@@ -1,7 +1,7 @@
 # abr-mkt-suppression: unsubscribe and bounce suppression (AutomationBench-R family 3)
 
-**Status (2026-10-15).** Development, $0. The generator, oracle, observable-only reference workflow, bad controls and
-tests are built. No arm has run and no model was called. Nothing here is a capability result. Design:
+**Status (2026-10-21).** Development, $0. The generator, oracle, observable-only reference workflow, bad controls and
+tests are built; the ten defects of the 2026-10-21 review are fixed (see [Changes](#changes)). No arm has run and no model was called. Nothing here is a capability result. Design:
 [RECURRING-DESIGN.md §4.3](../../../../research/automationbench-20261014/RECURRING-DESIGN.md).
 
 ## What it is
@@ -89,32 +89,35 @@ $PY -I -m pytest -p no:cacheprovider -q $F/tests
 
 The harness accepts only seeds 601–650 (practice and dev). Held-out seeds (8801+) are refused and were never generated.
 
-## Results ($0, development evidence; 2026-10-15, re-run 2026-10-21 after the change in [Changes](#changes))
+## Results ($0, development evidence; re-run 2026-10-21 after the review fixes in [Changes](#changes))
 
-Dev seeds 610–614 (610, 612, 614 at d2; 611, 613 at d3): 250 triggers, 46/55/47/55/47 per week.
+Dev seeds 610–614 (610, 612, 614 at d2; 611, 613 at d3): 255 triggers, 47/56/48/56/48 per week. Numbers from before the
+review fixes (250 triggers) are in the git history of this file.
 
 | Solver | Carry: triggers passed | Clean weeks | Rebased |
 |---|---|---|---|
-| **reference** | **250/250 (1.000)** | **5/5** | 5/5 |
-| `null` (does nothing) | 23/250 (0.092, exactly the no-op share); every other trigger `miss` | 0/5 | 0.092 |
-| `echo` (payload into #compliance and a "confirmation" to the payload address) | 0/250, all `wrong` | 0/5 | 0.000 |
-| `naive` (33 lines; ignores notes, holds, repeats and authority) | 158/250 (0.632); at d3 only 61/110 (0.555) | 0/5 | 0.684 |
-| `nodedupe` (no repeat check by Ref) | 218/250 (0.872) | 0/5 | 0.872 |
-| `fuzzy` (drops +tags, folds digits to letters) | 218/250 (0.872) | 0/5 | 0.924 |
-| `nohold` (archives held rows at once) | 226/250 (0.904) | 0/5 | 0.928 |
-| `nopremium` (old Q4 policy: archives Premium-tier) | 229/250 (0.916) | 0/5 | 0.964 |
-| `nowindow` (counts every soft bounce on record) | 241/250 (0.964) | 2/5 | 0.984 |
-| `confirmall` (no 30-day confirmation dedupe) | 234/250 (0.936) | 1/5 | 0.972 |
-| `anyauthor` (amendments from anyone) | 233/250 (0.932) | 3/5 (the d2 weeks have no amendments) | 0.992 |
-| `keepproduct` (obeys the manager: keeps Product Updates) | 174/250 (0.696) | 0/5 | 0.732 |
-| `noreprocess` (ignores "system error, reprocess") | 239/250 (0.956) | 1/5 | 0.984 |
-| `noskip` (ignores RESOLVED / pre-migration / retracted) | 233/250 (0.932) | 1/5 | 0.968 |
-| `effectivenow` (reads the Policy Log ignoring Effective dates) | 229/250 (0.916) | 0/5 | 0.956 |
+| **reference** | **255/255 (1.000)** | **5/5** | 5/5 |
+| `null` (does nothing) | 26/255 (0.102, exactly the no-op share); every other trigger `miss` | 0/5 | 0.102 |
+| `echo` (payload into #compliance and a "confirmation" to the payload address) | 0/255, all `wrong` | 0/5 | 0.000 |
+| `naive` (33 lines; ignores notes, holds, repeats and authority) | 158/255 (0.620); at d3 only 61/112 (0.545) | 0/5 | 0.671 |
+| `nodedupe` (no repeat check by Ref) | 223/255 (0.875) | 0/5 | 0.875 |
+| `fuzzy` (drops +tags, folds digits to letters) | 223/255 (0.875) | 0/5 | 0.925 |
+| `nohold` (archives held rows at once) | 231/255 (0.906) | 0/5 | 0.929 |
+| `nopremium` (old Q4 policy: archives Premium-tier) | 234/255 (0.918) | 0/5 | 0.965 |
+| `nowindow` (counts every soft bounce on record) | 246/255 (0.965) | 2/5 | 0.984 |
+| `confirmall` (no 30-day confirmation dedupe) | 236/255 (0.925) | 1/5 | 0.965 |
+| `anyauthor` (amendments from anyone) | 238/255 (0.933) | 3/5 (the d2 weeks have no amendments) | 0.992 |
+| `keepproduct` (obeys the manager: keeps Product Updates) | 177/255 (0.694) | 0/5 | 0.733 |
+| `noreprocess` (ignores "system error, reprocess") | 244/255 (0.957) | 1/5 | 0.984 |
+| `noskip` (ignores RESOLVED / pre-migration / retracted) | 238/255 (0.933) | 1/5 | 0.969 |
+| `effectivenow` (reads the Policy Log ignoring Effective dates) | 234/255 (0.918) | 0/5 | 0.957 |
+| `cachedlog` (confirmation dedupe from the Compliance Log as first read in the week) | 249/255 (0.977) | 3/5 (the d2 weeks have no in-week re-opt-in) | 0.992 |
 
 Every control fails the bar the reference meets (every trigger, every week clean). The narrow one-defect variants
-(`nowindow`, `confirmall`, `anyauthor`, `noreprocess`, `noskip`) only bite where their clause applies, so some of their
-weeks are clean; each fails on its own clause's triggers (tests check the trap labels of the failing rows).
-`effectivenow` fails every week: 0/5 clean here, and 0/50 clean weeks (2,314/2,513 triggers) on seeds 601–650.
+(`nowindow`, `confirmall`, `anyauthor`, `noreprocess`, `noskip`, `cachedlog`) only bite where their clause applies, so
+some of their weeks are clean; each fails on its own clause's triggers (tests check the trap labels of the failing
+rows). `effectivenow` fails every week: 0/5 clean here, and 0/50 clean weeks (2,364/2,563 triggers) on seeds 601–650.
+`cachedlog` fails all 25 d3 weeks of 601–650 (2,500/2,563 triggers), each first at its `in-week-confirm` trigger.
 
 Other gates on the same seeds:
 - **Determinism and round trip:** two generations give identical hashes, and `world0` and every `world_t` validate as
@@ -122,24 +125,28 @@ Other gates on the same seeds:
 - **Leakage:** payload keys are fixed per event and row keys equal the sheet headers; no payload, delta or `world0` text
   contains truth vocabulary; `world0` holds no record a delta creates; the reference imports only the standard library
   (`__future__`, `base64`, `datetime`, `re`, `urllib`).
-- **Solvability, wider:** the reference passes 2,513/2,513 triggers with 50/50 clean weeks on seeds 601–650 (practice,
-  dev and rehearsal blocks; re-run 2026-10-21, at most 129 tool calls in one trigger). Generator and reference therefore agree on every effect of every one of those triggers.
-- **Non-triviality:** `null` passes exactly the no-op share (0.092); the 33-line `naive` heuristic scores 0.555 at d3
+- **Solvability, wider:** the reference passes 2,563/2,563 triggers with 50/50 clean weeks on seeds 601–650 (practice,
+  dev and rehearsal blocks; re-run 2026-10-21 after the review fixes, at most 131 tool calls in one trigger). Generator
+  and reference therefore agree on every effect of every one of those triggers.
+- **Non-triviality:** `null` passes exactly the no-op share (0.102); the 33-line `naive` heuristic scores 0.545 at d3
   (gate: below 0.60).
-- **Oracle mutation score:** 4,088/4,088 = 1.000 over 27 operators on the reference's correct worlds (an archive undone,
+- **Oracle mutation score:** 4,945/4,945 = 1.000 over 34 operators on the reference's correct worlds (an archive undone,
   `unsubscribed` instead of `archived`, an extra member archived or noted, emails dropped, duplicated, misaddressed, cc'd,
-  re-subjected or emptied, Slack posts dropped, duplicated, miscounted, reformatted or moved, log rows dropped,
-  duplicated, re-dated or with a wrong Action, Lists or Confirmation, an earlier log row edited or deleted, a source row
-  marked, an extra post, sink post or email).
-- **Oracle specificity:** a policy-neutral variant of the reference (another confirmation wording, display-name
-  recipients, archive by `PATCH status=archived`, upper-case log values, lists reversed and comma-separated) passes
-  250/250: no false rejects.
+  given a second address behind `;`, re-subjected, upper-cased or emptied, a confirmation paraphrased, negated or naming
+  a list, Slack posts dropped, duplicated, miscounted, reformatted or moved, a post deleted again, log rows dropped,
+  duplicated, re-dated, with an upper-case Email or a wrong Action, Lists or Confirmation, an earlier log row edited or
+  deleted, a source row marked, an extra post, sink post or email).
+- **Oracle specificity:** a policy-neutral variant of the reference (another confirmation layout around the policy's
+  sentence, display-name recipients, archive by `PATCH status=archived`, other-case Event, Action and Confirmation
+  values, lists upper-cased, reversed and comma-separated) passes 255/255: no false rejects.
 - **Trap coverage** (triggers carrying each kind, five weeks): T-lookalike 27, T-stale 19 (11 of them
-  `future-parameter`), T-note 47, T-authority 13, T-format 20, T-repeat 28; every kind ≥ 5. Share of event triggers
-  with a trap: d2 0.44–0.55, d3 0.76–0.78 on these seeds; over seeds 601–650, d2 0.43–0.55 (mean 0.48) and d3
-  0.72–0.80 (mean 0.76). Weeks have 42–49 triggers at d2
-  and 52–59 at d3.
-- **Tests:** `tests/test_suppression.py`, 47 passed in 147 s (pytest 9.0.2 in the pinned venv, Python 3.13).
+  `future-parameter`), T-note 47, T-authority 13, T-format 26 (5 `fw-prefix`, 3 `confirm-reply`), T-repeat 30
+  (2 `in-week-confirm`); every kind ≥ 5. Share of event triggers with a trap: d2 0.45–0.58, d3 0.77–0.78 on these
+  seeds; over seeds 601–650, d2 0.45–0.58 (mean 0.51) and d3 0.73–0.81 (mean 0.77). Weeks have 43–50 triggers at d2
+  and 53–60 at d3.
+- **Review probes** (2026-10-21; seeds 610–611, 103 triggers): see [Changes](#changes). Every probe solver the review
+  used now fails.
+- **Tests:** `tests/test_suppression.py`, 62 passed in 494 s (pytest 9.0.2 in the pinned venv, Python 3.13).
 
 ## What the oracle checks
 
@@ -300,7 +307,8 @@ graded.
 - The stream runner (`stream.mjs`), the bridge commands (`abr-gen`, `abr-apply`, `abr-grade`) and the arms (§3.7–3.8)
   do not exist. Here everything runs in one process: the generator, `abr-apply`-equivalent deltas through the apps'
   pydantic models, AutomationBench's `api_fetch`, and the oracle. The arms will reach the same `api_fetch` through the
-  parity-checked `bridge.py serve` and the file mailbox.
+  parity-checked `bridge.py serve` and the file mailbox. `abr-apply` must implement the `set_member` delta op as well
+  as the row and email ops (`harness.apply_delta` is the reference).
 - The second-reader fairness gate (§3.11 gate 6) needs a session that did not write the family.
 - Effect masking for ids and timestamps from the bridge's `--det` shim is not needed in process. The oracle matches
   records by id (rows, messages) or by (list, address) (members) and compares contents.

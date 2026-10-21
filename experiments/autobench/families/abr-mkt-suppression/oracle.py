@@ -135,7 +135,7 @@ def ledger(before: dict, after: dict) -> dict:
     for m in after["slack"]["messages"]:
         a_keys.add(k(m))
         if k(m) not in bs:
-            if m.get("is_deleted"):  # posted and deleted within the trigger: it was delivered, and no post may be
+            if m.get("is_deleted"):  # posted and deleted within the trigger: a real Slack delivered it, so it is a write
                 out["other"].append(("slack.posted-then-deleted", k(m), channel_name(after, m["channel_id"])))
             else:
                 out["slack"].append(m)

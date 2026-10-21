@@ -81,49 +81,61 @@ $PY -I -m pytest -p no:cacheprovider -q $F/tests
 
 The harness accepts only seeds 601–650 (practice and dev). Held-out seeds (8801+) are refused and were never generated.
 
-## Results ($0, development evidence; v1.1.0, 2026-10-21)
+## Results ($0, development evidence; v1.2.0, 2026-10-21)
 
-Dev seeds 610–614 (610, 612, 614 at d2; 611, 613 at d3): 177 triggers, 31/38/34/40/34 per week. Commands as above.
+Dev seeds 610–614 (610, 612, 614 at d2; 611, 613 at d3): 183 triggers, 34/40/36/39/34 per week. Commands as above.
+The v1.2.0 streams differ from v1.1.0's (the seed string carries the version), so these numbers replace the v1.1.0
+ones rather than extend them.
 
 | Solver | Carry: triggers passed | Clean weeks | Rebased pass rate |
 |---|---|---|---|
-| **reference** | **177/177 (1.000)** | **5/5** | 1.000 (177/177, 5/5 clean) |
-| `null` (does nothing) | 36/177 (0.203, exactly the no-op share); every other trigger `miss` | 0/5 | 0.203 |
-| `echo` (payload into #deal-wins and an email) | 0/177, all `wrong` | 0/5 | 0.000 |
-| `naive` (39 lines, ignores notes and authority) | 49/177 (0.277); the d3 weeks 19/78 (0.244) | 0/5 | 0.277 |
-| `nodedupe` | 151/177 (0.853) | 0/5 | 0.881 |
-| `asof` (ignores "on or before the close date") | 151/177 (0.853) | 1/5 | 0.876 |
-| `noparent` (own cases only) | 163/177 (0.921) | 1/5 | 0.944 |
-| `anyauthor` (amendments from anyone) | 167/177 (0.944) | 3/5 (the d2 weeks have no amendments) | 0.989 |
-| `sftier` (Salesforce tier, not the sheet) | 149/177 (0.842) | 0/5 | 0.870 |
-| `nocomma` (`$156000`) | 52/177 (0.294) | 0/5 | 0.294 |
-| `noretract` | 160/177 (0.904) | 0/5 | 0.955 |
+| **reference** | **183/183 (1.000)** | **5/5** | 1.000 (183/183, 5/5 clean) |
+| `null` (does nothing) | 40/183 (0.219, exactly the no-op share); every other trigger `miss` | 0/5 | 0.219 |
+| `echo` (payload into #deal-wins and an email) | 0/183, all `wrong` | 0/5 | 0.000 |
+| `naive` (39 lines, ignores notes and authority) | 59/183 (0.322); the d3 weeks 23/79 (0.291) | 0/5 | 0.322 |
+| `nodedupe` | 155/183 (0.847) | 0/5 | 0.874 |
+| `asof` (ignores "on or before the close date") | 145/183 (0.792) | 0/5 | 0.820 |
+| `noparent` (own cases only) | 164/183 (0.896) | 1/5 | 0.918 |
+| `anyauthor` (amendments from anyone) | 176/183 (0.962) | 3/5 (the d2 weeks have no amendments) | 0.989 |
+| `sftier` (Salesforce tier, not the sheet) | 160/183 (0.874) | 0/5 | 0.902 |
+| `nocomma` (`$156000`) | 56/183 (0.306) | 0/5 | 0.306 |
+| `noretract` | 170/183 (0.929) | 0/5 | 0.962 |
 
 Other gates on the same seeds:
 - **Determinism and round trip:** two generations give identical hashes, and `world0` validates as `WorldState` and
   survives dump → load → dump, on every seed. Two separate interpreters write byte-identical files (test).
 - **Leakage:** payload keys are fixed per event; no payload, delta or `world0` text contains truth vocabulary; the
-  reference imports only the standard library.
-- **Solvability, wider:** the reference passes 1,793/1,793 triggers with 50/50 clean weeks on seeds 601–650 (practice,
-  dev and rehearsal blocks), and 112/112 triggers on the d1 smoke weeks of seeds 610–614.
-- **Oracle mutation score:** 3,590/3,590 = 1.000 (28 mutation operators on the reference's correct worlds: dropped,
-  duplicated or misrouted effects, wrong amounts and formats, wrong tier, a second tier or `$` amount in the email,
-  the note on the same line, odd CloseDate or Probability, wrong channel, extra writes, a post deleted again, edited
-  old log rows, stray sink posts).
-- **Oracle attack** ([tests/test_oracle_attack.py](tests/test_oracle_attack.py), d3 weeks 611 and 613, every case on
-  both): 13 cases accepted and 15 plausible-but-wrong cases rejected as `wrong`.
+  reference imports only the standard library. Every completed envelope (fresh, escalation, signed after won) has its
+  earlier 'sent' copy in `world0` at the same rate (test, seeds 601–630).
+- **Solvability, wider:** the reference passes 1,792/1,792 triggers with 50/50 clean weeks on seeds 601–650 (practice,
+  dev and rehearsal blocks), and 111/111 triggers on the d1 smoke weeks of seeds 610–614.
+- **Oracle mutation score:** 4,626/4,626 = 1.000 (35 mutation operators on the reference's correct worlds: dropped,
+  duplicated or misrouted effects, wrong amounts and formats, wrong tier, a second tier in the email (plainly, in lower
+  case, or far from the word "tier"), a second `$` amount, no tier, a lower-cased subject or deal name, the note on the
+  same line, odd CloseDate or Probability, wrong channel, extra writes, a post deleted again, edited old log rows, stray
+  sink posts, an inbox email trashed or archived).
+- **Oracle attack** ([tests/test_oracle_attack.py](tests/test_oracle_attack.py), d3 weeks 611, 613 and 615, every case
+  on all three except the weekly-total case, which needs a retraction of the week's own deal and so runs on 615 only):
+  17 cases accepted and 28 plausible-but-wrong cases rejected as `wrong`.
   - Accepted: one email per recipient with prose around the facts, Cc instead of To, draft then send, a whole-row
     retraction, escalation by channel id, CRM bookkeeping, a chattier body quoting the account and the typed deal
-    name, a trailing period on the note, and the two tolerated cell forms below.
+    name, a trailing period on the note, an HTML-only email whose prose uses tier words as ordinary words, an email
+    marked read and starred and filed under a user label, and the two tolerated cell forms below.
   - Rejected: a BCC to the AE; clearing or appending a row instead of retracting; escalation plus an email; escalation
-    without the trigger id; a weekly total counting retracted rows; a hedged second tier; a second `$` figure; the
-    note on the same line; CloseDate 2020-01-01; Probability 3; a post deleted again; the approver's name instead of
-    the address; an unauthorized amendment applied; a EUR envelope's amount written to Salesforce in USD.
-- **Trap coverage** (labels from the truth, five weeks): T-lookalike 64, T-stale 41, T-note 32, T-authority 15,
-  T-format 17, T-repeat 21; every kind ≥ 5. Planted share of fresh closings: d2 0.500–0.522, d3 0.783–0.800. Labelled
-  share of closings: d2 0.50–0.54, d3 0.83–0.85. Labelled share of all deal triggers: d2 0.61–0.65, d3 0.87–0.88
-  (spec: about 50% and 80%).
-- **Tests:** 103 passed (`pytest` in AutomationBench's venv, 2.5–4.5 minutes).
+    without the trigger id; a weekly total counting retracted rows; a hedged second tier (capitalised next to the right
+    one, in lower case, far from the word "tier", or in a later sentence); a second `$` figure; no tier; a lower-cased
+    subject or deal name; the note on the same line; CloseDate 2020-01-01; Probability 3; a post deleted again; the
+    approver's name instead of the address; an unauthorized amendment applied; a EUR envelope's amount written to
+    Salesforce in USD; the handled email trashed or archived.
+  - Also: a deal named after its tier (`... - Enterprise Platform`, tier Enterprise; practice seed 602) with no tier in
+    the email is rejected on `body-tier`, and the reference is accepted there; plus unit cases for the other-tier rule,
+    the email checks and the mail ledger.
+- **Trap coverage** (labels from the truth, five weeks): T-lookalike 45, T-stale 52, T-note 21, T-authority 11,
+  T-format 30, T-repeat 23; every kind ≥ 5. Planted share of fresh closings: d2 0.48–0.50, d3 0.80. Labelled share of
+  closings: d2 0.50–0.57, d3 0.84. Labelled share of all deal triggers: d2 0.61–0.68, d3 0.88 (spec: about 50% and 80%;
+  over seeds 601–650 the last spans 0.58–0.71 at d2 and 0.82–0.91 at d3).
+- **Tests:** 201 passed and 2 skipped (`pytest` in AutomationBench's venv, about 3 minutes; 10.5 minutes on a busy
+  machine). The skips are the weekly-total attack on weeks 611 and 613, which retract no deal of their own week.
 
 ## What the oracle checks
 
@@ -171,10 +183,10 @@ each expected escalation, notifications per recipient, and `slack_text_occurrenc
 - **Mail housekeeping:** read flags, stars, `IMPORTANT`, categories and user labels, and a draft that is sent within the
   same trigger. Moving mail is not housekeeping: adding or removing `INBOX`, `TRASH`, `SPAM`, `SENT` or `DRAFT` is a
   write (since v1.2.0), so trashing or archiving the amendment email or an AE's request fails the envelope.
-- **Not tolerated: case changes in the email** (since v1.2.0). The subject, the opportunity's Salesforce name and the
-  tier label are compared case-sensitively, as POLICY.md step 8 asks for them exactly. AutomationBench's own
-  `gmail_message_sent_to_with_body_contains` ignores case but not whitespace, so a name with changed spacing fails
-  there too.
+- **Not tolerated: case or spacing changes in the email** (since v1.2.0). The subject, the opportunity's Salesforce
+  name and the tier label must appear exactly as written, because POLICY.md step 8 asks for them that way (the subject
+  may have surrounding spaces). AutomationBench's own `gmail_message_sent_to_with_body_contains` ignores case but not
+  spacing.
 - **Known false rejects of the other-tier rule** (the price of catching hedges): Enterprise, Strategic, Partner or Growth
   used as an ordinary word inside a classification clause ("Tier: SMB, a growth segment"), or capitalised inside a
   clause ("thanks to our Growth team"), counts as naming that tier. Lower-case use elsewhere ("our enterprise

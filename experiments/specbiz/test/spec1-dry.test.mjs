@@ -57,6 +57,9 @@ test('dry end to end: derive-ledger and none-agent (stopped by an environment fa
     assert.deepEqual(a.owner.journal.map(r => r.n), [1, 2]);
     assert.deepEqual(a.owner.replay, { ok: true, mismatches: [] });
     assert.ok(second.seen.every(s => s.pack && !s.spec));
+    const adb = new DatabaseSync(a.journals.modelPort.file);
+    assert.deepEqual(adb.prepare('SELECT node_key FROM model_calls ORDER BY id').all().map(r => r.node_key), ['ask-01', 'ask-02'], 'the matcher\'s node keys continue after the resume');
+    adb.close();
 
     // 3. The spend ledger: every reservation settled ($0 in a dry run); the caps are the preregistered ones.
     const rows = readJsonl(spendFile);

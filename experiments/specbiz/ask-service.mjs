@@ -66,8 +66,8 @@ export function questionOf(prompt) {
  * The matcher owner-sim.mjs calls: one ModelPort call per question (nodeKey ask-<n>). Returns { ids } (owner-sim drops ids
  * outside the closed list and journals them as invalidMatch); a failed call returns { ids: [], error } and is logged.
  */
-export function modelMatcher({ port, modelId, runId, logFile = null, reasoning = 'none' }) {
-  let n = 0;
+export function modelMatcher({ port, modelId, runId, logFile = null, reasoning = 'none', startAt = 0 }) {
+  let n = startAt;                      // a resumed run continues the node keys (ask-<n>) after the questions it restored
   return async (question, closedList) => {
     n += 1;
     const t = Date.now();

@@ -127,6 +127,12 @@ export function reserveAll(file, { arm, label, items, caps = CAPS, dry = false }
     return tok;
   });
 }
+/** What a label has been charged (settled) or holds open (at the bound) for one kind of spend. */
+export function spentFor(file, label, kind) {
+  const byId = new Map();
+  for (const e of readJsonl(file)) if (e.label === label && e.kind === kind) { const x = byId.get(e.id) ?? {}; x[e.op] = e; byId.set(e.id, x); }
+  return r6([...byId.values()].reduce((s, x) => s + (x.settle ? x.settle.charged : x.reserve.bound), 0));
+}
 export function settle(file, tok, charged, detail = {}) {
   appendFileSync(file, JSON.stringify({ op: 'settle', at: new Date().toISOString(), id: tok.id, arm: tok.arm, label: tok.label, kind: tok.kind, bound: tok.bound, charged: r6(charged), dry: tok.dry, ...detail }) + '\n');
 }
@@ -373,13 +379,16 @@ export async function runAgentLineage(o) {
   const meterFile = path.join(liveDir, 'spend-sessions.jsonl');
   const prior = loadSpend([meterFile], label).totalUsd;
   const remaining = Math.max(0, A.lineageCapUsd - prior);
-  const toks = reserveAll(spendFile, { arm: 'none-agent', label, items: [{ kind: 'agent-sessions', bound: r6(remaining) }, { kind: 'owner-matcher', bound: CONDITIONS.matcherCapUsd }], caps, dry });
+  // A resumed lineage reserves only what its caps have left: sessions by its own meter, the matcher by the ledger.
+  const matcherLeft = r6(Math.max(0, CONDITIONS.matcherCapUsd - spentFor(spendFile, label, 'owner-matcher')));
+  const toks = reserveAll(spendFile, { arm: 'none-agent', label, items: [{ kind: 'agent-sessions', bound: r6(remaining) }, { kind: 'owner-matcher', bound: matcherLeft }], caps, dry });
   const t0 = Date.now();
   const P = ports({ dry, pack, liveDir, model });
-  const mp = budgetedPort(P.port, { capUsd: CONDITIONS.matcherCapUsd, logFile: path.join(liveDir, 'model-calls.jsonl') });
+  const mp = budgetedPort(P.port, { capUsd: matcherLeft, logFile: path.join(liveDir, 'model-calls.jsonl') });
   const askFile = path.join(liveDir, 'ask.jsonl');
   const priorAsks = readJsonl(askFile);
-  const sim = serialSim(await restoredOwnerSim({ pack, rows: priorAsks, matcher: modelMatcher({ port: mp, modelId: model, runId: `${label}:owner`, logFile: path.join(liveDir, 'match.jsonl') }), maxQuestions: questions }));
+  const sim = serialSim(await restoredOwnerSim({ pack, rows: priorAsks, maxQuestions: questions,
+    matcher: modelMatcher({ port: mp, modelId: model, runId: `${label}:owner`, logFile: path.join(liveDir, 'match.jsonl'), startAt: priorAsks.filter(r => !r.budgetExceeded).length }) }));
   const meter = makeMeter({ capUsd: A.lineageCapUsd, stage: label, spendFile: meterFile, priceTable: STAGES.priceTable });
   const session = inner ?? (dry ? scriptedPackSession({ after: dryRunner, askOn: [1, 3] }) : runClaudeCode);
   const runner = packSessionRunner({ inner: session, pack, sim, askJournal: askFile });
@@ -448,8 +457,16 @@ async function main() {
   const outRoot = dry ? path.join(root, 'runs') : RUNS, liveRoot = dry ? path.join(root, 'live') : LIVE_ROOT, workRoot = dry ? path.join(root, 'work') : WORK_ROOT;
   const spendFile = path.join(outRoot, 'spend.jsonl');
   if (argv[0] === 'perfect') {
-    const res = await gradePerfect({ worlds: parseWorlds(arg('--worlds', 'grading,shared')), outRoot });
+    const worlds = parseWorlds(arg('--worlds', 'grading,shared'));
+    const res = await gradePerfect({ worlds, outRoot });
     for (const r of res) console.log(`${r.label}: grading ${r.summary.grading.passed}/${r.summary.grading.completed}, shared ${r.summary.shared.passed}/${r.summary.shared.completed}`);
+    // With all nine grading worlds, the regrade must reproduce the frozen oracle-2 counts (3011/3066), or the oracle drifted.
+    if (GRADING.every(g => worlds.includes(g))) {
+      const frozen = S_PERFECT_LINEAGES.map(l => JSON.parse(readFileSync(path.join(ROOT, 'research/enterprise-20261014/runs', `regrade-oracle2-${l}`, 'result.json'), 'utf8')).summary);
+      const same = res.every((r, i) => r.summary.grading.passed === frozen[i].passed && r.summary.grading.completed === frozen[i].completed);
+      console.log(`S-perfect ${same ? 'reproduces' : 'DOES NOT reproduce'} the frozen counts (${frozen.map(f => `${f.passed}/${f.completed}`).join(', ')})`);
+      if (!same) process.exitCode = 5;
+    }
     return;
   }
   if (argv[0] === 'grade') {
@@ -476,6 +493,8 @@ async function main() {
   if (!lineages.every(k => Number.isInteger(k) && k >= 1 && k <= 9)) throw new Error('bad --lineage/--lineages');
   let prereg = null;
   if (!dry) {
+    const fixed = ['--worlds', '--concurrency', '--root', '--arm-cap', '--total-cap'].filter(has);
+    if (fixed.length) throw new Error(`a paid run uses the preregistered worlds, concurrency and caps: remove ${fixed.join(', ')}`);
     prereg = preregCheck();                     // refuses unless PREREG-SPEC1.md is FROZEN with matching hashes
     if (!sandboxAvailable()) throw new Error('no executor sandbox: refusing to start a paid run');
   }

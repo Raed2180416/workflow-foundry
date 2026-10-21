@@ -9,7 +9,7 @@
     "slots": [
       { "name": "answers", "type": "list", "maxItems": 8, "default": [], "description": "Canned replies: when a ticket's subject or text contains the keyword, it gets this reply. Use the person's own facts only.",
         "fields": [
-          { "name": "keyword", "type": "string", "maxLength": 40, "description": "A word or short phrase that marks the question, e.g. shipping, password, opening hours." },
+          { "name": "keyword", "type": "string", "maxLength": 40, "description": "A word that customers will write when they ask this question, matched anywhere in the subject or text, ignoring case. Prefer a short stem: 'ship' matches shipping and shipped, 'return' matches returns and returning, 'hour' matches hours and opening hours. Several entries may share one reply." },
           { "name": "reply", "type": "text", "maxLength": 1200, "description": "The answer to send, in the person's words and facts; no promises they did not make." } ] },
       { "name": "escalateTo", "type": "email", "grounded": true, "ask": "wrong-target", "question": "Who should get the tickets that need a person? (one e-mail address)", "askWhy": "Tickets contain customers' messages; I will not guess where they go.", "description": "E-mail address that gets the digest of tickets a person must handle." },
       { "name": "signature", "type": "string", "maxLength": 80, "default": "The support team", "description": "How automatic replies are signed." }

@@ -1,0 +1,283 @@
+{
+ "version": 1,
+ "parent": {
+  "file": "parent.mjs",
+  "calls": [
+   "intake",
+   "fraud",
+   "fulfilment",
+   "orderflow"
+  ],
+  "effects": [],
+  "humanTasks": []
+ },
+ "modules": {
+  "intake": {
+   "file": "modules/intake.mjs",
+   "purpose": "record a placed order with its allocated fulfilments and amounts (R1.1, R1.2)",
+   "rules": [
+    "R1.1",
+    "R1.2"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "place",
+       "allocated"
+      ]
+     },
+     "order": {
+      "type": "object"
+     },
+     "plan": {
+      "type": "object"
+     },
+     "edition": {
+      "type": "string"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "effects": [
+    "inventory.allocate",
+    "orders.create"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  },
+  "fraud": {
+   "file": "modules/fraud.mjs",
+   "purpose": "R2 fraud gate: the verdict clears, rejects or opens the review task with its deadline",
+   "rules": [
+    "R2.1",
+    "R2.2",
+    "S3"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "start",
+       "verdict"
+      ]
+     },
+     "verdict": {
+      "enum": [
+       "pass",
+       "review",
+       "reject"
+      ]
+     },
+     "at": {
+      "type": "string"
+     },
+     "edition": {
+      "type": "string"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "effects": [
+    "fraud.check"
+   ],
+   "humanTasks": [
+    "fraudReview"
+   ],
+   "timers": true,
+   "calls": [],
+   "reads": []
+  },
+  "fulfilment": {
+   "file": "modules/fulfilment.mjs",
+   "purpose": "one saga per fulfilment: reserve, charge, ship, carrier reports, failure and compensation",
+   "rules": [
+    "R4.2",
+    "R4.4",
+    "R5.1",
+    "R5.2",
+    "S14"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "start",
+       "resume",
+       "carrier",
+       "cancel"
+      ]
+     },
+     "fulfilment": {
+      "type": "object"
+     },
+     "report": {
+      "type": "object"
+     },
+     "reason": {
+      "type": "string"
+     },
+     "at": {
+      "type": "string"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "effects": [
+    "inventory.reserve",
+    "inventory.release",
+    "billing.charge",
+    "billing.refund",
+    "carrier.create",
+    "carrier.cancel",
+    "orders.setStatus:fulfilment",
+    "notify.send:fulfilment-failed"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  },
+  "orderflow": {
+   "file": "modules/orderflow.mjs",
+   "purpose": "order-level decisions: R3 customer actions on unavailable items, R4.1 readiness and starts, R4.5 outcome, R6 cancellation, R7.2 status moves",
+   "rules": [
+    "R3.1",
+    "R3.2",
+    "R4.1",
+    "R4.5",
+    "R6.1",
+    "R6.2",
+    "R6.3",
+    "R6.4",
+    "R7.2",
+    "S5",
+    "S8",
+    "S9",
+    "S10",
+    "S11",
+    "S12",
+    "S13",
+    "S15"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "record",
+       "resume",
+       "cleared",
+       "reject",
+       "action",
+       "evidence",
+       "ended",
+       "timeout",
+       "settle"
+      ]
+     },
+     "p": {
+      "type": "string"
+     },
+     "ed": {
+      "type": "string"
+     },
+     "em": {
+      "type": "string"
+     },
+     "cur": {
+      "type": "string"
+     },
+     "cust": {
+      "type": "string"
+     },
+     "fl": {
+      "type": "array"
+     },
+     "at": {
+      "type": "string"
+     },
+     "action": {
+      "enum": [
+       "amend",
+       "cancel"
+      ]
+     },
+     "eid": {
+      "type": "string"
+     },
+     "reason": {
+      "type": "string"
+     },
+     "reportedAt": {
+      "type": "string"
+     },
+     "fid": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string"
+     },
+     "now": {
+      "type": "string"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "effects": [
+    "orders.setStatus:order",
+    "orders.setStatus:order:customerActionRequired",
+    "orders.setStatus:order:processing",
+    "orders.setStatus:order:cancelled",
+    "orders.setStatus:order:timedOut",
+    "orders.setStatus:order:completed",
+    "orders.setStatus:order:failed",
+    "orders.setStatus:fulfilment",
+    "notify.send"
+   ],
+   "humanTasks": [],
+   "timers": true,
+   "calls": [
+    "fulfilment"
+   ],
+   "reads": []
+  }
+ }
+}

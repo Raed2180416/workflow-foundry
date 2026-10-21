@@ -1,0 +1,3035 @@
+{
+ "label": "ch-e8-3",
+ "item": "ebed-e8",
+ "spec": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+ "conditions": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "practice": {
+   "seeds": [
+    1235,
+    1236,
+    1237
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "grading": {
+   "seeds": [
+    1232,
+    1233,
+    1234
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  }
+ },
+ "build": {
+  "arm": "C-H",
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "dryRun": false,
+  "smokeRuns": 2,
+  "wallMs": 1423184,
+  "costUsd": 0.8568334000000001,
+  "error": null,
+  "turns": 3
+ },
+ "program": {
+  "modules": [
+   "intake",
+   "fraud",
+   "fulfilment",
+   "orderflow"
+  ],
+  "programDigest": "8f8a63e4f95f9d87b440905c749b5eddef46dab5b5b9d60789efefddbfc0d947",
+  "bundleDigest": "a57dba4de425b304f27ed0030d762f621fedb03613e0548ee2fa34a252c4c001",
+  "problems": []
+ },
+ "tests": {
+  "files": 4,
+  "modules": 4,
+  "modulesWithTests": 4,
+  "pass": 31,
+  "fail": 0,
+  "ok": true,
+  "ran": true
+ },
+ "worlds": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  },
+  {
+   "seed": 1232,
+   "d": 2
+  },
+  {
+   "seed": 1233,
+   "d": 2
+  },
+  {
+   "seed": 1234,
+   "d": 2
+  },
+  {
+   "seed": 1232,
+   "d": 3
+  },
+  {
+   "seed": 1233,
+   "d": 3
+  },
+  {
+   "seed": 1234,
+   "d": 3
+  },
+  {
+   "seed": 1232,
+   "d": 5
+  },
+  {
+   "seed": 1233,
+   "d": 5
+  },
+  {
+   "seed": 1234,
+   "d": 5
+  }
+ ],
+ "summary": {
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 13,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 13,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "13/14",
+     "customer-action": "14/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 192,
+     "parent->fulfilment": 40,
+     "parent->intake": 24,
+     "parent->fraud": 24,
+     "orderflow->fulfilment": 20,
+     "parent->fulfilment (event)": 68,
+     "parent->intake (event)": 11,
+     "parent->orderflow (event)": 31
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  "full": {
+   "completed": 1022,
+   "passed": 886,
+   "critical": 0,
+   "capabilitiesPassed": 865,
+   "capabilitiesCompleted": 1001,
+   "interfaceViolations": 0,
+   "armErrors": 0
+  },
+  "worlds": 10,
+  "armErrors": 0
+ },
+ "rows": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 13,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 13,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "13/14",
+     "customer-action": "14/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 192,
+     "parent->fulfilment": 40,
+     "parent->intake": 24,
+     "parent->fraud": 24,
+     "orderflow->fulfilment": 20,
+     "parent->fulfilment (event)": 68,
+     "parent->intake (event)": 11,
+     "parent->orderflow (event)": 31
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 52,
+    "passed": 51,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 52,
+    "passed": 51,
+    "byCapability": {
+     "intake": "51/52",
+     "fraud": "52/52",
+     "capture": "52/52",
+     "refund": "52/52",
+     "reservation": "51/52",
+     "shipment": "52/52",
+     "compensation": "52/52",
+     "failure": "52/52",
+     "tracking": "51/52",
+     "customer-action": "52/52",
+     "cancellation": "52/52",
+     "notifications": "52/52",
+     "exactly-once": "52/52"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 594,
+     "parent->fulfilment": 101,
+     "parent->intake": 100,
+     "parent->fraud": 100,
+     "orderflow->fulfilment": 52,
+     "parent->fulfilment (event)": 185,
+     "parent->intake (event)": 44,
+     "parent->orderflow (event)": 126
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 51,
+    "passed": 50,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 51,
+    "passed": 50,
+    "byCapability": {
+     "intake": "50/51",
+     "fraud": "51/51",
+     "capture": "51/51",
+     "refund": "51/51",
+     "reservation": "50/51",
+     "shipment": "51/51",
+     "compensation": "51/51",
+     "failure": "51/51",
+     "tracking": "50/51",
+     "customer-action": "51/51",
+     "cancellation": "51/51",
+     "notifications": "51/51",
+     "exactly-once": "51/51"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 770,
+     "parent->fulfilment": 159,
+     "parent->intake": 100,
+     "parent->fraud": 100,
+     "parent->orderflow (event)": 137,
+     "parent->intake (event)": 48,
+     "orderflow->fulfilment": 75,
+     "parent->fulfilment (event)": 289
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 52,
+    "passed": 51,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 52,
+    "passed": 51,
+    "byCapability": {
+     "intake": "51/52",
+     "fraud": "52/52",
+     "capture": "52/52",
+     "refund": "52/52",
+     "reservation": "51/52",
+     "shipment": "52/52",
+     "compensation": "52/52",
+     "failure": "52/52",
+     "tracking": "51/52",
+     "customer-action": "52/52",
+     "cancellation": "52/52",
+     "notifications": "52/52",
+     "exactly-once": "52/52"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 632,
+     "parent->fulfilment": 118,
+     "orderflow->fulfilment": 59,
+     "parent->fulfilment (event)": 215,
+     "parent->orderflow (event)": 116,
+     "parent->intake": 100,
+     "parent->fraud": 100,
+     "parent->intake (event)": 43
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 85,
+    "passed": 83,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 2
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 83,
+    "passed": 81,
+    "byCapability": {
+     "intake": "81/83",
+     "fraud": "83/83",
+     "capture": "83/83",
+     "refund": "83/83",
+     "reservation": "81/83",
+     "shipment": "83/83",
+     "compensation": "83/83",
+     "failure": "83/83",
+     "tracking": "81/83",
+     "customer-action": "83/83",
+     "cancellation": "83/83",
+     "notifications": "83/83",
+     "exactly-once": "83/83"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 1262,
+     "parent->fulfilment": 284,
+     "parent->intake": 160,
+     "parent->fraud": 160,
+     "orderflow->fulfilment": 118,
+     "parent->fulfilment (event)": 434,
+     "parent->intake (event)": 75,
+     "parent->orderflow (event)": 215,
+     "parent->fraud (event)": 13
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 81,
+    "passed": 79,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 2
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 79,
+    "passed": 77,
+    "byCapability": {
+     "intake": "77/79",
+     "fraud": "79/79",
+     "capture": "79/79",
+     "refund": "79/79",
+     "reservation": "77/79",
+     "shipment": "79/79",
+     "compensation": "79/79",
+     "failure": "79/79",
+     "tracking": "77/79",
+     "customer-action": "79/79",
+     "cancellation": "79/79",
+     "notifications": "79/79",
+     "exactly-once": "79/79"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 1138,
+     "parent->fulfilment": 235,
+     "parent->orderflow (event)": 213,
+     "parent->intake": 160,
+     "parent->fraud": 160,
+     "orderflow->fulfilment": 99,
+     "parent->fulfilment (event)": 375,
+     "parent->intake (event)": 74,
+     "parent->fraud (event)": 9
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 86,
+    "passed": 84,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 2
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 84,
+    "passed": 82,
+    "byCapability": {
+     "intake": "82/84",
+     "fraud": "84/84",
+     "capture": "84/84",
+     "refund": "84/84",
+     "reservation": "82/84",
+     "shipment": "84/84",
+     "compensation": "84/84",
+     "failure": "84/84",
+     "tracking": "82/84",
+     "customer-action": "84/84",
+     "cancellation": "84/84",
+     "notifications": "84/84",
+     "exactly-once": "84/84"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 1390,
+     "parent->fulfilment": 321,
+     "orderflow->fulfilment": 120,
+     "parent->fulfilment (event)": 474,
+     "parent->orderflow (event)": 244,
+     "parent->intake": 160,
+     "parent->fraud": 160,
+     "parent->intake (event)": 75,
+     "parent->fraud (event)": 7
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 202,
+    "passed": 156,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 3,
+     "L2:outside-allowed": 43
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0007",
+       "got": null,
+       "instance": "i-000007"
+      }
+     },
+     {
+      "case": "o0144",
+      "class": "f3-refund",
+      "first": {
+       "at": "2026-03-10T10:02:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0144",
+        "fulfilmentId": "ORD-1232-0144-F1",
+        "sku": "SKU-1001"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0145",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-10T11:42:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0145",
+        "fulfilmentId": "ORD-1232-0145-F1",
+        "sku": "SKU-1023"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0146",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-10T10:35:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0146",
+        "fulfilmentId": "ORD-1232-0146-F1",
+        "sku": "SKU-1005"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0147",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T11:54:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0147",
+        "fulfilmentId": "ORD-1232-0147-F1",
+        "sku": "SKU-1025"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0148",
+      "class": "collection-failed",
+      "first": {
+       "at": "2026-03-10T12:11:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0148",
+        "fulfilmentId": "ORD-1232-0148-F1",
+        "sku": "SKU-1026"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0149",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T14:17:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0149",
+        "fulfilmentId": "ORD-1232-0149-F1",
+        "sku": "SKU-1029"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0150",
+      "class": "cancel-after-collection",
+      "first": {
+       "at": "2026-03-10T16:45:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0150",
+        "fulfilmentId": "ORD-1232-0150-F1",
+        "sku": "SKU-1008"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0151",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T17:19:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0151",
+        "fulfilmentId": "ORD-1232-0151-F1",
+        "sku": "SKU-1030"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0152",
+      "class": "f3-charge",
+      "first": {
+       "at": "2026-03-10T17:38:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0152",
+        "fulfilmentId": "ORD-1232-0152-F2",
+        "sku": "SKU-1013"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0153",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T17:55:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0153",
+        "fulfilmentId": "ORD-1232-0153-F1",
+        "sku": "SKU-1018"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0154",
+      "class": "f3-refund",
+      "first": {
+       "at": "2026-03-10T19:54:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0154",
+        "fulfilmentId": "ORD-1232-0154-F1",
+        "sku": "SKU-1020"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0155",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T23:27:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0155",
+        "fulfilmentId": "ORD-1232-0155-F1",
+        "sku": "SKU-1029"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0156",
+      "class": "f3-charge",
+      "first": {
+       "at": "2026-03-11T03:38:01.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0156",
+        "fulfilmentId": "ORD-1232-0156-F1",
+        "sku": "SKU-1007"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0157",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T04:28:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0157",
+        "fulfilmentId": "ORD-1232-0157-F1",
+        "sku": "SKU-1015"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0158",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T05:27:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0158",
+        "fulfilmentId": "ORD-1232-0158-F1",
+        "sku": "SKU-1030"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0160",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T08:41:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0160",
+        "fulfilmentId": "ORD-1232-0160-F1",
+        "sku": "SKU-1028"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0161",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T09:44:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0161",
+        "fulfilmentId": "ORD-1232-0161-F1",
+        "sku": "SKU-1009"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0163",
+      "class": "amend-then-cancel",
+      "first": {
+       "at": "2026-03-11T11:05:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0163",
+        "fulfilmentId": "ORD-1232-0163-F1",
+        "sku": "SKU-1024"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0164",
+      "class": "cancel-at-collection",
+      "first": {
+       "at": "2026-03-11T09:47:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0164",
+        "fulfilmentId": "ORD-1232-0164-F1",
+        "sku": "SKU-1012"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0166",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-11T10:23:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0166",
+        "fulfilmentId": "ORD-1232-0166-F1",
+        "sku": "SKU-1003"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0167",
+      "class": "collection-failed",
+      "first": {
+       "at": "2026-03-11T11:45:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0167",
+        "fulfilmentId": "ORD-1232-0167-F1",
+        "sku": "SKU-1025"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0169",
+      "class": "f6-carrier",
+      "first": {
+       "at": "2026-03-11T13:15:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0169",
+        "fulfilmentId": "ORD-1232-0169-F1",
+        "sku": "SKU-1020"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0170",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T16:44:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0170",
+        "fulfilmentId": "ORD-1232-0170-F1",
+        "sku": "SKU-1015"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0172",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T17:16:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0172",
+        "fulfilmentId": "ORD-1232-0172-F1",
+        "sku": "SKU-1016"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0173",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T18:58:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0173",
+        "fulfilmentId": "ORD-1232-0173-F1",
+        "sku": "SKU-1016"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0175",
+      "class": "f3-refund",
+      "first": {
+       "at": "2026-03-12T01:00:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0175",
+        "fulfilmentId": "ORD-1232-0175-F1",
+        "sku": "SKU-1027"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0176",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T01:29:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0176",
+        "fulfilmentId": "ORD-1232-0176-F1",
+        "sku": "SKU-1030"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0177",
+      "class": "f3-charge",
+      "first": {
+       "at": "2026-03-12T04:31:01.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0177",
+        "fulfilmentId": "ORD-1232-0177-F1",
+        "sku": "SKU-1020"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0178",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T09:17:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0178",
+        "fulfilmentId": "ORD-1232-0178-F1",
+        "sku": "SKU-1016"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0179",
+      "class": "cancel-after-collection",
+      "first": {
+       "at": "2026-03-12T09:57:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0179",
+        "fulfilmentId": "ORD-1232-0179-F1",
+        "sku": "SKU-1003"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0180",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T10:36:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0180",
+        "fulfilmentId": "ORD-1232-0180-F1",
+        "sku": "SKU-1028"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0181",
+      "class": "f3-charge",
+      "first": {
+       "at": "2026-03-12T12:49:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0181",
+        "fulfilmentId": "ORD-1232-0181-F2",
+        "sku": "SKU-1001"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0183",
+      "class": "collection-failed",
+      "first": {
+       "at": "2026-03-12T15:12:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0183",
+        "fulfilmentId": "ORD-1232-0183-F1",
+        "sku": "SKU-1007"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0184",
+      "class": "f3-refund",
+      "first": {
+       "at": "2026-03-12T15:47:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0184",
+        "fulfilmentId": "ORD-1232-0184-F1",
+        "sku": "SKU-1002"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0185",
+      "class": "cancel-after-collection",
+      "first": {
+       "at": "2026-03-12T16:50:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0185",
+        "fulfilmentId": "ORD-1232-0185-F1",
+        "sku": "SKU-1003"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0187",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T17:27:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0187",
+        "fulfilmentId": "ORD-1232-0187-F1",
+        "sku": "SKU-1003"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0188",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T18:59:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0188",
+        "fulfilmentId": "ORD-1232-0188-F1",
+        "sku": "SKU-1007"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0191",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T01:07:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0191",
+        "fulfilmentId": "ORD-1232-0191-F1",
+        "sku": "SKU-1005"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0192",
+      "class": "f6-carrier",
+      "first": {
+       "at": "2026-03-13T06:15:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0192",
+        "fulfilmentId": "ORD-1232-0192-F1",
+        "sku": "SKU-1005"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0194",
+      "class": "f6-carrier",
+      "first": {
+       "at": "2026-03-13T08:42:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0194",
+        "fulfilmentId": "ORD-1232-0194-F1",
+        "sku": "SKU-1010"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0195",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-13T09:24:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0195",
+        "fulfilmentId": "ORD-1232-0195-F1",
+        "sku": "SKU-1004"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0196",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-13T12:20:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0196",
+        "fulfilmentId": "ORD-1232-0196-F1",
+        "sku": "SKU-1002"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0199",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-13T16:14:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1232-0199",
+        "fulfilmentId": "ORD-1232-0199-F1",
+        "sku": "SKU-1018"
+       },
+       "committed": true
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 197,
+    "passed": 151,
+    "byCapability": {
+     "intake": "194/197",
+     "fraud": "197/197",
+     "capture": "156/197",
+     "refund": "197/197",
+     "reservation": "194/197",
+     "shipment": "197/197",
+     "compensation": "154/197",
+     "failure": "154/197",
+     "tracking": "194/197",
+     "customer-action": "197/197",
+     "cancellation": "188/197",
+     "notifications": "197/197",
+     "exactly-once": "197/197"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 2834,
+     "parent->fulfilment": 507,
+     "parent->intake": 400,
+     "parent->fraud": 400,
+     "orderflow->fulfilment": 307,
+     "parent->fulfilment (event)": 1320,
+     "parent->intake (event)": 192,
+     "parent->orderflow (event)": 555,
+     "parent->fraud (event)": 13
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 208,
+    "passed": 168,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 3,
+     "L2:outside-allowed": 37
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0007",
+       "got": null,
+       "instance": "i-000007"
+      }
+     },
+     {
+      "case": "o0149",
+      "class": "review-approve",
+      "first": {
+       "at": "2026-03-10T10:43:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0149",
+        "fulfilmentId": "ORD-1233-0149-F1",
+        "sku": "SKU-1008"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0158",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T09:25:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0158",
+        "fulfilmentId": "ORD-1233-0158-F1",
+        "sku": "SKU-1006"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0159",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T13:32:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0159",
+        "fulfilmentId": "ORD-1233-0159-F1",
+        "sku": "SKU-1009"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0160",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T13:54:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0160",
+        "fulfilmentId": "ORD-1233-0160-F1",
+        "sku": "SKU-1006"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0161",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T14:25:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0161",
+        "fulfilmentId": "ORD-1233-0161-F1",
+        "sku": "SKU-1030"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0162",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T17:57:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0162",
+        "fulfilmentId": "ORD-1233-0162-F1",
+        "sku": "SKU-1022"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0163",
+      "class": "cancel-after-collection",
+      "first": {
+       "at": "2026-03-10T18:33:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0163",
+        "fulfilmentId": "ORD-1233-0163-F1",
+        "sku": "SKU-1006"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0164",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T21:41:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0164",
+        "fulfilmentId": "ORD-1233-0164-F1",
+        "sku": "SKU-1030"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0165",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T21:56:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0165",
+        "fulfilmentId": "ORD-1233-0165-F1",
+        "sku": "SKU-1009"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0166",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T23:43:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0166",
+        "fulfilmentId": "ORD-1233-0166-F1",
+        "sku": "SKU-1014"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0167",
+      "class": "cancel-at-collection",
+      "first": {
+       "at": "2026-03-11T02:17:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0167",
+        "fulfilmentId": "ORD-1233-0167-F1",
+        "sku": "SKU-1005"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0168",
+      "class": "cancel-at-collection",
+      "first": {
+       "at": "2026-03-11T03:00:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0168",
+        "fulfilmentId": "ORD-1233-0168-F1",
+        "sku": "SKU-1029"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0169",
+      "class": "amend",
+      "first": {
+       "at": "2026-03-11T05:37:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0169",
+        "fulfilmentId": "ORD-1233-0169-F1",
+        "sku": "SKU-1014"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0170",
+      "class": "f1-charge",
+      "first": {
+       "at": "2026-03-11T06:30:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0170",
+        "fulfilmentId": "ORD-1233-0170-F2",
+        "sku": "SKU-1023"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0172",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T09:41:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0172",
+        "fulfilmentId": "ORD-1233-0172-F1",
+        "sku": "SKU-1014"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0173",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T09:54:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0173",
+        "fulfilmentId": "ORD-1233-0173-F1",
+        "sku": "SKU-1029"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0174",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T09:59:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0174",
+        "fulfilmentId": "ORD-1233-0174-F1",
+        "sku": "SKU-1021"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0175",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-11T10:53:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0175",
+        "fulfilmentId": "ORD-1233-0175-F1",
+        "sku": "SKU-1007"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0177",
+      "class": "f1-charge",
+      "first": {
+       "at": "2026-03-11T16:28:01.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0177",
+        "fulfilmentId": "ORD-1233-0177-F1",
+        "sku": "SKU-1008"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0178",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T18:02:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0178",
+        "fulfilmentId": "ORD-1233-0178-F1",
+        "sku": "SKU-1019"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0179",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-11T18:03:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0179",
+        "fulfilmentId": "ORD-1233-0179-F1",
+        "sku": "SKU-1005"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0180",
+      "class": "action-at-deadline",
+      "first": {
+       "at": "2026-03-11T23:58:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0180",
+        "fulfilmentId": "ORD-1233-0180-F1",
+        "sku": "SKU-1009"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0181",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T01:26:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0181",
+        "fulfilmentId": "ORD-1233-0181-F1",
+        "sku": "SKU-1020"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0182",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-12T03:33:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0182",
+        "fulfilmentId": "ORD-1233-0182-F1",
+        "sku": "SKU-1024"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0183",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T03:46:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0183",
+        "fulfilmentId": "ORD-1233-0183-F1",
+        "sku": "SKU-1018"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0184",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T03:48:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0184",
+        "fulfilmentId": "ORD-1233-0184-F1",
+        "sku": "SKU-1017"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0185",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-12T05:33:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0185",
+        "fulfilmentId": "ORD-1233-0185-F1",
+        "sku": "SKU-1001"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0187",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-12T09:00:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0187",
+        "fulfilmentId": "ORD-1233-0187-F1",
+        "sku": "SKU-1022"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0188",
+      "class": "f6-carrier",
+      "first": {
+       "at": "2026-03-12T11:24:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0188",
+        "fulfilmentId": "ORD-1233-0188-F1",
+        "sku": "SKU-1028"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0190",
+      "class": "f4-reserve",
+      "first": {
+       "at": "2026-03-12T13:36:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0190",
+        "fulfilmentId": "ORD-1233-0190-F2",
+        "sku": "SKU-1016"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0192",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T18:53:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0192",
+        "fulfilmentId": "ORD-1233-0192-F1",
+        "sku": "SKU-1017"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0193",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T19:21:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0193",
+        "fulfilmentId": "ORD-1233-0193-F1",
+        "sku": "SKU-1023"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0197",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-13T04:56:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0197",
+        "fulfilmentId": "ORD-1233-0197-F1",
+        "sku": "SKU-1015"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0198",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-13T05:33:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0198",
+        "fulfilmentId": "ORD-1233-0198-F1",
+        "sku": "SKU-1023"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0202",
+      "class": "f6-carrier",
+      "first": {
+       "at": "2026-03-13T14:59:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0202",
+        "fulfilmentId": "ORD-1233-0202-F1",
+        "sku": "SKU-1003"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0203",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-13T18:04:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0203",
+        "fulfilmentId": "ORD-1233-0203-F1",
+        "sku": "SKU-1020"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0204",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-13T20:23:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1233-0204",
+        "fulfilmentId": "ORD-1233-0204-F1",
+        "sku": "SKU-1026"
+       },
+       "committed": true
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 203,
+    "passed": 163,
+    "byCapability": {
+     "intake": "200/203",
+     "fraud": "203/203",
+     "capture": "167/203",
+     "refund": "203/203",
+     "reservation": "200/203",
+     "shipment": "203/203",
+     "compensation": "166/203",
+     "failure": "166/203",
+     "tracking": "200/203",
+     "customer-action": "203/203",
+     "cancellation": "199/203",
+     "notifications": "203/203",
+     "exactly-once": "203/203"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 3214,
+     "parent->fulfilment": 656,
+     "orderflow->fulfilment": 313,
+     "parent->fulfilment (event)": 1341,
+     "parent->orderflow (event)": 557,
+     "parent->intake": 400,
+     "parent->fraud": 400,
+     "parent->intake (event)": 186,
+     "parent->fraud (event)": 14
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 205,
+    "passed": 164,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 3,
+     "L2:outside-allowed": 38
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0007",
+       "got": null,
+       "instance": "i-000007"
+      }
+     },
+     {
+      "case": "o0138",
+      "class": "review-approve",
+      "first": {
+       "at": "2026-03-10T12:05:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0138",
+        "fulfilmentId": "ORD-1234-0138-F1",
+        "sku": "SKU-1009"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0152",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T10:21:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0152",
+        "fulfilmentId": "ORD-1234-0152-F1",
+        "sku": "SKU-1008"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0153",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T12:18:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0153",
+        "fulfilmentId": "ORD-1234-0153-F1",
+        "sku": "SKU-1029"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0154",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-10T13:36:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0154",
+        "fulfilmentId": "ORD-1234-0154-F1",
+        "sku": "SKU-1006"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0155",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T14:07:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0155",
+        "fulfilmentId": "ORD-1234-0155-F1",
+        "sku": "SKU-1029"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0156",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-10T16:37:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0156",
+        "fulfilmentId": "ORD-1234-0156-F1",
+        "sku": "SKU-1029"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0157",
+      "class": "cancel-after-collection",
+      "first": {
+       "at": "2026-03-10T16:46:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0157",
+        "fulfilmentId": "ORD-1234-0157-F1",
+        "sku": "SKU-1007"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0158",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-10T17:14:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0158",
+        "fulfilmentId": "ORD-1234-0158-F1",
+        "sku": "SKU-1005"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0159",
+      "class": "cancel-after-collection",
+      "first": {
+       "at": "2026-03-10T20:17:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0159",
+        "fulfilmentId": "ORD-1234-0159-F1",
+        "sku": "SKU-1027"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0161",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T00:10:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0161",
+        "fulfilmentId": "ORD-1234-0161-F1",
+        "sku": "SKU-1020"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0162",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-11T02:54:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0162",
+        "fulfilmentId": "ORD-1234-0162-F1",
+        "sku": "SKU-1008"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0163",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T09:58:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0163",
+        "fulfilmentId": "ORD-1234-0163-F1",
+        "sku": "SKU-1008"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0165",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T14:26:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0165",
+        "fulfilmentId": "ORD-1234-0165-F1",
+        "sku": "SKU-1005"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0166",
+      "class": "review-approve",
+      "first": {
+       "at": "2026-03-11T18:05:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0166",
+        "fulfilmentId": "ORD-1234-0166-F1",
+        "sku": "SKU-1009"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0167",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T18:16:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0167",
+        "fulfilmentId": "ORD-1234-0167-F1",
+        "sku": "SKU-1019"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0169",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-11T22:06:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0169",
+        "fulfilmentId": "ORD-1234-0169-F1",
+        "sku": "SKU-1010"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0170",
+      "class": "amend",
+      "first": {
+       "at": "2026-03-12T01:06:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0170",
+        "fulfilmentId": "ORD-1234-0170-F1",
+        "sku": "SKU-1009"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0172",
+      "class": "cancel-after-collection",
+      "first": {
+       "at": "2026-03-12T04:32:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0172",
+        "fulfilmentId": "ORD-1234-0172-F1",
+        "sku": "SKU-1030"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0173",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T05:11:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0173",
+        "fulfilmentId": "ORD-1234-0173-F1",
+        "sku": "SKU-1011"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0174",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T06:45:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0174",
+        "fulfilmentId": "ORD-1234-0174-F1",
+        "sku": "SKU-1006"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0175",
+      "class": "f4-reserve",
+      "first": {
+       "at": "2026-03-12T07:23:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0175",
+        "fulfilmentId": "ORD-1234-0175-F2",
+        "sku": "SKU-1015"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0177",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T08:10:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0177",
+        "fulfilmentId": "ORD-1234-0177-F1",
+        "sku": "SKU-1010"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0179",
+      "class": "f4-reserve",
+      "first": {
+       "at": "2026-03-12T09:40:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0179",
+        "fulfilmentId": "ORD-1234-0179-F2",
+        "sku": "SKU-1025"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0180",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T12:08:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0180",
+        "fulfilmentId": "ORD-1234-0180-F1",
+        "sku": "SKU-1025"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0181",
+      "class": "f3-refund",
+      "first": {
+       "at": "2026-03-12T13:18:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0181",
+        "fulfilmentId": "ORD-1234-0181-F1",
+        "sku": "SKU-1024"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0182",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T14:48:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0182",
+        "fulfilmentId": "ORD-1234-0182-F1",
+        "sku": "SKU-1018"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0184",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-12T21:40:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0184",
+        "fulfilmentId": "ORD-1234-0184-F1",
+        "sku": "SKU-1007"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0185",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-12T21:52:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0185",
+        "fulfilmentId": "ORD-1234-0185-F1",
+        "sku": "SKU-1010"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0188",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-13T04:59:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0188",
+        "fulfilmentId": "ORD-1234-0188-F1",
+        "sku": "SKU-1017"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0189",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-13T05:10:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0189",
+        "fulfilmentId": "ORD-1234-0189-F1",
+        "sku": "SKU-1029"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0194",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T13:56:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0194",
+        "fulfilmentId": "ORD-1234-0194-F1",
+        "sku": "SKU-1027"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0197",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-13T20:08:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0197",
+        "fulfilmentId": "ORD-1234-0197-F1",
+        "sku": "SKU-1016"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0199",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-13T21:46:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0199",
+        "fulfilmentId": "ORD-1234-0199-F1",
+        "sku": "SKU-1017"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0200",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-13T23:06:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0200",
+        "fulfilmentId": "ORD-1234-0200-F1",
+        "sku": "SKU-1024"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0203",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-14T01:53:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0203",
+        "fulfilmentId": "ORD-1234-0203-F1",
+        "sku": "SKU-1026"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0205",
+      "class": "straight",
+      "first": {
+       "at": "2026-03-14T02:48:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0205",
+        "fulfilmentId": "ORD-1234-0205-F1",
+        "sku": "SKU-1022"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0206",
+      "class": "decline",
+      "first": {
+       "at": "2026-03-14T05:38:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0206",
+        "fulfilmentId": "ORD-1234-0206-F1",
+        "sku": "SKU-1003"
+       },
+       "committed": true
+      }
+     },
+     {
+      "case": "o0207",
+      "class": "collection-failed",
+      "first": {
+       "at": "2026-03-14T06:33:00.000Z",
+       "layer": 2,
+       "code": "outside-allowed",
+       "system": "inventory",
+       "op": "release",
+       "args": {
+        "orderId": "ORD-1234-0207",
+        "fulfilmentId": "ORD-1234-0207-F1",
+        "sku": "SKU-1003"
+       },
+       "committed": true
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 200,
+    "passed": 159,
+    "byCapability": {
+     "intake": "197/200",
+     "fraud": "200/200",
+     "capture": "164/200",
+     "refund": "200/200",
+     "reservation": "197/200",
+     "shipment": "200/200",
+     "compensation": "162/200",
+     "failure": "162/200",
+     "tracking": "197/200",
+     "customer-action": "200/200",
+     "cancellation": "192/200",
+     "notifications": "200/200",
+     "exactly-once": "200/200"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->orderflow": 2865,
+     "parent->fulfilment": 513,
+     "parent->intake": 400,
+     "parent->fraud": 400,
+     "parent->orderflow (event)": 559,
+     "parent->intake (event)": 197,
+     "orderflow->fulfilment": 288,
+     "parent->fulfilment (event)": 1201,
+     "parent->fraud (event)": 22
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}

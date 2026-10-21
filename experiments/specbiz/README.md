@@ -38,7 +38,14 @@ app, a carrier product the shop does not use, a newsletter with tempting bad adv
 | `predicates.mjs` | effect-history predicates for the not-wanted layer, over the host journal |
 | `attribute.mjs` | from an oracle verdict to the SPEC-E ids a failing case implicates; requirement recall |
 | `cli.mjs` | `gates`, `render`, `truth` |
-| `test/*.test.mjs` | units, assignment, renderer, leak (with planted leaks), coverage (with broken carriers), precedents, owner simulator, truth references, predicates on reference runs, controls and planted over-reach, attribution |
+| `spec1-arms.mjs` | SPEC-1 / INTENT-1 arms: B1L-H's build files with the pack under `business/` instead of SPEC-E.md, the derived TASK.md (audited edits of B1L-H's), the ask, prior and ledger sections, the prior card; `NO_SPEC_BINDING` / `DERIVE_ITEM`, the E8 binding with `specE: ''` |
+| `ask-service.mjs` | the `ask` channel: `ask.mjs` client, file mailbox, the typed match through the journaled ModelPort (`modelMatcher`), the $0 scripted stand-in (`scriptedPort`), serialised and restored owner simulators |
+| `ledger-review.mjs` | derive-ledger: the tracker's extraction over the pack, the owner's truth-first review (stale wording corrected, unauthorised and distractor quotes struck), `LEDGER.md` |
+| `pack-agent.mjs` | none-agent: AGENTV-E8's agent-H + validator session runner with the pack instead of SPEC-E, the ask step, and a scripted session for $0 runs |
+| `spec1.mjs` | the SPEC-1 / INTENT-1 runner: per-lineage spend reservation against the arm and $25 caps, owner, ledger, build or agent run, grading with no spec bound; `grade`, `perfect` (S-perfect regraded at $0); `--dry` runs every arm with scripted builders, sessions and matcher |
+| `spec1-freeze.mjs` | the preregistration's frozen-file table and the check every paid run makes |
+| `score.mjs` | four-layer scoring: per-layer recall under both raters, the primary metric (unstated recall, upper and lower bound), over-reach, spec recovery, ask metrics, Goldilocks, MOI, Completion vs Compliance, readings H1-H8, S1 claim rows |
+| `test/*.test.mjs` | units, assignment, renderer, leak (with planted leaks), coverage (with broken carriers), precedents, owner simulator, truth references, predicates on reference runs, controls and planted over-reach, attribution; SPEC-1: no SPEC-E reaches a derived solver or agent (with controls), the workspace, the ask channel, the ledger review, caps and CLI refusals (`spec1.test.mjs`), scoring (`score.test.mjs`), a dry end-to-end run with a resume (`spec1-dry.test.mjs`) |
 
 ## Run
 
@@ -51,10 +58,17 @@ node --test --test-concurrency=1 experiments/specbiz/test/owner-sim.test.mjs  # 
 node --test --test-concurrency=1 experiments/specbiz/test/truth.test.mjs      # ~12 s (runs the E8 host on small dev worlds)
 ```
 
-## Not built here (SPEC-1 needs them)
+## SPEC-1 / INTENT-1 (runner built 2026-10-21; nothing paid has run)
 
-- The SPEC-1 runner. It must bind the host with `specE: ''`: `beds/ebed/host/host.mjs:435` otherwise puts
-  `spec/SPEC-E.md` into every tick's `ctx.files`, which would hand the perfect spec to an S-derive solver at run time.
-- The Haiku typed judgment behind `ask()` (`owner-sim.mjs` `MATCH_JUDGMENT` documents its interface).
-- An S-derive TASK.md and an agent-arm variant that read the pack instead of SPEC-E.
-- A second, independent rater for the layer of each truth item.
+Preregistration: [research/intent-20261021/PREREG-SPEC1.md](../../research/intent-20261021/PREREG-SPEC1.md) (DRAFT until the
+orchestrator freezes it; every paid run refuses while it is a draft).
+
+```sh
+node experiments/specbiz/spec1.mjs --arm derive --dry --lineages 2 --worlds shared,g:1232:2   # $0, scripted; outputs under /var/tmp/foundry-work/spec1-dry
+node experiments/specbiz/spec1.mjs perfect --dry --worlds shared,g:1232:2                      # $0: S-perfect regraded with SPEC-E bound
+node experiments/specbiz/score.mjs --runs /var/tmp/foundry-work/spec1-dry/runs
+for f in spec1 score spec1-dry; do nice -n 15 node --test --test-concurrency=1 experiments/specbiz/test/$f.test.mjs; done
+```
+
+Never grade a derived solver with `experiments/ebed/build.mjs --grade-only`: it binds E8 with SPEC-E, so the solver would
+find `spec/SPEC-E.md` in `ctx.files` (host.mjs:435). `spec1.mjs grade` binds no spec.
