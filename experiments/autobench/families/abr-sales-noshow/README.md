@@ -5,10 +5,11 @@ A **standing automation** in the AutomationBench-R ("recurring") adaptation: a f
 from one trigger to the next. Design: [RECURRING-DESIGN.md §4.2](../../../../research/automationbench-20261014/RECURRING-DESIGN.md)
 (shared packaging in §3).
 
-**Status (2026-10-15).** Development, $0. The generator, oracle, observable-only reference, 11 bad controls, the $0
-validity gates and the tests are built. No model has run on this family, so there is no arm result and no capability
-number yet. Everything below is development evidence on practice and dev seeds (601–650); no held-out seed (8801+) has
-been generated or looked at.
+**Status (2026-10-21, generator 1.1.0).** Development, $0. The generator, oracle, observable-only reference, 11 bad
+controls, the $0 validity gates and the tests are built, and the defects of the 2026-10-21 review are fixed (History).
+No model has run on this family, so there is no arm result and no capability number yet. Everything below is
+development evidence on practice and dev seeds (601–650); no held-out seed (8801+) has been generated or looked at.
+Generator 1.1.0 re-keys every stream (the version is part of the seed string), so no 1.0.0 number carries over.
 
 ## What an arm does
 
@@ -25,6 +26,19 @@ gets one Zap-style payload (`{"trigger","at","app","event","data"}`) and Automat
 
 An escalation is a post in `#automation-review` that names the trigger id. Cross-trigger state is light: repeat no-shows
 are read back from Calendly flags and earlier tasks in the world. Nothing needs private memory.
+
+**How strictly the oracle reads the prescribed strings** (since the 2026-10-21 review):
+- the task description must equal `Scheduled: YYYY-MM-DD HH:MM UTC | Account pipeline: $N[ | Repeat no-show]` exactly
+  (case and field order included); only whitespace runs and one trailing period are policy-neutral. Cents, reordered
+  fields, added text and a second pipeline value fail;
+- a new task may leave WhatId empty or set it to the contact's own account, nothing else, and its IsClosed must match
+  its status (False for `Not Started`);
+- a retraction must leave the description as the old description plus exactly ` | Retracted: joined late`;
+- the week post must contain `No-shows this week: <N>` and no other number that could be a count (an explanation, an
+  ISO date, an `HH:MM` time or the trigger id may follow);
+- the week-close trigger is graded on its post and envelope only. The end-of-week state (flags, this week's tasks,
+  untouched records) is a separate per-stream `week_state` verdict, so one earlier mistake is charged once. A clean
+  week is every trigger passed **and** the week state passed.
 
 ## Grounding
 
@@ -48,7 +62,7 @@ and internal reports, escalations and the week-close count. All people, companie
 real judgment (which event). Expected agent-H (Haiku 5.5 per trigger) is about 0.85–0.95 per trigger. A built workflow
 should add no success and save little at N = 160. Label: **no-workflow, or either**. Proposed split: held-out (near).
 
-The controls fit this hypothesis without testing it. Each plausible single-rule mistake costs only 6–34% of triggers,
+The controls fit this hypothesis without testing it. Each plausible single-rule mistake costs only 1–34% of triggers,
 because each rule matters on few triggers (table below). A competent per-trigger agent loses little.
 
 ## Files
@@ -57,13 +71,13 @@ because each rule matters on few triggers (table below). A competent per-trigger
 |---|---|
 | [POLICY.md](POLICY.md) | The standing policy every arm receives (v1.0) |
 | [family.json](family.json) | Id, apps, tools, envelope, trigger kinds and rates, trap rates, need-job card, seeds, controls |
-| [gen.py](gen.py) | Seeded generator: `world0` (validated as AutomationBench `WorldState`, round-tripped), arm-visible `payloads`, host-only `triggers` (payload + delta + traps), `truth`, `end`, one `serve-inputs` row per trigger (`assertions: []`), `meta` with sha256. One `random.Random(f"{family}:{version}:{seed}:{difficulty}")`, no wall clock. Refuses held-out seeds |
-| [oracle.py](oracle.py) | Per-trigger grader: an effect ledger from `world_before` / `world_after` diffs (attribution), exact effects, envelope (nothing else written), decoy guards, AutomationBench's own `AssertionRegistry` checks, and the end-of-week state at week close. Outcomes: correct, abstained, miss, wrong |
+| [gen.py](gen.py) | Seeded generator (version 1.1.0): `world0` (validated as AutomationBench `WorldState`, round-tripped), arm-visible `payloads`, host-only `triggers` (payload + delta + traps), `truth`, `end`, one `serve-inputs` row per trigger (`assertions: []`), `meta` with sha256. One `random.Random(f"{family}:{version}:{seed}:{difficulty}")`, no wall clock. Refuses held-out seeds. Asserts two story invariants in `compute_truth` (no duplicate report after a retraction of the same no-show; no earlier no-show on the 14-day repeat boundary) |
+| [oracle.py](oracle.py) | Per-trigger grader: an effect ledger from `world_before` / `world_after` diffs (attribution), exact effects (exact description, retraction suffix and count), envelope (nothing else written), decoy guards, AutomationBench's own `AssertionRegistry` checks. At week close it also returns the separate `week` verdict on the end-of-week state. Outcomes: correct, abstained, miss, wrong |
 | [reference.py](reference.py) | Reference workflow: author-written code, no model. It sees only the payload, the policy constants and the tools, keeps no private state, and imports no host module |
 | [controls.py](controls.py) | 11 bad controls (below) |
-| [harness.py](harness.py) | `$0` stream runner. Applies each delta, calls the tools through `bridge.Rollout.batch` (the official `env_response` path with the determinism shim), grades every trigger; carry and rebased modes |
+| [harness.py](harness.py) | `$0` stream runner. Applies each delta, calls the tools through `bridge.Rollout.batch` (the official `env_response` path with the determinism shim), grades every trigger and the week state; carry and rebased modes. `--out` writes `results.jsonl`, `weeks.jsonl` and `summary.json` |
 | [gates.py](gates.py) | The $0 validity gates of RECURRING-DESIGN §3.11 |
-| [tests/test_noshow.py](tests/test_noshow.py) | pytest suite (38 tests) |
+| [tests/test_noshow.py](tests/test_noshow.py) | pytest suite (46 tests) |
 
 ## Commands
 
@@ -93,41 +107,45 @@ Each trap is recorded per trigger in the host-only truth. Every trap is resolvab
 | `T-lookalike:retraction-surname` | same surname at another account, with an open follow-up task for an event of the same name | the retraction names the person |
 | `T-stale:threshold`, `T-stale:closed-big`, `T-boundary:50k` | opportunities between $50,000 and $100,000, a closed big one, exactly $50,000 | $50,000 rule (not the old $100,000 message), open only, "or more" |
 | `T-format:offset`, `T-format:email-case`, `T-format:localtime` | Calendly time written with a US Eastern offset, mixed-case email, report quoting ET | UTC in the description, emails ignore case, Calendly is the source of the time |
-| `T-history:repeat`, `-repeat-completed`, `-old`, `-retracted` | earlier no-shows 3–13 or 16–26 days back, worked or retracted | the 14-day repeat rule; retracted no-shows do not count |
+| `T-history:repeat`, `-repeat-completed`, `-old`, `-retracted` | earlier no-shows 3–13 or 16–26 days before the reported meeting (1–4 days more before a later in-week repeat of the same invitee), worked or retracted; never on the calendar day 14 days back or within 12 h of the exact boundary (`gen.near_repeat_boundary`, asserted for every act) | the 14-day repeat rule; retracted no-shows do not count |
 | `T-note:chatter`, `-chatter-names-reported`, `-internal`, `-cancelled-only`, `-no-contact` | other messages, internal invitees, no countable event, no contact | sections 1, 2.1 and 2.5 of the policy |
 
-The first trap of a trapped report is dealt round-robin over five groups (repeat, look-alike, stale, format, history),
-so every kind recurs. Measured share of triggers carrying a trap, over seeds 601–650: **0.43 at d2 and 0.72 at d3**
-(design: 40% and 70%). d1 (smoke only) plants none on handled reports.
+Every trap of a trapped report is dealt round-robin over five groups (repeat, look-alike, stale, format, history), at
+most one per group per report, and round-robin over the members inside each group. d3 adds a floor: each group is dealt
+at least 3 times per d3 stream (`D3_DEAL_FLOOR`), met by giving trapped reports more traps (at most 3) before trapping
+more reports. Coverage is counted by group (`gen.trap_kind`), so `T-boundary:50k` counts as T-stale. Measured share of
+triggers carrying a trap, over seeds 601–650: **0.43 at d2 and 0.77 at d3** (design: 40% and 70%; over the 199 d3
+seeds in 601–1000 it is 0.76, of which the floor adds about 0.01). d1 (smoke only) plants none on handled reports.
 
 ## Numbers [measured, $0, development evidence]
 
-These come from `gates.py` (seeds 610–614 unless stated) and `harness.py`, on 2026-10-15.
+These come from `gates.py` (seeds 610–614 unless stated) and `harness.py`, on 2026-10-21, generator 1.1.0.
 
 **Reference** (observable-only code):
-- 1,014/1,014 triggers and 50/50 clean weeks on seeds 601–650 (carry mode);
-- 611/611 on 601–630 in rebased mode;
-- 100% on 631–640 forced to d1 and to d3;
-- 806/806 on a stress run (631–650 × d2/d3 with every report trapped).
+- 1,015/1,015 triggers and 50/50 clean weeks (50/50 week states) on seeds 601–650 (carry mode);
+- 603/603 on 601–630 in rebased mode;
+- 100% on 631–640 forced to d1 (150/150) and to d3 (230/230);
+- 823/823 on a stress run (631–650 × d2/d3 with every report trapped).
 
-The dev gate asks for ≥ 95% on 5 dev seeds. Result: 100/100 on 610–614 (19/19, 23/23, 17/17, 24/24, 17/17).
+The dev gate asks for ≥ 95% on 5 dev seeds. Result: 98/98 on 610–614 (16/16, 23/23, 16/16, 23/23, 20/20).
 Generator and reference agree on every effect of every stream run.
 
-**Bad controls** on 610–614 (100 triggers; 26 of them are no-op triggers):
+**Bad controls** on 610–614 (98 triggers; 26 of them are no-op triggers). Since 1.1.0 the week-close trigger is graded
+on its post only, so a control's earlier mistake no longer also fails the week close; the week state is its own column:
 
-| Control | What is wrong | Pass | Clean weeks | Outcomes |
-|---|---|---|---|---|
-| `null` | does nothing | 26 | 0/5 | 74 miss |
-| `echo` | posts every trigger back and creates a task named after it | 0 | 0/5 | 100 wrong |
-| `naive` (28 lines) | any email = a no-show of the latest event, old $100,000 rule, all opportunities, no dedupe or repeat, ignores retractions | 27 (d3: 23.4%) | 0/5 | 66 wrong, 7 miss |
-| `stale-threshold` | High only at $100,000 of pipeline | 84 | 1/5 | 16 wrong |
-| `no-repeat` | no 14-day repeat rule | 90 | 1/5 | 10 wrong |
-| `latest-event` | latest event before the report, whatever its status | 94 | 2/5 | 6 wrong |
-| `all-opps` | closed opportunities counted | 66 | 0/5 | 34 wrong |
-| `chatter-as-report` | every message naming an outside email is a report | 76 | 0/5 | 17 abstained, 4 wrong, 3 miss |
-| `no-dedupe` | a duplicate report creates a second task | 94 | 2/5 | 6 wrong |
-| `contact-by-surname` | the contact is the first one with the invitee's last name | 68 | 0/5 | 27 wrong, 5 abstained |
-| `retract-by-surname` | a retraction matches the person by last name only | 89 | 2/5 | 11 wrong |
+| Control | What is wrong | Pass | Clean weeks | Week state | Outcomes |
+|---|---|---|---|---|---|
+| `null` | does nothing | 26 | 0/5 | 0/5 | 72 miss |
+| `echo` | posts every trigger back and creates a task named after it | 0 | 0/5 | 0/5 | 98 wrong |
+| `naive` (28 lines) | any email = a no-show of the latest event, old $100,000 rule, all opportunities, no dedupe or repeat, ignores retractions | 27 (d3: 21.7%) | 0/5 | 0/5 | 63 wrong, 8 miss |
+| `stale-threshold` | High only at $100,000 of pipeline | 92 | 2/5 | 2/5 | 6 wrong |
+| `no-repeat` | no 14-day repeat rule | 91 | 1/5 | 1/5 | 7 wrong |
+| `latest-event` | latest event before the report, whatever its status | 97 | 4/5 | 4/5 | 1 wrong |
+| `all-opps` | closed opportunities counted | 65 | 0/5 | 0/5 | 33 wrong |
+| `chatter-as-report` | every message naming an outside email is a report | 74 | 0/5 | 3/5 | 19 abstained, 3 wrong, 2 miss |
+| `no-dedupe` | a duplicate report creates a second task | 90 | 1/5 | 1/5 | 8 wrong |
+| `contact-by-surname` | the contact is the first one with the invitee's last name | 68 | 0/5 | 0/5 | 25 wrong, 5 abstained |
+| `retract-by-surname` | a retraction matches the person by last name only | 88 | 2/5 | 2/5 | 10 wrong |
 
 Every control fails. The tests also check that each plausible control is rejected **for its own rule**, on the trigger
 kinds where that rule applies: for example, priority checks for `stale-threshold`, the retraction target for
@@ -139,13 +157,16 @@ kinds where that rule applies: for example, priority checks for `stale-threshold
 |---|---|
 | determinism | Identical sha256 on regeneration. Every `world_t` validates and round-trips |
 | leakage | 0 problems on 5 streams. Payloads, serve rows and `world0` carry no truth, ids, expected descriptions, flags or tasks of the week |
-| solvability | 283/283 on 601–614 |
-| controls | As above. `null` passes exactly the 26 no-op triggers. `naive` is below 60% at d3 |
-| trap coverage (610–613) | lookalike 9, stale 6, note 21, format 6, repeat 15 (each ≥ 5) |
-| oracle mutation | 1,758/1,758 single-fault mutants killed (score 1.000, 43 operators) |
-| oracle specificity | 191/191 policy-neutral variants accepted, no false rejects |
+| solvability | 277/277 triggers and 14/14 clean weeks on 601–614 |
+| controls | As above. `null` passes exactly the 26 no-op triggers. `naive` is 21.7% at d3 (below 60%) |
+| trap coverage (610–613, by group) | lookalike 12, stale 7 (threshold 2, closed-big 2, boundary 3), note 21, format 7, repeat 13 (each ≥ 5); history 8 (not a gated kind) |
+| oracle mutation | 2,087/2,087 single-fault mutants killed (score 1.000, 55 operators; killed = the trigger or, at week close, the week verdict fails) |
+| oracle specificity | 259/259 policy-neutral variants accepted, no false rejects |
 
-**Tests:** 38 passed (pytest 9.0.2 in the AutomationBench venv, about 80 s).
+Determinism also holds across processes: identical sha256 of the streams, the final reference worlds and the verdicts
+on 610 and 611 with `PYTHONHASHSEED=1` and `977`.
+
+**Tests:** 46 passed (pytest 9.0.2 in the AutomationBench venv, about 2 min).
 
 ## Limits and open items
 
@@ -166,6 +187,10 @@ kinds where that rule applies: for example, priority checks for `stale-threshold
   422 error, so the failure is loud and an arm can retry. It affects only the retraction trigger.
 - **No amendments.** The family has no amendable parameters, so d3 differs from d2 only in trap rates and volume.
 - **Trap rates** were tuned on practice and dev seeds before any arm ran. They are generator parameters, not results.
+  The d3 share (0.77 on 601–650) sits above the design's 70%, because chatter, internal, duplicate and escalation
+  reports are traps by construction; `TRAP_RATE` was not retuned for 1.1.0.
+- **A clean week needs the week state too.** The per-trigger pass rate is the headline; `week_state` is reported beside
+  `clean_weeks` (`harness.py` summary and `weeks.jsonl`). The two never disagreed for the reference.
 
 ## History
 
@@ -190,3 +215,34 @@ kinds where that rule applies: for example, priority checks for `stale-threshold
   - week count including retracted tasks: 95/100;
   - an extra acknowledgement post on retraction: 90/100;
   - internal invitees handled: 95/100.
+- 2026-10-21, review fixes (generator 1.1.0, $0). An independent review found the oracle too lenient on prescribed
+  strings and two generator story defects. Fixed, each with a regression test:
+  - **exact description** (medium). The oracle matched substrings, so reordered fields, `$87,000.00`, a junk prefix
+    and a second, conflicting pipeline value all passed. Now `task.description` requires the exact POLICY.md 2.7 string
+    (whitespace runs and one trailing period aside); the part checks stay only as diagnostics;
+  - **exact retraction** (medium). `'retracted' in desc.lower()` accepted a prepended marker, other wording and
+    ` | Not retracted`. Now the new description must be the old one plus exactly ` | Retracted: joined late`; the
+    end-of-week check tests that suffix too, and the reference tests case-sensitive `Retracted`, as POLICY.md 2.7 says;
+  - **contradicted count** (medium). `No-shows this week: N (actually N+1)` passed. Now the post may hold no other
+    number that could be a count;
+  - **other fields of the new task** (low). A WhatId on another company's account and IsClosed=True on a
+    `Not Started` task now fail (`task.what-id`, `task.is-closed`);
+  - **duplicate after retraction** (low). 3 of 36 duplicate reports on 601–650 followed the retraction of the same
+    no-show, an incoherent story that invites a fair escalation. A retraction is now planned after any duplicate of
+    its no-show, and `compute_truth` asserts it;
+  - **week close double-counted** (low). The end-of-week checks were folded into the week-close trigger, so one
+    earlier mistake failed two triggers (`stale-threshold`: week close 1/5). They are now the separate `week_state`
+    verdict (`stale-threshold`: week close 5/5, week state 2/5);
+  - **14-day boundary** (low). The README claimed repeat history never sits on the boundary, which was false for
+    in-week repeats (s615/t22 under 1.0.0: a prior no-show exactly 14 days before). The in-week repeat's day now avoids
+    the calendar day 14 days after any earlier no-show, `compute_truth` asserts this for every act, and the claim above
+    is corrected.
+
+  The mutation gate gained 12 operators for these cases (reorder, cents, junk prefix, conflicting pipeline, WhatId,
+  IsClosed, prepended / reworded / negated retraction, contradicted and decimal count, an earlier week task
+  re-described); the specificity gate gained 4 policy-neutral variants (extra whitespace in the description, a trailing period after
+  the retraction suffix, a week post with an explanation, and one with the week's date, the trigger id and a time). The version
+  bump re-keyed every stream, and the trap-coverage gate then failed on 610–613 (stale 1 by id prefix). A probe showed
+  why: under 1.0.0 dealing only about 20% of 4-seed blocks (d2, d3, d2, d3) met the ≥ 5 gate, so 1.0.0's pass on
+  610–613 was a draw on the seeds it was tuned on. 1.1.0 deals every trap round-robin by group and member, adds the d3
+  floor, and counts coverage by group; 300 of 300 random 4-seed blocks (seeds 20000+) then pass.

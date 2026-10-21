@@ -1,0 +1,1671 @@
+{
+ "label": "ch-e8-2",
+ "item": "ebed-e8",
+ "spec": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+ "conditions": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "practice": {
+   "seeds": [
+    1235,
+    1236,
+    1237
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "grading": {
+   "seeds": [
+    1232,
+    1233,
+    1234
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  }
+ },
+ "build": {
+  "arm": "C-H",
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "dryRun": false,
+  "smokeRuns": 3,
+  "wallMs": 1221649,
+  "costUsd": 0.5319577200000001,
+  "error": null,
+  "turns": 46
+ },
+ "program": {
+  "modules": [
+   "intake",
+   "review",
+   "wait",
+   "fulfil",
+   "close"
+  ],
+  "programDigest": "34f72f658ca204a341acdff7acc416de94286bf90da4bec5743ae832c11f9ceb",
+  "bundleDigest": "99a8e0586ee79bc55390db6a67661839c2b815f341d0c720551c3b67f929e89b",
+  "problems": []
+ },
+ "tests": {
+  "files": 5,
+  "modules": 5,
+  "modulesWithTests": 5,
+  "pass": 30,
+  "fail": 0,
+  "ok": true,
+  "ran": true
+ },
+ "worlds": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  },
+  {
+   "seed": 1232,
+   "d": 2
+  },
+  {
+   "seed": 1233,
+   "d": 2
+  },
+  {
+   "seed": 1234,
+   "d": 2
+  },
+  {
+   "seed": 1232,
+   "d": 3
+  },
+  {
+   "seed": 1233,
+   "d": 3
+  },
+  {
+   "seed": 1234,
+   "d": 3
+  },
+  {
+   "seed": 1232,
+   "d": 5
+  },
+  {
+   "seed": 1233,
+   "d": 5
+  },
+  {
+   "seed": 1234,
+   "d": 5
+  }
+ ],
+ "summary": {
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 11,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 3
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 11,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "12/14",
+     "customer-action": "13/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 12,
+     "parent->intake (event)": 36,
+     "parent->close": 23,
+     "parent->fulfil": 58,
+     "parent->fulfil (event)": 109,
+     "parent->close (event)": 26,
+     "parent->wait": 2,
+     "parent->wait (event)": 3
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  "full": {
+   "completed": 1022,
+   "passed": 955,
+   "critical": 0,
+   "capabilitiesPassed": 934,
+   "capabilitiesCompleted": 1001,
+   "interfaceViolations": 0,
+   "armErrors": 0
+  },
+  "worlds": 10,
+  "armErrors": 0
+ },
+ "rows": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 11,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 3
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 11,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "12/14",
+     "customer-action": "13/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 12,
+     "parent->intake (event)": 36,
+     "parent->close": 23,
+     "parent->fulfil": 58,
+     "parent->fulfil (event)": 109,
+     "parent->close (event)": 26,
+     "parent->wait": 2,
+     "parent->wait (event)": 3
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 52,
+    "passed": 49,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 3
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 52,
+    "passed": 49,
+    "byCapability": {
+     "intake": "51/52",
+     "fraud": "52/52",
+     "capture": "52/52",
+     "refund": "52/52",
+     "reservation": "51/52",
+     "shipment": "52/52",
+     "compensation": "52/52",
+     "failure": "52/52",
+     "tracking": "50/52",
+     "customer-action": "51/52",
+     "cancellation": "52/52",
+     "notifications": "52/52",
+     "exactly-once": "52/52"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 50,
+     "parent->intake (event)": 150,
+     "parent->close": 79,
+     "parent->fulfil": 151,
+     "parent->fulfil (event)": 305,
+     "parent->close (event)": 97,
+     "parent->wait": 32,
+     "parent->wait (event)": 64
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 51,
+    "passed": 48,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 3
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 51,
+    "passed": 48,
+    "byCapability": {
+     "intake": "50/51",
+     "fraud": "51/51",
+     "capture": "51/51",
+     "refund": "51/51",
+     "reservation": "50/51",
+     "shipment": "51/51",
+     "compensation": "51/51",
+     "failure": "51/51",
+     "tracking": "49/51",
+     "customer-action": "50/51",
+     "cancellation": "51/51",
+     "notifications": "51/51",
+     "exactly-once": "51/51"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 50,
+     "parent->intake (event)": 150,
+     "parent->wait": 14,
+     "parent->wait (event)": 31,
+     "parent->close": 93,
+     "parent->close (event)": 102,
+     "parent->fulfil": 232,
+     "parent->fulfil (event)": 438
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 52,
+    "passed": 49,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 3
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 52,
+    "passed": 49,
+    "byCapability": {
+     "intake": "51/52",
+     "fraud": "52/52",
+     "capture": "52/52",
+     "refund": "52/52",
+     "reservation": "50/52",
+     "shipment": "52/52",
+     "compensation": "52/52",
+     "failure": "52/52",
+     "tracking": "50/52",
+     "customer-action": "51/52",
+     "cancellation": "52/52",
+     "notifications": "52/52",
+     "exactly-once": "52/52"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 50,
+     "parent->intake (event)": 150,
+     "parent->close": 84,
+     "parent->close (event)": 101,
+     "parent->fulfil": 171,
+     "parent->fulfil (event)": 340,
+     "parent->wait": 17,
+     "parent->wait (event)": 36
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 85,
+    "passed": 76,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 5,
+     "L2:early": 4
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0005",
+       "got": null,
+       "instance": "i-000005"
+      }
+     },
+     {
+      "case": "o0027",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-05T19:50:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1232-0027-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0075",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-14T04:52:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1232-0075-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0083",
+      "class": "review-reject",
+      "first": {
+       "at": "2026-03-15T04:40:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1232-0083-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0084",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-15T07:34:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1232-0084-F1:cancelled"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 83,
+    "passed": 74,
+    "byCapability": {
+     "intake": "81/83",
+     "fraud": "79/83",
+     "capture": "83/83",
+     "refund": "83/83",
+     "reservation": "81/83",
+     "shipment": "83/83",
+     "compensation": "83/83",
+     "failure": "83/83",
+     "tracking": "80/83",
+     "customer-action": "81/83",
+     "cancellation": "83/83",
+     "notifications": "83/83",
+     "exactly-once": "83/83"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 80,
+     "parent->intake (event)": 240,
+     "parent->close": 138,
+     "parent->fulfil": 422,
+     "parent->fulfil (event)": 681,
+     "parent->close (event)": 159,
+     "parent->wait": 25,
+     "parent->wait (event)": 62,
+     "parent->review": 7,
+     "parent->review (event)": 12
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 81,
+    "passed": 75,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 5,
+     "L2:early": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0005",
+       "got": null,
+       "instance": "i-000005"
+      }
+     },
+     {
+      "case": "o0037",
+      "class": "review-reject",
+      "first": {
+       "at": "2026-03-09T04:54:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1233-0037-F1:cancelled"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 79,
+    "passed": 73,
+    "byCapability": {
+     "intake": "77/79",
+     "fraud": "78/79",
+     "capture": "79/79",
+     "refund": "79/79",
+     "reservation": "77/79",
+     "shipment": "79/79",
+     "compensation": "79/79",
+     "failure": "79/79",
+     "tracking": "76/79",
+     "customer-action": "77/79",
+     "cancellation": "79/79",
+     "notifications": "79/79",
+     "exactly-once": "79/79"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 80,
+     "parent->intake (event)": 240,
+     "parent->close": 126,
+     "parent->fulfil": 344,
+     "parent->fulfil (event)": 580,
+     "parent->close (event)": 145,
+     "parent->wait": 35,
+     "parent->wait (event)": 94,
+     "parent->review": 3,
+     "parent->review (event)": 9
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 86,
+    "passed": 78,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 5,
+     "L2:early": 3
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0005",
+       "got": null,
+       "instance": "i-000005"
+      }
+     },
+     {
+      "case": "o0037",
+      "class": "review-approve",
+      "first": {
+       "at": "2026-03-07T08:31:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1234-0037-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0068",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-12T01:49:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1234-0068-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0080",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-13T18:18:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1234-0080-F1:cancelled"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 84,
+    "passed": 76,
+    "byCapability": {
+     "intake": "82/84",
+     "fraud": "81/84",
+     "capture": "84/84",
+     "refund": "84/84",
+     "reservation": "81/84",
+     "shipment": "84/84",
+     "compensation": "84/84",
+     "failure": "84/84",
+     "tracking": "81/84",
+     "customer-action": "82/84",
+     "cancellation": "84/84",
+     "notifications": "84/84",
+     "exactly-once": "84/84"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 80,
+     "parent->intake (event)": 240,
+     "parent->wait": 36,
+     "parent->wait (event)": 109,
+     "parent->close": 133,
+     "parent->fulfil": 461,
+     "parent->fulfil (event)": 687,
+     "parent->close (event)": 148,
+     "parent->review": 4,
+     "parent->review (event)": 7
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 202,
+    "passed": 189,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 8,
+     "L2:early": 5
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0005",
+       "got": null,
+       "instance": "i-000005"
+      }
+     },
+     {
+      "case": "o0006",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0006",
+       "got": null,
+       "instance": "i-000006"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0007",
+       "got": null,
+       "instance": "i-000007"
+      }
+     },
+     {
+      "case": "o0008",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1232-0008",
+       "got": null,
+       "instance": "i-000008"
+      }
+     },
+     {
+      "case": "o0024",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-04T08:46:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1232-0024-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0057",
+      "class": "review-approve",
+      "first": {
+       "at": "2026-03-06T16:23:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1232-0057-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0097",
+      "class": "review-approve",
+      "first": {
+       "at": "2026-03-08T15:39:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1232-0097-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0103",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-09T02:58:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1232-0103-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0143",
+      "class": "review-reject",
+      "first": {
+       "at": "2026-03-11T09:49:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1232-0143-F1:cancelled"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 197,
+    "passed": 184,
+    "byCapability": {
+     "intake": "194/197",
+     "fraud": "192/197",
+     "capture": "197/197",
+     "refund": "197/197",
+     "reservation": "193/197",
+     "shipment": "197/197",
+     "compensation": "197/197",
+     "failure": "197/197",
+     "tracking": "192/197",
+     "customer-action": "194/197",
+     "cancellation": "197/197",
+     "notifications": "197/197",
+     "exactly-once": "197/197"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 200,
+     "parent->intake (event)": 600,
+     "parent->close": 352,
+     "parent->fulfil": 1122,
+     "parent->fulfil (event)": 1881,
+     "parent->close (event)": 391,
+     "parent->wait": 56,
+     "parent->wait (event)": 132,
+     "parent->review": 8,
+     "parent->review (event)": 13
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 208,
+    "passed": 198,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 8,
+     "L2:early": 2
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0005",
+       "got": null,
+       "instance": "i-000005"
+      }
+     },
+     {
+      "case": "o0006",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0006",
+       "got": null,
+       "instance": "i-000006"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0007",
+       "got": null,
+       "instance": "i-000007"
+      }
+     },
+     {
+      "case": "o0008",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1233-0008",
+       "got": null,
+       "instance": "i-000008"
+      }
+     },
+     {
+      "case": "o0063",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-06T13:40:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1233-0063-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0096",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-07T19:37:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1233-0096-F1:cancelled"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 203,
+    "passed": 193,
+    "byCapability": {
+     "intake": "200/203",
+     "fraud": "201/203",
+     "capture": "203/203",
+     "refund": "203/203",
+     "reservation": "198/203",
+     "shipment": "203/203",
+     "compensation": "203/203",
+     "failure": "203/203",
+     "tracking": "198/203",
+     "customer-action": "200/203",
+     "cancellation": "203/203",
+     "notifications": "203/203",
+     "exactly-once": "203/203"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 200,
+     "parent->intake (event)": 600,
+     "parent->close": 358,
+     "parent->fulfil": 1211,
+     "parent->fulfil (event)": 1868,
+     "parent->close (event)": 393,
+     "parent->wait": 49,
+     "parent->wait (event)": 136,
+     "parent->review": 9,
+     "parent->review (event)": 14
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 205,
+    "passed": 193,
+    "critical": 0,
+    "codes": {
+     "L1:decision": 8,
+     "L2:early": 4
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0001",
+       "got": null,
+       "instance": "i-000001"
+      }
+     },
+     {
+      "case": "o0002",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0002",
+       "got": null,
+       "instance": "i-000002"
+      }
+     },
+     {
+      "case": "o0003",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0003",
+       "got": null,
+       "instance": "i-000003"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0004",
+       "got": null,
+       "instance": "i-000004"
+      }
+     },
+     {
+      "case": "o0005",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0005",
+       "got": null,
+       "instance": "i-000005"
+      }
+     },
+     {
+      "case": "o0006",
+      "class": "gl-dispatched",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0006",
+       "got": null,
+       "instance": "i-000006"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0007",
+       "got": null,
+       "instance": "i-000007"
+      }
+     },
+     {
+      "case": "o0008",
+      "class": "gl-awaiting",
+      "first": {
+       "at": "2026-03-01T23:00:00.000Z",
+       "layer": 1,
+       "code": "decision",
+       "field": "subject",
+       "expected": "ORD-1234-0008",
+       "got": null,
+       "instance": "i-000008"
+      }
+     },
+     {
+      "case": "o0103",
+      "class": "review-approve",
+      "first": {
+       "at": "2026-03-08T09:57:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1234-0103-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0164",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-12T13:16:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1234-0164-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0168",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-12T20:48:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1234-0168-F1:cancelled"
+      }
+     },
+     {
+      "case": "o0202",
+      "class": "review-timeout",
+      "first": {
+       "at": "2026-03-15T00:27:00.000Z",
+       "layer": 2,
+       "code": "early",
+       "lid": "fst:ORD-1234-0202-F1:cancelled"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 200,
+    "passed": 188,
+    "byCapability": {
+     "intake": "197/200",
+     "fraud": "196/200",
+     "capture": "200/200",
+     "refund": "200/200",
+     "reservation": "195/200",
+     "shipment": "200/200",
+     "compensation": "200/200",
+     "failure": "200/200",
+     "tracking": "195/200",
+     "customer-action": "197/200",
+     "cancellation": "200/200",
+     "notifications": "200/200",
+     "exactly-once": "200/200"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->intake": 200,
+     "parent->intake (event)": 600,
+     "parent->wait": 61,
+     "parent->wait (event)": 196,
+     "parent->close": 345,
+     "parent->fulfil": 1025,
+     "parent->fulfil (event)": 1716,
+     "parent->close (event)": 383,
+     "parent->review": 15,
+     "parent->review (event)": 23
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}

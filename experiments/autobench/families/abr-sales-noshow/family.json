@@ -1,9 +1,9 @@
 {
  "id": "abr-sales-noshow",
- "version": "1.0.0",
+ "version": "1.1.0",
  "domain": "sales",
  "title": "Demo no-show follow-up",
- "status": "dev: generator, oracle, reference, 11 bad controls, $0 validity gates and tests built; reference 1014/1014 triggers on seeds 601-650; no arm has run (no model, $0)",
+ "status": "dev: generator 1.1.0 (2026-10-21 review fixes: exact description/retraction/count, separate week_state verdict, coherent duplicate/retraction order, off the 14-day boundary, d3 trap-deal floor), oracle, reference, 11 bad controls, $0 validity gates and 46 tests; reference 1015/1015 triggers and 50/50 clean weeks on seeds 601-650; no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.2",
  "grounding": [
   {"task": "sales.calendly_no_show_followup", "span": "automationbench/domains/sales/tasks.py:9803-10104", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14"}
@@ -34,7 +34,8 @@
   "unit": "share of triggers carrying at least one planted trap; chatter, internal, duplicate and escalation reports are traps by construction",
   "perHandledReport": {"d2": 0.15, "d3": 0.6},
   "perRetraction": {"d2": 0.5, "d3": 0.7},
-  "measured": {"seeds": "601-650", "d2": 0.43, "d3": 0.72}
+  "measured": {"seeds": "601-650", "version": "1.1.0", "d2": 0.43, "d3": 0.77},
+  "d3DealFloor": {"perGroupPerStream": 3, "note": "gen.D3_DEAL_FLOOR: every trap group dealt at least 3 times per d3 stream; coverage counted by group (gen.trap_kind)"}
  },
  "amendable": [],
  "hardRequirements": [],
