@@ -85,6 +85,8 @@ def summary_post(day: str, n: int, m: int, batch: str) -> str:
 # Per difficulty: (lo, hi) per trigger kind. req = erasure.requested, rep = verification.reply (all inbound email),
 # hold = legal_hold.changed, dup = erasure.duplicate, bad = replies that verify nothing (spoofed, forwarded, no ID,
 # late, repeated, wrong ID).
+# The chance that a pre-seeded blocked request's hold has already outlasted the 30-day deadline (d2, d3 only).
+OLD_HELD = {"pre-blocked-lift": 0.5, "pre-blocked-still": 0.8}
 COUNTS = {
     "d1": dict(req=(8, 8), rep=(6, 6), hold=(1, 1), dup=(1, 1), bad=(0, 0)),
     "d2": dict(req=(8, 10), rep=(6, 8), hold=(1, 2), dup=(1, 2), bad=(2, 2)),
@@ -146,6 +148,7 @@ TRAP_KIND = {
     "id-in-body": "T-format", "backdated": "T-format",
     "re-request": "T-stale", "hold-lifted-row": "T-stale", "batch-changed": "T-stale",
     "deadline": "T-timing", "deadline-late": "T-timing", "deadline-not-yet": "T-timing", "deadline-day": "T-timing",
+    "deadline-held": "T-timing",
     "hold-lift": "T-state", "hold-still": "T-state", "count-lift": "T-state",
 }
 BAD_TYPES = ["spoof-lookalike", "spoof-forward", "spoof-display", "spoof-colleague", "no-id", "late-reply",
@@ -210,6 +213,8 @@ class Gen:
             raise ValueError(f"difficulty must be d1, d2 or d3 (got {difficulty!r})")
         self.seed, self.d, self.attempt = int(seed), difficulty, attempt
         self.r = random.Random(f"{FAMILY}:{VERSION}:{self.seed}:{difficulty}" + (f":{attempt}" if attempt else ""))
+        # A separate stream for the age of held requests (added 2026-10-21), so every other draw is as before.
+        self.r_held = random.Random(f"{FAMILY}:{VERSION}:{self.seed}:{difficulty}:held" + (f":{attempt}" if attempt else ""))
         mondays = [date(2026, 2, 2) + timedelta(weeks=k) for k in range(60)]
         mondays = [m for m in mondays if m <= date(2026, 11, 23)]
         self.monday = datetime.combine(self.r.choice(mondays), time(0, 0), tzinfo=UTC)
@@ -548,18 +553,26 @@ class Gen:
             self.pre_open.append(pre("pre-notyet", DEADLINE_DAYS - 5, self.pick_user() if r.random() < 0.5 else None))
         for _ in range(r.randint(1, 2)):
             self.pre_open.append(pre("pre-open", r.randint(1, 14), self.pick_user(tickets="some")))
-        # blocked requests from earlier weeks
+        # blocked requests from earlier weeks. A legal hold often outlasts the 30-day deadline: such a request is
+        # verified and answered (hold notice), so it is never closed at a daily close (deadline-held).
         self.pre_blocked = []
+
+        def held_age(story: str) -> int:
+            age = r.randint(8, 25)
+            if d != "d1" and self.r_held.random() < OLD_HELD[story]:
+                age += 22                                     # 30-47 days old on Monday
+            return age
+
         if "lift-pre" in hold_types:
             u = self.pick_user(need_org=self.org_pref(), tickets="some")
-            q = pre("pre-blocked-lift", r.randint(8, 25), u)
+            q = pre("pre-blocked-lift", held_age("pre-blocked-lift"), u)
             q["v_at"] = q["sub_at"] + timedelta(days=r.randint(1, 4), minutes=r.randint(5, 300))
             if q["v_at"].date() >= mon:
                 q["v_at"] = self.past(1)
             self.pre_blocked.append(q)
         if "lift-still" in hold_types:
             u = self.pick_user(tickets="some")
-            q = pre("pre-blocked-still", r.randint(8, 25), u)
+            q = pre("pre-blocked-still", held_age("pre-blocked-still"), u)
             q["v_at"] = q["sub_at"] + timedelta(days=r.randint(1, 4), minutes=r.randint(5, 300))
             if q["v_at"].date() >= mon:
                 q["v_at"] = self.past(1)
@@ -1201,6 +1214,8 @@ class Gen:
                             labels.append("deadline-late")
                     elif state(x) == VS and age == DEADLINE_DAYS - 1:
                         labels.append("deadline-not-yet")
+                    elif state(x) == BLOCKED and age >= DEADLINE_DAYS:
+                        labels.append("deadline-held")        # verified and held: not closed, however old
                 n_p = sum(1 for x in S["log"] if x["Transition"] == PURGED and x["At"][:10] == e["date"])
                 n_b = sum(1 for x in S["log"] if x["Transition"] == BLOCKED and x["At"][:10] == e["date"])
                 batch = S["cfg"]["Batch_Reference"]

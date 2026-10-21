@@ -228,6 +228,11 @@ clean weeks separate careful handling from careless handling better than the per
   - weekly totals count rows by their Submitted date, so last week's receipt approved this week is not in this week's
     total;
   - the daily cap counts last week's rows for the same expense date.
+- **The daily meal cap is narrower than the build spec's wording [D].** The orchestrator's spec (2026-10-14) reads "at
+  most $100 of meals per employee per day"; POLICY.md rule 4d applies the cap to individual meals only (1 attendee or
+  none), because a team meal paid by one employee covers several people and a $75-per-person team meal would almost
+  always break a $100 cap. `cap-all-meals` is the control for the literal reading, and it fails (0.920 on 610–614). A
+  reviewer who prefers the literal reading would need a policy version bump and regenerated truth.
 - **Escalation truth is one case.** Only an unknown poster is undecidable; an ambiguous category or a correction on a
   pending receipt is never generated (the reference would escalate the first and handles the second by the policy).
 - **The naive gate passes with a thin margin** (0.556 on the d3 dev streams, 0.561 over all d3 seeds), and the
