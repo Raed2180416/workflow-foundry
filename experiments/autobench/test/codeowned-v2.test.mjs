@@ -215,6 +215,11 @@ test('4 app-faithful compile: a post compiles to its own app (never Slack for an
   ({ pcs } = compile([1, 2, 3].map(k => reader(k, [comment]))));
   assert.equal(pcs[0].type, 'child_created');
   assert.deepEqual(pcs[0].params, { parent: 'trello:cards:k1', kind: 'comment', values: ['Replace the hinge'] });
+  // A row added in another app than the spreadsheets is a record of that app, never a sheet row.
+  const boardRow = { id: 'R1', polarity: 'positive', action: 'add_row', app: 'trello', target: 'a new card on the board', statement: 'add a card for the dock repair', source: 'request', fields: [{ name: 'name', quote: 'Dock repair', source: 'trello:cards:k1' }] };
+  ({ pcs } = compile([1, 2, 3].map(k => reader(k, [boardRow]))));
+  assert.equal(pcs[0].type, 'record_created');
+  assert.equal(pcs[0].params.app, 'trello');
   // A list field passes on membership; long text on containment.
   assert.equal(fieldMatches(['urgent', 'vendor'], 'vendor'), true);
   assert.equal(fieldMatches([{ name: 'vendor' }], 'vendor'), true);

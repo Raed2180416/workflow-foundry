@@ -201,12 +201,14 @@ export function postconditionsFromLedger(merged, inv, { majority = Math.ceil((me
       continue;
     }
     if (item.action === 'delete_record' && ptr) { add(item, 'record_deleted', { ptr }, { hard, app: ptr.split(':')[0] }); continue; }
-    if (item.action === 'add_row' || (item.action === 'update_row' && !ptr)) {
+    // A row in another app (a board, a base) is a record of that app, not a sheet row (app-faithful).
+    const sheetApp = sameApp(app ?? 'google_sheets', 'google_sheets');
+    if ((item.action === 'add_row' || (item.action === 'update_row' && !ptr)) && sheetApp) {
       const { keep, soft: co } = coOccurring(recFields.filter(hardLit), item, sources);
       for (const x of co) { x.coSoft = true; stats.coSoft += 1; }
       if (keep.length || recFields.some(shownSoft) || co.length) { add(item, 'sheet_row', { spreadsheetId: sheetIdOf(item), values: keep.map(lit) }, { hard: hard && keep.length > 0, soft: recFields.filter(x => !keep.includes(x) && x.vtype !== 'clause').map(x => softRow(x, x.coSoft ? 'not in the same source record as the other values' : softWhy(x))), app: 'google_sheets' }); limits('row'); continue; }
     }
-    if (item.action === 'create_record' && app) {
+    if ((item.action === 'create_record' || (item.action === 'add_row' && !sheetApp)) && app) {
       // A new record's values include its text fields (a note's or comment's body is what it carries).
       const valFields = item.fields.filter(x => !META_FIELDS.has(x.name) || (BODY_FIELDS.has(x.name) && x.name !== 'subject'));
       const { keep, soft: co } = coOccurring(valFields.filter(hardLit), item, sources);
