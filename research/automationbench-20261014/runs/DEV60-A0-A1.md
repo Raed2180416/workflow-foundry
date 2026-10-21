@@ -94,3 +94,38 @@ Strict pass by domain:
 - The Sonnet pair (`a0s-dev60-dn`, `a1s-dev60-dn`) is running.
 - Then A1-C on the same 60.
 - Then the AM-10 rule, read on pooled runs.
+
+## Sonnet pair (AM-10/11), 2026-10-15 and 2026-10-21
+
+**Runs.**
+- `a0s-dev60-dn`: Sonnet 5.5, no harness. Complete on CLI 2.1.300.
+- `a1s-dev60-dn` + `a1s-dev60-dn-fill`: Sonnet 5.5 with the A1 harness. 45 tasks on CLI 2.1.300 and 15 on 2.1.306;
+  see `a1s-dev60-dn/NOTE.md`.
+- Same 60 devTrain tasks, the date note, $1.50 per session.
+
+| Arm (date note) | Strict pass | Partial credit | Cost of outcome sessions |
+|---|---|---|---|
+| Haiku alone | 9/60 (15.0%) | 0.491 | $0.79 |
+| Haiku + harness | 18/60 (30.0%) | 0.642 | $0.94 |
+| Sonnet alone | 20/60 (33.3%) | 0.649 | $6.03 |
+| **Sonnet + harness** | **28/60 (46.7%)** | **0.769** | $6.92 |
+
+**Paired, exact McNemar.**
+
+| Comparison | Tasks only the first passes | Tasks only the second passes | p |
+|---|---|---|---|
+| Sonnet + harness vs Sonnet alone | 12 | 4 | 0.077 |
+| Sonnet + harness vs Haiku + harness | 13 | 3 | 0.021 |
+| Sonnet alone vs Haiku + harness | 8 | 6 | 0.79 |
+
+**Reading (development evidence, devTrain tasks, k = 1).**
+- **The harness lifts both models by a similar amount.** Haiku +15 points, Sonnet +13 points. The Sonnet lift alone is
+  not significant at n = 60 (p = 0.077). The Haiku lift replicated (p = 0.035 and 0.013).
+- **Haiku + harness matches Sonnet alone at about one sixth of the cost** ($0.94 against $6.03; 8 against 6 discordant,
+  p = 0.79).
+- **Sonnet + harness is the best configuration on dev60:** 46.7% strict at about $0.12 per task. Per the AM-10
+  selection rule this is the candidate to freeze, subject to A1-C on the same tasks.
+- **Not comparable with the leaderboard.** These are public-split devTrain tasks. The official leaderboard is a harder
+  private set (Sonnet 5.5 max 44.75%, Gemini 4 Argon 51.29%; `research/benchmarks-20261015/FRONTIER-20261015.md`).
+
+**Next.** The A1-C review (resumed 2026-10-21), then A1-C on dev60 for Haiku and Sonnet with k ≥ 2.
