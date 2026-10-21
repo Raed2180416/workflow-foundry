@@ -1,0 +1,1183 @@
+{
+ "label": "cht-e8-1",
+ "item": "ebed-e8",
+ "spec": "9fdbc1ee16bb39b2c8259ebc3aa1ad34a40470f811a75da792396beca26ae787",
+ "conditions": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "practice": {
+   "seeds": [
+    1235,
+    1236,
+    1237
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "grading": {
+   "seeds": [
+    1232,
+    1233,
+    1234
+   ],
+   "difficulties": [
+    2,
+    3,
+    5
+   ]
+  },
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  }
+ },
+ "build": {
+  "arm": "C-H-T",
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "budgetUsd": 3,
+  "minutes": 40,
+  "loop": "smoke",
+  "dryRun": false,
+  "templates": "research/composition-20261021/runs/tpl-opus-1/templates",
+  "smokeRuns": 18,
+  "wallMs": 1871253,
+  "costUsd": 1.6974420899999996,
+  "error": null,
+  "turns": 85
+ },
+ "program": {
+  "modules": [
+   "order-id",
+   "intake",
+   "fraud",
+   "customer-action",
+   "order-progress",
+   "fulfilment",
+   "cancellation",
+   "statuses",
+   "notices"
+  ],
+  "programDigest": "2ef5a1215b581ad96d1f562b4b637b49786d294abbbc3194a867514e12cc9222",
+  "bundleDigest": "1058fadd154356d3331496df9c6efb956c0c382f9254c2ced2e9bbd7a425f0b9",
+  "problems": []
+ },
+ "tests": {
+  "files": 9,
+  "modules": 9,
+  "modulesWithTests": 9,
+  "pass": 58,
+  "fail": 0,
+  "ok": true,
+  "ran": true
+ },
+ "worlds": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12
+  },
+  {
+   "seed": 1232,
+   "d": 2
+  },
+  {
+   "seed": 1233,
+   "d": 2
+  },
+  {
+   "seed": 1234,
+   "d": 2
+  },
+  {
+   "seed": 1232,
+   "d": 3
+  },
+  {
+   "seed": 1233,
+   "d": 3
+  },
+  {
+   "seed": 1234,
+   "d": 3
+  },
+  {
+   "seed": 1232,
+   "d": 5
+  },
+  {
+   "seed": 1233,
+   "d": 5
+  },
+  {
+   "seed": 1234,
+   "d": 5
+  }
+ ],
+ "summary": {
+  "paired": {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 13,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:34:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 13,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "13/14",
+     "customer-action": "14/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 24,
+     "parent->intake": 14,
+     "parent->statuses": 14,
+     "parent->notices": 14,
+     "parent->fraud": 18,
+     "parent->customer-action": 31,
+     "parent->order-progress": 24,
+     "parent->fulfilment": 215,
+     "parent->cancellation": 6,
+     "cancellation->fraud": 3,
+     "cancellation->statuses": 13,
+     "cancellation->notices": 6,
+     "fulfilment->statuses": 26,
+     "order-progress->statuses": 49,
+     "parent->intake (event)": 24,
+     "parent->fraud (event)": 12,
+     "parent->fulfilment (event)": 63,
+     "parent->statuses (event)": 51,
+     "fulfilment->notices": 1,
+     "parent->notices (event)": 5,
+     "cancellation->fulfilment": 8,
+     "cancellation->order-progress": 1,
+     "customer-action->statuses": 2,
+     "customer-action->notices": 1
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  "full": {
+   "completed": 1022,
+   "passed": 1003,
+   "critical": 0,
+   "capabilitiesPassed": 982,
+   "capabilitiesCompleted": 1001,
+   "interfaceViolations": 0,
+   "armErrors": 0
+  },
+  "worlds": 10,
+  "armErrors": 0
+ },
+ "rows": [
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": 12,
+   "status": "complete",
+   "oracle": {
+    "completed": 14,
+    "passed": 13,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:34:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 14,
+    "passed": 13,
+    "byCapability": {
+     "intake": "13/14",
+     "fraud": "14/14",
+     "capture": "14/14",
+     "refund": "14/14",
+     "reservation": "13/14",
+     "shipment": "14/14",
+     "compensation": "14/14",
+     "failure": "14/14",
+     "tracking": "13/14",
+     "customer-action": "14/14",
+     "cancellation": "14/14",
+     "notifications": "14/14",
+     "exactly-once": "14/14"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 24,
+     "parent->intake": 14,
+     "parent->statuses": 14,
+     "parent->notices": 14,
+     "parent->fraud": 18,
+     "parent->customer-action": 31,
+     "parent->order-progress": 24,
+     "parent->fulfilment": 215,
+     "parent->cancellation": 6,
+     "cancellation->fraud": 3,
+     "cancellation->statuses": 13,
+     "cancellation->notices": 6,
+     "fulfilment->statuses": 26,
+     "order-progress->statuses": 49,
+     "parent->intake (event)": 24,
+     "parent->fraud (event)": 12,
+     "parent->fulfilment (event)": 63,
+     "parent->statuses (event)": 51,
+     "fulfilment->notices": 1,
+     "parent->notices (event)": 5,
+     "cancellation->fulfilment": 8,
+     "cancellation->order-progress": 1,
+     "customer-action->statuses": 2,
+     "customer-action->notices": 1
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 52,
+    "passed": 51,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:34:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 52,
+    "passed": 51,
+    "byCapability": {
+     "intake": "51/52",
+     "fraud": "52/52",
+     "capture": "52/52",
+     "refund": "52/52",
+     "reservation": "51/52",
+     "shipment": "52/52",
+     "compensation": "52/52",
+     "failure": "52/52",
+     "tracking": "51/52",
+     "customer-action": "52/52",
+     "cancellation": "52/52",
+     "notifications": "52/52",
+     "exactly-once": "52/52"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 92,
+     "parent->intake": 52,
+     "parent->statuses": 52,
+     "parent->notices": 52,
+     "parent->fraud": 75,
+     "parent->customer-action": 134,
+     "parent->order-progress": 77,
+     "parent->fulfilment": 519,
+     "parent->cancellation": 21,
+     "cancellation->fraud": 16,
+     "cancellation->statuses": 62,
+     "cancellation->notices": 21,
+     "parent->intake (event)": 100,
+     "parent->fraud (event)": 50,
+     "order-progress->statuses": 153,
+     "parent->fulfilment (event)": 156,
+     "parent->statuses (event)": 154,
+     "customer-action->statuses": 38,
+     "customer-action->notices": 22,
+     "parent->notices (event)": 26,
+     "fulfilment->statuses": 77,
+     "fulfilment->notices": 12,
+     "parent->customer-action (event)": 4,
+     "cancellation->fulfilment": 10,
+     "cancellation->order-progress": 3
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 51,
+    "passed": 50,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:22:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0001",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 51,
+    "passed": 50,
+    "byCapability": {
+     "intake": "50/51",
+     "fraud": "51/51",
+     "capture": "51/51",
+     "refund": "51/51",
+     "reservation": "50/51",
+     "shipment": "51/51",
+     "compensation": "51/51",
+     "failure": "51/51",
+     "tracking": "50/51",
+     "customer-action": "51/51",
+     "cancellation": "51/51",
+     "notifications": "51/51",
+     "exactly-once": "51/51"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 82,
+     "parent->intake": 52,
+     "parent->statuses": 52,
+     "parent->notices": 52,
+     "parent->fraud": 64,
+     "parent->customer-action": 119,
+     "parent->order-progress": 106,
+     "parent->fulfilment": 837,
+     "customer-action->statuses": 20,
+     "parent->cancellation": 14,
+     "cancellation->fraud": 6,
+     "cancellation->statuses": 36,
+     "cancellation->notices": 14,
+     "fulfilment->statuses": 113,
+     "order-progress->statuses": 212,
+     "parent->intake (event)": 100,
+     "parent->fraud (event)": 50,
+     "customer-action->notices": 10,
+     "parent->notices (event)": 22,
+     "parent->statuses (event)": 208,
+     "parent->fulfilment (event)": 231,
+     "fulfilment->notices": 12,
+     "parent->customer-action (event)": 2,
+     "cancellation->fulfilment": 17,
+     "cancellation->order-progress": 4
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 2,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 52,
+    "passed": 50,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 1,
+     "L2:order": 1
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:29:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0030",
+      "class": "cancel-processing",
+      "first": {
+       "at": "2026-03-08T11:05:00.000Z",
+       "layer": 2,
+       "code": "order",
+       "lid": "rf:ORD-1234-0030-F1",
+       "before": "csh:ORD-1234-0030-F1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 52,
+    "passed": 50,
+    "byCapability": {
+     "intake": "51/52",
+     "fraud": "52/52",
+     "capture": "52/52",
+     "refund": "52/52",
+     "reservation": "51/52",
+     "shipment": "52/52",
+     "compensation": "51/52",
+     "failure": "52/52",
+     "tracking": "51/52",
+     "customer-action": "52/52",
+     "cancellation": "52/52",
+     "notifications": "52/52",
+     "exactly-once": "52/52"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 82,
+     "parent->intake": 52,
+     "parent->statuses": 52,
+     "parent->notices": 52,
+     "parent->fraud": 72,
+     "parent->customer-action": 123,
+     "parent->order-progress": 84,
+     "parent->fulfilment": 613,
+     "customer-action->statuses": 21,
+     "order-progress->statuses": 168,
+     "parent->fulfilment (event)": 185,
+     "parent->statuses (event)": 166,
+     "parent->intake (event)": 100,
+     "parent->fraud (event)": 50,
+     "parent->cancellation": 20,
+     "cancellation->fraud": 13,
+     "cancellation->statuses": 58,
+     "cancellation->notices": 20,
+     "fulfilment->statuses": 85,
+     "fulfilment->notices": 10,
+     "cancellation->fulfilment": 15,
+     "cancellation->order-progress": 4,
+     "parent->notices (event)": 22,
+     "customer-action->notices": 13,
+     "parent->customer-action (event)": 3
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 85,
+    "passed": 83,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 2
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:40:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:21:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0004",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 83,
+    "passed": 81,
+    "byCapability": {
+     "intake": "81/83",
+     "fraud": "83/83",
+     "capture": "83/83",
+     "refund": "83/83",
+     "reservation": "81/83",
+     "shipment": "83/83",
+     "compensation": "83/83",
+     "failure": "83/83",
+     "tracking": "81/83",
+     "customer-action": "83/83",
+     "cancellation": "83/83",
+     "notifications": "83/83",
+     "exactly-once": "83/83"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 141,
+     "parent->intake": 91,
+     "parent->statuses": 83,
+     "parent->notices": 83,
+     "parent->fraud": 111,
+     "parent->customer-action": 192,
+     "parent->order-progress": 156,
+     "parent->fulfilment": 1494,
+     "parent->intake (event)": 160,
+     "parent->fraud (event)": 93,
+     "order-progress->statuses": 316,
+     "parent->fulfilment (event)": 357,
+     "parent->statuses (event)": 324,
+     "parent->cancellation": 27,
+     "cancellation->fraud": 16,
+     "cancellation->statuses": 81,
+     "cancellation->notices": 27,
+     "parent->customer-action (event)": 6,
+     "customer-action->statuses": 40,
+     "customer-action->notices": 21,
+     "cancellation->fulfilment": 25,
+     "cancellation->order-progress": 6,
+     "parent->notices (event)": 30,
+     "fulfilment->statuses": 170,
+     "fulfilment->notices": 15
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 81,
+    "passed": 79,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 2
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:23:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:51:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0004",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 79,
+    "passed": 77,
+    "byCapability": {
+     "intake": "77/79",
+     "fraud": "79/79",
+     "capture": "79/79",
+     "refund": "79/79",
+     "reservation": "77/79",
+     "shipment": "79/79",
+     "compensation": "79/79",
+     "failure": "79/79",
+     "tracking": "77/79",
+     "customer-action": "79/79",
+     "cancellation": "79/79",
+     "notifications": "79/79",
+     "exactly-once": "79/79"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 137,
+     "parent->intake": 88,
+     "parent->statuses": 83,
+     "parent->notices": 83,
+     "parent->fraud": 113,
+     "parent->customer-action": 200,
+     "parent->order-progress": 141,
+     "parent->fulfilment": 1205,
+     "parent->customer-action (event)": 11,
+     "customer-action->statuses": 60,
+     "customer-action->notices": 33,
+     "parent->intake (event)": 160,
+     "parent->fraud (event)": 89,
+     "order-progress->statuses": 283,
+     "parent->fulfilment (event)": 294,
+     "parent->statuses (event)": 287,
+     "fulfilment->statuses": 151,
+     "fulfilment->notices": 14,
+     "parent->notices (event)": 31,
+     "parent->cancellation": 23,
+     "cancellation->fraud": 16,
+     "cancellation->statuses": 73,
+     "cancellation->notices": 23,
+     "cancellation->fulfilment": 16,
+     "cancellation->order-progress": 3
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 3,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 86,
+    "passed": 84,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 2
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:23:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:55:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0004",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 84,
+    "passed": 82,
+    "byCapability": {
+     "intake": "82/84",
+     "fraud": "84/84",
+     "capture": "84/84",
+     "refund": "84/84",
+     "reservation": "82/84",
+     "shipment": "84/84",
+     "compensation": "84/84",
+     "failure": "84/84",
+     "tracking": "82/84",
+     "customer-action": "84/84",
+     "cancellation": "84/84",
+     "notifications": "84/84",
+     "exactly-once": "84/84"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 145,
+     "parent->intake": 89,
+     "parent->statuses": 83,
+     "parent->notices": 83,
+     "parent->fraud": 109,
+     "parent->customer-action": 198,
+     "parent->order-progress": 165,
+     "parent->fulfilment": 1691,
+     "parent->cancellation": 21,
+     "cancellation->fraud": 12,
+     "cancellation->statuses": 64,
+     "cancellation->notices": 21,
+     "customer-action->statuses": 67,
+     "order-progress->statuses": 332,
+     "parent->fulfilment (event)": 360,
+     "parent->statuses (event)": 357,
+     "parent->intake (event)": 160,
+     "parent->fraud (event)": 87,
+     "customer-action->notices": 33,
+     "parent->notices (event)": 33,
+     "fulfilment->statuses": 193,
+     "parent->customer-action (event)": 10,
+     "cancellation->fulfilment": 22,
+     "cancellation->order-progress": 4,
+     "fulfilment->notices": 5
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1232,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 202,
+    "passed": 199,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:48:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:21:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0004",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:38:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1232-0007",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 197,
+    "passed": 194,
+    "byCapability": {
+     "intake": "194/197",
+     "fraud": "197/197",
+     "capture": "197/197",
+     "refund": "197/197",
+     "reservation": "194/197",
+     "shipment": "197/197",
+     "compensation": "197/197",
+     "failure": "197/197",
+     "tracking": "194/197",
+     "customer-action": "197/197",
+     "cancellation": "197/197",
+     "notifications": "197/197",
+     "exactly-once": "197/197"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 326,
+     "parent->intake": 219,
+     "parent->statuses": 205,
+     "parent->notices": 205,
+     "parent->fraud": 256,
+     "parent->customer-action": 470,
+     "parent->order-progress": 434,
+     "parent->fulfilment": 4149,
+     "parent->intake (event)": 400,
+     "parent->fraud (event)": 213,
+     "order-progress->statuses": 875,
+     "parent->fulfilment (event)": 986,
+     "parent->statuses (event)": 876,
+     "customer-action->statuses": 85,
+     "parent->customer-action (event)": 12,
+     "customer-action->notices": 45,
+     "fulfilment->statuses": 477,
+     "parent->cancellation": 50,
+     "cancellation->fulfilment": 45,
+     "cancellation->notices": 50,
+     "parent->notices (event)": 80,
+     "fulfilment->notices": 54,
+     "cancellation->order-progress": 10,
+     "cancellation->statuses": 142,
+     "cancellation->fraud": 29
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1233,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 208,
+    "passed": 205,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:48:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:32:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0004",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:10:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1233-0007",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 203,
+    "passed": 200,
+    "byCapability": {
+     "intake": "200/203",
+     "fraud": "203/203",
+     "capture": "203/203",
+     "refund": "203/203",
+     "reservation": "200/203",
+     "shipment": "203/203",
+     "compensation": "203/203",
+     "failure": "203/203",
+     "tracking": "200/203",
+     "customer-action": "203/203",
+     "cancellation": "203/203",
+     "notifications": "203/203",
+     "exactly-once": "203/203"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 325,
+     "parent->intake": 231,
+     "parent->statuses": 205,
+     "parent->notices": 205,
+     "parent->fraud": 252,
+     "parent->customer-action": 456,
+     "parent->order-progress": 454,
+     "parent->fulfilment": 4492,
+     "parent->cancellation": 49,
+     "cancellation->fraud": 30,
+     "cancellation->statuses": 124,
+     "cancellation->notices": 49,
+     "customer-action->statuses": 86,
+     "order-progress->statuses": 909,
+     "parent->fulfilment (event)": 960,
+     "parent->statuses (event)": 904,
+     "parent->intake (event)": 400,
+     "parent->fraud (event)": 214,
+     "fulfilment->statuses": 524,
+     "fulfilment->notices": 35,
+     "customer-action->notices": 41,
+     "parent->notices (event)": 63,
+     "parent->customer-action (event)": 11,
+     "cancellation->fulfilment": 37,
+     "cancellation->order-progress": 6
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1234,
+   "d": 5,
+   "size": null,
+   "status": "complete",
+   "oracle": {
+    "completed": 205,
+    "passed": 202,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    },
+    "failing": [
+     {
+      "case": "o0001",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:48:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0001",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0004",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:37:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0004",
+       "rule": "R1.1"
+      }
+     },
+     {
+      "case": "o0007",
+      "class": "gl-intake",
+      "first": {
+       "at": "2026-03-01T23:40:00.000Z",
+       "layer": 3,
+       "code": "missed",
+       "lid": "create:ORD-1234-0007",
+       "rule": "R1.1"
+      }
+     }
+    ]
+   },
+   "capabilities": {
+    "completed": 200,
+    "passed": 197,
+    "byCapability": {
+     "intake": "197/200",
+     "fraud": "200/200",
+     "capture": "200/200",
+     "refund": "200/200",
+     "reservation": "197/200",
+     "shipment": "200/200",
+     "compensation": "200/200",
+     "failure": "200/200",
+     "tracking": "197/200",
+     "customer-action": "200/200",
+     "cancellation": "200/200",
+     "notifications": "200/200",
+     "exactly-once": "200/200"
+    }
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "byModule": {},
+    "dropped": 0,
+    "integrity": 0,
+    "calls": {
+     "parent->order-id": 355,
+     "parent->intake": 220,
+     "parent->statuses": 205,
+     "parent->notices": 205,
+     "parent->fraud": 265,
+     "parent->customer-action": 480,
+     "parent->order-progress": 403,
+     "parent->fulfilment": 3743,
+     "parent->intake (event)": 400,
+     "parent->fraud (event)": 222,
+     "customer-action->statuses": 119,
+     "customer-action->notices": 63,
+     "parent->notices (event)": 88,
+     "parent->statuses (event)": 831,
+     "order-progress->statuses": 812,
+     "parent->fulfilment (event)": 908,
+     "parent->customer-action (event)": 22,
+     "fulfilment->statuses": 433,
+     "fulfilment->notices": 41,
+     "parent->cancellation": 55,
+     "cancellation->fulfilment": 70,
+     "cancellation->order-progress": 15,
+     "cancellation->statuses": 143,
+     "cancellation->notices": 55,
+     "cancellation->fraud": 23
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}
