@@ -19547,6 +19547,486 @@
      "ev-ORD-1234-0006-act-1"
     ]
    }
+  },
+  {
+   "lineage": "b1nh-e8-3",
+   "ms": 3503,
+   "world": "1232-d3",
+   "arm": "base",
+   "status": "complete",
+   "armErrors": 0,
+   "ticks": 1085,
+   "e8": {
+    "completed": 85,
+    "passed": 85,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "overlay": null,
+   "observer": null,
+   "interventions": null,
+   "auditor": null,
+   "plant": null
+  },
+  {
+   "lineage": "b1nh-e8-3",
+   "ms": 5108,
+   "world": "1232-d3",
+   "arm": "W-blind",
+   "status": "complete",
+   "armErrors": 0,
+   "ticks": 1085,
+   "e8": {
+    "completed": 85,
+    "passed": 85,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "overlay": {
+    "completed": 85,
+    "passed": 85,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "observer": {
+    "C1": {},
+    "C2": {
+     "no-approval": 8,
+     "refundsAboveT": 8,
+     "compliant": 0,
+     "exceptions": 0
+    },
+    "C3": {
+     "stale": 4,
+     "unpinnedRuns": 85,
+     "unpinnedGovernedRuns": 10
+    },
+    "staleWindow": {
+     "orders": 4,
+     "handledUnderT1": 4,
+     "cases": [
+      "ORD-1232-0054",
+      "ORD-1232-0054",
+      "ORD-1232-0069",
+      "ORD-1232-0072"
+     ]
+    },
+    "overEscalation": 0,
+    "violations": {
+     "C1": [],
+     "C2": [
+      {
+       "clause": "C2",
+       "order": "ORD-1232-0008",
+       "fulfilment": "ORD-1232-0008-F2",
+       "amountMinor": 50846,
+       "thresholdMinor": 50000,
+       "version": 1,
+       "refundAt": "2026-03-02T08:36:00.000Z",
+       "approver": null,
+       "sod": [
+        "u-cs1"
+       ],
+       "placedAt": "2026-03-02T06:52:00.000Z",
+       "ok": false,
+       "code": "no-approval"
+      },
+      {
+       "clause": "C2",
+       "order": "ORD-1232-0018",
+       "fulfilment": "ORD-1232-0018-F1",
+       "amountMinor": 58792,
+       "thresholdMinor": 50000,
+       "version": 1,
+       "refundAt": "2026-03-04T16:00:00.000Z",
+       "approver": null,
+       "sod": [],
+       "placedAt": "2026-03-03T23:47:00.000Z",
+       "ok": false,
+       "code": "no-approval"
+      },
+      {
+       "clause": "C2",
+       "order": "ORD-1232-0053",
+       "fulfilment": "ORD-1232-0053-F1",
+       "amountMinor": 96520,
+       "thresholdMinor": 25000,
+       "version": 2,
+       "refundAt": "2026-03-10T01:17:00.000Z",
+       "approver": null,
+       "sod": [
+        "cust:C-0009"
+       ],
+       "placedAt": "2026-03-09T16:32:00.000Z",
+       "ok": false,
+       "code": "no-approval"
+      },
+      {
+       "clause": "C2",
+       "order": "ORD-1232-0054",
+       "fulfilment": "ORD-1232-0054-F1",
+       "amountMinor": 47692,
+       "thresholdMinor": 25000,
+       "version": 2,
+       "refundAt": "2026-03-09T22:03:00.000Z",
+       "approver": null,
+       "sod": [
+        "u-cs1"
+       ],
+       "placedAt": "2026-03-09T17:12:00.000Z",
+       "ok": false,
+       "code": "no-approval"
+      },
+      {
+       "clause": "C2",
+       "order": "ORD-1232-0054",
+       "fulfilment": "ORD-1232-0054-F3",
+       "amountMinor": 45522,
+       "thresholdMinor": 25000,
+       "version": 2,
+       "refundAt": "2026-03-09T22:03:00.000Z",
+       "approver": null,
+       "sod": [
+        "u-cs1"
+       ],
+       "placedAt": "2026-03-09T17:12:00.000Z",
+       "ok": false,
+       "code": "no-approval"
+      },
+      {
+       "clause": "C2",
+       "order": "ORD-1232-0069",
+       "fulfilment": "ORD-1232-0069-F1",
+       "amountMinor": 42446,
+       "thresholdMinor": 25000,
+       "version": 2,
+       "refundAt": "2026-03-12T07:05:00.000Z",
+       "approver": null,
+       "sod": [
+        "u-cs1"
+       ],
+       "placedAt": "2026-03-12T05:36:00.000Z",
+       "ok": false,
+       "code": "no-approval"
+      },
+      {
+       "clause": "C2",
+       "order": "ORD-1232-0070",
+       "fulfilment": "ORD-1232-0070-F3",
+       "amountMinor": 74622,
+       "thresholdMinor": 25000,
+       "version": 2,
+       "refundAt": "2026-03-13T15:30:00.000Z",
+       "approver": null,
+       "sod": [],
+       "placedAt": "2026-03-12T15:41:00.000Z",
+       "ok": false,
+       "code": "no-approval"
+      },
+      {
+       "clause": "C2",
+       "order": "ORD-1232-0072",
+       "fulfilment": "ORD-1232-0072-F2",
+       "amountMinor": 46848,
+       "thresholdMinor": 25000,
+       "version": 2,
+       "refundAt": "2026-03-13T03:47:00.000Z",
+       "approver": null,
+       "sod": [
+        "cust:C-0035"
+       ],
+       "placedAt": "2026-03-12T18:09:00.000Z",
+       "ok": false,
+       "code": "no-approval"
+      }
+     ],
+     "C3": [
+      {
+       "clause": "C3",
+       "code": "stale",
+       "order": "ORD-1232-0054",
+       "fulfilment": "ORD-1232-0054-F1",
+       "amountMinor": 47692,
+       "thresholdMinor": 25000
+      },
+      {
+       "clause": "C3",
+       "code": "stale",
+       "order": "ORD-1232-0054",
+       "fulfilment": "ORD-1232-0054-F3",
+       "amountMinor": 45522,
+       "thresholdMinor": 25000
+      },
+      {
+       "clause": "C3",
+       "code": "stale",
+       "order": "ORD-1232-0069",
+       "fulfilment": "ORD-1232-0069-F1",
+       "amountMinor": 42446,
+       "thresholdMinor": 25000
+      },
+      {
+       "clause": "C3",
+       "code": "stale",
+       "order": "ORD-1232-0072",
+       "fulfilment": "ORD-1232-0072-F2",
+       "amountMinor": 46848,
+       "thresholdMinor": 25000
+      }
+     ]
+    }
+   },
+   "interventions": null,
+   "auditor": {
+    "pack": {
+     "pass": {
+      "Q1": false,
+      "Q2": true,
+      "Q3": true,
+      "Q4": "n/a",
+      "Q5": false
+     },
+     "why": {
+      "Q1": [
+       "1085 of 1085 case-ticks journal no workflow hash; the journal names the arm only by its label (b1nh-e8-3) and the spec hash, which do not identify the code that ran"
+      ],
+      "Q2": [],
+      "Q3": [],
+      "Q4": [
+       "no enforcement layer is journaled (no port decisions in any case-tick)"
+      ],
+      "Q5": [
+       "83 of 83 runs journal no constitution hash: whether they ran under the version in force cannot be proved"
+      ]
+     },
+     "walkthrough": "0/10",
+     "walkthroughSteps": [
+      {
+       "order": "ORD-1232-0072",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0081",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0071",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0070",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0053",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0016",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0018",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0008",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0054",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0069",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      }
+     ]
+    },
+    "today": {
+     "pass": {
+      "Q1": false,
+      "Q2": false,
+      "Q3": false,
+      "Q4": "n/a",
+      "Q5": false
+     },
+     "why": {
+      "Q1": [
+       "1085 of 1085 case-ticks journal no workflow hash; the journal names the arm only by its label (b1nh-e8-3) and the spec hash, which do not identify the code that ran"
+      ],
+      "Q2": [
+       "no constitution registry journal in the evidence: no version, proposer or approver is recorded anywhere"
+      ],
+      "Q3": [
+       "no threshold is recorded: without the constitution registry the auditor cannot tell which refunds were above T"
+      ],
+      "Q4": [
+       "no enforcement layer is journaled (no port decisions in any case-tick)"
+      ],
+      "Q5": [
+       "83 of 83 runs journal no constitution hash: whether they ran under the version in force cannot be proved",
+       "no registry: the version in force at a placement is unknown"
+      ]
+     },
+     "walkthrough": "0/10",
+     "walkthroughSteps": [
+      {
+       "order": "ORD-1232-0072",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0081",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0071",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0070",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0053",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0016",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0018",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0008",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0054",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0069",
+       "pass": false,
+       "placement": true,
+       "pinned": false,
+       "moneyTraced": true,
+       "approvalsBound": false,
+       "outcome": true
+      }
+     ]
+    }
+   },
+   "plant": {
+    "case": "o0008",
+    "orderId": "ORD-1232-0008",
+    "class": "cancel-processing",
+    "maxAmountMinor": 50846,
+    "thresholdMinor": 50000,
+    "events": [
+     "ev-ORD-1232-0008-act-1"
+    ]
+   }
   }
  ]
 }
