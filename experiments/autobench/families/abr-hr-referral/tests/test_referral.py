@@ -38,7 +38,8 @@ ONE_DEFECT = {  # control -> trap labels its broken rule must show up on
     "cap-by-name": {"cap-namesake"}, "cap-inclusive": {"cap-exact"}, "dup-by-name": {"candidate-namesake"},
     "dup-case-sensitive": {"email-case"}, "no-rehire": {"rehire"}, "rehire-by-name": {"rehire-namesake"},
     "left-by-name": {"left-namesake"}, "void-paid": {"left-after-paid"},
-    "comply-broadcast": {"broadcast-allstaff", "cc-finance", "post-amounts", "vp-broadcast"}}
+    "comply-broadcast": {"broadcast-allstaff", "cc-finance", "post-amounts", "vp-broadcast"},
+    "cap-ignores-week": {"cap-earlier-run"}, "hire-on-duplicate": {"dup-hire"}}
 
 
 @pytest.fixture(scope="module")
@@ -280,15 +281,207 @@ def test_oracle_rejects_plausible_but_wrong_payouts(ref_worlds):
     assert any(c["group"] == "ab" for c in v["failed"])          # AutomationBench's own gmail_message_not_sent_to
 
 
+def _payout_case(ref_worlds, k_stream=0, min_payouts=1, other_referrer=False):
+    """(truth, before, after, payroll index, referrer index) of the first non-final payout run with enough payouts."""
+    stream, res = ref_worlds[k_stream]
+    for k, t in enumerate(stream["truth"][:-1]):
+        refs = {e["to"] for e in t["expect"]["emails"] if e["kind"] == "referrer"}
+        if t["kind"] != "payout.run" or len(refs) < (2 if other_referrer else 1) or len(t["expect"]["emails"]) < 2 * min_payouts:
+            continue
+        before, after = res["befores"][k], res["afters"][k]
+        old = {m["id"] for m in before["gmail"]["messages"]}
+        new = [i for i, m in enumerate(after["gmail"]["messages"]) if m["id"] not in old]
+        pay = next(i for i in new if gen.PAYROLL in after["gmail"]["messages"][i]["to"])
+        ref = next(i for i in new if gen.PAYROLL not in after["gmail"]["messages"][i]["to"])
+        return t, before, after, pay, ref
+    raise AssertionError("no payout run with enough payouts")
+
+
+def _add_to_body(w, i, text):
+    m = w["gmail"]["messages"][i]
+    for part in ("body_plain", "body_html"):
+        if m.get(part):
+            m[part] += text
+
+
+def test_payout_bodies_say_nothing_else(ref_worlds):
+    """Review 2026-10-21 (high + medium): a referrer email that also tells the referrer about other payouts, and a payout
+    email that also states a conflicting amount, used to pass (the needles only had to be present)."""
+    grader = oracle.Grader()
+    truth, before, after, pay, ref = _payout_case(ref_worlds, other_referrer=True)
+    to = oracle.addr(after["gmail"]["messages"][ref]["to"][0])
+    rows = {r["id"]: r["cells"] for r in after["google_sheets"]["rows"]}
+    paid = [rows[c["id"]] for c in truth["expect"]["cells"] if c["set"].get("Status") == gen.PAID]
+    other = next(c for c in paid if gen.norm(c["Referrer Email"]) != to)
+    own = next(c for c in paid if gen.norm(c["Referrer Email"]) == to)
+    week = before["meta"]["current_time"][:10]
+    stranger = next(r["cells"] for r in after["google_sheets"]["rows"] if r["worksheet_id"] == gen.WS_LOG   # paid before:
+                    and r["cells"]["Status"] == gen.PAID and r["cells"]["Paid On"] < week               # no rule pays it
+                    and gen.norm(r["cells"]["Referrer Email"]) != to and r["cells"]["Referrer"] != own["Referrer"])
+    wrong = {
+        "leak-other-payout": (ref, f"\nAlso paid today: {other['Referrer']} for {other['Candidate']}: {other['Bonus']}", True),
+        "leak-other-name": (ref, f"\nAlso referred lately: {stranger['Candidate']}.", False),
+        "leak-other-id": (ref, f"\nSee also {stranger['Referral ID']}.", False),
+        "conflicting-amount": (pay, "\nPLEASE PAY $5,000 (adjusted)" if "$5,000" not in own["Bonus"] else "\nPLEASE PAY $2,000", True),
+        "bare-conflicting-amount": (pay, "\nplease pay 10000 instead", False),
+        "cap-mentioned": (ref, "\nThe yearly cap is $10,000.", True),
+        "payroll-other-id": (pay, f"\nSame batch as {stranger['Referral ID']}.", False),
+    }
+    for name, (i, text, ab_too) in wrong.items():
+        w = copy.deepcopy(after)
+        _add_to_body(w, i, text)
+        v = grader.grade(truth, before, w)
+        failed = {c["name"].split(" ")[0] for c in v["failed"]}
+        assert not v["pass"] and "email" in failed, (name, v["failed"])
+        assert ("ab" in failed) == ab_too, (name, v["failed"])   # AutomationBench's handlers see this run's rows only
+    fine = {"own-referral-id": (ref, f"\n(Your referral {own['Referral ID']}.)"), "cents": (pay, f"\nTotal: {own['Bonus']}.00"),
+            "dollars-word": (ref, f"\nThat is {oracle.money_of(own['Bonus'])} dollars."), "year": (ref, "\nThanks for 2026!")}
+    for name, (i, text) in fine.items():
+        w = copy.deepcopy(after)
+        _add_to_body(w, i, text)
+        v = grader.grade(truth, before, w)
+        assert v["pass"], (name, v["failed"])
+
+
+def test_money_tokens():
+    t = oracle.money_tokens
+    assert t("Amount: $3,500") == {350000} and t("$3,500.00 and 3500 USD and 3,500 dollars") == {350000}
+    assert t("$3,500 ... PLEASE PAY $5,000 (adjusted)") == {350000, 500000}
+    assert t("$3,500; please pay 5000") == {350000, 500000} and t("$3.5k") == {350000}
+    assert t("REF-2000 E2000 2026-05-04 05/06/2026 alex.rivera2@x.example.com $2,000") == {200000}
+    assert t("$3,500.50") == {350050}
+
+
+def test_subject_spacing_inside_is_exact(ref_worlds):
+    """Review 2026-10-21 (low): the docs said extra spaces were ignored; AutomationBench's subject check (which the
+    oracle runs) rejects them, and so does the oracle's own check now. Surrounding spaces stay harmless."""
+    grader = oracle.Grader()
+    truth, before, after, pay, ref = _payout_case(ref_worlds)
+    for i in (pay, ref):
+        w = copy.deepcopy(after)
+        w["gmail"]["messages"][i]["subject"] = w["gmail"]["messages"][i]["subject"].replace(" ", "  ", 1)
+        v = grader.grade(truth, before, w)
+        assert not v["pass"] and {"email", "ab"} <= {c["name"].split(" ")[0] for c in v["failed"]}
+        w = copy.deepcopy(after)
+        w["gmail"]["messages"][i]["subject"] = "  " + w["gmail"]["messages"][i]["subject"].upper() + " "
+        assert grader.grade(truth, before, w)["pass"]
+
+
+@pytest.mark.parametrize("name", ["leak-other-payouts", "extra-amount"])
+def test_body_controls_fail_on_payout_runs_only(dev_runs, name):
+    _, results = dev_runs[name]
+    failed = [x for r in results for x in r["rows"] if not x["pass"]]
+    assert failed and all(x["kind"] == "payout.run" for x in failed)
+    assert all(any(c["name"].startswith("email") and "body also says" in c["detail"] for c in x["failed"]) for x in failed)
+
+
+@pytest.fixture(scope="module")
+def probe_runs(streams):
+    import controls
+    return {name: harness.run(name, DEV, streams=streams)[1] for name in controls.PROBES}
+
+
+def _later_failures(results, kinds):
+    """Failed triggers of the given kinds that fail some per-trigger check (not only the Friday end-of-week checks)."""
+    out = []
+    for r in results:
+        for x in r["rows"]:
+            if not x["pass"] and x["kind"] in kinds and any(c["group"] != "end" for c in x["failed"]):
+                out.append((x, x["trigger"] == len(r["rows"])))
+    return out
+
+
+@pytest.mark.parametrize("probe", ["no-hire-write", "cap-ignores-week", "no-hold-write", "no-paid-write"])
+def test_state_written_by_one_trigger_decides_a_later_one(probe_runs, probe):
+    """Review 2026-10-21 (medium): hire statuses and this week's payouts must decide a later trigger's own checks, not
+    only Friday's end-of-week state. Each probe drops one state write (or reading it); some payout run that is not the
+    week's last fails its own effects, envelope or AutomationBench checks."""
+    hits = _later_failures(probe_runs[probe], {"payout.run"})
+    assert any(not friday for _, friday in hits), (probe, [(x["taskKey"], [c["name"] for c in x["failed"]]) for x, _ in hits])
+
+
+def test_voided_status_is_end_of_week_state_only(probe_runs):
+    """The narrowed claim (README): no later trigger reads Voided, because the payout run's Active check already blocks
+    a departed employee. Dropping the void fails the departures and Friday's end-of-week state, nothing else."""
+    for r in probe_runs["no-void"]:
+        for x in r["rows"]:
+            if x["pass"]:
+                continue
+            last = x["trigger"] == len(r["rows"])
+            assert x["kind"] == "employee.left" or (last and all(c["group"] == "end" for c in x["failed"])), x["taskKey"]
+    assert any(not x["pass"] for r in probe_runs["no-void"] for x in r["rows"] if x["kind"] == "employee.left")
+
+
+def test_late_hires_and_cross_run_caps_are_planted(streams):
+    """A hire entered late is paid at a later run of the same week (Tuesday to Thursday), a late rehire is never paid,
+    and a cap that only this week's earlier payouts fill is decided at a run before Friday."""
+    for s, out in streams.items():
+        truth, d = out["truth"], out["meta"]["difficulty"]
+        last = len(truth)
+        paid_at = {}
+        for t in truth:
+            for e in t["expect"]["emails"]:
+                if e["kind"] == "payroll":
+                    paid_at[e["rids"][0]] = t["index"]
+        late = [(t, trig) for t, trig in zip(truth, out["triggers"]) if t["kind"] == "candidate.hired" and t["sub"] == "late"]
+        assert len(late) == 1, s
+        t, trig = late[0]
+        rid = trig["payload"]["data"]["row"]["Referral ID"]
+        assert date.fromisoformat(trig["at"][:10]).weekday() <= 2 and t["index"] < paid_at[rid] < last, (s, rid)
+        for t, trig in zip(truth, out["triggers"]):
+            if t["sub"] == "late-rehire":
+                assert "rehire" in t["traps"] and trig["payload"]["data"]["row"]["Referral ID"] not in paid_at
+        assert d == "d2" or any(t["sub"] == "late-rehire" for t in truth), s
+        cross = [t for t in truth if t["kind"] == "payout.run" and "cap-earlier-run" in t["traps"]]
+        assert cross and any(t["index"] < last for t in cross), s
+
+
+def test_hire_on_duplicate_row_is_a_noop(streams):
+    """Review 2026-10-21 (low): policy section 4.1 (a hire filled into a Duplicate referral row) is planted: every d3
+    week, and some d2 weeks; the truth is a no-op."""
+    seen = Counter()
+    for s, out in streams.items():
+        w = out["world0"]
+        for t, trig in zip(out["truth"], out["triggers"]):
+            if t["sub"] != "dup-hire":
+                continue
+            seen[out["meta"]["difficulty"]] += 1
+            assert t["outcome"] == "no-op" and t["traps"] == ["dup-hire"] and not t["expect"]["cells"]
+            row = next(r for r in w["google_sheets"]["rows"] if r["worksheet_id"] == gen.WS_LOG
+                       and r["row_id"] == trig["payload"]["data"]["row_id"])
+            assert row["cells"]["Status"] == gen.DUPLICATE
+    assert seen["d3"] == 2
+
+
+def test_missing_employee_row_is_not_eligible():
+    """Review 2026-10-21 (low): the reference escalated on a missing Employees row while the generator treated it as not
+    eligible. POLICY.md now says 'not eligible', and both implementations agree."""
+    policy = " ".join((FAMILY_DIR / "POLICY.md").read_text().split())
+    assert "a row whose Employee ID is not in Employees is not eligible" in policy
+    run = date(2026, 6, 10)
+    c = {"Referral ID": "REF-1", "Referrer": "A B", "Referrer Email": "a.b@company.example.com", "Candidate": "C D",
+         "Candidate Email": "c.d@mail.example.com", "Hire Date": "2026-03-01", "Role Level": "IC3", "Employee ID": "E9",
+         "Probation Complete": "No", "Hold": "", "Status": gen.PNYE, "Bonus": "", "Paid On": "", "Notes": ""}
+    emp = {"Employee ID": "E9", "Name": "C D", "Status": "Active"}
+    assert gen.payout_decisions([c], [], run) == [] and gen.payout_decisions([c], [emp], run) == [(0, "pay", 3500)]
+    w = reference.Referral({}, None)
+    assert w.eligible(c, {}, run) is False and w.eligible(c, {"e9": emp}, run) is True
+
+
 def test_oracle_mutation_score():
     g = gates.gate_mutation([610, 611])
     assert g["pass"] and g["score"] >= 0.95, g
-    assert len(g["operators"]) >= 25
+    assert len(g["operators"]) >= 40
+    for op in ("payroll-extra-amount", "payroll-other-rid", "payroll-subject-double-space", "referrer-extra-amount",
+               "referrer-other-payout", "referrer-other-referral", "referrer-subject-double-space"):
+        assert g["operators"].get(op), op
 
 
 def test_oracle_specificity_no_false_rejects():
     g = gates.gate_specificity([610])
     assert g["pass"], g["rejected"]
+    for op in ("subject-surrounding-spaces", "amount-with-cents", "referrer-own-referral-id"):
+        assert g["operators"].get(op), op
 
 
 def test_abstention_is_not_credit(ref_worlds):
@@ -328,6 +521,9 @@ def test_end_of_week_is_graded_at_the_last_trigger(ref_worlds):
 # -- policy and grounding ----------------------------------------------------------------------------------------------
 def test_policy_states_the_parameters_the_generator_uses():
     policy = (FAMILY_DIR / "POLICY.md").read_text()
+    flat = " ".join(policy.split())
+    for s in ("no other amount or Referral ID", "no other amount, and nothing about anyone else's referral"):
+        assert s in flat, s
     for s in (gen.SS, gen.WS_LOG, gen.WS_EMP, gen.WS_POL, gen.PAYROLL, gen.FINANCE, gen.ALL_STAFF, gen.INBOX, gen.VP_ID,
               gen.PENDING, gen.PNYE, gen.ELIGIBLE, gen.PAID, gen.DUPLICATE, gen.REHIRE, gen.VOIDED, gen.CAPPED,
               "Referral bonus payout: <Referral ID>", "Your referral bonus for <Candidate>", "$10,000", "$2,000", "$3,500",

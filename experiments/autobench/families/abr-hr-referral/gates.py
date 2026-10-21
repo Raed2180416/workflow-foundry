@@ -20,11 +20,14 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
                 carries the end-of-week state); the <= 40-line naive heuristic
                 scores below 60% per trigger at d3.
   traps         each trap kind appears at least five times across the four dev label streams 610-613.
-  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects.
-  specificity   the oracle accepts policy-neutral variants (no false rejects): subject in other letter case, amount
-                without digit grouping, a display name on the recipient, Status / Hold in other letter case, Bonus
-                written as a bare number, an inbound email marked read; and an equivalent solver that writes cells
-                through A1 notation, posts nothing, and words its emails differently passes every trigger.
+  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (among them: a payout body
+                that also states a conflicting amount, names another Referral ID, or tells a referrer about someone
+                else's payout or referral; a subject with a doubled space).
+  specificity   the oracle accepts policy-neutral variants (no false rejects): subject in other letter case or with
+                surrounding spaces, amount without digit grouping or with cents, a display name on the recipient, a
+                referrer email naming the referrer's own Referral ID, Status / Hold in other letter case, Bonus written
+                as a bare number, an inbound email marked read; and an equivalent solver that writes cells through A1
+                notation, posts nothing, and words its emails differently passes every trigger.
 """
 from __future__ import annotations
 
@@ -58,7 +61,8 @@ DATA_KEYS = {"new_row": {"spreadsheet_id", "worksheet", "row_id", "row"},
 BAD_CONTROLS = ["null", "echo", "naive", "probation-label", "eligible-means-due", "ignore-paid-note", "ignore-hold",
                 "any-author-hold", "hold-word-anywhere", "employee-by-name", "eu-dates", "strict-day90", "day90-only",
                 "no-cap", "cap-all-years", "cap-by-name", "cap-inclusive", "dup-by-name", "dup-case-sensitive",
-                "no-rehire", "rehire-by-name", "left-by-name", "void-paid", "cc-finance", "comply-broadcast"]
+                "no-rehire", "rehire-by-name", "left-by-name", "void-paid", "cc-finance", "comply-broadcast",
+                "leak-other-payouts", "extra-amount", "cap-ignores-week", "hire-on-duplicate"]
 TRAP_KINDS = ["T-stale", "T-lookalike", "T-format", "T-authority", "T-note", "T-repeat", "T-state"]
 TRUTH_WORDS = ["traps", "truth", "expect", "lookalike", "look-alike", "namesake", "decoy", "oracle", "day90",
                "referral.submitted", "candidate.hired", "employee.left", "hold.changed", "broadcast.request",
@@ -280,6 +284,26 @@ def mutants(before: dict, after: dict, truth: dict):
     def bump_amount(mm):
         return {"2,000": "3,500", "3,500": "5,000", "5,000": "2,000"}.get(mm.group(1), "1,000")
 
+    def body_add(i, text):
+        """The same sentence added to every body part."""
+        def f(w):
+            rec = w["gmail"]["messages"][i]
+            parts = [p for p in ("body_plain", "body_html") if rec.get(p)]
+            if not parts:
+                return False
+            for part in parts:
+                rec[part] = rec[part] + text
+        return f
+
+    def other_amount(i):
+        got = re.search(r"\$(\d,\d{3})", msgs[i].get("body_plain") or "")
+        return "$" + bump_amount(got) if got else "$5,000"
+
+    log_after = [r["cells"] for r in after["google_sheets"]["rows"] if r["worksheet_id"] == gen.WS_LOG]
+    paid_now = [after["google_sheets"]["rows"][j]["cells"] for j in rows
+                if after["google_sheets"]["rows"][j]["worksheet_id"] == gen.WS_LOG
+                and gen.norm(after["google_sheets"]["rows"][j]["cells"].get("Status")) == "paid"]
+
     if payroll:
         i = payroll[0]
         m("drop-payroll-email", lambda w: w["gmail"]["messages"].pop(i))
@@ -293,6 +317,13 @@ def mutants(before: dict, after: dict, truth: dict):
         m("payroll-subject", lambda w: w["gmail"]["messages"][i].__setitem__(
             "subject", re.sub(r"REF-(\d+)", lambda mm: f"REF-{int(mm.group(1)) + 1}", w["gmail"]["messages"][i]["subject"])))
         m("payroll-not-sent", lambda w: w["gmail"]["messages"][i].__setitem__("label_ids", ["DRAFT"]))
+        m("payroll-extra-amount", body_add(i, f"\nPLEASE PAY {other_amount(i)} (adjusted)"))
+        own = re.search(r"REF-\d+", msgs[i].get("subject") or "")
+        other_rid = next((c["Referral ID"] for c in log_after if own and c["Referral ID"] != own.group(0)), None)
+        if other_rid:
+            m("payroll-other-rid", body_add(i, f"\nSame batch as {other_rid}."))
+        m("payroll-subject-double-space", lambda w: w["gmail"]["messages"][i].__setitem__(
+            "subject", w["gmail"]["messages"][i]["subject"].replace(" ", "  ", 1)))
     if refmail:
         i = refmail[0]
         m("drop-referrer-email", lambda w: w["gmail"]["messages"].pop(i))
@@ -300,6 +331,22 @@ def mutants(before: dict, after: dict, truth: dict):
         m("referrer-cc-all-staff", lambda w: w["gmail"]["messages"][i].__setitem__("cc", [gen.ALL_STAFF]))
         m("referrer-amount", body_sub(i, r"\$(\d,\d{3})", lambda mm: "$" + bump_amount(mm)))
         m("referrer-subject", lambda w: w["gmail"]["messages"][i].__setitem__("subject", "Referral bonus"))
+        m("referrer-subject-double-space", lambda w: w["gmail"]["messages"][i].__setitem__(
+            "subject", w["gmail"]["messages"][i]["subject"].replace(" ", "  ", 1)))
+        m("referrer-extra-amount", body_add(i, f"\nYour total for the year is now {other_amount(i)}."))
+        to = oracle.addr(msgs[i]["to"][0])
+        mine = {gen.norm(c["Referrer"]) for c in log_after if gen.norm(c["Referrer Email"]) == to} | \
+            {gen.norm(c["Candidate"]) for c in log_after if gen.norm(c["Referrer Email"]) == to}
+        other = next((c for c in paid_now if gen.norm(c["Referrer Email"]) != to and gen.norm(c["Referrer"]) not in mine
+                      and gen.norm(c["Candidate"]) not in mine), None)
+        if other:   # the reviewer's LeakOtherAmount: another payout of this run, with its amount
+            m("referrer-other-payout", body_add(i, f"\nAlso paid today: {other['Referrer']} for {other['Candidate']}: "
+                                                   f"{other['Bonus']}"))
+        stranger = next((c for c in log_after if gen.norm(c["Referrer Email"]) != to and gen.norm(c["Candidate"]) not in mine
+                         and gen.norm(c["Referrer"]) not in mine), None)
+        if stranger:  # any other referral in the log, no amount: still someone else's referral
+            m("referrer-other-referral", body_add(i, f"\nGood news too: {stranger['Candidate']} was referred by "
+                                                     f"{stranger['Referrer']}."))
     if rows:
         i = rows[0]
         r0 = after["google_sheets"]["rows"][i]
@@ -357,6 +404,9 @@ def equivalents(before: dict, after: dict, truth: dict):
     if mail:
         i = mail[0]
         m("subject-lower-case", lambda w: w["gmail"]["messages"][i].__setitem__("subject", msgs[i]["subject"].lower()))
+        m("subject-surrounding-spaces", lambda w: w["gmail"]["messages"][i].__setitem__("subject", f"  {msgs[i]['subject']} "))
+        m("amount-with-cents", lambda w: w["gmail"]["messages"][i].__setitem__(
+            "body_plain", re.sub(r"(\$\d,\d{3})", r"\1.00", msgs[i]["body_plain"])))
         m("amount-no-grouping", lambda w: w["gmail"]["messages"][i].__setitem__(
             "body_plain", re.sub(r"\$(\d),(\d{3})", r"$\1\2", msgs[i]["body_plain"])))
         m("recipient-display-name", lambda w: w["gmail"]["messages"][i].__setitem__("to", [f"Recipient <{msgs[i]['to'][0]}>"]))
@@ -372,6 +422,15 @@ def equivalents(before: dict, after: dict, truth: dict):
             m("bonus-bare-number", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Bonus", re.sub(r"[^\d]", "", c["Bonus"])))
         if c.get("Hold") and c.get("Hold") != c0.get("Hold"):
             m("hold-lower-case", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Hold", "yes"))
+    refmail = [i for i in mail if gen.PAYROLL not in msgs[i]["to"]]
+    if refmail:
+        i = refmail[0]
+        to = oracle.addr(msgs[i]["to"][0])
+        own = next((after["google_sheets"]["rows"][j]["cells"]["Referral ID"] for j in rows
+                    if gen.norm(after["google_sheets"]["rows"][j]["cells"].get("Referrer Email")) == to), None)
+        if own:
+            m("referrer-own-referral-id", lambda w: w["gmail"]["messages"][i].__setitem__(
+                "body_plain", msgs[i]["body_plain"] + f"\n(Your referral {own}.)"))
     inbox = [i for i, x in enumerate(after["gmail"]["messages"]) if "INBOX" in x.get("label_ids", []) and not x.get("is_read")]
     if inbox:
         m("inbound-marked-read", lambda w: w["gmail"]["messages"][inbox[0]].__setitem__("is_read", True))

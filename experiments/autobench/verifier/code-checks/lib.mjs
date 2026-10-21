@@ -131,7 +131,7 @@ export function indexWorld(world, promptText = '') {
     for (const [coll, x] of Object.entries(v)) if (Array.isArray(x) && x.length && typeof x[0] === 'object') collections.set(`${app}.${coll}`, x);
   }
   const meta = world?.meta ?? {};
-  return { strings, lowerStrings, blob, emails, numbers, numberValues, numberRaws, dates, channels, collections, meta, promptText };
+  return { strings, lowerStrings, blob, worldBlob: lower(contentText), promptLower: lower(promptText), emails, numbers, numberValues, numberRaws, dates, channels, collections, meta, promptText };
 }
 export const round6 = x => Math.round(x * 1e6) / 1e6;
 
