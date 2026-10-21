@@ -46,6 +46,17 @@ test('agent path: an address the person never wrote is not used; the template as
   assert.equal(answered.status, 'ready'); assert.equal(answered.understood.slots.summaryTo, 'me@example.com');
 });
 
+test('an address for a part that is off by default turns that part on, so it is grounded or asked, never dropped (P1 journeys)', () => {
+  const b = new TemplateFormBuilder();
+  // The agent passed only the address: the summary is wanted. Guessed, it is asked; written by the person, it is used.
+  const guessed = b.build({ template: 'invoice-chase', settings: { summaryTo: 'boss@example.com' }, origin: 'agent', request: 'use Foundry to chase my unpaid invoices' });
+  assert.equal(guessed.status, 'needs_answers'); assert.deepEqual(guessed.questions.map(q => q.slot), ['summaryTo']);
+  const written = b.build({ template: 'invoice-chase', settings: { summaryTo: 'me@example.com' }, origin: 'agent', request: 'chase my unpaid invoices, summary to me@example.com' });
+  assert.equal(written.status, 'ready'); assert.equal(written.understood.slots.sendSummary, true); assert.equal(written.understood.slots.summaryTo, 'me@example.com');
+  // An explicit "no summary" still wins.
+  assert.equal(b.build({ template: 'invoice-chase', settings: { sendSummary: false, summaryTo: 'boss@example.com' }, origin: 'agent', request: 'chase my invoices' }).understood?.slots?.sendSummary ?? false, false);
+});
+
 test('bad settings are refused in words before anything is built', () => {
   const b = new TemplateFormBuilder();
   assert.equal(b.build({ template: 'nope' }).status, 'unsupported');

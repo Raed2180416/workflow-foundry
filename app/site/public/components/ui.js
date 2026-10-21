@@ -6,7 +6,7 @@ import { t, rich, api, decide, say, toast, download, navigate, refreshBadge } fr
 // ------------------------------------------------------------------------------------------------ status
 const MARK = { works: '✓', preview: '•', planned: '○', undecided: '?', decided: '✓', limit: '!' };
 /** Works now / Preview / Planned / Not decided / Decided / Limit, always a word and a mark. */
-export function statusChip(kind) { return el('span', { class: 'status', dataset: { status: kind } }, el('span', { 'aria-hidden': 'true' }, MARK[kind] ?? '•'), t(`status.${kind}`)); }
+export function statusChip(kind) { return el('span', { class: 'status', dataset: { chip: kind } }, el('span', { 'aria-hidden': 'true' }, MARK[kind] ?? '•'), t(`status.${kind}`)); }
 export const statusOf = word => ({ 'Works now': 'works', Preview: 'preview', Planned: 'planned', 'Not decided': 'undecided', Decided: 'decided', Limit: 'limit' })[word] ?? 'planned';
 /** A Planned thing always comes with what the person can do today instead (SPEC R7). */
 export function plannedLine(label, insteadHref, insteadText) {
@@ -130,7 +130,18 @@ export function dataQuestions(questions) {
     return el('fieldset', { dataset: { question: q.id } }, el('legend', {}, q.question), el('p', { class: 'field-help' }, el('b', {}, t('ask.why')), ' ', q.why, el('br'), el('b', {}, t('ask.skip')), ' ', q.skip),
       q.choices.map((c, i) => el('label', { class: 'check-row' }, boxes[i], el('span', {}, c.label))), el('label', { class: 'check-row' }, none, el('span', {}, t('drop.noneOfThem'))));
   }));
-  return { node, answers: () => Object.fromEntries(Object.entries(read).map(([k, f]) => [k, f()])) };
+  const answers = () => Object.fromEntries(Object.entries(read).map(([k, f]) => [k, f()]));
+  /** Before anything is sent: the first question still unanswered gets the message and the focus. Returns true when all are answered. */
+  const check = () => {
+    node.querySelectorAll('[data-unanswered]').forEach(n => n.remove());
+    const missing = Object.entries(answers()).filter(([, v]) => v === null).map(([k]) => k);
+    if (!missing.length) return true;
+    const box = node.querySelector(`fieldset[data-question="${CSS.escape(missing[0])}"]`);
+    box?.append(el('p', { class: 'field-error', role: 'alert', dataset: { unanswered: '' } }, t('make.answerFirst')));
+    box?.querySelector('input')?.focus();
+    return false;
+  };
+  return { node, answers, check };
 }
 
 // ------------------------------------------------------------------------------------------------ the exact list (batch)

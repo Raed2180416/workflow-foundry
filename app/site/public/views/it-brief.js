@@ -9,9 +9,10 @@ export async function render({ params }) {
   const b = await api(`/api/brief${flowId ? `/${flowId}` : ''}.json`);
   const status = el('div', {});
   const dl = (ext, label) => el('button', { type: 'button', class: ext === 'md' ? 'primary' : '', dataset: { action: `brief-${ext}` }, on: { click: async e => {
-    e.currentTarget.setAttribute('aria-busy', 'true');
+    const button = e.currentTarget; // currentTarget is null once the handler awaits
+    button.setAttribute('aria-busy', 'true');
     try { await download(`/api/brief${flowId ? `/${flowId}` : ''}.${ext}`, `foundry-it-brief${flowId ? `-${flowId}` : ''}.${ext}`); toast(t('brief.downloaded')); } catch (error) { status.replaceChildren(errorPanel(error)); }
-    e.currentTarget?.removeAttribute?.('aria-busy');
+    button.removeAttribute('aria-busy');
   } } }, label);
   return el('div', { dataset: { layout: 'narrow' } },
     el('h1', {}, b.title),

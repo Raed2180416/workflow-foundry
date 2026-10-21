@@ -23,6 +23,7 @@
     "it": "For IT and security",
     "claims": "What we can show",
     "docs": "Quickstart",
+    "settings": "Settings",
     "local": "Runs on this computer only (127.0.0.1)."
   },
   "common": {
@@ -130,7 +131,8 @@
     "openAutomation": "Open the automation",
     "testing": "Testing with pretend {noun}. Nothing real is sent.",
     "tested": "Test finished.",
-    "setBy": "Set in Who decides what. You can make it stricter here, not looser."
+    "setBy": "Set in Who decides what. You can make it stricter here, not looser.",
+    "refusedNext": "Choose a stricter setting, or ask the person who set the rule to change it in Who decides what."
   },
   "ask": {
     "why": "Why I'm asking:",
@@ -1021,7 +1023,7 @@
     "startButton": "Start from this",
     "youAlone": "You're the only person here, so you approve your own automations. The record says so.",
     "savedTitle": "Version {version} saved.",
-    "bootstrapTitle": "Started by one person.",
+    "bootstrapTitle": "One step left:",
     "peopleTitle": "People and roles",
     "peopleLead": "Names stay on this computer. You hold every role until you give one to someone else.",
     "personName": "Add a person: name",
@@ -1053,6 +1055,7 @@
     "aboveAmount": "above {amount}",
     "always": "always",
     "needs": "needs {who}'s yes",
+    "needsYou": "needs your yes",
     "rulesTitle": "Rules that never break",
     "rulesLead": "A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.",
     "noRules": "No rules yet.",

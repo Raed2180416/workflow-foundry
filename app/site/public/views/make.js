@@ -151,7 +151,7 @@ export async function render({ params, query }) {
         return;
       }
       if (p.status === 'no_change') { status.replaceChildren(el('div', { class: 'banner', role: 'status' }, el('p', {}, t('make.noChange')), el('a', { href: `#/automations/${p.flowId}` }, t('make.openAutomation')))); return; }
-      if (p.status !== 'proposed') { status.replaceChildren(errorPanel({ message: p.reply ?? t('errors.unknown'), problem: { what: p.reply, next: (p.problems ?? []).join(' ') || null } }, { notDone: t('make.nothingMade'), action: { label: t('make.fix'), onClick: () => testButton.focus() } })); return; }
+      if (p.status !== 'proposed') { status.replaceChildren(errorPanel({ message: p.reply ?? t('errors.unknown'), problem: { what: p.reply, next: p.refusals?.length ? t('make.refusedNext') : (p.problems ?? []).filter(x => x !== p.reply).join(' ') || null } }, { notDone: t('make.nothingMade'), action: { label: t('make.fix'), onClick: () => testButton.focus() } })); return; }
       if (decider) memory[`decider:${p.proposalId}`] = { choice: decider.value(), who: value(tpl.decider) };
       say(t('make.testing', { noun: tpl.noun }));
       const d = await api('/api/practice', { proposalId: p.proposalId });

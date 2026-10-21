@@ -10,7 +10,8 @@ export async function render({ query }) {
       el('h2', { class: 'h3' }, c.short, ' ', statusChip(statusOf(c.status))),
       el('p', {}, c.text), c.qualifier ? el('p', { class: 'muted' }, c.qualifier) : null,
       el('dl', { class: 'facts' }, el('dt', {}, t('claims.evidence')), el('dd', {}, t(`claims.kinds.${c.evidence}`)), el('dt', {}, t('claims.date')), el('dd', {}, c.date),
-        el('dt', {}, t('claims.sourceFile')), el('dd', {}, el('code', {}, c.source.path), ` (${c.source.anchor})`)))));
+        el('dt', {}, t('claims.sourceFile')), el('dd', {}, el('code', {}, c.source.path), ` (${c.source.anchor})`)))),
+    el('div', { class: 'actions' }, el('a', { class: 'button primary', href: '#/' }, t('common.backHome')), el('a', { class: 'button', href: '#/trust' }, t('footer.it'))));
   if (focus) queueMicrotask(() => document.getElementById(`claim-${focus}`)?.scrollIntoView());
   return node;
 }

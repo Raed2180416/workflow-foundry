@@ -154,7 +154,8 @@ export function createSiteApi(app, options = {}) {
         if (!d || d.expires < now()) bad('NOT_FOUND', 'That list has expired. Drop the file again.');
         sheets = d.sheets;
       }
-      const r = await app.dryRun({ proposalId, sheets });
+      // The person's own list is tested as of today (the same input a live run gets); pretend data keeps the card's own date.
+      const r = await app.dryRun({ proposalId, sheets, ...(sheets ? { input: { now: new Date(now()).toISOString() } } : {}) });
       if (r.passed) milestone('firstVerified');
       return ok(r);
     }

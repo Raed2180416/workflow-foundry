@@ -65,6 +65,10 @@ export class TemplateFormBuilder {
     // Answers to the template's own questions are keyed by slot name; they fill that slot.
     const answered = Object.fromEntries(Object.entries(answers).filter(([k, v]) => typeof v === 'string' && v.trim() && t.slots.some(s => s.name === k && s.type !== 'list')).map(([k, v]) => [k, v.trim()]));
     const slots = { ...(settings ?? {}), ...(checked.prefill ?? {}), ...answered };
+    // An address for a part that is off by default ("summary to me@...") means that part is wanted: the toggle follows, so the
+    // address is grounded or asked like any other, never silently dropped (found by the P1 journeys: an agent's guessed summary
+    // address was dropped together with the summary, and the person's own "summary to me" lost the summary).
+    for (const s of t.slots) if (s.askWhen && !Object.hasOwn(slots, s.askWhen) && typeof slots[s.name] === 'string' && slots[s.name].trim()) slots[s.askWhen] = true;
     const fill = { slots, notStated: t.slots.map(s => s.name).filter(n => !Object.hasOwn(slots, n)), questions: [], assumptions: [] };
     // What the person wrote: on the form, every value they typed (and answers); on the agent path, their request and answers only.
     const personWrote = origin === 'site-form'

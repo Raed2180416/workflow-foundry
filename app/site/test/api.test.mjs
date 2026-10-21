@@ -51,6 +51,20 @@ test('P2 reference path through the API: card -> test -> turn on -> own list -> 
   } finally { await s.close(); }
 });
 
+test('a test on the person\'s own list runs as of today, so it matches what the live list would make (found by the P2 own-data journey)', async () => {
+  const s = await startSite();
+  try {
+    const p = await s.post('/api/propose', { template: 'invoice-chase', settings: { sendSummary: true, summaryTo: 'me@example.com' } });
+    const csv = fixture('invoices-accounting-export.csv');
+    const pv = await s.post('/api/data/preview', { template: 'invoice-chase', sheet: 'invoices', csv });
+    const c = await s.post('/api/data/commit', { template: 'invoice-chase', sheet: 'invoices', csv, mapping: pv.mapping, answers: { 'dateOrder:due': 'dmy' }, target: 'practice' });
+    const d = await s.post('/api/practice', { proposalId: p.proposalId, practiceDataId: c.practiceDataId });
+    assert.equal(d.passed, true); assert.equal(d.dataSource, 'your-data');
+    // On 2026-10-21, read day first: INV-2041 (18 days late), INV-2042 (11) and INV-2043 (50) are due a reminder; INV-2046 is not due yet.
+    assert.deepEqual(d.wouldDo.filter(w => w.to !== 'me@example.com').map(w => w.subject.match(/INV-\d+/)[0]).sort(), ['INV-2041', 'INV-2042', 'INV-2043']);
+  } finally { await s.close(); }
+});
+
 test('practice-only mode: the site refuses live runs and new lists; tests still work', async () => {
   const s = await startSite();
   try {

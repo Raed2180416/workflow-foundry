@@ -32,7 +32,9 @@ function ownListBranch(view, tpl, onTested) {
         const go = el('button', { type: 'button', class: 'primary', dataset: { action: 'test-own' } }, i + 1 < sheets.length ? t('checked.ownNext') : t('checked.ownTest'));
         const err = el('div', {});
         go.addEventListener('click', async () => {
-          go.setAttribute('aria-busy', 'true'); err.replaceChildren();
+          err.replaceChildren();
+          if (!qs.check()) return; // a question is still open: say so here, send nothing
+          go.setAttribute('aria-busy', 'true');
           try {
             const c = await api('/api/data/commit', { template: tpl.id, sheet: s.sheet, csv: text, mapping: mapper.mapping(), answers: qs.answers(), target: 'practice', practiceDataId: state.practiceDataId });
             state.practiceDataId = c.practiceDataId;

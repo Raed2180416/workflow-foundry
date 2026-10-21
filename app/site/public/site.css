@@ -141,12 +141,12 @@ details > summary::marker, details > summary::-webkit-details-marker { color: va
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; padding: 0; list-style: none; }
 .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 2px 10px; font-size: 15px; background: var(--surface); color: var(--fg); }
 .status { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 10px; font-size: 14px; font-weight: 600; border: 1px solid currentColor; white-space: nowrap; }
-.status[data-status="works"] { color: var(--ok); }
-.status[data-status="preview"] { color: var(--wait); }
-.status[data-status="planned"] { color: var(--muted); }
-.status[data-status="undecided"] { color: var(--paid); }
-.status[data-status="decided"] { color: var(--ok); }
-.status[data-status="limit"] { color: var(--bad); }
+.status[data-chip="works"] { color: var(--ok); }
+.status[data-chip="preview"] { color: var(--wait); }
+.status[data-chip="planned"] { color: var(--muted); }
+.status[data-chip="undecided"] { color: var(--paid); }
+.status[data-chip="decided"] { color: var(--ok); }
+.status[data-chip="limit"] { color: var(--bad); }
 .mark-ok { color: var(--ok); font-weight: 700; } .mark-bad { color: var(--bad); font-weight: 700; } .mark-wait { color: var(--wait); font-weight: 700; }
 .checks { list-style: none; padding: 0; margin: 8px 0 12px; }
 .checks li { display: grid; grid-template-columns: 28px 1fr; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--line); }

@@ -37,7 +37,7 @@ export async function render() {
     el('h2', { id: 'managed-h' }, t('home.managedTitle')), el('p', {}, t('home.managedBody')),
     el('div', { class: 'actions' }, el('a', { class: 'button', href: '#/it-brief' }, t('home.managedBrief')),
       practiceOnly ? el('span', { role: 'status' }, statusChip('works'), ' ', t('home.practiceOnlyOn'))
-        : el('button', { type: 'button', on: { click: async e => { e.currentTarget.disabled = true; try { await api('/api/settings', { mode: 'practice-only' }); navigate('/settings'); } catch (error) { e.target.after(errorPanel(error)); } } } }, t('home.managedPractice')))) : null;
+        : el('button', { type: 'button', on: { click: async e => { const b = e.currentTarget; b.disabled = true; try { await api('/api/settings', { mode: 'practice-only' }); navigate('/settings'); } catch (error) { b.disabled = false; b.after(errorPanel(error)); } } } }, t('home.managedPractice')))) : null;
   return el('div', {},
     managedCard,
     waiting ? el('p', { class: 'banner wait', role: 'status' }, t('home.waiting', { n: waiting }), ' ', el('a', { href: '#/waiting' }, t('home.waitingOpen'))) : null,

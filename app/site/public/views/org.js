@@ -12,7 +12,8 @@ export async function render() {
   const state = await api('/api/org/map');
   const root = el('div', { dataset: { layout: 'narrow' } });
   const status = el('div', {});
-  const draw = () => root.replaceChildren(...view());
+  let drawing = false; // a blur fired while the view is replaced must not start a second replace
+  const draw = () => { if (drawing) return; drawing = true; try { root.replaceChildren(...view()); } finally { drawing = false; } };
   let draft = memory.orgDraft ?? null;
 
   function view() {
@@ -40,10 +41,10 @@ export async function render() {
     const people = map.principals.filter(p => p.kind === 'human');
     return [
       el('p', { class: 'banner ok', role: 'status', dataset: { savedVersion: String(version) } }, statusChip('works'), ' ', t('org.savedTitle', { version })),
-      state.warnings.map(w => el('div', { class: 'banner wait', dataset: { bootstrap: '' } }, el('p', {}, el('b', {}, t('org.bootstrapTitle')), ' ', w))),
+      ...state.warnings.map(w => el('div', { class: 'banner wait', dataset: { bootstrap: '' } }, el('p', {}, el('b', {}, t('org.bootstrapTitle')), ' ', w))),
       el('h2', {}, t('org.peopleTitle')), el('ul', {}, people.map(p => el('li', {}, p.name, ': ', p.roles.map(r => map.roles.find(x => x.id === r)?.name ?? r).join(', ')))),
       el('h2', {}, t('org.approvalsTitle')), el('ul', {}, map.approvals.map(a => el('li', {}, t(`org.actions.${a.actionClass}`), ': ',
-        a.aboveParameter ? t('org.aboveAmount', { amount: euro(map.parameters[a.aboveParameter]?.value ?? 0) }) : t('org.always'), ' ', t('org.needs', { who: nameOf(map, a.approverPrincipal) })))),
+        a.aboveParameter ? t('org.aboveAmount', { amount: euro(map.parameters[a.aboveParameter]?.value ?? 0) }) : t('org.always'), ' ', a.approverPrincipal === 'you' ? t('org.needsYou') : t('org.needs', { who: nameOf(map, a.approverPrincipal) })))),
       el('h2', {}, t('org.rulesTitle')), map.clauses.length ? el('ul', {}, map.clauses.map(c => el('li', {}, c.statement, ' ', el('span', { class: 'chip' }, t(`org.layers.${c.layer}`)), ' ', el('span', { class: 'chip' }, t(`org.mode.${c.mode}`))))) : el('p', { class: 'muted' }, t('org.noRules')),
       el('div', { class: 'actions' }, el('button', { type: 'button', class: 'primary', dataset: { action: 'change-map' }, on: { click: () => { draft = structuredClone(map); memory.orgDraft = draft; draw(); } } }, t('org.change')),
         el('a', { class: 'button', href: '#/make/expense-approval' }, t('org.tryCard'))),
@@ -110,24 +111,34 @@ export async function render() {
         const amount = param ? el('input', { type: 'number', id: amountId, min: 0, step: 'any', inputmode: 'decimal', value: row?.aboveParameter ? map.parameters[row.aboveParameter]?.value : '', dataset: { ask: 'money', amount: action } }) : null;
         const who = el('select', { id: whoId, dataset: { approver: action } }, el('option', { value: '' }, t('org.nobody')), people.map(p => el('option', { value: p.id, selected: row?.approverPrincipal === p.id }, p.name)));
         const ensure = () => { if (!row) { row = { id: `A${map.approvals.length + 1}`, actionClass: action, approverRole: 'approver', approverPrincipal: 'you', remindAfterHours: 24, stopAfterHours: 72, excluded: ['requester'] }; map.approvals.push(row); } return row; };
+        // Edits update this row in place: the field the person moves to next is never rebuilt under their pointer or focus.
+        const badgeHolder = el('span', {}), facts = el('p', { class: 'muted small' }, t('org.rowFacts'));
+        const makeRule = el('div', { class: 'actions' }, el('button', { type: 'button', dataset: { action: 'make-rule' }, on: { click: async e => {
+          const button = e.currentTarget; button.setAttribute('aria-busy', 'true');
+          try { const r = await api('/api/org/rule', { map, approvalId: row.id }); draft = r.map; memory.orgDraft = draft; rerender('[data-panel="rules"] h3'); }
+          catch (error) { button.removeAttribute('aria-busy'); status.replaceChildren(errorPanel(error)); }
+        } } }, t('org.makeRule')));
+        const sync = () => {
+          const badge = row?.approverPrincipal && row.approverPrincipal !== 'you' ? paidBadge(t('org.teamFor', { name: nameOf(map, row.approverPrincipal) })) : null;
+          badgeHolder.replaceChildren(...(badge ? [' ', badge.button, badge.note] : []));
+          facts.hidden = !row;
+          makeRule.hidden = !(row?.aboveParameter && !map.clauses.some(c => c.check.kind === 'approval-above-threshold' && c.check.parameter === row.aboveParameter));
+        };
         amount?.addEventListener('change', () => {
           const r = ensure(), v = amount.value === '' ? null : Number(amount.value);
           if (v === null) { delete r.aboveParameter; } else { map.parameters[param] = { value: v, unit: 'EUR', label: 'Money out above this needs a yes' }; r.aboveParameter = param; }
-          for (const c of map.clauses.filter(c => c.check.kind === 'approval-above-threshold' && c.check.parameter === param)) c.statement = c.statement.replace(/€[\d.,]+/, euro(v ?? 0));
-          rerender(`#${amountId}`);
+          for (const c of map.clauses.filter(c => c.check.kind === 'approval-above-threshold' && c.check.parameter === param)) {
+            c.statement = c.statement.replace(/€[\d.,]+/, euro(v ?? 0));
+            root.querySelector(`[data-rule="${c.id}"] h3`)?.replaceChildren(c.statement);
+          }
+          sync();
         });
-        who.addEventListener('change', () => { const r = ensure(); if (who.value) r.approverPrincipal = who.value; else map.approvals.splice(map.approvals.indexOf(r), 1); rerender(`#${whoId}`); });
-        const badge = row?.approverPrincipal && row.approverPrincipal !== 'you' ? paidBadge(t('org.teamFor', { name: nameOf(map, row.approverPrincipal) })) : null;
-        const ruleExists = map.clauses.some(c => c.check.kind === 'approval-above-threshold' && c.check.parameter === row?.aboveParameter);
+        who.addEventListener('change', () => { const r = ensure(); if (who.value) r.approverPrincipal = who.value; else { map.approvals.splice(map.approvals.indexOf(r), 1); row = null; } sync(); });
+        sync();
         return el('fieldset', { dataset: { action } }, el('legend', {}, t(`org.actions.${action}`)),
           amount ? el('div', { class: 'field' }, el('label', { for: amountId }, t('org.aboveLabel')), amount) : null,
-          el('div', { class: 'field' }, el('label', { for: whoId }, t('org.whoApproves')), who, ' ', badge?.button ?? null, badge?.note ?? null),
-          row ? el('p', { class: 'muted small' }, t('org.rowFacts')) : null,
-          row?.aboveParameter && !ruleExists ? el('div', { class: 'actions' }, el('button', { type: 'button', dataset: { action: 'make-rule' }, on: { click: async e => {
-            e.currentTarget.setAttribute('aria-busy', 'true');
-            try { const r = await api('/api/org/rule', { map, approvalId: row.id }); draft = r.map; memory.orgDraft = draft; rerender('[data-panel="rules"] h3'); }
-            catch (error) { status.replaceChildren(errorPanel(error)); }
-          } } }, t('org.makeRule'))) : null);
+          el('div', { class: 'field' }, el('label', { for: whoId }, t('org.whoApproves')), who, badgeHolder),
+          facts, makeRule);
       }));
   }
 
