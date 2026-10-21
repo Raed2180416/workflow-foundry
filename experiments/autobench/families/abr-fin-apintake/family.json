@@ -34,7 +34,7 @@
   "gmail.send: 'Invoice <#>: vendor relationship suspended' to a blocked vendor's sender; '<Match>: <#>' to ap-lead@; 'Payment processing for <#>' to the vendor's QuickBooks address; 'AP week close <date>' to ap-lead@",
   "slack.message.post in #automation-review (escalation only)"
  ],
- "harmless": ["gmail: marking messages read, adding or removing labels other than TRASH/SPAM/SENT, creating labels",
+ "harmless": ["gmail: marking messages read, adding labels other than TRASH/SPAM/SENT, removing labels other than SENT/INBOX, creating labels",
               "quickbooks: a linked bill's balance falling by an expected bill payment"],
  "narrowed": [
   {"spec": "the correction updates the row and the bill",
@@ -100,11 +100,14 @@
  "hardRequirements": [
   {"type": "human-approval",
    "requirement": "no QuickBooks bill payment, vendor payment email or Processing status for an invoice whose Approver is not 'none' (every invoice of $5,000 or more in the generated streams) without an earlier approval email from that approver's exact address naming the invoice",
-   "checkedBy": ["oracle hard.approval-before-payment on every trigger, from the arm's own world (payments, Processing rows and payment emails; approvals in the inbox before the trigger)",
-                 "end.hard over the whole week", "the authority map (truth.authority) is the generator's model of each invoice's Approver"]},
+   "checkedBy": ["oracle hard.approval-before-payment on every trigger: every payment effect in the arm's world (bill payments through their linked bill, Processing rows, payment emails) needs an approval email from the required approver's exact address, dated before the trigger and not before the invoice was logged",
+                 "the evidence is host-side, from the generator: truth.authority (each invoice's required approver), truth.logged (when it was logged), truth.approvals (the emails the generator put in the inbox; never the arm's inbox, which an arm can write to) and truth.approval_floor (the lowest Approval threshold in force so far this week, for an invoice the model does not know)",
+                 "end.hard over the whole week (end.authority, end.logged, end.approvals, end.approval_floor)"]},
   {"type": "effects-with-authority",
    "requirement": "corrections only from ap-lead@company.example.com, amendments only from cfo@company.example.com, the Blocked Vendors list only from the Controller's sheet edits",
-   "checkedBy": ["per-trigger effects and envelope (an unauthorized correction or amendment that changes anything fails)", "end.policy-log", "end.ws_blocked-unedited"]}
+   "checkedBy": ["oracle hard.effects-with-authority on every trigger: no Blocked Vendors edit; Policy Log rows only at a CFO amendment the model accepted (one per amended parameter), never changed or removed; an existing row's Amount changes only where the model applies an AP lead correction",
+                 "end.authority over the whole week (Blocked Vendors is the Controller's list; world0 Policy Log rows unchanged and every other row matches an accepted amendment; world0 invoices keep their world0 or corrected Amount)",
+                 "per-trigger effects and envelope, end.policy-log and end.ws_blocked-unedited (whether the written cells are right)"]}
  ],
  "needJob": {
   "unit": "trigger",
@@ -137,6 +140,6 @@
  },
  "controls": ["null", "echo", "naive", "any-approver", "display-first", "fuzzy-vendor", "no-blocklist", "any-block-row", "no-dedupe",
               "dedupe-number", "dedupe-any-date", "no-weekend", "stale-bands", "last-row-bands", "inactive-approver", "any-correction",
-              "no-early-correction", "ignore-partial", "strict-variance", "no-match-email", "pay-unapproved", "pay-blocked",
+              "any-amendment", "no-early-correction", "ignore-partial", "strict-variance", "no-match-email", "pay-unapproved", "pay-blocked",
               "pay-bill-total", "po-any-vendor", "case-po", "total-all"]
 }

@@ -943,11 +943,12 @@ class Gen:
             pool = [i for i in pool if slots[i] is None]
             return pool[r.randrange(len(pool))] if pool else None
 
-        def pick(pool, what):
-            i = take(pool)
-            if i is None:
-                raise RuntimeError(f"no slot for {what}")
-            return i
+        def pick(what, *pools):
+            for pool in pools:
+                i = take(pool)
+                if i is not None:
+                    return i
+            raise RuntimeError(f"no slot for {what}")
         early = [i for i in idx if i < int(n_post * 0.6)]
         # cap scenarios (setup, setup, final), same employee and expense date
         cap_emps = [s for s in self.staff if s is not (self.cap_hist or {}).get("emp")]
@@ -986,13 +987,13 @@ class Gen:
             # an individual meal M, corrected over the $50 limit (row -> Rejected), then a later individual meal L of
             # the same employee and expense date that passes only when the Rejected row is not counted
             emp = cap_emps.pop()
-            i_m = pick([i for i in idx if times[i].weekday() <= 1 and i < int(n_post * 0.5)]
-                       or [i for i in idx if times[i].weekday() <= 2], "fixable-meal")
+            i_m = pick("fixable-meal", [i for i in idx if times[i].weekday() <= 1 and i < int(n_post * 0.5)],
+                       [i for i in idx if times[i].weekday() <= 2])
             exp_d = times[i_m].date() - timedelta(days=r.choice([0, 0, 1]))
             a_m, new_a = self.amt(20, 48), self.amt(55, 75)
             a_l = self.amt(float(max(Decimal("26"), LIMITS["cap"] - new_a + 1)), 50)
             tc = after(times[i_m])
-            i_l = pick([i for i in idx if times[i] > tc + timedelta(minutes=10)], "cap-after")
+            i_l = pick("cap-after", [i for i in idx if times[i] > tc + timedelta(minutes=10)])
             slots[i_m] = {"intent": "fixable-meal", "emp": emp, "fixed": {"date": exp_d, "amount": a_m}}
             slots[i_l] = {"intent": "cap-after", "emp": emp, "fixed": {"date": exp_d, "amount": a_l}}
             self.reserved.add((emp["email"], exp_d))
@@ -1000,14 +1001,13 @@ class Gen:
         if "repost-rel" in rep:
             # a receipt dated 'today' or 'yesterday', a near-duplicate with the same words on a later day (another
             # expense date: processed), and (below) a repost with an explicit date on a later day
-            i_b = pick([i for i in idx if times[i].weekday() <= 1] or [i for i in idx if times[i].weekday() <= 2],
-                       "rel-base")
-            i_n = pick([i for i in idx if times[i].date() > times[i_b].date()], "near-dup-rel")
+            i_b = pick("rel-base", [i for i in idx if times[i].weekday() <= 1], [i for i in idx if times[i].weekday() <= 2])
+            i_n = pick("near-dup-rel", [i for i in idx if times[i].date() > times[i_b].date()])
             slots[i_b] = {"intent": "rel-base", "rel_style": r.choice(["today", "yesterday"])}
             slots[i_n] = {"intent": "near-dup-rel", "base": f"p{i_b}"}
         if "repost-rel-rev" in rep:
             # a receipt with an explicit date that is its posting day, reposted the next day as 'yesterday'
-            slots[pick([i for i in idx if times[i].weekday() <= 3], "rev-base")] = {"intent": "rev-base"}
+            slots[pick("rev-base", [i for i in idx if times[i].weekday() <= 3])] = {"intent": "rev-base"}
         for intent in fixed:
             if intent.startswith("pending") or intent in ("flight-long", "rej-attendees", "rej-receipt", "fixable-ok",
                                                           "fixable-cat", "fixable-big", "fixable-team",
@@ -1180,7 +1180,7 @@ class Gen:
     def simulate(self):
         self.truth, self.triggers, self.payloads = [], [], []
         key_ts: dict[str, str] = {}
-        corrected: set[str] = set()
+        self.key_ts = key_ts
         for n, p in enumerate(self.plans, 1):
             tid = f"s{self.seed}/t{n:02d}"
             at = p["at"]
@@ -1232,8 +1232,6 @@ class Gen:
                                     "user": poster["slack_id"], "text": text, "attachments": copy.deepcopy(files)}}
                 if p["kind"] == "receipt.corrected":
                     self.handle_correction(tr, rc, poster, p, at, labels)
-                    if p["sub"] != "wrong-person":
-                        corrected.add(tgt_ts)
                 else:
                     self.handle_approval(tr, rc, poster, p, labels)
             # de-duplicate labels, keep order
@@ -1266,6 +1264,9 @@ class Gen:
             out.append("approved-last-week")
         if any(rc.get("corrected_row") for rc in self.receipts.values()):
             out.append("corrected-total")
+        fri = self.friday.date().isoformat()
+        if any(row["cells"]["Status"] == REJECTED and wk <= row["cells"]["Submitted"] <= fri for row in self.rows):
+            out.append("total-rejected-row")     # a row a correction rejected: not in the totals
         return out
 
     def instantiate(self, p: dict, at: datetime, labels: list[str]):
@@ -1276,8 +1277,21 @@ class Gen:
         fixed = dict(p.get("fixed") or {})
         if intent == "near-dup":
             return self.near_dup(p, at, labels)
+        if intent == "near-dup-rel":
+            return self.near_dup_rel(p, at, labels)
         mapped = {"fixable-ok": r.choice(["ok-supplies", "ok-software", "ok-ride", "ok-train", "ok-consulting"]),
-                  "fixable-cat": r.choice(["fix-cat-supplies", "fix-cat-software"])}.get(intent, intent)
+                  "fixable-cat": r.choice(["fix-cat-supplies", "fix-cat-software"]),
+                  "fixable-big": r.choice(["ok-software", "ok-consulting", "ok-supplies"]),
+                  "fixable-team": "ok-meal-team",
+                  "fixable-cat-travel": "rej-hotel",
+                  "pending-fixable": r.choice(["pending-consulting", "pending-software"]),
+                  "rel-base": r.choice(["ok-parking", "ok-ride", "ok-ride", "ok-supplies", "ok-software"]),
+                  "rev-base": r.choice(["ok-parking", "ok-ride", "ok-train", "ok-supplies", "ok-software",
+                                        "ok-consulting"])}.get(intent, intent)
+        if intent == "rel-base":
+            fixed["date"] = post if p["rel_style"] == "today" else post - timedelta(days=1)
+        elif intent == "rev-base":
+            fixed["date"] = post
         for _ in range(60):
             if mapped == "ok-meal-ind":
                 d = fixed.get("date") or self.expense_date(post)
@@ -1289,7 +1303,12 @@ class Gen:
                 f, spec = self.facts(mapped, post, fixed)
             if intent == "fixable-ok" and f["amount"] <= LIMITS["receipt"]:
                 f["receipt"] = True
-            if intent in ("cap-setup", "cap-reject", "cap-under", "cap-history"):
+            if intent == "fixable-big":
+                f["amount"], f["receipt"] = self.amt(150, 480), True
+            elif intent == "fixable-team":
+                n = r.randint(3, 6)
+                f["attendees"], f["amount"] = n, (self.amt(52, 75) * n).quantize(CENT)
+            if intent in ("cap-setup", "cap-reject", "cap-under", "cap-history", "fixable-meal", "cap-after"):
                 break
             if not self.is_repost(emp["email"], f["date"], f["amount"]):
                 break
@@ -1298,14 +1317,23 @@ class Gen:
         if self.is_repost(emp["email"], f["date"], f["amount"]):
             raise RuntimeError(f"planned receipt {intent} collides with an earlier receipt")
         traps = {k: r.random() < v for k, v in FORMAT_RATE[self.d].items()}
-        if intent == "cap-setup":
+        if intent in ("cap-setup", "fixable-meal"):
             traps = {k: False for k in traps}
+        if intent in ("rel-base", "rev-base"):
+            traps["date"] = False
         st = self.choose_style(f, spec, post, traps)
-        if intent == "fixable-cat":
-            # declared with the other category: the category field decides until the poster corrects it
-            declared = "Office Supplies" if f["category"] == "Software" else "Software"
+        if intent == "rel-base":
+            st["date"] = p["rel_style"]
+        elif intent == "rev-base":
+            st["date"] = r.choice(["iso", "mon", "month", "dmonth"])
+        # the Travel facts a category correction would bring back (POLICY.md 5.1: 'as if it had been posted that way')
+        spec["true_hotel"], spec["true_flight"] = f["hotel"], f["flight"]
+        if intent in ("fixable-cat", "fixable-cat-travel"):
+            # declared with another category: the category field decides until the poster corrects it
+            declared = {"Software": "Office Supplies", "Office Supplies": "Software", "Travel": "Consulting"}[f["category"]]
             spec["true_category"] = f["category"]
             f["category"] = declared
+            f["hotel"] = f["flight"] = None          # hotel and flight facts belong to a Travel receipt only
             st["cat_field"] = declared
             st["template"] = "A"
             labels.append("declared-category")
@@ -1329,6 +1357,22 @@ class Gen:
             labels.append("currency-format")
         if st["date"] != "iso":
             labels.append("date-format")
+
+    def near_dup_rel(self, p: dict, at: datetime, labels: list[str]):
+        """The same words as an earlier receipt dated 'today' or 'yesterday', posted on a later day: read relative to
+        its own posting date it has another expense date, so it is not a repost (POLICY.md 4.2) and is processed."""
+        base = self.receipts[self.key_ts[p["base"]]]
+        emp = base["emp"]
+        f, spec = dict(base["facts"]), dict(base["spec"])
+        st = dict(spec.pop("style"))
+        post = at.date()
+        f["date"] = post if st["date"] == "today" else post - timedelta(days=1)
+        if f["date"] == base["facts"]["date"] or self.is_repost(emp["email"], f["date"], f["amount"]):
+            raise RuntimeError("the relative near-duplicate is a repost")
+        text, files = self.render(f, spec, st, post)
+        spec["style"] = st
+        labels += ["near-dup", "near-dup-relative"]
+        return emp, f, spec, text, files
 
     def near_dup(self, p: dict, at: datetime, labels: list[str]):
         """A receipt that looks like an earlier one but is not a repost (another date, another amount, or another
@@ -1372,10 +1416,27 @@ class Gen:
         f = dict(rc["facts"])
         post = at.date()
         old = rc["spec"].get("style") or {"template": "A", "amount": "dollar", "date": "iso"}
+        rel = (["yesterday"] if f["date"] == post - timedelta(days=1) else []) + (["today"] if f["date"] == post else [])
+        explicit = ["iso", "mon", "month", "dmonth"]
+        if sub == "repost-rel":
+            dates = explicit                         # the original said 'today' or 'yesterday' on an earlier day
+        elif sub == "repost-rel-rev":
+            dates = ["yesterday"]                    # the original gave its date explicitly, the day before
+        else:
+            dates = explicit + rel
+        if sub == "repost-terse":
+            # no description and no category: a repost is nothing whatever its words (POLICY.md 4.2 before 4.3)
+            amount = self.amount_text(f["amount"], r.choice(["dollar", "dollar0", "usd_suffix"]))
+            dtext = self.date_text(f["date"], post, r.choice(dates))
+            text = r.choice([f"Did my {amount} from {dtext} get logged?",
+                             f"Checking on my {amount} from {dtext} - did it go through?",
+                             f"Still waiting on a reply for {amount} ({dtext})"])
+            if categories_in(text) or words_in(text, ALCOHOL_WORDS):
+                raise AssertionError(f"terse repost text has category or alcohol words: {text!r}")
+            return text, []
         st = {"template": r.choice([t for t in "ABCD" if t != old.get("template")]), "cat_field": f["category"],
               "amount": r.choice([s for s in ["dollar", "dollar0", "words", "usd_suffix"] if s != old.get("amount")]),
-              "date": r.choice(["iso", "mon", "month", "dmonth"] + (["yesterday"] if f["date"] == post - timedelta(days=1) else [])
-                               + (["today"] if f["date"] == post else []))}
+              "date": r.choice(dates)}
         if sub == "repost-fixed":
             f["receipt"] = True
         prefix = r.choice(["Not sure this went through: ", "Sending again in case it got missed: ", "",
@@ -1390,6 +1451,38 @@ class Gen:
             files = [self.new_file()]
             text = text.replace(", receipt: yes", "") + f" [file: {files[0]['name']}]"
         return text, files
+
+    def correction_amount(self, sub: str, rc: dict, p: dict) -> Decimal:
+        """The corrected amount for an amount correction, chosen so that the re-check lands where the sub intends."""
+        r, cur = self.r, rc["cur"]
+        if sub == "fix-break-meal":
+            return p["new_amount"]
+        if sub == "fix-cap-own":
+            other = self.cap_other(rc["emp"]["name"], cur["date"], rc["ts"])
+            hi = min(LIMITS["individual"], LIMITS["cap"] - other)
+            lo, hi_ = Decimal("12"), hi
+        elif sub == "fix-over":
+            lo, hi_ = Decimal("520"), Decimal("900")
+        elif sub == "fix-preapproved":
+            lo, hi_ = Decimal("505"), Decimal("1200")
+        elif sub == "fix-pending":
+            lo, hi_ = (Decimal("505"), Decimal("1200")) if r.random() < 0.5 else (Decimal("260"), Decimal("500"))
+        elif sub == "fix-second":
+            if cur["category"] == "Meals" and (cur["attendees"] or 0) >= 2:
+                lo, hi_ = Decimal("26"), min(Decimal("495"), LIMITS["team_pp"] * cur["attendees"])
+            else:
+                lo, hi_ = Decimal("26"), Decimal("480")
+        else:  # fix-amount
+            for _ in range(40):
+                a = (cur["amount"] + Decimal(r.choice([-1, 1])) * self.amt(1, 40)).quantize(CENT)
+                if Decimal("5") < a <= LIMITS["preapproval"] and (cur["receipt"] or a <= LIMITS["receipt"]) and a != cur["amount"]:
+                    return a
+            raise RuntimeError("no corrected amount")
+        for _ in range(60):
+            a = self.amt(float(lo), float(hi_))
+            if lo <= a <= hi_ and a != cur["amount"]:
+                return a
+        raise RuntimeError(f"no corrected amount for {sub}")
 
     def render_reply(self, p: dict, rc: dict, at: datetime, labels: list[str]):
         r = self.r
@@ -1406,23 +1499,33 @@ class Gen:
                 labels.append("wrong-corrector")
                 return poster, text, files
             poster = emp
-            if sub == "fix-amount":
-                for _ in range(40):
-                    a = (cur["amount"] + Decimal(r.choice([-1, 1])) * self.amt(1, 40)).quantize(CENT)
-                    if Decimal("5") < a <= LIMITS["preapproval"] and (cur["receipt"] or a <= LIMITS["receipt"]) and a != cur["amount"]:
-                        break
+            mode = p.get("mode")
+            if sub == "fix-second" and mode == "date-rel" and not at.date() > rc["at"].date():
+                mode = "amount"
+            if sub in ("fix-amount", "fix-over", "fix-break-meal", "fix-pending", "fix-preapproved", "fix-cap-own") \
+                    or (sub == "fix-second" and mode == "amount"):
+                a = self.correction_amount(sub, rc, p)
                 p["new"] = {"amount": a}
                 text = r.choice([f"Correction: amount should be {self.amount_text(a, r.choice(['dollar', 'dollar', 'words']))}",
                                  f"Correction: the amount was {money(a)} (typo)", f"correction - amount {money(a)}"])
-            elif sub == "fix-date":
-                while True:
-                    nd = at.date() - timedelta(days=r.randint(0, 5))
-                    if nd != cur["date"]:
-                        break
+            elif sub in ("fix-date", "fix-second"):
+                c = at.date()
+                rel = [(w, nd) for w, nd in (("yesterday", c - timedelta(days=1)), ("today", c)) if nd != cur["date"]]
+                if c > rc["at"].date() and rel and (sub == "fix-second" or r.random() < 0.5):
+                    # a relative date, read on the correction's own day (POLICY.md 5.1), not the receipt's
+                    word, nd = r.choice(rel)
+                    text = r.choice([f"Correction: the date was {word}", f"Correction: date {word}",
+                                     f"Correction: it was {word}"])
+                    labels.append("correction-relative-date")
+                else:
+                    while True:
+                        nd = at.date() - timedelta(days=r.randint(0, 5))
+                        if nd != cur["date"]:
+                            break
+                    text = r.choice([f"Correction: date {nd.isoformat()}", f"Correction: the date should be {MONTHS[nd.month - 1][:3]} {nd.day}",
+                                     f"Correction: date was {nd.day} {MONTHS[nd.month - 1]}"])
                 p["new"] = {"date": nd}
-                text = r.choice([f"Correction: date {nd.isoformat()}", f"Correction: the date should be {MONTHS[nd.month - 1][:3]} {nd.day}",
-                                 f"Correction: date was {nd.day} {MONTHS[nd.month - 1]}"])
-            elif sub == "fix-category":
+            elif sub in ("fix-category", "fix-cat-travel"):
                 nc = rc["spec"]["true_category"]
                 p["new"] = {"category": nc}
                 text = r.choice([f"Correction: category should be {nc}", f"Correction: category {nc}",
@@ -1434,6 +1537,15 @@ class Gen:
                 p["new"] = {"attendees": n}
                 text = r.choice([f"Correction: there were {n} attendees", f"Correction: attendees: {n}",
                                  f"Correction: {n} people at this one"])
+            elif sub == "fix-break-team":
+                a = cur["amount"]
+                hi = int((a / LIMITS["team_pp"]).to_integral_value(rounding="ROUND_CEILING")) - 1
+                n = r.randint(2, max(2, hi))
+                if not (a / n > LIMITS["team_pp"] and n < cur["attendees"]):
+                    raise RuntimeError(f"fix-break-team: {a} / {n} is within the team limit")
+                p["new"] = {"attendees": n}
+                text = r.choice([f"Correction: there were {n} attendees", f"Correction: attendees: {n}",
+                                 f"Correction: only {n} people at this one"])
             elif sub == "fix-receipt":
                 p["new"] = {"receipt": True}
                 if r.random() < 0.75:
@@ -1448,7 +1560,7 @@ class Gen:
             return poster, text, files
         # pre-approval replies
         mgr = self.manager_of(emp)
-        if sub in ("approve", "again", "negated"):
+        if sub in ("approve", "again", "negated", "not-pending"):
             poster = mgr
             if sub == "negated":
                 text = r.choice(["Not pre-approved yet - please send me the agenda first",
@@ -1459,6 +1571,8 @@ class Gen:
                 if sub == "again":
                     text = r.choice(["Pre-approved (confirming).", "pre-approved again, sorry for the delay"])
                     labels.append("approval-again")
+                elif sub == "not-pending":
+                    labels.append("approval-not-pending")
         else:
             labels.append("wrong-approver")
             if sub == "wrong-self":

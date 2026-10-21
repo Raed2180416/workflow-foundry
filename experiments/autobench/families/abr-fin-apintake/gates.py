@@ -16,7 +16,8 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
   solvability   the observable-only reference passes every trigger (and every week) of the practice and dev streams,
                 in carry mode and in rebased mode; generator and reference therefore agree on every effect (gate 3).
   controls      every bad control fails; null passes exactly the no-op triggers; the <= 40-line naive heuristic
-                scores below 60% per trigger at d3; the approval controls trip the hard requirement.
+                scores below 60% per trigger at d3; the approval controls trip the approval requirement and the
+                authority controls (any-correction, any-amendment) the effects-with-authority requirement.
   traps         each design trap kind appears at least five times across the four dev label streams 610-613.
   mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects.
   specificity   the oracle accepts policy-neutral variants (no false rejects), and an equivalent solver that uses
