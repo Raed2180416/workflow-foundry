@@ -96,6 +96,9 @@ export default [
       // Kill only once the sandboxed code itself runs: an owner killed during sandbox setup takes the sandbox with it
       // (its READY line to the dead owner's stderr pipe raises SIGPIPE), which would hide the hazard.
       const running = await until(() => groupLive([group]).some(p => p.cmd.includes('--permission')), 15000);
+      // ... and has written what it writes at start-up (node's permission-model warning on stderr): a write to the dead owner's
+      // pipe would kill it with EPIPE. A computation that prints nothing afterwards (a busy loop, a hung call) runs on.
+      await wait(1500);
       o.child.kill('SIGKILL'); await o.done;
       await wait(5000);
       const orphanAfter5s = group ? groupLive([group]).length : -1;
@@ -153,7 +156,15 @@ await runSandboxed({ command: 'sh', args: ['-c', 'exec sleep 300 # ${marker}'], 
         const ws = path.join(tmp('orch-b4-'), 'ws');
         const groups = new Set();
         let polling = true;
-        const poll = (async () => { while (polling && !existsSync(path.join(ws, 'foundry.sqlite'))) await wait(20); while (polling) { try { const st = new Store(ws); for (const runRow of st.db.prepare('SELECT DISTINCT run_id FROM run_children').all()) for (const c of st.children(runRow.run_id)) groups.add(c.pgid); st.close(); } catch {} await wait(15); } })();
+        const poll = (async () => {
+          const file = path.join(ws, '.foundry', 'foundry.sqlite');
+          while (polling && !existsSync(file)) await wait(20);
+          await wait(100);
+          const { DatabaseSync } = await import('node:sqlite');
+          const db = new DatabaseSync(file);
+          while (polling) { try { for (const c of db.prepare('SELECT pgid FROM run_children').all()) groups.add(c.pgid); } catch {} await wait(10); }
+          db.close();
+        })();
         const r = await owner({ workspace: ws, action: 'create-execute', workflow: wf(`Crash${failure ?? 'Fast'}`, [mapNode('each', ref('input.items'), body, { concurrency: 3, failure })], [exists(ref('nodes.each.count'))]),
           input: { items: [0, 1, 2, 3, 4, 5] } });
         polling = false; await poll;
