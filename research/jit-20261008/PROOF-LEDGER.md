@@ -174,3 +174,43 @@ rule-and-deadline core of nine selected processes at documented semantics and st
 | L11 | **Opus can build a correct port** of each item from spec-E with fixtures (c\* ≥ 95% on completed dev cases and every public golden); a failure is a capability outcome, not an oracle failure | E-BED §2.12, K1′; ≈ $15–40 per item | — |
 | L12 | **Scale**: compiled arms keep L7 reliability at 10⁴–10⁵ cases per world (E1 2.5 × 10⁴ PO items; E6 10⁵–5 × 10⁵ edit rows) within throughput, memory and judge-cost budgets | E-BED §2.6 scale tier; agent arms not run at this tier | D |
 | L13 | **Tier E**: the same items run with the envelope executed by the engine (state, durable correlated waits with timer races, human-task completion, compensate with idempotent effects, multi-instance/child/cancel, sweeps, versioning) with tier-S reliability preserved | BAR-SET §5 bar-weighted engine column; each step breaks the engine freeze and lands on a branch | — |
+
+## M. Results and new claims, 2026-10-15 → 2026-10-21
+
+*Owner asks over this period:*
+- external benchmarks, and "trust" as the value proposition;
+- cheap model plus system ≥ frontier alone;
+- sub-workflows on long horizons;
+- intent from messy requests;
+- the org layer and the open-core line;
+- orchestration robustness;
+- the product surface;
+- Mercury 3;
+- a SOTA fix for every compromise.
+
+Status codes as above. Plan: [../PLAN-3DAY-20261021.md](../PLAN-3DAY-20261021.md).
+
+| # | claim | proof artifact | falsifier / decision rule | status |
+|---|---|---|---|---|
+| M1 | A procedure harness lifts a cheap model on one-shot automation tasks | dev60 four arms: Haiku 9 → 18/60 (replicated, p 0.035 / 0.013); Sonnet 20 → 28/60 ([DEV60-A0-A1](../automationbench-20261014/runs/DEV60-A0-A1.md)) | McNemar per pair; PREREG-AB-v1 for the test run | P-dev |
+| M2 | Cheap model + harness ≥ frontier model alone, at lower cost | One-shot: Haiku+A1 = Sonnet alone (8 vs 6 discordant, p 0.79, 1/6 cost). Construction: Haiku + practice loop 14/14 and 1,022/1,022 vs Opus one-shot 5/14 and 27.5% ([B1-E8-DEV](../enterprise-20261014/B1-E8-DEV.md)) | non-inferiority at δ, frozen per bed | P-dev |
+| M3 | Code-owned harness (A1-C) removes the mechanical failure classes: early stop 12 → ~0, untouched resources 11 → ~0 | A1-C review GO; dev60 run in flight ([FAILURE-ANATOMY](../automationbench-20261014/runs/DEV60-FAILURE-ANATOMY.md)) | the anatomy targets; devCheck out of sample | B |
+| M4 | Build-once workflows reach ≥ 0.90 pass^3 on sealed rows of an external benchmark and beat the per-row agent by ≥ 5 points | SOP-Bench: parity 1,315/1,315; Haiku agent dev 73.8% strict ([sopbench-20261021](../sopbench-20261021/)) | DESIGN.md decision rule (macro pass^3 ≥ 0.90, LB ≥ 0.85, paired CI) | B → P (sealed run in flight) |
+| M5 | Cheap builders construct correct composed long-horizon workflows; composition helps under faults and drift | COMP-1 ([PREREG-COMP1](../composition-20261021/PREREG-COMP1.md), harness 27/27 tests, 13 capability contracts agree with the oracle) | H-COMP: ≥ 2 of 3 builds load, pooled M1 ≥ 0.95 (refuted < 0.90) | B (paid builds in flight) |
+| M6 | Intent is recovered from messy requests: stated, implied and latent requirements without over-reach | SPEC-0 built (30/30 recoverable, leak 0); four-layer truth; second rater κ 0.57, not-wanted 23/23 ([intent-20261021](../intent-20261021/)) | spec recovery ratio; prediction 0.60–0.85; refuted if derive < no-spec agent | B |
+| M7 | A weak, fast model (Mercury 3) is lifted toward frontier by the system | Mercury alone 2/60 (official protocol, 52/60 at the step cap, ~97M tokens); executor and typed-call provider with token caps ([mercury-20261021](../mercury-20261021/)) | Mercury in A1-C typed nodes vs Haiku and Sonnet alone on dev60 | B |
+| M8 | Org invariants hold under cheap-built workflows with a shield and give auditor-answerable evidence, at least as well as a frontier agent given the same rules | OT-0 ([ATTACK-FABLE §3.3](../business-20261021/ATTACK-FABLE.md); `experiments/constitution/`) | P1–P5 in research/org-20261021/PREDICTION.md | D → B (in flight) |
+| M9 | Orchestration is robust under real-world worst cases across OS and host harnesses | chaos suite (`experiments/orch/`), worst-case catalogue, prior-art teardown | the pass/fail matrix; the ranked gaps | in flight |
+| M10 | A non-technical user reaches a verified automation in ≤ 3 person actions, and approvals cannot be faked by the model | surface spike: weekly-report journey 3 actions; 10/10 bypasses refused ([surface-20261021](../surface-20261021/DESIGN.md)) | journeys with a real builder (no stub) | B |
+| M11 | Every accepted compromise has a current SOTA fix, adopted cost-first | [REGISTER](../compromises-20261021/REGISTER.md) (28 items); sota-fixes workflow in flight | each fix ships with a test | D |
+| M12 | AutomationBench's official test-split score under the frozen harness | PREREG-AB-v1; SPLIT-v1 | the run, once | — |
+
+**Negative results recorded** in this period:
+- SOP-Bench's upstream scorer is gameable.
+- content_flagging's oracle is invalid.
+- Mercury alone almost never terminates.
+- Raters split implied from latent requirements at κ 0.57.
+- E8's oracle mis-scores some MR11 cases.
+- Same-instant duplicates (MR5) defeat every monolith.
+
+Details are in docs/RESEARCH.md, in the rows dated 10-14 to 10-21.
