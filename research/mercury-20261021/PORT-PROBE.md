@@ -34,5 +34,7 @@ Mercury tokens spent in this probe: 293.
 | BUILDER-1 `b-m-1` (research/surface-20261021/BUILDER-1.md; port meter, 59 calls) | 105,631 |
 | BUILDER-1 `b-m-fix-1` (post-hoc fix run; port meter, 63 calls) | 106,356 |
 | **Total after BUILDER-1 (2026-10-21)** | **about 1.51M** |
+| A1-C dev60 with Mercury ledger/checker (`m3-a1c-dev60-dn`, stopped at its 3M token cap after 38/60 tasks) | 2,709,413 |
+| **Total after m3-a1c-dev60-dn (2026-10-21 18:13Z)** | **about 4.22M of the 5M D8 ceiling** |
 
 There is no usage endpoint, so this is a ledger, not a measurement of the remaining allowance.
