@@ -7,7 +7,7 @@
 import { BOOKKEEPING_KEY, TRIVIAL_UPDATE_FIELD, EMAIL_RE, leaves, expandJsonText, stripHtml, lower, norm, datesIn, dayNumber,
   numbersIn, round6, knownInWorld } from './lib.mjs';
 
-export const CHECKS_VERSION = 'cc-checks-v1';
+export const CHECKS_VERSION = 'cc-checks-v1.1';
 
 // ---------- outputs of a diff ----------
 const deepEq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -109,8 +109,9 @@ export function literalMatcher(lit) {
   const s = norm(lit);
   const parts = s.split(SLOT_RE).map(p => regexEscape(p).replace(/\s+/g, '\\s*'));
   const slots = (s.match(SLOT_RE) ?? []).length;
-  const re = new RegExp(parts.join('(.{1,120}?)'), 'i');
-  return { re, slots, literal: s, test: text => { const m = norm(text).match(re); if (!m) return false; return m.slice(1).every(g => !/^[<\[{].*[>\]}]$/.test(g.trim())); } };
+  const re = new RegExp(parts.join('(.{1,120}?)'), 'gi');
+  // A slot must be filled: a captured value that still starts like a placeholder (<, [ or {) does not count.
+  return { re, slots, literal: s, test: text => [...norm(text).matchAll(re)].some(m => m.slice(1).every(g => !/^[<\[{]/.test(g.trim()))) };
 }
 
 const NAME_KEY = /(^|[._ ])(name|full_?name|first_?name|last_?name|company|company_?name|vendor|employee|customer|account|account_?name|contact|candidate|client|partner|system|title|subject|summary|topic|item_?name|product|organization|org)$/i;
@@ -166,7 +167,9 @@ export function runChecks({ view, idx, det, hf = null, world0 = null }) {
   const msgText = msgs.map(m => m.text).join('\n');
   const allOutLower = lower(outText.join('\n') + '\n' + msgText);
   const promptIds = new Set(det.ids);
-  const createdRecipients = new Set([...msgs.flatMap(m => m.recipients), ...out.created.flatMap(c => recordRecipients(c.record))]);
+  // v1.1 (post-hoc bug fix): only email addresses are recipients here (a text message's phone field produced "").
+  const isEmail = a => /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(a);
+  const createdRecipients = new Set([...msgs.flatMap(m => m.recipients), ...out.created.flatMap(c => recordRecipients(c.record))].filter(isEmail));
 
   // 1. Something was done.
   checks.push(result('effect.nonempty', 'effect', true, out.effects.length ? 'pass' : 'fail', out.effects.length ? [] : ['no effectful change in the world']));
@@ -317,6 +320,40 @@ export function runChecks({ view, idx, det, hf = null, world0 = null }) {
       if (near) rounded.push(`${n.raw}~${near.raw}`);
     }
     checks.push(result('value.verbatim_numbers', 'value', false, !msgs.length && !out.texts.length ? 'na' : rounded.length ? 'fail' : 'pass', rounded));
+  }
+
+  // 9b. Structured values copied into records keep their source form: a phone, email, amount or date written into a field
+  //     that equals a source value only after normalisation was reformatted (computed values are not judged).
+  {
+    const phoneKey = v => { const d = v.replace(/\D/g, ''); return d.length >= 7 && d.length <= 15 && /^\+?[\d\s().-]+$/.test(v) && /[-\s().]/.test(v) ? d.slice(-10) : null; };
+    const worldPhones = new Map(), worldDates = new Map();
+    for (const w of idx.strings) {
+      if (w.length > 40) continue;
+      const k = phoneKey(w.trim()); if (k && !worldPhones.has(k)) worldPhones.set(k, w.trim());
+    }
+    const bad = [];
+    const fieldVals = [
+      ...out.updated.flatMap(u => Object.entries(u.fields).filter(([, [, a]]) => typeof a === 'string' || typeof a === 'number').map(([p, [, a]]) => ({ p, v: String(a) }))),
+      ...out.created.filter(c => !messageOf(c.app, c.coll, c.record)).flatMap(c => leaves(c.coll.startsWith('actions.') ? (c.record.params ?? {}) : c.record, '', [], { skipBookkeeping: true }).map(l => ({ p: l.path, v: l.value }))),
+    ];
+    for (const { p, v } of fieldVals) {
+      const t = v.trim();
+      if (!t || t.length > 40 || idx.strings.has(t) || idx.lowerStrings.has(lower(t))) continue;
+      const pk = phoneKey(t);
+      if (pk && worldPhones.has(pk) && worldPhones.get(pk) !== t) { bad.push(`${p}: ${t} (source ${worldPhones.get(pk)})`); continue; }
+      const m = t.match(/^(-?)\$?(-?[\d,]*\d(?:\.\d+)?)$/);
+      if (m && /[,$.]/.test(t) === false && Math.abs(Number(m[2].replace(/,/g, ''))) >= 100) {
+        const val = Number(m[1] + m[2].replace(/,/g, ''));
+        const src = idx.numbers.find(n => n.value === val && (n.money || n.raw.includes(',')));
+        if (src) { bad.push(`${p}: ${t} (source ${src.raw})`); continue; }
+      }
+      if (m && /[,$.]/.test(t)) {
+        const val = Number(m[1] + m[2].replace(/,/g, ''));
+        const src = idx.numbers.find(n => n.value === val);
+        if (src && !idx.numberRaws.has(t.replace(/^-?\$/, '')) && src.raw.replace(/^-?\$/, '') !== t.replace(/^-?\$/, '')) { bad.push(`${p}: ${t} (source ${src.raw})`); continue; }
+      }
+    }
+    checks.push(result('value.verbatim_fields', 'value', false, !fieldVals.length ? 'na' : bad.length ? 'fail' : 'pass', bad));
   }
 
   // 10. No duplicate side effects (the same message or record twice).

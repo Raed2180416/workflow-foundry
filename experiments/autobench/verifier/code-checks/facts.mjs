@@ -25,7 +25,7 @@ export function deterministicFacts(user) {
     emails.push({ address: m[0].toLowerCase(), role });
   }
   const channels = [...new Set([...s.matchAll(/(?<![\w&])#([a-z0-9][a-z0-9_-]{1,60})/gi)].map(m => m[1].toLowerCase()))];
-  // Identifier tokens such as ss_x, ws_y, cal_ops, brd_hr, rec_14, SP_DR; composites a/b are split.
+  // Identifier tokens (word_word, e.g. tbl_x, tab_y, page_z, ID_2); a composite a/b yields both parts.
   const ids = [...new Set([...s.matchAll(/\b([A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]+)\b/g)].map(m => m[1]).filter(t => !/^(e_g|i_e)$/i.test(t)))];
   const quoted = [];
   for (const m of s.matchAll(/(?:'([^'\n]{2,90})'|"([^"\n]{2,90})"|‘([^’\n]{2,90})’|“([^”\n]{2,90})”)/g)) {

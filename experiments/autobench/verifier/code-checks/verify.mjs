@@ -12,7 +12,7 @@ import { deterministicFacts, groundFacts, FACTS_VERSION } from './facts.mjs';
 import { indexWorld } from './lib.mjs';
 import { runChecks, CHECKS_VERSION } from './checks.mjs';
 
-export const VERSION = `code-checks-v1 (${CHECKS_VERSION}, ${FACTS_VERSION})`;
+export const VERSION = `code-checks-v1.1 (${CHECKS_VERSION}, ${FACTS_VERSION})`;
 // Fixed before any held-out evaluation: a hard failure costs 1, a soft one 0.3.
 export const DEFAULT_WEIGHTS = Object.freeze({ hard: 1, soft: 0.3 });
 

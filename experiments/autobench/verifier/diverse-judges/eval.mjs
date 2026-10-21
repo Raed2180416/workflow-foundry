@@ -24,17 +24,27 @@ const REPORTED6 = ['m3-a1c', 'sonnet-a1', 'haiku-a1c', 'sonnet-a0', 'haiku-a1', 
 const HELDOUT = [3, 4];
 
 // ---- judgments: J[name] = Map(rowId -> {pass, strictPass, p, reqScore, costUsd, tokens})
-const J = {};
+// A row the judge attempted but never got a verdict for (truncated, schema error, budget) keeps an imputed abstention:
+// decision fail, p_done 0.5 (uninformative). Spend counts every call, failed ones included.
+const J = {}, spend = {}, attempted = {};
 for (const f of readdirSync(a.dj).filter(f => /^judgments-.*\.jsonl$/.test(f))) {
   for (const l of readFileSync(path.join(a.dj, f), 'utf8').split('\n').filter(Boolean)) {
     const j = JSON.parse(l);
-    if (j.version !== JUDGE_VERSION || !j.ok || !j.verdict || !byId.has(j.rowId)) continue;
+    if (j.version !== JUDGE_VERSION || !byId.has(j.rowId)) continue;
     const name = j.variant === 'world' ? j.judge : `${j.judge}-${j.variant}`;
-    J[name] ??= new Map();
+    J[name] ??= new Map(); spend[name] ??= { usd: 0, tokens: 0, calls: 0, failed: 0, replayed: 0 }; attempted[name] ??= new Set();
     const u = j.usage ?? {};
-    J[name].set(j.rowId, { pass: j.verdict.pass, strictPass: j.verdict.strictPass, p: j.verdict.confidence, reqScore: j.verdict.reqScore, nReq: j.verdict.nReq,
-      costUsd: j.costUsd ?? 0, tokens: (u.inputTokens ?? 0) + (u.outputTokens ?? 0) + (u.cacheReadTokens ?? 0) + (u.cacheWriteTokens ?? 0) });
+    const tokens = (u.inputTokens ?? 0) + (u.outputTokens ?? 0) + (u.cacheReadTokens ?? 0) + (u.cacheWriteTokens ?? 0);
+    if (!j.replayed) { spend[name].usd += j.costUsd ?? 0; spend[name].tokens += tokens; spend[name].calls++; } else spend[name].replayed++;
+    attempted[name].add(j.rowId);
+    if (!j.ok || !j.verdict) { spend[name].failed++; continue; }
+    J[name].set(j.rowId, { pass: j.verdict.pass, strictPass: j.verdict.strictPass, p: j.verdict.confidence, reqScore: j.verdict.reqScore, nReq: j.verdict.nReq });
   }
+}
+const imputed = {};
+for (const name of Object.keys(J)) {
+  imputed[name] = 0;
+  for (const id of attempted[name]) if (!J[name].has(id)) { J[name].set(id, { pass: false, strictPass: false, p: 0.5, reqScore: 0.5, nReq: 0, imputed: true }); imputed[name]++; }
 }
 const judges = Object.keys(J).sort();
 
@@ -158,7 +168,7 @@ const setFilters = {
 };
 
 const scorersFor = name => ({ decide: v => v.pass, score: v => v.p, calP: (v, r) => cal[name].get(r.rowId) });
-L.push(`# diverse-judges evaluation (${JUDGE_VERSION})`, '', `judged rows: ${judges.map(n => `${n} ${J[n].size}`).join(', ')}`, '');
+L.push(`# diverse-judges evaluation (${JUDGE_VERSION})`, '', `judged rows: ${judges.map(n => `${n} ${J[n].size} (${imputed[n]} imputed)`).join(', ')}`, '');
 
 // single judges
 for (const [setName, filter] of Object.entries(setFilters)) {
@@ -215,6 +225,46 @@ for (const [setName, filter] of Object.entries(setFilters).filter(([k]) => k.sta
   L.push('');
 }
 
+// diversity: do the judges make the same mistakes? (decisions on common fork3 rows)
+L.push('## Judge diversity (fork3 rows judged by both)', '', '| pair | n | agree | Cohen kappa | A wrong | B wrong | both wrong | both wrong if independent | corr(p_A, p_B) |', '|---|---|---|---|---|---|---|---|---|');
+report.diversity = {};
+const base = judges.filter(n => !n.includes('-'));
+for (let i = 0; i < base.length; i++) for (let k = i + 1; k < base.length; k++) {
+  const A = base[i], B = base[k];
+  const ids = [...J[A].keys()].filter(id => J[B].has(id) && FORK3.includes(byId.get(id).arm));
+  if (!ids.length) continue;
+  const n = ids.length, da = ids.map(id => J[A].get(id).pass), db = ids.map(id => J[B].get(id).pass), ys = ids.map(id => y(byId.get(id)) === 1);
+  const agree = da.filter((v, j) => v === db[j]).length / n;
+  const pa = da.filter(Boolean).length / n, pb = db.filter(Boolean).length / n, pe = pa * pb + (1 - pa) * (1 - pb);
+  const kappa = pe < 1 ? (agree - pe) / (1 - pe) : null;
+  const wa = da.map((v, j) => v !== ys[j]), wb = db.map((v, j) => v !== ys[j]);
+  const rA = wa.filter(Boolean).length / n, rB = wb.filter(Boolean).length / n, both = wa.filter((v, j) => v && wb[j]).length / n;
+  const xa = ids.map(id => J[A].get(id).p), xb = ids.map(id => J[B].get(id).p);
+  const mean = v => v.reduce((q, x) => q + x, 0) / v.length, ma = mean(xa), mb = mean(xb);
+  const cov = xa.reduce((q, x, j) => q + (x - ma) * (xb[j] - mb), 0), corr = cov / Math.sqrt(xa.reduce((q, x) => q + (x - ma) ** 2, 0) * xb.reduce((q, x) => q + (x - mb) ** 2, 0));
+  report.diversity[`${A}|${B}`] = { n, agree, kappa, wrongA: rA, wrongB: rB, bothWrong: both, bothWrongIndependent: rA * rB, corr };
+  L.push(`| ${A} vs ${B} | ${n} | ${fmt(agree)} | ${fmt(kappa)} | ${fmt(rA)} | ${fmt(rB)} | ${fmt(both)} | ${fmt(rA * rB)} | ${fmt(corr)} |`);
+}
+L.push('');
+
+// errors by task class (eval-only strata from the ceiling analysis; never shown to a judge)
+if (Object.keys(strata).length) {
+  const cls = t => strata[t] ?? 'other (some arm passes)';
+  const classes = [...new Set(rows.map(r => cls(r.task)))].sort();
+  L.push('## Errors by task class (fork3 rows)', '', '| judge | ' + classes.map(c => `${c}: FP / FN / n`).join(' | ') + ' |', '|---|' + classes.map(() => '---').join('|') + '|');
+  report.byClass = {};
+  for (const n of base) {
+    const cells = classes.map(c => {
+      const ids = [...J[n].keys()].filter(id => FORK3.includes(byId.get(id).arm) && cls(byId.get(id).task) === c);
+      const fp = ids.filter(id => J[n].get(id).pass && !lab.passed(byId.get(id))).length, fn = ids.filter(id => !J[n].get(id).pass && lab.passed(byId.get(id))).length;
+      report.byClass[`${n}|${c}`] = { fp, fn, n: ids.length };
+      return `${fp} / ${fn} / ${ids.length}`;
+    });
+    L.push(`| ${n} | ${cells.join(' | ')} |`);
+  }
+  L.push('');
+}
+
 // acceptance by arm (does a judge just prefer one pipeline's style?)
 L.push('## Acceptance by arm (fork3 rows, all folds)', '', '| arm | true pass | ' + judges.map(n => `${n} accepts`).join(' | ') + ' |', '|---|---|' + judges.map(() => '---').join('|') + '|');
 for (const arm of REPORTED6) {
@@ -233,19 +283,27 @@ const voteScorer = members => ({ name: `${members.join('+')} votes (tie: mean p)
 const ownChecks = { name: 'own checks (A1-C all-pass=1, A1=0.5)', needs: [], score: r => (r.selfCheck?.kind === 'a1c-checks' ? (r.selfCheck.termination === 'all checks pass' ? 1 : 0) : 0.5) };
 const keepBest = (n, arm) => ({ name: `${n}: keep ${arm} unless judged fail`, needs: [n], score: r => (r.arm === arm ? (J[n].get(r.rowId).pass ? 2 : 0) : J[n].get(r.rowId).p) });
 
-const fork3Scorers = [ownChecks,
-  ...judges.filter(n => !n.includes('-')).flatMap(n => [single(n), calScorer(n)]),
-  ...(J['haiku-diffonly'] ? [single('haiku-diffonly')] : []),
-  ...COMBOS.flatMap(m => [voteScorer(m), comboScorer(m, 'meanP', 'mean raw p'), comboScorer(m, 'meanCal', 'mean calibrated p'), comboScorer(m, 'stack', 'stacked')]),
-  ...['haiku', 'mercury'].filter(n => J[n]).map(n => keepBest(n, 'm3-a1c'))];
+
+const has = n => Boolean(J[n]);
+const hOnly = [ownChecks, single('haiku'), calScorer('haiku'), keepBest('haiku', 'm3-a1c')].filter(sc => sc.needs.every(has));
+const hm = ['haiku', 'mercury'].every(has) ? [ownChecks, single('haiku'), calScorer('haiku'), single('mercury'), calScorer('mercury'), voteScorer(['haiku', 'mercury']),
+  comboScorer(['haiku', 'mercury'], 'meanP', 'mean raw p'), comboScorer(['haiku', 'mercury'], 'meanCal', 'mean calibrated p'), comboScorer(['haiku', 'mercury'], 'stack', 'stacked'),
+  keepBest('haiku', 'm3-a1c'), keepBest('mercury', 'm3-a1c')] : [];
+const hs = ['haiku', 'sonnet'].every(has) ? [ownChecks, single('haiku'), single('sonnet'), calScorer('sonnet'), voteScorer(['haiku', 'sonnet']), comboScorer(['haiku', 'sonnet'], 'meanP', 'mean raw p'), comboScorer(['haiku', 'sonnet'], 'meanCal', 'mean calibrated p')] : [];
+const hms = ['haiku', 'mercury', 'sonnet'].every(has) ? [...hm, single('sonnet'), calScorer('sonnet'), voteScorer(['haiku', 'mercury', 'sonnet']), comboScorer(['haiku', 'mercury', 'sonnet'], 'meanP', 'mean raw p'),
+  comboScorer(['haiku', 'mercury', 'sonnet'], 'meanCal', 'mean calibrated p'), comboScorer(['haiku', 'mercury', 'sonnet'], 'stack', 'stacked'), keepBest('sonnet', 'm3-a1c')] : [];
+const foldOf = t => rows.find(r => r.task === t).fold;
 const selSets = [
-  ['k=3 forks (m3-a1c, haiku-a1c, haiku-a1): all tasks', FORK3, fork3Scorers.filter(s => !s.needs.includes('sonnet')), {}],
-  ['k=3 forks: tasks Sonnet judged', FORK3, fork3Scorers, {}],
-  ['k=3 forks: held-out folds 3-4', FORK3, fork3Scorers.filter(s => !s.needs.includes('sonnet')), { taskFilter: t => HELDOUT.includes(rows.find(r => r.task === t).fold) }],
-  ['k=3 forks: no hard-defect tasks', FORK3, fork3Scorers.filter(s => !s.needs.includes('sonnet')), { taskFilter: t => strata[t] !== 'hard' }],
-  ['6 reported arms (Haiku judge only)', REPORTED6, [single('haiku'), calScorer('haiku')].filter(s => J[s.needs[0]]), {}],
-  ['2 forks (m3-a1c, sonnet-a1), Haiku judge', ['m3-a1c', 'sonnet-a1'], [single('haiku')].filter(s => J.haiku), {}],
-  ['2 forks (m3-a1c, haiku-a1c)', ['m3-a1c', 'haiku-a1c'], fork3Scorers.filter(s => !s.needs.includes('sonnet') && s !== ownChecks && !s.name.includes('keep')), {}],
+  ['k=3 forks (m3-a1c, haiku-a1c, haiku-a1), all tasks: Haiku judge', FORK3, hOnly, {}],
+  ['k=3 forks, tasks Mercury judged: Haiku, Mercury, Haiku+Mercury', FORK3, hm, {}],
+  ['k=3 forks, tasks Mercury judged, held-out folds 3-4', FORK3, hm, { taskFilter: t => HELDOUT.includes(foldOf(t)) }],
+  ['k=3 forks, tasks Mercury judged, no hard-defect tasks', FORK3, hm, { taskFilter: t => strata[t] !== 'hard' }],
+  ['k=3 forks, tasks all three judges judged', FORK3, hms, {}],
+  ['k=3 forks, tasks Sonnet judged: Haiku + Sonnet', FORK3, hs, {}],
+  ['k=3 forks: Haiku with records vs Haiku on the diff alone', FORK3, [single('haiku'), single('haiku-diffonly')].filter(sc => sc.needs.every(has)), {}],
+  ['6 reported arms (Haiku judge only)', REPORTED6, [single('haiku'), calScorer('haiku')].filter(sc => sc.needs.every(has)), {}],
+  ['2 forks (m3-a1c, sonnet-a1), Haiku judge', ['m3-a1c', 'sonnet-a1'], [single('haiku')].filter(sc => sc.needs.every(has)), {}],
+  ['2 forks (m3-a1c, haiku-a1c), tasks Mercury judged', ['m3-a1c', 'haiku-a1c'], hm.filter(sc => sc !== ownChecks && !sc.name.includes('keep')), {}],
 ];
 for (const [label, arms, scorers, opt] of selSets) {
   const t = selectionTable(arms, scorers, { ...opt, label });
@@ -257,11 +315,11 @@ for (const [label, arms, scorers, opt] of selSets) {
 }
 
 // cost per task
-L.push('## Cost', '', '| judge | rows judged | USD total | USD per candidate | tokens per candidate (all kinds) |', '|---|---|---|---|---|');
+L.push('## Cost', '', '| judge | rows | verdicts | imputed (no verdict) | live calls | failed calls | USD total | USD per candidate | tokens per candidate (all kinds) |', '|---|---|---|---|---|---|---|---|---|');
 for (const n of judges) {
-  const vs = [...J[n].values()], usd = vs.reduce((s, v) => s + v.costUsd, 0), tok = vs.reduce((s, v) => s + v.tokens, 0);
-  report.cost[n] = { rows: vs.length, usd, usdPerCandidate: usd / vs.length, tokensPerCandidate: tok / vs.length };
-  L.push(`| ${n} | ${vs.length} | ${usd.toFixed(4)} | ${(usd / vs.length).toFixed(5)} | ${Math.round(tok / vs.length)} |`);
+  const rowsN = J[n].size, sp = spend[n];
+  report.cost[n] = { rows: rowsN, imputed: imputed[n], calls: sp.calls, failedCalls: sp.failed, usd: sp.usd, usdPerCandidate: sp.usd / rowsN, tokensPerCandidate: sp.tokens / rowsN };
+  L.push(`| ${n} | ${rowsN} | ${rowsN - imputed[n]} | ${imputed[n]} | ${sp.calls} | ${sp.failed} | ${sp.usd.toFixed(4)} | ${(sp.usd / rowsN).toFixed(5)} | ${Math.round(sp.tokens / rowsN)} |`);
 }
 const forkCost = arm => rows.filter(r => r.arm === arm).reduce((s, r) => s + (r.costUsd ?? 0), 0) / rows.filter(r => r.arm === arm).length;
 report.cost.forksUsdPerTask = Object.fromEntries(FORK3.map(arm => [arm, forkCost(arm)]));

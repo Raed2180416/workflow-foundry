@@ -92,7 +92,10 @@ async function main() {
     callTokens: 100_000, maxBudgetUsdPerCall: modelId === 'claude-sonnet-5-5' ? 0.3 : 0.1, concurrency: { 'claude-cli': Number(o.concurrency ?? 6), inception: Number(o.concurrency ?? 3) } });
   const decoding = modelId === 'mercury-3' ? { maxTokens: 8000, reasoning: o['mercury-reasoning'] ?? 'low' } : { reasoning: o.reasoning ?? 'none' };
 
-  let usd = spent.claudeUsd, stop = null, n = 0;
+  // In-flight calls are reserved at a per-call bound before they start, so concurrent workers cannot overshoot the cap
+  // (the first version checked only settled spend and overshot by the calls in flight: 2026-10-21, $0.027 over).
+  const perCallBound = modelId === 'claude-sonnet-5-5' ? 0.06 : 0.01;
+  let usd = spent.claudeUsd, inflight = 0, stop = null, n = 0;
   const started = Date.now();
   // Claude: candidates of one task run one after another so the task-shared system prompt is a cache read after the first.
   const byTask = new Map();
@@ -104,14 +107,16 @@ async function main() {
       const group = queue.shift();
       for (const r of group) {
         if (stop) return;
-        if (CLAUDE.has(modelId) && usd >= usdCap) { stop = `Claude budget cap $${usdCap} reached ($${usd.toFixed(4)})`; return; }
+        if (CLAUDE.has(modelId) && usd + (inflight + 1) * perCallBound > usdCap) { stop = `Claude budget cap $${usdCap} reached ($${usd.toFixed(4)} spent, ${inflight} call(s) in flight)`; return; }
         const ctx = ctxOf(r);
         const m = judgeMessages(ctx);
         const leaks = leakCheck(r, m.system + m.prompt);
         if (leaks.length) { appendFileSync(resultsFile, JSON.stringify({ key: keyOf(r), rowId: r.rowId, judge: o.judge, ok: false, error: { code: 'LEAK_REFUSED', message: `context contains ${leaks.length} forbidden string(s)` } }) + '\n'); continue; }
         let res;
+        inflight++;
         try { res = await judgeOnce(port, { modelId, ctx, runId: `dj-${JUDGE_VERSION}-${variant}`, nodeKey: `${o.judge}:${lab.opaqueId(r)}`, decoding, mode: 'replay-or-live', sampleIndex: Number(o.sample ?? 0) }); }
         catch (e) { res = { ok: false, error: { code: e.code ?? 'ERROR', message: String(e.message ?? e).slice(0, 300) }, costUsd: e.costUsd ?? 0 }; }
+        finally { inflight--; }
         if (CLAUDE.has(modelId)) usd += res.costUsd ?? 0;
         if (res.error?.code === 'MODEL_BUDGET' && modelId === 'mercury-3') stop = `Mercury token cap: ${res.error.message}`;
         if (res.error?.code === 'MODEL_RATE_LIMIT') stop = 'rate limited';
