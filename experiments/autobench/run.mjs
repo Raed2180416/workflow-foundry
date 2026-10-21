@@ -22,8 +22,6 @@
 //   --harness foundry --harness-hash H --cli-max-turns N|off (A1 step guard, default max-steps - 1)
 //   --test-run AB-v1 (A0 only: the preregistered test run may hold test-split tasks)
 //   --date-note (AM-9: both arms say the session date is the host's, not the task's; recorded in the summary)
-//   --sequential-look FILE (a look descriptor from `sequential.mjs look N`: the run must hold exactly that look's tasks, never
-//                          devCheck; look number, plan hash and boundary are recorded in launch.json and the summary)
 //   --token-cap N --session-tokens N (token meter: a hard cap on the run's input + output tokens, reserved per session at the
 //                                    session budget, default 400K; required for an executorModels model such as mercury-3)
 //   --call-tokens N (A1-C with --node-models role=mercury-3: the token budget of one remote model-node call, default 100K;
@@ -290,18 +288,9 @@ export async function runTasks(o) {
   // AM-4: a scripted run is never exempt. A dev-only pipeline arm (A0+SR, a probe not declared in PREREG §3) never is either.
   const testRunAuthorized = !opt.dryRun && !scripted && !co?.DEV_ONLY && (harness ? Boolean(opt.harnessHash) : opt.testRun === TEST_RUN_TOKEN);
   if (!testRunAuthorized) assertDevOnly(tasks);
-  // A look of the group-sequential dev design (sequential.mjs; PREREG-AB-v1-AMEND-1, register A4): devTrain only, never
-  // devCheck, exactly the look's planned tasks; its look number, plan hash and boundary go into launch.json.
-  const sequential = opt.sequential ?? null;
-  if (sequential) {
-    const dc = new Set(loadSplit().devCheck);
-    if (tasks.some(t => dc.has(t))) throw new Error('--sequential-look: a sequential look never runs devCheck tasks (PREREG-AB-v1 §5)');
-    if (JSON.stringify([...tasks].sort()) !== JSON.stringify([...(sequential.tasks ?? [])].sort())) throw new Error(`--sequential-look: the run's tasks are not look ${sequential.look}'s planned tasks`);
-  }
   // Resume: a live directory that already holds a run continues only with --resume and the launch settings unchanged.
   const resultsFile = path.join(live, 'results.jsonl'), faultsFile = path.join(live, 'results.faults.jsonl'), launchFile = path.join(live, 'launch.json');
-  const launch = { tasks, ...(sequential ? { sequential: { design: sequential.design, plan: sequential.plan, look: sequential.look, looks: sequential.looks, tasksSha256: sequential.tasksSha256, nominal: sequential.nominal, alphaPerMetric: sequential.alphaPerMetric } } : {}),
-    model: scripted ? null : opt.model ?? null, scripted, harness: manifest?.sha256 ?? null, cliMaxTurns, k: opt.k, det: opt.det,
+  const launch = { tasks, model: scripted ? null : opt.model ?? null, scripted, harness: manifest?.sha256 ?? null, cliMaxTurns, k: opt.k, det: opt.det,
     maxSteps: opt.maxSteps, budgetUsd: opt.budgetUsd, capUsd: opt.capUsd ?? null, timeoutMin: opt.timeoutMin, effort: opt.effort ?? null,
     tools: opt.tools, dateNote: Boolean(opt.dateNote), runnerSha256: sha256(readFileSync(new URL(import.meta.url))),
     ...(opt.tokenCap != null || remote || remoteRoles.length ? { tokenCap: opt.tokenCap ?? null, sessionTokens: sessionTokenBudget } : {}),
@@ -516,7 +505,6 @@ export async function runTasks(o) {
       extraModelCalls: results.reduce((s, r) => s + r.forks.reduce((t, f) => t + (f.session?.extraModelCalls ?? 0), 0), 0) }
       : harness ? { id: HARNESS_ID, version: HARNESS_VERSION, manifestSha256: manifest.sha256, frozenHashGiven: Boolean(opt.harnessHash), cliMaxTurns, stepGuard: Boolean(guard), extraModelCalls: 0 } : null,
     selection: opt.tasks?.length ? { tasks: opt.tasks } : opt.pool ? { pool: opt.pool, subset: opt.subset ?? null, seed: opt.subset ? opt.seed : null, domains } : { subset: opt.subset ?? 12, seed: opt.seed, domains }, tasks,
-    ...(launch.sequential ? { sequential: launch.sequential } : {}),
     dateNote: Boolean(opt.dateNote), k: opt.k, det: opt.det, maxSteps: opt.maxSteps, budgetUsdPerSession: opt.budgetUsd, capUsd: scripted ? null : opt.capUsd, tools: opt.tools, effort: opt.effort ?? null,
     n: results.length, n_graded: results.filter(r => r.final).length,
     pass_rate: mean(results.map(pass)), mean_partial_credit: mean(results.map(pc)), by_domain: byDomain,
@@ -591,7 +579,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     det: a.det ?? DEFAULTS.det, effort: a.effort, tools: a.tools ? a.tools.split(',') : DEFAULTS.tools, runId: a['run-id'], liveRoot: a.live,
     outDir: a['no-copy'] ? null : a.out, keep: Boolean(a.keep), dryRun: Boolean(a['dry-run']), runner, pool: a.pool,
     dateNote: Boolean(a['date-note']), resume: Boolean(a.resume), acceptRunnerChange: Boolean(a['accept-runner-change']), harness: a.harness ?? null, harnessHash: a['harness-hash'], testRun: a['test-run'], nodeRunner,
-    sequential: a['sequential-look'] ? readJson(a['sequential-look']) : undefined,
     nodeModels: a['node-models'] ? Object.fromEntries(a['node-models'].split(',').filter(Boolean).map(x => x.split('=').map(y => y.trim()))) : undefined, cliMaxTurns: a['cli-max-turns'] === undefined ? undefined : a['cli-max-turns'] === 'off' ? 0 : Number(a['cli-max-turns']),
   });
   process.stdout.write(JSON.stringify(summary, null, 1) + '\n');

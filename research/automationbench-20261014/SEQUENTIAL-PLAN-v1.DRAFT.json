@@ -1,18 +1,19 @@
 {
- "schema": "foundry.autobench.sequential-plan/v1",
+ "schema": "foundry.autobench.sequential-plan/v2",
  "status": "DRAFT (PREREG-AB-v1-AMEND-1 not frozen)",
  "split": {
   "devCheck": "74cf7615b66aed55b85f649066483aab1623b43021c698a59927150aadd125a7",
   "dev": "6e1cc09611b6b7efe501eab6bde2456bd07ca6c377114ebdc88b1a088030bcc9"
  },
- "rule": "look 1 = stored dev60; looks 2.. = 10 per domain from the unexposed devTrain pool in sha256('ab-seq-v1:' + task) order; a remainder under 20 is unused",
+ "rule": "look 1 = the dev60 tasks; looks 2.. = 10 per domain from the unexposed devTrain pool in sha256('ab-seq-v1:' + task) order; a remainder under 20 is unused",
+ "exposureRule": "an arm developed, tuned or probed on any task of a look starts at the first look after it (firstLook); every arm with stored dev60 rows starts at look 2",
  "batch": 60,
  "minLook": 20,
  "salt": "ab-seq-v1:",
  "looks": [
   {
    "look": 1,
-   "source": "stored dev60 rows (runs/a0-dev60: devTrain, subset 60, seed 21)",
+   "source": "the dev60 task list (runs/a0-dev60: devTrain, subset 60, seed 21); stored A0 rows are its control",
    "tasks": [
     "finance.ap_aging_report",
     "finance.bad_debt_writeoff",
@@ -202,32 +203,93 @@
    "sha256": "ae2200f349a5d75b4a1b3d778dae22854c616306def741b0016cc36710bdb035"
   }
  ],
- "cumulative": [
+ "counts": [
   60,
-  120,
-  143
+  60,
+  23
  ],
- "fractions": [
-  0.4195804195804196,
-  0.8391608391608392,
-  1
+ "schedules": [
+  {
+   "firstLook": 1,
+   "looks": [
+    1,
+    2,
+    3
+   ],
+   "cumulative": [
+    60,
+    120,
+    143
+   ],
+   "fractions": [
+    0.4195804195804196,
+    0.8391608391608392,
+    1
+   ],
+   "nominal": {
+    "strict": [
+     0.00038759043882763015,
+     0.012104184917893767,
+     0.02153493117217805
+    ],
+    "partialCredit": [
+     0.00038759043882763015,
+     0.012104184917893767,
+     0.02153493117217805
+    ]
+   }
+  },
+  {
+   "firstLook": 2,
+   "looks": [
+    2,
+    3
+   ],
+   "cumulative": [
+    60,
+    83
+   ],
+   "fractions": [
+    0.7228915662650602,
+    1
+   ],
+   "nominal": {
+    "strict": [
+     0.007317004167305001,
+     0.022585762258195773
+    ],
+    "partialCredit": [
+     0.007317004167305001,
+     0.022585762258195773
+    ]
+   }
+  },
+  {
+   "firstLook": 3,
+   "looks": [
+    3
+   ],
+   "cumulative": [
+    23
+   ],
+   "fractions": [
+    1
+   ],
+   "nominal": {
+    "strict": [
+     0.025000000000001257
+    ],
+    "partialCredit": [
+     0.025000000000001257
+    ]
+   }
+  }
  ],
  "alpha": {
   "total": 0.05,
   "perMetric": 0.025
  },
- "nominal": {
-  "strict": [
-   0.00038759043882763015,
-   0.012104184917893767,
-   0.02153493117217805
-  ],
-  "partialCredit": [
-   0.00038759043882763015,
-   0.012104184917893767,
-   0.02153493117217805
-  ]
- },
+ "floor": 0.03,
  "pool": {
   "devTrain": 240,
   "eligible": 83,
@@ -237,7 +299,49 @@
    "look 1": 35,
    "run before": 8
   },
-  "unused": []
+  "unused": [],
+  "roots": [
+   {
+    "label": "main:research/automationbench-20261014/runs",
+    "runs": 29
+   },
+   {
+    "label": "worktree:a1c-v1-pin:research/automationbench-20261014/runs",
+    "runs": 25
+   },
+   {
+    "label": "worktree:wf_0f86d12b-ab5-1:research/automationbench-20261014/runs",
+    "runs": 29
+   },
+   {
+    "label": "worktree:wf_0f86d12b-ab5-2:research/automationbench-20261014/runs",
+    "runs": 29
+   },
+   {
+    "label": "worktree:wf_3674d3bc-0a7-12:research/automationbench-20261014/runs",
+    "runs": 25
+   },
+   {
+    "label": "worktree:wf_630f3979-599-3:research/automationbench-20261014/runs",
+    "runs": 26
+   },
+   {
+    "label": "worktree:wf_630f3979-599-4:research/automationbench-20261014/runs",
+    "runs": 26
+   },
+   {
+    "label": "worktree:wf_c56a08f8-048-15:research/automationbench-20261014/runs",
+    "runs": 26
+   },
+   {
+    "label": "worktree:wf_c7946468-203-16:research/automationbench-20261014/runs",
+    "runs": 25
+   },
+   {
+    "label": "live:/var/tmp/foundry-work/autobench",
+    "runs": 36
+   }
+  ]
  },
- "planSha256": "97cc2f8ca51ddefb2b1f24156ed00d8dcd01b9912cd87a904096e8b56cc38e77"
+ "planSha256": "756d7d3a4b185271fede53e6c706ffbaf6640bed996088f22b9ec2e64eaeab7a"
 }
