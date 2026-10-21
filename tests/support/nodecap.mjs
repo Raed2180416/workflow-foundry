@@ -58,6 +58,25 @@ export const TICKET_MEMBERS = {
 export function ticketsEntry(url, { members = TICKET_MEMBERS, credential = { custody: 'C0', read: { env: 'NODECAP_TICKETS_READ_TOKEN' }, write: { env: 'NODECAP_TICKETS_WRITE_TOKEN' } } } = {}) {
   return { id: 'tickets', kind: 'mcp-http', trust: 'T1', status: 'active', trustAnnotations: true, dev: true, source: { url, transport: 'streamable-http' }, credential, members: structuredClone(members) };
 }
+export function sheetsEntry({ ledger, status = 'active' } = {}) {
+  return { id: 'sheets', kind: 'mcp-stdio', trust: 'T1', status, trustAnnotations: true,
+    source: { command: process.execPath, args: [path.join(SERVERS, 'sheets-stdio.mjs'), ...(ledger ? ['--ledger', ledger] : [])], envAllow: [] },
+    members: {
+      read_range: attest({ type: 'row.read', system: 'sheets', verbs: ['read'], objects: ['row'], effects: 'none', risk: 'low', outputLabel: 'untrusted:mcp.sheets', dataClass: 'internal',
+        outputSchema: { type: 'object' }, view: { name: 'sheets_read_range', summary: 'Read every row of the team sheet.', inputSchema: { type: 'object', additionalProperties: false, properties: {} } } }),
+      append_row: attest({ type: 'row.append', system: 'sheets', verbs: ['create'], objects: ['row'], effects: 'non-idempotent', risk: 'low', requiresApproval: true, outputLabel: 'untrusted:mcp.sheets', dataClass: 'internal',
+        outputSchema: { type: 'object' }, view: { name: 'sheets_append_row', summary: 'Append one row to the team sheet.', inputSchema: obj({ cells: { type: 'array', maxItems: 10, items: S() } }) } }) } };
+}
+export function brokerEntry({ ledger } = {}) {
+  const view = (name, summary) => ({ name, summary, inputSchema: { type: 'object', additionalProperties: false, properties: { app: S(100), server: S(200) } } });
+  return { id: 'broker', kind: 'mcp-stdio', trust: 'T1', status: 'active', trustAnnotations: true,
+    source: { command: process.execPath, args: [path.join(SERVERS, 'broker-stdio.mjs'), ...(ledger ? ['--ledger', ledger] : [])], envAllow: [] },
+    members: {
+      manage_connections: attest({ type: 'connection.manage', system: 'crm', verbs: ['update'], objects: ['contact', 'connection'], effects: 'none', risk: 'low', outputLabel: 'untrusted:mcp.broker',
+        outputSchema: { type: 'object' }, view: view('broker_connect', 'Connect a SaaS account.') }),
+      auto_provision_mcp: attest({ type: 'connection.manage', system: 'crm', verbs: ['create'], objects: ['contact', 'connection'], effects: 'none', risk: 'low', outputLabel: 'untrusted:mcp.broker',
+        outputSchema: { type: 'object' }, view: view('broker_provision', 'Install a new tool server.') }) } };
+}
 export const catalogOf = (...entries) => ({ schema: 'foundry-catalog/1', entries });
 export function mkdir(dir) { mkdirSync(dir, { recursive: true }); return dir; }
 
