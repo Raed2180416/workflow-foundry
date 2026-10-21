@@ -1,6 +1,6 @@
 # Expense receipt capture: standing policy
 
-Owner: Finance (finance@company.example.com). Policy version 1.
+Owner: Finance (finance@company.example.com). Policy version 1.1.
 
 > Every receipt posted in #expense-submissions is checked once against this policy, logged once if it passes, and
 > answered in its own thread.
@@ -64,7 +64,7 @@ A top-level message that states an amount (section 7) is a receipt. A top-level 
 | Submitted | the UTC date (`YYYY-MM-DD`) on which the receipt message was posted |
 | Employee | the poster's Employee name (section 3) |
 | Date | the expense date, `YYYY-MM-DD` |
-| Amount | the amount with two decimals, without `$` or commas: `1250.00` |
+| Amount | the amount with two decimals, without `$` or commas: `1250.00` (text in exactly this form, or a number cell of the same value; not `$1,250.00`, `1,250.00` or `1250`) |
 | Category | one of the eight category names of section 7, spelled as there |
 | Attendees | for Meals, the number of attendees (`1` when the receipt gives none); empty for every other category |
 | Status | `Approved`, `Pending Pre-Approval` (or `Rejected`, section 5.1) |

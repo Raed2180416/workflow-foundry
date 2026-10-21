@@ -444,10 +444,13 @@ def test_approval_must_follow_logging_and_floor_follows_the_model(ref613):
 def test_authority_hard_check(dev_runs, ref613):
     """effects-with-authority is its own hard check: an unauthorized correction trips it; so does any Blocked Vendors
     edit, a Policy Log row outside a CFO amendment, or an Amount change outside an AP lead correction."""
-    for name in ("any-correction", "any-amendment"):
+    # any-correction edits this week's rows, which end.authority does not cover (it checks world0 invoices' Amounts:
+    # a this-week Amount that differs from the model may be a misread at intake); the per-trigger check names it
+    for name, want in (("any-correction", {"hard.effects-with-authority"}),
+                       ("any-amendment", {"hard.effects-with-authority", "end.authority"})):
         summary, results = dev_runs[name]
         names = {c["name"] for r in results for x in r["rows"] for c in x["failed"]}
-        assert summary["hard_violations"] > 0 and {"hard.effects-with-authority", "end.authority"} <= names, name
+        assert summary["hard_violations"] > 0 and want <= names, name
     for name in ("reference", "pay-unapproved", "any-approver"):
         names = {c["name"] for r in dev_runs[name][1] for x in r["rows"] for c in x["failed"]}
         assert not names & {"hard.effects-with-authority", "end.authority"}, name

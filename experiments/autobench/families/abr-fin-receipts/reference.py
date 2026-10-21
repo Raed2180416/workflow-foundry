@@ -298,13 +298,19 @@ class Receipts:
     def international(self, text: str) -> bool:
         return has_word(text, ["international"] + COUNTRIES)
 
+    def cabin(self, low: str) -> str:
+        """POLICY.md section 7: business, first class and premium economy are not economy. 'business' is a cabin only
+        as 'business class' or as its own item of the description ('..., business, 5h'), not in 'business meeting'."""
+        if re.search(r"\bpremium economy\b|\bfirst class\b|\bbusiness class\b", low) or \
+                re.search(r"(?:^|[,;(]\s*)business(?=\s*(?:[,;)]|$))", low):
+            return "other"
+        return "economy"
+
     def flight(self, text: str, cat: str) -> dict | None:
         if cat != "Travel" or not has_word(text, ["flight", "airfare"]):
             return None
         low = text.lower()
-        cabin = "economy"
-        if "premium economy" in low or has_word(low, ["business", "first class"]):
-            cabin = "other"
+        cabin = self.cabin(low)
         hours = None
         m = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hours?)\b(?:\s*(\d+)\s*(?:m|min|mins|minutes)\b)?", low)
         if m:
@@ -314,15 +320,25 @@ class Receipts:
     def amount(self, text: str) -> Decimal | None:
         return parse_amount(text)
 
-    def read(self, text: str, attachments, posted: date) -> dict | None:
+    def expense_date(self, text: str, posted: date) -> date:
+        return parse_date(text, posted)
+
+    def head(self, text: str, posted: date) -> dict | None:
+        """The amount and the expense date only: all that the repost check of POLICY.md 4.2 compares."""
         amount = self.amount(text)
         if amount is None:
             return None
+        return {"amount": amount, "date": self.expense_date(text, posted)}
+
+    def read(self, text: str, attachments, posted: date) -> dict | None:
+        f = self.head(text, posted)
+        if f is None:
+            return None
         cat = self.category(text)
-        return {"amount": amount, "date": parse_date(text, posted), "category": cat,
-                "attendees": parse_attendees(text), "receipt": self.has_receipt(text, attachments),
-                "alcohol": self.is_alcohol(text), "client": self.client(text), "hotel": self.hotel(text, cat),
-                "flight": self.flight(text, cat)}
+        f.update({"category": cat, "attendees": parse_attendees(text), "receipt": self.has_receipt(text, attachments),
+                  "alcohol": self.is_alcohol(text), "client": self.client(text), "hotel": self.hotel(text, cat),
+                  "flight": self.flight(text, cat)})
+        return f
 
     # -- section 8: rules --------------------------------------------------------------------------------------------
     def individual(self, f: dict) -> bool:
@@ -333,12 +349,16 @@ class Receipts:
         for _, c in rows:
             if (norm(c.get("Employee")) == norm(name) and norm(c.get("Category")) == "meals"
                     and c.get("Date", "").strip() == d.isoformat() and self.att_value(c.get("Attendees")) == 1
-                    and norm(c.get("Status")) != norm(REJECTED) and c.get("Message TS", "").strip() != (exclude_ts or "")):
+                    and self.cap_counts(c.get("Status")) and c.get("Message TS", "").strip() != (exclude_ts or "")):
                 try:
                     s += Decimal(str(c.get("Amount")).replace("$", "").replace(",", ""))
                 except InvalidOperation:
                     pass
         return s
+
+    def cap_counts(self, status) -> bool:
+        """Rule 4d: the cap counts rows with a Status other than Rejected."""
+        return norm(status) != norm(REJECTED)
 
     @staticmethod
     def att_value(v) -> int | None:
@@ -409,6 +429,10 @@ class Receipts:
         email = self.email_of(user_id)
         return self.employees().get(email) if email else None
 
+    def earlier_date(self, m: dict, d: dict) -> date:
+        """4.2: an earlier message's expense date, read relative to its own posting date."""
+        return parse_date(m.get("text") or "", ts_date(m["ts"]))
+
     def is_repost(self, d: dict, f: dict) -> bool:
         for m in self.history():
             if float(m["ts"]) >= float(d["ts"]) or m.get("user") != d["user"] or m.get("bot_id"):
@@ -416,20 +440,22 @@ class Receipts:
             a = self.amount(m.get("text") or "")
             if a is None:
                 continue
-            if a == f["amount"] and parse_date(m.get("text") or "", ts_date(m["ts"])) == f["date"]:
+            if a == f["amount"] and self.earlier_date(m, d) == f["date"]:
                 return True
         return False
 
     def top_level(self, d: dict):
         text = d.get("text") or ""
-        if self.amount(text) is None:
+        posted = ts_date(d["ts"])
+        head = self.head(text, posted)
+        if head is None:
             return None
         emp = self.poster(d["user"])
         if emp is None:
             return self.escalate(f"the poster ({d['user']}) is not in Employees")
-        f = self.read(text, d.get("attachments") or [], ts_date(d["ts"]))
-        if self.is_repost(d, f):
+        if self.is_repost(d, head):          # 4.2 comes before reading the category (4.3)
             return None
+        f = self.read(text, d.get("attachments") or [], posted)
         rows = self.sheet(SUBMISSIONS)
         other = self.cap_other(rows, emp["Employee"], f["date"], None) if self.individual(f) else Decimal("0")
         status, reason = self.check(f, other)
@@ -458,7 +484,7 @@ class Receipts:
             return self.preapproval(d, parent)
         return None
 
-    def apply_correction(self, f: dict, text: str, attachments, posted: date) -> dict:
+    def apply_correction(self, f: dict, text: str, attachments, posted: date, parent_text: str = "") -> dict:
         f = dict(f)
         a = self.amount(text)
         if a is not None:
@@ -480,9 +506,13 @@ class Receipts:
             f["attendees"] = n
         if self.has_receipt(text, attachments):
             f["receipt"] = True
-        f["hotel"] = f["hotel"] if f["category"] == "Travel" else None
-        f["flight"] = f["flight"] if f["category"] == "Travel" else None
+        f["hotel"], f["flight"] = self.travel_facts(f, parent_text)
         return f
+
+    def travel_facts(self, f: dict, parent_text: str) -> tuple:
+        """5.1 'as if it had been posted that way': the hotel and flight facts are read from the receipt's own text
+        under its corrected category (a hotel declared as Consulting and corrected to Travel is now a hotel stay)."""
+        return self.hotel(parent_text, f["category"]), self.flight(parent_text, f["category"])
 
     def is_corrector(self, user_id: str | None, parent: dict) -> bool:
         """5.1: only the receipt's own poster corrects it."""
@@ -494,24 +524,36 @@ class Receipts:
         emp = self.poster(parent["user"])
         if emp is None:
             raise Undecidable("a correction on a receipt whose poster is not in Employees")
-        f = self.read(parent.get("text") or "", parent.get("attachments") or [], ts_date(parent["ts"]))
+        ptext = parent.get("text") or ""
+        f = self.read(ptext, parent.get("attachments") or [], ts_date(parent["ts"]))
         if f is None:
             return None
         thread = self.replies(parent["ts"])
-        preapproved = False
+        # Replay the thread in order (5.1): every earlier correction by the poster applies, each read on its own day,
+        # and a manager's 'pre-approved' counts only if the receipt was pending when it was posted (5.2). Whether a
+        # receipt is pending does not depend on the daily cap (a meal over $50 fails rule 4b first), so it is known
+        # from the facts alone.
+        preapproved, pending = False, self.pending_shape(f)
         for m in thread:
             if float(m["ts"]) > float(d["ts"]):
                 break
+            if m["ts"] == parent["ts"]:
+                continue
             body = (m.get("text") or "").strip()
             if self.is_corrector(m.get("user"), parent) and re.match(r"correction\b", body, re.I):
-                f = self.apply_correction(f, body, d.get("attachments") if m["ts"] == d["ts"] else [], ts_date(m["ts"]))
+                if self.applies(m, d):
+                    f = self.apply_correction(f, body, d.get("attachments") if m["ts"] == d["ts"] else [],
+                                              self.correction_day(m, parent), ptext)
+                pending = not preapproved and self.pending_shape(f)
             elif re.match(r"pre-approved\b", body, re.I) and self.is_manager(m.get("user"), emp):
-                preapproved = True
+                if self.preapproval_counts(pending):
+                    preapproved = True
+                pending = False
         rows = self.sheet(SUBMISSIONS)
         mine = next(((n, c) for n, c in rows if c.get("Message TS", "").strip() == parent["ts"]), None)
-        other = self.cap_other(rows, emp["Employee"], f["date"], parent["ts"]) if self.individual(f) else Decimal("0")
-        status, reason = self.check(f, other)
-        if status == PENDING and preapproved:
+        other = self.cap_other(rows, emp["Employee"], f["date"], self.own_ts(parent)) if self.individual(f) else Decimal("0")
+        status, reason = self.recheck(f, other)
+        if status == PENDING and self.keeps_preapproval(preapproved):
             status = APPROVED
         if mine is not None:
             n, cells = mine
@@ -528,6 +570,34 @@ class Receipts:
         """5.1: a correction updates the receipt's own row in place."""
         self.update_row(row_no, cells)
 
+    # hooks of the correction path (one per rule of 5.1, so that controls.py can break exactly one)
+    def pending_shape(self, f: dict) -> bool:
+        return self.check(f, Decimal("0"))[0] == PENDING
+
+    def applies(self, m: dict, d: dict) -> bool:
+        """Every correction of the thread up to this one applies, in order."""
+        return True
+
+    def correction_day(self, m: dict, parent: dict) -> date:
+        """A correction's relative date is read on the correction's own posting day."""
+        return ts_date(m["ts"])
+
+    def preapproval_counts(self, pending: bool) -> bool:
+        """A pre-approval counts only on a pending receipt."""
+        return pending
+
+    def keeps_preapproval(self, preapproved: bool) -> bool:
+        """A pre-approval given earlier in the thread still counts after a correction."""
+        return preapproved
+
+    def own_ts(self, parent: dict) -> str | None:
+        """The daily cap counts the employee's other rows, not this receipt's own row."""
+        return parent["ts"]
+
+    def recheck(self, f: dict, cap_other: Decimal):
+        """The corrected receipt is checked again with section 8."""
+        return self.check(f, cap_other)
+
     def is_manager(self, user_id: str | None, emp: dict) -> bool:
         if not user_id:
             return False
@@ -540,12 +610,16 @@ class Receipts:
             return None
         rows = self.sheet(SUBMISSIONS)
         mine = next(((n, c) for n, c in rows if c.get("Message TS", "").strip() == parent["ts"]), None)
-        if mine is None or norm(mine[1].get("Status")) != norm(PENDING):
+        if mine is None or not self.approvable(mine[1].get("Status")):
             return None
         n, cells = mine
         self.update_row(n, dict(cells, Status=APPROVED))
         amount = Decimal(str(cells.get("Amount")).replace("$", "").replace(",", ""))
         self.post(self.outcome_text(APPROVED, None, amount, cells.get("Category", "")), thread_ts=parent["ts"])
+
+    def approvable(self, status) -> bool:
+        """5.2: only a row with Status Pending Pre-Approval is approved."""
+        return norm(status) == norm(PENDING)
 
     # -- section 6: week close ------------------------------------------------------------------------------------------
     def week_lines(self, rows, week_start: str, friday: str) -> list[str]:
@@ -556,13 +630,17 @@ class Receipts:
             if st == norm(PENDING):
                 pending += 1
             sub = c.get("Submitted", "").strip()
-            if st == norm(APPROVED) and week_start <= sub <= friday:
+            if self.in_total(st) and week_start <= sub <= friday:
                 name = c.get("Employee", "").strip()
                 totals[name] = totals.get(name, Decimal("0")) + Decimal(str(c.get("Amount")).replace("$", "").replace(",", ""))
         lines = [f"{name}: {money(totals[name])}" for name in sorted(totals)]
         lines.append(f"Total: {money(sum(totals.values(), Decimal('0')))}")
         lines.append(f"Pending pre-approval: {pending}")
         return lines
+
+    def in_total(self, status: str) -> bool:
+        """Section 6: the totals count rows with Status Approved only."""
+        return status == norm(APPROVED)
 
     def week_close(self, week_start: str, friday: str):
         lines = self.week_lines(self.sheet(SUBMISSIONS), week_start, friday)

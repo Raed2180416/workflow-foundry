@@ -40,7 +40,14 @@ ONE_DEFECT = {  # control -> trap labels its broken rule must show up on
     "log-rejected": {"rule-category", "rule-receipt", "rule-meal", "rule-hotel", "rule-flight", "meal-cap"},
     "total-all-weeks": {"week-total"}, "no-receipt-rule": {"rule-receipt"}, "domestic-only": {"hotel-intl"},
     "cabin-ignored": {"rule-flight", "flight-six"}, "six-hours-ok": {"flight-six"}, "correction-append": {"correction"},
-    "unknown-logged": {"unknown-poster"}, "date-posted": {"date-format", "cap-history", "near-dup"}}
+    "unknown-logged": {"unknown-poster"}, "date-posted": {"date-format", "cap-history", "near-dup"},
+    # generator 1.1.0 (review 2026-10-21)
+    "no-recheck": {"correction-recheck"}, "no-pending-check": {"approval-again", "approval-not-pending"},
+    "repost-rel-now": {"repost-relative", "near-dup-relative"}, "category-first": {"repost-terse"},
+    "cap-counts-rejected": {"cap-rejected-row"}, "total-counts-rejected": {"total-rejected-row"},
+    "cap-counts-own-row": {"correction-own-row"}, "latest-correction-only": {"correction-multi"},
+    "correction-receipt-day": {"correction-relative-date"}, "preapproval-forgotten": {"correction-preapproved"},
+    "preapproval-any-time": {"correction-early-approval"}}
 
 
 @pytest.fixture(scope="module")
@@ -72,7 +79,7 @@ def test_stream_shape_matches_family_json(streams):
         d = out["meta"]["difficulty"]
         assert d == {610: "d2", 611: "d3", 612: "d2", 613: "d3", 614: "d2"}[s]
         lo, hi = FAMILY["triggersPerWeek"][d]
-        assert lo <= out["meta"]["n_triggers"] <= hi and 30 <= out["meta"]["n_triggers"] <= 50
+        assert lo <= out["meta"]["n_triggers"] <= hi and 30 <= out["meta"]["n_triggers"] <= 60
         kinds = Counter(t["kind"] for t in out["triggers"])
         for kind, spec in FAMILY["triggerKinds"].items():
             assert spec[d][0] <= kinds[kind] <= spec[d][1], (s, kind, kinds[kind])
@@ -157,7 +164,7 @@ def test_truth_follows_the_state_across_triggers(streams):
                 assert rejected[row["cells"]["Message TS"]] < t["index"]
                 fixed += 1
             if t["kind"] == "receipt.reposted" or set(t["traps"]) & {"wrong-corrector", "wrong-approver", "approval-negated",
-                                                                    "approval-again"}:
+                                                                    "approval-again", "approval-not-pending"}:
                 ex = t["expect"]
                 assert t["outcome"] == "no-op" and not (ex["new_rows"] or ex["set_rows"] or ex["replies"] or ex["email"])
                 quiet += 1
@@ -457,3 +464,190 @@ def test_grounding_spans_point_at_the_public_tasks():
         a, b = (int(x) for x in g["span"].split(":")[1].split("-"))
         assert lines[a - 1].startswith(fn), (g["task"], lines[a - 1])
         assert f'"{g["task"]}"' in "\n".join(lines[a - 1:b])
+
+
+# -- review 2026-10-21 regressions (generator 1.1.0) ---------------------------------------------------------------------
+def test_d3_weeks_carry_every_correction_state():
+    """Every d3 week exercises the POLICY.md 5.1 / 5.2 branches 1.0.0 never generated: a re-check that changes the
+    outcome (to Pending and to Rejected), the cap's own-row rule, two corrections in a thread, a relative date in a
+    correction, a pre-approval that survives a correction and one given while the row was not pending, a Rejected row
+    in a later cap and in the weekly totals, a repeated and a not-pending approval, and reposts and a near-duplicate
+    read relative to their own dates."""
+    for s in range(601, 651):
+        if gen.default_difficulty(s) != "d3":
+            continue
+        out = gen.generate(s, validate=False)
+        labels = Counter(x for t in out["truth"] for x in t["traps"])
+        assert not [x for x in gates.D3_REQUIRED if not labels[x]], (s, [x for x in gates.D3_REQUIRED if not labels[x]])
+        corr = [t for t in out["truth"] if t["kind"] == "receipt.corrected" and t["expect"]["replies"]]
+        texts = [t["expect"]["replies"][0]["text"] for t in corr]
+        assert any(x.startswith("Rejected:") for x in texts) and any(x.startswith("Pending pre-approval:") for x in texts), (s, texts)
+        statuses = {r["cells"]["Status"] for t in corr for r in t["expect"]["set_rows"]}
+        assert {gen.REJECTED, gen.PENDING, gen.APPROVED} <= statuses, (s, statuses)
+
+
+def test_d2_weeks_plant_approval_again_in_about_half():
+    d2 = [s for s in range(601, 651) if gen.default_difficulty(s) == "d2"]
+    again = sum(any("approval-again" in t["traps"] for t in gen.generate(s, validate=False)["truth"]) for s in d2)
+    assert 0.3 <= again / len(d2) <= 0.7, (again, len(d2))
+
+
+def test_rejected_row_reaches_a_later_cap_and_the_weekly_email(streams):
+    """A correction rejects a logged individual meal (row Status Rejected); a later meal of the same employee and day
+    passes only when the Rejected row is not counted, and the week's totals leave it out."""
+    seen = 0
+    for s in (611, 613):
+        out = streams[s]
+        tr = next(t for t in out["truth"] if "cap-rejected-row" in t["traps"])
+        (row,) = tr["expect"]["new_rows"]
+        assert row["cells"]["Status"] == gen.APPROVED and row["cells"]["Category"] == "Meals"
+        rejected = [r for ts, r in out["end"]["rows"].items() if r["Status"] == gen.REJECTED
+                    and r["Employee"] == row["cells"]["Employee"] and r["Date"] == row["cells"]["Date"]]
+        assert rejected
+        rej_corr = next(t for t in out["truth"] if t["kind"] == "receipt.corrected"
+                        and any(u["message_ts"] == rejected[0]["Message TS"] for u in t["expect"]["set_rows"]))
+        assert rej_corr["index"] < tr["index"]
+        assert Decimal(rejected[0]["Amount"]) + Decimal(row["cells"]["Amount"]) > 100
+        close = out["truth"][-1]
+        assert "total-rejected-row" in close["traps"]
+        want_total = sum(Decimal(r["Amount"]) for r in out["end"]["rows"].values() if r["Status"] == gen.APPROVED
+                         and out["end"]["week_start"] <= r["Submitted"] <= out["end"]["friday"])
+        assert f"Total: ${want_total:,.2f}" in close["expect"]["email"]["lines"]
+        seen += 1
+    assert seen == 2
+
+
+def test_no_recheck_control_fails_every_d3_week(dev_runs):
+    """The review's control: apply the corrected values, never re-check a rule. It passed 1,186/1,186 triggers on
+    1.0.0; now it fails every d3 week, on triggers labelled correction-recheck."""
+    _, results = dev_runs["no-recheck"]
+    for res in results:
+        failed = [x for x in res["rows"] if not x["pass"]]
+        if res["difficulty"] == "d3":
+            assert not res["clean_week"]
+            assert any("correction-recheck" in x["traps"] for x in failed), res["seed"]
+
+
+def test_no_pending_check_control_fails_on_approval_again(dev_runs):
+    _, results = dev_runs["no-pending-check"]
+    failed = [x for r in results for x in r["rows"] if not x["pass"]]
+    assert any("approval-again" in x["traps"] for x in failed)
+    assert any("approval-not-pending" in x["traps"] for x in failed)
+
+
+@pytest.mark.parametrize("name", sorted(gates.RARE_CONTROLS))
+def test_rarer_rule_controls_fail_on_their_traps(name):
+    """travel-facts-kept and cabin-anywhere are the 1.0.0 reference's own departures from POLICY.md 5.1 and 7; their
+    traps are drawn at random, so they are checked on the first dev-range seeds that carry them."""
+    label = gates.RARE_CONTROLS[name]
+    seeds = gates.rare_seeds(label)
+    assert len(seeds) == 2, (label, seeds)
+    ref, _ = harness.run("reference", seeds)
+    assert ref["passed"] == ref["triggers"], ref
+    summary, results = harness.run(name, seeds)
+    failed = [x for r in results for x in r["rows"] if not x["pass"]]
+    assert summary["clean_weeks"] == 0 and any(label in x["traps"] for x in failed), (name, seeds, summary)
+
+
+def test_reference_follows_the_policy_text_where_the_review_found_departures():
+    """(a) a category corrected to Travel re-reads the hotel; (c) the repost check comes before the category; (d) a
+    'business' that is not a cabin is economy. (b), a pre-approval given while not pending, is covered by the
+    preapproval-any-time control."""
+    rd = reference.Receipts({"trigger": "x"}, None)
+    day = date(2026, 6, 23)
+    text = "Expense: Harborview Hotel in Denver, 2 nights, $612.40, category: Consulting, receipt: yes"
+    f = rd.read(text, [], day)
+    assert f["category"] == "Consulting" and f["hotel"] is None
+    g = rd.apply_correction(f, "Correction: category should be Travel", [], day, text)
+    assert g["category"] == "Travel" and g["hotel"] == {"nights": 2, "intl": False}
+    assert rd.check(g, Decimal("0")) == (None, "Over hotel nightly limit")
+    assert rd.head("Did my $45.00 from Jun 22 get logged?", day) == {"amount": Decimal("45.00"), "date": date(2026, 6, 22)}
+    with pytest.raises(reference.Undecidable):
+        rd.category("Did my $45.00 from Jun 22 get logged?")
+    for desc, cabin in (("Flight Denver to Boston for a business meeting, 4h", "economy"),
+                        ("Airfare Austin - Seattle (business trip), 3h 30m", "economy"),
+                        ("Flight Denver to Boston, business, 4h", "other"),
+                        ("Flight Denver to Boston, business class, 4h", "other"),
+                        ("Flight Denver to Boston, first class, 4h", "other"),
+                        ("Flight Denver to Boston, premium economy, 4h", "other")):
+        assert rd.flight(desc, "Travel")["cabin"] == cabin, desc
+
+
+def test_correction_replay_counts_a_preapproval_only_on_a_pending_row():
+    """5.2: the manager's 'pre-approved' given while the row was Approved never counts, even after a later correction
+    makes the receipt pending; one given while pending still counts after a correction (5.1)."""
+    for s in (611, 613):
+        out = gen.generate(s, validate=False)
+        early = [t for t in out["truth"] if "correction-early-approval" in t["traps"]]
+        kept = [t for t in out["truth"] if "correction-preapproved" in t["traps"]]
+        assert early and all(t["expect"]["replies"][0]["text"].startswith("Pending pre-approval:") for t in early)
+        assert kept and all(t["expect"]["replies"][0]["text"].startswith("Logged:") for t in kept)
+
+
+def _weekly_email_world(ref_worlds):
+    stream, res = ref_worlds[1]
+    k = len(stream["truth"]) - 1
+    before, after = res["befores"][k], res["afters"][k]
+    i = gates._new_mail(before, after)[0]
+    return stream, k, before, after, i
+
+
+def test_oracle_accepts_email_layouts_the_policy_leaves_open(ref_worlds):
+    """Review defect: a dated header line, list markers and an HTML body were graded wrong. POLICY.md section 6 lists
+    the required lines and forbids none of these, so they pass; wrong or extra lines behind them still fail."""
+    grader = oracle.Grader()
+    stream, k, before, after, i = _weekly_email_world(ref_worlds)
+    truth, week = stream["truth"][k], stream["end"]["week_start"]
+    plain = after["gmail"]["messages"][i]["body_plain"]
+    lines = plain.splitlines()
+    ok = {"header": f"Weekly expense totals for the week of {week}:\n" + plain,
+          "dash": "\n".join("- " + x for x in lines), "star": "\n".join("* " + x for x in lines),
+          "dot": "\n".join("• " + x for x in lines), "numbered": "\n".join(f"{n}. {x}" for n, x in enumerate(lines, 1)),
+          "html-in-plain": "<p>" + "<br>".join(lines) + "</p>",
+          "greeting": "Hi Finance,\n\n" + "\n".join(reversed(lines)) + "\n\nThanks"}
+    for name, body in ok.items():
+        w = copy.deepcopy(after)
+        w["gmail"]["messages"][i]["body_plain"] = body
+        v = grader.grade(truth, before, w)
+        assert v["pass"], (name, v["failed"])
+    w = copy.deepcopy(after)
+    w["gmail"]["messages"][i].update(body_plain=None, body_html="<p>" + "<br>".join(lines) + "</p>")
+    assert grader.grade(truth, before, w)["pass"]
+    bad = {"extra-bullet": "\n".join("- " + x for x in lines) + "\n- Someone Else: $10.00",
+           "wrong-total-html": "<p>" + "<br>".join(re.sub(r"Total: \$([\d,]+)\.(\d\d)", lambda m: f"Total: ${m.group(1)}.{(int(m.group(2)) + 1) % 100:02d}", x)
+                                                    for x in lines) + "</p>",
+           "missing-line": "\n".join("* " + x for x in lines[1:]),
+           "money-header": f"Weekly total for {week}: $1.00\n" + plain}
+    for name, body in bad.items():
+        w = copy.deepcopy(after)
+        w["gmail"]["messages"][i]["body_plain"] = body
+        v = grader.grade(truth, before, w)
+        assert not v["pass"] and v["outcome"] == "wrong", name
+
+
+def test_oracle_enforces_the_amount_cell_format(ref_worlds):
+    """Review defect: POLICY.md section 4 writes Amount as `1250.00` (no `$`, no commas, two decimals). Text cells in
+    any other format fail, at the trigger and at week end; a number cell of the same value passes."""
+    grader = oracle.Grader()
+    stream, res = ref_worlds[1]
+    n = 0
+    for truth, before, after in zip(stream["truth"], res["befores"], res["afters"]):
+        new, _ = gates._changed_rows(before, after)
+        if not new:
+            continue
+        i = new[0]
+        a = Decimal(after["google_sheets"]["rows"][i]["cells"]["Amount"])
+        for bad in (f"${a:,.2f}", f"{a:.3f}", f"${a:.2f}", f"{a:.1f}") + ((f"{a:,.2f}",) if a >= 1000 else ()):
+            w = copy.deepcopy(after)
+            w["google_sheets"]["rows"][i]["cells"]["Amount"] = bad
+            v = grader.grade(truth, before, w)
+            assert not v["pass"] and v["outcome"] == "wrong", (truth["trigger"], bad)
+        for good in (float(a), f" {a:.2f} "):
+            w = copy.deepcopy(after)
+            w["google_sheets"]["rows"][i]["cells"]["Amount"] = good
+            assert grader.grade(truth, before, w)["pass"], (truth["trigger"], good)
+        n += 1
+    assert n >= 20
+    assert not oracle.cells_equal({"Amount": "$145"}, {"Amount": "145.00"}) == []
+    assert oracle.amount_cell_ok(145, "145.00") and not oracle.amount_cell_ok("145", "145.00")
+    assert not oracle.amount_cell_ok(True, "1.00")

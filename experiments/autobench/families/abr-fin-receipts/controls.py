@@ -32,6 +32,21 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
     correction-append  a correction appends a second row instead of updating the receipt's row
     unknown-logged     a poster missing from Employees is logged under their Slack name instead of escalated
     date-posted        the expense date is always the posting date
+  added with generator 1.1.0 (review 2026-10-21), one per rule the 1.0.0 streams never exercised:
+    no-recheck         a correction applies the stated values and logs them; no rule is checked again (5.1)
+    no-pending-check   the manager's 'pre-approved' approves without checking that the row is pending (5.2)
+    repost-rel-now     an earlier message's 'today' / 'yesterday' / missing date is read relative to the new
+                       message's posting date, not its own (4.2)
+    category-first     the category is read (and an unreadable one escalated) before the repost check (4.2 before 4.3)
+    cap-counts-rejected    the daily cap also counts rows with Status Rejected (rule 4d)
+    total-counts-rejected  the weekly totals also count rows with Status Rejected (section 6)
+    cap-counts-own-row     a corrected meal's cap counts its own old row too (5.1)
+    latest-correction-only only the newest correction of a thread is applied to the original receipt (5.1)
+    correction-receipt-day a correction's relative date is read on the receipt's posting day (5.1)
+    preapproval-forgotten  a correction drops an earlier pre-approval (5.1, last bullet)
+    preapproval-any-time   a manager's 'pre-approved' counts even when the row was not pending at the time (5.2)
+    travel-facts-kept  a category corrected to Travel keeps the hotel and flight facts read under the old category
+    cabin-anywhere     any 'business' in a flight description is a business cabin ('for a business meeting')
 """
 from __future__ import annotations
 
@@ -222,11 +237,75 @@ class UnknownLogged(Receipts):
 
 
 class DatePosted(Receipts):
-    def read(self, text, attachments, posted):
-        f = super().read(text, attachments, posted)
-        if f is not None:
-            f["date"] = posted
-        return f
+    def expense_date(self, text, posted):
+        return posted
+
+
+class NoRecheck(Receipts):
+    def recheck(self, f, cap_other):
+        return APPROVED, None
+
+
+class NoPendingCheck(Receipts):
+    def approvable(self, status):
+        return True
+
+
+class RepostRelNow(Receipts):
+    def earlier_date(self, m, d):
+        return R.parse_date(m.get("text") or "", ts_date(d["ts"]))
+
+
+class CategoryFirst(Receipts):
+    def is_repost(self, d, f):
+        self.category(d.get("text") or "")      # raises Undecidable (an escalation) on a message without a category
+        return super().is_repost(d, f)
+
+
+class CapCountsRejected(Receipts):
+    def cap_counts(self, status):
+        return True
+
+
+class TotalCountsRejected(Receipts):
+    def in_total(self, status):
+        return status in (norm(APPROVED), norm(R.REJECTED))
+
+
+class CapCountsOwnRow(Receipts):
+    def own_ts(self, parent):
+        return None
+
+
+class LatestCorrectionOnly(Receipts):
+    def applies(self, m, d):
+        return m["ts"] == d["ts"]
+
+
+class CorrectionReceiptDay(Receipts):
+    def correction_day(self, m, parent):
+        return ts_date(parent["ts"])
+
+
+class PreapprovalForgotten(Receipts):
+    def keeps_preapproval(self, preapproved):
+        return False
+
+
+class PreapprovalAnyTime(Receipts):
+    def preapproval_counts(self, pending):
+        return True
+
+
+class TravelFactsKept(Receipts):
+    def travel_facts(self, f, parent_text):
+        travel = f["category"] == "Travel"
+        return (f["hotel"] if travel else None), (f["flight"] if travel else None)
+
+
+class CabinAnywhere(Receipts):
+    def cabin(self, low):
+        return "other" if "premium economy" in low or R.has_word(low, ["business", "first class"]) else "economy"
 
 
 def _solver(cls):
@@ -246,7 +325,13 @@ for _name, _cls in [("no-dedupe", NoDedupe), ("no-cap", NoCap), ("cap-all-meals"
                     ("no-receipt-rule", NoReceiptRule), ("domestic-only", DomesticOnly),
                     ("cabin-ignored", CabinIgnored), ("six-hours-ok", SixHoursOk),
                     ("correction-append", CorrectionAppend), ("unknown-logged", UnknownLogged),
-                    ("date-posted", DatePosted)]:
+                    ("date-posted", DatePosted), ("no-recheck", NoRecheck), ("no-pending-check", NoPendingCheck),
+                    ("repost-rel-now", RepostRelNow), ("category-first", CategoryFirst),
+                    ("cap-counts-rejected", CapCountsRejected), ("total-counts-rejected", TotalCountsRejected),
+                    ("cap-counts-own-row", CapCountsOwnRow), ("latest-correction-only", LatestCorrectionOnly),
+                    ("correction-receipt-day", CorrectionReceiptDay), ("preapproval-forgotten", PreapprovalForgotten),
+                    ("preapproval-any-time", PreapprovalAnyTime), ("travel-facts-kept", TravelFactsKept),
+                    ("cabin-anywhere", CabinAnywhere)]:
     CONTROLS[_name] = _solver(_cls)
 
 assert handle  # the reference entry point stays importable beside the controls

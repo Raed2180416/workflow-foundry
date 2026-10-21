@@ -16,14 +16,23 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
   solvability   the observable-only reference passes every trigger (and every week) of the practice and dev streams,
                 in carry mode and in rebased mode; generator and reference therefore agree on every effect (gate 3).
   controls      every bad control fails; null passes exactly the no-op triggers; the <= 40-line naive heuristic
-                scores below 60% per trigger at d3.
-  traps         each trap kind appears at least five times across the four dev label streams 610-613.
-  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects.
+                scores below 60% per trigger at d3. The two rarer-rule controls (travel-facts-kept, cabin-anywhere: their
+                traps are drawn at random, not every week) must fail on the first two dev-range seeds (601-650) whose
+                stream carries their trap.
+  traps         each trap kind appears at least five times across the four dev label streams 610-613, and every d3
+                stream carries each state the 1.1.0 review asked for (a correction whose re-check changes the outcome,
+                the cap's own-row rule, two corrections in a thread, a relative date in a correction, a pre-approval
+                that survives a correction and one given while not pending, a Rejected row in a later cap and in the
+                weekly totals, a repeated and a not-pending approval, reposts and a near-duplicate read relative to
+                their own dates).
+  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (since 1.1.0 also an Amount
+                cell as `$1,975.89`, `1,975.89`, `145.000` or `145`, and wrong or extra email lines behind list markers
+                or HTML).
   specificity   the oracle accepts policy-neutral variants (no false rejects): a trailing period, other letter case or
-                extra spaces in a reply, `$1250.00` for `$1,250.00`, an Amount cell without decimals or as a number,
-                another bot name, an email with a greeting and its lines in another order; and an equivalent solver
-                that updates rows by row id, names the channel by id and writes the email body with blank lines passes
-                every trigger.
+                extra spaces in a reply, `$1250.00` for `$1,250.00`, an Amount cell as a number, another bot name, an
+                email with a greeting, a dated header, its lines in another order, behind list markers (`- `, `* `,
+                `• `, `1. `) or as HTML (`<br>`, `<p>`, an HTML-only body); and an equivalent solver that updates rows
+                by row id, names the channel by id and writes the email body with blank lines passes every trigger.
 """
 from __future__ import annotations
 
@@ -34,6 +43,7 @@ import json
 import re
 import sys
 from collections import Counter
+from decimal import Decimal
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -53,7 +63,17 @@ DATA_KEYS = {"new_message": {"channel", "channel_id", "ts", "thread_ts", "user",
 BAD_CONTROLS = ["null", "echo", "naive", "no-dedupe", "no-cap", "cap-all-meals", "cap-week-only", "any-corrector",
                 "any-approver", "name-approver", "contains-approved", "field-category", "digits-only", "drinks-ok",
                 "slack-name", "no-preapproval", "top-level-reply", "log-rejected", "total-all-weeks", "no-receipt-rule",
-                "domestic-only", "cabin-ignored", "six-hours-ok", "correction-append", "unknown-logged", "date-posted"]
+                "domestic-only", "cabin-ignored", "six-hours-ok", "correction-append", "unknown-logged", "date-posted",
+                "no-recheck", "no-pending-check", "repost-rel-now", "category-first", "cap-counts-rejected",
+                "total-counts-rejected", "cap-counts-own-row", "latest-correction-only", "correction-receipt-day",
+                "preapproval-forgotten", "preapproval-any-time"]
+# Controls whose trap is drawn at random (not every week): checked on the dev-range seeds that carry the trap.
+RARE_CONTROLS = {"travel-facts-kept": "correction-travel-facts", "cabin-anywhere": "cabin-lookalike"}
+DEV_RANGE = list(range(601, 651))
+# Every d3 week carries these states (generator 1.1.0; review 2026-10-21).
+D3_REQUIRED = ["correction-recheck", "correction-own-row", "correction-multi", "correction-relative-date",
+               "correction-preapproved", "correction-early-approval", "cap-rejected-row", "total-rejected-row",
+               "approval-again", "approval-not-pending", "repost-relative", "near-dup-relative"]
 TRAP_KINDS = ["T-format", "T-authority", "T-repeat", "T-lookalike", "T-state"]
 TRUTH_WORDS = ["traps", "truth", "expect", "lookalike", "look-alike", "oracle", "repost", "near-dup", "namesake",
                "wrong-approver", "wrong-corrector", "meal-cap", "cap-history", "cap-under", "display-name",
@@ -176,10 +196,30 @@ def gate_controls(seeds: list[int], d3_seeds: list[int], streams: dict | None = 
     naive_d3, _ = harness.run("naive", d3_seeds, streams=streams)
     if naive_d3["pass_rate"] >= 0.6:
         problems.append(f"naive scores {naive_d3['pass_rate']} at d3")
+    rare = {}
+    for name, label in RARE_CONTROLS.items():
+        found = rare_seeds(label)
+        summary, results = harness.run(name, found)
+        hit = [x["taskKey"] for r in results for x in r["rows"] if not x["pass"] and label in x["traps"]]
+        rare[name] = {"label": label, "seeds": found, "passed": summary["passed"], "triggers": summary["triggers"],
+                      "clean_weeks": summary["clean_weeks"], "failed_on_label": hit}
+        if len(found) < 2 or summary["clean_weeks"] > 0 or not hit:
+            problems.append(f"{name} does not fail on its trap {label} (seeds {found})")
     import controls
-    return {"pass": not problems, "seeds": seeds, "noop_triggers": noop, "controls": res,
+    return {"pass": not problems, "seeds": seeds, "noop_triggers": noop, "controls": res, "rare": rare,
             "naive_d3": {"seeds": d3_seeds, "pass_rate": naive_d3["pass_rate"], "lines": controls.NAIVE_LINES},
             "problems": problems}
+
+
+def rare_seeds(label: str, k: int = 2) -> list[int]:
+    """The first k dev-range seeds (601-650) whose stream carries the trap label."""
+    out = []
+    for s in DEV_RANGE:
+        if any(label in t["traps"] for t in gen.generate(s, validate=False)["truth"]):
+            out.append(s)
+            if len(out) == k:
+                break
+    return out
 
 
 def gate_traps(seeds: list[int]) -> dict:
@@ -195,8 +235,17 @@ def gate_traps(seeds: list[int]) -> dict:
         shares[s] = {"difficulty": out["meta"]["difficulty"], "trigger": out["meta"]["trigger_trap_share"],
                      "receipt": out["meta"]["receipt_trap_share"]}
     short = [k for k in TRAP_KINDS if kinds[k] < 5]
-    return {"pass": not short, "seeds": seeds, "by_kind": dict(sorted(kinds.items())), "by_id": dict(sorted(ids.items())),
-            "short": short, "shares": shares}
+    d3_missing = {}
+    for s in seeds:
+        out = gen.generate(s)
+        if out["meta"]["difficulty"] != "d3":
+            continue
+        labs = {x for t in out["truth"] for x in t["traps"]}
+        miss = [x for x in D3_REQUIRED if x not in labs]
+        if miss:
+            d3_missing[s] = miss
+    return {"pass": not short and not d3_missing, "seeds": seeds, "by_kind": dict(sorted(kinds.items())),
+            "by_id": dict(sorted(ids.items())), "short": short, "d3_missing": d3_missing, "shares": shares}
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -293,6 +342,12 @@ def mutants(before: dict, after: dict, truth: dict):
         out += m("row-attendees", cell(i, "Attendees", lambda v: "" if v else "1"))
         out += m("row-ts", cell(i, "Message TS", lambda v: (v or "")[:-1] + ("0" if (v or "x")[-1] != "0" else "1")))
         out += m("row-submitted", cell(i, "Submitted", lambda v: (v[:8] + f"{int(v[8:]) % 27 + 1:02d}") if v else "2026-01-01"))
+        # the Amount cell's format (POLICY.md section 4: `1250.00`, no `$`, no commas)
+        out += m("row-amount-dollar", cell(i, "Amount", lambda v: f"${Decimal(str(v)):,.2f}"))
+        out += m("row-amount-3dp", cell(i, "Amount", lambda v: f"{Decimal(str(v)):.3f}"))
+        out += m("row-amount-commas", cell(i, "Amount", lambda v: f"{Decimal(str(v)):,.2f}"))
+        out += m("row-amount-no-decimals", cell(i, "Amount", lambda v: f"{Decimal(str(v)):.0f}"
+                                                  if Decimal(str(v)) == Decimal(str(v)).to_integral_value() else v))
     if new_rows:
         i = new_rows[0]
         out += m("row-drop", lambda w: w["google_sheets"]["rows"].pop(i))
@@ -342,6 +397,13 @@ def mutants(before: dict, after: dict, truth: dict):
         out += m("mail-drop-line", body(lambda b: "\n".join(b.splitlines()[1:])))
         out += m("mail-extra-line", body(lambda b: "Someone Else: $10.00\n" + b))
         out += m("mail-line-amount", body(lambda b: re.sub(r"^([^:\n]+): \$([\d,]+)\.(\d\d)", lambda mm: f"{mm.group(1)}: ${mm.group(2)}.{(int(mm.group(3)) + 1) % 100:02d}", b, count=1)))
+        # list markers and HTML must not hide a wrong or extra line
+        out += m("mail-extra-bullet", body(lambda b: "\n".join("- " + x for x in b.splitlines()) + "\n- Someone Else: $10.00"))
+        out += m("mail-bullet-wrong-total", body(lambda b: "\n".join("* " + x for x in re.sub(
+            r"Total: \$([\d,]+)\.(\d\d)", lambda mm: f"Total: ${mm.group(1)}.{(int(mm.group(2)) + 1) % 100:02d}", b).splitlines())))
+        out += m("mail-html-wrong-pending", body(lambda b: "<p>" + re.sub(
+            r"Pending pre-approval: (\d+)", lambda mm: f"Pending pre-approval: {int(mm.group(1)) + 1}", b).replace("\n", "<br>") + "</p>"))
+        out += m("mail-html-drop-line", body(lambda b: "<p>" + "<br>".join(b.splitlines()[1:]) + "</p>"))
     # writes no trigger asks for
     olds = [i for i in _sub_rows(after) if after["google_sheets"]["rows"][i]["id"] in {r["id"] for r in before["google_sheets"]["rows"]}
             and i not in changed_rows]
@@ -392,7 +454,6 @@ def equivalents(before: dict, after: dict, truth: dict):
         def c(w, i=i):
             return w["google_sheets"]["rows"][i]["cells"]
         m("row-amount-number", lambda w, c=c: c(w).__setitem__("Amount", float(c(w)["Amount"])))
-        m("row-amount-dollar", lambda w, c=c: c(w).__setitem__("Amount", "$" + f"{float(c(w)['Amount']):,.2f}"))
         m("row-status-case", lambda w, c=c: c(w).__setitem__("Status", c(w)["Status"].upper()))
         m("row-attendees-int", lambda w, c=c: c(w).__setitem__("Attendees", int(c(w)["Attendees"]) if c(w)["Attendees"] else ""))
     if mails:
@@ -403,6 +464,14 @@ def equivalents(before: dict, after: dict, truth: dict):
         m("mail-greeting", lambda w: b(w).__setitem__("body_plain", "Hi Finance,\n\n" + b(w)["body_plain"] + "\n\nThanks"))
         m("mail-reordered", lambda w: b(w).__setitem__("body_plain", "\n".join(reversed(b(w)["body_plain"].splitlines()))))
         m("mail-display-name", lambda w: b(w).__setitem__("to", [f"Finance <{gen.FINANCE}>"]))
+        # layouts POLICY.md section 6 leaves open (review 2026-10-21): a dated header, list markers, HTML
+        m("mail-header-date", lambda w: b(w).__setitem__("body_plain", f"Weekly expense totals for the week of {truth['expect']['email']['subject'].split()[-1]}:\n" + b(w)["body_plain"]))
+        m("mail-bullets-dash", lambda w: b(w).__setitem__("body_plain", "\n".join("- " + x for x in b(w)["body_plain"].splitlines())))
+        m("mail-bullets-star", lambda w: b(w).__setitem__("body_plain", "\n".join("* " + x for x in b(w)["body_plain"].splitlines())))
+        m("mail-bullets-dot", lambda w: b(w).__setitem__("body_plain", "\n".join("\u2022 " + x for x in b(w)["body_plain"].splitlines())))
+        m("mail-numbered", lambda w: b(w).__setitem__("body_plain", "\n".join(f"{n}. {x}" for n, x in enumerate(b(w)["body_plain"].splitlines(), 1))))
+        m("mail-html-only", lambda w: b(w).update(body_html="<p>" + b(w)["body_plain"].replace("\n", "<br>") + "</p>", body_plain=None))
+        m("mail-html-in-plain", lambda w: b(w).__setitem__("body_plain", "<html><body><ul>" + "".join(f"<li>{x}</li>" for x in b(w)["body_plain"].splitlines()) + "</ul></body></html>"))
     return out
 
 

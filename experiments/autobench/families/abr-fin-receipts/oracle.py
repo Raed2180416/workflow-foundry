@@ -8,15 +8,20 @@ trigger of the week (Friday's week close), end.json plus world0.
 Checks per trigger:
   1. effects   every expected effect is found in THIS trigger's ledger (attribution):
                - each expected new Submissions row: exactly one new row with that Message TS, every column equal
-                 (Employee, Category and Status ignoring letter case and extra spaces; Amount and Attendees compared
-                 as numbers; dates exactly `YYYY-MM-DD`) and no other non-empty cell;
+                 (Employee, Category and Status ignoring letter case and extra spaces; Amount as POLICY.md section 4
+                 writes it, text with two decimals and no `$` or commas (`1250.00`) or a number cell of that value;
+                 Attendees compared as numbers; dates exactly `YYYY-MM-DD`) and no other non-empty cell;
                - each expected row update: the receipt's existing row (found by Message TS in world_before) changed in
                  place to the expected cells (row id and position kept);
                - each expected thread reply: a new #expense-submissions message whose thread_ts is the receipt's ts and
                  whose text is the expected text (whitespace collapsed, letter case ignored, money compared by value so
                  `$1,250.00` = `$1250.00`, one trailing period tolerated);
-               - the weekly email: one sent message to finance@ only, the expected subject, and the expected body lines
-                 as a multiset (line order, blank lines and lines without digits such as a greeting are ignored);
+               - the weekly email: one sent message to finance@ only, the expected subject, and the body's lines of
+                 the three shapes POLICY.md section 6 lists (`<name>: $<amount>`, `Total: $<amount>`,
+                 `Pending pre-approval: <N>`) equal to the expected lines as a multiset. Other lines (a greeting, a
+                 dated header), line order, blank lines, list markers (`- `, `* `, `• `, `1. `) and HTML markup
+                 (`<br>`, `<p>`, `<li>`; an HTML-only body) are ignored; a missing, extra or wrong line of those
+                 shapes fails;
                - an escalation: a new #automation-review post naming the trigger id.
   2. envelope  every record created, changed or removed in this trigger is an expected effect or harmless (a thread
                parent's reply_count; read flags or labels on mail that was already there). Anything else is overreach.
@@ -38,6 +43,7 @@ is the same verdict without it (reported beside the headline).
 from __future__ import annotations
 
 import copy
+import html
 import json
 import re
 from collections import Counter, defaultdict
@@ -48,6 +54,12 @@ CHAN, REVIEW = "expense-submissions", "automation-review"
 FINANCE = "finance@company.example.com"
 COLUMNS = ["Message TS", "Submitted", "Employee", "Date", "Amount", "Category", "Attendees", "Status"]
 HARMLESS_MSG = {"reply_count"}
+AMOUNT_TEXT = re.compile(r"^\d+\.\d{2}$")          # POLICY.md section 4: `1250.00`
+HTML_TAG = re.compile(r"<\s*/?\s*(?:br|p|div|li|ul|ol|tr|td|th|table|tbody|thead|html|body|head|span|b|strong|em|i|u|"
+                      r"pre|h[1-6]|font|meta|style|title)\b[^>]*>", re.I)
+HTML_BREAK = re.compile(r"<\s*br\s*/?\s*>|<\s*/?\s*(?:p|div|li|tr|h[1-6]|pre|ul|ol|table)\b[^>]*>", re.I)
+LIST_MARK = re.compile(r"^\s*(?:[-*\u2022\u00b7]|\d{1,2}[.)])\s+")
+EMAIL_LINE = re.compile(r"^(?:[^:$]+: \$\d+\.\d{2}|pending pre-approval: \d+)$")   # on text_key()
 HARMLESS_MAIL = {"is_read", "label_ids"}
 
 
@@ -84,13 +96,24 @@ def num(v) -> Decimal | None:
         return None
 
 
+def amount_cell_ok(got, want) -> bool:
+    """POLICY.md section 4: the Amount cell is the amount with two decimals and no `$` or commas (`1250.00`), as
+    text, or a number cell holding the same value. `$1,975.89`, `1,975.89`, `145`, `145.0`, `145.000` as text fail."""
+    if isinstance(got, bool) or num(want) is None:
+        return False
+    if isinstance(got, (int, float)):
+        return num(got) == num(want)
+    s = str(got if got is not None else "").strip()
+    return bool(AMOUNT_TEXT.match(s)) and Decimal(s) == num(want)
+
+
 def cells_equal(got: dict, want: dict) -> list[str]:
     """Column-by-column comparison of a Submissions row; returns the differences."""
     bad = []
     for k in COLUMNS:
         g, w = got.get(k), want.get(k)
-        if k in ("Amount",):
-            ok = num(g) is not None and num(g) == num(w)
+        if k == "Amount":
+            ok = amount_cell_ok(g, w)
         elif k == "Attendees":
             ok = (num(w) is None and num(g) is None and norm(g) == "") or (num(w) is not None and num(g) == num(w))
         elif k in ("Message TS", "Submitted", "Date"):
@@ -179,8 +202,25 @@ def addr(a: str) -> str:
     return (m.group(1) if m else (a or "")).strip().lower()
 
 
+def body_text(body) -> str:
+    """The email body as plain lines: HTML markup turned into line breaks and removed, entities decoded."""
+    s = str(body or "")
+    if HTML_TAG.search(s):
+        s = HTML_BREAK.sub("\n", s)
+        s = re.sub(r"<[^>]*>", "", s)
+        s = html.unescape(s)
+    return s
+
+
 def body_lines(body: str) -> Counter:
-    return Counter(text_key(x) for x in str(body or "").splitlines() if x.strip() and re.search(r"\d", x))
+    """The body's lines of the three shapes POLICY.md section 6 lists, normalized (list markers dropped). Any other
+    line (a greeting, a header with a date, a signature) is not one of the required lines and is ignored."""
+    out = Counter()
+    for x in body_text(body).splitlines():
+        k = text_key(LIST_MARK.sub("", x))
+        if EMAIL_LINE.match(k):
+            out[k] += 1
+    return out
 
 
 def summarize(it: dict) -> str:
