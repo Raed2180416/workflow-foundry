@@ -224,8 +224,11 @@ export class Dispatcher {
       if (error.code === 'SCOPE_INSUFFICIENT' && this.ledger) stepUpProposal(this.ledger, { entry: this.host.entry(member.entryId), scopeClass: member.effects === 'none' ? 'read' : 'write',
         scopes: error.details?.scopes ?? [], flowId: this.lock.flowId, node, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey, member: member.id } });
       if (['CANCELLED', 'SECRET_EXPOSURE'].includes(error.code)) throw error;
-      // Host-chosen code only: upstream text never reaches the model.
-      return this.#out(ctx, refusal(error.code === 'SCHEMA_MISMATCH' ? 'ARGS_INVALID' : error.code, { tool: member.view.name, member: member.id }));
+      // Host-chosen code only: upstream text never reaches the model. Invalid arguments come back with the member's Foundry-authored
+      // signature (owner text, never server text): a standby index line names a tool without its arguments, so a model that called it
+      // from the index learns them here instead of guessing again (found before the NC-1 Haiku run, PREREG-NODECAP-1 §2).
+      if (error.code === 'SCHEMA_MISMATCH') return this.#out(ctx, refusal('ARGS_INVALID', { tool: member.view.name, member: member.id, signature: renderView(member) }));
+      return this.#out(ctx, refusal(error.code, { tool: member.view.name, member: member.id }));
     }
     const view = boundView(result, member.modelViewTokens ?? 1500);
     // (The approval id stays out of the model-visible output: it is run-specific, so it would break replay; the grant decision holds it.)

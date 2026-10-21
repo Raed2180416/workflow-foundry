@@ -92,7 +92,7 @@ class RawDispatcher {
 }
 
 /** Lower and launch one arm-B episode on the bed's host. Returns { construction, runtime, run } shaped like the Foundry arms'. */
-export async function launchArmB({ store, host, envelope, source, maxTurns, models, modelPolicy }) {
+export async function launchArmB({ store, host, envelope, source, maxTurns, models, modelPolicy, maxCost = 0 }) {
   if (!host.members.size) await host.qualify();
   const members = await rawMembers(host);
   const lock = { schema: 'nc1-armB-raw/1', flowId: source.id, tier0: {}, members: Object.fromEntries(members.map(m => [m.id, m])),
@@ -109,7 +109,7 @@ export async function launchArmB({ store, host, envelope, source, maxTurns, mode
   registry.register({ ...base, name: 'nodecap.act', description: 'Raw effect (engine approval).', inputSchema: DECISION_IN, outputSchema: OPEN, effects: 'non-idempotent', risk: 'high', requiresApproval: true, execute: (a, c) => dispatcher.act(a, c) });
   registry.register({ ...base, name: 'nodecap.log', description: 'Transcript.', inputSchema: { type: 'object', required: ['decision'], properties: { decision: OPEN, result: {}, effect: {}, previous: {} } }, outputSchema: OPEN, effects: 'none', risk: 'low', requiresApproval: false, execute: async a => dispatcher.base.log(a) });
   registry.register({ ...base, name: 'nodecap.close', description: 'Close.', inputSchema: { type: 'object', additionalProperties: false, required: ['log'], properties: { log: OPEN } }, outputSchema: OPEN, effects: 'none', risk: 'low', requiresApproval: false, execute: (a, c) => dispatcher.base.close(a, c) });
-  const runtime = new Runtime(store, registry, { allowedCapabilities: allowedCapabilities(registry, lowered), maxCost: 0 }, { models, modelPolicy });
+  const runtime = new Runtime(store, registry, { allowedCapabilities: allowedCapabilities(registry, lowered), maxCost }, { models, modelPolicy });
   store.saveWorkflow(lowered, { expectedHash: null });
   const run = runtime.create(lowered, {}, {});
   return { construction: { lock, lowered, lockHash: 'raw', workflowHash: digest(lowered), lint: { errors: [], warnings: [] } }, runtime, run };

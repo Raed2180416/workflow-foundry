@@ -189,3 +189,15 @@ test('broker L3 → lock N+1 → continuation (T04 shape): approve via CLI, rebi
   assert.deepEqual(completedEffects(h.store.events(run.id)).length, 1);
   assert.deepEqual(completedEffects(h.store.events(first.id)), []);
 });
+
+test('broker: invalid arguments to a standby member come back as ARGS_INVALID with the authored signature, never server text', async t => {
+  const dir = workspace(t), crmLedger = path.join(dir, 'crm.jsonl');
+  const h = await setup(t, { dir, entries: [crmEntry({ ledger: crmLedger })], script: [read('crm_search_contacts', { q: 'Analytical' }), read('crm_search_contacts', { query: 'Analytical' }), done({ email: 'ada@analytical.example' })] });
+  const run = await h.execute();
+  assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
+  const second = h.provider.calls[1].prompt;
+  assert.match(second, /"code":"ARGS_INVALID"/);
+  assert.match(second, /"signature":"crm_search_contacts\(query: string \(≤200\)\) — Find CRM contacts by name, email or company\."/, 'the owner-authored signature, so the model can correct the call');
+  assert.doesNotMatch(second, /IMPORTANT|evil\.invalid/, 'never the server description');
+  assert.equal(ledgerLines(crmLedger).length, 1, 'the invalid call never reached the server');
+});
