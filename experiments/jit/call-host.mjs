@@ -83,6 +83,7 @@ import { compileDataSchema, validateData } from '../../src/validate.mjs';
 import { checkProfile, checkOptionsOf, profileSupports, PROFILE_SCHEMA } from './profile.mjs';
 import { reserveFor } from '../lib/services.mjs';
 import { ENV_FAULTS } from '../lib/runner.mjs';
+import { lockWorkdir } from '../lib/workdir-lock.mjs';
 import { FoundryError } from '../../src/data.mjs';
 
 export const FLOW_V3 = path.resolve(new URL('./flow-v3.mjs', import.meta.url).pathname);
@@ -405,9 +406,13 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
   async function interpretChild({ entry, task, span, childPath, budgetUsd, timeoutMs, reason }) {
     const workdir = workRoot ? path.join(workRoot, 'interpret', dirOf(childPath)) : null;
     if (workdir) mkdirSync(workdir, { recursive: true });
+    // One runner per workdir (orch-20261021 rank 12): another host sharing this workRoot is refused, nothing spent.
+    const lock = workdir ? lockWorkdir(workdir, { label: `interpret:${childPath}` }) : null;
+    if (lock && !lock.ok) return { ok: false, error: { code: 'WORKDIR_BUSY', message: `interpret workdir in use by pid ${lock.holder?.pid ?? '?'}` }, costUsd: 0, costUnknown: false, traceId: null };
     let r;
     try { r = (await interpreter({ task, outputSchema: entry.contract.output, budgetUsd, timeoutMs, workdir, name: span?.replace(/^call:|#\d+$/g, '') ?? null, span, path: childPath, callee: entry.hash, reason, arm, taskKey })) ?? {}; }
     catch (error) { return { ok: false, error: { code: error.code ?? 'INTERPRETER', message: short(error, 400) }, costUsd: 0, costUnknown: false, traceId: null }; }
+    finally { lock?.release(); }
     const costUnknown = !!r.costUnknown, costUsd = usd(costUnknown ? Math.max(r.costUsd ?? 0, budgetUsd) : (r.costUsd ?? 0));
     const traceId = r.traceId ?? null;
     if (r.answer == null) return { ok: false, error: r.error ?? { code: 'NO_ANSWER' }, costUsd, costUnknown, traceId };
@@ -664,6 +669,9 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       const stallMs = Number.isInteger(req.stallMs) && req.stallMs > 0 ? req.stallMs : agentCfg.stallMs;
       const workdir = workRoot ? path.join(workRoot, 'agents', `${dirOf(nodePath)}-a${attempt}`) : null;
       let run = null, spent = 0, restarts = 0, stalls = 0, costUnknown = false;
+      // One runner per workdir (orch-20261021 rank 12): the agent's workdir (and its -rN restart dirs) belong to this host while it runs.
+      const lock = workdir ? lockWorkdir(workdir, { label: `agent:${nodePath}` }) : null;
+      try {
       await reserveOn(scope, amount, gatewayHoldUsd, async () => {
         await acquireSlot();
         try {
@@ -674,7 +682,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
             if (stallMs) { timer = setInterval(() => { if (Date.now() - last > stallMs) { stalled = true; ac.abort(); } }, Math.max(5, Math.min(1000, Math.floor(stallMs / 4)))); timer.unref?.(); }
             let r;
             try {
-              r = (await agentCfg.runner({ instructions: req.instructions, files, inputs: req.inputs, returns: req.returns, model, tools, budgetUsd: usd(amount - spent), timeoutMs,
+              if (lock && !lock.ok) r = { answer: null, costUsd: 0, error: { code: 'WORKDIR_BUSY', message: `agent workdir in use by pid ${lock.holder?.pid ?? '?'}` } };
+              else r = (await agentCfg.runner({ instructions: req.instructions, files, inputs: req.inputs, returns: req.returns, model, tools, budgetUsd: usd(amount - spent), timeoutMs,
                 workdir: workdir ? (restarts ? `${workdir}-r${restarts}` : workdir) : null, signal: ac.signal, progress: () => { last = Date.now(); }, retryReason, name, span, attempt,
                 path: nodePath, arm, taskKey })) ?? {};
             } catch (error) { r = { answer: null, costUsd: 0, error: { code: error.code ?? 'AGENT_RUNNER', message: short(error, 400) } }; }
@@ -690,6 +699,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
           }
         } finally { releaseSlot(); }
       });
+      } finally { lock?.release(); }
       scope.spentUsd += spent;
       // Void, failed or ok (the verify is the caller's).
       let result;

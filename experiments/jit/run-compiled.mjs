@@ -12,6 +12,7 @@ import { loadFamily } from '../lib/beds.mjs';
 import { validateOutput } from './interpret.mjs';
 import { FoundryError } from '../../src/data.mjs';
 import { REPLAYABLE_ERRORS } from '../../src/journal.mjs';
+import { lockWorkdir } from '../lib/workdir-lock.mjs';
 
 export const DEOPT_EXIT = 75, ENV_EXIT = 76, MAX_TRACE_EVENTS = 5000;
 // DEFAULT_FLOW is the version-1 SDK (frozen); a prompt-version-2 arm passes flowPath = FLOW_V2 (stream.mjs, prompts.mjs flowFileOf).
@@ -275,9 +276,23 @@ export async function runCompiled(args = {}) {
   return { ...r, ...cost, status: 'deopt', output: null, deopt: { kind: INVARIANCE_KIND, name: v.violated.relation, detail: { violations: v.violated.violations.slice(0, 10), info: v.violated.info } }, meta };
 }
 
-async function runOnce({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs = 20 * 60 * 1000, workdir, familyId = null, outputSchema = null,
+// One run per workdir (orch-20261021 rank 12, chaos F1): the run holds an exclusive lock file in its workdir from before it clears or
+// writes anything there until it has read its results back. A second run in the same workdir, in this process or another, is refused
+// (status 'refused', WORKDIR_BUSY, nothing spent) instead of sharing the gateway files, answers and trace; WORKDIR_BUSY is an
+// environment fault (experiments/lib/runner.mjs ENV_FAULTS), retried on resume, never a task failure.
+async function runOnce(args) {
+  if (!args?.solvePath || !args?.task || !args?.workdir) throw new Error('runCompiled needs solvePath, task and workdir');
+  const label = args.label ?? 'compiled', lock = lockWorkdir(args.workdir, { label });
+  if (!lock.ok) {
+    return { status: 'refused', output: null, deopt: null, trace: [], flags: flagsOf([]), costUsd: 0, costUnknown: false, imputedUsd: 0, latencyMs: 0,
+      error: { code: 'WORKDIR_BUSY', message: `workdir ${args.workdir} is in use by another run (pid ${lock.holder?.pid ?? '?'}, ${lock.holder?.label ?? 'unlabelled'})` },
+      meta: { exitCode: null, calls: 0, errors: {}, refusals: { WORKDIR_BUSY: 1 }, unknownCalls: 0, unknownUpperUsd: 0, spentUsd: 0, overshootUsd: 0, workdirHolder: lock.holder } };
+  }
+  try { return await runLocked(args); } finally { lock.release(); }
+}
+
+async function runLocked({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs = 20 * 60 * 1000, workdir, familyId = null, outputSchema = null,
   allowedModels = null, flowPath = DEFAULT_FLOW, label = 'compiled', flowOverride = null, flowOverrideData, ledger: givenLedger = null, flowScope = null, resume = null }) {
-  if (!solvePath || !task || !workdir) throw new Error('runCompiled needs solvePath, task and workdir');
   // S0-2 (opt-in): flowOverride is the path of an ESM module whose default export is flow-v2's override(callSite, request)
   // (see flow-v2.mjs); it is copied in as tools/flow-override.mjs, and flowOverrideData (any JSON) as tools/flow-override.json
   // for it to read. flow.mjs (version 1, frozen) has no hook, so an override with it is refused rather than ignored.

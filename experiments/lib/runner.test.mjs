@@ -30,9 +30,9 @@ const arm = (id, fault = () => null, version = 1) => ({
 
 test('the environment-fault classes are the pre-registered ones', () => {
   // The five pre-registered classes, plus host infrastructure (a full disk, a quota, an exhausted file table, a store that cannot be written)
-  // added by orch-20261021 patch 06 (chaos C2): the host's fault, never the task's. A run that pre-registered the five records the change as
+  // added by orch-20261021 patch 06 (chaos C2), and a run refused for a busy workdir (rank 12): the host's fault, never the task's. A run that pre-registered the five records the change as
   // dependency drift (experiments/lib/runner.mjs is hashed by sealed runs).
-  assert.deepEqual([...ENV_FAULTS].sort(), ['EDQUOT', 'EMFILE', 'ENFILE', 'ENOSPC', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL', 'MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE']);
+  assert.deepEqual([...ENV_FAULTS].sort(), ['EDQUOT', 'EMFILE', 'ENFILE', 'ENOSPC', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL', 'MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'WORKDIR_BUSY']);
   assert.equal(metEnvFault({ error: { code: 'SCRIPT_ERROR', message: 'Error: ENOSPC: no space left on device, write' } }), true, 'infrastructure text in a task error is the host\'s fault');
   assert.equal(metEnvFault({ error: { code: 'SQLITE_ERROR', errstr: 'database or disk is full' } }), true);
   assert.deepEqual([...BUILD_ENV_FAULTS].sort(), [...ENV_FAULTS].sort(), 'constructions and trials share one fault rule');
