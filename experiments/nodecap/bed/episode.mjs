@@ -156,10 +156,13 @@ async function startWorld({ task, dir, canaries, chromium }) {
   world.close = async () => { await world.tickets.close(); await world.app?.close(); };
   return world;
 }
-/** Everything a world's servers recorded, for the replay comparison (timestamps dropped). */
+/** Everything a world's servers recorded, for the replay comparison (timestamps dropped; the engine's idempotency key, which an
+ *  idempotent member receives as `requestId`, is bound to the run by design, so only its presence is compared). */
 function worldState(world) {
   const names = ['crm', 'sheets', 'rugpull', 'broker', 'dist-legacy', 'dist-contacts'];
-  return { ...Object.fromEntries(names.map(n => [n, world.lines(n).map(({ at, ...rest }) => rest)])), tickets: world.tickets.ledger.map(({ tool, args, scope }) => ({ tool, args, scope })),
+  const keyless = args => args && typeof args === 'object' && Object.hasOwn(args, 'requestId') ? { ...args, requestId: args.requestId ? 'present' : null } : args;
+  return { ...Object.fromEntries(names.map(n => [n, world.lines(n).map(({ at, args, ...rest }) => ({ ...rest, ...(args !== undefined ? { args: keyless(args) } : {}) }))])),
+    tickets: world.tickets.ledger.map(({ tool, args, scope }) => ({ tool, args: keyless(args), scope })),
     ticketState: [...world.tickets.tickets.values()].map(t => ({ id: t.id, label: t.label, comments: t.comments, status: t.status })), app: world.app ? world.app.ledger.writes : null };
 }
 /** The scripted person: approves an effect iff it is the task's gold effect, always as `user`. Runs the run to a resting status. */
