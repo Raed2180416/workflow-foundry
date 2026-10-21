@@ -405,6 +405,12 @@ test('T2 (D23): under H0 the fixed sequence keeps the family-wise type-I at most
   assert.ok(mc < 0.05 && Math.abs(Math.log(bc / mc)) < 0.25, `BC p ${bc} vs MC p ${mc}`);
   assert.equal(signFlipPSequential([0, 0], rng('bc0')), 1);
   assert.throws(() => simulateSchedule({ cumulative: [60], reps: 1, pcTest: 'exact' }), /pcTest/);
+  // The sign-flip draws have their own stream: runs that differ only in the Besag-Clifford settings see the same tasks, so
+  // everything strict-pass-only is identical and the partial-credit columns differ only by the p's Monte Carlo noise.
+  const lo = simulateSchedule({ cumulative: [60, 83], reps: 300, seed: 'test-bc-pair', pcTest: 'permutation', bc: { h: 10, max: 2000 } });
+  const hi = simulateSchedule({ cumulative: [60, 83], reps: 300, seed: 'test-bc-pair', pcTest: 'permutation', bc: { h: 40, max: 8000 } });
+  assert.deepEqual([lo.strictRejected, lo.draftStrict, lo.meanTasks], [hi.strictRejected, hi.draftStrict, hi.meanTasks]);
+  assert.deepEqual([lo.bc, hi.bc], [{ h: 10, max: 2000 }, { h: 40, max: 8000 }]);
 });
 
 test('power (D23, development evidence): the full alpha on strict pass detects more than the DRAFT\'s 0.025; the simulation stops only on strict pass', t => {

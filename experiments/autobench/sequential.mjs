@@ -35,7 +35,7 @@
 //   node experiments/autobench/sequential.mjs analyze --plan FILE --first-look F --control 1:a0-dev60-dn [--control 2:RUN] \
 //        --treatment 2:RUN [--treatment 3:RUN] [--illustration] [--json]      (--stop-on accepts only strict: D23)
 //   node experiments/autobench/sequential.mjs simulate [--plan FILE --first-look F | --cumulative 60,120] [--reps 20000] \
-//        [--pc-test normal|permutation] [--h1 [--h1-scale s]] [--json]   (T2: type-I under H0; power under --h1)
+//        [--pc-test normal|permutation [--bc-h 20 --bc-max 20000]] [--h1 [--h1-scale s]] [--json]   (T2: type-I under H0; power under --h1)
 //   node experiments/autobench/sequential.mjs export-look N --plan FILE [--write FILE]   (a frozen look's task list + hash)
 //
 // The unexposed pool, from data on disk (names only, never grades): devTrain minus the forced set (SPLIT-v1, 103), minus
@@ -542,13 +542,18 @@ export function signFlipPSequential(d, r, { h = 20, max = 20000 } = {}) {
  *   draftEither, draftStrict  the DRAFT's Bonferroni rule (either metric at 0.025 per metric) and strict alone at 0.025,
  *                           for comparison only
  *   meanTasks               tasks used, stopping at the first strict-pass rejection
+ * bc: the Besag-Clifford stopping of the permutation p ({ h, max }). Its draws use their own random stream, so the task
+ * samples do not depend on bc: runs that differ only in bc are paired. A small h makes each look's p noisy, and that noise
+ * is independent across looks, which weakens the correlation the O'Brien-Fleming boundary relies on. The analysis' p
+ * (exact, or 100,000 fixed draws) is far less noisy; use a larger h to approach it (AMEND-1 §4).
  */
-export function simulateSchedule({ cumulative, reps = 20000, seed = 'ab-seq-sim', population = storedPopulation(), alternative = null, pcTest = 'normal' } = {}) {
+export function simulateSchedule({ cumulative, reps = 20000, seed = 'ab-seq-sim', population = storedPopulation(), alternative = null, pcTest = 'normal', bc = { h: 20, max: 20000 } } = {}) {
   if (pcTest !== 'normal' && pcTest !== 'permutation') throw new Error(`pcTest must be normal or permutation, got ${pcTest}`);
   const r = rng(seed, cumulative.join(','), reps, alternative ? 'h1' : 'h0', pcTest);
+  const rp = rng(seed, cumulative.join(','), reps, alternative ? 'h1' : 'h0', pcTest, 'sign-flip draws');
   const bnd = boundariesFor(cumulative), draft = obrienFlemingBoundary(cumulative.length, { alpha: DRAFT_BONFERRONI_ALPHA, fractions: cumulative });
   const draw = (arr) => arr[Math.floor(r.next() * arr.length)];
-  const pcP = (x, y) => (pcTest === 'permutation' ? signFlipPSequential(x.map((o, i) => o.pc - y[i].pc), r) : twoSidedP(pairedSignFlipZ(x.map(o => o.pc), y.map(o => o.pc))));
+  const pcP = (x, y) => (pcTest === 'permutation' ? signFlipPSequential(x.map((o, i) => o.pc - y[i].pc), rp, bc) : twoSidedP(pairedSignFlipZ(x.map(o => o.pc), y.map(o => o.pc))));
   const k = { familyWise: 0, strictRejected: 0, strictBenefit: 0, partialCreditRejected: 0, bothBenefit: 0, partialCreditUngated: 0, draftEither: 0, draftStrict: 0 };
   let used = 0;
   for (let i = 0; i < reps; i++) {
@@ -577,7 +582,7 @@ export function simulateSchedule({ cumulative, reps = 20000, seed = 'ab-seq-sim'
     k.partialCreditUngated += pcUngated; k.draftEither += dEither; k.draftStrict += dStrict;
     used += stopped ? stopped.at : cumulative.at(-1);
   }
-  return { cumulative, reps, pcTest, hypothesis: alternative ? 'H1' : 'H0', nominal: { strict: bnd.strict.nominal, partialCredit: bnd.partialCredit.nominal },
+  return { cumulative, reps, pcTest, ...(pcTest === 'permutation' ? { bc } : {}), hypothesis: alternative ? 'H1' : 'H0', nominal: { strict: bnd.strict.nominal, partialCredit: bnd.partialCredit.nominal },
     ...Object.fromEntries(Object.entries(k).map(([key, v]) => [key, v / reps])), meanTasks: used / reps, mcSE: Math.sqrt(0.05 * 0.95 / reps) };
 }
 
@@ -678,7 +683,8 @@ async function main(argv) {
     if (!(s >= 0 && s <= 1)) throw new Error(`--h1-scale must be in [0, 1] (a number or a fraction such as 2/3), got ${sArg}`);
     const pick = rng('h1-scale', s);
     const alternative = a.h1 ? { treatment: outs => (pick.next() < s ? outs.slice(2) : outs.slice(0, 2)), control: outs => outs.slice(0, 2) } : null;
-    const r = simulateSchedule({ cumulative, reps: Number(a.reps ?? 20000), alternative, pcTest: a['pc-test'] ?? 'normal' });
+    const bc = { h: intArg(a['bc-h'] ?? 20, '--bc-h'), max: intArg(a['bc-max'] ?? 20000, '--bc-max') };
+    const r = simulateSchedule({ cumulative, reps: Number(a.reps ?? 20000), alternative, pcTest: a['pc-test'] ?? 'normal', bc });
     if (a.json) { console.log(JSON.stringify(r, null, 1)); return; }
     const f = v => v.toFixed(4);
     console.log(`${a.h1 ? `H1 (A1 vs A0 at ${s} x the in-sample dev60 effect; optimistic)` : 'H0 (A/A from stored dev60 outcomes)'}, looks at ${cumulative.join('/')} (nominal strict ${r.nominal.strict.map(v => v.toPrecision(3)).join(' / ')}), partial credit by ${r.pcTest}, ${r.reps} reps (MC SE at 0.05: ${f(r.mcSE)}):`);
