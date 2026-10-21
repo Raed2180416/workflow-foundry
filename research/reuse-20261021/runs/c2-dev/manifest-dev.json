@@ -1,0 +1,8688 @@
+{
+ "schema": "c2-manifest/1",
+ "seed": "c2-dev-1",
+ "sizes": {
+  "pool": 15,
+  "build": 5,
+  "shipments": 10,
+  "itemWeights": [
+   0.3,
+   0.4,
+   0.3
+  ],
+  "zeroRate": 0.03
+ },
+ "bank": [
+  {
+   "row": 50,
+   "total": 17
+  },
+  {
+   "row": 143,
+   "total": 16
+  },
+  {
+   "row": 207,
+   "total": 3
+  },
+  {
+   "row": 241,
+   "total": 7
+  },
+  {
+   "row": 248,
+   "total": 20
+  },
+  {
+   "row": 1,
+   "total": 15
+  },
+  {
+   "row": 30,
+   "total": 9
+  },
+  {
+   "row": 60,
+   "total": 5
+  },
+  {
+   "row": 64,
+   "total": 20
+  },
+  {
+   "row": 79,
+   "total": 15
+  },
+  {
+   "row": 97,
+   "total": 12
+  },
+  {
+   "row": 105,
+   "total": 9
+  },
+  {
+   "row": 112,
+   "total": 17
+  },
+  {
+   "row": 124,
+   "total": 20
+  },
+  {
+   "row": 138,
+   "total": 17
+  },
+  {
+   "row": 177,
+   "total": 16
+  },
+  {
+   "row": 178,
+   "total": 20
+  },
+  {
+   "row": 237,
+   "total": 15
+  },
+  {
+   "row": 245,
+   "total": 6
+  },
+  {
+   "row": 251,
+   "total": 20
+  }
+ ],
+ "sources": {
+  "S0": {
+   "build": [
+    "P_45267",
+    "P_34009",
+    "P_87684",
+    "P_61141",
+    "P_84356"
+   ],
+   "repair": [
+    "P_75421",
+    "P_27030",
+    "P_52728",
+    "P_66034",
+    "P_36582",
+    "P_21250",
+    "P_64164",
+    "P_71547",
+    "P_62793",
+    "P_54654"
+   ],
+   "shipments": [
+    "S0-sh01",
+    "S0-sh02",
+    "S0-sh03",
+    "S0-sh04",
+    "S0-sh05",
+    "S0-sh06",
+    "S0-sh07",
+    "S0-sh08",
+    "S0-sh09",
+    "S0-sh10"
+   ]
+  },
+  "S1": {
+   "build": [
+    "P_44525",
+    "P_91863",
+    "P_92155",
+    "P_25801",
+    "P_36571"
+   ],
+   "repair": [
+    "P_25192",
+    "P_74479",
+    "P_55583",
+    "P_75016",
+    "P_69590",
+    "P_79692",
+    "P_82142",
+    "P_58150",
+    "P_36504",
+    "P_42404"
+   ],
+   "shipments": [
+    "S1-sh01",
+    "S1-sh02",
+    "S1-sh03",
+    "S1-sh04",
+    "S1-sh05",
+    "S1-sh06",
+    "S1-sh07",
+    "S1-sh08",
+    "S1-sh09",
+    "S1-sh10"
+   ]
+  },
+  "S2": {
+   "build": [
+    "P-31840",
+    "P-87052",
+    "P-91386",
+    "P-21003",
+    "P-69727"
+   ],
+   "repair": [
+    "P-72118",
+    "P-80452",
+    "P-29945",
+    "P-52652",
+    "P-92123",
+    "P-87873",
+    "P-50770",
+    "P-63582",
+    "P-46919",
+    "P-65038"
+   ],
+   "shipments": [
+    "S2-sh01",
+    "S2-sh02",
+    "S2-sh03",
+    "S2-sh04",
+    "S2-sh05",
+    "S2-sh06",
+    "S2-sh07",
+    "S2-sh08",
+    "S2-sh09",
+    "S2-sh10"
+   ]
+  },
+  "S3": {
+   "build": [
+    "P_67911",
+    "P_40872",
+    "P_39677",
+    "P_54422",
+    "P_66342"
+   ],
+   "repair": [
+    "P_84097",
+    "P_39974",
+    "P_96827",
+    "P_28302",
+    "P_64026",
+    "P_28239",
+    "P_37098",
+    "P_56604",
+    "P_24452",
+    "P_85839"
+   ],
+   "shipments": [
+    "S3-sh01",
+    "S3-sh02",
+    "S3-sh03",
+    "S3-sh04",
+    "S3-sh05",
+    "S3-sh06",
+    "S3-sh07",
+    "S3-sh08",
+    "S3-sh09",
+    "S3-sh10"
+   ]
+  },
+  "S4": {
+   "build": [
+    "P_59869",
+    "P_76421",
+    "P_39986",
+    "P_51492",
+    "P_33428"
+   ],
+   "repair": [
+    "P_69765",
+    "P_31017",
+    "P_38376",
+    "P_79640",
+    "P_49840",
+    "P_73070",
+    "P_55576",
+    "P_51659",
+    "P_40648",
+    "P_41609"
+   ],
+   "shipments": [
+    "S4-sh01",
+    "S4-sh02",
+    "S4-sh03",
+    "S4-sh04",
+    "S4-sh05",
+    "S4-sh06",
+    "S4-sh07",
+    "S4-sh08",
+    "S4-sh09",
+    "S4-sh10"
+   ]
+  },
+  "S5": {
+   "build": [
+    "P_21011",
+    "P_80901",
+    "P_50744",
+    "P_62335",
+    "P_52783"
+   ],
+   "repair": [
+    "P_34408",
+    "P_44844",
+    "P_29200",
+    "P_89507",
+    "P_53966",
+    "P_37429",
+    "P_35470",
+    "P_64731",
+    "P_50634",
+    "P_83580"
+   ],
+   "shipments": [
+    "S5-sh01",
+    "S5-sh02",
+    "S5-sh03",
+    "S5-sh04",
+    "S5-sh05",
+    "S5-sh06",
+    "S5-sh07",
+    "S5-sh08",
+    "S5-sh09",
+    "S5-sh10"
+   ]
+  },
+  "S6": {
+   "build": [
+    "P_83544",
+    "P_38805",
+    "P_77098",
+    "X_82367",
+    "P_46388"
+   ],
+   "repair": [
+    "P_24676",
+    "P_28975",
+    "P_61419",
+    "P_74227",
+    "P_84A13",
+    "P_94929",
+    "P_74063",
+    "P_51504",
+    "P_51394",
+    "P_63915"
+   ],
+   "shipments": [
+    "S6-sh01",
+    "S6-sh02",
+    "S6-sh03",
+    "S6-sh04",
+    "S6-sh05",
+    "S6-sh06",
+    "S6-sh07",
+    "S6-sh08",
+    "S6-sh09",
+    "S6-sh10"
+   ]
+  }
+ },
+ "products": [
+  {
+   "index": 0,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_45267",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 177
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 1,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_34009",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 2,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_87684",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 8,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 3,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_61141",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 4,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_84356",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 8,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 5,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_75421",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 6,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_27030",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 7,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_52728",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 8,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 8,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_66034",
+   "edgeKind": null,
+   "sop": {
+    "safety": 0,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 0,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 9,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_36582",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 10,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_21250",
+   "edgeKind": null,
+   "sop": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 11,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_64164",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 12,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_71547",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 64
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 13,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_62793",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 138
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 14,
+   "source": "S0",
+   "role": "pool",
+   "id": "P_54654",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 15,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_55440",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 16,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_40892",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 17,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_70232",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 18,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_40132",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 19,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_32891",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 20,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_90684",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 3,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 3,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 21,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_98698",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 22,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_24702",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 23,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_55839",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 24,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_32126",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 251
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 25,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_42253",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 5,
+    "transportation": 1,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 5,
+    "transportation": 1,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 26,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_85112",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 64
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 27,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_70419",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 28,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_73055",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 1
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 29,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_65770",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 3,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 3,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 237
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 30,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_50700",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 0,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 0,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 31,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_97688",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 32,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_75894",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 33,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_67855",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 34,
+   "source": "S0",
+   "role": "eval",
+   "id": "P_43734",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 138
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 18,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 35,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_44525",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 0,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 0,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 36,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_91863",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 3,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 37,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_92155",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 3,
+     "handling": 4,
+     "transportation": 3,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 38,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_25801",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 2,
+     "disposal": 3
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 8,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 39,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_36571",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 1,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 5
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 40,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_25192",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 0,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 0,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 4,
+     "handling": 1,
+     "transportation": 5,
+     "disposal": 3
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 41,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_74479",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 0,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 3,
+     "handling": 4,
+     "transportation": 1,
+     "disposal": 2
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 42,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_55583",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 0,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 4,
+     "disposal": 5
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 43,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_75016",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 1,
+     "disposal": 4
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 44,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_69590",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 5,
+     "disposal": 4
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 45,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_79692",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 0,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 3,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 46,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_82142",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 5,
+     "handling": 4,
+     "transportation": 1,
+     "disposal": 2
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 47,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_58150",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 5,
+     "handling": 1,
+     "transportation": 5,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 48,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_36504",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 0,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 5,
+     "disposal": 5
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 49,
+   "source": "S1",
+   "role": "pool",
+   "id": "P_42404",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 3,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 3,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 0,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 4,
+     "handling": 3,
+     "transportation": 2,
+     "disposal": 2
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 50,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_78368",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 0,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 2,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 51,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_38179",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 2,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 2,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 1,
+     "handling": 5,
+     "transportation": 2,
+     "disposal": 5
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 52,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_60612",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 53,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_71237",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 1,
+     "handling": 4,
+     "transportation": 1,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 54,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_31354",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 2,
+     "handling": 3,
+     "transportation": 4,
+     "disposal": 4
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 55,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_36039",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 1,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 56,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_69734",
+   "edgeKind": null,
+   "sop": {
+    "safety": 0,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 0,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 0,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 1,
+     "handling": 4,
+     "transportation": 5,
+     "disposal": 5
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 57,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_44444",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 0,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 2,
+     "handling": 1,
+     "transportation": 2,
+     "disposal": 4
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 58,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_84539",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 5,
+     "handling": 2,
+     "transportation": 1,
+     "disposal": 3
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 59,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_98345",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 1,
+     "handling": 2,
+     "transportation": 5,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 60,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_31275",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 4,
+     "handling": 5,
+     "transportation": 4,
+     "disposal": 3
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 61,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_73215",
+   "edgeKind": null,
+   "sop": {
+    "safety": 0,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 0,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 1,
+     "handling": 5,
+     "transportation": 5,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 62,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_83005",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 2,
+     "handling": 2,
+     "transportation": 5,
+     "disposal": 4
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 63,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_42058",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 0,
+     "handling": 1,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 3,
+     "handling": 1,
+     "transportation": 2,
+     "disposal": 4
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 64,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_28024",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 0,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 4,
+     "handling": 4,
+     "transportation": 4,
+     "disposal": 2
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 65,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_92763",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 1,
+     "disposal": 0
+    },
+    "level": {
+     "safety": 5,
+     "handling": 5,
+     "transportation": 5,
+     "disposal": 4
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 66,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_47274",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 2,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 2,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 0,
+     "transportation": 0,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 1,
+     "handling": 3,
+     "transportation": 2,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 67,
+   "source": "S1",
+   "role": "eval",
+   "id": "P_45142",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "ghs",
+    "pick": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 0,
+     "disposal": 1
+    },
+    "level": {
+     "safety": 1,
+     "handling": 1,
+     "transportation": 2,
+     "disposal": 1
+    }
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 68,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-31840",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 251
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 69,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-87052",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 3,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 3,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 79
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 70,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-91386",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 71,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-21003",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 237
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 72,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-69727",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 73,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-72118",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 74,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-80452",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 75,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-29945",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 76,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-52652",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 138
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 18,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 77,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-92123",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 8,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 78,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-87873",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 251
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 79,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-50770",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 80,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-63582",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 81,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-46919",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 112
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 18,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 82,
+   "source": "S2",
+   "role": "pool",
+   "id": "P-65038",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 0,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 0,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 79
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 83,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-59699",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 84,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-59594",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 0,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 0,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 85,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-69751",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 138
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 18,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 86,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-47987",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 2,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 2,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 87,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-37995",
+   "edgeKind": null,
+   "sop": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 88,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-33537",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 138
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 89,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-93170",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 90,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-52535",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 91,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-26538",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 237
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 92,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-22739",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 93,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-70006",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 64
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 94,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-82964",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 79
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 95,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-73290",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 248
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 96,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-63151",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 112
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 97,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-43826",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 98,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-99310",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 99,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-21400",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 100,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-52029",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 207
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 101,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-53950",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 207
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 102,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-25966",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 103,
+   "source": "S2",
+   "role": "eval",
+   "id": "P-48166",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 251
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 104,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_67911",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 105,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_40872",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 106,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_39677",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 10,
+    "transportation": 10,
+    "disposal": 8
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 1
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 107,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_54422",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 5,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 10,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 108,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_66342",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 9,
+    "handling": 7,
+    "transportation": 9,
+    "disposal": 10
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 124
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 109,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_84097",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 207
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 110,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_39974",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 8,
+    "handling": 9,
+    "transportation": 9,
+    "disposal": 10
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 178
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 111,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_96827",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 7,
+    "transportation": 2,
+    "disposal": 6
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 112,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_28302",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 9,
+    "handling": 10,
+    "transportation": 9,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 178
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 113,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_64026",
+   "edgeKind": null,
+   "sop": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 114,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_28239",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 10,
+    "handling": 10,
+    "transportation": 10,
+    "disposal": 7
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 178
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 115,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_37098",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 9,
+    "transportation": 10,
+    "disposal": 6
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 79
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 116,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_56604",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 10,
+    "handling": 1,
+    "transportation": 10,
+    "disposal": 8
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 1
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 117,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_24452",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 8,
+    "handling": 8,
+    "transportation": 9,
+    "disposal": 9
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 50
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 18,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 118,
+   "source": "S3",
+   "role": "pool",
+   "id": "P_85839",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 9,
+    "handling": 10,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 119,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_94953",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 10,
+    "handling": 7,
+    "transportation": 7,
+    "disposal": 9
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 112
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 18,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 120,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_26681",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 10,
+    "handling": 9,
+    "transportation": 9,
+    "disposal": 9
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 64
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 121,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_32485",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 10,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 8,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 122,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_77974",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": 6,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 123,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_43694",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 7,
+    "handling": 10,
+    "transportation": 10,
+    "disposal": 9
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 64
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 124,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_98783",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 10,
+    "handling": 4,
+    "transportation": 7,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 177
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 125,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_27439",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 10,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 126,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_20306",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 127,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_20280",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": 2,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 128,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_35356",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 10,
+    "handling": 3,
+    "transportation": 10,
+    "disposal": 9
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 138
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 129,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_64386",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 207
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 130,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_29947",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 9,
+    "handling": 10,
+    "transportation": 9,
+    "disposal": 9
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 251
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 131,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_71304",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 7,
+    "transportation": 6,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 132,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_84564",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 10
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 133,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_88468",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 2,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 10,
+    "transportation": 4,
+    "disposal": 10
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 134,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_34035",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 9,
+    "handling": 10,
+    "transportation": 10,
+    "disposal": 7
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 124
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 135,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_26122",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 136,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_53421",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 5,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 7,
+    "handling": 9,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 137,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_71141",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 8,
+    "handling": 7,
+    "transportation": 5,
+    "disposal": 9
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 177
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 138,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_32649",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 139,
+   "source": "S3",
+   "role": "eval",
+   "id": "P_63237",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 6,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 140,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_59869",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 50
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 141,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_76421",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 178
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 142,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_39986",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 1,
+    "transportation": 0,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 0,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 237
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 143,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_51492",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 5,
+    "transportation": 3,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 138
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 144,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_33428",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 145,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_69765",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 5,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 4,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 146,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_31017",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 147,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_38376",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 0,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 0,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 148,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_79640",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 8,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 149,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_49840",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 150,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_73070",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 151,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_55576",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 79
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 152,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_51659",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 153,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_40648",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 1
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 154,
+   "source": "S4",
+   "role": "pool",
+   "id": "P_41609",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 155,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_54236",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 156,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_22676",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 157,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_85455",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 1,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 5,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 12,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 158,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_53552",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 2,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 112
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 159,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_36940",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 178
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 160,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_78551",
+   "edgeKind": null,
+   "sop": {
+    "safety": 0,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 0,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 161,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_85382",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 3,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 3,
+    "transportation": 3,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 162,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_78937",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 112
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 18,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 163,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_50077",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 164,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_30656",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 165,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_48716",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 79
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 166,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_67870",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 167,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_49723",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 3,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 168,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_31790",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 169,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_55012",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 3,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 3,
+    "transportation": 4,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 170,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_59087",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 79
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 171,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_57709",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 172,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_85463",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 3,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 173,
+   "source": "S4",
+   "role": "eval",
+   "id": "P_70942",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 3,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 50
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 174,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_21011",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 5,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 175,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_80901",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 3,
+    "transportation": 0,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 3,
+    "transportation": 0,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 1
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 176,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_50744",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 177,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_62335",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 178,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_52783",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 178
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 179,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_34408",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 1
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 180,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_44844",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 181,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_29200",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 251
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 182,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_89507",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 183,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_53966",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 184,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_37429",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 185,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_35470",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 186,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_64731",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 187,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_50634",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 188,
+   "source": "S5",
+   "role": "pool",
+   "id": "P_83580",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 189,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_21381",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 3,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 3,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 50
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 190,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_26480",
+   "edgeKind": null,
+   "sop": {
+    "safety": 4,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 191,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_92562",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 192,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_64404",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 193,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_74284",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 207
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 194,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_95431",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 2,
+    "transportation": 3,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 8,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 195,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_95436",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 177
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 196,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_51725",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 248
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 197,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_55139",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 7,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 198,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_53700",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 2,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 199,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_61859",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 5,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 138
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 200,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_64286",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 3,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 3,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 201,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_41815",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 207
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 202,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_29596",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 0
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 0
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 79
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 203,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_50032",
+   "edgeKind": null,
+   "sop": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": 3,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 204,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_61657",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 138
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 18,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 205,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_33047",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 2,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 206,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_59276",
+   "edgeKind": null,
+   "sop": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 8,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 207,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_74118",
+   "edgeKind": null,
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 251
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 19,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 208,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_46285",
+   "edgeKind": null,
+   "sop": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 9,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 209,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_70608",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 210,
+   "source": "S5",
+   "role": "eval",
+   "id": "P_90497",
+   "edgeKind": null,
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "complete"
+   }
+  },
+  {
+   "index": 211,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_83544",
+   "edgeKind": "miss1",
+   "sop": {
+    "safety": 5,
+    "handling": null,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": null,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 251
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 212,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_38805",
+   "edgeKind": "miss2",
+   "sop": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": null,
+    "disposal": null
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 4,
+    "transportation": null,
+    "disposal": null
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 213,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_77098",
+   "edgeKind": "miss3",
+   "sop": {
+    "safety": 1,
+    "handling": null,
+    "transportation": null,
+    "disposal": null
+   },
+   "raw": {
+    "safety": 1,
+    "handling": null,
+    "transportation": null,
+    "disposal": null
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 245
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "missing>2"
+   }
+  },
+  {
+   "index": 214,
+   "source": "S6",
+   "role": "pool",
+   "id": "X_82367",
+   "edgeKind": "badid",
+   "sop": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 0,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 2
+   },
+   "inMaster": false,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "id"
+   }
+  },
+  {
+   "index": 215,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_46388",
+   "edgeKind": "blank1",
+   "sop": {
+    "safety": 4,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 2,
+    "transportation": 5,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": "handling_and_storage_guidelines",
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 216,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_24676",
+   "edgeKind": "unknownid",
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": false,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 248
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "id"
+   }
+  },
+  {
+   "index": 217,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_28975",
+   "edgeKind": "miss1",
+   "sop": {
+    "safety": 2,
+    "handling": null,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": null,
+    "transportation": 4,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 218,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_61419",
+   "edgeKind": "miss2",
+   "sop": {
+    "safety": null,
+    "handling": 1,
+    "transportation": 4,
+    "disposal": null
+   },
+   "raw": {
+    "safety": null,
+    "handling": 1,
+    "transportation": 4,
+    "disposal": null
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 241
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 13,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 219,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_74227",
+   "edgeKind": "miss3",
+   "sop": {
+    "safety": null,
+    "handling": null,
+    "transportation": 2,
+    "disposal": null
+   },
+   "raw": {
+    "safety": null,
+    "handling": null,
+    "transportation": 2,
+    "disposal": null
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "missing>2"
+   }
+  },
+  {
+   "index": 220,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_84A13",
+   "edgeKind": "badid",
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": false,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 207
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "id"
+   }
+  },
+  {
+   "index": 221,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_94929",
+   "edgeKind": "blank1",
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": "handling_and_storage_guidelines",
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 4,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 222,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_74063",
+   "edgeKind": "unknownid",
+   "sop": {
+    "safety": 4,
+    "handling": 3,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 3,
+    "transportation": 4,
+    "disposal": 5
+   },
+   "inMaster": false,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 177
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "id"
+   }
+  },
+  {
+   "index": 223,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_51504",
+   "edgeKind": "miss1",
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": null
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": null
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Hazard Class A",
+    "hazard_score": 6,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 224,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_51394",
+   "edgeKind": "miss2",
+   "sop": {
+    "safety": null,
+    "handling": 4,
+    "transportation": null,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": null,
+    "handling": 4,
+    "transportation": null,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 237
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 14,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 225,
+   "source": "S6",
+   "role": "pool",
+   "id": "P_63915",
+   "edgeKind": "miss3",
+   "sop": {
+    "safety": null,
+    "handling": null,
+    "transportation": null,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": null,
+    "handling": null,
+    "transportation": null,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "missing>2"
+   }
+  },
+  {
+   "index": 226,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_73265",
+   "edgeKind": "miss1",
+   "sop": {
+    "safety": null,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": null,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 10,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 227,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_75341",
+   "edgeKind": "miss2",
+   "sop": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": null,
+    "disposal": null
+   },
+   "raw": {
+    "safety": 3,
+    "handling": 4,
+    "transportation": null,
+    "disposal": null
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 177
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 228,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_20072",
+   "edgeKind": "miss3",
+   "sop": {
+    "safety": null,
+    "handling": null,
+    "transportation": 3,
+    "disposal": null
+   },
+   "raw": {
+    "safety": null,
+    "handling": null,
+    "transportation": 3,
+    "disposal": null
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "missing>2"
+   }
+  },
+  {
+   "index": 229,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_594589",
+   "edgeKind": "badid",
+   "sop": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 5
+   },
+   "inMaster": false,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "id"
+   }
+  },
+  {
+   "index": 230,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_34000",
+   "edgeKind": "blank1",
+   "sop": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 4,
+    "handling": 4,
+    "transportation": 4,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": "disposal_guidelines",
+   "textRef": {
+    "style": "proof",
+    "row": 143
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 16,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 231,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_53176",
+   "edgeKind": "unknownid",
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 2,
+    "disposal": 1
+   },
+   "inMaster": false,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 60
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "id"
+   }
+  },
+  {
+   "index": 232,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_81955",
+   "edgeKind": "miss1",
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": null,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": null,
+    "disposal": 2
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 112
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 17,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 233,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_98205",
+   "edgeKind": "miss2",
+   "sop": {
+    "safety": 3,
+    "handling": null,
+    "transportation": null,
+    "disposal": 4
+   },
+   "raw": {
+    "safety": 3,
+    "handling": null,
+    "transportation": null,
+    "disposal": 4
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 234,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_33285",
+   "edgeKind": "miss3",
+   "sop": {
+    "safety": 2,
+    "handling": null,
+    "transportation": null,
+    "disposal": null
+   },
+   "raw": {
+    "safety": 2,
+    "handling": null,
+    "transportation": null,
+    "disposal": null
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 1
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "missing>2"
+   }
+  },
+  {
+   "index": 235,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_27A35",
+   "edgeKind": "badid",
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": 5,
+    "disposal": 5
+   },
+   "inMaster": false,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 248
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "id"
+   }
+  },
+  {
+   "index": 236,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_47095",
+   "edgeKind": "blank1",
+   "sop": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 1,
+    "disposal": 3
+   },
+   "inMaster": true,
+   "blank": "transportation_requirements",
+   "textRef": {
+    "style": "proof",
+    "row": 105
+   },
+   "truth": {
+    "hazard_class": "Hazard Class B",
+    "hazard_score": 11,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 237,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_24471",
+   "edgeKind": "unknownid",
+   "sop": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 5,
+    "transportation": 3,
+    "disposal": 2
+   },
+   "inMaster": false,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "id"
+   }
+  },
+  {
+   "index": 238,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_63078",
+   "edgeKind": "miss1",
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": null,
+    "disposal": 5
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": null,
+    "disposal": 5
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 64
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 239,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_92364",
+   "edgeKind": "miss2",
+   "sop": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": null,
+    "disposal": null
+   },
+   "raw": {
+    "safety": 5,
+    "handling": 5,
+    "transportation": null,
+    "disposal": null
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 124
+   },
+   "truth": {
+    "hazard_class": "Hazard Class D",
+    "hazard_score": 20,
+    "reason": "imputed"
+   }
+  },
+  {
+   "index": 240,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_72141",
+   "edgeKind": "miss3",
+   "sop": {
+    "safety": null,
+    "handling": null,
+    "transportation": null,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": null,
+    "handling": null,
+    "transportation": null,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 30
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "missing>2"
+   }
+  },
+  {
+   "index": 241,
+   "source": "S6",
+   "role": "eval",
+   "id": "P84549",
+   "edgeKind": "badid",
+   "sop": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 1,
+    "handling": 1,
+    "transportation": 1,
+    "disposal": 1
+   },
+   "inMaster": false,
+   "blank": null,
+   "textRef": {
+    "style": "proof",
+    "row": 207
+   },
+   "truth": {
+    "hazard_class": "Unable to Decide",
+    "hazard_score": 0,
+    "reason": "id"
+   }
+  },
+  {
+   "index": 242,
+   "source": "S6",
+   "role": "eval",
+   "id": "P_21075",
+   "edgeKind": "blank1",
+   "sop": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "raw": {
+    "safety": 2,
+    "handling": 3,
+    "transportation": 5,
+    "disposal": 1
+   },
+   "inMaster": true,
+   "blank": "disposal_guidelines",
+   "textRef": {
+    "style": "proof",
+    "row": 97
+   },
+   "truth": {
+    "hazard_class": "Hazard Class C",
+    "hazard_score": 15,
+    "reason": "imputed"
+   }
+  }
+ ],
+ "shipments": [
+  {
+   "id": "S0-sh01",
+   "source": "S0",
+   "mode": "air",
+   "items": [
+    "P_55440",
+    "P_40892"
+   ]
+  },
+  {
+   "id": "S0-sh02",
+   "source": "S0",
+   "mode": "air",
+   "items": [
+    "P_70232",
+    "P_40132",
+    "P_32891"
+   ]
+  },
+  {
+   "id": "S0-sh03",
+   "source": "S0",
+   "mode": "air",
+   "items": [
+    "P_90684"
+   ]
+  },
+  {
+   "id": "S0-sh04",
+   "source": "S0",
+   "mode": "sea",
+   "items": [
+    "P_98698"
+   ]
+  },
+  {
+   "id": "S0-sh05",
+   "source": "S0",
+   "mode": "air",
+   "items": [
+    "P_24702",
+    "P_55839"
+   ]
+  },
+  {
+   "id": "S0-sh06",
+   "source": "S0",
+   "mode": "road",
+   "items": [
+    "P_32126",
+    "P_42253",
+    "P_85112"
+   ]
+  },
+  {
+   "id": "S0-sh07",
+   "source": "S0",
+   "mode": "road",
+   "items": [
+    "P_70419",
+    "P_73055",
+    "P_65770"
+   ]
+  },
+  {
+   "id": "S0-sh08",
+   "source": "S0",
+   "mode": "air",
+   "items": [
+    "P_50700",
+    "P_97688"
+   ]
+  },
+  {
+   "id": "S0-sh09",
+   "source": "S0",
+   "mode": "air",
+   "items": [
+    "P_75894",
+    "P_67855"
+   ]
+  },
+  {
+   "id": "S0-sh10",
+   "source": "S0",
+   "mode": "air",
+   "items": [
+    "P_43734"
+   ]
+  },
+  {
+   "id": "S1-sh01",
+   "source": "S1",
+   "mode": "air",
+   "items": [
+    "P_78368"
+   ]
+  },
+  {
+   "id": "S1-sh02",
+   "source": "S1",
+   "mode": "road",
+   "items": [
+    "P_38179",
+    "P_60612"
+   ]
+  },
+  {
+   "id": "S1-sh03",
+   "source": "S1",
+   "mode": "road",
+   "items": [
+    "P_71237",
+    "P_31354"
+   ]
+  },
+  {
+   "id": "S1-sh04",
+   "source": "S1",
+   "mode": "air",
+   "items": [
+    "P_36039"
+   ]
+  },
+  {
+   "id": "S1-sh05",
+   "source": "S1",
+   "mode": "air",
+   "items": [
+    "P_69734",
+    "P_44444"
+   ]
+  },
+  {
+   "id": "S1-sh06",
+   "source": "S1",
+   "mode": "road",
+   "items": [
+    "P_84539"
+   ]
+  },
+  {
+   "id": "S1-sh07",
+   "source": "S1",
+   "mode": "air",
+   "items": [
+    "P_98345",
+    "P_31275",
+    "P_73215"
+   ]
+  },
+  {
+   "id": "S1-sh08",
+   "source": "S1",
+   "mode": "air",
+   "items": [
+    "P_83005"
+   ]
+  },
+  {
+   "id": "S1-sh09",
+   "source": "S1",
+   "mode": "sea",
+   "items": [
+    "P_42058",
+    "P_28024",
+    "P_92763"
+   ]
+  },
+  {
+   "id": "S1-sh10",
+   "source": "S1",
+   "mode": "sea",
+   "items": [
+    "P_47274",
+    "P_45142"
+   ]
+  },
+  {
+   "id": "S2-sh01",
+   "source": "S2",
+   "mode": "road",
+   "items": [
+    "P-59699",
+    "P-59594"
+   ]
+  },
+  {
+   "id": "S2-sh02",
+   "source": "S2",
+   "mode": "air",
+   "items": [
+    "P-69751",
+    "P-47987"
+   ]
+  },
+  {
+   "id": "S2-sh03",
+   "source": "S2",
+   "mode": "road",
+   "items": [
+    "P-37995"
+   ]
+  },
+  {
+   "id": "S2-sh04",
+   "source": "S2",
+   "mode": "air",
+   "items": [
+    "P-33537",
+    "P-93170",
+    "P-52535"
+   ]
+  },
+  {
+   "id": "S2-sh05",
+   "source": "S2",
+   "mode": "road",
+   "items": [
+    "P-26538",
+    "P-22739"
+   ]
+  },
+  {
+   "id": "S2-sh06",
+   "source": "S2",
+   "mode": "sea",
+   "items": [
+    "P-70006",
+    "P-82964"
+   ]
+  },
+  {
+   "id": "S2-sh07",
+   "source": "S2",
+   "mode": "road",
+   "items": [
+    "P-73290",
+    "P-63151"
+   ]
+  },
+  {
+   "id": "S2-sh08",
+   "source": "S2",
+   "mode": "air",
+   "items": [
+    "P-43826",
+    "P-99310"
+   ]
+  },
+  {
+   "id": "S2-sh09",
+   "source": "S2",
+   "mode": "road",
+   "items": [
+    "P-21400",
+    "P-52029"
+   ]
+  },
+  {
+   "id": "S2-sh10",
+   "source": "S2",
+   "mode": "road",
+   "items": [
+    "P-53950",
+    "P-25966",
+    "P-48166"
+   ]
+  },
+  {
+   "id": "S3-sh01",
+   "source": "S3",
+   "mode": "sea",
+   "items": [
+    "P_94953",
+    "P_26681",
+    "P_32485"
+   ]
+  },
+  {
+   "id": "S3-sh02",
+   "source": "S3",
+   "mode": "sea",
+   "items": [
+    "P_77974",
+    "P_43694"
+   ]
+  },
+  {
+   "id": "S3-sh03",
+   "source": "S3",
+   "mode": "air",
+   "items": [
+    "P_98783"
+   ]
+  },
+  {
+   "id": "S3-sh04",
+   "source": "S3",
+   "mode": "sea",
+   "items": [
+    "P_27439"
+   ]
+  },
+  {
+   "id": "S3-sh05",
+   "source": "S3",
+   "mode": "sea",
+   "items": [
+    "P_20306",
+    "P_20280",
+    "P_35356"
+   ]
+  },
+  {
+   "id": "S3-sh06",
+   "source": "S3",
+   "mode": "air",
+   "items": [
+    "P_64386",
+    "P_29947",
+    "P_71304"
+   ]
+  },
+  {
+   "id": "S3-sh07",
+   "source": "S3",
+   "mode": "road",
+   "items": [
+    "P_84564"
+   ]
+  },
+  {
+   "id": "S3-sh08",
+   "source": "S3",
+   "mode": "air",
+   "items": [
+    "P_88468",
+    "P_34035"
+   ]
+  },
+  {
+   "id": "S3-sh09",
+   "source": "S3",
+   "mode": "sea",
+   "items": [
+    "P_26122",
+    "P_53421"
+   ]
+  },
+  {
+   "id": "S3-sh10",
+   "source": "S3",
+   "mode": "sea",
+   "items": [
+    "P_71141",
+    "P_32649",
+    "P_63237"
+   ]
+  },
+  {
+   "id": "S4-sh01",
+   "source": "S4",
+   "mode": "air",
+   "items": [
+    "P_54236",
+    "P_22676",
+    "P_85455"
+   ]
+  },
+  {
+   "id": "S4-sh02",
+   "source": "S4",
+   "mode": "air",
+   "items": [
+    "P_53552"
+   ]
+  },
+  {
+   "id": "S4-sh03",
+   "source": "S4",
+   "mode": "air",
+   "items": [
+    "P_36940",
+    "P_78551",
+    "P_85382"
+   ]
+  },
+  {
+   "id": "S4-sh04",
+   "source": "S4",
+   "mode": "sea",
+   "items": [
+    "P_78937"
+   ]
+  },
+  {
+   "id": "S4-sh05",
+   "source": "S4",
+   "mode": "sea",
+   "items": [
+    "P_50077",
+    "P_30656"
+   ]
+  },
+  {
+   "id": "S4-sh06",
+   "source": "S4",
+   "mode": "road",
+   "items": [
+    "P_48716",
+    "P_67870"
+   ]
+  },
+  {
+   "id": "S4-sh07",
+   "source": "S4",
+   "mode": "sea",
+   "items": [
+    "P_49723"
+   ]
+  },
+  {
+   "id": "S4-sh08",
+   "source": "S4",
+   "mode": "sea",
+   "items": [
+    "P_31790",
+    "P_55012"
+   ]
+  },
+  {
+   "id": "S4-sh09",
+   "source": "S4",
+   "mode": "air",
+   "items": [
+    "P_59087",
+    "P_57709"
+   ]
+  },
+  {
+   "id": "S4-sh10",
+   "source": "S4",
+   "mode": "sea",
+   "items": [
+    "P_85463",
+    "P_70942"
+   ]
+  },
+  {
+   "id": "S5-sh01",
+   "source": "S5",
+   "mode": "road",
+   "items": [
+    "P_21381",
+    "P_26480"
+   ]
+  },
+  {
+   "id": "S5-sh02",
+   "source": "S5",
+   "mode": "air",
+   "items": [
+    "P_92562",
+    "P_64404",
+    "P_74284"
+   ]
+  },
+  {
+   "id": "S5-sh03",
+   "source": "S5",
+   "mode": "road",
+   "items": [
+    "P_95431"
+   ]
+  },
+  {
+   "id": "S5-sh04",
+   "source": "S5",
+   "mode": "air",
+   "items": [
+    "P_95436",
+    "P_51725"
+   ]
+  },
+  {
+   "id": "S5-sh05",
+   "source": "S5",
+   "mode": "air",
+   "items": [
+    "P_55139",
+    "P_53700"
+   ]
+  },
+  {
+   "id": "S5-sh06",
+   "source": "S5",
+   "mode": "air",
+   "items": [
+    "P_61859",
+    "P_64286"
+   ]
+  },
+  {
+   "id": "S5-sh07",
+   "source": "S5",
+   "mode": "air",
+   "items": [
+    "P_41815",
+    "P_29596",
+    "P_50032"
+   ]
+  },
+  {
+   "id": "S5-sh08",
+   "source": "S5",
+   "mode": "road",
+   "items": [
+    "P_61657",
+    "P_33047"
+   ]
+  },
+  {
+   "id": "S5-sh09",
+   "source": "S5",
+   "mode": "air",
+   "items": [
+    "P_59276",
+    "P_74118"
+   ]
+  },
+  {
+   "id": "S5-sh10",
+   "source": "S5",
+   "mode": "sea",
+   "items": [
+    "P_46285",
+    "P_70608",
+    "P_90497"
+   ]
+  },
+  {
+   "id": "S6-sh01",
+   "source": "S6",
+   "mode": "sea",
+   "items": [
+    "P_73265",
+    "P_75341"
+   ]
+  },
+  {
+   "id": "S6-sh02",
+   "source": "S6",
+   "mode": "air",
+   "items": [
+    "P_20072"
+   ]
+  },
+  {
+   "id": "S6-sh03",
+   "source": "S6",
+   "mode": "air",
+   "items": [
+    "P_594589"
+   ]
+  },
+  {
+   "id": "S6-sh04",
+   "source": "S6",
+   "mode": "sea",
+   "items": [
+    "P_34000",
+    "P_53176"
+   ]
+  },
+  {
+   "id": "S6-sh05",
+   "source": "S6",
+   "mode": "road",
+   "items": [
+    "P_81955",
+    "P_98205",
+    "P_33285"
+   ]
+  },
+  {
+   "id": "S6-sh06",
+   "source": "S6",
+   "mode": "air",
+   "items": [
+    "P_27A35"
+   ]
+  },
+  {
+   "id": "S6-sh07",
+   "source": "S6",
+   "mode": "sea",
+   "items": [
+    "P_47095"
+   ]
+  },
+  {
+   "id": "S6-sh08",
+   "source": "S6",
+   "mode": "road",
+   "items": [
+    "P_24471",
+    "P_63078"
+   ]
+  },
+  {
+   "id": "S6-sh09",
+   "source": "S6",
+   "mode": "sea",
+   "items": [
+    "P_92364"
+   ]
+  },
+  {
+   "id": "S6-sh10",
+   "source": "S6",
+   "mode": "air",
+   "items": [
+    "P_72141",
+    "P84549",
+    "P_21075"
+   ]
+  }
+ ],
+ "order": [
+  "S1-sh05",
+  "S4-sh03",
+  "S0-sh02",
+  "S4-sh07",
+  "S1-sh09",
+  "S6-sh08",
+  "S0-sh05",
+  "S5-sh08",
+  "S2-sh03",
+  "S6-sh01",
+  "S2-sh06",
+  "S6-sh05",
+  "S3-sh10",
+  "S1-sh03",
+  "S5-sh02",
+  "S0-sh06",
+  "S3-sh01",
+  "S1-sh08",
+  "S1-sh10",
+  "S2-sh01",
+  "S0-sh04",
+  "S5-sh05",
+  "S4-sh04",
+  "S4-sh08",
+  "S3-sh04",
+  "S1-sh04",
+  "S6-sh03",
+  "S5-sh09",
+  "S6-sh07",
+  "S4-sh09",
+  "S5-sh01",
+  "S6-sh09",
+  "S0-sh09",
+  "S1-sh06",
+  "S4-sh10",
+  "S0-sh10",
+  "S4-sh01",
+  "S6-sh02",
+  "S4-sh06",
+  "S5-sh03",
+  "S2-sh02",
+  "S3-sh03",
+  "S3-sh02",
+  "S4-sh05",
+  "S2-sh10",
+  "S3-sh08",
+  "S1-sh02",
+  "S3-sh05",
+  "S0-sh01",
+  "S6-sh04",
+  "S4-sh02",
+  "S2-sh04",
+  "S1-sh01",
+  "S3-sh06",
+  "S2-sh08",
+  "S1-sh07",
+  "S3-sh07",
+  "S0-sh08",
+  "S5-sh06",
+  "S0-sh07",
+  "S5-sh10",
+  "S3-sh09",
+  "S0-sh03",
+  "S2-sh09",
+  "S2-sh07",
+  "S6-sh10",
+  "S5-sh07",
+  "S2-sh05",
+  "S6-sh06",
+  "S5-sh04"
+ ],
+ "sha256": "06191fb4feca9034f51f6605dedb0f2006a1793c34031f7bec2a4bfceab8ddeb"
+}

@@ -1,0 +1,410 @@
+{
+ "kind": "c2-summary",
+ "id": "C2-1",
+ "set": "dev",
+ "runId": "c2-dev",
+ "evidence": "development (dev set: gate design and harness checks)",
+ "freeze": {
+  "ok": true,
+  "dev": true
+ },
+ "manifestSha256": "06191fb4feca9034f51f6605dedb0f2006a1793c34031f7bec2a4bfceab8ddeb",
+ "items": 138,
+ "shipments": 70,
+ "sources": [
+  "S0",
+  "S1",
+  "S2",
+  "S3",
+  "S4",
+  "S5",
+  "S6"
+ ],
+ "completeLineages": [],
+ "completeKs": [],
+ "gateView": {
+  "b0": {
+   "accepted": 138,
+   "reuseRate": 1,
+   "wrongReuse": 54,
+   "wrongReuseRate": 0.391304347826087,
+   "deopt": 0,
+   "falseDeopt": 0,
+   "falseDeoptRate": null,
+   "catchRate": 0,
+   "devKnown": {
+    "items": 138,
+    "accepted": 138,
+    "wrongAccepted": 54,
+    "falseDeopt": 0
+   },
+   "heldOut": {
+    "items": 0,
+    "accepted": 0,
+    "wrongAccepted": 0,
+    "falseDeopt": 0
+   },
+   "bySource": {
+    "S0": {
+     "items": 20,
+     "accepted": 20,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 17,
+     "falseDeopt": 0
+    },
+    "S4": {
+     "items": 19,
+     "accepted": 19,
+     "wrongAccepted": 16,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 22,
+     "accepted": 22,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "items": 17,
+     "accepted": 17,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    }
+   }
+  },
+  "b1": {
+   "accepted": 115,
+   "reuseRate": 0.8333333333333334,
+   "wrongReuse": 33,
+   "wrongReuseRate": 0.28695652173913044,
+   "deopt": 23,
+   "falseDeopt": 2,
+   "falseDeoptRate": 0.08695652173913043,
+   "catchRate": 0.3888888888888889,
+   "devKnown": {
+    "items": 138,
+    "accepted": 115,
+    "wrongAccepted": 33,
+    "falseDeopt": 2
+   },
+   "heldOut": {
+    "items": 0,
+    "accepted": 0,
+    "wrongAccepted": 0,
+    "falseDeopt": 0
+   },
+   "bySource": {
+    "S0": {
+     "items": 20,
+     "accepted": 20,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 17,
+     "falseDeopt": 0
+    },
+    "S4": {
+     "items": 19,
+     "accepted": 19,
+     "wrongAccepted": 16,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 22,
+     "accepted": 22,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "items": 17,
+     "accepted": 15,
+     "wrongAccepted": 0,
+     "falseDeopt": 2
+    }
+   }
+  },
+  "b2": {
+   "accepted": 64,
+   "reuseRate": 0.463768115942029,
+   "wrongReuse": 21,
+   "wrongReuseRate": 0.328125,
+   "deopt": 74,
+   "falseDeopt": 41,
+   "falseDeoptRate": 0.5540540540540541,
+   "catchRate": 0.6111111111111112,
+   "devKnown": {
+    "items": 138,
+    "accepted": 64,
+    "wrongAccepted": 21,
+    "falseDeopt": 41
+   },
+   "heldOut": {
+    "items": 0,
+    "accepted": 0,
+    "wrongAccepted": 0,
+    "falseDeopt": 0
+   },
+   "bySource": {
+    "S0": {
+     "items": 20,
+     "accepted": 20,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 21,
+     "accepted": 7,
+     "wrongAccepted": 5,
+     "falseDeopt": 2
+    },
+    "S4": {
+     "items": 19,
+     "accepted": 19,
+     "wrongAccepted": 16,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 22,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 22
+    },
+    "S6": {
+     "items": 17,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 17
+    }
+   }
+  },
+  "b3": {
+   "accepted": 86,
+   "reuseRate": 0.6231884057971014,
+   "wrongReuse": 21,
+   "wrongReuseRate": 0.2441860465116279,
+   "deopt": 52,
+   "falseDeopt": 19,
+   "falseDeoptRate": 0.36538461538461536,
+   "catchRate": 0.6111111111111112,
+   "devKnown": {
+    "items": 138,
+    "accepted": 86,
+    "wrongAccepted": 21,
+    "falseDeopt": 19
+   },
+   "heldOut": {
+    "items": 0,
+    "accepted": 0,
+    "wrongAccepted": 0,
+    "falseDeopt": 0
+   },
+   "bySource": {
+    "S0": {
+     "items": 20,
+     "accepted": 20,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 21,
+     "accepted": 7,
+     "wrongAccepted": 5,
+     "falseDeopt": 2
+    },
+    "S4": {
+     "items": 19,
+     "accepted": 19,
+     "wrongAccepted": 16,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 22,
+     "accepted": 22,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "items": 17,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 17
+    }
+   }
+  },
+  "oracle": {
+   "accepted": 84,
+   "reuseRate": 0.6086956521739131,
+   "wrongReuse": 0,
+   "wrongReuseRate": 0,
+   "deopt": 54,
+   "falseDeopt": 0,
+   "falseDeoptRate": 0,
+   "catchRate": 1,
+   "devKnown": {
+    "items": 138,
+    "accepted": 84,
+    "wrongAccepted": 0,
+    "falseDeopt": 0
+   },
+   "heldOut": {
+    "items": 0,
+    "accepted": 0,
+    "wrongAccepted": 0,
+    "falseDeopt": 0
+   },
+   "bySource": {
+    "S0": {
+     "items": 20,
+     "accepted": 20,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 21,
+     "accepted": 4,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S4": {
+     "items": 19,
+     "accepted": 3,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 22,
+     "accepted": 22,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "items": 17,
+     "accepted": 17,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    }
+   }
+  }
+ },
+ "primaryGate": "b3",
+ "m3": {
+  "admitted": 86,
+  "wrong": 21,
+  "parentExact": {
+   "decision": "kill",
+   "upper": 0.3820881576629783,
+   "n": 86,
+   "nEff": 39.340425531914896,
+   "deff": 2.186046511627907,
+   "rhoUsed": 1,
+   "minN": 60
+  },
+  "crossedExact": {
+   "decision": "no-decision",
+   "upper": 0.5929551572731493,
+   "n": 86,
+   "nEff": 8.047878128400434,
+   "deff": 10.686046511627907,
+   "rhoParentUsed": 1,
+   "rhoEntryUsed": 0.1,
+   "entries": 1,
+   "minN": 60
+  }
+ },
+ "metrics": [],
+ "comparisons": [],
+ "builds": [
+  {
+   "label": "S2-L1",
+   "source": "S2",
+   "lineage": 1,
+   "costUsd": 0.054243,
+   "wallMin": 4.5,
+   "rounds": 2,
+   "bestRound": 1,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "0e22e50c31396e3ebf508ad62bb1e90e7b66b33b61475355315c63d29107335a"
+  }
+ ],
+ "spend": {
+  "buildsUsd": 0.054243,
+  "agentUsd": 0.005523,
+  "agentItems": 4,
+  "agentViolations": 0,
+  "agentSessionErrors": 0,
+  "agentNoAnswer": 0
+ },
+ "generatedAt": "2026-10-21T22:29:59.570Z"
+}

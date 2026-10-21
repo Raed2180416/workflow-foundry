@@ -1,0 +1,525 @@
+{
+ "id": "sopbench-p2:dangerous_goods",
+ "contractHash": "560837af9a0740fea0f2c8d146e8df4a36c61fc726270c85beeb0d1f88e98123",
+ "contract": {
+  "procedureSha256": "4fa1c29f031a8067caa826ced62cbb3873d8cd0b7fb6db429addd95e4ce01a53",
+  "catalogSha256": "35c0832d7faad0a5bed88ce72be52c190460ace5a48a1d378fd024c6068b84d3",
+  "inputColumns": [
+   "product_id",
+   "sds_label_text",
+   "handling_and_storage_guidelines",
+   "transportation_requirements",
+   "disposal_guidelines"
+  ],
+  "outputColumns": [
+   "hazard_class"
+  ]
+ },
+ "artifact": {
+  "sha256": "8e7b18221a16eae23db331e3eb96b2ae0388405d6e0d20e8a8826ce6a69ac875",
+  "files": [
+   "lib/hazard.mjs",
+   "solve.mjs"
+  ],
+  "dir": "experiments/sopbench/frozen/p2/dangerous_goods"
+ },
+ "sdk": {
+  "sha256": "4bdb2324acb21c891745925fcbdaab5cb8a2b48cd00a94b73d80898eece77b4b"
+ },
+ "origin": {
+  "program": "SOP-Bench phase 2 (build once, frozen p2)",
+  "freeze": "research/sopbench-20261021/FREEZE-p2.json",
+  "evidence": {
+   "kind": "dev rows (build + repair), strict, re-run here through the SOP-Bench bridge",
+   "rows": [
+    50,
+    143,
+    207,
+    241,
+    248,
+    1,
+    30,
+    60,
+    64,
+    79,
+    97,
+    105,
+    112,
+    124,
+    138,
+    177,
+    178,
+    237,
+    245,
+    251
+   ],
+   "pass": 20,
+   "of": 20,
+   "rowsPassed": [
+    50,
+    143,
+    207,
+    241,
+    248,
+    1,
+    30,
+    60,
+    64,
+    79,
+    97,
+    105,
+    112,
+    124,
+    138,
+    177,
+    178,
+    237,
+    245,
+    251
+   ],
+   "runSha256": "89702ef05b98691ec441a41b60e354de8c9c5d3d3a39250cdce667eaa0e6ea12"
+  }
+ },
+ "profiles": {
+  "input": {
+   "sha256": "c73d445d189f2e3f3cd11f30ee4a86fecb32fe5349d869e5d55379e2b14f1e17",
+   "summary": {
+    "schema": "jit-profile/1",
+    "n": 20,
+    "paths": {
+     "inputs": {
+      "types": [
+       "object"
+      ],
+      "tasks": 20,
+      "sets": {}
+     },
+     "inputs.disposal_guidelines": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 15,
+       "max": 22
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 13
+      }
+     },
+     "inputs.handling_and_storage_guidelines": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 16,
+       "max": 25
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 16
+      }
+     },
+     "inputs.product_id": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 7,
+       "max": 7
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 20
+      }
+     },
+     "inputs.sds_label_text": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 12,
+       "max": 23
+      },
+      "sets": {
+       "classes": 2,
+       "sigs": 2,
+       "values": 20
+      }
+     },
+     "inputs.transportation_requirements": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 15,
+       "max": 29
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 17
+      }
+     }
+    }
+   }
+  },
+  "trace": {
+   "sha256": "1f297e25b310571115f53fa91a1a19fe368c3def30ff863893f7a991c096a1f9",
+   "summary": {
+    "schema": "jit-profile/1",
+    "n": 20,
+    "paths": {
+     "inputs": {
+      "types": [
+       "object"
+      ],
+      "tasks": 20,
+      "sets": {}
+     },
+     "inputs.answer": {
+      "types": [
+       "object"
+      ],
+      "tasks": 20,
+      "sets": {}
+     },
+     "inputs.answer.hazard_class": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 14,
+       "max": 14
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 4
+      }
+     },
+     "inputs.flags": {
+      "types": [
+       "array"
+      ],
+      "tasks": 20,
+      "alen": {
+       "min": 0,
+       "max": 1
+      },
+      "sets": {}
+     },
+     "inputs.flags[]": {
+      "types": [
+       "object"
+      ],
+      "tasks": 2,
+      "sets": {}
+     },
+     "inputs.flags[].detail": {
+      "types": [
+       "object"
+      ],
+      "tasks": 2,
+      "sets": {}
+     },
+     "inputs.flags[].detail.hazard_score": {
+      "types": [
+       "number"
+      ],
+      "tasks": 2,
+      "num": {
+       "min": 4,
+       "max": 16
+      },
+      "int": true,
+      "sets": {}
+     },
+     "inputs.flags[].detail.imputed": {
+      "types": [
+       "array"
+      ],
+      "tasks": 2,
+      "alen": {
+       "min": 1,
+       "max": 1
+      },
+      "sets": {}
+     },
+     "inputs.flags[].detail.imputed[]": {
+      "types": [
+       "string"
+      ],
+      "tasks": 2,
+      "slen": {
+       "min": 6,
+       "max": 8
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 2
+      }
+     },
+     "inputs.flags[].name": {
+      "types": [
+       "string"
+      ],
+      "tasks": 2,
+      "slen": {
+       "min": 18,
+       "max": 18
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 1
+      }
+     },
+     "inputs.path": {
+      "types": [
+       "array"
+      ],
+      "tasks": 20,
+      "alen": {
+       "min": 7,
+       "max": 7
+      },
+      "sets": {}
+     },
+     "inputs.path[]": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 27,
+       "max": 42
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 6
+      }
+     },
+     "inputs.status": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 4,
+       "max": 4
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 1
+      }
+     },
+     "inputs.tools": {
+      "types": [
+       "object"
+      ],
+      "tasks": 20,
+      "sets": {}
+     },
+     "inputs.tools.calculate_disposal_score": {
+      "types": [
+       "array"
+      ],
+      "tasks": 20,
+      "alen": {
+       "min": 1,
+       "max": 1
+      },
+      "sets": {}
+     },
+     "inputs.tools.calculate_disposal_score[]": {
+      "types": [
+       "object"
+      ],
+      "tasks": 20,
+      "sets": {}
+     },
+     "inputs.tools.calculate_disposal_score[].disposal_score": {
+      "types": [
+       "number"
+      ],
+      "tasks": 20,
+      "num": {
+       "min": 0,
+       "max": 5
+      },
+      "int": true,
+      "sets": {}
+     },
+     "inputs.tools.calculate_disposal_score[].product_id": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 7,
+       "max": 7
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 20
+      }
+     },
+     "inputs.tools.calculate_handling_score": {
+      "types": [
+       "array"
+      ],
+      "tasks": 20,
+      "alen": {
+       "min": 1,
+       "max": 1
+      },
+      "sets": {}
+     },
+     "inputs.tools.calculate_handling_score[]": {
+      "types": [
+       "object"
+      ],
+      "tasks": 20,
+      "sets": {}
+     },
+     "inputs.tools.calculate_handling_score[].handling_score": {
+      "types": [
+       "number"
+      ],
+      "tasks": 20,
+      "num": {
+       "min": 1,
+       "max": 5
+      },
+      "int": true,
+      "sets": {}
+     },
+     "inputs.tools.calculate_handling_score[].product_id": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 7,
+       "max": 7
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 20
+      }
+     },
+     "inputs.tools.calculate_sds_label_score": {
+      "types": [
+       "array"
+      ],
+      "tasks": 20,
+      "alen": {
+       "min": 1,
+       "max": 1
+      },
+      "sets": {}
+     },
+     "inputs.tools.calculate_sds_label_score[]": {
+      "types": [
+       "object"
+      ],
+      "tasks": 20,
+      "sets": {}
+     },
+     "inputs.tools.calculate_sds_label_score[].product_id": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 7,
+       "max": 7
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 20
+      }
+     },
+     "inputs.tools.calculate_sds_label_score[].sds_label_score": {
+      "types": [
+       "number"
+      ],
+      "tasks": 20,
+      "num": {
+       "min": 0,
+       "max": 5
+      },
+      "int": true,
+      "sets": {}
+     },
+     "inputs.tools.calculate_transportation_score": {
+      "types": [
+       "array"
+      ],
+      "tasks": 20,
+      "alen": {
+       "min": 1,
+       "max": 1
+      },
+      "sets": {}
+     },
+     "inputs.tools.calculate_transportation_score[]": {
+      "types": [
+       "object"
+      ],
+      "tasks": 20,
+      "sets": {}
+     },
+     "inputs.tools.calculate_transportation_score[].product_id": {
+      "types": [
+       "string"
+      ],
+      "tasks": 20,
+      "slen": {
+       "min": 7,
+       "max": 7
+      },
+      "sets": {
+       "classes": 1,
+       "sigs": 1,
+       "values": 20
+      }
+     },
+     "inputs.tools.calculate_transportation_score[].transportation_score": {
+      "types": [
+       "number"
+      ],
+      "tasks": 20,
+      "num": {
+       "min": 1,
+       "max": 5
+      },
+      "int": true,
+      "sets": {}
+     }
+    }
+   }
+  }
+ },
+ "gate": {
+  "version": "c2-gate/1",
+  "learnParams": "PARAMS_V2"
+ },
+ "effects": "none (read-only scoring lookups)"
+}
