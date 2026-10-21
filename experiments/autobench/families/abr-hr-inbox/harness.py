@@ -16,7 +16,9 @@ per trigger (gen.serve_input writes the row).
 Per trigger: apply the trigger's delta (a new inbound Gmail message in the HR inbox, or a new Grievance Tracker row;
 validated through WorldState), set meta.current_time to the trigger time, snapshot world_before, run the solver with
 (payload, ctx), snapshot world_after, grade. The solver sees the payload and the tools only; the truth,
-the delta and the generator stay host-side in this process.
+the delta and the generator stay host-side in this process. After the last trigger (Friday's close) the oracle also
+returns the end-of-week verdict (`week_state`), which is never part of the close trigger's own pass; a clean week is
+every trigger passing and the end-of-week verdict passing.
 
 Modes (RECURRING-DESIGN §3.6): carry (headline) - the solver's world evolves with its own effects; rebased
 (diagnostic) - before each trigger the world is replaced by the reference run's world at that point.
@@ -164,6 +166,7 @@ def run_stream(stream: dict, solver, mode: str = "carry", ref_befores: list | No
     asyncio.run(r.setup())
     world = stream["world0"]
     rows, befores, afters = [], [], []
+    week_state = {"pass": False, "failed": [{"name": "end.not-graded", "detail": "no last trigger"}]}
     for trig, truth in zip(stream["triggers"], stream["truth"]):
         assert trig["trigger"] == truth["trigger"]
         if mode == "rebased":
@@ -189,6 +192,8 @@ def run_stream(stream: dict, solver, mode: str = "carry", ref_befores: list | No
         last = trig is stream["triggers"][-1]
         v = grader.grade(truth, before, after, end=stream["end"] if last else None,
                          world0=stream["world0"] if last else None)
+        if last:
+            week_state = v["week"]
         rows.append({"taskKey": f"s{seed}/t{trig['index']:02d}", "stream": seed, "trigger": trig["index"],
                      "kind": trig["kind"], "sub": trig["sub"], "difficulty": stream["meta"]["difficulty"],
                      "pass": v["pass"], "pass_core": v["pass_core"], "outcome": v["outcome"], "score": v["score"],
@@ -199,7 +204,8 @@ def run_stream(stream: dict, solver, mode: str = "carry", ref_befores: list | No
             afters.append(after)
         world = after
     out = {"seed": seed, "difficulty": stream["meta"]["difficulty"], "rows": rows,
-           "clean_week": all(x["pass"] for x in rows),
+           "week_state": {"pass": week_state["pass"], "failed": week_state["failed"]},
+           "clean_week": all(x["pass"] for x in rows) and week_state["pass"],
            "first_failure": next((x["trigger"] for x in rows if not x["pass"]), None)}
     if keep_worlds:
         out["befores"], out["afters"] = befores, afters
@@ -235,6 +241,7 @@ def summarize(results: list[dict]) -> dict:
             "pass_core_rate": round(sum(x["pass_core"] for x in rows) / max(1, len(rows)), 4),
             "trapped_pass_rate": round(sum(x["pass"] for x in trapped) / max(1, len(trapped)), 4),
             "clean_weeks": sum(res["clean_week"] for res in results), "streams": len(results),
+            "week_state_ok": sum(res["week_state"]["pass"] for res in results),
             "outcomes": dict(sorted(outcomes.items())), "by_kind": {k: f"{a}/{n}" for k, (a, n) in sorted(by_kind.items())},
             "errors": sum(1 for x in rows if x["error"]), "max_steps": max((x["steps"] for x in rows), default=0),
             "per_stream": {res["seed"]: f"{sum(x['pass'] for x in res['rows'])}/{len(res['rows'])} ({res['difficulty']})"
@@ -277,6 +284,11 @@ def main(argv=None):
                 for x in res["rows"]:
                     f.write(json.dumps({k: v for k, v in x.items() if k != "failed"} | {"failedChecks": [c["name"] for c in x["failed"]]}) + "\n")
         (d / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
+        with open(d / "weeks.jsonl", "w") as f:
+            for res in results:
+                f.write(json.dumps({"stream": res["seed"], "difficulty": res["difficulty"], "clean_week": res["clean_week"],
+                                    "week_state": res["week_state"]["pass"],
+                                    "failedChecks": [c["name"] for c in res["week_state"]["failed"]]}) + "\n")
     if a.failures:
         for res in results:
             for x in res["rows"]:
@@ -284,6 +296,10 @@ def main(argv=None):
                     print(f"{x['taskKey']} {x['kind']}/{x['sub']} {x['outcome']} err={x['error']}")
                     for c in x["failed"]:
                         print(f"   - {c['name']}: {c['detail']}")
+            if not res["week_state"]["pass"]:
+                print(f"s{res['seed']} end-of-week verdict wrong")
+                for c in res["week_state"]["failed"]:
+                    print(f"   - {c['name']}: {c['detail']}")
     print(json.dumps(summary))
 
 

@@ -38,11 +38,11 @@
                         "note": "a manager asks to CC all-staff or finance, or to post payouts with amounts; d3 adds the VP People asking to post amounts in #general"},
   "payout.run": {"perWeek": [5, 5], "d1": [5, 5], "d2": [5, 5], "d3": [5, 5], "event": "schedule/payout_run", "at": "09:00 UTC Monday-Friday; Friday's run is the last trigger and carries the end-of-week grading"}
  },
- "triggersPerWeek": {"d2": [20, 26], "d3": [27, 29], "design": [20, 35], "measuredOn": "seeds 601-650, v1.1.0"},
+ "triggersPerWeek": {"d2": [21, 25], "d3": [27, 29], "design": [20, 35], "measuredOn": "seeds 601-650, v1.2.0"},
  "trapRates": {"d1": 0.0, "d2": 0.12, "d3": 0.5, "format": {"d1": 0.0, "d2": 0.3, "d3": 0.5},
                "unit": "planted share of referral.submitted and candidate.hired triggers (format: share of Hire Dates not written YYYY-MM-DD); payout runs carry traps by construction (stale labels, held, paid-out notes, cap boundaries), as do holds, broadcasts and most departures",
-               "measuredTriggerShare": {"d2": 0.49, "d3": 0.708, "range": {"d2": [0.417, 0.565], "d3": [0.69, 0.741]}, "design": {"d2": 0.45, "d3": 0.70}, "on": "seeds 601-650, v1.1.0"},
-               "measuredEventShare": {"d2": 0.147, "d3": 0.522, "unit": "planted share of referral.submitted + candidate.hired", "on": "seeds 601-650, v1.1.0"}},
+               "measuredTriggerShare": {"d2": 0.522, "d3": 0.713, "range": {"d2": [0.44, 0.591], "d3": [0.69, 0.741]}, "design": {"d2": 0.45, "d3": 0.70}, "on": "seeds 601-650, v1.2.0"},
+               "measuredEventShare": {"d2": 0.193, "d3": 0.527, "unit": "planted share of referral.submitted + candidate.hired", "on": "seeds 601-650, v1.2.0"}},
  "trapCatalogue": {
   "T-stale": ["probation-stale (Probation Complete disagrees with Hire Date + 90 and would change the run)", "status-stale (Status Eligible from the old process before day 90)", "paid-note (Status Eligible, Notes record a payout)", "cap-prior-year (last year's payouts would cap a payout)", "rehire-old (the candidate left more than 12 months before the Hire Date: eligible)"],
   "T-lookalike": ["namesake (a former employee with the referred employee's name: Employees must be read by Employee ID)", "cap-namesake (two referrers with one name: the cap goes by Referrer Email)", "candidate-namesake (a new candidate with an earlier candidate's name and another email: not a duplicate)", "rehire-namesake (a recent leaver with the candidate's name and another personal email: not a rehire)", "left-namesake (someone with a referred employee's name leaves: nothing)"],

@@ -80,6 +80,11 @@ class GBM:
             qs = np.unique(np.quantile(X[:, j], np.linspace(0, 1, self.bins + 1)[1:-1]))
             self.edges.append(qs)
         B = self._bin(X)
+        nbs = np.array([len(e) + 1 for e in self.edges])
+        self.NB = int(nbs.max())
+        self.offsets = (np.arange(X.shape[1]) * self.NB)[None, :]
+        # split after bin t is a candidate only when the feature has a bin above t
+        self.valid = (np.arange(self.NB - 1)[None, :] < (nbs - 1)[:, None])
         p0 = np.clip(y.mean(), 1e-3, 1 - 1e-3)
         self.f0 = np.log(p0 / (1 - p0))
         F = np.full(len(y), self.f0)
@@ -100,25 +105,23 @@ class GBM:
             return self._leaf(g[idx], h[idx])
         G, H = g[idx].sum(), h[idx].sum()
         parent = G * G / (H + self.lam)
-        best = (0.0, None, None)
-        for j in range(B.shape[1]):
-            nb = len(self.edges[j]) + 1
-            if nb < 2:
-                continue
-            bj = B[idx, j]
-            gs = np.bincount(bj, weights=g[idx], minlength=nb)
-            hs = np.bincount(bj, weights=h[idx], minlength=nb)
-            cs = np.bincount(bj, minlength=nb)
-            gl, hl, cl = np.cumsum(gs)[:-1], np.cumsum(hs)[:-1], np.cumsum(cs)[:-1]
-            gr, hr, cr = G - gl, H - hl, len(idx) - cl
-            ok = (cl >= self.min_leaf) & (cr >= self.min_leaf)
-            if not ok.any():
-                continue
+        d, NB = B.shape[1], self.NB
+        flat = (B[idx].astype(np.int64) + self.offsets).ravel()
+        gs = np.bincount(flat, weights=np.repeat(g[idx], d), minlength=d * NB).reshape(d, NB)
+        hs = np.bincount(flat, weights=np.repeat(h[idx], d), minlength=d * NB).reshape(d, NB)
+        cs = np.bincount(flat, minlength=d * NB).reshape(d, NB)
+        gl, hl, cl = np.cumsum(gs, 1)[:, :-1], np.cumsum(hs, 1)[:, :-1], np.cumsum(cs, 1)[:, :-1]
+        gr, hr, cr = G - gl, H - hl, len(idx) - cl
+        ok = (cl >= self.min_leaf) & (cr >= self.min_leaf) & self.valid
+        with np.errstate(invalid='ignore'):
             gain = gl * gl / (hl + self.lam) + gr * gr / (hr + self.lam) - parent
-            gain = np.where(ok, gain, -np.inf)
-            t = int(np.argmax(gain))
-            if gain[t] > best[0] + 1e-12:
-                best = (float(gain[t]), j, t)
+        gain = np.where(ok, gain, -np.inf)
+        tbest = np.argmax(gain, 1)
+        gbest = gain[np.arange(d), tbest]
+        best = (0.0, None, None)
+        for j in range(d):  # first feature wins ties (same rule as a per-feature scan)
+            if gbest[j] > best[0] + 1e-12:
+                best = (float(gbest[j]), j, int(tbest[j]))
         if best[1] is None:
             return self._leaf(g[idx], h[idx])
         j, t = best[1], best[2]

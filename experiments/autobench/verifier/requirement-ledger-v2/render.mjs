@@ -26,9 +26,17 @@ function clip(v, max) {
   return v;
 }
 const iso = n => { try { return new Date(n).toISOString().replace('.000Z', 'Z'); } catch { return String(n); } };
-function flatRow(rec, i, maxStr) {
-  const o = { '@id': String(recordKey(rec, i)) };
-  for (const [k, v0] of Object.entries(compact(rec))) {
+const OPAQUE = /^[0-9a-f-]{20,}$/i;
+/** Nested opaque ids (uuids inside lists of events or messages) carry no meaning for a reader: dropped from the view. */
+function dropOpaque(v) {
+  if (Array.isArray(v)) return v.map(dropOpaque);
+  if (isObj(v)) return Object.fromEntries(Object.entries(v).filter(([k, x]) => !(k === 'id' && typeof x === 'string' && OPAQUE.test(x))).map(([k, x]) => [k, dropOpaque(x)]));
+  return v;
+}
+function flatRow(rec, i, maxStr, alias) {
+  const id = String(recordKey(rec, i));
+  const o = { '@id': alias?.get(id) ?? id };
+  for (const [k, v0] of Object.entries(dropOpaque(compact(rec)))) {
     if (HIDE_COL.test(k) || k === 'id') continue;
     let v = v0;
     if (EPOCH_COL.test(k) && typeof v === 'number' && v > 1e11) v = iso(v);
@@ -38,8 +46,8 @@ function flatRow(rec, i, maxStr) {
   return o;
 }
 const cell = v => (v === undefined ? '' : typeof v === 'string' ? v.replace(/\r?\n/g, '⏎').replace(/\|/g, '¦') : JSON.stringify(v).replace(/\|/g, '¦'));
-function table(records, maxStr) {
-  const rows = records.map(([r, i]) => flatRow(r, i, maxStr));
+function table(records, maxStr, alias) {
+  const rows = records.map(([r, i]) => flatRow(r, i, maxStr, alias));
   const cols = [];
   for (const r of rows) for (const k of Object.keys(r)) if (!cols.includes(k)) cols.push(k);
   return [`| ${cols.join(' | ')} |`, ...rows.map(r => `| ${cols.map(c => cell(r[c])).join(' | ')} |`)].join('\n');
@@ -47,8 +55,10 @@ function table(records, maxStr) {
 
 /** The initial records of the connected apps as tables, within capChars. Long strings are shortened first, then fewer
  *  records per collection are shown (each cut is marked). Each table's "@id" column is the record's pointer id. */
-export function renderWorld(world, { services = [], capChars = 45000 } = {}) {
+export function renderWorld(world, { services = [], capChars = 45000, idx = null } = {}) {
   const keep = new Set(services);
+  const aliasOf = new Map();
+  for (const r of idx?.recs ?? []) if (r.alias) aliasOf.set(`${r.app}.${r.coll}`, (aliasOf.get(`${r.app}.${r.coll}`) ?? new Map()).set(r.id, r.alias));
   const apps = Object.entries(world ?? {}).filter(([app, v]) => app !== 'meta' && keep.has(app) && isObj(v)).sort(([a], [b]) => a.localeCompare(b));
   const render = (maxStr, maxRecords) => {
     const out = [];
@@ -58,7 +68,7 @@ export function renderWorld(world, { services = [], capChars = 45000 } = {}) {
       if (!list.length) continue;
       out.push(`### ${app}.${coll} (${list.length} record${list.length === 1 ? '' : 's'}; pointer ${app}.${coll}:<@id>)`);
       const shown = list.slice(0, maxRecords);
-      out.push(table(shown, maxStr));
+      out.push(table(shown, maxStr, aliasOf.get(`${app}.${coll}`)));
       if (list.length > shown.length) out.push(`[… ${list.length - shown.length} more ${app}.${coll} records not shown]`);
     }
     return out.join('\n');
@@ -82,7 +92,7 @@ export function ruleSourceHints(idx, world, max = 30) {
     const words = new Set((r.text.match(RULE_WORDS) ?? []).map(w => w.toLowerCase()));
     const inRuleSheet = r.app === 'google_sheets' && r.coll === 'rows' && RULE_TITLE.test(wsTitle.get(r.record.worksheet_id) ?? '');
     const doc = r.text.length >= 120 && words.size >= 2;
-    if (inRuleSheet || doc) hits.push({ ptr: r.ptr, score: words.size + (inRuleSheet ? 3 : 0) + Math.min(3, r.text.length / 600) });
+    if (inRuleSheet || doc) hits.push({ ptr: r.aliasPtr ?? r.ptr, score: words.size + (inRuleSheet ? 3 : 0) + Math.min(3, r.text.length / 600) });
   }
   return hits.sort((a, b) => b.score - a.score).slice(0, max).map(h => h.ptr);
 }

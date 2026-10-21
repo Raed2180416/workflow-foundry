@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { renderWorld, ruleSourceHints } from './render.mjs';
 import { emailsIn, findSpan, grounded, indexWorld, norm, numericLiteral, resolvePtr } from './lib.mjs';
 
-export const EXTRACT_VERSION = 'rl2-extract-v1';
+export const EXTRACT_VERSION = 'rl2-extract-v3';
 export const TYPES = Object.freeze(['positive', 'negative', 'scope', 'value', 'side_effect']);
 export const EFFECTS = Object.freeze(['send_email', 'post_message', 'reply', 'create_record', 'update_record', 'delete_record', 'add_row', 'update_row', 'schedule_event', 'other']);
 
@@ -98,21 +98,22 @@ Write the ledger in four steps.
 
 3. requirements. One entry per effect and per item or target:
  - type "positive", kind "must": an effect that must exist after the work: an email to someone, a message in a channel, a reply on a conversation, a record created or changed, a sheet row added or updated, an event scheduled.
- - type "value", kind "must": the exact values an effect must carry: a field that must hold a value (field and value), or text a message or record must contain (must_include). Use must_include only for values the request or an applying rule asks to include or set: amounts, names, identifiers, dates, statuses, labels, required wording. Never for wording of your own.
+ - type "value", kind "must": the exact values an effect must carry: a field that must hold a value (field and value), or text a message or record must contain (must_include). Use must_include only for values the request or an applying rule asks to include or set: amounts, names, identifiers, dates, statuses, labels, required wording. Never for wording of your own, and never for a rule's own internal names or a column's name.
  - type "scope": an effect that follows from an item's in_scope decision: kind "must" for the effect an in-scope item gets; kind "must_not" for an effect an excluded item must not get (only when the rule or the request implies that an excluded item gets no such effect).
- - type "negative", kind "must_not": something the request or a rule forbids: a recipient, channel or record that must not be messaged or changed, or text that must not appear (must_not_include). Quote the forbidding words.
+ - type "negative", kind "must_not": something the request or a rule forbids: a recipient, channel or record that must not be messaged or changed, or text that must not appear (must_not_include). Quote the forbidding words. Use must_not_include only for text a rule forbids, not for wording you would merely avoid.
  - type "side_effect", kind "must_not": a change a careful operator would object to that this request makes likely: a deleted or overwritten record, a message to a party outside the work, a duplicate notification, a summary that names skipped items when the agent instructions forbid it.
  Fields: effect, app (as listed under Connected apps), recipients (email addresses copied from the records or the request), channel (name or id), record (pointer of an existing record to change or to leave alone), container (pointer of the spreadsheet, worksheet, board, list, page, conversation or parent record a new record goes into), field and value (a field to set), must_include and must_not_include (exact strings), item (pointer of the item this is about), source ("request" or the pointer of the record that asks for it), quote (the exact words of that source, copied verbatim), computed (true when a value is calculated rather than copied). Use "" or [] when a field does not apply.
 
 4. today: the task's date as YYYY-MM-DD if the request or a record states it, else "".
 
+Reading, counting or comparing data leaves no trace in the systems: it is never a requirement by itself; only its outcome is (the effect, or the value an effect must carry). An order or timing constraint between effects (one before another) goes in the statement with effect "other".
 Copy addresses, identifiers, names, amounts and dates exactly as written in the records or the request, keeping their format (for example "$1,250.00" stays "$1,250.00"). Compute a value only from the records, and mark it computed. Only the request and the rules that apply create requirements: do not invent recipients, values or steps. At most 60 requirements; statements under 25 words.`;
 }
 
 /** Inputs of one extraction: the view of a canonical row of the task and its initial world. */
 export function extractionInput(view, world0, { capChars = 45000 } = {}) {
   const idx = indexWorld(world0);
-  const rendered = renderWorld(world0, { services: view.services ?? [], capChars });
+  const rendered = renderWorld(world0, { services: view.services ?? [], capChars, idx });
   const hints = ruleSourceHints(idx, world0);
   const prompt = extractPrompt({ system: view.prompt?.system, user: view.prompt?.user, services: view.services, clock: view.today, worldText: rendered.text, hints });
   const key = createHash('sha256').update(`${EXTRACT_VERSION}\n${EXTRACT_SYSTEM}\n${prompt}`).digest('hex').slice(0, 24);

@@ -9,17 +9,19 @@ export const SOFT_W = 0.3;
 export const UNCLEAR_W = 0.5;
 
 /** code: [{hard, pass (true|false|null)}]; judged: [{id, hard}]; verdicts: {id -> {verdict}} | null (not judged). */
-export function combine({ code, judged = [], verdicts = null, softW = SOFT_W, unclearW = UNCLEAR_W, useJudged = true }) {
+export function combine({ code, judged = [], verdicts = null, softW = SOFT_W, unclearW = UNCLEAR_W, useJudged = true, readers = null }) {
+  // readers: when given, each check's weight is also scaled by its support share (agreement as confidence)
+  const share = c => (readers ? Math.min(1, (c.support ?? readers) / readers) : 1);
   let total = 0, failed = 0, hardFails = 0, softFails = 0, unclear = 0, undecided = 0;
   const failing = [];
   for (const c of code) {
-    const w = c.hard ? 1 : softW;
+    const w = (c.hard ? 1 : softW) * share(c);
     if (c.pass === null) { undecided++; continue; }
     total += w;
     if (c.pass === false) { failed += w; if (c.hard) hardFails++; else softFails++; failing.push({ key: c.key, hard: c.hard, cat: c.cat, by: 'code', evidence: c.evidence }); }
   }
   if (useJudged && verdicts) for (const j of judged) {
-    const w = j.hard ? 1 : softW;
+    const w = (j.hard ? 1 : softW) * share(j);
     const v = verdicts[j.id]?.verdict ?? 'unclear';
     total += w;
     if (v === 'not_met') { failed += w; if (j.hard) hardFails++; else softFails++; failing.push({ key: j.id, hard: j.hard, cat: j.cat, by: 'judge', evidence: verdicts[j.id]?.evidence }); }

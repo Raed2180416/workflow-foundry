@@ -14,8 +14,12 @@ Writes into HOSTDIR (host-only; nothing generated is committed):
   serve-inputs.jsonl one input row per trigger for `bridge.py serve --input <row> --world world_t.json`
   meta.json          family, version, seed, difficulty, counts, trap shares and sha256 of every file
 
-Determinism: one random.Random(f"{family}:{version}:{seed}:{difficulty}:{attempt}"); no wall clock, no set iteration
-in any output, every id and datetime written explicitly, so no pydantic default factory fires.
+Determinism: one random.Random(f"{family}:{PLAN_KEY}:{seed}:{difficulty}:{attempt}") for the plan and everything
+drawn after it, plus one random.Random(f"{family}:{version}:week-boundary:...") for world0's week-boundary records
+(v1.1.0); no wall clock, no set iteration in any output, every id and datetime written explicitly, so no pydantic
+default factory fires. PLAN_KEY stays "1.0.0": version 1.1.0 changed the oracle, the policy text and the truth's
+expectations, and added the week-boundary records to world0, but not the plan, so a seed's triggers (payloads, texts,
+ids, times) are exactly the ones 1.0.0 drew and results before and after the review fixes compare trigger by trigger.
 
 The truth comes from the generator's own canonical model of the business (`Book`: the Routing Rules, the Employee
 Directory, the Grievance Tracker, the Policy Log and the week's sent mail, as they would be after correct handling of
@@ -41,6 +45,7 @@ from pathlib import Path
 
 FAMILY = "abr-hr-inbox"
 VERSION = "1.1.0"
+PLAN_KEY = "1.0.0"          # the plan's RNG key (see the module docstring): unchanged since 1.0.0
 HERE = Path(__file__).resolve().parent
 UTC = timezone.utc
 
@@ -443,7 +448,8 @@ class Book:
 class Gen:
     def __init__(self, seed: int, difficulty: str, attempt: int = 0):
         self.seed, self.d, self.attempt = seed, difficulty, attempt
-        self.r = random.Random(f"{FAMILY}:{VERSION}:{seed}:{difficulty}:{attempt}")
+        self.r = random.Random(f"{FAMILY}:{PLAN_KEY}:{seed}:{difficulty}:{attempt}")
+        self.rb = random.Random(f"{FAMILY}:{VERSION}:week-boundary:{seed}:{difficulty}:{attempt}")
         self.cnt = {k: (v if isinstance(v, int) else self.r.randint(*v)) for k, v in COUNTS[difficulty].items()}
         self.rate = RATES[difficulty]
         weeks = (date(2026, 11, 23) - date(2026, 2, 2)).days // 7
@@ -859,6 +865,8 @@ class Gen:
         # counts from the inbox, or from the stream's own triggers, gets a different number.
         self.boundary = None
         if self.d != "d1":
+            main, self.r = self.r, self.rb       # its own RNG: the plan's draws stay those of 1.0.0
+            r = self.r
             emp = r.choice(self.staff)
             cat = r.choice(CATEGORIES)
             subj, ask = r.choice(PLAIN[cat])
@@ -867,14 +875,16 @@ class Gen:
             sent = self.monday + timedelta(minutes=r.randint(0, 1), seconds=r.randint(5, 50))
             box = RULES[CATEGORIES.index(cat)][2] if cat != PAYROLL else self.payroll_at(sent)
             self.mail0.append({"from": self.from_header(emp["name"], emp["email"]), "to": [INBOX], "subject": subj, "body": body,
-                               "at": got, "sent": False})
+                               "at": got, "sent": False, "rng": "boundary"})
             self.mail0.append({"from": INBOX, "to": [box], "subject": f"HR request {emp['id']}: {cat}",
                                "body": f"Employee: {emp['name']} ({emp['id']})\nCategory: {cat}\n\nOriginal subject: {subj}",
-                               "at": sent, "sent": True})
+                               "at": sent, "sent": True, "rng": "boundary"})
             self.mail0.append({"from": INBOX, "to": [emp["email"]], "subject": f"Re: {subj}",
                                "body": f"Hello {emp['first']},\n\nYour request has been routed to {cat}.\n\nHR Operations",
-                               "at": sent + timedelta(seconds=30), "sent": True})
+                               "at": sent + timedelta(seconds=30), "sent": True, "rng": "boundary"})
             self.boundary = {"category": cat, "sent": sent}
+            self.r = main
+            r = self.r
         # Slack: #hr-general chatter, including a request the policy forbids
         mgrs = list(self.managers.values())
         self.posts0.append({"channel": HR_GENERAL, "who": self.hrops[0], "text": "Reminder: payroll cut-off is Wednesday noon this month.",
@@ -1288,7 +1298,9 @@ class Gen:
                              (WS_GRIEV, self.griev0), (WS_POLICY, self.policy0))]}]
         msgs = []
         for m in sorted(self.mail0, key=lambda m: m["at"]):
-            msgs.append({"id": self.hexid(16), "thread_id": self.hexid(16), "from_": m["from"], "to": m["to"],
+            g = self.r if m.get("rng") != "boundary" else self.rb      # boundary ids keep the plan's draws as in 1.0.0
+            hexid = lambda n: "".join(g.choice("0123456789abcdef") for _ in range(n))  # noqa: E731
+            msgs.append({"id": hexid(16), "thread_id": hexid(16), "from_": m["from"], "to": m["to"],
                          "subject": m["subject"], "body_plain": m["body"], "snippet": snippet_of(m["body"]),
                          "label_ids": ["SENT"] if m["sent"] else ["INBOX"], "is_read": True,
                          "date": ms(m["at"]), "internal_date": ms(m["at"])})

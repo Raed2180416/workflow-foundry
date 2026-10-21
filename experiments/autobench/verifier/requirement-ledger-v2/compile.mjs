@@ -48,6 +48,8 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
   if (effect === 'other') effect = req.recipients.length ? 'send_email' : req.channel ? 'post_message' : req.record ? 'update_record' : 'other';
   const label = req.item ? itemLabels.get(req.item) ?? '' : '';
   const dupGuess = pol === 'must_not' && /duplicat|twice|more than once|repeat|again/i.test(req.statement);
+  // a conditional or ordered prohibition ("not before X", "unless Y") is not a plain absence: the judge decides it
+  if (pol === 'must_not' && !dupGuess && /\b(before|until|after|unless|only if|except|prior to|without)\b/i.test(req.statement)) return { checks: [], judged: { statement: req.statement, why: 'conditional prohibition' } };
 
   if (dupGuess && (req.recipients.length || req.channel)) {
     for (const t of req.recipients.length ? req.recipients.map(email => ({ email })) : [{ channel: req.channel }]) add('no_dup', { target: t }, { weak: true });
@@ -61,7 +63,7 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
       if (pol === 'must') {
         add('msg_to', { target: t });
         for (const l of lits) add('msg_has', { target: t, lit: l.text }, { computed: l.computed && !l.grounded });
-        for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: !req.quoteOk });
+        for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: true });
       } else if (excl.length) for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: negWeak || sideWeak });
       else add('msg_none', { target: t }, { weak: negWeak || sideWeak });
     }
@@ -70,7 +72,7 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
     if (pol === 'must') {
       add('rec_changed', { ptr: req.record, scope: 'reply' });
       for (const l of lits) add('msg_has', { target: t, lit: l.text }, { computed: l.computed && !l.grounded });
-      for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: !req.quoteOk });
+      for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: true });
     } else if (excl.length) for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: negWeak || sideWeak });
     else add('rec_unchanged', { ptr: req.record, scope: 'reply' }, { weak: negWeak || sideWeak });
   } else if (effect === 'post_message' && req.channel) {
@@ -78,7 +80,7 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
     if (pol === 'must') {
       add('post_in', { target: t });
       for (const l of lits) add('msg_has', { target: t, lit: l.text }, { computed: l.computed && !l.grounded });
-      for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: !req.quoteOk });
+      for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: true });
     } else if (excl.length) for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: negWeak || sideWeak });
     else add('post_none', { target: t }, { weak: negWeak || sideWeak });
   } else if (UPDATE_EFFECTS.has(effect) && req.record) {
@@ -93,7 +95,8 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
     if (pol === 'must') add('rec_deleted', { ptr: req.record });
     else add('rec_kept', { ptr: req.record }, { weak: negWeak || sideWeak });
   } else if (CREATE_EFFECTS.has(effect) && (req.app || req.container)) {
-    const base = { app: req.app || req.container?.ptr.split('.')[0] || '', container: req.container?.id ?? null, label: label || null };
+    // the item's label is not required inside the new record (a log row or a note names its item in its own words)
+    const base = { app: req.app || req.container?.ptr.split('.')[0] || '', container: req.container?.id ?? null, label: null };
     if (pol === 'must') {
       add('created_in', base);
       for (const l of lits) add('created_has', { ...base, lit: l.text }, { computed: l.computed && !l.grounded });

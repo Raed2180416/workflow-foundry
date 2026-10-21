@@ -68,7 +68,11 @@ export function numericLiteral(s) {
 export function containsLiteral(text, literal) {
   const t = norm(text), l = norm(literal);
   if (!l) return 'exact';
-  if (t.includes(l)) return 'exact';
+  if (t.includes(l)) {
+    // a literal that starts or ends with a letter or digit must not match inside a longer word or number ("hr" in "three")
+    const re = new RegExp(`${/^[a-z0-9]/.test(l) ? '(?<![a-z0-9])' : ''}${l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}${/[a-z0-9]$/.test(l) ? '(?![a-z0-9])' : ''}`);
+    if (re.test(t)) return 'exact';
+  }
   const n = numericLiteral(literal);
   if (n !== null && numbersIn(text).some(x => Math.abs(x - n) < 1e-9)) return 'numeric';
   return null;
@@ -115,9 +119,13 @@ export function indexWorld(world) {
       });
     }
   }
+  // Long opaque ids (uuids, hex) get short aliases (x1, x2, ...) for the model's view: fewer tokens, fewer copy errors.
+  let k = 0;
+  for (const r of recs) if (/^[0-9a-f-]{20,}$/i.test(r.id)) { r.alias = `x${++k}`; r.aliasPtr = `${r.app}.${r.coll}:${r.alias}`; }
   const byPtr = new Map(recs.map(r => [r.ptr, r]));
+  for (const r of recs) if (r.aliasPtr) byPtr.set(r.aliasPtr, r);
   const byId = new Map();
-  for (const r of recs) { if (!byId.has(r.id)) byId.set(r.id, []); byId.get(r.id).push(r); }
+  for (const r of recs) for (const id of [r.id, r.alias].filter(Boolean)) { if (!byId.has(id)) byId.set(id, []); byId.get(id).push(r); }
   const channels = (world?.slack?.channels ?? []).filter(isObj).map(c => ({ id: String(c.id ?? ''), name: String(c.name ?? '') }));
   const allText = recs.map(r => r.text).join('\n');
   return { recs, byPtr, byId, channels, allText, emails: new Set(emailsIn(allText)) };

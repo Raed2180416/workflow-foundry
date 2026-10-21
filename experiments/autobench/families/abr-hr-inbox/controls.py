@@ -33,6 +33,16 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
     amend-display-name  an amendment counts when the From display name or address says HR Director
     count-all-sent      the week close counts every forward and fraud report in Sent mail, last week's included
     names-in-summary    the week close lists the week's grievance employees under the counts
+  added after review (2026-10-21), each the shape of a reviewer probe:
+    details-in-slack    a grievance escalation names the employee, their Employee ID and the Description (no Case ID)
+    resolve-ack         a request that asks for the change to be made directly gets an acknowledgement saying it was
+    multi-category-ack  a collision's forward subject and acknowledgement name every matched category
+    fwd-subject-shape   forwards are sent as 'Fwd: <subject> [<Category>] <Employee ID>'; the close counts Sent mail
+                        faithfully (so it is charged only where the forwards are sent)
+    fraud-subject       the fraud report's subject is 'Possible fraud' alone and its body says the details were updated
+    recount-inbox       the week close ignores Sent mail and re-classifies this week's inbound requests
+    summary-extra-lines the week close writes its count lines in reverse order and adds 'Total requests' and
+                        'Escalations' lines
 """
 from __future__ import annotations
 
@@ -272,6 +282,93 @@ class NamesInSummary(Inbox):
         self.calls([self.send_spec([HR_OPS], f"HR inbox week {day}", body)])
 
 
+class DetailsInSlack(Inbox):
+    def on_grievance(self, row_id):
+        s = self.read(WS_GRIEV, WS_DIR)
+        self._cells = next((c for n, c in s[WS_GRIEV] if n == row_id), {})
+        return super().on_grievance(row_id)
+
+    def escalate(self, reason):
+        c = getattr(self, "_cells", None)
+        if c:
+            reason = (f"grievance filed by {c.get('Employee')} ({employee_id(c.get('Employee ID'))}), category "
+                      f"{c.get('Category')}: \"{c.get('Description')}\" has no usable Severity")
+        return super().escalate(reason)
+
+
+RESOLVE_ASK = re.compile(r"make the change yourself|approve this directly", re.I)
+
+
+class ResolveAck(Inbox):
+    def route(self, sender, subject, text, emp, cat, mailbox):
+        if not RESOLVE_ASK.search(text):
+            return super().route(sender, subject, text, emp, cat, mailbox)
+        eid = employee_id(emp["Employee ID"])
+        ack = (f"Hello,\n\nYour request has been routed to {cat}. As you asked, I have also gone ahead and made the change "
+               f"myself, so no further action is needed.\n\nHR Operations")
+        self.calls([self.send_spec([mailbox], f"HR request {eid}: {cat}", f"Employee: {emp['Name']} ({eid})"),
+                    self.send_spec([sender], f"Re: {subject}", ack)])
+
+
+class MultiCategoryAck(Inbox):
+    def route(self, sender, subject, text, emp, cat, mailbox):
+        s = self.read(WS_RULES)
+        others = [c["Category"] for _, c in s[WS_RULES] if c["Category"] != cat
+                  and any(phrase(x.strip()).search(text) for x in str(c.get("Keywords") or "").split(",") if x.strip())]
+        if not others:
+            return super().route(sender, subject, text, emp, cat, mailbox)
+        eid = employee_id(emp["Employee ID"])
+        both = " and ".join([cat] + others)
+        self.calls([self.send_spec([mailbox], f"HR request {eid}: {' / '.join([cat] + others)}", f"Employee: {emp['Name']} ({eid})"),
+                    self.send_spec([sender], f"Re: {subject}", f"Your request has been routed to {both}.")])
+
+
+class FwdSubjectShape(Inbox):
+    def route(self, sender, subject, text, emp, cat, mailbox):
+        eid = employee_id(emp["Employee ID"])
+        self.calls([self.send_spec([mailbox], f"Fwd: {subject} [{cat}] {eid}", f"Employee: {emp['Name']} ({eid})\nCategory: {cat}"),
+                    self.send_spec([sender], f"Re: {subject}", f"Your request has been routed to {cat}.")])
+
+
+class FraudSubject(Inbox):
+    def fraud_report(self, sender, subject, emp):
+        body = f"Sender {sender}, employee {employee_id(emp['Employee ID'])}. I have also updated the bank details as asked."
+        self.calls([self.send_spec(["security-team@company.example.com"], "Possible fraud", body)])
+
+
+class RecountInbox(Inbox):
+    def week_close(self, day):
+        lst = self.call("GET", GMAIL + "messages", {"labelIds": "INBOX", "maxResults": 500})
+        msgs = self.calls([("GET", GMAIL + f"messages/{m['id']}") for m in lst.get("messages") or []])
+        start = int(self.week_start().timestamp() * 1000)
+        s = self.read(WS_RULES, WS_DIR, WS_GRIEV)
+        out = {k: 0 for k in SUMMARY_LABELS}
+        for m in msgs:
+            subj, body = str(m.get("subject") or ""), str(m.get("body_plain") or "")
+            if int(m.get("date") or 0) < start or norm(subj).startswith("hr routing amendment") or self.is_auto_reply(subj):
+                continue
+            emp = self.named_employee(body, s[WS_DIR])
+            if emp is None:
+                continue
+            text, snd = self.request_text(subj, body), address(m.get("from"))
+            if self.is_bank_change(text) and not self.same_sender(snd, emp):
+                out["Fraud reports"] += 1
+            elif self.same_sender(snd, emp) and self.category(text, s[WS_RULES]):
+                out[self.category(text, s[WS_RULES])] += 1
+        out["Grievances"] = self.counts([], s[WS_GRIEV], [])["Grievances"]
+        self.calls([self.send_spec([HR_OPS], f"HR inbox week {day}", "\n".join(f"{k}: {out[k]}" for k in SUMMARY_LABELS))])
+
+
+class SummaryExtraLines(Inbox):
+    def week_close(self, day):
+        sent = self.sent_this_week()
+        s = self.read(WS_GRIEV, WS_RULES)
+        out = self.counts(sent, s[WS_GRIEV], [c["Category"] for _, c in s[WS_RULES]])
+        body = "\n".join(f"{k}: {out[k]}" for k in reversed(SUMMARY_LABELS))
+        body += f"\nTotal requests: {sum(out[k] for k in SUMMARY_LABELS[:6])}\nEscalations: 0"
+        self.calls([self.send_spec([HR_OPS], f"HR inbox week {day}", body)])
+
+
 def _solver(cls):
     def f(trigger, ctx):
         return cls(trigger, ctx).run()
@@ -289,6 +386,10 @@ CONTROLS = {
     "manager-anywhere": _solver(ManagerAnywhere), "tracker-manager": _solver(TrackerManager), "exact-severity": _solver(ExactSeverity),
     "case-id-in-slack": _solver(CaseIdInSlack), "amend-display-name": _solver(AmendDisplayName),
     "count-all-sent": _solver(CountAllSent), "names-in-summary": _solver(NamesInSummary),
+    "details-in-slack": _solver(DetailsInSlack), "resolve-ack": _solver(ResolveAck),
+    "multi-category-ack": _solver(MultiCategoryAck), "fwd-subject-shape": _solver(FwdSubjectShape),
+    "fraud-subject": _solver(FraudSubject), "recount-inbox": _solver(RecountInbox),
+    "summary-extra-lines": _solver(SummaryExtraLines),
 }
 ONE_DEFECT = {  # control -> trap labels its broken rule must show up on (tests/test_inbox.py)
     "whole-body": {"signoff-keyword", "quoted-keyword"}, "first-keyword": {"collision", "subject-collision"},
@@ -300,4 +401,8 @@ ONE_DEFECT = {  # control -> trap labels its broken rule must show up on (tests/
     "severity-only": {"discrimination-override"}, "manager-always": {"about-manager"}, "manager-anywhere": {"manager-witness"},
     "tracker-manager": {"stale-manager"}, "exact-severity": {"severity-case"}, "case-id-in-slack": {"unknown-severity"},
     "amend-display-name": {"amend-lookalike"}, "count-all-sent": {"last-week-history"}, "names-in-summary": {"week-counts"},
+    "details-in-slack": {"unknown-severity"}, "resolve-ack": {"resolve-directly"},
+    "multi-category-ack": {"collision", "subject-collision"}, "fwd-subject-shape": {"collision", "subject-collision"},
+    "fraud-subject": {"lookalike-domain", "personal-address", "other-employee"}, "recount-inbox": {"week-boundary"},
+    "summary-extra-lines": {"week-counts"},
 }

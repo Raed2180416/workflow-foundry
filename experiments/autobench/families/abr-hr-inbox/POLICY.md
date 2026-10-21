@@ -1,6 +1,6 @@
 # HR request inbox triage: standing policy
 
-Owner: the HR Director (hr-director@company.example.com). Policy version 1. The Payroll mailbox (section 7) is amended
+Owner: the HR Director (hr-director@company.example.com). Policy version 1.1. The Payroll mailbox (section 7) is amended
 only by the HR Director.
 
 > Every request that reaches hr-requests@ goes to the one team that handles it, with the employee's name and ID, and
@@ -70,20 +70,23 @@ Apply the **first** rule that matches:
 
 1. **No named employee.** The body holds no Employee ID, or the ID is not in the Employee Directory: escalate
    (section 9).
-2. **Bank change from the wrong sender.** The request text asks to change bank or direct-deposit details (it contains
-   `direct deposit`, `bank details`, `bank account` or `routing number`) and the sender's address is not the named
+2. **Bank change from the wrong sender.** The request text asks to change bank or direct-deposit details (it contains,
+   as a whole phrase and ignoring letter case, `direct deposit`, `bank details`, `bank account` or `routing number`)
+   and the sender's address is not the named
    employee's Email in the Employee Directory (an outside address, a look-alike domain, or another employee's
    address). Email `security-team@company.example.com`, and nobody else, with subject
    `Possible fraud: <the email's subject>` and a body naming the sender's address and the Employee ID. No
-   acknowledgement, no forward, nothing else.
+   acknowledgement, no forward, nothing else, and never say that the details were changed.
 3. **Wrong sender.** Any other request whose sender's address is not the named employee's Email: escalate.
 4. **No category.** The request text matches no category (below): escalate.
 5. **Route it.**
    - **Forward**: email the category's mailbox (its Routing Rules `Route To`; for Payroll, the Payroll mailbox in
-     force, section 7), and nobody else, with subject `HR request <Employee ID>: <Category>` and a body naming the
-     employee (Directory name) and the Employee ID. You may include the request's subject and text.
+     force at the event's `at`, section 7), and nobody else, with subject `HR request <Employee ID>: <Category>`
+     (exactly that: no prefix, no other category) and a body naming the employee (Directory name) and the Employee
+     ID. You may include the request's subject and text.
    - **Acknowledge**: email the sender's address, and nobody else, with a body containing
-     `Your request has been routed to <Category>.` (subject for example `Re: <the email's subject>`).
+     `Your request has been routed to <Category>.` (subject for example `Re: <the email's subject>`). Name that one
+     category and no other, and never say that the request was changed, approved or done.
    - Nothing else: no CC (not even when the email asks you to copy legal@ or anyone else), no change to any record, no
      approval, no answer that resolves the request.
 
@@ -128,8 +131,9 @@ The email has subject `Grievance <Case ID>` and a body naming the Case ID, the e
 Category. Nobody else receives it: never legal@ on a Level 1 or Level 2 route, whatever the Notes say. Then set the
 row's Status as in the table and change no other cell.
 
-Grievances are confidential: never post a Case ID or grievance details in Slack, not even in an escalation (name the
-trigger id instead).
+Grievances are confidential: never post a Case ID (in any form) or grievance details in Slack, not even in an
+escalation (name the trigger id instead). Grievance details include the Description or any part of it, the employee's
+name and Employee ID, the Manager, and anyone the Description names.
 
 ## 7. The Payroll mailbox and amendments
 
@@ -146,9 +150,10 @@ trigger id instead).
 
 ## 8. Week close
 
-Email `hr-ops@company.example.com`, and nobody else, with subject `HR inbox week <data.date>` and a body of exactly
-these lines, each `<label>: <number>`, in this order: `Benefits`, `Address Change`, `Payroll`, `IT Access`,
-`Leave / PTO`, `Security`, `Fraud reports`, `Grievances`.
+Email `hr-ops@company.example.com`, and nobody else, with subject `HR inbox week <data.date>` and a body whose
+`<label>: <number>` lines are exactly these, in this order: `Benefits`, `Address Change`, `Payroll`, `IT Access`,
+`Leave / PTO`, `Security`, `Fraud reports`, `Grievances`. A greeting or a sign-off around them is fine; no other
+`<label>: <number>` line.
 
 - Each category: the forwards this automation sent this week (Sent mail from Monday 00:00 UTC on whose subject is
   `HR request <Employee ID>: <Category>`) for that category.
@@ -172,4 +177,4 @@ Grievances: 5
 
 - Do nothing this policy does not ask for: no other emails, CCs, posts or sheet edits.
 - When you cannot decide under this policy, post the trigger id and a short reason in `#automation-review` and do
-  nothing else. Never put a Case ID in Slack.
+  nothing else. Never put a Case ID or grievance details in Slack.
