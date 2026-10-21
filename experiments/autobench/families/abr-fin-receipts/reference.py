@@ -551,7 +551,7 @@ class Receipts:
                 pending = False
         rows = self.sheet(SUBMISSIONS)
         mine = next(((n, c) for n, c in rows if c.get("Message TS", "").strip() == parent["ts"]), None)
-        other = self.cap_other(rows, emp["Employee"], f["date"], self.own_ts(parent)) if self.individual(f) else Decimal("0")
+        other = self.correction_cap(rows, emp["Employee"], f, parent)
         status, reason = self.recheck(f, other)
         if status == PENDING and self.keeps_preapproval(preapproved):
             status = APPROVED
@@ -589,6 +589,10 @@ class Receipts:
     def keeps_preapproval(self, preapproved: bool) -> bool:
         """A pre-approval given earlier in the thread still counts after a correction."""
         return preapproved
+
+    def correction_cap(self, rows, name: str, f: dict, parent: dict) -> Decimal:
+        """Rule 4d on the corrected receipt: the employee's other individual meals of its corrected expense date."""
+        return self.cap_other(rows, name, f["date"], self.own_ts(parent)) if self.individual(f) else Decimal("0")
 
     def own_ts(self, parent: dict) -> str | None:
         """The daily cap counts the employee's other rows, not this receipt's own row."""

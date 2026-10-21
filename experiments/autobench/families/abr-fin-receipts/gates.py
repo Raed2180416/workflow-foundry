@@ -66,12 +66,12 @@ BAD_CONTROLS = ["null", "echo", "naive", "no-dedupe", "no-cap", "cap-all-meals",
                 "domestic-only", "cabin-ignored", "six-hours-ok", "correction-append", "unknown-logged", "date-posted",
                 "no-recheck", "no-pending-check", "repost-rel-now", "category-first", "cap-counts-rejected",
                 "total-counts-rejected", "cap-counts-own-row", "latest-correction-only", "correction-receipt-day",
-                "preapproval-forgotten", "preapproval-any-time"]
+                "preapproval-forgotten", "preapproval-any-time", "correction-no-cap"]
 # Controls whose trap is drawn at random (not every week): checked on the dev-range seeds that carry the trap.
 RARE_CONTROLS = {"travel-facts-kept": "correction-travel-facts", "cabin-anywhere": "cabin-lookalike"}
 DEV_RANGE = list(range(601, 651))
 # Every d3 week carries these states (generator 1.1.0; review 2026-10-21).
-D3_REQUIRED = ["correction-recheck", "correction-own-row", "correction-multi", "correction-relative-date",
+D3_REQUIRED = ["correction-recheck", "correction-cap", "correction-own-row", "correction-multi", "correction-relative-date",
                "correction-preapproved", "correction-early-approval", "cap-rejected-row", "total-rejected-row",
                "approval-again", "approval-not-pending", "repost-relative", "near-dup-relative"]
 TRAP_KINDS = ["T-format", "T-authority", "T-repeat", "T-lookalike", "T-state"]

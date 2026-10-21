@@ -47,6 +47,8 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
     preapproval-any-time   a manager's 'pre-approved' counts even when the row was not pending at the time (5.2)
     travel-facts-kept  a category corrected to Travel keeps the hotel and flight facts read under the old category
     cabin-anywhere     any 'business' in a flight description is a business cabin ('for a business meeting')
+  added after the 1.1.0 review pass (fix-date-cap):
+    correction-no-cap  a correction is checked again with every rule except the daily meal cap (5.1, rule 4d)
 """
 from __future__ import annotations
 
@@ -303,6 +305,11 @@ class TravelFactsKept(Receipts):
         return (f["hotel"] if travel else None), (f["flight"] if travel else None)
 
 
+class CorrectionNoCap(Receipts):
+    def correction_cap(self, rows, name, f, parent):
+        return Decimal("0")
+
+
 class CabinAnywhere(Receipts):
     def cabin(self, low):
         return "other" if "premium economy" in low or R.has_word(low, ["business", "first class"]) else "economy"
@@ -331,7 +338,7 @@ for _name, _cls in [("no-dedupe", NoDedupe), ("no-cap", NoCap), ("cap-all-meals"
                     ("cap-counts-own-row", CapCountsOwnRow), ("latest-correction-only", LatestCorrectionOnly),
                     ("correction-receipt-day", CorrectionReceiptDay), ("preapproval-forgotten", PreapprovalForgotten),
                     ("preapproval-any-time", PreapprovalAnyTime), ("travel-facts-kept", TravelFactsKept),
-                    ("cabin-anywhere", CabinAnywhere)]:
+                    ("cabin-anywhere", CabinAnywhere), ("correction-no-cap", CorrectionNoCap)]:
     CONTROLS[_name] = _solver(_cls)
 
 assert handle  # the reference entry point stays importable beside the controls
