@@ -5,6 +5,11 @@ the validity gates and the tests are built. No arm has run and no model was call
 result. Design: [RECURRING-DESIGN.md §4.7](../../../../research/automationbench-20261014/RECURRING-DESIGN.md).
 Proposed split: **TRAIN**.
 
+**Re-verified 2026-10-21**, unchanged code, same venv (AutomationBench `4a8e106`): reference 195/195 on dev seeds
+610–614 (5/5 clean weeks); `gates.py` exit 0 with every gate passing and the numbers below reproduced exactly; pytest
+65 passed in 149 s. Over seeds 601–650 the per-week counts sit inside the spec: `ticket.created` 25–31 (d2) and 32–37
+(d3), `tier.changed` 2–3 and 4, `ticket.assigned` 1–2, `day.close` 5; weeks from 2026-02-09 to 2026-11-23.
+
 ## What it is
 
 A standing automation, like a Zap. Support Ops writes the policy once ([POLICY.md](POLICY.md)) and it runs on every

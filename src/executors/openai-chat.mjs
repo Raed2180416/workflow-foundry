@@ -227,6 +227,7 @@ export class SandboxSession {
     this.exited = new Promise(resolve => this.child.on('close', (code, signal) => { this.closed = true; this.exitCode = code ?? signal; this.failAll(); resolve(); }));
     this.child.stdin.on('error', () => {});
     this.child.on('error', () => {});
+    this.child.stdout.setEncoding('utf8'); this.child.stderr.setEncoding('utf8');   // a multibyte character may span chunks
     this.child.stderr.on('data', d => {
       if (this.stderr.length < 64 * 1024) this.stderr += d;
       if (!this.ready && this.stderr.includes(`${SANDBOX_READY}\n`)) this.ready = true;

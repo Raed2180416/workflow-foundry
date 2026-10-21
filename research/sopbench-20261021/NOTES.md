@@ -35,8 +35,10 @@ except label names and field names.
 
 Command: `corpus/sop-bench-venv/bin/python -I experiments/sopbench/bridge.py stats --upstream corpus/sop-bench` (from a
 neutral directory). "Rows" are the labelled rows of `test_set_with_outputs.csv`, the file upstream's loader reads
-(`benchmarks/registry.py:40`, `TEST_FILES`); "paper n" is the paper's Table 3 (`[doc]`), which also counts the unlabelled
-`test_set_without_outputs.csv` rows of some SOPs. Split = build / repair / sealed (SPLIT.json).
+(`benchmarks/registry.py:40`, `TEST_FILES`); "paper n" is the paper's Table 3 (`[doc]`). The two differ: several SOPs also
+ship unlabelled `test_set_without_outputs.csv` rows the paper may count (aircraft 112 + 38 = 150) [inference], and
+email_intent has more labelled rows here (186) than the paper lists (122; the pin's last merge is "fix/email-intent-restore").
+Only labelled rows can be scored. Split = build / repair / sealed (SPLIT.json).
 
 | SOP | rows | paper n | split | output columns | inputs | tools | SOP chars | labels per column |
 |---|---|---|---|---|---|---|---|---|
@@ -56,7 +58,9 @@ neutral directory). "Rows" are the labelled rows of `test_set_with_outputs.csv`,
 | warehouse_package_inspection | 150 | 200 | 5/15/130 | `resolution_status` | 15 | 7 | 3,323 | 3 |
 
 - **Tools** read the SOP's CSV with `pd.read_csv` on every call and look the row up by a key (`aircraft_id`, `product_id`,
-  `account_id`, …); key columns are unique in every SOP [measured, `stats` key_duplicates]. Exceptions: order_fulfillment and
+  `account_id`, …). Each SOP's first (id) column is unique [measured, `stats` key_duplicates], but some lookup keys repeat:
+  email_intent's tools look products up by `product_id` (14 repeats), so upstream answers with the first row holding that
+  id, another row's data (§5, row 126). Exceptions to CSV lookups: order_fulfillment and
   warehouse_package_inspection compute from arguments and in-memory tables only; email_intent reads the unlabelled
   `test_set_without_outputs.csv`, which is row-aligned with the labelled file [measured, World alignment].
 - **Stubs**: 20 of video_annotation's 26 tools and 5 of video_classification's 10 have the body `pass` (return `None`): the
@@ -74,7 +78,7 @@ neutral directory). "Rows" are the labelled rows of `test_set_with_outputs.csv`,
 - **bridge.py** (runs in `corpus/sop-bench-venv`, `python -I`, neutral cwd, minimal env): loads upstream modules by path with
   stub packages (`upstream.py`; ACQUISITION.md lists them), runs the SOP's `tools.py` as upstream's loader does
   (`benchmarks/loader.py:254-302`) and executes calls through upstream's own `ToolManager.execute_tool`
-  (`tools/manager.py:94-157`). Commands: stats, rows, prepare, serve, replay, grade, official, probe.
+  (`tools/manager.py:94-157`). Commands: stats, rows, prepare, serve, replay, grade, official, probe, worldcheck.
 - **World filter**: the tools module's `pd` is a proxy; `read_csv` of a known SOP file returns a copy of the host-cached frame
   filtered to the run's rows (dev world = the SOP's build + repair rows; full world only with `--sealed` and a freeze file).
   The frame is parsed once with upstream's own call, so dtypes and values equal upstream's. Measured invariance on all dev
@@ -96,8 +100,8 @@ neutral directory). "Rows" are the labelled rows of `test_set_with_outputs.csv`,
      (`parser.py:67-71`, "matches original eval.ipynb").
   2. We grade the final message only. Upstream grades multi-field SOPs from the **reasoning trace** (`evaluator.py:313-318`),
      whose tool results count as answers when the agent gave none (`parser.py:73-78`, `586-640`).
-  3. Inputs for the three "legacy mode" SOPs: upstream passes the whole row, answer included (`loader.py:226-229`); we pass the
-     columns of the SOP's own output-free file.
+  3. Inputs for the three SOPs without `input_columns`: upstream passes the whole row, answer included
+     (`loader.py:226-229`; warehouse does not load at all); we pass the columns of the SOP's own output-free file.
   4. Two upstream crashes are made non-fatal and flagged `upstreamFatal` in the host log: an unknown tool name
      (`manager.py:120-125` raises outside its `try`; the FC loop dies and the row fails) and a tool result `json.dumps` cannot
      encode (`function_calling.py:283`). Our tools return JSON with numpy scalars converted.
@@ -128,9 +132,11 @@ neutral directory). "Rows" are the labelled rows of `test_set_with_outputs.csv`,
 ## 5. Parity at $0 [measured]
 
 Command: `node experiments/sopbench/parity.mjs` → [parity.json](parity.json) (2026-10-21; no model; all 263 dev rows of all
-14 SOPs). Code at run time: bridge.py sha256 `5a3846f1…`, run.mjs `e049d317…` (the committed bridge only adds the
-`worldcheck` command; the committed run.mjs only changes where per-row records are written — verified by hashing the
-committed files with those additions removed).
+14 SOPs). Code at run time (both this run and §8): bridge.py sha256 `5a3846f1…` (committed as such in `462779e`) and
+run.mjs `e049d317…` (= `5ce2aae`'s run.mjs minus its later redaction helper, verified by hash). Changed since, none of it in
+serving, prompting or grading: bridge.py gained the `worldcheck` command; run.mjs writes per-row records outside the repo and
+adds two per-SOP counts to its summary; parity.mjs drops tool-result contents from the repo copy of this report (applied
+to this file after the run; counts unchanged).
 
 **1. Scripted policies through the full run path** (tool.mjs → mailbox → `bridge serve` on the dev world → `bridge grade`):
 
@@ -207,7 +213,8 @@ context, not a comparison.
 8. **Date-relative rules** [code: sop.txt]: know_your_business ("license is not expired for more than 42 days") and
    referral_abuse_detection_v2 ("within 90 days") do not say "as of when"; both arms meet the same ambiguity.
 9. **Underspecified rules** [measured: agent transcript, dev row]: dangerous_goods' SOP asks to map a score to "Hazard Class
-   A–D" without cut-offs; the agent assumed equal bands. Build rows are the only source of the rule.
+   A–D" without cut-offs; in the one transcript read the agent assumed four equal bands, and dangerous_goods scored 20/20
+   strict, so that guess matches the dev ground truth. A builder has the SOP and 5 build rows to infer the bands from.
 10. **patient_intake: scope** [AGENTS.md]: synthetic, mock tools, no real patient; but AGENTS.md lists "patient/lab
     operations" as out of scope and TRUST-BENCHMARKS.md asked for owner approval for synthetic medical beds. It is in the
     split and the $0 parity, and **excluded from paid runs until the owner decides**.

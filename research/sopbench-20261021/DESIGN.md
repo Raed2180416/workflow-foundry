@@ -9,7 +9,8 @@ PLAN.md (composition, 2026-10-21): "This is where the '90%+ reliable on recurrin
 else's benchmark." Concretely: **a workflow constructed once per SOP by Haiku 5.5, from the SOP text, the tool specs and 5
 build rows, with the SOP's sections as typed sub-workflows, repaired only on dev repair rows and then frozen, answers
 SOP-Bench's sealed rows with strict pass^3 ≥ 0.90, and more reliably than the Haiku agent acting per row through the same
-mock tools.** Both arms, the tools, the scorer and the rows are fixed before the sealed run.
+mock tools.** Both arms, the tools, the scorer and the rows are fixed before the sealed run. Context from phase 1: the raw Haiku agent
+scores 73.8% strict pass@1 (macro, 12 valid SOPs, dev rows, K = 1); its pass^3 is not measured yet and can only be lower.
 
 ## 1. Arms
 
@@ -33,8 +34,9 @@ Why, from reading both:
   with input-profile gates, carved budgets and refusals. It exists for reuse of compiled solvers across tasks. A SOP section
   is used by one SOP only, has no section-level ground truth to compile a library entry against (SOP-Bench grades only the
   final columns), and would cost a sandboxed child per section per row (about 6 sections × 1,693 sealed rows × 3 ≈ 30,000
-  child sandboxes) for no correctness gain. It stays a stretch variant (§9) for the one case where it fits: referral abuse v1
-  and v2 share their `investigate_account` and `analyze_traffic_patterns` sections.
+  child sandboxes; "6 sections" is an estimate) for no correctness gain. It stays a stretch variant (§9) for the one case
+  where it may fit: referral abuse v1 and v2 share two tool-backed steps, `investigate_account` and
+  `analyze_traffic_patterns` (v2's return more fields) [inference].
 - `compile.mjs` assumes **pure solvers**: a solver gets `task.json` and files, may call the model gateway, and has no effect
   port ("solvers have no effects"). A SOP workflow must call the SOP's mock tools mid-run, in an order it chooses. Its
   acceptance check compares outputs canonically against traces or regression answers, and its inputs come from bed families
@@ -96,7 +98,8 @@ runs on the 5 build rows in `runSandboxed` (no network) with fresh bridges; stri
 - Per run: the answer is graded by the phase-1 graders (upstream verdict through upstream's own `Evaluator.run_single_task`;
   strict verdict in Python and JS, which must agree). An environment fault (rate limit, usage limit, sandbox) is never a
   fail: the run stops and resumes.
-- Sealed records go to `results.sealed.jsonl`; no per-row grade is printed while the run is open.
+- Sealed per-row records go to `results.sealed.jsonl` under `/var/tmp/foundry-work/sopbench-rows/<run-id>/` (outside the
+  repo, as every per-row record: CC BY-NC); no per-row grade is printed while the run is open; the repo gets aggregates.
 
 ## 6. Valid SOPs (fixed now, before any sealed data is seen)
 
@@ -152,25 +155,25 @@ release ships video_annotation **as the bloated registry** (20 tools whose body 
 
 ## 10. Budgets, caps and cost estimate
 
-Measured unit costs (phase 1, dev rows; NOTES.md §8): the Haiku agent cost $0.0008–0.0052 per row, mean about $0.003
-(cache-heavy, 2–10 steps). E8's Haiku builder: $0.39 per build.
+Measured unit costs (phase 1, dev rows; NOTES.md §8): the Haiku agent cost **$0.0022 per row** on average ($0.0009–0.0037
+by SOP; 247 rows for $0.54), cache-heavy, 2.6 tool steps per row. E8's Haiku builder: $0.39 per build (one data point).
 
-| Item | Count | Unit (estimate) | Estimate | Hard cap |
+| Item | Count | Unit (estimate unless measured) | Estimate | Hard cap |
 |---|---|---|---|---|
-| Builds (Haiku, effort high) | 12 SOPs (+1 for minimal video_annotation, +3 V2 bloated) = 16 | $0.4–1.5 | $6–24 | $3 each |
-| Repairs | ≤ 2 per build = 32 | $0.2–0.8 | $3–26 | $1.50 each |
+| Builds (Haiku, effort high) | 12 SOPs + 1 minimal video_annotation + 3 V2 bloated = 16 | $0.4–1.5 | $6–24 | $3 each |
+| Repairs | ≤ 2 per build = ≤ 32 | $0.2–0.8 | $0–26 | $1.50 each |
 | Host checks and repair-row runs (W-H judges only) | 16 × 20 rows | ≤ $0.005 | ≤ $2 | |
 | W-H sealed runs (judge calls only; most SOPs are code-only) | 1,693 × 3 | $0–0.003 | $0–15 | $0.05 per run |
-| A-H sealed runs | 1,693 × 3 | $0.003 | ~$15 | $0.25 per session |
-| Ablation V1 (both arms, both cells) | 105 × 3 × 2 × 2 = 1,260 runs | ≤ $0.006 | ≤ $8 | |
-| Ablation V2 | 3 × 40 × 3 × 2 × 2 = 1,440 runs | ≤ $0.004 | ≤ $6 | |
-| **Total** | | | **$30–95, most likely ≈ $45** | **run cap $120** |
+| A-H sealed runs | 1,693 × 3 | $0.0022 (measured on dev rows) | ≈ $11 | $0.25 per session |
+| Ablation V1 (both arms, both cells) | 105 × 3 × 2 × 2 = 1,260 runs | A-H $0.0037 (measured, video_annotation) | ≤ $5 | |
+| Ablation V2 | 3 × 40 × 3 × 2 × 2 = 1,440 runs | A-H ≈ $0.002 | ≤ $4 | |
+| **Total** | | | **$20–85, most likely ≈ $35** | **run cap $100** |
 
-The wide range is the builder: E8's single build is one data point; SOP texts are longer and the repair loop is new. The run
-stops at the cap like phase 1 (`--cap`), and a builder that hits its budget is a failed build (the SOP then has no W-H
-workflow: every sealed run of that SOP counts as a W-H fail). Wall time: phase 1 ran ≈ 3 agent rows per minute at
-concurrency 3 on 4 shared CPUs; 5,079 A-H runs ≈ 28 h at that pace, so the sealed run needs concurrency 6–8 or a quieter
-machine; W-H runs are sandbox-bound (≈ 2–5 s each plus judges).
+The range is the builder: E8's single build is one data point; SOP texts are longer and the repair loop is new. The run stops
+at the cap like phase 1 (`--cap`), and a builder that hits its budget is a failed build (the SOP then has no W-H workflow:
+every sealed run of that SOP counts as a W-H fail). Wall time: phase 1 ran 247 agent rows in 23 minutes at concurrency 3 on
+4 shared CPUs (10.6 rows per minute), so the 5,079 A-H sealed runs take ≈ 8 h at that pace (≈ 4 h at concurrency 6); W-H
+runs are sandbox-bound (≈ 2–5 s each plus judges).
 
 ## 11. Order of work and gates
 
@@ -184,8 +187,8 @@ machine; W-H runs are sandbox-bound (≈ 2–5 s each plus judges).
 ## 12. Risks we already see
 
 - **Ambiguous SOPs**: dangerous_goods' SOP gives no score-to-class cut-offs ("map the score to Hazard Class A–D" with no
-  thresholds; phase-1 agent transcript), so build rows must carry the rule; with 5 build rows a builder may fit the wrong
-  bands. That is the bed working as intended (repair rows exist for it), but it caps both arms.
+  thresholds); the phase-1 agent guessed equal bands and scored 20/20 on dev rows, but a builder that fits 5 build rows may
+  pick other bands. Repair rows exist for this; the same ambiguity caps both arms.
 - **Date-relative rules**: know_your_business ("license is not expired for more than 42 days") and referral v2 ("within 90
   days") never say "as of when"; the ground truth was generated at an unknown date. Both arms meet it alike.
 - **Lenient upstream scorer**: never the headline (§7).

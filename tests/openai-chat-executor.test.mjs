@@ -324,3 +324,11 @@ test('a rate limit cools the endpoint down for every session of the process, not
   assert.equal(waited.length, 1); assert.ok(waited[0].waitMs > 0 && waited[0].waitMs <= 1200, `${waited[0].waitMs}`);
   assert.equal(ep.requests.length, 3, 'the second session sent nothing into the window');
 });
+
+test('multibyte output survives the pipes intact (no replacement characters at chunk boundaries)', { skip: live }, async t => {
+  const ep = await fakeEndpoint(t, [reply({ tool_calls: [bash("for i in $(seq 1 6000); do printf 'é€'; done")] }), reply({ content: 'ok' })]);
+  const r = await run(t, { baseUrl: ep.baseUrl });
+  const out = toolResults(r.transcript)[0].content;
+  assert.equal(out.includes('�'), false); assert.equal(out, 'é€'.repeat(6000));
+  assert.equal(ep.requests[1].body.messages.at(-1).content, 'é€'.repeat(6000));
+});

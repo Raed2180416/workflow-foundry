@@ -1,0 +1,2569 @@
+{
+ "date": "2026-10-21",
+ "evidence": "development (dev worlds, E-bed dev block); $0",
+ "worlds": [
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40
+  },
+  {
+   "seed": 1163,
+   "d": 4,
+   "size": 40
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60
+  }
+ ],
+ "capabilities": [
+  "intake",
+  "fraud",
+  "capture",
+  "refund",
+  "reservation",
+  "shipment",
+  "compensation",
+  "failure",
+  "tracking",
+  "customer-action",
+  "cancellation",
+  "notifications",
+  "exactly-once"
+ ],
+ "reference": [
+  {
+   "seed": 1161,
+   "d": 2,
+   "timing": "earliest",
+   "both": 0,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 43,
+   "armCensored": 0,
+   "completed": 43,
+   "capFails": {},
+   "misses": [],
+   "extras": []
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "timing": "latest",
+   "both": 0,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 43,
+   "armCensored": 0,
+   "completed": 43,
+   "capFails": {},
+   "misses": [],
+   "extras": []
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "timing": "earliest",
+   "both": 0,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 43,
+   "armCensored": 0,
+   "completed": 43,
+   "capFails": {},
+   "misses": [],
+   "extras": []
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "timing": "latest",
+   "both": 0,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 43,
+   "armCensored": 0,
+   "completed": 43,
+   "capFails": {},
+   "misses": [],
+   "extras": []
+  },
+  {
+   "seed": 1163,
+   "d": 4,
+   "timing": "earliest",
+   "both": 0,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 44,
+   "armCensored": 0,
+   "completed": 44,
+   "capFails": {},
+   "misses": [],
+   "extras": []
+  },
+  {
+   "seed": 1163,
+   "d": 4,
+   "timing": "latest",
+   "both": 0,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 44,
+   "armCensored": 0,
+   "completed": 44,
+   "capFails": {},
+   "misses": [],
+   "extras": []
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "timing": "earliest",
+   "both": 0,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 67,
+   "armCensored": 0,
+   "completed": 67,
+   "capFails": {},
+   "misses": [],
+   "extras": []
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "timing": "latest",
+   "both": 0,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 67,
+   "armCensored": 0,
+   "completed": 67,
+   "capFails": {},
+   "misses": [],
+   "extras": []
+  }
+ ],
+ "controls": [
+  {
+   "id": "noop",
+   "kind": "bad",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 44,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 67,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "intake": 183,
+    "reservation": 131,
+    "tracking": 135,
+    "customer-action": 51,
+    "fraud": 22,
+    "cancellation": 14,
+    "notifications": 32
+   },
+   "both": 197,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 0,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "echo",
+   "kind": "bad",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 44,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 67,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "intake": 183,
+    "reservation": 131,
+    "tracking": 135,
+    "customer-action": 51,
+    "fraud": 22,
+    "cancellation": 14,
+    "notifications": 32
+   },
+   "both": 197,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 0,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "declare-every-obligation",
+   "kind": "gaming",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 44,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 67,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "intake": 183,
+    "reservation": 131,
+    "tracking": 135,
+    "customer-action": 51,
+    "fraud": 22,
+    "cancellation": 14,
+    "notifications": 32
+   },
+   "both": 197,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 0,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "hold-everything",
+   "kind": "gaming",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 35,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 8,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 36,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 7,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 39,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 5,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 60,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 7,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "fraud": 154,
+    "reservation": 128,
+    "tracking": 129,
+    "cancellation": 14,
+    "customer-action": 43,
+    "notifications": 32
+   },
+   "both": 170,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 27,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "escalate-everything",
+   "kind": "gaming",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 41,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 2,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 40,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 3,
+     "armCensored": 1
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 64,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 3,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "fraud": 188
+   },
+   "both": 188,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 8,
+   "armCensored": 1,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "charge-twice",
+   "kind": "gaming",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 27,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 16,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 28,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 15,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 33,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 11,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 48,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 19,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "capture": 136,
+    "exactly-once": 136,
+    "failure": 9
+   },
+   "both": 136,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 61,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "no-compensation",
+   "kind": "necessity",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 8,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 35,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 9,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 34,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 7,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 37,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 11,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 56,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "shipment": 9,
+    "refund": 18,
+    "reservation": 27,
+    "compensation": 27
+   },
+   "both": 35,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 162,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "forward-order-compensation",
+   "kind": "necessity",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 6,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 37,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 8,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 35,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 6,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 38,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 6,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 61,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "compensation": 26
+   },
+   "both": 26,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 171,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "no-keys",
+   "kind": "necessity",
+   "worlds": [
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 3,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 64,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "capture": 3,
+    "exactly-once": 3
+   },
+   "both": 3,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 64,
+   "armCensored": 0,
+   "completed": 67,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "last-signal-wins",
+   "kind": "necessity",
+   "worlds": [
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 39,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 40,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 5,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 62,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "tracking": 13,
+    "exactly-once": 13
+   },
+   "both": 13,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 141,
+   "armCensored": 0,
+   "completed": 154,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "timer-first",
+   "kind": "necessity",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 2,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 41,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 10,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 33,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 40,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 5,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 62,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "customer-action": 18,
+    "fraud": 3
+   },
+   "both": 21,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 176,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "edition-by-publication",
+   "kind": "necessity",
+   "worlds": [
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 11,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 33,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 16,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 51,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "intake": 25,
+    "capture": 18,
+    "customer-action": 4,
+    "reservation": 2,
+    "tracking": 2
+   },
+   "both": 27,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 84,
+   "armCensored": 0,
+   "completed": 111,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "no-dedupe",
+   "kind": "necessity",
+   "worlds": [
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 5,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 38,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 2,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 42,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 8,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 59,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "exactly-once": 15
+   },
+   "both": 15,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 139,
+   "armCensored": 0,
+   "completed": 154,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "no-correlation",
+   "kind": "necessity",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 12,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 31,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 7,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 36,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 10,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 34,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 17,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 50,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "customer-action": 33,
+    "cancellation": 14,
+    "reservation": 14,
+    "tracking": 11,
+    "notifications": 5
+   },
+   "both": 46,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 151,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  },
+  {
+   "id": "c-oss",
+   "kind": "oss",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "both": 24,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 19,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "both": 26,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 17,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "both": 21,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 23,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "both": 34,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 33,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "notifications": 78,
+    "fraud": 22,
+    "capture": 22,
+    "cancellation": 11,
+    "customer-action": 34,
+    "refund": 17,
+    "reservation": 26,
+    "compensation": 26,
+    "shipment": 3
+   },
+   "both": 105,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 92,
+   "armCensored": 0,
+   "completed": 197,
+   "caughtWhereOracleRejects": true
+  }
+ ],
+ "mutants": [
+  {
+   "id": "ref-k0",
+   "operator": "window constant",
+   "line": 15,
+   "status": "latent",
+   "from": "const isoOf = (m, off = '+01:00') => { const d = new Date(m + 60 * MIN); return `${d.toISOString().slice(0, 19)}${off}`; };",
+   "to": "const isoOf = (m, off = '+01:00') => { const d = new Date(m + 120 * MIN); return `${d.toISOString().slice(0, 19)}${off}`; };",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 44,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 1,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 66,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "customer-action": 1
+   },
+   "both": 1,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 196,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k8",
+   "operator": "relational boundary",
+   "line": 34,
+   "status": "latent",
+   "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+   "to": "const ed = world.rulebook.editions.find(e => e.effectiveFrom < date && (e.effectiveTo === null || date < e.effectiveTo));",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 7,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 37,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 3,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 64,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "intake": 10,
+    "reservation": 5,
+    "tracking": 5,
+    "customer-action": 6,
+    "notifications": 2
+   },
+   "both": 10,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 187,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k12",
+   "operator": "connective swap",
+   "line": 34,
+   "status": "e0-visible",
+   "from": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null || date < e.effectiveTo));",
+   "to": "const ed = world.rulebook.editions.find(e => e.effectiveFrom <= date && (e.effectiveTo === null && date < e.effectiveTo));",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 44,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 67,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "intake": 183,
+    "reservation": 131,
+    "tracking": 135,
+    "customer-action": 51,
+    "fraud": 22,
+    "cancellation": 14,
+    "notifications": 32
+   },
+   "both": 197,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 0,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k22",
+   "operator": "negated condition",
+   "line": 55,
+   "status": "e0-visible",
+   "from": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 || row.error.code === 'permanent');",
+   "to": "const permanent = row => !row.committed && !!row.error && (row.error.code !== 402 || row.error.code === 'permanent');",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": "more than 6000 wake-ups",
+     "both": 17,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 23,
+     "armCensored": 3
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": "more than 6000 wake-ups",
+     "both": 16,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 21,
+     "armCensored": 6
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": "more than 6000 wake-ups",
+     "both": 8,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 28,
+     "armCensored": 8
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": "more than 6000 wake-ups",
+     "both": 33,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 27,
+     "armCensored": 7
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "capture": 8,
+    "failure": 8,
+    "customer-action": 19,
+    "intake": 65,
+    "tracking": 38,
+    "fraud": 9,
+    "notifications": 18,
+    "compensation": 1
+   },
+   "both": 74,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 99,
+   "armCensored": 24,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k26",
+   "operator": "connective swap",
+   "line": 55,
+   "status": "e0-visible",
+   "from": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 || row.error.code === 'permanent');",
+   "to": "const permanent = row => !row.committed && !!row.error && (row.error.code === 402 && row.error.code === 'permanent');",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": "more than 6000 wake-ups",
+     "both": 17,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 23,
+     "armCensored": 3
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": "more than 6000 wake-ups",
+     "both": 16,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 21,
+     "armCensored": 6
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": "more than 6000 wake-ups",
+     "both": 8,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 28,
+     "armCensored": 8
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": "more than 6000 wake-ups",
+     "both": 33,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 27,
+     "armCensored": 7
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "capture": 7,
+    "failure": 8,
+    "customer-action": 19,
+    "intake": 65,
+    "tracking": 38,
+    "fraud": 9,
+    "notifications": 18
+   },
+   "both": 74,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 99,
+   "armCensored": 24,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k32",
+   "operator": "negated condition",
+   "line": 80,
+   "status": "e0-visible",
+   "from": "const email = world.master.customers.find(x => x.customerId === t.customerId).email;",
+   "to": "const email = world.master.customers.find(x => x.customerId !== t.customerId).email;",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 25,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 18,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 26,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 17,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 20,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 24,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 34,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 33,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "notifications": 105
+   },
+   "both": 105,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 92,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k52",
+   "operator": "negated condition",
+   "line": 101,
+   "status": "e0-visible",
+   "from": "const prior = required.findIndex(x => x.lid === id);",
+   "to": "const prior = required.findIndex(x => x.lid !== id);",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": "more than 6000 wake-ups",
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 43,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": "more than 6000 wake-ups",
+     "both": 44,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": "more than 6000 wake-ups",
+     "both": 67,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 0,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "intake": 178,
+    "capture": 76,
+    "reservation": 73,
+    "tracking": 138,
+    "customer-action": 51,
+    "notifications": 66,
+    "fraud": 19,
+    "cancellation": 12
+   },
+   "both": 197,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 0,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k57",
+   "operator": "negated condition",
+   "line": 121,
+   "status": "e0-visible",
+   "from": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op === op && r.committed && pred(r.args ?? {}));",
+   "to": "const committed = (system, op, pred = () => true) => rows.filter(r => r.system === system && r.op !== op && r.committed && pred(r.args ?? {}));",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 27,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 16,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 28,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 15,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 33,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 11,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 48,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 19,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "capture": 135,
+    "reservation": 14,
+    "compensation": 14
+   },
+   "both": 136,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 61,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k61",
+   "operator": "negated condition",
+   "line": 123,
+   "status": "e0-visible",
+   "from": "const custActions = events.slice(placedIdx + 1).filter(e => e.type === 'customer.action').sort((a, b) => a.at - b.at || a.seq - b.seq);   // S11: none before its order",
+   "to": "const custActions = events.slice(placedIdx + 1).filter(e => e.type !== 'customer.action').sort((a, b) => a.at - b.at || a.seq - b.seq);   // S11: none before its order",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 12,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 31,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 7,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 36,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 10,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 34,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 17,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 50,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "customer-action": 33,
+    "cancellation": 14,
+    "reservation": 14,
+    "tracking": 11,
+    "notifications": 5
+   },
+   "both": 46,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 151,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k70",
+   "operator": "negated condition",
+   "line": 140,
+   "status": "e0-visible",
+   "from": "const pre = { created: !!stage && stage !== 'gl-intake', actionRequired: stage === 'gl-awaiting', processing: stage === 'gl-dispatched' };",
+   "to": "const pre = { created: !!stage && stage !== 'gl-intake', actionRequired: stage !== 'gl-awaiting', processing: stage === 'gl-dispatched' };",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 8,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 35,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 12,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 31,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 8,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 36,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 12,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 55,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "tracking": 8,
+    "customer-action": 32,
+    "notifications": 32
+   },
+   "both": 40,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 157,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k75",
+   "operator": "negated condition",
+   "line": 144,
+   "status": "e0-visible",
+   "from": "items: t.class === 'gl-dispatched' ? alloc[0].items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),",
+   "to": "items: t.class !== 'gl-dispatched' ? alloc[0].items : (events.find(e => e.type === 'order.placed')?.payload.items ?? alloc.flatMap(f => f.items)),",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 24,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 19,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 26,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 17,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 23,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 21,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 39,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 28,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "intake": 112
+   },
+   "both": 112,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 85,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k86",
+   "operator": "dropped rule row",
+   "line": 155,
+   "status": "e0-visible",
+   "from": "tasksReq.push({ lid: `review:${O}`, rule: 'R2.1', kind: 'fraudReview', role: 'fraudAnalyst', mustExclude: [], window: { earliest: p, latest: p + 120 * MIN } });",
+   "to": "void 0;",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 2,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 41,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 40,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 3,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 64,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "fraud": 9
+   },
+   "both": 9,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 188,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k98",
+   "operator": "connective swap",
+   "line": 167,
+   "status": "e0-visible",
+   "from": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) && e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+   "to": "&& ['approve', 'reject'].includes(e.payload.answer?.decision) || e.at <= deadline).sort((a, b) => a.at - b.at || a.seq - b.seq);",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 1,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 42,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 1,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 1,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 66,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "fraud": 3
+   },
+   "both": 3,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 194,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k118",
+   "operator": "relational boundary",
+   "line": 181,
+   "status": "latent",
+   "from": "countedAction = custActions.find(a => a.at <= D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;",
+   "to": "countedAction = custActions.find(a => a.at < D && ['amend', 'cancel'].includes(a.payload.action)) ?? null;",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 1,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 42,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 2,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 42,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 63,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "reservation": 3,
+    "tracking": 3,
+    "customer-action": 7
+   },
+   "both": 7,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 190,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k132",
+   "operator": "dropped rule row",
+   "line": 192,
+   "status": "e0-visible",
+   "from": "ost('timedOut', 'R3.2', D + SEC, D + 60 * MIN);",
+   "to": "void 0;",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 2,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 41,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 9,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 34,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 3,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 41,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 63,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "customer-action": 18,
+    "notifications": 18
+   },
+   "both": 18,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 179,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k141",
+   "operator": "negated condition",
+   "line": 209,
+   "status": "e0-visible",
+   "from": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action === 'cancel' && a.at >= tr);",
+   "to": "const procCancels = custActions.filter(a => a !== countedAction && a.payload.action !== 'cancel' && a.at >= tr);",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 3,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 40,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 39,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 3,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 41,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 63,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "cancellation": 14,
+    "notifications": 5
+   },
+   "both": 14,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 183,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k148",
+   "operator": "negated condition",
+   "line": 212,
+   "status": "latent-unrevealed",
+   "from": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at === a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+   "to": "const collectedBy = a => msgs.some(m => ['collected', 'inTransit', 'delivered'].includes(m.meaning) && (m.at < a.at || (m.at !== a.at && m.seq < a.seq)) && reportedMs(m) <= a.at);",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 0,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 1,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 43,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": "more than 6000 wake-ups",
+     "both": 15,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 44,
+     "armCensored": 8
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "shipment": 3,
+    "cancellation": 3,
+    "notifications": 6,
+    "refund": 1,
+    "reservation": 1,
+    "compensation": 1,
+    "intake": 13,
+    "tracking": 7,
+    "fraud": 3,
+    "customer-action": 3
+   },
+   "both": 16,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 173,
+   "armCensored": 8,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k154",
+   "operator": "negated condition",
+   "line": 217,
+   "status": "e0-visible",
+   "from": "const mine = r => r.fulfilmentId === F;",
+   "to": "const mine = r => r.fulfilmentId !== F;",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 27,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 16,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 28,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 15,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 33,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 11,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 48,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 19,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "capture": 135,
+    "reservation": 14,
+    "compensation": 14
+   },
+   "both": 136,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 61,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k163",
+   "operator": "connective swap",
+   "line": 226,
+   "status": "e0-visible",
+   "from": "const fails = rows.filter(r => r.args?.fulfilmentId === F && permanent(r) && ['inventory.reserve', 'billing.charge', 'carrier.create'].includes(`${r.system}.${r.op}`));",
+   "to": "const fails = rows.filter(r => r.args?.fulfilmentId === F || permanent(r) && ['inventory.reserve', 'billing.charge', 'carrier.create'].includes(`${r.system}.${r.op}`));",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 28,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 15,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 29,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 14,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 35,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 9,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 50,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 17,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "capture": 135,
+    "compensation": 136,
+    "failure": 142,
+    "tracking": 6,
+    "cancellation": 14
+   },
+   "both": 142,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 55,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k169",
+   "operator": "negated condition",
+   "line": 229,
+   "status": "e0-visible",
+   "from": "const deliveredMsg = myMsgs.find(m => m.meaning === 'delivered') ?? null;",
+   "to": "const deliveredMsg = myMsgs.find(m => m.meaning !== 'delivered') ?? null;",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 21,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 22,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 24,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 19,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 31,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 13,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 42,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 25,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "tracking": 118,
+    "cancellation": 3,
+    "notifications": 3
+   },
+   "both": 118,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 79,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k179",
+   "operator": "connective swap",
+   "line": 240,
+   "status": "e0-visible",
+   "from": "const endedBefore = saga.every(s => (s.deliveredMsg && s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13",
+   "to": "const endedBefore = saga.every(s => (s.deliveredMsg || s.deliveredMsg.at <= a.at) || (s.failAt !== null && s.failSeen <= a.at));   // S13",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 3,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 40,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 39,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 3,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 41,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 4,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 63,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "tracking": 13,
+    "cancellation": 14,
+    "notifications": 5
+   },
+   "both": 14,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 183,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k188",
+   "operator": "connective swap",
+   "line": 256,
+   "status": "e0-visible",
+   "from": "const aborted = abortAt !== null && !(s.failAt !== null && s.failSeen <= abortAt);   // S13",
+   "to": "const aborted = abortAt !== null || !(s.failAt !== null && s.failSeen <= abortAt);   // S13",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": "more than 6000 wake-ups",
+     "both": 35,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 8,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": "more than 6000 wake-ups",
+     "both": 33,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 10,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": "more than 6000 wake-ups",
+     "both": 36,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 8,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": "more than 6000 wake-ups",
+     "both": 60,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 7,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "fraud": 92,
+    "compensation": 85,
+    "notifications": 109,
+    "cancellation": 7,
+    "capture": 7,
+    "customer-action": 19,
+    "intake": 65,
+    "tracking": 38
+   },
+   "both": 164,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 33,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k198",
+   "operator": "negated condition",
+   "line": 267,
+   "status": "e0-visible",
+   "from": "if (s.rF !== null && (s.chargeRow ? forwardOk(s.chargeRow) : cut === null)) {",
+   "to": "if (s.rF === null && (s.chargeRow ? forwardOk(s.chargeRow) : cut === null)) {",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 28,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 15,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 29,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 14,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 34,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 10,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 50,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 17,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "capture": 141
+   },
+   "both": 141,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 56,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  },
+  {
+   "id": "ref-k206",
+   "operator": "connective swap",
+   "line": 273,
+   "status": "e0-visible",
+   "from": "if (s.chargeRow && !s.items[0].pre && (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {",
+   "to": "if (s.chargeRow && !s.items[0].pre || (s.shipRow ? forwardOk(s.shipRow) : cut === null)) {",
+   "worlds": [
+    {
+     "seed": 1161,
+     "d": 2,
+     "aborted": null,
+     "both": 28,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 15,
+     "armCensored": 0
+    },
+    {
+     "seed": 1162,
+     "d": 3,
+     "aborted": null,
+     "both": 29,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 14,
+     "armCensored": 0
+    },
+    {
+     "seed": 1163,
+     "d": 4,
+     "aborted": null,
+     "both": 35,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 9,
+     "armCensored": 0
+    },
+    {
+     "seed": 1164,
+     "d": 5,
+     "aborted": null,
+     "both": 50,
+     "oracleOnly": 0,
+     "capsOnly": 0,
+     "pass": 17,
+     "armCensored": 0
+    }
+   ],
+   "misses": [],
+   "extras": [],
+   "capFails": {
+    "intake": 118,
+    "reservation": 135,
+    "tracking": 139,
+    "customer-action": 14
+   },
+   "both": 142,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 55,
+   "armCensored": 0,
+   "completed": 197,
+   "oracleRejects": true,
+   "contractsReject": true
+  }
+ ],
+ "summary": {
+  "reference": {
+   "both": 0,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 394,
+   "armCensored": 0,
+   "completed": 394,
+   "allPass": true
+  },
+  "controls": {
+   "both": 1376,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 1276,
+   "armCensored": 1,
+   "completed": 2653,
+   "caughtWhereOracleRejects": 15,
+   "of": 15
+  },
+  "mutants": {
+   "both": 1916,
+   "oracleOnly": 0,
+   "capsOnly": 0,
+   "pass": 2756,
+   "armCensored": 56,
+   "completed": 4728,
+   "sampled": 24,
+   "oracleRejects": 24,
+   "contractsAlsoReject": 24,
+   "contractsOnly": 0
+  }
+ }
+}

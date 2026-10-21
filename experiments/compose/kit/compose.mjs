@@ -48,6 +48,6 @@ if (cmd === 'check') {
   if (p.length) { console.log(`${p.length} problem(s):\n${p.map(x => `  - ${x}`).join('\n')}`); process.exit(1); }
   console.log('composition: OK');
 } else if (cmd === 'test') {
-  const r = spawnSync(process.execPath, ['--test', '--test-concurrency=1', 'tests/'], { cwd: dir, stdio: 'inherit' });
+  const r = spawnSync(process.execPath, ['--test', '--test-concurrency=1', 'tests/*.test.mjs'], { cwd: dir, stdio: 'inherit' });
   process.exit(r.status ?? 1);
 } else { console.log('usage: node compose-kit/compose.mjs check | test'); process.exit(2); }

@@ -8,7 +8,7 @@
 // tests (run in the sandbox); faults and drift with fault-run.mjs on the saved program. METERED: the session spends
 // model budget; `--dry-run` replaces the session by a scripted stub builder ($0) to check the whole pipeline.
 //   node experiments/compose/build.mjs --arm C-H --model claude-haiku-5-5 --effort high --budget 3 --minutes 40 --label ch-e8-1
-//   node experiments/compose/build.mjs --arm C-H-T --model claude-haiku-5-5 --effort high --budget 3 --minutes 40 --label cht-e8-1
+//   node experiments/compose/build.mjs --arm C-H-T --model claude-haiku-5-5 --effort high --budget 3 --minutes 40 --label cht-e8-1 [--templates <dir>]
 //   node experiments/compose/build.mjs --arm C-H --dry-run --label dry-ch-1 [--seeds 1232 --difficulties 2 --size 12]
 //   node experiments/compose/build.mjs --grade-only <program dir> --label regrade-x
 import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, readdirSync, cpSync, rmSync, mkdtempSync } from 'node:fs';
@@ -75,7 +75,7 @@ requires it, and keep each rule in the module that owns it.
 }
 
 /** The builder's workspace: spec, contract, API schemas, the composition interface and kit, the task; templates for C-H-T. */
-export function composedBuildFiles(item, { arm = 'C-H', loop = 'smoke' } = {}) {
+export function composedBuildFiles(item, { arm = 'C-H', loop = 'smoke', templates = path.join(here, 'builder', 'templates') } = {}) {
   if (!ARMS.includes(arm)) throw new Error(`--arm must be one of ${ARMS.join(', ')}`);
   const t0 = Date.parse('2026-03-02T00:00:00+01:00');
   const files = { 'SPEC-E.md': item.specE.text, 'CONTRACT.md': contractText(), 'COMPOSE.md': readFileSync(path.join(here, 'builder', 'COMPOSE.md'), 'utf8') };
@@ -87,7 +87,7 @@ export function composedBuildFiles(item, { arm = 'C-H', loop = 'smoke' } = {}) {
   files['TASK.md'] = composedTaskText(arm) + (loop === 'none' ? '' : composedClientInstructions(loop));
   if (loop !== 'none') files['smoke.mjs'] = CLIENT;
   if (arm === 'C-H-T') {
-    const tdir = path.join(here, 'builder', 'templates');
+    const tdir = templates;
     const walk = rel => {
       for (const ent of readdirSync(path.join(tdir, rel), { withFileTypes: true })) {
         const r = rel ? `${rel}/${ent.name}` : ent.name;
@@ -112,7 +112,7 @@ export async function runModuleTests(dir, { timeoutMs = 180_000 } = {}) {
   const work = mkdtempSync(path.join(root, 'run-'));
   try {
     cpSync(dir, work, { recursive: true, filter: src => !src.includes(`${path.sep}.smoke`) && !src.includes('.executor-transcript') });
-    const script = sandboxScript(maskSteps({ workdir: work, hidden: DEFAULT_HIDDEN, keepRo: binaryKeeps(['node']) }), work, ['node', '--test', '--test-concurrency=1', '--test-reporter=tap', 'tests/']);
+    const script = sandboxScript(maskSteps({ workdir: work, hidden: DEFAULT_HIDDEN, keepRo: binaryKeeps(['node']) }), work, ['node', '--test', '--test-concurrency=1', '--test-reporter=tap', 'tests/*.test.mjs']);
     const child = spawn('unshare', [...UNSHARE_ARGS, '--net', 'sh', '-c', script], { env: { PATH: process.env.PATH ?? '/usr/bin:/bin', HOME: '/tmp', TMPDIR: '/tmp', LANG: 'C.UTF-8' }, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
     let out = '';
     child.stdout.on('data', d => { if (out.length < 200_000) out += d; });
@@ -169,8 +169,15 @@ test('${id} loads and runs inside its declaration', () => {
 `);
   }
   const check = spawnSync(process.execPath, ['compose-kit/compose.mjs', 'check'], { cwd: workdir, encoding: 'utf8' });
-  const smoke = spawnSync(process.execPath, ['smoke.mjs'], { cwd: workdir, encoding: 'utf8', timeout: 20 * 60_000 });
-  return { costUsd: 0, turns: 0, error: null, stub: true, check: check.stdout.trim(), smoke: (smoke.stdout ?? '').slice(0, 4000) };
+  // Asynchronous: the mailbox is served by this same process, so a synchronous spawn would deadlock it.
+  const smoke = await new Promise(resolve => {
+    const c = spawn(process.execPath, ['smoke.mjs'], { cwd: workdir });
+    let o = '';
+    c.stdout.on('data', d => { o += d; });
+    const timer = setTimeout(() => c.kill('SIGKILL'), 20 * 60_000);
+    c.on('close', () => { clearTimeout(timer); resolve(o); });
+  });
+  return { costUsd: 0, turns: 0, error: null, stub: true, check: check.stdout.trim(), smoke: smoke.slice(0, 4000) };
 }
 
 async function main() {
@@ -198,7 +205,8 @@ async function main() {
     mkdirSync(out, { recursive: true });
     const practice = practiceFor(item);
     if (worlds.some(w => practice.seeds.includes(w.seed))) throw new Error('grading seeds overlap the practice worlds');
-    const files = composedBuildFiles(item, { arm: armName, loop: 'smoke' });
+    const templates = path.resolve(arg('--templates', path.join(here, 'builder', 'templates')));
+    const files = composedBuildFiles(item, { arm: armName, loop: 'smoke', templates });
     const prompt = `${files['TASK.md']}\nRead SPEC-E.md, CONTRACT.md, COMPOSE.md and api/*.schema.json first.`;
     const budgetUsd = Number(arg('--budget', String(B1LH_CONDITIONS.budgetUsd))), minutes = Number(arg('--minutes', String(B1LH_CONDITIONS.minutes)));
     const effort = arg('--effort', B1LH_CONDITIONS.effort);
@@ -213,7 +221,7 @@ async function main() {
         r = await stubBuilder({ workdir });
       } else r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs: minutes * 60_000, effort });
     } finally { build = { smokeRuns: await box.stop() }; if (existsSync(liveSmoke)) copyFileSync(liveSmoke, path.join(out, 'smoke.jsonl')); }
-    build = { arm: armName, model, effort, budgetUsd, minutes, loop: 'smoke', dryRun: dry, ...build, wallMs: Date.now() - t, costUsd: r.costUsd ?? null, error: r.error ?? null, turns: r.turns ?? null, ...(dry ? { stub: { check: r.check, smoke: r.smoke } } : {}) };
+    build = { arm: armName, model, effort, budgetUsd, minutes, loop: 'smoke', dryRun: dry, ...(armName === 'C-H-T' ? { templates: path.relative(ROOT, templates) } : {}), ...build, wallMs: Date.now() - t, costUsd: r.costUsd ?? null, error: r.error ?? null, turns: r.turns ?? null, ...(dry ? { stub: { check: r.check, smoke: r.smoke } } : {}) };
     if (existsSync(path.join(workdir, '.executor-transcript.jsonl'))) copyFileSync(path.join(workdir, '.executor-transcript.jsonl'), path.join(out, 'transcript.jsonl'));
     dir = workdir;
     console.log(`build: ${JSON.stringify({ ...build, stub: undefined })}`);
