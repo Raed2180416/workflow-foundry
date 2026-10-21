@@ -40,8 +40,8 @@ written, with no case folding, whitespace collapsing or trailing-period toleranc
   - a log row: Request ID, Transition and Reference exactly as text (AutomationBench's own google_sheets_row_exists,
     run beside it, compares Request ID and Transition exactly too); for Purged and Blocked rows the Reference is a
     comma-separated list (POLICY.md: "comma-separated"), compared as a set of ids, a space after a comma allowed; At
-    as an instant (the event's `at`; any ISO 8601 form of that same instant, e.g. `+00:00` for `Z`, or no seconds
-    when they are 0);
+    as the event's `at` in any UTC spelling of that instant (`+00:00` for `Z`, a space for `T`, no seconds when they
+    are 0, no offset); another offset, or another instant even within the same minute, is a different At;
   - an email subject: exactly after trimming its ends (a header's surrounding whitespace is not part of it).
 The only normalisation that is not an exact match is the address rule POLICY.md §3 itself states (letter case and
 surrounding spaces): the log row's Email and the email recipient compare as addresses.
@@ -52,7 +52,7 @@ import copy
 import json
 import re
 from collections import Counter, defaultdict
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 SS = "ss_gdpr"
 WS_REQ, WS_HOLD, WS_LOG, WS_CFG = "ws_requests", "ws_legal_hold", "ws_compliance_log", "ws_config"
@@ -102,9 +102,9 @@ def addr(s) -> str:
 
 
 def instant(at) -> str:
-    """An ISO 8601 time as the UTC instant it names, to the microsecond. Only the form is free (Z or +00:00 or another
-    offset of the same instant, a space for T, omitted seconds when they are 0, no offset read as UTC); a different
-    instant, even within the same minute, is a different At."""
+    """An ISO 8601 UTC time (POLICY.md §9) as the instant it names, to the microsecond. Only the UTC spelling is free:
+    Z or +00:00, a space for T, omitted seconds when they are 0, no offset (the column is UTC). Another offset is not
+    UTC, and a different instant, even within the same minute, is a different At."""
     s = str(at or "").strip()
     try:
         dt = datetime.fromisoformat(s.replace("Z", "+00:00").replace(" ", "T", 1))
@@ -112,6 +112,8 @@ def instant(at) -> str:
         return "unparsed:" + s
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
+    elif dt.utcoffset() != timedelta(0):
+        return "not-utc:" + s
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 

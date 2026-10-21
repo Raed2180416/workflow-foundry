@@ -298,6 +298,8 @@ def mutants(before: dict, after: dict, truth: dict):
         m("log-request-id-padded", cell(i, "Request ID", lambda v: f" {v} "))
         m("log-reference-case", cell(i, "Reference", lambda v: v.swapcase()))
         m("log-at-seconds", cell(i, "At", lambda v: re.sub(r":00Z$", ":50Z", v)))
+        m("log-at-other-offset", cell(i, "At", lambda v: datetime.fromisoformat(v.replace("Z", "+00:00"))
+                                       .astimezone(timezone(timedelta(hours=2))).isoformat() if v else v))
         multi = [j for j in rows_new if "," in (after["google_sheets"]["rows"][j]["cells"].get("Reference") or "")]
         if multi:
             m("log-reference-semicolon", cell(multi[0], "Reference", lambda v: ";".join(x.strip() for x in v.split(","))))
@@ -403,11 +405,9 @@ def equivalents(before: dict, after: dict, truth: dict):
     if rows_new:
         i = rows_new[0]
         c = after["google_sheets"]["rows"][i]["cells"]
-        # the same instant in another ISO 8601 form (POLICY §9 fixes the instant, not the spelling)
+        # the same instant in another ISO 8601 UTC spelling (POLICY §9 fixes the instant and UTC, not the spelling)
         m("log-at-offset", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("At", c["At"].replace("Z", "+00:00")))
         m("log-at-no-seconds", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("At", c["At"][:16].replace("T", " ")))
-        m("log-at-other-offset", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__(
-            "At", datetime.fromisoformat(c["At"].replace("Z", "+00:00")).astimezone(timezone(timedelta(hours=2))).isoformat()))
         # §3: an address is the same in any letter case
         m("log-email-case", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Email", c["Email"].upper()))
         multi = [j for j in rows_new if "," in (after["google_sheets"]["rows"][j]["cells"].get("Reference") or "")]

@@ -36,3 +36,16 @@ task, against Sonnet + A1's $0.115 per task on dev60.
 2. The loop guard and masking from FIXES A2/A1 cut Mercury's tokens per task.
 3. A paired arm with Sonnet as planner/checker and Haiku acting on the same tasks separates "different family" from
    "stronger model".
+
+## Completion as a fill run (2026-10-21 ~18:50Z)
+
+D18 raised the Mercury ceiling to 20M, but resuming `m3-a1c-dev60-dn` was refused: its launch pins the harness manifest
+(ef5c3382), and `experiments/autobench/bridge.py` changed at 18:41Z. The AutomationBench families workflow added
+`pin_timezone`, which acts only on rows that carry `info.tz` (the abr-* recurring families) and is a no-op for every
+official task. It also loads the input row before installing the shim, which is pure and changes nothing. Following the
+`a1-dev60-dn-fill` precedent, the 22 unfinished tasks run as **`m3-a1c-dev60-dn-fill`** (same model roles, budget, session
+tokens and concurrency; token cap 2.3M; harness manifest 17a9f039, which differs from ef5c3382 only by that bridge
+change). The headline for the 60 tasks pools the two runs, and the split is stated.
+
+The same bridge change reached `a0-devcheck-2` (ab-chain4) mid-run. A0 records no harness manifest; official rows carry no
+`info.tz`, so its behaviour is unchanged.
