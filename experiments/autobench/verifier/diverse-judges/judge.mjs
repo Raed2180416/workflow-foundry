@@ -73,9 +73,9 @@ export function parseVerdict(value) {
 }
 
 /** Run one judge on one candidate through a ModelPort. Returns the port result plus the parsed verdict. */
-export async function judgeOnce(port, { modelId, ctx, runId, nodeKey, decoding = {}, mode = 'live' }) {
+export async function judgeOnce(port, { modelId, ctx, runId, nodeKey, decoding = {}, mode = 'live', sampleIndex = 0 }) {
   const { system, prompt } = judgeMessages(ctx);
-  const r = await port.call({ runId, nodeKey, modelId, system, prompt, schema: OUTPUT_SCHEMA, decoding, mode });
+  const r = await port.call({ runId, nodeKey, modelId, system, prompt, schema: OUTPUT_SCHEMA, decoding, mode, sampleIndex });
   return { ok: r.ok, verdict: r.ok ? parseVerdict(r.value) : null, value: r.ok ? r.value : null, error: r.ok ? null : { code: r.error?.code, message: String(r.error?.message ?? '').slice(0, 300) },
     usage: r.usage, costUsd: r.costUsd ?? 0, latencyMs: r.latencyMs, replayed: r.replayed, journalId: r.journalId, chars: { system: system.length, prompt: prompt.length } };
 }

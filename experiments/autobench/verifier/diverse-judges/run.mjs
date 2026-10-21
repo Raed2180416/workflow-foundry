@@ -4,6 +4,7 @@
 //   set -a; . /root/.config/foundry/inception.env; set +a     # only when --judge mercury (the key never enters a file or log)
 //   node run.mjs --vlab <lab dir> --out <dir> --judge haiku|sonnet|mercury [--arms a,b] [--folds 0,1] [--tasks t1,t2]
 //       [--variant world|diffonly] [--limit N] [--concurrency N] [--usd-cap 4] [--mercury-cap 1500000] [--sizes]
+//       [--sample N]   (a retry of rows without a verdict: a failed call replays from the journal, so a retry draws sample N)
 //
 // Each candidate (one row = one arm's final world on one task) is judged alone. The judge sees verifierView(row) rendered
 // by view.mjs (request, connected apps' records before the run, the changes) and never the label, task name, arm, run or a
@@ -109,14 +110,14 @@ async function main() {
         const leaks = leakCheck(r, m.system + m.prompt);
         if (leaks.length) { appendFileSync(resultsFile, JSON.stringify({ key: keyOf(r), rowId: r.rowId, judge: o.judge, ok: false, error: { code: 'LEAK_REFUSED', message: `context contains ${leaks.length} forbidden string(s)` } }) + '\n'); continue; }
         let res;
-        try { res = await judgeOnce(port, { modelId, ctx, runId: `dj-${JUDGE_VERSION}-${variant}`, nodeKey: `${o.judge}:${lab.opaqueId(r)}`, decoding, mode: 'replay-or-live' }); }
+        try { res = await judgeOnce(port, { modelId, ctx, runId: `dj-${JUDGE_VERSION}-${variant}`, nodeKey: `${o.judge}:${lab.opaqueId(r)}`, decoding, mode: 'replay-or-live', sampleIndex: Number(o.sample ?? 0) }); }
         catch (e) { res = { ok: false, error: { code: e.code ?? 'ERROR', message: String(e.message ?? e).slice(0, 300) }, costUsd: e.costUsd ?? 0 }; }
         if (CLAUDE.has(modelId)) usd += res.costUsd ?? 0;
         if (res.error?.code === 'MODEL_BUDGET' && modelId === 'mercury-3') stop = `Mercury token cap: ${res.error.message}`;
         if (res.error?.code === 'MODEL_RATE_LIMIT') stop = 'rate limited';
         n++;
         appendFileSync(resultsFile, JSON.stringify({ key: keyOf(r), version: JUDGE_VERSION, variant, judge: o.judge, modelId, rowId: r.rowId, vid: lab.opaqueId(r), ok: res.ok, verdict: res.verdict ?? null,
-          value: res.value ?? null, error: res.error ?? null, usage: res.usage ?? null, costUsd: res.costUsd ?? 0, latencyMs: res.latencyMs ?? null, replayed: res.replayed ?? false,
+          value: res.value ?? null, error: res.error ?? null, sampleIndex: Number(o.sample ?? 0), usage: res.usage ?? null, costUsd: res.costUsd ?? 0, latencyMs: res.latencyMs ?? null, replayed: res.replayed ?? false,
           chars: res.chars ?? null, recordsTruncated: ctx.recordsTruncated, at: new Date().toISOString() }) + '\n');
         if (n % 10 === 0) console.error(`[${o.judge}/${variant}] ${n}/${todo.length} judged, claude $${usd.toFixed(4)}, mercury ${JSON.stringify(tokens()?.inception ?? null)}, ${Math.round((Date.now() - started) / 1000)} s`);
       }
