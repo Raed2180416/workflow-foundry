@@ -73,3 +73,11 @@ test('the CLIs refuse a paid run outside the declared conditions before any sess
   assert.match(node('run-agents.mjs', ['--arm', 'A-F', '--model', 'claude-sonnet-5-5', '--label', 'x', '--cap', '20']).stderr, /PREREG-OT0.md is a draft|no preregistration/);
   assert.match(node('build-wc.mjs', ['--model', 'claude-haiku-5-5', '--label', 'wc-x']).stderr, /PREREG-OT0.md is a draft|no preregistration/);
 });
+
+test('the frozen-file table covers files that exist, and a draft prereg is refused', async () => {
+  const { table, preregCheck, FROZEN } = await import('../freeze.mjs');
+  const rows = table();
+  assert.equal(rows.length, FROZEN.length);
+  assert.ok(rows.every(r => /^[0-9a-f]{64}  /.test(r)), rows.find(r => !/^[0-9a-f]{64}  /.test(r)));
+  assert.throws(() => preregCheck(), /draft|no preregistration/);
+});

@@ -1,0 +1,98 @@
+diff --git a/src/models/providers/claude-cli.mjs b/src/models/providers/claude-cli.mjs
+index 3eb8f9c..7f5b178 100644
+--- a/src/models/providers/claude-cli.mjs
++++ b/src/models/providers/claude-cli.mjs
+@@ -102,7 +102,8 @@ export function interpretResult(result, { modelId, stderr = '' } = {}) {
+     const status = Number(result.api_error_status);
+     const detail = `${result.subtype ?? 'error'}${result.api_error_status ? ` (HTTP ${result.api_error_status})` : ''}`;
+     if (result.subtype === 'error_max_budget_usd') throw fail('MODEL_BUDGET', 'claude CLI hit the per-call --max-budget-usd cap', extra);
+-    if (status === 429 || status === 529 || RATE.test(`${result.result ?? ''} ${stderr}`)) throw fail('MODEL_RATE_LIMIT', `claude CLI rate limited or overloaded: ${detail}`, extra);
++    // The CLI's own text carries what the user needs (a usage limit's reset time, a retry-after): it is kept, cut short (orch-20261021 D3).
++    if (status === 429 || status === 529 || RATE.test(`${result.result ?? ''} ${stderr}`)) throw fail('MODEL_RATE_LIMIT', `claude CLI rate limited or overloaded: ${detail}${result.result ? `: ${String(result.result).slice(0, 200)}` : ''}`, extra);
+     if (/structured.?output/i.test(result.subtype ?? '')) throw fail('MODEL_SCHEMA', `claude CLI could not produce structured output: ${detail}`, extra);
+     if (result.stop_reason === 'refusal') throw fail('MODEL_REFUSAL', 'The model refused the request', extra);
+     if (status >= 500 || status === 401 || status === 403) throw fail('MODEL_UNAVAILABLE', `claude CLI API error: ${detail}`, extra);
+diff --git a/src/runtime.mjs b/src/runtime.mjs
+index 8fc29a7..c8cc9c3 100644
+--- a/src/runtime.mjs
++++ b/src/runtime.mjs
+@@ -94,6 +94,14 @@ const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED',
+   // Cross-run state faults of the harness, not refusals of the data (src/state.mjs STATE_REFUSALS are the handleable ones).
+   'STATE_CLOCK', 'STATE_OP', 'STATE_TRANSACTION', 'STATE_SLOT_UNKNOWN']);
+ const cancelled = error => ['CANCELLED', 'ABORT_ERR'].includes(error?.code);
++// Outages (orch-20261021): up to ENV_RETRIES inline retries of a model call, each at most ENV_RETRY_INLINE_MAX_MS away; past that an agent
++// node parks (status waiting, timer at retryAt) at most MAX_PARKS times. retry-after (seconds) in the provider's message wins; a usage
++// limit ("resets ...") parks for 15 minutes at a time; otherwise exponential backoff with jitter.
++const ENV_RETRIES = 3, ENV_RETRY_INLINE_MAX_MS = 60000, MAX_PARKS = 8;
++const retryAfterMs = message => { const m = /retry.?after[^0-9]{0,4}(\d+(?:\.\d+)?)/i.exec(String(message ?? '')); return m ? Math.ceil(Number(m[1]) * 1000) : null; };
++const jitter = ms => Math.round(ms * (0.8 + 0.4 * Math.random()));
++const outageDelayMs = (message, n) => retryAfterMs(message) ?? (/usage limit|limit reached|resets/i.test(String(message ?? '')) ? Infinity : jitter(Math.min(30000, 1000 * 2 ** n)));
++const parkDelayMs = (message, parks) => retryAfterMs(message) ?? (/usage limit|limit reached|resets/i.test(String(message ?? '')) ? 15 * 60000 : jitter(Math.min(30 * 60000, 60000 * 2 ** parks)));
+ // A call cut short because the run deadline, not its own timeout, set its limit is the deadline's outcome.
+ const deadlineStop = (what, details) => new FoundryError('DEADLINE', `Run deadline exhausted while ${what} was running`, details);
+ // The E1 retry note sits outside every untrusted fence, so it carries only the port's model-safe feedback (fixed text
+@@ -1168,17 +1176,33 @@ class Invocation {
+   }
+ 
+   async agent(node, frameKey, ctx, state, resumed) {
++    const nodeKey = `${frameKey}/${node.id}`;
++    if (state.status === 'waiting' && state.parked) {
++      // A node parked on an outage (below) is due again: it runs on, within the same attempt.
++      this.store.clearTimer(this.runId, nodeKey);
++      this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { ...f.nodes[node.id], status: 'running', parked: null }; }, 'model.unparked', { parks: state.parks ?? 0 });
++    }
+     try {
+-      const { value, compiled, entry, escalations } = await this.modelLoop(node, frameKey, ctx, state, resumed, { returns: node.returns, checks: node.checks ?? [] });
++      const { value, compiled, entry, escalations } = await this.modelLoop(node, frameKey, ctx, state, resumed, { returns: node.returns, checks: node.checks ?? [], park: true });
+       this.complete(frameKey, node, value, 'completed', { state: { ...labelState(compiled.outputLabel), modelId: entry.id, modelClass: entry.class, escalations, receiptHash: compiled.receiptHash } });
+     } catch (error) {
++      // An outage (rate limit, usage limit, provider down, timeout) that outlasted the inline retries parks this node: the run is
++      // `waiting` with a timer at retryAt, so `foundry tick` (or a resume after it) continues it, the work done so far is kept and the user
++      // sees why and until when. Bounded: after MAX_PARKS the outage is the run's result (orch-20261021 B9, D1, D3).
++      if (error.code === 'ENV_PARK') {
++        const parks = (this.stateOf(frameKey, node.id)?.parks ?? 0) + 1, { retryAt, cause } = error.details;
++        if (parks > MAX_PARKS || retryAt >= this.head().deadline) throw new FoundryError(cause.code, `${node.id}: ${cause.message} (outage outlasted ${parks - 1} park(s) or the run deadline)`, { parks: parks - 1 });
++        this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { ...f.nodes[node.id], status: 'waiting', parked: { code: cause.code, message: cause.message.slice(0, 300), retryAt }, parks }; }, 'model.parked', { errorCode: cause.code, retryAt, parks });
++        this.store.setTimer(this.runId, nodeKey, retryAt);
++        return;
++      }
+       if (node.onError !== 'continue' || unhandled.has(error.code)) throw error;
+       this.complete(frameKey, node, { ok: false, error: errorData(error) }, 'handled_error');
+     }
+   }
+   // DESIGN §5.1. The journal is the loop's memory: a resumed attempt recompiles the same requests,
+   // and ModelPort serves already-journaled calls of this (run, node, attempt) without a provider call.
+-  async modelLoop(node, frameKey, ctx, state, resumed, { returns, checks, excludeFamily = new Set(), extraInputs = [] }) {
++  async modelLoop(node, frameKey, ctx, state, resumed, { returns, checks, excludeFamily = new Set(), extraInputs = [], park = false }) {
+     const models = this.runtime.models, policy = this.runtime.modelPolicy;
+     if (!models) throw new FoundryError('MODEL_PORT_REQUIRED', `${node.id} needs a ModelPort; this runtime was created without one`);
+     const run = this.head(), nodeKey = `${frameKey}/${node.id}`, attempt = state.attempts, limits = policy.escalation ?? {};
+@@ -1191,7 +1215,7 @@ class Invocation {
+     if (classIndex(policy, entry.class) > classIndex(policy, max)) throw new FoundryError('ASSIGNMENT_INVALID', `${entry.id} (class ${entry.class}) exceeds maxClass ${max} of ${node.id}`);
+     if (resumed) this.eventNode(frameKey, node.id, () => {}, 'node.resumed', { attempt, source: 'journal' });
+     const inputs = [...contextInputs(node, ctx, this.labelScope(frameKey, ...(node.context?.inputs ?? []).map(spec => spec.ref).filter(ref => typeof ref === 'string'))), ...extraInputs];
+-    let retries = 0, resamples = 0, sampleIndex = 0, escalations = 0, retryNote = null, recovered = false;
++    let retries = 0, resamples = 0, sampleIndex = 0, escalations = 0, retryNote = null, recovered = false, envRetries = 0;
+     const escalate = (rule, code, message) => {
+       let target = null;
+       if (escalations < rules.maxEscalations)
+@@ -1241,6 +1265,19 @@ class Invocation {
+       if (spent.cost > this.costLimit(spent) + 1e-12) throw new FoundryError('COST_BUDGET', `Run cost budget exhausted by a model call at ${node.id}`);
+       if (!result.ok) {
+         const message = result.error?.message ?? code;
++        if (environmentFaults.has(code)) {
++          // A transient outage is retried here, on the same model (an outage never escalates), honouring a retry-after the provider sent;
++          // a longer one parks the node (agent nodes) or ends the run as an environment fault (other model nodes).
++          const waitMs = outageDelayMs(message, envRetries);
++          if (envRetries < ENV_RETRIES && waitMs <= ENV_RETRY_INLINE_MAX_MS && Date.now() + waitMs < this.head().deadline) {
++            envRetries++;
++            this.eventNode(frameKey, node.id, () => {}, 'model.env_retry', { errorCode: code, modelId: entry.id, retry: envRetries, delayMs: waitMs });
++            try { await delay(waitMs, undefined, { signal }); }
++            catch (error) { if (error.code === 'ABORT_ERR') throw new FoundryError('CANCELLED', 'Execution cancelled during an outage backoff'); throw error; }
++            continue;
++          }
++          if (park) throw new FoundryError('ENV_PARK', `${node.id}: parked on ${code}`, { retryAt: Date.now() + parkDelayMs(message, state.parks ?? 0), cause: { code, message: `${node.id}: ${message}` } });
++        }
+         if (environmentFaults.has(code) || providerFaults.has(code)) throw new FoundryError(code, `${node.id}: ${message}`, { journalId: result.journalId ?? null, modelId: entry.id });
+         if (retryable.has(code) && retries < rules.schemaRetries) {
+           retries++; retryNote = `Retry ${retries} of ${rules.schemaRetries} on this model. ${code}: ${result.error?.feedback ?? RETRY_FEEDBACK[code]}`;

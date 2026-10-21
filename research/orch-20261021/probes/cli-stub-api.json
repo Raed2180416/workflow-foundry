@@ -1,0 +1,357 @@
+{
+ "cli": "/opt/node22/bin/claude",
+ "version": "2.1.306 (Claude Code)",
+ "at": "2026-10-21T13:03:32.373Z",
+ "probes": {
+  "P0": {
+   "title": "baseline: one text answer from the stub",
+   "requests": [
+    {
+     "at": 1115,
+     "method": "POST",
+     "path": "/v1/messages",
+     "stream": true,
+     "model": "claude-haiku-5-5",
+     "tools": 2
+    }
+   ],
+   "code": 0,
+   "signal": null,
+   "ms": 1295,
+   "signalSentAtMs": null,
+   "treeAtSignal": [],
+   "survivors": [],
+   "eventTypes": [
+    "system:init",
+    "assistant",
+    "result"
+   ],
+   "result": {
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "result": "hi from stub",
+    "num_turns": 1,
+    "total_cost_usd": 0.0000027000000000000004,
+    "terminal_reason": "completed",
+    "duration_ms": 322
+   },
+   "stderrTail": ""
+  },
+  "P1": {
+   "title": "429 rate_limit_error with retry-after: 1 on every request (how long and how often does the CLI retry?)",
+   "requests": 11,
+   "requestTimesMs": [
+    1006,
+    2032,
+    3068,
+    5284,
+    10279,
+    20279,
+    39051,
+    74499,
+    107284,
+    146680,
+    179375
+   ],
+   "code": 1,
+   "signal": null,
+   "ms": 179456,
+   "signalSentAtMs": null,
+   "treeAtSignal": [],
+   "survivors": [],
+   "eventTypes": [
+    "system:init",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "assistant",
+    "result"
+   ],
+   "result": {
+    "subtype": "success",
+    "is_error": true,
+    "api_error_status": 429,
+    "result": "API Error: Request rejected (429) · Number of request tokens has exceeded your per-minute rate limit",
+    "num_turns": 1,
+    "total_cost_usd": 0,
+    "terminal_reason": "api_error",
+    "duration_ms": 178557
+   },
+   "stderrTail": ""
+  },
+  "P2": {
+   "title": "529 overloaded_error on every request",
+   "requests": 11,
+   "requestTimesMs": [
+    696,
+    1333,
+    2596,
+    5028,
+    9997,
+    18996,
+    37122,
+    70568,
+    106029,
+    141508,
+    177686
+   ],
+   "code": 1,
+   "signal": null,
+   "ms": 177777,
+   "signalSentAtMs": null,
+   "treeAtSignal": [],
+   "survivors": [],
+   "eventTypes": [
+    "system:init",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "assistant",
+    "result"
+   ],
+   "result": {
+    "subtype": "success",
+    "is_error": true,
+    "api_error_status": 529,
+    "result": "API Error: 529 Overloaded. This is a server-side issue, usually temporary — try again in a moment. If it persists, check your inference gateway (127.0.0.1:46845).",
+    "num_turns": 1,
+    "total_cost_usd": 0,
+    "terminal_reason": "api_error",
+    "duration_ms": 177230
+   },
+   "stderrTail": ""
+  },
+  "P3": {
+   "title": "429 three times (retry-after: 1), then an answer",
+   "requests": 4,
+   "requestTimesMs": [
+    1292,
+    2492,
+    3609,
+    5798
+   ],
+   "code": 0,
+   "signal": null,
+   "ms": 5862,
+   "signalSentAtMs": null,
+   "treeAtSignal": [],
+   "survivors": [],
+   "eventTypes": [
+    "system:init",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "assistant",
+    "result"
+   ],
+   "result": {
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "result": "recovered",
+    "num_turns": 1,
+    "total_cost_usd": 0.0000027000000000000004,
+    "terminal_reason": "completed",
+    "duration_ms": 4942
+   },
+   "stderrTail": ""
+  },
+  "P4": {
+   "title": "SIGTERM to the CLI while its Bash tool runs `sleep 300.x`",
+   "requests": 1,
+   "code": 143,
+   "signal": null,
+   "ms": 2897,
+   "signalSentAtMs": 1655,
+   "treeAtSignal": [
+    {
+     "pid": 24385,
+     "cmd": "/bin/bash -c source /tmp/orch-cli-home-FDDDhm/.claude/shell-snapshots/snapshot-b"
+    },
+    {
+     "pid": 24386,
+     "cmd": "sleep 300.14844"
+    }
+   ],
+   "survivors": [],
+   "eventTypes": [
+    "system:init",
+    "assistant",
+    "user"
+   ],
+   "result": null,
+   "stderrTail": ""
+  },
+  "P5": {
+   "title": "SIGKILL to the CLI while its Bash tool runs `sleep 300.x`",
+   "requests": 1,
+   "code": null,
+   "signal": "SIGKILL",
+   "ms": 1409,
+   "signalSentAtMs": 1396,
+   "treeAtSignal": [
+    {
+     "pid": 24529,
+     "cmd": "/bin/bash -c source /tmp/orch-cli-home-8fYFgO/.claude/shell-snapshots/snapshot-b"
+    },
+    {
+     "pid": 24531,
+     "cmd": "sleep 300.14845"
+    }
+   ],
+   "survivors": [
+    {
+     "pid": 24529,
+     "ppid": 1,
+     "cmd": "/bin/bash -c source /tmp/orch-cli-home-8fYFgO/.claude/shell-snapshots/snapshot-b"
+    },
+    {
+     "pid": 24531,
+     "ppid": 24529,
+     "cmd": "sleep 300.14845"
+    }
+   ],
+   "eventTypes": [
+    "system:init",
+    "assistant"
+   ],
+   "result": null,
+   "stderrTail": ""
+  },
+  "P6": {
+   "title": "the stream is cut mid-answer (socket destroyed after message_start)",
+   "requests": 2,
+   "requestTimesMs": [
+    660,
+    1316
+   ],
+   "code": 0,
+   "signal": null,
+   "ms": 1386,
+   "signalSentAtMs": null,
+   "treeAtSignal": [],
+   "survivors": [],
+   "eventTypes": [
+    "system:init",
+    "system:api_retry",
+    "assistant",
+    "result"
+   ],
+   "result": {
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "result": "second try",
+    "num_turns": 1,
+    "total_cost_usd": 0.0000044,
+    "terminal_reason": "completed",
+    "duration_ms": 862
+   },
+   "stderrTail": ""
+  },
+  "P7": {
+   "title": "API never answers; API_TIMEOUT_MS=5000",
+   "requests": 9,
+   "requestTimesMs": [
+    1036,
+    6636,
+    12854,
+    20052,
+    29280,
+    43204,
+    66548,
+    106186,
+    147283
+   ],
+   "code": null,
+   "signal": "SIGKILL",
+   "ms": 150051,
+   "signalSentAtMs": null,
+   "treeAtSignal": [],
+   "survivors": [],
+   "eventTypes": [
+    "system:init",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry",
+    "system:api_retry"
+   ],
+   "result": null,
+   "stderrTail": ""
+  },
+  "P8": {
+   "title": "corrupted session file, then --resume",
+   "sessionFile": ".claude/projects/-tmp-orch-cli-cwd-RK8K9p/c8725bbd-223f-452d-a9f7-03ac74c28dee.jsonl",
+   "corrupted": {
+    "bytesBefore": 46147,
+    "bytesAfter": 27824
+   },
+   "first": {
+    "code": 0,
+    "result": {
+     "subtype": "success",
+     "is_error": false,
+     "api_error_status": null,
+     "result": "remembered",
+     "num_turns": 1,
+     "total_cost_usd": 0.0000027000000000000004,
+     "terminal_reason": "completed",
+     "duration_ms": 573
+    }
+   },
+   "resumed": {
+    "code": 0,
+    "result": {
+     "subtype": "success",
+     "is_error": false,
+     "api_error_status": null,
+     "result": "remembered",
+     "num_turns": 1,
+     "total_cost_usd": 0.0000027000000000000004,
+     "terminal_reason": "completed",
+     "duration_ms": 148
+    },
+    "stderrTail": "",
+    "eventTypes": [
+     "system:init",
+     "assistant",
+     "result"
+    ]
+   },
+   "missingSession": {
+    "code": 1,
+    "result": {
+     "subtype": "error_during_execution",
+     "is_error": true,
+     "api_error_status": null,
+     "result": "",
+     "num_turns": 0,
+     "total_cost_usd": 0,
+     "terminal_reason": null,
+     "duration_ms": 0
+    },
+    "stderrTail": "No conversation found with session ID: 00000000-0000-4000-8000-000000000000\n"
+   },
+   "requests": 2
+  }
+ }
+}
