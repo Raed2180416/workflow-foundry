@@ -23,7 +23,7 @@ export function compileRegistry({ lock, lockHash, host, envelope, envelopeDigest
       inputSchema: m.view.inputSchema, outputSchema: m.outputSchema, effects: m.effects, risk: m.risk,
       requiresApproval: m.requiresApproval === true || (gateEffects && m.effects !== 'none'), maxTimeoutMs: m.maxTimeoutMs, cost: m.cost,
       cancellation: 'protocol-request-only; external effect reconciliation may be required',
-      execute: async (args, ctx) => host.invoke(m.id, args, { runId: ctx.runId, node: ctx.nodeKey, signal: ctx.signal, idempotencyKey: ctx.idempotencyKey, artifactsDir: ctx.artifactsDir, practice: mode === 'practice' }) });
+      execute: async (args, ctx) => host.invoke(m.id, args, { runId: ctx.runId, node: ctx.nodeKey, signal: ctx.signal, idempotencyKey: ctx.idempotencyKey, artifactsDir: ctx.artifactsDir, practice: mode === 'practice', approved: m }) });
   }
   if (Object.keys(lock.nodes).length) {
     const dispatcher = new Dispatcher({ host, lock, lockHash, envelope, envelopeDigest, ledger, mode });

@@ -6,13 +6,21 @@ import { createDefaultRegistry } from '../capabilities.mjs';
 import { validateData } from '../validate.mjs';
 import { clone } from '../data.mjs';
 import { bindable, entryStatus } from './catalog.mjs';
-import { fail, FoundryError } from './common.mjs';
+import { digest, fail, FoundryError } from './common.mjs';
 import { ScrubSet, credentialPresent } from './credentials.mjs';
 import { McpPool } from './mcp-client.mjs';
 import { qualifyMcp, PinGuard, invokeMcp, runCanary, checkMemberSchema } from './import-mcp.mjs';
 import { loadSkill, skillMembers, invokeSkill } from './skills.mjs';
 import { uiMembers, invokeUi, UiSessions } from './cua.mjs';
 import { memberRecord } from './members.mjs';
+import { lockMembers } from './resolve.mjs';
+
+/** How an approved member record differs from a live one: null, DEFINITION_CHANGED (pins moved) or LOCK_STALE (view/attestation only). */
+export function memberDrift(approved, live) {
+  if (approved.implementation === live.implementation) return null;
+  const fields = [...(digest(approved.pins) !== digest(live.pins) ? ['pins'] : []), ...(approved.viewHash !== live.viewHash ? ['view'] : []), ...(approved.attestationHash !== live.attestationHash ? ['attestation'] : [])];
+  return { code: fields.includes('pins') ? 'DEFINITION_CHANGED' : 'LOCK_STALE', fields: fields.length ? fields : ['implementation'] };
+}
 
 export class NodecapHost {
   constructor({ catalog, ledger = null, envelope, env = process.env, keychain, keychainStore = null, chromium = null, scrub = new ScrubSet(), now = Date.now, codeRunner } = {}) {
@@ -66,9 +74,27 @@ export class NodecapHost {
     }
     return out;
   }
-  /** Preflight for a lock: re-list every MCP entry it uses against its pins (forced), run canaries, and check credentials are present. */
-  async preflight(memberIds) {
-    const entries = new Set(memberIds.map(id => this.member(id)?.entryId).filter(Boolean)), problems = [];
+  /**
+   * The approved lock against what qualified in THIS process. A member whose pins moved since the person approved the lock is
+   * DEFINITION_CHANGED (the entry is quarantined; I9 across processes: the host's own fresh qualification is never the reference); a changed
+   * view or attestation with the same pins is LOCK_STALE (the owner edited the catalog: construct a new version); a member that did not
+   * qualify is TOOL_ABSENT.
+   */
+  lockDrift(lock) {
+    const problems = [];
+    for (const id of lockMembers(lock)) {
+      const approved = lock.members[id], live = this.member(id);
+      if (!live) { problems.push({ entry: approved.entryId, member: id, code: 'TOOL_ABSENT' }); continue; }
+      const drift = memberDrift(approved, live);
+      if (!drift) continue;
+      problems.push({ entry: approved.entryId, member: id, ...drift });
+      if (drift.code === 'DEFINITION_CHANGED') this.ledger?.quarantine(approved.entryId, 'DEFINITION_CHANGED', { member: id, since: 'lock' });
+    }
+    return problems;
+  }
+  /** Preflight for a lock: the lock's pins against this process's qualification, a forced re-list of every MCP entry it uses, canaries, credentials. */
+  async preflight(memberIds, lock = null) {
+    const entries = new Set(memberIds.map(id => this.member(id)?.entryId).filter(Boolean)), problems = lock ? this.lockDrift(lock) : [];
     for (const id of entries) {
       const entry = this.entry(id);
       if (!bindable(entry, this.ledger)) { problems.push({ entry: id, code: 'CAPABILITY_QUARANTINED' }); continue; }
@@ -89,6 +115,14 @@ export class NodecapHost {
     if (!member) fail('TOOL_ABSENT', `No qualified member ${memberId}`);
     const entry = this.entry(member.entryId);
     if (!bindable(entry, this.ledger)) fail('CAPABILITY_QUARANTINED', `${member.entryId} is not active`);
+    // The approved record (from the lock) must be the one that qualified here, before anything is sent.
+    if (ctx.approved) {
+      const drift = memberDrift(ctx.approved, member);
+      if (drift) {
+        if (drift.code === 'DEFINITION_CHANGED') this.ledger?.quarantine(member.entryId, 'DEFINITION_CHANGED', { member: member.id, since: 'lock' });
+        fail(drift.code, `${member.id} no longer matches the approved lock (${drift.fields.join(', ')}); the call was not sent`, { member: member.id, fields: drift.fields });
+      }
+    }
     validateData(member.view.inputSchema, args, `${member.id} arguments`);
     if (ctx.practice && member.effects !== 'none') return { practice: true, member: member.id, wouldCall: true };
     let out;

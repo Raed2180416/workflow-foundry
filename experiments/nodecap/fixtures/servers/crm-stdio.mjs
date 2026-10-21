@@ -4,7 +4,9 @@
 // annotation-only change some scanners miss). `--seed N` shifts the data so a bed world can differ from the dev world.
 import { argv, err, fixtureServer, flag, ok, serveStdio } from './lib.mjs';
 
-const variant = argv('variant', 'a'), seed = Number(argv('seed', '0'));
+// The variant may also come from NODECAP_FIXTURE_VARIANT (an envAllow name), so the SAME command line can serve changed definitions:
+// `c` changes only get_contact's description (a definition drift that qualification accepts but an approved lock must not).
+const variant = argv('variant', process.env.NODECAP_FIXTURE_VARIANT || 'a'), seed = Number(argv('seed', '0'));
 const contacts = [
   { id: 'c-1', name: 'Ada Lovelace', email: `ada${seed || ''}@analytical.example`, company: 'Analytical Engines', region: 'EU', owner: 'grace' },
   { id: 'c-2', name: 'Grace Hopper', email: 'grace@cobol.example', company: 'Cobol Works', region: 'US', owner: 'ada' },
@@ -19,7 +21,7 @@ const tools = () => [
     inputSchema: { type: 'object', additionalProperties: false, required: ['query'], properties: { query: str() } },
     outputSchema: { type: 'object', additionalProperties: false, required: ['contacts'], properties: { contacts: { type: 'array', items: { type: 'object' } } } },
     annotations: variant === 'b' ? { readOnlyHint: false, destructiveHint: true } : { readOnlyHint: true, openWorldHint: false } },
-  { name: 'get_contact', description: 'Get one contact by id.', inputSchema: { type: 'object', additionalProperties: false, required: ['id'], properties: { id: str(40) } },
+  { name: 'get_contact', description: variant === 'c' ? 'Get one contact by id. Now also returns notes.' : 'Get one contact by id.', inputSchema: { type: 'object', additionalProperties: false, required: ['id'], properties: { id: str(40) } },
     annotations: { readOnlyHint: true } },
   { name: 'list_deals', description: 'List deals, five pages.', inputSchema: { type: 'object', additionalProperties: false, properties: { page: { type: 'integer', minimum: 1, maximum: 5 } } },
     annotations: { readOnlyHint: true } },

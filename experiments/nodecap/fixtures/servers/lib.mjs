@@ -2,6 +2,7 @@
 // (JSON lines appended synchronously to the file named by --ledger) that tests and the bed oracles read; the model never sees it.
 // Built on the pinned SDK's low-level Server with raw JSON schemas, as tests/components-environment.test.mjs does.
 import { appendFileSync } from 'node:fs';
+import path from 'node:path';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -11,6 +12,14 @@ export function argv(name, fallback = null) {
   return i > 0 ? process.argv[i + 1] : fallback;
 }
 export const flag = name => process.argv.includes(`--${name}`);
+/**
+ * The ledger file: `--ledger <file>`, or `<NODECAP_LEDGER_DIR>/<--ledger-name>.jsonl` when the directory comes from the environment. The
+ * second form keeps the command line (part of the server's pin) identical across fresh worlds, which a replay on a new world needs.
+ */
+export function ledgerPath() {
+  const file = argv('ledger'), name = argv('ledger-name'), dir = process.env.NODECAP_LEDGER_DIR;
+  return file ?? (name && dir ? path.join(dir, `${name}.jsonl`) : null);
+}
 export function record(ledger, entry) { if (ledger) appendFileSync(ledger, `${JSON.stringify({ at: Date.now(), ...entry })}\n`); }
 export const ok = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], structuredContent: value });
 export const err = text => ({ isError: true, content: [{ type: 'text', text }] });
@@ -19,7 +28,7 @@ export const err = text => ({ isError: true, content: [{ type: 'text', text }] }
  * A server from a tool table: tools() returns the current Tool list (it may change between listings), handlers maps a tool name to
  * (args, state) => result. `onListed(count)` runs after each tools/list (a rug pull flips its definitions there).
  */
-export function fixtureServer({ name, version = '1', instructions, tools, handlers, ledger = argv('ledger'), onListed = null, listChanged = false }) {
+export function fixtureServer({ name, version = '1', instructions, tools, handlers, ledger = ledgerPath(), onListed = null, listChanged = false }) {
   const server = new Server({ name, version }, { capabilities: { tools: listChanged ? { listChanged: true } : {} }, ...(instructions ? { instructions } : {}) });
   let listed = 0;
   server.setRequestHandler(ListToolsRequestSchema, async () => {

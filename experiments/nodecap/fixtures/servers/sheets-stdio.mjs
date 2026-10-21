@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Fixture spreadsheet (stdio): read_range and append_row (non-idempotent). The ledger is the oracle (rows exact, no duplicates).
-import { argv, fixtureServer, ok, record, serveStdio } from './lib.mjs';
+import { fixtureServer, ledgerPath, ok, record, serveStdio } from './lib.mjs';
 
 const rows = [['ticket', 'title'], ['42', 'Refund for order 7731']];
 const str = (max = 200) => ({ type: 'string', maxLength: max });
@@ -11,6 +11,6 @@ const tools = () => [
 ];
 const handlers = {
   read_range: () => ok({ rows }),
-  append_row: ({ cells }) => { rows.push(cells); record(argv('ledger'), { appended: cells }); return ok({ rows: rows.length }); }
+  append_row: ({ cells }) => { rows.push(cells); record(ledgerPath(), { appended: cells }); return ok({ rows: rows.length }); }
 };
 await serveStdio(fixtureServer({ name: 'fixture-sheets', tools, handlers }));

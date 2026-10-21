@@ -251,12 +251,14 @@ const VIEW = {
 };
 const VERB = { observe: 'observe', find: 'search', act: 'navigate', extract: 'read', assert: 'observe', commit: 'update', 'trace.export': 'read' };
 
+/** Origins as pinned: a development (loopback) entry's port is dropped, as for MCP HTTP sources, so a fresh world keeps the same pins. */
+const pinnedOrigins = entry => entry.dev === true ? entry.source.origins.map(o => { const u = new URL(o); u.port = ''; return u.origin; }) : entry.source.origins;
 /** The ui.* members of one cua entry. Every output is labelled untrusted:web.<entry> (page text is third-party data). */
 export function uiMembers(entry) {
   const label = `untrusted:web.${entry.id}`;
   return Object.entries(VIEW).map(([action, [summary, inputSchema]]) => {
     const effects = action === 'commit' ? 'non-idempotent' : action === 'trace.export' ? 'idempotent' : 'none';
-    return memberRecord({ entry, name: action, id: `ui.${entry.id}.${action}`, adapter: 'nodecap-ui/1', pins: { backend: entry.source.backend, origins: entry.source.origins, holdPaths: entry.source.holdPaths ?? DEFAULT_HOLD },
+    return memberRecord({ entry, name: action, id: `ui.${entry.id}.${action}`, adapter: 'nodecap-ui/1', pins: { backend: entry.source.backend, origins: pinnedOrigins(entry), holdPaths: entry.source.holdPaths ?? DEFAULT_HOLD },
       attestation: { type: `ui.${action.replace('.', '-')}`, system: entry.id, verbs: [VERB[action]], objects: ['page'], effects, risk: action === 'commit' ? 'high' : 'low', requiresApproval: action === 'commit',
         outputLabel: label, dataClass: 'private', egress: 'first-party', maxTimeoutMs: 30000, cost: 0, outputMode: 'structured', outputSchema: { type: 'object' },
         view: { name: `${entry.id.replace(/-/g, '_')}_${action.replace('.', '_')}`, summary, inputSchema } } });

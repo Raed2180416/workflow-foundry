@@ -34,9 +34,14 @@ export const CRM_MEMBERS = {
     idempotencyArgument: 'requestId', outputSchema: { type: 'object' },
     view: { name: 'crm_update_contact', summary: 'Change the email or owner of one CRM contact.', inputSchema: obj({ id: S(40), field: { enum: ['email', 'owner'] }, value: S() }) } })
 };
-export function crmEntry({ ledger, variant = 'a', members = CRM_MEMBERS, pin, canary, trust = 'T1', id = 'crm', extraArgs = [] } = {}) {
+// `ledgerName`: the ledger file comes from the host env's NODECAP_LEDGER_DIR (the command line, part of the server pin, stays the same across
+// fresh worlds); `variant: null` lets NODECAP_FIXTURE_VARIANT choose the definitions with an unchanged command line.
+const ledgerArgs = (ledger, ledgerName) => ledgerName ? ['--ledger-name', ledgerName] : ledger ? ['--ledger', ledger] : [];
+const ENV_ALLOW = ['NODECAP_LEDGER_DIR', 'NODECAP_FIXTURE_VARIANT'];
+export function crmEntry({ ledger, ledgerName = null, variant = 'a', members = CRM_MEMBERS, pin, canary, trust = 'T1', id = 'crm', extraArgs = [] } = {}) {
   return { id, kind: 'mcp-stdio', trust, status: 'active', trustAnnotations: true,
-    source: { command: process.execPath, args: [path.join(SERVERS, 'crm-stdio.mjs'), '--variant', variant, ...(ledger ? ['--ledger', ledger] : []), ...extraArgs], envAllow: [] },
+    source: { command: process.execPath, args: [path.join(SERVERS, 'crm-stdio.mjs'), ...(variant ? ['--variant', variant] : []), ...ledgerArgs(ledger, ledgerName), ...extraArgs],
+      envAllow: ledgerName || !variant ? ENV_ALLOW : [] },
     members: structuredClone(members), ...(pin ? { pin } : {}), ...(canary ? { canary } : {}) };
 }
 export function rugpullEntry({ ledger, flip = true } = {}) {
@@ -58,9 +63,9 @@ export const TICKET_MEMBERS = {
 export function ticketsEntry(url, { members = TICKET_MEMBERS, credential = { custody: 'C0', read: { env: 'NODECAP_TICKETS_READ_TOKEN' }, write: { env: 'NODECAP_TICKETS_WRITE_TOKEN' } } } = {}) {
   return { id: 'tickets', kind: 'mcp-http', trust: 'T1', status: 'active', trustAnnotations: true, dev: true, source: { url, transport: 'streamable-http' }, credential, members: structuredClone(members) };
 }
-export function sheetsEntry({ ledger, status = 'active' } = {}) {
+export function sheetsEntry({ ledger, ledgerName = null, status = 'active' } = {}) {
   return { id: 'sheets', kind: 'mcp-stdio', trust: 'T1', status, trustAnnotations: true,
-    source: { command: process.execPath, args: [path.join(SERVERS, 'sheets-stdio.mjs'), ...(ledger ? ['--ledger', ledger] : [])], envAllow: [] },
+    source: { command: process.execPath, args: [path.join(SERVERS, 'sheets-stdio.mjs'), ...ledgerArgs(ledger, ledgerName)], envAllow: ledgerName ? ENV_ALLOW : [] },
     members: {
       read_range: attest({ type: 'row.read', system: 'sheets', verbs: ['read'], objects: ['row'], effects: 'none', risk: 'low', outputLabel: 'untrusted:mcp.sheets', dataClass: 'internal',
         outputSchema: { type: 'object' }, view: { name: 'sheets_read_range', summary: 'Read every row of the team sheet.', inputSchema: { type: 'object', additionalProperties: false, properties: {} } } }),

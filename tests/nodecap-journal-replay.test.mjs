@@ -35,7 +35,10 @@ const workflow = { schemaVersion: '1.0', id: 'NodecapReplay', version: 1, title:
     returns: { type: 'object', additionalProperties: false, required: ['email'], properties: { email: { type: 'string', maxLength: 200 } } }, model: { class: 'M' } }],
   acceptance: [{ op: 'exists', value: { $ref: 'nodes.work.email' } }] };
 const sidecar = { schema: 'foundry-nodecap-toolnodes/1', nodes: { work: { acquire: { systems: ['crm', 'sheets', 'policy'], objects: ['contact', 'row', 'refund'], effectsMax: 'non-idempotent', max: 5 }, maxTurns: 8 } } };
-const world = dir => checkCatalog(catalogOf(crmEntry({ ledger: path.join(dir, 'crm.jsonl') }), sheetsEntry({ ledger: path.join(dir, 'sheets.jsonl') }), skillEntry('refund-policy')));
+// A world's ledgers live in a directory named by the host env, so the servers' command lines (and so their pins) are the same in every
+// world: the approved lock must match the fresh world's servers, or the replay would rightly be refused (DEFINITION_CHANGED).
+const world = () => checkCatalog(catalogOf(crmEntry({ ledgerName: 'crm' }), sheetsEntry({ ledgerName: 'sheets' }), skillEntry('refund-policy')));
+const envOf = dir => ({ ...process.env, NODECAP_LEDGER_DIR: dir });
 async function approveAndFinish(runtime, host, run) {
   while (run.status === 'awaiting_approval') { for (const id of Object.keys(run.approvals).filter(id => run.approvals[id].status === 'pending')) runtime.approve(run.id, id, true, 'user'); run = await executeRun({ runtime, host, runId: run.id }); }
   return run;
@@ -47,7 +50,7 @@ test('replay: a fresh world replays the run at $0 with the same decisions, outco
   const dir = workspace(t), store = new Store(dir), ledger = new NodecapLedger(dir);
   const firstWorld = path.join(dir, 'w1'), secondWorld = path.join(dir, 'w2');
   const { mkdirSync } = await import('node:fs'); mkdirSync(firstWorld); mkdirSync(secondWorld);
-  const catalog = world(firstWorld), host = new NodecapHost({ catalog, ledger, envelope });
+  const catalog = world(), host = new NodecapHost({ catalog, ledger, envelope, env: envOf(firstWorld) });
   const provider = new ScriptedProvider({ [M]: SCRIPT });
   const models = new ModelPort({ policy: loaded.policy, providers: { 'claude-cli': provider, 'llama-server': provider }, journal: new Journal(store) });
   t.after(async () => { await host.close(); store.close(); ledger.close(); });
@@ -61,7 +64,7 @@ test('replay: a fresh world replays the run at $0 with the same decisions, outco
   assert.equal(report.ok, true, JSON.stringify(report.findings));
   assert.ok(report.recomputed >= 3);
   // Fresh world: new server processes and ledgers; same lock (same pins), so the same registry hash. The provider must never be called.
-  const host2 = new NodecapHost({ catalog: world(secondWorld), ledger, envelope });
+  const host2 = new NodecapHost({ catalog: world(), ledger, envelope, env: envOf(secondWorld) });
   t.after(() => host2.close());
   await host2.qualify();
   const never = new ScriptedProvider(() => { throw new Error('replay must not call a provider'); });
@@ -83,7 +86,7 @@ test('replay: a fresh world replays the run at $0 with the same decisions, outco
 
 test('replay: tampering a decision row is caught by verify-run and by the acquisition audit; an edited lock is caught too', async t => {
   const dir = workspace(t), store = new Store(dir), ledger = new NodecapLedger(dir);
-  const catalog = world(dir), host = new NodecapHost({ catalog, ledger, envelope });
+  const catalog = world(), host = new NodecapHost({ catalog, ledger, envelope, env: envOf(dir) });
   const provider = new ScriptedProvider({ [M]: [SCRIPT[1], SCRIPT[5]] });
   const models = new ModelPort({ policy: loaded.policy, providers: { 'claude-cli': provider, 'llama-server': provider }, journal: new Journal(store) });
   t.after(async () => { await host.close(); store.close(); ledger.close(); });

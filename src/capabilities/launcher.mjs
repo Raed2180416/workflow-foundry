@@ -42,7 +42,7 @@ export function runtimeFor({ store, host, ledger, construction, envelope, models
 
 export async function launch({ store, ledger, host, construction, envelope, models = null, modelPolicy = null, input = {}, runOptions = {}, dryRunId = null, mode = 'live', maxCost = null }) {
   if (construction.lint.errors.length) fail('NODECAP_LINT', `Lint refused the version: ${construction.lint.errors.map(f => f.code).join(', ')}`, { findings: construction.lint.errors });
-  const preflight = await host.preflight(lockMembers(construction.lock));
+  const preflight = await host.preflight(lockMembers(construction.lock), construction.lock);
   if (!preflight.ok) fail('PREFLIGHT_FAILED', `Preflight failed: ${preflight.problems.map(p => `${p.entry}:${p.code}`).join(', ')}`, { problems: preflight.problems });
   if (!ledger.lockApproval(subjectOf(construction, dryRunId))) fail('LOCK_UNAPPROVED', 'No person approved this exact version (workflow, lock, envelope, catalog, dry run)');
   ledger.putLock(construction.lock);

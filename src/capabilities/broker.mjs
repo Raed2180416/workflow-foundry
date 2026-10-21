@@ -215,7 +215,7 @@ export class Dispatcher {
     let result;
     try {
       result = await this.host.invoke(member.id, decision.args ?? {}, { runId: ctx.runId, node, signal: ctx.signal, idempotencyKey: ctx.idempotencyKey,
-        artifactsDir: ctx.artifactsDir, practice: this.mode === 'practice' });
+        artifactsDir: ctx.artifactsDir, practice: this.mode === 'practice', approved: member });
     } catch (error) {
       if (!(error instanceof FoundryError)) throw error;
       if (error.code === 'DEFINITION_CHANGED' && this.ledger) this.ledger.putProposal({ kind: 'capability.definition-changed', flowId: this.lock.flowId, node, fromLockHash: this.lockHash,
