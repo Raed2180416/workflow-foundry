@@ -32,3 +32,9 @@ by a general grant.
 | D13 | Publishing a package, plugin, `.mcpb` or marketplace entry | **Not taken.** AGENTS.md forbids publishing, and publishing is outward-facing and hard to reverse, so a general grant does not cover it. The owner must say "publish" explicitly | Boundary |
 | D14 | n8n terms-only templates | **Local use only, for import-coverage counts.** Never committed or redistributed | Their terms give no open licence |
 | D15 | Approval ledger and approver identity (surface patch 0001) | **Scheduled for the 11-04 engine bump**, together with the principal model (OT-0, compromise D1). Not applied while paid runs use the runtime | Avoids changing the runtime under running experiments |
+
+## Added later on 2026-10-21 (breadth)
+
+| # | Pending question | Decision | Why |
+|---|---|---|---|
+| D16 | Installing external benchmark harnesses for the breadth portfolio | **Allowed** into an isolated, exact-pinned venv or node prefix **outside the repo** (`/var/tmp/foundry-work/benches/<name>/`), wheels only where possible (`--only-binary :all:`), no post-install scripts beyond the package manager's own wheel install, every data download recorded with URL, sha256, size, licence and date. No accounts, no hosted instances (ServiceNow, Salesforce orgs) and no docker/VM images over 1 GB without a separate decision. Each clone or install ≤ 500 MB, and the breadth work ≤ 1.5 GB in total while sealed runs are live; anything not adopted is deleted after reading and recorded in a DISPOSALS file | Breadth needs runnable benchmarks; D4 set the pattern; the disk has about 3.7 GB free |
