@@ -20,6 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { shellQuote } from '../../../src/executors/claude-code.mjs';
 import { CHILD_ENV_ALLOWED } from '../../../src/models/policy.mjs';
+import { cliIdentityOf, resolveCli } from '../../../src/cli-pin.mjs';
 import { REPO, adapterText, sha256 } from '../lib.mjs';
 
 export const HARNESS_ID = 'foundry';
@@ -169,8 +170,18 @@ export function manifestFiles() {
 
 /** The CLI version, read without a model call (`claude --version`, minimal environment). */
 export function cliVersion(binary = 'claude') {
-  const r = spawnSync(binary, ['--version'], { encoding: 'utf8', timeout: 20_000, env: { PATH: process.env.PATH ?? '', HOME: '/nonexistent' } });
+  const r = spawnSync(binary, ['--version'], { encoding: 'utf8', timeout: 20_000, env: { PATH: process.env.PATH ?? '', HOME: '/nonexistent', DISABLE_AUTOUPDATER: '1', DISABLE_UPDATES: '1' } });
   return r.status === 0 ? r.stdout.trim() : null;
+}
+
+/** The CLI a run uses, by bytes (compromise C2, src/cli-pin.mjs): {version, sha256, pinned, path}. With FOUNDRY_CLI_LOCK the verified
+ *  pinned binary (path: its absolute path; CLI_UNPINNED/CLI_DRIFT throw); without, the `claude` on PATH, hashed (path: null). The
+ *  launch record keeps {version, sha256, pinned}, and a resume on other bytes is refused (run.mjs). */
+export function cliIdentity({ binary = 'claude' } = {}) {
+  const pin = resolveCli();
+  if (pin) return { version: pin.version, sha256: pin.sha256, pinned: true, path: pin.path };
+  const version = cliVersion(binary)?.split(/\s+/)[0] ?? null;
+  return { ...cliIdentityOf(binary, version), path: null };
 }
 
 /** The run settings the manifest pins (H3, H4, H8, H9 and §7: model, effort, budgets, step limits, executor options, the
