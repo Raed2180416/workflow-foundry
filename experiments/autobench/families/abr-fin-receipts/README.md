@@ -156,6 +156,7 @@ posts and no escalation was expected: no credit, and no wrong-answer penalty. `p
 | Trap coverage, label streams 610–613 | T-authority 8, T-format 42, T-lookalike 11, T-repeat 16, T-state 41 (each ≥ 5) |
 | Gates | `gates.py` (determinism, leakage, solvability, controls, traps, mutation, specificity): **all pass**, exit 0 |
 | Tests | `pytest`: **76 passed** in about 200 s (about 15 min when the machine is heavily loaded) |
+| Re-verified 2026-10-21 (no code change) | reference 610–614 carry 199/199 and rebased 199/199, 5/5 clean weeks; `gates.py` all pass (exit 0, 170 s; mutation 4,473/4,473, specificity 1,317/1,317, naive d3 0.556); controls as in the table below; `pytest` 76 passed in 121 s |
 
 Controls on dev seeds 610–614 (199 triggers, five weeks). Every control fails. `null` passes exactly the 20 no-op
 triggers:

@@ -153,9 +153,11 @@ async function main() {
     const liveSmoke = path.join(path.dirname(workdir), `${label}.smoke.jsonl`);
     const box = loop === 'none' ? null : serveMailbox({ item, workdir, mode: loop, journal: liveSmoke, practice });
     let r;
-    try { r = await buildRunner(model)({ model, prompt, workdir, files, budgetUsd, timeoutMs: minutes * 60_000, effort: arg('--effort', 'high') }); }
+    // --session-tokens: the remote executor's session token budget (default 400K; a $0 model never meets --budget). The claude
+    // executor ignores it.
+    try { r = await buildRunner(model)({ model, prompt, workdir, files, budgetUsd, timeoutMs: minutes * 60_000, effort: arg('--effort', 'high'), tokenBudget: Number(arg('--session-tokens', '400000')) }); }
     finally { if (box) { build = { smokeRuns: await box.stop() }; if (existsSync(liveSmoke)) copyFileSync(liveSmoke, path.join(out, 'smoke.jsonl')); } }
-    build = { model, effort: arg('--effort', 'high'), budgetUsd, minutes, loop, ...(build ?? {}), wallMs: Date.now() - t, costUsd: r.costUsd ?? null, error: r.error ?? null, turns: r.turns ?? null };
+    build = { model, effort: arg('--effort', 'high'), budgetUsd, minutes, loop, ...(build ?? {}), wallMs: Date.now() - t, costUsd: r.costUsd ?? null, error: r.error ?? null, turns: r.turns ?? null, ...(r.tokens ? { tokens: r.tokens } : {}) };
     copyFileSync(path.join(workdir, '.executor-transcript.jsonl'), path.join(out, 'transcript.jsonl'));
     if (!existsSync(path.join(workdir, 'solver.mjs'))) { writeFileSync(path.join(out, 'result.json'), JSON.stringify({ label, build, solver: null }, null, 1)); throw new Error('no solver.mjs written'); }
     solverSource = readFileSync(path.join(workdir, 'solver.mjs'), 'utf8');
