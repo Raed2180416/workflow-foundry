@@ -51,7 +51,8 @@ export function summarize(world, rows, pools, label) {
 
 async function main() {
   const model = arg('--model', null);
-  if (!POLICY.models.some(m => m.id === model)) throw new Error(`--model must be a policy model id (policy/models.json): ${model}`);
+  // Mercury hook: executorModels ids (e.g. mercury-3) too; agentArm picks the model's session executor (tickExecutor).
+  if (![...POLICY.models, ...(POLICY.executorModels ?? [])].some(m => m.id === model)) throw new Error(`--model must be a policy model id (policy/models.json): ${model}`);
   const label = arg('--label', null);
   if (!label) throw new Error('--label is required');
   const out = path.join(ROOT, 'research/enterprise-20261014/runs', label);

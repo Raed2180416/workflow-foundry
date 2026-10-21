@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runClaudeCode } from '../../src/executors/claude-code.mjs';
+import { executorForModel } from '../../src/executors/openai-chat.mjs';
 import { MockSystem } from '../../beds/ebed/host/mocks.mjs';
 import { createHost } from '../../beds/ebed/host/host.mjs';
 import { sandboxArm } from '../../beds/ebed/host/sandbox-arm.mjs';
@@ -27,6 +28,11 @@ const ROOT = path.resolve(here, '..', '..');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const POLICY = JSON.parse(readFileSync(path.join(ROOT, 'policy', 'models.json'), 'utf8'));
 export const ITEMS = Object.freeze({ e8, e7 });
+// Mercury hook (research/mercury-20261021/): a policy model id from models[] or executorModels[]; the build session runs on
+// the model's executor (src/executors/openai-chat.mjs for an executorModels entry such as mercury-3, runClaudeCode for a
+// claude-cli model, as before).
+export const isSessionModel = id => [...POLICY.models, ...(POLICY.executorModels ?? [])].some(m => m.id === id);
+export const buildRunner = model => executorForModel(POLICY, model).run;
 
 /** The contract text an arm author gets: BED-CONTRACT v1.1 §3.1-§3.4 and the host's arm interface (README §2). */
 export function contractText() {
@@ -133,7 +139,7 @@ async function main() {
   if (gradeOnly) solverSource = readFileSync(gradeOnly, 'utf8');
   else {
     const model = arg('--model', null);
-    if (!POLICY.models.some(m => m.id === model)) throw new Error(`--model must be a policy model id (policy/models.json): ${model}`);
+    if (!isSessionModel(model)) throw new Error(`--model must be a policy model id (policy/models.json): ${model}`);
     const workdir = path.join('/var/tmp/foundry-work/ebed-build', label);
     if (existsSync(workdir)) throw new Error(`workdir exists: ${workdir}`);
     const loop = arg('--loop', 'none');
@@ -147,7 +153,7 @@ async function main() {
     const liveSmoke = path.join(path.dirname(workdir), `${label}.smoke.jsonl`);
     const box = loop === 'none' ? null : serveMailbox({ item, workdir, mode: loop, journal: liveSmoke, practice });
     let r;
-    try { r = await runClaudeCode({ model, prompt, workdir, files, budgetUsd, timeoutMs: minutes * 60_000, effort: arg('--effort', 'high') }); }
+    try { r = await buildRunner(model)({ model, prompt, workdir, files, budgetUsd, timeoutMs: minutes * 60_000, effort: arg('--effort', 'high') }); }
     finally { if (box) { build = { smokeRuns: await box.stop() }; if (existsSync(liveSmoke)) copyFileSync(liveSmoke, path.join(out, 'smoke.jsonl')); } }
     build = { model, effort: arg('--effort', 'high'), budgetUsd, minutes, loop, ...(build ?? {}), wallMs: Date.now() - t, costUsd: r.costUsd ?? null, error: r.error ?? null, turns: r.turns ?? null };
     copyFileSync(path.join(workdir, '.executor-transcript.jsonl'), path.join(out, 'transcript.jsonl'));

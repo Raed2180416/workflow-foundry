@@ -69,8 +69,11 @@ const freeze = v => { if (v && typeof v === 'object') { for (const c of Object.v
 // those of the recorded runs (the 2026-10-08 flags lower the reported cost per call; synthesis rule R3 makes those costs incomparable).
 export const PROSE_FIELDS = Object.freeze(['policyVersion', 'notes']);
 export const PROVIDER_KEYS_UNREAD_BY_KIT = Object.freeze(['childEnv']);
-export const TOP_LEVEL_KEYS_UNREAD_BY_KIT = Object.freeze(['judgmentModels']);
-export const PROVIDERS_UNREAD_BY_KIT = Object.freeze(['typesafe-systemone']);
+// 2026-10-21 (policy 2026-10-21.1, research/mercury-20261021/): `executorModels` and its provider `inception` (kind openai-chat-https,
+// executor sessions only, never ModelPort) are added under the same rule as Jev's entries: each is exempt only while no kit source
+// mentions it and, for the provider, while no models[] entry names it. Flagged for the owner's review with the Mercury change.
+export const TOP_LEVEL_KEYS_UNREAD_BY_KIT = Object.freeze(['judgmentModels', 'executorModels']);
+export const PROVIDERS_UNREAD_BY_KIT = Object.freeze(['typesafe-systemone', 'inception']);
 const stable = v => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x));
 const diffPaths = (a, b, at = '') => {
   const obj = x => x !== null && typeof x === 'object' && !Array.isArray(x);

@@ -218,7 +218,7 @@ export function fieldCoverage(rows) {
   return out;
 }
 
-/** The model ids the owner policy allows (models and judgment models). Pass the parsed policy/models.json. */
+/** The model ids the owner policy allows (models, judgment models and executor models). Pass the parsed policy/models.json. */
 export function policyModelIds(policy) {
-  return new Set([...(policy.models ?? []).map(m => m.id), ...(policy.judgmentModels ?? []).map(m => m.id)]);
+  return new Set([...(policy.models ?? []).map(m => m.id), ...(policy.judgmentModels ?? []).map(m => m.id), ...(policy.executorModels ?? []).map(m => m.id)]);
 }

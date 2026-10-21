@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "parent": { "file": "parent.mjs", "calls": ["intake", "screening", "waiting", "fulfilment", "order"], "effects": [] },
+  "modules": {
+    "intake": {
+      "file": "modules/intake.mjs", "purpose": "read the allocation, compute amounts with the edition in force at p, record the order once", "rules": ["R1.1", "R1.2", "R1.3", "R1.4"],
+      "input": { "type": "object", "required": ["op"], "properties": { "op": { "enum": ["start", "resume"] }, "placed": { "type": "object" }, "records": { "type": "object" } } },
+      "output": { "type": "object", "required": ["recorded"], "properties": { "recorded": { "type": "boolean" }, "edition": { "type": "string" }, "customerId": { "type": "string" }, "email": { "type": "string" }, "placedAt": { "type": "string" },
+        "fulfilments": { "type": "array", "items": { "type": "object", "required": ["fulfilmentId", "location", "items", "amountMinor", "available"], "properties": { "fulfilmentId": { "type": "string" }, "location": { "type": ["string", "null"] }, "items": { "type": "array" }, "amountMinor": { "type": "integer" }, "available": { "type": "boolean" } } } } } },
+      "effects": ["inventory.allocate", "orders.create"], "reads": ["orders"]
+    },
+    "screening": {
+      "file": "modules/screening.mjs", "purpose": "fraud check and review task with its deadline", "rules": ["R2.1", "R2.2", "S1", "S3"],
+      "input": { "type": "object", "required": ["op"], "properties": { "op": { "enum": ["start", "resume"] }, "orderId": { "type": "string" }, "placedAt": { "type": "string" }, "edition": { "type": "string" } } },
+      "output": { "type": "object", "required": ["state"], "properties": { "state": { "enum": ["pending", "cleared", "rejected", "timedOut"] }, "at": { "type": ["string", "null"] } } },
+      "effects": ["fraud.check"], "humanTasks": ["fraudReview"], "timers": true
+    },
+    "waiting": {
+      "file": "modules/waiting.mjs", "purpose": "customer action on unavailable items: notice, amend, cancel, timeout", "rules": ["R3.1", "R3.2", "S1", "S5", "S9"],
+      "input": { "type": "object", "required": ["op"], "properties": { "op": { "enum": ["start", "action", "resume"] }, "orderId": { "type": "string" }, "email": { "type": "string" }, "clearedAt": { "type": "string" }, "placedAt": { "type": "string" }, "hours": { "type": "number" },
+        "fulfilments": { "type": "array" }, "action": { "enum": ["amend", "cancel"] }, "at": { "type": "string" } } },
+      "output": { "type": "object", "required": ["state"], "properties": { "state": { "enum": ["waiting", "amended", "cancelled", "timedOut"] }, "at": { "type": ["string", "null"] }, "counted": { "type": "boolean" } } },
+      "effects": ["orders.setStatus:order:customerActionRequired", "orders.setStatus:order:timedOut", "orders.setStatus:fulfilment:cancelled", "notify.send:action-required", "notify.send:order-timed-out"], "timers": true
+    },
+    "fulfilment": {
+      "file": "modules/fulfilment.mjs", "purpose": "one fulfilment's saga: reserve, charge, ship, track; fail or stop with compensation in reverse order", "rules": ["R4.1", "R4.2", "R4.3", "R4.4", "R5.1", "R5.2", "S2", "S13", "S14", "R6.2"],
+      "input": { "type": "object", "required": ["op"], "properties": { "op": { "enum": ["start", "report", "stop", "resume"] }, "orderId": { "type": "string" }, "customerId": { "type": "string" }, "email": { "type": "string" }, "location": { "type": ["string", "null"] },
+        "items": { "type": "array" }, "amountMinor": { "type": "integer" }, "meaning": { "enum": ["collected", "inTransit", "delivered", "collectionFailed", "info"] }, "reportedAt": { "type": "string" }, "at": { "type": "string" }, "records": { "type": "object" } } },
+      "output": { "type": "object", "required": ["status"], "properties": { "status": { "enum": ["pending", "processing", "dispatched", "completed", "failed", "cancelled"] }, "collected": { "type": "boolean" }, "endedAt": { "type": ["string", "null"] }, "busy": { "type": "boolean" } } },
+      "effects": ["inventory.reserve", "inventory.release", "billing.charge", "billing.refund", "carrier.create", "carrier.cancel", "orders.setStatus:fulfilment", "notify.send:fulfilment-failed"], "reads": ["orders"]
+    },
+    "order": {
+      "file": "modules/order.mjs", "purpose": "order lifecycle: processing, outcome, cancellation decisions and their notices", "rules": ["R4.1", "R4.5", "R6.1", "R6.2", "R6.3", "R6.4", "S4", "S6", "S7", "S12", "S15"],
+      "input": { "type": "object", "required": ["op"], "properties": { "op": { "enum": ["ready", "cancel", "cancelRequest", "fulfilmentEnded", "resume"] }, "orderId": { "type": "string" }, "email": { "type": "string" }, "reason": { "type": "string" }, "at": { "type": "string" },
+        "fulfilments": { "type": "array" }, "collectedBefore": { "type": "boolean" }, "ended": { "type": "boolean" } } },
+      "output": { "type": "object", "required": ["state"], "properties": { "state": { "enum": ["pending", "processing", "completed", "failed", "cancelled"] }, "counted": { "type": "boolean" }, "refused": { "type": "boolean" } } },
+      "effects": ["orders.setStatus:order", "orders.setStatus:fulfilment:cancelled", "notify.send:order-cancelled", "notify.send:cancel-refused"]
+    }
+  }
+}

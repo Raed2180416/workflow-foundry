@@ -18,8 +18,9 @@ export function subsetPolicy(owner, ids) {
   if (missing.length) throw new Error(`model ids not in the owner policy: ${missing.join(', ')}`);
   const models = owner.models.filter(m => ids.includes(m.id)), used = new Set(models.map(m => m.provider));
   // A session subset holds generative models only: judgment models (judgmentModels, System One; added 2026-10-09 for hosted Jev)
-  // never enter a ModelPort, and their providers are not kept, so they are left out with them.
-  const { judgmentModels: _judgment, ...generative } = owner;
+  // never enter a ModelPort, and their providers are not kept, so they are left out with them. So are executor models
+  // (executorModels, remote chat endpoints driven as executor sessions; added 2026-10-21 for Mercury), for the same reason.
+  const { judgmentModels: _judgment, executorModels: _executor, ...generative } = owner;
   return freeze(validatePolicy(structuredClone({ ...generative, policyVersion: `${owner.policyVersion}+only:${[...ids].sort().join(',')}`, models,
     providers: Object.fromEntries(Object.entries(owner.providers).filter(([n]) => used.has(n))) })));
 }

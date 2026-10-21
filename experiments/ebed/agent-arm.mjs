@@ -17,6 +17,8 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { runClaudeCode, materialize } from '../../src/executors/claude-code.mjs';
+import { executorForModel } from '../../src/executors/openai-chat.mjs';
+import { loadPolicy } from '../../src/models/policy.mjs';
 
 export const CTX_CLIENT = `// Read the platform for this tick. Usage:
 //   node ctx.mjs query <system.table> '<filter json, e.g. {"where":{"orderId":"X"},"limit":10}>'
@@ -89,16 +91,26 @@ function serveCtx(dir, ctx, pollMs = 100) {
   return { stop: () => { stopped = true; clearInterval(timer); return served; } };
 }
 
+// Mercury hook (research/mercury-20261021/): with no runner given, the tick session's executor follows the model's policy
+// provider kind: src/executors/openai-chat.mjs for an executorModels entry (e.g. mercury-3), runClaudeCode for a claude-cli
+// model (as before). An injected runner (tests, agentv's validating wrapper) is used as given, booked as before.
+export function tickExecutor(model, runner = null) {
+  if (runner) return { run: runner, source: 'executor:claude-code' };
+  const ex = executorForModel(loadPolicy().policy, model); // refuses ids the policy does not list
+  return { run: ex.run, source: ex.source };
+}
+
 /**
  * agentArm({ id, model, workRoot, contract, effort?, budgetUsdPerTick?, minutesPerTick?, runner?, journal?, keepWorkdirs?, workspaceScope? })
  * `contract` is the contract text the B1 builder also gets (experiments/ebed/build.mjs contractText()). `runner` defaults
- * to runClaudeCode (tests inject a scripted one). With `ctx.workspace` set by the host, the tick's instance directory
+ * to the model's session executor (tickExecutor: runClaudeCode for a claude-cli model; tests inject a scripted one). With `ctx.workspace` set by the host, the tick's instance directory
  * (workspaceScope 'instance', the default) or the whole workspace ('arm': agent-H-ws) is copied to ws/ before the session
  * and back after it.
  */
-export function agentArm({ id, model, workRoot, contract, effort = null, budgetUsdPerTick = 0.5, minutesPerTick = 8, runner = runClaudeCode, journal = null, keepWorkdirs = false, tools = DEFAULT_TOOLS, workspaceScope = 'instance' }) {
+export function agentArm({ id, model, workRoot, contract, effort = null, budgetUsdPerTick = 0.5, minutesPerTick = 8, runner = null, journal = null, keepWorkdirs = false, tools = DEFAULT_TOOLS, workspaceScope = 'instance' }) {
   if (!model) throw new Error('agentArm needs a policy model id');
   if (!WORKSPACE_SCOPES.includes(workspaceScope)) throw new Error(`agentArm: workspaceScope must be ${WORKSPACE_SCOPES.join(' or ')}`);
+  const session = tickExecutor(model, runner);
   mkdirSync(workRoot, { recursive: true });
   let n = 0;
   return {
@@ -119,9 +131,9 @@ export function agentArm({ id, model, workRoot, contract, effort = null, budgetU
       const prompt = TICK_PROMPT + (ctx.workspace ? WORKSPACE_PROMPT[workspaceScope] : '');
       let r;
       try {
-        r = await runner({ model, prompt, workdir: dir, files: {}, budgetUsd: budgetUsdPerTick, timeoutMs: minutesPerTick * 60_000, effort, tools });
+        r = await session.run({ model, prompt, workdir: dir, files: {}, budgetUsd: budgetUsdPerTick, timeoutMs: minutesPerTick * 60_000, effort, tools });
       } finally { box.stop(); }
-      const cost = { source: 'executor:claude-code', model, costUsd: r?.costUsd ?? null, costUnknown: r?.costUsd === null || r?.costUsd === undefined, costUpperUsd: budgetUsdPerTick, turns: r?.turns ?? null };
+      const cost = { source: session.source, model, costUsd: r?.costUsd ?? null, costUnknown: r?.costUsd === null || r?.costUsd === undefined, costUpperUsd: budgetUsdPerTick, turns: r?.turns ?? null };
       ctx.recordCost(cost);
       if (ws && existsSync(path.join(dir, 'ws'))) { rmSync(ws, { recursive: true, force: true }); cpSync(path.join(dir, 'ws'), ws, { recursive: true }); }
       // tokens: the session's stream usage, for the run's prompt-cache read share (MEM-0; experiments/memory/cache-share.mjs).
