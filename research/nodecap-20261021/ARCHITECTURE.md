@@ -450,7 +450,7 @@ bed's page-by-page plan takes 6 [B].
 | P7 journal, replay, verifier, e2e, secret sweep | **Built** | `journal.mjs`, `verify-acquisitions.mjs`, tests |
 | P8 CM0 program capabilities (rpc-sandbox) | **Built**, reads only (v1) | `program.mjs`, `rpc-sandbox.mjs`, `tests/nodecap-program.test.mjs` |
 | NC-1 bed (§4): worlds, 12 tasks, arms U/A/C/**B**, adversary, person, metrics, V1-**V5** | **Built**, runs at $0 with scripted models | `experiments/nodecap/bed/` |
-| NC-1 Haiku run ($3 cap), PREREG-NC1 freeze, τ/δ frozen on D1-D6 | **Not done**: needs owner go-ahead (O5) and a dev split | — |
+| NC-1 Haiku run ($3 cap), PREREG-NC1 freeze, τ/δ frozen on D1-D6 | **Done** 2026-10-21 (O5 given): [PREREG-NODECAP-1](PREREG-NODECAP-1.md), [RESULT-NODECAP-1](RESULT-NODECAP-1.md); $0.08; U 8/12, A 6/12, C 1/12, B 8/12. τ/δ stayed at the development defaults (no dev split). | `experiments/nodecap/bed/run-model.mjs`, `probes.mjs`, `analyze.mjs` |
 | Closed-option class-M tie-break call | **Designed only.** Ties resolve by id and are flagged. | `resolve.mjs` `ties` |
 | `connection` and `builtin` kinds | Schema and loader built; `builtin` members are invocable; `connection` lends credentials (env, keychain or OAuth) to `mcp-http` entries; OAuth through a `connection` entry is wired but untested | `catalog.mjs`, `host.mjs`, `mcp-client.mjs` |
 | Descriptor `outputLabel` in the engine (`validate.mjs:187`, `runtime.mjs:1120,1134`) | **Designed** for the next engine bump. Interim rules (a)-(c) are built. | §5 |
@@ -520,11 +520,9 @@ Results: [RESULTS-SCRIPTED.md](RESULTS-SCRIPTED.md). They are development and di
 Gates V1-V5 all pass (V5: 48/48 replays identical at $0). Arm B's equal competent success is expected: a script is not distracted, so
 only a model run can show what arm B's 36 exposed members and poisoned descriptions cost.
 
-**Not done:**
-
-- the PREREG-NC1 freeze;
-- the dev split D1-D6 used to freeze τ/δ;
-- the Haiku run (O5).
+**Since done (2026-10-21):** the preregistered Haiku run, [RESULT-NODECAP-1.md](RESULT-NODECAP-1.md). It found two broker/CUA
+defects the scripted bed could not (an unreachable L2 path under `request`, and the `ui.act` name colliding with the protocol action
+`act`). **Still not done:** the dev split D1-D6 used to freeze τ/δ.
 
 ## 5. Next steps, in order
 
