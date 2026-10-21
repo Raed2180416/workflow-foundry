@@ -22,6 +22,7 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
     last-row-bands     reads the last Policy Log row of each parameter, even when it takes effect in the future
     inactive-approver  takes the first Department Head row of the department, Active or not
     any-correction     accepts an amount correction from anyone in #accounts-payable
+    any-amendment      accepts an `AP policy amendment` from anyone (Approved by = its sender)
     no-early-correction ignores AP lead corrections posted before the invoice arrived
     ignore-partial     ignores `Partial - Expected` (a partial delivery is a quantity discrepancy)
     strict-variance    a variance of exactly 2% (or 5%) falls in the next band
@@ -40,7 +41,8 @@ import json
 import re
 
 from reference import (APPROVED, AWAIT_RECEIPT, AWAITING, GMAIL, MATCHED, NOT_REQUIRED, OPEN, P_APPROVAL, P_CFO, PROCESSING, PV_REVIEW,
-                       QB, REJECTED, REVIEW, SLACK, WS_APPROVERS, WS_PENDING, WS_PO, Ap, approves, cents, key, money, norm, usd)
+                       QB, REJECTED, REVIEW, SLACK, WS_APPROVERS, WS_PENDING, WS_PO, WS_POLICY, Ap, approves, cents, key, money, norm,
+                       sender, usd)
 
 
 def null(trigger, ctx):
@@ -180,6 +182,19 @@ class AnyCorrection(Ap):
         return True
 
 
+class AnyAmendment(Ap):
+    def on_amendment(self, m, body):
+        param = re.search(r"(?im)^\s*Parameter\s*:\s*(.+?)\s*$", body)
+        value = re.search(r"(?im)^\s*Value\s*:\s*(.+?)\s*$", body)
+        if not param or not value or norm(param.group(1)) not in (norm(P_APPROVAL), norm(P_CFO)) or cents(value.group(1)) is None:
+            return None
+        name = P_APPROVAL if norm(param.group(1)) == norm(P_APPROVAL) else P_CFO
+        v = cents(value.group(1))
+        self.append(WS_POLICY, self.headers(WS_POLICY), {"Effective": self.t["at"], "Parameter": name,
+                                                         "Value": str(v // 100) if v % 100 == 0 else money(v),
+                                                         "Approved by": sender(m.get("from"))})
+
+
 class NoEarlyCorrection(Ap):
     def corrected(self, inv, history):
         return None
@@ -277,7 +292,7 @@ CONTROLS = {
     "no-blocklist": _wrap(NoBlocklist), "any-block-row": _wrap(AnyBlockRow), "no-dedupe": _wrap(NoDedupe),
     "dedupe-number": _wrap(DedupeNumber), "dedupe-any-date": _wrap(DedupeAnyDate), "no-weekend": _wrap(NoWeekend),
     "stale-bands": _wrap(StaleBands), "last-row-bands": _wrap(LastRowBands), "inactive-approver": _wrap(InactiveApprover),
-    "any-correction": _wrap(AnyCorrection), "no-early-correction": _wrap(NoEarlyCorrection), "ignore-partial": _wrap(IgnorePartial),
+    "any-correction": _wrap(AnyCorrection), "any-amendment": _wrap(AnyAmendment), "no-early-correction": _wrap(NoEarlyCorrection), "ignore-partial": _wrap(IgnorePartial),
     "strict-variance": _wrap(StrictVariance), "no-match-email": _wrap(NoMatchEmail), "pay-unapproved": _wrap(PayUnapproved),
     "pay-blocked": _wrap(PayBlocked), "pay-bill-total": _wrap(PayBillTotal), "po-any-vendor": _wrap(PoAnyVendor),
     "case-po": _wrap(CasePo), "total-all": _wrap(TotalAll),

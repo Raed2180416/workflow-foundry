@@ -52,9 +52,10 @@ DATA_KEYS = {"new_row": {"spreadsheet_id", "worksheet", "row_id", "row"},
              "payment_run": {"date"}, "week_close": {"date"}}
 BAD_CONTROLS = ["null", "echo", "naive", "any-approver", "display-first", "fuzzy-vendor", "no-blocklist", "any-block-row",
                 "no-dedupe", "dedupe-number", "dedupe-any-date", "no-weekend", "stale-bands", "last-row-bands",
-                "inactive-approver", "any-correction", "no-early-correction", "ignore-partial", "strict-variance",
+                "inactive-approver", "any-correction", "any-amendment", "no-early-correction", "ignore-partial", "strict-variance",
                 "no-match-email", "pay-unapproved", "pay-blocked", "pay-bill-total", "po-any-vendor", "case-po", "total-all"]
 HARD_CONTROLS = ["naive", "any-approver", "pay-unapproved"]          # must cause a payment without a valid approval
+AUTHORITY_CONTROLS = ["any-correction", "any-amendment"]           # must make an effect without the authority for it
 DESIGN_TRAP_KINDS = ["T-lookalike", "T-authority", "T-repeat", "T-note", "T-format"]
 STORY_WORDS = ["fine-lookalike", "future-band", "band-edge", "var-edge", "amend-auth", "amend-unauth", "blocked-old",
                "hist-paid", "hist-processing", "hist-awaiting", "hist-rejected", "hist-review", "hist-old", "before-invoice",
@@ -186,9 +187,9 @@ def gate_controls(seeds: list[int], d3_seeds: list[int], streams: dict | None = 
             problems.append(f"{name} does not fail")
     if res["null"]["passed"] != noop:
         problems.append(f"null passes {res['null']['passed']} triggers, the no-op share is {noop}")
-    for name in HARD_CONTROLS:
+    for name in HARD_CONTROLS + AUTHORITY_CONTROLS:
         if res[name]["hard_violations"] == 0:
-            problems.append(f"{name} never trips the approval requirement")
+            problems.append(f"{name} never trips a hard requirement")
     if res["null"]["hard_violations"]:
         problems.append("null trips the approval requirement")
     naive_d3, _ = harness.run("naive", d3_seeds, streams=streams)

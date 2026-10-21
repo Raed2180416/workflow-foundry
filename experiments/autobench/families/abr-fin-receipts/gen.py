@@ -38,7 +38,7 @@ from decimal import Decimal
 from pathlib import Path
 
 FAMILY = "abr-fin-receipts"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 HERE = Path(__file__).resolve().parent
 UTC = timezone.utc
 
@@ -88,11 +88,32 @@ POLICY_ROWS = [
 ]
 
 KINDS = ("receipt.posted", "receipt.corrected", "receipt.reposted", "preapproval.reply", "week.close")
+# Per-week volumes. receipt.posted and receipt.reposted are drawn from these ranges; receipt.corrected and
+# preapproval.reply follow from the week's plan (Gen.plan_week) and must fall inside them.
 COUNTS = {
     "d1": {"receipt.posted": (24, 26), "receipt.corrected": (2, 2), "receipt.reposted": (2, 2), "preapproval.reply": (1, 1)},
-    "d2": {"receipt.posted": (24, 30), "receipt.corrected": (2, 3), "receipt.reposted": (2, 3), "preapproval.reply": (1, 2)},
-    "d3": {"receipt.posted": (32, 38), "receipt.corrected": (3, 4), "receipt.reposted": (2, 3), "preapproval.reply": (3, 3)},
+    "d2": {"receipt.posted": (24, 30), "receipt.corrected": (2, 3), "receipt.reposted": (2, 3), "preapproval.reply": (1, 3)},
+    "d3": {"receipt.posted": (30, 35), "receipt.corrected": (8, 8), "receipt.reposted": (3, 4), "preapproval.reply": (5, 5)},
 }
+# Correction kinds (generator 1.1.0). fix-attendees / fix-receipt make a rejected receipt pass; fix-amount / fix-date /
+# fix-category change a logged one and it stays logged; the rest make the re-check decide (POLICY.md 5.1):
+#   fix-over         an approved receipt's amount raised over $500: Pending Pre-Approval (after a manager's
+#                    'pre-approved' given while the row was Approved, which never counts)
+#   fix-break-team   a team meal's attendee count lowered: Rejected, Over team meal limit (row updated to Rejected)
+#   fix-break-meal   an individual meal's amount raised over $50: Rejected (a later meal that day must not count it)
+#   fix-cat-travel   a hotel declared as Consulting corrected to Travel: the hotel rule now applies
+#   fix-pending      a pending receipt's amount changed: still pending, or approved when it drops to $500 or less
+#   fix-preapproved  a pre-approved receipt's amount changed: the pre-approval still counts
+#   fix-cap-own      the last individual meal of a capped day changed: the cap counts the other rows, not its own
+#   fix-second       a second correction in a thread, a relative date read on the correction's own day
+FIX_REJ = ["fix-attendees", "fix-receipt"]
+FIX_OK = ["fix-amount", "fix-date", "fix-category"]
+RECHECK = ["fix-break-team", "fix-cat-travel", "fix-pending"]
+TARGET_INTENT = {"fix-attendees": "rej-attendees", "fix-receipt": "rej-receipt", "fix-amount": "fixable-ok",
+                 "fix-date": "fixable-ok", "fix-category": "fixable-cat", "wrong-person": "fixable-ok",
+                 "fix-over": "fixable-big", "fix-break-team": "fixable-team", "fix-cat-travel": "fixable-cat-travel"}
+# Share of no-cabin flights described with a non-cabin 'business' ('for a business meeting').
+LOOKALIKE = {"d1": 0.0, "d2": 0.25, "d3": 0.4}
 # Share of receipts given each format trap (a receipt may get several).
 FORMAT_RATE = {"d1": {"synonym": 0.0, "words": 0.0, "currency": 0.0, "date": 0.0},
                "d2": {"synonym": 0.05, "words": 0.02, "currency": 0.02, "date": 0.03},
@@ -472,11 +493,15 @@ class Gen:
             a_city, b_city = r.sample(CITIES, 2)
             spec.update(sub="flight", route=(a_city, b_city), cabin=cabin, hours=hours,
                         hours_style=r.choice(["h", "hm", "hours"]), syn=["Airfare", "Flight"])
-        elif intent in ("ok-meal-ind", "cap-setup", "cap-reject", "cap-under", "cap-history", "rej-individual"):
+            # a 'business' that is not a cabin (POLICY.md section 7 reads the cabin, not every use of the word)
+            if cabin is None and intent in ("ok-flight", "pending-flight") and r.random() < LOOKALIKE[self.d]:
+                spec["biz"] = r.choice([" for a business meeting", " (business trip)", " for the business review"])
+        elif intent in ("ok-meal-ind", "cap-setup", "cap-reject", "cap-under", "cap-history", "rej-individual",
+                        "fixable-meal", "cap-after"):
             if intent == "ok-meal-ind":
                 cap_left = fixed.get("cap_left", LIMITS["cap"])
                 a = self.amt(8, float(min(LIMITS["individual"], cap_left)))
-            elif intent in ("cap-setup", "cap-reject", "cap-under", "cap-history"):
+            elif intent in ("cap-setup", "cap-reject", "cap-under", "cap-history", "fixable-meal", "cap-after"):
                 a = fixed["amount"]
             else:
                 a = self.amt(50.5, 75)
@@ -678,7 +703,7 @@ class Gen:
                 dur = f"{h.normalize():f} hours" if mm in (0, 30) else f"{hh}h {mm}m"
             else:
                 dur = f"{hh}h" if not mm else f"{hh}h {mm}m"
-            parts = [r.choice([f"Flight {a_city} to {b_city}", f"Airfare {a_city} - {b_city}"])]
+            parts = [r.choice([f"Flight {a_city} to {b_city}", f"Airfare {a_city} - {b_city}"]) + spec.get("biz", "")]
             if spec["cabin"]:
                 parts.append(spec["cabin"] if spec["cabin"] != "business" else r.choice(["business", "business class"]))
             parts.append(dur)
