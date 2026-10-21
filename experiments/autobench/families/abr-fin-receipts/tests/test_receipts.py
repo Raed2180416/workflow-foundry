@@ -47,7 +47,7 @@ ONE_DEFECT = {  # control -> trap labels its broken rule must show up on
     "cap-counts-rejected": {"cap-rejected-row"}, "total-counts-rejected": {"total-rejected-row"},
     "cap-counts-own-row": {"correction-own-row"}, "latest-correction-only": {"correction-multi"},
     "correction-receipt-day": {"correction-relative-date"}, "preapproval-forgotten": {"correction-preapproved"},
-    "preapproval-any-time": {"correction-early-approval"}}
+    "preapproval-any-time": {"correction-early-approval"}, "correction-no-cap": {"correction-cap"}}
 
 
 @pytest.fixture(scope="module")
@@ -484,6 +484,47 @@ def test_d3_weeks_carry_every_correction_state():
         assert any(x.startswith("Rejected:") for x in texts) and any(x.startswith("Pending pre-approval:") for x in texts), (s, texts)
         statuses = {r["cells"]["Status"] for t in corr for r in t["expect"]["set_rows"]}
         assert {gen.REJECTED, gen.PENDING, gen.APPROVED} <= statuses, (s, statuses)
+
+
+def test_date_correction_onto_a_capped_day_is_rejected_by_the_cap():
+    """fix-date-cap (every d3 week): an individual meal logged Approved on one day, its date then corrected onto a day
+    whose other individual meals of the same employee leave no room. The re-check counts that day's other rows and the
+    row is updated to Rejected; without the cap the corrected receipt would pass."""
+    for s in range(601, 651):
+        if gen.default_difficulty(s) != "d3":
+            continue
+        out = gen.generate(s, validate=False)
+        (tr,) = [t for t in out["truth"] if t["sub"] == "fix-date-cap"]
+        assert "correction-cap" in tr["traps"] and "correction-recheck" in tr["traps"], (s, tr["traps"])
+        assert tr["expect"]["replies"][0]["text"] == "Rejected: Over daily meal cap", (s, tr["expect"])
+        (upd,) = tr["expect"]["set_rows"]
+        cells = upd["cells"]
+        assert cells["Status"] == gen.REJECTED and cells["Category"] == "Meals" and cells["Attendees"] == "1"
+        # the receipt was logged Approved on another expense date before the correction
+        posted = next(t for t in out["truth"] if any(r["cells"]["Message TS"] == upd["message_ts"] for r in t["expect"]["new_rows"]))
+        (orig,) = posted["expect"]["new_rows"]
+        assert posted["index"] < tr["index"] and orig["cells"]["Status"] == gen.APPROVED
+        assert orig["cells"]["Date"] != cells["Date"] and orig["cells"]["Amount"] == cells["Amount"]
+        # the other individual meals of the corrected date, logged before the correction, leave no room for it
+        logged = {}
+        for t in out["truth"][:tr["index"] - 1]:
+            for r in t["expect"]["new_rows"]:
+                logged[r["cells"]["Message TS"]] = r["cells"]
+            for r in t["expect"]["set_rows"]:
+                logged[r["message_ts"]] = r["cells"]
+        other = sum((Decimal(c["Amount"]) for ts, c in logged.items() if ts != upd["message_ts"]
+                     and c["Employee"] == cells["Employee"] and c["Date"] == cells["Date"] and c["Category"] == "Meals"
+                     and c["Attendees"] == "1" and c["Status"] != gen.REJECTED), Decimal("0"))
+        amount = Decimal(cells["Amount"])
+        assert amount <= 50 and other + amount > 100, (s, other, cells)
+
+
+def test_correction_no_cap_control_fails_on_the_date_correction(dev_runs):
+    _, results = dev_runs["correction-no-cap"]
+    for res in results:
+        failed = [x for x in res["rows"] if not x["pass"]]
+        if res["difficulty"] == "d3":
+            assert any("correction-cap" in x["traps"] for x in failed), res["seed"]
 
 
 def test_d2_weeks_plant_approval_again_in_about_half():

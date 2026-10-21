@@ -242,8 +242,8 @@ run pays it.
 | solvability | 584/584 triggers, 14/14 clean weeks on 601–614 (max 12 steps, 0 hard violations); rebased 209/209 on 610–614 |
 | controls | Every control fails (none passes every trigger or keeps every week clean); `null` passes exactly the 45 no-op triggers; `naive` (35 lines) scores 0.381 at d3 (below 60%); `naive`, `any-approver` and `pay-unapproved` trip the approval requirement, `any-correction` and `any-amendment` the authority requirement |
 | trap coverage (610–613) | T-authority 17, T-format 80, T-lookalike 14, T-note 27, T-repeat 15, T-stale 28, T-state 50 |
-| oracle mutation | 4848/4848 single-fault mutants killed on 610–614 (score 1.0, 63 operators); no survivor |
-| oracle specificity | 1038/1038 policy-neutral variants accepted (21 operators); the equivalent solver passes 209/209 with 5/5 clean weeks |
+| oracle mutation | 4867/4867 single-fault mutants killed on 610–614 (score 1.0, 65 operators); no survivor |
+| oracle specificity | 1045/1045 policy-neutral variants accepted (23 operators); the equivalent solver passes 209/209 with 5/5 clean weeks |
 
 Mutation operators include a dropped, duplicated or mis-celled Pending Invoices row (each of the 13 columns), a reverted
 or wrong update, an edited or deleted older row, a Policy Log row dropped or wrong, a bill with the wrong vendor, total,
