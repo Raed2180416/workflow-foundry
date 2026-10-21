@@ -9,9 +9,9 @@ approver's own address) and `effects-with-authority` (only the AP lead corrects 
 approval bands, only the Controller's sheet edits change the blocked-vendor list).
 
 **Status (2026-10-21).** Development, $0. Built: the generator, the oracle, an observable-only reference workflow,
-27 bad controls, the $0 validity gates and the tests. Review fixes of 2026-10-21 are in History. No model has run on this family, so there is no arm result and
-no capability number yet. Everything below is development evidence on practice and dev seeds (601–650). No held-out
-seed (8801+) has been generated or looked at.
+27 bad controls, the $0 validity gates and the tests; the review fixes of 2026-10-21 are listed under History. No
+model has run on this family, so there is no arm result and no capability number yet. Everything below is development
+evidence on practice and dev seeds (601–650). No held-out seed (8801+) has been generated or looked at.
 
 ## What an arm does
 
