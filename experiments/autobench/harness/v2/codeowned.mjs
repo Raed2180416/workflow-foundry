@@ -331,7 +331,7 @@ export async function runPipeline(o) {
     hostWrite('postconditions.json', { pcs, atStart });
     hostWrite('satisfiability.json', satisfiability);
     const items = merged.items.filter(i => !i.superseded);
-    stats.ledger = { readersOk: merged.readersOk, readers: merged.readers, majority, reasked, items: items.length, positive: items.filter(i => i.polarity === 'positive').length, negative: items.filter(i => i.polarity === 'negative').length,
+    stats.ledger = { readersOk: merged.readersOk, readers: merged.readers, supportNeeded: majority, reasked, items: items.length, positive: items.filter(i => i.polarity === 'positive').length, negative: items.filter(i => i.polarity === 'negative').length,
       majority: items.filter(i => i.support >= majority).length, conflicts: merged.conflicts.length, settledByCode: settled.length, adjudicated: open.length, droppedNegatives: merged.dropped.length,
       literals: items.reduce((s, i) => s + i.fields.length, 0), unverifiedLiterals: items.reduce((s, i) => s + i.fields.filter(f => !f.verified).length, 0), today: merged.today ? 'set' : 'unset',
       checks: pcs.length, hardChecks: pcs.filter(p => p.hard).length, judgedChecks: pcs.filter(p => p.type === 'judged').length, mappedChecks: mapped, trueAtStart: atStart.filter(a => a.pass === true).length,

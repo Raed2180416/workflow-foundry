@@ -286,8 +286,8 @@ export function kindFor(item, inv) {
   let named = [...table, ...listed].filter(k => at(k.kind, tt) >= 0 || at(k.kind, st) >= 0);
   // A kind named next to its own parent kind ("a calendar event", "a note on the card") is the child: that parent kind is
   // dropped. A parent named elsewhere ("create a card and add a comment") stays a candidate.
-  const PREP = /^(on|to|for|in|under|of|onto)$/;
-  const nextTo = (child, parent, ws) => { const c = forms(child), p = forms(parent); return ws.some((w, i) => (p.has(w) && c.has(ws[i + 1] ?? '')) || (c.has(w) && PREP.test(ws[i + 1] ?? '') && [ws[i + 2], ws[i + 3]].some(x => p.has(x ?? '')))); };
+  const LINK_WORD = /^(on|to|for|in|under|of|onto)$/;
+  const nextTo = (child, parent, ws) => { const c = forms(child), p = forms(parent); return ws.some((w, i) => (p.has(w) && c.has(ws[i + 1] ?? '')) || (c.has(w) && LINK_WORD.test(ws[i + 1] ?? '') && [ws[i + 2], ws[i + 3]].some(x => p.has(x ?? '')))); };
   const parents = new Set(table.filter(t => t.parent && named.some(n => sameKind(n.kind, t.kind)) && [tt, st].some(ws => nextTo(t.kind, t.parent.kind, ws))).map(t => kindKey(t.parent.kind)));
   if (named.some(n => !parents.has(kindKey(n.kind)))) named = named.filter(n => !parents.has(kindKey(n.kind)));
   if (!named.length) return null;
