@@ -1,0 +1,157 @@
+// "What I checked" (#/checked/:proposalId): the test result of this exact version, what a test can't prove, an optional test on
+// the person's own list (A4), and the turn-on card (SPEC §9.4, §9.5). Turning on doesn't send anything.
+import { el, t, api, templates, memory, navigate, say, decide, refreshBadge } from '../site.js';
+import { checkList, errorPanel, stepper, whoDecides, dropZone, columnMapper, dataQuestions, statusChip } from '../components/ui.js';
+import { plural } from '../components/dom.js';
+
+/** "4 e-mails would have gone out: 3 to customers and 1 to me@example.com" (counts from the test, words from the card). */
+export function wouldDoSummary(wouldDo, slots, noun) {
+  const mails = wouldDo.filter(w => w.action === 'send'), posts = wouldDo.filter(w => w.action === 'post'), appends = wouldDo.filter(w => w.action === 'append');
+  const own = new Set(Object.values(slots ?? {}).filter(v => typeof v === 'string' && v.includes('@')).map(v => v.toLowerCase()));
+  const toOwn = mails.filter(m => own.has(String(m.to).toLowerCase())), toOthers = mails.filter(m => !own.has(String(m.to).toLowerCase()));
+  const parts = [];
+  if (toOthers.length) parts.push(t('checked.mailsToOthers', { count: plural(toOthers.length, t('checked.email'), t('checked.emails')), noun }));
+  for (const addr of [...new Set(toOwn.map(m => m.to))]) parts.push(t('checked.mailsTo', { count: plural(toOwn.filter(m => m.to === addr).length, t('checked.email'), t('checked.emails')), to: addr }));
+  for (const ch of [...new Set(posts.map(p => p.to))]) parts.push(t('checked.postsTo', { count: plural(posts.filter(p => p.to === ch).length, t('checked.post'), t('checked.posts')), to: ch }));
+  for (const a of appends) parts.push(t('checked.appends', { what: a.subject, sheet: a.to }));
+  return parts.length ? parts : [t('checked.nothingToDo')];
+}
+
+function ownListBranch(view, tpl, onTested) {
+  const box = el('div', { hidden: true, dataset: { ownData: '' } });
+  const sheets = tpl.sheets;
+  const state = { practiceDataId: null };
+  const drawSheet = (i) => {
+    const s = sheets[i];
+    const area = el('div', {});
+    box.append(el('h3', {}, t('checked.ownTitle', { plain: s.plain })), dropZone({ label: t('golive.dropLabel', { plain: s.plain }), help: t('golive.dropHelp'), onText: async text => {
+      area.replaceChildren(el('p', { role: 'status' }, t('golive.reading')));
+      try {
+        const pv = await api('/api/data/preview', { template: tpl.id, sheet: s.sheet, csv: text });
+        const mapper = columnMapper(pv), qs = dataQuestions(pv.questions);
+        const go = el('button', { type: 'button', class: 'primary', dataset: { action: 'test-own' } }, i + 1 < sheets.length ? t('checked.ownNext') : t('checked.ownTest'));
+        const err = el('div', {});
+        go.addEventListener('click', async () => {
+          go.setAttribute('aria-busy', 'true'); err.replaceChildren();
+          try {
+            const c = await api('/api/data/commit', { template: tpl.id, sheet: s.sheet, csv: text, mapping: mapper.mapping(), answers: qs.answers(), target: 'practice', practiceDataId: state.practiceDataId });
+            state.practiceDataId = c.practiceDataId;
+            if (i + 1 < sheets.length) { drawSheet(i + 1); return; }
+            say(t('make.testing', { noun: tpl.noun }));
+            const d = await api('/api/practice', { proposalId: view.proposalId, practiceDataId: state.practiceDataId });
+            memory[`tested:${view.proposalId}`] = d; say(t('make.tested')); onTested();
+          } catch (error) { err.replaceChildren(errorPanel(error, { notDone: t('golive.notImported') })); }
+          go.removeAttribute('aria-busy');
+        });
+        area.replaceChildren(el('p', {}, t('golive.found', { rows: pv.rowCount, noun: s.rowNoun })), mapper.node,
+          pv.unused.length ? el('p', { class: 'muted' }, t('golive.keepsOnly', { columns: pv.unused.join(', ') })) : null, qs.node, el('div', { class: 'actions' }, go), err);
+      } catch (error) { area.replaceChildren(errorPanel(error, { notDone: t('golive.notImported') })); }
+    } }), area);
+  };
+  drawSheet(0);
+  return box;
+}
+
+export async function render({ params }) {
+  const proposalId = params[0];
+  let view = await api(`/api/proposals/${proposalId}`);
+  const list = await templates();
+  const tpl = list.find(x => x.id === view.template) ?? null;
+  const noun = tpl?.noun ?? t('checked.items');
+  const status = el('div', {});
+  const root = el('div', { dataset: { layout: 'narrow' } });
+
+  if (!view.dryRun) {
+    const run = el('button', { type: 'button', class: 'primary' }, t('checked.runTest'));
+    run.addEventListener('click', async () => { run.setAttribute('aria-busy', 'true'); say(t('make.testing', { noun })); try { await api('/api/practice', { proposalId }); navigate(`/checked/${proposalId}`); } catch (error) { status.replaceChildren(errorPanel(error)); } });
+    return el('div', { dataset: { layout: 'narrow' } }, stepper('test'), el('h1', {}, t('checked.notTested')), el('div', { class: 'actions' }, run), status);
+  }
+  const d = view.dryRun;
+  const passed = d.passed;
+  const ownData = d.dataSource === 'your-data';
+  const checksPassed = d.checks.filter(c => c.passed === true).length;
+  root.append(stepper(view.active ? 'goLive' : 'test'));
+  if (passed) {
+    root.append(el('h1', {}, t('checked.passedTitle')));
+    const summary = wouldDoSummary(d.wouldDo, view.slots, noun);
+    root.append(el('p', { class: 'lead' }, t('checked.wouldHave'), ' ', summary.join(t('common.and')), '. ', t('checked.nothingSent')));
+    if (ownData && !d.wouldDo.some(w => w.action === 'send' && !Object.values(view.slots ?? {}).includes(w.to))) root.append(el('p', { class: 'banner', role: 'status' }, t('checked.nothingToChase')));
+  } else {
+    root.append(el('h1', {}, t('checked.failedTitle')));
+    root.append(errorPanel({ problem: d.problem ?? { what: d.headline } }, { notDone: t('checked.cantTurnOn'), action: { label: t('checked.changeSetting'), href: `#/make/${view.template}${view.basedOn ? `?flow=${view.flowId}` : ''}` } }));
+  }
+  root.append(el('p', { class: 'pretend' }, ownData ? t('checked.testedOnYours') : t('checked.testedOnPretend', { noun })));
+
+  root.append(el('section', { 'aria-labelledby': 'checks-h' }, el('h2', { id: 'checks-h' }, t('checked.checksTitle')), checkList(d.checks)));
+  if (d.wouldDo.length) root.append(el('section', { 'aria-labelledby': 'would-h' }, el('h2', { id: 'would-h' }, t('checked.wouldTitle')),
+    el('ol', { class: 'items' }, d.wouldDo.map(w => el('li', {}, el('div', { class: 'head' }, el('span', {}, el('b', {}, w.action === 'post' ? t('items.postTo') : w.action === 'append' ? t('items.addTo') : t('items.to')), ' ', w.to),
+      w.subject ? el('span', {}, el('b', {}, t('items.subject')), ' ', w.subject) : null), el('pre', {}, w.preview))))));
+
+  // What a test can't prove, and the optional test on the person's own list (A4).
+  const own = tpl ? ownListBranch({ proposalId }, tpl, () => navigate(`/checked/${proposalId}`)) : null;
+  const ownButton = el('button', { type: 'button', 'aria-expanded': 'false', dataset: { action: 'own-list' } }, t('checked.ownButton'));
+  ownButton.addEventListener('click', () => { const open = own.hidden; own.hidden = !open; ownButton.setAttribute('aria-expanded', String(open)); if (open) own.querySelector('input[type=file]')?.focus(); });
+  root.append(el('section', { class: 'box-limit', 'aria-labelledby': 'limit-h' }, el('h2', { id: 'limit-h' }, t('checked.limitTitle')), el('p', {}, t('checked.limitBody')), tpl ? el('div', { class: 'actions' }, ownButton) : null, own));
+
+  // The turn-on card.
+  if (passed && !view.active) root.append(turnOnCard(view, tpl, { checksPassed, ownData }));
+  if (view.active) root.append(el('div', { class: 'banner ok', role: 'status' }, el('p', {}, statusChip('works'), ' ', t('checked.alreadyOn')), el('a', { class: 'button primary', href: `#/go-live/${view.flowId}` }, t('checked.useOwnList'))));
+  root.append(status);
+  return root;
+}
+
+function turnOnCard(view, tpl, { checksPassed, ownData }) {
+  const headId = 'turn-on-h';
+  const remembered = memory[`decider:${view.proposalId}`];
+  const status = el('div', {});
+  let who = remembered?.choice ?? 'me';
+  const whoName = remembered?.who ?? null;
+  const whoLine = el('dd', {});
+  const whoEditor = el('div', { hidden: true });
+  const drawWho = () => whoLine.replaceChildren(who === 'inform' && whoName ? t('turnon.whoInform', { who: whoName }) : who === 'team' ? t('turnon.whoTeam', { who: whoName ?? t('who.thatPerson') }) : t('turnon.whoYou'), ' ',
+    el('button', { type: 'button', class: 'link', 'aria-expanded': String(!whoEditor.hidden), on: { click: e => { whoEditor.hidden = !whoEditor.hidden; e.currentTarget.setAttribute('aria-expanded', String(!whoEditor.hidden)); } } }, t('turnon.change')));
+  const choice = whoDecides({ name: whoName ?? '', onChange: v => { who = v; drawWho(); drawButtons(); } });
+  if (remembered) choice.node.querySelector(`input[value="${who}"]`).checked = true;
+  else choice.node.querySelector('input[value="me"]').checked = true;
+  whoEditor.append(choice.node);
+  drawWho();
+  const buttons = el('div', { class: 'actions stack decision' });
+  const turnOn = async (e, note) => {
+    const b = e.currentTarget; b.setAttribute('aria-busy', 'true'); b.disabled = true;
+    try {
+      const req = await api('/api/request-approval', { proposalId: view.proposalId });
+      if (req.status !== 'approved') await decide(e, { kind: 'activation', approvalId: req.approvalId, decision: 'approve', note }, b);
+      say(t('turnon.done')); refreshBadge();
+      navigate(`/go-live/${view.flowId}?on=1`);
+    } catch (error) { status.replaceChildren(errorPanel(error, { notDone: t('turnon.notOn') })); b.disabled = false; }
+    b.removeAttribute('aria-busy');
+  };
+  const noteFor = () => who === 'inform' ? `who decides: the person at this computer; ${whoName ?? 'the named person'} is told by e-mail` : who === 'team' ? `who decides: the person at this computer, standing in for ${whoName ?? 'the named person'} (Team plan not available)` : 'who decides: the person at this computer (single-person mode)';
+  function drawButtons() {
+    buttons.replaceChildren();
+    if (who === 'team') {
+      buttons.append(el('p', { class: 'banner wait' }, t('turnon.teamPractice', { who: whoName ?? t('who.thatPerson') })));
+      buttons.append(el('button', { type: 'button', class: 'primary', dataset: { action: 'turn-on' }, on: { click: e => turnOn(e, noteFor()) } }, t('turnon.teamOnAnyway')),
+        el('button', { type: 'button', on: { click: () => navigate('/automations') } }, t('turnon.keepPractice')));
+    } else {
+      buttons.append(el('button', { type: 'button', class: 'primary', dataset: { action: 'turn-on' }, on: { click: e => turnOn(e, noteFor()) } }, t('turnon.yes')),
+        el('a', { class: 'button', href: `#/make/${view.template}${view.basedOn ? `?flow=${view.flowId}` : ''}` }, t('turnon.change')),
+        el('a', { class: 'button', href: '#/automations' }, t('turnon.notNow')));
+    }
+  }
+  drawButtons();
+  const sheets = tpl?.sheets.map(s => s.plain).join(t('common.and')) ?? '';
+  return el('article', { class: 'card emph', 'aria-labelledby': headId, dataset: { decisionCard: '', turnOn: view.proposalId } },
+    el('h2', { id: headId }, t('turnon.title', { title: tpl?.card ?? view.title, version: view.version })),
+    view.basedOn ? el('p', { class: 'wait-text' }, t('turnon.replaces', { version: view.basedOn.version })) : null,
+    el('h3', {}, t('turnon.will')), el('ul', {}, (view.promises?.willDo ?? []).map(x => el('li', {}, x))),
+    el('h3', {}, t('turnon.wont')), el('ul', {}, (view.promises?.willNotDo ?? []).map(x => el('li', {}, x))),
+    el('h3', {}, t('turnon.done_means')), checkList(view.dryRun.checks, { how: false }),
+    el('dl', { class: 'facts' }, el('dt', {}, t('make.usesAI')), el('dd', {}, view.usesAI ? t('turnon.aiYes') : t('turnon.aiNo')),
+      el('dt', {}, t('turnon.testedOn')), el('dd', {}, t(ownData ? 'turnon.testedYours' : 'turnon.testedPretend', { passed: checksPassed, total: view.dryRun.checks.length })),
+      el('dt', {}, t('turnon.who')), whoLine,
+      el('dt', {}, t('turnon.needs')), el('dd', {}, t('turnon.needsSheets', { sheets }))),
+    whoEditor,
+    buttons,
+    el('p', { class: 'muted small' }, t('turnon.fine')), status);
+}

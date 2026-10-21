@@ -1,0 +1,18 @@
+{
+  "name": "Thank customers when an invoice is paid",
+  "nodes": [
+    { "id": "1", "name": "Invoice paid webhook", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0], "parameters": { "httpMethod": "POST", "path": "invoice-paid" } },
+    { "id": "2", "name": "Only fully paid", "type": "n8n-nodes-base.if", "typeVersion": 2, "position": [220, 0], "parameters": { "conditions": { "string": [{ "value1": "={{$json.status}}", "value2": "paid" }] } } },
+    { "id": "3", "name": "Write the thank-you", "type": "n8n-nodes-base.set", "typeVersion": 3, "position": [440, 0], "parameters": { "values": { "string": [{ "name": "subject", "value": "Thank you for your payment" }] } } },
+    { "id": "4", "name": "Send thank-you", "type": "n8n-nodes-base.gmail", "typeVersion": 2, "position": [660, 0], "retryOnFail": true, "parameters": { "operation": "send", "sendTo": "={{$json.email}}", "subject": "={{$json.subject}}", "message": "Thanks!" } },
+    { "id": "5", "name": "Log to sheet", "type": "n8n-nodes-base.googleSheets", "typeVersion": 4, "position": [880, 0], "parameters": { "operation": "append", "sheetName": "Paid" } }
+  ],
+  "connections": {
+    "Invoice paid webhook": { "main": [[{ "node": "Only fully paid", "type": "main", "index": 0 }]] },
+    "Only fully paid": { "main": [[{ "node": "Write the thank-you", "type": "main", "index": 0 }], []] },
+    "Write the thank-you": { "main": [[{ "node": "Send thank-you", "type": "main", "index": 0 }]] },
+    "Send thank-you": { "main": [[{ "node": "Log to sheet", "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "meta": { "note": "Synthetic, written for Foundry's import page test on 2026-10-21. Not from any real n8n instance." }
+}

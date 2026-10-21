@@ -1,0 +1,7 @@
+Invoice No.,Client,Contact email,Issued,Due date,Amount due (EUR),Status,Notes
+INV-2041,Bramble Cafe,accounts@bramble-cafe.example,03/09/2026,03/10/2026,"1,240.00",Open,"Catering, September"
+INV-2042,Northfield Gym,billing@northfield-gym.example,10/09/2026,10/10/2026,480.00,Open,
+INV-2043,Lark & Fern Florist,hello@larkfern.example,01/08/2026,01/09/2026,75.50,Open,"Asked for a copy, resent 02/09"
+INV-2044,Harbour Bakery,orders@harbour-bakery.example,05/08/2026,05/09/2026,300.00,Paid,
+INV-2045,Copper Garage,office@copper-garage.example,02/07/2026,02/08/2026,900.00,Disputed,Wrong part invoiced
+INV-2046,Willow Studio,studio@willow.example,08/10/2026,08/11/2026,60.00,Open,Not due yet

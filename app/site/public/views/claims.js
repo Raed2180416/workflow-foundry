@@ -1,0 +1,16 @@
+// What we can show (#/claims): every claim the site makes, with its status, what kind of evidence it is, its date, and the file in
+// the repository it comes from (SPEC §17.3). A claim link elsewhere on the site lands here.
+import { el, t, claims } from '../site.js';
+import { statusChip, statusOf } from '../components/ui.js';
+
+export async function render({ query }) {
+  const all = claims(), focus = query.get('c');
+  const node = el('div', { dataset: { layout: 'narrow' } }, el('h1', {}, t('claims.h1')), el('p', { class: 'lead' }, t('claims.lead')),
+    Object.entries(all).map(([id, c]) => el('section', { class: `card ${id === focus ? 'emph' : ''}`, id: `claim-${id}`, dataset: { claimCard: id } },
+      el('h2', { class: 'h3' }, c.short, ' ', statusChip(statusOf(c.status))),
+      el('p', {}, c.text), c.qualifier ? el('p', { class: 'muted' }, c.qualifier) : null,
+      el('dl', { class: 'facts' }, el('dt', {}, t('claims.evidence')), el('dd', {}, t(`claims.kinds.${c.evidence}`)), el('dt', {}, t('claims.date')), el('dd', {}, c.date),
+        el('dt', {}, t('claims.sourceFile')), el('dd', {}, el('code', {}, c.source.path), ` (${c.source.anchor})`)))));
+  if (focus) queueMicrotask(() => document.getElementById(`claim-${focus}`)?.scrollIntoView());
+  return node;
+}
