@@ -28,10 +28,15 @@ frozen plan is `PREREG.md` in the same folder.
 - **Not yet usable as a verdict.** The next step is a writer prompt and trace API revision, preregistered as a new
   version.
 
-**Gleaning (2026-10-21, development evidence only; REPORT.md §10).** A second extraction pass over the coverage list
-(`glean`, or `--glean` on `extract` / `all`) took the primary Haiku ledger from 23/30 to 28/30 SPEC-E ids and covered the
-go-live sentences, for $0.0022–0.0028 per call (3 repeats agree). SPEC-E is in-sample for that prompt. The pass is
-opt-in; the default pipeline is unchanged.
+**Gleaning (2026-10-21, development evidence only; REPORT.md §10 and its amendment §10.1).** A second extraction pass
+over the coverage list (`glean`, or `--glean` on `extract` / `all`) took the primary Haiku ledger from 23/30 to 28/30
+SPEC-E ids and covered the go-live sentences, for $0.0022–0.0028 per call (3 repeats agree). **The gain comes from the
+coverage list, not from the model call:** making every uncovered sentence an entry, with no call
+(`eval-e8.mjs baseline`), also gives 28/30 and go-live 3/3, with as many or more U and clauses on all three samples.
+Because both quote whole sentences, no filter over the list can beat that baseline on recall. The Haiku call only
+filters, keeping 22 of 37 sentences on s0. Whether what it cuts is noise (precision) is unmeasured, and its "none"
+answers lost U01 in 2 of 3 runs. SPEC-E is in-sample for the prompt and for the cue list. The pass is opt-in; the
+default pipeline is unchanged.
 
 ## Files
 
@@ -43,7 +48,7 @@ opt-in; the default pipeline is unchanged.
 | `checks.mjs` | The property sandbox, the contrast pair (G2), the writer (rewrites, then one logged escalation), the §3 status rules and G3. |
 | `report.mjs` | `report.md`: run health, the status table (with possibly-missed sentences), and failing instances with trace excerpts. |
 | `run.mjs` | The runner and CLI. Builds run on the practice worlds, then properties, statuses and per-build files. `calibrate` is G4. Also the gleaning pass (`gleanLedger`, `mergeGleaned`): one model call over `ledger.uncovered`, entries or "none" per sentence, merged by quote pointer (the quote is the sentence, copied by code; existing entries and ids are untouched). It lives here because PREREG-SPEC1 freezes `extract.mjs` and `ledger.mjs` by sha256. |
-| `eval-e8.mjs` | Analyst-side only, never imported by the tracker. `score` is the mechanical extraction recall against the frozen gold, on the frozen SPEC-E only (`frozenSpecE()`: `git show 48535bb:beds/ebed/e8/spec/SPEC-E.md`; any other text or a ledger from one is refused), plus go-live coverage (frozen lines 91–93). `adjudicate` joins a build's failing instances to the bed oracle's verdicts on the same run. |
+| `eval-e8.mjs` | Analyst-side only, never imported by the tracker. `score` is the mechanical extraction recall against the frozen gold, on the frozen SPEC-E only (`frozenSpecE()`: the committed copy `research/need-router-20261014/tracker-e8/SPEC-E.48535bb.md`, checked against the frozen sha256, and against `git show 48535bb:beds/ebed/e8/spec/SPEC-E.md` where the clone has it; any other text, a ledger from one, or a gold or ledger with no source hash is refused), plus go-live coverage (frozen lines 91–93) and the guard yield, line-level and by offsets. `baseline` is the $0 comparator for gleaning: every coverage-list sentence becomes an entry. `adjudicate` joins a build's failing instances to the bed oracle's verdicts on the same run. |
 | `test/*.test.mjs` | Leak test, projection, helpers, ledger mechanics, extraction, gleaning and writer with a scripted model, sandbox, contrast, status rules, G1/G3, spend cap, the frozen-SPEC-E hash and score check, and end to end on the three frozen E8 builds. Tests that assert SPEC-E lines read the frozen text. |
 
 ## How to run
@@ -54,23 +59,32 @@ All commands are run from the repository root.
 # tests ($0, scripted model, no paid call; about 20 s, most of it the end-to-end run on practice world 1237)
 node --test experiments/tracker/test/*.test.mjs
 
+# Which text. The working-tree SPEC-E (beds/ebed/e8/spec/SPEC-E.md) has changed since the gold was written (S10, S11,
+# delivery order; lines shift). Check current builds against a ledger from it, but eval-e8 cannot score that ledger: it
+# refuses any ledger not extracted from the frozen text. For a ledger you want scored, extract from the committed copy of
+# git 48535bb, research/need-router-20261014/tracker-e8/SPEC-E.48535bb.md, and pass that same file to every command.
+
 # the whole pipeline: extract, write a property per entry, check builds (metered: --budget caps model spend, default $2)
 node experiments/tracker/run.mjs all --text beds/ebed/e8/spec/SPEC-E.md \
   --build research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs \
   --build research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs \
   --build research/enterprise-20261014/runs/b1o-e8-1/solver.mjs --budget 2 --out /var/tmp/foundry-work/tracker/e8
 
-# or step by step
-node experiments/tracker/run.mjs extract --text beds/ebed/e8/spec/SPEC-E.md --out DIR [--samples 3] [--model ID] [--budget 2] [--glean]
-node experiments/tracker/run.mjs glean   --ledger DIR/ledger.json --text <the text it was extracted from> [--sample N] [--model ID] [--budget 0.05]   # in place
-node experiments/tracker/run.mjs ledger  --text beds/ebed/e8/spec/SPEC-E.md --entries gold.json --out DIR   # $0, frozen list (gold-ledger ablation)
-node experiments/tracker/run.mjs edit    --ledger DIR/ledger.json --text beds/ebed/e8/spec/SPEC-E.md --edits edits.json
+# or step by step (TEXT is one of the two texts above, the same in every command)
+TEXT=research/need-router-20261014/tracker-e8/SPEC-E.48535bb.md
+node experiments/tracker/run.mjs extract --text $TEXT --out DIR [--samples 3] [--model ID] [--budget 2] [--glean]   # --glean keeps the extraction as DIR/ledger.pre-glean.json (ledger.s<N>.pre-glean.json per sample)
+node experiments/tracker/run.mjs glean   --ledger DIR/ledger.json --text $TEXT [--out DIR2] [--sample N] [--model ID] [--budget 0.05]   # writes DIR2/ledger.json and DIR2/ledger.pre-glean.json (default DIR2: a new folder under /var/tmp/foundry-work/tracker), never in place
+node experiments/tracker/run.mjs ledger  --text $TEXT --entries gold.json --out DIR   # $0, frozen list (gold-ledger ablation)
+node experiments/tracker/run.mjs edit    --ledger DIR/ledger.json --text $TEXT --edits edits.json
 node experiments/tracker/run.mjs write   --ledger DIR/ledger.json [--model ID] [--escalate ID|none] [--reasoning low] [--budget 2]
 node experiments/tracker/run.mjs check   --ledger DIR/ledger.json --build <solver.mjs> [--build ...] [--worlds 1235:2,1236:3,1237:5] [--size N] [--keep-traces]
 node experiments/tracker/run.mjs calibrate --ledger DIR/ledger.json --teeth teeth.json [--worlds ...]   # G4, evaluation only
 
-# analyst-side recall against the frozen gold ($0; the text defaults to git show 48535bb:beds/ebed/e8/spec/SPEC-E.md)
+# analyst-side recall against the frozen gold ($0; the text defaults to the committed frozen copy, sha256-checked; a ledger
+# extracted from any other text is refused)
 node experiments/tracker/eval-e8.mjs score --ledger DIR/ledger.json [--ledger ...]
+# the simple baseline for gleaning ($0, no model call): every sentence on the coverage list becomes an entry
+node experiments/tracker/eval-e8.mjs baseline --ledger DIR/ledger.json --out DIR/ledger.baseline.json
 ```
 
 **Outputs.**
