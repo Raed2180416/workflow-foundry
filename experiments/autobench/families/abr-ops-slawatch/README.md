@@ -217,3 +217,10 @@ that the late and early controls fail at checks through the warning SMS and the 
   start-of-week ticket count exceeded 14 (story tickets may now open mid-week); the reopen story now reopens before the
   deadline, and "work resumed" now happens inside the window, so both traps are exposed. The generator stays at version
   1.0.0, because no stream from it has been used for any label.
+- 2026-10-21, re-verification by a later session ($0, no model, no code change): every number above reproduced exactly
+  (reference 269/269 and 5/5 clean weeks on 610–614; null 158, echo 0, naive 67 of 269; all seven gates pass:
+  770/770 solvability, 5,969/5,969 mutants, 556/556 specificity; 26 tests pass in 206 s). Three further
+  plausible-but-wrong solvers written outside this directory, in that session's scratch space, were also rejected on
+  610–614. The first resends the full warning bundle on a reassignment: 261/269, 8 wrong, 1/5 clean weeks. The second
+  writes HH:MM from the deadline's local offset: 237/269, 28 wrong; 4 more failures were crashes in the probe itself.
+  The third never writes Breached At: 89/269, 180 wrong.

@@ -208,7 +208,8 @@ export function composedReference({ world, timing = 'earliest', journal, item = 
       const fut = future.filter(m => m > now);
       const obligations = fut.length ? { upsert: [{ id: 'wake', kind: 'window', anchor: null, dueAt: iso(Math.min(...fut), off), onDue: null }] } : undefined;
       const todo = required.filter(e => !done.includes(e.lid));
-      const out = { decisions: { ...E.decisions.graded }, state: { c }, effects, ...(obligations ? { obligations } : {}) };
+      // Stateless like the reference policy (its carry is always null): the merge check above runs on every tick.
+      const out = { decisions: { ...E.decisions.graded }, state: null, effects, ...(obligations ? { obligations } : {}) };
       if ((E.terminal && !todo.length && !emitted.length) || subject === null) out.close = true;
       return out;
     },

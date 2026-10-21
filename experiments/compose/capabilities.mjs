@@ -277,7 +277,7 @@ function cCapture(f, d) {
       if (cutOf(f, d, F) > due && due <= f.endMs && (!ch || ch.at > due)) v.push(['R4.2', `${F}: not charged within 120 min of its reservation`]);
     }
     const decline = attempts.find(permanentRow);
-    if (decline && attempts.some(r => r.seq > decline.seq && r.via !== 'platform-retry')) v.push(['R5.2', `${F}: a declined charge retried`]);
+    if (decline && attempts.some(r => r.seq > decline.seq && r.emission !== decline.emission && r.via !== 'platform-retry')) v.push(['R5.2', `${F}: a declined charge retried`]);
     const delivered = f.reports.some(r => r.F === F && ['collected', 'inTransit', 'delivered'].includes(r.meaning));
     if (delivered && !ch && f.stage !== 'gl-dispatched') v.push(['R4.2', `${F}: shipped without a charge`]);
   }
@@ -445,7 +445,8 @@ function cFailure(f, d) {
     else if (!inWin(st.at, fail.at, due)) v.push(['R5.2', `${F}: failed set at ${fmt(st.at)}, due ${fmt(due)}`]);
     const n = f.committed.find(r => k(r) === 'notify.send' && r.args?.about === F && r.args?.template === 'fulfilment-failed');
     if (n && n.at > due) v.push(['R5.2', `${F}: fulfilment-failed notice late`]);
-    if (fail.row && f.rows.some(r => r.seq > fail.row.seq && k(r) === fail.kind && r.args?.fulfilmentId === F && r.via !== 'platform-retry')) v.push(['R5.2', `${F}: permanently failed step retried`]);
+    // A retry is a later emission (another item of the same batch emission is not: the arm could not know yet).
+    if (fail.row && f.rows.some(r => r.seq > fail.row.seq && r.emission !== fail.row.emission && k(r) === fail.kind && r.args?.fulfilmentId === F && r.via !== 'platform-retry')) v.push(['R5.2', `${F}: permanently failed step retried`]);
     for (const other of f.avail) if (other.fulfilmentId !== F && !failureOf(f, other.fulfilmentId) && !d.decidedCancel && ['failed', 'cancelled'].includes(f.last(f.fHist[other.fulfilmentId]))) v.push(['R5.2', `${other.fulfilmentId}: ended because of ${F}'s failure`]);
   }
   return v;

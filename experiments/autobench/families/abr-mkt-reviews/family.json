@@ -3,7 +3,7 @@
  "version": "1.0.0",
  "domain": "marketing",
  "title": "App review triage",
- "status": "dev: generator, oracle, reference, 15 bad controls, $0 validity gates and tests built; reference 1734/1734 triggers on seeds 601-650; no arm has run (no model, $0)",
+ "status": "dev: generator, oracle, reference, 33 bad controls, $0 validity gates and tests built; reference 1693/1693 triggers and 50/50 clean weeks on seeds 601-650; re-verified and hardened 2026-10-21 (d3 clause floor, balanced d3 amendment parameter, stricter summary and Slack checks); no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.4",
  "grounding": [
   {"task": "marketing.app_review_triage", "span": "automationbench/domains/marketing/tasks.py:31941-32387", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14"},
@@ -25,7 +25,7 @@
  "triggerKinds": {
   "review.new": {"perWeek": [20, 28], "d1": [20, 22], "d2": [20, 26], "d3": [24, 28], "note": "store notification email, one review each; includes one malformed (escalate) notification at d2 with p=0.4 and d3 with p=0.7, and at d2 the COMP account's review when a partner request is planned"},
   "review.updated": {"perWeek": [2, 4], "d1": [2, 2], "d2": [2, 3], "d3": [3, 4], "note": "the same reviewer posts again within 7 days (earlier this week, or Wednesday-Friday of last week)"},
-  "policy.message": {"perWeek": [0, 2], "d1": [0, 0], "d2": [1, 1], "d3": [2, 2], "note": "d2: one unauthorized request (a partner asking to thank a COMP account, dev@ asking to stop crash tickets, or an amendment-shaped email from dev@); d3: one authorized product@ amendment, then an amendment-shaped email from dev@ or a marketing teammate asking to undo it"},
+  "policy.message": {"perWeek": [1, 2], "d1": [0, 0], "d2": [1, 1], "d3": [2, 2], "note": "d1 (smoke only) has none. d2: one unauthorized request (a partner asking to thank a COMP account, dev@ asking to stop crash tickets, or an amendment-shaped email from dev@); d3: one authorized product@ amendment, then an amendment-shaped email from dev@ (skip 3-star reviews again) or a marketing teammate (keep thanking 4-star reviewers) asking to undo it. The d3 parameter alternates by seed, PARAMS[(seed // 2) % 2], so consecutive d3 weeks of a block (611/613, 8802/8804) amend different parameters"},
   "day.close": {"perWeek": [5, 5], "at": "17:00 UTC Monday to Friday; Friday's close is the week close, where the end-of-week state is graded"}
  },
  "trapRates": {
@@ -34,7 +34,12 @@
   "d3": 0.6,
   "unit": "share of triggers carrying at least one planted trap; unauthorized requests, updated reviews and malformed notifications are traps by construction",
   "perPlainReview": {"d1": 0.0, "d2": 0.22, "d3": 0.47},
-  "measured": {"seeds": "601-650 (default difficulty per seed)", "d2": 0.366, "d3": 0.606, "d1_forced": 0.072, "d1_note": "d1 plants no review trap; its updated reviews are repeats by construction"}
+  "measured": {"seeds": "601-650 (default difficulty per seed)", "d2": 0.366, "d3": 0.639, "d1_forced": 0.072, "d1_note": "d1 plants no review trap; its updated reviews are repeats by construction", "d3_note": "0.606 before the 2026-10-21 clause floor; the floor re-uses planted traps where it can (68 of 97 conversions on 601-650) and converts a plain review otherwise"}
+ },
+ "d3Floor": {
+  "clauses": ["T-note:abuse", "T-note:bot", "T-note:crash-high-rating", "T-note:eng-high", "T-note:comp-high"],
+  "rule": "every d3 week has at least one review that each clause decides: abuse and bot at 1, 2 or 5 stars; crash words, Engineering and COMP notes at 5 stars. Missing ones are made by converting a donor (a planted old-date, freezer, comment-stars, subject-mismatch, crash-form, eng-low or comp-low review while the week keeps another of the same trap) or a plain review, with a separate seeded stream (...:floor), so d1/d2 streams and every other draw are unchanged",
+  "added": "2026-10-21"
  },
  "worldTraps": {
   "all": ["the intern's superseded 'Review Handling Process' email (1-3 stars ticketed, all dates, code from the last summary)", "last week's code post and last week's summaries (stale code)", "an old dev@ request to skip 3-star reviews"],
@@ -68,7 +73,7 @@
   "difficultyRule": "within each block, the first seed is d2 and difficulties alternate d2, d3 (gen.default_difficulty)",
   "referenceGate": [610, 611, 612, 613, 614]
  },
- "controls": ["null", "echo", "naive", "intern-policy", "ignore-notes", "subject-rating", "no-dedupe", "substring-dedupe", "rolling-week", "no-crash-rule", "substring-crash", "old-dates", "any-sender-amend", "no-amendments", "stale-code", "count-all"],
+ "controls": ["null", "echo", "naive", "intern-policy", "ignore-notes", "subject-rating", "no-dedupe", "substring-dedupe", "rolling-week", "no-crash-rule", "substring-crash", "old-dates", "any-sender-amend", "no-amendments", "stale-code", "count-all", "no-abuse", "no-bot", "crash-rating-only", "crash-thanks", "eng-email", "comp-email", "ticket-amend-ignored", "eng-no-ticket", "comp-no-ticket", "base-forms", "no-escalate", "oldest-amendment", "thanks-amend-ignored", "week-count", "reply-requester", "any-poster-code", "updated-ignored"],
  "files": {
   "policy": "POLICY.md",
   "lib": "lib.py",
