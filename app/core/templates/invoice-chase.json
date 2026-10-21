@@ -24,6 +24,7 @@
     "willDo": ["Read the invoices sheet and pick the open invoices (not paid, not disputed)", "Send [[cadenceText]]", "Send each invoice at most one reminder of each kind, ever: it remembers what it already sent",
       { "if": "sendSummary", "text": "E-mail [[summaryTo]] a summary of the invoices due for a reminder" }, "Check, by re-reading the outbox, that exactly the planned reminders went out, each intact", "Ask you before every e-mail"],
     "willNotDo": ["Remind customers whose invoice is paid or disputed", "Take payments, charge cards or change the invoices sheet", "Contact anyone except the e-mail address on each invoice", "Run by itself on a schedule: you (or your coding agent) start each run"],
+    "example": {"firstAfterDays": 7, "secondAfterDays": 14, "finalAfterDays": 30, "signature": "Accounts team", "sendSummary": true, "summaryTo": "owner@practice.example"},
     "practice": {
       "now": "2026-10-10T09:00:00Z",
       "sheets": { "invoices": [

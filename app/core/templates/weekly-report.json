@@ -20,6 +20,7 @@
       "Save the report on this machine", "E-mail it to [[recipient]] only, after you approve each send", "Check that what was sent is exactly what was saved"],
     "willNotDo": ["Send to anyone else, or more than one message per run", "Read Jira, Linear or Asana directly: it reads the tracker sheet you keep in the workspace",
       "Run by itself on a schedule: there is no scheduler yet, so you (or your coding agent) start each run", "Use a model: this flow has no model step"],
+    "example": {"team": "Platform", "recipient": "lead@practice.example", "listOpen": true, "listBlocked": false},
     "practice": {
       "now": "2026-10-16T17:00:00Z",
       "sheets": { "tracker": [

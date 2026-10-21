@@ -18,6 +18,7 @@
     "willDo": ["Read the alerts and keep the unresolved ones from the last [[windowHours]] hours at [[minSeverity]] or above", "Post one digest to [[channel]], after you approve the post",
       { "if": "page", "text": "E-mail [[pageTo]] about each critical alert nobody acknowledged, after you approve each one" }, "Check, by re-reading the channel and the outbox, that exactly the planned messages went out"],
     "willNotDo": ["Restart, fix or silence anything", { "if": "!page", "text": "Page or e-mail anyone" }, "Post to any other channel", "Run by itself: you (or your coding agent) start each run"],
+    "example": {"channel": "#ops", "windowHours": 12, "minSeverity": "warning", "page": true, "pageTo": "oncall@practice.example"},
     "practice": {
       "now": "2026-10-18T08:00:00Z",
       "sheets": { "alerts": [

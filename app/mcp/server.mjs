@@ -21,18 +21,21 @@ const id = { type: 'string', minLength: 1, maxLength: 128 };
 const object = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
 const item = { type: 'object', additionalProperties: false, required: ['title', 'status'],
   properties: { title: { type: 'string', minLength: 1, maxLength: 300 }, status: { enum: ['done', 'open', 'blocked'] }, owner: { type: 'string', maxLength: 120 } } };
-const reportInput = { type: 'object', additionalProperties: false, required: ['weekOf', 'items'], description: 'The flow input as a JSON OBJECT (not a string).',
-  properties: { weekOf: { type: 'string', minLength: 1, maxLength: 40 }, items: { type: 'array', maxItems: 500, items: item } } };
+// The flow input is a JSON object; each flow's own input schema checks it when the run is created. The stub's weekly report takes
+// { weekOf, items[] } (items as below); library flows take { now: ISO date-time } and read their data from the workspace sheets.
+const flowInput = { type: 'object', description: 'The flow input as a JSON OBJECT (not a string): {now: "2026-10-21T09:00:00Z"} for library flows; {weekOf, items: [{title, status: done|open|blocked}]} for the preview weekly report.',
+  properties: { now: { type: 'string', minLength: 10, maxLength: 40 }, weekOf: { type: 'string', minLength: 1, maxLength: 40 }, items: { type: 'array', maxItems: 500, items: item } } };
+const DID = { send: w => `sent “${w.subject}” to ${w.to}`, post: w => `posted to ${w.to}`, append: w => `added ${w.subject} to the ${w.to} sheet` };
 
 function say(tool, r) {
   if (r.ok === false) return `${r.problem?.what ?? 'That did not work.'} ${r.problem?.next ?? ''}`.trim();
   switch (tool) {
     case 'propose_flow':
       if (r.status === 'needs_answers') return `I need one answer first: ${r.questions.map(q => q.question).join(' ')}`;
-      if (r.status === 'unsupported' || r.status === 'no_change') return r.reply;
+      if (r.status === 'unsupported' || r.status === 'no_change' || r.status === 'build_failed') return r.reply;
       return `I drafted “${r.summary.title}” (version ${r.version}). It will: ${r.willDo.join('; ')}. It will not: ${r.willNotDo.join('; ')}. Nothing is running. Next: try it on practice data.`;
     case 'explain_flow': return `“${r.summary.title}” has ${r.summary.steps.length} steps and ${r.summary.checks.length} checks that define done.`;
-    case 'dry_run': return r.passed ? `Practice run passed all ${r.checks.length} checks. It would have: ${r.wouldDo.map(w => `sent “${w.subject}” to ${w.to}`).join('; ') || 'taken no outside action'}. Nothing real was sent.`
+    case 'dry_run': return r.passed ? `Practice run passed all ${r.checks.length} checks. It would have: ${r.wouldDo.map(w => (DID[w.action] ?? DID.send)(w)).join('; ') || 'taken no outside action'}. Nothing real was sent.`
       : `Practice run did not pass: ${r.headline}`;
     case 'approve': return r.status === 'approved' ? `The person approved version ${r.workflowHash?.slice(0, 8)}. It can run now; each send still asks them first.`
       : r.status === 'rejected' ? 'The person said no. Nothing was turned on.'
@@ -68,15 +71,15 @@ export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
     return { ...request, how: where() };
   }
   const defs = [
-    ['propose_flow', 'Turn a plain-language request into a proposed automation, or questions, or an honest "cannot build that". Nothing runs. Pass the person\'s exact words in request; pass answers to earlier questions in answers. To change an existing flow, pass flowId.',
+    ['propose_flow', 'Turn a plain-language request into a proposed automation, or questions, or an honest "cannot build that". Nothing runs. Pass the person\'s exact words in request; pass answers to earlier questions in answers, keyed by question id. To change an existing flow, pass flowId.',
       object({ request: { type: 'string', minLength: 1, maxLength: 30000 }, answers: { type: 'object', additionalProperties: { type: 'string', maxLength: 2000 } }, flowId: id }, ['request']), a => app.propose(a), false],
     ['explain_flow', 'Explain a proposal or flow in plain words: its steps, the checks that define done, the outside actions it can take and its limits.', object({ proposalId: id, flowId: id }), a => app.explain(a), true],
     ['dry_run', 'Try the exact proposed version on practice data, with outside actions replaced by a practice stand-in. Reports which checks passed and what it would have done. Required before approval.',
-      object({ proposalId: id, practiceInput: reportInput }, ['proposalId']), a => app.dryRun({ proposalId: a.proposalId, input: a.practiceInput }), false],
+      object({ proposalId: id, practiceInput: flowInput }, ['proposalId']), a => app.dryRun({ proposalId: a.proposalId, input: a.practiceInput }), false],
     ['approve', 'Ask the PERSON to turn on a proposed version after a passing practice run. You cannot approve: the person decides in a dialog or in the dashboard. Returns approved, rejected, or awaiting_human with where to approve.',
       object({ proposalId: id }, ['proposalId']), approve, false],
     ['run_flow', 'Run the current, person-approved version of a flow with an input OBJECT. Unapproved or changed versions are refused. Outside actions (sending) pause until the person approves them.',
-      object({ flowId: id, input: reportInput }, ['flowId', 'input']), a => app.run(a), false],
+      object({ flowId: id, input: flowInput }, ['flowId', 'input']), a => app.run(a), false],
     ['flow_status', 'Status of one run in plain words: what happened, which step failed and what to do, checks, pending approvals, cost.', object({ runId: id }, ['runId']), a => app.status(a), true],
     ['list_flows', 'List flows, drafts awaiting practice or approval, and how many things are waiting for the person.', object({}), () => app.list(), true]
   ];

@@ -1,0 +1,27 @@
+[
+ {
+  "cluster": "A-efficiency",
+  "n": 7,
+  "verified": 3
+ },
+ {
+  "cluster": "B-evaluation",
+  "n": 6,
+  "verified": 4
+ },
+ {
+  "cluster": "C-isolation",
+  "n": 3,
+  "verified": 2
+ },
+ {
+  "cluster": "D-governance",
+  "n": 3,
+  "verified": 1
+ },
+ {
+  "cluster": "E-construction",
+  "n": 3,
+  "verified": 2
+ }
+]

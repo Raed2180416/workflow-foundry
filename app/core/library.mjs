@@ -259,7 +259,8 @@ export function instantiate(template, values, { version = 1, id = null, builder 
 }
 const tag = (workflow, prefix) => workflow?.metadata?.tags?.find(t => typeof t === 'string' && t.startsWith(prefix))?.slice(prefix.length) ?? null;
 /** The library template a workflow was built from, if any. */
-export const templateOf = (workflow, library = loadLibrary()) => { const id = tag(workflow, 'template:'); return id ? templateById(id, library) : null; };
+// (A library instance always carries its slots tag; the stub's weekly report carries template:weekly-report without one.)
+export const templateOf = (workflow, library = loadLibrary()) => { const id = tag(workflow, 'template:'); return id && tag(workflow, 'slots:') !== null ? templateById(id, library) : null; };
 /** The slot values a library workflow was built with. */
 export const slotsOf = workflow => { const s = tag(workflow, 'slots:'); try { return s ? JSON.parse(s) : null; } catch { return null; } };
 export const builderOf = workflow => tag(workflow, 'builder:');

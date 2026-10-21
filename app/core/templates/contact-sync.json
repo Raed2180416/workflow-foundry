@@ -16,6 +16,7 @@
     "willDo": ["Read the CRM and the newsletter list", "Compare them by e-mail address ([[scopeText]])", { "if": "addMissing", "text": "Add the contacts missing from the newsletter list" }, { "if": "!addMissing", "text": "Only report the contacts missing from the newsletter list; add nothing" },
       "E-mail [[reportTo]] a report of what was missing and which names differ, after you approve the send", "Check that no unsubscribed contact was added, and re-read the list and the outbox"],
     "willNotDo": ["Add anyone who unsubscribed", "Delete or change anyone already on the newsletter list", "Send the newsletter or e-mail any contact", "Change the CRM", "Run by itself: you (or your coding agent) start each run"],
+    "example": {"onlyTag": "customer", "addMissing": true, "reportTo": "owner@practice.example"},
     "practice": {
       "now": "2026-10-13T07:30:00Z",
       "sheets": {

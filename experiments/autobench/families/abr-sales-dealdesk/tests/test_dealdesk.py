@@ -289,7 +289,8 @@ def test_oracle_escalation_and_abstention(gens):
 
 # ---------------------------------------------------------------------------------------------- helpers and docs
 def test_amount_parsing_and_formats_agree_between_the_two_implementations():
-    # euro-decimal forms with one or two decimals: lib (the truth) read ',5' as thousands before v1.2.0 (review of v1.1.0)
+    # euro-decimal forms with one or two decimals: before v1.2.0, lib (the truth) read the comma in '125.000,5' as a
+    # thousands separator, giving 125.0005 (review of v1.1.0)
     for text, want in (("125.000,00", "125000"), ("125,000.00", "125000"), ("125000", "125000"), ("98,500", "98500"),
                        ("1.234.567,50", "1234567.5"), ("125.000,5", "125000.5"), ("125000,5", "125000.5"), ("1.234,56", "1234.56"),
                        ("98,5", "98.5"), (" 125.000,00 ", "125000"), ("1,234,567", "1234567")):

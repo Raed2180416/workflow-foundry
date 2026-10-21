@@ -86,7 +86,7 @@ test('with a client that shows the person a dialog (elicitation), the person dec
 }));
 
 test('dashboard: token and host checks, overview, verified run record, version diff, the person decides', async () => withWorkspace(async app => {
-  const p = app.propose({ request: MESSY });
+  const p = await app.propose({ request: MESSY });
   await app.dryRun({ proposalId: p.proposalId });
   const pending = app.requestApproval({ proposalId: p.proposalId });
   const dash = createDashboard(app);
@@ -114,7 +114,7 @@ test('dashboard: token and host checks, overview, verified run record, version d
     assert.equal(detail.chain.verified, true); assert.ok(detail.timeline.length > 10);
     assert.deepEqual(detail.checks.map(c => c.passed), [true, true, true, true, true]);
     assert.equal(detail.modelCalls.count, 0, 'no model was called');
-    const v2 = app.propose({ request: MESSY.replace('boss@example.com', 'cto@example.com'), flowId: p.flowId });
+    const v2 = await app.propose({ request: MESSY.replace('boss@example.com', 'cto@example.com'), flowId: p.flowId });
     const flow = await (await fetch(`${base}/api/flows/${p.flowId}`, { headers })).json();
     assert.deepEqual(flow.versions.map(v => [v.version, v.state, v.active]), [[1, 'version', true], [2, 'draft', false]]);
     assert.deepEqual(flow.versions[1].diffFromPrevious.changed.map(c => [c.id, c.fields.sort().join(',')]), [['send', 'args,description']]);

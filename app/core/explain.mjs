@@ -34,7 +34,12 @@ const FAILURES = {
   NEEDS_DRY_RUN: ['This version has not passed a practice run yet.', 'Run it on practice data first; approval comes after.'],
   NOT_FOUND: ['There is nothing by that name.', 'List the flows to see what exists.'],
   ACTIVATION_CONFLICT: ['Someone already decided this request.', 'Reload to see the decision.'],
-  APPROVAL_AUTHORITY: ['Only a person can approve, in their own window.', 'Ask the person to approve it in the dashboard or the approval dialog.']
+  APPROVAL_AUTHORITY: ['Only a person can approve, in their own window.', 'Ask the person to approve it in the dashboard or the approval dialog.'],
+  BUILDER_MODEL: ['The model that builds flows could not give a usable answer.', 'Nothing was created. Try again, or describe the request in other words.'],
+  BUILDER_TOKEN_CAP: ['The builder has no token cap for this model.', 'Set a token cap before using a model listed at $0.'],
+  MODEL_BUDGET: ['The builder reached its token or spending cap.', 'Nothing was created. The flows you have keep running.'],
+  SHEET_NOT_FOUND: ['A sheet the flow reads is not in your workspace.', 'Put the sheet (a JSON list of rows) in the workspace world/sheets folder, then run again.'],
+  ROWS_DATE: ['A date in your sheet is not in a form the flow can read.', 'Use YYYY-MM-DD, or a date and time with a time zone.']
 };
 const isRef = value => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 1 && typeof value.$ref === 'string';
 

@@ -5,25 +5,33 @@
 //   propose (version-bound proposal; the model may do this) -> dry run on practice data (isolated store, practice registry)
 //   -> approval request (needs a passing dry run of the SAME hash) -> a person decides (dashboard, CLI or the MCP client's dialog)
 //   -> the proposal is applied (head compare-and-swap) -> runs of that exact hash only -> each outside action asks again.
+//
+// The builder is pluggable (BUILDER-1): the stub (default, $0, no model) or the model builder over the template library
+// (./builder-model.mjs). Both return the same shape; every proposal names the builder that made it.
 import { mkdirSync, readdirSync, readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Foundry } from '../../src/foundry.mjs';
 import { FoundryError, errorData, digest } from '../../src/data.mjs';
 import { appRegistry } from './capabilities.mjs';
-import { buildFromIntent, SAMPLE_INPUT, BUILDER_ID } from './builder.mjs';
+import { SAMPLE_INPUT, stubBuilder } from './builder.mjs';
+import { templateOf, slotsOf, practiceOf } from './library.mjs';
+import { runInWorld } from './practice.mjs';
 import { describeWorkflow, explainRun, failureText } from './explain.mjs';
 import { Ledger, HUMAN_CHANNELS } from './ledger.mjs';
 
 const problem = (error, extra = {}) => ({ ok: false, problem: { ...(failureText(errorData(error)) ?? {}), code: error.code ?? 'ERROR', details: errorData(error).message }, ...extra });
 
 export class FoundryApp {
-  constructor({ workspace, now = Date.now } = {}) {
+  constructor({ workspace, now = Date.now, builder = stubBuilder } = {}) {
     if (typeof workspace !== 'string' || !workspace.trim()) throw new FoundryError('APP_WORKSPACE', 'A workspace directory is required');
-    this.root = path.resolve(workspace);
+    if (!builder || typeof builder.build !== 'function' || typeof builder.id !== 'string') throw new FoundryError('APP_BUILDER', 'A builder with an id and build() is required');
+    this.root = path.resolve(workspace); this.builder = builder;
     mkdirSync(this.root, { recursive: true, mode: 0o700 });
     this.liveDir = path.join(this.root, 'live'); this.outboxDir = path.join(this.root, 'outbox'); this.practiceRoot = path.join(this.root, 'practice');
-    this.registry = appRegistry({ mode: 'live', outboxDir: this.outboxDir });
+    // Local stand-ins (sheets, chat) live in the workspace's world directory: <workspace>/world/sheets/<name>.json.
+    this.worldDir = path.join(this.root, 'world');
+    this.registry = appRegistry({ mode: 'live', outboxDir: this.outboxDir, worldDir: this.worldDir });
     this.foundry = new Foundry(this.liveDir, { registry: this.registry });
     this.ledger = new Ledger(path.join(this.root, 'app-ledger.sqlite'), { now });
   }
@@ -33,28 +41,34 @@ export class FoundryApp {
   #head(flowId) { try { return this.foundry.store.workflow(flowId); } catch (error) { if (error.code === 'NOT_FOUND') return null; throw error; } }
   #baseOf(head) {
     if (!head) return null;
+    const template = templateOf(head.workflow);
+    if (template) return { id: head.workflow.id, version: head.workflow.version, template: template.id, slots: slotsOf(head.workflow) ?? {} };
     const send = head.workflow.nodes.find(n => n.id === 'send'), compose = head.workflow.nodes.find(n => n.id === 'compose');
     return { id: head.workflow.id, version: head.workflow.version, recipient: send?.args?.to ?? null, team: compose?.args?.variables?.team ?? null };
   }
 
-  /** describe-intent -> a version-bound proposal, questions, or an honest refusal. Never runs anything. */
-  propose({ request, answers = {}, flowId = null }) {
+  /** describe-intent -> a version-bound proposal, questions, or an honest refusal. Never runs anything. Asynchronous: a model may build. */
+  async propose({ request, answers = {}, flowId = null }) {
     let head = flowId ? this.#head(flowId) : null;
     if (flowId && !head) return problem(new FoundryError('NOT_FOUND', `No flow named ${flowId}`));
-    let built = buildFromIntent({ request, answers, base: this.#baseOf(head) });
-    if (built.status !== 'ready') return { ok: true, ...built };
+    let built;
+    try { built = await this.builder.build({ request, answers, base: this.#baseOf(head) }); }
+    catch (error) { if (['REQUEST_TEXT', 'ANSWERS'].includes(error.code)) throw error; return problem(error, { builder: this.builder.id }); }
+    const report = built.buildReport ? (({ callLog, ...rest }) => rest)(built.buildReport) : null;
+    if (built.status !== 'ready') { const { args, buildReport, ...rest } = built; return { ok: true, ...rest, ...(report ? { build: report } : {}) }; }
     // Same template, same team: this is a new version of an existing flow, never a silent second copy.
-    if (!head) { head = this.#head(built.workflow.id); if (head) built = buildFromIntent({ request, answers, base: this.#baseOf(head) }); }
+    if (!head) { head = this.#head(built.workflow.id); if (head) built = await this.builder.rebase(built, this.#baseOf(head)); }
     // A revision that would change nothing but the version number is not proposed (a schedule, for example, is not part of the flow).
-    if (head && digest({ ...built.workflow, version: 0 }) === digest({ ...head.workflow, version: 0 }))
-      return { ok: true, status: 'no_change', flowId: head.workflow.id, version: head.workflow.version, builder: BUILDER_ID, understood: built.understood,
-        reply: 'Nothing in the flow would change, so no new version was made. Schedules and connectors are not part of this preview yet.' };
+    const same = w => digest({ ...w, version: 0, metadata: null });
+    if (head && same(built.workflow) === same(head.workflow))
+      return { ok: true, status: 'no_change', flowId: head.workflow.id, version: head.workflow.version, builder: built.builder, understood: built.understood,
+        reply: 'Nothing in the flow would change, so no new version was made. Schedules and connectors are not part of this preview yet.', ...(report ? { build: report } : {}) };
     const validation = this.foundry.validate(built.workflow, { strict: true });
-    if (!validation.valid) return problem(new FoundryError('INVALID_PROPOSAL', 'The builder produced a workflow that does not validate'), { validation });
+    if (!validation.valid) return problem(new FoundryError('INVALID_PROPOSAL', 'The builder produced a workflow that does not validate'), { validation, builder: built.builder });
     const designRequest = this.foundry.store.createAgentDesignRequest({ task: request, workflowId: head ? head.workflow.id : null, expectedHash: head?.hash ?? null });
     const proposal = this.foundry.propose({ requestId: designRequest.id, workflow: built.workflow,
-      rationale: `Built by ${BUILDER_ID} from template ${built.template}. Understood: ${JSON.stringify(built.understood)}` });
-    return { ok: true, status: 'proposed', builder: BUILDER_ID, proposalId: proposal.id, requestId: designRequest.id, flowId: built.workflow.id,
+      rationale: `Built by ${built.builder} from template ${built.template}. Understood: ${JSON.stringify(built.understood)}` });
+    return { ok: true, status: 'proposed', builder: built.builder, template: built.template, ...(report ? { build: report } : {}), proposalId: proposal.id, requestId: designRequest.id, flowId: built.workflow.id,
       version: built.workflow.version, workflowHash: proposal.workflowHash, basedOn: head ? { version: head.workflow.version, hash: head.hash } : null,
       changes: proposal.impact, understood: built.understood, willDo: built.willDo, willNotDo: built.willNotDo,
       summary: describeWorkflow(built.workflow, this.registry), lintWarnings: validation.warnings.map(w => w.code),
@@ -75,6 +89,8 @@ export class FoundryApp {
   /** Run the exact proposed workflow on practice data in its own store, with the practice registry. Records the result. */
   async dryRun({ proposalId, input }) {
     const proposal = this.foundry.store.proposal(proposalId);
+    const template = templateOf(proposal.workflow);
+    if (template) return this.#dryRunLibrary(proposal, template, input);
     const dir = path.join(this.practiceRoot, `${proposalId.slice(0, 8)}-${randomUUID().slice(0, 8)}`), outbox = path.join(dir, 'outbox');
     const registry = appRegistry({ mode: 'practice', outboxDir: outbox });
     const practice = new Foundry(dir, { registry });
@@ -98,6 +114,24 @@ export class FoundryApp {
         caveat: 'Practice used a stand-in for sending and sample items. It shows the flow behaves as described; it does not show delivery works.',
         next: passed ? 'Ask the person to approve it (approve). They decide in their own window, not you.' : 'Do not ask for approval: the practice run did not pass.' };
     } finally { await practice.close(); }
+  }
+
+  /** A library flow's dry run: the template's practice sheets in a fresh practice world, the practice registry, the exact version. */
+  async #dryRunLibrary(proposal, template, input) {
+    mkdirSync(this.practiceRoot, { recursive: true, mode: 0o700 });
+    const world = practiceOf(template), runInput = input ?? world.input;
+    const res = await runInWorld(proposal.workflow, { sheets: world.sheets, input: runInput, mode: 'practice', keep: true, root: this.practiceRoot });
+    if (['invalid', 'input-refused'].includes(res.status)) return problem(Object.assign(new FoundryError(res.error?.code ?? 'VALIDATION', res.error?.message ?? 'refused'), {}), { practice: true, passed: false, next: 'Fix the practice input or ask for a changed flow.' });
+    const wouldDo = [...res.effects.outbox.map(m => ({ action: 'send', to: m.to, subject: m.subject, preview: m.body.slice(0, 400) })),
+      ...Object.entries(res.effects.chat).flatMap(([channel, posts]) => posts.map(text => ({ action: 'post', to: channel, subject: null, preview: text.slice(0, 400) }))),
+      ...Object.entries(res.effects.appended).map(([sheet, rows]) => ({ action: 'append', to: sheet, subject: `${rows.length} row(s)`, preview: JSON.stringify(rows.slice(0, 3)).slice(0, 400) }))];
+    const explained = res.explained;
+    const record = this.ledger.recordDryRun({ proposalId: proposal.id, workflowHash: proposal.workflowHash, registryHash: res.run.registryHash, practiceRunId: res.run.id, passed: res.passed,
+      body: { headline: explained.headline, checks: explained.checks, wouldDo, inputHash: digest(runInput), practiceDir: res.dir, template: template.id } });
+    return { ok: true, practice: true, dryRunId: record.id, passed: res.passed, headline: explained.headline, checks: explained.checks, wouldDo, problem: explained.problem,
+      practiceRunId: res.run.id, workflowHash: proposal.workflowHash, practiceRegistryHash: res.run.registryHash, liveRegistryHash: this.registry.hash(),
+      caveat: 'Practice used stand-ins for sending, posting and the sheets, with the template\'s practice data. It shows the flow behaves as described; it does not show delivery works.',
+      next: res.passed ? 'Ask the person to approve it (approve). They decide in their own window, not you.' : 'Do not ask for approval: the practice run did not pass.' };
   }
 
   /** Ask a person to turn this exact version on. Returns the open request; it never decides it. */
@@ -177,7 +211,8 @@ export class FoundryApp {
     const actions = this.foundry.store.runs().filter(r => r.status === 'awaiting_approval').flatMap(r => {
       const workflow = this.foundry.store.workflow(r.workflowHash).workflow, explained = explainRun(r, workflow);
       return explained.pendingApprovals.map(a => ({ kind: 'action', runId: r.id, flowId: r.workflowId, approvalId: a.approvalId, step: a.step, tool: a.tool,
-        to: a.args?.to ?? null, subject: a.args?.subject ?? null, preview: typeof a.args?.body === 'string' ? a.args.body.slice(0, 600) : null }));
+        to: a.args?.to ?? a.args?.channel ?? null, subject: a.args?.subject ?? null,
+        preview: typeof a.args?.body === 'string' ? a.args.body.slice(0, 600) : typeof a.args?.text === 'string' ? a.args.text.slice(0, 600) : null }));
     });
     return { activations, actions, count: activations.length + actions.length };
   }

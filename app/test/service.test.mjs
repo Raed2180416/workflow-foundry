@@ -16,7 +16,7 @@ async function withApp(fn) {
   try { await fn(app, dir); } finally { await app.close(); rmSync(dir, { recursive: true, force: true }); }
 }
 async function activeFlow(app, recipient = 'boss@example.com') {
-  const p = app.propose({ request: MESSY, answers: { recipient } });
+  const p = await app.propose({ request: MESSY, answers: { recipient } });
   assert.equal(p.status, 'proposed');
   const d = await app.dryRun({ proposalId: p.proposalId });
   assert.equal(d.passed, true);
@@ -58,7 +58,7 @@ test('happy path: propose -> practice -> person approves -> run pauses before se
 }));
 
 test('authority stays with the person: no dry run, no approval, model channel, rejected send', async () => withApp(async (app, dir) => {
-  const p = app.propose({ request: MESSY, answers: { recipient: 'boss@example.com' } });
+  const p = await app.propose({ request: MESSY, answers: { recipient: 'boss@example.com' } });
   assert.equal(app.requestApproval({ proposalId: p.proposalId }).problem.code, 'NEEDS_DRY_RUN');
   assert.equal((await app.run({ flowId: p.flowId, input: WEEK })).problem.code, 'NOT_APPROVED');
   await app.dryRun({ proposalId: p.proposalId });
@@ -79,7 +79,7 @@ test('authority stays with the person: no dry run, no approval, model channel, r
 
 test('versions: an approval covers one exact hash; a changed head is refused until the person approves it', async () => withApp(async (app) => {
   const v1 = await activeFlow(app);
-  const v2 = app.propose({ request: MESSY, flowId: v1.flowId, answers: { recipient: 'cto@example.com' } });
+  const v2 = await app.propose({ request: MESSY, flowId: v1.flowId, answers: { recipient: 'cto@example.com' } });
   assert.equal(v2.status, 'proposed'); assert.equal(v2.version, 2);
   assert.deepEqual(v2.changes.changed, ['send']);
   assert.equal(app.requestApproval({ proposalId: v2.proposalId }).problem.code, 'NEEDS_DRY_RUN', 'the v1 practice run does not count for v2');
@@ -88,11 +88,11 @@ test('versions: an approval covers one exact hash; a changed head is refused unt
   const head = app.foundry.store.workflow(v1.flowId);
   app.foundry.save({ ...app.foundry.store.proposal(v2.proposalId).workflow, version: 2 }, head.hash);
   assert.equal((await app.run({ flowId: v1.flowId, input: WEEK })).problem.code, 'STALE_APPROVAL');
-  assert.equal(app.propose({ request: 'same thing, every Friday', flowId: v1.flowId }).status, 'no_change', 'a revision that changes nothing is not proposed');
+  assert.equal((await app.propose({ request: 'same thing, every Friday', flowId: v1.flowId })).status, 'no_change', 'a revision that changes nothing is not proposed');
 }));
 
 test('bad input and unknown requests fail in words, and create nothing', async () => withApp(async (app) => {
-  assert.equal(app.propose({ request: 'translate my novel into Klingon' }).status, 'unsupported');
+  assert.equal((await app.propose({ request: 'translate my novel into Klingon' })).status, 'unsupported');
   assert.equal(app.foundry.store.proposals().length, 0);
   const p = await activeFlow(app);
   const bad = await app.run({ flowId: p.flowId, input: { weekOf: 'x', items: [{ title: 'a', status: 'maybe' }] } });

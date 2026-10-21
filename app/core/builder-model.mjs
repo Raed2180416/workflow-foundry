@@ -16,6 +16,7 @@
 // dashboard and the approval path are unchanged; every result names the builder that made it, and carries what the build cost.
 import { randomUUID } from 'node:crypto';
 import { FoundryError } from '../../src/data.mjs';
+import { loadPolicy } from '../../src/models/policy.mjs';
 import { loadLibrary, catalog, fillSchema, slotSpecText, resolveSlots, instantiate, promises, practiceOf, templateById, libraryHash } from './library.mjs';
 import { validateStrict, runInWorld, practiceFeedback } from './practice.mjs';
 
@@ -65,7 +66,9 @@ export function fillPrompt({ template, request, answers, base, feedback, previou
  *  in allowedModels because a Mercury-only subset has no class model (research/mercury-20261021/PORT-PROBE.md gap 1). */
 export async function createBuilderPort({ model = DEFAULT_BUILDER_MODEL, journalFile, tokenCap = null, callTokens = 20000, maxBudgetUsdPerCall = 0.25, timeoutMs = 180000 } = {}) {
   const { createModelPort } = await import('../../experiments/lib/models.mjs');
-  const remote = model !== DEFAULT_BUILDER_MODEL && !model.startsWith('claude-');
+  const { policy } = loadPolicy();
+  const remote = (policy.executorModels ?? []).some(m => m.id === model);
+  if (!remote && !policy.models.some(m => m.id === model)) throw new FoundryError('MODEL_NOT_IN_POLICY', `${model} is not in the owner policy (policy/models.json)`);
   if (remote && !(Number.isInteger(tokenCap) && tokenCap > 0)) throw new FoundryError('BUILDER_TOKEN_CAP', `${model} has no other spend bound: give the builder a token cap`);
   return createModelPort({ journalFile, allowedModels: [...new Set([DEFAULT_BUILDER_MODEL, model])], maxBudgetUsdPerCall, timeoutMs,
     ...(remote ? { tokenCap, callTokens } : {}) });

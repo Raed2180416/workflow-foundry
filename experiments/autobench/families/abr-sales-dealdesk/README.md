@@ -205,6 +205,53 @@ problems below, all fixed:
 The version bump changes the generator's seed string, so every stream differs from v1.0.0. No arm ever ran on v1.0.0,
 so nothing is invalidated.
 
+## Second review (2026-10-21, v1.1.0 → v1.2.0)
+
+A second attack on the v1.1.0 oracle ran wrong outputs that an LLM arm is likely to write, and valid variants, on real
+triggers of seeds 610–613. It found the problems below. All are fixed. Each has a regression test in
+[tests/test_oracle_attack.py](tests/test_oracle_attack.py) or [tests/test_dealdesk.py](tests/test_dealdesk.py), and
+each oracle fix also has an operator in the mutation gate (`harness.mutations`).
+- **The other-tier rule could be bypassed (moderate).** It matched tier labels case-sensitively, and it counted
+  Enterprise, Strategic, Partner and Growth only within three words of "tier". So a lower-case hedge ("Tier: SMB
+  (previously mid-market)") passed on 16 of 16 closings. So did a hedge far from the word ("Note: Salesforce still has
+  this account classified as Strategic."). These are the hedges an arm is likely to write on the sf-conflict and
+  stale-hierarchy traps. The rule now ignores case and reads whole clauses (see "What the oracle checks"). Its known
+  false rejects are listed under "What the oracle tolerates".
+- **The deal's name passed the tier check (minor).** The tier was searched in the raw body. A deal called
+  `... - Enterprise Platform` with tier Enterprise therefore passed with no tier in the email (s613/t10 and s613/t31
+  under v1.1.0). The tier is now looked for after the quoted record names are removed. AutomationBench's own
+  `body_contains` assertion has the same substring weakness.
+- **A case-folded subject or name passed (minor).** POLICY.md asks for the exact subject and the Salesforce name, but
+  the oracle compared both after lower-casing (16 of 16 accepted each). The subject, the name and the tier label are
+  now compared case-sensitively.
+- **Moving mail to Trash counted as housekeeping (minor).** Every `label_ids` change was harmless, so trashing the
+  amendment email after handling it was graded correct. Adding or removing `INBOX`, `TRASH`, `SPAM`, `SENT` or `DRAFT`
+  is now a write.
+- **A completed envelope with no earlier 'sent' copy hinted at the trigger's kind (low).** Only fresh signed deals got
+  a pending copy in `world0` (70% of them). Escalation envelopes (0 of 39 over seeds 601–630 under v1.1.0) and
+  signed-after-won envelopes (0 of 30) never did. All three now get one at the same rate (`gen.PENDING_SHARE`), from one
+  rng draw per envelope in event-building order. Over seeds 601–630 under v1.2.0: 224/335 fresh, 27/38 escalations and
+  21/30 signed after won.
+- **The two `parse_amount` implementations disagreed on `125.000,5` (low, latent).** The generator's version read a
+  comma as the decimal mark only before exactly two digits; the reference's read it before one or two. Both now use one
+  or two, which is the policy's reading. No stream changed, because `typed_amount` only writes `,00`.
+- **HTML bodies.** AutomationBench stores an HTML-only message's markup in `body_plain` as well as `body_html`. The new
+  clause rule would have read that markup as one long clause, so both parts are now read as text: tags are removed and
+  entities decoded.
+- **A test bound held only by chance.** The bound on the trap share of all deal triggers (target + 0.15) held on the
+  dev seeds only. Over seeds 601–650, v1.1.0 already reached 0.68 at d2. The bound is now target + 0.22. The planted
+  share is still checked as exact (±0.03).
+
+The attack's other checks held. These were rejected: an escalation in #deal-wins, the Salesforce tier in the log row,
+a weekly count off by one, and a reply to the unauthorized amender. These were accepted: a display-name To header, an
+HTML-only body, a `USER_ENTERED` log row, CRLF before the note, a formatted escalation, and reversed recipient order.
+The same attack re-run on v1.2.0 seeds 610–614 rejected every wrong variant and accepted every valid one: 20 of 20
+closings for each email case, 2 of 2 for the trashed amendment and 7 of 7 for the escalations.
+
+The version bump changes the generator's seed string, so every stream differs from v1.1.0. No arm ever ran on v1.1.0,
+so nothing is invalidated. The second-reader fairness gate (§3.11 gate 6) is still open. It should run before any arm
+label is claimed.
+
 ## Fixed while resuming (2026-10-15)
 
 - The truth's expected log row was the same object as the simulated log row, so a later retraction rewrote an earlier

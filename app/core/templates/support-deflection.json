@@ -19,6 +19,7 @@
     "willDo": ["Read the open tickets", "Answer a ticket automatically only when it mentions one of your keywords ([[keywordsText]]) and is not urgent, with your reply for that keyword", "Send every other ticket, including every urgent one, to [[escalateTo]] in one digest",
       "Ask you before every e-mail", "Check, by re-reading the outbox, that exactly the planned e-mails went out"],
     "willNotDo": ["Answer urgent tickets automatically", "Write new answers: it only sends the replies you gave", "Close, edit or tag tickets", "Run by itself: you (or your coding agent) start each run"],
+    "example": {"answers": [{"keyword": "shipping", "reply": "Orders ship within 3 to 5 business days."}, {"keyword": "password", "reply": "Use the Forgot password link on the login page."}], "escalateTo": "support-lead@practice.example", "signature": "The support team"},
     "practice": {
       "now": "2026-10-14T10:00:00Z",
       "sheets": { "tickets": [

@@ -22,6 +22,7 @@
     "willDo": ["Read the leads sheet and take the leads marked new", "Send each one to the first matching person ([[rulesText]]); everything else to [[defaultAssignee]]", "E-mail that person the lead's details, one e-mail per lead, after you approve each send",
       "Log who got which lead in the lead-log sheet", "Check, by re-reading the outbox and the log, that every lead went to exactly one person"],
     "willNotDo": ["E-mail the leads themselves", "Change the leads sheet or mark leads as contacted", "Touch leads marked spam or already contacted", "Run by itself: you (or your coding agent) start each run"],
+    "example": {"rules": [{"field": "region", "op": "is", "value": "EMEA", "assignTo": "emea@practice.example"}, {"field": "companySize", "op": "atLeast", "value": "500", "assignTo": "enterprise@practice.example"}], "defaultAssignee": "sales@practice.example"},
     "practice": {
       "now": "2026-10-12T08:00:00Z",
       "sheets": { "leads": [

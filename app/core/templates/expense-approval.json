@@ -18,6 +18,7 @@
       "Record every decision in the expense-decisions sheet", "E-mail [[approver]] the claims that need a decision, after you approve the send", { "if": "notifyEmployees", "text": "Tell each employee when their claim was approved automatically" },
       "Check that nothing over the limit was approved, and re-read the outbox and the decisions sheet"],
     "willNotDo": ["Pay or reimburse anyone", "Approve anything over [[autoApproveUpTo]]", "Change the expenses sheet", "Run by itself: you (or your coding agent) start each run"],
+    "example": {"autoApproveUpTo": 100, "approver": "finance@practice.example", "requireReceipt": true, "notifyEmployees": true},
     "practice": {
       "now": "2026-10-15T12:00:00Z",
       "sheets": { "expenses": [
