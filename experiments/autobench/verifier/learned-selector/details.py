@@ -20,7 +20,9 @@ def main():
     ap.add_argument('--vlab', required=True)
     ap.add_argument('--run', required=True)
     ap.add_argument('--variant', default='LR-FULL (primary)')
+    ap.add_argument('--exclude-tasks', default='', help='evaluation-only stratum (known label defects)')
     a = ap.parse_args()
+    hard = set(t for t in a.exclude_tasks.split(',') if t)
     R = json.load(open(os.path.join(a.run, 'eval.json')))
     oof = {}
     for line in open(os.path.join(a.run, 'oof.jsonl')):
@@ -30,7 +32,7 @@ def main():
     meta = [m for m in meta if oof.get(m['rid']) is not None]
     score = np.array([oof[m['rid']] for m in meta])
     thr = {f['fold']: f['threshold'] for f in R['variants'][a.variant]['folds']}
-    out = {'variant': a.variant, 'perArm': {}, 'moves': {}}
+    out = {'variant': a.variant, 'perArm': {}, 'moves': {}, 'mixedAccuracy': {}}
     for arm in ARM_ORDER:
         ix = [i for i, m in enumerate(meta) if m['arm'] == arm]
         if not ix:
@@ -59,6 +61,22 @@ def main():
             k = ('pass' if meta[d[0]]['y'] else 'fail') + '->' + ('pass' if meta[p]['y'] else 'fail')
             mv[k] += 1
         out['moves'][pname] = mv
+    for pname, arms in POOLS.items():
+        g = groups_for(meta, arms)
+        for label, keep in (('all', lambda t: True), ('minusHard', lambda t: t not in hard)):
+            mixed = [t for t, ix in g.items() if keep(t) and 0 < sum(meta[i]['y'] for i in ix) < len(ix)]
+            if not mixed:
+                continue
+            sel = sum(meta[pick(meta, g[t], score)]['y'] for t in mixed)
+            prior = sum(max([meta[i]['y'] for i in g[t] if meta[i]['arm'] == ARM_ORDER[min(ARM_ORDER.index(meta[j]['arm']) for j in g[t])]]) for t in mixed)
+            rnd = sum(np.mean([meta[i]['y'] for i in g[t]]) for t in mixed)
+            tasks = [t for t in g if keep(t)]
+            out['mixedAccuracy'][f'{pname}/{label}'] = {
+                'tasks': len(tasks), 'mixed': len(mixed), 'selectorPicksPass': int(sel), 'priorArmPicksPass': int(prior),
+                'randomExpected': round(float(rnd), 2),
+                'selectorTotal': int(sum(meta[pick(meta, g[t], score)]['y'] for t in tasks)),
+                'priorTotal': int(sum(max([meta[i]['y'] for i in g[t] if meta[i]['arm'] == ARM_ORDER[min(ARM_ORDER.index(meta[j]['arm']) for j in g[t])]]) for t in tasks)),
+                'oracleTotal': int(sum(max(meta[i]['y'] for i in g[t]) for t in tasks))}
     print(json.dumps(out, indent=1))
 
 
