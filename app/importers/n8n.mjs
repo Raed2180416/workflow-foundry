@@ -114,8 +114,12 @@ export function classifyNode(type, parameters) {
 /** The workflow object of an export, a template API response, or an n8n API body. */
 export function workflowOf(json) {
   checkData(json, { maxBytes: 4 * 1024 * 1024 });
-  const w = Array.isArray(json?.nodes) ? json : json?.workflow?.nodes ? json.workflow : json?.workflow?.workflow?.nodes ? json.workflow.workflow : null;
-  if (!w || !w.connections || typeof w.connections !== 'object') throw new FoundryError('N8N_FORMAT', 'Not an n8n workflow: expected "nodes" and "connections"');
+  // The first envelope level that holds BOTH a nodes list and a connections object. An n8n.io template document wraps the workflow as
+  // doc.workflow.workflow, and its doc.workflow.nodes is a metadata list of node TYPES with no connections: taking the first level with a
+  // nodes list made every raw template throw N8N_FORMAT (research/ci1-20261021, S0).
+  const isGraph = c => Array.isArray(c?.nodes) && c.connections !== null && typeof c.connections === 'object' && !Array.isArray(c.connections);
+  const w = [json, json?.workflow, json?.workflow?.workflow].find(isGraph) ?? null;
+  if (!w) throw new FoundryError('N8N_FORMAT', 'Not an n8n workflow: expected "nodes" and "connections"');
   return w;
 }
 

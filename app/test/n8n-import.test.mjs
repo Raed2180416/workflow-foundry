@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { importN8n, normalise, classifyNode, n8nConnector, BLOCKING } from '../importers/n8n.mjs';
+import { importN8n, normalise, classifyNode, n8nConnector, workflowOf, BLOCKING } from '../importers/n8n.mjs';
 import { runSample, DEFAULT_ACQ, MANIFEST } from '../importers/run-n8n-sample.mjs';
 import { createDefaultRegistry } from '../../src/capabilities.mjs';
 import { Foundry } from '../../src/foundry.mjs';
@@ -36,6 +36,19 @@ test('classification is the corpus normaliser\'s (spot checks of its branch orde
   assert.equal(n8nConnector('n8n-nodes-base.googleDriveTrigger'), 'google-drive');
   assert.equal(n8nConnector('n8n-nodes-mcp.mcpClientTool'), 'community:mcp');
   assert.equal(normalise(agentFlow).verdict, 'via-extension:webhook-trigger+chat-session+agent-tool-loop');
+});
+
+test('envelopes: a bare export, an API body and an n8n.io template document (whose workflow.nodes is a TYPE list) all parse', () => {
+  const typeList = [{ id: 19, name: 'n8n-nodes-base.httpRequest', displayName: 'HTTP Request' }];
+  const template = { workflow: { id: 1, name: 'Fetch and tidy', nodes: typeList, workflow: { nodes: simple.nodes, connections: simple.connections } } };
+  for (const doc of [simple, { workflow: simple }, template]) {
+    const n = normalise(doc);
+    assert.deepEqual(n.nodes.map(x => x.name).sort(), ['Get page', 'Pause', 'Start'], 'the real graph, not the metadata type list');
+  }
+  assert.equal(workflowOf(template).nodes.length, 4);
+  // A metadata-only document (types, no graph) is still refused, not misread as a workflow.
+  assert.throws(() => workflowOf({ workflow: { nodes: typeList } }), e => e.code === 'N8N_FORMAT');
+  assert.throws(() => workflowOf({ nodes: [], connections: [] }), e => e.code === 'N8N_FORMAT', 'connections must be an object');
 });
 
 test('a plain flow lowers to valid IR and runs on the real runtime with stub connectors (behaviour vs n8n not shown)', async () => {
