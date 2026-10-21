@@ -15,8 +15,10 @@
 //
 // One model response is one turn. maxTurns caps the responses: the tool calls of the last allowed response still run, and
 // then the session ends (subtype error_max_turns). budgetUsd is checked between turns against the policy price times the
-// usage the endpoint reports (a soft bound, as the CLI's); tokenBudget does the same for input + output tokens, which is
-// the binding limit for a model listed at $0. timeoutMs bounds the whole session.
+// usage the endpoint reports (a soft bound, as the CLI's). tokenBudget (default 400K input + output tokens) is the binding
+// limit for a model listed at $0, which budgetUsd never stops: before each request the session checks the tokens used plus
+// the projected input of that request, and stops (EXECUTOR_BUDGET, subtype error_max_budget_tokens) instead of sending a
+// request that would pass it. The result's `tokens` reports the spend. timeoutMs bounds the whole session.
 //
 // The transcript is written where runClaudeCode writes it (<workdir>/.executor-transcript.jsonl) in the claude CLI's
 // stream-json shape (system/init, one assistant event per response with a unique message id, one user event per tool
@@ -50,8 +52,12 @@ export const OPENAI_CHAT_KEEP_RO = Object.freeze(DEFAULT_KEEP_RO.filter(p => p !
 export const BASH_DEFAULT_TIMEOUT_MS = 120_000, BASH_MAX_TIMEOUT_MS = 600_000, OTHER_TOOL_TIMEOUT_MS = 60_000;
 /** Tool output kept per call (the claude CLI's default Bash output limit): head and tail, with the middle elided. */
 export const TOOL_OUTPUT_MAX_CHARS = 30_000;
-/** Input + output tokens per session unless the caller sets tokenBudget (null: no token cap). */
-export const DEFAULT_TOKEN_BUDGET = 3_000_000;
+/** Input + output tokens per session unless the caller sets tokenBudget (null: no token cap). A model listed at $0 is never
+ * stopped by budgetUsd, so this is its only spend bound: the official AutomationBench loop spent ~1.6M input tokens per task
+ * on mercury-3 (orchestrator, 2026-10-21) against a 100M-token allowance. */
+export const DEFAULT_TOKEN_BUDGET = 400_000;
+/** Characters per token for the pre-request projection: conservative (JSON and code run nearer 3 than 4). */
+export const CHARS_PER_TOKEN = 3;
 // Per-minute rate limits are the binding constraint on a free tier (measured 2026-10-21: HTTP 429 "too many requests per
 // minute" / "input token limit exceeded" with two sessions beside another run on the same key), so a session waits them out
 // for about four minutes (5, 10, 20, 40, 60, 60, 60 s) before it reports MODEL_RATE_LIMIT, which stops an AutomationBench run.
@@ -450,9 +456,22 @@ export async function runOpenAIChat({
       if (failed) throw new SessionStop(failed, failed === 'SANDBOX_UNAVAILABLE' ? `the sandbox could not be set up: ${sandbox.stderr.slice(-500)}` : `the command server did not start: ${sandbox.stderr.slice(-500)}`);
     }
     const messages = [{ role: 'system', content: system }, { role: 'user', content: prompt }];
+    // The next request's input, projected before it is sent: the last reported prompt plus what was appended since, at
+    // CHARS_PER_TOKEN (the whole request when nothing was reported yet). The token budget is checked against used + this,
+    // so a session stops before the request that would cross it, not after.
+    const toolChars = toolList.length ? JSON.stringify(toolDefinitions(toolList)).length : 0;
+    let lastPrompt = null, charsAtLast = 0;
+    const projectNext = () => {
+      const chars = JSON.stringify(messages).length + toolChars;
+      return lastPrompt === null ? Math.ceil(chars / CHARS_PER_TOKEN) : lastPrompt + Math.ceil(Math.max(0, chars - charsAtLast) / CHARS_PER_TOKEN);
+    };
     while (true) {
       if (priced && costUsd >= budgetUsd) throw new SessionStop('EXECUTOR_BUDGET', `spent $${costUsd.toFixed(6)} of the $${budgetUsd} session budget`, 'error_max_budget_usd');
-      if (tokenBudget !== null && totals.input + totals.output >= tokenBudget) throw new SessionStop('EXECUTOR_BUDGET', `used ${totals.input + totals.output} tokens of the ${tokenBudget}-token session budget`, 'error_max_budget_tokens');
+      if (tokenBudget !== null) {
+        const used = totals.input + totals.output, next = projectNext();
+        if (used + next > tokenBudget) throw new SessionStop('EXECUTOR_BUDGET', `token budget: ${used} tokens used, and the next request (about ${next} input tokens) would pass the ${tokenBudget}-token session budget`, 'error_max_budget_tokens');
+      }
+      const charsNow = JSON.stringify(messages).length + toolChars;
       const data = await complete(messages);
       const choice = data?.choices?.[0], msg = choice?.message;
       if (!msg || typeof msg !== 'object') {
@@ -465,6 +484,7 @@ export async function runOpenAIChat({
       const byModel = served.get(servedModel) ?? { inputTokens: 0, outputTokens: 0, cacheReadInputTokens: 0, reasoningTokens: 0, responses: 0 };
       served.set(servedModel, byModel); byModel.responses += 1;
       if (u) {
+        lastPrompt = u.input; charsAtLast = charsNow;
         for (const k of Object.keys(totals)) totals[k] += u[k];
         costUsd += priceUsage(u, price);
         byModel.inputTokens += u.input; byModel.outputTokens += u.output; byModel.cacheReadInputTokens += u.cached; byModel.reasoningTokens += u.reasoning;
@@ -510,6 +530,8 @@ export async function runOpenAIChat({
     ok: !stop, error: stop ? { code: stop.code, exitCode: null, stderr: stop.message.slice(-2000) } : null, sandboxReady,
     result: finalText, costUsd: cost, costUnknown: cost === null, costUpperUsd: cost ?? Math.max(budgetUsd, costUsd),
     streamUsage: { inputTokens: totals.input, outputTokens: totals.output, cacheReadTokens: totals.cached, cacheWriteTokens: 0, reasoningTokens: totals.reasoning },
+    // Token spend as the endpoint reported it (input includes cached input). usageMissing: a response without a usage report.
+    tokens: { input: totals.input, output: totals.output, cachedInput: totals.cached, reasoning: totals.reasoning, total: totals.input + totals.output, budget: tokenBudget, usageMissing },
     turns, sessionId, usage, durationMs: Date.now() - started, toolUses, requests, retries, servedModels: [...served.keys()],
     label: `executor:${EXECUTOR_KIND}:${model}`, transcript,
   };

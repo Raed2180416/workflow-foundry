@@ -75,8 +75,8 @@ effects, is a `trace-integrity` finding). The vm context is a boundary against s
 
 - **Names.** Every key (batch item keys included), wake-up id and task id of a module instance is emitted as
   `<module>/<key>/<local>` and localised again on the way back, so routing is parsed from the name, never remembered.
-  A first version kept a provenance index in the carry; the crash fault (§4) showed why that is wrong: a crash that
-  rolls the carry back would leave the crashed tick's results unroutable. `ctx.status(system, key)` takes the local key.
+  A first version kept a provenance index in the carry; designing the crash fault (§4) showed why that is wrong: a
+  crash that rolls the carry back would leave the crashed tick's results unroutable (found by reasoning, before any run). `ctx.status(system, key)` takes the local key.
   `after` resolves to the module's own key or, across modules, to a local key emitted earlier in the tick.
 - **Enforcement.** Mode `strict` (default; the paid arms and every grading): an undeclared effect, task or timer is
   dropped and recorded; an undeclared call, a schema breach, a recursion, a read outside the declared systems is refused
@@ -170,19 +170,57 @@ Dev worlds; `runs/faults-composed-reference.json`, `runs/probe-straight-saga-*.j
 Cells: oracle passed / completed; `=` journal identical to the fault-free run; dup = logical effects committed twice
 (money in brackets); comp = compensated fulfilments complete / due.
 
-RESULTS-TABLE
+| subject | world | none | restart | crash | dup-delayed | dup-same | downstream |
+|---|---|---|---|---|---|---|---|
+| composed reference (in process) | 1161 d2 s40 | 43/43 | 43/43 = | 43/43 | 43/43 | 43/43 | 42/42, comp 31/31 |
+| composed reference (in process) | 1162 d3 s40 | 44/44 | 44/44 = | 44/44 | 44/44 | 44/44 | 45/46, comp 37/37 |
+| composed reference (in process) | 1164 d5 s60 | 69/69 | 69/69 = | 69/69 | 69/69 | 69/69 | 70/70, comp 47/47 |
+| probe, stable keys (sandbox) | 1161 d2 s40 | 16/43; contracts 16/43 | 16/43 =; contracts 16/43 | 16/43; contracts 16/43 | — | — | — |
+| probe, emission-time keys (sandbox) | 1161 d2 s40 | 16/43; contracts 16/43 | — | 14/43, dup 6 (6), crit 6; contracts 14/43 | — | — | — |
+| B1L-H lineage 1 (monolith, sandbox) | 1232 d2 s12 | 14/14 | 14/14 = | 14/14 | 14/14 | 13/14; contracts 13/14 | 14/14, comp 9/9; contracts 13/14 |
+| B1L-H lineage 1 (monolith, sandbox) | 1161 d2 s40 | 43/43 | 43/43 = | 43/43 | 43/43 | 35/43; contracts 33/43 | 40/42, comp 24/27; contracts 40/42 |
+| B1L-H lineage 2 | 1232 d2 s12 | 11/14; contracts 11/14 | 11/14 =; contracts 11/14 | 11/14; contracts 11/14 | 11/14; contracts 11/14 | 10/14; contracts 10/14 | 11/14, comp 9/9; contracts 11/14 |
+| B1L-H lineage 2 | 1161 d2 s40 | 40/43; contracts 40/43 | 40/43 =; contracts 40/43 | 39/43; contracts 39/43 | 40/43; contracts 40/43 | 32/43; contracts 30/43 | 39/42, comp 24/24; contracts 39/42 |
+| B1L-H lineage 3 | 1232 d2 s12 | 14/14 | 14/14 = | 14/14 | 14/14 | 13/14; contracts 13/14 | 14/14, comp 9/9 |
+| B1L-H lineage 3 | 1161 d2 s40 | 43/43 | 43/43 = | 43/43 | 43/43 | 35/43; contracts 33/43 | 42/42, comp 27/27 |
+
+Injected: restart 49–99 and crash 52–93 per world for the composed reference; 52 restarts and 47 crashes for the probe
+on 1161; 23–24 restarts and 22–27 crashes on 1232 s12 and 62–65 / 61–72 on 1161 for the B1L-H lineages. B1L-H
+lineage 2 is the pre-repair build (its go-live gap costs 3 cases on 1232 s12, as in B1-E8-DEV.md); the probe program
+handles straight orders only, so its pass counts are not a measure of anything.
 
 **What it shows.** The composed reference (journal-driven, it keeps no state of its own) passes the oracle, every
 contract and the interface under every fault, except the reference policy's own same-batch case (§3.3 item 2). The probe
 program (a deliberately partial, carry-dependent composed program in the sandbox, `fixtures/straight-saga/`) shows the
-crash fault catches what it should: with stable keys, 0 duplicates under PROBE-STABLE-CRASHES injected crashes; with a
-key carrying the emission time (correct without faults), PROBE-TIME-DUP logical effects committed twice, all money,
+crash fault catches what it should: with stable keys, 0 duplicates under 47 injected crashes; with a
+key carrying the emission time (correct without faults), 6 logical effects committed twice, all money,
 caught by exactly-once and by the oracle as critical. The monolith baselines are the comparison rows the composed arms
-will meet (§7).
+will meet (§7), and they already differ: every B1L-H lineage keeps exactly-once under every crash (deterministic keys)
+and replays identically under restarts; lineage 2 loses one more case under crashes on 1161 (39/43 against 40/43); all
+three lose cases when deliveries are duplicated in the same instant (1161: 35, 32 and 35 of 43; the twin instance of a
+same-instant duplicate placement is never merged, E8's known MR5 gap); under downstream failures lineage 1 leaves 3 of
+27 compensations incomplete on 1161 (40/42) while lineage 3 completes all (42/42); delayed duplicates cost nothing.
 
 ### 4.3 Mis-composed variants of the reference (`runs/variant-*.json`)
 
-VARIANT-TABLE
+| variant | what is wrong | world, fault | oracle | contracts (failing) | compensation | interface violations | caught by |
+|---|---|---|---|---|---|---|---|
+| payment-compensates (strict) | compensation in the payment (saga) module; it refunds, nobody cancels shipments or releases stock; declared honestly | 1162 d3, none | 18/44 | 22/43 {"refund": "42/43", "reservation": "39/43", "compensation": "39/43", "failure": "37/43", "tracking": "40/43", "customer-action": "30/43", "cancellation": "40/43", "notifications": "37/43"} | 0/4 | 0  (dropped 0) | oracle, contracts, compensation |
+| payment-compensates (strict) | compensation in the payment (saga) module; it refunds, nobody cancels shipments or releases stock; declared honestly | 1162 d3, downstream | 6/46 | 10/45 {"refund": "44/45", "reservation": "31/45", "compensation": "31/45", "failure": "31/45", "tracking": "40/45", "customer-action": "32/45", "cancellation": "36/45", "notifications": "31/45"} | 0/25 | 0  (dropped 0) | oracle, contracts, compensation |
+| payment-compensates (strict) | compensation in the payment (saga) module; it refunds, nobody cancels shipments or releases stock; declared honestly | 1164 d5, none | 37/69 | 42/67 {"reservation": "59/67", "compensation": "59/67", "failure": "57/67", "tracking": "66/67", "customer-action": "53/67", "cancellation": "66/67", "notifications": "57/67"} | 0/14 | 0  (dropped 0) | oracle, contracts, compensation |
+| payment-compensates (strict) | compensation in the payment (saga) module; it refunds, nobody cancels shipments or releases stock; declared honestly | 1164 d5, downstream | 17/70 | 22/68 {"reservation": "48/68", "compensation": "48/68", "failure": "46/68", "tracking": "63/68", "customer-action": "54/68", "cancellation": "58/68", "notifications": "46/68"} | 0/33 | 0  (dropped 0) | oracle, contracts, compensation |
+| undeclared-write (strict) | the notify module sets the order `cancelled` itself (undeclared); the order module leaves it to it | 1162 d3, none | 36/44 | 35/43 {"fraud": "38/43", "cancellation": "40/43", "notifications": "35/43"} | 10/10 | 8 {"effect-undeclared": 8} (dropped 8) | oracle, contracts, interface |
+| undeclared-write (strict) | the notify module sets the order `cancelled` itself (undeclared); the order module leaves it to it | 1164 d5, none | 55/69 | 53/67 {"fraud": "63/67", "customer-action": "58/67", "cancellation": "66/67", "notifications": "53/67"} | 19/19 | 14 {"effect-undeclared": 14} (dropped 14) | oracle, contracts, interface |
+| undeclared-write (audit) | same, recorded but let through | 1162 d3, none | 44/44 | 43/43  | 10/10 | 8 {"effect-undeclared": 8} (dropped 0) | interface |
+| undeclared-write (audit) | same, recorded but let through | 1164 d5, none | 69/69 | 67/67  | 19/19 | 14 {"effect-undeclared": 14} (dropped 0) | interface |
+| parent-direct (strict) | the parent books shipments itself (undeclared parent effect) | 1162 d3, none | 17/44 | 16/43 {"shipment": "16/43"} | 7/7 | 75 {"parent-effect-undeclared": 75} (dropped 75) | oracle, contracts, interface |
+| parent-direct (audit) | same, recorded but let through | 1162 d3, none | 44/44 | 43/43  | 10/10 | 59 {"parent-effect-undeclared": 59} (dropped 0) | interface |
+| call-outside-graph | the notify module calls the compensation module (not in its calls) | 1162 d3, none | 44/44 | 43/43  | 10/10 | 8 {"call-undeclared": 8} (dropped 0) | interface |
+
+Each mistake is caught by its own signal. The business-capability mistake (`payment-compensates`, with an honest
+interface) is caught by the compensation contract and compensation completeness (0 complete), and by the oracle. The
+interface mistakes are caught by the interface signal alone in audit mode (oracle and contracts pass: the behaviour is
+equivalent). In strict mode the enforcement also turns them into business failures the oracle and contracts see.
 
 ### 4.4 Drift (`drift.mjs`, `drift-run.mjs`; `runs/drift-review-timeout-clears.json`)
 
@@ -194,7 +232,11 @@ text (R2.2's third bullet and S15's list of deciding rules), served by the host 
 `driftedBinding`, a world change (up to four straight orders become reviews the analyst answers 25–30 h after the task,
 past the 24 h deadline) and the contracts' reading (`rules.reviewTimeout = 'clear'`).
 
-DRIFT-TABLE
+| world | changed cases | drifted reference: oracle / contracts (earliest, latest) | stale reference fails (oracle) | stale reference fails (contracts) | exactly the changed cases |
+|---|---|---|---|---|---|
+| 1165 d2 s30 | o0009, o0010, o0017, o0019 | 33/33 / 33/33, 33/33 / 33/33 | o0009, o0010, o0017, o0019 | o0009 fraud+reservation+tracking; o0010 fraud+reservation+tracking; o0017 fraud+reservation+tracking; o0019 fraud+reservation+tracking | True |
+| 1166 d3 s30 | o0006, o0007, o0008, o0011 | 34/34 / 33/33, 34/34 / 33/33 | o0006, o0007, o0008, o0011 | o0006 fraud+reservation+tracking; o0007 fraud+reservation+tracking; o0008 fraud+reservation+tracking; o0011 fraud+reservation+tracking | True |
+
 
 `patchLocality(before, after, { rule })` compares two program versions: the files and modules a rebuild or patch
 changed, the modules that declare the rule (`rules` in the manifest), and whether the change stayed inside them (the

@@ -1,0 +1,176 @@
+{
+ "subject": "program:experiments/compose/fixtures/straight-saga",
+ "date": "2026-10-21",
+ "evidence": "development (dev worlds); $0",
+ "worlds": [
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40
+  }
+ ],
+ "results": [
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "none",
+   "status": "complete",
+   "ms": 2851,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 16,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 27
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 16,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "37/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "40/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "38/43",
+     "tracking": "39/43",
+     "customer-action": "32/43",
+     "cancellation": "40/43",
+     "notifications": "36/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 0,
+    "complete": 0,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "restart",
+   "status": "complete",
+   "ms": 19792,
+   "injected": 52,
+   "sameJournalAsFaultFree": true,
+   "oracle": {
+    "completed": 43,
+    "passed": 16,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 27
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 16,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "37/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "40/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "38/43",
+     "tracking": "39/43",
+     "customer-action": "32/43",
+     "cancellation": "40/43",
+     "notifications": "36/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 0,
+    "complete": 0,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "crash",
+   "status": "complete",
+   "ms": 16715,
+   "injected": 47,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 16,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 27
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 16,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "37/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "40/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "38/43",
+     "tracking": "39/43",
+     "customer-action": "32/43",
+     "cancellation": "40/43",
+     "notifications": "36/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 0,
+    "complete": 0,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}

@@ -7,7 +7,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { loadPolicy, validatePolicy, executorModelById, sessionModelById, modelById, modelsForClass, REMOTE_CHAT_KIND } from '../src/models/policy.mjs';
-import { runOpenAIChat, executorForModel, classifyHttp, redact, priceUsage, OPENAI_CHAT_KEEP_RO, TOOL_OUTPUT_MAX_CHARS, EXECUTOR_KIND } from '../src/executors/openai-chat.mjs';
+import { runOpenAIChat, executorForModel, classifyHttp, redact, priceUsage, OPENAI_CHAT_KEEP_RO, TOOL_OUTPUT_MAX_CHARS, EXECUTOR_KIND, DEFAULT_TOKEN_BUDGET } from '../src/executors/openai-chat.mjs';
 import { runClaudeCode, sandboxAvailable, nestedModelUses, streamUsageOf, CLOUD_LOGIN_FILE, DEFAULT_KEEP_RO } from '../src/executors/claude-code.mjs';
 import { auditSession, readStream } from '../experiments/autobench/accounting.mjs';
 import { ENV_FAULTS } from '../experiments/lib/runner.mjs';
@@ -224,10 +224,16 @@ test('budget: a priced model stops between turns once the policy price times the
   assert.equal(r.error.code, 'EXECUTOR_BUDGET'); assert.equal(r.turns, 3, '$0.20, $0.40, $0.60: the third response crosses $0.50');
   assert.ok(Math.abs(r.costUsd - 0.6) < 1e-9); assert.equal(r.costUnknown, false);
   assert.equal(readStream(r.transcript).at(-1).subtype, 'error_max_budget_usd');
+  // A free model: budgetUsd never binds; the session token budget does, before the request that would cross it.
   const free = await fakeEndpoint(t, [reply({ tool_calls: [bash('true')] }, { usage: { prompt_tokens: 400, completion_tokens: 100 } })]);
-  const f = await run(t, { baseUrl: free.baseUrl, budgetUsd: 0.01, tokenBudget: 1200 });
-  assert.equal(f.error.code, 'EXECUTOR_BUDGET'); assert.equal(f.turns, 3); assert.equal(f.costUsd, 0);
-  assert.equal(readStream(f.transcript).at(-1).subtype, 'error_max_budget_tokens');
+  const f = await run(t, { baseUrl: free.baseUrl, budgetUsd: 0.000001, tokenBudget: 1300, tools: ['Bash'] });
+  assert.equal(f.error.code, 'EXECUTOR_BUDGET'); assert.equal(f.costUsd, 0);
+  assert.equal(f.turns, 2, 'used 1000 after two responses; the third request (~400 more input tokens) would pass 1300');
+  assert.equal(free.requests.length, 2); assert.ok(f.tokens.total <= 1300);
+  assert.deepEqual({ ...f.tokens }, { input: 800, output: 200, cachedInput: 0, reasoning: 0, total: 1000, budget: 1300, usageMissing: false });
+  const last = readStream(f.transcript).at(-1);
+  assert.equal(last.subtype, 'error_max_budget_tokens'); assert.match(last.error, /token budget: 1000 tokens used, and the next request \(about \d+ input tokens\) would pass the 1300-token session budget/);
+  assert.equal(ENV_FAULTS.has(f.error.code), false, 'a task outcome, not an environment fault');
   const missing = await fakeEndpoint(t, [{ body: { model: 'mercury-2.5', choices: [{ message: { role: 'assistant', content: 'no usage reported' } }] } }]);
   const m = await run(t, { model: 'mercury-2.5', baseUrl: missing.baseUrl, budgetUsd: 0.3 });
   assert.equal(m.ok, true); assert.equal(m.costUsd, null); assert.equal(m.costUnknown, true); assert.equal(m.costUpperUsd, 0.3, 'unknown cost is booked at the budget bound');
@@ -331,4 +337,13 @@ test('multibyte output survives the pipes intact (no replacement characters at c
   const out = toolResults(r.transcript)[0].content;
   assert.equal(out.includes('�'), false); assert.equal(out, 'é€'.repeat(6000));
   assert.equal(ep.requests[1].body.messages.at(-1).content, 'é€'.repeat(6000));
+});
+
+test('the default session token budget is 400K and binds before the first request when the prompt alone would pass it', { skip: live }, async t => {
+  assert.equal(DEFAULT_TOKEN_BUDGET, 400_000);
+  const ep = await fakeEndpoint(t, [reply({ content: 'never' })]);
+  const r = await run(t, { baseUrl: ep.baseUrl, prompt: 'x'.repeat(1_300_000) });
+  assert.equal(r.error.code, 'EXECUTOR_BUDGET'); assert.equal(ep.requests.length, 0, 'nothing was sent'); assert.equal(r.costUsd, 0);
+  assert.equal(r.tokens.total, 0); assert.equal(r.tokens.budget, 400_000);
+  assert.match(readStream(r.transcript).at(-1).error, /would pass the 400000-token session budget/);
 });

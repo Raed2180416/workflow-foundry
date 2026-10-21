@@ -1,0 +1,68 @@
+{
+ "subject": "ref:call-outside-graph",
+ "date": "2026-10-21",
+ "evidence": "development (dev worlds); $0",
+ "worlds": [
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40
+  }
+ ],
+ "results": [
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "none",
+   "status": "complete",
+   "ms": 5056,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 44,
+    "critical": 0,
+    "codes": {}
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 43,
+    "byCapability": {
+     "intake": "43/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "43/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "43/43",
+     "customer-action": "43/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 8,
+    "byCode": {
+     "call-undeclared": 8
+    },
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}

@@ -22,6 +22,8 @@
 //   --harness foundry --harness-hash H --cli-max-turns N|off (A1 step guard, default max-steps - 1)
 //   --test-run AB-v1 (A0 only: the preregistered test run may hold test-split tasks)
 //   --date-note (AM-9: both arms say the session date is the host's, not the task's; recorded in the summary)
+//   --token-cap N --session-tokens N (token meter: a hard cap on the run's input + output tokens, reserved per session at the
+//                                    session budget, default 400K; required for an executorModels model such as mercury-3)
 //   --harness codeowned [--node-models role=model,...] (arm A1-C: harness/codeowned.mjs, the host-run pipeline; every model
 //                                                        call of the pipeline counts toward the 50 responses; --scripted stub = $0)
 //   --harness secondreader [--node-models role=model,...] (arm A0+SR: harness/secondreader.mjs, A0 unchanged + one clean-context
@@ -39,7 +41,7 @@
 // outcomes: the task's record goes to results.faults.jsonl, no new session starts, and the run stops without a headline
 // (exit 3). `--resume` with the same command keeps every recorded task and reruns the rest; a resume whose settings or
 // runner differ from launch.json is refused.
-import { copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, rmSync, appendFileSync, writeFileSync, constants as fsc } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, appendFileSync, writeFileSync, constants as fsc } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { runClaudeCode, WORK_ROOT, nestedModelUses, DEFAULT_KEEP_RO } from '../../src/executors/claude-code.mjs';
@@ -94,6 +96,30 @@ export function remoteSessionExecutor(policy, model, { pipeline = false } = {}) 
   if (pipeline) throw new Error(`model ${model} (${ex.kind} executor) is not wired into the pipeline arms`);
   return { ...ex, manifestPolicy: { provider: ex.provider, model: ex.entry }, manifestExecutor: 'src/executors/openai-chat.mjs runOpenAIChat (tools in the claude-code executor sandbox: DEFAULT_HIDDEN, OPENAI_CHAT_KEEP_RO + the step-guard directory, no network); maxTurns enforced natively' };
 }
+
+// --- Token meter (orchestrator requirement 2026-10-21, research/mercury-20261021/) ------------------------------------------
+// A model listed at $0 never meets the dollar ledger: the official loop spent ~1.6M input tokens per task on mercury-3. With
+// --token-cap (required for a remote run) tokens are booked like dollars: a session starts only if spent + reserved + its
+// session token budget (--session-tokens, default 400K; the remote executor stops a session before it would pass it) <= the
+// cap, and settles at the tokens it reported (at its budget when it reported none). Every fork records its tokens either way.
+export const DEFAULT_SESSION_TOKENS = 400_000;
+export function makeTokenMeter(cap) {
+  const m = { cap, spent: 0, reserved: 0, unknown: 0 };
+  m.tryReserve = b => { if (m.spent + m.reserved + b <= cap) { m.reserved += b; return true; } return false; };
+  m.reserve = async b => { while (!m.tryReserve(b)) { if (m.reserved <= 0) return false; await new Promise(r => setTimeout(r, 250)); } return true; };
+  m.settle = (b, tokens) => { m.reserved -= b; if (Number.isFinite(tokens)) m.spent += tokens; else { m.spent += b; m.unknown += 1; } };
+  return m;
+}
+/** A session's token spend: the remote executor's `tokens`, or the claude executor's stream usage (input = uncached + cache
+ * reads + cache writes). null when the session reported none. */
+export function tokensOf(r) {
+  if (r?.tokens && Number.isFinite(r.tokens.total)) return { input: r.tokens.input, output: r.tokens.output, cachedInput: r.tokens.cachedInput ?? 0, total: r.tokens.total, ...(r.tokens.usageMissing ? { usageMissing: true } : {}) };
+  const u = r?.streamUsage;
+  if (!u) return null;
+  const input = (u.inputTokens ?? 0) + (u.cacheReadTokens ?? 0) + (u.cacheWriteTokens ?? 0);
+  return { input, output: u.outputTokens ?? 0, cachedInput: u.cacheReadTokens ?? 0, total: input + (u.outputTokens ?? 0) };
+}
+const tokenTotals = forks => { const t = forks.map(f => f.tokens).filter(Boolean); return { input: t.reduce((s, x) => s + x.input, 0), output: t.reduce((s, x) => s + x.output, 0), cachedInput: t.reduce((s, x) => s + x.cachedInput, 0), total: t.reduce((s, x) => s + x.total, 0), sessions: t.length }; };
 
 /** A hard USD cap over reserved session budgets: a session starts only if spent + reserved + its budget <= cap. */
 export function makeLedger(capUsd) {
@@ -190,7 +216,10 @@ export async function runTasks(o) {
     else if (modelById(policy.policy, opt.model).provider !== 'claude-cli') throw new Error(`model ${opt.model} is not served by the claude-cli provider`);
     for (const m of new Set(Object.values(models ?? {}))) if (modelById(policy.policy, m).provider !== 'claude-cli') throw new Error(`model ${m} is not served by the claude-cli provider`);
     if (!(opt.capUsd > 0)) throw new Error('--cap (hard USD cap for the run) is required for model runs');
+    if (remote && !(opt.tokenCap > 0)) throw new Error(`--token-cap (hard cap on the run's input + output tokens) is required for ${opt.model}: its listed price is $${remote.entry.price.inputPerMTok}/$${remote.entry.price.outputPerMTok} per MTok, so the dollar cap may never stop it`);
   }
+  const sessionTokenBudget = opt.sessionTokens ?? DEFAULT_SESSION_TOKENS;
+  if (opt.tokenCap != null && !(opt.tokenCap > 0 && Number.isInteger(sessionTokenBudget) && sessionTokenBudget > 0)) throw new Error('--token-cap and --session-tokens must be positive');
   const runId = opt.runId ?? `ab-${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}-${sha256(String(Math.random())).slice(0, 6)}`;
   const live = opt.liveRoot ?? path.join(WORK_ROOT, 'autobench', runId);
   mkdirSync(live, { recursive: true });
@@ -212,7 +241,7 @@ export async function runTasks(o) {
   const cli = scripted || remote ? null : cliVersion();
   let manifest = null, guard = null;
   if (harness) {
-    manifest = co ? (co.pipelineManifest ?? co.codeownedManifest)((co.pipelineConfig ?? co.codeownedConfig)({ ...opt, cli })) : harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli, ...(remote ? { policy: remote.manifestPolicy, executor: remote.manifestExecutor } : {}) }));
+    manifest = co ? (co.pipelineManifest ?? co.codeownedManifest)((co.pipelineConfig ?? co.codeownedConfig)({ ...opt, cli })) : harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli, ...(remote ? { policy: remote.manifestPolicy, executor: `${remote.manifestExecutor}; session token budget ${sessionTokenBudget}` } : {}) }));
     if (opt.harnessHash && opt.harnessHash !== manifest.sha256) throw new Error(`harness hash mismatch: given ${opt.harnessHash}, recomputed ${manifest.sha256} (files or settings changed)`);
   }
   // AM-4: a scripted run is never exempt. A dev-only pipeline arm (A0+SR, a probe not declared in PREREG §3) never is either.
@@ -222,7 +251,8 @@ export async function runTasks(o) {
   const resultsFile = path.join(live, 'results.jsonl'), faultsFile = path.join(live, 'results.faults.jsonl'), launchFile = path.join(live, 'launch.json');
   const launch = { tasks, model: scripted ? null : opt.model ?? null, scripted, harness: manifest?.sha256 ?? null, cliMaxTurns, k: opt.k, det: opt.det,
     maxSteps: opt.maxSteps, budgetUsd: opt.budgetUsd, capUsd: opt.capUsd ?? null, timeoutMin: opt.timeoutMin, effort: opt.effort ?? null,
-    tools: opt.tools, dateNote: Boolean(opt.dateNote), runnerSha256: sha256(readFileSync(new URL(import.meta.url))) };
+    tools: opt.tools, dateNote: Boolean(opt.dateNote), runnerSha256: sha256(readFileSync(new URL(import.meta.url))),
+    ...(opt.tokenCap != null || remote ? { tokenCap: opt.tokenCap ?? null, sessionTokens: sessionTokenBudget } : {}) };
   const readRecords = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
   let kept = [];
   if (!opt.dryRun && (existsSync(resultsFile) || existsSync(launchFile))) {
@@ -231,7 +261,7 @@ export async function runTasks(o) {
     // Every setting must match. Two may change, each recorded in the launch history: the cap may be raised (it gates which
     // sessions start, never how one runs), and the runner may change only with --accept-runner-change.
     const prior = readJson(launchFile);
-    const settings = ({ capUsd, runnerSha256, history, ...rest }) => JSON.stringify(rest);
+    const settings = ({ capUsd, tokenCap, runnerSha256, history, ...rest }) => JSON.stringify(rest);
     if (settings(prior) !== settings(launch)) throw new Error(`resume refused: the settings differ from ${launchFile}`);
     const change = {};
     if (prior.runnerSha256 !== launch.runnerSha256) {
@@ -242,7 +272,11 @@ export async function runTasks(o) {
       if (!(launch.capUsd >= prior.capUsd)) throw new Error(`resume refused: the cap can only be raised (${prior.capUsd} -> ${launch.capUsd})`);
       change.capUsd = [prior.capUsd, launch.capUsd];
     }
-    if (Object.keys(change).length) writeJson(launchFile, { ...prior, runnerSha256: launch.runnerSha256, capUsd: launch.capUsd, history: [...(prior.history ?? []), { at: new Date().toISOString(), ...change }] });
+    if ((prior.tokenCap ?? null) !== (launch.tokenCap ?? null)) {
+      if (!(launch.tokenCap >= prior.tokenCap)) throw new Error(`resume refused: the token cap can only be raised (${prior.tokenCap} -> ${launch.tokenCap})`);
+      change.tokenCap = [prior.tokenCap, launch.tokenCap];
+    }
+    if (Object.keys(change).length) writeJson(launchFile, { ...prior, runnerSha256: launch.runnerSha256, capUsd: launch.capUsd, ...(launch.tokenCap != null ? { tokenCap: launch.tokenCap } : {}), history: [...(prior.history ?? []), { at: new Date().toISOString(), ...change }] });
     // A recorded task that is not an outcome (written before these rules, or by hand) reruns; a faulted one is kept aside.
     const all = readRecords(resultsFile);
     kept = all.filter(r => !notAnOutcome(r));
@@ -281,6 +315,8 @@ export async function runTasks(o) {
     const known = r.forks.filter(f => !f.costUnknown).reduce((s, f) => s + (f.costUsd ?? 0), 0);
     ledger.spent += r.costUsd; ledger.knownUsd += known; ledger.unknownUpperUsd += r.costUsd - known; ledger.unknown += r.forks.filter(f => f.costUnknown).length;
   }
+  const meter = opt.tokenCap != null ? makeTokenMeter(opt.tokenCap) : null;
+  if (meter) for (const r of [...kept, ...faulted]) meter.spent += r.forks.reduce((s, f) => s + (f.tokens?.total ?? 0), 0);
   const done = new Set(kept.map(r => r.task));
   if (kept.length) log(`[autobench] resuming ${runId}: ${kept.length}/${tasks.length} tasks kept, ${faulted.length} earlier fault records, $${ledger.spent.toFixed(4)} already spent`);
   const jobs = tasks.flatMap((task, ti) => (done.has(task) ? [] : Array.from({ length: opt.k }, (_, fork) => ({ task, ti, fork }))));
@@ -303,7 +339,7 @@ export async function runTasks(o) {
     const rec = { task, domain: meta.domain, example_id: meta.example_id, contract_sha256: meta.contract_sha256, k: opt.k,
       forks: fs.map(f => ({ fork: f.fork, ...summarizeGrade(f.grade), steps: f.steps ?? null, costUsd: f.costUsd ?? null, costUnknown: f.costUnknown ?? false,
         turns: f.turns ?? null, durationMs: f.durationMs ?? null, sessionError: f.sessionError ?? null, harnessError: f.harnessError ?? null, skipped: f.skipped ?? null, nestedModelUses: f.nestedModelUses ?? 0,
-        session: f.session ?? null, usage: f.usage ?? null, ...(harness === HARNESS_ID ? { ledger: f.ledger ?? null } : {}), ...(co ? { pipeline: f.pipeline ?? null } : {}), accountingError: f.accountingError ?? null })),
+        session: f.session ?? null, usage: f.usage ?? null, tokens: f.tokens ?? null, ...(harness === HARNESS_ID ? { ledger: f.ledger ?? null } : {}), ...(co ? { pipeline: f.pipeline ?? null } : {}), accountingError: f.accountingError ?? null })),
       vote, final: final ? summarizeGrade(final) : null, costUsd: fs.reduce((s, f) => s + (f.costUsd ?? f.costUpperUsd ?? 0), 0) };
     // An environment fault, a cap skip, or a fork not started after a stop is not an outcome: a fault is kept as raw
     // evidence, and the task reruns on --resume.
@@ -338,8 +374,15 @@ export async function runTasks(o) {
     } else if (!(await ledger.reserve(opt.budgetUsd))) {
       rec.skipped = `cap: spent ${ledger.spent.toFixed(4)} + reserved ${ledger.reserved.toFixed(4)} + ${opt.budgetUsd} > ${opt.capUsd}`;
       stopped ??= `the cap (${rec.skipped})`;
+    } else if (meter && !(await meter.reserve(sessionTokenBudget))) {
+      ledger.settle(opt.budgetUsd, { costUsd: 0 }); // release the dollar reservation: nothing started
+      rec.skipped = `token cap: spent ${meter.spent} + reserved ${meter.reserved} + ${sessionTokenBudget} > ${meter.cap}`;
+      stopped ??= `the token cap (${rec.skipped})`;
     } else {
       let r = null, bridge = null, started = false;
+      // A rerun after an environment fault reuses this host directory: the earlier session's transcript is kept beside it,
+      // never mistaken for this session's (copyTranscript does not overwrite).
+      if (existsSync(path.join(hostDir, 'transcript.jsonl'))) renameSync(path.join(hostDir, 'transcript.jsonl'), path.join(hostDir, `transcript.prior-${Date.now()}.jsonl`));
       try {
         rmSync(workdir, { recursive: true, force: true });
         const catalog = readJson(path.join(pdir, 'catalog.json')), prompt = readJson(path.join(pdir, 'prompt.json'));
@@ -357,10 +400,10 @@ export async function runTasks(o) {
           nodeRunner: opt.nodeRunner ?? runner, cliTarget: opt.cliTarget ?? 'claude', scripted, pipeline: opt.pipeline, log })
           : await runner({ model: opt.model, prompt: prompt.user, systemPrompt: systemPromptFor(prompt, catalog), workdir, files: {},
           budgetUsd: opt.budgetUsd, timeoutMs: opt.timeoutMin * 60_000, effort: opt.effort ?? null, tools: opt.tools, task: { name: task, fork },
-          ...(harness ? { maxTurns: cliMaxTurns || null } : {}), ...(guard ? { binary: guard.binary, keepRo: [...DEFAULT_KEEP_RO, guard.dir] } : {}) });
+          ...(harness ? { maxTurns: cliMaxTurns || null } : {}), ...(guard ? { binary: guard.binary, keepRo: [...DEFAULT_KEEP_RO, guard.dir] } : {}), ...(remote ? { tokenBudget: sessionTokenBudget } : {}) });
         if (co) rec.pipeline = r.pipeline;
         Object.assign(rec, { costUsd: r.costUsd ?? null, costUnknown: Boolean(r.costUnknown), costUpperUsd: r.costUpperUsd ?? opt.budgetUsd, turns: r.turns ?? null,
-          durationMs: r.durationMs ?? null, sessionError: r.error?.code ?? null, nestedModelUses: nestedModelUses(r.toolUses ?? []) });
+          durationMs: r.durationMs ?? null, sessionError: r.error?.code ?? null, nestedModelUses: nestedModelUses(r.toolUses ?? []), tokens: tokensOf(r) });
         const done = await bridge.stop();
         rec.steps = done.steps;
         rec.grade = readJson(path.join(hostDir, 'grade.json'));
@@ -371,6 +414,7 @@ export async function runTasks(o) {
         // A runner that threw after it started may have spent: count it at its budget (an upper bound), never at 0.
         if (!r && started) Object.assign(rec, { costUsd: null, costUnknown: true, costUpperUsd: opt.budgetUsd });
         ledger.settle(opt.budgetUsd, r ?? (started ? { costUsd: null, costUpperUsd: opt.budgetUsd } : { costUsd: 0 }));
+        if (meter) meter.settle(sessionTokenBudget, !started ? 0 : rec.tokens && !rec.tokens.usageMissing ? rec.tokens.total : rec.tokens ? Math.max(rec.tokens.total, sessionTokenBudget) : null);
         copyTranscript(workdir, hostDir);
         if (harness === HARNESS_ID && started) { try { rec.ledger = collectLedger(workdir, hostDir); } catch (e) { rec.ledger = { present: false, reason: `error: ${String(e?.message ?? e).slice(0, 200)}` }; } }
         if (!opt.keep) rmSync(workdir, { recursive: true, force: true });
@@ -399,9 +443,9 @@ export async function runTasks(o) {
   // 4. summary
   results.sort((a, b) => tasks.indexOf(a.task) - tasks.indexOf(b.task));
   if (stopped) {
-    const atCap = stopped.startsWith('the cap');
-    log(`[autobench] STOPPED at ${atCap ? '' : 'an environment fault: '}${stopped}. ${results.length}/${tasks.length} tasks recorded, $${ledger.spent.toFixed(4)} spent of $${opt.capUsd}; no summary or headline. ${atCap ? 'Re-run with --resume and a higher --cap.' : 'Re-run the same command with --resume after the reset.'}`);
-    return { summary: { runId, stopped, recorded: results.length, of: tasks.length, spentUsd: ledger.spent, live }, results, stopped, stopKind: atCap ? 'cap' : 'environment' };
+    const atCap = /^the (token )?cap/.test(stopped);
+    log(`[autobench] STOPPED at ${atCap ? '' : 'an environment fault: '}${stopped}. ${results.length}/${tasks.length} tasks recorded, $${ledger.spent.toFixed(4)} spent of $${opt.capUsd}${meter ? `, ${meter.spent} tokens of ${meter.cap}` : ''}; no summary or headline. ${atCap ? `Re-run with --resume and a higher ${stopped.startsWith('the token cap') ? '--token-cap' : '--cap'}.` : 'Re-run the same command with --resume after the reset.'}`);
+    return { summary: { runId, stopped, recorded: results.length, of: tasks.length, spentUsd: ledger.spent, ...(meter ? { spentTokens: meter.spent } : {}), live }, results, stopped, stopKind: atCap ? 'cap' : 'environment' };
   }
   const faultRecords = readRecords(faultsFile);
   const pass = r => (r.final ? r.final.task_completed_correctly : 0), pc = r => (r.final ? r.final.partial_credit : 0);
@@ -427,6 +471,10 @@ export async function runTasks(o) {
     // spentUsd is an upper bound: CLI-reported costs plus every session whose cost is unknown counted at its budget.
     cost: { spentUsd: ledger.spent, knownUsd: ledger.knownUsd, unknownUpperUsd: ledger.unknownUpperUsd, unknownCostSessions: ledger.unknown, sessions: results.reduce((s, r) => s + r.forks.length, 0),
       skipped: results.flatMap(r => r.forks).filter(f => f.skipped).length },
+    // Token spend as the sessions reported it (input includes cached input); the meter (--token-cap) when one ran.
+    tokens: { ...tokenTotals(results.flatMap(r => r.forks)), meanPerTask: results.length ? tokenTotals(results.flatMap(r => r.forks)).total / results.length : null,
+      sessionBudget: remote ? sessionTokenBudget : null, cap: opt.tokenCap ?? null, meterSpent: meter?.spent ?? null, meterUnknownSessions: meter?.unknown ?? null,
+      faultSessions: tokenTotals(readRecords(faultsFile).flatMap(r => r.forks)).total },
     // Tasks rerun after an environment fault (their fault records stay in results.faults.jsonl, live and repo copy).
     launchHistory: readJson(launchFile).history ?? [],
     envFaults: { records: faultRecords.length, tasks: [...new Set(faultRecords.map(r => r.task))].length, sessions: faultRecords.reduce((s, r) => s + r.forks.filter(isEnvFault).length, 0), spentUsd: faultRecords.reduce((s, r) => s + r.costUsd, 0) },
@@ -479,6 +527,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const { summary, stopped, stopKind } = await runTasks({
     model: a.model, tasks: a.tasks ? a.tasks.split(',').filter(Boolean) : undefined, subset: num(a.subset, undefined), seed: a.seed ?? DEFAULTS.seed,
     domains: a.domains ? a.domains.split(',') : undefined, k: num(a.k, DEFAULTS.k), capUsd: num(a.cap, undefined), budgetUsd: num(a.budget, DEFAULTS.budgetUsd),
+    tokenCap: num(a['token-cap'], undefined), sessionTokens: num(a['session-tokens'], undefined),
     concurrency: num(a.concurrency, DEFAULTS.concurrency), maxSteps: num(a['max-steps'], DEFAULTS.maxSteps), timeoutMin: num(a['timeout-min'], DEFAULTS.timeoutMin),
     det: a.det ?? DEFAULTS.det, effort: a.effort, tools: a.tools ? a.tools.split(',') : DEFAULTS.tools, runId: a['run-id'], liveRoot: a.live,
     outDir: a['no-copy'] ? null : a.out, keep: Boolean(a.keep), dryRun: Boolean(a['dry-run']), runner, pool: a.pool,
@@ -486,6 +535,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     nodeModels: a['node-models'] ? Object.fromEntries(a['node-models'].split(',').filter(Boolean).map(x => x.split('=').map(y => y.trim()))) : undefined, cliMaxTurns: a['cli-max-turns'] === undefined ? undefined : a['cli-max-turns'] === 'off' ? 0 : Number(a['cli-max-turns']),
   });
   process.stdout.write(JSON.stringify(summary, null, 1) + '\n');
-  // Exit 3: an environment fault (resume after the reset). Exit 4: the cap (resume with a higher --cap).
+  // Exit 3: an environment fault (resume after the reset). Exit 4: the cap or the token cap (resume with a higher one).
   if (stopped) process.exit(stopKind === 'cap' ? 4 : 3);
 }

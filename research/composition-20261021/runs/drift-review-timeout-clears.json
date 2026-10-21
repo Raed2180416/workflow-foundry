@@ -1,0 +1,137 @@
+{
+ "drift": "review-timeout-clears",
+ "rule": "R2.2",
+ "capability": "fraud",
+ "date": "2026-10-21",
+ "evidence": "development (dev worlds); $0",
+ "worlds": [
+  {
+   "seed": 1165,
+   "d": 2,
+   "size": 30,
+   "converted": [
+    "o0009",
+    "o0010",
+    "o0017",
+    "o0019"
+   ],
+   "drifted": {
+    "earliest": {
+     "oracle": "33/33",
+     "capabilities": "33/33"
+    },
+    "latest": {
+     "oracle": "33/33",
+     "capabilities": "33/33"
+    }
+   },
+   "stale": {
+    "oracleFails": [
+     "o0009",
+     "o0010",
+     "o0017",
+     "o0019"
+    ],
+    "contractFails": [
+     {
+      "case": "o0009",
+      "failed": [
+       "fraud",
+       "reservation",
+       "tracking"
+      ]
+     },
+     {
+      "case": "o0010",
+      "failed": [
+       "fraud",
+       "reservation",
+       "tracking"
+      ]
+     },
+     {
+      "case": "o0017",
+      "failed": [
+       "fraud",
+       "reservation",
+       "tracking"
+      ]
+     },
+     {
+      "case": "o0019",
+      "failed": [
+       "fraud",
+       "reservation",
+       "tracking"
+      ]
+     }
+    ],
+    "exactlyTheChangedCases": true
+   }
+  },
+  {
+   "seed": 1166,
+   "d": 3,
+   "size": 30,
+   "converted": [
+    "o0006",
+    "o0007",
+    "o0008",
+    "o0011"
+   ],
+   "drifted": {
+    "earliest": {
+     "oracle": "34/34",
+     "capabilities": "33/33"
+    },
+    "latest": {
+     "oracle": "34/34",
+     "capabilities": "33/33"
+    }
+   },
+   "stale": {
+    "oracleFails": [
+     "o0006",
+     "o0007",
+     "o0008",
+     "o0011"
+    ],
+    "contractFails": [
+     {
+      "case": "o0006",
+      "failed": [
+       "fraud",
+       "reservation",
+       "tracking"
+      ]
+     },
+     {
+      "case": "o0007",
+      "failed": [
+       "fraud",
+       "reservation",
+       "tracking"
+      ]
+     },
+     {
+      "case": "o0008",
+      "failed": [
+       "fraud",
+       "reservation",
+       "tracking"
+      ]
+     },
+     {
+      "case": "o0011",
+      "failed": [
+       "fraud",
+       "reservation",
+       "tracking"
+      ]
+     }
+    ],
+    "exactlyTheChangedCases": true
+   }
+  }
+ ]
+}
