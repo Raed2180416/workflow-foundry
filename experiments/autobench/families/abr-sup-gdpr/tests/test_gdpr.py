@@ -8,7 +8,9 @@ Seeds used: practice 601-609 and dev 610-614 only (RECURRING-DESIGN §3.9); held
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
@@ -28,6 +30,12 @@ import reference  # noqa: E402
 DEV = [610, 611, 612, 613, 614]
 FAMILY = json.loads((FAMILY_DIR / "family.json").read_text())
 REPO = FAMILY_DIR.parents[3]
+BRIDGE = FAMILY_DIR.parents[1] / "bridge.py"
+# mutation operators added after the 2026-10-21 review (tag case, prefix spacing, trashed sends, exact texts and At)
+REVIEW_OPERATORS = {"ticket-tag-case", "ticket-other-tags-case", "ticket-prefix-spacing", "ticket-subject-padded",
+                    "trash-own-sent", "post-trailing-period", "post-double-space", "log-at-seconds",
+                    "log-request-id-case", "log-request-id-padded", "log-reference-case", "log-transition-case",
+                    "log-reference-semicolon"}
 # control -> trap labels (or trigger kinds) its broken rule must show up on
 ONE_DEFECT = {
     "any-sender": {"spoof-lookalike", "spoof-forward", "spoof-display", "spoof-colleague", "wrong-id"},
@@ -294,8 +302,11 @@ def test_spoofed_verification_is_a_wrong_delivery(streams):
 
 # -- oracle ------------------------------------------------------------------------------------------------------------
 def test_oracle_mutation_score():
+    """Every single-fault mutant is killed, including the operators added after the 2026-10-21 review (each of them
+    applies on 610-611)."""
     g = gates.gate_mutation([610, 611])
-    assert g["pass"] and g["score"] >= 0.95, g["survived"]
+    assert g["pass"] and g["score"] >= 0.95 and g["n_survived"] == 0, g["survived"]
+    assert REVIEW_OPERATORS <= set(g["operators"]), REVIEW_OPERATORS - set(g["operators"])
 
 
 def test_oracle_specificity():
@@ -324,3 +335,197 @@ def test_grounding_span():
     span = "\n".join(lines[22600:23005])
     assert '"task": "support.zendesk_gdpr_purge"' in span and "ws_legal_hold" in span
     assert FAMILY["grounding"][0]["span"].endswith("22601-23005")
+
+
+# -- 2026-10-21 review: the oracle grades the stated contract, through the real tool path ------------------------------
+class _OtherTagsUpper(reference.Gdpr):
+    """Re-cases the ticket's other tags and adds gdpr-purged in lower case (scratch variant 'other-tags-upper')."""
+    def anonymize(self, t):
+        tags = [x.upper() for x in t.get("tags") or []] + [reference.TAG]
+        self.call("PUT", reference.ZENDESK + f"tickets/{t['id']}", None,
+                  {"ticket": {"subject": reference.PREFIX + t["subject"], "tags": tags}})
+
+
+class _UpperTag(reference.Gdpr):
+    """Every tag upper case, the purge tag as 'GDPR-PURGED' (scratch variant 'upper-tag')."""
+    def anonymize(self, t):
+        tags = [x.upper() for x in t.get("tags") or []] + [reference.TAG.upper()]
+        self.call("PUT", reference.ZENDESK + f"tickets/{t['id']}", None,
+                  {"ticket": {"subject": reference.PREFIX + t["subject"], "tags": tags}})
+
+
+class _DoubleSpace(reference.Gdpr):
+    """'[GDPR Purged]   Subject' (scratch variant 'double-space')."""
+    def anonymize(self, t):
+        self.call("PUT", reference.ZENDESK + f"tickets/{t['id']}", None,
+                  {"ticket": {"subject": "[GDPR Purged]   " + t["subject"], "tags": list(t.get("tags") or []) + [reference.TAG]}})
+
+
+class _LeadingSpace(reference.Gdpr):
+    """'  [GDPR Purged] Subject  ' (scratch variant 'leading-space')."""
+    def anonymize(self, t):
+        self.call("PUT", reference.ZENDESK + f"tickets/{t['id']}", None,
+                  {"ticket": {"subject": "  " + reference.PREFIX + t["subject"] + "  ", "tags": list(t.get("tags") or []) + [reference.TAG]}})
+
+
+class _TrashSent(reference.Gdpr):
+    """Moves every email it sends to Trash in the same run (scratch variant 'trash-sent')."""
+    def call(self, method, url, params=None, body=None):
+        out = super().call(method, url, params, body)
+        if method == "POST" and url.endswith("messages/send"):
+            super().call("POST", reference.GMAIL + f"messages/{out['id']}/trash")
+        return out
+
+
+class _PostPeriod(reference.Gdpr):
+    """The #privacy-ops summary with a trailing period (scratch variant 'post-period')."""
+    def post(self, text, channel=reference.PRIVACY_OPS):
+        return super().post(text + "." if channel == reference.PRIVACY_OPS else text, channel)
+
+
+class _AtLater(reference.Gdpr):
+    """At 50 seconds after the event (scratch variant 'at-later')."""
+    def __init__(self, trigger, ctx):
+        super().__init__(trigger, ctx)
+        self.at = re.sub(r":00Z$", ":50Z", self.at)
+
+
+class _LowerIds(reference.Gdpr):
+    """Request ID and Reference with their letter case changed (log_key folded both before the fix)."""
+    def append_log(self, rid, email, transition, reference=""):
+        return super().append_log(rid.lower(), email, transition, reference.swapcase())
+
+
+def _solver(cls):
+    def run(trigger, ctx):
+        return cls(trigger, ctx).run()
+    return run
+
+
+REVIEW_VARIANTS = {   # variant -> (a failed check it must show, a trap or kind it must fail on)
+    "other-tags-upper": (_OtherTagsUpper, "ticket ", "keep-tags"),
+    "upper-tag": (_UpperTag, "ticket ", "verification.reply"),
+    "double-space": (_DoubleSpace, "ticket ", "verification.reply"),
+    "leading-space": (_LeadingSpace, "ticket ", "verification.reply"),
+    "trash-sent": (_TrashSent, "email ", "erasure.requested"),
+    "post-period": (_PostPeriod, "post ", "day.close"),
+    "at-later": (_AtLater, "log ", "erasure.requested"),
+    "lower-ids": (_LowerIds, "log ", "erasure.requested"),
+}
+
+
+@pytest.mark.parametrize("name", sorted(REVIEW_VARIANTS))
+def test_review_variants_are_rejected(name, streams):
+    """Each variant passed 77/77 on 610-612 before the fix (tags and subjects compared after case folding and whitespace
+    collapsing, a trashed sent email matched, a trailing period and an At within the minute tolerated, ids case-folded).
+    Run through AutomationBench's tool path on the d3 dev stream 611, each now fails where its rule applies."""
+    cls, check, where = REVIEW_VARIANTS[name]
+    res = harness.run_stream(streams[611], _solver(cls))
+    failed = [x for x in res["rows"] if not x["pass"]]
+    assert failed and not res["clean_week"], name
+    hit = [x for x in failed if where in set(x["traps"]) | {x["kind"]} and any(c["name"].startswith(check) for c in x["failed"])]
+    assert hit, (name, [(x["taskKey"], [c["name"] for c in x["failed"]]) for x in failed][:4])
+    if name == "trash-sent":                    # the trashed email is overreach as well as a missing email
+        assert any(c["name"] == "envelope" and "TRASH" in c["detail"] for x in failed for c in x["failed"])
+
+
+def test_exact_tags_and_subjects_in_the_week_close(streams):
+    """end.tickets compares subjects and tags exactly too: re-casing a purged ticket's tags or padding its subject in
+    the final world fails the week close, while reordering its tags does not."""
+    out = streams[611]
+    res = harness.run_stream(out, reference.handle, keep_worlds=True)
+    assert res["clean_week"]
+    before, after, truth = res["befores"][-1], res["afters"][-1], out["truth"][-1]
+    grader = oracle.Grader(use_ab=False)
+    purged = [t for t in after["zendesk"]["tickets"] if reference.TAG in t["tags"] and len(t["tags"]) > 1]
+    assert purged
+
+    def end_ok(w):
+        v = grader.grade(truth, before, w, end=out["end"], world0=out["world0"])
+        return not [c for c in v["failed"] if c["name"] == "end.tickets"]
+    import copy
+    for fn in (lambda t: t.__setitem__("tags", [x.upper() for x in t["tags"]]),
+               lambda t: t.__setitem__("subject", t["subject"].replace("] ", "]  ", 1)),
+               lambda t: t.__setitem__("subject", " " + t["subject"])):
+        w = copy.deepcopy(after)
+        fn(next(t for t in w["zendesk"]["tickets"] if t["id"] == purged[0]["id"]))
+        assert not end_ok(w)
+    w = copy.deepcopy(after)
+    t = next(t for t in w["zendesk"]["tickets"] if t["id"] == purged[0]["id"])
+    t["tags"] = list(reversed(t["tags"]))
+    assert end_ok(w)
+
+
+def test_inweek_hold_lift_reads_a_blocked_row_written_this_week(streams, dev_runs):
+    """hold-lift-inweek (added 2026-10-21): a request verified while on hold this week, then its hold lifted later the
+    same week. The lift purges from a Blocked row the automation wrote this week, never one pre-seeded in world0."""
+    hits = []
+    for s, out in streams.items():
+        log0 = {c["Request ID"] for c in out["end"]["log0"]}
+        for k, t in enumerate(out["truth"]):
+            if "hold-lift-inweek" not in t["traps"]:
+                continue
+            assert t["kind"] == "legal_hold.changed" and "hold-lift" in t["traps"]
+            purged = [x for x in t["expect"]["log"] if x["Transition"] == gen.PURGED]
+            assert purged and t["expect"]["delete_users"]
+            for x in purged:
+                assert x["Request ID"] not in log0
+                assert any(y["Request ID"] == x["Request ID"] and y["Transition"] == gen.BLOCKED
+                           for u in out["truth"][:k] for y in u["expect"]["log"])
+            hits.append((s, t["trigger"]))
+    assert hits, "no in-week hold lift on the dev streams"
+    _, results = dev_runs["no-lift"]
+    assert any(not x["pass"] and "hold-lift-inweek" in x["traps"] for r in results for x in r["rows"])
+    summary, results = dev_runs["reference"]
+    assert all(x["pass"] for r in results for x in r["rows"] if "hold-lift-inweek" in x["traps"])
+
+
+def test_trigger_ids_and_prompt_carry_no_host_identity(streams):
+    """Opaque trigger ids (2026-10-21 review): the payload named the seed and the position ('s613/t01') and the system
+    line named the family. Now neither the payload nor the prompt does; the mapping stays host-side."""
+    for s, out in streams.items():
+        ids = [p["trigger"] for p in out["payloads"]]
+        assert len(set(ids)) == len(ids)
+        for t, p in zip(out["triggers"], out["payloads"]):
+            assert re.fullmatch(r"[0-9a-f]{10}", p["trigger"]) and p["trigger"] == t["trigger"]
+            assert not gates.host_identity(s, t["index"]).search(gen.canon(p)), (s, t["index"])
+            row = gen.serve_input(s, t)
+            assert row["prompt"][0] == {"role": "system", "content": "standing automation"}
+            assert not gates.host_identity(s, t["index"]).search(json.dumps(row["prompt"]))
+    first = streams[613]["payloads"][0]
+    assert not first["trigger"].startswith("s613")
+    assert gates.host_identity(613, 1).search(gen.canon(dict(first, trigger="s613/t01")))   # the old form is caught
+
+
+@pytest.mark.skipif(not Path("/usr/share/zoneinfo/Pacific/Auckland").exists(), reason="no tz database")
+def test_serve_process_is_pinned_to_utc(tmp_path, streams):
+    """bridge.py serve/replay set TZ from the row's info.tz (gen.serve_input writes UTC): the shim's naive clock is local
+    time, so under another host zone a ticket's updated_at would not fall on the trigger time. Run in a separate
+    process with TZ=Pacific/Auckland: pinned, updated_at is the trigger minute; without info.tz it is not."""
+    out = streams[610]
+    trig = out["triggers"][0]
+    world = harness.apply_delta(out["world0"], trig["delta"], trig["at"])
+    t = world["zendesk"]["tickets"][0]
+    args = harness.Ctx.fetch_args("PUT", reference.ZENDESK + f"tickets/{t['id']}", None, {"ticket": {"status": t["status"]}})
+    (tmp_path / "world.json").write_text(json.dumps(world))
+    (tmp_path / "steps.json").write_text(json.dumps([{"calls": [{"name": "api_fetch", "arguments": json.dumps(args)}]}]))
+    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "TZ": "Pacific/Auckland", "HOME": str(tmp_path / "home"),
+           "HF_HOME": str(tmp_path / "hf"), "HF_DATASETS_OFFLINE": "1", "HF_HUB_OFFLINE": "1", "TQDM_DISABLE": "1"}
+
+    def updated_at(row, name):
+        (tmp_path / f"{name}.json").write_text(json.dumps(row))
+        host = tmp_path / f"host-{name}"
+        r = subprocess.run([sys.executable, "-I", "-B", str(BRIDGE), "replay", "--input", str(tmp_path / f"{name}.json"),
+                            "--world", str(tmp_path / "world.json"), "--steps", str(tmp_path / "steps.json"),
+                            "--host", str(host), "--det", "seed"], cwd=tmp_path, env=env, capture_output=True, text=True,
+                           timeout=900)
+        assert r.returncode == 0, r.stderr[-2000:]
+        w = json.loads((host / "final-world.json").read_text())
+        return next(x for x in w["zendesk"]["tickets"] if x["id"] == t["id"])["updated_at"]
+
+    row = gen.serve_input(610, trig)
+    assert json.loads(row["info"])["tz"] == "UTC"
+    assert updated_at(row, "pinned").startswith(trig["at"][:16])            # YYYY-MM-DDTHH:MM, the trigger minute
+    info = json.loads(row["info"])
+    del info["tz"]
+    assert not updated_at(dict(row, info=json.dumps(info)), "unpinned").startswith(trig["at"][:16])

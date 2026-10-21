@@ -21,13 +21,25 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
     returned-skip    returned packages get Status Skipped instead of being left alone
     no-recheck       a package released on return is routed without checking its notes again
     customs-first    the customs hold is checked before the on-leave hold
+    stateless        section 4 without the Status column: any change to a package whose Notes lack customs hold decides
+                     it again, and a return decides again every package of that name and department, whatever its
+                     Status (review 2026-10-21)
+    nostatus         every Notes update decides the package again, whatever its Status (review 2026-10-21)
+    exact-match      the recipient's Name and Department must match the directory byte for byte (no case or space
+                     folding)
+    post-as-written  the routing post names the recipient as written on the package, not as in the directory
+    type-exact       an SMS only when the Package Type is exactly `Refrigerated` or `Hazardous`
+    no-escalate      two directory rows for the recipient: the first one is used instead of escalating
+    no-from          SMS sent without the mailroom From number
+    thread-reply     routing posts are thread replies under the latest #mailroom message (not top-level)
 """
 from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
 
-from reference import ARROW, HELD_CUSTOMS, HELD_LEAVE, ROUTED, SKIPPED, SLACK, WS_EMP, WS_PKG, Mailroom, handle, norm
+from reference import (ARROW, HELD_CUSTOMS, HELD_LEAVE, ROUTED, SKIPPED, SLACK, TWILIO, WS_EMP, WS_PKG, Mailroom, handle,
+                       norm)
 
 
 def null(trigger, ctx):
@@ -89,7 +101,7 @@ class CaseNotes(Mailroom):
 
 
 class NoRelease(Mailroom):
-    def package_changed(self, row_no):
+    def package_changed(self, row_no, changed):
         return None
 
     def employee_changed(self, row_no):
@@ -150,6 +162,73 @@ class CustomsFirst(Mailroom):
         return super().decide(row_no, pkg, directory)
 
 
+class Stateless(Mailroom):
+    """Section 4 without the Status column (the review's 'stateless' solver)."""
+    def package_changed(self, row_no, changed):
+        pkg = dict(self.sheet(WS_PKG)).get(row_no)
+        if pkg is None or self.customs_hold(pkg):
+            return None
+        self.decide(row_no, pkg, self.sheet(WS_EMP))
+
+    def employee_changed(self, row_no):
+        directory = self.sheet(WS_EMP)
+        emp = dict(directory).get(row_no)
+        if emp is None or norm(emp.get("Status")) != "active":
+            return None
+        for n, pkg in self.sheet(WS_PKG):
+            if self.same_person(pkg, emp):
+                self.decide(n, pkg, directory)
+
+
+class NoStatus(Mailroom):
+    """Every Notes update decides the package again (the review's 'nostatus' solver)."""
+    def package_changed(self, row_no, changed):
+        if "notes" not in changed:
+            return None
+        pkg = dict(self.sheet(WS_PKG)).get(row_no)
+        if pkg is None:
+            return None
+        self.decide(row_no, pkg, self.sheet(WS_EMP))
+
+
+class ExactMatch(Mailroom):
+    def recipient(self, pkg, directory):
+        m = [e for _, e in directory if e.get("Name") == pkg.get("Recipient Name") and e.get("Department") == pkg.get("Department")]
+        if len(m) > 1:
+            raise LookupError("several directory rows match name and department")
+        return m[0] if m else None
+
+
+class PostAsWritten(Mailroom):
+    def route(self, row_no, pkg, emp):
+        super().route(row_no, pkg, dict(emp, Name=pkg["Recipient Name"], Department=pkg["Department"]))
+
+
+class TypeExact(Mailroom):
+    def needs_sms(self, pkg):
+        return pkg.get("Package Type") in ("Refrigerated", "Hazardous")
+
+
+class NoEscalate(Mailroom):
+    def recipient(self, pkg, directory):
+        return next((e for _, e in directory if self.same_person(pkg, e)), None)
+
+
+class NoFrom(Mailroom):
+    def sms(self, to, body):
+        self.call("POST", TWILIO, None, {"To": to, "Body": body})
+
+
+class ThreadReply(Mailroom):
+    def post(self, text, channel="mailroom"):
+        if channel == "mailroom" and ARROW in text:
+            hist = self.call("GET", SLACK + "conversations.history", {"channel": "mailroom", "limit": 1})
+            last = (hist.get("messages") or [{}])[0].get("ts")
+            if last:
+                return self.call("POST", SLACK + "chat.postMessage", None, {"channel": channel, "text": text, "thread_ts": last})
+        return super().post(text, channel)
+
+
 def variant(cls):
     def run(trigger, ctx):
         try:
@@ -164,4 +243,7 @@ CONTROLS = {"null": null, "echo": echo, "naive": naive,
             "name-only": variant(NameOnly), "leave-as-skip": variant(LeaveAsSkip), "no-dock": variant(NoDock),
             "case-notes": variant(CaseNotes), "no-release": variant(NoRelease), "release-by-name": variant(ReleaseByName),
             "count-sheet": variant(CountSheet), "count-all": variant(CountAll), "sms-floor": variant(SmsFloor),
-            "returned-skip": variant(ReturnedSkip), "no-recheck": variant(NoRecheck), "customs-first": variant(CustomsFirst)}
+            "returned-skip": variant(ReturnedSkip), "no-recheck": variant(NoRecheck), "customs-first": variant(CustomsFirst),
+            "stateless": variant(Stateless), "nostatus": variant(NoStatus), "exact-match": variant(ExactMatch),
+            "post-as-written": variant(PostAsWritten), "type-exact": variant(TypeExact), "no-escalate": variant(NoEscalate),
+            "no-from": variant(NoFrom), "thread-reply": variant(ThreadReply)}

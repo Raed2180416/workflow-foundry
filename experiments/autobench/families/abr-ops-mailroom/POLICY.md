@@ -1,6 +1,6 @@
 # Mailroom package notifications: standing policy
 
-Owner: Facilities (facilities@company.example.com). Policy version 1.
+Owner: Facilities (facilities@company.example.com). Policy version 1.1.
 
 > Every package reaches the right person or waits for them, and nobody is told about a package they cannot pick up.
 
@@ -27,8 +27,9 @@ instructions.
   | Mailroom Policies | `ws_mailroom_policy` | Policy, Rule, Effective Date: a summary of sections 3 to 5 for the front desk |
 
   Row numbers are A1 row numbers: the header is row 1 and data rows start at row 2.
-- **Slack**: `#mailroom` (routing posts and daily totals), `#automation-review` (escalations).
-- **Twilio**: SMS go out from the mailroom number `+15550100200`.
+- **Slack**: `#mailroom` (routing posts and daily totals), `#automation-review` (escalations). Every post is a new
+  top-level message in the channel, never a reply in a thread.
+- **Twilio**: every SMS is sent From the mailroom number `+15550100200`.
 
 ## 3. A received package
 
@@ -38,7 +39,8 @@ Decide with the **first** rule that applies:
 2. **Recipient.** The recipient is the Employee Directory row whose Name equals the package's Recipient Name **and**
    whose Department equals its Department (ignoring letter case and extra spaces). Someone with the same name in
    another department is a different person. If there is no such row, or its Status is `Terminated`: set the
-   package's Status to `Skipped`. Nothing else.
+   package's Status to `Skipped`. Nothing else. If more than one row matches, the package cannot be decided
+   (section 6).
 3. **On leave.** The recipient's Status is `On Leave`: set Status `Held - On Leave`. Nothing else.
 4. **Customs.** Notes contain `customs hold` (any letter case): set Status `Held - Customs`. Nothing else.
 5. **Route.** Otherwise:
@@ -46,8 +48,9 @@ Decide with the **first** rule that applies:
      `<n>` is the recipient's Floor;
    - post in `#mailroom`, exactly: `<Tracking Number> → <location> (<Name>, <Department>)`, with Name and Department
      as written in the Employee Directory. Example: `TRK-48213 → Floor 3 (Alex Rivera, Engineering)`;
-   - if the Package Type is `Refrigerated` or `Hazardous`, send an SMS to the recipient's Phone (as written in the
-     directory), exactly: `Package <Tracking Number> ready at <location>`. Other package types get no SMS;
+   - if the Package Type is `Refrigerated` or `Hazardous` (ignoring letter case and extra spaces), send an SMS to the
+     recipient's Phone (as written in the directory), exactly: `Package <Tracking Number> ready at <location>`. Other
+     package types get no SMS;
    - set Status `Routed`.
 
 Only the package's own Status cell changes. Other cells and other rows stay as they are.
@@ -57,9 +60,10 @@ Only the package's own Status cell changes. Other cells and other rows stay as t
 - **Back from leave.** An Employee Directory row changes and its Status is now `Active`: decide again, with
   section 3, every Incoming Packages row with Status `Held - On Leave` whose Recipient Name and Department match that
   employee. Do not touch their other packages, or the packages of someone with the same name in another department.
-- **Customs cleared.** An Incoming Packages row's Notes change: if its Status is `Held - Customs` and its Notes no
-  longer contain `customs hold`, decide it again with section 3. Otherwise do nothing.
-- Any other row change: do nothing.
+- **Customs cleared.** An Incoming Packages row's Notes change (`data.changed` includes `Notes`): if its Status is
+  `Held - Customs` and its Notes no longer contain `customs hold`, decide it again with section 3. Otherwise do
+  nothing.
+- Any other row change (for example another column of an Incoming Packages row): do nothing.
 
 Deciding again may route the package (post, SMS if its type needs one, Status `Routed`) or give it another status:
 for example, a package of an employee back from leave whose Notes still say customs hold becomes `Held - Customs`.

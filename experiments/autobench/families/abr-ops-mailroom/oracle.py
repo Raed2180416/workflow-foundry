@@ -8,15 +8,18 @@ trigger of the week (Friday's day close), end.json plus world0.
 Checks per trigger:
   1. effects   every expected effect is found in THIS trigger's ledger (attribution): each expected Status change on
                the right package row (by record id) with no other cell or row field changed; each expected #mailroom
-               post with the exact text; each expected SMS to the exact number with the exact text. Texts compare
-               after collapsing whitespace; a trailing period is tolerated.
+               post with the exact text, as a top-level message (a thread reply is not in the channel's history, so it
+               is not a post in #mailroom: POLICY.md section 2); each expected SMS to the exact number with the exact
+               text, sent From the mailroom number (POLICY.md section 2). Texts compare after collapsing whitespace; a
+               trailing period is tolerated.
   2. envelope  every record created, changed or removed in this trigger is an expected effect (nothing else):
                no extra post, SMS, sheet edit, directory edit or other app write.
   3. ab        the truth's AutomationBench assertion dicts (twilio_sms_sent / _not_sent, slack_message_exists /
                _not_exists, google_sheets_row_exists), checked with AutomationBench's own AssertionRegistry on an
                attribution view: world_after restricted to the messages, SMS and rows this trigger created or changed.
   4. end       (last trigger only) every package row's final Status and unchanged other cells, no row added or
-               removed, the directory and policy sheet as expected, the week's #mailroom posts and SMS as multisets,
+               removed, the directory and policy sheet as expected, the week's top-level #mailroom posts and SMS
+               (with their From number) as multisets,
                no pre-existing message or SMS edited, plus AutomationBench's slack_text_occurrence_count per routed
                tracking number and twilio_message_count per notified phone on the whole world.
 
@@ -32,6 +35,7 @@ from collections import Counter, defaultdict
 
 SS, WS_PKG, WS_EMP, WS_POL = "ss_mailroom", "ws_packages", "ws_employees", "ws_mailroom_policy"
 MAILROOM, REVIEW = "mailroom", "automation-review"
+MAILROOM_NUMBER = "+15550100200"          # POLICY.md section 2: every SMS goes out from this number
 
 
 def canon(obj) -> str:
@@ -171,17 +175,19 @@ class Grader:
         new_msgs = [i for i, it in enumerate(L) if it["app"] == "slack" and it["coll"] == "messages" and it["op"] == "new"]
         for text in exp["posts"]:
             cands = [i for i in new_msgs if i not in used and L[i]["after"].get("channel_id") == mailroom
-                     and not L[i]["after"].get("is_deleted") and text_key(L[i]["after"].get("text")) == text_key(text)]
+                     and not L[i]["after"].get("is_deleted") and not L[i]["after"].get("thread_ts")
+                     and text_key(L[i]["after"].get("text")) == text_key(text)]
             if cands:
                 used.add(cands[0])
-            check(f"post {text[:40]}", bool(cands), f"no new #mailroom message {text!r}")
+            check(f"post {text[:40]}", bool(cands), f"no new top-level #mailroom message {text!r}")
         new_sms = [i for i, it in enumerate(L) if it["app"] == "twilio" and it["coll"] == "sms_messages" and it["op"] == "new"]
         for to, body in exp["sms"]:
             cands = [i for i in new_sms if i not in used and L[i]["after"].get("to_number") == to
+                     and L[i]["after"].get("from_number") == MAILROOM_NUMBER
                      and text_key(L[i]["after"].get("body")) == text_key(body)]
             if cands:
                 used.add(cands[0])
-            check(f"sms {body[:40]}", bool(cands), f"no new SMS to {to} {body!r}")
+            check(f"sms {body[:40]}", bool(cands), f"no new SMS from {MAILROOM_NUMBER} to {to} {body!r}")
         if exp.get("escalate"):
             cands = [i for i in new_msgs if i not in used and L[i]["after"].get("channel_id") == review
                      and truth["trigger"] in (L[i]["after"].get("text") or "")]
@@ -274,12 +280,14 @@ class Grader:
             keys0 = {_key("slack", "messages", m) for m in world0["slack"]["messages"]}
             mailroom = _chan_id(after, MAILROOM)
             got = Counter(text_key(m.get("text")) for m in after["slack"]["messages"]
-                          if _key("slack", "messages", m) not in keys0 and m.get("channel_id") == mailroom and not m.get("is_deleted"))
+                          if _key("slack", "messages", m) not in keys0 and m.get("channel_id") == mailroom
+                          and not m.get("is_deleted") and not m.get("thread_ts"))
             want = Counter(text_key(t) for t in end["mailroom"])
             check("end.mailroom", got == want, f"missing {list((want - got).elements())[:3]}; extra {list((got - want).elements())[:3]}")
             sids0 = {m.get("sid") for m in world0["twilio"]["sms_messages"]}
-            got = Counter((m.get("to_number"), text_key(m.get("body"))) for m in after["twilio"]["sms_messages"] if m.get("sid") not in sids0)
-            want = Counter((to, text_key(b)) for to, b in end["sms"])
+            got = Counter((m.get("to_number"), m.get("from_number"), text_key(m.get("body")))
+                          for m in after["twilio"]["sms_messages"] if m.get("sid") not in sids0)
+            want = Counter((to, MAILROOM_NUMBER, text_key(b)) for to, b in end["sms"])
             check("end.sms", got == want, f"missing {list((want - got).elements())[:3]}; extra {list((got - want).elements())[:3]}")
             touched = [summarize(it) for it in ledger(world0, after)
                        if it["op"] in ("changed", "removed") and it["app"] in ("slack", "twilio")]

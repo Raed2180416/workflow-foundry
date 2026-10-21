@@ -677,6 +677,28 @@ def _serve_loop(r: Rollout, box: Mailbox, poll: float):
                 stop = True  # one more pass: answer anything that arrived before the stop
 
 
+def pin_timezone(row: dict) -> str | None:
+    """A serve-input row may name the serve process's time zone in info.tz (the abr-* recurring families write 'UTC').
+    The shim's naive clock (datetime.now() with no tz, and the pydantic default factories bound to it) is local time,
+    so a row whose meta.current_time is a UTC trigger time must run under that zone for naive timestamps (a ticket's
+    updated_at, a message's created_at) to fall on the trigger time. A row without info.tz (every official task) keeps
+    the host's zone, so nothing changes for them. Called before the shim is installed."""
+    info = row.get("info") if isinstance(row, dict) else None
+    if isinstance(info, str):
+        try:
+            info = json.loads(info)
+        except ValueError:
+            return None
+    tz = info.get("tz") if isinstance(info, dict) else None
+    if tz is None:
+        return None
+    if not isinstance(tz, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_+\-]*(/[A-Za-z0-9_+\-]+)*", tz) or len(tz) > 64:
+        raise SystemExit(f"info.tz must be an IANA zone name such as UTC (got {tz!r})")
+    os.environ["TZ"] = tz
+    _time_mod.tzset()
+    return tz
+
+
 def load_world(p):
     """A world file is either prepare's {"task", "contract_sha256", "world"} or a raw dump (final-world.json)."""
     w = load_json(p)
@@ -684,8 +706,9 @@ def load_world(p):
 
 
 def cmd_serve(a):
-    SHIM.install(a.det)
     row = load_json(a.input)
+    pin_timezone(row)
+    SHIM.install(a.det)
     world = load_world(a.world) if a.world else None
     r = Rollout(row, a.max_steps, world, a.fork)
     asyncio.run(r.setup())
@@ -703,8 +726,9 @@ def cmd_serve(a):
 
 
 def cmd_replay(a):
-    SHIM.install(a.det)
     row = load_json(a.input)
+    pin_timezone(row)
+    SHIM.install(a.det)
     world = load_world(a.world) if a.world else None
     r = Rollout(row, a.max_steps, world, a.fork)
     asyncio.run(r.setup())

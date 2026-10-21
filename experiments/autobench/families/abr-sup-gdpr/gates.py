@@ -10,9 +10,11 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
                 survives dump -> load -> dump.
   leakage       what an arm sees carries no hidden truth: payload keys are fixed per event; a sheet payload's cells
                 equal the world's cells after the delta; an email payload equals the inbound message; no truth
-                vocabulary (trap ids, kinds, plan words) in payloads or world0; a request row and an inbound email
-                arrive with their trigger (never in world0); the serve-input row holds only POLICY.md and the payload
-                with no assertions; the reference imports no host module.
+                vocabulary (trap ids, kinds, plan words) in payloads or world0; no host identity in what the arm
+                reads (the trigger id is opaque and unique, and neither the payload nor the prompt names the seed, the
+                trigger's position or the family id); a request row and an inbound email arrive with their trigger
+                (never in world0); the serve-input row holds only a fixed system line, POLICY.md and the payload with
+                no assertions, and pins the serve process to UTC; the reference imports no host module.
   solvability   the observable-only reference passes every trigger (and every week) of the practice and dev streams,
                 in carry mode and in rebased mode; generator and reference therefore agree on every effect (gate 3).
   controls      every bad control fails; null passes exactly the no-op triggers; the <= 40-line naive heuristic
@@ -31,6 +33,7 @@ import json
 import re
 import sys
 from collections import Counter
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -91,6 +94,14 @@ def gate_determinism(seeds: list[int]) -> dict:
 # ---------------------------------------------------------------------------------------------------------------------
 # leakage
 # ---------------------------------------------------------------------------------------------------------------------
+def host_identity(seed: int, index: int | None = None) -> re.Pattern:
+    """What would tell an arm which stream (or which position in it) it is in: the seed as a token of its own (not
+    inside an id such as 'CASE-2026-613' or 'GDPR-6130', nor inside the hex trigger id), the old 's613/t01' and
+    't01' forms, the word 'seed', and the family id."""
+    pos = rf"|(?<![0-9A-Za-z])t{index:02d}(?![0-9A-Za-z])" if index is not None else ""
+    return re.compile(rf"(?<![0-9A-Za-z-])s?{seed}(?![0-9A-Za-z])|\bseed\b|{re.escape(gen.FAMILY)}" + pos, re.I)
+
+
 def gate_leakage(seeds: list[int]) -> dict:
     problems = []
     policy = (HERE / "POLICY.md").read_text()
@@ -103,10 +114,18 @@ def gate_leakage(seeds: list[int]) -> dict:
             problems.append(f"{s}: world0 mentions {m.group(0)!r}")
         w0_rows = {r["id"] for r in w["google_sheets"]["rows"]}
         w0_msgs = {m["id"] for m in w["gmail"]["messages"]}
+        ids = [t["trigger"] for t in out["triggers"]]
+        if len(set(ids)) != len(ids):
+            problems.append(f"{s}: trigger ids are not unique")
         for trig, payload in zip(out["triggers"], out["payloads"]):
             tid = trig["trigger"]
             if trig["payload"] != payload:
                 problems.append(f"{tid}: payloads.jsonl differs from the trigger's payload")
+            if not re.fullmatch(r"[0-9a-f]{10}", str(payload.get("trigger"))) or tid != gen.trigger_id(s, out["meta"]["difficulty"], trig["index"]):
+                problems.append(f"{tid}: the trigger id is not the opaque id")
+            m = host_identity(s, trig["index"]).search(gen.canon(payload))
+            if m:
+                problems.append(f"s{s}/t{trig['index']:02d}: the payload names the stream or position ({m.group(0)!r})")
             if set(payload) != PAYLOAD_KEYS or set(payload["data"]) != DATA_KEYS.get(payload["event"], set()):
                 problems.append(f"{tid}: unexpected payload keys {sorted(payload)} / {sorted(payload['data'])}")
             m = words.search(gen.canon(payload))
@@ -133,8 +152,15 @@ def gate_leakage(seeds: list[int]) -> dict:
             info = json.loads(row["info"])
             if info["assertions"] or any(info["initial_state"][a] for a in gen.APPS):
                 problems.append(f"{tid}: the serve-input row carries assertions or world records")
+            if info.get("tz") != "UTC":
+                problems.append(f"{tid}: the serve-input row does not pin the serve process to UTC")
+            if len(row["prompt"]) != 2 or row["prompt"][0] != {"role": "system", "content": gen.SYSTEM_PROMPT}:
+                problems.append(f"{tid}: the serve prompt's system line is not the fixed one")
             if row["prompt"][1]["content"] != policy + "\n\nTrigger:\n" + gen.canon(payload):
                 problems.append(f"{tid}: the serve prompt holds more than POLICY.md and the payload")
+            m = host_identity(s, trig["index"]).search(row["prompt"][0]["content"] + "\n" + row["prompt"][1]["content"])
+            if m:
+                problems.append(f"s{s}/t{trig['index']:02d}: the serve prompt names the stream, position or family ({m.group(0)!r})")
     tree = ast.parse((HERE / "reference.py").read_text())
     imported = {n.module.split(".")[0] if isinstance(n, ast.ImportFrom) else a.name.split(".")[0]
                 for n in ast.walk(tree) if isinstance(n, (ast.Import, ast.ImportFrom))
@@ -266,6 +292,15 @@ def mutants(before: dict, after: dict, truth: dict):
         m("log-at-missing", cell(i, "At", lambda v: ""))
         m("log-reference", cell(i, "Reference", lambda v: (v.split(",")[0] if "," in v else (v + "x" if v else "n/a"))))
         m("log-extra-cell", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Notes", "auto"))
+        # exactness (2026-10-21 review): case, a later second, another separator are not the stated text
+        m("log-transition-case", cell(i, "Transition", lambda v: v.upper()))
+        m("log-request-id-case", cell(i, "Request ID", lambda v: v.lower()))
+        m("log-request-id-padded", cell(i, "Request ID", lambda v: f" {v} "))
+        m("log-reference-case", cell(i, "Reference", lambda v: v.swapcase()))
+        m("log-at-seconds", cell(i, "At", lambda v: re.sub(r":00Z$", ":50Z", v)))
+        multi = [j for j in rows_new if "," in (after["google_sheets"]["rows"][j]["cells"].get("Reference") or "")]
+        if multi:
+            m("log-reference-semicolon", cell(multi[0], "Reference", lambda v: ";".join(x.strip() for x in v.split(","))))
         same = [j for j in rows_new if j != i and after["google_sheets"]["rows"][j]["cells"]["Request ID"]
                 == after["google_sheets"]["rows"][i]["cells"]["Request ID"]]
         if same:
@@ -290,6 +325,8 @@ def mutants(before: dict, after: dict, truth: dict):
         rid = re.search(r"GDPR-\d+", g["subject"]).group(0)
         m("email-body-no-id", lambda w: [w["gmail"]["messages"][i].__setitem__(f, (g.get(f) or "").replace(rid, "your request") or None)
                                           for f in ("body_plain", "body_html")])
+        # sent, then moved to Trash in the same run (2026-10-21 review)
+        m("trash-own-sent", lambda w: w["gmail"]["messages"][i].__setitem__("label_ids", list(g["label_ids"]) + ["TRASH"]))
     else:
         to = next((u["email"] for u in after["zendesk"]["users"] if u["role"] == "end-user"), "a@b.example.com")
         m("email-extra", lambda w: _sent(w, to, "Verify your erasure request GDPR-0000", "GDPR-0000", k[0]))
@@ -301,6 +338,14 @@ def mutants(before: dict, after: dict, truth: dict):
         m("ticket-no-tag", lambda w: w["zendesk"]["tickets"][i].__setitem__("tags", list(t0["tags"])))
         if t0["tags"]:
             m("ticket-replace-tags", lambda w: w["zendesk"]["tickets"][i].__setitem__("tags", ["gdpr-purged"]))
+            # tag-case (2026-10-21 review): the other tags re-cased, gdpr-purged added in lower case
+            m("ticket-other-tags-case", lambda w: w["zendesk"]["tickets"][i].__setitem__(
+                "tags", [x.upper() if x != gen.TAG else x for x in w["zendesk"]["tickets"][i]["tags"]]))
+        m("ticket-tag-case", lambda w: w["zendesk"]["tickets"][i].__setitem__(
+            "tags", [gen.TAG.upper() if x == gen.TAG else x for x in w["zendesk"]["tickets"][i]["tags"]]))
+        # prefix-spacing (2026-10-21 review): POLICY §6.2 '[GDPR Purged] ' with one space, nothing else changed
+        m("ticket-prefix-spacing", lambda w: w["zendesk"]["tickets"][i].__setitem__("subject", "[GDPR Purged]   " + t0["subject"]))
+        m("ticket-subject-padded", lambda w: w["zendesk"]["tickets"][i].__setitem__("subject", "  [GDPR Purged] " + t0["subject"] + "  "))
         m("ticket-comment", lambda w: w["zendesk"]["tickets"][i]["comments"].append(
             {"id": "mutcmt", "body": "[redacted]", "public": False, "author_id": None, "created_at": "2026-01-01T00:00:00"}))
         m("ticket-status", lambda w: w["zendesk"]["tickets"][i].__setitem__("status", "closed" if t0["status"] != "closed" else "solved"))
@@ -323,6 +368,9 @@ def mutants(before: dict, after: dict, truth: dict):
         m("post-batch", lambda w: w["slack"]["messages"][i].__setitem__("text", re.sub(r"batch \S+", "batch GDPR-BATCH-00000000", txt)))
         m("post-date", lambda w: w["slack"]["messages"][i].__setitem__("text", re.sub(r"^(\d{4}-\d\d-)(\d\d)", lambda mm: f"{mm.group(1)}{(int(mm.group(2)) % 28) + 1:02d}", txt)))
         m("post-channel", lambda w: w["slack"]["messages"][i].__setitem__("channel_id", _chan(w, gen.GENERAL)))
+        # POLICY §8.2 'exactly' (2026-10-21 review)
+        m("post-trailing-period", lambda w: w["slack"]["messages"][i].__setitem__("text", txt + "."))
+        m("post-double-space", lambda w: w["slack"]["messages"][i].__setitem__("text", txt.replace(" purged", "  purged", 1)))
     reqs = [i for i, r in enumerate(after["google_sheets"]["rows"]) if r["worksheet_id"] == gen.WS_REQ]
     holds = [i for i, r in enumerate(after["google_sheets"]["rows"]) if r["worksheet_id"] == gen.WS_HOLD]
     cfg = [i for i, r in enumerate(after["google_sheets"]["rows"]) if r["worksheet_id"] == gen.WS_CFG]
@@ -355,16 +403,20 @@ def equivalents(before: dict, after: dict, truth: dict):
     if rows_new:
         i = rows_new[0]
         c = after["google_sheets"]["rows"][i]["cells"]
+        # the same instant in another ISO 8601 form (POLICY §9 fixes the instant, not the spelling)
         m("log-at-offset", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("At", c["At"].replace("Z", "+00:00")))
         m("log-at-no-seconds", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("At", c["At"][:16].replace("T", " ")))
-        m("log-transition-case", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Transition", c["Transition"].upper()))
+        m("log-at-other-offset", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__(
+            "At", datetime.fromisoformat(c["At"].replace("Z", "+00:00")).astimezone(timezone(timedelta(hours=2))).isoformat()))
+        # §3: an address is the same in any letter case
         m("log-email-case", lambda w: w["google_sheets"]["rows"][i]["cells"].__setitem__("Email", c["Email"].upper()))
         multi = [j for j in rows_new if "," in (after["google_sheets"]["rows"][j]["cells"].get("Reference") or "")]
         if multi:
             j = multi[0]
             ref = after["google_sheets"]["rows"][j]["cells"]["Reference"]
+            # 'comma-separated' fixes the separator, not the order or the space after a comma
             m("log-reference-order", lambda w: w["google_sheets"]["rows"][j]["cells"].__setitem__(
-                "Reference", ";".join(reversed([x.strip() for x in ref.split(",")]))))
+                "Reference", ",".join(reversed([x.strip() for x in ref.split(",")]))))
     if mails:
         i = mails[0]
         g = after["gmail"]["messages"][i]
@@ -377,7 +429,6 @@ def equivalents(before: dict, after: dict, truth: dict):
         m("ticket-tags-order", lambda w: w["zendesk"]["tickets"][i].__setitem__("tags", list(reversed(w["zendesk"]["tickets"][i]["tags"]))))
     if posts:
         i = posts[0]
-        m("post-trailing-period", lambda w: w["slack"]["messages"][i].__setitem__("text", w["slack"]["messages"][i]["text"] + "."))
         m("post-bot-name", lambda w: w["slack"]["messages"][i].__setitem__("bot_name", "Privacy Bot"))
     if inbound:
         i = inbound[-1]
@@ -419,23 +470,14 @@ def gate_specificity(seeds: list[int]) -> dict:
     from reference import SHEETS, SLACK, SS, TAG, WS_LOG, ZENDESK, Gdpr
 
     class Equivalent(Gdpr):
-        """Other tool paths the policy leaves open: append by worksheet title, the tags endpoint, the channel id,
-        a lower-case Transition and an At with an explicit offset, the ticket ids separated by semicolons (and reads
-        its own rows back accordingly)."""
-        def state(self, rid, log):
-            rows = [c for c in log if c.get("Request ID", "").strip() == rid]
-            s = " ".join(rows[-1].get("Transition", "").split()).lower() if rows else None
-            return next((t for t in ("Verification Sent", "Verified", "Blocked - Legal Hold", "Purged", "Not Found",
-                                     "Duplicate", "Closed - Unverified") if t.lower() == s), s)
-
-        def count(self, log, transition, day):
-            from reference import utc_date
-            return sum(1 for c in log if c.get("Transition", "").strip().lower() == transition.lower() and utc_date(c.get("At")) == day)
-
+        """Other tool paths and spellings the policy leaves open: append by worksheet title, the tags endpoint, the
+        channel id, an At with an explicit offset, the ticket ids in reverse order without a space after the comma,
+        the Email as written in lower case (POLICY §3)."""
         def append_log(self, rid, email, transition, reference=""):
             hdr = self.headers(WS_LOG)
-            cells = {"Request ID": rid, "Email": email.strip(), "Transition": transition.lower(),
-                     "At": self.at.replace("Z", "+00:00"), "Reference": reference.replace(", ", ";")}
+            cells = {"Request ID": rid, "Email": email.strip().lower(), "Transition": transition,
+                     "At": self.at.replace("Z", "+00:00"),
+                     "Reference": ",".join(reversed([x.strip() for x in reference.split(",")])) if reference else ""}
             self.call("POST", f"{SHEETS}{SS}/values/Compliance%20Log!A1:E1:append", {"valueInputOption": "RAW"},
                       {"values": [[cells.get(h, "") for h in hdr]]})
 

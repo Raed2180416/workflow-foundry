@@ -1,7 +1,8 @@
 # abr-ops-mailroom: mailroom package notifications (AutomationBench-R family 6)
 
-**Status (2026-10-15).** Development, $0. The generator, oracle, observable-only reference workflow, 15 bad controls,
-the validity gates and the tests are built. No arm has run and no model was called. Nothing here is a capability
+**Status (2026-10-21, v1.1.0).** Development, $0. The generator, oracle, observable-only reference workflow, 23 bad
+controls, the validity gates and the tests are built; v1.1.0 fixes the six defects of the 2026-10-21 review (see
+[Review fixes](#review-fixes-2026-10-21-v110)). No arm has run and no model was called. Nothing here is a capability
 result. Design: [RECURRING-DESIGN.md §4.6](../../../../research/automationbench-20261014/RECURRING-DESIGN.md).
 Proposed split: **held-out (near)**. Under RECURRING-DESIGN §3.9 its dev streams 610–613 are therefore for harness
 rehearsal only and never feed router fitting.
@@ -9,15 +10,17 @@ rehearsal only and never feed router fitting.
 ## What it is
 
 A standing automation, like a Zap, that the Facilities owner writes once ([POLICY.md](POLICY.md)) and that runs on
-every trigger of a recurring family. One stream is one simulated business week, Monday to Friday, of 41–55 triggers.
+every trigger of a recurring family. One stream is one simulated business week, Monday to Friday, of 42–59 triggers.
 The world carries over from trigger to trigger: held packages wait in the sheet's Status column until a later trigger
-releases them, and the daily total is counted from the `#mailroom` history.
+releases them, a Routed or Skipped package is never decided again (only the Status column says which is which), and
+the daily total is counted from the `#mailroom` history.
 
 | Trigger (`kind`) | Arm-visible payload | Correct handling |
 |---|---|---|
-| `package.received` (33–45/week) | `google_sheets` / `new_row`: the new Incoming Packages row (number and cells) | First rule that applies. `returned to sender`: nothing at all. Recipient = the directory row with the same Name **and** Department; none, or Terminated: Status `Skipped`. On Leave: `Held - On Leave`. Notes say `customs hold`: `Held - Customs`. Otherwise post `<TRK> → <Floor n \| Loading Dock B if oversized> (<Name>, <Dept>)` in #mailroom, SMS `Package <TRK> ready at <location>` for Refrigerated or Hazardous, Status `Routed` |
+| `package.received` (32–45/week) | `google_sheets` / `new_row`: the new Incoming Packages row (number and cells) | First rule that applies. `returned to sender`: nothing at all. Recipient = the directory row with the same Name **and** Department (case and spaces ignored); none, or Terminated: Status `Skipped`; two such rows (d3): escalate in #automation-review. On Leave: `Held - On Leave`. Notes say `customs hold`: `Held - Customs`. Otherwise post `<TRK> → <Floor n \| Loading Dock B if oversized> (<Name>, <Dept>)` (directory spelling) as a top-level #mailroom message, SMS `Package <TRK> ready at <location>` From `+15550100200` for Refrigerated or Hazardous (any case), Status `Routed` |
 | `customs.cleared` (2–4/week) | `google_sheets` / `row_updated`: row number, `changed: ["Notes"]`, the tracking number and the new Notes | If the row is `Held - Customs` and its Notes no longer say customs hold: decide it again (usually route). Otherwise nothing |
-| `employee.returned` (1–2/week) | `google_sheets` / `row_updated` on the Employee Directory: Name, Department, `Status: Active` | Decide again exactly that person's `Held - On Leave` packages (same name **and** department) |
+| `employee.returned` (1–2/week) | `google_sheets` / `row_updated` on the Employee Directory: Name, Department, `Status: Active` | Decide again exactly that person's `Held - On Leave` packages (same name **and** department), never their Routed one |
+| `package.updated` (1–4/week) | `google_sheets` / `row_updated`: row number, `changed` (`Notes`, `Department` or `Package Type`), the tracking number and the changed cell | Nothing: the package is not `Held - Customs` (Routed, or Skipped with a recipient who is now Active), or a column other than Notes changed |
 | `day.close` (5/week, 17:00 UTC) | `schedule` / `day_close`: the date | Post `Routed today: <N>`, N = that day's routing posts in #mailroom. Friday's is the last trigger and carries the end-of-week grading |
 
 All worlds, policies and noise are our own fictional text: invented names, phones in the 555-01xx fiction range,
@@ -55,8 +58,8 @@ per-trigger rate, separate careful from careless handling.
 | [gen.py](gen.py) | Seeded generator: `world0` (validated as `WorldState`, round-tripped), arm-visible `payloads`, host-only `triggers` (payload + delta + traps), `truth`, `end`, one `serve-inputs` row per trigger (`assertions: []`), `meta` with sha256. `random.Random(f"{family}:{version}:{seed}:{difficulty}")`, no wall clock. The truth comes from its own canonical model (`Gen.simulate`), never from an arm. Refuses seeds outside 601–650 |
 | [oracle.py](oracle.py) | Per-trigger grader: effect ledger from `world_before` / `world_after` (attribution), exact effects, envelope (nothing else written), AutomationBench's own `AssertionRegistry` on an attribution view, and the end-of-week state at Friday's close. Outcomes: correct, abstained, miss, wrong |
 | [reference.py](reference.py) | Reference workflow: author-written code, no model, standard library only. It sees only the payload, the policy constants and the tools (`ctx.fetch` → `api_fetch`), keeps no private state, and imports no host module |
-| [controls.py](controls.py) | 15 bad controls (below) |
-| [harness.py](harness.py) | `$0` stream runner: applies each delta, calls the tools through `bridge.Rollout.batch` (the official `env_response` path with the determinism shim, clock = trigger time), grades every trigger; carry and rebased modes |
+| [controls.py](controls.py) | 23 bad controls (below) |
+| [harness.py](harness.py) | `$0` stream runner: applies each delta, calls the tools through `bridge.Rollout.batch` (the official `env_response` path with the determinism shim, clock = trigger time), grades every trigger; carry, rebased and `both` (per-trigger rate from rebased, clean weeks from carry) |
 | [gates.py](gates.py) | The $0 validity gates of RECURRING-DESIGN §3.11 |
 | [tests/test_mailroom.py](tests/test_mailroom.py) | pytest suite |
 
@@ -68,7 +71,7 @@ All of these run inside AutomationBench's own venv (`uv sync` in `corpus/Automat
 PY="corpus/AutomationBench/.venv/bin/python -I -B"
 F=experiments/autobench/families/abr-ops-mailroom
 $PY $F/gen.py --seed 610 --out HOSTDIR                                # host-only stream files
-$PY $F/harness.py run --solver reference --seeds 601-614 [--mode rebased] [--failures]
+$PY $F/harness.py run --solver reference --seeds 601-614 [--mode both|carry|rebased] [--failures]   # default both
 $PY $F/harness.py run --solver no-dock --seeds 610-614
 $PY $F/gates.py [--seeds 610-614] [--out DIR]                         # exit 0 only when every gate passes
 $PY -m pytest -q -p no:cacheprovider $F/tests
@@ -81,11 +84,11 @@ copied from the plan). Every trap is resolvable from `POLICY.md` and the tools.
 
 | Kind | Labels | Where | Resolved by |
 |---|---|---|---|
-| T-lookalike | `lookalike`, `wrong-dept`, `release-lookalike` | Same name in two or three departments, with different floors and phones; a name that exists only in another department; at d3 the returning employee's namesake is also On Leave with a held package | Name **and** Department; "do not touch ... someone with the same name in another department" |
-| T-note | `terminated`, `on-leave`, `customs`, `returned`, `not-found`, `notes-variant`, `notes-decoy`, `precedence`, `still-held`, `not-held`, `requeue` | Terminated vs On Leave (sometimes with an Active namesake); keyword casing (`CUSTOMS HOLD`, `Returned To Sender`, `OVERSIZED pallet`); decoys that do not contain a keyword (`Return to sender if undeliverable`, `cleared customs at port of entry`, `return label enclosed`, `large box`); On Leave plus customs hold; a Notes update that still says customs hold; customs cleared on a package that is Held - On Leave or Skipped; back from leave but still in customs | The first-rule-that-applies order; "contain ... (any letter case)"; "if its Status is Held - Customs and ... no longer contain" |
+| T-lookalike | `lookalike`, `wrong-dept`, `release-lookalike`, `spelling`, `ambiguous` | Same name in two or three departments, with different floors and phones; a name that exists only in another department; at d3 the returning employee's namesake is also On Leave with a held package; the package writes Name or Department in another case or spacing (` alex  rivera `, `engineering`); at d3 one person is on two directory rows (same name and department, other floor and phone) | Name **and** Department "ignoring letter case and extra spaces"; the post uses the directory spelling; "do not touch ... someone with the same name in another department"; "If more than one row matches ... section 6" |
+| T-note | `terminated`, `on-leave`, `customs`, `returned`, `not-found`, `notes-variant`, `notes-decoy`, `precedence`, `still-held`, `not-held`, `requeue`, `type-variant` | Terminated vs On Leave (sometimes with an Active namesake); keyword casing (`CUSTOMS HOLD`, `Returned To Sender`, `OVERSIZED pallet`); decoys that do not contain a keyword (`Return to sender if undeliverable`, `cleared customs at port of entry`, `return label enclosed`, `large box`); On Leave plus customs hold; a Notes update that still says customs hold; customs cleared on a package that is Held - On Leave or Skipped; back from leave but still in customs; a Package Type `refrigerated` / ` HAZARDOUS` | The first-rule-that-applies order; "contain ... (any letter case)"; "if its Status is Held - Customs and ... no longer contain"; Package Type "ignoring letter case and extra spaces" |
 | T-format | `oversized`, `oversized-sms` | Oversized notes, alone or with a Refrigerated/Hazardous type (also on packages released from customs) | Loading Dock B in the post **and** the SMS |
 | T-repeat | `returned-rescan` | A returned package scanned again under a tracking number already routed | Rule 1: nothing at all; the old row stays as it is |
-| T-state | `release`, `back-from-leave`, `count-noise`, `count-release` | Hold releases; a package for someone back this week; human chatter in #mailroom; releases routed that day | Section 4; the count is routing posts dated that day, releases included |
+| T-state | `release`, `back-from-leave`, `count-noise`, `count-release`, `already-routed`, `skipped-active`, `other-change` | Hold releases; a package for someone back this week; human chatter in #mailroom; releases routed that day; a note on a Routed package (a delivery note, or at d3 a second customs note after a release); a returning employee who also has a package Routed before the leave; a note on a Skipped package whose recipient is now Active; a Department correction on a Skipped package or a Package Type relabel on a Routed one | Section 4: only `Held - Customs` rows (on a Notes change) and `Held - On Leave` rows (on a return) are decided again; "Any other row change: do nothing"; the count is routing posts dated that day, releases included |
 
 Measured share of triggers carrying a trap, over seeds 601–650: **0.357 at d2 and 0.602 at d3** (design: 35% and
 60%); share of package triggers with a planted trap 0.24 and 0.55. d1 (smoke only) plants none on packages.
@@ -94,21 +97,31 @@ Measured share of triggers carrying a trap, over seeds 601–650: **0.357 at d2 
 
 Per trigger, on the effect ledger (world before vs after the trigger):
 - each expected Status change on the right row (by record id), with no other cell or row field changed;
-- each expected #mailroom post and SMS with the exact text (whitespace collapsed, a trailing period tolerated) and,
-  for SMS, the exact number;
+- each expected #mailroom post with the exact text (whitespace collapsed, a trailing period tolerated) as a
+  top-level message (a thread reply is not in `conversations.history`, so it is not a post in the channel);
+- each expected SMS with the exact text, the exact To number and the mailroom From number `+15550100200`;
+- the escalation, when the truth escalates (d3 `ambiguous`): a #automation-review post naming the trigger id;
 - the envelope: nothing else created, changed or removed in any app;
-- AutomationBench's own handlers (`twilio_sms_sent` / `_not_sent` including the namesake's phone,
+- AutomationBench's own handlers (`twilio_sms_sent` with `from_number` / `_not_sent` including the namesake's phone,
   `slack_message_exists` / `_not_exists`, `google_sheets_row_exists`) on an attribution view that holds only this
   trigger's messages, SMS and rows, so an earlier post never counts again.
 
 At Friday's close it adds the end state: every package row's final Status and unchanged other cells, no row added or
-removed, the directory and policy sheet unchanged except for the week's own deltas, the week's #mailroom messages and
-SMS as multisets, no pre-existing message or SMS edited, and AutomationBench's `slack_text_occurrence_count` per
+removed, the directory and policy sheet unchanged except for the week's own deltas, the week's top-level #mailroom
+messages and SMS (To, From, body) as multisets, no pre-existing message or SMS edited, and AutomationBench's `slack_text_occurrence_count` per
 routed tracking number and `twilio_message_count` per notified phone on the whole world.
 
 Outcomes are `correct`, `abstained` (only #automation-review posts, no escalation expected: no credit, no
 wrong-answer penalty), `miss` (no effects although some were expected) or `wrong`. `pass` includes the envelope;
 `pass_core` is reported beside it.
+
+**Which number is which.** The truth of a trigger is a snapshot of the correct history. In carry mode one earlier miss
+therefore also fails later triggers that depend on it (that day's `day.close`, a later release) even when the solver
+acts correctly on its own world, so the carry per-trigger rate counts one error several times. The per-trigger rate
+is the **rebased** rate (each trigger graded once, on the world it should have seen); **clean weeks** come from
+**carry**; the carry per-trigger rate is reported beside them with `inherited` (triggers that fail in carry but pass
+rebased). `harness.py run --mode both` (the default) and the controls gate report exactly that; `family.json`
+`grading` records it.
 
 ## Numbers [measured, $0, development evidence]
 

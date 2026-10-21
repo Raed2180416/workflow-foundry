@@ -15,12 +15,15 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
                 only POLICY.md and the payload with no assertions, and the reference imports no host module.
   solvability   the observable-only reference passes every trigger (and every week) of the practice and dev streams,
                 in carry mode and in rebased mode; generator and reference therefore agree on every effect (gate 3).
-  controls      every bad control fails; null passes exactly the no-op triggers; the <= 40-line naive heuristic
-                scores below 60% per trigger at d3.
+  controls      every bad control fails, per trigger in rebased mode and as weeks in carry mode; null passes exactly
+                the no-op triggers; the <= 40-line naive heuristic scores below 60% per trigger at d3. Each control's
+                table row gives the per-trigger rate (rebased), the clean weeks (carry) and the carry per-trigger rate
+                with its inherited failures (harness.summarize_both).
   traps         each trap kind appears at least five times across the four dev label streams 610-613.
-  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects.
+  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (among them an SMS from
+                another number and a post sent as a thread reply: POLICY.md section 2).
   specificity   the oracle accepts policy-neutral variants (no false rejects): a trailing period or newline on a post
-                or SMS, Status in lower or upper case, another From number or SMS status, another bot name; and an
+                or SMS, Status in lower or upper case, another SMS status, another bot name; and an
                 equivalent solver that writes the Status through A1 notation and names the channel by id passes every
                 trigger. (Padded cells and doubled inner spaces are not counted as neutral: AutomationBench's own
                 handlers, reused unchanged, reject them.)
@@ -53,11 +56,13 @@ DATA_KEYS = {"new_row": {"spreadsheet_id", "worksheet", "row_id", "row"},
              "day_close": {"date"}}
 BAD_CONTROLS = ["null", "echo", "naive", "name-only", "leave-as-skip", "no-dock", "case-notes", "no-release",
                 "release-by-name", "count-sheet", "count-all", "sms-floor", "returned-skip", "no-recheck",
-                "customs-first"]
+                "customs-first", "stateless", "nostatus", "exact-match", "post-as-written", "type-exact", "no-escalate",
+                "no-from", "thread-reply"]
 TRAP_KINDS = ["T-lookalike", "T-note", "T-format", "T-repeat", "T-state"]
 TRUTH_WORDS = ["traps", "truth", "expect", "decoy", "lookalike", "look-alike", "stale", "oracle", "precedence",
                "requeue", "rescan", "package.received", "customs.cleared", "employee.returned", "day.close",
-               "T-repeat", "T-lookalike", "T-note", "T-format", "T-state"]
+               "package.updated", "already-routed", "skipped-active", "other-change", "type-variant", "routed-note",
+               "routed-released", "T-repeat", "T-lookalike", "T-note", "T-format", "T-state"]
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -165,20 +170,23 @@ def gate_controls(seeds: list[int], d3_seeds: list[int], streams: dict | None = 
     res, problems = {}, []
     noop = sum(1 for s in seeds for t in streams[s]["truth"] if t["outcome"] == "no-op")
     for name in BAD_CONTROLS:
-        summary, results = harness.run(name, seeds, streams=streams)
-        failed_kinds = Counter(x["kind"] for r in results for x in r["rows"] if not x["pass"])
-        res[name] = {**{k: summary[k] for k in ("triggers", "passed", "pass_rate", "clean_weeks", "outcomes")},
+        summary, results = harness.run(name, seeds, mode="both", streams=streams)
+        rebased = results[len(seeds):]
+        failed_kinds = Counter(x["kind"] for r in rebased for x in r["rows"] if not x["pass"])
+        res[name] = {**{k: summary[k] for k in ("triggers", "passed", "pass_rate", "clean_weeks", "passed_carry",
+                                                "pass_rate_carry", "inherited", "outcomes")},
                      "failed_by_kind": dict(sorted(failed_kinds.items()))}
         if summary["passed"] == summary["triggers"] or summary["clean_weeks"] == summary["streams"]:
             problems.append(f"{name} does not fail")
     if res["null"]["passed"] != noop:
         problems.append(f"null passes {res['null']['passed']} triggers, the no-op share is {noop}")
-    naive_d3, _ = harness.run("naive", d3_seeds, streams=streams)
-    if naive_d3["pass_rate"] >= 0.6:
-        problems.append(f"naive scores {naive_d3['pass_rate']} at d3")
+    naive_d3, _ = harness.run("naive", d3_seeds, mode="both", streams=streams)
+    if naive_d3["pass_rate"] >= 0.6 or naive_d3["pass_rate_carry"] >= 0.6:
+        problems.append(f"naive scores {naive_d3['pass_rate']} (rebased) / {naive_d3['pass_rate_carry']} (carry) at d3")
     import controls
     return {"pass": not problems, "seeds": seeds, "noop_triggers": noop, "controls": res,
-            "naive_d3": {"seeds": d3_seeds, "pass_rate": naive_d3["pass_rate"], "lines": controls.NAIVE_LINES},
+            "naive_d3": {"seeds": d3_seeds, "pass_rate": naive_d3["pass_rate"], "pass_rate_carry": naive_d3["pass_rate_carry"],
+                         "lines": controls.NAIVE_LINES},
             "problems": problems}
 
 
@@ -262,6 +270,8 @@ def mutants(before: dict, after: dict, truth: dict):
         out += m("drop-post", lambda w: w["slack"]["messages"].pop(posts[0]))
         out += m("dup-post", lambda w: w["slack"]["messages"].append(dict(w["slack"]["messages"][posts[0]], ts="9100000000.000001")))
         out += m("post-channel", lambda w: w["slack"]["messages"][posts[0]].__setitem__("channel_id", _chan(w, gen.GENERAL)))
+        out += m("post-thread-reply", lambda w: w["slack"]["messages"][posts[0]].__setitem__(
+            "thread_ts", next(x["ts"] for x in w["slack"]["messages"] if x["channel_id"] == mailroom)))
     if route:
         i = route[0]
         out += m("post-floor", text_sub(i, r"Floor (\d)", lambda mm: f"Floor {int(mm.group(1)) % 9 + 1}"))
@@ -280,6 +290,7 @@ def mutants(before: dict, after: dict, truth: dict):
         out += m("sms-location", text_sub(sms[0], r"(Floor \d|Loading Dock B)$", lambda mm: "Floor 9" if mm.group(1) != "Floor 9" else "Floor 8",
                                           "body", ("twilio", "sms_messages")))
         out += m("sms-tracking", text_sub(sms[0], r"TRK-(\d)", lambda mm: f"TRK-{(int(mm.group(1)) + 1) % 10}", "body", ("twilio", "sms_messages")))
+        out += m("sms-from", lambda w: w["twilio"]["sms_messages"][sms[0]].__setitem__("from_number", "+15550100299"))
     elif route:
         to = before["google_sheets"]["rows"][0]["cells"].get("Phone") or next(
             r["cells"]["Phone"] for r in before["google_sheets"]["rows"] if r["worksheet_id"] == gen.WS_EMP)
@@ -333,7 +344,6 @@ def equivalents(before: dict, after: dict, truth: dict):
     if sms:
         i = sms[0]
         m("sms-trailing-period", lambda w: w["twilio"]["sms_messages"][i].__setitem__("body", w["twilio"]["sms_messages"][i]["body"] + "."))
-        m("sms-other-from", lambda w: w["twilio"]["sms_messages"][i].__setitem__("from_number", "+15550100299"))
         m("sms-status-sent", lambda w: w["twilio"]["sms_messages"][i].__setitem__("status", "sent"))
     if rows:
         i = rows[0]
@@ -387,7 +397,10 @@ def gate_specificity(seeds: list[int]) -> dict:
             self.call("POST", SLACK + "chat.postMessage", None, {"channel": cid, "text": text})
 
     def solver(trigger, ctx):
-        return Equivalent(trigger, ctx).run()
+        try:
+            return Equivalent(trigger, ctx).run()
+        except LookupError as e:                        # section 6, through the channel id as well
+            return Equivalent(trigger, ctx).post(f"{trigger.get('trigger')}: {e}", "automation-review")
     grader = oracle.Grader()
     results = [harness.run_stream(gen.generate(s), solver, grader=grader) for s in seeds]
     summ = harness.summarize(results)

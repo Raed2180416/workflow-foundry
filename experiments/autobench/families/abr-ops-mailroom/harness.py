@@ -3,7 +3,7 @@
 AutomationBench's own tool path, grade every trigger with the oracle. Runs inside AutomationBench's venv:
 
     corpus/AutomationBench/.venv/bin/python -I experiments/autobench/families/abr-ops-mailroom/harness.py \
-        run --solver reference --seeds 610-614 [--mode carry|rebased] [--out DIR] [--failures]
+        run --solver reference --seeds 610-614 [--mode both|carry|rebased] [--out DIR] [--failures]
 
 Tool path. Each trigger's tool calls go through `bridge.Rollout.batch` (experiments/autobench/bridge.py), i.e. the
 official AutomationBenchEnv.env_response with the 'api' toolset (api_search, api_fetch, base64_encode), exactly the
@@ -18,8 +18,17 @@ message; validated through WorldState), set meta.current_time to the trigger tim
 solver with (payload, ctx), snapshot world_after, grade. The solver sees the payload and the tools only; the truth,
 the delta and the generator stay host-side in this process.
 
-Modes (RECURRING-DESIGN §3.6): carry (headline) - the solver's world evolves with its own effects; rebased
-(diagnostic) - before each trigger the world is replaced by the reference run's world at that point.
+Modes (RECURRING-DESIGN §3.6): carry - the solver's world evolves with its own effects; rebased - before each trigger
+the world is replaced by the reference run's world at that point (the reference passes every practice and dev trigger,
+so that world is the truth's correct-history world).
+
+Which number is which (review 2026-10-21). The truth of a trigger is a snapshot of the correct history, so in carry
+mode one earlier miss also fails every later trigger that depends on it (that day's day.close, a later release) even
+when the solver acts correctly on its own world: carry double-counts errors per trigger. So:
+  - the per-trigger rate is the REBASED rate (each trigger graded once, on the world it should have seen);
+  - clean weeks come from CARRY (a week is clean only if the solver's own world stays right all week);
+  - the carry per-trigger rate is reported beside them, with `inherited` = triggers that fail in carry but pass rebased.
+`--mode both` (the CLI default) runs both and reports exactly that.
 """
 from __future__ import annotations
 
@@ -233,18 +242,51 @@ def summarize(results: list[dict]) -> dict:
                            for res in results}}
 
 
+_REF_BEFORES: dict[int, tuple] = {}
+
+
+def reference_befores(stream: dict, grader=None) -> list:
+    """The reference run's world_before per trigger (the rebased worlds), cached per stream object."""
+    hit = _REF_BEFORES.get(id(stream))
+    if hit is None or hit[0] is not stream:
+        import reference
+        res = run_stream(stream, reference.handle, grader=grader, keep_worlds=True)
+        if not res["clean_week"]:
+            raise RuntimeError(f"the reference fails stream {stream['meta']['seed']}: no rebased worlds")
+        hit = _REF_BEFORES[id(stream)] = (stream, res["befores"])
+    return hit[1]
+
+
+def summarize_both(carry: list[dict], rebased: list[dict]) -> dict:
+    """Headline numbers: per-trigger from rebased, clean weeks from carry; carry per-trigger beside them."""
+    c, r = summarize(carry), summarize(rebased)
+    inherited = sum(1 for rc, rr in zip(carry, rebased) for xc, xr in zip(rc["rows"], rr["rows"])
+                    if not xc["pass"] and xr["pass"])
+    return {"triggers": r["triggers"], "passed": r["passed"], "pass_rate": r["pass_rate"],
+            "pass_core_rate": r["pass_core_rate"], "trapped_pass_rate": r["trapped_pass_rate"],
+            "clean_weeks": c["clean_weeks"], "streams": c["streams"],
+            "passed_carry": c["passed"], "pass_rate_carry": c["pass_rate"], "inherited": inherited,
+            "outcomes": r["outcomes"], "outcomes_carry": c["outcomes"], "by_kind": r["by_kind"],
+            "errors": r["errors"] + c["errors"], "max_steps": max(r["max_steps"], c["max_steps"]),
+            "per_stream": {s: f"{r['per_stream'][s]} rebased; {c['per_stream'][s]} carry" for s in r["per_stream"]}}
+
+
 def run(solver_name: str, seeds: list[int], mode: str = "carry", difficulty: str | None = None,
         streams: dict | None = None) -> tuple[dict, list]:
+    """mode carry | rebased: (summary, per-stream results). mode both: (summarize_both, carry results + rebased
+    results), the carry results first."""
     solver = load_solver(solver_name)
     grader = oracle.Grader()
-    results = []
+    carry, rebased = [], []
     for s in seeds:
         stream = (streams or {}).get(s) or gen.generate(s, difficulty)
-        ref_befores = None
-        if mode == "rebased":
-            import reference
-            ref_befores = run_stream(stream, reference.handle, grader=grader, keep_worlds=True)["befores"]
-        results.append(run_stream(stream, solver, mode, ref_befores, grader))
+        if mode in ("carry", "both"):
+            carry.append(run_stream(stream, solver, "carry", None, grader))
+        if mode in ("rebased", "both"):
+            rebased.append(run_stream(stream, solver, "rebased", reference_befores(stream, grader), grader))
+    if mode == "both":
+        return summarize_both(carry, rebased), carry + rebased
+    results = carry or rebased
     return summarize(results), results
 
 
@@ -254,7 +296,8 @@ def main(argv=None):
     s = sub.add_parser("run")
     s.add_argument("--solver", default="reference")
     s.add_argument("--seeds", default="610-614")
-    s.add_argument("--mode", choices=["carry", "rebased"], default="carry")
+    s.add_argument("--mode", choices=["both", "carry", "rebased"], default="both",
+                   help="both (default): per-trigger rate from rebased, clean weeks from carry")
     s.add_argument("--difficulty", choices=["d1", "d2", "d3"])
     s.add_argument("--out", help="host-only directory for results.jsonl and summary.json")
     s.add_argument("--failures", action="store_true", help="print failed checks")
@@ -264,16 +307,20 @@ def main(argv=None):
     if a.out:
         d = Path(a.out)
         d.mkdir(parents=True, exist_ok=True)
+        n = len(results) // 2 if a.mode == "both" else 0
         with open(d / "results.jsonl", "w") as f:
-            for res in results:
+            for i, res in enumerate(results):
+                mode = a.mode if a.mode != "both" else ("carry" if i < n else "rebased")
                 for x in res["rows"]:
-                    f.write(json.dumps({k: v for k, v in x.items() if k != "failed"} | {"failedChecks": [c["name"] for c in x["failed"]]}) + "\n")
+                    f.write(json.dumps({k: v for k, v in x.items() if k != "failed"} | {"mode": mode, "failedChecks": [c["name"] for c in x["failed"]]}) + "\n")
         (d / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
     if a.failures:
-        for res in results:
+        n = len(results) // 2 if a.mode == "both" else 0
+        for i, res in enumerate(results):
+            mode = a.mode if a.mode != "both" else ("carry" if i < n else "rebased")
             for x in res["rows"]:
                 if not x["pass"]:
-                    print(f"{x['taskKey']} {x['kind']}/{x['sub']} {x['outcome']} err={x['error']}")
+                    print(f"[{mode}] {x['taskKey']} {x['kind']}/{x['sub']} {x['outcome']} err={x['error']}")
                     for c in x["failed"]:
                         print(f"   - {c['name']}: {c['detail']}")
     print(json.dumps(summary))

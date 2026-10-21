@@ -76,7 +76,7 @@ class Mailroom:
         if ev == "new_row" and ws in (PACKAGES, WS_PKG):
             return self.received(int(d["row_id"]))
         if ev == "row_updated" and ws in (PACKAGES, WS_PKG):
-            return self.package_changed(int(d["row_id"]))
+            return self.package_changed(int(d["row_id"]), [norm(c) for c in d.get("changed") or []])
         if ev == "row_updated" and ws in (DIRECTORY, WS_EMP):
             return self.employee_changed(int(d["row_id"]))
         return None
@@ -138,7 +138,9 @@ class Mailroom:
             raise LookupError(f"no package row {row_no}")
         self.decide(row_no, pkg, self.sheet(WS_EMP))
 
-    def package_changed(self, row_no: int):                      # section 4, customs cleared
+    def package_changed(self, row_no: int, changed: list[str]):  # section 4, customs cleared
+        if "notes" not in changed:                               # any other row change: do nothing
+            return None
         pkg = dict(self.sheet(WS_PKG)).get(row_no)
         if pkg is None or not self.customs_released(pkg):
             return None

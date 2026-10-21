@@ -1,6 +1,6 @@
 {
  "id": "abr-ops-mailroom",
- "version": "1.0.0",
+ "version": "1.1.0",
  "domain": "operations",
  "title": "Mailroom package notifications",
  "status": "dev: generator, oracle, observable-only reference, controls and gates built; no arm has run (no model, $0)",
@@ -15,12 +15,12 @@
  "zapierTools": [],
  "allowedServices": ["google_sheets", "slack", "twilio"],
  "sink": {"app": "slack", "channel": "automation-review"},
- "stateOfRecord": "the Incoming Packages Status column (held packages, released by later triggers), the Employee Directory (On Leave -> Active) and the #mailroom history (the daily count); all in the world, visible to every arm",
+ "stateOfRecord": "the Incoming Packages Status column (held packages, released by later triggers; a Routed or Skipped package is never decided again, which package.updated triggers and returns test), the Employee Directory (On Leave -> Active) and the top-level #mailroom history (the daily count); all in the world, visible to every arm",
  "envelope": [
   "google_sheets.row.update Incoming Packages Status (the package of the trigger, or the packages a hold release decides again)",
   "slack.message.post in #mailroom ('<Tracking> → <location> (<Name>, <Department>)' per routed package; 'Routed today: <N>' at day close)",
-  "twilio.sms.send ('Package <Tracking> ready at <location>' to the recipient's Phone, Refrigerated or Hazardous only)",
-  "slack.message.post in #automation-review (escalation only)"
+  "twilio.sms.send ('Package <Tracking> ready at <location>' From +15550100200 to the recipient's Phone, Refrigerated or Hazardous only, any letter case)",
+  "slack.message.post in #automation-review (escalation only: two directory rows for the recipient)"
  ],
  "harmless": [],
  "triggerKinds": {
@@ -28,19 +28,22 @@
   "customs.cleared": {"perWeek": [2, 4], "d1": [2, 2], "d2": [2, 3], "d3": [3, 4], "event": "google_sheets/row_updated (Incoming Packages, Notes)",
                       "note": "d2: every one lifts a hold; d3: 1-2 lift a hold, plus one Notes update that still says customs hold and one on a package that is not Held - Customs (Held - On Leave, or Skipped)"},
   "employee.returned": {"perWeek": [1, 2], "d1": [1, 1], "d2": [1, 2], "d3": [1, 2], "event": "google_sheets/row_updated (Employee Directory, Status On Leave -> Active)",
-                        "note": "every returning employee has at least one Held - On Leave package; d3: a namesake in another department is also On Leave with a held package"},
+                        "note": "every returning employee has at least one Held - On Leave package; d2/d3: the first one also has a package Routed before the leave (not decided again); d3: a namesake in another department is also On Leave with a held package"},
+  "package.updated": {"perWeek": [1, 4], "d1": [1, 1], "d2": [2, 3], "d3": [3, 4], "event": "google_sheets/row_updated (Incoming Packages, Notes, Department or Package Type)",
+                      "note": "a row change on a package that is not Held - Customs; the truth is always nothing. routed-note (a delivery note on a Routed package), skipped-active (d2/d3: a note on a Skipped package whose recipient is now Active), other-change (d2/d3: a Department correction on a Skipped package, or a Package Type relabel on a Routed one), routed-released (d3: a customs note on a package released this week)"},
   "day.close": {"perWeek": [5, 5], "d1": [5, 5], "d2": [5, 5], "d3": [5, 5], "event": "schedule/day_close", "at": "17:00 UTC Monday-Friday; Friday's is the last trigger and carries the end-of-week grading"}
  },
- "triggersPerWeek": {"d2": [41, 47], "d3": [50, 55], "measuredOn": "seeds 601-650"},
+ "triggersPerWeek": {"d2": [42, 50], "d3": [51, 59], "measuredOn": "seeds 601-650 (v1.1.0)"},
  "trapRates": {"d1": 0.0, "d2": 0.24, "d3": 0.55,
                "unit": "planted share of package.received triggers; release triggers are traps by construction and day closes carry count traps",
-               "measuredTriggerShare": {"d2": 0.357, "d3": 0.602, "design": {"d2": 0.35, "d3": 0.60}, "on": "seeds 601-650"}},
+               "measuredTriggerShare": {"d2": 0.392, "d3": 0.631, "design": {"d2": 0.35, "d3": 0.60}, "on": "seeds 601-650 (v1.1.0)",
+                                       "note": "above the design because package.updated triggers are traps by construction"}},
  "trapCatalogue": {
-  "T-lookalike": ["lookalike (the recipient has a namesake in another department, with another floor and phone)", "wrong-dept (the name exists only in other departments: Skipped)", "release-lookalike (a namesake in another department is also On Leave with a held package: not released)"],
-  "T-note": ["terminated (Skipped; sometimes with an Active namesake)", "on-leave (Held - On Leave)", "customs (Held - Customs)", "returned (returned to sender: nothing at all)", "notes-variant (keyword in other letter case)", "notes-decoy ('Return to sender if undeliverable', 'cleared customs at port of entry', 'return label enclosed', 'large box': routed normally)", "not-found (a former employee)", "precedence (On Leave and customs hold: Held - On Leave)", "still-held (Notes updated, still customs hold)", "not-held (Notes cleared on a package that is not Held - Customs)", "requeue (back from leave, still customs hold: Held - Customs)"],
+  "T-lookalike": ["lookalike (the recipient has a namesake in another department, with another floor and phone)", "wrong-dept (the name exists only in other departments: Skipped)", "release-lookalike (a namesake in another department is also On Leave with a held package: not released)", "spelling (Recipient Name or Department in another letter case or spacing: the same person; the post uses the directory spelling)", "ambiguous (d3: two directory rows with the recipient's name and department: escalate)"],
+  "T-note": ["terminated (Skipped; sometimes with an Active namesake)", "on-leave (Held - On Leave)", "customs (Held - Customs)", "returned (returned to sender: nothing at all)", "notes-variant (keyword in other letter case)", "notes-decoy ('Return to sender if undeliverable', 'cleared customs at port of entry', 'return label enclosed', 'large box': routed normally)", "not-found (a former employee)", "precedence (On Leave and customs hold: Held - On Leave)", "still-held (Notes updated, still customs hold)", "not-held (Notes cleared on a package that is not Held - Customs)", "requeue (back from leave, still customs hold: Held - Customs)", "type-variant (Package Type Refrigerated/Hazardous in another case or spacing: SMS)"],
   "T-format": ["oversized (Loading Dock B)", "oversized-sms (oversized and Refrigerated/Hazardous: the SMS names Loading Dock B)"],
   "T-repeat": ["returned-rescan (a returned package scanned again under a tracking number already routed)"],
-  "T-state": ["release (a hold ends: route exactly the held packages)", "back-from-leave (a package for an employee back this week: route)", "count-noise (human messages in #mailroom today)", "count-release (packages released from holds today count)"]
+  "T-state": ["release (a hold ends: route exactly the held packages)", "back-from-leave (a package for an employee back this week: route)", "count-noise (human messages in #mailroom today)", "count-release (packages released from holds today count)", "already-routed (a row change on a Routed package, or a return by an employee who also has a Routed package: deciding it again would route it twice)", "skipped-active (a note on a Skipped package whose recipient is now Active: stays Skipped)", "other-change (a change to a column other than Notes: nothing)"]
  },
  "amendable": [],
  "hardRequirements": [],
@@ -52,6 +55,8 @@
   "alsoReported": [1, 40, {"N": 520, "label": "extrapolated, stationarity assumed"}],
   "verifier": "none"
  },
+ "grading": {"perTrigger": "rebased", "cleanWeeks": "carry", "alsoReported": "carry per-trigger rate with inherited failures",
+             "why": "the truth is a snapshot of the correct history, so in carry mode one earlier miss also fails later triggers that depend on it (a day close, a release) even when the arm acts correctly on its own world (review 2026-10-21)"},
  "hypothesis": {
   "label": "either, slider-sensitive: the label should flip with V and N",
   "agentH": [0.85, 0.95],

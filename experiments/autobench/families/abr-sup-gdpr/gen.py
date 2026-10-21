@@ -87,6 +87,14 @@ def summary_post(day: str, n: int, m: int, batch: str) -> str:
 # late, repeated, wrong ID).
 # The chance that a pre-seeded blocked request's hold has already outlasted the 30-day deadline (d2, d3 only).
 OLD_HELD = {"pre-blocked-lift": 0.5, "pre-blocked-still": 0.8}
+# The chance that a hold added this week is lifted again later this week, after the request it blocked was verified
+# (hold-lift-inweek; d2 and d3 weeks with fewer than three hold changes, so the spec's 1-3 a week holds; added
+# 2026-10-21 after review: until then every hold-lift purge consumed a Blocked row pre-seeded in world0).
+INWEEK_LIFT = 0.75
+# The arm's system message: no family id, seed or position (2026-10-21 review: host identity reached the arm).
+SYSTEM_PROMPT = "standing automation"
+# The time zone a serve process runs in (bridge.py pin_timezone reads info.tz): the shim's naive clock is local time.
+SERVE_TZ = "UTC"
 COUNTS = {
     "d1": dict(req=(8, 8), rep=(6, 6), hold=(1, 1), dup=(1, 1), bad=(0, 0)),
     "d2": dict(req=(8, 10), rep=(6, 8), hold=(1, 2), dup=(1, 2), bad=(2, 2)),
@@ -149,7 +157,7 @@ TRAP_KIND = {
     "re-request": "T-stale", "hold-lifted-row": "T-stale", "batch-changed": "T-stale",
     "deadline": "T-timing", "deadline-late": "T-timing", "deadline-not-yet": "T-timing", "deadline-day": "T-timing",
     "deadline-held": "T-timing",
-    "hold-lift": "T-state", "hold-still": "T-state", "count-lift": "T-state",
+    "hold-lift": "T-state", "hold-still": "T-state", "count-lift": "T-state", "hold-lift-inweek": "T-state",
 }
 BAD_TYPES = ["spoof-lookalike", "spoof-forward", "spoof-display", "spoof-colleague", "no-id", "late-reply",
              "repeat-reply", "wrong-id"]
@@ -189,6 +197,14 @@ def sender_addr(header) -> str:
     return norm_addr(m.group(1) if m else header)
 
 
+def trigger_id(seed: int, difficulty: str, index: int) -> str:
+    """The arm-visible trigger id: opaque, the first 10 hex characters of a sha256 over family, version, seed,
+    difficulty and index. A payload therefore names neither the seed nor the trigger's position in the week; the
+    mapping to (seed, index) stays host-side (triggers.jsonl and truth.jsonl carry both). Changed 2026-10-21 from
+    's<seed>/t<nn>' after review. Opaque only to an arm that cannot read this file: the seed space is small."""
+    return hashlib.sha256(f"{FAMILY}:{VERSION}:{seed}:{difficulty}:{index}".encode()).hexdigest()[:10]
+
+
 def default_difficulty(seed: int) -> str:
     """Within each seed block (RECURRING-DESIGN §3.9) the first seed is d2, then d2/d3 alternate."""
     starts = [601, 610, 614, 622, 631, 8801, 8805, 8825, 8837]
@@ -215,6 +231,8 @@ class Gen:
         self.r = random.Random(f"{FAMILY}:{VERSION}:{self.seed}:{difficulty}" + (f":{attempt}" if attempt else ""))
         # A separate stream for the age of held requests (added 2026-10-21), so every other draw is as before.
         self.r_held = random.Random(f"{FAMILY}:{VERSION}:{self.seed}:{difficulty}:held" + (f":{attempt}" if attempt else ""))
+        # Another separate stream for the in-week hold lift (added 2026-10-21, after every other draw).
+        self.r_lift = random.Random(f"{FAMILY}:{VERSION}:{self.seed}:{difficulty}:inweek-lift" + (f":{attempt}" if attempt else ""))
         mondays = [date(2026, 2, 2) + timedelta(weeks=k) for k in range(60)]
         mondays = [m for m in mondays if m <= date(2026, 11, 23)]
         self.monday = datetime.combine(self.r.choice(mondays), time(0, 0), tzinfo=UTC)
@@ -262,8 +280,8 @@ class Gen:
     def friday_end(self) -> datetime:
         return self.day(4) + timedelta(hours=16, minutes=50)
 
-    def slot(self, lo: datetime, hi: datetime, h_lo: float = 8.05, h_hi: float = 16.85) -> datetime:
-        """A free business minute (Monday-Friday, h_lo..h_hi UTC) strictly inside (lo, hi)."""
+    def slot(self, lo: datetime, hi: datetime, h_lo: float = 8.05, h_hi: float = 16.85, rng: random.Random | None = None) -> datetime:
+        """A free business minute (Monday-Friday, h_lo..h_hi UTC) strictly inside (lo, hi), drawn from rng (self.r)."""
         cand = []
         for d in range(5):
             for m in range(int(round(h_lo * 60)), int(round(h_hi * 60))):
@@ -273,7 +291,7 @@ class Gen:
                     cand.append(k)
         if not cand:
             raise PlanError(f"no free business minute in ({lo}, {hi})")
-        k = self.r.choice(cand)
+        k = (rng or self.r).choice(cand)
         self.minutes.add(k)
         return self.monday + timedelta(minutes=k)
 
@@ -748,6 +766,7 @@ class Gen:
             if q["story"] == "block-add":
                 th = self.slot(q["sub_at"] + timedelta(minutes=5), self.day(3) + timedelta(hours=12))
                 hold = {"Email": q["email"], "Status": "Active", "q": q, "added_at": th}
+                q["hold"] = hold
                 ev.append({"kind": "legal_hold.changed", "sub": "hold-added", "at": th, "hold": hold, "op": "add"})
                 genuine(q, th + timedelta(minutes=15), fri_end - timedelta(minutes=30))
             else:
@@ -796,6 +815,23 @@ class Gen:
         bads = (req_types + r.choices(rest, k=self.n_bad))[: self.n_bad]
         for b in bads:
             self.plan_bad(b)
+        self.plan_inweek_lift()
+
+    def plan_inweek_lift(self):
+        """hold-lift-inweek: the hold added this week (block-add) is lifted later this week, after its request was
+        verified and blocked, so the lift purges from a Blocked row the automation itself wrote this week. Drawn from
+        r_lift and scheduled after every other event, so every other draw of the stream is unchanged; skipped (never
+        redrawn) when the verification comes too late in the week for a lift."""
+        if self.d == "d1" or len(self.hold_types) >= 3:        # the spec: 1-3 hold changes a week
+            return
+        q = next((x for x in self.blocks if x["story"] == "block-add"), None)
+        if q is None or self.r_lift.random() >= INWEEK_LIFT:
+            return
+        try:
+            t = self.slot(q["reply_at"] + timedelta(minutes=20), self.friday_end, rng=self.r_lift)
+        except PlanError:
+            return
+        self.events.append({"kind": "legal_hold.changed", "sub": "hold-lift-inweek", "at": t, "hold": q["hold"], "op": "lift"})
 
     def reply_style(self) -> dict:
         r, d = self.r, self.d
@@ -973,7 +1009,8 @@ class Gen:
             return [h for h in S["holds"] if h["Status"] == "Active" and norm_addr(h["Email"]) == norm_addr(addr)]
 
         for n, e in enumerate(self.events, 1):
-            tid = f"s{self.seed}/t{n:02d}"
+            tid = trigger_id(self.seed, self.d, n)       # arm-visible, opaque
+            where = f"s{self.seed}/t{n:02d}"             # host-only label for plan errors
             at = e["at"]
             at_s = iso_z(at)
             today = at.date().isoformat()
@@ -1010,7 +1047,7 @@ class Gen:
             def purge(rid, email):
                 us = users_with(email)
                 if len(us) != 1:
-                    raise PlanError(f"{tid}: purge of {email} finds {len(us)} users")
+                    raise PlanError(f"{where}: purge of {email} finds {len(us)} users")
                 u = us[0]
                 ids = []
                 for t_id, t in sorted(S["tickets"].items()):
@@ -1068,7 +1105,7 @@ class Gen:
                 S["req"][rid] = {"email": em, "date": q["date"]}
                 dups = [x for x, s in earlier if s in OPEN_FOR_DUP]
                 if len(dups) > 1:
-                    raise PlanError(f"{tid}: several open requests for {em}")
+                    raise PlanError(f"{where}: several open requests for {em}")
                 if dups:
                     log(rid, em, DUPLICATE, dups[0])
                     labels.append({VS: "duplicate-open", BLOCKED: "duplicate-blocked", PURGED: "duplicate-purged"}[dict(earlier)[dups[0]]])
@@ -1099,7 +1136,7 @@ class Gen:
                           "backdated-late": VS,
                           "notfound": NOT_FOUND, "notfound-lookalike": NOT_FOUND}.get(q["story"], DUPLICATE)
                 if ex["log"][-1]["Transition"] != intent:
-                    raise PlanError(f"{tid}: {q['story']} derived {ex['log'][-1]['Transition']}, planned {intent}")
+                    raise PlanError(f"{where}: {q['story']} derived {ex['log'][-1]['Transition']}, planned {intent}")
 
             elif e["kind"] == "verification.reply":
                 q = e["q"]
@@ -1118,7 +1155,7 @@ class Gen:
                 snd = sender_addr(m["from"])
                 hits = [x for x in quoted if x in S["req"] and state(x) == VS and norm_addr(S["req"][x]["email"]) == snd]
                 if len(hits) > 1:
-                    raise PlanError(f"{tid}: an email verifies several requests")
+                    raise PlanError(f"{where}: an email verifies several requests")
                 if hits:
                     rid = hits[0]
                     em = S["req"][rid]["email"]
@@ -1151,11 +1188,11 @@ class Gen:
                         asserts.append({"type": "zendesk_user_exists", "user_id": q["user"]})
                         protect([q["user"]])
                 if (e["sub"] == "genuine") != bool(hits):
-                    raise PlanError(f"{tid}: reply {e['sub']} derived verified={bool(hits)}")
+                    raise PlanError(f"{where}: reply {e['sub']} derived verified={bool(hits)}")
                 if hits:
                     want = BLOCKED if q["story"] in ("block-add", "block-pre") else PURGED
                     if ex["log"][-1]["Transition"] != want:
-                        raise PlanError(f"{tid}: {q['story']} derived {ex['log'][-1]['Transition']}, planned {want}")
+                        raise PlanError(f"{where}: {q['story']} derived {ex['log'][-1]['Transition']}, planned {want}")
 
             elif e["kind"] == "legal_hold.changed":
                 h = e["hold"]
@@ -1187,9 +1224,13 @@ class Gen:
                                         "row": {"Email": row["Email"], "Status": "Lifted", "Updated": today}}}
                     blocked = [x for x, v in S["req"].items() if norm_addr(v["email"]) == norm_addr(row["Email"]) and state(x) == BLOCKED]
                     if blocked and not active_holds(row["Email"]):
+                        # a Blocked row written this week (by the automation, not pre-seeded in world0)
+                        inweek = [x for x in blocked if any(w["Request ID"] == x and w["Transition"] == BLOCKED for w in week_rows)]
                         for x in blocked:
                             purge(x, S["req"][x]["email"])
                         labels.append("hold-lift")
+                        if inweek:
+                            labels.append("hold-lift-inweek")
                         lift_today[today] = lift_today.get(today, 0) + 1
                     elif blocked:
                         labels.append("hold-still")
@@ -1197,8 +1238,10 @@ class Gen:
                         if us:
                             asserts.append({"type": "zendesk_user_exists", "user_id": us[0]["id"]})
                             protect([us[0]["id"]])
-                    if (e["sub"] == "hold-lift") != ("hold-lift" in labels) or (e["sub"] == "hold-still") != ("hold-still" in labels):
-                        raise PlanError(f"{tid}: hold change {e['sub']} derived {labels}")
+                    if (e["sub"] in ("hold-lift", "hold-lift-inweek")) != ("hold-lift" in labels) \
+                            or (e["sub"] == "hold-lift-inweek") != ("hold-lift-inweek" in labels) \
+                            or (e["sub"] == "hold-still") != ("hold-still" in labels):
+                        raise PlanError(f"{where}: hold change {e['sub']} derived {labels}")
 
             else:  # day.close
                 dd = date.fromisoformat(e["date"])
@@ -1231,7 +1274,7 @@ class Gen:
                 for q in self.pre_deadline:
                     if q["close_day"] == (dd - self.monday.date()).days and not any(
                             x["Request ID"] == q["rid"] and x["Transition"] == CLOSED for x in ex["log"]):
-                        raise PlanError(f"{tid}: planned deadline closure of {q['rid']} not derived")
+                        raise PlanError(f"{where}: planned deadline closure of {q['rid']} not derived")
             # audit: rows logged earlier for the requests this trigger touches must stay as they are
             touched = sorted({x["Request ID"] for x in ex["log"]})
             for k, x in enumerate(self.log_cells0):
@@ -1247,6 +1290,8 @@ class Gen:
                                   "traps": tr["traps"], "payload": payload, "delta": delta})
             self.truth.append(tr)
 
+        if len({t["trigger"] for t in self.triggers}) != len(self.triggers):
+            raise ValueError("two triggers of one stream share an id")
         # end of week
         fri = self.day(4).date()
         req_all = {x: {"email": v["email"], "date": v["date"].isoformat()} for x, v in sorted(S["req"].items())}
@@ -1465,14 +1510,17 @@ def validate_world(world: dict) -> dict:
 def serve_input(seed: int, trigger: dict) -> dict:
     """The input row for `bridge.py serve --input <row> --world <world_t>` for ONE trigger (an AutomationBenchEnv
     dataset row): the family's apps only (so the allowed services are fixed), no assertions (the truth never enters
-    the serve process), the api toolset, and meta.current_time = the trigger time. The prompt holds only arm-visible
-    text: POLICY.md and the payload."""
+    the serve process), the api toolset, meta.current_time = the trigger time, and info.tz = UTC (bridge.py
+    pin_timezone sets the serve process's TZ from it: the shim's naive clock is local time, and the trigger times are
+    UTC). The prompt holds only arm-visible text: a fixed system line (no family id, seed or position), POLICY.md and
+    the payload. info.task_name and example_id are host-side (the bridge's host files), never shown to the arm."""
     policy = (HERE / "POLICY.md").read_text()
     info = {"task_name": f"{FAMILY}.s{seed}.t{trigger['index']:02d}", "zapier_tools": [], "assertions": [],
+            "tz": SERVE_TZ,
             "initial_state": {"meta": {"schema_version": "0.1.0", "current_time": trigger["at"]},
                               "zendesk": {}, "google_sheets": {}, "gmail": {}, "slack": {}}}
     return {"example_id": trigger["index"],
-            "prompt": [{"role": "system", "content": "standing automation " + FAMILY},
+            "prompt": [{"role": "system", "content": SYSTEM_PROMPT},
                        {"role": "user", "content": policy + "\n\nTrigger:\n" + canon(trigger["payload"])}],
             "answer": "", "info": json.dumps(info)}
 

@@ -8,16 +8,16 @@ trigger of the week (Friday's day close), end.json plus world0.
 Checks per trigger:
   1. audit     the hard requirement: no Compliance Log row that existed before the trigger was changed or removed
                (append-only), and the trigger appended exactly the expected rows: one per transition, matched as a
-               multiset on (Request ID, Email, Transition, At to the minute, Reference), in the expected order per
-               request. Reference compares as a set of ids for Purged and Blocked rows, exactly otherwise.
+               multiset on (Request ID, Email, Transition, At, Reference), in the expected order per request.
      effects   every expected effect is found in THIS trigger's ledger (attribution): each email (exactly one
-               recipient, the exact subject, the Request ID in the body); each anonymized ticket (subject = the
-               prefix + the old subject, tags = the old tags + gdpr-purged, nothing else changed); each deleted user;
-               each #privacy-ops summary (exact text). Texts compare after collapsing whitespace; a trailing period
-               is tolerated on posts.
+               recipient, the exact subject, the Request ID in the body, sent and neither trashed nor marked spam);
+               each anonymized ticket (subject = the prefix + the old subject, character for character; tags = the
+               old tags + gdpr-purged, exactly and in any order; nothing else changed); each deleted user; each
+               #privacy-ops summary (the exact text).
   2. envelope  every record created, changed or removed in this trigger is an expected effect or harmless (marking
                mail read or labelling it, creating Gmail labels, a ticket or user `updated_at` touch with no other
-               change). Anything else is overreach: another email, post, ticket or user change, a sheet edit.
+               change). Anything else is overreach: another email (or a required one moved to Trash or Spam), post,
+               ticket or user change, a sheet edit.
   3. ab        the truth's AutomationBench assertion dicts (zendesk_ticket_exists / _has_tag / _not_has_tag,
                zendesk_user_exists / _not_exists, gmail_message_sent_to_with_body_contains / _not_sent_to,
                google_sheets_row_exists / _row_not_updated, slack_message_exists), checked with AutomationBench's own
@@ -32,6 +32,19 @@ Checks per trigger:
 Outcome: correct (all checks pass) | abstained (only #automation-review posts, truth is not an escalation) |
 miss (no effect at all, truth expected effects) | wrong (anything else). `pass` includes the envelope; `pass_core`
 is the same verdict without it (reported beside the headline).
+
+Exactness (tightened 2026-10-21 after review; family.json `exactness`). Every text POLICY.md fixes is compared as
+written, with no case folding, whitespace collapsing or trailing-period tolerance:
+  - a ticket subject and its tags: exactly (tags as a multiset, so their order is free);
+  - a #privacy-ops summary: exactly (POLICY.md §8.2 "exactly");
+  - a log row: Request ID, Transition and Reference exactly as text (AutomationBench's own google_sheets_row_exists,
+    run beside it, compares Request ID and Transition exactly too); for Purged and Blocked rows the Reference is a
+    comma-separated list (POLICY.md: "comma-separated"), compared as a set of ids, a space after a comma allowed; At
+    as an instant (the event's `at`; any ISO 8601 form of that same instant, e.g. `+00:00` for `Z`, or no seconds
+    when they are 0);
+  - an email subject: exactly after trimming its ends (a header's surrounding whitespace is not part of it).
+The only normalisation that is not an exact match is the address rule POLICY.md §3 itself states (letter case and
+surrounding spaces): the log row's Email and the email recipient compare as addresses.
 """
 from __future__ import annotations
 
@@ -46,21 +59,37 @@ WS_REQ, WS_HOLD, WS_LOG, WS_CFG = "ws_requests", "ws_legal_hold", "ws_compliance
 LOG_HEADERS = ["Request ID", "Email", "Transition", "At", "Reference"]
 PRIVACY_OPS, REVIEW = "privacy-ops", "automation-review"
 TAG = "gdpr-purged"
-SET_REF = ("purged", "blocked - legal hold")
+SET_REF_EXACT = ("Purged", "Blocked - Legal Hold")
 TERMINAL = {"purged", "not found", "duplicate", "closed - unverified", "blocked - legal hold"}
 AGENT_IDS = {"usr_90001", "usr_90002"}
 VOLATILE = {"updated_at"}
 HARMLESS_GMAIL = {"is_read", "label_ids"}
+HIDDEN_LABELS = {"TRASH", "SPAM"}
 
 
 def canon(obj) -> str:
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
-def text_key(s) -> str:
-    """Whitespace collapsed, one trailing period tolerated; case and every other character count."""
-    t = " ".join(str(s or "").split())
-    return t[:-1].rstrip() if t.endswith(".") else t
+def subject_key(s) -> str:
+    """An email subject: exact, apart from whitespace around it (header parsing drops it)."""
+    return str(s if s is not None else "").strip()
+
+
+def text(s) -> str:
+    """A sheet cell as text, exactly as written."""
+    return str(s if s is not None else "")
+
+
+def cell(s) -> str:
+    """A sheet cell as text, trimmed at both ends (only for reading state back, never for matching a row)."""
+    return text(s).strip()
+
+
+def tags_key(tags) -> list[str]:
+    """Ticket tags as an exact multiset: order is free, letter case and duplicates are not (the API keeps each tag as
+    sent, only trimmed: automationbench/tools/api/impl/zendesk.py zendesk_tickets_update)."""
+    return sorted(str(x).strip() for x in (tags or []))
 
 
 def ws_key(s) -> str:
@@ -72,8 +101,10 @@ def addr(s) -> str:
     return (m.group(1) if m else str(s or "")).strip().lower()
 
 
-def minute(at) -> str:
-    """An ISO 8601 time as UTC YYYY-MM-DDTHH:MM (Z, +00:00, other offsets, a space for T, no seconds all accepted)."""
+def instant(at) -> str:
+    """An ISO 8601 time as the UTC instant it names, to the microsecond. Only the form is free (Z or +00:00 or another
+    offset of the same instant, a space for T, omitted seconds when they are 0, no offset read as UTC); a different
+    instant, even within the same minute, is a different At."""
     s = str(at or "").strip()
     try:
         dt = datetime.fromisoformat(s.replace("Z", "+00:00").replace(" ", "T", 1))
@@ -81,20 +112,25 @@ def minute(at) -> str:
         return "unparsed:" + s
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M")
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 
 def ref_key(transition: str, ref) -> str:
-    r = str(ref if ref is not None else "").strip()
-    if ws_key(transition) in SET_REF:
-        return ",".join(sorted(x.lower() for x in re.split(r"[,;\s]+", r) if x))
-    return r.lower()
+    """Reference as written. For Purged and Blocked rows it is a comma-separated list (POLICY.md §5, §6), compared as
+    a set of ids; any other separator, an empty element or an id with inner whitespace is malformed."""
+    r = text(ref)
+    if transition in SET_REF_EXACT:
+        parts = [x.strip() for x in r.split(",")]
+        if any(not x or re.search(r"[\s;]", x) for x in parts):
+            return "malformed:" + r
+        return ",".join(sorted(parts))
+    return r
 
 
 def log_key(cells: dict) -> tuple:
     extra = tuple(sorted(k for k, v in cells.items() if k not in LOG_HEADERS and str(v or "").strip()))
-    tr = ws_key(cells.get("Transition"))
-    return (str(cells.get("Request ID") or "").strip().upper(), addr(cells.get("Email")), tr, minute(cells.get("At")),
+    tr = text(cells.get("Transition"))
+    return (text(cells.get("Request ID")), addr(cells.get("Email")), tr, instant(cells.get("At")),
             ref_key(tr, cells.get("Reference")), extra)
 
 
@@ -176,6 +212,12 @@ def is_sent(m: dict) -> bool:
     return "SENT" in (m.get("label_ids") or [])
 
 
+def is_live_sent(m: dict) -> bool:
+    """Sent and still in the mailbox: a message the automation sent and then moved to Trash or Spam is not a delivered
+    policy email (POLICY.md §11: nothing the policy does not ask for)."""
+    return is_sent(m) and not HIDDEN_LABELS & set(m.get("label_ids") or [])
+
+
 def harmless(it: dict) -> bool:
     if it["app"] == "gmail" and it["coll"] == "labels":
         return True
@@ -192,7 +234,9 @@ def summarize(it: dict) -> str:
     if it["app"] == "slack" and it.get("coll") == "messages":
         return f"slack.{it['op']} {rec.get('channel_id')}: {str(rec.get('text'))[:80]!r}"
     if it["app"] == "gmail" and it.get("coll") == "messages":
-        return f"gmail.{it['op']} to={rec.get('to')} {str(rec.get('subject'))[:60]!r} {it.get('fields', '')}"
+        hidden = sorted(HIDDEN_LABELS & set(rec.get("label_ids") or []))
+        return (f"gmail.{it['op']} to={rec.get('to')} {str(rec.get('subject'))[:60]!r} {it.get('fields', '')}"
+                + (f" labels={hidden}" if hidden else ""))
     if it["app"] == "google_sheets" and it.get("coll") == "rows":
         return f"sheets.row.{it['op']} {rec.get('worksheet_id')}#{rec.get('row_id')} {canon(rec.get('cells'))[:90]} {it.get('fields', '')}"
     if it["app"] == "zendesk":
@@ -204,7 +248,7 @@ def latest_states(log_rows: list[dict]) -> dict[str, str]:
     out = {}
     for r in log_rows:
         c = r.get("cells") or {}
-        rid = str(c.get("Request ID") or "").strip().upper()
+        rid = cell(c.get("Request ID"))
         if rid:
             out[rid] = ws_key(c.get("Transition"))
     return out
@@ -256,11 +300,13 @@ class Grader:
             check("log.order", order_ok, f"rows of one request appended out of order: {dict(by_req)}", group="audit")
 
         # 1b. emails -------------------------------------------------------------------------------------------------
+        # a new message sent and then trashed or marked spam in the same run is never the expected email; it stays
+        # unmatched, so the envelope reports it as well
         new_sent = [i for i, it in enumerate(L) if it["app"] == "gmail" and it["coll"] == "messages" and it["op"] == "new"
-                    and is_sent(it["after"])]
+                    and is_live_sent(it["after"])]
         for em in exp["emails"]:
             cands = [i for i in new_sent if i not in used and recipients(L[i]["after"]) == [em["to"]]
-                     and text_key(L[i]["after"].get("subject")) == text_key(em["subject"])
+                     and subject_key(L[i]["after"].get("subject")) == em["subject"]
                      and em["rid"] in f"{L[i]['after'].get('body_plain') or ''}\n{L[i]['after'].get('body_html') or ''}"]
             if cands:
                 used.add(cands[0])
@@ -275,9 +321,8 @@ class Grader:
                 continue
             used.add(idx)
             a = L[idx]["after"]
-            ok_subj = text_key(a.get("subject")) == text_key(t["subject"])
-            ok_tags = sorted({str(x).strip().lower() for x in a.get("tags") or []}) == sorted({x.lower() for x in t["tags"]}) \
-                and len(a.get("tags") or []) == len({str(x).strip().lower() for x in a.get("tags") or []})
+            ok_subj = a.get("subject") == t["subject"]                # POLICY §6.2: the prefix "with one space"
+            ok_tags = tags_key(a.get("tags")) == tags_key(t["tags"])  # §6.2: keep the other tags, change nothing else
             other = [f for f in L[idx]["fields"] if f not in ("subject", "tags") and f not in VOLATILE]
             check(f"ticket {t['id']}", ok_subj and ok_tags and not other,
                   f"subject {a.get('subject')!r} (want {t['subject']!r}); tags {a.get('tags')} (want {t['tags']}); other {other}")
@@ -293,7 +338,7 @@ class Grader:
         new_msgs = [i for i, it in enumerate(L) if it["app"] == "slack" and it["coll"] == "messages" and it["op"] == "new"]
         for text in exp["posts"]:
             cands = [i for i in new_msgs if i not in used and L[i]["after"].get("channel_id") == ops
-                     and not L[i]["after"].get("is_deleted") and text_key(L[i]["after"].get("text")) == text_key(text)]
+                     and not L[i]["after"].get("is_deleted") and L[i]["after"].get("text") == text]
             if cands:
                 used.add(cands[0])
             check(f"post {text[:40]}", bool(cands), f"no new #{PRIVACY_OPS} message {text!r}")
@@ -385,7 +430,7 @@ class Grader:
         late = []
         for r in sheet_rows(after, WS_REQ):
             c = r.get("cells") or {}
-            rid = str(c.get("Request ID") or "").strip().upper()
+            rid = cell(c.get("Request ID"))
             try:
                 age = (fri - date.fromisoformat(str(c.get("Requested Date")).strip())).days
             except ValueError:
@@ -401,8 +446,7 @@ class Grader:
         badt = []
         for tid, want_t in end["tickets"].items():
             t = tickets.get(tid)
-            if t is None or text_key(t.get("subject")) != text_key(want_t["subject"]) or \
-                    sorted({str(x).strip().lower() for x in t.get("tags") or []}) != sorted({x.lower() for x in want_t["tags"]}):
+            if t is None or t.get("subject") != want_t["subject"] or tags_key(t.get("tags")) != tags_key(want_t["tags"]):
                 badt.append(tid)
         badt += sorted(set(tickets) - set(end["tickets"]))
         check("end.tickets", not badt, f"{len(badt)} tickets differ: {badt[:5]}")
@@ -413,16 +457,16 @@ class Grader:
             check(f"end.{ws}-unedited", canon(got_rows) == canon(want_rows), f"the {ws} worksheet was edited")
         if world0 is not None:
             ids0 = {m["id"] for m in world0["gmail"]["messages"]}
-            got_m = Counter((tuple(recipients(m)), text_key(m.get("subject"))) for m in after["gmail"]["messages"]
-                            if m["id"] not in ids0 and is_sent(m))
-            # inbound messages of the week arrive by delta; they are not SENT
-            want_m = Counter(((to,), text_key(s)) for to, s in end["emails"])
+            got_m = Counter((tuple(recipients(m)), subject_key(m.get("subject"))) for m in after["gmail"]["messages"]
+                            if m["id"] not in ids0 and is_live_sent(m))
+            # inbound messages of the week arrive by delta; they are not SENT. A sent email later trashed is missing.
+            want_m = Counter(((to,), s) for to, s in end["emails"])
             check("end.emails", got_m == want_m, f"missing {list((want_m - got_m).elements())[:3]}; extra {list((got_m - want_m).elements())[:3]}")
             keys0 = {_key("slack", "messages", m) for m in world0["slack"]["messages"]}
             ops = _chan_id(after, PRIVACY_OPS)
-            got_p = Counter(text_key(m.get("text")) for m in after["slack"]["messages"]
+            got_p = Counter(m.get("text") for m in after["slack"]["messages"]
                             if _key("slack", "messages", m) not in keys0 and m.get("channel_id") == ops and not m.get("is_deleted"))
-            want_p = Counter(text_key(t) for t in end["posts"])
+            want_p = Counter(end["posts"])
             check("end.posts", got_p == want_p, f"missing {list((want_p - got_p).elements())[:3]}; extra {list((got_p - want_p).elements())[:3]}")
             touched = [summarize(it) for it in ledger(world0, after)
                        if it["op"] in ("changed", "removed") and it["app"] in ("slack", "gmail") and not harmless(it)]
