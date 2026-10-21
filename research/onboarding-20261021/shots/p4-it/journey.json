@@ -1,0 +1,237 @@
+{
+  "journey": "p4-it",
+  "persona": "p4-it",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "action": "precondition",
+      "target": "the operator made \"Chase unpaid invoices\", tested it and turned it on (as in P2); their invoice list is in Foundry",
+      "steps": 0,
+      "asks": 0,
+      "ms": 411
+    },
+    {
+      "action": "precondition",
+      "target": "the organisation manages Claude Code on this computer (a stand-in managed-settings.json in FOUNDRY_MANAGED_DIR)",
+      "steps": 0,
+      "asks": 0,
+      "ms": 411
+    },
+    {
+      "n": 1,
+      "shot": "01-home-managed.jpg",
+      "slug": "home-managed",
+      "note": "Foundry noticed the managed policy folder (read-only: it lists the folder, it does not change it)",
+      "steps": 0,
+      "asks": 0,
+      "ms": 800,
+      "route": "#/",
+      "h1": "Hand off the jobs you do every week.",
+      "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
+      "a11y": [],
+      "aria": "- main:\n  - region \"Your organisation manages Claude Code on this computer\":\n    - heading \"Your organisation manages Claude Code on this computer\" [level=2]\n    - paragraph: Your IT team may want to see what Foundry does before you use it for real. You can hand them a one-page brief, and keep everything in practice until they say yes.\n    - link \"Get a one-page brief for IT\":\n      - /url: \"#/it-brief\"\n    - button \"Turn on practice-only mode\"\n  - heading \"Hand off the jobs you do every week.\" [level=1]\n  - paragraph: Pick one below or describe it. Foundry builds it, tests it with pretend data, and shows you exactly what it will do. Nothing real happens until you say yes.\n  - paragraph:\n    - link \"Your automations (1)\":\n      - /url: \"#/automations\"\n  - heading \"Foundry can make these today\" [level=2]\n  - list \"Foundry can make these today\":\n    - listitem \"Chase unpaid invoices\":\n      - heading \"Chase unpaid invoices\" [level=3]\n      - paragraph: Polite reminders to customers who are late, firmer later. You see every e-mail first.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your invoice list as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/invoice-chase\"\n    - listitem \"Approve small expenses\":\n      - heading \"Approve small expenses\" [level=3]\n      - paragraph: Approves claims under your limit. Sends the rest to the person who decides.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your expense claims as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/expense-approval\"\n    - listitem \"Weekly progress report\":\n      - heading \"Weekly progress report\" [level=3]\n      - paragraph: Counts what's done, open and blocked, and e-mails one person.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your tracker export as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/weekly-report\"\n    - listitem \"Route new leads\":\n      - heading \"Route new leads\" [level=3]\n      - paragraph: Sends each new lead to the right salesperson.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your leads list as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/lead-triage\"\n    - listitem \"Answer common support questions\":\n      - heading \"Answer common support questions\" [level=3]\n      - paragraph: Replies with your own answers. Sends the rest to a person.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your ticket export as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/support-deflection\"\n    - listitem \"On-call alert digest\":\n      - heading \"On-call alert digest\" [level=3]\n      - paragraph: One summary of unresolved alerts to a chat channel.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your alerts export as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/oncall-digest\"\n    - listitem \"Keep the newsletter list in step\":\n      - heading \"Keep the newsletter list in step\" [level=3]\n      - paragraph: Finds contacts missing from your list and tells you.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your customer list (CRM export) and newsletter list as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/contact-sync\"\n  - search \"Or describe it in your own words\":\n    - text: Or describe it in your own words\n    - textbox \"Or describe it in your own words\":\n      - /placeholder: e.g. remind customers who haven't paid after a week\n    - button \"Find a match\"\n    - paragraph: Without an AI key, Foundry matches your words to the list above. Nothing leaves this computer.\n  - paragraph: \"Already use n8n? Drop an exported workflow to see what it does and what could come over. Zapier and Make: later.\"\n  - text: Preview\n  - link \"Bring in an n8n workflow\":\n    - /url: \"#/import\"\n  - paragraph:\n    - text: Use Claude Code, Cursor or Codex?\n    - link \"Connect it with one line →\":\n      - /url: \"#/connect-agent\"\n  - paragraph:\n    - text: \"Runs on this computer. No account. Nothing runs, sends or changes until you say yes. The limit: a coding agent that can run commands as you on this computer could do what you can do, including say yes.\"\n    - 'link \"Where this comes from: Nothing happens until you say yes (with one honest limit)\"':\n      - /url: \"#/claims?c=C01\"\n      - text: (source)\n    - link \"How this is kept safe\":\n      - /url: \"#/trust\"\n  - region \"Why Foundry tests before it acts\":\n    - heading \"Why Foundry tests before it acts\" [level=2]\n    - paragraph:\n      - text: In our own tests, a low-cost AI that practised first built a 14-case order process with 14 of 14 right, for $0.39. A top AI that built it in one go got 5 of 14, for $7.63.\n      - 'link \"Where this comes from: Practising first: 14 of 14 versus 5 of 14\"':\n        - /url: \"#/claims?c=C04\"\n        - text: (source)\n    - paragraph: These are development tests on one task family we wrote, not a promise about yours."
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Get a one-page brief for IT",
+      "steps": 1,
+      "asks": 0,
+      "ms": 921
+    },
+    {
+      "n": 2,
+      "shot": "02-it-brief.jpg",
+      "slug": "it-brief",
+      "note": "generated on this computer from the automation's own record",
+      "steps": 1,
+      "asks": 0,
+      "ms": 1510,
+      "route": "#/it-brief",
+      "h1": "IT brief: Invoice reminders",
+      "focus": "h1 IT brief: Invoice reminders",
+      "a11y": [],
+      "aria": "- main:\n  - 'heading \"IT brief: Invoice reminders\" [level=1]'\n  - paragraph: Generated on this computer on 2026-10-21. Not sent anywhere.\n  - button \"Download (Markdown)\"\n  - button \"Download (web page)\"\n  - heading \"What Foundry is\" [level=2]\n  - list:\n    - listitem: A local program that builds small automations from fixed, reviewed templates, tests each version on pretend data, and runs a version only after a person turns it on. Each outside action (an e-mail, a chat post) asks the person first.\n    - listitem: It runs on this computer only. The page listens on 127.0.0.1. There is no account, no hosted service and no telemetry.\n  - heading \"This automation\" [level=2]\n  - table:\n    - rowgroup:\n      - row \"Item Value\":\n        - columnheader \"Item\"\n        - columnheader \"Value\"\n    - rowgroup:\n      - row \"Title Invoice reminders\":\n        - cell \"Title\"\n        - cell \"Invoice reminders\"\n      - row \"Version 1\":\n        - cell \"Version\"\n        - cell \"1\"\n      - row \"Workflow hash (sha256) 880c72959b0849464b1bb1c935ab540c07c737d24c19afc50e103df4ef49ed30\":\n        - cell \"Workflow hash (sha256)\"\n        - cell \"880c72959b0849464b1bb1c935ab540c07c737d24c19afc50e103df4ef49ed30\"\n      - row \"Made from template invoice-chase\":\n        - cell \"Made from template\"\n        - cell \"invoice-chase\"\n      - row \"Built by template-form/1 (no model; the person or their agent filled the settings)\":\n        - cell \"Built by\"\n        - cell \"template-form/1 (no model; the person or their agent filled the settings)\"\n      - row \"Uses AI yes (building only)\":\n        - cell \"Uses AI\"\n        - cell \"yes (building only)\"\n      - row \"Turned on yes\":\n        - cell \"Turned on\"\n        - cell \"yes\"\n  - heading \"Every action\" [level=2]\n  - table:\n    - rowgroup:\n      - row \"Step Effect Asks a person first\":\n        - columnheader \"Step\"\n        - columnheader \"Effect\"\n        - columnheader \"Asks a person first\"\n    - rowgroup:\n      - row \"Read the invoices sheet reads or computes only no\":\n        - cell \"Read the invoices sheet\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Keep open invoices only (not paid, not disputed) reads or computes only no\":\n        - cell \"Keep open invoices only (not paid, not disputed)\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Work out how many days late each open invoice is reads or computes only no\":\n        - cell \"Work out how many days late each open invoice is\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Decide which reminder each invoice is due for reads or computes only no\":\n        - cell \"Decide which reminder each invoice is due for\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Keep the invoices due for a reminder reads or computes only no\":\n        - cell \"Keep the invoices due for a reminder\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Remind each customer once per stage computes only no\":\n        - cell \"Remind each customer once per stage\"\n        - cell \"computes only\"\n        - cell \"no\"\n      - row \"List the reminders this run actually sent reads or computes only no\":\n        - cell \"List the reminders this run actually sent\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Who should have received a reminder this run reads or computes only no\":\n        - cell \"Who should have received a reminder this run\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"List the invoices due for a reminder reads or computes only no\":\n        - cell \"List the invoices due for a reminder\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Write the summary reads or computes only no\":\n        - cell \"Write the summary\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"E-mail the summary to me@example.com (asks you first) acts on the outside world (not safe to repeat) yes\":\n        - cell \"E-mail the summary to me@example.com (asks you first)\"\n        - cell \"acts on the outside world (not safe to repeat)\"\n        - cell \"yes\"\n      - 'row \"Re-read the outbox: exactly the planned e-mails went out this run, each intact reads or computes only no\"':\n        - 'cell \"Re-read the outbox: exactly the planned e-mails went out this run, each intact\"'\n        - cell \"reads or computes only\"\n        - cell \"no\"\n  - heading \"What it never does\" [level=2]\n  - list:\n    - listitem: Remind customers whose invoice is paid or disputed\n    - listitem: Take payments, charge cards or change the invoices sheet\n    - listitem: Contact anyone except the e-mail address on each invoice\n    - listitem: \"Run by itself on a schedule: you (or your coding agent) start each run\"\n  - heading \"Data\" [level=2]\n  - list:\n    - listitem: \"Reads or writes the \\\"invoices\\\" sheet on this computer: one row per invoice: invoice (id), customer, email, amount, due (YYYY-MM-DD), status (open | paid | disputed)\"\n    - listitem: Writes drafts (e-mail files) to the workspace outbox after the person approves each one; nothing is sent by Foundry.\n    - listitem: \"Leaves this computer: nothing.\"\n  - heading \"Who decides\" [level=2]\n  - list:\n    - listitem: Turned on by the person at this computer through dashboard on 2026-10-21T18:42:26.463Z.\n    - listitem: Every outside action asks the person again before it happens. A second person's own sign-in is planned (Team plan), not available.\n  - heading \"Test evidence\" [level=2]\n  - list:\n    - listitem: Practice run passed on the template's pretend data (2026-10-21T18:42:26.450Z), bound to this hash.\n    - listitem: \"PASS: Every overdue open invoice got the reminder its age calls for\"\n    - listitem: \"PASS: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox)\"\n    - listitem: \"PASS: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true\"\n    - listitem: \"PASS: Re-read th"
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Download (Markdown)",
+      "steps": 2,
+      "asks": 0,
+      "ms": 1594
+    },
+    {
+      "n": 3,
+      "shot": "03-brief-downloaded.jpg",
+      "slug": "brief-downloaded",
+      "note": null,
+      "steps": 2,
+      "asks": 0,
+      "ms": 2170,
+      "route": "#/it-brief",
+      "h1": "IT brief: Invoice reminders",
+      "focus": "button Download (Markdown)",
+      "a11y": [],
+      "aria": "- main:\n  - 'heading \"IT brief: Invoice reminders\" [level=1]'\n  - paragraph: Generated on this computer on 2026-10-21. Not sent anywhere.\n  - button \"Download (Markdown)\"\n  - button \"Download (web page)\"\n  - heading \"What Foundry is\" [level=2]\n  - list:\n    - listitem: A local program that builds small automations from fixed, reviewed templates, tests each version on pretend data, and runs a version only after a person turns it on. Each outside action (an e-mail, a chat post) asks the person first.\n    - listitem: It runs on this computer only. The page listens on 127.0.0.1. There is no account, no hosted service and no telemetry.\n  - heading \"This automation\" [level=2]\n  - table:\n    - rowgroup:\n      - row \"Item Value\":\n        - columnheader \"Item\"\n        - columnheader \"Value\"\n    - rowgroup:\n      - row \"Title Invoice reminders\":\n        - cell \"Title\"\n        - cell \"Invoice reminders\"\n      - row \"Version 1\":\n        - cell \"Version\"\n        - cell \"1\"\n      - row \"Workflow hash (sha256) 880c72959b0849464b1bb1c935ab540c07c737d24c19afc50e103df4ef49ed30\":\n        - cell \"Workflow hash (sha256)\"\n        - cell \"880c72959b0849464b1bb1c935ab540c07c737d24c19afc50e103df4ef49ed30\"\n      - row \"Made from template invoice-chase\":\n        - cell \"Made from template\"\n        - cell \"invoice-chase\"\n      - row \"Built by template-form/1 (no model; the person or their agent filled the settings)\":\n        - cell \"Built by\"\n        - cell \"template-form/1 (no model; the person or their agent filled the settings)\"\n      - row \"Uses AI yes (building only)\":\n        - cell \"Uses AI\"\n        - cell \"yes (building only)\"\n      - row \"Turned on yes\":\n        - cell \"Turned on\"\n        - cell \"yes\"\n  - heading \"Every action\" [level=2]\n  - table:\n    - rowgroup:\n      - row \"Step Effect Asks a person first\":\n        - columnheader \"Step\"\n        - columnheader \"Effect\"\n        - columnheader \"Asks a person first\"\n    - rowgroup:\n      - row \"Read the invoices sheet reads or computes only no\":\n        - cell \"Read the invoices sheet\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Keep open invoices only (not paid, not disputed) reads or computes only no\":\n        - cell \"Keep open invoices only (not paid, not disputed)\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Work out how many days late each open invoice is reads or computes only no\":\n        - cell \"Work out how many days late each open invoice is\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Decide which reminder each invoice is due for reads or computes only no\":\n        - cell \"Decide which reminder each invoice is due for\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Keep the invoices due for a reminder reads or computes only no\":\n        - cell \"Keep the invoices due for a reminder\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Remind each customer once per stage computes only no\":\n        - cell \"Remind each customer once per stage\"\n        - cell \"computes only\"\n        - cell \"no\"\n      - row \"List the reminders this run actually sent reads or computes only no\":\n        - cell \"List the reminders this run actually sent\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Who should have received a reminder this run reads or computes only no\":\n        - cell \"Who should have received a reminder this run\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"List the invoices due for a reminder reads or computes only no\":\n        - cell \"List the invoices due for a reminder\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"Write the summary reads or computes only no\":\n        - cell \"Write the summary\"\n        - cell \"reads or computes only\"\n        - cell \"no\"\n      - row \"E-mail the summary to me@example.com (asks you first) acts on the outside world (not safe to repeat) yes\":\n        - cell \"E-mail the summary to me@example.com (asks you first)\"\n        - cell \"acts on the outside world (not safe to repeat)\"\n        - cell \"yes\"\n      - 'row \"Re-read the outbox: exactly the planned e-mails went out this run, each intact reads or computes only no\"':\n        - 'cell \"Re-read the outbox: exactly the planned e-mails went out this run, each intact\"'\n        - cell \"reads or computes only\"\n        - cell \"no\"\n  - heading \"What it never does\" [level=2]\n  - list:\n    - listitem: Remind customers whose invoice is paid or disputed\n    - listitem: Take payments, charge cards or change the invoices sheet\n    - listitem: Contact anyone except the e-mail address on each invoice\n    - listitem: \"Run by itself on a schedule: you (or your coding agent) start each run\"\n  - heading \"Data\" [level=2]\n  - list:\n    - listitem: \"Reads or writes the \\\"invoices\\\" sheet on this computer: one row per invoice: invoice (id), customer, email, amount, due (YYYY-MM-DD), status (open | paid | disputed)\"\n    - listitem: Writes drafts (e-mail files) to the workspace outbox after the person approves each one; nothing is sent by Foundry.\n    - listitem: \"Leaves this computer: nothing.\"\n  - heading \"Who decides\" [level=2]\n  - list:\n    - listitem: Turned on by the person at this computer through dashboard on 2026-10-21T18:42:26.463Z.\n    - listitem: Every outside action asks the person again before it happens. A second person's own sign-in is planned (Team plan), not available.\n  - heading \"Test evidence\" [level=2]\n  - list:\n    - listitem: Practice run passed on the template's pretend data (2026-10-21T18:42:26.450Z), bound to this hash.\n    - listitem: \"PASS: Every overdue open invoice got the reminder its age calls for\"\n    - listitem: \"PASS: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox)\"\n    - listitem: \"PASS: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true\"\n    - listitem: \"PASS: Re-read th"
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Home",
+      "steps": 3,
+      "asks": 0,
+      "ms": 2233
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Turn on practice-only mode",
+      "steps": 4,
+      "asks": 0,
+      "ms": 2458
+    },
+    {
+      "n": 4,
+      "shot": "04-practice-only-on.jpg",
+      "slug": "practice-only-on",
+      "note": "one action from the managed card; enforced by the service for the page, the command line and MCP alike",
+      "steps": 4,
+      "asks": 0,
+      "ms": 3123,
+      "route": "#/settings",
+      "h1": "Settings",
+      "focus": "h1 Settings",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Settings\" [level=1]\n  - heading \"Practice-only mode\" [level=2]\n  - 'checkbox \"Practice-only mode: nothing can run for real on this computer\" [checked]'\n  - text: \"Practice-only mode: nothing can run for real on this computer\"\n  - paragraph: Tests with pretend data still work. Your coding agent and the terminal are held to it too. Useful for a pilot your IT team runs.\n  - heading \"Allowed AI\" [level=2]\n  - group \"Which AI may build from your words?\":\n    - text: Which AI may build from your words?\n    - radio \"None (Foundry matches your words to a card)\" [checked]\n    - text: None (Foundry matches your words to a card)\n    - radio \"Mercury 3, with your own key Preview\"\n    - text: Mercury 3, with your own key Preview\n  - paragraph: With no AI, nothing you type leaves this computer.\n  - paragraph:\n    - link \"Manage AI keys\":\n      - /url: \"#/keys\"\n  - heading \"Look\" [level=2]\n  - group \"Colours\":\n    - text: Colours\n    - radio \"Match my computer\" [checked]\n    - text: Match my computer\n    - radio \"Light\"\n    - text: Light\n    - radio \"Dark\"\n    - text: Dark\n  - heading \"Where your things are\" [level=2]\n  - paragraph: \"Your automations, your lists and every record live in this folder, readable only by your user:\"\n  - text: /tmp/journey-p4-it-xEmARo\n  - paragraph: Foundry doesn't keep anything anywhere else.\n  - heading \"Your organisation\" [level=2]\n  - paragraph:\n    - link \"Who decides what\":\n      - /url: \"#/org\"\n  - status"
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Your automations",
+      "steps": 5,
+      "asks": 0,
+      "ms": 3198
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Open",
+      "steps": 6,
+      "asks": 0,
+      "ms": 3367
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Run it (shows you the list first)",
+      "steps": 7,
+      "asks": 0,
+      "ms": 3529
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Show me what it would make",
+      "steps": 8,
+      "asks": 0,
+      "ms": 3689
+    },
+    {
+      "n": 5,
+      "shot": "05-run-refused.jpg",
+      "slug": "run-refused",
+      "note": null,
+      "steps": 8,
+      "asks": 0,
+      "ms": 4049,
+      "route": "#/go-live/invoice-chase",
+      "h1": "Where's your invoice list?",
+      "focus": "button Show me what it would make",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Where's your invoice list?\" [level=1]\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here.\n  - status:\n    - paragraph: Practice-only mode is on, so nothing runs for real on this computer.\n    - link \"Open Settings\":\n      - /url: \"#/settings\"\n  - paragraph:\n    - text: You gave Foundry your invoice list on 10/21/2026, 6:42:26 PM (6 invoices).\n    - button \"Replace it\"\n  - button \"Show me what it would make\"\n  - alert:\n    - heading \"That didn't work\" [level=2]\n    - term: What happened\n    - definition: Practice-only mode is on, so nothing runs for real on this computer.\n    - term: What was not done\n    - definition: Nothing was made.\n    - term: What to do\n    - definition:\n      - paragraph: Turn it off in Settings if you want to run it for real. Tests on pretend data still work.\n      - link \"Open Settings\":\n        - /url: \"#/settings\"\n    - group: Details\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"How should it send?\":\n      - text: How should it send?\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "For IT and security",
+      "steps": 9,
+      "asks": 0,
+      "ms": 4125
+    },
+    {
+      "n": 6,
+      "shot": "06-trust.jpg",
+      "slug": "trust",
+      "note": null,
+      "steps": 9,
+      "asks": 0,
+      "ms": 4679,
+      "route": "#/trust",
+      "h1": "How this is kept safe",
+      "focus": "h1 How this is kept safe",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"How this is kept safe\" [level=1]\n  - paragraph: What Foundry does, where, and the one limit you should know about.\n  - region \"What runs where\":\n    - heading \"What runs where\" [level=2]\n    - paragraph: \"Everything runs on this computer. The page listens on this computer only, and nothing listens on your network. Your automations and records are in this folder, private to your user:\"\n    - text: /tmp/journey-p4-it-xEmARo\n  - region \"What leaves this computer\":\n    - heading \"What leaves this computer\" [level=2]\n    - paragraph: Nothing, unless you turn on an AI builder. With Mercury, your words and answers go to Inception to fill in a card's settings. Nothing else does.\n  - region \"Keys\":\n    - heading \"Keys\" [level=2]\n    - paragraph:\n      - text: AI keys go into your computer's keychain. Foundry never writes them to a file, a log or the AI's view. If your computer has no keychain Foundry can use, it doesn't save the key. Bringing your own AI key is free, and the key goes into your computer's keychain, never into files or logs.\n      - 'link \"Where this comes from: Your key, your keychain\"':\n        - /url: \"#/claims?c=C10\"\n        - text: (source)\n  - region \"Who can approve\":\n    - heading \"Who can approve\" [level=2]\n    - paragraph:\n      - text: Only you, with a click on this page, a typed yes in your own terminal, or the dialog your coding agent shows you. Your agent can draft and test, not approve. In our tests, 10 of 10 attempts to get around your yes were refused.\n      - 'link \"Where this comes from: Ways around your yes are refused\"':\n        - /url: \"#/claims?c=C02\"\n        - text: (source)\n  - region \"The honest limit\":\n    - heading \"The honest limit\" [level=2]\n    - paragraph: A coding agent that can run commands as you on this computer could do what you can do, including approve. Foundry's link key and checks keep out other web pages and other users, not that agent.\n    - paragraph: \"What closes this gap: Foundry running as a separate user, approvals on a second device, or the hosted Team plan (all planned).\"\n  - region \"Records\":\n    - heading \"Records\" [level=2]\n    - paragraph:\n      - text: Each run keeps a chained record that Foundry re-checks when you open it. Your decisions and the AI's transcripts are not yet part of the chained record, and its latest link is not stored outside this computer unless you ask for it.\n      - 'link \"Where this comes from: Known gaps in the record\"':\n        - /url: \"#/claims?c=C14\"\n        - text: (source)\n  - region \"What's tested\":\n    - heading \"What's tested\" [level=2]\n    - paragraph:\n      - text: Tested on Linux only. macOS and Windows are untested, and steps that run code are refused there.\n      - 'link \"Where this comes from: What has been tested\"':\n        - /url: \"#/claims?c=C13\"\n        - text: (source)\n    - paragraph: No user has tried this yet.\n  - 'region \"For IT: the pilot we suggest\"':\n    - 'heading \"For IT: the pilot we suggest\" [level=2]'\n    - list:\n      - listitem: Practice-only mode on\n      - listitem: No AI, or only the provider you approve; Mercury off\n      - listitem: Linux or macOS developer machines\n      - listitem: 30 days\n      - listitem: Allowlist the exact command below, not the name\n    - link \"Turn on practice-only mode\":\n      - /url: \"#/settings\"\n    - link \"Get a one-page brief for IT\":\n      - /url: \"#/it-brief\"\n  - region \"Before live use in an organisation, these must exist\":\n    - heading \"Before live use in an organisation, these must exist\" [level=2]\n    - list:\n      - listitem: Approvals by an identity the agent can't hold Planned\n      - listitem: A record anchored outside the user's control Planned\n      - listitem: Automatic removal of leavers and a stop-everything switch Planned\n      - listitem: A signed, pinned build you can allowlist Planned\n    - paragraph: None of these exists yet.\n  - region \"Allowlist entry (exact)\":\n    - heading \"Allowlist entry (exact)\" [level=2]\n    - paragraph: \"For Claude Code's managed settings: allow Foundry's exact command, every argument in order, generated on this computer.\"\n    - text: \"{ \\\"allowedMcpServers\\\": [ { \\\"serverCommand\\\": [ \\\"/opt/node24/bin/node\\\", \\\"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\\\", \\\"mcp\\\", \\\"--dashboard\\\", \\\"--workspace\\\", \\\"/tmp/journey-p4-it-xEmARo\\\" ] } ] }\"\n    - button \"Copy\"\n    - paragraph: \"Or, if your organisation sets every server itself, a managed-mcp entry:\"\n    - text: \"{ \\\"mcpServers\\\": { \\\"foundry\\\": { \\\"command\\\": \\\"/opt/node24/bin/node\\\", \\\"args\\\": [ \\\"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\\\", \\\"mcp\\\", \\\"--dashboard\\\", \\\"--workspace\\\", \\\"/tmp/journey-p4-it-xEmARo\\\" ] } } }\"\n    - button \"Copy\"\n    - paragraph: Claude Code matches every argument in order; a server name is not a security control (code.claude.com/docs/en/managed-mcp, read on the day this was built). The paths are this computer's, so generate it on the machine you allow."
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {
+    "brief": {
+      "steps": 2,
+      "asks": 0,
+      "ms": 1639
+    },
+    "beforePracticeOnly": {
+      "steps": 3,
+      "asks": 0,
+      "ms": 2389
+    },
+    "practiceOnly": {
+      "steps": 4,
+      "asks": 0,
+      "ms": 2802
+    }
+  },
+  "a11y": [],
+  "refusals": [
+    "409 /api/batch/preview"
+  ],
+  "checks": {
+    "managed": "Your organisation manages Claude Code on this computer",
+    "briefFile": "foundry-it-brief-invoice-chase.md",
+    "banner": "Practice-only mode is on, so nothing runs for real on this computer.Open Settings",
+    "refused": "That didn't workWhat happenedPractice-only mode is on, so nothing runs for real on this computer.What was not doneNothing was made.What to doTurn it off in Settings if you want to run it for real. Tests on pretend data still work.Open SettingsDetailsPRACTICE_ONLY Practice-only mode is on",
+    "trustAllowlist": true
+  },
+  "preconditions": [
+    "the operator made \"Chase unpaid invoices\", tested it and turned it on (as in P2); their invoice list is in Foundry",
+    "the organisation manages Claude Code on this computer (a stand-in managed-settings.json in FOUNDRY_MANAGED_DIR)"
+  ],
+  "totalSteps": 9,
+  "totalAsks": 0,
+  "ms": 4679,
+  "shots": [
+    "01-home-managed.jpg",
+    "02-it-brief.jpg",
+    "03-brief-downloaded.jpg",
+    "04-practice-only-on.jpg",
+    "05-run-refused.jpg",
+    "06-trust.jpg"
+  ],
+  "budgets": {
+    "brief": {
+      "steps": 2
+    },
+    "practiceOnly": {
+      "steps": 1,
+      "since": "beforePracticeOnly"
+    }
+  },
+  "passed": true
+}

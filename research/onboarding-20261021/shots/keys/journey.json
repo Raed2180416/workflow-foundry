@@ -1,0 +1,94 @@
+{
+  "journey": "keys",
+  "persona": "keys",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "n": 1,
+      "shot": "01-keys-page.jpg",
+      "slug": "keys-page",
+      "note": "you do not need a key; the cards work without AI",
+      "steps": 0,
+      "asks": 0,
+      "ms": 790,
+      "route": "#/keys",
+      "h1": "AI keys",
+      "focus": "h1 AI keys",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - text: Paste your Inception (Mercury 3) key\n  - textbox \"Paste your Inception (Mercury 3) key\"\n  - paragraph: Checking sends one request to the provider with your key. The key then goes into your keychain, and this page never sees it again.\n  - button \"Check and save\"\n  - paragraph: Foundry stops using the key for the day once your daily limit is reached. You set the limit in Settings.\n  - status\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
+    },
+    {
+      "action": "fill",
+      "ask": true,
+      "target": "Paste your Inception (Mercury 3) key",
+      "steps": 1,
+      "asks": 1,
+      "ms": 876
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Check and save",
+      "steps": 2,
+      "asks": 1,
+      "ms": 1118
+    },
+    {
+      "n": 2,
+      "shot": "02-saved-last-four.jpg",
+      "slug": "saved-last-four",
+      "note": null,
+      "steps": 2,
+      "asks": 1,
+      "ms": 1499,
+      "route": "#/keys",
+      "h1": "AI keys",
+      "focus": "button Check and save",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - text: Paste your Inception (Mercury 3) key\n  - textbox \"Paste your Inception (Mercury 3) key\"\n  - paragraph: Checking sends one request to the provider with your key. The key then goes into your keychain, and this page never sees it again.\n  - button \"Check and save\"\n  - paragraph: Foundry stops using the key for the day once your daily limit is reached. You set the limit in Settings.\n  - status:\n    - paragraph: \"Works now Saved in your keychain: key ending wxyz (ephemeral).\"\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
+    },
+    {
+      "n": 3,
+      "shot": "03-saved-view.jpg",
+      "slug": "saved-view",
+      "note": null,
+      "steps": 2,
+      "asks": 1,
+      "ms": 2199,
+      "route": "#/keys",
+      "h1": "AI keys",
+      "focus": "h1 AI keys",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - paragraph: \"Works now Saved in your keychain: key ending wxyz (ephemeral).\"\n  - paragraph: Checked 10/21/2026, 9:00:00 AM.\n  - paragraph: Your words go to the provider when you ask Foundry to build from them. Nothing else does.\n  - button \"Remove the key\"\n  - status\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {},
+  "a11y": [],
+  "refusals": [],
+  "checks": {
+    "saved": "✓Works now Saved in your keychain: key ending wxyz (ephemeral).",
+    "providerCalls": 1,
+    "domHasKey": false,
+    "responsesHaveKey": false,
+    "filesHaveKey": false,
+    "logHasKey": false,
+    "responses": 5
+  },
+  "totalSteps": 2,
+  "totalAsks": 1,
+  "ms": 2208,
+  "shots": [
+    "01-keys-page.jpg",
+    "02-saved-last-four.jpg",
+    "03-saved-view.jpg"
+  ],
+  "budgets": null,
+  "passed": true
+}

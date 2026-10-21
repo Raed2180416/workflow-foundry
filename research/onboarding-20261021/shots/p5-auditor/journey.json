@@ -1,0 +1,146 @@
+{
+  "journey": "p5-auditor",
+  "persona": "p5-auditor",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "action": "precondition",
+      "target": "the operator ran \"Chase unpaid invoices\" once and approved its exact list of 4 drafts in the page (as in P2)",
+      "steps": 0,
+      "asks": 0,
+      "ms": 724
+    },
+    {
+      "n": 1,
+      "shot": "01-home.jpg",
+      "slug": "home",
+      "note": null,
+      "steps": 0,
+      "asks": 0,
+      "ms": 1105,
+      "route": "#/",
+      "h1": "Hand off the jobs you do every week.",
+      "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Hand off the jobs you do every week.\" [level=1]\n  - paragraph: Pick one below or describe it. Foundry builds it, tests it with pretend data, and shows you exactly what it will do. Nothing real happens until you say yes.\n  - paragraph:\n    - link \"Your automations (1)\":\n      - /url: \"#/automations\"\n  - heading \"Foundry can make these today\" [level=2]\n  - list \"Foundry can make these today\":\n    - listitem \"Chase unpaid invoices\":\n      - heading \"Chase unpaid invoices\" [level=3]\n      - paragraph: Polite reminders to customers who are late, firmer later. You see every e-mail first.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your invoice list as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/invoice-chase\"\n    - listitem \"Approve small expenses\":\n      - heading \"Approve small expenses\" [level=3]\n      - paragraph: Approves claims under your limit. Sends the rest to the person who decides.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your expense claims as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/expense-approval\"\n    - listitem \"Weekly progress report\":\n      - heading \"Weekly progress report\" [level=3]\n      - paragraph: Counts what's done, open and blocked, and e-mails one person.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your tracker export as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/weekly-report\"\n    - listitem \"Route new leads\":\n      - heading \"Route new leads\" [level=3]\n      - paragraph: Sends each new lead to the right salesperson.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your leads list as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/lead-triage\"\n    - listitem \"Answer common support questions\":\n      - heading \"Answer common support questions\" [level=3]\n      - paragraph: Replies with your own answers. Sends the rest to a person.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your ticket export as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/support-deflection\"\n    - listitem \"On-call alert digest\":\n      - heading \"On-call alert digest\" [level=3]\n      - paragraph: One summary of unresolved alerts to a chat channel.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your alerts export as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/oncall-digest\"\n    - listitem \"Keep the newsletter list in step\":\n      - heading \"Keep the newsletter list in step\" [level=3]\n      - paragraph: Finds contacts missing from your list and tells you.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your customer list (CRM export) and newsletter list as a spreadsheet\"\n      - link \"Start\":\n        - /url: \"#/make/contact-sync\"\n  - search \"Or describe it in your own words\":\n    - text: Or describe it in your own words\n    - textbox \"Or describe it in your own words\":\n      - /placeholder: e.g. remind customers who haven't paid after a week\n    - button \"Find a match\"\n    - paragraph: Without an AI key, Foundry matches your words to the list above. Nothing leaves this computer.\n  - paragraph: \"Already use n8n? Drop an exported workflow to see what it does and what could come over. Zapier and Make: later.\"\n  - text: Preview\n  - link \"Bring in an n8n workflow\":\n    - /url: \"#/import\"\n  - paragraph:\n    - text: Use Claude Code, Cursor or Codex?\n    - link \"Connect it with one line →\":\n      - /url: \"#/connect-agent\"\n  - paragraph:\n    - text: \"Runs on this computer. No account. Nothing runs, sends or changes until you say yes. The limit: a coding agent that can run commands as you on this computer could do what you can do, including say yes.\"\n    - 'link \"Where this comes from: Nothing happens until you say yes (with one honest limit)\"':\n      - /url: \"#/claims?c=C01\"\n      - text: (source)\n    - link \"How this is kept safe\":\n      - /url: \"#/trust\"\n  - region \"Why Foundry tests before it acts\":\n    - heading \"Why Foundry tests before it acts\" [level=2]\n    - paragraph:\n      - text: In our own tests, a low-cost AI that practised first built a 14-case order process with 14 of 14 right, for $0.39. A top AI that built it in one go got 5 of 14, for $7.63.\n      - 'link \"Where this comes from: Practising first: 14 of 14 versus 5 of 14\"':\n        - /url: \"#/claims?c=C04\"\n        - text: (source)\n    - paragraph: These are development tests on one task family we wrote, not a promise about yours."
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Runs",
+      "steps": 1,
+      "asks": 0,
+      "ms": 1262
+    },
+    {
+      "n": 2,
+      "shot": "02-runs.jpg",
+      "slug": "runs",
+      "note": null,
+      "steps": 1,
+      "asks": 0,
+      "ms": 1565,
+      "route": "#/runs",
+      "h1": "Runs",
+      "focus": "h1 Runs",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Runs\" [level=1]\n  - paragraph: Every run keeps a chained record. Foundry checks the chain each time you open this page.\n  - table \"Runs\":\n    - caption: Runs\n    - rowgroup:\n      - row \"Automation Result When Record\":\n        - columnheader \"Automation\"\n        - columnheader \"Result\"\n        - columnheader \"When\"\n        - columnheader \"Record\"\n        - columnheader\n    - rowgroup:\n      - 'row \"invoice-chase Done 10/21/2026, 6:42:36 PM checked: 94 events, unbroken Open the run of invoice-chase from 10/21/2026, 6:42:36 PM\"':\n        - cell \"invoice-chase\"\n        - cell \"Done\"\n        - cell \"10/21/2026, 6:42:36 PM\"\n        - 'cell \"checked: 94 events, unbroken\"'\n        - cell \"Open the run of invoice-chase from 10/21/2026, 6:42:36 PM\":\n          - link \"Open the run of invoice-chase from 10/21/2026, 6:42:36 PM\":\n            - /url: \"#/runs/90667e68-bfde-49a0-936f-e7f04d829b75\"\n            - text: Open"
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Open the run of invoice-chase from 10/21/2026, 6:42:36 PM",
+      "steps": 2,
+      "asks": 0,
+      "ms": 1701
+    },
+    {
+      "n": 3,
+      "shot": "03-run-record-checked.jpg",
+      "slug": "run-record-checked",
+      "note": null,
+      "steps": 2,
+      "asks": 0,
+      "ms": 2135,
+      "route": "#/runs/90667e68-bfde-49a0-936f-e7f04d829b75",
+      "h1": "Finished. Every check in its definition of done passed.",
+      "focus": "h1 Finished. Every check in its definition of done passed.",
+      "a11y": [],
+      "aria": "- main:\n  - paragraph:\n    - link \"← All runs\":\n      - /url: \"#/runs\"\n  - heading \"Finished. Every check in its definition of done passed.\" [level=1]\n  - paragraph: \"Automation: invoice-chase · 12 of 12 steps done · cost $0.0000, AI calls: 0\"\n  - heading \"Done means\" [level=2]\n  - list:\n    - listitem: \"Passed: Every overdue open invoice got the reminder its age calls for How: a rule on the result.\"\n    - listitem: \"Passed: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox) How: a rule on the result.\"\n    - listitem: \"Passed: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true How: a rule on the result.\"\n    - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out this run, each intact How: Foundry re-read what the test left behind afterwards.\"\n  - paragraph: \"Works now Record checked: 94 events, unbroken.\"\n  - group: Show details\n  - button \"Download evidence\"\n  - heading \"What this record doesn't hold yet\" [level=2]\n  - list:\n    - listitem: Your decisions (turning it on, each yes) are recorded beside the chain, not inside it yet.\n    - listitem: If an AI helped build it, its transcript is not part of the chain.\n    - listitem: The chain's latest link isn't stored outside this computer unless you export it.\n    - listitem: Approvals come from the person at this computer; a second person's own sign-in is planned.\n  - group: Timeline (94 events)\n  - paragraph: A run that passed its checks shows the automation did what it said on this computer. It doesn't show that an e-mail arrived."
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Download evidence",
+      "steps": 3,
+      "asks": 0,
+      "ms": 2267
+    },
+    {
+      "n": 4,
+      "shot": "04-evidence-downloaded.jpg",
+      "slug": "evidence-downloaded",
+      "note": null,
+      "steps": 3,
+      "asks": 0,
+      "ms": 2541,
+      "route": "#/runs/90667e68-bfde-49a0-936f-e7f04d829b75",
+      "h1": "Finished. Every check in its definition of done passed.",
+      "focus": "button Download evidence",
+      "a11y": [],
+      "aria": "- main:\n  - paragraph:\n    - link \"← All runs\":\n      - /url: \"#/runs\"\n  - heading \"Finished. Every check in its definition of done passed.\" [level=1]\n  - paragraph: \"Automation: invoice-chase · 12 of 12 steps done · cost $0.0000, AI calls: 0\"\n  - heading \"Done means\" [level=2]\n  - list:\n    - listitem: \"Passed: Every overdue open invoice got the reminder its age calls for How: a rule on the result.\"\n    - listitem: \"Passed: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox) How: a rule on the result.\"\n    - listitem: \"Passed: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true How: a rule on the result.\"\n    - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out this run, each intact How: Foundry re-read what the test left behind afterwards.\"\n  - paragraph: \"Works now Record checked: 94 events, unbroken.\"\n  - group: Show details\n  - button \"Download evidence\"\n  - heading \"What this record doesn't hold yet\" [level=2]\n  - list:\n    - listitem: Your decisions (turning it on, each yes) are recorded beside the chain, not inside it yet.\n    - listitem: If an AI helped build it, its transcript is not part of the chain.\n    - listitem: The chain's latest link isn't stored outside this computer unless you export it.\n    - listitem: Approvals come from the person at this computer; a second person's own sign-in is planned.\n  - group: Timeline (94 events)\n  - paragraph: A run that passed its checks shows the automation did what it said on this computer. It doesn't show that an e-mail arrived."
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {
+    "evidence": {
+      "steps": 3,
+      "asks": 0,
+      "ms": 2267
+    }
+  },
+  "a11y": [],
+  "refusals": [],
+  "checks": {
+    "record": "✓Works now Record checked: 94 events, unbroken.Show detailsLatest link of the chain: 43bd3d0224a7c524c8dad634a2e1f595480060f35a74775e06f27a64e85c27ef",
+    "decisionEvents": [
+      "approval.requested",
+      "run.awaiting_approval",
+      "approval.decided"
+    ],
+    "evidence": {
+      "file": "foundry-evidence-90667e68.json",
+      "events": 94,
+      "head": "43bd3d0224a7",
+      "ledger": [
+        "approved via dashboard"
+      ],
+      "actionDecisions": 4,
+      "gaps": 4
+    }
+  },
+  "preconditions": [
+    "the operator ran \"Chase unpaid invoices\" once and approved its exact list of 4 drafts in the page (as in P2)"
+  ],
+  "totalSteps": 3,
+  "totalAsks": 0,
+  "ms": 2544,
+  "shots": [
+    "01-home.jpg",
+    "02-runs.jpg",
+    "03-run-record-checked.jpg",
+    "04-evidence-downloaded.jpg"
+  ],
+  "budgets": {
+    "evidence": {
+      "steps": 3
+    }
+  },
+  "passed": true
+}

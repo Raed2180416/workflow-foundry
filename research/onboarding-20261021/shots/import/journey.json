@@ -1,0 +1,73 @@
+{
+  "journey": "import",
+  "persona": "import",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Bring in an n8n workflow",
+      "steps": 1,
+      "asks": 0,
+      "ms": 713
+    },
+    {
+      "n": 1,
+      "shot": "01-import-page.jpg",
+      "slug": "import-page",
+      "note": null,
+      "steps": 1,
+      "asks": 0,
+      "ms": 1093,
+      "route": "#/import",
+      "h1": "Bring in an n8n workflow •Preview",
+      "focus": "h1 Bring in an n8n workflow •Preview",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Bring in an n8n workflow Preview\" [level=1]\n  - paragraph: Drop a workflow you exported from n8n. Foundry tells you what it does, what could come over, and what to watch for. It runs nothing.\n  - text: Choose an exported n8n workflow (a JSON file)\n  - paragraph: In n8n, open the workflow and use Download. The file stays on this computer.\n  - button \"Choose an exported n8n workflow (a JSON file)\"\n  - paragraph:\n    - text: Planned Zapier exports, Make blueprints and GitHub Actions.\n    - 'link \"What you can do today: pick the matching card\"':\n      - /url: \"#/\""
+    },
+    {
+      "action": "upload",
+      "ask": false,
+      "target": "Choose an exported n8n workflow (a JSON file)",
+      "steps": 2,
+      "asks": 0,
+      "ms": 1171
+    },
+    {
+      "n": 2,
+      "shot": "02-verdict-and-risk.jpg",
+      "slug": "verdict-and-risk",
+      "note": null,
+      "steps": 2,
+      "asks": 0,
+      "ms": 1625,
+      "route": "#/import",
+      "h1": "Bring in an n8n workflow •Preview",
+      "focus": "h1 Bring in an n8n workflow •Preview",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Bring in an n8n workflow Preview\" [level=1]\n  - paragraph: Drop a workflow you exported from n8n. Foundry tells you what it does, what could come over, and what to watch for. It runs nothing.\n  - text: Choose an exported n8n workflow (a JSON file)\n  - paragraph: In n8n, open the workflow and use Download. The file stays on this computer.\n  - button \"Choose an exported n8n workflow (a JSON file)\"\n  - heading \"Thank customers when an invoice is paid\" [level=2]\n  - list:\n    - listitem: Does not come over exactly.\n    - listitem: \"Can be called as it is: it stays in n8n, and Foundry calls it through its webhook, asking you before each call.\"\n    - listitem: \"Can't come over yet, because:\"\n  - list:\n    - listitem: A condition the prototype cannot translate into the IR's condition language. (Only fully paid)\n  - heading \"Risk card\" [level=3]\n  - term: What it does to the outside world\n  - definition: Send thank-you (gmail, send); Log to sheet (google-sheets, append) read from the file\n  - term: Safe to repeat?\n  - definition: \"No: Send thank-you retries on failure, and it writes outside, so a retry can do it twice read from the file\"\n  - term: Does anything check it worked?\n  - definition: No check of the outside steps' results was found inferred\n  - term: Does anyone approve it?\n  - definition: \"No: nothing in the file asks a person before acting read from the file\"\n  - paragraph:\n    - text: Foundry ran nothing. n8n keeps running your workflow as before. Of 10 sample n8n files, 2 came over exactly, 10 of 10 can be called as they are, and 0 were run.\n    - 'link \"Where this comes from: n8n import: honest about what comes over\"':\n      - /url: \"#/claims?c=C06\"\n      - text: (source)\n  - paragraph:\n    - text: Planned Zapier exports, Make blueprints and GitHub Actions.\n    - 'link \"What you can do today: pick the matching card\"':\n      - /url: \"#/\""
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {},
+  "a11y": [],
+  "refusals": [],
+  "checks": {
+    "report": "Thank customers when an invoice is paid✗Does not come over exactly.✓Can be called as it is: it stays in n8n, and Foundry calls it through its webhook, asking you before each call.✗Can't come over yet, because:A condition the prototype cannot translate into the IR's condition language. (Only fully paid)Risk cardWhat it does to the outside worldSend thank-you (gmail, send); Log to sheet (google-sheets, append) read from the fileSafe to repeat?No: Send thank-you retries on failure, and it writes outside, so a retry can do it twice read from the fileDoes anything check it worked?No check of the ou"
+  },
+  "totalSteps": 2,
+  "totalAsks": 0,
+  "ms": 1625,
+  "shots": [
+    "01-import-page.jpg",
+    "02-verdict-and-risk.jpg"
+  ],
+  "budgets": null,
+  "passed": true
+}

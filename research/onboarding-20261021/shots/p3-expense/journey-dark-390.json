@@ -1,0 +1,216 @@
+{
+  "journey": "p3-expense",
+  "persona": "p3-expense",
+  "variant": "-dark-390",
+  "theme": "dark",
+  "width": 390,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Start",
+      "steps": 1,
+      "asks": 0,
+      "ms": 539
+    },
+    {
+      "n": 1,
+      "shot": "01-make-dark-390.jpg",
+      "slug": "make",
+      "note": "two questions; \"who decides\" sits right below the second",
+      "steps": 1,
+      "asks": 0,
+      "ms": 879,
+      "route": "#/make/expense-approval",
+      "h1": "Approve small expenses",
+      "focus": "h1 Approve small expenses",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Approve small expenses\" [level=1]\n  - region \"I'll do this:\":\n    - heading \"I'll do this:\" [level=2]\n    - list:\n      - listitem: Read the submitted expense claims\n      - listitem: Approve automatically each claim up to the amount you choose that has a receipt\n      - listitem: Record every decision in the expense-decisions sheet\n      - listitem: E-mail the address you give the claims that need a decision, after you approve the send\n      - listitem: Check that nothing over the limit was approved, and re-read the outbox and the decisions sheet\n    - group: \"It won't:\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - spinbutton \"Up to what amount should it approve on its own?\"\n  - paragraph: \"Why I'm asking: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - text: Who decides the bigger ones? (their e-mail)\n  - textbox \"Who decides the bigger ones? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n  - paragraph: \"Why I'm asking: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"Who decides the bigger ones?\":\n    - text: Who decides the bigger ones?\n    - radio \"The person you named gets an e-mail, and you record the decision here Free\" [checked]\n    - text: The person you named gets an e-mail, and you record the decision here Free\n    - radio \"The person you named decides, and their yes is recorded as theirs\"\n    - text: The person you named decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n    - radio \"Just me, nobody else needs to know Free\"\n    - text: Just me, nobody else needs to know Free\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: Nowhere. It reads the list you give it and writes on this computer.\n  - term: \"When it runs:\"\n  - definition: Only when you press Run. There is no schedule yet.\n  - status\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is sent."
+    },
+    {
+      "action": "fill",
+      "ask": true,
+      "target": "Up to what amount should it approve on its own?",
+      "steps": 2,
+      "asks": 1,
+      "ms": 1014
+    },
+    {
+      "action": "fill",
+      "ask": true,
+      "target": "Who decides the bigger ones? (their e-mail)",
+      "steps": 3,
+      "asks": 2,
+      "ms": 1074
+    },
+    {
+      "n": 2,
+      "shot": "02-answered-dark-390.jpg",
+      "slug": "answered",
+      "note": null,
+      "steps": 3,
+      "asks": 2,
+      "ms": 1420,
+      "route": "#/make/expense-approval",
+      "h1": "Approve small expenses",
+      "focus": "input#ask-approver-8 ",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Approve small expenses\" [level=1]\n  - region \"I'll do this:\":\n    - heading \"I'll do this:\" [level=2]\n    - list:\n      - listitem: Read the submitted expense claims\n      - listitem: Approve automatically each claim up to 100 that has a receipt\n      - listitem: Record every decision in the expense-decisions sheet\n      - listitem: E-mail maria@example.com the claims that need a decision, after you approve the send\n      - listitem: Check that nothing over the limit was approved, and re-read the outbox and the decisions sheet\n    - group: \"It won't:\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - spinbutton \"Up to what amount should it approve on its own?\": \"100\"\n  - paragraph: \"Why I'm asking: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - text: Who decides the bigger ones? (their e-mail)\n  - textbox \"Who decides the bigger ones? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n    - text: maria@example.com\n  - paragraph: \"Why I'm asking: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"Who decides the bigger ones?\":\n    - text: Who decides the bigger ones?\n    - radio \"maria@example.com gets an e-mail, and you record the decision here Free\" [checked]\n    - text: maria@example.com gets an e-mail, and you record the decision here Free\n    - radio \"maria@example.com decides, and their yes is recorded as theirs\"\n    - text: maria@example.com decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n    - radio \"Just me, nobody else needs to know Free\"\n    - text: Just me, nobody else needs to know Free\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: Nowhere. It reads the list you give it and writes on this computer.\n  - term: \"When it runs:\"\n  - definition: Only when you press Run. There is no schedule yet.\n  - status\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is sent."
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Test it with pretend claims",
+      "steps": 4,
+      "asks": 2,
+      "ms": 1563
+    },
+    {
+      "n": 3,
+      "shot": "03-checked-dark-390.jpg",
+      "slug": "checked",
+      "note": "first verified; \"Who decides: you (maria gets an e-mail)\"",
+      "steps": 4,
+      "asks": 2,
+      "ms": 2569,
+      "route": "#/checked/a01ea4f9-134c-4b1a-9866-f649d304ab7a",
+      "h1": "Test passed. Nothing real was sent.",
+      "focus": "h1 Test passed. Nothing real was sent.",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Test passed. Nothing real was sent.\" [level=1]\n  - paragraph: It would have made 1 e-mail to maria@example.com and 3 row(s) added to expense-decisions on this computer. Nothing real was sent.\n  - paragraph: \"Tested on: pretend claims that come with this automation.\"\n  - region \"What I checked\":\n    - heading \"What I checked\" [level=2]\n    - list:\n      - listitem: \"Passed: Every approval is within the limit (and has a receipt when required) How: a rule on the result.\"\n      - listitem: \"Passed: Every submitted claim is recorded with its decision How: a rule on the result.\"\n      - listitem: \"Passed: The approver received the claims that need a decision How: a rule on the result.\"\n      - listitem: \"Passed: This run delivered exactly the planned e-mails and rows (checked by re-reading them) How: a rule on the result.\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out, each intact How: Foundry re-read what the test left behind afterwards.\"\n      - listitem: \"Passed: Re-read the decisions sheet: one row per submitted claim How: Foundry re-read what the test left behind afterwards.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - list:\n      - listitem: \"To: maria@example.com Subject: Expenses: 2 waiting for your approval Expense claims waiting for your decision (2): - PX-2 Practice Ben: 640 for Train to Leeds (travel; over the limit) - PX-3 Practice Cal: 9 for Pens (office; no receipt) Approved automatically (up to 100 with a receipt) (1): - PX-1 Practice Ana: 18.5 for Lunch with a client Reply to approve or reject the waiting ones. This flow never pays anything.\"\n      - listitem: \"Add to: expense-decisions Subject: 3 row(s) [{\\\"amount\\\":18.5,\\\"at\\\":\\\"2026-10-15T12:00:00Z\\\",\\\"decision\\\":\\\"approved\\\",\\\"employee\\\":\\\"Practice Ana\\\",\\\"id\\\":\\\"PX-1\\\",\\\"reason\\\":\\\"within the limit\\\"},{\\\"amount\\\":640,\\\"at\\\":\\\"2026-10-15T12:00:00Z\\\",\\\"decision\\\":\\\"waiting for approver\\\",\\\"employee\\\":\\\"Practice Ben\\\",\\\"id\\\":\\\"PX-2\\\",\\\"reason\\\":\\\"over the limit\\\"},{\\\"amount\\\":9,\\\"at\\\":\\\"2026-10-15T12:00:00Z\\\",\\\"decision\\\":\\\"waiting for approver\\\",\\\"employee\\\":\\\"Practice Cal\\\",\\\"id\\\":\\\"PX-3\\\",\\\"reason\\\":\\\"no r\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n    - button \"Test with my own list\"\n  - article \"Turn on 'Approve small expenses' (version 1)?\":\n    - heading \"Turn on 'Approve small expenses' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read the submitted expense claims\n      - listitem: Approve automatically each claim up to 100 that has a receipt\n      - listitem: Record every decision in the expense-decisions sheet\n      - listitem: E-mail maria@example.com the claims that need a decision, after you approve the send\n      - listitem: Check that nothing over the limit was approved, and re-read the outbox and the decisions sheet\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 100\n      - listitem: Change the expenses sheet\n      - listitem: \"Run by itself: you (or your coding agent) start each run\"\n    - heading \"Done means\" [level=3]\n    - list:\n      - listitem: \"Passed: Every approval is within the limit (and has a receipt when required)\"\n      - listitem: \"Passed: Every submitted claim is recorded with its decision\"\n      - listitem: \"Passed: The approver received the claims that need a decision\"\n      - listitem: \"Passed: This run delivered exactly the planned e-mails and rows (checked by re-reading them)\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out, each intact\"\n      - listitem: \"Passed: Re-read the decisions sheet: one row per submitted claim\"\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 6 of 6 checks\n    - term: \"Who decides:\"\n    - definition:\n      - text: you (maria@example.com gets an e-mail)\n      - button \"Change something\"\n    - term: \"What it needs to go live:\"\n    - definition: your expense claims\n    - button \"Turn it on\"\n    - link \"Change something\":\n      - /url: \"#/make/expense-approval\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens."
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Change something",
+      "steps": 5,
+      "asks": 2,
+      "ms": 2626
+    },
+    {
+      "action": "choose",
+      "ask": true,
+      "target": "maria@example.com decides, and their yes is recorded as theirs",
+      "steps": 6,
+      "asks": 3,
+      "ms": 2711
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Team plan",
+      "steps": 7,
+      "asks": 3,
+      "ms": 2758
+    },
+    {
+      "n": 4,
+      "shot": "04-team-plan-disclosure-dark-390.jpg",
+      "slug": "team-plan-disclosure",
+      "note": null,
+      "steps": 7,
+      "asks": 3,
+      "ms": 3069,
+      "route": "#/checked/a01ea4f9-134c-4b1a-9866-f649d304ab7a",
+      "h1": "Test passed. Nothing real was sent.",
+      "focus": "button Team plan",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Test passed. Nothing real was sent.\" [level=1]\n  - paragraph: It would have made 1 e-mail to maria@example.com and 3 row(s) added to expense-decisions on this computer. Nothing real was sent.\n  - paragraph: \"Tested on: pretend claims that come with this automation.\"\n  - region \"What I checked\":\n    - heading \"What I checked\" [level=2]\n    - list:\n      - listitem: \"Passed: Every approval is within the limit (and has a receipt when required) How: a rule on the result.\"\n      - listitem: \"Passed: Every submitted claim is recorded with its decision How: a rule on the result.\"\n      - listitem: \"Passed: The approver received the claims that need a decision How: a rule on the result.\"\n      - listitem: \"Passed: This run delivered exactly the planned e-mails and rows (checked by re-reading them) How: a rule on the result.\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out, each intact How: Foundry re-read what the test left behind afterwards.\"\n      - listitem: \"Passed: Re-read the decisions sheet: one row per submitted claim How: Foundry re-read what the test left behind afterwards.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - list:\n      - listitem: \"To: maria@example.com Subject: Expenses: 2 waiting for your approval Expense claims waiting for your decision (2): - PX-2 Practice Ben: 640 for Train to Leeds (travel; over the limit) - PX-3 Practice Cal: 9 for Pens (office; no receipt) Approved automatically (up to 100 with a receipt) (1): - PX-1 Practice Ana: 18.5 for Lunch with a client Reply to approve or reject the waiting ones. This flow never pays anything.\"\n      - listitem: \"Add to: expense-decisions Subject: 3 row(s) [{\\\"amount\\\":18.5,\\\"at\\\":\\\"2026-10-15T12:00:00Z\\\",\\\"decision\\\":\\\"approved\\\",\\\"employee\\\":\\\"Practice Ana\\\",\\\"id\\\":\\\"PX-1\\\",\\\"reason\\\":\\\"within the limit\\\"},{\\\"amount\\\":640,\\\"at\\\":\\\"2026-10-15T12:00:00Z\\\",\\\"decision\\\":\\\"waiting for approver\\\",\\\"employee\\\":\\\"Practice Ben\\\",\\\"id\\\":\\\"PX-2\\\",\\\"reason\\\":\\\"over the limit\\\"},{\\\"amount\\\":9,\\\"at\\\":\\\"2026-10-15T12:00:00Z\\\",\\\"decision\\\":\\\"waiting for approver\\\",\\\"employee\\\":\\\"Practice Cal\\\",\\\"id\\\":\\\"PX-3\\\",\\\"reason\\\":\\\"no r\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n    - button \"Test with my own list\"\n  - article \"Turn on 'Approve small expenses' (version 1)?\":\n    - heading \"Turn on 'Approve small expenses' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read the submitted expense claims\n      - listitem: Approve automatically each claim up to 100 that has a receipt\n      - listitem: Record every decision in the expense-decisions sheet\n      - listitem: E-mail maria@example.com the claims that need a decision, after you approve the send\n      - listitem: Check that nothing over the limit was approved, and re-read the outbox and the decisions sheet\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 100\n      - listitem: Change the expenses sheet\n      - listitem: \"Run by itself: you (or your coding agent) start each run\"\n    - heading \"Done means\" [level=3]\n    - list:\n      - listitem: \"Passed: Every approval is within the limit (and has a receipt when required)\"\n      - listitem: \"Passed: Every submitted claim is recorded with its decision\"\n      - listitem: \"Passed: The approver received the claims that need a decision\"\n      - listitem: \"Passed: This run delivered exactly the planned e-mails and rows (checked by re-reading them)\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out, each intact\"\n      - listitem: \"Passed: Re-read the decisions sheet: one row per submitted claim\"\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 6 of 6 checks\n    - term: \"Who decides:\"\n    - definition:\n      - text: \"maria@example.com, once the Team plan exists. Until then: you\"\n      - button \"Change something\" [expanded]\n    - term: \"What it needs to go live:\"\n    - definition: your expense claims\n    - group \"Who decides the bigger ones?\":\n      - text: Who decides the bigger ones?\n      - radio \"maria@example.com gets an e-mail, and you record the decision here Free\"\n      - text: maria@example.com gets an e-mail, and you record the decision here Free\n      - radio \"maria@example.com decides, and their yes is recorded as theirs\" [checked]\n      - text: maria@example.com decides, and their yes is recorded as theirs\n      - button \"Team plan\" [expanded]\n      - text: For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you standing in for them.\n      - link \"What the Team plan does\":\n        - /url: \"#/pricing\"\n      - radio \"Just me, nobody else needs to know Free\"\n      - text: Just me, nobody else needs to know Free\n    - paragraph: \"Practice only: maria@example.com's own sign-in isn't available yet.\"\n    - button \"Turn it on with you recording decisions\"\n    - button \"Keep it in practice\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens."
+    },
+    {
+      "action": "choose",
+      "ask": true,
+      "target": "maria@example.com gets an e-mail, and you record the decision here Free",
+      "steps": 8,
+      "asks": 4,
+      "ms": 3191
+    },
+    {
+      "n": 5,
+      "shot": "05-keep-going-free-dark-390.jpg",
+      "slug": "keep-going-free",
+      "note": null,
+      "steps": 8,
+      "asks": 4,
+      "ms": 3449,
+      "route": "#/checked/a01ea4f9-134c-4b1a-9866-f649d304ab7a",
+      "h1": "Test passed. Nothing real was sent.",
+      "focus": "input ",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Test passed. Nothing real was sent.\" [level=1]\n  - paragraph: It would have made 1 e-mail to maria@example.com and 3 row(s) added to expense-decisions on this computer. Nothing real was sent.\n  - paragraph: \"Tested on: pretend claims that come with this automation.\"\n  - region \"What I checked\":\n    - heading \"What I checked\" [level=2]\n    - list:\n      - listitem: \"Passed: Every approval is within the limit (and has a receipt when required) How: a rule on the result.\"\n      - listitem: \"Passed: Every submitted claim is recorded with its decision How: a rule on the result.\"\n      - listitem: \"Passed: The approver received the claims that need a decision How: a rule on the result.\"\n      - listitem: \"Passed: This run delivered exactly the planned e-mails and rows (checked by re-reading them) How: a rule on the result.\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out, each intact How: Foundry re-read what the test left behind afterwards.\"\n      - listitem: \"Passed: Re-read the decisions sheet: one row per submitted claim How: Foundry re-read what the test left behind afterwards.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - list:\n      - listitem: \"To: maria@example.com Subject: Expenses: 2 waiting for your approval Expense claims waiting for your decision (2): - PX-2 Practice Ben: 640 for Train to Leeds (travel; over the limit) - PX-3 Practice Cal: 9 for Pens (office; no receipt) Approved automatically (up to 100 with a receipt) (1): - PX-1 Practice Ana: 18.5 for Lunch with a client Reply to approve or reject the waiting ones. This flow never pays anything.\"\n      - listitem: \"Add to: expense-decisions Subject: 3 row(s) [{\\\"amount\\\":18.5,\\\"at\\\":\\\"2026-10-15T12:00:00Z\\\",\\\"decision\\\":\\\"approved\\\",\\\"employee\\\":\\\"Practice Ana\\\",\\\"id\\\":\\\"PX-1\\\",\\\"reason\\\":\\\"within the limit\\\"},{\\\"amount\\\":640,\\\"at\\\":\\\"2026-10-15T12:00:00Z\\\",\\\"decision\\\":\\\"waiting for approver\\\",\\\"employee\\\":\\\"Practice Ben\\\",\\\"id\\\":\\\"PX-2\\\",\\\"reason\\\":\\\"over the limit\\\"},{\\\"amount\\\":9,\\\"at\\\":\\\"2026-10-15T12:00:00Z\\\",\\\"decision\\\":\\\"waiting for approver\\\",\\\"employee\\\":\\\"Practice Cal\\\",\\\"id\\\":\\\"PX-3\\\",\\\"reason\\\":\\\"no r\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n    - button \"Test with my own list\"\n  - article \"Turn on 'Approve small expenses' (version 1)?\":\n    - heading \"Turn on 'Approve small expenses' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read the submitted expense claims\n      - listitem: Approve automatically each claim up to 100 that has a receipt\n      - listitem: Record every decision in the expense-decisions sheet\n      - listitem: E-mail maria@example.com the claims that need a decision, after you approve the send\n      - listitem: Check that nothing over the limit was approved, and re-read the outbox and the decisions sheet\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 100\n      - listitem: Change the expenses sheet\n      - listitem: \"Run by itself: you (or your coding agent) start each run\"\n    - heading \"Done means\" [level=3]\n    - list:\n      - listitem: \"Passed: Every approval is within the limit (and has a receipt when required)\"\n      - listitem: \"Passed: Every submitted claim is recorded with its decision\"\n      - listitem: \"Passed: The approver received the claims that need a decision\"\n      - listitem: \"Passed: This run delivered exactly the planned e-mails and rows (checked by re-reading them)\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out, each intact\"\n      - listitem: \"Passed: Re-read the decisions sheet: one row per submitted claim\"\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 6 of 6 checks\n    - term: \"Who decides:\"\n    - definition:\n      - text: you (maria@example.com gets an e-mail)\n      - button \"Change something\" [expanded]\n    - term: \"What it needs to go live:\"\n    - definition: your expense claims\n    - group \"Who decides the bigger ones?\":\n      - text: Who decides the bigger ones?\n      - radio \"maria@example.com gets an e-mail, and you record the decision here Free\" [checked]\n      - text: maria@example.com gets an e-mail, and you record the decision here Free\n      - radio \"maria@example.com decides, and their yes is recorded as theirs\"\n      - text: maria@example.com decides, and their yes is recorded as theirs\n      - button \"Team plan\" [expanded]\n      - text: For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you standing in for them.\n      - link \"What the Team plan does\":\n        - /url: \"#/pricing\"\n      - radio \"Just me, nobody else needs to know Free\"\n      - text: Just me, nobody else needs to know Free\n    - button \"Turn it on\"\n    - link \"Change something\":\n      - /url: \"#/make/expense-approval\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens."
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Turn it on",
+      "steps": 9,
+      "asks": 4,
+      "ms": 3524
+    },
+    {
+      "n": 6,
+      "shot": "06-on-dark-390.jpg",
+      "slug": "on",
+      "note": null,
+      "steps": 9,
+      "asks": 4,
+      "ms": 3916,
+      "route": "#/go-live/expense-approval?on=1",
+      "h1": "Where's your expense claims?",
+      "focus": "h1 Where's your expense claims?",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: On. It runs when you press Run. It won't run by itself.\n  - heading \"Where's your expense claims?\" [level=1]\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here.\n  - text: Choose your expense claims (a CSV or JSON file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your expense claims (a CSV or JSON file)\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"How should it send?\":\n      - text: How should it send?\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {
+    "firstVerified": {
+      "steps": 4,
+      "asks": 2,
+      "ms": 2247
+    },
+    "turnedOn": {
+      "steps": 9,
+      "asks": 4,
+      "ms": 3639
+    }
+  },
+  "a11y": [],
+  "refusals": [],
+  "checks": {
+    "questions": [
+      "Up to what amount should it approve on its own?",
+      "Who decides the bigger ones? (their e-mail)"
+    ],
+    "paidBadges": 1,
+    "checked": "It would have made 1 e-mail to maria@example.com and 3 row(s) added to expense-decisions on this computer. Nothing real was sent.",
+    "who": "Uses AI:noTested on:pretend data, passed 6 of 6 checksWho decides:you (maria@example.com gets an e-mail) Change somethingWhat it needs to go live:your expense claims",
+    "disclosure": "For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you standing in for them. What the Team plan does",
+    "teamButtons": [
+      "Turn it on with you recording decisions",
+      "Keep it in practice"
+    ]
+  },
+  "totalSteps": 9,
+  "totalAsks": 4,
+  "ms": 3920,
+  "shots": [
+    "01-make-dark-390.jpg",
+    "02-answered-dark-390.jpg",
+    "03-checked-dark-390.jpg",
+    "04-team-plan-disclosure-dark-390.jpg",
+    "05-keep-going-free-dark-390.jpg",
+    "06-on-dark-390.jpg"
+  ],
+  "budgets": {
+    "firstVerified": {
+      "steps": 4,
+      "asks": 2
+    }
+  },
+  "passed": true
+}

@@ -1,0 +1,151 @@
+{
+  "journey": "p2-own-data",
+  "persona": "p2-own-data",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Start",
+      "steps": 1,
+      "asks": 0,
+      "ms": 383
+    },
+    {
+      "action": "fill",
+      "ask": true,
+      "target": "Which e-mail address should get the summary?",
+      "steps": 2,
+      "asks": 1,
+      "ms": 506
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Test it with pretend customers",
+      "steps": 3,
+      "asks": 1,
+      "ms": 588
+    },
+    {
+      "n": 1,
+      "shot": "01-checked-pretend.jpg",
+      "slug": "checked-pretend",
+      "note": null,
+      "steps": 3,
+      "asks": 1,
+      "ms": 1923,
+      "route": "#/checked/1a1b0411-c7ba-4add-ba19-4b3802ebdb7f",
+      "h1": "Test passed. Nothing real was sent.",
+      "focus": "h1 Test passed. Nothing real was sent.",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Test passed. Nothing real was sent.\" [level=1]\n  - paragraph: It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.\n  - paragraph: \"Tested on: pretend customers that come with this automation.\"\n  - region \"What I checked\":\n    - heading \"What I checked\" [level=2]\n    - list:\n      - listitem: \"Passed: Every overdue open invoice got the reminder its age calls for How: a rule on the result.\"\n      - listitem: \"Passed: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox) How: a rule on the result.\"\n      - listitem: \"Passed: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true How: a rule on the result.\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out this run, each intact How: Foundry re-read what the test left behind afterwards.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - list:\n      - listitem: \"To: practice-gym@example.org Subject: Second reminder: invoice PR-102 Hello Practice Gym, This is our second reminder. Invoice PR-102 for 480 was due on 2026-09-20 (20 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: me@example.com Subject: Invoice reminders: summary Unpaid invoices due for a reminder (3): - PR-101 Practice Cafe: 120, 9 days late (reminder) - PR-102 Practice Gym: 480, 20 days late (second reminder) - PR-103 Practice Florist: 75, 56 days late (final notice) New reminders sent this run: 3. Paid and disputed invoices were left alone.\"\n      - listitem: \"To: practice-cafe@example.org Subject: Friendly reminder: invoice PR-101 Hello Practice Cafe, Just a friendly reminder. Invoice PR-101 for 120 was due on 2026-10-01 (9 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: practice-florist@example.org Subject: Final notice: invoice PR-103 Hello Practice Florist, This is a final notice. Invoice PR-103 for 75 was due on 2026-08-15 (56 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n    - button \"Test with my own list\"\n  - article \"Turn on 'Chase unpaid invoices' (version 1)?\":\n    - heading \"Turn on 'Chase unpaid invoices' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read the invoices sheet and pick the open invoices (not paid, not disputed)\n      - listitem: Send a friendly reminder once an invoice is 7 days late, a second reminder at 14 days, a final notice at 30 days\n      - listitem: \"Send each invoice at most one reminder of each kind, ever: it remembers what it already sent\"\n      - listitem: E-mail me@example.com a summary of the invoices due for a reminder\n      - listitem: Check, by re-reading the outbox, that exactly the planned reminders went out, each intact\n      - listitem: Ask you before every e-mail\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change the invoices sheet\n      - listitem: Contact anyone except the e-mail address on each invoice\n      - listitem: \"Run by itself on a schedule: you (or your coding agent) start each run\"\n    - heading \"Done means\" [level=3]\n    - list:\n      - listitem: \"Passed: Every overdue open invoice got the reminder its age calls for\"\n      - listitem: \"Passed: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox)\"\n      - listitem: \"Passed: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out this run, each intact\"\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 4 of 4 checks\n    - term: \"Who decides:\"\n    - definition:\n      - text: you\n      - button \"Change something\"\n    - term: \"What it needs to go live:\"\n    - definition: your invoice list\n    - button \"Turn it on\"\n    - link \"Change something\":\n      - /url: \"#/make/invoice-chase\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens."
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Test with my own list",
+      "steps": 4,
+      "asks": 1,
+      "ms": 1978
+    },
+    {
+      "n": 2,
+      "shot": "02-own-list-open.jpg",
+      "slug": "own-list-open",
+      "note": null,
+      "steps": 4,
+      "asks": 1,
+      "ms": 2389,
+      "route": "#/checked/1a1b0411-c7ba-4add-ba19-4b3802ebdb7f",
+      "h1": "Test passed. Nothing real was sent.",
+      "focus": "input#file-8 ",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Test passed. Nothing real was sent.\" [level=1]\n  - paragraph: It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.\n  - paragraph: \"Tested on: pretend customers that come with this automation.\"\n  - region \"What I checked\":\n    - heading \"What I checked\" [level=2]\n    - list:\n      - listitem: \"Passed: Every overdue open invoice got the reminder its age calls for How: a rule on the result.\"\n      - listitem: \"Passed: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox) How: a rule on the result.\"\n      - listitem: \"Passed: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true How: a rule on the result.\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out this run, each intact How: Foundry re-read what the test left behind afterwards.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - list:\n      - listitem: \"To: practice-gym@example.org Subject: Second reminder: invoice PR-102 Hello Practice Gym, This is our second reminder. Invoice PR-102 for 480 was due on 2026-09-20 (20 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: me@example.com Subject: Invoice reminders: summary Unpaid invoices due for a reminder (3): - PR-101 Practice Cafe: 120, 9 days late (reminder) - PR-102 Practice Gym: 480, 20 days late (second reminder) - PR-103 Practice Florist: 75, 56 days late (final notice) New reminders sent this run: 3. Paid and disputed invoices were left alone.\"\n      - listitem: \"To: practice-cafe@example.org Subject: Friendly reminder: invoice PR-101 Hello Practice Cafe, Just a friendly reminder. Invoice PR-101 for 120 was due on 2026-10-01 (9 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: practice-florist@example.org Subject: Final notice: invoice PR-103 Hello Practice Florist, This is a final notice. Invoice PR-103 for 75 was due on 2026-08-15 (56 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n    - button \"Test with my own list\" [expanded]\n    - heading \"Your invoice list\" [level=3]\n    - text: Choose your invoice list (a CSV or JSON file)\n    - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n    - button \"Choose your invoice list (a CSV or JSON file)\"\n  - article \"Turn on 'Chase unpaid invoices' (version 1)?\":\n    - heading \"Turn on 'Chase unpaid invoices' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read the invoices sheet and pick the open invoices (not paid, not disputed)\n      - listitem: Send a friendly reminder once an invoice is 7 days late, a second reminder at 14 days, a final notice at 30 days\n      - listitem: \"Send each invoice at most one reminder of each kind, ever: it remembers what it already sent\"\n      - listitem: E-mail me@example.com a summary of the invoices due for a reminder\n      - listitem: Check, by re-reading the outbox, that exactly the planned reminders went out, each intact\n      - listitem: Ask you before every e-mail\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change the invoices sheet\n      - listitem: Contact anyone except the e-mail address on each invoice\n      - listitem: \"Run by itself on a schedule: you (or your coding agent) start each run\"\n    - heading \"Done means\" [level=3]\n    - list:\n      - listitem: \"Passed: Every overdue open invoice got the reminder its age calls for\"\n      - listitem: \"Passed: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox)\"\n      - listitem: \"Passed: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out this run, each intact\"\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 4 of 4 checks\n    - term: \"Who decides:\"\n    - definition:\n      - text: you\n      - button \"Change something\"\n    - term: \"What it needs to go live:\"\n    - definition: your invoice list\n    - button \"Turn it on\"\n    - link \"Change something\":\n      - /url: \"#/make/invoice-chase\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens."
+    },
+    {
+      "action": "upload",
+      "ask": true,
+      "target": "Choose your invoice list (a CSV or JSON file)",
+      "steps": 5,
+      "asks": 2,
+      "ms": 2425
+    },
+    {
+      "n": 3,
+      "shot": "03-own-columns.jpg",
+      "slug": "own-columns",
+      "note": null,
+      "steps": 5,
+      "asks": 2,
+      "ms": 3098,
+      "route": "#/checked/1a1b0411-c7ba-4add-ba19-4b3802ebdb7f",
+      "h1": "Test passed. Nothing real was sent.",
+      "focus": "input#file-8 ",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Test passed. Nothing real was sent.\" [level=1]\n  - paragraph: It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.\n  - paragraph: \"Tested on: pretend customers that come with this automation.\"\n  - region \"What I checked\":\n    - heading \"What I checked\" [level=2]\n    - list:\n      - listitem: \"Passed: Every overdue open invoice got the reminder its age calls for How: a rule on the result.\"\n      - listitem: \"Passed: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox) How: a rule on the result.\"\n      - listitem: \"Passed: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true How: a rule on the result.\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out this run, each intact How: Foundry re-read what the test left behind afterwards.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - list:\n      - listitem: \"To: practice-gym@example.org Subject: Second reminder: invoice PR-102 Hello Practice Gym, This is our second reminder. Invoice PR-102 for 480 was due on 2026-09-20 (20 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: me@example.com Subject: Invoice reminders: summary Unpaid invoices due for a reminder (3): - PR-101 Practice Cafe: 120, 9 days late (reminder) - PR-102 Practice Gym: 480, 20 days late (second reminder) - PR-103 Practice Florist: 75, 56 days late (final notice) New reminders sent this run: 3. Paid and disputed invoices were left alone.\"\n      - listitem: \"To: practice-cafe@example.org Subject: Friendly reminder: invoice PR-101 Hello Practice Cafe, Just a friendly reminder. Invoice PR-101 for 120 was due on 2026-10-01 (9 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: practice-florist@example.org Subject: Final notice: invoice PR-103 Hello Practice Florist, This is a final notice. Invoice PR-103 for 75 was due on 2026-08-15 (56 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n    - button \"Test with my own list\" [expanded]\n    - heading \"Your invoice list\" [level=3]\n    - text: Choose your invoice list (a CSV or JSON file)\n    - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n    - button \"Choose your invoice list (a CSV or JSON file)\"\n    - paragraph: Found 6 invoices.\n    - text: Which column is the invoice number?\n    - combobox \"Which column is the invoice number?\":\n      - option \"Invoice No.\" [selected]\n      - option \"Client\"\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\"\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: INV-2041, INV-2042, INV-2043\"\n    - text: Which column is the customer name?\n    - combobox \"Which column is the customer name?\":\n      - option \"Invoice No.\"\n      - option \"Client\" [selected]\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\"\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: Bramble Cafe, Northfield Gym, Lark & Fern Florist\"\n    - text: Which column is the customer's e-mail address?\n    - combobox \"Which column is the customer's e-mail address?\":\n      - option \"Invoice No.\"\n      - option \"Client\"\n      - option \"Contact email\" [selected]\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\"\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: accounts@bramble-cafe.example, billing@northfield-gym.example, hello@larkfern.example\"\n    - text: Which column is the amount owed?\n    - combobox \"Which column is the amount owed?\":\n      - option \"Invoice No.\"\n      - option \"Client\"\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\" [selected]\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: 1,240.00, 480.00, 75.50\"\n    - text: Which column is the due date?\n    - combobox \"Which column is the due date?\":\n      - option \"Invoice No.\"\n      - option \"Client\"\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\" [selected]\n      - option \"Amount due (EUR)\"\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: 03/10/2026, 10/10/2026, 01/09/2026\"\n    - text: Which column is the status?\n    - combobox \"Which column is the status?\":\n      - option \"Invoice No.\"\n      - option \"Client\"\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\"\n      - option \"Status\" [selected]\n      - option \"Notes\"\n    - paragraph: \"For example: Open, Open, Open\"\n    - paragraph: \"Foundry keeps only these columns. It ignores: Issued, Notes.\"\n    - group \"Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\":\n      - text: Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\n      - paragraph: \"Why I'm asking: Your file writes dates both ways round, so the due date could be wrong by months. Foundry "
+    },
+    {
+      "action": "choose",
+      "ask": true,
+      "target": "The 3rd of October 2026 (day first)",
+      "steps": 6,
+      "asks": 3,
+      "ms": 3162
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Test with this list",
+      "steps": 7,
+      "asks": 3,
+      "ms": 3214
+    },
+    {
+      "n": 4,
+      "shot": "04-tested-on-yours.jpg",
+      "slug": "tested-on-yours",
+      "note": null,
+      "steps": 7,
+      "asks": 3,
+      "ms": 4528,
+      "route": "#/checked/1a1b0411-c7ba-4add-ba19-4b3802ebdb7f",
+      "h1": "Test passed. Nothing real was sent.",
+      "focus": "h1 Test passed. Nothing real was sent.",
+      "a11y": [],
+      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Test passed. Nothing real was sent.\" [level=1]\n  - paragraph: It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.\n  - paragraph: \"Tested on: your own list.\"\n  - region \"What I checked\":\n    - heading \"What I checked\" [level=2]\n    - list:\n      - listitem: \"Passed: Every overdue open invoice got the reminder its age calls for How: a rule on the result.\"\n      - listitem: \"Passed: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox) How: a rule on the result.\"\n      - listitem: \"Passed: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true How: a rule on the result.\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out this run, each intact How: Foundry re-read what the test left behind afterwards.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - list:\n      - listitem: \"To: me@example.com Subject: Invoice reminders: summary Unpaid invoices due for a reminder (3): - INV-2041 Bramble Cafe: 1240, 18 days late (second reminder) - INV-2042 Northfield Gym: 480, 11 days late (reminder) - INV-2043 Lark & Fern Florist: 75.5, 50 days late (final notice) New reminders sent this run: 3. Paid and disputed invoices were left alone.\"\n      - listitem: \"To: hello@larkfern.example Subject: Final notice: invoice INV-2043 Hello Lark & Fern Florist, This is a final notice. Invoice INV-2043 for 75.5 was due on 2026-09-01 (50 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: billing@northfield-gym.example Subject: Friendly reminder: invoice INV-2042 Hello Northfield Gym, Just a friendly reminder. Invoice INV-2042 for 480 was due on 2026-10-10 (11 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: accounts@bramble-cafe.example Subject: Second reminder: invoice INV-2041 Hello Bramble Cafe, This is our second reminder. Invoice INV-2041 for 1240 was due on 2026-10-03 (18 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n    - button \"Test with my own list\"\n  - article \"Turn on 'Chase unpaid invoices' (version 1)?\":\n    - heading \"Turn on 'Chase unpaid invoices' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read the invoices sheet and pick the open invoices (not paid, not disputed)\n      - listitem: Send a friendly reminder once an invoice is 7 days late, a second reminder at 14 days, a final notice at 30 days\n      - listitem: \"Send each invoice at most one reminder of each kind, ever: it remembers what it already sent\"\n      - listitem: E-mail me@example.com a summary of the invoices due for a reminder\n      - listitem: Check, by re-reading the outbox, that exactly the planned reminders went out, each intact\n      - listitem: Ask you before every e-mail\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change the invoices sheet\n      - listitem: Contact anyone except the e-mail address on each invoice\n      - listitem: \"Run by itself on a schedule: you (or your coding agent) start each run\"\n    - heading \"Done means\" [level=3]\n    - list:\n      - listitem: \"Passed: Every overdue open invoice got the reminder its age calls for\"\n      - listitem: \"Passed: This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox)\"\n      - listitem: \"Passed: the delivered of “E-mail the summary to me@example.com (asks you first)” equals true\"\n      - listitem: \"Passed: Re-read the outbox: exactly the planned e-mails went out this run, each intact\"\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: your own list, passed 4 of 4 checks\n    - term: \"Who decides:\"\n    - definition:\n      - text: you\n      - button \"Change something\"\n    - term: \"What it needs to go live:\"\n    - definition: your invoice list\n    - button \"Turn it on\"\n    - link \"Change something\":\n      - /url: \"#/make/invoice-chase\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens."
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {
+    "ownTested": {
+      "steps": 7,
+      "asks": 3,
+      "ms": 4091
+    }
+  },
+  "a11y": [],
+  "refusals": [],
+  "totalSteps": 7,
+  "totalAsks": 3,
+  "ms": 4528,
+  "shots": [
+    "01-checked-pretend.jpg",
+    "02-own-list-open.jpg",
+    "03-own-columns.jpg",
+    "04-tested-on-yours.jpg"
+  ],
+  "budgets": {
+    "ownTested": {
+      "steps": 7,
+      "asks": 3
+    }
+  },
+  "passed": true
+}

@@ -1,0 +1,125 @@
+{
+  "journey": "p1-ungrounded",
+  "persona": "p1-ungrounded",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "n": 1,
+      "shot": "01-connect-page.jpg",
+      "slug": "connect-page",
+      "note": "what the agent can and cannot do, then the exact line",
+      "steps": 0,
+      "asks": 0,
+      "ms": 1923,
+      "route": "#/connect-agent",
+      "h1": "Connect your coding agent",
+      "focus": "h1 Connect your coding agent",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Connect your coding agent\" [level=1]\n  - paragraph: Paste one line into your agent's terminal. Foundry doesn't change your agent's settings for you, so your agent asks you before it trusts Foundry.\n  - heading \"What your agent can and can't do with Foundry\" [level=2]\n  - list:\n    - listitem: Draft an automation from what you ask for.\n    - listitem: Test it with pretend data.\n    - listitem: \"It can't turn anything on: you do.\"\n    - listitem: \"It can't approve what an automation makes: you do, in a dialog or in this page.\"\n  - heading \"Claude Code Works now\" [level=2]\n  - paragraph: \"In a terminal:\"\n  - text: claude mcp add --transport stdio foundry -- \"/opt/node24/bin/node\" \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" mcp --dashboard --workspace \"/tmp/journey-p1-ungrounded-I3xphr\"\n  - button \"Copy\"\n  - paragraph: Claude Code will ask you to trust the new server the first time. Not yet tested against a released Claude Code.\n  - heading \"Cursor Works now\" [level=2]\n  - paragraph: \"Add this to .cursor/mcp.json in your project, or to your user settings:\"\n  - text: \"{ \\\"mcpServers\\\": { \\\"foundry\\\": { \\\"command\\\": \\\"/opt/node24/bin/node\\\", \\\"args\\\": [ \\\"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\\\", \\\"mcp\\\", \\\"--dashboard\\\", \\\"--workspace\\\", \\\"/tmp/journey-p1-ungrounded-I3xphr\\\" ] } } }\"\n  - button \"Copy\"\n  - paragraph: \"Or use a one-click link (built from Cursor's documented format; not yet tried in Cursor): Preview\"\n  - text: cursor://anysphere.cursor-deeplink/mcp/install?name=foundry&config=eyJjb21tYW5kIjoiL29wdC9ub2RlMjQvYmluL25vZGUiLCJhcmdzIjpbIi9ob21lL3VzZXIvd29ya2Zsb3ctZm91bmRyeS8uY2xhdWRlL3dvcmt0cmVlcy93Zl9jNzk0NjQ2OC0yMDMtMTYvYXBwL2NsaS5tanMiLCJtY3AiLCItLWRhc2hib2FyZCIsIi0td29ya3NwYWNlIiwiL3RtcC9qb3VybmV5LXAxLXVuZ3JvdW5kZWQtSTN4cGhyIl19\n  - button \"Copy\"\n  - paragraph: Cursor shows you the server before it adds it.\n  - heading \"Codex Works now\" [level=2]\n  - paragraph: \"In a terminal:\"\n  - text: codex mcp add foundry -- \"/opt/node24/bin/node\" \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" mcp --dashboard --workspace \"/tmp/journey-p1-ungrounded-I3xphr\"\n  - button \"Copy\"\n  - paragraph: Codex has no documented dialog for your decisions, so Foundry opens your browser when it needs your yes.\n  - heading \"Plugin from your own copy Planned\" [level=2]\n  - paragraph: \"Planned: one step that adds Foundry and a short guide for your agent, from a copy on this computer. Nothing would be published.\"\n  - 'link \"What you can do today: paste the line above\"':\n    - /url: \"#/connect-agent\"\n  - paragraph: \"Then ask your agent, for example:\"\n  - text: use Foundry to chase my unpaid invoices, summary to me@example.com\n  - paragraph: Nothing was written to any config file. Paste one of these. The approve tool always asks you, never your agent.\n  - group: Show details"
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Copy",
+      "steps": 1,
+      "asks": 0,
+      "ms": 1963
+    },
+    {
+      "action": "external",
+      "target": "pastes the line into a terminal",
+      "ask": false,
+      "steps": 2,
+      "asks": 0,
+      "ms": 1973
+    },
+    {
+      "action": "external",
+      "target": "types to the agent: \"use Foundry to chase my unpaid invoices\"",
+      "ask": false,
+      "steps": 3,
+      "asks": 0,
+      "ms": 2749
+    },
+    {
+      "n": 2,
+      "shot": "02-asked-not-guessed.jpg",
+      "slug": "asked-not-guessed",
+      "note": "the guessed address was not used; the template's own question is relayed",
+      "steps": 3,
+      "asks": 0,
+      "ms": 2937,
+      "route": null,
+      "h1": null,
+      "focus": null,
+      "a11y": [],
+      "aria": ""
+    },
+    {
+      "action": "external",
+      "target": "answers the agent: \"me@example.com\"",
+      "ask": true,
+      "steps": 4,
+      "asks": 1,
+      "ms": 2937
+    },
+    {
+      "n": 3,
+      "shot": "03-answered-and-tested.jpg",
+      "slug": "answered-and-tested",
+      "note": "first verified after one extra ask",
+      "steps": 4,
+      "asks": 1,
+      "ms": 4609,
+      "route": null,
+      "h1": null,
+      "focus": null,
+      "a11y": [],
+      "aria": ""
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {
+    "setup": {
+      "steps": 2,
+      "asks": 0,
+      "ms": 2749
+    },
+    "firstVerified": {
+      "steps": 4,
+      "asks": 1,
+      "ms": 4411
+    }
+  },
+  "a11y": [],
+  "refusals": [],
+  "checks": {
+    "refused": {
+      "status": "needs_answers",
+      "question": "Which e-mail address should get the summary?",
+      "notWritten": [
+        {
+          "slot": "summaryTo",
+          "value": "boss@example.com",
+          "why": "The person never wrote this address, so it was not used."
+        }
+      ]
+    }
+  },
+  "totalSteps": 4,
+  "totalAsks": 1,
+  "ms": 4676,
+  "shots": [
+    "01-connect-page.jpg",
+    "02-asked-not-guessed.jpg",
+    "03-answered-and-tested.jpg"
+  ],
+  "budgets": null,
+  "passed": true
+}

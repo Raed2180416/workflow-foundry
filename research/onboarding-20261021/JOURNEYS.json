@@ -1,0 +1,1368 @@
+{
+  "label": "development, scripted, no users",
+  "note": "Written by app/site/test/journeys/*.mjs. Steps and asks are counted by the harness; times are scripted wall-clock on a shared machine, not human time.",
+  "journeys": {
+    "p2-invoice": {
+      "persona": "p2-invoice",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 9,
+      "asks": 4,
+      "ms": 7912,
+      "milestones": {
+        "firstVerified": {
+          "steps": 3,
+          "asks": 1,
+          "ms": 3013,
+          "accounts": 0,
+          "keys": 0,
+          "connections": 0
+        },
+        "firstLive": {
+          "steps": 8,
+          "asks": 4,
+          "ms": 7063,
+          "accounts": 0,
+          "keys": 0,
+          "connections": 0
+        }
+      },
+      "budgets": {
+        "firstVerified": {
+          "steps": 3,
+          "asks": 1
+        },
+        "firstLive": {
+          "steps": 8,
+          "asks": 4
+        }
+      },
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 11,
+      "failure": null,
+      "checks": {
+        "restatement": "Read the invoices sheet and pick the open invoices (not paid, not disputed)Send a friendly reminder once an invoice is 7 days late, a second reminder at 14 days, a final notice at 30 daysSend each invoice at most one reminder of each kind, ever: it remembers what it already sentE-mail the address you give a summary of the invoices due for a reminderCheck, by re-reading the outbox, that exactly the planned reminders went out, each intactAsk you before every e-mail",
+        "checked": "It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.",
+        "on": "On. It runs when you press Run. It won't run by itself.",
+        "mapping": {
+          "invoice": "Invoice No.",
+          "customer": "Client",
+          "email": "Contact email",
+          "amount": "Amount due (EUR)",
+          "due": "Due date",
+          "status": "Status"
+        },
+        "exactList": [
+          "To: hello@larkfern.exampleSubject: Final notice: invoice INV-2043",
+          "To: billing@northfield-gym.exampleSubject: Friendly reminder: invoice INV-2042",
+          "To: accounts@bramble-cafe.exampleSubject: Second reminder: invoice INV-2041",
+          "To: me@example.comSubject: Invoice reminders: summary"
+        ],
+        "drafts": "4 drafts ready. Foundry didn't send anything.",
+        "eml": {
+          "file": "draft-5f891efa.eml",
+          "xUnsent": true,
+          "to": "me@example.com",
+          "subject": "Invoice reminders: summary"
+        },
+        "keysSaved": 0
+      }
+    },
+    "p2-invoice (-dark-390)": {
+      "persona": "p2-invoice",
+      "variant": "-dark-390",
+      "passed": true,
+      "steps": 9,
+      "asks": 4,
+      "ms": 6914,
+      "milestones": {
+        "firstVerified": {
+          "steps": 3,
+          "asks": 1,
+          "ms": 2458,
+          "accounts": 0,
+          "keys": 0,
+          "connections": 0
+        },
+        "firstLive": {
+          "steps": 8,
+          "asks": 4,
+          "ms": 6253,
+          "accounts": 0,
+          "keys": 0,
+          "connections": 0
+        }
+      },
+      "budgets": {
+        "firstVerified": {
+          "steps": 3,
+          "asks": 1
+        },
+        "firstLive": {
+          "steps": 8,
+          "asks": 4
+        }
+      },
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 11,
+      "failure": null,
+      "checks": {
+        "restatement": "Read the invoices sheet and pick the open invoices (not paid, not disputed)Send a friendly reminder once an invoice is 7 days late, a second reminder at 14 days, a final notice at 30 daysSend each invoice at most one reminder of each kind, ever: it remembers what it already sentE-mail the address you give a summary of the invoices due for a reminderCheck, by re-reading the outbox, that exactly the planned reminders went out, each intactAsk you before every e-mail",
+        "checked": "It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.",
+        "on": "On. It runs when you press Run. It won't run by itself.",
+        "mapping": {
+          "invoice": "Invoice No.",
+          "customer": "Client",
+          "email": "Contact email",
+          "amount": "Amount due (EUR)",
+          "due": "Due date",
+          "status": "Status"
+        },
+        "exactList": [
+          "To: hello@larkfern.exampleSubject: Final notice: invoice INV-2043",
+          "To: billing@northfield-gym.exampleSubject: Friendly reminder: invoice INV-2042",
+          "To: accounts@bramble-cafe.exampleSubject: Second reminder: invoice INV-2041",
+          "To: me@example.comSubject: Invoice reminders: summary"
+        ],
+        "drafts": "4 drafts ready. Foundry didn't send anything.",
+        "eml": {
+          "file": "draft-2e20ab7b.eml",
+          "xUnsent": true,
+          "to": "me@example.com",
+          "subject": "Invoice reminders: summary"
+        },
+        "keysSaved": 0
+      }
+    },
+    "p2-invoice (-keyboard-1280)": {
+      "persona": "p2-invoice",
+      "variant": "-keyboard-1280",
+      "passed": true,
+      "steps": 9,
+      "asks": 4,
+      "ms": 6512,
+      "milestones": {
+        "firstVerified": {
+          "steps": 3,
+          "asks": 1,
+          "ms": 2462,
+          "accounts": 0,
+          "keys": 0,
+          "connections": 0
+        },
+        "firstLive": {
+          "steps": 8,
+          "asks": 4,
+          "ms": 5956,
+          "accounts": 0,
+          "keys": 0,
+          "connections": 0
+        }
+      },
+      "budgets": {
+        "firstVerified": {
+          "steps": 3,
+          "asks": 1
+        },
+        "firstLive": {
+          "steps": 8,
+          "asks": 4
+        }
+      },
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 11,
+      "failure": null,
+      "checks": {
+        "restatement": "Read the invoices sheet and pick the open invoices (not paid, not disputed)Send a friendly reminder once an invoice is 7 days late, a second reminder at 14 days, a final notice at 30 daysSend each invoice at most one reminder of each kind, ever: it remembers what it already sentE-mail the address you give a summary of the invoices due for a reminderCheck, by re-reading the outbox, that exactly the planned reminders went out, each intactAsk you before every e-mail",
+        "checked": "It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.",
+        "on": "On. It runs when you press Run. It won't run by itself.",
+        "mapping": {
+          "invoice": "Invoice No.",
+          "customer": "Client",
+          "email": "Contact email",
+          "amount": "Amount due (EUR)",
+          "due": "Due date",
+          "status": "Status"
+        },
+        "exactList": [
+          "To: hello@larkfern.exampleSubject: Final notice: invoice INV-2043",
+          "To: billing@northfield-gym.exampleSubject: Friendly reminder: invoice INV-2042",
+          "To: accounts@bramble-cafe.exampleSubject: Second reminder: invoice INV-2041",
+          "To: me@example.comSubject: Invoice reminders: summary"
+        ],
+        "drafts": "4 drafts ready. Foundry didn't send anything.",
+        "eml": {
+          "file": "draft-f6c12183.eml",
+          "xUnsent": true,
+          "to": "me@example.com",
+          "subject": "Invoice reminders: summary"
+        },
+        "keysSaved": 0
+      }
+    },
+    "p2-own-data": {
+      "persona": "p2-own-data",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 7,
+      "asks": 3,
+      "ms": 4528,
+      "milestones": {
+        "ownTested": {
+          "steps": 7,
+          "asks": 3,
+          "ms": 4091
+        }
+      },
+      "budgets": {
+        "ownTested": {
+          "steps": 7,
+          "asks": 3
+        }
+      },
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 4,
+      "failure": null,
+      "checks": null
+    },
+    "p2-edges (-light-390)": {
+      "persona": "p2-edges",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 16,
+      "asks": 5,
+      "ms": 5360,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 7,
+      "failure": null,
+      "checks": {
+        "noMatch": "I can't make that yet. Nothing was created.",
+        "suggestion": "This sounds like: Chase unpaid invoices",
+        "nothingToChase": "Nothing to chase: nobody on this list needs a reminder today.",
+        "unknownStatuses": "Your file says \"Overdue\", \"Part paid\" and \"Sent\". Which of these mean the invoice is still open?",
+        "unanswered": "Please answer this first. Foundry won't guess it.",
+        "oddTested": "It would have made 2 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent."
+      }
+    },
+    "p3-expense": {
+      "persona": "p3-expense",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 9,
+      "asks": 4,
+      "ms": 6506,
+      "milestones": {
+        "firstVerified": {
+          "steps": 4,
+          "asks": 2,
+          "ms": 4214
+        },
+        "turnedOn": {
+          "steps": 9,
+          "asks": 4,
+          "ms": 6266
+        }
+      },
+      "budgets": {
+        "firstVerified": {
+          "steps": 4,
+          "asks": 2
+        }
+      },
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 6,
+      "failure": null,
+      "checks": {
+        "questions": [
+          "Up to what amount should it approve on its own?",
+          "Who decides the bigger ones? (their e-mail)"
+        ],
+        "paidBadges": 1,
+        "checked": "It would have made 1 e-mail to maria@example.com and 3 row(s) added to expense-decisions on this computer. Nothing real was sent.",
+        "who": "Uses AI:noTested on:pretend data, passed 6 of 6 checksWho decides:you (maria@example.com gets an e-mail) Change somethingWhat it needs to go live:your expense claims",
+        "disclosure": "For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you standing in for them. What the Team plan does",
+        "teamButtons": [
+          "Turn it on with you recording decisions",
+          "Keep it in practice"
+        ]
+      }
+    },
+    "p3-expense (-dark-390)": {
+      "persona": "p3-expense",
+      "variant": "-dark-390",
+      "passed": true,
+      "steps": 9,
+      "asks": 4,
+      "ms": 3920,
+      "milestones": {
+        "firstVerified": {
+          "steps": 4,
+          "asks": 2,
+          "ms": 2247
+        },
+        "turnedOn": {
+          "steps": 9,
+          "asks": 4,
+          "ms": 3639
+        }
+      },
+      "budgets": {
+        "firstVerified": {
+          "steps": 4,
+          "asks": 2
+        }
+      },
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 6,
+      "failure": null,
+      "checks": {
+        "questions": [
+          "Up to what amount should it approve on its own?",
+          "Who decides the bigger ones? (their e-mail)"
+        ],
+        "paidBadges": 1,
+        "checked": "It would have made 1 e-mail to maria@example.com and 3 row(s) added to expense-decisions on this computer. Nothing real was sent.",
+        "who": "Uses AI:noTested on:pretend data, passed 6 of 6 checksWho decides:you (maria@example.com gets an e-mail) Change somethingWhat it needs to go live:your expense claims",
+        "disclosure": "For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you standing in for them. What the Team plan does",
+        "teamButtons": [
+          "Turn it on with you recording decisions",
+          "Keep it in practice"
+        ]
+      }
+    },
+    "p1-claude-code": {
+      "persona": "p1-claude-code",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 5,
+      "asks": 1,
+      "ms": 11872,
+      "milestones": {
+        "setup": {
+          "steps": 2,
+          "asks": 0,
+          "ms": 2107
+        },
+        "firstVerified": {
+          "steps": 3,
+          "asks": 0,
+          "ms": 3350
+        },
+        "firstLive": {
+          "steps": 5,
+          "asks": 1,
+          "ms": 7594,
+          "accounts": 0,
+          "keys": 0,
+          "connections": 0
+        }
+      },
+      "budgets": {
+        "firstVerified": {
+          "steps": 2,
+          "asks": 0,
+          "since": "setup"
+        },
+        "firstLive": {
+          "steps": 4,
+          "asks": 2,
+          "since": "setup"
+        }
+      },
+      "preconditions": [
+        "their invoice list is already in Foundry (dropped once before, as in P2)"
+      ],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 6,
+      "failure": null,
+      "checks": {
+        "argv": [
+          "/opt/node24/bin/node",
+          "/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs",
+          "mcp",
+          "--dashboard",
+          "--workspace",
+          "<ws>"
+        ],
+        "dryRunSay": "Practice run passed all 4 checks. It would have: sent “Invoice reminders: summary” to me@example.com; sent “Friendly reminder: invoice PR-101” to practice-cafe@example.org; sent “Second reminder: invoice PR-102” to practice-gym@example.org; sent “Final notice: invoice PR-103” to practice-florist@example.org. Nothing real was sent.",
+        "elicitation": "Turn on “Invoice reminders” (version 1, 880c7295)?",
+        "notCounted": [
+          "Claude Code trust prompt for a new stdio server (setup)",
+          "Claude Code permission prompt for the approve tool (anthropic/requiresUserInteraction): +1 click per approval, not verified in a real client"
+        ]
+      }
+    },
+    "p1-ungrounded": {
+      "persona": "p1-ungrounded",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 4,
+      "asks": 1,
+      "ms": 4676,
+      "milestones": {
+        "setup": {
+          "steps": 2,
+          "asks": 0,
+          "ms": 2749
+        },
+        "firstVerified": {
+          "steps": 4,
+          "asks": 1,
+          "ms": 4411
+        }
+      },
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 3,
+      "failure": null,
+      "checks": {
+        "refused": {
+          "status": "needs_answers",
+          "question": "Which e-mail address should get the summary?",
+          "notWritten": [
+            {
+              "slot": "summaryTo",
+              "value": "boss@example.com",
+              "why": "The person never wrote this address, so it was not used."
+            }
+          ]
+        }
+      }
+    },
+    "p1-cursor-codex": {
+      "persona": "p1-cursor-codex",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 7,
+      "asks": 1,
+      "ms": 16833,
+      "milestones": {
+        "setup": {
+          "steps": 2,
+          "asks": 0,
+          "ms": 2996
+        },
+        "firstVerified": {
+          "steps": 3,
+          "asks": 0,
+          "ms": 4178
+        },
+        "firstLive": {
+          "steps": 7,
+          "asks": 1,
+          "ms": 12725,
+          "accounts": 0,
+          "keys": 0,
+          "connections": 0
+        }
+      },
+      "budgets": {
+        "firstLive": {
+          "steps": 5,
+          "asks": 2,
+          "since": "setup"
+        }
+      },
+      "preconditions": [
+        "their invoice list is already in Foundry (dropped once before, as in P2)"
+      ],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 7,
+      "failure": null,
+      "checks": {
+        "sameServer": true
+      }
+    },
+    "p4-it": {
+      "persona": "p4-it",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 9,
+      "asks": 0,
+      "ms": 4679,
+      "milestones": {
+        "brief": {
+          "steps": 2,
+          "asks": 0,
+          "ms": 1639
+        },
+        "beforePracticeOnly": {
+          "steps": 3,
+          "asks": 0,
+          "ms": 2389
+        },
+        "practiceOnly": {
+          "steps": 4,
+          "asks": 0,
+          "ms": 2802
+        }
+      },
+      "budgets": {
+        "brief": {
+          "steps": 2
+        },
+        "practiceOnly": {
+          "steps": 1,
+          "since": "beforePracticeOnly"
+        }
+      },
+      "preconditions": [
+        "the operator made \"Chase unpaid invoices\", tested it and turned it on (as in P2); their invoice list is in Foundry",
+        "the organisation manages Claude Code on this computer (a stand-in managed-settings.json in FOUNDRY_MANAGED_DIR)"
+      ],
+      "errors": 0,
+      "refusals": 1,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 6,
+      "failure": null,
+      "checks": {
+        "managed": "Your organisation manages Claude Code on this computer",
+        "briefFile": "foundry-it-brief-invoice-chase.md",
+        "banner": "Practice-only mode is on, so nothing runs for real on this computer.Open Settings",
+        "refused": "That didn't workWhat happenedPractice-only mode is on, so nothing runs for real on this computer.What was not doneNothing was made.What to doTurn it off in Settings if you want to run it for real. Tests on pretend data still work.Open SettingsDetailsPRACTICE_ONLY Practice-only mode is on",
+        "trustAllowlist": true
+      }
+    },
+    "p5-auditor": {
+      "persona": "p5-auditor",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 3,
+      "asks": 0,
+      "ms": 2544,
+      "milestones": {
+        "evidence": {
+          "steps": 3,
+          "asks": 0,
+          "ms": 2267
+        }
+      },
+      "budgets": {
+        "evidence": {
+          "steps": 3
+        }
+      },
+      "preconditions": [
+        "the operator ran \"Chase unpaid invoices\" once and approved its exact list of 4 drafts in the page (as in P2)"
+      ],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 4,
+      "failure": null,
+      "checks": {
+        "record": "✓Works now Record checked: 94 events, unbroken.Show detailsLatest link of the chain: 43bd3d0224a7c524c8dad634a2e1f595480060f35a74775e06f27a64e85c27ef",
+        "decisionEvents": [
+          "approval.requested",
+          "run.awaiting_approval",
+          "approval.decided"
+        ],
+        "evidence": {
+          "file": "foundry-evidence-90667e68.json",
+          "events": 94,
+          "head": "43bd3d0224a7",
+          "ledger": [
+            "approved via dashboard"
+          ],
+          "actionDecisions": 4,
+          "gaps": 4
+        }
+      }
+    },
+    "org": {
+      "persona": "org",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 20,
+      "asks": 4,
+      "ms": 6525,
+      "milestones": {
+        "v1": {
+          "steps": 11,
+          "asks": 1,
+          "ms": 3401
+        },
+        "v2": {
+          "steps": 20,
+          "asks": 4,
+          "ms": 6217
+        }
+      },
+      "budgets": {
+        "v1": {
+          "steps": 12
+        }
+      },
+      "preconditions": [
+        "opened \"Who decides what\" (Settings, then the link; or #/org)"
+      ],
+      "errors": 0,
+      "refusals": 1,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 9,
+      "failure": null,
+      "checks": {
+        "notEnforced": "•Preview Checked when an automation is made and tested. Not yet enforced while it runs: that needs named approvers, which are planned.",
+        "examples": [
+          "€0: allowedheld for a yesblocked",
+          "€249.99: allowedheld for a yesblocked",
+          "€250: allowedheld for a yesblocked",
+          "€250.01: allowedheld for a yesblocked",
+          "€5,000: allowedheld for a yesblocked",
+          "€500, asked for by Dana (who would also approve it): allowedheld for a yesblocked"
+        ],
+        "bootstrap": "One step left: Started by one person. Rules need a second person to approve changes; until then, you approved your own setup. Review within 14 days.",
+        "setBy": "€250 · Set by Dana (Org policy)",
+        "refused": "That didn't workWhat happenedNot allowed here. Dana set the limit at €250 (Org policy). This automation can only make it stricter.What was not doneNothing was made or sent.What to doChoose a stricter setting, or ask the person who set the rule to change it in Who decides what.Change the settings",
+        "flip": "This change would change a confirmed answerThis change would turn case 4 (€250.01, held) into allowed. Confirm the new answer for case 4 or undo the change.Confirm the new answer for case 4 (allowed)Undo the change"
+      }
+    },
+    "org (-dark-390)": {
+      "persona": "org",
+      "variant": "-dark-390",
+      "passed": true,
+      "steps": 20,
+      "asks": 4,
+      "ms": 5449,
+      "milestones": {
+        "v1": {
+          "steps": 11,
+          "asks": 1,
+          "ms": 2932
+        },
+        "v2": {
+          "steps": 20,
+          "asks": 4,
+          "ms": 5193
+        }
+      },
+      "budgets": {
+        "v1": {
+          "steps": 12
+        }
+      },
+      "preconditions": [
+        "opened \"Who decides what\" (Settings, then the link; or #/org)"
+      ],
+      "errors": 0,
+      "refusals": 1,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 9,
+      "failure": null,
+      "checks": {
+        "notEnforced": "•Preview Checked when an automation is made and tested. Not yet enforced while it runs: that needs named approvers, which are planned.",
+        "examples": [
+          "€0: allowedheld for a yesblocked",
+          "€249.99: allowedheld for a yesblocked",
+          "€250: allowedheld for a yesblocked",
+          "€250.01: allowedheld for a yesblocked",
+          "€5,000: allowedheld for a yesblocked",
+          "€500, asked for by Dana (who would also approve it): allowedheld for a yesblocked"
+        ],
+        "bootstrap": "One step left: Started by one person. Rules need a second person to approve changes; until then, you approved your own setup. Review within 14 days.",
+        "setBy": "€250 · Set by Dana (Org policy)",
+        "refused": "That didn't workWhat happenedNot allowed here. Dana set the limit at €250 (Org policy). This automation can only make it stricter.What was not doneNothing was made or sent.What to doChoose a stricter setting, or ask the person who set the rule to change it in Who decides what.Change the settings",
+        "flip": "This change would change a confirmed answerThis change would turn case 4 (€250.01, held) into allowed. Confirm the new answer for case 4 or undo the change.Confirm the new answer for case 4 (allowed)Undo the change"
+      }
+    },
+    "keys-none": {
+      "persona": "keys-none",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 862,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 1,
+      "failure": null,
+      "checks": {
+        "refusal": "This computer has no keychain Foundry can use, so a key can't be saved.You can set INCEPTION_API_KEY in your own terminal before starting Foundry instead. Foundry never writes a key to a file."
+      }
+    },
+    "keys": {
+      "persona": "keys",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 2,
+      "asks": 1,
+      "ms": 2208,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 3,
+      "failure": null,
+      "checks": {
+        "saved": "✓Works now Saved in your keychain: key ending wxyz (ephemeral).",
+        "providerCalls": 1,
+        "domHasKey": false,
+        "responsesHaveKey": false,
+        "filesHaveKey": false,
+        "logHasKey": false,
+        "responses": 5
+      }
+    },
+    "import": {
+      "persona": "import",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 2,
+      "asks": 0,
+      "ms": 1625,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 2,
+      "failure": null,
+      "checks": {
+        "report": "Thank customers when an invoice is paid✗Does not come over exactly.✓Can be called as it is: it stays in n8n, and Foundry calls it through its webhook, asking you before each call.✗Can't come over yet, because:A condition the prototype cannot translate into the IR's condition language. (Only fully paid)Risk cardWhat it does to the outside worldSend thank-you (gmail, send); Log to sheet (google-sheets, append) read from the fileSafe to repeat?No: Send thank-you retries on failure, and it writes outside, so a retry can do it twice read from the fileDoes anything check it worked?No check of the ou"
+      }
+    },
+    "crawl-empty": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5970,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 5,
+      "failure": null,
+      "checks": {
+        "state": "empty",
+        "width": 1280,
+        "pages": 33,
+        "linksFollowed": 33,
+        "problems": []
+      }
+    },
+    "crawl-empty (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 6026,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 5,
+      "failure": null,
+      "checks": {
+        "state": "empty",
+        "width": 390,
+        "pages": 33,
+        "linksFollowed": 33,
+        "problems": []
+      }
+    },
+    "crawl-draft": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 4350,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 0,
+      "failure": null,
+      "checks": {
+        "state": "draft",
+        "width": 1280,
+        "pages": 34,
+        "linksFollowed": 34,
+        "problems": []
+      }
+    },
+    "crawl-draft (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5005,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 0,
+      "failure": null,
+      "checks": {
+        "state": "draft",
+        "width": 390,
+        "pages": 34,
+        "linksFollowed": 34,
+        "problems": []
+      }
+    },
+    "crawl-tested": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 4290,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 0,
+      "failure": null,
+      "checks": {
+        "state": "tested",
+        "width": 1280,
+        "pages": 34,
+        "linksFollowed": 34,
+        "problems": []
+      }
+    },
+    "crawl-tested (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5501,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 0,
+      "failure": null,
+      "checks": {
+        "state": "tested",
+        "width": 390,
+        "pages": 34,
+        "linksFollowed": 34,
+        "problems": []
+      }
+    },
+    "crawl-on": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5138,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 0,
+      "failure": null,
+      "checks": {
+        "state": "on",
+        "width": 1280,
+        "pages": 38,
+        "linksFollowed": 38,
+        "problems": []
+      }
+    },
+    "crawl-on (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 11077,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 25,
+      "failure": null,
+      "checks": {
+        "state": "on",
+        "width": 390,
+        "pages": 38,
+        "linksFollowed": 38,
+        "problems": []
+      }
+    },
+    "crawl-waiting-action": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5385,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 1,
+      "failure": null,
+      "checks": {
+        "state": "waiting-action",
+        "width": 1280,
+        "pages": 39,
+        "linksFollowed": 39,
+        "problems": []
+      }
+    },
+    "crawl-waiting-action (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 6037,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 1,
+      "failure": null,
+      "checks": {
+        "state": "waiting-action",
+        "width": 390,
+        "pages": 39,
+        "linksFollowed": 39,
+        "problems": []
+      }
+    },
+    "crawl-waiting-batch": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5142,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 1,
+      "failure": null,
+      "checks": {
+        "state": "waiting-batch",
+        "width": 1280,
+        "pages": 38,
+        "linksFollowed": 38,
+        "problems": []
+      }
+    },
+    "crawl-waiting-batch (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5832,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 1,
+      "failure": null,
+      "checks": {
+        "state": "waiting-batch",
+        "width": 390,
+        "pages": 38,
+        "linksFollowed": 38,
+        "problems": []
+      }
+    },
+    "crawl-failed-run": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 6008,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 1,
+      "failure": null,
+      "checks": {
+        "state": "failed-run",
+        "width": 1280,
+        "pages": 39,
+        "linksFollowed": 39,
+        "problems": []
+      }
+    },
+    "crawl-failed-run (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 6353,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 1,
+      "failure": null,
+      "checks": {
+        "state": "failed-run",
+        "width": 390,
+        "pages": 39,
+        "linksFollowed": 39,
+        "problems": []
+      }
+    },
+    "crawl-no-keychain": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5541,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 1,
+      "failure": null,
+      "checks": {
+        "state": "no-keychain",
+        "width": 1280,
+        "pages": 38,
+        "linksFollowed": 38,
+        "problems": []
+      }
+    },
+    "crawl-no-keychain (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 7149,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 1,
+      "failure": null,
+      "checks": {
+        "state": "no-keychain",
+        "width": 390,
+        "pages": 38,
+        "linksFollowed": 38,
+        "problems": []
+      }
+    },
+    "crawl-practice-only": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 6036,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 2,
+      "failure": null,
+      "checks": {
+        "state": "practice-only",
+        "width": 1280,
+        "pages": 38,
+        "linksFollowed": 38,
+        "problems": []
+      }
+    },
+    "crawl-practice-only (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 6451,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 2,
+      "failure": null,
+      "checks": {
+        "state": "practice-only",
+        "width": 390,
+        "pages": 38,
+        "linksFollowed": 38,
+        "problems": []
+      }
+    },
+    "crawl-org-v1": {
+      "persona": "crawl",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5566,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 2,
+      "failure": null,
+      "checks": {
+        "state": "org-v1",
+        "width": 1280,
+        "pages": 33,
+        "linksFollowed": 33,
+        "problems": []
+      }
+    },
+    "crawl-org-v1 (-light-390)": {
+      "persona": "crawl",
+      "variant": "-light-390",
+      "passed": true,
+      "steps": 0,
+      "asks": 0,
+      "ms": 5920,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 2,
+      "failure": null,
+      "checks": {
+        "state": "org-v1",
+        "width": 390,
+        "pages": 33,
+        "linksFollowed": 33,
+        "problems": []
+      }
+    }
+  },
+  "run": {
+    "at": "2026-10-21T18:45:28.206Z",
+    "files": [
+      {
+        "file": "p2-operator.mjs",
+        "pass": 5,
+        "fail": 0,
+        "ms": 36288,
+        "failures": []
+      },
+      {
+        "file": "p3-team-lead.mjs",
+        "pass": 2,
+        "fail": 0,
+        "ms": 15924,
+        "failures": []
+      },
+      {
+        "file": "p1-agents.mjs",
+        "pass": 3,
+        "fail": 0,
+        "ms": 37294,
+        "failures": []
+      },
+      {
+        "file": "p4-it.mjs",
+        "pass": 1,
+        "fail": 0,
+        "ms": 7488,
+        "failures": []
+      },
+      {
+        "file": "p5-auditor.mjs",
+        "pass": 1,
+        "fail": 0,
+        "ms": 7790,
+        "failures": []
+      },
+      {
+        "file": "org-map.mjs",
+        "pass": 2,
+        "fail": 0,
+        "ms": 15362,
+        "failures": []
+      },
+      {
+        "file": "keys.mjs",
+        "pass": 2,
+        "fail": 0,
+        "ms": 6710,
+        "failures": []
+      },
+      {
+        "file": "import.mjs",
+        "pass": 1,
+        "fail": 0,
+        "ms": 4965,
+        "failures": []
+      },
+      {
+        "file": "crawl.mjs",
+        "pass": 10,
+        "fail": 0,
+        "ms": 141271,
+        "failures": []
+      }
+    ],
+    "screenshots": 157,
+    "screenshotBytes": 18165185,
+    "folderBytes": 18628930,
+    "budgetBytes": 26214400
+  }
+}

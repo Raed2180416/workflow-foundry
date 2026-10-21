@@ -1,0 +1,210 @@
+{
+  "journey": "p1-claude-code",
+  "persona": "p1-claude-code",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "action": "precondition",
+      "target": "their invoice list is already in Foundry (dropped once before, as in P2)",
+      "steps": 0,
+      "asks": 0,
+      "ms": 599
+    },
+    {
+      "n": 1,
+      "shot": "01-connect-page.jpg",
+      "slug": "connect-page",
+      "note": "what the agent can and cannot do, then the exact line",
+      "steps": 0,
+      "asks": 0,
+      "ms": 1039,
+      "route": "#/connect-agent",
+      "h1": "Connect your coding agent",
+      "focus": "h1 Connect your coding agent",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Connect your coding agent\" [level=1]\n  - paragraph: Paste one line into your agent's terminal. Foundry doesn't change your agent's settings for you, so your agent asks you before it trusts Foundry.\n  - heading \"What your agent can and can't do with Foundry\" [level=2]\n  - list:\n    - listitem: Draft an automation from what you ask for.\n    - listitem: Test it with pretend data.\n    - listitem: \"It can't turn anything on: you do.\"\n    - listitem: \"It can't approve what an automation makes: you do, in a dialog or in this page.\"\n  - heading \"Claude Code Works now\" [level=2]\n  - paragraph: \"In a terminal:\"\n  - text: claude mcp add --transport stdio foundry -- \"/opt/node24/bin/node\" \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" mcp --dashboard --workspace \"/tmp/journey-p1-claude-code-NWBd5j\"\n  - button \"Copy\"\n  - paragraph: Claude Code will ask you to trust the new server the first time. Not yet tested against a released Claude Code.\n  - heading \"Cursor Works now\" [level=2]\n  - paragraph: \"Add this to .cursor/mcp.json in your project, or to your user settings:\"\n  - text: \"{ \\\"mcpServers\\\": { \\\"foundry\\\": { \\\"command\\\": \\\"/opt/node24/bin/node\\\", \\\"args\\\": [ \\\"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\\\", \\\"mcp\\\", \\\"--dashboard\\\", \\\"--workspace\\\", \\\"/tmp/journey-p1-claude-code-NWBd5j\\\" ] } } }\"\n  - button \"Copy\"\n  - paragraph: \"Or use a one-click link (built from Cursor's documented format; not yet tried in Cursor): Preview\"\n  - text: cursor://anysphere.cursor-deeplink/mcp/install?name=foundry&config=eyJjb21tYW5kIjoiL29wdC9ub2RlMjQvYmluL25vZGUiLCJhcmdzIjpbIi9ob21lL3VzZXIvd29ya2Zsb3ctZm91bmRyeS8uY2xhdWRlL3dvcmt0cmVlcy93Zl9jNzk0NjQ2OC0yMDMtMTYvYXBwL2NsaS5tanMiLCJtY3AiLCItLWRhc2hib2FyZCIsIi0td29ya3NwYWNlIiwiL3RtcC9qb3VybmV5LXAxLWNsYXVkZS1jb2RlLU5XQmQ1aiJdfQ==\n  - button \"Copy\"\n  - paragraph: Cursor shows you the server before it adds it.\n  - heading \"Codex Works now\" [level=2]\n  - paragraph: \"In a terminal:\"\n  - text: codex mcp add foundry -- \"/opt/node24/bin/node\" \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" mcp --dashboard --workspace \"/tmp/journey-p1-claude-code-NWBd5j\"\n  - button \"Copy\"\n  - paragraph: Codex has no documented dialog for your decisions, so Foundry opens your browser when it needs your yes.\n  - heading \"Plugin from your own copy Planned\" [level=2]\n  - paragraph: \"Planned: one step that adds Foundry and a short guide for your agent, from a copy on this computer. Nothing would be published.\"\n  - 'link \"What you can do today: paste the line above\"':\n    - /url: \"#/connect-agent\"\n  - paragraph: \"Then ask your agent, for example:\"\n  - text: use Foundry to chase my unpaid invoices, summary to me@example.com\n  - paragraph: Nothing was written to any config file. Paste one of these. The approve tool always asks you, never your agent.\n  - group: Show details"
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "target": "Copy",
+      "steps": 1,
+      "asks": 0,
+      "ms": 1142
+    },
+    {
+      "action": "external",
+      "target": "pastes the line into a terminal (Claude Code then shows its own trust prompt for the server: not counted, not verified)",
+      "ask": false,
+      "steps": 2,
+      "asks": 0,
+      "ms": 1149
+    },
+    {
+      "action": "external",
+      "target": "types to the agent: \"use Foundry to chase my unpaid invoices, summary to me@example.com\"",
+      "ask": false,
+      "steps": 3,
+      "asks": 0,
+      "ms": 2107
+    },
+    {
+      "n": 2,
+      "shot": "02-agent-request-and-test.jpg",
+      "slug": "agent-request-and-test",
+      "note": "first verified: list_templates, propose_flow, dry_run",
+      "steps": 3,
+      "asks": 0,
+      "ms": 3470,
+      "route": null,
+      "h1": null,
+      "focus": null,
+      "a11y": [],
+      "aria": ""
+    },
+    {
+      "action": "external",
+      "target": "approves \"Turn on\" in the agent's dialog",
+      "ask": false,
+      "steps": 4,
+      "asks": 0,
+      "ms": 3521
+    },
+    {
+      "n": 3,
+      "shot": "03-elicitation-accepted.jpg",
+      "slug": "elicitation-accepted",
+      "note": "the person approved in the client dialog (channel mcp-elicitation)",
+      "steps": 4,
+      "asks": 0,
+      "ms": 3666,
+      "route": null,
+      "h1": null,
+      "focus": null,
+      "a11y": [],
+      "aria": ""
+    },
+    {
+      "n": 4,
+      "shot": "04-run-waits-for-you.jpg",
+      "slug": "run-waits-for-you",
+      "note": "run_flow: the exact list waits for the person in the browser",
+      "steps": 4,
+      "asks": 0,
+      "ms": 4654,
+      "route": null,
+      "h1": null,
+      "focus": null,
+      "a11y": [],
+      "aria": ""
+    },
+    {
+      "n": 5,
+      "shot": "05-browser-waiting.jpg",
+      "slug": "browser-waiting",
+      "note": "the page Foundry opened: the exact list",
+      "steps": 4,
+      "asks": 0,
+      "ms": 6685,
+      "route": "#/waiting",
+      "h1": "Waiting for you (1)",
+      "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Waiting for you (1)\" [level=1]\n  - paragraph: Only a click here decides. Your coding agent can't.\n  - article \"Make these 4 drafts?\":\n    - heading \"Make these 4 drafts?\" [level=2]\n    - paragraph: This is everything the real run would make (version 1), in full. Read it before you say yes.\n    - list:\n      - listitem: \"To: hello@larkfern.example Subject: Final notice: invoice INV-2043 Hello Lark & Fern Florist, This is a final notice. Invoice INV-2043 for 75.5 was due on 2026-09-01 (50 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: billing@northfield-gym.example Subject: Friendly reminder: invoice INV-2042 Hello Northfield Gym, Just a friendly reminder. Invoice INV-2042 for 480 was due on 2026-10-10 (11 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: accounts@bramble-cafe.example Subject: Second reminder: invoice INV-2041 Hello Bramble Cafe, This is our second reminder. Invoice INV-2041 for 1240 was due on 2026-10-03 (18 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: me@example.com Subject: Invoice reminders: summary Unpaid invoices due for a reminder (3): - INV-2041 Bramble Cafe: 1240, 18 days late (second reminder) - INV-2042 Northfield Gym: 480, 11 days late (reminder) - INV-2043 Lark & Fern Florist: 75.5, 50 days late (final notice) New reminders sent this run: 3. Paid and disputed invoices were left alone.\"\n    - paragraph: If the real run wants to make anything that isn't on this list, it stops and asks you.\n    - button \"Make 4 drafts\"\n    - button \"Don't make any\"\n    - status"
+    },
+    {
+      "action": "click",
+      "ask": true,
+      "target": "Make 4 drafts",
+      "steps": 5,
+      "asks": 1,
+      "ms": 6749
+    },
+    {
+      "n": 6,
+      "shot": "06-drafts.jpg",
+      "slug": "drafts",
+      "note": null,
+      "steps": 5,
+      "asks": 1,
+      "ms": 9857,
+      "route": "#/drafts?run=462b9a1a-19bf-4d3c-8bfb-e9cb0f70f6be",
+      "h1": "4 drafts ready. Foundry didn't send anything.",
+      "focus": "h1 4 drafts ready. Foundry didn't send anything.",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"4 drafts ready. Foundry didn't send anything.\" [level=1]\n  - paragraph: Open each one in your mail app and send it yourself, or download it.\n  - list:\n    - listitem:\n      - text: \"To: me@example.com Subject: Invoice reminders: summary 10/21/2026, 6:41:57 PM Unpaid invoices due for a reminder (3): - INV-2041 Bramble Cafe: 1240, 18 days late (second reminder) - INV-2042 Northfield Gym: 480, 11 days late (reminder) - INV-2043 Lark & Fern Florist: 75.5, 50 days late (final notice) New reminders sent this run: 3. Paid and disputed invoices were left alone.\"\n      - link \"Open in your mail app\":\n        - /url: mailto:me@example.com?subject=Invoice%20reminders%3A%20summary&body=Unpaid%20invoices%20due%20for%20a%20reminder%20(3)%3A%0A-%20INV-2041%20Bramble%20Cafe%3A%201240%2C%2018%20days%20late%20(second%20reminder)%0A-%20INV-2042%20Northfield%20Gym%3A%20480%2C%2011%20days%20late%20(reminder)%0A-%20INV-2043%20Lark%20%26%20Fern%20Florist%3A%2075.5%2C%2050%20days%20late%20(final%20notice)%0A%0ANew%20reminders%20sent%20this%20run%3A%203.%20Paid%20and%20disputed%20invoices%20were%20left%20alone.\n      - button \"Download .eml\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n    - listitem:\n      - text: \"To: hello@larkfern.example Subject: Final notice: invoice INV-2043 10/21/2026, 6:41:57 PM Hello Lark & Fern Florist, This is a final notice. Invoice INV-2043 for 75.5 was due on 2026-09-01 (50 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - link \"Open in your mail app\":\n        - /url: mailto:hello@larkfern.example?subject=Final%20notice%3A%20invoice%20INV-2043&body=Hello%20Lark%20%26%20Fern%20Florist%2C%0A%0AThis%20is%20a%20final%20notice.%20Invoice%20INV-2043%20for%2075.5%20was%20due%20on%202026-09-01%20(50%20days%20ago)%20and%20we%20have%20not%20received%20payment%20yet.%0A%0AIf%20you%20have%20already%20paid%2C%20please%20ignore%20this%20message.%20If%20something%20about%20the%20invoice%20is%20wrong%2C%20just%20reply%20and%20we%20will%20sort%20it%20out.%0A%0AThank%20you%2C%0AAccounts%20team\n      - button \"Download .eml\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n    - listitem:\n      - text: \"To: billing@northfield-gym.example Subject: Friendly reminder: invoice INV-2042 10/21/2026, 6:41:56 PM Hello Northfield Gym, Just a friendly reminder. Invoice INV-2042 for 480 was due on 2026-10-10 (11 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - link \"Open in your mail app\":\n        - /url: mailto:billing@northfield-gym.example?subject=Friendly%20reminder%3A%20invoice%20INV-2042&body=Hello%20Northfield%20Gym%2C%0A%0AJust%20a%20friendly%20reminder.%20Invoice%20INV-2042%20for%20480%20was%20due%20on%202026-10-10%20(11%20days%20ago)%20and%20we%20have%20not%20received%20payment%20yet.%0A%0AIf%20you%20have%20already%20paid%2C%20please%20ignore%20this%20message.%20If%20something%20about%20the%20invoice%20is%20wrong%2C%20just%20reply%20and%20we%20will%20sort%20it%20out.%0A%0AThank%20you%2C%0AAccounts%20team\n      - button \"Download .eml\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n    - listitem:\n      - text: \"To: accounts@bramble-cafe.example Subject: Second reminder: invoice INV-2041 10/21/2026, 6:41:56 PM Hello Bramble Cafe, This is our second reminder. Invoice INV-2041 for 1240 was due on 2026-10-03 (18 days ago) and we have not received payment yet. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - link \"Open in your mail app\":\n        - /url: mailto:accounts@bramble-cafe.example?subject=Second%20reminder%3A%20invoice%20INV-2041&body=Hello%20Bramble%20Cafe%2C%0A%0AThis%20is%20our%20second%20reminder.%20Invoice%20INV-2041%20for%201240%20was%20due%20on%202026-10-03%20(18%20days%20ago)%20and%20we%20have%20not%20received%20payment%20yet.%0A%0AIf%20you%20have%20already%20paid%2C%20please%20ignore%20this%20message.%20If%20something%20about%20the%20invoice%20is%20wrong%2C%20just%20reply%20and%20we%20will%20sort%20it%20out.%0A%0AThank%20you%2C%0AAccounts%20team\n      - button \"Download .eml\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n  - paragraph: \"\\\"I sent it\\\" is your own note, kept in this browser. Foundry can't see your mail.\"\n  - link \"Your automations\":\n    - /url: \"#/automations\"\n  - link \"Runs\":\n    - /url: \"#/runs\""
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {
+    "setup": {
+      "steps": 2,
+      "asks": 0,
+      "ms": 2107
+    },
+    "firstVerified": {
+      "steps": 3,
+      "asks": 0,
+      "ms": 3350
+    },
+    "firstLive": {
+      "steps": 5,
+      "asks": 1,
+      "ms": 7594,
+      "accounts": 0,
+      "keys": 0,
+      "connections": 0
+    }
+  },
+  "a11y": [],
+  "refusals": [],
+  "checks": {
+    "argv": [
+      "/opt/node24/bin/node",
+      "/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs",
+      "mcp",
+      "--dashboard",
+      "--workspace",
+      "<ws>"
+    ],
+    "dryRunSay": "Practice run passed all 4 checks. It would have: sent “Invoice reminders: summary” to me@example.com; sent “Friendly reminder: invoice PR-101” to practice-cafe@example.org; sent “Second reminder: invoice PR-102” to practice-gym@example.org; sent “Final notice: invoice PR-103” to practice-florist@example.org. Nothing real was sent.",
+    "elicitation": "Turn on “Invoice reminders” (version 1, 880c7295)?",
+    "notCounted": [
+      "Claude Code trust prompt for a new stdio server (setup)",
+      "Claude Code permission prompt for the approve tool (anthropic/requiresUserInteraction): +1 click per approval, not verified in a real client"
+    ]
+  },
+  "preconditions": [
+    "their invoice list is already in Foundry (dropped once before, as in P2)"
+  ],
+  "totalSteps": 5,
+  "totalAsks": 1,
+  "ms": 11872,
+  "shots": [
+    "01-connect-page.jpg",
+    "02-agent-request-and-test.jpg",
+    "03-elicitation-accepted.jpg",
+    "04-run-waits-for-you.jpg",
+    "05-browser-waiting.jpg",
+    "06-drafts.jpg"
+  ],
+  "budgets": {
+    "firstVerified": {
+      "steps": 2,
+      "asks": 0,
+      "since": "setup"
+    },
+    "firstLive": {
+      "steps": 4,
+      "asks": 2,
+      "since": "setup"
+    }
+  },
+  "passed": true
+}
