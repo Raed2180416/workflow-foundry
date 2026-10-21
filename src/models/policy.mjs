@@ -78,7 +78,8 @@ export function validateChildEnv(childEnv, where = 'childEnv') {
   return childEnv;
 }
 
-export function validatePolicy(policy) {
+// executorOnly: a session subset that lists executor models alone (experiments/lib/models.mjs subsetPolicy); only then may models[] be empty.
+export function validatePolicy(policy, { executorOnly = false } = {}) {
   try { checkData(policy, { maxBytes: 1024 * 1024 }); } catch (error) { invalid(error.message); }
   if (!isObject(policy)) invalid('must be a JSON object');
   if (!nonEmpty(policy.policyVersion)) invalid('policyVersion is required');
@@ -105,7 +106,12 @@ export function validatePolicy(policy) {
     }
     if (p.kind === REMOTE_CHAT_KIND) validateRemoteChatProvider(name, p);
   }
-  if (!Array.isArray(policy.models) || !policy.models.length) invalid('models must be a non-empty list');
+  // models[] may be empty only in an executor-only session subset (executorOnly, with a non-empty executorModels[]: a Mercury-only stream,
+  // research/mercury-20261021/PORT-PROBE.md finding 1). Class resolution (modelsForClass, nextClass, resolve) reads models[] only, so it
+  // finds nothing and never reaches an executor model; every call must name its executor model (portModelById). The owner policy file and
+  // the Runtime (agent nodes resolve models[] by class or id) still need a non-empty models[].
+  const emptyAllowed = executorOnly === true && Array.isArray(policy.models) && Array.isArray(policy.executorModels) && policy.executorModels.length > 0;
+  if (!Array.isArray(policy.models) || (!policy.models.length && !emptyAllowed)) invalid('models must be a non-empty list (it may be empty only in an executor-only session subset)');
   const ids = new Set(), ports = new Set();
   for (const m of policy.models) {
     if (!isObject(m) || typeof m.id !== 'string' || !ID.test(m.id)) invalid(`model id ${JSON.stringify(m?.id)} is not a valid id`);
