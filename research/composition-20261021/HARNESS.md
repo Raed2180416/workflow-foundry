@@ -161,7 +161,7 @@ after `c-oss` showed it.
 | `restart` | the solver process is killed and a fresh one made before every 7th tick; the committed carry is intact | the journal's behaviour must equal the fault-free run (`defects.mjs behaviourDigest`) |
 | `crash` | every 3rd tick with a side effect (no merge or close; ≤ 3 per instance) is "crashed after apply": its effects and human tasks go out, its carry rolls back to the input's, its timers are dropped, the process restarts, and its events are prepended to the instance's next tick (at-least-once redelivery) | exactly-once effects (every logical effect committed at most once), and the three signals |
 | `dup-delayed` | MR5 world transform: placed orders and carrier reports repeated 7 min later, carriers repeating reports | the three signals (SPEC-E §3.1, §3.3: repeats change nothing) |
-| `dup-same` | MR5: every world arrival also delivered in its own instant (later id), carriers repeating in-instant | the three signals; note the known contract gap (E8 README, MR5: two same-instant placements start two instances in one round) |
+| `dup-same` | MR5: every world arrival also delivered in its own instant (later id), carriers repeating in-instant | the three signals; note the known contract gap (E8 README, MR5: two same-instant placements start two instances in one round). Diagnostic row, never pooled (2026-10-21, §4.2) |
 | `downstream` | MR11 transform of straight orders: F6 on the charge after the reservations, on a reservation item, on the booking after the charge; a collection failure after the booking; customer cancels 1, 2, 3, 45 min in | compensation completeness against the independent planner, critical violations, the three signals |
 
 ### 4.2 Results: the scripted composed reference, the probe program and the monolith baselines
@@ -200,6 +200,14 @@ and replays identically under restarts; lineage 2 loses one more case under cras
 three lose cases when deliveries are duplicated in the same instant (1161: 35, 32 and 35 of 43; the twin instance of a
 same-instant duplicate placement is never merged, E8's known MR5 gap); under downstream failures lineage 1 leaves 3 of
 27 compensations incomplete on 1161 (40/42) while lineage 3 completes all (42/42); delayed duplicates cost nothing.
+
+**dup-same is a diagnostic row** (note added 2026-10-21, compromise register B6). Read the dup-same cells as passes: on
+1161 the monoliths pass 35, 32 and 35 of 43, so they lose 8–11 cases (8 each against their own fault-free runs), not
+32–35 as the register first said. The loss comes from E8's known same-instant gap (MR5), which every arm meets, so the
+row measures that gap rather than the arm. dup-same is reported beside dup-delayed and kept out of every pooled fault
+or headline number. `fault-run.mjs` writes one row per world and fault and pools nothing; any pooled fault figure
+built from its output excludes dup-same. The fix (keyed start: same-round starts grouped by key) changes SPEC-E, so it
+needs an owner-approved version bump and reruns (compromises FIXES.md B6).
 
 ### 4.3 Mis-composed variants of the reference (`runs/variant-*.json`)
 
@@ -338,11 +346,14 @@ Grading, faults and drift: $0. Drift patch sessions are a later row (B1N-H's rep
   asked for; `--mode audit` re-grading at $0 separates interface honesty from its business consequence.
 - **The scripted composed reference is analyst-side** (journal-driven, trusted realm), so it validates the harness, not
   the claim that a cheap builder can write a sandboxed composed E8 solver. The sandboxed probe program covers only straight
-  orders. No complete arm-side composed E8 solver exists yet; the first paid C-H build is the first.
+  orders. No complete arm-side composed E8 solver exists yet; the first paid C-H build is the first. *2026-10-21:*
+  superseded. ch-e8-1 passes 974/1,022 and ch-e8-2 955/1,022, both with 0 interface violations (`runs/ch-e8-*/result.json`;
+  compromise register E4).
 - **Downstream worlds use MR11's F6 on reservations**, which the generator never produces; the oracle has two findings
   there (§3.3); compensation completeness is judged by the planner either way.
 - **Duplicate delivery in the same instant** meets E8's known contract gap (two instances in one round). Report
-  `dup-same` beside `dup-delayed`, not pooled.
+  `dup-same` beside `dup-delayed`, not pooled. *2026-10-21:* `dup-same` is labelled a diagnostic row and excluded
+  from pooled numbers (§4.2); the monoliths lose 8–11 of 43 there, not 32–35 (compromise register B6).
 - **Drift D1 touches one rule.** Whether a builder's patch is local depends on its own boundaries; the measure needs a
   paid patch or rebuild session under the drifted spec (practice worlds served the drifted spec), which is not wired
   into `build.mjs` yet: `drift-run.mjs` grades any program under the drift at $0, and `patchLocality` compares versions.
