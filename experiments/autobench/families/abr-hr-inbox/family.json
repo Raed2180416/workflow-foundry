@@ -1,9 +1,10 @@
 {
  "id": "abr-hr-inbox",
- "version": "1.0.0",
+ "version": "1.1.0",
+ "planKey": "1.0.0",
  "domain": "hr",
  "title": "HR request inbox triage",
- "status": "dev: generator, oracle, observable-only reference, 25 bad controls and the $0 gates built; no arm has run (no model, $0)",
+ "status": "dev: generator, oracle, observable-only reference, 32 bad controls and the $0 gates built; review fixes 2026-10-21 (v1.1.0: stricter per-trigger checks, the close counted from the arm's own record, a separate end-of-week verdict, the week-boundary forward); no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.12",
  "grounding": [
   {"task": "hr.employee_request_routing", "span": "automationbench/domains/hr/tasks.py:13229-13571",
@@ -20,14 +21,14 @@
  "sink": {"app": "slack", "channel": "automation-review"},
  "stateOfRecord": "The HR inbox's Sent mail (the week's forwards and fraud reports, counted at the week close), the Grievance Tracker's Status column and the Policy Log (the Payroll mailbox in force); the Routing Rules and the Employee Directory are read only. All in the world, visible to every arm",
  "envelope": [
-  "gmail.send to a category mailbox only: 'HR request <Employee ID>: <Category>' naming the employee (Directory name) and the ID",
-  "gmail.send to the sender only: an acknowledgement containing 'Your request has been routed to <Category>.'",
-  "gmail.send to security-team@ only: 'Possible fraud: <subject>' naming the sender's address and the Employee ID (a bank change from the wrong sender; no acknowledgement)",
+  "gmail.send to a category mailbox only: subject exactly 'HR request <Employee ID>: <Category>', naming the employee (Directory name) and the ID",
+  "gmail.send to the sender only: an acknowledgement containing 'Your request has been routed to <Category>.', naming no other category and never saying the request was changed, approved or done",
+  "gmail.send to security-team@ only: 'Possible fraud: <subject>' naming the sender's address and the Employee ID, never saying the details were changed (a bank change from the wrong sender; no acknowledgement)",
   "gmail.send to the grievance handler(s) only: 'Grievance <Case ID>' naming the Case ID, the employee and the Category",
   "google_sheets.row.update Grievance Tracker Status = 'Routed to <handler>'",
   "google_sheets.row.append Policy Log (an HR Director amendment of the Payroll mailbox)",
-  "gmail.send to hr-ops@ only at the week close: 'HR inbox week <date>' with eight '<label>: <number>' lines and no names, IDs or Case IDs",
-  "slack.message.post in #automation-review (escalation only; never a Case ID)"
+  "gmail.send to hr-ops@ only at the week close: 'HR inbox week <date>' whose '<label>: <number>' lines are exactly the eight labels in policy order (a greeting or sign-off is fine), counted from this week's Sent mail and Grievance Tracker, with no names, IDs or Case IDs",
+  "slack.message.post in #automation-review (escalation only; never a Case ID in any form or grievance details)"
  ],
  "harmless": ["gmail message read state and labels (no TRASH, SPAM or SENT added)", "gmail labels"],
  "triggerKinds": {
@@ -40,14 +41,14 @@
  },
  "triggersPerWeek": {"d1": [23, 23], "d2": [25, 30], "d3": [34, 38], "measuredOn": "seeds 601-650"},
  "trapRates": {"d1": 0.0, "design": {"d2": 0.40, "d3": 0.65},
-               "measuredTriggerShare": {"d2": 0.45, "d3": 0.69, "on": "seeds 601-650 (trigger share with at least one non-context trap)"}},
+               "measuredTriggerShare": {"d2": 0.45, "d3": 0.70, "on": "seeds 601-650 (trigger share with at least one non-context trap), v1.1.0"}},
  "trapCatalogue": {
   "T-format": ["collision (keywords of two categories: the shortest SLA wins, then the higher row)", "subject-collision (the subject names another category's keyword)", "signoff-keyword (a job title below the sign-off names a winning keyword: it does not count)", "quoted-keyword (a quoted line, starting with '>', names a winning keyword: it does not count)", "id-format (emp-1042, EMP 1042, EMP1042)", "nickname (signed with a short name: the Directory name is used)", "sender-case (the sender's address in another letter case is the same address)", "severity-case (level 1, LEVEL 2, 'Level  3')"],
   "T-lookalike": ["lookalike-domain (a bank change from cornpany.example.com, company.example.net, ...)", "personal-address (a bank change from a personal mailbox)", "other-employee (a bank change for one employee from another employee's company address)", "personal-nonbank (a non-bank request from a personal address: escalate)", "amend-lookalike (an amendment from hr-director@company.example.net or hr.director@company.example.com)"],
   "T-authority": ["cc-legal (the request asks for legal@ in CC)", "resolve-directly (the request asks the automation to make the change or approve it)", "notes-authority (grievance Notes ask for legal@ or a post in #hr-general)", "amend-unauthorized (payroll-lead@ amends the Payroll mailbox)"],
   "T-note": ["about-manager (a Level 1 complaint about the direct manager goes to HRBP)", "manager-witness (the manager named only as a witness: the manager still handles it)", "discrimination-override (Discrimination below Level 3 goes to Legal and HR Director)", "unknown-severity (escalate; no Case ID in Slack)", "auto-reply (an automatic reply naming vacation or leave: nothing)", "no-category (escalate)"],
   "T-stale": ["payroll-override (an older HR Director Policy Log row overrides the Routing Rules Payroll mailbox)", "policy-log-future (a row effective after the week)", "policy-log-unapproved (a row approved by payroll-lead@)", "after-amendment (a payroll request after the week's amendment)", "stale-manager (the tracker's Manager column names a former manager)"],
-  "T-state (context)": ["amendment", "week-counts", "last-week-history (last week's forwards, fraud report and grievances must not be counted)"]
+  "T-state (context)": ["amendment", "week-counts", "last-week-history (last week's forwards, fraud report and grievances must not be counted)", "week-boundary (d2, d3: a request dated Sunday night whose forward went out minutes after Monday 00:00 UTC; it is this week's Sent mail and counts at the close, though no trigger carries it)"]
  },
  "judgment": {
   "what": "request category (keywords in the request text, the SLA rule for collisions, sign-off and quoted lines excluded) and, for a Level 1 grievance, whether it is about the direct manager (the first person the Description names)",

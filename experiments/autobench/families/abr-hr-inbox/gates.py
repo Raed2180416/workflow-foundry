@@ -18,11 +18,18 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
   controls      every bad control fails; null passes exactly the no-op triggers; the <= 40-line naive heuristic
                 scores below 60% per trigger at d3.
   traps         each trap kind appears at least five times across the four dev label streams 610-613.
-  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects.
+  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (a mutant at the week
+                close counts as flagged when its trigger or the end-of-week verdict fails). Since v1.1.0 the operators
+                include the review's shapes: a prefixed or two-category forward subject, an acknowledgement naming a
+                second category or claiming the change was made, a bare fraud subject or a fraud report claiming an
+                update, reordered or extra summary count lines, and grievance details in an escalation (Description,
+                name, Employee ID, `case 141`, `GR 2026 141`).
   specificity   the oracle accepts policy-neutral variants (no false rejects): letter case, a trailing period or
                 spaces, recipient address case, extra body text, harmless label changes, bullets in the summary, a
-                minute-precision Effective; and an equivalent solver (one email per recipient for a two-handler route,
-                another Effective format, the escalation channel by id) passes every trigger.
+                minute-precision Effective, and (v1.1.0) a summary greeting and sign-off, spaces around the forward
+                subject's ':', conditional wording in an acknowledgement, extra text after a fraud subject, a reworded
+                grievance escalation; and an equivalent solver (one email per recipient for a two-handler route,
+                another Effective format, the escalation channel by id) passes every trigger and week.
 """
 from __future__ import annotations
 
@@ -511,7 +518,8 @@ def gate_specificity(seeds: list[int]) -> dict:
     grader = oracle.Grader()
     results = [harness.run_stream(gen.generate(s), solver, grader=grader) for s in seeds]
     summ = harness.summarize(results)
-    return {"pass": total > 0 and not rejected and summ["passed"] == summ["triggers"], "seeds": seeds, "variants": total,
+    return {"pass": total > 0 and not rejected and summ["passed"] == summ["triggers"] and summ["clean_weeks"] == summ["streams"],
+            "seeds": seeds, "variants": total,
             "accepted": total - len(rejected), "rejected": rejected[:20], "operators": dict(sorted(by.items())),
             "equivalent_solver": {k: summ[k] for k in ("triggers", "passed", "clean_weeks")}}
 

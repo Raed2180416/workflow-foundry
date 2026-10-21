@@ -162,8 +162,11 @@ async function main() {
       const view = lab.verifierView(cr);
       const w0 = lab.loadWorlds(cr).initial;
       const x = extractionInput(view, w0, { capChars: worldCap });
-      const got = byTask.get(t) ?? new Map();
-      const grounded = [...got.entries()].filter(([, j]) => j.key.includes(x.key)).map(([reader, j]) => ({ reader, ...groundLedger(j.value, { view, idx: x.idx }) }));
+      const got = new Map([...(byTask.get(t) ?? new Map()).entries()].filter(([, j]) => j.key.includes(x.key)));
+      // --fallback-reader: a listed reader with no valid ledger for this task is replaced by this one (e.g. a truncated call)
+      const fb = o['fallback-reader'];
+      if (fb && readers && readers.some(rd => !got.has(rd))) { const f = readJsonl(extractFile).filter(j => j.ok && j.version === EXTRACT_VERSION && j.task === t && j.reader === fb && j.key.includes(x.key)).at(-1); if (f) got.set(fb, f); }
+      const grounded = [...got.entries()].map(([reader, j]) => ({ reader, ...groundLedger(j.value, { view, idx: x.idx }) }));
       const merged = mergeLedgers(grounded, { hardSupport: o['hard-support'] ? Number(o['hard-support']) : null });
       appendFileSync(ledgerFile, JSON.stringify({ task: t, readers: grounded.map(g => g.reader), merged, grounded: grounded.map(g => ({ reader: g.reader, ok: g.ok, today: g.today, nReq: g.requirements.length, dropped: g.dropped.length, ruleSources: g.ruleSources, items: g.items })) }) + '\n');
       for (const r of all.filter(x2 => x2.task === t)) {
