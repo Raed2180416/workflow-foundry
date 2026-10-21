@@ -71,7 +71,10 @@ const entrySchema = { type: 'object', additionalProperties: false, required: ['i
   scripts: { type: 'object', maxProperties: 20, additionalProperties: scriptSchema },
   // cua entries
   login: { type: 'object', additionalProperties: false, required: ['path', 'user', 'password'], properties: { path: { type: 'string', pattern: '^/[A-Za-z0-9/_-]{0,100}$' }, user: secretRef, password: secretRef } },
-  limits: { type: 'object', additionalProperties: false, properties: { maxSteps: { type: 'integer', minimum: 1, maximum: 200 }, observationTokens: { type: 'integer', minimum: 100, maximum: 20000 } } },
+  limits: { type: 'object', additionalProperties: false, properties: { maxSteps: { type: 'integer', minimum: 1, maximum: 200 }, observationTokens: { type: 'integer', minimum: 100, maximum: 20000 },
+    maxCalls: { type: 'integer', minimum: 1, maximum: 100 } } },
+  // program entries (CM0): the members a program may call, by member id (reads only in v1)
+  uses: { type: 'array', minItems: 1, maxItems: 20, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z][A-Za-z0-9_.-]{0,127}$' } },
   // connection entries
   provider: { type: 'string', pattern: ID }, origins: { type: 'array', maxItems: 10, items: { type: 'string', maxLength: 200 } } } };
 export const catalogSchema = { type: 'object', additionalProperties: false, required: ['schema', 'entries'], properties: {
@@ -88,6 +91,8 @@ const sourceSchemas = {
     backend: { const: 'playwright-local' }, executablePath: { type: 'string', maxLength: 4096 }, origins: { type: 'array', minItems: 1, maxItems: 10, items: { type: 'string', maxLength: 200 } },
     profile: { enum: ['S0'] }, holdPaths: { type: 'array', maxItems: 20, items: { type: 'string', pattern: '^[a-z][a-z0-9-]{0,40}$' } } } },
   connection: { type: 'object', additionalProperties: false, properties: {} },
+  program: { type: 'object', additionalProperties: false, required: ['lang', 'file', 'sha256'], properties: {
+    lang: { const: 'js' }, file: { type: 'string', minLength: 1, maxLength: 4096 }, sha256: { type: 'string', pattern: '^[0-9a-f]{64}$' } } },
   builtin: { type: 'object', additionalProperties: false, properties: {} }
 };
 
@@ -119,7 +124,6 @@ export function checkCatalog(catalog, { allowDev = false } = {}) {
   for (const entry of out.entries) {
     if (ids.has(entry.id)) fail('CATALOG_DUPLICATE', `Duplicate catalog entry id ${entry.id}`);
     ids.add(entry.id);
-    if (entry.kind === 'program') fail('CATALOG_KIND_UNSUPPORTED', 'Program capabilities (CM0) are designed but not built in this spike; the entry is refused, not flattened', { id: entry.id });
     validateData(sourceSchemas[entry.kind], entry.source ?? {}, `catalog entry ${entry.id} source`, { trustedSchema: true });
     if (entry.dev === true && !allowDev) fail('CATALOG_DEV_ENTRY', `Entry ${entry.id} is a development (loopback) entry; it loads only with allowDev`, { id: entry.id });
     if (entry.kind === 'mcp-http') {
@@ -133,7 +137,9 @@ export function checkCatalog(catalog, { allowDev = false } = {}) {
       if (!oauth.issuer.startsWith('https://') && !(entry.dev === true && loopback(oauth.issuer))) fail('CATALOG_TRANSPORT', `Entry ${entry.id}: the authorization server must use https (loopback http only for dev entries)`);
     }
     if (entry.kind === 'cua') for (const origin of entry.source.origins) if (!origin.startsWith('https://') && !(entry.dev === true && loopback(origin))) fail('CATALOG_TRANSPORT', `Entry ${entry.id}: UI origins must be https (loopback http only for dev entries)`);
-    if (['mcp-stdio', 'mcp-http', 'builtin'].includes(entry.kind) && !entry.members) fail('CATALOG_MEMBERS', `Entry ${entry.id} attests no members; an unattested tool is never bindable`, { id: entry.id });
+    if (['mcp-stdio', 'mcp-http', 'builtin', 'program'].includes(entry.kind) && !entry.members) fail('CATALOG_MEMBERS', `Entry ${entry.id} attests no members; an unattested tool is never bindable`, { id: entry.id });
+    if (entry.kind === 'program' && (Object.keys(entry.members).length !== 1 || !entry.uses)) fail('CATALOG_PROGRAM', `Program entry ${entry.id} attests exactly one member and lists the members it uses`, { id: entry.id });
+    if (entry.kind !== 'program' && entry.uses) fail('CATALOG_PROGRAM', `Only program entries list uses (${entry.id})`);
     if (entry.kind === 'skill' && (!entry.view || !entry.type || !entry.system)) fail('CATALOG_MEMBERS', `Skill entry ${entry.id} needs an owner view, type and system`);
     for (const [name, member] of Object.entries(entry.members ?? {})) {
       if (!/^[A-Za-z][A-Za-z0-9_.-]{0,100}$/.test(name)) fail('CATALOG_MEMBERS', `Entry ${entry.id}: member name ${name.slice(0, 40)} is outside the registry name profile`);

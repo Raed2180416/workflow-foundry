@@ -13,6 +13,7 @@ import { qualifyMcp, PinGuard, invokeMcp, runCanary, checkMemberSchema } from '.
 import { loadSkill, skillMembers, invokeSkill } from './skills.mjs';
 import { uiMembers, invokeUi, UiSessions } from './cua.mjs';
 import { memberRecord } from './members.mjs';
+import { programMember, invokeProgram } from './program.mjs';
 import { lockMembers } from './resolve.mjs';
 
 /** How an approved member record differs from a live one: null, DEFINITION_CHANGED (pins moved) or LOCK_STALE (view/attestation only). */
@@ -34,7 +35,9 @@ export class NodecapHost {
   member(id) { return this.members.get(id) ?? null; }
   /** Qualify every bindable entry. An entry that fails is recorded (and, for drift, quarantined by the ledger) and contributes no members. */
   async qualify({ canaries = true } = {}) {
-    for (const entry of this.catalog.entries) {
+    // Programs last: a program's members are built from the members it uses, which must have qualified first.
+    const ordered = [...this.catalog.entries.filter(e => e.kind !== 'program'), ...this.catalog.entries.filter(e => e.kind === 'program')];
+    for (const entry of ordered) {
       if (!bindable(entry, this.ledger)) continue;
       try {
         let members = [];
@@ -49,6 +52,7 @@ export class NodecapHost {
           this.skills.set(entry.id, skill);
           members = skillMembers(entry, skill);
         } else if (entry.kind === 'cua') members = uiMembers(entry);
+        else if (entry.kind === 'program') members = [programMember(entry, this.members)];
         else if (entry.kind === 'builtin') {
           members = Object.entries(entry.members).map(([name, attestation]) => {
             if (!this.builtins.get(attestation.capability)) fail('MEMBER_TOOL_MISSING', `Builtin ${attestation.capability} is not registered`);
@@ -132,6 +136,7 @@ export class NodecapHost {
       if (!this.sessions) fail('UI_BACKEND_UNAVAILABLE', 'This host was created without a browser backend');
       out = await invokeUi(member, this.sessions, args, { runId: ctx.runId, node: ctx.node, entry, artifactsDir: ctx.artifactsDir });
     } else if (member.kind === 'builtin') out = await this.builtins.execute(member.capability, args, ctx);
+    else if (member.kind === 'program') out = (await invokeProgram(member, entry, args, { signal: ctx.signal, invoke: (id, inner) => this.invoke(id, inner, { ...ctx, approved: null }) })).value;
     else fail('MEMBER_KIND', `Unsupported member kind ${member.kind}`);
     validateData(member.outputSchema, out, `${member.id} output`);
     return out;

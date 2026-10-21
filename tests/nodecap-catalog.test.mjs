@@ -24,7 +24,7 @@ test('catalog: a valid JSONC catalog loads, gets default statuses and a stable d
   assert.equal(catalogDigest(shuffled), loaded.digest);
 });
 
-test('catalog: refusals (symlink, size, unknown key, duplicate id, secret value, env name, dev gating, transport, program kind, members)', async t => {
+test('catalog: refusals (symlink, size, unknown key, duplicate id, secret value, env name, dev gating, transport, program entries, members)', async t => {
   const dir = workspace(t), file = path.join(dir, 'c.json'), link = path.join(dir, 'link.json');
   writeFileSync(file, JSON.stringify(catalogOf(crmEntry())));
   symlinkSync(file, link);
@@ -48,7 +48,10 @@ test('catalog: refusals (symlink, size, unknown key, duplicate id, secret value,
   assert.throws(() => checkCatalog(catalogOf(ticketsEntry('http://127.0.0.1:0/mcp'))), code('CATALOG_DEV_ENTRY'));
   const plain = { ...ticketsEntry('http://tickets.example/mcp'), dev: false };
   assert.throws(() => checkCatalog(catalogOf(plain)), code('CATALOG_TRANSPORT'));
-  assert.throws(() => checkCatalog(catalogOf({ id: 'prog', kind: 'program', trust: 'T0', source: {} })), code('CATALOG_KIND_UNSUPPORTED'));
+  // Program entries (CM0) need a pinned JavaScript source, exactly one attested member and the members they use; python is not supported.
+  assert.throws(() => checkCatalog(catalogOf({ id: 'prog', kind: 'program', trust: 'T0', source: {} })), code('SCHEMA_MISMATCH'));
+  assert.throws(() => checkCatalog(catalogOf({ id: 'prog', kind: 'program', trust: 'T0', source: { lang: 'python', file: '/x.py', sha256: 'a'.repeat(64) } })), code('SCHEMA_MISMATCH'));
+  assert.throws(() => checkCatalog(catalogOf({ id: 'prog', kind: 'program', trust: 'T0', source: { lang: 'js', file: '/x.mjs', sha256: 'a'.repeat(64) }, members: {} })), code('CATALOG_PROGRAM'));
   const memberless = crmEntry(); delete memberless.members;
   assert.throws(() => checkCatalog(catalogOf(memberless)), code('CATALOG_MEMBERS'));
   const unidempotent = crmEntry(); delete unidempotent.members.update_contact.idempotencyArgument;
