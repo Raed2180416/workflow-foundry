@@ -103,8 +103,7 @@ export function loadProgram({ vm, manifest, sources }) {
   const realm = {
     toRealm: (who, v) => (v === undefined ? undefined : realmJSON[who] ? realmJSON[who].parse(JSON.stringify(v)) : JSON.parse(JSON.stringify(v))),
     makeCtx: (who, meta, h) => {
-      // Handlers take the caller as their first argument (the shim passes `who`): drop it.
-      handlers[who] = Object.fromEntries(Object.entries(h).map(([k, f]) => [k, (_w, ...a) => f(...a)]));
+      handlers[who] = h;                       // the bridge strips the caller (`who`) before dispatching
       return makers[who](JSON.stringify(meta), who);
     },
   };

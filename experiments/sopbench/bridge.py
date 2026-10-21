@@ -360,24 +360,39 @@ def py_str_json(v) -> str:
 FINAL_RE = re.compile(r'<final_output>\s*(\{.*?\})\s*</final_output>', re.DOTALL | re.IGNORECASE)
 
 
-def norm_strict(s: str) -> str:
-    s = s.lower().strip().replace("_", " ").replace("-", " ")
-    return re.sub(r"\s+", " ", s)
+FLOAT_RE = re.compile(r"[+-]?(?:(?:\d(?:_?\d)*)?\.\d(?:_?\d)*|\d(?:_?\d)*\.?)(?:[eE][+-]?\d(?:_?\d)*)?", re.ASCII)
 
 
 def _num(s: str):
-    try:
-        x = float(s)
-        return x if math.isfinite(x) else None
-    except ValueError:
+    """A finite number written with ASCII digits (Python float() syntax minus inf/nan/Unicode digits), else None."""
+    if not FLOAT_RE.fullmatch(s):
         return None
+    x = float(s.replace("_", ""))
+    return x if math.isfinite(x) else None
+
+
+def _norm_text(s: str) -> str:
+    return re.sub(r"\s+", " ", s.replace("_", " ").replace("-", " ")).strip()
+
+
+def strict_field(p_str: str, e: dict) -> bool:
+    p_raw, e_raw = p_str.strip(), e["str"].strip()
+    p_low, e_low = p_raw.lower(), e_raw.lower()
+    p_null, e_null = p_low in NULLS, e["isna"] or e_low in NULLS
+    if p_null or e_null:
+        return p_null and e_null
+    pn, en = _num(p_raw), _num(e_raw)
+    if pn is not None and en is not None:
+        return pn == en
+    return _norm_text(p_low) == _norm_text(e_low)
 
 
 def strict_verdict(text: str, expected: dict, output_columns: list) -> dict:
-    """Our strict metric (research/sopbench-20261021/NOTES.md §scoring): the LAST <final_output>{json}</final_output>
-    must parse and hold every output column (case-insensitive key); per column, the value equals the ground truth
-    after lower-casing, trimming, '_'/'-' -> space and whitespace collapsing, or both are numbers with the same value,
-    or both are null-like. No substring containment, no fallback parsers, no reading of tool results."""
+    """Our strict metric (research/sopbench-20261021/NOTES.md §4): the LAST <final_output>{json}</final_output> must
+    parse and hold every output column (case-insensitive key) with a scalar value; per column the value equals the
+    ground truth: both null-like, or both finite numbers with the same value, or the same text after lower-casing,
+    '_'/'-' -> space, whitespace collapsing and trimming. No substring containment, no fallback parsers, no tool
+    results. Identical to scorer.mjs strictVerdict (parity-tested)."""
     m = FINAL_RE.findall(text or "")
     if not m:
         return {"pass": False, "reason": "no <final_output> JSON"}
@@ -388,19 +403,12 @@ def strict_verdict(text: str, expected: dict, output_columns: list) -> dict:
     low = {str(k).lower(): v for k, v in obj.items()}
     fields = {}
     for c in output_columns:
-        if c.lower() not in low:
-            fields[c] = False
-            continue
-        p = norm_strict(py_str_json(low[c.lower()]))
-        e = expected[c]
-        en = norm_strict(e["str"])
-        p_null, e_null = p in NULLS, e["isna"] or en in NULLS
-        if p_null or e_null:
-            fields[c] = p_null and e_null
-            continue
-        pn, enn = _num(p), _num(en)
-        fields[c] = (p == en) or (pn is not None and enn is not None and pn == enn)
+        v = low.get(c.lower(), _MISSING)
+        fields[c] = False if v is _MISSING or isinstance(v, (list, dict)) else strict_field(str(v), expected[c])
     return {"pass": all(fields.values()), "fields": fields}
+
+
+_MISSING = object()
 
 
 class ScriptedAgent:
