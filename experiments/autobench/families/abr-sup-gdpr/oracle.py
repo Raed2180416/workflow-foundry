@@ -76,14 +76,14 @@ def subject_key(s) -> str:
     return str(s if s is not None else "").strip()
 
 
-def text(s) -> str:
+def as_text(s) -> str:
     """A sheet cell as text, exactly as written."""
     return str(s if s is not None else "")
 
 
 def cell(s) -> str:
     """A sheet cell as text, trimmed at both ends (only for reading state back, never for matching a row)."""
-    return text(s).strip()
+    return as_text(s).strip()
 
 
 def tags_key(tags) -> list[str]:
@@ -120,7 +120,7 @@ def instant(at) -> str:
 def ref_key(transition: str, ref) -> str:
     """Reference as written. For Purged and Blocked rows it is a comma-separated list (POLICY.md §5, §6), compared as
     a set of ids; any other separator, an empty element or an id with inner whitespace is malformed."""
-    r = text(ref)
+    r = as_text(ref)
     if transition in SET_REF_EXACT:
         parts = [x.strip() for x in r.split(",")]
         if any(not x or re.search(r"[\s;]", x) for x in parts):
@@ -131,8 +131,8 @@ def ref_key(transition: str, ref) -> str:
 
 def log_key(cells: dict) -> tuple:
     extra = tuple(sorted(k for k, v in cells.items() if k not in LOG_HEADERS and str(v or "").strip()))
-    tr = text(cells.get("Transition"))
-    return (text(cells.get("Request ID")), addr(cells.get("Email")), tr, instant(cells.get("At")),
+    tr = as_text(cells.get("Transition"))
+    return (as_text(cells.get("Request ID")), addr(cells.get("Email")), tr, instant(cells.get("At")),
             ref_key(tr, cells.get("Reference")), extra)
 
 

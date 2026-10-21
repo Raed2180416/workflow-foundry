@@ -49,3 +49,25 @@ change). The headline for the 60 tasks pools the two runs, and the split is stat
 
 The same bridge change reached `a0-devcheck-2` (ab-chain4) mid-run. A0 records no harness manifest; official rows carry no
 `info.tz`, so its behaviour is unchanged.
+
+## Full dev60 (38 + 22 fill), 2026-10-21 19:00Z
+
+| Arm, same 60 devTrain tasks | Strict pass | Only Mercury-planner passes | Only the other passes | p (exact McNemar) |
+|---|---|---|---|---|
+| **Haiku acting + Mercury ledger/checker (A1-C)** | **29/60 (48.3%)**, partial credit **0.800** | | | |
+| Haiku alone | 9/60 | 24 | 4 | < 0.001 |
+| Haiku + A1 prose harness | 18/60 | 17 | 6 | 0.035 |
+| Haiku in every role (A1-C) | 20/60 | 13 | 4 | 0.049 |
+| Sonnet alone | 20/60 | 15 | 6 | 0.078 |
+| Sonnet + A1 prose harness | 28/60 | 8 | 7 | 1.00 |
+
+**Cost.** Haiku $0.93 for 60 tasks ($0.015 per task); Mercury 3.68M tokens by the records (about 61K per task; at most
+about $0.02 per task at documented list prices). In total at most about $0.035 per task, against Sonnet + A1's $0.115 and
+Sonnet alone's $0.10.
+
+**Reading (development evidence, k = 1, the A1-C pipeline was probed on these tasks; the Mercury roles are new).**
+- **The best configuration we have measured on dev60:** two cheap models, a different-family planner/checker with a cheap
+  actor, match the frontier model with the harness (29 vs 28; 8 vs 7 discordant) and are significantly better than
+  Haiku-only A1-C, at about a third of the frontier cost.
+- The out-of-sample test is next (devCheck look 3, or a disjoint devTrain 60), with the Sonnet-planner control (queued)
+  separating "different family" from "stronger model".

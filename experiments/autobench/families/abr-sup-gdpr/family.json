@@ -3,7 +3,7 @@
  "version": "1.0.0",
  "domain": "support",
  "title": "GDPR erasure requests",
- "status": "dev: generator, oracle, observable-only reference, controls and gates built; re-verified 2026-10-21 (deadline-held trap and close-held control added); no arm has run (no model, $0)",
+ "status": "dev: generator, oracle, observable-only reference, controls and gates built; re-verified 2026-10-21 (deadline-held trap and close-held control added); review fixes 2026-10-21 (exact oracle, trashed sends, in-week hold lift, opaque trigger ids, serve pinned to UTC); no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.8",
  "grounding": [
   {"task": "support.zendesk_gdpr_purge", "span": "automationbench/domains/support/tasks.py:22601-23005",
@@ -36,20 +36,20 @@
                         "note": "new requests: purge stories, a legal-hold story, not found (fresh or a look-alike address), pending, a re-request after Closed - Unverified, and at d3 two backdated postal requests (day 30 later this week; already past day 30 on entry); pre-seeded open requests are at most 29 days old on Monday and reach day 30 during the week (a pre-seeded request blocked by a legal hold may be 30-47 days old: deadline-held)"},
   "verification.reply": {"perWeek": [6, 10], "d1": [6, 6], "d2": [6, 8], "d3": [8, 10], "event": "gmail/new_email (privacy inbox)",
                          "note": "genuine replies (some capitalized, some with a display name, some quoting the ID only deep in the body) and replies that verify nothing: d2 2, d3 4 (look-alike sender, forwarded from another address, display-name spoof, colleague, no ID, late after closure, repeated, wrong ID)"},
-  "legal_hold.changed": {"perWeek": [1, 3], "d1": [1, 1], "d2": [1, 2], "d3": [2, 3], "event": "google_sheets/new_row or row_updated (Legal Hold)",
-                         "note": "a pre-seeded blocked request's hold lifted (purge at that trigger); a hold added before a verification (blocks it); d3: one of two holds lifted (still held)"},
+  "legal_hold.changed": {"perWeek": [1, 3], "d1": [1, 1], "d2": [1, 3], "d3": [2, 3], "event": "google_sheets/new_row or row_updated (Legal Hold)",
+                         "note": "a pre-seeded blocked request's hold lifted (purge at that trigger); a hold added before a verification (blocks it); d3: one of two holds lifted (still held); d2/d3 weeks with two hold changes: the added hold lifted again later the same week with probability 0.75 (hold-lift-inweek, added 2026-10-21; the spec's 1-3 a week is kept)"},
   "erasure.duplicate": {"perWeek": [1, 3], "d1": [1, 1], "d2": [1, 2], "d3": [2, 3], "event": "google_sheets/new_row (Erasure Requests)",
                         "note": "the same address again while open, blocked or purged; d3: one in other letter case or padded"},
   "day.close": {"perWeek": [5, 5], "d1": [5, 5], "d2": [5, 5], "d3": [5, 5], "event": "schedule/day_close",
                 "at": "17:00 UTC Monday-Friday; deadline closures then the summary; Friday's is the last trigger and carries the end-of-week grading"}
  },
- "triggersPerWeek": {"d1": [21, 21], "d2": [23, 26], "d3": [28, 33], "measuredOn": "seeds 601-650 (d1: 631-640 forced)"},
+ "triggersPerWeek": {"d1": [21, 21], "d2": [23, 27], "d3": [29, 32], "measuredOn": "seeds 601-650 (d1: 631-640 forced); re-measured 2026-10-21 after the in-week hold lift (before: d2 23-26, d3 28-32)"},
  "transitionsPerWeek": {"d2": {"Purged": [4, 7], "Blocked - Legal Hold": [0, 1], "Closed - Unverified": [1, 2]},
-                        "d3": {"Purged": [4, 5], "Blocked - Legal Hold": [1, 2], "Closed - Unverified": [4, 4]},
+                        "d3": {"Purged": [4, 6], "Blocked - Legal Hold": [1, 2], "Closed - Unverified": [4, 4]},
                         "measuredOn": "seeds 601-650"},
  "trapRates": {"design": {"d2": 0.45, "d3": 0.75},
                "unit": "share of all triggers carrying at least one exposed trap label",
-               "measuredTriggerShare": {"d1": 0.271, "d2": 0.558, "d3": 0.809, "on": "seeds 601-650 (d1: 631-640 forced)"},
+               "measuredTriggerShare": {"d1": 0.271, "d2": 0.592, "d3": 0.822, "on": "seeds 601-650 (d1: 631-640 forced); 2026-10-21 after the in-week hold lift"},
                "note": "both above the design rates: duplicates, hold changes, non-verifying replies and deadline closes are traps by construction and already make up about a third of a d2 week"},
  "trapCatalogue": {
   "T-lookalike": ["lookalike-domain (a request for x@brand.example.net, x@brand-de.example.com, a digit-for-letter domain or a dotless local part, while only the .example.com user exists: Not Found)",
@@ -73,7 +73,23 @@
                "deadline-not-yet (an open request at age 29: not closed)", "deadline-day (d3: verified on the morning of day 30: purged, not closed)",
                "deadline-held (d2/d3: a request blocked by a legal hold is 30 or more days old at a close: verified and answered, so not closed; added 2026-10-21)"],
   "T-state": ["hold-lift (a hold lifted: the blocked request is purged at that trigger)", "hold-still (d3: one of two holds lifted: still held)",
-              "count-lift (today's summary counts a hold-lift purge)"]
+              "count-lift (today's summary counts a hold-lift purge)",
+              "hold-lift-inweek (d2/d3: a request verified while on hold this week, its hold lifted later the same week: the lift purges from a Blocked row the automation wrote this week, not one pre-seeded in world0; added 2026-10-21 after review)"]
+ },
+ "exactness": {
+  "choice": "tighten the oracle (2026-10-21 review), not widen POLICY.md: every text the policy fixes is graded as written",
+  "ticket": "subject exactly (the prefix '[GDPR Purged] ' with one space, nothing else changed: no trimming, no whitespace collapsing); tags as an exact multiset (order free; letter case and duplicates count)",
+  "summary": "the #privacy-ops post exactly (§8.2 'exactly': no trailing period, no whitespace changes)",
+  "log": "Request ID, Transition and Reference exactly as text; Reference of Purged and Blocked rows a comma-separated list (a space after a comma allowed), compared as a set of ids; At = the event's at in any UTC spelling of that instant (Z or +00:00, a space for T, no seconds when they are 0, no offset); another offset or another instant (even within the minute) fails",
+  "email": "subject exactly after trimming its ends (header parsing); a sent message also moved to Trash or Spam is not delivered (never matched, and reported by the envelope)",
+  "address": "the only case-insensitive comparison: POLICY.md §3 itself makes letter case and surrounding spaces of an address irrelevant (the log row's Email, recipients)",
+  "previously": "until 2026-10-21 tags compared lower-cased as sets, ticket subjects and posts after collapsing whitespace (a trailing period tolerated on posts), At to the minute, Request ID and Reference case-folded, ';' accepted as a Reference separator, and a sent-then-trashed email matched"
+ },
+ "identity": {
+  "trigger": "opaque arm-visible trigger id: the first 10 hex characters of sha256('abr-sup-gdpr:<version>:<seed>:<difficulty>:<index>'); the (seed, index) mapping stays in the host-only triggers.jsonl and truth.jsonl (before 2026-10-21: 's<seed>/t<nn>')",
+  "prompt": "system line 'standing automation' (no family id), then POLICY.md and the payload",
+  "serveTz": "serve-input rows carry info.tz = 'UTC'; bridge.py serve/replay set TZ from it before the shim is installed (rows without info.tz keep the host zone)",
+  "limit": "opaque only to an arm that cannot read gen.py: the seed space is small enough to brute-force the hash"
  },
  "amendable": [],
  "hardRequirements": [

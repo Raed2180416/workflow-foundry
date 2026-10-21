@@ -10,7 +10,9 @@ Writes into HOSTDIR (host-only; nothing generated is committed):
   payloads.jsonl     the arm-visible trigger payloads, one per line, in order
   triggers.jsonl     host-only: payload + delta (world ops applied before the trigger) + kind + sub + traps
   truth.jsonl        host-only: per trigger, the outcome, the expected effects, AutomationBench assertion dicts and
-                     the approval authority map used by the hard-requirement check
+                     the hard-requirement evidence: the approval authority map (each invoice's required approver),
+                     when each invoice was logged, the lowest Approval threshold in force so far this week, and the
+                     approval-like emails the generator itself put in the inbox (world0 and the deltas so far)
   end.json           host-only: the end-of-week expectations (graded at the last trigger, Friday's week close)
   serve-inputs.jsonl one input row per trigger for `bridge.py serve --input <row> --world world_t.json`
   meta.json          family, version, seed, difficulty, counts, trap shares and sha256 of every file
@@ -288,6 +290,16 @@ def approves(text: str, inv: str) -> bool:
     return any(m.group(1) is None for m in pat.finditer(text or ""))
 
 
+def approval_evidence(mid: str, frm: str, subject: str, body: str, date_ms: int) -> dict | None:
+    """One inbound email as hard-requirement evidence: its id, From header (as written; the oracle reads the address
+    itself), subject and body, and date. None when the text cannot approve anything (POLICY section 7 needs the word
+    `Approved`), which keeps the truth small."""
+    text = f"{subject or ''}\n{body or ''}"
+    if not re.search(r"approved", text, re.I):
+        return None
+    return {"id": mid, "from": frm, "text": text, "date": int(date_ms)}
+
+
 class PlanError(RuntimeError):
     pass
 
@@ -298,7 +310,9 @@ class PlanError(RuntimeError):
 class Book:
     def __init__(self, g: "Gen"):
         self.g = g
-        self.rows = [{"row_id": c["row_id"], "cells": {k: v for k, v in c.items() if k != "row_id"}} for c in g.pending0]
+        logged = {q["row_id"]: ms(q["logged"]) for q in g.hist}       # when each history row was logged (host-only)
+        self.rows = [{"row_id": c["row_id"], "cells": {k: v for k, v in c.items() if k != "row_id"}, "logged_ms": logged[c["row_id"]]}
+                     for c in g.pending0]
         self.recv = [dict(c) for c in g.recv0]
         self.blocked = [{"row_id": i + 2, "cells": {k: v for k, v in c.items() if k != "row_id"}} for i, c in enumerate(g.blocked0)]
         self.policy = [dict(c) for c in g.policy0]
@@ -1218,6 +1232,11 @@ class Gen:
         recv_row = 1 + len(B.recv)
         ap_users = {p["slack_id"]: p for p in [self.aplead, self.controller] + self.staff + [self.guest]}
         th0 = B.thresholds(self.monday)
+        # Hard-requirement evidence, host-side: every email the generator itself put in the AP inbox that could approve
+        # an invoice (its subject or body mentions "approved"), never the arm's world, which an arm can write to.
+        evidence = [approval_evidence(m["id"], m["from_"], m["subject"], m["body_plain"], m["date"])
+                    for m in self.world0_msgs if "SENT" not in m["label_ids"]]
+        evidence = [x for x in evidence if x is not None]
         stale_th = {P_APPROVAL: int(float(self.policy0[0]["Value"]) * 100), P_CFO: int(float(self.policy0[1]["Value"]) * 100)}
         self.run_report = {}
 
@@ -1284,9 +1303,9 @@ class Gen:
                     cells = {"Logged": today, "Vendor": vendor, "Invoice #": inv, "Invoice Date": q["inv_date"].isoformat(),
                              "Due Date": due.isoformat(), "Amount": plain(amt), "Qty": str(q["qty"]), "PO #": q["cited_po"],
                              "Approver": "", "Match": "", "Approval": "", "Status": REJECTED, "Notes": ""}
-                    B.rows.append({"row_id": 2 + len(B.rows), "cells": cells})
+                    B.rows.append({"row_id": 2 + len(B.rows), "cells": cells, "logged_ms": ms(at)})
                     ex["append"].append(dict(cells))
-                    mail(addr(v["sender"]), f"Invoice {inv}: vendor relationship suspended", [inv, "suspended"])
+                    mail(addr(v["sender"]), f"Invoice {inv}: vendor relationship suspended", [inv, "vendor relationship", "suspended"])
                     asserts.append({"type": "google_sheets_row_exists", "spreadsheet_id": SS, "worksheet_id": WS_PENDING,
                                     "cells": {"Invoice #": inv, "Status": REJECTED}})
                     asserts.append({"type": "quickbooks_bill_not_exists", "doc_number": inv})
@@ -1321,7 +1340,7 @@ class Gen:
                     m = B.three_way(cells)
                     if m is not None:
                         cells["Match"] = m
-                    B.rows.append({"row_id": 2 + len(B.rows), "cells": cells})
+                    B.rows.append({"row_id": 2 + len(B.rows), "cells": cells, "logged_ms": ms(at)})
                     q["logged_at"] = at
                     ex["append"].append(dict(cells))
                     bill = {"vendor_id": v["qb_id"], "vendor": vendor, "doc": inv, "txn_date": q["inv_date"].isoformat(),
@@ -1621,6 +1640,12 @@ class Gen:
                 raise ValueError(kind)
 
             payload = {"trigger": tid, "at": at_s, **payload}
+            for op in delta:
+                if op.get("app") == "gmail" and op.get("collection") == "messages" and "SENT" not in op["record"]["label_ids"]:
+                    rec = op["record"]
+                    x = approval_evidence(rec["id"], rec["from_"], rec["subject"], rec["body_plain"], rec["date"])
+                    if x is not None:
+                        evidence.append(x)
             labels = sorted(set(labels))
             outcome = "escalate" if ex["escalate"] else ("act" if any(ex[k] for k in ("append", "update", "policy", "bills", "payments", "emails")) else "no-op")
             authority = {f"{wsk(r_['cells']['Vendor'])}|{num_key(r_['cells']['Invoice #'])}": (r_["cells"]["Approver"] or "").lower()
@@ -1629,7 +1654,9 @@ class Gen:
                                   "delta": delta, "traps": labels})
             self.payloads.append(payload)
             self.truth.append({"trigger": tid, "index": n, "kind": kind, "sub": e["sub"], "at": at_s, "outcome": outcome,
-                               "traps": labels, "expect": ex, "assertions": asserts, "authority": authority})
+                               "traps": labels, "expect": ex, "assertions": asserts, "authority": authority,
+                               "logged": self.logged_map(B), "approval_floor": self.approval_floor(B, at),
+                               "approvals": [dict(x) for x in evidence]})
 
         # end of week
         self.end = {
@@ -1646,6 +1673,8 @@ class Gen:
             "policy_final": [dict(c) for c in B.policy],
             "authority": {f"{wsk(r_['cells']['Vendor'])}|{num_key(r_['cells']['Invoice #'])}": (r_["cells"]["Approver"] or "").lower()
                           for r_ in B.rows if wsk(r_["cells"]["Status"]) != wsk(REJECTED)},
+            "logged": self.logged_map(B), "approval_floor": self.approval_floor(B, self.close_at),
+            "approvals": [dict(x) for x in evidence],
             "assertions": [{"type": "quickbooks_bill_count", "count": len(self.bills0) + len(week_bills)},
                            {"type": "quickbooks_payment_count", "count": len(self.payments0) + len(week_payments)},
                            {"type": "gmail_message_sent_to_with_body_contains", "to": AP_LEAD, "subject": f"AP week close {self.day(4).date().isoformat()}",
@@ -1655,6 +1684,20 @@ class Gen:
                              if wsk(r_["cells"]["Status"]) == wsk(PROCESSING)],
         }
         self.check_week()
+
+    # -- hard-requirement evidence (host-only, from the model) ---------------------------------------------------------------
+    @staticmethod
+    def logged_map(B: "Book") -> dict[str, int]:
+        """When each invoice that needs an authority check was logged (epoch ms): an approval counts only from then on
+        (POLICY.md section 7: the row must exist, Open and Awaiting Approval)."""
+        return {f"{wsk(r_['cells']['Vendor'])}|{num_key(r_['cells']['Invoice #'])}": r_["logged_ms"]
+                for r_ in B.rows if wsk(r_["cells"]["Status"]) != wsk(REJECTED)}
+
+    def approval_floor(self, B: "Book", at: datetime) -> int:
+        """The lowest Approval threshold in force at any moment from Monday 00:00 to `at` (cents): an invoice the model
+        does not know is held to it."""
+        moments = [self.monday] + [datetime.fromisoformat(c["Effective"].replace("Z", "+00:00")) for c in B.policy]
+        return min(B.thresholds(t)[P_APPROVAL] for t in moments if self.monday <= t <= at)
 
     # -- intent checks: the derivation must do what the plan meant ----------------------------------------------------------
     def check_intent(self, tid: str, e: dict, ex: dict):
@@ -1763,6 +1806,7 @@ class Gen:
         self.schedule()
         self.build_world0()
         world = self.world_dict()          # world0 ids are drawn before the week's
+        self.world0_msgs = world["gmail"]["messages"]
         self.simulate()
         return {"world0": world, "triggers": self.triggers, "payloads": self.payloads, "truth": self.truth, "end": self.end}
 

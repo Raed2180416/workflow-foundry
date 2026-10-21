@@ -61,3 +61,72 @@ server or JVM required; inert reading only, see ORG-SCALE-SOURCES).
 (empty page to the fetch tool); Exa (HTTP 402, credits exhausted at 18:05 UTC).
 
 Disk at time of work: 4.4 GB free at 17:57 UTC, 3.5 GB at 18:23 UTC with other sweeps running; peak use of this sweep about 160 MB, all freed by 18:24 UTC.
+
+## Sweep: enterprise-process (2026-10-21), merged from the sweep's notes by the PLAN.md author
+
+Rule: D16. The sweep did not write into the repository; these rows are copied from its notes, section 7 (scratchpad
+`breadth/enterprise-process.md`; download hashes in `breadth/raw/MANIFEST.tsv`). All clones were shallow
+(`--depth 1 --no-recurse-submodules --filter=blob:limit=25m`), inert (nothing installed or run; only `python3 -I` reading
+JSON/CSV/gz), under `/var/tmp/foundry-work/benches/_sweep-enterprise-process/`, and **all were deleted on 2026-10-21**.
+
+| Clone | Pinned SHA (HEAD) | HEAD date | Clone MB | Licence | Disposition |
+|---|---|---|---|---|---|
+| olly-styles/WorkBench | 49c7dfd00c03d384ec59ea57374f50b766aa5613 | 2026-08-18 | 21.3 (tree, blobless); 8 on disk | MIT | read; recommended; deleted (re-clone for adoption) |
+| ServiceNow/EnterpriseOps-Gym | 271f2c357f763376997dfd16807fcde2474ae41b | 2026-08-19 | 33 | Apache-2.0 | read; recommended (laptop); deleted |
+| ServiceNow/AgentArch | dfdd9cd69642f74d7f2c72738c96faff7b70e59f | 2026-01-07 | 1.6 | Apache-2.0 | read; recommended; deleted |
+| itbench-hub/ITBench | e35270629b336ea3170c912edf3c4632eba877eb | 2026-10-20 | 22.5 | Apache-2.0 | read; live scenarios not adopted; deleted |
+| zlwang-cs/OfficeBench | b978b808667c32b52ce19a67ce1def1de9ae02b7 | 2026-03-31 | 43 | Apache-2.0 | read; not adopted; deleted |
+| AST-FRI/EnterpriseBench | 9e41e5c1159c7ffd8359e943b1e4d296d3e91b4c | 2026-09-15 | 240 | MIT | read; not adopted (LLM judge); deleted |
+| bird-bench/BIRD-Interact | 451fe2c3518ee1cf908d8139e2913483bd519381 | 2026-03-29 | 17 | MIT (data CC BY-SA 4.0) | read; deferred; deleted |
+| stanfordmlgroup/MedAgentBench | 99260117137b09f04837a8c18d18a1107efa55ae | 2025-11-21 | 2.8 | MIT | read; not adopted (1.84 GB image); deleted |
+| HazyResearch/legalbench | b46bf4ffae90524b2b72aaa30e7745fe9db64481 | 2026-03-29 | 19.9 | per task | read; optional typed-judgment axis; deleted |
+| SalesforceAIResearch/CRMArena | 22033e5364b4ca5faf71fe29deae181b4c518706 | 2026-10-15 | 123.7 | CC BY-NC 4.0 | read; not adoptable (live org); deleted. Shared credentials in its README were not used or recorded |
+| ServiceNow/WorkArena | e885130962f61fb64ac305497996a46cfc7d18f0 | 2026-09-28 | 152 | Apache-2.0 | read; not adoptable (ServiceNow instances); deleted |
+| TheAgentCompany/TheAgentCompany | 98b68ef82a47690c316f42fddb05baafaab56851 | 2025-11-17 | 18 | MIT | read; not adoptable (30+ GB images); deleted |
+| patronus-ai/financebench | cc39aeb4afdf33909ee1412188bf89035950c2eb | 2024-12-03 | **1,258 (over the 500 MB cap)** | not stated | read; not adopted; deleted |
+| xlang-ai/Spider2 | cafb867313aab4e674652054198f383cf4018943 | 2026-08-12 | **2,150 (over the 500 MB cap)** | MIT | read; not adopted; deleted |
+| column-tax/tax-calc-bench | b2a6b82112a9884d83eca00e6183188c5a3697e9 | 2026-10-21 | ≥ 285 (aborted: disk full) | MIT | partial clone deleted; re-acquire sparse (TY24 only) if adopted |
+
+**Compliance incident (disclosed by the sweep).** Its size-measurement loop cloned the 13 repositories above plus the
+partial tax-calc-bench clone, about 4.0 GB transient. That broke D16's 500 MB per-clone cap (Spider2, FinanceBench) and
+the 1.5 GB total, and filled the disk to 100% for a short time (286 MB free). Everything was deleted at once (2.8 GB free
+afterwards). No repository, run or sealed file was touched; nothing third-party was installed or executed. Fix adopted in
+PLAN.md §5.5: measure with `git ls-remote` and a blobless clone plus `ls-tree -l`, one clone at a time, `df` check before
+each, no background loops.
+
+Files kept for reading (scratchpad, about 5 MB, not data acquisitions): READMEs and LICENSE files, HF dataset cards and API
+JSON, DABstep `all.jsonl` (0.19 MB) and `dev.jsonl`, 60 DABstep `task_scores` files (about 3 MB), ITBench-Lite `eval.py`.
+
+## Sweep: construction (2026-10-21), merged from the sweep's notes by the PLAN.md author
+
+Rule: D16. Copied from the sweep's notes, section 8 (scratchpad `breadth/construction.md`). Downloads were made under
+`/var/tmp/foundry-work/benches/construction-probe/`, in venvs built with `uv pip install --no-deps --only-binary :all:
+--require-hashes` (no post-install hook ran). Peak 402 MB. **Deleted 2026-10-21 18:08 UTC.**
+
+| What | URL | Bytes | sha256 | Licence | Disposition |
+|---|---|---|---|---|---|
+| SpreadsheetBench Verified-400 | https://huggingface.co/datasets/KAKA22/SpreadsheetBench/resolve/main/spreadsheetbench_verified_400.tar.gz | 14,958,255 | 10ef893dd29cb13ab97143ea787e68cdc9574a13873ab9a54e50b31dc03fc949 | CC BY-SA 4.0 | deleted; Tier 2 (912 set) candidate |
+| SpreadsheetBench 912 v0.1 | https://huggingface.co/datasets/KAKA22/SpreadsheetBench/resolve/main/spreadsheetbench_912_v0.1.tar.gz | 95,752,357 | 9cf7228b54f1edcdd4b372eb736774adf29cb4f804c9920229bac6c154833399 | CC BY-SA 4.0 | deleted; Tier 2 candidate |
+| NaturalPlan trip_planning.json | https://raw.githubusercontent.com/google-deepmind/natural-plan/main/data/trip_planning.json | 18,989,726 | 15c4755daec9433115f3a9f0dfdca5edafd4a10a7f51b742315eee65c6281e08 | CC BY 4.0 (data) | deleted; Tier 1 candidate |
+| NaturalPlan meeting_planning.json | https://raw.githubusercontent.com/google-deepmind/natural-plan/main/data/meeting_planning.json | 23,857,401 | cabd5537667e97d15faf0c3f0187b8eefc720abf0e03fedf8e52dd01c596d53a | CC BY 4.0 | deleted; Tier 1 candidate |
+| NaturalPlan calendar_scheduling.json | https://raw.githubusercontent.com/google-deepmind/natural-plan/main/data/calendar_scheduling.json | 6,660,095 | 3f34ff275b22202e16f750560f39805860378ba30f4e15cd80cf37986bcd484d | CC BY 4.0 | deleted; Tier 1 candidate |
+| openpyxl 3.1.5 wheel | PyPI | 250,910 | 5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2 | MIT | deleted with its venv |
+| et-xmlfile 2.0.0 wheel | PyPI | 18,059 | 7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa | MIT | deleted with its venv |
+| absl-py 2.3.1 wheel | PyPI | 135,811 | eeecf07f0c2a93ace0772c92e596ace6d3d3996c042b2128459aaae2a76de11d | Apache-2.0 | deleted with its venv |
+
+**Not acquired:** Spider2-DBT zips (377,819,033 B + 683,874,645 B; over the per-download cap; owner decision), DAComp-DE
+and DAComp-DA (5.3 GB and 6.1 GB), Chat2Workflow (Docker stack and provider keys), ScienceAgentBench (password-protected
+SharePoint zip), ELT-Bench (hosted accounts).
+
+**Read-only fetches** (READMEs, LICENSE files, evaluator sources, arXiv PDFs, HF file listings, 1-byte range probes of three
+Google Drive links) are in the scratchpad `breadth/raw/construction/` (42 MB).
+
+**Observation reconciled.** The construction sweep saw `/var/tmp/foundry-work/benches/appworld/` and `workbench/` at
+17:24 UTC and not at 18:08 UTC. Those are the agentic-tool sweep's installs; its rows above record both as installed for a
+$0 probe and deleted.
+
+## PLAN.md author (2026-10-21)
+
+No install, clone or data download. One $0 power simulation in the scratchpad (`breadth/plan/pool_power.py`, importing the
+methodology sweep's `tools-meth/portfolio_sim.py`). Disk at writing: 3.5 GB free (`df`). Read-only reads of the pinned,
+already-present `corpus/tau2-bench` (split and task files, registry, CHANGELOG) with `python3 -I`.
