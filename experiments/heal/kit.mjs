@@ -72,8 +72,31 @@ export const PROVIDER_KEYS_UNREAD_BY_KIT = Object.freeze(['childEnv']);
 // 2026-10-21 (policy 2026-10-21.1, research/mercury-20261021/): `executorModels` and its provider `inception` (kind openai-chat-https,
 // executor sessions only, never ModelPort) are added under the same rule as Jev's entries: each is exempt only while no kit source
 // mentions it and, for the provider, while no models[] entry names it. Flagged for the owner's review with the Mercury change.
-export const TOP_LEVEL_KEYS_UNREAD_BY_KIT = Object.freeze(['judgmentModels', 'executorModels']);
+// D20 (2026-10-21, research/heal-20261008/D20-HEAL-UNBLOCK.md): `defaultsByRole`, deleted from the owner file by the P0 policy batch
+// (2026-10-15.1), is added under the same rule: no file of the frozen kit names it, so the frozen policy of record carrying it is inert.
+export const TOP_LEVEL_KEYS_UNREAD_BY_KIT = Object.freeze(['judgmentModels', 'executorModels', 'defaultsByRole']);
 export const PROVIDERS_UNREAD_BY_KIT = Object.freeze(['typesafe-systemone', 'inception']);
+// D20, the second kind of proof: an ENVELOPE bound. The kit does read `inputBudgetTokensByClass`, but (1) the run reads it only from
+// the kit's policy of record (loadKit below), never from the owner file, and (2) the kit uses it only as an upper bound on a node's
+// input (kit src/context.mjs: `Math.min` of the node and class limits; over the bound the context is truncated or refused with
+// CONTEXT_OVERFLOW). So if, class by class, the record's bound is at most the owner's, every call the kit can make under its record is
+// also inside the owner's current envelope: the owner file still sanctions the run, and nothing about the recorded evidence changes.
+// The proof is checked, not assumed, on every load:
+//   - every line of every kit source that names the key is one of the audited sites below (any other mention lapses the exemption);
+//   - the cap site exists (the min-of-limits line), so the bound is used as a bound;
+//   - per class: both values are positive integers and record <= owner. A class the owner states and the record does not (the kit would
+//     run unbounded where the owner bounds it), a class the owner no longer states, or an owner bound below the record's: blocking.
+// If no kit source mentions the key at all, the plain "unread" rule applies instead. Reversible by emptying ENVELOPE_BOUNDS_READ_BY_KIT.
+export const ENVELOPE_BOUNDS_READ_BY_KIT = Object.freeze({
+  inputBudgetTokensByClass: Object.freeze({
+    sites: Object.freeze([
+      'classBudget: policy.inputBudgetTokensByClass?.[entry.class]',                                        // src/runtime.mjs:598 (the read)
+      'if (policy.inputBudgetTokensByClass !== undefined && (!isObject(policy.inputBudgetTokensByClass)',    // src/models/policy.mjs:53 (validation)
+      "invalid('inputBudgetTokensByClass values must be positive integers')",                               // src/models/policy.mjs:54 (validation)
+    ]),
+    cap: Object.freeze(['const limits = [nodeBudget, classBudget].filter(', 'Math.min(...limits)']),       // src/context.mjs:112-113 (the cap)
+  }),
+});
 const stable = v => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x));
 const diffPaths = (a, b, at = '') => {
   const obj = x => x !== null && typeof x === 'object' && !Array.isArray(x);
@@ -82,6 +105,30 @@ const diffPaths = (a, b, at = '') => {
 };
 const unmentioned = (kitSources, s) => !kitSources.some(text => text.includes(s));
 const proof = s => `no kit source mentions "${s}"`;
+// The envelope proof for one bound key: null when it cannot be established (then the difference stays blocking), else the per-class
+// verdicts. `kitSources` are whole file texts; a mention is audited when its line contains one of the audited site snippets.
+const posInt = n => Number.isSafeInteger(n) && n > 0;
+export function envelopeProof(key, live, frozen, kitSources, spec = ENVELOPE_BOUNDS_READ_BY_KIT[key]) {
+  if (!spec) return null;
+  const lines = kitSources.flatMap(t => t.split('\n')).filter(l => l.includes(key));
+  if (!lines.length) return null;                                           // unread: not an envelope case (the caller decides)
+  const unaudited = lines.filter(l => !spec.sites.some(s => l.includes(s)));
+  if (unaudited.length) return { ok: false, reason: `a kit source names "${key}" outside the audited sites`, unaudited: unaudited.map(l => l.trim().slice(0, 160)) };
+  if (!spec.cap.every(s => kitSources.some(t => t.includes(s)))) return { ok: false, reason: `the kit's cap site for "${key}" is missing` };
+  const L = live ?? {}, F = frozen ?? {};
+  if (L === null || typeof L !== 'object' || Array.isArray(L) || F === null || typeof F !== 'object' || Array.isArray(F)) return { ok: false, reason: `"${key}" is not an object` };
+  const classes = [...new Set([...Object.keys(L), ...Object.keys(F)])].sort();
+  const verdicts = classes.map(c => {
+    const owner = L[c], record = F[c];
+    if (stable(owner) === stable(record)) return { class: c, ok: true, same: true };
+    if (record === undefined) return { class: c, ok: false, why: `the owner bounds ${c} at ${owner}; the record does not bound it` };
+    if (owner === undefined) return { class: c, ok: false, why: `the owner file no longer states a ${c} bound (record ${record})` };
+    if (!posInt(owner) || !posInt(record)) return { class: c, ok: false, why: `${c}: bounds must be positive integers` };
+    if (record > owner) return { class: c, ok: false, why: `${c}: record ${record} > owner ${owner}` };
+    return { class: c, ok: true, why: `record ${record} <= owner ${owner}; the kit reads only its record, and only as an upper bound (audited sites)` };
+  });
+  return { ok: verdicts.every(v => v.ok), verdicts };
+}
 export function policyDrift(live, frozen, { kitSources = [] } = {}) {
   const L = structuredClone(live), F = structuredClone(frozen), ignored = [];
   for (const k of PROSE_FIELDS) { if (stable(L[k]) !== stable(F[k])) ignored.push(k); delete L[k]; delete F[k]; }
@@ -103,6 +150,19 @@ export function policyDrift(live, frozen, { kitSources = [] } = {}) {
     if (!unmentioned(kitSources, name) || namedByModels.has(name)) continue;
     if (stable(L.providers?.[name]) !== stable(F.providers?.[name])) ignored.push(`providers.${name}: ${proof(name)}; no models[] entry names it`);
     if (L.providers) delete L.providers[name]; if (F.providers) delete F.providers[name];
+  }
+  // D20 envelope bounds: per class, a difference is reported (not blocking) only when the envelope proof holds for that class; the
+  // classes that fail it stay in the comparison and block.
+  for (const key of Object.keys(ENVELOPE_BOUNDS_READ_BY_KIT)) {
+    if (stable(L[key]) === stable(F[key])) continue;
+    if (unmentioned(kitSources, key)) { ignored.push(`${key}: ${proof(key)}`); delete L[key]; delete F[key]; continue; }
+    const p = envelopeProof(key, L[key], F[key], kitSources);
+    if (!p?.verdicts) continue;                                             // no proof: the whole key stays blocking
+    for (const v of p.verdicts) {
+      if (!v.ok || v.same) continue;
+      ignored.push(`${key}.${v.class}: ${v.why}`);
+      delete L[key][v.class]; delete F[key][v.class];
+    }
   }
   const blocking = diffPaths(L, F);
   return { bytesIdentical: false, blocking, ignored, ok: blocking.length === 0 };
