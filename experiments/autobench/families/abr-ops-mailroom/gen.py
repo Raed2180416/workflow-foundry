@@ -460,8 +460,8 @@ class Gen:
             self.plans.append({"kind": "employee.returned", "sub": "release", "at": t, "emp": e})
         times = sorted(self.slot([0, 1, 2, 3, 4], 8.0 + 5 / 60, 16.75) for _ in range(self.cnt["pkg"]))
         n_trap = round(TRAP_RATE[self.d] * len(times))
-        req = [] if n_trap == 0 else ["twin-active", "oversized-sms", "returned-rescan"] + (
-            ["returned-rescan", "precedence"] if self.d == "d3" else [])
+        req = [] if n_trap == 0 else ["twin-active", "oversized-sms", "returned-rescan", "spelling"] + (
+            ["returned-rescan", "precedence", "type-variant", "ambiguous"] if self.d == "d3" else [])
         weights = dict(TRAP_WEIGHTS, **(TRAP_WEIGHTS_D3 if self.d == "d3" else {}))
         kinds = sorted(weights)
         cases = req[:n_trap] + r.choices(kinds, weights=[weights[k] for k in kinds], k=max(0, n_trap - len(req)))
@@ -496,11 +496,77 @@ class Gen:
             t = self.slot([0, 1, 2, 3, 4], 9.0, 16.5)
             self.plans.append({"kind": "customs.cleared", "sub": "not-held", "at": t, "target": ("w0", x),
                                "notes": self.cleared(t, x["cells"]["Notes"])})
+        self.plan_updates()
         self.plans.sort(key=lambda p: (p["at"], p["kind"]))
         # chatter in #mailroom during the week: a human message just before some package triggers
         cands = [p for p in self.plans if p["kind"] == "package.received" and p["at"] > self.monday + timedelta(hours=9)]
         for p in r.sample(cands, min(len(cands), self.cnt["chatter"])):
             p["chatter"] = {"user": r.choice(FRONT_DESK)[0], "text": r.choice(CHATTER), "at": p["at"] - timedelta(seconds=40)}
+
+    def plan_updates(self):
+        """package.updated: row changes on packages that are not Held - Customs. The truth is "nothing" every time;
+        only the Status column (the state of record) says so, so an arm that re-decides without reading it acts twice."""
+        r = self.r
+        used: set[str] = set()
+        routed0 = [x for x in self.rows0 if x["cells"]["Status"] == ROUTED and not x.get("as_of")]
+
+        def note(old: str, phrase: str) -> str:
+            new = (old + "; " if old else "") + phrase
+            assert not any(kw in norm(new) for kw in (KW_RETURNED, KW_CUSTOMS)), new
+            return new
+
+        def pick_routed(non_sms: bool = False) -> dict | None:
+            pool = [x for x in routed0 if x["id"] not in used
+                    and (not non_sms or norm(x["cells"]["Package Type"]) not in {norm(t) for t in SMS_TYPES})]
+            return r.choice(pool) if pool else None
+
+        for sub in UPD_SUBS[self.d][: self.cnt["upd"]]:
+            if sub == "routed-released":                    # a note on a package released from customs this week
+                lift = min((p for p in self.plans if p["kind"] == "customs.cleared" and p["sub"] == "lift"),
+                           key=lambda p: p["at"])
+                try:
+                    t = self.slot([0, 1, 2, 3, 4], 8.0, 16.5, after=lift["at"] + timedelta(minutes=30))
+                except RuntimeError:                          # released too late in the week: a routed row instead
+                    sub = "routed-note"
+                else:
+                    phrase = r.choice(AFTER_RELEASE_NOTES).format(d=t.date().isoformat())
+                    self.plans.append({"kind": "package.updated", "sub": sub, "at": t, "target": lift["target"],
+                                       "cells": {"Notes": note(lift["notes"], phrase)}})
+                    continue
+            if sub == "other-change":                         # a Department correction or a Package Type relabel
+                x, y = self.extra0.get("wrong-dept"), pick_routed(non_sms=True)
+                if x is not None and (y is None or r.random() < 0.5):
+                    cells = {"Department": x["fix_to"]}
+                elif y is not None:
+                    x, cells = y, {"Package Type": r.choice(SMS_TYPES)}
+                else:
+                    sub = "routed-note"
+                if sub == "other-change":
+                    used.add(x["id"])
+                    t = self.slot([0, 1, 2, 3, 4], 9.0, 16.5)
+                    self.plans.append({"kind": "package.updated", "sub": sub, "at": t, "target": ("w0", x), "cells": cells})
+                    continue
+            if sub == "skipped-active":                       # a note on a Skipped package whose recipient is now Active
+                x = self.extra0["skipped-active"]
+                used.add(x["id"])
+                t = self.slot([0, 1, 2, 3, 4], 9.0, 16.5)
+                phrase = r.choice(OTHER_NOTES).format(d=t.date().isoformat())
+                self.plans.append({"kind": "package.updated", "sub": sub, "at": t, "target": ("w0", x),
+                                   "cells": {"Notes": note(x["cells"]["Notes"], phrase)}})
+                continue
+            x = pick_routed()                                 # routed-note: a delivery note on a routed package
+            used.add(x["id"])
+            t = self.slot([0, 1, 2, 3, 4], 9.0, 16.5)
+            phrase = r.choice(ROUTED_NOTES).format(d=t.date().isoformat())
+            self.plans.append({"kind": "package.updated", "sub": "routed-note", "at": t, "target": ("w0", x),
+                               "cells": {"Notes": note(x["cells"]["Notes"], phrase)}})
+
+    def respell(self, s: str) -> str:
+        """The same text in another letter case or spacing (equal after case folding and collapsing spaces)."""
+        opts = [o for o in (s.lower(), s.upper(), " " + s, s + " ", s.replace(" ", "  ")) if o != s]
+        out = self.r.choice(opts)
+        assert norm(out) == norm(s)
+        return out
 
     def cleared(self, t: datetime, old: str) -> str:
         new = self.r.choice(CLEARED).format(d=t.date().isoformat())
@@ -568,6 +634,17 @@ class Gen:
             e = r.choice(plain)
             notes = r.choice(DECOYS)
             decoy = True
+        elif case == "spelling":                              # Name and/or Department in another case or spacing
+            src = r.choice(plain + [x for x in self.role("twin") if x["status"] == "Active"])
+            name, dept = src["name"], src["dept"]
+            while name == src["name"] and dept == src["dept"]:
+                name = self.respell(src["name"]) if r.random() < 0.6 else src["name"]
+                dept = self.respell(src["dept"]) if r.random() < 0.6 else src["dept"]
+        elif case == "type-variant":                          # Refrigerated / Hazardous in another case or spacing
+            e = r.choice(plain)
+            ptype = self.respell(self.ptype(sms=True))
+        elif case == "ambiguous":                             # the recipient is on two directory rows
+            e = r.choice(self.role("dup"))
         if e is not None:
             name, dept = e["name"], e["dept"]
         cells = {"Tracking Number": trk or self.trk(), "Recipient Name": name, "Department": dept, "Package Type": ptype,
@@ -606,16 +683,18 @@ class Gen:
                 payload = {"app": "google_sheets", "event": "new_row",
                            "data": {"spreadsheet_id": SS, "worksheet": WS_TITLE[WS_PKG], "row_id": row["row_id"],
                                     "row": dict(row["cells"])}}
-            elif p["kind"] == "customs.cleared":
+            elif p["kind"] in ("customs.cleared", "package.updated"):
                 src, ref = p["target"]
                 row = next(x for x in rows if x["id"] == (ref["id"] if src == "w0" else ref["row"]["id"]))
-                row["cells"]["Notes"] = p["notes"]
+                cells = dict(p["cells"]) if "cells" in p else {"Notes": p["notes"]}
+                changed = sorted(cells)
+                row["cells"].update(cells)
                 delta.append({"op": "set_cells", "spreadsheet_id": SS, "worksheet_id": WS_PKG, "row_id": row["row_id"],
-                              "cells": {"Notes": p["notes"]}})
+                              "cells": dict(cells)})
                 payload = {"app": "google_sheets", "event": "row_updated",       # key + changed cells only: the
                            "data": {"spreadsheet_id": SS, "worksheet": WS_TITLE[WS_PKG],  # Status is the arm's own state
-                                    "row_id": row["row_id"], "changed": ["Notes"],
-                                    "row": {"Tracking Number": row["cells"]["Tracking Number"], "Notes": p["notes"]}}}
+                                    "row_id": row["row_id"], "changed": changed,
+                                    "row": {"Tracking Number": row["cells"]["Tracking Number"], **cells}}}
             elif p["kind"] == "employee.returned":
                 e = p["emp"]
                 emps[e["row_id"]]["cells"]["Status"] = "Active"
@@ -671,8 +750,13 @@ class Gen:
                 else:
                     if match and len(same) > len(match):
                         labels.append("lookalike")
+                    if any(m["Name"] != c["Recipient Name"] or m["Department"] != c["Department"] for m in match):
+                        labels.append("spelling")
                     if not match:
                         labels.append("wrong-dept" if same else "not-found")
+                    elif dec["reason"] == "ambiguous":
+                        labels.append("ambiguous")
+                        ex["escalate"] = True
                     elif dec["reason"] in ("terminated", "on-leave", "customs"):
                         labels.append(dec["reason"])
                         if dec["reason"] == "on-leave" and KW_CUSTOMS in norm(nl):
@@ -680,20 +764,34 @@ class Gen:
                     elif any(x["id"] in returned_ids and norm(x["name"]) == norm(c["Recipient Name"])
                              and norm(x["dept"]) == norm(c["Department"]) for x in self.returning):
                         labels.append("back-from-leave")
+                    if c["Package Type"] not in [t for t, _ in TYPES] and dec["status"] == ROUTED:
+                        labels.append("type-variant")
                 apply(row, dec, labels)
-            elif p["kind"] == "customs.cleared":
-                labels.append("release")
-                if norm(row["cells"]["Status"]) == norm(HELD_CUSTOMS) and KW_CUSTOMS not in norm(row["cells"]["Notes"]):
+            elif p["kind"] in ("customs.cleared", "package.updated"):
+                if p["kind"] == "customs.cleared":
+                    labels.append("release")
+                st = norm(row["cells"]["Status"])
+                if "Notes" in changed and st == norm(HELD_CUSTOMS) and KW_CUSTOMS not in norm(row["cells"]["Notes"]):
                     dec = decide(row["cells"], directory)
                     apply(row, dec, labels)
                     if dec["status"] == ROUTED:
                         released_today[today] = released_today.get(today, 0) + 1
-                else:
-                    labels.append("still-held" if KW_CUSTOMS in norm(row["cells"]["Notes"]) else "not-held")
+                else:                                       # section 4: anything else is "do nothing"
+                    if p["kind"] == "customs.cleared":
+                        labels.append("still-held" if KW_CUSTOMS in norm(row["cells"]["Notes"]) else "not-held")
+                    if st == norm(ROUTED):                  # deciding it again would route it a second time
+                        labels.append("already-routed")
+                    elif st == norm(SKIPPED) and decide(row["cells"], directory)["status"] not in (SKIPPED, None):
+                        labels.append("skipped-active")     # deciding it again would no longer give Skipped
+                    if changed != ["Notes"]:
+                        labels.append("other-change")
                     tr["assertions"].extend(self.assertions(row, {"status": None}, directory))
             elif p["kind"] == "employee.returned":
                 labels.append("release")
                 me = emps[p["emp"]["row_id"]]["cells"]
+                if any(norm(x["cells"]["Status"]) == norm(ROUTED) and norm(x["cells"]["Recipient Name"]) == norm(me["Name"])
+                       and norm(x["cells"]["Department"]) == norm(me["Department"]) for x in rows):
+                    labels.append("already-routed")         # their routed package must not be decided again
                 if norm(me["Status"]) == "active":
                     for row in rows:
                         if norm(row["cells"]["Status"]) == norm(HELD_LEAVE) and norm(row["cells"]["Recipient Name"]) == norm(me["Name"]) \
@@ -723,7 +821,9 @@ class Gen:
                 if released_today.get(p["date"]):
                     labels.append("count-release")
             tr["traps"] = sorted(set(labels))
-            if ex["status"] or ex["posts"] or ex["sms"]:
+            if ex["escalate"]:
+                tr["outcome"] = "escalate"
+            elif ex["status"] or ex["posts"] or ex["sms"]:
                 tr["outcome"] = "act"
             payload = {"trigger": tid, "at": iso_z(at), **payload}
             self.payloads.append(payload)
@@ -754,7 +854,8 @@ class Gen:
             out.append({"type": "google_sheets_row_exists", "spreadsheet_id": SS, "worksheet_id": WS_PKG,
                         "cells": {"Tracking Number": trk, "Status": ROUTED}})
             if dec.get("sms"):
-                out.append({"type": "twilio_sms_sent", "to_number": dec["sms"][0], "body_contains": [trk, dec["loc"]]})
+                out.append({"type": "twilio_sms_sent", "to_number": dec["sms"][0], "from_number": MAILROOM_NUMBER,
+                            "body_contains": [trk, dec["loc"]]})
             else:
                 out.append({"type": "twilio_sms_not_sent", "body_contains": trk})
             for d in directory:
@@ -847,7 +948,9 @@ TRAP_KIND = {"lookalike": "T-lookalike", "wrong-dept": "T-lookalike", "release-l
              "still-held": "T-note", "not-held": "T-note", "requeue": "T-note",
              "oversized": "T-format", "oversized-sms": "T-format",
              "returned-rescan": "T-repeat",
-             "release": "T-state", "back-from-leave": "T-state", "count-noise": "T-state", "count-release": "T-state"}
+             "release": "T-state", "back-from-leave": "T-state", "count-noise": "T-state", "count-release": "T-state",
+             "spelling": "T-lookalike", "ambiguous": "T-lookalike", "type-variant": "T-note",
+             "already-routed": "T-state", "skipped-active": "T-state", "other-change": "T-state"}
 
 
 def generate(seed: int, difficulty: str | None = None, validate: bool = True) -> dict:
