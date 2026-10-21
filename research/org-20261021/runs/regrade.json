@@ -23568,6 +23568,224 @@
      "ev-ORD-1232-0145-act-2"
     ]
    }
+  },
+  {
+   "lineage": "b1nh-e8-3",
+   "ms": 22226,
+   "world": "1232-d5",
+   "arm": "W-S",
+   "status": "complete",
+   "armErrors": 0,
+   "ticks": 2818,
+   "e8": {
+    "completed": 202,
+    "passed": 188,
+    "critical": 0,
+    "codes": {
+     "L1:over-escalation": 14
+    },
+    "failing": [
+     "o0056",
+     "o0087",
+     "o0132",
+     "o0144",
+     "o0145",
+     "o0154",
+     "o0166",
+     "o0167",
+     "o0175",
+     "o0183",
+     "o0184",
+     "o0187",
+     "o0191",
+     "o0192"
+    ]
+   },
+   "overlay": {
+    "completed": 202,
+    "passed": 201,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 1
+    },
+    "failing": [
+     "o0154"
+    ]
+   },
+   "overlayWidePostHoc": {
+    "completed": 202,
+    "passed": 202,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "observer": {
+    "C1": {},
+    "C2": {
+     "refundsAboveT": 17,
+     "compliant": 17,
+     "exceptions": 0
+    },
+    "C3": {
+     "unpinnedRuns": 0,
+     "unpinnedGovernedRuns": 0
+    },
+    "staleWindow": {
+     "orders": 13,
+     "handledUnderT1": 0,
+     "cases": []
+    },
+    "overEscalation": 0,
+    "builderPins": {
+     "orders": 0,
+     "mismatches": 0
+    },
+    "violations": {
+     "C1": [],
+     "C2": [],
+     "C3": []
+    }
+   },
+   "interventions": {
+    "holds": 17,
+    "released": 17,
+    "openAtHorizon": 0,
+    "refused": 0,
+    "abandoned": 0,
+    "verified": 0,
+    "asks": 20,
+    "reAsks": 3,
+    "breakGlass": 0,
+    "closeDeferred": 0,
+    "mergeWithHold": 0,
+    "approvers": {
+     "u-cs1": 9,
+     "u-fin2": 1,
+     "u-fin1": 7
+    }
+   },
+   "auditor": {
+    "pack": {
+     "pass": {
+      "Q1": true,
+      "Q2": true,
+      "Q3": true,
+      "Q4": true,
+      "Q5": true
+     },
+     "why": {
+      "Q1": [],
+      "Q2": [],
+      "Q3": [],
+      "Q4": [],
+      "Q5": []
+     },
+     "walkthrough": "10/10",
+     "walkthroughSteps": [
+      {
+       "order": "ORD-1232-0114",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0031",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0144",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0018",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0148",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0054",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0194",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0076",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0184",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      },
+      {
+       "order": "ORD-1232-0135",
+       "pass": true,
+       "placement": true,
+       "pinned": true,
+       "moneyTraced": true,
+       "approvalsBound": true,
+       "outcome": true
+      }
+     ]
+    }
+   },
+   "plant": {
+    "case": "o0145",
+    "orderId": "ORD-1232-0145",
+    "class": "amend-then-cancel",
+    "maxAmountMinor": 48543,
+    "thresholdMinor": 25000,
+    "events": [
+     "ev-ORD-1232-0145-act-1",
+     "ev-ORD-1232-0145-act-2"
+    ]
+   }
   }
  ]
 }
