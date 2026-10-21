@@ -1,0 +1,127 @@
+{
+ "subject": "ref:undeclared-write",
+ "date": "2026-10-21",
+ "evidence": "development (dev worlds); $0",
+ "worlds": [
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60
+  }
+ ],
+ "results": [
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "none",
+   "status": "complete",
+   "ms": 6387,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 44,
+    "critical": 0,
+    "codes": {}
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 43,
+    "byCapability": {
+     "intake": "43/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "43/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "43/43",
+     "customer-action": "43/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 8,
+    "byCode": {
+     "effect-undeclared": 8
+    },
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "none",
+   "status": "complete",
+   "ms": 7708,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 69,
+    "critical": 0,
+    "codes": {}
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 67,
+    "byCapability": {
+     "intake": "67/67",
+     "fraud": "67/67",
+     "capture": "67/67",
+     "refund": "67/67",
+     "reservation": "67/67",
+     "shipment": "67/67",
+     "compensation": "67/67",
+     "failure": "67/67",
+     "tracking": "67/67",
+     "customer-action": "67/67",
+     "cancellation": "67/67",
+     "notifications": "67/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 19,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 14,
+    "byCode": {
+     "effect-undeclared": 14
+    },
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}

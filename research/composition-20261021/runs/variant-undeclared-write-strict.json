@@ -1,0 +1,131 @@
+{
+ "subject": "ref:undeclared-write",
+ "date": "2026-10-21",
+ "evidence": "development (dev worlds); $0",
+ "worlds": [
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60
+  }
+ ],
+ "results": [
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "none",
+   "status": "complete",
+   "ms": 5953,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 36,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 35,
+    "byCapability": {
+     "intake": "43/43",
+     "fraud": "38/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "43/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "43/43",
+     "customer-action": "43/43",
+     "cancellation": "40/43",
+     "notifications": "35/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 8,
+    "byCode": {
+     "effect-undeclared": 8
+    },
+    "dropped": 8,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "none",
+   "status": "complete",
+   "ms": 7713,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 55,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 14
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 53,
+    "byCapability": {
+     "intake": "67/67",
+     "fraud": "63/67",
+     "capture": "67/67",
+     "refund": "67/67",
+     "reservation": "67/67",
+     "shipment": "67/67",
+     "compensation": "67/67",
+     "failure": "67/67",
+     "tracking": "67/67",
+     "customer-action": "58/67",
+     "cancellation": "66/67",
+     "notifications": "53/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 19,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 14,
+    "byCode": {
+     "effect-undeclared": 14
+    },
+    "dropped": 14,
+    "integrity": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}
