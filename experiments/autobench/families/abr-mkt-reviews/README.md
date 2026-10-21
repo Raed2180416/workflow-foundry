@@ -256,7 +256,7 @@ For example:
 | oracle mutation | 2,947/2,947 single-fault mutants killed (score 1.000, 43 operators). The operators include a wrong code, rating, reviewer or star sign, a dropped or added `[HIGH PRIORITY]`, a duplicated or dropped ticket or email, a wrong recipient, an extra cc, a summary count ±1, a summary that adds a contradicting count line or a line with another code, a draft instead of a send, an acknowledgement or escalation deleted again, mail to a protected address, and edits to old records |
 | oracle specificity | 653/653 policy-neutral variants accepted, no false rejects. The variants: mark read, label and star, ticket priority HIGH, extra content around the comment, subject case, a longer body, a summary with other week figures in other words, a display-name recipient, extra words around a post |
 
-**Tests:** 97 passed (pytest 9.0.2 in the AutomationBench venv, about 3 minutes). They cover:
+**Tests:** 97 passed (pytest 9.0.2 in the AutomationBench venv, 82 s). They cover:
 - determinism and round trips; stream shape against `family.json`; trap rates and coverage; the d3 clause floor and the
   balanced amendment parameter, and d1/d2 streams left alone;
 - fictional entities only; held-out seeds refused; leakage; the Zap payload shape; the reference importing nothing

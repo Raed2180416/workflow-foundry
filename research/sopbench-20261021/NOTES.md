@@ -28,7 +28,8 @@ except label names and field names.
   metrics through the bridge, wrong answers 0%, our verdicts equal upstream's own `Evaluator.run_single_task` verdicts on
   every compared answer, and the JS scorer port agrees with upstream's Python on every answer it covers (§5).
 - The split is frozen: 70 build, 193 repair, 1,891 sealed rows; `splitSha256 1d957beb…` ([SPLIT.json](SPLIT.json)).
-- Raw baseline (Haiku 5.5 agent per row, dev rows only): §8.
+- Raw baseline (Haiku 5.5 agent per row, 247 dev rows, K = 1): **73.8% strict macro** on our 12-SOP valid set (70.4% on
+  all 13 run), against 38% for a majority-label baseline, at **$0.0022 per row** ($0.54 in total). §8.
 
 ## 2. The benchmark at the pin [code, measured]
 
@@ -259,9 +260,10 @@ Claude Code 2.1.306, Bash only, 10 tool steps, $0.25 reserved per session, 10 mi
   acceptance decision; content_flagging (30%) is at the level its random tools allow (§7.1).
 - **Against the paper** (Claude 4 Opus, Table 4; §6): different model, agent loop, prompt (answer format), rows (our 20 dev
   rows per SOP against all labelled rows), and scorer; content_flagging and order_fulfillment upstream agents also saw the
-  answer. Per SOP the raw Haiku agent is above Opus 4 on customer_service, dangerous_goods, know_your_business (FC/ReAct
-  43/31%) and video_annotation, and below it on aircraft_inspection (ReAct 97%), email_intent (98%) and video_classification
-  (94%); the averages (70% here, 68/72% there) are not comparable beyond "the same range".
+  answer. Per SOP, the raw Haiku agent is above both Opus 4 numbers on customer_service, dangerous_goods, referral v1/v2 and
+  video_annotation, between them on aircraft_inspection (FC 45%, ReAct 97%), know_your_business (43/31%) and
+  traffic_spoofing (79/60%), and below both on email_intent, video_classification and warehouse. The averages (70% here,
+  68/72% there) are not comparable beyond "the same range".
 
 ## 9. Commands
 
