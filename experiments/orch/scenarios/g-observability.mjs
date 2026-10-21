@@ -5,7 +5,7 @@ import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { Store } from '../../../src/store.mjs';
 import { Runtime } from '../../../src/runtime.mjs';
-import { agentNode, eq, exists, HAIKU, mapNode, POLICY, probeRegistry, ref, ROOT, scriptedPort, task, tmp, wait, wf } from '../lib/harness.mjs';
+import { agentNode, eq, exists, HAIKU, mapNode, POLICY, probeRegistry, ref, ROOT, scriptedPort, task, tmp, until, wait, wf } from '../lib/harness.mjs';
 import { owner, startOwner } from '../lib/proc.mjs';
 
 const NEXT = /resum|retry|re-run|rerun|raise|increase|reset|reconcil|check whether|after|wait until/i;
@@ -29,7 +29,7 @@ export default [
         cases[name] = { status: final.status, code: final.error?.code ?? null, verdict: final.verdict?.verdict, reason: final.verdict?.reason ?? null, message: final.error?.message ?? null };
         store.close();
       };
-      await lib('rate-limit', wf('G1rate', [agentNode('j', { model: HAIKU })], [exists(ref('nodes.j.v'))]), () => ({ error: { code: 'MODEL_RATE_LIMIT', message: '429; retry-after: 30' } }), { raw: '1' });
+      await lib('rate-limit', wf('G1rate', [agentNode('j', { model: HAIKU })], [exists(ref('nodes.j.v'))]), () => ({ error: { code: 'MODEL_RATE_LIMIT', message: '429; retry-after: 1' } }), { raw: '1' });
       await lib('cost-budget', wf('G1cost', [agentNode('j', { model: HAIKU })], [exists(ref('nodes.j.v'))], { maxCost: 0.05 }), () => ({ value: { v: 1 }, costUsd: 0.1 }), { raw: '1' });
       await lib('deadline', wf('G1deadline', [task('slow', 'chaos.work', { ms: 3000 })], [exists(ref('nodes.slow.id'))], { maxDurationMs: 500 }), () => ({}), {});
       // Effect of unknown outcome: kill the owner inside a non-idempotent effect, resume.
@@ -59,7 +59,11 @@ export default [
       const child = spawn(process.execPath, [cli, 'run', file, '--input', '{}', '--workspace', ws], { stdio: ['ignore', 'pipe', 'pipe'], env: { PATH: process.env.PATH, NODE_NO_WARNINGS: '1' } });
       let out = '', err = '';
       child.stdout.on('data', d => { out += d; }); child.stderr.on('data', d => { err += d; });
-      await wait(1300);
+      // Interrupt only once a step is running (a slow start under load would otherwise kill the CLI before its handler exists).
+      const { DatabaseSync } = await import('node:sqlite');
+      const dbFile = path.join(ws, '.foundry', 'foundry.sqlite');
+      const running = await until(() => { try { const db = new DatabaseSync(dbFile); const n = db.prepare("SELECT count(*) AS n FROM run_nodes WHERE status='running'").get().n; db.close(); return n > 0; } catch { return false; } }, 20000, 50);
+      await wait(150);
       child.kill('SIGINT');
       const code = await new Promise(r => child.on('close', r));
       const runId = (`${err} ${out}`.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/) ?? [])[0];

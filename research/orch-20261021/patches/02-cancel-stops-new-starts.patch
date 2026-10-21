@@ -1,0 +1,28 @@
+diff --git a/src/runtime.mjs b/src/runtime.mjs
+index c3f18be..14b87da 100644
+--- a/src/runtime.mjs
++++ b/src/runtime.mjs
+@@ -526,6 +526,13 @@ class Invocation {
+     signal.addEventListener('abort', abandon, { once: true });
+     return { lapse: promise, done: () => { clearTimeout(timer); signal.removeEventListener('abort', abandon); } };
+   }
++  // A cancel request found in the record outside the poll (checkBudget): the execution aborts as watchCancel would, after the
++  // current update (the abort listeners kill processes and settle promises; they must not run inside the transaction).
++  noteCancel(request) {
++    if (this.cancelRequest) return;
++    this.cancelRequest = request; this.userCancelled = true;
++    queueMicrotask(() => this.abort.abort());
++  }
+   // Best effort: a store that was closed under a running execution reads as no request.
+   readCancelRequest() { try { return this.store.cancelRequest(this.runId); } catch { return null; } }
+   // The whole record (every row): for the checks when a run is resumed. Everything else reads the rows it needs (store.rows).
+@@ -564,6 +571,9 @@ class Invocation {
+   }
+   checkBudget(run = this.head(), cost = 0) {
+     if (this.signal().aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');
++    // A cancel request already in the record stops every new start at once, not one poll later (orch-20261021 A7): charge()
++    // runs this inside the update that would start the node, so nothing starts after the request committed.
++    if (run.cancelRequest) { this.noteCancel(run.cancelRequest); throw new FoundryError('CANCELLED', 'Run cancellation was requested; no new node starts'); }
+     if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
+     if (run.steps >= Math.min(run.policy.maxSteps, this.workflow.budget.maxSteps)) throw new FoundryError('STEP_BUDGET', 'Run step budget exhausted');
+     if (run.cost + cost > Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost) + 1e-12) throw new FoundryError('COST_BUDGET', 'Run cost budget exhausted');

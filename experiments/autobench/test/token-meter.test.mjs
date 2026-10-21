@@ -34,7 +34,7 @@ test('tokensOf: the remote executor\'s token report, or the claude executor\'s s
   assert.equal(tokensOf({ costUsd: 0 }), null); assert.equal(tokensOf(null), null);
 });
 
-test('the Mercury hook: an executorModels model selects the remote executor, needs --token-cap, and is refused by pipeline arms', async () => {
+test('the Mercury hook: an executorModels model selects the remote executor and needs --token-cap; only the codeowned pipeline takes one', async () => {
   const { policy } = loadPolicy();
   const remote = remoteSessionExecutor(policy, 'mercury-3');
   assert.equal(remote.kind, 'openai-chat'); assert.equal(remote.run, runOpenAIChat); assert.equal(remote.manifestPolicy.provider.kind, 'openai-chat-https');
@@ -43,7 +43,10 @@ test('the Mercury hook: an executorModels model selects the remote executor, nee
   assert.throws(() => remoteSessionExecutor(policy, 'gpt-4o'), /not listed in the model policy/);
   const live = tmp('tokcap-required');
   await assert.rejects(runTasks({ model: 'mercury-3', tasks: ['simple.x'], capUsd: 1, liveRoot: live, outDir: null, log: () => {} }), /--token-cap .* is required for mercury-3/);
-  await assert.rejects(runTasks({ model: 'mercury-3', tasks: ['simple.x'], capUsd: 1, liveRoot: live, outDir: null, log: () => {}, harness: 'codeowned' }), /pipeline arms|not listed|claude-cli/);
+  // A1-C (codeowned) takes executor models per role (pipelineDispatch), with --token-cap; other pipeline arms refuse them.
+  await assert.rejects(runTasks({ model: 'mercury-3', tasks: ['simple.x'], capUsd: 1, liveRoot: live, outDir: null, log: () => {}, harness: 'codeowned' }), /--token-cap .* is required for mercury-3/);
+  await assert.rejects(runTasks({ model: 'claude-haiku-5-5', nodeModels: { ledger: 'mercury-3' }, tasks: ['simple.x'], capUsd: 1, liveRoot: live, outDir: null, log: () => {}, harness: 'codeowned' }), /--token-cap .* is required for mercury-3/);
+  await assert.rejects(runTasks({ model: 'mercury-3', tasks: ['simple.x'], capUsd: 1, liveRoot: live, outDir: null, log: () => {}, harness: 'secondreader' }), /not wired into the pipeline arms/);
 });
 
 const PHONE_TASK = 'simple.email_sf_contact_phone_update';

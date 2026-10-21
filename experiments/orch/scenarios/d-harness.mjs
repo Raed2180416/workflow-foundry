@@ -81,12 +81,12 @@ flow.done(v);` });
       const bin = fakeCli(dir, `cat ${JSON.stringify(path.join(dir, 'limit.json'))}\nexit 1`);
       const ws = path.join(dir, 'ws');
       const r = await owner({ workspace: ws, action: 'create-execute', workflow: wf('Usage', [agentNode('j', { model: HAIKU })], [exists(ref('nodes.j.v'))]), input: { raw: '1' }, cliBinary: bin });
-      const res = r.result;
+      const res = r.result, parked = Object.values(res?.parked ?? {})[0] ?? null;
       return { observed: res,
         checks: [
-          { name: 'classified as an environment fault (MODEL_RATE_LIMIT)', pass: res?.error?.code === 'MODEL_RATE_LIMIT', observed: res?.error?.code },
+          { name: 'classified as an environment fault (MODEL_RATE_LIMIT)', pass: (res?.error?.code ?? parked?.code) === 'MODEL_RATE_LIMIT', observed: res?.error?.code ?? parked?.code },
           { name: 'not a terminal failure (parked or resumable)', pass: !['failed', 'cancelled'].includes(res?.status), observed: res?.status },
-          { name: 'the reset time reaches the user', pass: /reset/i.test(res?.error?.message ?? ''), observed: res?.error?.message ?? null },
+          { name: 'the reset time reaches the user', pass: /reset/i.test(res?.error?.message ?? parked?.message ?? ''), observed: res?.error?.message ?? parked?.message ?? null },
         ] };
     },
   },

@@ -1,0 +1,59 @@
+{
+ "runId": "p2-pi",
+ "evidence": "development: builds and repairs on SPLIT.json build/repair rows only; no sealed row was prepared, served or graded",
+ "stopped": null,
+ "builderModel": "claude-haiku-5-5",
+ "judgeModels": [
+  "claude-haiku-5-5"
+ ],
+ "budgets": {
+  "build": 3,
+  "repair": 1.5,
+  "buildMinutes": 30,
+  "repairMinutes": 20,
+  "rounds": 2,
+  "builderJudgeUsd": 0.5
+ },
+ "prompts": {
+  "buildTemplateSha256": "8c69d8b593015f86dbb2de1bbccf783bee097223bb20e5c620a363af4805f132",
+  "repairTemplateSha256": "f5ff28a3e56b5050c5857298c82d64418c07a1d25155361202f06585c4cf2aa5"
+ },
+ "spentUsd": 0.18891193000000003,
+ "capUsd": 5,
+ "sops": {
+  "patient_intake": {
+   "devPass": 16,
+   "devRows": 16,
+   "buildPass": 5,
+   "repairPass": 11,
+   "bestRound": 0,
+   "artifactSha256": "c19bd128085f356128f55be61fe535023b13a2f8403f821aa7ccf79deb579f08",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.18891193000000003,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.18891193000000003,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 24,
+     "minutes": 6.1,
+     "buildPass": 5,
+     "repairPass": 11,
+     "kept": true,
+     "statuses": {
+      "done": 16
+     },
+     "sectionsPerRun": 7,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "c19bd128085f356128f55be61fe535023b13a2f8403f821aa7ccf79deb579f08"
+    }
+   ]
+  }
+ },
+ "live": "/var/tmp/foundry-work/sopbench/p2-pi",
+ "finishedAt": "2026-10-21T13:08:03.634Z"
+}

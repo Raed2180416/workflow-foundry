@@ -92,6 +92,12 @@ export function separateCells({ id, separate, split }) {
   });
 }
 
+/** Build spend per build run (sessions + checks, from builds.jsonl: every round's record, not only the latest per SOP). */
+function spendOf(runs) {
+  const per = Object.fromEntries([...new Set(runs)].map(run => [run, readRecords(path.join(WORK_ROOT, 'sopbench', run, 'builds.jsonl')).reduce((a, r) => a + (r.costUsd ?? 0), 0)]));
+  return { perBuildRun: per, totalUsd: Object.values(per).reduce((a, x) => a + x, 0), note: 'phase-2 builds only; phase-1 spend is in runs/raw-haiku-dev/summary.json' };
+}
+
 export function makeFreeze({ id, builds, sops, capUsd, agentModel = 'claude-haiku-5-5', ablation = null, separate = {}, split = loadSplit() }) {
   // The latest record per SOP across the given build runs (a later run in the list wins).
   const recs = latestBuilds(builds);
@@ -127,11 +133,13 @@ export function makeFreeze({ id, builds, sops, capUsd, agentModel = 'claude-haik
         prompt: 'run.mjs systemPrompt + userPrompt (unchanged from the phase-1 dev baseline)' },
     },
     artifacts, devResults: dev, orchestrationOnly: ['aircraft_inspection'],
-    prompts: { buildTemplateSha256: sha256(BUILD_PROMPT.toString()), repairTemplateSha256: sha256(REPAIR_PROMPT.toString()) },
+    prompts: { source: 'experiments/sopbench/build.mjs (BUILD_PROMPT, REPAIR_PROMPT; committed with this freeze)', buildTemplateSha256: sha256(BUILD_PROMPT.toString()),
+      repairTemplateSha256: sha256(REPAIR_PROMPT.toString()), buildMjsSha256: sha256(readFileSync(path.join(HERE, 'build.mjs'))) },
     code: codeHashes(),
     dependencies: dependencyHashes(),
     decisionRule: DECISION_RULE,
     caps: { sealedRunCapUsd: capUsd, phase2CapUsd: 100 },
+    spendBeforeSealedUsd: spendOf([...builds, ...(ablation ? [ablation.v1Build, ablation.v2Build].filter(Boolean) : []), ...Object.values(separate)]),
     ablation: ablation ? { design: 'DESIGN.md §8: each cell is compared with the primary run (see compareWith)' } : null,
     cells: [...(ablation ? ablationCells({ id, split, ...ablation }) : []), ...separateCells({ id, separate, split })],
   };
@@ -143,9 +151,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   for (let i = 0; i < argv.length; i++) a[argv[i].slice(2)] = argv[++i];
   const ablation = a['v1-build'] || a['v2-build'] ? { v1Build: a['v1-build'], v2Build: a['v2-build'], v2Sops: (a['v2-sops'] ?? 'dangerous_goods,customer_service,know_your_business').split(','), v2Rows: Number(a['v2-rows'] ?? 40) } : null;
   const separate = a.separate ? Object.fromEntries(a.separate.split(',').map(x => x.split('='))) : {};
-  const f = makeFreeze({ id: a.id, builds: a.builds.split(','), sops: a.sops.split(','), capUsd: Number(a.cap), agentModel: a['agent-model'] ?? 'claude-haiku-5-5', ablation, separate });
   const out = path.join(RESEARCH, `FREEZE-${a.id}.json`);
-  if (existsSync(out)) throw new Error(`${out} exists: a freeze is written once`);
+  if (existsSync(out)) throw new Error(`${out} exists: a freeze is written once`);   // checked before the frozen copies are rewritten
+  const f = makeFreeze({ id: a.id, builds: a.builds.split(','), sops: a.sops.split(','), capUsd: Number(a.cap), agentModel: a['agent-model'] ?? 'claude-haiku-5-5', ablation, separate });
   writeJson(out, f);
   console.log(JSON.stringify({ out: path.relative(REPO, out), sops: f.sops.length, withoutWorkflow: f.withoutWorkflow, artifacts: Object.fromEntries(Object.entries(f.artifacts).map(([s, x]) => [s, x.sha256.slice(0, 16)])) }, null, 1));
 }

@@ -1,0 +1,87 @@
+diff --git a/bin/foundry.mjs b/bin/foundry.mjs
+index 31a40ed..f13591e 100755
+--- a/bin/foundry.mjs
++++ b/bin/foundry.mjs
+@@ -49,6 +49,8 @@ const executing = new Set(['run', 'resume', 'tick', 'trial']);
+ function interruptOnSignal(foundry, halt) {
+   const handler = (name, code) => () => {
+     halt.abort();
++    // Recorded so that `foundry resume` treats this as the user's interruption, not as a failed attempt of the running tasks.
++    for (const id of foundry.active.keys()) { try { foundry.store.markInterrupted(id, { pid: process.pid, signal: name }); } catch { /* best effort */ } }
+     try { process.stderr.write(JSON.stringify({ interrupted: name, runs: [...foundry.active.keys()], resumable: true }) + '\n'); } catch {}
+     process.exit(code);
+   };
+diff --git a/src/runtime.mjs b/src/runtime.mjs
+index 14b87da..8fc29a7 100644
+--- a/src/runtime.mjs
++++ b/src/runtime.mjs
+@@ -690,6 +690,10 @@ class Invocation {
+         throw error;
+       }
+       owned = true;
++      // Did the earlier owner stop on a signal it handled (Ctrl-C, SIGTERM)? Only an interruption recorded by that same process counts.
++      const interrupt = this.store.interruptOf?.(this.runId) ?? null;
++      const graceful = interrupt && run.owner && interrupt.pid === run.owner.pid ? interrupt : null;
++      if (interrupt) this.store.forgetInterrupt(this.runId);
+       // Process groups an earlier owner of this run left running (it was killed) are stopped before this execution starts its own.
+       const stale = reapChildren(this.store, this.runId).filter(child => child.killed);
+       if (stale.length) this.update(() => {}, { type: 'children.reaped', children: stale.map(({ pid, kind }) => ({ pid, kind })) });
+@@ -700,7 +704,7 @@ class Invocation {
+       if (this.cancelRequest) throw new FoundryError('CANCELLED', 'Execution was cancelled before it started');
+       if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted before resume');
+       this.semaphore = new Semaphore(Math.min(run.policy.maxConcurrency, this.workflow.budget.maxConcurrency));
+-      this.recover();
++      this.recover(graceful);
+       const result = await this.flow(this.workflow, 'root', run.input, {});
+       let status = result.done ? 'succeeded' : 'waiting';
+       if (this.rows.anyWithStatus(this.runId, 'awaiting_human')) status = 'awaiting_human';
+@@ -736,16 +740,22 @@ class Invocation {
+       }, r => [...swept, ...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: 'run.stopped', error: errorData(reported), ...(request ? { cancel: request } : {}) }], { result: 'run', final: true });
+     } finally { clearInterval(this.cancelTimer); this.outerSignal?.removeEventListener('abort', this.onAbort); }
+   }
+-  recover() {
++  // Tasks an earlier owner left running. `graceful`: that owner stopped on Ctrl-C or SIGTERM (bin/foundry.mjs records it in
++  // run_interrupts before it exits): an interruption by the user is not a failed attempt, so a pure or idempotent task gets its
++  // attempt back (with maxAttempts 1, the common case, Ctrl-C made the run unresumable although the CLI printed resumable: true,
++  // orch-20261021 G2). An unexplained death (SIGKILL, out of memory, a native crash) still costs the attempt, which is what bounds
++  // a task that kills its owner every time (B7).
++  recover(graceful = null) {
+     for (const { frameKey, nodeId: id, state } of this.rows.withStatus(this.runId, 'running')) {
+       if (state.kind !== 'task') continue;
+       const cap = this.registry.get(state.tool);
+       if (!cap) throw new FoundryError('CAPABILITY_DRIFT', 'Interrupted operation capability is missing');
+-      const uncertain = cap.effects === 'non-idempotent';
++      const uncertain = cap.effects === 'non-idempotent', refund = !!graceful && !uncertain && (state.attempts ?? 0) > 0;
+       this.eventNode(frameKey, id, current => {
+         current.nodes[id].status = uncertain ? 'uncertain' : 'pending';
+         current.nodes[id].recovered = true;
+-      }, uncertain ? 'effect.uncertain' : 'node.recovered', { effects: cap.effects });
++        if (refund) current.nodes[id].attempts -= 1;
++      }, uncertain ? 'effect.uncertain' : 'node.recovered', { effects: cap.effects, ...(refund ? { attemptRefunded: true, interruptedBy: graceful.signal } : {}) });
+     }
+   }
+   context(frameKey, input, locals) {
+diff --git a/src/store.mjs b/src/store.mjs
+index a11efa4..a65adb5 100644
+--- a/src/store.mjs
++++ b/src/store.mjs
+@@ -63,6 +63,7 @@ export class Store {
+       CREATE TABLE IF NOT EXISTS timers(run_id TEXT NOT NULL, node_key TEXT NOT NULL, wake_at INTEGER NOT NULL, PRIMARY KEY(run_id,node_key));
+       CREATE INDEX IF NOT EXISTS timers_due ON timers(wake_at);
+       CREATE TABLE IF NOT EXISTS run_children(run_id TEXT NOT NULL, pid INTEGER NOT NULL, pgid INTEGER NOT NULL, start TEXT, kind TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY(run_id,pid));
++      CREATE TABLE IF NOT EXISTS run_interrupts(run_id TEXT PRIMARY KEY, pid INTEGER NOT NULL, signal TEXT NOT NULL, at INTEGER NOT NULL);
+       CREATE TABLE IF NOT EXISTS signals(id TEXT PRIMARY KEY, run_id TEXT NOT NULL, digest TEXT NOT NULL, at INTEGER NOT NULL);
+     `);
+     // Run state is per-node rows (src/run-rows.mjs). `limits` are the state bounds; an instance may lower them (tests do).
+@@ -160,6 +161,11 @@ export class Store {
+   recordChild(runId, { pid, pgid, start = null, kind }) { this.rows.stmt('INSERT OR REPLACE INTO run_children(run_id,pid,pgid,start,kind,at) VALUES(?,?,?,?,?,?)').run(runId, pid, pgid, start, kind, Date.now()); }
+   forgetChild(runId, pid) { this.rows.stmt('DELETE FROM run_children WHERE run_id=? AND pid=?').run(runId, pid); }
+   forgetChildren(runId) { this.rows.stmt('DELETE FROM run_children WHERE run_id=?').run(runId); }
++  // An owner that stops on a signal it handles (bin/foundry.mjs interruptOnSignal) records it, so the next owner can tell a user's
++  // interruption from a crash (Runtime recover). Advisory: the refund it allows is recorded in the chain (node.recovered attemptRefunded).
++  markInterrupted(runId, { pid, signal }) { this.rows.stmt('INSERT OR REPLACE INTO run_interrupts(run_id,pid,signal,at) VALUES(?,?,?,?)').run(runId, pid, String(signal).slice(0, 16), Date.now()); }
++  interruptOf(runId) { const row = this.rows.stmt('SELECT pid,signal,at FROM run_interrupts WHERE run_id=?').get(runId); return row ? { ...row } : null; }
++  forgetInterrupt(runId) { this.rows.stmt('DELETE FROM run_interrupts WHERE run_id=?').run(runId); }
+   children(runId) { return this.rows.stmt('SELECT pid,pgid,start,kind,at FROM run_children WHERE run_id=? ORDER BY at,pid').all(runId).map(row => ({ ...row })); }
+   /** The ids of runs that have recorded process groups still on file. */
+   childRunIds() { return this.rows.stmt('SELECT DISTINCT run_id FROM run_children ORDER BY run_id').all().map(row => row.run_id); }

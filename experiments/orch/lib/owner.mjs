@@ -44,7 +44,8 @@ const foundry = new Foundry(spec.workspace, {
 });
 const summary = run => run && ({ status: run.status, error: run.error ? { code: run.error.code, message: String(run.error.message ?? '').slice(0, 300) } : null,
   verdict: run.verdict ? { verdict: run.verdict.verdict, code: run.verdict.code } : null, steps: run.steps, cost: run.cost, resumeCount: run.resumeCount,
-  outputDigest: run.outputs ? digest(run.outputs) : null });
+  outputDigest: run.outputs ? digest(run.outputs) : null,
+  ...(Object.values(run.nodes ?? {}).some(n => n?.parked) ? { parked: Object.fromEntries(Object.entries(run.nodes).filter(([, n]) => n?.parked).map(([k, n]) => [k, n.parked])) } : {}) });
 try {
   let runId = spec.runId ?? null;
   if (runId === 'only') runId = foundry.store.db.prepare('SELECT id FROM runs ORDER BY rowid DESC LIMIT 1').get()?.id ?? null;

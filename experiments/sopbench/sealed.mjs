@@ -220,7 +220,8 @@ export async function sealedRun(o) {
     const an = analyse(all, { sops, arms, k });
     const orch = freeze.orchestrationOnly ?? [];
     const anNoOrch = analyse(all, { sops: sops.filter(s => !orch.includes(s)), arms, k, resamples: 2000 });
-    const buildUsd = freeze.arms.W.buildCostUsd ?? null;
+    // Amortised W cost: a cell's own builds (ablation or separately reported workflows), else the primary builds.
+    const buildUsd = cell ? Object.values(cell.artifacts ?? {}).reduce((a, x) => a + (x.buildCostUsd ?? 0), 0) : freeze.arms.W.buildCostUsd ?? null;
     const wRuns = all.filter(r => r.arm === 'W').length;
     const w = buildUsd !== null && wRuns ? { amortisedPerRunUsd: (buildUsd + an.arms.W.costUsd) / wRuns } : undefined;
     Object.assign(summary, { analysis: an, analysisWithoutOrchestrationOnly: anNoOrch, wCost: w ?? null, decision: arms.length === 2 && !cell ? decide(an, anNoOrch, w) : null,   // the decision rule covers the primary run only
