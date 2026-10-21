@@ -14,8 +14,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { WORK_ROOT } from '../../src/executors/claude-code.mjs';
-import { RESEARCH, SPLIT_FILE, bridgeOk, canon, readJson, writeJson } from './lib.mjs';
-import { POLICIES, gradeAnswers, policyAnswer, runRows, scriptedSteps } from './run.mjs';
+import { RESEARCH, SPLIT_FILE, bridgeOk, readJson, sha256, writeJson } from './lib.mjs';
+import { POLICIES, ROWS_ROOT, gradeAnswers, runRows, scriptedSteps } from './run.mjs';
 import { loadSplit } from './split.mjs';
 import { finalOutputText } from './scorer.mjs';
 
@@ -107,7 +107,8 @@ export async function parity({ sops: only = null, out = path.join(RESEARCH, 'par
       callCmp.compared++;
       const m = myCalls[i];
       const same = m && m.name === c.name && m.content === c.content && Boolean(m.upstreamFatal) === Boolean(c.upstreamFatal);
-      if (same) callCmp.equal++; else callCmp.differ.push({ id: o.id, i, name: c.name, ours: m?.content?.slice(0, 160), official: c.content?.slice(0, 160) });
+      // Contents are row data (CC BY-NC): the report names the call and hashes both results; ROWS_ROOT keeps the texts.
+      if (same) callCmp.equal++; else callCmp.differ.push({ id: o.id, i, name: c.name, oursSha256: m?.content ? sha256(m.content) : null, officialSha256: c.content ? sha256(c.content) : null, detail: { ours: m?.content, official: c.content } });
     });
   }
   // 3. scorer battery (dev rows of the oracle run)
@@ -126,8 +127,9 @@ export async function parity({ sops: only = null, out = path.join(RESEARCH, 'par
   graded.forEach((g, i) => {
     const v = (byVariant[bat[i].id] ??= { n: 0, upstreamPass: 0, strictPass: 0, jsCovered: 0 });
     v.n++; v.upstreamPass += g.upstream ? 1 : 0; v.strictPass += g.strict ? 1 : 0;
-    if (g.jsUpstream !== null) { covered++; v.jsCovered++; if (g.agree.upstream) agreeUp++; else disagree.push({ ...bat[i], py: g.upstream, js: g.jsUpstream, kind: 'upstream' }); }
-    if (g.agree.strict) agreeStrict++; else disagree.push({ ...bat[i], py: g.strict, js: g.jsStrict, kind: 'strict' });
+    const ref = { sop: bat[i].sop, row: bat[i].row, variant: bat[i].id, textSha256: sha256(bat[i].text) };
+    if (g.jsUpstream !== null) { covered++; v.jsCovered++; if (g.agree.upstream) agreeUp++; else disagree.push({ ...ref, py: g.upstream, js: g.jsUpstream, kind: 'upstream', detail: bat[i].text }); }
+    if (g.agree.strict) agreeStrict++; else disagree.push({ ...ref, py: g.strict, js: g.jsStrict, kind: 'strict', detail: bat[i].text });
   });
   const table = Object.fromEntries(POLICIES.map(p => [p, { upstream: runs[p].summary.upstream, strict: runs[p].summary.strict, n: runs[p].summary.n,
     bySop: Object.fromEntries(Object.entries(runs[p].summary.bySop).map(([s, x]) => [s, { n: x.n, upstream: x.upstream, strict: x.strict }])) }]));
@@ -142,8 +144,11 @@ export async function parity({ sops: only = null, out = path.join(RESEARCH, 'par
     runPathScorer: Object.fromEntries(POLICIES.map(p => [p, runs[p].summary.scorer])),
     worldFlags: Object.fromEntries(POLICIES.slice(0, 1).map(p => [p, runs[p].summary.world])),
   };
-  writeJson(out, report);
-  return report;
+  // The repo copy drops every `detail` (row-derived text); the full report goes to ROWS_ROOT (outside the repo).
+  const strip = x => JSON.parse(JSON.stringify(x, (k, v) => (k === 'detail' ? undefined : v)));
+  writeJson(path.join(ROWS_ROOT, `parity-${Date.now()}`, 'parity.full.json'), report);
+  writeJson(out, strip(report));
+  return strip(report);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-// Markdown table of a SOP-Bench run (research/sopbench-20261021/runs/<run-id>/results.jsonl): per SOP rows, upstream and
-// strict pass rates, cost, steps, and why the strict misses missed (no final_output, a wrong field, upstream-only passes).
-//   node experiments/sopbench/table.mjs research/sopbench-20261021/runs/raw-haiku-dev [--paper]
-import { readFileSync } from 'node:fs';
+// Markdown table of a SOP-Bench run from its per-row records (ROWS_ROOT/<run-id>/results.jsonl, outside the repo): per SOP
+// rows, upstream and strict pass rates, upstream-only passes, answers without <final_output>, cost and steps.
+//   node experiments/sopbench/table.mjs raw-haiku-dev [--no-paper]      (a run id under ROWS_ROOT, or a directory)
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { ROWS_ROOT } from './run.mjs';
 
 // Claude 4 Opus, SOP-Bench paper v2 Table 4 (arXiv 2506.08119v2; read 2026-10-21 through a fetch-and-summarise tool, to be
 // re-checked against the PDF before external use). Different model, agents (Bedrock FC and LangChain ReAct), prompts,
@@ -15,7 +16,8 @@ export const PAPER_OPUS4 = Object.freeze({
 });
 
 const pct = x => (x === null || x === undefined ? '-' : `${(100 * x).toFixed(0)}%`);
-export function table(dir, { paper = true } = {}) {
+export function table(run, { paper = true } = {}) {
+  const dir = existsSync(path.join(run, 'results.jsonl')) ? run : path.join(ROWS_ROOT, run);
   const rs = readFileSync(path.join(dir, 'results.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
   const sops = [...new Set(rs.map(r => r.sop))];
   const mean = xs => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);

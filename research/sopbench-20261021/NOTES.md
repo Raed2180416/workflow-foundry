@@ -125,7 +125,46 @@ neutral directory). "Rows" are the labelled rows of `test_set_with_outputs.csv`,
 
 ## 5. Parity at $0 [measured]
 
-PARITY_PLACEHOLDER
+Command: `node experiments/sopbench/parity.mjs` → [parity.json](parity.json) (2026-10-21; no model; all 263 dev rows of all
+14 SOPs). Code at run time: bridge.py sha256 `5a3846f1…`, run.mjs `e049d317…` (the committed bridge only adds the
+`worldcheck` command; the committed run.mjs only changes where per-row records are written — verified by hashing the
+committed files with those additions removed).
+
+**1. Scripted policies through the full run path** (tool.mjs → mailbox → `bridge serve` on the dev world → `bridge grade`):
+
+| Policy | What it answers | upstream TSR | strict |
+|---|---|---|---|
+| oracle | the ground truth | **100.0%** (263/263) | **100.0%** |
+| wrong | a non-label string | 0.0% | 0.0% |
+| labelswap | another dev label of the column | 0.0% | 0.0% |
+| **gaming** | every dev label of the column in one string | **99.6%** (262/263; 100% on 13 SOPs, 95% on aircraft) | **0.0%** |
+| empty | nothing | 0.0% | 0.0% |
+
+Each scripted row also exercised the error paths (an unknown tool, malformed JSON arguments): 263/263 rows logged the
+unknown tool as `upstreamFatal` (it would have ended upstream's FC agent) and still completed.
+
+**2. Upstream's own path on the same calls and answers** (`bridge official`: upstream's `BenchmarkLoader` (13 SOPs; ours
+for warehouse, which upstream cannot load), upstream's `ToolManager` on the unfiltered world, the real
+`Evaluator.run_single_task` with a scripted agent):
+- verdicts: **1,315/1,315 equal** (5 policies × 263 rows);
+- tool results: 1,192/1,215 calls equal. The 23 differences are explained: 20 are content_flagging's
+  `calculateBotProbabilityIndex` (random, both sides; §2) and 3 are email_intent row 126, whose `product_id` also belongs to
+  an earlier, sealed row: upstream's lookup (`df[df.product_id == id].iloc[0]`) returns that other row's price, description
+  and stock; our dev world, which lacks the sealed row, returns row 126's own. `bridge.py worldcheck` (every tool fillable
+  from a dev row's columns, dev world vs full world, 1,897 calls) finds no other row: **world filtering changes nothing else**.
+  In sealed runs the world is upstream's, so this applies to dev rows only.
+- upstream task inputs contain the answer column for content_flagging (`final_decision`) and order_fulfillment
+  (`expected_output`) — §7.2.
+
+**3. Scorer battery**: 31 answer variants per dev row (8,153 answers) graded by upstream's code (Python) and by the JS port,
+and by both strict implementations: **upstream port 6,368/6,368 agree** on the answers it covers (it declines the 1,785
+that need upstream's fallback parsers: invalid JSON, no output column, nested objects, list values, XML, plain text, empty);
+**strict 8,153/8,153 agree**. What upstream's comparison accepts that strict rejects, out of 263 rows each:
+"Final: X" 263, "X (per SOP)" 263, X minus its first and last character 263, "not X" 263, the first word of X 263 (strict
+130), all labels in one string 262, Python-dict text with single quotes 207, `{"result": {...}}` 207, `["X"]` 262,
+`<final_decision>X</final_decision>` 207, bare text 207 (the 207 are the single-field rows: those parsers do not reach
+multi-field columns). Both accept case, `_`/`-` and padding variants, JSON booleans and numbers, upper-case keys, repeated
+keys (last wins), extra keys, and take the last of two blocks.
 
 ## 6. Published numbers [doc]
 
@@ -178,7 +217,51 @@ No blocker on data access, tool dependencies (pure pandas) or LLM-dependent tool
 
 ## 8. Raw baseline: the Haiku 5.5 agent per row, dev rows [measured]
 
-BASELINE_PLACEHOLDER
+Command: `node experiments/sopbench/run.mjs --model claude-haiku-5-5 --cap 7.99 --rows-per-sop 20 --concurrency 3
+--run-id raw-haiku-dev` (2026-10-21; summary: [runs/raw-haiku-dev/summary.json](runs/raw-haiku-dev/summary.json); per-row
+records outside the repo at `/var/tmp/foundry-work/sopbench-rows/raw-haiku-dev/`; table: `node experiments/sopbench/table.mjs
+raw-haiku-dev`). **Dev rows, K = 1, development/diagnostic evidence.** 13 SOPs (patient_intake excluded, §7.10), all 247 dev
+rows (build then repair; 20 per SOP, 7 for order_fulfillment), Claude Haiku 5.5 (`claude-haiku-5-5`, policy 2026-10-21.1),
+Claude Code 2.1.306, Bash only, 10 tool steps, $0.25 reserved per session, 10 min timeout, default effort.
+
+| SOP | rows | upstream | strict | upstream-only passes | no final_output | $/row | steps (mean) | paper Opus 4 FC / ReAct |
+|---|---|---|---|---|---|---|---|---|
+| aircraft_inspection | 20 | 60% | 60% | 0 | 0 | 0.0025 | 2.3 | 45% / 97% |
+| content_flagging | 20 | 30% | 30% | 0 | 0 | 0.0019 | 3.0 | 36% / 27% |
+| customer_service | 20 | 85% | 85% | 0 | 0 | 0.0032 | 6.5 | 56% / 56% |
+| dangerous_goods | 20 | 100% | 100% | 0 | 0 | 0.0013 | 1.0 | 73% / 83% |
+| email_intent | 20 | 85% | 85% | 0 | 0 | 0.0009 | 0.8 | 98% / 98% |
+| know_your_business | 20 | 35% | 35% | 0 | 0 | 0.0026 | 2.6 | 43% / 31% |
+| order_fulfillment | 7 | 86% | 86% | 0 | 0 | 0.0011 | 2.0 | not in Table 4 |
+| referral_abuse_detection_v1 | 20 | 100% | 100% | 0 | 0 | 0.0017 | 1.6 | 95% / 97% |
+| referral_abuse_detection_v2 | 20 | 100% | 100% | 0 | 0 | 0.0022 | 1.3 | 98% / 96% |
+| traffic_spoofing_detection | 20 | 70% | 70% | 0 | 0 | 0.0020 | 2.7 | 79% / 60% |
+| video_annotation | 20 | 50% | 50% | 0 | 0 | 0.0037 | 2.1 | 37% / 38% |
+| video_classification | 20 | 60% | 60% | 0 | 0 | 0.0026 | 4.8 | 79% / 94% |
+| warehouse_package_inspection | 20 | 55% | 55% | 0 | 0 | 0.0020 | 2.8 | 56% / 65% |
+| **all (macro over SOPs)** | 247 | 70% | 70% | | | 0.0022 | | 68% / 72% (13 SOPs) |
+| **all (micro over rows)** | 247 | 70% | 70% | | | total $0.5395 | | |
+
+- **Headline (strict, our valid set: 12 SOPs without content_flagging)**: macro **73.8%**, micro 73.1% (166/227). All 13
+  SOPs: macro 70.4%, micro 69.6% (Wilson 95% 63.6–75.0%). Upstream's metric gives the same numbers here: every answer
+  had a well-formed `<final_output>` and none relied on containment.
+- **Simple baseline** (`node experiments/sopbench/majority.mjs`, $0): the majority label of the 5 build rows answered on
+  every dev row scores macro 37.9% strict on the same 13 SOPs (38.2% on the 12). The agent's margin is about 32–36 points.
+- **Cost**: $0.5395 for 247 rows, **$0.0022 per row** (range by SOP $0.0009–0.0037), plus $0.0019 for a one-row smoke
+  (`raw-haiku-smoke1`). Total phase-1 model spend **$0.54** of the $8 cap. Tokens are almost all cache reads (6.5 M read,
+  1.3 M written, 5.7 K output). 3.6 model responses and 2.6 tool steps per row on average; 13.6 s per session.
+- **Accounting**: 0 environment faults, 0 L5 violations (only `claude-haiku-5-5` reported; no network or package commands),
+  0 nested model uses, 0 unknown-tool or `upstreamFatal` calls; one row hit the 10-step limit (customer_service row 99);
+  JS and Python graders agreed on all 247 answers.
+- **Where it fails** (dev rows, read from the per-row records): aircraft_inspection fails exactly on the 8 rows where the agent
+  called 4–5 of the 7 tools and wrote "None" for the report tools' columns (all 12 rows with 7 calls pass) — a procedure
+  step skipped, not a judgment error; know_your_business (35%) and video_annotation (50%) fail on the final escalation /
+  acceptance decision; content_flagging (30%) is at the level its random tools allow (§7.1).
+- **Against the paper** (Claude 4 Opus, Table 4; §6): different model, agent loop, prompt (answer format), rows (our 20 dev
+  rows per SOP against all labelled rows), and scorer; content_flagging and order_fulfillment upstream agents also saw the
+  answer. Per SOP the raw Haiku agent is above Opus 4 on customer_service, dangerous_goods, know_your_business (FC/ReAct
+  43/31%) and video_annotation, and below it on aircraft_inspection (ReAct 97%), email_intent (98%) and video_classification
+  (94%); the averages (70% here, 68/72% there) are not comparable beyond "the same range".
 
 ## 9. Commands
 

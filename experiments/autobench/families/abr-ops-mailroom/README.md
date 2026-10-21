@@ -164,6 +164,12 @@ Several are near the hypothesis band for `agent-H`: one misread rule costs a few
 
 **Tests:** `pytest` (48 tests): 48 passed in 97 s.
 
+**Re-verified 2026-10-21** (unchanged code, same commands, $0, development evidence): `gates.py --seeds 610-614` exit 0,
+every gate passes with the numbers above (determinism, leakage 0 problems, solvability 678/678 on 601–614 plus 243/243
+rebased, controls table identical, trap coverage identical, mutation 4,404/4,404, specificity 1,190/1,190);
+`harness.py run --solver reference --seeds 601-650` 2,426/2,426 triggers, 50/50 clean weeks, 0 errors, at most
+10 tool steps; `pytest` 48 passed in 188 s.
+
 ## Fixed while building (2026-10-15)
 
 - **Leak in update payloads.** A `customs.cleared` payload first carried the whole row, including the Status the

@@ -312,3 +312,15 @@ test('a session without tools needs no sandbox; an unknown tool call or bad argu
   assert.match(w.content, /Unknown tool Write/); assert.equal(w.is_error, true); assert.match(j.content, /not a JSON object/);
   assert.equal(existsSync(path.join(b.workdir, 'x')), false);
 });
+
+test('a rate limit cools the endpoint down for every session of the process, not only the one that saw it', { skip: live }, async t => {
+  const ep = await fakeEndpoint(t, [(_, n) => (n === 0 ? { status: 429, body: { error: 'too many requests per minute' }, headers: { 'retry-after': '1' } } : reply({ content: 'ok' }))]);
+  const retry = { attempts: 3, baseDelayMs: 20, maxDelayMs: 2000 };
+  const first = run(t, { baseUrl: ep.baseUrl, retry });
+  await new Promise(r => setTimeout(r, 300));   // the first session's 429 has set the cooldown by now
+  const [a, b] = await Promise.all([first, run(t, { baseUrl: ep.baseUrl, retry })]);
+  assert.equal(a.ok, true); assert.equal(a.retries, 1); assert.equal(b.ok, true); assert.equal(b.retries, 0);
+  const waited = readStream(b.transcript).filter(e => e.subtype === 'rate_limit_wait');
+  assert.equal(waited.length, 1); assert.ok(waited[0].waitMs > 0 && waited[0].waitMs <= 1200, `${waited[0].waitMs}`);
+  assert.equal(ep.requests.length, 3, 'the second session sent nothing into the window');
+});

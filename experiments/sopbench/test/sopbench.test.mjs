@@ -11,7 +11,7 @@ import path from 'node:path';
 import { HERE, TOOL_CLIENT, UPSTREAM, VENV_PY, bridgeOk, canon, materializeWorkdir, readJson, runBridge, shaCanon, startServe, writeJson } from '../lib.mjs';
 import { assertRows, loadSplit, makeSplit, repairCount, splitOne } from '../split.mjs';
 import { compareSingle, lastFinalOutput, pyFloatRepr, pyJsonLoads, pyStr, strictVerdict, upstreamVerdict } from '../scorer.mjs';
-import { policyAnswer, redact, runRows, systemPrompt, userPrompt } from '../run.mjs';
+import { policyAnswer, runRows, systemPrompt, userPrompt } from '../run.mjs';
 
 const HAVE = existsSync(VENV_PY) && existsSync(path.join(UPSTREAM, 'src/amazon_sop_bench/evaluation/parser.py'));
 const SKIP = !HAVE && 'SOP-Bench tool venv or clone missing';
@@ -112,10 +112,6 @@ test('prompts: upstream wording, the SOP, the task lines and the exact output ke
   const sp = systemPrompt([{ name: 'get_item', description: 'd', input_schema: {} }], 10);
   assert.match(sp, /node tool\.mjs call/);
   assert.match(sp, /at most 10 steps/);
-  const red = redact({ sop: 's', row: 1, answerText: 'row data here', grade: { strict: true } });
-  assert.equal(red.answerText, undefined);
-  assert.equal(red.answerChars, 13);
-  assert.match(red.answerSha256, /^[0-9a-f]{64}$/);
   assert.deepEqual(policyAnswer('gaming', { output_columns: ['d'], expected: { d: E('ship') } }, { d: ['backorder', 'review', 'ship'] }), { d: 'backorder / review / ship' });
 });
 

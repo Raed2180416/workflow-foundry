@@ -52,7 +52,13 @@ export const BASH_DEFAULT_TIMEOUT_MS = 120_000, BASH_MAX_TIMEOUT_MS = 600_000, O
 export const TOOL_OUTPUT_MAX_CHARS = 30_000;
 /** Input + output tokens per session unless the caller sets tokenBudget (null: no token cap). */
 export const DEFAULT_TOKEN_BUDGET = 3_000_000;
-export const DEFAULT_RETRY = Object.freeze({ attempts: 5, baseDelayMs: 2_000, maxDelayMs: 30_000 });
+// Per-minute rate limits are the binding constraint on a free tier (measured 2026-10-21: HTTP 429 "too many requests per
+// minute" / "input token limit exceeded" with two sessions beside another run on the same key), so a session waits them out
+// for about four minutes (5, 10, 20, 40, 60, 60, 60 s) before it reports MODEL_RATE_LIMIT, which stops an AutomationBench run.
+export const DEFAULT_RETRY = Object.freeze({ attempts: 8, baseDelayMs: 5_000, maxDelayMs: 60_000 });
+// A rate-limited endpoint cools down for every session of this process, not only the one that saw the 429: concurrent sessions
+// wait out the same window instead of spending their retries on it. Keyed by endpoint origin; exported for tests.
+export const COOLDOWN = new Map();
 export const DEFAULT_REQUEST_TIMEOUT_MS = 300_000;
 const PROXY_VARS = ['HTTPS_PROXY', 'https_proxy', 'NO_PROXY', 'no_proxy'];
 const LIMITED = /rate.?limit|overloaded|usage limit|quota|limit reached|insufficient.?(?:credit|balance|funds)/i;
@@ -382,8 +388,16 @@ export async function runOpenAIChat({
   // One chat.completions call with bounded retries. Returns the parsed body; throws SessionStop.
   const complete = async messages => {
     const body = { model, messages, ...(toolList.length ? { tools: toolDefinitions(toolList), tool_choice: 'auto' } : {}), ...requestDefaults, ...(effort ? { reasoning_effort: effort } : {}) };
+    const origin = new URL(endpoint).origin;
     for (let attempt = 1; ; attempt++) {
       if (aborted()) throw aborted();
+      const cool = (COOLDOWN.get(origin) ?? 0) - Date.now();
+      if (cool > 0) {
+        if (cool >= started + timeoutMs - Date.now()) throw new SessionStop('MODEL_RATE_LIMIT', `the endpoint is cooling down for ${Math.round(cool / 1000)} s after a rate limit, past this session's time`);
+        events.push({ type: 'system', subtype: 'rate_limit_wait', session_id: sessionId, timestamp: ts(), waitMs: cool });
+        await sleep(cool, controller.signal);
+        if (aborted()) throw aborted();
+      }
       const key = hostEnv[credentialEnv];   // read at call time, never cached
       if (typeof key !== 'string' || !key) throw new SessionStop('MODEL_UNAVAILABLE', `no credential: the environment variable ${credentialEnv} is not set`);
       let res = null, transportError = null;
@@ -397,7 +411,8 @@ export async function runOpenAIChat({
       const { code, retry: again } = classifyHttp({ status: res?.status ?? null, text: res?.text ?? '', transportError });
       const detail = res ? `HTTP ${res.status}: ${redact(res.text.slice(0, 500), key)}` : `${transportError?.code ?? 'transport error'}: ${redact(transportError?.message ?? transportError, key).slice(0, 300)}`;
       const retryAfter = Number(res?.headers?.['retry-after']);
-      const delay = Math.min(retry.maxDelayMs, Number.isFinite(retryAfter) && retryAfter >= 0 ? retryAfter * 1000 : retry.baseDelayMs * 2 ** (attempt - 1));
+      const delay = Math.round(Math.min(retry.maxDelayMs, Number.isFinite(retryAfter) && retryAfter >= 0 ? retryAfter * 1000 : retry.baseDelayMs * 2 ** (attempt - 1)) * (1 + Math.random() * 0.1));
+      if (code === 'MODEL_RATE_LIMIT' && again) COOLDOWN.set(origin, Math.max(COOLDOWN.get(origin) ?? 0, Date.now() + delay));
       const room = started + timeoutMs - Date.now();
       events.push({ type: 'system', subtype: 'api_error', session_id: sessionId, timestamp: ts(), attempt, status: res?.status ?? null, code, retry: again && attempt < retry.attempts && delay < room, delayMs: delay, detail });
       if (!again || attempt >= retry.attempts || delay >= room) throw new SessionStop(code, `${detail} (attempt ${attempt} of ${retry.attempts})`);

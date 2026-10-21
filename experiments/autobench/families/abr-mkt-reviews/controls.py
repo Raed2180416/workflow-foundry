@@ -22,8 +22,9 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
   stale-code         the reference, but the code is the one in the newest summary email (the intern's advice)
   count-all          the reference, but the daily count includes every ticket created today (other teams' too)
 
-Added 2026-10-21 (one rule each; the first seven passed every dev week before the d3 clause floor and the balanced
-amendment parameter, see README "Changes"):
+Added 2026-10-21 (one rule each). The first seven break the clauses that the d3 clause floor and the balanced d3
+amendment parameter now test on every d3 week; five of them (no-abuse, crash-rating-only, crash-thanks, eng-email,
+ticket-amend-ignored) passed all five dev weeks 610-614 before that change (README "Changes"):
   no-abuse             the abuse note is ignored (only `Bot Suspected` suppresses)
   no-bot               the `Bot Suspected` note is ignored (only abuse suppresses)
   crash-rating-only    crash words only prefix tickets the rating earns: no ticket for a crash at a 3-5 star rating

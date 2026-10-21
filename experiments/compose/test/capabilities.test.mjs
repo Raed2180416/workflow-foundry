@@ -32,10 +32,13 @@ test('controls: the contracts reject where the oracle rejects (the named capabil
   const { w, pools } = await prep(W[1]);
   const expect = { noop: 'intake', 'charge-twice': 'exactly-once', 'no-compensation': 'compensation', 'forward-order-compensation': 'compensation',
     'timer-first': 'customer-action', 'escalate-everything': 'fraud', 'hold-everything': 'fraud', 'no-keys': 'exactly-once', 'last-signal-wins': 'tracking' };
+  const skipped = [];
   for (const [id, cap] of Object.entries(expect)) {
     const r = compare(w, await runControl(id, w), pools);
+    assert.equal(r.capsOnly, 0, `${id}: contracts reject a case the oracle passes: ${JSON.stringify(r.extras[0])}`);
+    if (r.both + r.oracleOnly === 0) { skipped.push(id); continue; }       // the world has no case this control breaks
     assert.ok(r.both > 0, `${id}: the contracts catch nothing the oracle rejects`);
     assert.ok(r.capFails[cap] > 0, `${id}: ${cap} not violated (${JSON.stringify(r.capFails)})`);
-    assert.equal(r.capsOnly, 0, `${id}: contracts reject a case the oracle passes: ${JSON.stringify(r.extras[0])}`);
   }
+  assert.ok(skipped.length <= 2, `controls with nothing to break on this world: ${skipped}`);
 });

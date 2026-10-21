@@ -466,162 +466,185 @@
      "id": "oracle:content_flagging:38",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.96, \"device_consistency_score\": 0.62}",
-     "official": "{\"bot_probability_index\": 0.61, \"device_consistency_score\": 0.31}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:48",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.65, \"device_consistency_score\": 0.02}",
-     "official": "{\"bot_probability_index\": 0.88, \"device_consistency_score\": 0.72}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:65",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.49, \"device_consistency_score\": 0.95}",
-     "official": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.44}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:67",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.36, \"device_consistency_score\": 0.97}",
-     "official": "{\"bot_probability_index\": 0.25, \"device_consistency_score\": 0.27}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:162",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.39}",
-     "official": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.26}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:11",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.18}",
-     "official": "{\"bot_probability_index\": 0.38, \"device_consistency_score\": 0.47}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:14",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.49, \"device_consistency_score\": 0.95}",
-     "official": "{\"bot_probability_index\": 0.32, \"device_consistency_score\": 0.54}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:16",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.21, \"device_consistency_score\": 0.24}",
-     "official": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.09}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:22",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.47, \"device_consistency_score\": 0.58}",
-     "official": "{\"bot_probability_index\": 0.33, \"device_consistency_score\": 0.91}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:23",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.21, \"device_consistency_score\": 0.98}",
-     "official": "{\"bot_probability_index\": 0.95, \"device_consistency_score\": 0.48}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:30",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.82, \"device_consistency_score\": 0.57}",
-     "official": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.11}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:33",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.19}",
-     "official": "{\"bot_probability_index\": 0.71, \"device_consistency_score\": 0.14}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:42",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.64, \"device_consistency_score\": 0.92}",
-     "official": "{\"bot_probability_index\": 0.31, \"device_consistency_score\": 0.62}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:75",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.53, \"device_consistency_score\": 0.34}",
-     "official": "{\"bot_probability_index\": 0.71, \"device_consistency_score\": 0.12}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:96",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.99, \"device_consistency_score\": 0.23}",
-     "official": "{\"bot_probability_index\": 0.67, \"device_consistency_score\": 0.34}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:97",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.08, \"device_consistency_score\": 0.79}",
-     "official": "{\"bot_probability_index\": 0.37, \"device_consistency_score\": 0.89}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:102",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.19}",
-     "official": "{\"bot_probability_index\": 0.75, \"device_consistency_score\": 0.06}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:email_intent:126",
      "i": 0,
      "name": "get_product_price",
-     "ours": "{\"product_id\": \"P45W6X\", \"listing_price\": 69.99}",
-     "official": "{\"product_id\": \"P45W6X\", \"listing_price\": 0.0}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:email_intent:126",
      "i": 1,
      "name": "get_product_description",
-     "ours": "{\"product_id\": \"P45W6X\", \"product_description\": \"LED desk lamp\"}",
-     "official": "{\"product_id\": \"P45W6X\", \"product_description\": \"Meal replacement\"}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:email_intent:126",
      "i": 2,
      "name": "get_inventory_status",
-     "ours": "{\"product_id\": \"P45W6X\", \"marketplace_id\": \"US\", \"current_stock\": 85}",
-     "official": "{\"product_id\": \"P45W6X\", \"marketplace_id\": \"US\", \"current_stock\": 0}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:107",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.26, \"device_consistency_score\": 0.54}",
-     "official": "{\"bot_probability_index\": 0.21, \"device_consistency_score\": 0.66}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:129",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.59, \"device_consistency_score\": 0.04}",
-     "official": "{\"bot_probability_index\": 0.46, \"device_consistency_score\": 0.11}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     },
     {
      "id": "oracle:content_flagging:160",
      "i": 0,
      "name": "calculateBotProbabilityIndex",
-     "ours": "{\"bot_probability_index\": 0.59, \"device_consistency_score\": 0.86}",
-     "official": "{\"bot_probability_index\": 0.62, \"device_consistency_score\": 0.57}"
+     "oursSha256": null,
+     "officialSha256": null,
+     "note": "contents removed after the run (row data); 160-character previews were all that was recorded"
     }
    ],
    "differCount": 23
@@ -878,5 +901,6 @@
    "stepLimitRows": 0,
    "meanSteps": 2
   }
- }
+ },
+ "note": "Repo copy: tool-result contents removed (CC BY-NC row data). Produced by parity.mjs before that change; counts unchanged."
 }

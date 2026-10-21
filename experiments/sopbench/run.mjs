@@ -5,14 +5,15 @@
 // file mailbox (tool.mjs) while ONE sandboxed `claude -p` session (src/executors/claude-code.mjs) works the row with
 // upstream's function-calling prompt (the SOP, the task lines) and returns a <final_output> JSON; the answer is graded
 // host-side twice: upstream's verdict (bridge grade: the real Evaluator.run_single_task, plus the JS port where it
-// applies) and our strict verdict (Python and JS, which must agree). Live files stay outside the repo; results are copied
-// into research/sopbench-20261021/runs/<run-id>/ at the end.
+// applies) and our strict verdict (Python and JS, which must agree). Live files stay outside the repo; the aggregate summary is copied
+// into research/sopbench-20261021/runs/<run-id>/ at the end (per-row records: ROWS_ROOT, never the repo).
 //
 //   node experiments/sopbench/run.mjs --model claude-haiku-5-5 --cap 8 [--rows-per-sop 20] [--sops a,b] [--concurrency 3]
 //   node experiments/sopbench/run.mjs --scripted oracle|wrong|labelswap|gaming|empty [--sops ...]   ($0: no model)
 // Options: --budget 0.25 (USD per session, reserved against --cap) --max-steps 10 (tool steps per row: upstream's
 //   function-calling agent makes at most 10 model calls) --timeout-min 10 --effort low|medium|high --run-id ID
-//   --live DIR --out DIR --no-copy --keep (workdirs) --resume --sealed --freeze FILE (sealed rows; refused without both)
+//   --live DIR --out DIR (the repo copy: summary.json only) --no-copy --keep (workdirs) --resume --sealed --freeze FILE
+//   (sealed rows; refused without both). Per-row records (answers, grades) go to ROWS_ROOT/<run-id>/, outside the repo.
 //   --exclude a,b (default for model runs: patient_intake, pending the owner's scope decision; NOTES.md §7)
 // Split hygiene: rows come from SPLIT.json dev rows (build then repair); assertRows here and allowed_rows in the bridge
 // refuse sealed rows unless --sealed is given with a freeze file naming this split.
@@ -32,6 +33,8 @@ import { finalOutputText, strictVerdict, upstreamVerdict } from './scorer.mjs';
 
 export const DEFAULTS = Object.freeze({ budgetUsd: 0.25, concurrency: 3, maxSteps: 10, timeoutMin: 10, rowsPerSop: 20, tools: ['Bash'] });
 export const MODEL_EXCLUDE = Object.freeze(['patient_intake']);
+/** Per-row records live outside the repo (CC BY-NC upstream-derived values); research/ keeps aggregates only. */
+export const ROWS_ROOT = '/var/tmp/foundry-work/sopbench-rows';
 const INFRA_FAULT = /ENOSPC|EDQUOT|EMFILE|ENFILE|No usable temporary directory/;
 export const isEnvFault = r => ENV_FAULTS.has(r?.sessionError) || INFRA_FAULT.test(r?.harnessError ?? '');
 /** The benchmark's own distribution, for the L5 audit (the AutomationBench pattern in accounting.mjs does not cover it). */
@@ -323,7 +326,8 @@ export async function runRows(o) {
   const bySop = Object.fromEntries(sops.map(s => {
     const rs = results.filter(r => r.sop === s);
     return [s, { n: rs.length, of: rowsBy[s].length, upstream: mean(rs.map(r => (r.final.upstream ? 1 : 0))), strict: mean(rs.map(r => (r.final.strict ? 1 : 0))),
-      costUsd: rs.reduce((x, r) => x + (r.costUsd ?? 0), 0), meanCostUsd: mean(rs.map(r => r.costUsd ?? 0)), meanSteps: mean(rs.map(r => r.steps ?? 0)) }];
+      costUsd: rs.reduce((x, r) => x + (r.costUsd ?? 0), 0), meanCostUsd: mean(rs.map(r => r.costUsd ?? 0)), meanSteps: mean(rs.map(r => r.steps ?? 0)),
+      upstreamOnlyPasses: rs.filter(r => r.final.upstream && !r.final.strict).length, noFinalOutput: rs.filter(r => !/<final_output>/i.test(r.answerText ?? '')).length }];
   }));
   const graded = results.filter(r => r.grade);
   const sopsWithRows = sops.filter(s => bySop[s].n);
@@ -355,24 +359,18 @@ export async function runRows(o) {
   if (out) {
     mkdirSync(out, { recursive: true });
     cpSync(path.join(live, 'summary.json'), path.join(out, 'summary.json'));
-    // CC BY-NC data stays out of git (ACQUISITION.md): the repo copy keeps each record without its answer text (agents
-    // restate row data), replaced by the text's sha256 and length; the full records go to the ignored experiments/runs/.
-    const full = path.join(REPO, 'experiments/runs/sopbench', runId);
-    mkdirSync(full, { recursive: true });
-    const name = opt.sealed ? 'results.sealed.jsonl' : 'results.jsonl';
-    writeFileSync(path.join(full, name), results.map(r => JSON.stringify(r)).join('\n') + '\n');
-    writeFileSync(path.join(out, name), results.map(r => JSON.stringify(redact(r))).join('\n') + '\n');
-    if (faults.length) writeFileSync(path.join(out, 'results.faults.jsonl'), faults.map(r => JSON.stringify(redact(r))).join('\n') + '\n');
+    // CC BY-NC data stays out of git (ACQUISITION.md): the repo gets the aggregate summary only; per-row records (answers,
+    // graded values) go to ROWS_ROOT/<run-id>/, outside the repo.
+    const rowsDir = path.join(opt.rowsRoot ?? ROWS_ROOT, runId);
+    mkdirSync(rowsDir, { recursive: true });
+    writeFileSync(path.join(rowsDir, opt.sealed ? 'results.sealed.jsonl' : 'results.jsonl'), results.map(r => JSON.stringify(r)).join('\n') + '\n');
+    if (faults.length) writeFileSync(path.join(rowsDir, 'results.faults.jsonl'), faults.map(r => JSON.stringify(r)).join('\n') + '\n');
     summary.copiedTo = out;
+    summary.rowsDir = rowsDir;
+    writeJson(path.join(out, 'summary.json'), summary);
   }
   if (stopped) log(`[sopbench] STOPPED: ${stopped}. ${results.length}/${jobs.length} rows recorded, $${ledger.spent.toFixed(4)} spent.`);
   return { summary, results, stopped, stopKind: stopped ? (stopped.startsWith('the cap') ? 'cap' : 'environment') : null };
-}
-
-/** A record for git: the answer text replaced by its sha256 and length (the full record stays in experiments/runs/). */
-export function redact(r) {
-  const { answerText, ...rest } = r;
-  return answerText === undefined ? rest : { ...rest, answerSha256: sha256(answerText), answerChars: answerText.length };
 }
 
 function cliVersion() { try { return execFileSync('claude', ['--version'], { encoding: 'utf8', timeout: 30_000 }).trim(); } catch { return null; } }
