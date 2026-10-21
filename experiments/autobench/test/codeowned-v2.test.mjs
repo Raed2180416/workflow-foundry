@@ -208,7 +208,20 @@ test('4 app-faithful compile: a post compiles to its own app (never Slack for an
   // Kinds: case-insensitive, singular or plural; the listing's kind is used.
   assert.equal(sameKind('Tasks', 'task'), true);
   assert.equal(sameKind('cards', 'Card'), true);
-  assert.equal(sameKind('cards', 'card_list'), false);
+  assert.equal(sameKind('event_list', 'Events'), true);                         // a '<kind>_list' listing holds <kind> records
+  assert.equal(sameKind('cards', 'card_note'), false);
+  // A kind named with its parent kind is the child kind, in the listing's name.
+  const cal = { ...INV, connected: [...INV.connected, 'google_calendar'], records: [...INV.records, rec('google_calendar:calendar_list:team', { id: 'team', summary: 'Team' }), rec('google_calendar:event_list:e1', { id: 'e1', summary: 'Standup' })] };
+  assert.deepEqual(kindFor({ app: 'google_calendar', target: 'the team calendar', statement: 'Create a calendar event for the dock inspection' }, cal), { kind: 'event_list', parent: { param: 'calendarId', kind: 'calendar' } });
+  // A child kind whose listing never names a parent (events listed per calendar): any new record of the kind with the values.
+  const ev = { id: 'P9', type: 'child_created', hard: true, params: { parent: 'google_calendar:calendar_list:team', kind: 'event_list', values: ['Dock inspection'] } };
+  assert.equal(evaluate(ev, cal, { ...cal, records: [...cal.records, rec('google_calendar:event_list:e2', { id: 'e2', summary: 'Dock inspection' })] }).pass, true);
+  assert.equal(evaluate(ev, cal, cal).pass, false);
+  // Where the listing does name the parent, a new record must name this one.
+  const tk = { records: [rec('zendesk:tickets:7', { id: 7 }), rec('zendesk:tickets:8', { id: 8 }), rec('zendesk:comments:c1', { id: 'c1', ticket: 8, body: 'old' })] };
+  const cm = { id: 'P10', type: 'child_created', hard: true, params: { parent: 'zendesk:tickets:7', kind: 'comment', values: ['Replace the hinge'] } };
+  assert.equal(evaluate(cm, tk, { records: [...tk.records, rec('zendesk:comments:c2', { id: 'c2', ticket: 8, body: 'Replace the hinge' })] }).pass, false);
+  assert.equal(evaluate(cm, tk, { records: [...tk.records, rec('zendesk:comments:c3', { id: 'c3', ticket: 7, body: 'Replace the hinge' })] }).pass, true);
   assert.deepEqual(kindFor({ app: 'salesforce', target: 'a new follow-up task', statement: 'Create a task for the contact' }, INV), { kind: 'task', parent: null });
   // A comment on an existing card is a child record.
   const comment = { id: 'R1', polarity: 'positive', action: 'create_record', app: 'trello', target: 'trello:cards:k1', statement: 'add a comment to the dock repair card', source: 'request', fields: [{ name: 'text', quote: 'Replace the hinge', source: 'trello:cards:k1' }] };

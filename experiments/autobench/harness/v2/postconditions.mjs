@@ -35,7 +35,9 @@ export const channelsOf = app => new Set(rowsOf(app).map(r => r.channel).filter(
 export const createKindsOf = app => rowsOf(app).filter(r => r.effect === 'create').map(r => ({ kind: r.kind, parent: r.parent }));
 const singular = w => { const s = String(w ?? '').toLowerCase().replace(/[^a-z0-9_]/g, ''); return s.length > 3 && /ies$/.test(s) ? `${s.slice(0, -3)}y` : s.length > 3 && /(ches|shes|xes|zes|sses)$/.test(s) ? s.slice(0, -2) : s.length > 3 && /s$/.test(s) && !/(ss|us|is)$/.test(s) ? s.slice(0, -1) : s; };
 /** Kind names match case-insensitively, singular or plural (ride-along 7). */
-export const sameKind = (a, b) => Boolean(a && b) && singular(a) === singular(b);
+/** A record kind's key: singular, case-insensitive, and a listing named '<kind>_list' holds records of <kind>. */
+const kindKey = k => singular(String(k ?? '').replace(/_list$/i, ''));
+export const sameKind = (a, b) => Boolean(a && b) && kindKey(a) === kindKey(b);
 /** Apps the re-read can list (an enumeration plan entry that is not a probe), and google_sheets through google_drive. */
 export const observable = app => app === 'google_sheets' || ENUM_PLAN.some(e => e.app === app && !e.probe);
 const l0Kinds = app => ENUM_PLAN.filter(e => e.app === app).flatMap(e => e.l0.map(c => c.kind));
@@ -257,11 +259,14 @@ const CREATE_VERB = /^(create|add|log|open|new|insert|schedule|make|file|raise|b
 export function kindFor(item, inv) {
   const toks = s => String(s ?? '').replace(new RegExp(PTR_RE.source, 'g'), ' ').toLowerCase().replace(/[^a-z0-9_]+/g, ' ').trim().split(' ').filter(Boolean);
   const tt = toks(item.target), st = toks(item.statement);   // record pointers name the parent, not the new kind
-  const forms = k => { const s = singular(k); return s.length >= 3 ? new Set([s, `${s}s`, `${s}es`, s.replace(/y$/, 'ies')]) : new Set(); };
+  const forms = k => { const s = kindKey(k); return s.length >= 3 ? new Set([s, `${s}s`, `${s}es`, s.replace(/y$/, 'ies')]) : new Set(); };
   const at = (k, ws, from = 0) => { const f = forms(k); const i = ws.findIndex((w, j) => j >= from && f.has(w)); return i; };
   const table = createKindsOf(item.app);
   const listed = [...new Set((inv?.records ?? []).filter(r => r.app === item.app).map(r => r.kind))].map(k => ({ kind: k, parent: null }));
-  const named = [...table, ...listed].filter(k => at(k.kind, tt) >= 0 || at(k.kind, st) >= 0);
+  let named = [...table, ...listed].filter(k => at(k.kind, tt) >= 0 || at(k.kind, st) >= 0);
+  // A kind named together with its parent kind ("a calendar event", "a note on the card") is the child.
+  const parents = new Set(table.filter(t => t.parent && named.some(n => sameKind(n.kind, t.kind))).map(t => kindKey(t.parent.kind)));
+  if (named.some(n => !parents.has(kindKey(n.kind)))) named = named.filter(n => !parents.has(kindKey(n.kind)));
   if (!named.length) return null;
   const verb = st.findIndex(w => CREATE_VERB.test(w));
   const rank = k => (at(k.kind, tt) >= 0 ? at(k.kind, tt) : 1000 + (verb >= 0 && at(k.kind, st, verb) >= 0 ? at(k.kind, st, verb) : 1000 + at(k.kind, st)));
@@ -465,7 +470,17 @@ export function evaluate(pc, before, after) {
       if (best) return best.miss.length ? { pass: false, evidence: `new ${P.kind} ${best.r.ptr} lacks ${best.miss.map(v => `"${v}"`).join(', ')}` } : { pass: true, evidence: `${P.kind} ${best.r.ptr}` };
       const ch = d.changed.find(c => c.after.ptr === P.parent);
       if (ch) { const miss = P.values.filter(v => !hasValue(recordText(ch.after.data), v)); return miss.length ? { pass: false, evidence: `${P.parent} changed but lacks ${miss.map(v => `"${v}"`).join(', ')}` } : { pass: true, evidence: `${P.parent} now carries the values` }; }
-      if (![...before.records, ...after.records].some(r => r.app === app && sameKind(r.kind, P.kind))) return { pass: null, evidence: `unobservable: ${app} ${P.kind} records are not listed`, unobservable: true };
+      const ofKind = [...before.records, ...after.records].filter(r => r.app === app && sameKind(r.kind, P.kind));
+      if (!ofKind.length) return { pass: null, evidence: `unobservable: ${app} ${P.kind} records are not listed`, unobservable: true };
+      // A listing whose records of this kind never name a parent (events listed per calendar, say) cannot tie a new one to
+      // its parent: then any new record of the kind carrying the values counts.
+      const parentKind = String(P.parent).split(':')[1];
+      const parentIds = new Set(before.records.filter(r => r.app === app && r.kind === parentKind).map(r => String(r.id)));
+      const tied = ofKind.some(r => Object.values(r.data ?? {}).some(v => parentIds.has(String(v))));
+      if (!tied) {
+        const loose = d.added.filter(r => r.app === app && sameKind(r.kind, P.kind)).map(r => ({ r, miss: P.values.filter(v => !hasValue(recordText(r.data), v)) })).sort((x, y) => x.miss.length - y.miss.length)[0];
+        if (loose) return loose.miss.length ? { pass: false, evidence: `new ${P.kind} ${loose.r.ptr} lacks ${loose.miss.map(v => `"${v}"`).join(', ')}` } : { pass: true, evidence: `${P.kind} ${loose.r.ptr} (the listing does not name its parent)` };
+      }
       return { pass: false, evidence: `no new ${P.kind} on ${P.parent}` };
     }
     case 'sheet_row':
