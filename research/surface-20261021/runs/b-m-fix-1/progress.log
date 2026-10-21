@@ -1,0 +1,4 @@
+B-M W1: ready weekly-report verified=true refusal=null trap=- $0.0000 tok=2816 3s
+B-M W2: ready weekly-report verified=true refusal=null trap=- $0.0000 tok=3044 3s
+B-M W3: ready weekly-report verified=true refusal=null trap=- $0.0000 tok=5415 5s
+B-M I1: ready invoice-chase verified=true refusal=null trap=false $0.0000 tok=4458 6s
