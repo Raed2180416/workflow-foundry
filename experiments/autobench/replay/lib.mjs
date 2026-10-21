@@ -14,8 +14,8 @@ import { fileURLToPath } from 'node:url';
 import { BRIDGE, VENV_PY, readJson, startServe } from '../lib.mjs';
 import { bridgeClient } from '../harness/bridge-client.mjs';
 import { buildInventory, dateOf, isLoadStamp } from '../harness/v2/inventory.mjs';
-import { applyDecisions, mergeLedgers, normalizeLedger, parseJsonReply, settleByCode, sourceMap, typeLedger } from '../harness/v2/ledger.mjs';
-import { postconditionsFromLedger, validateMapped } from '../harness/v2/postconditions.mjs';
+import { applyDecisions, majorityOf, mergeLedgers, normalizeLedger, parseJsonReply, settleByCode, sourceMap, typeLedger } from '../harness/v2/ledger.mjs';
+import { applyMapped, postconditionsFromLedger } from '../harness/v2/postconditions.mjs';
 import { PIPELINE_DEFAULTS } from '../harness/v2/codeowned.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -116,23 +116,19 @@ export function recompileV2({ rec, inv, P = PIPELINE_DEFAULTS, replies = null, a
   }
   applyDecisions(merged, decisions);
   const typing = typeLedger(merged, sources, inv, P);
-  const majority = Math.ceil(merged.readers / 2);
+  const majority = majorityOf(merged);
   let pcs = postconditionsFromLedger(merged, inv, { sources, P, majority });
   const sat = pcs.satisfiability, stats = pcs.stats;
   let mappedFromRecord = 0;
   const pmText = pcmap === undefined ? rec.pcmapReply : pcmap;
   const pm = pmText ? parseJsonReply(pmText) : null;
   if (pm?.checks) {
+    // The pipeline's own mapping step (postconditions.mjs applyMapped); a RECORDED reply answered v1's item ids, so its
+    // requirement is matched to the v2 item by statement.
     const v1Items = rec.v1.ledgers?.merged?.items ?? [];
-    for (const c of pm.checks) {
-      const stmt = pcmap === undefined ? v1Items.find(i => i.id === String(c?.requirement))?.statement : null;
-      const item = merged.items.find(i => (stmt ? i.statement === stmt : i.id === String(c?.requirement)) && pcs.some(p => p.item === i.id && p.type === 'judged' && p.polarity === 'positive'));
-      const v = item ? validateMapped(c, sources, inv, { item, majority, P }) : null;
-      if (!v) continue;
-      const idx = pcs.findIndex(p => p.item === item.id && p.type === 'judged');
-      pcs[idx] = { ...pcs[idx], type: c.type, params: v.params, app: c.type.startsWith('gmail') ? 'gmail' : c.type.startsWith('slack') ? 'slack' : v.params.app ?? pcs[idx].app, hard: item.support >= majority && (v.hardValue ?? true), why: 'mapped (recorded reply)' };
-      mappedFromRecord += 1;
-    }
+    const judgedPositive = i => pcs.some(p => p.item === i.id && p.type === 'judged' && p.polarity === 'positive');
+    const itemFor = c => { const stmt = pcmap === undefined ? v1Items.find(i => i.id === String(c?.requirement))?.statement : null; return merged.items.find(i => (stmt ? i.statement === stmt : i.id === String(c?.requirement)) && judgedPositive(i)); };
+    ({ pcs, mapped: mappedFromRecord } = applyMapped(pcs, pm, { itemFor, sources, inv, majority, P, why: pcmap === undefined ? 'mapped (recorded reply)' : 'mapped by the mapping call; values found in sources' }));
   }
   pcs = pcs.map((p, i) => ({ ...p, id: `P${i + 1}` }));
   pcs.satisfiability = sat; pcs.stats = stats;

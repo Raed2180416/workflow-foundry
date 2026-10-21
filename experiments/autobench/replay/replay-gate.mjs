@@ -16,7 +16,7 @@
 //   node experiments/autobench/replay/replay-gate.mjs --lint --from DIR [--run DIR] [--out FILE]
 //     (P0: replays the pre-send lint over every outbound send in the recorded act windows, with the gate each task's
 //      ledger-replay output compiles; every refusal is listed for review)
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { DEFAULT_RUN, actWindow, aligned, inventoryV2, playback, recompileV2, recorded, round0Cut, runTaskList, served } from './lib.mjs';
@@ -29,10 +29,11 @@ import { PIPELINE_DEFAULTS } from '../harness/v2/codeowned.mjs';
 
 export const TARGETS = Object.freeze({ alignedHardFalseRejects: 25, hardFalseAccepts: 28, passingWorldsRejected: 3, clauseOrSlotShownExact: 0, wrongAppChecks: 0 });
 
-/** Class of one check verdict against the grader's assertions at the same point. */
+/** Class of one check verdict against the grader's assertions at the same point. An undecided check aligned with a
+ * failing assertion is 'undecided-failing': a false accept the null verdict hides (counted in the honest total). */
 export function classify(pc, pass, assertions) {
   const A = aligned(pc, assertions);
-  if (pass === null || pass === undefined) return { cls: 'undecided', aligned: A.map(x => x.i) };
+  if (pass === null || pass === undefined) return { cls: A.some(x => !x.a.passed) ? 'undecided-failing' : 'undecided', aligned: A.map(x => x.i) };
   if (pass === false) return { cls: !A.length ? 'FR-unaligned' : A.every(x => x.a.passed) ? 'FR-aligned' : 'TR', aligned: A.map(x => x.i) };
   return { cls: A.some(x => !x.a.passed) ? 'FA' : A.length ? 'TA' : 'neutral', aligned: A.map(x => x.i) };
 }
@@ -51,12 +52,14 @@ export async function gateTask({ runDir, task, work, P = PIPELINE_DEFAULTS }) {
   const pb = await playback({ runDir, task, cut, outFile: path.join(dir, 'playback.json'), cwd: path.join(dir, 'pbcwd') });
   const chk = await served({ runDir, task, world: pb.world, liveDir: path.join(dir, 'round0') }, client => runChecks({ client, inv, pcs, maxSteps: P.checkSteps, judge: null }));
   const assertions = pb.assertions;
-  const v2 = chk.results.map(r => ({ id: r.pc.id, type: r.pc.type, hard: r.pc.hard, pass: r.pass, observable: r.observable, evidence: String(r.evidence ?? '').slice(0, 200), ...classify(r.pc, r.pass, assertions) }));
+  const v2 = chk.results.map(r => ({ id: r.pc.id, type: r.pc.type, hard: r.pc.hard, pass: r.pass, observable: r.observable, notReread: Boolean(r.notReread), evidence: String(r.evidence ?? '').slice(0, 200), ...classify(r.pc, r.pass, assertions) }));
   // v1 at the same point: the recorded round-0 verdicts of the recorded checks.
   const v1pcs = rec.v1.postconditions?.pcs ?? [];
   const v1 = (rec.v1.checks[0] ?? []).map(c => { const pc = v1pcs.find(p => p.id === c.id); return pc ? { id: c.id, type: c.type, hard: c.hard, pass: c.pass, ...classify(pc, c.pass, assertions) } : null; }).filter(Boolean);
   const count = (rows, cls) => rows.filter(r => r.hard && r.cls === cls).length;
-  const sum = rows => ({ checks: rows.length, hard: rows.filter(r => r.hard).length, hardFail: rows.filter(r => r.hard && r.pass === false).length, FRaligned: count(rows, 'FR-aligned'), FRunaligned: count(rows, 'FR-unaligned'), FA: count(rows, 'FA'), TA: count(rows, 'TA'), TR: count(rows, 'TR'), neutral: count(rows, 'neutral'), nullHard: count(rows, 'undecided') });
+  const sum = rows => ({ checks: rows.length, hard: rows.filter(r => r.hard).length, hardFail: rows.filter(r => r.hard && r.pass === false).length, FRaligned: count(rows, 'FR-aligned'), FRunaligned: count(rows, 'FR-unaligned'), FA: count(rows, 'FA'), TA: count(rows, 'TA'), TR: count(rows, 'TR'), neutral: count(rows, 'neutral'),
+    nullHard: count(rows, 'undecided') + count(rows, 'undecided-failing'), nullHardFailing: count(rows, 'undecided-failing'),
+    nullHardUnobservable: rows.filter(r => r.hard && (r.pass === null || r.pass === undefined) && r.observable === false).length, nullHardNotReread: rows.filter(r => r.hard && (r.pass === null || r.pass === undefined) && r.notReread).length });
   const s2 = sum(v2), s1 = sum(v1);
   const v1Today = rec.v1.ledgers?.merged?.today?.value ?? null, v2Today = merged.today?.value ?? null;
   return {
@@ -71,8 +74,12 @@ export function totals(rows) {
   const T = side => {
     const r = rows.map(x => x[side]);
     const add = k => r.reduce((s, x) => s + (x[k] ?? 0), 0);
+    const notRejected = x => !x.graderPass && !x[side].rejects;
     return { tasks: rows.length, checks: add('checks'), hard: add('hard'), alignedHardFalseRejects: add('FRaligned'), unalignedHardFalseRejects: add('FRunaligned'), hardFalseAccepts: add('FA'), hardTrueAccepts: add('TA'), hardTrueRejects: add('TR'), hardNeutral: add('neutral'), nullHard: add('nullHard'),
-      passingWorldsRejected: rows.filter(x => x.graderPass && x[side].rejects).length, failingWorldsAccepted: rows.filter(x => !x.graderPass && !x[side].rejects).length,
+      // Honest false accepts: hard checks that pass on a failing assertion, plus hard checks left undecided on one.
+      nullHardOnFailing: add('nullHardFailing'), honestHardFalseAccepts: add('FA') + add('nullHardFailing'), nullHardUnobservable: add('nullHardUnobservable'), nullHardNotReread: add('nullHardNotReread'),
+      passingWorldsRejected: rows.filter(x => x.graderPass && x[side].rejects).length, failingWorldsAccepted: rows.filter(notRejected).length,
+      failingWorldsAcceptedClean: rows.filter(x => notRejected(x) && !(x[side].nullHard ?? 0)).length, failingWorldsUndecided: rows.filter(x => notRejected(x) && (x[side].nullHard ?? 0) > 0).length,
       acceptedWithNullHard: rows.filter(x => !x[side].rejects && (x[side].nullHard ?? 0) > 0).length };
   };
   const v2 = { ...T('v2'), clauseOrSlotShownExact: rows.reduce((s, x) => s + x.v2.clauseOrSlotShown, 0), wrongAppChecks: rows.reduce((s, x) => s + x.v2.wrongApp, 0) };
@@ -106,7 +113,7 @@ export function lintTask({ rec, pcs, merged, P = PIPELINE_DEFAULTS }) {
 // ---------------------------------------------------------------------------------------------------------------
 
 async function pool(items, n, fn) { let i = 0; await Promise.all(Array.from({ length: Math.max(1, Math.min(n, items.length)) }, async () => { while (i < items.length) { const k = i++; await fn(items[k], k); } })); }
-function args(argv) { const a = {}; for (let i = 0; i < argv.length; i++) { const k = argv[i].replace(/^--/, ''); if (['lint'].includes(k)) a[k] = true; else a[k] = argv[++i]; } return a; }
+function args(argv) { const a = {}; for (let i = 0; i < argv.length; i++) { const k = argv[i].replace(/^--/, ''); if (['lint', 'keep'].includes(k)) a[k] = true; else a[k] = argv[++i]; } return a; }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const a = args(process.argv.slice(2));
@@ -122,18 +129,21 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       rows.push({ task, ...lintTask({ rec: recorded(runDir, task), pcs: c.pcs, merged: c.merged }) });
     }
     const refusals = rows.flatMap(r => (r.refusals ?? []).map(x => ({ task: r.task, ...x })));
-    const res = { rows, refusals: refusals.length, autoTrue: refusals.filter(x => x.auto.startsWith('true')).length, review: refusals.filter(x => !x.auto.startsWith('true')).length,
-      rule: 'P0: preSendLint on only if >= 2 true refusals and <= 1 false refusal (every refusal reviewed by hand)' };
+    const missing = rows.filter(r => r.missing).map(r => r.task);
+    const res = { rows, tasks: tasks.length, missing, complete: !missing.length, refusals: refusals.length, autoTrue: refusals.filter(x => x.auto.startsWith('true')).length, review: refusals.filter(x => !x.auto.startsWith('true')).length,
+      rule: 'P0: preSendLint on only if >= 2 true refusals and <= 1 false refusal (every refusal reviewed by hand), over every task (a missing compiled.json leaves the rule unjudged)' };
     if (a.out) writeFileSync(a.out, JSON.stringify(res, null, 1));
-    process.stdout.write(`${JSON.stringify({ refusals: res.refusals, autoTrue: res.autoTrue, review: res.review }, null, 1)}\n`);
+    process.stdout.write(`${JSON.stringify({ tasks: res.tasks, missing: res.missing, refusals: res.refusals, autoTrue: res.autoTrue, review: res.review }, null, 1)}\n`);
     for (const x of refusals) process.stdout.write(`- ${x.task} step ${x.step} call ${x.call}: ${x.rule} to ${x.recipient} "${x.literal}" -> ${x.auto}\n`);
+    if (missing.length) { process.stderr.write(`[replay-gate --lint] ${missing.length} task(s) have no compiled.json: the lint rule is not judged on a subset (${missing.join(', ')})\n`); process.exit(1); }
   } else {
     const work = a.work ?? path.join(os.tmpdir(), `a1c-v2-replay-gate-${Date.now()}`);
     mkdirSync(work, { recursive: true });
     const rows = [], errors = [];
     await pool(tasks, Number(a.concurrency ?? 2), async task => {
-      try { const r = await gateTask({ runDir, task, work }); rows.push(r); process.stderr.write(`[replay-gate] ${task}: grader ${r.graderPass ? 'pass' : 'fail'}; v2 hard ${r.v2.hard}, fail ${r.v2.hardFail} (FR ${r.v2.FRaligned}+${r.v2.FRunaligned}u, FA ${r.v2.FA}); v1 hard fail ${r.v1.hardFail} (FR ${r.v1.FRaligned}+${r.v1.FRunaligned}u, FA ${r.v1.FA})\n`); }
+      try { const r = await gateTask({ runDir, task, work }); rows.push(r); process.stderr.write(`[replay-gate] ${task}: grader ${r.graderPass ? 'pass' : 'fail'}; v2 hard ${r.v2.hard}, fail ${r.v2.hardFail} (FR ${r.v2.FRaligned}+${r.v2.FRunaligned}u, FA ${r.v2.FA}, null ${r.v2.nullHard}); v1 hard fail ${r.v1.hardFail} (FR ${r.v1.FRaligned}+${r.v1.FRunaligned}u, FA ${r.v1.FA})\n`); }
       catch (e) { errors.push({ task, error: String(e?.stack ?? e).slice(0, 1500) }); process.stderr.write(`[replay-gate] ${task}: ERROR ${String(e?.message ?? e).slice(0, 300)}\n`); }
+      if (!a.keep) rmSync(path.join(work, task), { recursive: true, force: true });   // world copies: bounded disk
     });
     rows.sort((x, y) => tasks.indexOf(x.task) - tasks.indexOf(y.task));
     const res = { evidence: 'development/diagnostic, in-sample (devTrain dev60, recorded a1c-dev60-dn replies; automatic alignment)', run: runDir, work, totals: totals(rows), errors, rows };
