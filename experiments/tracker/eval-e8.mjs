@@ -3,19 +3,64 @@
 // the frozen gold (ids, U-list, clause anchors) mechanically, and maps a build's failing requirements to the SPEC-E ids
 // they cover.
 //
-//   node experiments/tracker/eval-e8.mjs score --ledger L.json [--ledger L2.json ...] --gold gold.json --text SPEC-E.md
+//   node experiments/tracker/eval-e8.mjs score --ledger L.json [--ledger L2.json ...] [--gold gold.json] [--text SPEC-E.md]
 //   node experiments/tracker/eval-e8.mjs adjudicate --ledger L.json --build solver.mjs     (oracle join; analyst only)
+//
+// Scoring is against the frozen SPEC-E only (FROZEN_SPEC_E: git 48535bb, the text gold.json's spans and anchors were
+// written on). The working-tree SPEC-E has moved since the freeze (lines shift by 7 before §4 as of 2026-10-21), and a
+// moved text makes every span wrong and some anchors unlocatable (the scorer used to crash on a null anchor). `score`
+// therefore reads the frozen revision from git by default, and scoreExtraction refuses any text, or any ledger, whose
+// sha256 is not the gold's (compromise register E1, FIXES Action 3).
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { indexText } from './ledger.mjs';
+import { indexText, isNormative } from './ledger.mjs';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const sha256 = s => createHash('sha256').update(s).digest('hex');
+
+/** The SPEC-E revision the frozen gold was written against (gold.json source.sha256; tracker-e8/freeze.json specE). */
+export const FROZEN_SPEC_E = Object.freeze({ rev: '48535bb', file: 'beds/ebed/e8/spec/SPEC-E.md', sha256: 'c013c04c80636682f46fd9bdbc2bf436712ed53233b03a06ba74bd88824f8cf1' });
+export const GOLD_FILE = 'research/need-router-20261014/tracker-e8/gold.json';
+/**
+ * The go-live paragraph of the frozen SPEC-E (§3.5, lines 91–93; FIXES Action 3 acceptance). Coverage is judged per
+ * sentence that starts on these lines: `normative` counts the sentences the coverage guard flags (ledger.mjs CUES),
+ * which are the ones a missed condition can hide in; `all` adds the descriptive opening sentence.
+ */
+export const GO_LIVE_LINES = Object.freeze([91, 93]);
+
+/** The frozen SPEC-E text, read from git (never from the working tree); throws unless its sha256 is the frozen one. */
+export function frozenSpecE({ rev, file, sha256: want } = FROZEN_SPEC_E, { root = ROOT } = {}) {
+  let text;
+  try { text = execFileSync('git', ['show', `${rev}:${file}`], { cwd: root, encoding: 'utf8', maxBuffer: 16 << 20, stdio: ['ignore', 'pipe', 'pipe'] }); }
+  catch (e) { throw new Error(`cannot read the frozen SPEC-E (git show ${rev}:${file}): ${String(e?.stderr || e?.message || e).trim().slice(0, 200)}`); }
+  const got = sha256(text);
+  if (got !== want) throw new Error(`git show ${rev}:${file} has sha256 ${got}, not the frozen ${want}`);
+  return text;
+}
+
+/** Sentences starting on lines [lo, hi] and the ledger entries whose located quote overlaps each. */
+export function linesCoverage(ledger, text, [lo, hi] = GO_LIVE_LINES) {
+  const ix = indexText(text);
+  const ranges = ledger.requirements.map(r => ({ id: r.id, at: ix.locate(r.quote) })).filter(r => r.at);
+  const rows = ix.sentences().filter(s => s.line >= lo && s.line <= hi).map(s => ({ line: s.line, lineEnd: s.lineEnd, normative: isNormative(s.text), text: s.text,
+    by: ranges.filter(r => r.at.start < s.end && s.start < r.at.end).map(r => r.id) }));
+  const count = xs => ({ sentences: xs.length, covered: xs.filter(s => s.by.length).length });
+  return { lines: [lo, hi], normative: count(rows.filter(s => s.normative)), all: count(rows), rows };
+}
 
 /** Ids whose span contains the requirement's quote span. */
 export const idsOf = (span, spans) => Object.entries(spans).filter(([, s]) => span.line >= s[0] && span.lineEnd <= s[1]).map(([id]) => id);
 
-/** scoreExtraction(ledger, gold, text) → mechanical recall metrics (PREREG §a). */
+/** scoreExtraction(ledger, gold, text) → mechanical recall metrics (PREREG §a). `text` must be the gold's (frozen) text. */
 export function scoreExtraction(ledger, gold, text) {
   const ix = indexText(text);
+  if (gold.source?.sha256 && ix.sha256 !== gold.source.sha256)
+    throw new Error(`the text is not the one the gold was written against (sha256 ${ix.sha256}, gold ${gold.source.sha256}); score against the frozen SPEC-E (frozenSpecE())`);
+  if (ledger.source?.sha256 && ledger.source.sha256 !== ix.sha256)
+    throw new Error(`the ledger was extracted from another text (sha256 ${ledger.source.sha256}, scored text ${ix.sha256}); its spans do not refer to the gold's lines`);
   const ranges = ledger.requirements.map(r => ({ id: r.id, at: ix.locate(r.quote), span: r.span })).filter(r => r.at);
   const covered = spans => Object.keys(spans).filter(id => ranges.some(r => r.span.line >= spans[id][0] && r.span.lineEnd <= spans[id][1]));
   const ids = covered(gold.ids);
@@ -23,6 +68,7 @@ export function scoreExtraction(ledger, gold, text) {
   const us = covered(uSpans);
   const clauses = gold.clauses.map(c => {
     const a = ix.locate(c.anchor);
+    if (!a) throw new Error(`gold clause ${c.id}: its anchor does not locate in the scored text`);
     const hit = ranges.filter(r => r.at.start < a.end && a.start < r.at.end).map(r => r.id);
     const unc = (ledger.uncovered ?? []).some(u => u.line <= a.line && a.lineEnd <= (u.lineEnd ?? u.line));
     return { id: c.id, of: c.of, covered: hit.length > 0, by: hit, inUncovered: unc };
@@ -42,6 +88,10 @@ export function scoreExtraction(ledger, gold, text) {
     nonNormative: nonNormative.map(r => r.id), uncovered: ledger.uncovered?.length ?? 0,
     kinds: ledger.requirements.reduce((m, r) => ({ ...m, [r.kind]: (m[r.kind] ?? 0) + 1 }), {}),
     costUsd: ledger.extractor?.costUsd ?? null, latencyMs: ledger.extractor?.latencyMs ?? null, model: ledger.extractor?.model ?? null,
+    // The second pass over the coverage list (run.mjs gleanLedger), when the ledger had one.
+    gleaned: ledger.requirements.filter(r => r.gleaned).length,
+    gleanCostUsd: ledger.gleaning?.length ? ledger.gleaning.reduce((s, g) => s + (g.costUsd ?? 0), 0) : null,
+    goLive: (({ lines, normative, all, rows }) => ({ lines, normative, all, missed: rows.filter(s => !s.by.length).map(s => `${s.line}: ${s.text.slice(0, 80)}`) }))(linesCoverage(ledger, text)),
   };
 }
 
@@ -85,12 +135,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const args = process.argv.slice(2);
   const get = k => args.flatMap((a, i) => (a === `--${k}` ? [args[i + 1]] : []));
   if (args[0] === 'score') {
-    const gold = JSON.parse(readFileSync(get('gold')[0], 'utf8'));
-    const text = readFileSync(get('text')[0], 'utf8');
+    const gold = JSON.parse(readFileSync(get('gold')[0] ?? path.join(ROOT, GOLD_FILE), 'utf8'));
+    const text = get('text').length ? readFileSync(get('text')[0], 'utf8') : frozenSpecE();   // either way it must hash to the gold's
     for (const f of get('ledger')) console.log(JSON.stringify({ ledger: f, ...scoreExtraction(JSON.parse(readFileSync(f, 'utf8')), gold, text) }));
   } else if (args[0] === 'adjudicate') {
     const ledger = JSON.parse(readFileSync(get('ledger')[0], 'utf8'));
     const r = await adjudicate({ ledger, solverSource: readFileSync(get('build')[0], 'utf8'), log: s => console.error(s) });
     console.log(JSON.stringify(r, null, 1));
-  } else { console.error('usage: eval-e8.mjs score --ledger L.json [...] --gold gold.json --text SPEC-E.md | adjudicate --ledger L.json --build solver.mjs'); process.exit(2); }
+  } else { console.error('usage: eval-e8.mjs score --ledger L.json [...] [--gold gold.json] [--text SPEC-E.md, default: git show 48535bb] | adjudicate --ledger L.json --build solver.mjs'); process.exit(2); }
 }
