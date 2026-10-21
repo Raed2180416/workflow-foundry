@@ -4,6 +4,9 @@ import { CallToolRequestSchema, ListToolsRequestSchema, ListResourcesRequestSche
 import { skillCatalog, readSkill } from './foundry.mjs';
 import { workflowSchema, validateData } from './validate.mjs';
 import { errorData, checkData, FoundryError } from './data.mjs';
+import { needAdvice, needToolSpec } from './need/advice.mjs';
+
+const NEED = needToolSpec('foundry_need_check');
 
 const string = { type: 'string', minLength: 1, maxLength: 30000 };
 const identifier = { type: 'string', minLength: 1, maxLength: 128 };
@@ -49,6 +52,8 @@ export function toolDefinitions(foundry) {
     ['foundry_resume', 'Resume a persisted run, preserving its program and completed effects. Cannot synthesize human answers or approvals.', object({ runId: identifier }, ['runId']), async (args, context) => foundry.publicRun(await foundry.startRun(args.runId, { signal: context?.signal })), false],
     ['foundry_inspect', 'Read run state and verified event history. Local success is distinct from independent task qualification.', object({ runId: identifier }, ['runId']), args => foundry.inspectRun(args.runId), true],
     ['foundry_delivery', 'Check exact request→applied proposal→run identity before reporting an outcome. Rejects mixed versions or unrelated successful runs. Returns local execution state and separately scoped host task-evaluation evidence without claiming general readiness.', object({ requestId: identifier, proposalId: identifier, runId: identifier }, ['requestId', 'proposalId', 'runId']), args => foundry.delivery(args), true]
+    // ROUTER-1 need router: does this request need a workflow at all? Code only, $0, read-only.
+    [NEED.name, NEED.description, NEED.inputSchema, args => needAdvice(args), true]
   ];
   // These are descriptive hints, never the authority mechanism. Execution tools
   // can invoke host-selected external adapters; do not advertise a universally

@@ -125,5 +125,12 @@ Recorded here, with date and reason, if any step above changes after this file i
 - **D2 (same time): Mercury launched through `experiments/need-router/router1/with-inception.sh`** (the key file sourced
   inside the command, as `m3-fill.sh` does), because this session's worktree guard refuses `.` in a command line. Same key,
   same variable, nothing printed.
+- **D3 (2026-10-21T21:45Z, after the Mercury dev pass, before any test call and before the step-4 choice was computed):
+  Mercury test token cap 300,000 instead of 200,000.** The dev pass used 148,583 tokens for 126 calls (1,179 per call, not
+  the ~700 planned): Mercury 3 reasons on every call whatever `reasoning_effort` says (research/mercury-20261021/
+  PROVISIONING.md), median 308 reasoning-heavy output tokens. 7 of 126 dev calls stopped at the frozen 1,000-token output
+  limit with no answer (`MODEL_TRUNCATED`, reasoning_tokens 999); they stay fault rows, are not re-asked, and fall back to
+  the code decision in `router+mercury` (§7). The decoding (maxTokens 1,000) is unchanged. Mercury total stays under the
+  owner's 0.5M: about 15K (author pass) + 0.7K (smoke) + 148.6K (dev) + at most 300K (test).
 - **Diagnostic added (no change to any rule):** a 5-fold dev cluster cross-validation of the fit and threshold rule
   (`fit.mjs --cv`), reported as development evidence only.

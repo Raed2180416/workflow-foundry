@@ -16,6 +16,9 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { validateData } from '../../src/validate.mjs';
 import { errorData } from '../../src/data.mjs';
+import { needAdvice, needToolSpec } from '../core/need.mjs';
+
+const NEED = needToolSpec('need_check');
 
 const id = { type: 'string', minLength: 1, maxLength: 128 };
 const object = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -33,7 +36,7 @@ function say(tool, r) {
     case 'propose_flow':
       if (r.status === 'needs_answers') return `I need one answer first: ${r.questions.map(q => q.question).join(' ')}`;
       if (r.status === 'unsupported' || r.status === 'no_change' || r.status === 'build_failed') return r.reply;
-      return `I drafted “${r.summary.title}” (version ${r.version}). It will: ${r.willDo.join('; ')}. It will not: ${r.willNotDo.join('; ')}. Nothing is running. Next: try it on practice data.`;
+      return `I drafted “${r.summary.title}” (version ${r.version}). It will: ${r.willDo.join('; ')}. It will not: ${r.willNotDo.join('; ')}. Nothing is running. Next: try it on practice data.${r.need && !r.need.needsWorkflow ? ` Note: ${r.need.say}` : ''}`;
     case 'explain_flow': return `“${r.summary.title}” has ${r.summary.steps.length} steps and ${r.summary.checks.length} checks that define done.`;
     case 'dry_run': return r.passed ? `Practice run passed all ${r.checks.length} checks. It would have: ${r.wouldDo.map(w => (DID[w.action] ?? DID.send)(w)).join('; ') || 'taken no outside action'}. Nothing real was sent.`
       : `Practice run did not pass: ${r.headline}`;
@@ -42,6 +45,7 @@ function say(tool, r) {
       : `Waiting for the person to approve. ${r.how}`;
     case 'run_flow': case 'flow_status': return `${r.headline}${r.problem ? ` ${r.problem.what} ${r.problem.next}` : ''}${r.pendingApprovals?.length ? ` The person must approve: ${r.pendingApprovals.map(a => a.step).join('; ')}.` : ''}`;
     case 'list_flows': return `${r.flows.length} flow(s), ${r.proposals.length} draft(s), ${r.waitingForYou} item(s) waiting for the person.`;
+    case 'need_check': return r.say;
     default: return '';
   }
 }
@@ -81,8 +85,13 @@ export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
     ['run_flow', 'Run the current, person-approved version of a flow with an input OBJECT. Unapproved or changed versions are refused. Outside actions (sending) pause until the person approves them.',
       object({ flowId: id, input: flowInput }, ['flowId', 'input']), a => app.run(a), false],
     ['flow_status', 'Status of one run in plain words: what happened, which step failed and what to do, checks, pending approvals, cost.', object({ runId: id }, ['runId']), a => app.status(a), true],
-    ['list_flows', 'List flows, drafts awaiting practice or approval, and how many things are waiting for the person.', object({}), () => app.list(), true]
+    ['list_flows', 'List flows, drafts awaiting practice or approval, and how many things are waiting for the person.', object({}), () => app.list(), true],
+    // ROUTER-1 need router (app/core/need.mjs): read-only, $0.
+    [NEED.name, NEED.description, NEED.inputSchema, a => needAdvice(a), true]
   ];
+  // propose_flow also carries the need router's advice (additive field; code only, $0).
+  const propose = defs[0];
+  propose[4] = async a => { const r = await app.propose(a); return r && r.ok !== false ? { ...r, need: await needAdvice({ request: a.request }) } : r; };
   return defs.map(([name, description, inputSchema, execute, readOnly]) => ({
     name, description, inputSchema, execute,
     annotations: { readOnlyHint: readOnly, destructiveHint: false, idempotentHint: readOnly, openWorldHint: name === 'run_flow' },

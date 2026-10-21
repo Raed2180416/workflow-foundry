@@ -1,0 +1,89 @@
+{
+ "table": [
+  {
+   "judge": "mercury",
+   "delta": 0,
+   "fp": 0,
+   "recall": 1,
+   "judged": 0,
+   "fallbacks": 0
+  },
+  {
+   "judge": "mercury",
+   "delta": 0.1,
+   "fp": 1,
+   "recall": 1,
+   "judged": 2,
+   "fallbacks": 0
+  },
+  {
+   "judge": "mercury",
+   "delta": 0.2,
+   "fp": 2,
+   "recall": 1,
+   "judged": 9,
+   "fallbacks": 0
+  },
+  {
+   "judge": "mercury",
+   "delta": 0.3,
+   "fp": 3,
+   "recall": 1,
+   "judged": 26,
+   "fallbacks": 1
+  },
+  {
+   "judge": "mercury",
+   "delta": 0.4,
+   "fp": 5,
+   "recall": 1,
+   "judged": 83,
+   "fallbacks": 1
+  },
+  {
+   "judge": "haiku",
+   "delta": 0,
+   "fp": 0,
+   "recall": 1,
+   "judged": 0,
+   "fallbacks": 0
+  },
+  {
+   "judge": "haiku",
+   "delta": 0.1,
+   "fp": 1,
+   "recall": 1,
+   "judged": 2,
+   "fallbacks": 0
+  },
+  {
+   "judge": "haiku",
+   "delta": 0.2,
+   "fp": 1,
+   "recall": 1,
+   "judged": 9,
+   "fallbacks": 0
+  },
+  {
+   "judge": "haiku",
+   "delta": 0.3,
+   "fp": 1,
+   "recall": 1,
+   "judged": 27,
+   "fallbacks": 0
+  },
+  {
+   "judge": "haiku",
+   "delta": 0.4,
+   "fp": 2,
+   "recall": 1,
+   "judged": 84,
+   "fallbacks": 0
+  }
+ ],
+ "choice": {
+  "judge": null,
+  "delta": 0
+ },
+ "rule": "PREREG-ROUTER-1 §3 step 4"
+}
