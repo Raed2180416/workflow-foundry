@@ -49,6 +49,20 @@ sealed or claim-bearing result.*
   2026-10-08; `foundry cancel` and `foundry stop-all` landed on 2026-10-09 (see "Cancel and
   stop-all" in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)). It ends in a named engine
   freeze, E1, before any new comparative run.
+- **2026-10-21, evening.** Development evidence only; rows with links are in [RESEARCH.md](docs/RESEARCH.md):
+  - **Pass rate.** Haiku acting with Mercury 3 as planner and checker inside the code-owned harness passes 29/60
+    on AutomationBench dev60, tying Sonnet + A1 (28/60) at about 30% of its cost. devCheck looks 1–2: A1-C and A1
+    both 20/60. The owner's frontier bar is **Opus 5.5 xhigh** (D19); that comparator runs after the SOP sealed run.
+    The bottleneck is verification: in the Mercury arm a clean "all checks pass" was right 17 of 28 times, and 19
+    of 60 tasks were never passed by any arm (orchestrator's dev analysis of the stored runs; the verifier-lab
+    write-up will carry the per-task table). The verifier lab and A1-C v2 are working on it.
+  - **Construction.** BUILDER-1: the template builder verifies 18/21 with Haiku and 18/21 with Mercury, against
+    5/21 one-shot. COMP-1: composition keeps interfaces clean but is inconclusive on correctness (0.918 vs the 0.95 bar).
+  - **In flight.** SOP-Bench phase 2 sealed (k = 3); the OT-0 agent arms, re-running after the session limit voided
+    them; engine v2 (chaos 20 → 35 of 43), held until the sealed and OT-0 runs finish; the need router, heal,
+    reuse (C2), adaptive sub-workflows, game/visual QA, node capabilities, onboarding site and breadth programs.
+  - **Owner asks against the evidence:** [REQUIREMENTS-COVERAGE-20261021.md](research/REQUIREMENTS-COVERAGE-20261021.md);
+    standing operating rules: [OPERATING-PRINCIPLES.md](research/OPERATING-PRINCIPLES.md).
 - **2026-10-21 (cloud session, resumed after the weekly limit).** Development evidence only:
   - **AutomationBench dev60** is complete for 4 arms; Sonnet + the A1 harness is best at 28/60
     ([DEV60-A0-A1](research/automationbench-20261014/runs/DEV60-A0-A1.md)). The code-owned harness A1-C passed review (GO
