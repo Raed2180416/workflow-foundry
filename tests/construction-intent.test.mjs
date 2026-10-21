@@ -13,7 +13,7 @@ import {
   constructFromIntent, constructHarness, createScriptedProvider, detectLeakage, freezeFamily, freezeIntentClass,
   FOUNDRY_IR_LIMITS, INTENT_CLASSES, interpretIntent, ledgerFromGaps, listFamilies, listIntentClasses,
   PRODUCTION_LATTICE, primaryIntentReport, PUBLIC_HARNESS_CATALOG, runConstructionProgram,
-  runIntentProgram
+  runIntentProgram, INTENT_MOTIFS, INTENT_RESPECTING, INTENT_SCENARIOS, INTENT_SPECS, IR_UNSUPPORTED
 } from '../src/construction.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -301,4 +301,26 @@ test('wait crash between charge and waiting restarts wakeAt rather than restorin
   assert.equal(typeof wakeAt2, 'number');
   assert.ok(wakeAt2 > wakeAt1, `expected restarted wakeAt ${wakeAt2} > ${wakeAt1}`);
   assert.equal(FOUNDRY_IR_LIMITS.waitCrashRestartsDeadline, true);
+});
+
+// Compromise register C6 (2026-10-21): the IR limits are stated in several model-facing and grading places. They must
+// change together (the C6 track, #75 with #78), never one alone, or the builder pack contradicts itself.
+test('the durable builder pack, motif, harness, held-out scenario and IR_UNSUPPORTED state the same IR limits', () => {
+  const L = FOUNDRY_IR_LIMITS;
+  const spec = INTENT_SPECS['durable-business-process'];
+  const { intent, publicInterface, ideologicalReasons } = spec.builderPack;
+  const motif = INTENT_MOTIFS['intent:durable-business-process'].find(m => m.id === 'ir-limits-named-not-papered');
+  const why = ideologicalReasons.find(r => r.motif === motif.id).why;
+  assert.equal(why, motif.why);
+  for (const text of [intent, publicInterface.ir, why]) assert.ok(text.includes(L.timerDispatch), `names timerDispatch ${L.timerDispatch}`);
+  assert.equal(/restarts wakeAt/.test(why), L.waitCrashRestartsDeadline);
+  assert.equal(/wait crash restarts the deadline/.test(intent), L.waitCrashRestartsDeadline);
+  assert.ok(publicInterface.ir.includes(`waitCrashRestartsDeadline ${L.waitCrashRestartsDeadline}`));
+  assert.equal(motif.inspect(INTENT_RESPECTING['durable-business-process']), true);
+  const scenario = INTENT_SCENARIOS['durable-business-process'].find(x => x.id === 'ir-limits-named');
+  for (const [k, v] of Object.entries(scenario.expected)) assert.equal(v, L[k], `scenario ir-limits-named ${k}`);
+  for (const entry of IR_UNSUPPORTED) {
+    const [k, v] = entry.split(':');
+    if (k in L) assert.equal(v, String(L[k]), `IR_UNSUPPORTED ${entry}`);
+  }
 });
