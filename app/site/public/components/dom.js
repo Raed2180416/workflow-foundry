@@ -1,5 +1,5 @@
-// DOM helpers. Every value from the workspace, a template or the person is put on the page as text (textContent / text nodes),
-// never as markup: there is no innerHTML anywhere in the site (app/site/test/security.test.mjs greps for it).
+// DOM helpers. Every value from the workspace, a template or the person is put on the page as text (text nodes),
+// never parsed as markup: no string is ever turned into HTML anywhere in the site (app/site/test/security.test.mjs checks).
 export function el(tag, props = {}, ...children) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(props ?? {})) {
