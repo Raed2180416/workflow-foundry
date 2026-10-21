@@ -1,6 +1,7 @@
 // Shared fixtures of the nodecap tests: temp workspaces (removed in t.after), attested catalog entries for the fixture servers, and the
 // owner skills. Development fixtures only.
 import { mkdtempSync, rmSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -59,3 +60,27 @@ export function ticketsEntry(url, { members = TICKET_MEMBERS, credential = { cus
 }
 export const catalogOf = (...entries) => ({ schema: 'foundry-catalog/1', entries });
 export function mkdir(dir) { mkdirSync(dir, { recursive: true }); return dir; }
+
+// ---- skills ----
+export const SKILLS = path.join(FIXTURES, 'skills');
+const sha = file => createHash('sha256').update(readFileSync(file)).digest('hex');
+const PRORATE_IN = { type: 'object', additionalProperties: false, required: ['monthly', 'days', 'daysInMonth'], properties: {
+  monthly: { type: 'number', minimum: 0, maximum: 100000 }, days: { type: 'integer', minimum: 0, maximum: 31 }, daysInMonth: { type: 'integer', minimum: 28, maximum: 31 } } };
+export function skillEntry(id, overrides = {}) {
+  const table = {
+    'refund-policy': { root: path.join(SKILLS, 'refund-policy'), type: 'refund.compute', system: 'policy', objects: ['refund'], verbs: ['compute'],
+      view: { name: 'skill_refund_policy', summary: 'House rule for refund amounts on cancelled subscriptions.' }, intents: ['how much refund'] },
+    'ticket-triage': { root: path.join(SKILLS, 'ticket-triage'), type: 'ticket.classify', system: 'policy', objects: ['ticket'], verbs: ['transform'],
+      view: { name: 'skill_ticket_triage', summary: 'House taxonomy for labelling support tickets.' } },
+    'billing-math': { root: path.join(SKILLS, 'billing-math'), type: 'charge.compute', system: 'policy', objects: ['charge'], verbs: ['compute'],
+      view: { name: 'skill_billing_math', summary: 'House rule for prorating a monthly charge.' },
+      scripts: { prorate: { lang: 'js', path: 'scripts/prorate.js', sha256: sha(path.join(SKILLS, 'billing-math', 'scripts', 'prorate.js')), type: 'charge.prorate', system: 'policy',
+        verbs: ['compute'], objects: ['charge'], inputSchema: PRORATE_IN,
+        outputSchema: { type: 'object', additionalProperties: false, required: ['charge'], properties: { charge: { type: 'number' } } },
+        view: { name: 'skill_billing_prorate', summary: 'Prorate a monthly charge for part of a month (house rounding).', inputSchema: PRORATE_IN } } } },
+    'fast-refunds': { root: path.join(SKILLS, 'third-party', 'fast-refunds'), type: 'refund.compute', system: 'policy', objects: ['refund'], verbs: ['compute'], trust: 'T2', label: 'untrusted:skill.fast-refunds',
+      view: { name: 'skill_fast_refunds', summary: 'Third-party refund procedure (unvetted).' } }
+  };
+  const { root, trust = 'T0', label = 'trusted', ...rest } = structuredClone(table[id]);
+  return { id, kind: 'skill', trust, status: 'active', source: { root }, label, maxTokens: 1200, requires: { tools: [], egress: [], credentials: [], scripts: !!rest.scripts }, ...rest, ...overrides };
+}
