@@ -375,6 +375,23 @@ def mutants(before: dict, after: dict, truth: dict):
         if amt and ("Payment processing" in g["subject"] or "week close" in g["subject"]):   # amounts the policy names
             m("email-body-amount", lambda w, i=i, g=g, a=amt.group(1): [w["gmail"]["messages"][i].__setitem__(
                 f, (g.get(f) or "").replace(a, a[:-1] + str((int(a[-1]) + 1) % 10)) or None) for f in ("body_plain", "body_html")])
+            # a wrong amount that ends in the right one ($14,750.00 for $4,750.00)
+            m("email-body-amount-prefix", lambda w, i=i, g=g, a=amt.group(1): [w["gmail"]["messages"][i].__setitem__(
+                f, (g.get(f) or "").replace("$" + a, "$1" + a) or None) for f in ("body_plain", "body_html")])
+        if amt and "Payment processing" in g["subject"]:
+            # the right amount and a wrong one in the same body
+            wrong = _cents_str(amt.group(1), 5000)
+            m("email-body-second-amount", lambda w, i=i, g=g, x=wrong: [w["gmail"]["messages"][i].__setitem__(
+                f, (g.get(f) or "") + f"\n\nAmount released: ${x}") for f in ("body_plain",)])
+        cnt = re.search(r"Awaiting approval: (\d+)", g.get("body_plain") or "")
+        if cnt and "week close" in g["subject"]:
+            # a wrong count that starts with the right one (Awaiting approval: 37 for 3)
+            m("email-body-count-suffix", lambda w, i=i, g=g, c=cnt.group(0): [w["gmail"]["messages"][i].__setitem__(
+                f, (g.get(f) or "").replace(c, c + "7") or None) for f in ("body_plain", "body_html")])
+        if "vendor relationship suspended" in g["subject"] and inv:
+            # the reply says the opposite of what POLICY.md section 5 rule 1 asks
+            m("email-body-negated", lambda w, i=i, inv=inv.group(0): [w["gmail"]["messages"][i].__setitem__(f, v) for f, v in (
+                ("body_plain", f"Invoice {inv}: the vendor relationship is not suspended any more, we will process it."), ("body_html", None))])
     if not mails:
         m("email-extra", lambda w: _sent(w, "ap-lead@company.example.com", "AP update", "nothing", k[0]))
     for i in posts:
@@ -440,6 +457,17 @@ def equivalents(before: dict, after: dict, truth: dict):
         if amt and "Payment processing" in g["subject"]:
             m("email-amount-plain", lambda w, i=i, g=g, a=amt.group(0): w["gmail"]["messages"][i].__setitem__(
                 "body_plain", (g.get("body_plain") or "").replace(a, a.replace(",", "").replace("$", "USD "))))
+            m("email-amount-twice", lambda w, i=i, g=g, a=amt.group(0): w["gmail"]["messages"][i].__setitem__(
+                "body_plain", (g.get("body_plain") or "") + f"\n\nAmount: {a} ({a.replace('$', '').replace(',', '')} USD)"))
+        line = re.search(r"Logged total: .*Awaiting approval: \d+", g.get("body_plain") or "")
+        if line and "week close" in g["subject"]:
+            m("email-html-only-period", lambda w, i=i, ln=line.group(0): (w["gmail"]["messages"][i].__setitem__("body_plain", ""),
+                                                                         w["gmail"]["messages"][i].__setitem__("body_html", f"<p>{ln}.</p>")))
+        inv = re.search(r"[A-Z]{3}-\d+", g["subject"])
+        if "vendor relationship suspended" in g["subject"] and inv:
+            m("email-suspended-reworded", lambda w, i=i, inv=inv.group(0): [w["gmail"]["messages"][i].__setitem__(f, v) for f, v in (
+                ("body_plain", f"Hello,\n\nWe have suspended the vendor relationship, so invoice {inv} will not be processed.\n\nAP"),
+                ("body_html", None))])
     for i in bills:
         m("bill-vendor-name", lambda w, i=i: w["quickbooks"]["bills"][i].__setitem__("vendor_name", "Typed name"))
         m("bill-memo", lambda w, i=i: w["quickbooks"]["bills"][i].__setitem__("memo", "Logged by the AP automation"))
