@@ -195,8 +195,22 @@ MONTHS = {m: i + 1 for i, m in enumerate(['January', 'February', 'March', 'April
 BOOKKEEPING_PATH = re.compile(
     r"(^|\.)(is_read|read|unread|seen|is_unread|updated_at|updated|modified\w*|last_modified\w*|last_\w*|etag|version|"
     r"label_ids|labels|date_updated|date_modified|\w+_at|\w+_time|\w+_date_time|\w+date)$", re.I)
-TEXT_KEYS = re.compile(r"(body|text|content|message|subject|title|name|summary|description|notes?|comment\w*|desc|"
-                       r"values?|cells|fields|item_name|topic|user_message|email_subject|value_\w+)$", re.I)
+TEXT_WORDS = ('body', 'text', 'content', 'message', 'subject', 'title', 'name', 'summary', 'description', 'note',
+              'comment', 'desc', 'value', 'cells', 'fields', 'topic')
+
+
+class _TextKeys:
+    """Keys whose values are written content (case-insensitive substring), excluding id-like keys."""
+
+    @staticmethod
+    def search(k):
+        k = (k or '').lower()
+        if k == 'id' or k.endswith('_id') or k.endswith('id') and not k.endswith('valid'):
+            return False
+        return any(w in k for w in TEXT_WORDS)
+
+
+TEXT_KEYS = _TextKeys()
 TARGET_KEYS = ['to', 'channel_id', 'channel', 'recipient', 'to_number', 'phone', 'email', 'assignee', 'parent_id',
                'board_id', 'list', 'list_id', 'project', 'projects', 'workspace', 'spreadsheet_id', 'worksheet_id',
                'applicationId', 'tableName', 'parent_page', 'calendarid', 'author_id', 'task_id', 'item_id', 'recordId']

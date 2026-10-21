@@ -145,7 +145,8 @@ class Hygiene(unittest.TestCase):
         pat_task = re.compile(r"\b(sales|finance|hr|marketing|operations|support)\.[a-z0-9]+_[a-z0-9_]+\b")
         pat_assert = re.compile(r"\b[a-z]+_(?:exists|equals|not_exists|contains|not_contains)\w*\b")
         for fn in ('features.py', 'models.py', 'metrics.py'):
-            src = open(os.path.join(HERE, fn)).read()
+            with open(os.path.join(HERE, fn)) as fh:
+                src = fh.read()
             self.assertIsNone(pat_task.search(src), fn)
             self.assertIsNone(pat_assert.search(src), fn)
             self.assertNotIn('dataset.jsonl', src)
