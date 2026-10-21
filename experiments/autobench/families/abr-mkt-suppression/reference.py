@@ -74,6 +74,10 @@ class Suppression:
     def post(self, channel: str, text: str):
         self.call("POST", f"{SLACK}/chat.postMessage", None, {"channel": channel, "text": text})
 
+    def history(self, channel: str) -> list[str]:
+        r = self.call("GET", f"{SLACK}/conversations.history", {"channel": channel, "limit": 1000})
+        return [m.get("text") or "" for m in r.get("messages", [])]
+
     def send(self, to: str, subject: str, body: str):
         raw = f"To: {to}\r\nSubject: {subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n{body}"
         self.call("POST", f"{GMAIL}/messages/send", None, {"raw": base64.urlsafe_b64encode(raw.encode("utf-8")).decode("ascii")})
@@ -185,7 +189,7 @@ class Suppression:
         _, log = self.sheet(COMPLIANCE_LOG)
         conf = ""
         if not self.confirmed_recently(log, email, today):
-            self.send(email, CONFIRM_SUBJECT, f"Hello,\n\nThis confirms that {email} has been removed from all our mailing lists. "
+            self.send(email, CONFIRM_SUBJECT, f"Hello,\n\n{email} has been removed from all our mailing lists. "
                                               f"You will not receive marketing email from us again.\n\nCompany Marketing\n")
             conf = "Sent"
         self.log(today, email, event, "Archived", ref, names, conf)
@@ -311,6 +315,8 @@ class Suppression:
         eff, value = found.get("effective", ""), re.sub(r"\D", "", found.get("new value", ""))
         if param is None or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", eff) or not value:
             raise Undecidable("amendment from compliance could not be read")
+        if self.amendment_logged(eff, param, value):
+            return  # a repeated delivery of an amendment already logged (section 8)
         self.append(POLICY_LOG, {"Effective": eff, "Parameter": param, "Value": value, "Approved by": COMPLIANCE})
 
     def releasable(self, cells: dict, log: list[dict], today: str, key: str) -> bool:
@@ -319,7 +325,17 @@ class Suppression:
         return bool(hd) and hd <= today and not self.logged(log, ref) and not self.duplicate(cells.get("Notes")) \
             and not self.invalid(cells.get("Notes"))
 
+    def amendment_logged(self, eff: str, param: str, value: str) -> bool:
+        _, rows = self.sheet(POLICY_LOG)
+        return any((r.get("Effective", "").strip(), r.get("Parameter", "").strip(), re.sub(r"\D", "", r.get("Value", ""))) == (eff, param, value)
+                   for r in rows)
+
+    def closed(self, today: str) -> bool:
+        return any(t.strip().startswith(f"{today}:") for t in self.history("compliance"))
+
     def on_close(self, p: dict, today: str):
+        if self.closed(today):
+            return  # this close already ran (section 7 step 1)
         for key, ref in (("requests", REQUESTS), ("bounces", BOUNCES)):
             _, rows = self.sheet(ref)
             for cells in rows:

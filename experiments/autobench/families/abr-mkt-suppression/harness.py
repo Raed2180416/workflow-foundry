@@ -52,9 +52,10 @@ def ab():
     if not _AB:
         from automationbench.schema.gmail import Message
         from automationbench.schema.google_sheets import Row
+        from automationbench.schema.mailchimp import MailchimpSubscriber
         from automationbench.schema.world import WorldState
         from automationbench.tools.api.fetch import api_fetch
-        _AB.update(World=WorldState, fetch=api_fetch, Message=Message, Row=Row)
+        _AB.update(World=WorldState, fetch=api_fetch, Message=Message, Row=Row, Member=MailchimpSubscriber)
     return _AB
 
 
@@ -116,6 +117,15 @@ def apply_delta(world, delta: list[dict], at: str):
             row.cells = dict(row.cells, **op["cells"])
         elif kind == "add_email":
             world.gmail.messages.append(A["Message"](**copy.deepcopy(op["message"])))
+        elif kind == "set_member":  # a Mailchimp change made outside the automation (a preference-center re-opt-in)
+            email = op["email"].strip().lower()
+            m = next((x for x in world.mailchimp.subscribers if x.list_id == op["list_id"] and x.email.strip().lower() == email), None)
+            if m is None:
+                world.mailchimp.subscribers.append(A["Member"](id=L.member_id(email), email=email, list_id=op["list_id"],
+                                                               status=op["status"], created_at=to_dt(at), updated_at=to_dt(at)))
+            else:
+                m.status = op["status"]
+                m.updated_at = to_dt(at)
         else:
             raise ValueError(f"unknown delta op {kind}")
 
@@ -303,6 +313,18 @@ def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
             "to", [re.sub(r"@", "+x@", a["gmail"]["messages"][em[0]]["to"][0], count=1)]))
         mut("email-subject", lambda a: a["gmail"]["messages"][em[0]].__setitem__("subject", "You have been unsubscribed"))
         mut("email-body", lambda a: a["gmail"]["messages"][em[0]].update(body_plain="Done.", body_html="<p>Done.</p>"))
+        # one To entry that hides a second address behind ';' (AutomationBench splits recipients on ',' only)
+        mut("semicolon-cc", lambda a: a["gmail"]["messages"][em[0]].__setitem__(
+            "to", [f"Subscriber <{a['gmail']['messages'][em[0]]['to'][0]}>; marketing-ops@{L.ORG}"]))
+        mut("subject-case", lambda a: a["gmail"]["messages"][em[0]].__setitem__("subject", a["gmail"]["messages"][em[0]]["subject"].upper()))
+        conf = [i for i in em if after["gmail"]["messages"][i]["subject"] == L.CONFIRM_SUBJECT]
+        if conf:
+            to = L.addr(after["gmail"]["messages"][conf[0]]["to"][0])
+            for name, body in (("confirm-paraphrase", f"Hi,\n\n{to} has been unsubscribed from every one of our mailing lists.\n"),
+                               ("confirm-negated", f"We have not removed {to} from all our mailing lists; it was removed from the "
+                                                   f"Newsletter only and stays on the others."),
+                               ("confirm-names-list", f"{to} has been removed from all our mailing lists. You stay on Product Updates.")):
+                mut(name, lambda a, body=body: a["gmail"]["messages"][conf[0]].update(body_plain=body, body_html=None))
     if sl:
         mut("drop-slack", lambda a: a["slack"]["messages"].pop(sl[-1]))
         mut("dup-slack", lambda a: a["slack"]["messages"].append(dict(a["slack"]["messages"][sl[0]], ts="1999999999.000001")))
@@ -315,6 +337,10 @@ def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
         mut("row-date", lambda a: _cell(a["google_sheets"]["rows"][rw[0]], ("Date", "Effective"), "1999-01-01"))
         mut("row-lists", lambda a: _cell(a["google_sheets"]["rows"][rw[-1]], ("Lists",), "Newsletter; Partner Offers; Product Updates"))
         mut("row-confirmation", lambda a: _cell(a["google_sheets"]["rows"][rw[-1]], ("Confirmation",), "Sent", flip=True))
+        lg = [i for i in rw if O.sheet_of(after, after["google_sheets"]["rows"][i]) in ("log", "bouncelog")]
+        if lg:
+            mut("row-email-case", lambda a: _cell(a["google_sheets"]["rows"][lg[0]], ("Email",),
+                                                  a["google_sheets"]["rows"][lg[0]]["cells"]["Email"].upper()))
         mut("dup-row", lambda a: a["google_sheets"]["rows"].append(dict(a["google_sheets"]["rows"][rw[0]], id="mutduprow0000001", row_id=9999)))
     # writes no trigger should make
     old = [i for i, r in enumerate(after["google_sheets"]["rows"]) if r["id"] in {x["id"] for x in before["google_sheets"]["rows"]}
@@ -329,6 +355,10 @@ def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
                                                                "channel_id": L.CHANNELS["compliance"], "text": "All clear today."}))
     mut("sink-post", lambda a: a["slack"]["messages"].append({**copy.deepcopy(a["slack"]["messages"][0]), "ts": "1999999999.000003",
                                                              "channel_id": L.CHANNELS["automation-review"], "text": "checked"}))
+    # a post the solver deleted again within the trigger (a real Slack delivered it already)
+    mut("post-then-delete", lambda a: a["slack"]["messages"].append({**copy.deepcopy(a["slack"]["messages"][0]), "ts": "1999999999.000004",
+                                                                    "channel_id": L.CHANNELS["marketing"], "is_deleted": True,
+                                                                    "text": "unsubscribe batch: " + L.canon(truth["expect"]["archive"])[:80]}))
     mut("extra-email", lambda a: a["gmail"]["messages"].append({**copy.deepcopy(a["gmail"]["messages"][0]), "id": "mutextra00000001",
                                                                 "label_ids": ["SENT"], "to": [f"listdesk@bulkmail-partners.example.com"],
                                                                 "subject": "Contacts restored"}))
@@ -387,12 +417,19 @@ def gate_mutation(seeds: list[int], difficulty: str | None) -> dict:
 
 # -- oracle specificity: policy-neutral variants of the reference's effects must still pass ------------------------------
 class Variant(R.Suppression):
-    """Policy-neutral differences: one confirmation wording and layout, display-name recipients, mixed-case list names
-    in another order with a comma separator, an archive by PATCH status instead of DELETE, mixed-case log values."""
+    """Policy-neutral differences: another confirmation wording and layout around POLICY.md's sentence (a lead-in on
+    the same line, the sentence wrapped over two lines, no final period), display-name recipients, mixed-case list names
+    in another order with a comma separator, an archive by PATCH status instead of DELETE, and other-case Event, Action
+    and Confirmation values. Addresses and subjects stay as POLICY.md writes them (lower case; "exactly")."""
 
     def send(self, to, subject, body):
-        body = body.replace("Hello,", "Hi there,").replace("You will not receive marketing email from us again.", "")
-        raw = f"To: Subscriber <{to}>\r\nSubject: {subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n{body}"
+        if subject == R.CONFIRM_SUBJECT:
+            body = (f"Hi there,\n\nGood news: {to} has been removed\nfrom all our mailing lists\n\n"
+                    f"We are sorry to see you go.\nThe Marketing Team\n")
+        else:
+            body = body.replace("Hello,", "Hi there,")
+        raw = (f"To: Subscriber <{to}>\r\nSubject: {subject}\r\nMIME-Version: 1.0\r\n"
+               f"Content-Type: text/plain; charset=utf-8\r\n\r\n{body}")
         self.call("POST", f"{R.GMAIL}/messages/send", None, {"raw": base64.urlsafe_b64encode(raw.encode()).decode()})
 
     def archive(self, email, lists):
@@ -402,9 +439,9 @@ class Variant(R.Suppression):
         return sorted(name for _, name in lists)
 
     def log(self, today, email, event, action, ref, lists=(), conf=""):
-        self.append(R.COMPLIANCE_LOG, {"Date": today, "Email": email.upper() if "+" not in email else email, "Event": event.lower(),
+        self.append(R.COMPLIANCE_LOG, {"Date": today, "Email": f" {email} ", "Event": event.lower(),
                                        "Action": action.upper(), "Lists": ", ".join(sorted((x.upper() for x in lists), reverse=True)),
-                                       "Confirmation": conf.lower(), "Ref": ref})
+                                       "Confirmation": conf.upper(), "Ref": ref})
 
 
 def gate_specificity(seeds: list[int], difficulty: str | None) -> dict:

@@ -17,6 +17,9 @@
     noreprocess   ignores the "system error, reprocess" updates
     noskip        ignores RESOLVED / pre-migration / retracted notes
     effectivenow  reads the Policy Log ignoring Effective dates (a row approved for a later date applies at once)
+    cachedlog     decides the 30-day confirmation dedupe from a copy of the Compliance Log taken at its first
+                  confirmation decision of the week (a workflow that snapshots the history once); it misses the rows
+                  it wrote itself later in the week
 """
 from __future__ import annotations
 
@@ -144,6 +147,20 @@ class EffectiveNow(R.Suppression):
         return super().params("9999-12-31")
 
 
+class CachedLog(R.Suppression):
+    _snapshot: dict[str, list[dict]] = {}  # stream id ('s611') -> the Compliance Log as first read for a confirmation
+
+    def handle(self, p):
+        self._stream = str(p.get("trigger") or "").split("/")[0]
+        if str(p.get("trigger") or "").endswith("/t01"):
+            self._snapshot.pop(self._stream, None)  # a new run of the stream starts a new cache
+        super().handle(p)
+
+    def confirmed_recently(self, log, email, today):
+        snap = self._snapshot.setdefault(self._stream, [dict(r) for r in log])
+        return super().confirmed_recently(snap, email, today)
+
+
 def variant(cls):
     def run(payload, api):
         cls(api).handle(payload)
@@ -154,6 +171,7 @@ def variant(cls):
 CONTROLS = {"null": null, "echo": echo, "naive": naive, "nodedupe": variant(NoDedupe), "fuzzy": variant(Fuzzy),
             "nohold": variant(NoHold), "nopremium": variant(NoPremium), "nowindow": variant(NoWindow),
             "confirmall": variant(ConfirmAll), "anyauthor": variant(AnyAuthor), "keepproduct": variant(KeepProduct),
-            "noreprocess": variant(NoReprocess), "noskip": variant(NoSkip), "effectivenow": variant(EffectiveNow)}
+            "noreprocess": variant(NoReprocess), "noskip": variant(NoSkip), "effectivenow": variant(EffectiveNow),
+            "cachedlog": variant(CachedLog)}
 
 assert not [n for n in CONTROLS if not re.fullmatch(r"[a-z]+", n)]

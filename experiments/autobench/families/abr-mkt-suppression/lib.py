@@ -18,6 +18,7 @@ ORG = "company.example.com"
 COMPLIANCE = f"compliance@{ORG}"
 INBOX = f"suppression@{ORG}"
 CONFIRM_SUBJECT = "Unsubscribe confirmation"
+CONFIRM_PHRASE = "has been removed from all our mailing lists"  # POLICY.md: "<address> has been removed from all our mailing lists."
 AM_SUBJECT_PREFIX = "Premium-tier hard bounce: "
 CONFIRM_WINDOW = 30
 

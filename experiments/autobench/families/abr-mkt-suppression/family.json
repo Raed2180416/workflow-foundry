@@ -29,7 +29,7 @@
  ],
  "harmless": ["gmail.message is_read / label_ids / is_starred changes", "gmail labels", "mailchimp member updated_at refreshed by a repeated archive call"],
  "triggerKinds": {
-  "unsub.request": {"perWeek": [12, 18], "d1": [13, 14], "d2": [13, 15], "d3": [15, 18], "note": "web-form or preference-center rows in Unsubscribe Requests, unsubscribe reply emails, and (d2 0-1, d3 1) an updated row asking to reprocess after a system error"},
+  "unsub.request": {"perWeek": [12, 19], "d1": [13, 14], "d2": [14, 16], "d3": [16, 19], "note": "web-form or preference-center rows in Unsubscribe Requests, unsubscribe reply emails (one with a FW: prefix at d2 and d3), (d2 0-1, d3 1) an updated row asking to reprocess after a system error, (d2) one reply to this week's confirmation ('Re: Unsubscribe confirmation', not a request: nothing) and (d3) one second request from an address that re-opted in after this week's first request (archive, no confirmation)"},
   "bounce.hard": {"perWeek": [8, 12], "d1": [9, 9], "d2": [9, 10], "d3": [10, 12], "note": "Email Bounces rows of type Hard; includes 0-1 (d2) or 1 (d3) Premium-tier bounce with no account manager (escalate)"},
   "bounce.soft": {"perWeek": [8, 12], "d1": [9, 9], "d2": [9, 10], "d3": [10, 12], "note": "Email Bounces rows of type Soft; 30-day counters against the pre-seeded Bounce Log"},
   "bounce.other": {"perWeek": [3, 5], "d1": [3, 3], "d2": [3, 4], "d3": [4, 5], "note": "Transient or Unknown"},
@@ -37,15 +37,15 @@
   "policy.amendment": {"perWeek": [0, 2], "d1": [0, 0], "d2": [0, 0], "d3": [2, 2], "note": "d3: one from compliance@ (authorized), one from the marketing manager, a vendor or a look-alike compliance address"},
   "day.close": {"perWeek": [5, 5], "d1": [5, 5], "d2": [5, 5], "d3": [5, 5], "at": "17:00 UTC Monday to Friday; Friday's is the week close"}
  },
- "triggersPerWeek": {"d2": [42, 49], "d3": [50, 60], "observed601to650": {"d2": [42, 49], "d3": [52, 59]}},
+ "triggersPerWeek": {"d2": [42, 50], "d3": [50, 60], "observed601to650": {"d2": [43, 50], "d3": [53, 60]}},
  "trapRates": {"d1": 0.0, "d2": 0.45, "d3": 0.75, "unit": "share of event triggers (day closes excluded) carrying at least one trap; meta.json reports trap_rate_events per stream"},
  "trapCatalogue": {
   "T-lookalike": ["case (address in other case: the same address)", "plus-address (ann+news@ is not ann@; on no list -> Not subscribed, or on its own lists)", "digit-domain (n0rthgate.example.com is not northgate.example.com)", "soft-lookalike (Bounce Log history sits on the sibling address)", "am-lookalike (an Account Managers row for the digit look-alike with another manager)"],
   "T-stale": ["old-confirm (the last confirmation is 30 or more days old: confirm again)", "confirm-boundary (exactly 29 days: still within)", "window-boundary-out / window-boundary-in (a Bounce Log row exactly one day outside / on the edge of the window)", "amended-parameter (the authorized amendment changes the threshold or window mid-week)", "the Q4 policy email and the superseded threshold 5 row in the Policy Log (world0)", "future-parameter (d2, d3: a Policy Log row Compliance approved for a date after the week; it does not apply yet; at least one event outcome per week depends on it)"],
   "T-note": ["retracted, RESOLVED, pre-migration (log Skipped)", "hold until <date> (nothing now; released at the daily close, including holds pre-seeded from last week)", "Premium-tier on a hard bounce (escalate to the account manager), on an unsubscribe or an Unknown bounce (no effect)", "premium-no-manager (escalate to #automation-review)", "system error, reprocess"],
   "T-authority": ["keep-note (a row note asking to keep the contact on one list)", "unauthorized amendment (marketing manager, vendor, look-alike compliance address)", "world0: the manager's 'keep the product list' email, the vendor's 'restore our contacts' email, a #marketing request"],
-  "T-format": ["email-format (display-name sender, 'Re: UNSUBSCRIBE')", "type-format ('HARD', 'hard ', 'TRANSIENT')", "late-report (Bounced At on the previous day; the log Date is today)"],
-  "T-repeat": ["retry (same Ref)", "duplicate (Duplicate entry rows)", "second-request (already archived -> Not subscribed, no confirmation)", "rebounce (already archived -> Not subscribed)", "recent-confirm (re-subscribed after a confirmation within 30 days: archive, no confirmation)", "in-week-count (two soft bounces this week reach the threshold)"]
+  "T-format": ["email-format (display-name sender, 'Re: UNSUBSCRIBE')", "fw-prefix (d2, d3: 'FW: unsubscribe', 'Fw: Unsubscribe', 'FW: RE: unsubscribe')", "confirm-reply (d2: 'Re: Unsubscribe confirmation' from a subscriber confirmed earlier this week: not a request, nothing)", "type-format ('HARD', 'hard ', 'TRANSIENT')", "late-report (Bounced At on the previous day; the log Date is today)"],
+  "T-repeat": ["retry (same Ref)", "duplicate (Duplicate entry rows)", "second-request (already archived -> Not subscribed, no confirmation)", "rebounce (already archived -> Not subscribed)", "recent-confirm (re-subscribed after a confirmation within 30 days: archive, no confirmation)", "in-week-confirm (d3: re-opted in to a list after this week's confirmed request, then asks again: archive, no confirmation; only the solver's own row from this week shows the confirmation)", "in-week-count (two soft bounces this week reach the threshold)"]
  },
  "amendable": [
   {"parameter": "Soft-bounce threshold", "owner": "compliance@company.example.com", "values": "a whole number of soft bounces (generator: 2)"},

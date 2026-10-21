@@ -8,12 +8,16 @@ Per trigger (RECURRING-DESIGN section 3.6):
                  *attribution view*: world_after in which Gmail and Slack messages and sheet rows are restricted to the
                  records created or changed during this trigger (an earlier trigger's email never counts again);
   2. exact       our predicates on the effect ledger: the set of Mailchimp members archived during this trigger, the
-                 multiset of emails by (recipient, subject) with one recipient each and the required body content, the
-                 exact Slack texts, and the new Compliance Log, Bounce Log and Policy Log rows as multisets;
+                 multiset of emails by (recipient, exact subject) with exactly one address in all of To/Cc/Bcc (an
+                 entry holding two addresses, e.g. joined by ';', is two recipients) and the required body content
+                 (for a confirmation, POLICY.md's sentence, not negated, naming no individual list), the exact Slack
+                 texts (plus, at a daily close, one #automation-review post per released row the policy cannot
+                 decide), and the new Compliance Log, Bounce Log and Policy Log rows as multisets;
   3. guardrails  `mailchimp_subscriber_in_list` (addresses that must stay) and `gmail_message_not_sent_to`
                  (confirmations that must not go out) assertions in the truth;
   4. envelope    every write in the ledger must be an expected effect or harmless (mail read flags and labels; the
                  member `updated_at` stamp that Mailchimp's archive call refreshes). Earlier sheet rows are never edited.
+                 A Slack message posted and then deleted during the trigger is still a write (a real Slack delivered it).
 Outcome: correct | abstained (only #automation-review posts, escalation not expected) | miss (no effects although
 some were expected) | wrong (anything else).
 
@@ -26,6 +30,7 @@ escalation, plus AutomationBench assertions (`mailchimp_subscriber_is_archived`,
 from __future__ import annotations
 
 import copy
+import html
 import re
 from collections import Counter
 
@@ -130,7 +135,10 @@ def ledger(before: dict, after: dict) -> dict:
     for m in after["slack"]["messages"]:
         a_keys.add(k(m))
         if k(m) not in bs:
-            out["slack"].append(m)
+            if m.get("is_deleted"):  # posted and deleted within the trigger: it was delivered, and no post may be
+                out["other"].append(("slack.posted-then-deleted", k(m), channel_name(after, m["channel_id"])))
+            else:
+                out["slack"].append(m)
         elif L.canon(m) != L.canon(bs[k(m)]):
             out["other"].append(("slack.changed", k(m)))
     for key in bs:
@@ -176,20 +184,23 @@ def n_lists(v) -> frozenset:
     return frozenset(x.strip().lower() for x in re.split(r"[;,]", str(v or "")) if x.strip())
 
 
+# Leniencies (README "What the oracle checks"): surrounding spaces; the case of Event, Action and Confirmation; Lists as
+# a set (case, order, ';' or ','); a Policy Log Value written with its unit. Addresses are compared exactly, because
+# POLICY.md section 3 says "Write addresses in lower case".
 def norm_log(cells: dict) -> tuple:
-    return (_g(cells, "Date"), _g(cells, "Email").lower(), _g(cells, "Event").lower(), _g(cells, "Action").lower(),
+    return (_g(cells, "Date"), _g(cells, "Email"), _g(cells, "Event").lower(), _g(cells, "Action").lower(),
             n_lists(cells.get("Lists")), _g(cells, "Confirmation").lower(), _g(cells, "Ref"))
 
 
 def norm_blog(cells: dict) -> tuple:
-    return (_g(cells, "Date"), _g(cells, "Email").lower(), _g(cells, "Bounce ID"))
+    return (_g(cells, "Date"), _g(cells, "Email"), _g(cells, "Bounce ID"))
 
 
 def norm_policy(cells: dict) -> tuple:
     v = _g(cells, "Value")
     d = re.sub(r"[^\d]", "", v)
     return (_g(cells, "Effective"), _g(cells, "Parameter").lower(), d if d and re.fullmatch(r"\s*\d+\s*(days?|soft bounces?)?\s*", v, re.I) else v.lower(),
-            _g(cells, "Approved by").lower())
+            _g(cells, "Approved by"))
 
 
 NORM = {"log": norm_log, "bouncelog": norm_blog, "policy": norm_policy}
@@ -200,12 +211,55 @@ def extra_cells(cells: dict, key: str) -> list[str]:
     return [k for k, v in cells.items() if k not in hdr and str(v or "").strip()]
 
 
+ADDR_RE = re.compile(r"[^\s<>,;:\"'()\[\]]+@[^\s<>,;:\"'()\[\]]+")
+NAMED_RE = re.compile(r'\s*(?:"[^"]*"|[^"<>@,;]*)\s*<\s*([^<>\s]+)\s*>\s*')
+
+
+def parse_recipient(entry) -> list[str]:
+    """The addresses in one stored To/Cc/Bcc entry. AutomationBench splits a header on ',' only, so an entry can hold
+    'Ann <ann@x>; ops@y': that is two recipients. An entry that is neither 'address' nor 'Name <address>' is returned
+    as one 'invalid:' recipient, which matches no expected address."""
+    s = str(entry or "").strip()
+    found = [a.lower() for a in ADDR_RE.findall(s)]
+    if len(found) != 1:
+        return found or [f"invalid:{s}"]
+    m = NAMED_RE.fullmatch(s)
+    if s.lower() == found[0] or (m and m.group(1).lower() == found[0]):
+        return found
+    return [f"invalid:{s}"]
+
+
 def recipients(m: dict) -> list[str]:
-    return [L.addr(x) for x in (m.get("to") or []) + (m.get("cc") or []) + (m.get("bcc") or [])]
+    return [a for x in (m.get("to") or []) + (m.get("cc") or []) + (m.get("bcc") or []) for a in parse_recipient(x)]
+
+
+def subject_of(m: dict) -> str:
+    """Compared exactly (POLICY.md: "Subject exactly ..."), surrounding spaces aside."""
+    return (m.get("subject") or "").strip()
 
 
 def body_of(m: dict) -> str:
     return f"{m.get('body_plain') or ''}\n{m.get('body_html') or ''}"
+
+
+NEGATION = re.compile(r"\b(?:not|never|cannot|unable|failed|false)\b|n't\b", re.I)
+
+
+def confirmation_ok(body: str, address: str) -> bool:
+    """POLICY.md section 5: the body contains `<address> has been removed from all our mailing lists.`, nothing in it
+    contradicts that sentence, and it names no individual list. Checked lexically: the sentence (any whitespace between
+    words, any case) must end there ('.', '!', a line end or the end of the text), the text before it on its line and in
+    its sentence must hold no negation, and no list name may appear anywhere in the body."""
+    text = html.unescape(re.sub(r"<[^>]+>", " ", body or ""))
+    if any(re.search(rf"(?<![\w]){re.escape(n)}(?![\w])", text, re.I) for n in L.LIST_NAMES):
+        return False
+    words = [re.escape(address)] + [re.escape(w) for w in L.CONFIRM_PHRASE.split()]
+    pat = re.compile(r"(?<![\w.+-])" + r"\s+".join(words) + r"[ \t]*(?:[.!]|\r?\n|$)", re.I)
+    for m in pat.finditer(text):
+        start = max(text.rfind("\n", 0, m.start()), *(text.rfind(c + " ", 0, m.start()) for c in ".!?"))
+        if not NEGATION.search(text[start + 1: m.start()]):
+            return True
+    return False
 
 
 # ---------------------------------------------------------------------------------------------- per trigger
@@ -254,23 +308,27 @@ def grade_trigger(before: dict, after: dict, truth: dict, payload: dict) -> dict
         if len(rc) != 1:
             bad.append(("recipients", rc))
             continue
-        gotm[(rc[0], (m.get("subject") or "").strip().lower())] += 1
-    wantm = Counter((x["to"].lower(), x["subject"].lower()) for x in exp["emails"])
+        gotm[(rc[0], subject_of(m))] += 1
+    wantm = Counter((x["to"].lower(), x["subject"]) for x in exp["emails"])
     check("email.exact", not bad and gotm == wantm, {"got": {" | ".join(k): v for k, v in gotm.items()},
                                                      "want": {" | ".join(k): v for k, v in wantm.items()}, "bad": bad})
     for x in exp["emails"]:
-        hits = [m for m in led["emails"] if recipients(m) == [x["to"].lower()]
-                and (m.get("subject") or "").strip().lower() == x["subject"].lower()]
+        hits = [m for m in led["emails"] if recipients(m) == [x["to"].lower()] and subject_of(m) == x["subject"]]
         ok = bool(hits) and all(all(c.lower() in body_of(m).lower() for c in x["contains"]) for m in hits)
         if x["kind"] == "confirmation":
-            ok = ok and all(re.search(r"\bremoved\b", body_of(m), re.I) for m in hits)
+            ok = ok and all(confirmation_ok(body_of(m), x["to"]) for m in hits)
         check(f"email.content:{x['kind']}", ok, [body_of(m)[:160] for m in hits])
     # slack: exact multiset (or the single escalation post)
-    gots = sorted([channel_name(after, m["channel_id"]), (m.get("text") or "").strip()] for m in led["slack"] if not m.get("is_deleted"))
+    gots = sorted([channel_name(after, m["channel_id"]), (m.get("text") or "").strip()] for m in led["slack"])
     if outcome == "escalate":
         check("slack.escalation", len(gots) == 1 and gots[0][0] == L.SINK and payload["trigger"] in gots[0][1], gots)
     else:
-        check("slack.exact", gots == sorted([list(x) for x in exp["slack"]]), {"got": gots, "want": exp["slack"]})
+        sink = [t for ch, t in gots if ch == L.SINK]
+        check("slack.exact", [x for x in gots if x[0] != L.SINK] == sorted([list(x) for x in exp["slack"]]),
+              {"got": gots, "want": exp["slack"]})
+        # a daily close posts one #automation-review line per released row it cannot decide (POLICY.md section 7)
+        want_sink = len(exp.get("sink") or [])
+        check("slack.sink", len(sink) == want_sink and all(payload["trigger"] in t for t in sink), {"got": sink, "want": want_sink})
     # sheets: new rows per sheet as multisets, append-only everywhere
     new_by = {}
     for r in led["rows_new"]:
@@ -339,17 +397,23 @@ def grade_end(world0: dict, final: dict, end: dict) -> dict:
     for m in final["gmail"]["messages"]:
         if m["id"] in ids0 or "SENT" not in (m.get("label_ids") or []):
             continue
-        subj = (m.get("subject") or "").strip().lower()
         for r in recipients(m):
-            if subj == L.CONFIRM_SUBJECT.lower():
+            if subject_of(m) == L.CONFIRM_SUBJECT:
                 conf[r] += 1
             else:
                 am[r] += 1
     check("end.confirmations", conf == Counter(end["confirmations"]) and all(v == 1 for v in conf.values()),
           {"got": dict(conf), "want": end["confirmations"]})
     check("end.other-emails", am == Counter(end["am_emails"]), {"got": dict(am), "want": end["am_emails"]})
+    never = {"listdesk@bulkmail-partners.example.com", f"marketing-ops@{L.ORG}", f"mktg-manager@{L.ORG}"}
+    leaked = sorted({r for m in final["gmail"]["messages"] if m["id"] not in ids0 and "SENT" in (m.get("label_ids") or [])
+                     for r in recipients(m) if r in never})
+    check("end.never-recipients", not leaked, leaked)  # also when hidden in one entry ('a; b'), which AB's handler misses
     keys0 = {(m["channel_id"], m["ts"]) for m in world0["slack"]["messages"]}
-    new = [m for m in final["slack"]["messages"] if (m["channel_id"], m["ts"]) not in keys0 and not m.get("is_deleted")]
+    added = [m for m in final["slack"]["messages"] if (m["channel_id"], m["ts"]) not in keys0]
+    check("end.slack-deleted", not any(m.get("is_deleted") for m in added),
+          [(channel_name(final, m["channel_id"]), m["ts"]) for m in added if m.get("is_deleted")][:3])
+    new = [m for m in added if not m.get("is_deleted")]
     got = Counter((m.get("text") or "").strip() for m in new if channel_name(final, m["channel_id"]) == "compliance")
     check("end.compliance-posts", got == Counter(end["posts"]), {"missing": list((Counter(end["posts"]) - got).elements())[:3],
                                                                   "extra": list((got - Counter(end["posts"])).elements())[:3]})

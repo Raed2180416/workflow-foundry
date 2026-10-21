@@ -830,6 +830,82 @@ class Gen:
         uvalue = str(rng.choice([5, 6, 10])) if uparam == "Soft-bounce threshold" else str(rng.choice([7, 90]))
         self.amend_event(tu, who[0], who[1], uparam, uvalue, tu.date(), "unauthorized")
 
+    def plan_extras(self):
+        """Three plants drawn from their own seeded stream, so every other draw of the week is unchanged (as in
+        plan_future_row). Each reuses a plain unsubscribe request whose address no other event touches.
+
+        - `fw-prefix` (d2, d3): one unsubscribe email's subject gets a leading `FW:` / `Fw:` prefix (POLICY.md section 5
+          strips `Re:`, `Fw:` and `Fwd:`), so the prefix clause is exercised.
+        - `confirm-reply` (d2): the subscriber answers the confirmation of an earlier request this week. The subject is
+          `Re: Unsubscribe confirmation`, which is not an unsubscribe request: nothing to do (the address is on no list,
+          so a solver that treats it as a request writes a `Not subscribed` row).
+        - `in-week-confirm` (d3): an address confirmed by a plain request on Monday to Wednesday re-opts in to one list
+          through the preference center (a host-side Mailchimp change in the next trigger's delta) and then asks again
+          on a later day: archive, but no confirmation, because the Compliance Log row this week's first request wrote
+          already says `Sent`. Only the solver's own row from this week can tell (no world0 history row exists).
+        """
+        if self.diff == "d1":
+            return
+        saved, self.rng = self.rng, random.Random(f"{L.FAMILY}:{L.VERSION}:{self.seed}:{self.diff}:extras")
+        try:
+            self._plan_extras()
+        finally:
+            self.rng = saved
+
+    def _plan_extras(self):
+        rng = self.rng
+
+        def lonely() -> list[dict]:
+            """Unsubscribe requests whose address appears in no other event and in no guard (no retry, no second
+            request, no look-alike sibling)."""
+            n = {}
+            for e in self.events:
+                if e.get("addr"):
+                    n[e["addr"]] = n.get(e["addr"], 0) + 1
+            guarded = {g.lower() for e in self.events for g in e.get("guard") or []} | {g.lower() for g in self.guard_world}
+            return [e for e in self.events if e["kind"] == "unsub.request" and n.get(e["addr"]) == 1 and e["addr"] not in guarded]
+
+        used = set()
+        plain = [e for e in lonely() if e["sub"] in ("form", "email") and not e["traps"]]
+        if self.diff == "d3":
+            early = [e for e in plain if e["t"].date() <= self.days[2]]
+            t2 = None
+            if early:
+                first = rng.choice(early)
+                t2 = self.slot(lo=self.day_start(first["t"].date() + timedelta(days=1)))
+            if t2 is not None:
+                used.add(first["addr"])
+                back = rng.choice(self.on_lists(first["addr"]))
+                ev = self.unsub_event("inweek-resub", t2, first["addr"], ["in-week-confirm"], channel=rng.choice(["form", "email"]))
+                ev["delta"].insert(0, {"op": "set_member", "list_id": self.list_id[back], "email": first["addr"], "status": "subscribed"})
+        if self.diff == "d2":
+            early = [e for e in plain if e["t"].date() <= self.days[3]]
+            t2 = None
+            if early:
+                first = rng.choice(early)
+                t2 = self.slot(lo=first["t"] + timedelta(hours=1))
+            if t2 is not None:
+                e = first["addr"]
+                used.add(e)
+                f, l = self.names.get(e, ("", ""))
+                body = (rng.choice(["Thanks, that worked.", "Got it, thank you.", "Thanks for the quick confirmation."])
+                        + (f"\n\n{f}" if f else "") + "\n\n> Unsubscribe confirmation")
+                self.ev_email("unsub.request", "confirm-reply", t2, f"{f} {l} <{e}>" if f else e, "Re: Unsubscribe confirmation",
+                              body, ["confirm-reply"])
+        cands = [e for e in lonely() if e["event"] == "new_email" and e["addr"] not in used]
+        if not cands:  # no such email this week: a plain web-form request arrives by email instead
+            forms = [e for e in lonely() if e["sub"] == "form" and not e["traps"] and e["addr"] not in used]
+            if forms:
+                old = rng.choice(forms)
+                self.events.remove(old)
+                cands = [self.unsub_event("email", old["t"], old["addr"], [], channel="email")]
+        if cands:
+            x = rng.choice(cands)
+            subject = rng.choice(FW_SUBJECTS)
+            x["msg"]["subject"] = subject  # the same dict as the add_email delta's message
+            x["data"]["subject"] = subject
+            x["traps"].append("fw-prefix")
+
     def plan_future_row(self):
         """T-stale, future-dated: a Policy Log row that Compliance approved for a date after this week (world0).
 

@@ -15,7 +15,8 @@ Prints one JSON object. No model is called. The gates:
                 generator and reference therefore agree on every effect (gate 3).
   controls      every bad control fails; null passes exactly the no-op triggers; the <= 40-line naive heuristic
                 scores below 60% per trigger at d3.
-  traps         each trap kind appears at least five times across the four dev label streams 610-613.
+  traps         each trap kind appears at least five times across the four dev label streams 610-613 (kinds by the
+                generator's trap groups, gen.trap_kind: T-boundary:50k counts as T-stale).
   mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (drop, duplicate, wrong
                 recipient/record, wrong priority/status/subject/time/amount/format, description fields reordered,
                 cents, junk or a second conflicting value, WhatId on another account, IsClosed contradicting the
@@ -179,7 +180,7 @@ def gate_traps(seeds: list[int]) -> dict:
     for s in seeds:
         for t in gen.generate(s)["truth"]:
             for x in t["traps"]:
-                kinds[x.split(":")[0]] += 1
+                kinds[gen.trap_kind(x)] += 1
                 ids[x] += 1
     short = [k for k in gen.TRAP_KINDS if kinds[k] < 5]
     return {"pass": not short, "seeds": seeds, "by_kind": dict(sorted(kinds.items())), "by_id": dict(sorted(ids.items())),

@@ -50,6 +50,9 @@ ALERTS, REVIEW = "sales-alerts", "automation-review"
 # by construction, so these per-report rates put the share of trap-bearing TRIGGERS near the design's 40% (d2) and
 # 70% (d3): measured over seeds 601-650, 0.43 (d2) and 0.72 (d3); gen meta reports the share per stream.
 TRAP_RATE = {"d1": 0.0, "d2": 0.15, "d3": 0.6}
+# d3 floor (1.1.0): every trap group is dealt at least this many times per d3 stream (trap_budget). It raises the number
+# of traps on already-trapped reports first, so the share of trap-bearing triggers stays near the design's 70%.
+D3_DEAL_FLOOR = 3
 # Probability that a retraction names a person who has a same-surname look-alike at another account with an OPEN
 # follow-up task for an event of the same name (T-lookalike:retraction-surname): the first name decides.
 RETRACT_LOOKALIKE_RATE = {"d1": 0.0, "d2": 0.5, "d3": 0.7}
@@ -179,6 +182,13 @@ def description(start: datetime, pipeline: int, repeat: bool) -> str:
     return f"{scheduled(start)} | Account pipeline: {money(pipeline)}" + (" | Repeat no-show" if repeat else "")
 
 
+def trap_kind(trap_id: str) -> str:
+    """The trap's kind for coverage counts: its TRAP_GROUPS group for planted report traps (so T-boundary:50k counts
+    as T-stale, the group it is dealt from and the README lists it under), else its id prefix (T-note:..., T-repeat:
+    in-week, T-lookalike:retraction-surname)."""
+    return next((g for g, members in TRAP_GROUPS.items() if trap_id in members), trap_id.split(":")[0])
+
+
 def near_repeat_boundary(start: datetime, prior_start: datetime) -> bool:
     """POLICY.md 2.7 counts earlier no-shows 'that started in the 14 days before this event's start'. Read as elapsed
     time (the truth: start - 14 days <= prior < start) or as calendar days, the readings can differ only when the
@@ -215,6 +225,7 @@ class Gen:
         self.prior = {}          # email -> [{"start", "event", "contact_id", "report_at", "retract_at"}] (history + week)
         self.target_contacts: set[str] = set()
         self.group_order: list[str] = []      # round-robin deal of trap groups (TRAP_GROUPS)
+        self.member_order: dict[str, list[str]] = {}    # and of the traps inside each group
 
     # -- ids and names ---------------------------------------------------------------------------------------------
     def _uid(self, alphabet: str, n: int, prefix: str = "") -> str:
@@ -410,9 +421,10 @@ class Gen:
         used_acc: set = set()
         days = [i % 5 for i in range(n_act - n_rep_week)]
         r.shuffle(days)
+        ks = self.trap_budget(len(days))
         acts = []
-        for day in sorted(days):
-            acts.append(self.plan_act(self.pick_target(used_acc), day))
+        for day, k in zip(sorted(days), ks):
+            acts.append(self.plan_act(self.pick_target(used_acc), day, k=k))
         for _ in range(n_rep_week):        # the same invitee no-shows again later in the week (cross-trigger state)
             # the repeat's day avoids the calendar day 14 days after any earlier no-show of the invitee: history is
             # placed relative to the base act, so a later day could otherwise land on the 14-day boundary
@@ -442,29 +454,62 @@ class Gen:
         self.plans.append({"kind": "week.close", "variant": "week_close", "at": self.unique_time(self.week_close),
                            "traps": []})
 
+    def next_group(self, used: set) -> str:
+        """The next trap group of the stream's round-robin deal (per-stream shuffled cycles), skipping groups this
+        report already carries; a skipped group stays first in line."""
+        if all(g in used for g in self.group_order):
+            fresh = sorted(TRAP_GROUPS)
+            self.r.shuffle(fresh)
+            self.group_order = fresh + self.group_order          # pop() serves the older cycle first
+        i = max(j for j, g in enumerate(self.group_order) if g not in used)
+        return self.group_order.pop(i)
+
+    def next_member(self, group: str) -> str:
+        """The next trap of a group, round-robin over its members (per-stream shuffled cycles)."""
+        order = self.member_order.setdefault(group, [])
+        if not order:
+            order += TRAP_GROUPS[group]
+            self.r.shuffle(order)
+        return order.pop()
+
     def repeat_day_clear(self, contact, day: int) -> bool:
         """No earlier no-show of the contact lies on the calendar day 14 days before `day` of this week."""
         d = (self.monday + timedelta(days=day)).date()
         return all((d - q["start"].astimezone(UTC).date()).days != 14 for q in self.prior.get(contact["email"], []))
 
-    def plan_act(self, contact, day: int, in_week_repeat: bool = False):
+    def trap_budget(self, n: int, floor: bool = True) -> list[int]:
+        """Planted traps per ordinary report (0 = untrapped), for n reports. Each report is trapped with TRAP_RATE[d]
+        and then carries 1 trap (d2: mostly), 1-2 (d2) or 1-3 (d3). d3 adds a floor: at least D3_DEAL_FLOOR deals of
+        every trap group per stream, met by raising k (at most 3) on trapped reports first and trapping more reports
+        only when every trapped one already carries 3. With the round-robin deal this puts every trap group on the
+        two d3 label streams at least 2 x D3_DEAL_FLOOR times, instead of leaving per-kind coverage to the seed."""
+        r, out = self.r, []
+        for _ in range(n):
+            if r.random() < TRAP_RATE[self.d]:
+                out.append(1 if self.d == "d2" and r.random() < 0.75 else r.randint(1, 3 if self.d == "d3" else 2))
+            else:
+                out.append(0)
+        if self.d == "d3" and floor:
+            while sum(out) < D3_DEAL_FLOOR * len(TRAP_GROUPS):
+                up = [i for i, k in enumerate(out) if 0 < k < 3] or [i for i, k in enumerate(out) if k == 0]
+                if not up:
+                    break
+                out[r.choice(up)] += 1
+        return out
+
+    def plan_act(self, contact, day: int, in_week_repeat: bool = False, k: int | None = None):
         r = self.r
         traps = []
+        if k is None:                      # (only the rare fallback of plan_week) the same draw as trap_budget
+            k = self.trap_budget(1, floor=False)[0] if not in_week_repeat else 0
         if in_week_repeat:
             traps.append("T-repeat:in-week")
-        elif r.random() < TRAP_RATE[self.d]:
-            k = 1 if self.d == "d2" and r.random() < 0.75 else r.randint(1, 3 if self.d == "d3" else 2)
-            if not self.group_order:
-                self.group_order = sorted(TRAP_GROUPS)
-                r.shuffle(self.group_order)
-            traps.append(r.choice(TRAP_GROUPS[self.group_order.pop()]))
-            pool = [t for t in ACT_TRAPS if t not in traps]
-            while len(traps) < k and pool:
-                t = r.choice(pool)
-                pool.remove(t)
-                if (t in OPP_TRAPS and OPP_TRAPS & set(traps)) or (t in HISTORY_TRAPS and HISTORY_TRAPS & set(traps)):
-                    continue
-                traps.append(t)
+        elif k:
+            used: set = set()
+            for _ in range(k):             # every trap of the report from the round-robin deal, one per group
+                g = self.next_group(used)
+                used.add(g)
+                traps.append(self.next_member(g))
         latest = time(14, 0) if day == 4 else time(15, 30)
         start = self.slot(day, latest)
         offset = et_offset(start) if "T-format:offset" in traps else None

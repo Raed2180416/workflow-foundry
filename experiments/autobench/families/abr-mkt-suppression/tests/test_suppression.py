@@ -16,6 +16,7 @@ import json
 import re
 import sys
 from collections import Counter
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -37,11 +38,12 @@ BAD = list(C.CONTROLS)
 # one-defect variants: the trap labels on which their broken clause bites
 BITES = {"nodedupe": {"retry"}, "fuzzy": {"plus-address", "digit-domain", "soft-lookalike", "am-lookalike"},
          "nohold": {"hold", "hold-release"}, "nopremium": {"premium"}, "nowindow": {"window-boundary-out"},
-         "confirmall": {"recent-confirm", "reprocess"}, "anyauthor": {"unauthorized-amendment"}, "noreprocess": {"reprocess"},
-         "noskip": {"resolved", "retracted", "pre-migration"}, "effectivenow": {"future-parameter"}}
+         "confirmall": {"recent-confirm", "reprocess", "in-week-confirm"}, "anyauthor": {"unauthorized-amendment"},
+         "noreprocess": {"reprocess"}, "noskip": {"resolved", "retracted", "pre-migration"}, "effectivenow": {"future-parameter"},
+         "cachedlog": {"in-week-confirm"}}
 # variants whose clause exists only in some weeks (amendments and reprocess at d3, window edges, recent confirmations,
-# invalid-note rows)
-NARROW = {"anyauthor", "noreprocess", "nowindow", "confirmall", "noskip", "effectivenow"}
+# invalid-note rows, the in-week re-opt-in at d3)
+NARROW = {"anyauthor", "noreprocess", "nowindow", "confirmall", "noskip", "effectivenow", "cachedlog"}
 
 
 @pytest.fixture(scope="module")
@@ -317,6 +319,7 @@ def test_end_of_week_catches_a_duplicate_confirmation_and_an_edited_log_row(gens
 def test_helpers_agree_between_the_two_implementations():
     s = R.Suppression(None)
     for subj, want in (("Unsubscribe", True), ("Re: UNSUBSCRIBE", True), ("RE: unsubscribe ", True), ("Fwd: Re: unsubscribe", True),
+                       ("FW: unsubscribe", True), ("Fw: RE: UNSUBSCRIBE", True), ("Re: Unsubscribe confirmation", False),
                        ("unsubscribe me", False), ("Suppression policy amendment", False), ("", False)):
         assert L.is_unsub_subject(subj) == s.unsub_subject(subj) == want, subj
     for notes in ("HOLD until 2026-03-06 (account dispute)", "Temporary hold until 2026-03-06, do not archive", "hold", ""):
@@ -351,3 +354,287 @@ def test_smoke_difficulty_d1_has_no_traps_and_is_solved():
     g = G.generate(631, "d1")
     assert not any(t["traps"] for t in g["triggers"]) and not any(t["kind"] in ("repeat", "policy.amendment") for t in g["triggers"])
     assert H.run_stream("ref", 631, g=g)["clean_week"]
+
+
+
+# ---------------------------------------------------------------------------------------------- review 2026-10-21
+# Regression tests for the defects a review found on 2026-10-21 (README "Changes"). Test-only one-defect variants of
+# the reference stand for the probe solvers the review used.
+def _variant_run(cls, seed, g):
+    return H.run_stream(cls.__name__, seed, g=g, fn=C.variant(cls))
+
+
+def _failed_names(rows):
+    return Counter(n for r in rows if not r["pass"] for n, _ in r["failed"])
+
+
+def _section(policy: str, n: int) -> str:
+    return " ".join(policy.split(f"## {n}.")[1].split(f"## {n + 1}.")[0].split())
+
+
+def test_policy_states_the_clauses_the_review_found_missing():
+    policy = (FAM / "POLICY.md").read_text()
+    s5, s6, s7, s8, s9 = (_section(policy, n) for n in (5, 6, 7, 8, 9))
+    # 1: which events get a Compliance Log row
+    assert "Every Unsubscribe Requests row, Email Bounces row or unsubscribe email that this policy handles appends exactly one" in s6
+    assert "not a daily close" in s6 and "not an amendment (Compliance's included)" in s6 and "cannot decide" in s6
+    # 2, 4: the confirmation body is a fixed sentence, checkable without a model
+    assert f"`<address> {L.CONFIRM_PHRASE}.`" in s5 and "names no individual list" in s5
+    # 7: an undecidable released row at a daily close
+    assert "one post per such row" in s7 and "go on with the close" in s7 and "tries it again" in s7 and "section 7" in s9
+    # 8: FW prefixes
+    assert "`Re:`, `Fw:` or `Fwd:`" in s5
+    # 10: repeated deliveries of a close and of an amendment
+    assert "this close has already run: do nothing" in s7 and "(a repeated delivery), do nothing" in s8
+
+
+def test_truth_writes_no_log_row_for_closes_and_amendments(gens):
+    """POLICY.md section 6 (defect 1): amendments write no Compliance Log row, and a daily close writes only the rows of
+    the holds it releases."""
+    for g in gens.values():
+        for t, tr in zip(g["triggers"], g["truth"]):
+            log = tr["expect"]["rows"]["log"]
+            if t["kind"] == "policy.amendment":
+                assert not log, t["trigger"]
+            elif t["kind"] == "day.close" and log:
+                assert "hold-release" in tr["traps"], t["trigger"]
+
+
+def test_confirmation_content_check_follows_the_policy_sentence():
+    a = "ann.lee@riverside.example.com"
+    good = [f"Hello,\n\n{a} has been removed from all our mailing lists. You will not receive marketing email from us again.\n",
+            f"Hi,\n\nThis confirms that {a.title()} has been removed\nfrom all our mailing lists\n\nThanks",
+            f"<p>Good news: <b>{a}</b> has been removed from all our mailing lists.</p>"]
+    bad = [f"{a} has been unsubscribed from every one of our mailing lists.",  # paraphrase (the policy fixes the sentence)
+           f"We have not removed {a} from all our mailing lists; it was removed from the Newsletter only and stays on the others.",
+           f"It is not true that {a} has been removed from all our mailing lists.",
+           f"{a} has been removed from all our mailing lists except Partner Offers.",
+           f"{a} has been removed from all our mailing lists. You stay on Product Updates.",
+           f"x{a} has been removed from all our mailing lists."]
+    assert all(O.confirmation_ok(b, a) for b in good)
+    assert not any(O.confirmation_ok(b, a) for b in bad)
+
+
+class _Paraphrase(R.Suppression):
+    def send(self, to, subject, body):
+        if subject == R.CONFIRM_SUBJECT:
+            body = f"Hello,\n\n{to} has been unsubscribed from every one of our mailing lists.\n"
+        super().send(to, subject, body)
+
+
+class _NotRemoved(R.Suppression):
+    def send(self, to, subject, body):
+        if subject == R.CONFIRM_SUBJECT:
+            body = (f"We have not removed {to} from all our mailing lists; it was removed from the Newsletter only and stays "
+                    f"on the others.")
+        super().send(to, subject, body)
+
+
+class _SemicolonCc(R.Suppression):
+    def send(self, to, subject, body):
+        if subject == R.CONFIRM_SUBJECT:
+            to = f"Subscriber <{to}>; marketing-ops@company.example.com"  # the old Q4 email's trap
+        super().send(to, subject, body)
+
+
+class _SubjectCase(R.Suppression):
+    def send(self, to, subject, body):
+        super().send(to, subject.upper(), body)
+
+
+class _LogEmailUpper(R.Suppression):
+    def log(self, today, email, event, action, ref, lists=(), conf=""):
+        super().log(today, email.upper(), event, action, ref, lists, conf)
+
+
+class _PostThenDelete(R.Suppression):
+    def handle(self, p):
+        r = self.call("POST", f"{R.SLACK}/chat.postMessage", None, {"channel": "marketing", "text": f"handling {p['data']}"[:200]})
+        self.call("POST", f"{R.SLACK}/chat.delete", None, {"channel": "marketing", "ts": r["ts"]})
+        super().handle(p)
+
+
+class _FwStrict(R.Suppression):
+    def unsub_subject(self, subject):
+        s = (subject or "").strip()
+        while (m := re.match(r"(?i)\s*(re|fwd)\s*:\s*", s)):
+            s = s[m.end():]
+        return s.strip().lower() == "unsubscribe"
+
+
+def test_oracle_rejects_confirmations_the_policy_does_not_allow(gens):
+    """Defects 2 and 4: a paraphrase without the policy's sentence, and a body that contradicts it, fail exactly on the
+    confirmation triggers."""
+    g = gens[610]
+    conf = {t["trigger"] for t in g["truth"] if any(e["kind"] == "confirmation" for e in t["expect"]["emails"])}
+    assert conf
+    for cls in (_Paraphrase, _NotRemoved):
+        res = _variant_run(cls, 610, g)
+        bad = [r for r in res["rows"] if not r["pass"]]
+        assert {r["taskKey"] for r in bad} == conf, cls.__name__
+        assert all("email.content:confirmation" in {n for n, _ in r["failed"]} for r in bad), (cls.__name__, _failed_names(bad))
+
+
+def test_oracle_rejects_a_semicolon_joined_recipient(gens):
+    """Defect 3: 'Subscriber <ann@x>; marketing-ops@...' is stored as one To entry; it is two recipients."""
+    assert O.parse_recipient("Subscriber <ann@x.example.com>; marketing-ops@company.example.com") == [
+        "ann@x.example.com", "marketing-ops@company.example.com"]
+    assert O.parse_recipient('"Lee, Ann" <Ann@X.example.com>') == ["ann@x.example.com"]
+    assert O.parse_recipient("ann@x.example.com please")[0].startswith("invalid:")
+    g = gens[610]
+    res = _variant_run(_SemicolonCc, 610, g)
+    names = _failed_names(res["rows"])
+    assert not res["clean_week"] and names["email.exact"] > 0, names
+    assert res["rows"][-1]["failed"] and "end:end.never-recipients" in {n for n, _ in res["rows"][-1]["failed"]}
+
+
+def test_oracle_holds_subjects_and_log_addresses_to_the_policy_wording(gens):
+    """Defect 9: 'Subject exactly' and 'Write addresses in lower case' are checked as written (other log values keep
+    their documented leniency; the specificity gate covers that)."""
+    g = gens[610]
+    for cls, check in ((_SubjectCase, "email.exact"), (_LogEmailUpper, "rows.log")):
+        res = _variant_run(cls, 610, g)
+        assert not res["clean_week"] and _failed_names(res["rows"])[check] > 0, cls.__name__
+
+
+def test_a_post_deleted_again_is_still_a_write(gens):
+    """Defect 5: a Slack post followed by chat.delete in the same trigger is an envelope effect."""
+    res = _variant_run(_PostThenDelete, 610, gens[610])
+    assert not any(r["pass"] for r in res["rows"])
+    assert _failed_names(res["rows"])["envelope"] == len(res["rows"])
+
+
+def test_fw_prefixed_unsubscribe_emails_are_requests(gens):
+    """Defect 8: every d2/d3 week carries one FW-prefixed unsubscribe email, and a reader that strips only Re:/Fwd:
+    fails on it."""
+    for s, g in gens.items():
+        fw = [t for t in g["triggers"] if "fw-prefix" in t["traps"]]
+        assert len(fw) == 1 and re.match(r"(?i)fw\s*:", fw[0]["payload"]["data"]["subject"]), s
+    res = _variant_run(_FwStrict, 611, gens[611])
+    assert any(not r["pass"] and "fw-prefix" in r["traps"] for r in res["rows"])
+
+
+def test_a_reply_to_a_confirmation_is_not_a_request(gens, bad):
+    """d2 weeks carry 'Re: Unsubscribe confirmation' from an address confirmed earlier that week: nothing to do."""
+    for s in (610, 612, 614):
+        g = gens[s]
+        idx = [i for i, t in enumerate(g["triggers"]) if "confirm-reply" in t["traps"]]
+        assert len(idx) == 1 and g["truth"][idx[0]]["outcome"] == "no-op", s
+        addr = L.addr(g["triggers"][idx[0]]["payload"]["data"]["from"])
+        assert any(e["to"] == addr and e["kind"] == "confirmation" for t in g["truth"][:idx[0]] for e in t["expect"]["emails"]), s
+    rows = [r for s in (610, 612) for r in bad["naive"][s]["rows"]]
+    assert any(not r["pass"] and "confirm-reply" in r["traps"] for r in rows)
+
+
+def test_in_week_confirmation_comes_from_this_weeks_own_row(gens, bad):
+    """Defect 6: at d3 an address confirmed early in the week re-opts in (host-side delta) and asks again: archive, no
+    confirmation, and the only Sent row that says so is the one written by this week's first request."""
+    for s in (611, 613):
+        g = gens[s]
+        idx = [i for i, t in enumerate(g["truth"]) if "in-week-confirm" in t["traps"]]
+        assert len(idx) == 1, s
+        i = idx[0]
+        tr, trig = g["truth"][i], g["triggers"][i]
+        row = tr["expect"]["rows"]["log"][0]
+        assert tr["expect"]["archive"] and not tr["expect"]["emails"] and row["Action"] == "Archived" and row["Confirmation"] == ""
+        assert trig["delta"][0]["op"] == "set_member" and trig["delta"][0]["email"] == row["Email"]
+        assert not any(r["Email"] == row["Email"] for r in world0_rows(g, "log"))
+        assert any(r["Email"] == row["Email"] and r["Confirmation"] == "Sent" and r["Date"] < row["Date"]
+                   for t in g["truth"][:i] for r in t["expect"]["rows"]["log"])
+    for name in ("cachedlog", "confirmall"):
+        assert any(not r["pass"] and "in-week-confirm" in r["traps"] for s in (611, 613) for r in bad[name][s]["rows"]), name
+
+
+class _HeldPremiumGen(G.Gen):
+    """A world0 Email Bounces row that is both on hold until Monday and Premium-tier, with no Account Managers row: the
+    hard-bounce rule cannot decide it when Monday's daily close releases it (defect 7; the stream generator never plants
+    this)."""
+
+    def plan_preheld(self, n):
+        super().plan_preheld(n)
+        e = self.fresh()
+        self.held_premium = e
+        self.h_bounce_row(e, self.monday - timedelta(days=3), "Hard", f"Temporary hold until {G.ds(self.monday)}, Premium-tier subscriber")
+
+
+class _CloseStops(R.Suppression):
+    """Reads section 9 alone: at the first undecidable released row it escalates and does nothing else."""
+
+    def on_close(self, p, today):
+        for key, ref in (("requests", R.REQUESTS), ("bounces", R.BOUNCES)):
+            for cells in self.sheet(ref)[1]:
+                if self.releasable(cells, self.sheet(R.COMPLIANCE_LOG)[1], today, key):
+                    self.apply_rule(key, cells, today)  # Undecidable propagates: handle() escalates, no post
+        super().on_close(p, today)
+
+
+def test_an_undecidable_release_at_a_daily_close_is_escalated_and_the_close_goes_on():
+    gen = _HeldPremiumGen(611, "d3")
+    g = gen.run()
+    closes = [(t, tr) for t, tr in zip(g["triggers"], g["truth"]) if t["kind"] == "day.close"]
+    for t, tr in closes:  # unhandled, so every close tries it again
+        assert tr["outcome"] == "act" and len(tr["expect"]["sink"]) == 1 and gen.held_premium in tr["expect"]["sink"][0], t["trigger"]
+        assert [ch for ch, _ in tr["expect"]["slack"]] == ["compliance"]
+    assert {t["trigger"] for t, _ in closes} <= set(g["end"]["escalations"])
+    assert H.run_stream("ref", 611, g=g)["clean_week"]
+    res = H.run_stream("closestops", 611, g=g, fn=C.variant(_CloseStops))
+    first = next(r for r in res["rows"] if r["kind"] == "day.close")
+    assert not first["pass"] and "slack.exact" in {n for n, _ in first["failed"]}
+    # an extra or missing escalation post at that close is caught too
+    ci = next(i for i, t in enumerate(g["triggers"]) if t["kind"] == "day.close")
+    w = _trigger_world(g, ci)
+    before = w.model_dump(mode="json")
+    p = g["triggers"][ci]["payload"]
+    R.handle(copy.deepcopy(p), H.Api(w))
+    H.Api(w).fetch("POST", f"{R.SLACK}/chat.postMessage", None, {"channel": "automation-review", "text": f"{p['trigger']}: again"})
+    v = O.grade_trigger(before, w.model_dump(mode="json"), g["truth"][ci], p)
+    assert not v["pass"] and "slack.sink" in {n for n, _ in v["failed"]}
+
+
+class _RetryGen(G.Gen):
+    """Adds a repeated webhook delivery of the authorized amendment and of Monday's daily close (defect 10; the stream
+    generator does not plant these)."""
+
+    def build_noise(self):
+        super().build_noise()
+        amend = next(e for e in self.events if e["kind"] == "policy.amendment" and e["sub"] == "authorized")
+        close = next(e for e in self.events if e["kind"] == "day.close")
+        for orig, dt in ((amend, timedelta(minutes=1)), (close, timedelta(minutes=5))):
+            t = orig["t"] + dt
+            while self.minute_of(t) in self.used_minutes:
+                t += timedelta(minutes=1)
+            self.used_minutes.add(self.minute_of(t))
+            self.events.append({**{k: copy.deepcopy(orig[k]) for k in ("app", "event", "data")}, "kind": "repeat", "sub": "retry",
+                                "t": t, "traps": ["retry"], "delta": [], "addr": orig["addr"], "guard": [], "msg": orig.get("msg"),
+                                "amend": orig.get("amend")})
+
+
+class _NoCloseDedupe(R.Suppression):
+    def closed(self, today):
+        return False
+
+
+class _NoAmendmentDedupe(R.Suppression):
+    def amendment_logged(self, eff, param, value):
+        return False
+
+
+def test_repeated_deliveries_of_a_close_and_an_amendment_change_nothing():
+    g = _RetryGen(611, "d3").run()
+    rep = {t["payload"]["event"]: (i, t) for i, t in enumerate(g["triggers"]) if t["kind"] == "repeat" and t["payload"]["event"] in
+           ("daily_close", "new_email") and (t["payload"]["event"] == "daily_close" or "amendment" in t["payload"]["data"]["subject"])}
+    assert set(rep) == {"daily_close", "new_email"}
+    for i, t in rep.values():
+        assert g["truth"][i]["outcome"] == "no-op", t["trigger"]
+    assert H.run_stream("ref", 611, g=g)["clean_week"]
+    for cls, ev in ((_NoCloseDedupe, "daily_close"), (_NoAmendmentDedupe, "new_email")):
+        res = H.run_stream(cls.__name__, 611, g=g, fn=C.variant(cls))
+        assert not res["rows"][rep[ev][0]]["pass"], cls.__name__
+
+
+def test_new_mutation_operators_are_all_flagged():
+    r = H.gate_mutation([610, 611], None)
+    for name in ("semicolon-cc", "subject-case", "confirm-paraphrase", "confirm-negated", "confirm-names-list", "row-email-case",
+                 "post-then-delete"):
+        hit, total = map(int, r["by_mutation"][name].split("/"))
+        assert total > 0 and hit == total, (name, r["by_mutation"][name])

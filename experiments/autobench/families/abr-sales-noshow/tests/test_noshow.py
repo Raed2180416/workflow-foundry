@@ -123,6 +123,20 @@ def test_trap_coverage_on_dev_label_streams():
     g = gates.gate_traps([610, 611, 612, 613])
     assert g["pass"], g
     assert all(g["by_kind"][k] >= 5 for k in gen.TRAP_KINDS)
+    assert gen.trap_kind("T-boundary:50k") == "T-stale" and gen.trap_kind("T-note:chatter") == "T-note"
+
+
+def test_d3_floor_deals_every_trap_group():
+    """1.1.0: coverage is a property of the generator, not of the seed. Every d3 stream deals each trap group at least
+    D3_DEAL_FLOOR times (1.0.0 met the >= 5 gate on 610-613 only by draw: about 20% of other 4-seed blocks did)."""
+    planted = {x for members in gen.TRAP_GROUPS.values() for x in members}
+    for s in [x for x in PRACTICE + DEV + list(range(615, 651)) if gen.default_difficulty(x) == "d3"]:
+        counts = {g: 0 for g in gen.TRAP_GROUPS}
+        for t in gen.generate(s, validate=False)["truth"]:
+            for x in t["traps"]:
+                if x in planted:
+                    counts[gen.trap_kind(x)] += 1
+        assert min(counts.values()) >= gen.D3_DEAL_FLOOR, (s, counts)
 
 
 def test_fictional_entities_only():
