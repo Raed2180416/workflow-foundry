@@ -1,6 +1,6 @@
-# OT-0 preregistration (paid arms): DRAFT
+# OT-0 preregistration (paid arms): FROZEN
 
-**Status: DRAFT — not frozen.** No paid OT-0 row may run until the owner changes this line to `**Status: FROZEN
+**Status: FROZEN (2026-10-21, 27ff324)** by the orchestrator under the owner's blanket permission. The §6 table matched all 40 files at freeze. The Opus arm's "owner agrees" condition is met by decision D6 (research/decisions-20261021.md: Opus comparator included within the $100 cap). Paid arms run on engine v1, all four before the v2 merge.
 (<date>, <commit>)**` and the sha256 table in §6 still matches the files. `build-wc.mjs` and `run-agents.mjs` call
 `experiments/constitution/freeze.mjs` `preregCheck()` before any session and refuse otherwise (tested in
 `experiments/constitution/test/paid.test.mjs`).
