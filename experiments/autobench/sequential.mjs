@@ -346,6 +346,8 @@ export function verifyLookRuns(plan, n, dirs, { role, firstLook = null, illustra
       if (listSha256(s.tasks ?? []) !== c.tasksSha256) throw new Error(`${d}: its summary's tasks are not look ${n}'s`);
       arm = c.arm; sources.push({ run: d, source: 'sequential look run' });
     } else if (role === 'control' && n === 1) {
+      // Pre-plan control rows on look 1: an A0 model run (no harness, not scripted) on dev60 tasks only.
+      if (s.harness || s.scripted !== false || !s.model) throw new Error(`${d}: look 1's pre-plan control must be a stored A0 model run (no harness, not scripted)`);
       sources.push({ run: d, source: 'stored dev60 A0 rows (pre-plan control)' });
     } else if (illustration) {
       sources.push({ run: d, source: 'ILLUSTRATION: no sequential-look sidecar' });

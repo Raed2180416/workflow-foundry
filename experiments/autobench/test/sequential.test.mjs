@@ -188,6 +188,7 @@ test('analyze on stored dev60 rows: treatment look-1 rows are in-sample (refused
   const p = realPlan();
   // The control on look 1 may be the stored dev60 A0 rows; a treatment's stored dev60 rows may not.
   assert.equal(verifyLookRuns(p, 1, ['a0-dev60-dn'], { role: 'control' }).sources[0].source, 'stored dev60 A0 rows (pre-plan control)');
+  assert.throws(() => verifyLookRuns(p, 1, ['a1c-dev60-dn'], { role: 'control' }), /must be a stored A0 model run/);
   assert.throws(() => verifyLookRuns(p, 1, ['a1-dev60-dn', 'a1-dev60-dn-fill'], { role: 'treatment', firstLook: 1 }), /in-sample: the arm was developed on dev60/);
   const ill = verifyLookRuns(p, 1, ['a1-dev60-dn', 'a1-dev60-dn-fill'], { role: 'treatment', firstLook: 1, illustration: true });
   assert.match(ill.sources[0].source, /^ILLUSTRATION/);
