@@ -45,6 +45,7 @@ ONE_DEFECT = {
     "last-row-bands": {"policy-log-future"},
     "inactive-approver": {"inactive-head"},
     "any-correction": {"correction-unauthorized"},
+    "any-amendment": {"amendment-unauthorized"},
     "no-early-correction": {"correction-early"},
     "ignore-partial": {"partial-expected"},
     "strict-variance": {"variance-boundary"},
@@ -443,9 +444,10 @@ def test_approval_must_follow_logging_and_floor_follows_the_model(ref613):
 def test_authority_hard_check(dev_runs, ref613):
     """effects-with-authority is its own hard check: an unauthorized correction trips it; so does any Blocked Vendors
     edit, a Policy Log row outside a CFO amendment, or an Amount change outside an AP lead correction."""
-    summary, results = dev_runs["any-correction"]
-    names = {c["name"] for r in results for x in r["rows"] for c in x["failed"]}
-    assert summary["hard_violations"] > 0 and "hard.effects-with-authority" in names
+    for name in ("any-correction", "any-amendment"):
+        summary, results = dev_runs[name]
+        names = {c["name"] for r in results for x in r["rows"] for c in x["failed"]}
+        assert summary["hard_violations"] > 0 and {"hard.effects-with-authority", "end.authority"} <= names, name
     for name in ("reference", "pay-unapproved", "any-approver"):
         names = {c["name"] for r in dev_runs[name][1] for x in r["rows"] for c in x["failed"]}
         assert not names & {"hard.effects-with-authority", "end.authority"}, name

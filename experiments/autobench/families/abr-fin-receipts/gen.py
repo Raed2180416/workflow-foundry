@@ -862,29 +862,42 @@ class Gen:
                        "date": iso_z(sent), "internal_date": iso_z(sent)}]
 
     # -- the week's plan ---------------------------------------------------------------------------------------------
+    def next_morning(self, t0: datetime) -> datetime:
+        """08:00 UTC on the calendar day after t0."""
+        return datetime.combine(t0.date() + timedelta(days=1), time(8, 0), tzinfo=UTC)
+
     def plan_week(self):
         """Choose the triggers: kinds, subs, times, posters, and the links between follow-ups and their targets."""
         r, d = self.r, self.d
-        n_post, n_corr = self.cnt["receipt.posted"], self.cnt["receipt.corrected"]
-        n_rep, n_appr = self.cnt["receipt.reposted"], self.cnt["preapproval.reply"]
+        n_post, n_rep = self.cnt["receipt.posted"], self.cnt["receipt.reposted"]
         # follow-up subs
-        fix_rej = ["fix-attendees", "fix-receipt"]
-        fix_ok = ["fix-amount", "fix-date", "fix-category"]
         if d == "d1":
-            corr = ["fix-amount", "fix-attendees"][:n_corr]
+            corr = ["fix-amount", "fix-attendees"]
             rep = ["repost"] * n_rep
-            appr = ["approve"] * n_appr
+            appr = ["approve"]
         elif d == "d2":
-            corr = [r.choice(fix_rej), r.choice(fix_ok)] + (["wrong-person"] if n_corr > 2 else [])
-            rep = ["repost", "repost-history"] + (["repost"] if n_rep > 2 else [])
-            appr = ["approve"] + ([r.choice(["wrong-self", "wrong-namesake", "wrong-manager", "wrong-finance", "negated",
-                                             "again"])] if n_appr > 1 else [])
+            corr = [r.choice(FIX_REJ), r.choice(FIX_OK + RECHECK + ["fix-over", "fix-preapproved", "fix-second"])]
+            if r.random() < 0.5:
+                corr.append("wrong-person")
+            rep = ["repost", "repost-history"] + (["repost-terse"] if n_rep > 2 else [])
+            appr = ["approve"] + (["again"] if r.random() < 0.5 else [])
+            if r.random() < 0.5:
+                appr.append(r.choice(["wrong-self", "wrong-namesake", "wrong-manager", "wrong-finance", "negated",
+                                      "not-pending"]))
         else:
-            corr = [r.choice(fix_rej), r.choice(fix_ok), "wrong-person"]
-            if n_corr > 3:
-                corr.append(r.choice(fix_rej + fix_ok))
-            rep = ["repost-fixed", r.choice(["repost", "repost-history"])] + (["repost"] if n_rep > 2 else [])
-            appr = ["approve", "wrong-namesake", "negated"]
+            # every d3 week: a re-check to Pending (fix-over) and one to Rejected (fix-break-meal), the cap's own-row
+            # rule, two corrections in one thread, a pre-approval that survives a correction
+            corr = [r.choice(FIX_REJ), r.choice(FIX_OK + RECHECK), "wrong-person", "fix-break-meal", "fix-cap-own",
+                    "fix-second", "fix-preapproved", "fix-over"]
+            rep = ["repost-fixed", "repost-rel", "repost-rel-rev"]
+            if n_rep > 3:
+                rep.append(r.choice(["repost", "repost-history", "repost-terse"]))
+            appr = ["approve", "again", "wrong-namesake", "negated", "not-pending"]
+        self.cnt["receipt.corrected"], self.cnt["preapproval.reply"] = len(corr), len(appr)
+        for k in ("receipt.corrected", "preapproval.reply", "receipt.reposted"):
+            lo, hi = COUNTS[d][k]
+            if not lo <= self.cnt[k] <= hi:
+                raise RuntimeError(f"{k}: {self.cnt[k]} outside {COUNTS[d][k]}")
         # every d2 week has at least one authority trap (a wrong corrector or approver, or an unknown poster)
         authority = "wrong-person" in corr or any(a.startswith("wrong") for a in appr)
         self.unknown = d == "d3" or (d == "d2" and (r.random() < 0.5 or not authority))
@@ -892,22 +905,22 @@ class Gen:
         pending_kinds = ["pending-flight", "pending-hotel", "pending-consulting", "pending-software", "pending-meal",
                          "flight-long"]
         n_pending = {"d1": 1, "d2": 2, "d3": 3}[d]
-        fixed: list[str] = [r.choice(pending_kinds) for _ in range(n_pending)]
-        for c in corr:
-            fixed.append({"fix-attendees": "rej-attendees", "fix-receipt": "rej-receipt", "fix-amount": "fixable-ok",
-                          "fix-date": "fixable-ok", "fix-category": "fixable-cat", "wrong-person": "fixable-ok"}[c])
+        fixed: list[str] = ["pending-fixable"] * (("fix-preapproved" in corr) + ("fix-pending" in corr))
+        fixed += [r.choice(pending_kinds) for _ in range(n_pending - len(fixed))]
+        fixed += [TARGET_INTENT[c] for c in corr if c in TARGET_INTENT]
         if "repost-fixed" in rep:
             fixed.append("rej-receipt")
         if self.unknown:
             fixed.append("unknown")
-        n_near = {"d1": 0, "d2": 1, "d3": 2}[d]
-        fixed += ["near-dup"] * n_near
+        fixed += ["near-dup"] * {"d1": 0, "d2": 1, "d3": 1}[d]
         if d == "d3":
             fixed.append("flight-six")      # the 6-hour boundary appears every d3 week
         cap_in = d == "d3" or (d == "d2" and not self.cap_hist)
         cap_under = d == "d3"
-        n_cap = (3 if cap_in else 0) + (3 if cap_under else 0) + (1 if self.cap_hist else 0)
-        n_free = n_post - len(fixed) - n_cap
+        n_scen = ((3 if cap_in else 0) + (3 if cap_under else 0) + (1 if self.cap_hist else 0)
+                  + (2 if "fix-break-meal" in corr else 0) + (2 if "repost-rel" in rep else 0)
+                  + (1 if "repost-rel-rev" in rep else 0))
+        n_free = n_post - len(fixed) - n_scen
         if n_free < 0:
             raise RuntimeError("too many fixed receipts for the week's volume")
         menu = MENU[d]
@@ -917,10 +930,24 @@ class Gen:
         times = sorted(self.minute_slot(self.monday, self.friday + timedelta(hours=15)) for _ in range(n_post))
         idx = list(range(n_post))
         slots: list[dict | None] = [None] * n_post
+        end = self.friday + timedelta(hours=15, minutes=50)
+
+        def after(t0, lo_min=12, hi=None):
+            hi = min(hi or end, t0 + timedelta(days=2), end)
+            try:
+                return self.minute_slot(t0 + timedelta(minutes=lo_min), max(hi, t0 + timedelta(minutes=lo_min + 30)))
+            except RuntimeError:
+                return self.minute_slot(t0 + timedelta(minutes=lo_min), end)
 
         def take(pool):
             pool = [i for i in pool if slots[i] is None]
             return pool[r.randrange(len(pool))] if pool else None
+
+        def pick(pool, what):
+            i = take(pool)
+            if i is None:
+                raise RuntimeError(f"no slot for {what}")
+            return i
         early = [i for i in idx if i < int(n_post * 0.6)]
         # cap scenarios (setup, setup, final), same employee and expense date
         cap_emps = [s for s in self.staff if s is not (self.cap_hist or {}).get("emp")]
@@ -954,9 +981,37 @@ class Gen:
             pos = take([i for i in idx if times[i] < self.monday + timedelta(days=2)])
             slots[pos] = {"intent": "cap-history", "emp": self.cap_hist["emp"],
                           "fixed": {"date": self.cap_hist["date"], "amount": self.cap_hist["final"]}}
+        self.pre_at: dict[str, tuple] = {}
+        if "fix-break-meal" in corr:
+            # an individual meal M, corrected over the $50 limit (row -> Rejected), then a later individual meal L of
+            # the same employee and expense date that passes only when the Rejected row is not counted
+            emp = cap_emps.pop()
+            i_m = pick([i for i in idx if times[i].weekday() <= 1 and i < int(n_post * 0.5)]
+                       or [i for i in idx if times[i].weekday() <= 2], "fixable-meal")
+            exp_d = times[i_m].date() - timedelta(days=r.choice([0, 0, 1]))
+            a_m, new_a = self.amt(20, 48), self.amt(55, 75)
+            a_l = self.amt(float(max(Decimal("26"), LIMITS["cap"] - new_a + 1)), 50)
+            tc = after(times[i_m])
+            i_l = pick([i for i in idx if times[i] > tc + timedelta(minutes=10)], "cap-after")
+            slots[i_m] = {"intent": "fixable-meal", "emp": emp, "fixed": {"date": exp_d, "amount": a_m}}
+            slots[i_l] = {"intent": "cap-after", "emp": emp, "fixed": {"date": exp_d, "amount": a_l}}
+            self.reserved.add((emp["email"], exp_d))
+            self.pre_at["fix-break-meal"] = (tc, new_a)
+        if "repost-rel" in rep:
+            # a receipt dated 'today' or 'yesterday', a near-duplicate with the same words on a later day (another
+            # expense date: processed), and (below) a repost with an explicit date on a later day
+            i_b = pick([i for i in idx if times[i].weekday() <= 1] or [i for i in idx if times[i].weekday() <= 2],
+                       "rel-base")
+            i_n = pick([i for i in idx if times[i].date() > times[i_b].date()], "near-dup-rel")
+            slots[i_b] = {"intent": "rel-base", "rel_style": r.choice(["today", "yesterday"])}
+            slots[i_n] = {"intent": "near-dup-rel", "base": f"p{i_b}"}
+        if "repost-rel-rev" in rep:
+            # a receipt with an explicit date that is its posting day, reposted the next day as 'yesterday'
+            slots[pick([i for i in idx if times[i].weekday() <= 3], "rev-base")] = {"intent": "rev-base"}
         for intent in fixed:
             if intent.startswith("pending") or intent in ("flight-long", "rej-attendees", "rej-receipt", "fixable-ok",
-                                                          "fixable-cat"):
+                                                          "fixable-cat", "fixable-big", "fixable-team",
+                                                          "fixable-cat-travel"):
                 pos = take(early)
             elif intent == "near-dup":
                 pos = take([i for i in idx if i >= int(n_post * 0.25)])
@@ -976,48 +1031,45 @@ class Gen:
             s["sub"] = s["intent"]
             s["key"] = f"p{i}"
         self.posted = slots
+        self.slot_by_key = {s["key"]: s for s in slots}
         # follow-ups
         plans = list(slots)
-        end = self.friday + timedelta(hours=15, minutes=50)
-
-        def after(t0, lo_min=12, hi=None):
-            hi = min(hi or end, t0 + timedelta(days=2), end)
-            try:
-                return self.minute_slot(t0 + timedelta(minutes=lo_min), max(hi, t0 + timedelta(minutes=lo_min + 30)))
-            except RuntimeError:
-                return self.minute_slot(t0 + timedelta(minutes=lo_min), end)
         by_intent = lambda name: [s for s in slots if s["intent"] == name]  # noqa: E731
         used_targets: set[str] = set()
 
+        def use(t):
+            used_targets.add(t["key"])
+            return t
+
         def pick_target(cands):
             cands = [c for c in cands if c["key"] not in used_targets]
-            c = cands[r.randrange(len(cands))]
-            used_targets.add(c["key"])
-            return c
-        for c in corr:
-            if c == "fix-attendees":
-                t = pick_target(by_intent("rej-attendees"))
-            elif c == "fix-receipt":
-                t = pick_target([s for s in by_intent("rej-receipt") if not s.get("for_repost")])
-            elif c == "fix-category":
-                t = pick_target(by_intent("fixable-cat"))
-            else:
-                t = pick_target(by_intent("fixable-ok"))
-            plans.append({"kind": "receipt.corrected", "sub": c, "target": t["key"], "at": after(t["at"])})
+            return use(cands[r.randrange(len(cands))])
         pend = [s for s in slots if (s["intent"].startswith("pending") or s["intent"] == "flight-long")
                 and s["at"] < self.friday + timedelta(hours=9)]
+        pf = by_intent("pending-fixable")
+        pre_t = use(pf[0]) if "fix-preapproved" in corr else None
+        pend_t = use(pf[-1]) if "fix-pending" in corr else None
+        big = [use(s) for s in by_intent("fixable-big")]
         hist_pend = [ts for ts in self.hist if self.receipts[ts]["status"] == PENDING]
         approvals = []
         for a in appr:
-            if a == "approve":
-                if hist_pend and (d != "d1" and r.random() < 0.4):
-                    tgt, t_at = hist_pend[0], self.monday + timedelta(hours=8)
-                    plans.append({"kind": "preapproval.reply", "sub": "approve", "target": tgt, "hist": True,
-                                  "at": self.minute_slot(t_at, t_at + timedelta(days=3))})
-                else:
-                    t = pend[r.randrange(len(pend))]
-                    plans.append({"kind": "preapproval.reply", "sub": "approve", "target": t["key"], "at": after(t["at"], 20)})
-                approvals.append(plans[-1])
+            if a != "approve":
+                continue
+            if pre_t is not None:
+                plans.append({"kind": "preapproval.reply", "sub": "approve", "target": pre_t["key"],
+                              "at": after(pre_t["at"], 20)})
+            elif hist_pend and (d != "d1" and r.random() < 0.4):
+                tgt, t_at = hist_pend[0], self.monday + timedelta(hours=8)
+                plans.append({"kind": "preapproval.reply", "sub": "approve", "target": tgt, "hist": True,
+                              "at": self.minute_slot(t_at, t_at + timedelta(days=3))})
+            else:
+                cands = [s for s in pend if s is not pend_t]
+                t = cands[r.randrange(len(cands))]
+                plans.append({"kind": "preapproval.reply", "sub": "approve", "target": t["key"], "at": after(t["at"], 20)})
+            approvals.append(plans[-1])
+        np_at = None
+        plain = ("ok-ride", "ok-parking", "ok-train", "ok-supplies", "ok-software", "ok-consulting", "ok-hotel",
+                 "ok-flight", "ok-meal-team")
         for a in appr:
             if a == "approve":
                 continue
@@ -1025,6 +1077,16 @@ class Gen:
                 base = approvals[0]
                 plans.append({"kind": "preapproval.reply", "sub": "again", "target": base["target"], "hist": base.get("hist"),
                               "at": after(base["at"], 20)})
+                continue
+            if a == "not-pending":
+                # the manager's 'pre-approved' on a receipt logged Approved at once: nothing (POLICY.md 5.2)
+                if big:
+                    t = big[0]
+                else:
+                    t = pick_target([s for s in slots if s["intent"] in plain and s["at"] < end - timedelta(hours=3)])
+                at = after(t["at"], 15)
+                np_at = at if big else None
+                plans.append({"kind": "preapproval.reply", "sub": "not-pending", "target": t["key"], "at": at})
                 continue
             approved = {p["target"]: p["at"] for p in approvals}
             cands = [s for s in pend if s["key"] not in approved] or pend
@@ -1034,24 +1096,85 @@ class Gen:
             t = cands[r.randrange(len(cands))]
             hi = approved.get(t["key"])
             plans.append({"kind": "preapproval.reply", "sub": a, "target": t["key"], "at": after(t["at"], 15, hi)})
-        for k_, rp in enumerate(rep):
+        corr_plans: dict[str, dict] = {}
+        for c in corr:
+            if c == "fix-second":
+                continue
+            new_amount = None
+            if c == "fix-attendees":
+                t = pick_target(by_intent("rej-attendees"))
+            elif c == "fix-receipt":
+                t = pick_target([s for s in by_intent("rej-receipt") if not s.get("for_repost")])
+            elif c == "fix-category":
+                t = pick_target(by_intent("fixable-cat"))
+            elif c in ("fix-amount", "fix-date", "wrong-person"):
+                t = pick_target(by_intent("fixable-ok"))
+            elif c == "fix-over":
+                t = big[0]
+            elif c == "fix-break-team":
+                t = pick_target(by_intent("fixable-team"))
+            elif c == "fix-cat-travel":
+                t = pick_target(by_intent("fixable-cat-travel"))
+            elif c == "fix-break-meal":
+                t = use(by_intent("fixable-meal")[0])
+            elif c == "fix-cap-own":
+                t = use(by_intent("cap-under")[0])
+            elif c == "fix-pending":
+                t = pend_t
+            elif c == "fix-preapproved":
+                t = pre_t
+            else:
+                raise ValueError(c)
+            if c == "fix-break-meal":
+                at, new_amount = self.pre_at[c]
+            elif c == "fix-preapproved":
+                at = after(approvals[0]["at"], 15)
+            elif c == "fix-over" and np_at is not None:
+                at = after(np_at, 15)
+            else:
+                at = after(t["at"])
+            corr_plans[c] = {"kind": "receipt.corrected", "sub": c, "target": t["key"], "at": at}
+            if new_amount is not None:
+                corr_plans[c]["new_amount"] = new_amount
+            plans.append(corr_plans[c])
+        if "fix-second" in corr:
+            # a second valid correction in the thread of the first one (the rejected receipt it fixed); on a later
+            # calendar day than the receipt it states a relative date, read on the correction's own day
+            first = corr_plans[corr[0]]
+            t = self.slot_by_key[first["target"]]
+            lo = max(first["at"] + timedelta(minutes=10), self.next_morning(t["at"]))
+            mode = "date-rel"
+            if lo > end - timedelta(minutes=30):
+                lo, mode = first["at"] + timedelta(minutes=10), "amount"
+            plans.append({"kind": "receipt.corrected", "sub": "fix-second", "target": t["key"], "mode": mode,
+                          "at": self.minute_slot(lo, max(end, lo + timedelta(minutes=30)))})
+        for rp in rep:
             if rp == "repost-history":
                 tgt = self.hist[r.randrange(len(self.hist))]
                 plans.append({"kind": "receipt.reposted", "sub": rp, "target": tgt, "hist": True,
                               "at": self.minute_slot(self.monday, self.monday + timedelta(days=3))})
             elif rp == "repost-fixed":
-                cands = [s for s in by_intent("rej-receipt") if s["key"] not in used_targets]
-                t = pick_target(cands)
+                t = pick_target(by_intent("rej-receipt"))
                 plans.append({"kind": "receipt.reposted", "sub": rp, "target": t["key"], "at": after(t["at"], 30)})
-            else:
-                cands = [s for s in slots if s["intent"] not in ("unknown", "cap-setup", "cap-reject", "cap-under")
+            elif rp == "repost-rel":
+                t = use(by_intent("rel-base")[0])
+                plans.append({"kind": "receipt.reposted", "sub": rp, "target": t["key"],
+                              "at": self.minute_slot(self.next_morning(t["at"]), end)})
+            elif rp == "repost-rel-rev":
+                t = use(by_intent("rev-base")[0])
+                nm = self.next_morning(t["at"])
+                plans.append({"kind": "receipt.reposted", "sub": rp, "target": t["key"],
+                              "at": self.minute_slot(nm, nm + timedelta(hours=9))})
+            else:  # repost, repost-terse
+                cands = [s for s in slots if s["intent"] not in ("unknown", "cap-setup", "cap-reject", "cap-under",
+                                                                  "fixable-meal", "cap-after", "rel-base", "rev-base",
+                                                                  "near-dup-rel")
                          and s["key"] not in used_targets and s["at"] < end - timedelta(hours=3)]
                 t = pick_target(cands)
                 plans.append({"kind": "receipt.reposted", "sub": rp, "target": t["key"], "at": after(t["at"], 40)})
         plans.sort(key=lambda p: p["at"])
         plans.append({"kind": "week.close", "sub": "week-close", "at": self.close_at})
         self.plans = plans
-        self.slot_by_key = {s["key"]: s for s in slots}
 
     # -- simulation ---------------------------------------------------------------------------------------------------
     def simulate(self):
