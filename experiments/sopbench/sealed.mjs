@@ -30,17 +30,17 @@ const readRecords = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').fi
 const mean = xs => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
 /** Verify a freeze file against the split, the code and the artifacts; returns it. */
-export function verifyFreeze(file, { split = loadSplit(), checkCode = true } = {}) {
+export function verifyFreeze(file, { split = loadSplit(), checkCode = true, root = REPO } = {}) {
   const f = readJson(file);
   const bad = [];
   if (f.kind !== 'sopbench-freeze') bad.push('kind');
   if (f.splitSha256 !== split.splitSha256) bad.push('splitSha256');
   if (checkCode) for (const [p, h] of Object.entries(f.code ?? {})) if (!existsSync(path.join(REPO, p)) || sha256(readFileSync(path.join(REPO, p))) !== h) bad.push(`code ${p}`);
   for (const [sop, a] of Object.entries(f.artifacts ?? {})) {
-    const files = artifactFiles(path.join(REPO, a.dir));
+    const files = artifactFiles(path.resolve(root, a.dir));
     if (!files || artifactSha256(files) !== a.sha256) bad.push(`artifact ${sop}`);
   }
-  for (const sop of f.sops) if (!split.sops[sop]) bad.push(`sop ${sop}`); else if (sha256(JSON.stringify(split.sops[sop].sealed)) !== sha256(JSON.stringify(f.rows?.[sop]?.sealed ?? split.sops[sop].sealed))) bad.push(`rows ${sop}`);
+  for (const sop of f.sops) if (!split.sops[sop]) bad.push(`sop ${sop}`); else if (f.rows?.[sop]?.sealedSha256 !== split.sops[sop].sealedSha256) bad.push(`rows ${sop}`);
   if (bad.length) throw new Error(`freeze check failed: ${bad.join(', ')}`);
   return f;
 }
@@ -99,15 +99,17 @@ export function decide(an, anNoOrch, w) {
 
 export async function sealedRun(o) {
   const log = o.log ?? (m => process.stderr.write(m + '\n'));
-  const split = loadSplit();
-  const freeze = verifyFreeze(o.freeze, { split });
+  const splitFile = o.split ?? undefined, dataDir = o.dataDir ?? null, upstream = o.upstream ?? undefined;
+  const split = loadSplit(splitFile);
+  const freeze = verifyFreeze(o.freeze, { split, checkCode: o.checkCode ?? true, root: o.root ?? REPO });
+  const io = { split: splitFile, dataDir, upstream };
   const arms = o.arms ?? ['W', 'A'];
   const sops = (o.sops ?? freeze.sops).filter(s => freeze.sops.includes(s));
   const k = freeze.k;
   const policy = loadPolicy();
-  for (const m of [freeze.arms.A.model, ...freeze.arms.W.judgeModels]) if (modelById(policy.policy, m).provider !== 'claude-cli') throw new Error(`model ${m} is not served by claude-cli`);
+  for (const m of [freeze.arms.A.model, ...freeze.arms.W.judgeModels]) if (modelById(policy.policy, m).provider !== 'claude-cli') throw new Error(`model ${m} is not served by claude-cli (this harness's executor)`);
   const live = path.join(WORK_ROOT, 'sopbench', o.runId);
-  const rowsDir = path.join(ROWS_ROOT, o.runId);
+  const rowsDir = path.join(o.rowsRoot ?? ROWS_ROOT, o.runId);
   mkdirSync(live, { recursive: true }); mkdirSync(rowsDir, { recursive: true });
   const rawFile = path.join(rowsDir, 'runs.raw.jsonl'), gradedFile = path.join(rowsDir, 'runs.sealed.jsonl'), faultsFile = path.join(rowsDir, 'faults.jsonl');
   const launch = { freezeSha256: sha256(readFileSync(o.freeze)), arms, sops, k, capUsd: o.capUsd };
@@ -116,8 +118,8 @@ export async function sealedRun(o) {
   if (existsSync(launchFile) && readJson(launchFile).freezeSha256 !== launch.freezeSha256) throw new Error('resume refused: another freeze file');
   writeJson(launchFile, { ...launch, history: [...(existsSync(launchFile) ? readJson(launchFile).history ?? [] : []), new Date().toISOString()] });
   // Prepare every SOP's sealed rows (refused by the bridge without this freeze).
-  for (const s of sops) if (!existsSync(path.join(live, 'prep', s, 'meta.json'))) await prepareRows({ sop: s, rows: split.sops[s].sealed, live, sealed: true, freeze: o.freeze });
-  const files = Object.fromEntries(sops.map(s => [s, artifactFiles(path.join(REPO, freeze.artifacts[s].dir))]));
+  for (const s of sops) if (!existsSync(path.join(live, 'prep', s, 'meta.json'))) await prepareRows({ sop: s, rows: split.sops[s].sealed, live, sealed: true, freeze: o.freeze, ...io });
+  const files = Object.fromEntries(sops.map(s => [s, artifactFiles(path.resolve(o.root ?? REPO, freeze.artifacts[s].dir))]));
   const expectedOf = (s, r) => readJson(path.join(live, 'prep', s, 'rows', String(r), 'expected.json'));
   // Jobs: rows round-robin over SOPs; per row k forks; per fork both arms (order alternates).
   const done = new Set([...readRecords(gradedFile), ...readRecords(rawFile)].map(r => `${r.arm}:${r.sop}:${r.row}:${r.fork}`));
@@ -126,13 +128,13 @@ export async function sealedRun(o) {
   for (let i = 0; i < maxRows; i++) for (const s of sops) { const row = split.sops[s].sealed[i]; if (row === undefined) continue;
     for (let fork = 0; fork < k; fork++) for (const arm of (fork % 2 ? [...arms].reverse() : arms)) if (!done.has(`${arm}:${s}:${row}:${fork}`)) jobs.push({ arm, sop: s, row, fork }); }
   log(`[sealed] ${o.runId}: ${jobs.length} runs to go (${sops.length} SOPs, k=${k}, arms ${arms.join('+')})`);
-  const { port, db } = createModelPort({ journalFile: path.join(live, 'journal.sqlite'), allowedModels: [...new Set(freeze.arms.W.judgeModels)], concurrency: { 'claude-cli': 4 } });
+  const { port, db } = o.noModels ? { port: null, db: { close() {} } } : createModelPort({ journalFile: path.join(live, 'journal.sqlite'), allowedModels: [...new Set(freeze.arms.W.judgeModels)], concurrency: { 'claude-cli': 4 } });
   let spent = readRecords(rawFile).reduce((a, r) => a + (r.costUsd ?? 0), 0) + readRecords(faultsFile).reduce((a, r) => a + (r.costUsd ?? 0), 0), reserved = 0, stopped = null, next = 0, finished = 0;
   const pending = [];
   const gradePending = async () => {
     if (!pending.length) return;
     const batch = pending.splice(0);
-    const g = await gradeAnswers(batch.map(r => ({ sop: r.sop, row: r.row, text: r.answerText ?? '' })), { liveDir: live, sealed: true, freeze: o.freeze, expectedOf });
+    const g = await gradeAnswers(batch.map(r => ({ sop: r.sop, row: r.row, text: r.answerText ?? '' })), { liveDir: live, sealed: true, freeze: o.freeze, expectedOf, ...io });
     for (const [i, r] of batch.entries()) appendFileSync(gradedFile, JSON.stringify({ ...r, strict: g[i].strict, upstream: g[i].upstream, graderAgree: g[i].agree }) + '\n');
   };
   const budgetOf = arm => (arm === 'A' ? freeze.arms.A.budgetUsd : freeze.arms.W.budgetUsdPerRun);
@@ -149,12 +151,12 @@ export async function sealedRun(o) {
         if (job.arm === 'W') {
           const w = freeze.arms.W;
           const x = await runWorkflowRow({ files: files[job.sop], prepDir: path.join(live, 'prep', job.sop), sop: job.sop, row: job.row, live, tag, sealed: true, freeze: o.freeze,
-            modelPort: port, judgeModels: w.judgeModels, budgetUsd: w.budgetUsdPerRun, timeoutMs: w.timeoutMs, maxSteps: w.maxSteps });
+            modelPort: port, judgeModels: w.judgeModels, budgetUsd: w.budgetUsdPerRun, timeoutMs: w.timeoutMs, maxSteps: w.maxSteps, ...io });
           rec = { ...job, status: x.status, answerText: x.answerText, costUsd: x.costUsd, judgeCalls: x.judgeCalls, steps: x.steps, toolCalls: x.toolCalls, sections: x.sections.length,
             deopt: x.deopt, error: x.error ? String(x.error).slice(-400) : null, durationMs: x.durationMs, envFault: x.status === 'env' };
         } else {
           const a = freeze.arms.A;
-          const { rec: r } = await runAgentRow({ sop: job.sop, row: job.row, prepDir: path.join(live, 'prep', job.sop), live, tag, hostDir: path.join(live, 'host', tag), runner: runClaudeCode,
+          const { rec: r } = await runAgentRow({ sop: job.sop, row: job.row, prepDir: path.join(live, 'prep', job.sop), live, tag, hostDir: path.join(live, 'host', tag), runner: o.runner ?? runClaudeCode, ...io,
             model: a.model, budgetUsd: a.budgetUsd, maxSteps: a.maxSteps, timeoutMin: a.timeoutMin, effort: a.effort, tools: a.tools, sealed: true, freeze: o.freeze, audit: true });
           const v = [...(r.session?.violations ?? []), ...(r.nestedModelUses ? ['nested model use'] : [])];
           rec = { ...job, answerText: v.length ? '' : r.answerText ?? '', liveAnswerSha256: sha256(r.answerText ?? ''), violations: v, costUsd: r.costUsd, steps: r.steps ?? null,
@@ -191,9 +193,11 @@ export async function sealedRun(o) {
       graderDisagreements: all.filter(r => r.graderAgree && (r.graderAgree.strict === false || r.graderAgree.upstream === false)).length });
   }
   writeJson(path.join(live, 'summary.json'), summary);
-  const out = path.join(RESEARCH, 'runs', o.runId);
-  mkdirSync(out, { recursive: true });
-  writeJson(path.join(out, 'summary.json'), summary);
+  if (o.outDir !== null) {
+    const out = o.outDir ?? path.join(RESEARCH, 'runs', o.runId);
+    mkdirSync(out, { recursive: true });
+    writeJson(path.join(out, 'summary.json'), summary);
+  }
   if (stopped) log(`[sealed] STOPPED: ${stopped}. Resume with the same command and --resume.`);
   return { summary, stopped };
 }
