@@ -69,7 +69,13 @@ still reaped through the group on file). Found while landing, not named by the p
 environment-fault classes (patch 06 adds the infrastructure codes), `tests/verdict.test.mjs` pins the inconclusive codes (patch 09
 adds `TOKEN_BUDGET`), and patch 05's lifeline turned a missing binary into "exited with 127" (`PROCESS_FAILED`) instead of
 `PROCESS_LAUNCH` and showed `setpriv` to a test's spawn mock: `src/children.mjs` `lifelineExecFailed` restores the launch failure,
-and the mock in `tests/evaluator-audit.test.mjs` unwraps the lifeline (8 tests).
+and the mock in `tests/evaluator-audit.test.mjs` unwraps the lifeline (8 tests); patch 09 binds the runtime's default `maxTokens`
+into every new run's policy, so trials now reserve the host's token bound in their policy (`src/trials.mjs`; its hash must match the
+run's) and the legacy-store fixture in `tests/store-rows.test.mjs` allows that runtime addition, as it already allowed `dispatch`.
+On the experiment side: `experiments/jit/stats.mjs` keeps a copy of the environment-fault codes pinned to `runner.mjs` (updated);
+`experiments/jit/test/slice2-wiring.test.mjs` pinned `flow-v3.mjs` to its pre-patch-07 bytes (`15da5c24…`, which are SOP-Bench p2's
+frozen SDK copy, untouched; the pin moved) and expected a host check's three identical leaf calls to run three times (patch 08 joins
+them: one judge is paid).
 
 Chaos (`nice -n 15 node experiments/orch/chaos.mjs`): repository before this bump 20/43; scratch copy with the patches 32/43;
 this worktree after the patches 32/43 with the same 11 failures
@@ -83,7 +89,7 @@ this bump **35/43** ([../orch-20261021/chaos-landed/MATRIX.md](../orch-20261021/
 |---|---|---|
 | 21 | `sessionError({cancelled})`: a session the caller aborted, with no result, is `CANCELLED`, not `EXECUTOR_PROTOCOL` (which runners retried as an environment fault); an abort before launch reads the same | `tests/executor-sandbox.test.mjs` (unit cases and an end-to-end abort of a fake CLI) |
 | 15 | `REMEDIES` and `remedyOf(run)` (`src/verdict.mjs`): for every stop (failed, cancelled, uncertain, parked on an outage, waiting, awaiting a person or an approval) the code, cause, whether the run can continue and the next action, naming real commands; sealed in terminal verdicts as `verdict.remedy`; `Foundry.publicRun` adds it to CLI, HTTP and MCP output | chaos G1 green; `tests/verdict.test.mjs`. G1's extraction now also reads `remedyOf(record)` (a parked run has no error and no verdict); its checks are unchanged |
-| 12 | `experiments/lib/workdir-lock.mjs`: a lock file per workdir, created complete and exclusively (a private `O_EXCL` file hard-linked into place), holder = pid + start time, stale locks moved aside atomically; `runCompiled` refuses a second run in a held workdir (`refused`, `WORKDIR_BUSY`, nothing spent; an environment fault), call-host locks its interpret and agent workdirs | chaos F1 green; `experiments/lib/workdir-lock.test.mjs` |
+| 12 | `experiments/lib/workdir-lock.mjs`: a lock file per workdir, created complete and exclusively (a private `O_EXCL` file hard-linked into place), holder = pid + start time, stale locks moved aside atomically; `runCompiled` refuses a second run in a held workdir (`refused`, `WORKDIR_BUSY`, nothing spent; an environment fault), call-host locks its interpret and agent workdirs. Call-host child workdirs are now unique by construction (host tag + sequence): one host serves several check cases whose child spans repeat, so concurrent cases used to share (and clobber) one workdir | chaos F1 green; `experiments/lib/workdir-lock.test.mjs`; the jit suite |
 | 16 | the claude-cli provider asks `--version` on every call (the per-connect check; about 50 ms, measured, against calls of seconds) instead of once per binary per process; `verify-run` warns `MIXED_ENGINE_VERSIONS` when one harness served a run in two versions | chaos D4 green (calls a, b, c record 2.1.300, 2.1.306, 2.1.306; the run is flagged) |
 
 ## 4. Pinning the Claude CLI by bytes (compromise C2)
