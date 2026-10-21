@@ -186,6 +186,11 @@ test('sessionError: budget before rate limits, usage limits are rate limits, a s
   assert.equal(sessionError({ result: null, sandboxReady: false }), 'SANDBOX_UNAVAILABLE');
   assert.equal(sessionError({ result: null, timedOut: true }), 'EXECUTOR_TIMEOUT');
   assert.equal(sessionError({ result: { is_error: false, result: 'done' } }), null);
+  // The caller's own abort is CANCELLED (orch-20261021 rank 21), whatever else a resultless end would read as; a result printed first stands.
+  assert.equal(sessionError({ result: null, cancelled: true }), 'CANCELLED');
+  assert.equal(sessionError({ result: null, sandboxReady: false, cancelled: true }), 'CANCELLED');
+  assert.equal(sessionError({ result: null, stderr: 'API Error: 529 overloaded', cancelled: true }), 'CANCELLED');
+  assert.equal(sessionError({ result: { is_error: false, result: 'done' }, cancelled: true }), null);
   assert.deepEqual(splitReady(`${SANDBOX_READY}\nwarn\n`), { ready: true, stderr: 'warn\n' });
   assert.deepEqual(splitReady('mount: failed\n'), { ready: false, stderr: 'mount: failed\n' });
 });
@@ -219,6 +224,23 @@ test('a killed executor session is charged at its budget bound, never $0 (R5)', 
   assert.equal(killed.sessionId, 'fake-session'); assert.equal(killed.toolUses.length, 1); assert.equal(killed.sandboxReady, true);
   const finished = await run('finished', true);
   assert.equal(finished.ok, true); assert.equal(finished.costUsd, 0.123); assert.equal(finished.costUnknown, false); assert.equal(finished.costUpperUsd, 0.123);
+});
+
+test('a session the caller aborts ends CANCELLED, not EXECUTOR_PROTOCOL (orch-20261021 rank 21, probe L3), and is charged at its bound', { skip: live }, async t => {
+  const root = tmpRoot(); t.after(() => rmSync(root, { recursive: true, force: true }));
+  const workdir = path.join(root, 'aborted'); mkdirSync(workdir);
+  writeFileSync(path.join(workdir, 'fake-claude'), FAKE_CLI({ result: false })); chmodSync(path.join(workdir, 'fake-claude'), 0o755);
+  const halt = new AbortController();
+  const pending = runClaudeCode({ model: 'claude-haiku-4-5-20251001', prompt: 'x', workdir, budgetUsd: 0.75, timeoutMs: 30000, binary: path.join(workdir, 'fake-claude'), signal: halt.signal });
+  // Abort once the session has started (its init event is on stdout); the fake CLI would otherwise sleep 30 s.
+  setTimeout(() => halt.abort(), 1500);
+  const started = Date.now(), r = await pending;
+  assert.ok(Date.now() - started < 20000, 'the abort ended the session');
+  assert.equal(r.error.code, 'CANCELLED'); assert.equal(r.ok, false);
+  assert.equal(r.costUnknown, true); assert.equal(r.costUpperUsd, 0.75, 'a cancelled session is still charged at its bound');
+  const early = new AbortController(); early.abort();
+  const before = await runClaudeCode({ model: 'claude-haiku-4-5-20251001', prompt: 'x', workdir, budgetUsd: 0.75, timeoutMs: 30000, binary: path.join(workdir, 'fake-claude'), signal: early.signal });
+  assert.equal(before.error.code, 'CANCELLED', 'a signal aborted before launch also reads as CANCELLED');
 });
 
 test('live sandbox: own workdir only, nested hidden paths, read-only host, own pid namespace, optional no-network (R1)', { skip: live }, async t => {

@@ -275,8 +275,12 @@ export function streamUsageOf(events) {
 }
 const LIMITED = /rate.?limit|overloaded|usage limit|hit your (usage )?limit|limit reached/i;
 // Classify one session's end from the CLI's result event (null: none was printed). Exported for tests.
-export function sessionError({ result, stderr = '', timedOut = false, sandboxReady = true }) {
+export function sessionError({ result, stderr = '', timedOut = false, sandboxReady = true, cancelled = false }) {
   const status = Number(result?.api_error_status);
+  // The caller's own abort (orch-20261021 d3, probe L3): a session killed because its caller cancelled it ends without a result. That is
+  // CANCELLED, not EXECUTOR_PROTOCOL or SANDBOX_UNAVAILABLE, which runners retry as environment faults. A session that printed its result
+  // before the abort landed keeps its own classification.
+  if (cancelled && !result) return 'CANCELLED';
   if (!sandboxReady && !result) return 'SANDBOX_UNAVAILABLE';
   if (timedOut) return 'EXECUTOR_TIMEOUT';
   if (result?.subtype === 'error_max_budget_usd') return 'EXECUTOR_BUDGET';
@@ -317,18 +321,20 @@ export async function runClaudeCode({
   child.stderr.on('data', d => { if (stderr.length < 64 * 1024) stderr += d; });
   const kill = () => { try { process.kill(-child.pid, 'SIGKILL'); } catch {} };
   const timer = setTimeout(() => { timedOut = true; kill(); }, timeoutMs);
-  signal?.addEventListener('abort', kill, { once: true });
+  let cancelled = false;
+  const onAbort = () => { cancelled = true; kill(); };
+  if (signal?.aborted) onAbort(); else signal?.addEventListener('abort', onAbort, { once: true });
   child.stdin.on('error', () => {});
   child.stdin.end(prompt);
   const code = await new Promise(resolve => child.on('close', resolve));
-  clearTimeout(timer);
+  clearTimeout(timer); signal?.removeEventListener('abort', onAbort);
   const { ready, stderr: errText } = splitReady(stderr);
   const events = stdout.split('\n').filter(Boolean).map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
   writeFileSync(path.join(workdir, '.executor-transcript.jsonl'), stdout);
   const result = [...events].reverse().find(e => e.type === 'result');
   const toolUses = events.filter(e => e.type === 'assistant').flatMap(e => (e.message?.content ?? []).filter(c => c.type === 'tool_use').map(c => ({ name: c.name, input: c.input })));
   const init = events.find(e => e.type === 'system' && e.subtype === 'init');
-  const errorCode = sessionError({ result, stderr: errText, timedOut, sandboxReady: ready });
+  const errorCode = sessionError({ result, stderr: errText, timedOut, sandboxReady: ready, cancelled });
   const reported = typeof result?.total_cost_usd === 'number' && Number.isFinite(result.total_cost_usd);
   // A CLI that emitted no stream event never reached the agent loop (system/init precedes the first model call), so
   // nothing was spent; this covers both a sandbox that never got ready and a CLI that bailed at startup.
