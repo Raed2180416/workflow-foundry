@@ -16,6 +16,8 @@
 //   created_in {app, container, label}        a new record in the app (inside the container; naming the item)
 //   created_has {app, container, label, lit}  such a new record carries the literal
 //   created_none {app, container, lit}        no new record in the app (inside the container) carries the literal
+//   rec_field_not {ptr, field, value}         after the work the record's field does not hold the value
+//   no_dup {target}              no two new messages to the target with the same text (a side-effect guess: always soft)
 //
 // Merging: checks from K readers are keyed; a check's support is the number of readers that produced it. A check is
 // hard when its support reaches the majority and nothing weakens it (a negative without a verbatim rule quote, a computed
@@ -45,6 +47,13 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
   let effect = req.effect;
   if (effect === 'other') effect = req.recipients.length ? 'send_email' : req.channel ? 'post_message' : req.record ? 'update_record' : 'other';
   const label = req.item ? itemLabels.get(req.item) ?? '' : '';
+  const dupGuess = pol === 'must_not' && /duplicat|twice|more than once|repeat|again/i.test(req.statement);
+
+  if (dupGuess && (req.recipients.length || req.channel)) {
+    for (const t of req.recipients.length ? req.recipients.map(email => ({ email })) : [{ channel: req.channel }]) add('no_dup', { target: t }, { weak: true });
+    for (const c of checks) c.key = checkKey(c);
+    return { checks, judged: null };
+  }
 
   if (MESSAGE_EFFECTS.has(effect) && req.recipients.length) {
     for (const email of req.recipients) {
@@ -77,7 +86,9 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
       if (req.field && req.value && (req.valueGrounded || req.computed)) add('rec_field', { ptr: req.record, field: req.field, value: req.value }, { computed: !req.valueGrounded });
       else add('rec_changed', { ptr: req.record, scope: 'any' });
       for (const l of lits) add('msg_has', { target: { ptr: req.record }, lit: l.text }, { computed: l.computed && !l.grounded });
-    } else add('rec_unchanged', { ptr: req.record, scope: 'any' }, { weak: negWeak || sideWeak });
+    } else if (req.field && req.value) add('rec_field_not', { ptr: req.record, field: req.field, value: req.value }, { weak: negWeak || sideWeak });
+    // "do not process X" rarely means "do not touch X's record at all": without a field it is a soft guess
+    else add('rec_unchanged', { ptr: req.record, scope: 'any' }, { weak: true });
   } else if (effect === 'delete_record' && req.record) {
     if (pol === 'must') add('rec_deleted', { ptr: req.record });
     else add('rec_kept', { ptr: req.record }, { weak: negWeak || sideWeak });
@@ -100,10 +111,10 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
 export function checkKey(c) {
   const P = c.params;
   switch (c.type) {
-    case 'msg_to': case 'msg_none': case 'post_in': case 'post_none': return `${c.type}|${tgtKey(P.target)}`;
+    case 'msg_to': case 'msg_none': case 'post_in': case 'post_none': case 'no_dup': return `${c.type}|${tgtKey(P.target)}`;
     case 'msg_has': case 'msg_lacks': return `${c.type}|${tgtKey(P.target)}|${norm(P.lit)}`;
     case 'rec_changed': case 'rec_unchanged': return `${c.type}|${P.ptr}|${P.scope}`;
-    case 'rec_field': return `${c.type}|${P.ptr}|${norm(P.field).replace(/^cells\./, '')}|${norm(P.value)}`;
+    case 'rec_field': case 'rec_field_not': return `${c.type}|${P.ptr}|${norm(P.field).replace(/^cells\./, '')}|${norm(P.value)}`;
     case 'rec_deleted': case 'rec_kept': return `${c.type}|${P.ptr}`;
     case 'created_in': return `${c.type}|${P.app}|${P.container ?? ''}|${norm(P.label ?? '')}`;
     case 'created_has': return `${c.type}|${P.app}|${P.container ?? ''}|${norm(P.label ?? '')}|${norm(P.lit)}`;
@@ -114,7 +125,7 @@ export function checkKey(c) {
 // The check that contradicts a key, if any.
 function opposite(key) {
   const [t, ...rest] = key.split('|');
-  const map = { msg_to: 'msg_none', msg_none: 'msg_to', post_in: 'post_none', post_none: 'post_in', msg_has: 'msg_lacks', msg_lacks: 'msg_has', rec_changed: 'rec_unchanged', rec_unchanged: 'rec_changed', rec_deleted: 'rec_kept', rec_kept: 'rec_deleted' };
+  const map = { msg_to: 'msg_none', msg_none: 'msg_to', post_in: 'post_none', post_none: 'post_in', msg_has: 'msg_lacks', msg_lacks: 'msg_has', rec_changed: 'rec_unchanged', rec_unchanged: 'rec_changed', rec_deleted: 'rec_kept', rec_kept: 'rec_deleted', rec_field: 'rec_field_not', rec_field_not: 'rec_field' };
   return map[t] ? [map[t], ...rest].join('|') : null;
 }
 
@@ -137,20 +148,28 @@ export function mergeLedgers(ledgers, { hardSupport = null, maxJudged = 24 } = {
     for (const req of L.requirements) {
       const { checks, judged } = compileRequirement(req, { itemLabels });
       for (const c of checks) {
-        if (!byKey.has(c.key)) byKey.set(c.key, { ...c, readers: new Set(), weakVotes: 0, computedVotes: 0, statements: [] });
+        if (!byKey.has(c.key)) byKey.set(c.key, { ...c, readers: new Set(), weakReaders: new Set(), computedReaders: new Set(), statements: [] });
         const m = byKey.get(c.key);
-        if (!m.readers.has(L.reader)) { m.readers.add(L.reader); if (c.weak) m.weakVotes++; if (c.computed) m.computedVotes++; }
+        if (!m.readers.has(L.reader)) { m.readers.add(L.reader); if (c.weak) m.weakReaders.add(L.reader); if (c.computed) m.computedReaders.add(L.reader); }
         if (m.statements.length < 3) m.statements.push(c.statement);
       }
       if (judged) judgedAll.push({ ...judged, reader: L.reader, kind: req.kind, cat: req.type, weak: req.kind === 'must_not' && !req.quoteOk, words: words(judged.statement) });
     }
   }
+  // A reader that asks for an effect and also forbids it (a qualified negative, e.g. "not about X") keeps the positive.
+  for (const [key, m] of byKey) {
+    if (m.polarity !== 'must_not') continue;
+    const pos = byKey.get(opposite(key));
+    if (pos) for (const r of [...m.readers]) if (pos.readers.has(r)) m.readers.delete(r);
+  }
   const checks = [];
   for (const [key, m] of byKey) {
+    if (!m.readers.size) continue;
     const support = m.readers.size;
     let hard = support >= need, why = hard ? 'majority' : `support ${support}/${n}`;
-    if (hard && m.weakVotes >= support) { hard = false; why = m.cat === 'side_effect' ? 'side-effect guess' : 'negative without a verbatim rule quote'; }
-    if (hard && m.computedVotes >= support && support < 2) { hard = false; why = 'computed value from one reader'; }
+    const weak = [...m.readers].filter(r => m.weakReaders.has(r)).length, computed = [...m.readers].filter(r => m.computedReaders.has(r)).length;
+    if (hard && (weak >= support || m.type === 'no_dup')) { hard = false; why = m.cat === 'side_effect' || m.type === 'no_dup' ? 'side-effect guess' : 'negative without a verbatim rule quote'; }
+    if (hard && computed >= support && support < 2) { hard = false; why = 'computed value from one reader'; }
     if (hard && m.cat === 'side_effect' && support < 2) { hard = false; why = 'side-effect guess'; }
     checks.push({ key, type: m.type, polarity: m.polarity, cat: m.cat, params: m.params, statement: m.statements[0], support, readers: [...m.readers], hard, why, conflict: false });
   }

@@ -8,8 +8,8 @@ export const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A
 
 export const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
 
-/** Text normal form for literal matching: NFKC, typographic quotes and dashes folded, whitespace collapsed, lower case. */
-export const norm = s => String(s ?? '').normalize('NFKC').replace(/[‘’‛]/g, "'").replace(/[“”]/g, '"')
+/** Text normal form for literal matching: diacritics dropped, NFKC, typographic quotes and dashes folded, whitespace collapsed, lower case. */
+export const norm = s => String(s ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').normalize('NFKC').replace(/[‘’‛]/g, "'").replace(/[“”]/g, '"')
   .replace(/[‐-―−]/g, '-').replace(/ /g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
 
 export const stripHtml = s => String(s ?? '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li|h\d|tr)>/gi, '\n').replace(/<[^>]+>/g, ' ')

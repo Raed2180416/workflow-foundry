@@ -144,6 +144,19 @@ export function evaluateCheck(check, eff, ctx) {
       const v = fieldValue(fin, P.field);
       return sameValue(v, P.value) ? { pass: true, evidence: `${P.field} = ${JSON.stringify(v)}`.slice(0, 200) } : { pass: false, evidence: `${P.field} = ${JSON.stringify(v ?? null)}, expected ${JSON.stringify(P.value)}`.slice(0, 240) };
     }
+    case 'rec_field_not': {
+      const r = ctx.mapPtr(P.ptr);
+      if (!r) return { pass: null, evidence: `record ${P.ptr} not found in this candidate's world` };
+      const fin = (ctx.final?.[r.app]?.[r.coll] ?? []).find?.(x => isObj(x) && String(x.id ?? x.row_id) === r.id);
+      const v = fin ? fieldValue(fin, P.field) : undefined;
+      return sameValue(v, P.value) ? { pass: false, evidence: `${P.field} = ${JSON.stringify(v)}`.slice(0, 200) } : { pass: true, evidence: `${P.field} = ${JSON.stringify(v ?? null)}`.slice(0, 200) };
+    }
+    case 'no_dup': {
+      const m = messagesTo(P.target, eff, ctx);
+      const seen = new Map();
+      for (const x of m) { const k = norm(x.text); if (seen.has(k)) return { pass: false, evidence: `${seen.get(k)} and ${x.where} carry the same text` }; seen.set(k, x.where); }
+      return { pass: true, evidence: `${m.length} distinct message(s)` };
+    }
     case 'rec_deleted': case 'rec_kept': {
       const r = ctx.mapPtr(P.ptr);
       if (!r) return { pass: null, evidence: `record ${P.ptr} not found in this candidate's world` };
