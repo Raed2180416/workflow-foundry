@@ -299,8 +299,12 @@ for (const limit of [NaN, Infinity, -1]) audit(`invalid subprocess output bound 
 // protocol fixtures NEVER execute the selected binary, bubblewrap, or a model.
 function syntheticSpawn(t, respond) {
   const calls = [];
-  const replacement = t.mock.method(childProcess, 'spawn', (command, args, options) => {
-    calls.push({ command, args, options });
+  const replacement = t.mock.method(childProcess, 'spawn', (spawned, spawnedArgs, options) => {
+    // The lifeline (src/children.mjs, orch-20261021 patch 05) is transparent: on Linux every spawn is `setpriv --pdeathsig KILL -- command
+    // args`; the control sees the command it wraps.
+    const wrapped = /\/setpriv$/.test(spawned) && spawnedArgs?.[0] === '--pdeathsig' && spawnedArgs?.[2] === '--';
+    const command = wrapped ? spawnedArgs[3] : spawned, args = wrapped ? spawnedArgs.slice(4) : spawnedArgs;
+    calls.push({ command, args, options, lifeline: wrapped });
     const child = new EventEmitter(); child.stdout = new PassThrough(); child.stderr = new PassThrough(); child.stdin = new PassThrough(); child.stdin.resume();
     queueMicrotask(() => {
       try {

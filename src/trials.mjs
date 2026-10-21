@@ -35,7 +35,9 @@ export class TrialRunner {
         return normal.allowedCapabilities.includes(name) && cap.risk === 'low' && !cap.requiresApproval && cap.effects !== 'non-idempotent' && cap.cost === 0;
       }),
       maxSteps: Math.min(maxSteps, normal.maxSteps), maxDurationMs: Math.min(maxDurationMs, normal.maxDurationMs),
-      maxConcurrency: Math.min(2, normal.maxConcurrency), maxCost: 0, maxResumes: 1
+      maxConcurrency: Math.min(2, normal.maxConcurrency), maxCost: 0, maxResumes: 1,
+      // The host's token bound (orch-20261021 patch 09): the trial's runtime binds it into the run's policy, which must hash as reserved.
+      ...(Number.isSafeInteger(normal.maxTokens) ? { maxTokens: normal.maxTokens } : {})
     };
     this.limits = { maxPerRequest, maxTotal };
   }

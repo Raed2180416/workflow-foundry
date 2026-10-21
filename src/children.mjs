@@ -18,6 +18,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 const SETPRIV = process.platform === 'linux' ? (['/usr/bin/setpriv', '/bin/setpriv'].find(p => { try { return existsSync(p); } catch { return false; } }) ?? null) : null;
 /** [command, args] for spawn(): `command` wrapped so that it dies with the process that spawns it (see SETPRIV); unchanged without setpriv. */
 export function lifeline(command, args) { return SETPRIV ? [SETPRIV, ['--pdeathsig', 'KILL', '--', command, ...args]] : [command, args]; }
+/** Did setpriv itself fail to exec the wrapped command (it exits 126/127 and says so)? That is a launch failure of the command, as a spawn
+ *  ENOENT/EACCES was before the lifeline wrapped it, never a run of the command that failed. */
+export const lifelineExecFailed = (code, stderr = '') => !!SETPRIV && (code === 126 || code === 127) && /^setpriv: failed to execute /m.test(String(stderr));
 
 /** Set by the runtime around a sandbox or model call: {add(child), remove(pid)}. */
 export const childScope = new AsyncLocalStorage();

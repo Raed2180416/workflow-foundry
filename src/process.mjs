@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { FoundryError } from './data.mjs';
-import { lifeline, trackChild } from './children.mjs';
+import { lifeline, lifelineExecFailed, trackChild } from './children.mjs';
 
 /** Bounded argv-only subprocess. No shell parsing or inherited credential env. */
 export async function runProcess(command, args, { cwd, env, input = '', timeoutMs = 60000, signal, maxBytes = 4 * 1024 * 1024 } = {}) {
@@ -41,6 +41,8 @@ export async function runProcess(command, args, { cwd, env, input = '', timeoutM
       if (failure) kill();
       const result = { command, args, code, signal: terminationSignal, stdout, stderr, elapsedMs: Date.now() - startedAt };
       if (failure) { failure.processResult = result; reject(failure); }
+      // The lifeline (setpriv) could not exec the command: a launch failure, as the spawn error was before the wrapper (patch 05 follow-up).
+      else if (lifelineExecFailed(code, stderr)) { const error = new FoundryError('PROCESS_LAUNCH', `${command} could not be launched: ${stderr.trim().split('\n').at(-1).slice(0, 200)}`); error.processResult = result; reject(error); }
       else if (code !== 0) { const error = new FoundryError('PROCESS_FAILED', `${command} exited with ${code ?? terminationSignal}`); error.processResult = result; reject(error); }
       else resolve(result);
     });
