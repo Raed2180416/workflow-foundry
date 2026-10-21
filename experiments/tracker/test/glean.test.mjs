@@ -13,8 +13,8 @@ import { Journal } from '../../../src/journal.mjs';
 import { ScriptedProvider } from '../../../src/models/providers/scripted.mjs';
 import { subsetPolicy } from '../../lib/models.mjs';
 import { defaultModels } from '../extract.mjs';
-import { indexText, writeLedger, readLedger } from '../ledger.mjs';
-import { gleanLedger, gleanPrompt, mergeGleaned, GLEAN_SCHEMA, GLEAN_PROMPT_ID, main } from '../run.mjs';
+import { indexText, writeLedger, readLedger, applyEdits } from '../ledger.mjs';
+import { gleanLedger, gleanPrompt, mergeGleaned, gleanPrefixOf, GLEAN_SCHEMA, GLEAN_PROMPT_ID, main } from '../run.mjs';
 import { frozenSpecE, scoreExtraction, GOLD_FILE } from '../eval-e8.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -82,23 +82,44 @@ test('merge by pointer: verbatim sentence quotes, old ids untouched, new ids nex
   assert.equal(out.log.at(-1).op, 'glean');
 });
 
-test('answers that point nowhere, repeat a number or name an unknown kind are counted, never guessed at', () => {
-  const n91 = nAt(S0, 91), n139 = nAt(S0, 139);
+test('answers that point nowhere, repeat a number, or contradict their verdict are counted as invalid, never guessed at', () => {
+  const n91 = nAt(S0, 91), n92 = nAt(S0, 92), n139 = nAt(S0, 139), n252 = nAt(S0, 252), n255 = nAt(S0, 255), n263 = nAt(S0, 263), n266 = nAt(S0, 266);
   const out = mergeGleaned(S0, SPEC, [
     { n: 0, verdict: 'entries', entries: [{ kind: 'must', summary: 'x' }] },
     { n: 99, verdict: 'entries', entries: [{ kind: 'must', summary: 'x' }] },
     { n: n91, verdict: 'entries', entries: [{ kind: 'must', summary: 'migrated orders get an instance' }, { kind: 'order', summary: 'migration event first' }] },
     { n: n91, verdict: 'none', entries: [] },
+    { n: n92, verdict: 'entries', entries: [{ kind: 'must', summary: 'continue' }, { kind: 'sometimes', summary: 'bad kind' }] },
     { n: n139, verdict: 'entries', entries: [{ kind: 'sometimes', summary: 'bad kind' }] },
+    { n: n252, verdict: 'none', entries: [] },
+    { n: n255, verdict: 'entries', entries: [] },
+    { n: n263, verdict: 'none', entries: [{ kind: 'must', summary: 'contradicts its verdict' }] },
+    { n: n266, verdict: 'maybe', entries: [] },
   ]);
   const g = out.gleaning.at(-1);
-  assert.deepEqual(g.invalid.map(x => x.why), ['no such sentence', 'no such sentence', 'answered twice (first answer kept)', 'an entry with an unknown kind (dropped)']);
-  assert.deepEqual([g.added, g.none, g.answered, g.unanswered], [1, 1, 2, 35]);
-  const r = out.requirements.find(x => x.gleaned);
-  assert.deepEqual([r.span.line, r.kind, r.summary, r.merged], [91, 'must', 'migrated orders get an instance; also: migration event first', 1]);
-  assert.equal(out.uncovered.find(u => u.line === 139).glean, 'none');
-  assert.equal(out.uncovered.find(u => u.line === 252).glean, 'unanswered');
+  assert.deepEqual(g.invalid.map(x => x.why), ['no such sentence', 'no such sentence', 'answered twice (first answer kept)', 'an entry with an unknown kind (dropped)',
+    'every entry has an unknown kind', 'verdict "entries" with no entry', 'verdict "none" with entries', 'unknown verdict "maybe"']);
+  assert.deepEqual([g.added, g.none, g.answered, g.unanswered], [2, 1, 7, 30], 'only a clean "none" counts as none');
+  const [r91, r92] = out.requirements.filter(x => x.gleaned);
+  assert.deepEqual([r91.span.line, r91.kind, r91.kinds, r91.summary, r91.merged], [91, 'must', ['must', 'order'], 'migrated orders get an instance; also: migration event first', 1],
+    'every condition\'s kind is kept, not only the first');
+  assert.deepEqual([r92.span.line, r92.kind, r92.kinds, r92.merged], [92, 'must', undefined, undefined], 'the unknown kind is dropped (and counted above)');
+  const label = line => out.uncovered.filter(u => u.line === line).map(u => u.glean);
+  assert.deepEqual([label(139), label(255), label(263), label(266)], [['invalid'], ['invalid'], ['invalid'], ['invalid']]);
+  assert.deepEqual(label(252), ['none', 'unanswered'], 'two sentences start on line 252: the first answered none, the second not at all');
   assert.throws(() => mergeGleaned(S0, `${SPEC}\n`, []), /sha256 differs/);
+});
+
+test('gleaned ids take the extractor\'s prefix, never the user-added U (even when a U entry comes first in text order)', () => {
+  const user = 'This is the only description of the work you are given.';      // line 3, on s0's coverage list
+  const edited = applyEdits(S0, SPEC, [{ op: 'add', quote: user, kind: 'must', summary: 'added by the user' }], { now: () => '2026-10-21T00:00:00Z' });
+  assert.equal(edited.requirements.at(-1).id, 'U-079');
+  const once = mergeGleaned(edited, SPEC, [{ n: nAt(edited, 91), verdict: 'entries', entries: [{ kind: 'must', summary: 'a' }] }]);
+  assert.equal(once.requirements[0].id, 'U-079', 'in text order the user-added entry is first');
+  const twice = mergeGleaned(once, SPEC, [{ n: nAt(once, 139), verdict: 'entries', entries: [{ kind: 'must', summary: 'b' }] }]);
+  assert.deepEqual(twice.requirements.filter(r => r.gleaned).map(r => r.id), ['Q-080', 'Q-081']);
+  assert.deepEqual([gleanPrefixOf(twice), gleanPrefixOf({ requirements: [] }), gleanPrefixOf({ requirements: [{ id: 'G-001', source: 'user-text' }, { id: 'U-002', source: 'user-added' }] })], ['Q', 'Q', 'G']);
+  assert.equal(new Set(twice.requirements.map(r => r.id)).size, twice.requirements.length, 'no id repeats');
 });
 
 test('a failed call throws (nothing invented); an empty coverage list makes no call; the CLI needs the text', async () => {

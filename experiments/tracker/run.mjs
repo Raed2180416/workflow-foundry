@@ -193,6 +193,9 @@ export async function writeChecks({ ledger, port, writer, escalate, reasoning = 
 // so a gleaned entry cannot be invented or lose a word (the R3.1 drop in REPORT §2). Existing ids, quotes and properties
 // are untouched; new entries take the next ids and are marked `gleaned`. The pass lives here, not in extract.mjs or
 // ledger.mjs, because SPEC-1's frozen-file table (research/intent-20261021/PREREG-SPEC1.md) lists those two by sha256.
+// The prompt (gleanPrompt) is in-sample for SPEC-E: its "readings" is the title of SPEC-E §5, where S1–S9 sit (review
+// m11). It is measured on SPEC-E as development evidence only; before any held-out use, write neutral wording under a
+// new GLEAN_PROMPT_ID and freeze it.
 export const GLEAN_PROMPT_ID = 'tracker-glean/1';
 export const GLEAN_SYSTEM = 'You check sentences of a user\'s description of the workflow they want for conditions a checklist missed. Return JSON only, matching the schema.';
 export const GLEAN_SCHEMA = Object.freeze({
@@ -255,12 +258,29 @@ SENTENCES>>>`;
 }
 
 /**
+ * The id prefix for gleaned entries: the extractor's (or gold list's) prefix, taken from the ids that are not user-added
+ * (`U-###` means added by the user in applyEdits, so it is never reused). The most frequent such prefix wins; a ledger
+ * with no such id takes buildLedger's default 'Q'.
+ */
+export function gleanPrefixOf(ledger) {
+  const counts = new Map();
+  for (const r of ledger.requirements ?? []) {
+    if (r.source === 'user-added') continue;
+    const p = /^([A-Za-z]+)-\d+$/.exec(String(r.id ?? ''))?.[1];
+    if (p && p !== 'U') counts.set(p, (counts.get(p) ?? 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'Q';
+}
+
+/**
  * mergeGleaned(ledger, text, answers, meta) → a new ledger ($0, mechanical). `answers` are [{ n, verdict, entries }],
- * n pointing into ledger.uncovered (1-based). A sentence answered with at least one entry of a known kind becomes one
- * requirement quoting that sentence (several conditions in one sentence merge, as buildLedger merges a repeated quote:
- * the first kind, the summaries joined). Answers that point nowhere, repeat a number or name an unknown kind are
- * counted, never guessed at. The coverage list is recomputed; what stays on it is marked `glean`: 'none' (answered: no
- * condition), 'invalid' (the pointer did not resolve) or 'unanswered'.
+ * n pointing into ledger.uncovered (1-based). A sentence answered "entries" with at least one entry of a known kind
+ * becomes one requirement quoting that sentence (several conditions in one sentence merge, as buildLedger merges a
+ * repeated quote: `kind` is the first, `kinds` keeps every condition's kind in answer order, the summaries are joined).
+ * Answers are counted, never guessed at: one that points nowhere or repeats a number, a verdict that is neither "entries"
+ * nor "none", "entries" with no entry or only unknown kinds, and "none" with entries are all `invalid` (and add
+ * nothing); an unknown kind beside known ones is dropped and counted. The coverage list is recomputed; what stays on it
+ * is marked `glean`: 'none' (answered: no condition), 'invalid' (the answer was not usable) or 'unanswered'.
  */
 export function mergeGleaned(ledger, text, answers, meta = {}) {
   const index = indexText(text);
@@ -275,21 +295,29 @@ export function mergeGleaned(ledger, text, answers, meta = {}) {
     if (byN.has(n)) { invalid.push({ n, why: 'answered twice (first answer kept)' }); continue; }
     byN.set(n, a);
   }
-  const prefix = /^([A-Za-z]+)-\d+$/.exec(out.requirements[0]?.id ?? '')?.[1] ?? 'Q';
+  const prefix = gleanPrefixOf(out);
   let next = Math.max(0, ...out.requirements.map(r => Number(String(r.id).split('-').pop()) || 0)) + 1;
   const added = [], none = [], label = new Map();       // n -> what stays on the coverage list says: 'none' | 'invalid'
+  const bad = (n, why) => { invalid.push({ n, why }); label.set(n, 'invalid'); };
   for (const [n, a] of [...byN].sort((x, y) => x[0] - y[0])) {
     const u = asked[n - 1];
-    const entries = a.verdict === 'entries' ? (Array.isArray(a.entries) ? a.entries : []).filter(e => KIND_NAMES.includes(e?.kind)) : [];
-    if (a.verdict === 'entries' && entries.length < (a.entries?.length ?? 0)) invalid.push({ n, why: 'an entry with an unknown kind (dropped)' });
-    if (!entries.length) { none.push(n); label.set(n, 'none'); continue; }
+    const given = Array.isArray(a.entries) ? a.entries : [];
+    if (a.verdict === 'none') {
+      if (given.length) { bad(n, 'verdict "none" with entries'); continue; }
+      none.push(n); label.set(n, 'none'); continue;
+    }
+    if (a.verdict !== 'entries') { bad(n, `unknown verdict ${JSON.stringify(a.verdict ?? null)}`); continue; }
+    if (!given.length) { bad(n, 'verdict "entries" with no entry'); continue; }
+    const entries = given.filter(e => KIND_NAMES.includes(e?.kind));
+    if (!entries.length) { bad(n, 'every entry has an unknown kind'); continue; }
+    if (entries.length < given.length) invalid.push({ n, why: 'an entry with an unknown kind (dropped)' });
     // the pointer: the sentence of the user's text the coverage list recorded (same lines, same words)
     const s = sentences.find(x => x.line === u.line && x.lineEnd === u.lineEnd && x.text === u.text);
-    if (!s) { invalid.push({ n, why: 'the sentence is not in the text' }); label.set(n, 'invalid'); continue; }
+    if (!s) { bad(n, 'the sentence is not in the text'); continue; }
     const summaries = [...new Set(entries.map(e => String(e.summary ?? '').trim()).filter(Boolean))];
     added.push({ s, r: { id: `${prefix}-${String(next++).padStart(3, '0')}`, quote: s.text, span: { line: s.line, lineEnd: s.lineEnd }, context: [], contextText: [],
-      kind: entries[0].kind, summary: summaries.join('; also: '), confirmed: false, source: 'user-text', gleaned: true, ...(entries.length > 1 ? { merged: entries.length - 1 } : {}),
-      check: null, status: null, evidence: null } });
+      kind: entries[0].kind, ...(entries.length > 1 ? { kinds: entries.map(e => e.kind) } : {}), summary: summaries.join('; also: '), confirmed: false, source: 'user-text', gleaned: true,
+      ...(entries.length > 1 ? { merged: entries.length - 1 } : {}), check: null, status: null, evidence: null } });
   }
   // keep the ledger in text order (old ids unchanged, so ids no longer follow position once a ledger is gleaned)
   const at = new Map(out.requirements.map(r => [r, index.locate(r.quote)]));
