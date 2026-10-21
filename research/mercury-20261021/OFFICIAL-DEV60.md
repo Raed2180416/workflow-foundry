@@ -36,6 +36,17 @@ The harnesses differ: official API loop against Claude Code sessions. So this pl
 - That is the termination failure class in `research/automationbench-20261014/runs/DEV60-FAILURE-ANATOMY.md`, in its
   extreme form. It is the clearest case yet for code-owned termination, inventory and checks (A1-C).
 
+*Note added 2026-10-21 (compromise register A1 and A2; `research/compromises-20261021/action0/a1a2.py`, $0):*
+- "Every stop reason is `tool_calls`" is true of the `finish_reasons` field of `results.json` (2,761 entries, all
+  `tool_calls`), but that field misses each task's final call (upstream `automationbench/clients.py:219-223`). The
+  `stop_reasons` field records every call: 2,821 entries, 9 of them `stop`. So 9 of the 60 tasks ended with a `stop`
+  response: 8 under the cap, and 1 at step 50, which also counts among the 52 cap tasks.
+- The cap tasks are repetition loops rather than a missing done signal alone: all 52 repeat an identical (tool,
+  arguments) call 3 or more times, and 64% of their steps come after the first third repeat (median step 17). The
+  register splits the fix: a loop guard for Mercury (FIXES A2a) and a stop gate for CLI sessions (A2b).
+- Mean input is about 34K tokens per response (95.96M over 2,821 responses), 98.3% of it cache reads; the 1.6M per
+  task stands.
+
 **Next.**
 - Mercury runs through our harnesses once the OpenAI-compatible executor lands (A0, A1, A1-C), with **token caps**,
   because a dollar cap never triggers at a $0 price.

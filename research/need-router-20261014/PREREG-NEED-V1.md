@@ -549,7 +549,7 @@ produced.
   | claude-haiku-5-5 | ≤ 100K | 0.10 | 0.50 | 0.01 | 0.125 |
   | claude-haiku-5-5 | > 100K | 0.50 | 2.50 | 0.05 | 0.625 |
   | claude-opus-5-5 | all | 4.00 | 20.00 | 0.20 | 5.00 |
-  | claude-sonnet-5-5 (reference judges only) | all | 2.00 | 10.00 | 0.20 | 2.50 |
+  | claude-sonnet-5-5 (reference judges only) | all | 2.00 | 10.00 | 0.20 (wrong: the documented rate is 0.10; amended in §13 D10) | 2.50 |
 
   Base input and output equal `policy/models.json` (checked). The Haiku cache-read rate is the generic 0.1× multiplier;
   no Haiku-5.5-specific figure was found, so D6 (cost-meter delta on archived agent rows) reports how far the re-priced
@@ -1247,6 +1247,29 @@ label exists):
     is a sensitivity.
   - *Probe purposes* (`stages.json` NL1). They name the probe task (§3.3) instead of example 601 (DESIGN §3 departure,
     §14).
+- **D10. The Sonnet 5.5 cache-read price is wrong** (amendment, 2026-10-21, still before freeze; compromise register A7,
+  `research/compromises-20261021/FIXES.md` Action 0). No need-router label existed when this was recorded.
+  - *The error.* The §12 price table and `stages.json` (`priceTable.models["claude-sonnet-5-5"]`) list Sonnet 5.5 cache
+    reads at $0.20 per MTok. Anthropic's pricing page (platform.claude.com, read 2026-10-21) lists **$0.10**: cache hits
+    on Opus 5.5 and Sonnet 5.5 are 0.05× the base input price ($0.20 on Opus 5.5, $0.10 on Sonnet 5.5). The source cited
+    in `stages.json` (the claude-api skill's cached model table, 2026-10-06) still gives $0.20; whether that was a stale
+    cache or a price change was not established. The Opus 5.5 and Haiku 5.5 rows match the page.
+  - *Its effect.* The meter books a Sonnet 5.5 cache read at twice its documented price. Sonnet 5.5 appears in this
+    preregistration only as the live judge of the reference arms (§4.1). The error is conservative for caps (the meter
+    reaches a cap early) and raises those arms' cost term c. No paid stage has booked a Sonnet 5.5 row yet. The M0 D6
+    diagnostic did re-price 62 archived Sonnet 5.5 agent sessions with this table ($6.60 against $17.62 reported,
+    2.67×); at the documented rate that re-price is lower and the gap wider. D6 is a LEGACY diagnostic, and its gate
+    (block-until-verified) does not depend on the Sonnet rate.
+  - *What is not changed here.* The table keeps 0.20, marked, because `stages.json` still meters 0.2 and the two must
+    agree. Before any metered Sonnet 5.5 session, `stages.json` and the table change to 0.1 together, with
+    `prereg-check` re-run. `stages.json` is also pinned by sha256 in the SPEC-1 draft
+    (`research/intent-20261021/PREREG-SPEC1.md` §9), so `spec1-freeze.mjs` is re-run after that change.
+  - *Other meters on the same table* (added 2026-10-21 after review). `stages.json`'s `priceTable` is not only this
+    preregistration's meter. `experiments/agentv/run.mjs` (:241, :271) meters every session it runs with it, for any
+    `--model`, and `experiments/specbiz/spec1.mjs` (:342, :394) meters SPEC-1's sessions with it. A Sonnet 5.5 session
+    in either is booked at twice the documented cache-read price today, which is why the trigger above is any metered
+    Sonnet 5.5 session, not only this preregistration's judges. The one committed agentv run (`agentv-e8-s12`) is
+    Haiku 5.5; other runs were not checked.
 
 ## 14. What this file resolved, what stays open
 

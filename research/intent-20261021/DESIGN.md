@@ -275,6 +275,14 @@ All arms are scored on the 14 shared cases. Build arms are also scored on worlds
 - Every threshold below that MDE reads **inconclusive** unless its interval excludes it.
 - Layer-4 results are read per lineage as "any violation", so at K = 2 only 0/2 vs 2/2 is informative.
 - All results are development evidence; no claim rests on E8 alone (§0.3).
+- *Added 2026-10-21 (compromise register B3):* I-2 and I-6 read L3 recall, a per-layer number, and the L2/L3 boundary
+  has κ 0.36 between the two raters (§8 item 2, [RATER2.md](RATER2.md)). They are read under both raters' labels, and a
+  prediction counts as supported or refuted only if the reading is the same under both. The counts in I-2 and I-6 are
+  rater 1's: its gold L3 set has 16 ids, 3 of them owner-only. Rater 2's has 15 (12 shared with rater 1), 2 of them
+  owner-only (`research/compromises-20261021/action0/b3.py`). Under rater 2 the thresholds are read as the same
+  proportions of its own set. I-2's band 0.45–0.75 is 7–12 of 16 for rater 1 and 7–11 of 15 for rater 2. Its
+  refutation "≥ 15/16" (0.94) needs 15/15 for rater 2. I-6's "L3 ≤ 13/16" (all owner-only ids lost) is ≤ 13/15 for
+  rater 2.
 
 | # | Prediction | Refuted if |
 |---|---|---|
@@ -423,6 +431,10 @@ outcome-critical, divergent or benign by trials.
   creator's own description (median 2,737 characters), real graphs, and `createdAt`/`views` fields:
   - creation dates: 358 in 2025 and 203 in 2026. The 2026 ones are a natural post-cutoff stratum, and views give a
     popularity stratum;
+    *Corrected 2026-10-21 (compromise register B8):* not all 203. Haiku 5.5's training-data cutoff is June 2026, so only
+    the **77** templates created from July 2026 on are post-cutoff (July 20, August 29, September 22, October 6). Of the
+    other 2026 ones, 14 are from June and 112 from January to May. The adopted fix pairs this split with renamed twins,
+    as a difference in differences (compromises FIXES.md B8). Only `createdAt` was read.
   - no outcome oracle, so it scores feature recall only;
   - n8n's terms of service give no open licence, so this would be **local-only, never committed**;
   - only counts were read here, no description text.
@@ -465,6 +477,11 @@ SPEC-0 and INTENT target the first, second and fifth. The corpus inversion targe
    - Anything beyond SPEC-E is unscored anticipation.
    - The layer of each id is one analyst's judgment, with no second rater yet. Before any claim, a second rater labels the
      46 E8 units, and κ is reported.
+     *Update 2026-10-21 (compromise register B3):* the second rater has labelled them ([RATER2.md](RATER2.md)). κ is 0.57
+     over L1/L2/L3, but on the implied-versus-latent boundary (the 40 units both raters put in L2 or L3) it is **0.36**
+     (bootstrap 95% CI 0.04–0.66; AC1 0.52). Every per-layer number (L2 or L3 recall) is reported under both raters'
+     labels, and a per-layer claim is made only if it holds under both. The primary metric, recall over L2 ∪ L3, does not
+     depend on the split.
 3. **Owner burden in human terms.** We count questions, not minutes, annoyance or trust.
    - The simulator answers instantly and never changes its mind mid-run; only the edition switch drifts.
    - Easy mode stays on: the owner knows every rule.

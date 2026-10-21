@@ -194,6 +194,9 @@ context, not a comparison.
    40 times per dev row (`experiments/sopbench/cf_ceiling.py`, bridge dev world): the decision matches the ground truth on
    36.6% and 36.1% of draws (two runs); 8 of 20 rows never match, 4 always; the modal decision matches on 6–7 of 20. Upstream's oracle for this SOP is
    therefore invalid for a capability claim; it is excluded from our primary set (DESIGN.md §6) and reported separately.
+   *Note added 2026-10-21 (compromise register B2):* enumerating every value the random tool can return, instead of
+   sampling 40 draws, gives the exact figures: the label is reachable on 12 dev rows and unreachable by any draw on 8;
+   3 rows (not 4) always match; the exact chance of a match is 35.8% (`research/compromises-20261021/action0/b2_reach.py`).
 2. **Answer leak in upstream's loader** [code, measured]: for SOPs whose metadata lacks `input_columns`, upstream passes the
    whole row as the task input (`loader.py:226-229`): content_flagging's agent sees `final_decision`, order_fulfillment's
    sees `expected_output` (`bridge.py stats`, upstream_loader.outputs_in_inputs). Upstream's numbers on those SOPs measure

@@ -186,6 +186,16 @@ export const INTENT_MOTIFS = {
       why: 'Temporal Worker Deployment Versioning / getVersion: in-flight executions must complete on the code they started with (or a compatible patch). Shipping new workflow code over open runs is a replay break. Restate versions services the same way. An LLM session has no in-flight pin.',
       inspect: c => c.versioning?.inFlightPinned === true
     },
+    // Correction note (2026-10-21, compromise register C6). This motif's `why` text, FOUNDRY_IR_LIMITS.timerDispatch
+    // and .waitCrashRestartsDeadline, its inspect, the durable intent text and the held-out scenario ir-limits-named
+    // describe an older runtime: wait dispatch "persisted-wake-reinvoke" and a wait crashed between charge and waiting
+    // restarting wakeAt from Date.now()+delayMs. Today a wait fixes wakeAt and registers a store timer when it is charged
+    // (src/runtime.mjs:576-585, :848), any process resumes due runs (Runtime.tick, `foundry tick`, the serve scanner,
+    // src/http.mjs:135), and such a crash keeps wakeAt (tests/timers.test.mjs:54, :106). The `why` string is left as it
+    // was on purpose: it is model-facing (builderPack.ideologicalReasons and PRODUCTION_LATTICE), so changing it alone
+    // changes builderPackSHA256 and makes the builder pack contradict its own intent text and this motif's inspect. The
+    // C6 track (#75, with #78) changes all of them together, plus IR_UNSUPPORTED in src/construction-objective.mjs and
+    // tests/construction-intent.test.mjs (which deletes wakeAt to reproduce the old limit).
     {
       id: 'ir-limits-named-not-papered',
       why: 'Foundry workflow IR is not Temporal. schema delayMs maximum is 3600000 (1 hour); budget schema allows 2592000000 but runtime policyDefaults cap maxDurationMs at 3600000; there is no compensate node kind and no continue-as-new; wait dispatch is persisted-wake-reinvoke (someone must re-invoke execute); recover() only resets running task nodes, so a wait crashed between charge and waiting restarts wakeAt from Date.now()+delayMs. A construction that papers over these limits as if the IR were a timer-service saga engine is a lie. Protocol maxDelay unbounded-or-months still lives on wait.*, not by claiming delayMs can hold 30 days.',
