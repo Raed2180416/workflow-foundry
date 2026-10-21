@@ -165,6 +165,8 @@ const setFilters = {
   'fork3/held-out folds 3-4': r => FORK3.includes(r.arm) && HELDOUT.includes(r.fold),
   'fork3/no hard-defect tasks': r => FORK3.includes(r.arm) && strata[r.task] !== 'hard',
   'reported6/all folds': r => REPORTED6.includes(r.arm),
+  // analysis only (conditions on labels): the tasks at least one arm passes, i.e. without the 19 never-passed tasks
+  'fork3/41 tasks some arm passes (analysis only)': r => FORK3.includes(r.arm) && Object.keys(strata).length > 0 && !strata[r.task],
 };
 
 const scorersFor = name => ({ decide: v => v.pass, score: v => v.p, calP: (v, r) => cal[name].get(r.rowId) });
@@ -264,6 +266,25 @@ if (Object.keys(strata).length) {
   }
   L.push('');
 }
+
+// within-task ranking (what selection needs): over every (passing, failing) pair of fork3 candidates of one task, the share
+// the scorer ranks the passing one higher (ties count half)
+L.push('## Within-task pairwise ranking (fork3 candidates of the same task)', '', '| scorer | tasks with a pass/fail pair | pairs | ranked right |', '|---|---|---|---|');
+report.withinTask = {};
+const pairScorers = [...base.map(n => [n, id => J[n].get(id)?.p]), ...Object.entries(comboMaps).flatMap(([c, m]) => [[`${c} mean calibrated p`, id => m.get(id)?.meanCal], [`${c} mean raw p`, id => m.get(id)?.meanP]]),
+  ['own checks (A1-C only)', id => { const r = byId.get(id); return r.selfCheck?.kind === 'a1c-checks' ? (r.selfCheck.termination === 'all checks pass' ? 1 : 0) : undefined; }]];
+for (const [name, sc] of pairScorers) {
+  let pairs = 0, right = 0;
+  const tasksWith = new Set();
+  const g = new Map();
+  for (const r of rows) if (FORK3.includes(r.arm) && sc(r.rowId) !== undefined) { if (!g.has(r.task)) g.set(r.task, []); g.get(r.task).push(r); }
+  for (const [t, rs] of g) for (const p of rs.filter(lab.passed)) for (const q of rs.filter(r => !lab.passed(r))) {
+    pairs++; tasksWith.add(t); const d = sc(p.rowId) - sc(q.rowId); right += d > 0 ? 1 : d === 0 ? 0.5 : 0;
+  }
+  report.withinTask[name] = { tasks: tasksWith.size, pairs, rankedRight: pairs ? right / pairs : null };
+  L.push(`| ${name} | ${tasksWith.size} | ${pairs} | ${fmt(pairs ? right / pairs : null)} |`);
+}
+L.push('');
 
 // acceptance by arm (does a judge just prefer one pipeline's style?)
 L.push('## Acceptance by arm (fork3 rows, all folds)', '', '| arm | true pass | ' + judges.map(n => `${n} accepts`).join(' | ') + ' |', '|---|---|' + judges.map(() => '---').join('|') + '|');

@@ -32,7 +32,7 @@ opened; no sealed aggregate of a running experiment was read.*
    environment.py:70-71` [M]); it needs a user simulator, so it moves from bed 8 to bed 10, paired with airline.
 5. **Repo facts updated** from the repo-coverage sweep: the AB-v1 test run is not in flight; devCheck has Sonnet alone
    at 23/60, above Haiku + A1 (20/60); D18 raised the Mercury ceiling to 20M tokens; the AB-R held-out seed range collides
-   with the need router's (§2, §12).
+   with the need router's (§2, §6.4, §11 OD-10).
 6. **Disk and meter.** Raw run transcripts for the full portfolio would be about 11.5 GB [calc]; the disk has 3.0 GB free
    [M, `df`]. Audit-on-write compression and a quota-meter capture are now prerequisites (§5.5, §9).
 7. **Contamination controls fixed**: a memorization probe with ≥ 100 items and an exact test (30 items cannot detect less
