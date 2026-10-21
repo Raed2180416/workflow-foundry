@@ -4,6 +4,7 @@
 // they cover.
 //
 //   node experiments/tracker/eval-e8.mjs score --ledger L.json [--ledger L2.json ...] [--gold gold.json] [--text SPEC-E.md]
+//   node experiments/tracker/eval-e8.mjs baseline --ledger L.json --out B.json [--text SPEC-E.md]   ($0, no model call)
 //   node experiments/tracker/eval-e8.mjs adjudicate --ledger L.json --build solver.mjs     (oracle join; analyst only)
 //
 // Scoring is against the frozen SPEC-E only (FROZEN_SPEC_E: git 48535bb, the text gold.json's spans and anchors were
@@ -87,6 +88,9 @@ export function scoreExtraction(ledger, gold, text) {
   if (ledger.source.sha256 !== ix.sha256)
     throw new Error(`the ledger was extracted from another text (sha256 ${ledger.source.sha256}, scored text ${ix.sha256}); its spans do not refer to the gold's lines`);
   const ranges = ledger.requirements.map(r => ({ id: r.id, at: ix.locate(r.quote), span: r.span })).filter(r => r.at);
+  // the coverage list's sentences located by offsets (same lines, same words), for the sentence-level guard yield
+  const sentences = ix.sentences();
+  const uncoveredAt = (ledger.uncovered ?? []).map(u => sentences.find(x => x.line === u.line && x.lineEnd === u.lineEnd && x.text === u.text) ?? null);
   const covered = spans => Object.keys(spans).filter(id => ranges.some(r => r.span.line >= spans[id][0] && r.span.lineEnd <= spans[id][1]));
   const ids = covered(gold.ids);
   const uSpans = Object.fromEntries(Object.entries(gold.u).map(([k, u]) => [k, u.span]));
@@ -96,7 +100,8 @@ export function scoreExtraction(ledger, gold, text) {
     if (!a) throw new Error(`gold clause ${c.id}: its anchor does not locate in the scored text`);
     const hit = ranges.filter(r => r.at.start < a.end && a.start < r.at.end).map(r => r.id);
     const unc = (ledger.uncovered ?? []).some(u => u.line <= a.line && a.lineEnd <= (u.lineEnd ?? u.line));
-    return { id: c.id, of: c.of, covered: hit.length > 0, by: hit, inUncovered: unc };
+    const uncSentence = uncoveredAt.some(u => u && u.start <= a.start && a.end <= u.end);
+    return { id: c.id, of: c.of, covered: hit.length > 0, by: hit, inUncovered: unc, inUncoveredSentence: uncSentence };
   });
   const missedClauses = clauses.filter(c => !c.covered);
   const lines = text.split('\n');
@@ -108,8 +113,15 @@ export function scoreExtraction(ledger, gold, text) {
     idRecall: ids.length / Object.keys(gold.ids).length, idsCovered: ids.length, idsMissed: Object.keys(gold.ids).filter(id => !ids.includes(id)),
     uRecall: us.length / Object.keys(uSpans).length, uMissed: Object.keys(uSpans).filter(id => !us.includes(id)),
     clauseCoverage: (clauses.length - missedClauses.length) / clauses.length, clausesMissed: missedClauses.map(c => c.id),
+    // guardYield (PREREG §a, kept as reported in §2) is line-level: a missed clause counts as caught when its anchor's
+    // lines lie inside an uncovered sentence's lines, so an anchor that only shares a line with an uncovered sentence
+    // counts (R6.2a on s0: anchor on line 208, uncovered sentence on 207-208). guardYieldSentence asks the same by
+    // offsets: the anchor lies inside an uncovered sentence (review m10).
     guardYield: missedClauses.length ? missedClauses.filter(c => c.inUncovered).length / missedClauses.length : null,
     guardCaught: missedClauses.filter(c => c.inUncovered).map(c => c.id),
+    guardYieldSentence: missedClauses.length ? missedClauses.filter(c => c.inUncoveredSentence).length / missedClauses.length : null,
+    guardCaughtSentence: missedClauses.filter(c => c.inUncoveredSentence).map(c => c.id),
+    uncoveredUnlocated: uncoveredAt.filter(u => !u).length,
     nonNormative: nonNormative.map(r => r.id), uncovered: ledger.uncovered?.length ?? 0,
     kinds: ledger.requirements.reduce((m, r) => ({ ...m, [r.kind]: (m[r.kind] ?? 0) + 1 }), {}),
     costUsd: ledger.extractor?.costUsd ?? null, latencyMs: ledger.extractor?.latencyMs ?? null, model: ledger.extractor?.model ?? null,
@@ -118,6 +130,22 @@ export function scoreExtraction(ledger, gold, text) {
     gleanCostUsd: ledger.gleaning?.length ? ledger.gleaning.reduce((s, g) => s + (g.costUsd ?? 0), 0) : null,
     goLive: (({ lines, normative, all, rows }) => ({ lines, normative, all, missed: rows.filter(s => !s.by.length).map(s => `${s.line}: ${s.text.slice(0, 80)}`) }))(linesCoverage(ledger, text)),
   };
+}
+
+/**
+ * The simple baseline for a second pass over the coverage list (review M1; AGENTS.md "a capability number against a
+ * simple baseline"): every sentence on ledger.uncovered becomes an entry, with no model call ($0). It goes through the
+ * same merge as gleaning (run.mjs mergeGleaned: the quote is the sentence, copied by pointer; old entries untouched), so
+ * it differs from a gleaned ledger only in which sentences become entries. It judges nothing: each entry's kind is the
+ * placeholder 'must' (kinds are not scored) and its summary is empty.
+ */
+export async function coverageListBaseline(ledger, text, { at = new Date().toISOString() } = {}) {
+  const { mergeGleaned } = await import('./run.mjs');
+  const out = mergeGleaned(ledger, text, (ledger.uncovered ?? []).map((u, i) => ({ n: i + 1, verdict: 'entries', entries: [{ kind: 'must', summary: '' }] })),
+    { model: null, costUsd: 0, at });
+  Object.assign(out.gleaning.at(-1), { prompt: null, baseline: 'all-uncovered', note: 'no model call: every coverage-list sentence becomes an entry; kind is a placeholder (must), not a judgement' });
+  out.log.at(-1).by = 'baseline';
+  return out;
 }
 
 /**
@@ -163,9 +191,19 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const gold = JSON.parse(readFileSync(get('gold')[0] ?? path.join(ROOT, GOLD_FILE), 'utf8'));
     const text = get('text').length ? readFileSync(get('text')[0], 'utf8') : frozenSpecE();   // either way it must hash to the gold's (scoreExtraction)
     for (const f of get('ledger')) console.log(JSON.stringify({ ledger: f, ...scoreExtraction(JSON.parse(readFileSync(f, 'utf8')), gold, text) }));
+  } else if (args[0] === 'baseline') {
+    const [file, outFile] = [get('ledger')[0], get('out')[0]];
+    if (!file || !outFile) { console.error('usage: eval-e8.mjs baseline --ledger L.json --out B.json [--text SPEC-E.md]'); process.exit(2); }
+    if (path.resolve(file) === path.resolve(outFile)) throw new Error('refusing to write the baseline over its input ledger');
+    const text = get('text').length ? readFileSync(get('text')[0], 'utf8') : frozenSpecE();
+    const { saveLedger } = await import('./run.mjs');
+    const b = await coverageListBaseline(JSON.parse(readFileSync(file, 'utf8')), text);
+    saveLedger(outFile, b);
+    const g = b.gleaning.at(-1);
+    console.log(`baseline: ${g.added} coverage-list sentences became entries (${g.before.entries} -> ${g.after.entries}), $0; ${outFile}`);
   } else if (args[0] === 'adjudicate') {
     const ledger = JSON.parse(readFileSync(get('ledger')[0], 'utf8'));
     const r = await adjudicate({ ledger, solverSource: readFileSync(get('build')[0], 'utf8'), log: s => console.error(s) });
     console.log(JSON.stringify(r, null, 1));
-  } else { console.error('usage: eval-e8.mjs score --ledger L.json [...] [--gold gold.json] [--text SPEC-E.md, default: the frozen copy of 48535bb] | adjudicate --ledger L.json --build solver.mjs'); process.exit(2); }
+  } else { console.error('usage: eval-e8.mjs score --ledger L.json [...] [--gold gold.json] [--text SPEC-E.md, default: the frozen copy of 48535bb] | baseline --ledger L.json --out B.json | adjudicate --ledger L.json --build solver.mjs'); process.exit(2); }
 }
