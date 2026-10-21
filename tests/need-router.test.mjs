@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { detectPrimitives, effectVerbs, FEATURES, PRIMITIVES, DAMPENERS, MAX_SCAN_CHARS } from '../src/need/primitives.mjs';
-import { needCheck, needDecide, thresholdAt, scoreFeatures, loadParams, validateParams, paramsSha, modelJudge, DECISION_SCHEMA } from '../src/need/router.mjs';
+import { needCheck, needDecide, needCascade, CASCADE_CLEAR_BELOW, thresholdAt, scoreFeatures, loadParams, validateParams, paramsSha, modelJudge, DECISION_SCHEMA } from '../src/need/router.mjs';
 
 const P = loadParams();
 const RECURRING = 'Every weekday at 8am, check the on-call queue and page the secondary if anything is older than 15 minutes.';
@@ -132,6 +132,24 @@ test('needDecide: the judge is asked only in the middle band and can only raise 
   await needDecide(QUESTION, { judge: yes, delta: 0.1 });         // far below it
   await needDecide(text, { sensitivity: s, judge: yes, delta: 0 }); // no band
   assert.equal(asked, 0);
+});
+
+test('needCascade: code clears clear negatives without a call; the judge decides the rest; the slider moves the judge bar; faults fall back', async () => {
+  let asked = 0;
+  const judge = p => async () => { asked++; return { mode: p >= 0.5 ? 'workflow' : 'none', p, model: 'fake', costUsd: 0.0003 }; };
+  const cleared = await needCascade(QUESTION, { judge: judge(0.99) });
+  assert.equal(asked, 0); assert.equal(cleared.needsWorkflow, false); assert.equal(cleared.cascade.judged, false);
+  const text = 'Send the price-increase email to all 3,000 customers today.';   // code p above the 0.05 bar, below the threshold
+  assert.ok(needCheck(text).p >= CASCADE_CLEAR_BELOW);
+  const up = await needCascade(text, { judge: judge(0.8) });
+  assert.equal(asked, 1); assert.equal(up.needsWorkflow, true); assert.equal(up.decidedBy, 'judge:fake'); assert.equal(up.judge.threshold, 0.5);
+  assert.equal((await needCascade(text, { judge: judge(0.8), sensitivity: 0.1 })).needsWorkflow, false, 's = 0.1 puts the judge bar at 0.9');
+  const down = await needCascade(RECURRING, { judge: judge(0.1) });
+  assert.equal(down.needsWorkflow, false, 'the judge can also overrule a code trigger'); assert.equal(down.mode, 'none');
+  const fault = await needCascade(RECURRING, { judge: async () => { throw Object.assign(new Error('x'), { code: 'MODEL_TIMEOUT' }); } });
+  assert.equal(fault.decidedBy, 'code (judge fault)'); assert.equal(fault.needsWorkflow, true);
+  const noJudge = await needCascade(RECURRING);
+  assert.equal(noJudge.decidedBy, 'code'); assert.equal(noJudge.mode, needCheck(RECURRING).mode);
 });
 
 test('modelJudge: the typed question through a ModelPort-shaped port', async () => {

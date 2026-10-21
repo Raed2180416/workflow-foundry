@@ -128,6 +128,25 @@ export async function needDecide(text, { sensitivity = DEFAULT_SENSITIVITY, cont
   return { ...out, needsWorkflow: true, mode: read.mode, decidedBy: `judge:${read.model ?? 'unnamed'}`, why: `${explain(read.mode, card.primitives, card.dampeners)} (Close call: a cheap judge decided.)` };
 }
 
+// The cascade (ROUTER-1 POST-HOC, results/POSTHOC-test.md (b); not preregistered, confirm on a sealed set): the $0 code router
+// clears requests whose p is below CASCADE_CLEAR_BELOW, and the judge decides everything else. On the ROUTER-1 test split this
+// asked Haiku on 77% of requests with the same decisions as asking Haiku on all of them (FP 5/132, recall 0.967). The slider
+// moves the judge's threshold: t_J(s) = thresholdAt(s, 0.5), so s = 0.5 takes the judge's own boundary (percent >= 50).
+export const CASCADE_CLEAR_BELOW = 0.05;
+export async function needCascade(text, { sensitivity = DEFAULT_SENSITIVITY, context = {}, params = loadParams(), judge = null, clearBelow = CASCADE_CLEAR_BELOW } = {}) {
+  const card = needCheck(text, { sensitivity, context, params });
+  if (!judge) return card;
+  if (card.p < clearBelow) return { ...card, needsWorkflow: false, decidedBy: 'code (cleared below the cascade bar)', cascade: { clearBelow, judged: false } };
+  let a = null, fault = null;
+  try { a = await judge(text); } catch (e) { fault = { code: e.code ?? 'JUDGE_ERROR', message: String(e.message ?? e).slice(0, 200) }; }
+  if (!a || !MODES.includes(a.mode) || !Number.isFinite(a.p)) return { ...card, decidedBy: 'code (judge fault)', judge: { fault: fault ?? { code: 'JUDGE_ANSWER', message: 'unreadable answer' } }, cascade: { clearBelow, judged: false } };
+  const tJ = thresholdAt(sensitivity, 0.5), yes = a.p >= tJ;
+  const mode = yes ? (NEEDS_WORKFLOW.has(a.mode) ? a.mode : (card.features.recurrence >= 0.5 ? 'recurring' : 'workflow'))
+    : (NEEDS_WORKFLOW.has(a.mode) ? (card.mode === 'checklist' ? 'checklist' : 'none') : a.mode);
+  return { ...card, needsWorkflow: yes, mode, decidedBy: `judge:${a.model ?? 'unnamed'}`, why: `${explain(mode, card.primitives, card.dampeners)} (A model judged it; the code signals are shown as reasons.)`,
+    judge: { model: a.model ?? null, mode: a.mode, p: a.p, threshold: round(tJ), costUsd: a.costUsd ?? null, latencyMs: a.latencyMs ?? null }, cascade: { clearBelow, judged: true } };
+}
+
 /** A judge over a ModelPort (Haiku via the Claude CLI, or Mercury): the one typed question of judge-prompt.mjs. */
 export function modelJudge({ port, modelId, runId = 'need-router', salt = null, maxTokens = 1000 }) {
   let n = 0;

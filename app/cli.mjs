@@ -8,7 +8,8 @@
 //   node app/cli.mjs doctor  [--workspace DIR]                          what works here and what does not, in plain words
 //   node app/cli.mjs connect [--workspace DIR]                          the exact command or config for each coding agent (prints only)
 //   node app/cli.mjs approve APPROVAL_ID [--workspace DIR]              approve in this terminal (asks you to type yes; needs a real terminal)
-//   node app/cli.mjs need "REQUEST" [--sensitivity 0.5]                 does this request need a workflow at all? (code only, $0; ROUTER-1)
+//   node app/cli.mjs need "REQUEST" [--sensitivity 0.5] [--judge haiku|mercury]   does this request need a workflow at all? (code only and $0 by
+//                                                                           default; --judge asks a cheap model unless the code clears it; ROUTER-1)
 //
 // Safe defaults: the workspace is a private directory (0700) under the user's home; nothing listens beyond 127.0.0.1; no config file of any
 // coding agent is written (connect prints what to paste); no model is called unless --builder names one; nothing is sent beyond the
@@ -75,7 +76,7 @@ export function browserOpener(os = platform()) {
 
 async function main() {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { workspace: { type: 'string' }, port: { type: 'string' }, 'no-open': { type: 'boolean' }, dashboard: { type: 'boolean' },
-    builder: { type: 'string' }, 'token-cap': { type: 'string' }, sensitivity: { type: 'string' }, help: { type: 'boolean', short: 'h' } } });
+    builder: { type: 'string' }, 'token-cap': { type: 'string' }, sensitivity: { type: 'string' }, judge: { type: 'string' }, help: { type: 'boolean', short: 'h' } } });
   const [command = 'help', item] = positionals;
   const workspace = path.resolve(args.workspace ?? defaultWorkspace());
   const print = value => process.stdout.write(`${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}\n`);
@@ -85,8 +86,17 @@ async function main() {
     const { needAdvice } = await import('./core/need.mjs');
     const s = args.sensitivity === undefined ? undefined : Number(args.sensitivity);
     if (s !== undefined && !(s >= 0 && s <= 1)) { process.stderr.write('need: --sensitivity must be between 0 and 1\n'); process.exitCode = 2; return; }
-    const a = await needAdvice({ request: positionals.slice(1).join(' '), ...(s === undefined ? {} : { sensitivity: s }) });
-    print(`${a.mode.toUpperCase()}  p=${a.probability} (threshold ${a.threshold.toFixed(3)} at sensitivity ${a.sensitivity})\n${a.say}\n${a.why}`);
+    let judge = null;
+    if (args.judge) {
+      if (!['haiku', 'mercury'].includes(args.judge)) { process.stderr.write('need: --judge is haiku or mercury\n'); process.exitCode = 2; return; }
+      const [{ createBuilderPort }, { modelJudge }] = await Promise.all([import('./core/builder-model.mjs'), import('../src/need/router.mjs')]);
+      mkdirSync(workspace, { recursive: true, mode: 0o700 });
+      const { port } = await createBuilderPort({ model: BUILDERS[args.judge], journalFile: path.join(workspace, 'need-journal.sqlite'), maxBudgetUsdPerCall: 0.05,
+        ...(args.judge === 'mercury' ? { tokenCap: args['token-cap'] ? Number(args['token-cap']) : 20000 } : {}) });
+      judge = modelJudge({ port, modelId: BUILDERS[args.judge], runId: `need-cli-${Date.now()}` });
+    }
+    const a = await needAdvice({ request: positionals.slice(1).join(' '), ...(s === undefined ? {} : { sensitivity: s }), judge });
+    print(`${a.mode.toUpperCase()}  p=${a.probability} (threshold ${a.threshold.toFixed(3)} at sensitivity ${a.sensitivity}); decided by ${a.decidedBy}\n${a.say}\n${a.why}\nReliability: ${a.reliability}`);
     return;
   }
   if (command === 'doctor') { const report = doctor({ workspace }); for (const i of report.items) print(`${i.ok ? 'ok ' : i.optional ? 'note' : 'NO '}  ${i.say}`); process.exitCode = report.ok ? 0 : 1; return; }
