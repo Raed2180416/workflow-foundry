@@ -12,7 +12,8 @@
 //   - Co-primary metrics: strict pass (exact McNemar; stays the headline) and official partial credit (paired sign-flip
 //     permutation), each at two-sided alpha 0.025 with its own O'Brien-Fleming schedule (Bonferroni over the two metrics,
 //     so the family-wise type-I over both metrics and every look is at most 0.05). The boundary uses the planned
-//     cumulative task counts as information fractions. A strict-pass claim needs the strict test to cross.
+//     cumulative task counts as information fractions. A crossing decides only with a gap of at least 3 points
+//     (0.03 partial credit; ROADMAP §4.3). A strict-pass claim needs the strict test to cross.
 //   - Reported beside every look, never deciding: the Beta-mixture e-value (anytime-valid, for an unplanned look), Wilson
 //     intervals per arm and paired Bayes intervals for both metrics (exact/Bayes intervals at n < 200).
 //
@@ -43,6 +44,7 @@ export const LOOK1_RUN = 'a0-dev60';                  // the stored dev60 select
 export const SALT = 'ab-seq-v1:';
 export const ALPHA_TOTAL = 0.05;
 export const ALPHA_PER_METRIC = 0.025;                // Bonferroni over the two co-primary metrics
+export const FLOOR = 0.03;                            // ROADMAP §4.3: gaps under 3 points (0.03 partial credit) are noise
 /** PREREG-AB-v1 §1.1 records the devCheck list hash abbreviated as `74cf7615…25a7`. */
 export const PREREG_DEVCHECK = Object.freeze({ prefix: '74cf7615', suffix: '25a7' });
 
@@ -201,11 +203,15 @@ export function analyzeLooks(plan, control, treatment, { permIterations = 100000
         bayes: pairedBayesInterval(x.map(o => o.pass), y.map(o => o.pass), { seed: `ab-seq-strict-${L.look}` }), eValue: mixtureEvalue(b, c) },
       partialCredit: { meanDiff: pc.meanDiff, p: pc.p, method: pc.method, bayes: pairedBayesInterval(x.map(o => o.pc), y.map(o => o.pc), { seed: `ab-seq-pc-${L.look}` }) },
     };
+    // ROADMAP §4.3 floor: a crossing decides only with a gap of at least 3 points (strict) or 0.03 (mean partial credit).
+    const floor = { strict: Math.abs(row.strict.diff) >= FLOOR, partialCredit: Math.abs(pc.meanDiff) >= FLOOR };
+    row.decisive = { strict: crossed.strict && floor.strict, partialCredit: crossed.partialCredit && floor.partialCredit };
     rows.push(row);
-    if (!decided && (crossed.strict || crossed.partialCredit)) {
-      const which = Object.keys(crossed).filter(k => crossed[k]);
+    if (!decided && (row.decisive.strict || row.decisive.partialCredit)) {
+      const which = Object.keys(row.decisive).filter(k => row.decisive[k]);
       const harm = which.some(k => dir[k] < 0);
-      decided = { look: L.look, label: `${harm ? 'harm' : 'effect'} at look ${L.look} (${which.join(' and ')})`, strictClaim: crossed.strict && dir.strict > 0 };
+      const strictClaim = row.decisive.strict && dir.strict > 0;
+      decided = { look: L.look, label: `${harm ? 'harm' : 'effect'} at look ${L.look} (${which.join(' and ')})${!harm && !strictClaim ? '; strict pass not resolved' : ''}`, strictClaim };
       break;
     }
   }

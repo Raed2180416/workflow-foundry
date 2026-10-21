@@ -103,10 +103,22 @@ test('analyze on stored dev60 rows: look 1 of the plan does not cross O\'Brien-F
   const r1 = analyzeLooks(one, control, treatment, { permIterations: 20000 });
   assert.deepEqual(r1.rows[0].crossed, { strict: false, partialCredit: true });
   assert.match(r1.decision.label, /effect at look 1 \(partialCredit\)/); assert.equal(r1.decision.strictClaim, false);
+  assert.match(r1.decision.label, /strict pass not resolved/);
   // Arms swapped: harm.
   assert.match(analyzeLooks(one, treatment, control, { permIterations: 20000 }).decision.label, /^harm/);
+  // The 3-point floor: a uniform +0.01 partial-credit gap crosses the boundary (every sign agrees) but does not decide.
+  const tiny = t => new Map(p.looks[0].tasks.map(x => [x, { pass: 0, pc: t }]));
+  const rt = analyzeLooks(one, { 1: tiny(0.50) }, { 1: tiny(0.51) }, { permIterations: 2000 });
+  assert.equal(rt.rows[0].crossed.partialCredit, true); assert.equal(rt.rows[0].decisive.partialCredit, false);
+  assert.match(rt.decision.label, /final look: no resolvable difference/);
   // A sealed run (devCheck) is never read.
   assert.throws(() => loadOutcomes(['a0-devcheck-1']), /sealed run/);
+  // T3 at $0: the same arm (A0, date note) run twice on dev60, CLI 2.1.300 and 2.1.306: never significant.
+  const aa = analyzeLooks(one, { 1: loadOutcomes(['a0-dev60-dn']) }, { 1: loadOutcomes(['a0-dev60-dn-v306']) }, { permIterations: 20000 });
+  assert.deepEqual([aa.rows[0].strict.b, aa.rows[0].strict.c], [4, 4]);
+  assert.deepEqual(aa.rows[0].crossed, { strict: false, partialCredit: false });
+  assert.ok(aa.rows[0].partialCredit.p > 0.3, `A/A partial-credit p ${aa.rows[0].partialCredit.p}`);
+  assert.match(aa.decision.label, /no resolvable difference/);
 });
 
 test('T2: under H0 (A/A from stored dev60 outcomes) the co-primary schedule keeps two-sided type-I at most 0.05', t => {
