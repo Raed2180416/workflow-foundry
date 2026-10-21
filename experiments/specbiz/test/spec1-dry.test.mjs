@@ -10,6 +10,7 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { dryRunner, dryRunnerWith } from '../../agentv/run.mjs';
 import { runBuildLineage, runAgentLineage, spendTotals, SHARED, CAPS } from '../spec1.mjs';
+import { materialize } from '../../../src/executors/claude-code.mjs';
 import { scriptedPackSession } from '../pack-agent.mjs';
 import { scoreRuns } from '../score.mjs';
 import { validateClaimRow } from '../../claims/schema.mjs';
@@ -80,5 +81,22 @@ test('dry end to end: derive-ledger and none-agent (stopped by an environment fa
     assert.equal(dl.outcome.shared.completed, 14);
     assert.equal(dl.ask.replayOk, true);
     assert.ok(s.readings.length >= 2);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a build that writes no solver is graded as the null solver (every case fails), never dropped', async () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'spec1-null-'));
+  const dirs = { liveRoot: path.join(root, 'live'), outRoot: path.join(root, 'runs'), workRoot: path.join(root, 'work') };
+  try {
+    const builder = async ({ workdir, files }) => { materialize(workdir, files); return { costUsd: 0, costUnknown: false, turns: 1, error: { code: 'MODEL_RATE_LIMIT' }, scripted: true }; };
+    const r = await runBuildLineage({ armName: 'no-ask', lineage: 1, dry: true, label: 'dry-t-null', ...dirs, spendFile: path.join(dirs.outRoot, 'spend.jsonl'), worlds: [SHARED],
+      practice: { seeds: [1235], difficulties: [2], size: 4 }, builder, log: () => {} });
+    assert.equal(r.nullSolver, true);
+    assert.equal(r.build.error.code, 'MODEL_RATE_LIMIT', 'the environment fault is recorded for the set-aside rule');
+    assert.deepEqual([r.summary.shared.passed, r.summary.shared.completed], [0, 14]);
+    const s = scoreRuns(dirs.outRoot);
+    assert.equal(s.lineages.length, 1);
+    assert.equal(s.lineages[0].masked, true, 'a null build is credited by attribution and flagged');
+    assert.deepEqual(s.unscored, []);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

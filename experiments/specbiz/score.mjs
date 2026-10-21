@@ -380,8 +380,10 @@ export function claimRows(res, lin, { K }) {
 
 /** Score every SPEC-1 / INTENT-1 lineage under `runsDir` (one result.json per sub-directory). */
 export function scoreRuns(runsDir, { root = ROOT, packSeed = 1 } = {}) {
-  const results = readdirSync(runsDir).filter(d => existsSync(path.join(runsDir, d, 'result.json'))).map(d => JSON.parse(readFileSync(path.join(runsDir, d, 'result.json'), 'utf8')))
-    .filter(r => ['SPEC-1', 'INTENT-1'].includes(r.experiment) && r.grading?.length);
+  const all = readdirSync(runsDir).filter(d => existsSync(path.join(runsDir, d, 'result.json'))).map(d => JSON.parse(readFileSync(path.join(runsDir, d, 'result.json'), 'utf8')))
+    .filter(r => ['SPEC-1', 'INTENT-1'].includes(r.experiment));
+  const results = all.filter(r => r.grading?.length);
+  const unscored = all.filter(r => !r.grading?.length).map(r => ({ label: r.label, arm: r.arm, why: 'no graded world in result.json' }));
   const truth = truthE8(packSeed);
   const rater2 = JSON.parse(readFileSync(path.join(root, 'research/intent-20261021/rater2-labels.json'), 'utf8'));
   const layers = layerSets(truth, rater2), pack = renderPack({ seed: packSeed }), perfect = sPerfect(root), attributable = attributableIds();
@@ -393,7 +395,7 @@ export function scoreRuns(runsDir, { root = ROOT, packSeed = 1 } = {}) {
   const invalid = claim.map(r => ({ id: r.id, errors: validateClaimRow(r) })).filter(x => x.errors.length);
   return { version: SCORE_VERSION, at: new Date().toISOString(), runsDir: path.relative(root, runsDir) || runsDir, packSeed, packDigest: pack.digest, truth: { version: truth.version, counts: truth.counts },
     raters: { kappaL2L3: 0.57, unstatedAgree: layers.unstatedAgree, layers }, attributable: { unstated: layers.unstated.filter(id => attributable.has(id)).length, excluded: layers.unstated.filter(id => !attributable.has(id)) },
-    sPerfect: perfect, thresholds: THRESHOLDS, lineages: lineages.map(x => x.lin), arms, readings: readings(arms, byArm, perfect), claimRows: claim, claimRowsInvalid: invalid };
+    sPerfect: perfect, thresholds: THRESHOLDS, unscored, lineages: lineages.map(x => x.lin), arms, readings: readings(arms, byArm, perfect), claimRows: claim, claimRowsInvalid: invalid };
 }
 
 const pct = x => (x === null || x === undefined ? '–' : `${(x * 100).toFixed(1)}%`);
@@ -405,7 +407,7 @@ export function markdown(s) {
   for (const a of Object.values(s.arms)) L.push(`| ${a.arm}${a.dry ? ' (dry)' : ''} | ${a.K} | ${a.grading.completed ? `${a.grading.passed}/${a.grading.completed}` : '–'} | ${a.shared.passed}/${a.shared.completed} | ${a.specRecovery ?? '–'} | ${pct(a.primary.recall)} (${a.primary.implemented}/${a.primary.n}) [${pct(a.primaryLower.recall)}]${a.masked ? ' masked' : ''} | ${['L1', 'L2', 'L3'].map(k => pct(a.layers.rater1[k].recall)).join(' / ')} | ${pct(a.layers.rater2.L3.recall)} | ${a.overreach.itemsViolatedPerLineage.join(', ')} | ${a.goldilocks.upper} [${a.goldilocks.lower}] | ${a.moi.upper} [${a.moi.lower}] | ${a.ask.asked.join(', ')} | ${a.ask.askF1 ?? '–'} | ${a.cost.usd} |`);
   L.push('', '## Readings', '', '| H | statement | observed | verdict |', '|---|---|---|---|');
   for (const r of s.readings) L.push(`| ${r.id} | ${r.statement} | \`${JSON.stringify(r.observed)}\` | ${r.verdict}${r.notes.length ? ` (${r.notes.join('; ')})` : ''} |`);
-  L.push('', `Claim rows: ${s.claimRows.length} (${s.claimRowsInvalid.length} invalid).`, '');
+  L.push('', `Claim rows: ${s.claimRows.length} (${s.claimRowsInvalid.length} invalid).${s.unscored.length ? ` UNSCORED lineages: ${s.unscored.map(u => u.label).join(', ')}.` : ''}`, '');
   return L.join('\n');
 }
 

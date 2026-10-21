@@ -1,0 +1,32 @@
+{
+ "runId": "p2-sealed",
+ "cell": "primary",
+ "freeze": "research/sopbench-20261021/FREEZE-p2.json",
+ "freezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
+ "evidence": "SEALED rows (frozen split, frozen workflows and code)",
+ "stopped": "environment fault at A-video_classification-15-0: MODEL_RATE_LIMIT",
+ "k": 3,
+ "arms": [
+  "W",
+  "A"
+ ],
+ "sops": [
+  "aircraft_inspection",
+  "customer_service",
+  "dangerous_goods",
+  "email_intent",
+  "know_your_business",
+  "order_fulfillment",
+  "referral_abuse_detection_v1",
+  "referral_abuse_detection_v2",
+  "traffic_spoofing_detection",
+  "video_annotation",
+  "video_classification",
+  "warehouse_package_inspection"
+ ],
+ "runs": 1139,
+ "spentUsd": 0.9772230950000004,
+ "capUsd": 40,
+ "finishedAt": "2026-10-21T15:58:19.128Z",
+ "dependencyDrift": []
+}

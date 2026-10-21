@@ -1260,10 +1260,6 @@
       "reply": "Orders ship in 2-3 business days, and you will get a tracking link by e-mail."
      },
      {
-      "keyword": "order",
-      "reply": "Orders ship in 2-3 business days, and you will get a tracking link by e-mail."
-     },
-     {
       "keyword": "password",
       "reply": "Please use 'forgot password' on the login page."
      }
@@ -1276,6 +1272,21 @@
      "why": "no canned answers: everything goes to the person",
      "slots": {
       "answers": []
+     }
+    },
+    {
+     "why": "the loose keyword 'order' also answers the bulk-order enquiry",
+     "slots": {
+      "answers": [
+       {
+        "keyword": "order",
+        "reply": "Orders ship in 2-3 business days, and you will get a tracking link by e-mail."
+       },
+       {
+        "keyword": "password",
+        "reply": "Please use 'forgot password' on the login page."
+       }
+      ]
      }
     }
    ]

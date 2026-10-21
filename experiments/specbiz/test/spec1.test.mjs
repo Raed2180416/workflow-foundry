@@ -268,14 +268,16 @@ test('spend caps: a lineage reserves all its bounds or none; unsettled reservati
 
 test('the CLI refuses a paid run before any session: draft prereg, model, question budget, arm; a dry run over its cap exits 4 having spent nothing', () => {
   const node = args => spawnSync(process.execPath, [path.join(here, '..', 'spec1.mjs'), ...args], { encoding: 'utf8', timeout: 120_000 });
+  const H = ['--model', 'claude-haiku-5-5'];
   assert.match(node(['--arm', 'nope']).stderr, /--arm must be one of/);
+  assert.match(node(['--arm', 'derive']).stderr, /--model must be a policy model id/, 'a paid run names its model');
   assert.match(node(['--arm', 'derive', '--model', 'claude-sonnet-5-5']).stderr, /B1L-H conditions: --model claude-haiku-5-5/);
-  assert.match(node(['--arm', 'derive', '--budget', '10']).stderr, /preregistered at 20/);
+  assert.match(node(['--arm', 'derive', ...H, '--budget', '10']).stderr, /preregistered at 20/);
   assert.match(node(['--arm', 'derive', '--model', 'gpt-4o']).stderr, /policy model id/);
-  assert.match(node(['--arm', 'derive', '--worlds', 'shared']).stderr, /preregistered worlds, concurrency and caps: remove --worlds/);
-  assert.match(node(['--arm', 'none-agent', '--concurrency', '8']).stderr, /remove --concurrency/);
-  assert.match(node(['--arm', 'derive']).stderr, /PREREG-SPEC1.md is a draft|no preregistration/);
-  assert.match(node(['--arm', 'none-agent']).stderr, /PREREG-SPEC1.md is a draft|no preregistration/);
+  assert.match(node(['--arm', 'derive', ...H, '--worlds', 'shared']).stderr, /preregistered worlds, concurrency and caps: remove --worlds/);
+  assert.match(node(['--arm', 'none-agent', ...H, '--concurrency', '8']).stderr, /remove --concurrency/);
+  assert.match(node(['--arm', 'derive', ...H]).stderr, /PREREG-SPEC1.md is a draft|no preregistration/);
+  assert.match(node(['--arm', 'none-agent', ...H, '--pack-seed', '1', '--lineages', '2', '--budget', '20']).stderr, /PREREG-SPEC1.md is a draft|no preregistration/);
   const dir = tmp();
   try {
     const r = node(['--arm', 'derive', '--dry', '--lineage', '1', '--root', dir, '--arm-cap', '2']);

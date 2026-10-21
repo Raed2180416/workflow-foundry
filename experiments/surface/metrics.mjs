@@ -23,7 +23,9 @@ export function recordNumbers(caseDef, rec) {
     unnecessaryQuestions: rec.questions.filter(q => q.matched.length === 0).length, repeatQuestions: repeats, questionsAsked: answers,
     personActions: verified ? answers + 1 + (rec.hidden?.approvals?.asked ?? 0) : null,
     personActionsBeforeRun: verified ? answers + 1 : null,
-    slotChecks: Object.keys(caseDef.slotChecks ?? {}).length, slotChecksOk: rec.slots ? Object.entries(caseDef.slotChecks ?? {}).filter(([k, v]) => slotOk(v, rec.slots[k])).length : 0
+    // Slot checks apply to the template arms only (B0 has no slots; its effects are judged by the oracle alone).
+    slotChecks: rec.templateArm ? Object.keys(caseDef.slotChecks ?? {}).length : 0,
+    slotChecksOk: rec.templateArm && rec.slots ? Object.entries(caseDef.slotChecks ?? {}).filter(([k, v]) => slotOk(v, rec.slots[k])).length : 0
   };
 }
 

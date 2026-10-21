@@ -285,6 +285,9 @@ function ownerBlock(pack, sim, liveDir, matcherPort) {
     matcher: { calls: calls.length, failed: calls.filter(c => !c.ok).length, spentUsd: matcherPort ? r6(matcherPort.spentUsd) : 0 } };
 }
 
+/** What a build that wrote no solver is graded as: nothing happens (a valid, empty output on every tick). */
+export const NULL_SOLVER = "export function createSolver() { return { id: 'null', tick() { return { decisions: { subject: null }, effects: [], carry: null }; } }; }\n";
+
 /** One build lineage of a derived arm: (ledger), owner, build session with the smoke loop, grading. */
 export async function runBuildLineage(o) {
   const { armName, lineage, packSeed = 1, dry = false, model = MODEL, label, liveRoot, outRoot, workRoot, spendFile, worlds, practice = PRACTICE,
@@ -352,16 +355,15 @@ export async function runBuildLineage(o) {
   const base = { label, experiment: arm.experiment, arm: armName, kind: 'build', lineage, packSeed, packDigest: pack.digest, dry, prereg, model, conditions: CONDITIONS, armsVersion: ARMS_VERSION,
     stamps: stamps(), build, owner, ledger: ledgerOut ? { counts: ledgerOut.review.counts, calls: ledgerOut.calls, failed: ledgerOut.failed, entries: ledgerOut.review.entries.map(e => ({ id: e.id, status: e.status, file: e.file, units: e.units })) } : null,
     journals: { modelPort: { file: path.join(liveDir, 'journal.sqlite'), rows: modelCalls, provider: P?.provider ?? null }, smoke: 'smoke.jsonl', owner: sim ? 'ask.jsonl' : null } };
-  if (!existsSync(solverFile)) {
-    writeFileSync(path.join(outDir, 'result.json'), JSON.stringify({ ...base, solver: null, grading: [], spend: spendTotals(spendFile), wallMs: Date.now() - t0 }, null, 1));
-    throw new Error(`${label}: no solver.mjs written (${r.error?.code ?? 'no error reported'})`);
-  }
-  const solverSource = readFileSync(solverFile, 'utf8');
-  writeFileSync(path.join(outDir, 'solver.mjs'), solverSource);
+  // A build that wrote no solver.mjs did nothing: it is graded as the null solver (no effect, every case fails), never dropped.
+  const noSolver = !existsSync(solverFile);
+  if (noSolver) log(`  ${label}: no solver.mjs written (${r.error?.code ?? 'no error reported'}); graded as the null solver`);
+  const solverSource = noSolver ? NULL_SOLVER : readFileSync(solverFile, 'utf8');
+  if (!noSolver) writeFileSync(path.join(outDir, 'solver.mjs'), solverSource);
   log(`  build: ${JSON.stringify({ costUsd: build.costUsd, charged: build.charged, turns: build.turns, smokeRuns, asked: owner?.asked ?? 0, wallMs: buildWallMs, error: build.error?.code ?? null })}`);
   // 4. Grading ($0), with no spec bound.
   const grading = await gradeSolver({ solverSource, label, worlds, log });
-  const result = { ...base, solverSha256: sha256(solverSource), grading, summary: { grading: summaryOf(grading, 'grading'), shared: summaryOf(grading, 'shared') }, spend: spendTotals(spendFile), wallMs: Date.now() - t0 };
+  const result = { ...base, solverSha256: noSolver ? null : sha256(solverSource), nullSolver: noSolver, grading, summary: { grading: summaryOf(grading, 'grading'), shared: summaryOf(grading, 'shared') }, spend: spendTotals(spendFile), wallMs: Date.now() - t0 };
   writeFileSync(path.join(outDir, 'result.json'), JSON.stringify(result, null, 1));
   return result;
 }
@@ -482,7 +484,8 @@ async function main() {
   const armName = arg('--arm');
   if (!ARM_NAMES.includes(armName)) throw new Error(`--arm must be one of ${ARM_NAMES.join(', ')}`);
   const arm = ARMS[armName];
-  const model = arg('--model', MODEL);
+  // A paid run names its model explicitly (a policy id); a dry run defaults to the preregistered one.
+  const model = arg('--model', dry ? MODEL : null);
   if (!isSessionModel(model)) throw new Error(`--model must be a policy model id (policy/models.json): ${model}`);
   if (!dry && model !== MODEL) throw new Error(`SPEC-1 / INTENT-1 run under B1L-H conditions: --model ${MODEL}`);
   const questions = Number(arg('--budget', String(CONDITIONS.questions)));

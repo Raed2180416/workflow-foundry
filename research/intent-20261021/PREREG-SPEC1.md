@@ -71,7 +71,8 @@ to all three SPEC-1 arms. This draft gives none-agent the owner with a run-wide 
 - **Set-aside rule.** A lineage whose build session or agent run ends in an environment fault (MODEL_RATE_LIMIT,
   MODEL_UNAVAILABLE, SANDBOX_UNAVAILABLE) is kept and reported as set aside; the agent arm resumes from its journal with the
   same command (exit code 3); a build arm is re-run once as `-l<k>r` after the set-aside directories are moved, and the
-  re-run is reported as such. No other substitution.
+  re-run is reported as such. No other substitution. A build that writes no `solver.mjs` for any other reason is a
+  result: it is graded as the null solver (`spec1.mjs NULL_SOLVER`: no effect, every case fails), never dropped.
 
 ## 4. Outputs
 
@@ -180,8 +181,9 @@ node experiments/specbiz/spec1.mjs perfect --worlds grading,shared
 node experiments/specbiz/score.mjs --json research/intent-20261021/runs/score.json --md research/intent-20261021/runs/SCORE.md
 ```
 
-The S-perfect regrade must reproduce 3011/3066 on the grading worlds; a different count means the oracle drifted, and no
-reading is made until that is explained.
+The S-perfect regrade must reproduce 3011/3066 on the grading worlds (`perfect` checks it and exits 5 otherwise); a
+different count means the oracle drifted, and no reading is made until that is explained. A paid invocation refuses
+`--worlds`, `--concurrency`, `--root` and the cap overrides, and needs `--model` (a policy id, and Haiku 5.5).
 
 ## 9. Frozen inputs (sha256; `node experiments/specbiz/spec1-freeze.mjs`)
 
