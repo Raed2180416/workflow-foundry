@@ -19,6 +19,7 @@ import { templateOf, slotsOf, practiceOf } from './library.mjs';
 import { runInWorld } from './practice.mjs';
 import { describeWorkflow, explainRun, failureText } from './explain.mjs';
 import { Ledger, HUMAN_CHANNELS } from './ledger.mjs';
+import { machinePolicy } from './machine-policy.mjs';
 
 // The digest that binds a planned outside action to its full content: sha256 of the canonical {tool, args} (batch approval matches on it).
 export const effectDigest = (tool, args) => digest({ tool, args });
@@ -132,7 +133,8 @@ export class FoundryApp {
     if (['invalid', 'input-refused'].includes(res.status)) return problem(Object.assign(new FoundryError(res.error?.code ?? 'VALIDATION', res.error?.message ?? 'refused'), {}), { practice: true, passed: false, next: 'Fix the practice input or ask for a changed flow.' });
     const wouldDo = [...res.effects.outbox.map(m => ({ action: 'send', to: m.to, subject: m.subject, preview: m.body.slice(0, 400), digest: effectDigest('outbox.send', { to: m.to, subject: m.subject, body: m.body }) })),
       ...Object.entries(res.effects.chat).flatMap(([channel, posts]) => posts.map(text => ({ action: 'post', to: channel, subject: null, preview: text.slice(0, 400), digest: effectDigest('chat.post', { channel, text }) }))),
-      ...Object.entries(res.effects.appended).map(([sheet, rows]) => ({ action: 'append', to: sheet, subject: `${rows.length} row(s)`, preview: JSON.stringify(rows.slice(0, 3)).slice(0, 400), digest: effectDigest('sheet.append', { sheet, rows }) }))];
+      ...Object.entries(res.effects.appended).map(([sheet, rows]) => ({ action: 'append', to: sheet, subject: `${rows.length} row(s)`, count: rows.length, rows: rows.slice(0, 50),
+        preview: JSON.stringify(rows.slice(0, 3)).slice(0, 400), digest: effectDigest('sheet.append', { sheet, rows }) }))];
     const explained = res.explained;
     const record = this.ledger.recordDryRun({ proposalId: proposal.id, workflowHash: proposal.workflowHash, registryHash: res.run.registryHash, practiceRunId: res.run.id, passed: res.passed,
       body: { headline: explained.headline, checks: explained.checks, wouldDo, inputHash: digest(runInput), sheetsHash: digest(sheets), dataSource, practiceDir: res.dir, template: template.id } });
@@ -158,11 +160,15 @@ export class FoundryApp {
   }
 
   /** A person's decision on turning a version on (called by the dashboard, the CLI, or the MCP elicitation handler only). */
-  decideActivation(id, approved, { channel, principal = 'local-user', note = null } = {}) {
+  // principal: who decided, as this computer knows them (the site, the MCP server and the CLI set app.principal from the person's name in
+  // Settings, the OS account and the host: "Ravi Patel (ravi@laptop)"); 'local-user' when nothing set it. onDecision (optional) is told
+  // of every decision, so a caller can keep it in its own chained log (app/onboarding/decisions.mjs).
+  decideActivation(id, approved, { channel, principal = this.principal?.() ?? 'local-user', note = null } = {}) {
     if (!HUMAN_CHANNELS.includes(channel)) throw new FoundryError('APPROVAL_AUTHORITY', `Approvals come only from a person, not from ${channel}`);
     const act = this.ledger.activation(id), proposal = this.foundry.store.proposal(act.proposalId);
     if (approved && proposal.workflowHash !== act.workflowHash) throw new FoundryError('STALE_APPROVAL', 'The proposal changed after the request was made');
     const decided = this.ledger.decide(id, approved, { channel, principal, note, expectRev: act.rev });
+    try { this.onDecision?.({ kind: 'turn-on', decision: approved ? 'approved' : 'rejected', channel, principal, flowId: act.flowId, version: proposal.workflow.version, workflowHash: act.workflowHash, approvalId: id, note }); } catch { /* the log is a record, never a gate */ }
     if (!approved) return { ok: true, status: 'rejected', approvalId: id };
     try { if (proposal.status === 'proposed') this.foundry.apply(act.proposalId); }
     catch (error) {
@@ -192,7 +198,9 @@ export class FoundryApp {
   }
 
   /** Practice-only mode (<workspace>/settings.json mode: 'practice-only', set by the person in the site's Settings): no live run starts. */
+  // An organisation's machine policy (app/core/machine-policy.mjs) can force it on for every Foundry folder on this computer.
   practiceOnly() {
+    if (machinePolicy().mode === 'practice-only') return true;
     try { return JSON.parse(readFileSync(path.join(this.root, 'settings.json'), 'utf8'))?.mode === 'practice-only'; }
     catch (error) { if (error.code === 'ENOENT') return false; return true; } // an unreadable settings file fails closed
   }
@@ -233,9 +241,12 @@ export class FoundryApp {
   }
 
   /** A person's decision on one paused action; on yes, the run resumes here. */
-  async decideAction(runId, approvalId, approved, { channel } = {}) {
+  // fromList: { batchId, n, digest } when Foundry applies the person's one yes to an exact list to this paused action (onboarding batch).
+  async decideAction(runId, approvalId, approved, { channel, fromList = null } = {}) {
     if (!HUMAN_CHANNELS.includes(channel)) throw new FoundryError('APPROVAL_AUTHORITY', `Approvals come only from a person, not from ${channel}`);
     this.foundry.runtime.approve(runId, approvalId, approved, 'user');
+    try { this.onDecision?.({ kind: fromList ? 'list-item' : 'action', decision: approved ? 'approved' : 'rejected', channel, principal: this.principal?.() ?? 'local-user', runId, approvalId,
+      ...(fromList ? { batchId: fromList.batchId, item: fromList.n, digest: fromList.digest, appliedBy: 'Foundry, from your one approval of the list' } : {}) }); } catch { /* a record, never a gate */ }
     if (approved) await this.foundry.startRun(runId).catch(() => {});
     return this.status({ runId });
   }

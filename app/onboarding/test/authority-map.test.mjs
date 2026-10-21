@@ -25,7 +25,7 @@ test('every starter is a valid document; a one-signer setup carries the bootstra
   for (const k of ['just-me', 'small-team', 'refund', 'blank']) {
     const { problems, warnings } = mapProblems(starter(k));
     assert.deepEqual(problems, [], k);
-    assert.ok(warnings.some(w => /Started by one person/.test(w)), k);
+    assert.ok(warnings.some(w => /Only you have saved these rules/.test(w)), k);
   }
   assert.throws(() => starter('enterprise'), { code: 'ORG_STARTER' });
 });
@@ -48,7 +48,7 @@ test('saving: examples must be confirmed; a change that flips a confirmed answer
     assert.throws(() => maps.save(map), { code: 'ORG_INVALID', message: /confirm the examples/ });
     map.clauses[0].examples.forEach(e => { e.confirmed = true; });
     const v1 = maps.save(map);
-    assert.equal(v1.version, 1); assert.ok(v1.warnings.some(w => /Started by one person/.test(w)));
+    assert.equal(v1.version, 1); assert.ok(v1.warnings.some(w => /Only you have saved these rules/.test(w)));
     const next = structuredClone(maps.current().map);
     next.parameters.moneyOutApprovalAbove.value = 300;
     const f = flips(next);
@@ -84,9 +84,9 @@ test('proposal check: the map answers the expense limit ("Set by"), refuses a wi
     const policy = orgPolicy(dir);
     const filled = policy('expense-approval', {});
     assert.deepEqual(filled.prefill, { autoApproveUpTo: 250 });
-    assert.equal(filled.answered[0].text, '€250 · Set by Dana (Finance) (Org policy)');
+    assert.equal(filled.answered[0].text, '€250 · set by you for Dana (Finance) (Org policy). Dana (Finance) hasn\'t confirmed it', 'the person at this computer wrote it down, for Dana (P3 walkthrough M5)');
     const wide = policy('expense-approval', { autoApproveUpTo: 2000 });
-    assert.equal(wide.refusals[0].message, 'Not allowed here. Dana (Finance) set the limit at €250 (Org policy). This automation can only make it stricter.');
+    assert.equal(wide.refusals[0].message, 'Not allowed here. The rule written down for Dana (Finance) (Org policy) caps this at €250. This automation can only make it stricter.');
     const b = new TemplateFormBuilder({ policy });
     assert.equal(b.build({ template: 'expense-approval', settings: { approver: 'dana@example.com', autoApproveUpTo: 2000 } }).status, 'build_failed');
     const ok = b.build({ template: 'expense-approval', settings: { approver: 'dana@example.com' } });

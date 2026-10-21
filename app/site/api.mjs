@@ -2,12 +2,13 @@
 // { download: { name, type, body } }; the server (./server.mjs) has already checked the Host header, the token and the body size.
 // Nothing here decides on the person's behalf: decisions go through the dashboard's /api/decide (channel 'dashboard') or the batch
 // approval below, which the page sends only from a click on a visible card.
-import { readFileSync, existsSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync, renameSync, readdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { FoundryError } from '../../src/data.mjs';
-import { loadLibrary, templateById, templateOf, practiceOf, slotsOf, promises } from '../core/library.mjs';
+import { loadLibrary, templateById, templateOf, practiceOf, slotsOf } from '../core/library.mjs';
+import { cardPromises } from '../onboarding/card-text.mjs';
 import { describeWorkflow } from '../core/explain.mjs';
 import { doctorFull, connectInstructions } from '../cli.mjs';
 import { restate } from '../onboarding/form-builder.mjs';
@@ -15,12 +16,16 @@ import { suggest, FORMS } from '../onboarding/suggest.mjs';
 import { COLUMNS, preview as csvPreview, inputSheets } from '../onboarding/csv.mjs';
 import { commit as dataCommit, liveSheets } from '../onboarding/data.mjs';
 import { Batches } from '../onboarding/batch.mjs';
-import { listDrafts, draft as oneDraft } from '../onboarding/drafts.mjs';
+import { readWorld } from '../core/stand-ins.mjs';
+import { listDrafts, listPosts, draft as oneDraft, markSent } from '../onboarding/drafts.mjs';
 import { loadSettings, saveSettings } from '../onboarding/settings.mjs';
 import { Keychain, detectBackend } from '../onboarding/keychain.mjs';
 import { Keys } from '../onboarding/keys.mjs';
-import { briefData, briefMarkdown, briefHtml } from '../onboarding/brief.mjs';
+import { briefData, briefMarkdown, briefHtml, usesModel } from '../onboarding/brief.mjs';
 import { evidenceBundle } from '../onboarding/evidence.mjs';
+import { recordDecisions, whoIsHere, whoLabel } from '../onboarding/decisions.mjs';
+import { approverAnswers } from '../onboarding/cards.mjs';
+import { buildInfo } from '../onboarding/build-info.mjs';
 
 import { importReport } from '../onboarding/importers.mjs';
 import { AuthorityMaps, starter, ruleFromApproval, mapProblems, toConstitutionV0, NOT_ENFORCED } from '../onboarding/authority-map.mjs';
@@ -66,15 +71,20 @@ export function siteTemplates(library = loadLibrary()) {
       }),
       defaults,
       pretend: Object.fromEntries(Object.entries(world.sheets).map(([k, rows]) => [k, rows.slice(0, 8)])),
-      promises: promises(t, Object.fromEntries(t.slots.map(s => [s.name, defaults[s.name] ?? (s.type === 'email' ? 'the address you give' : null)])))
+      promises: cardPromises(t, Object.fromEntries(t.slots.map(s => [s.name, defaults[s.name] ?? (s.type === 'email' ? 'the address you give' : null)])))
     };
   }).filter(Boolean);
 }
 
 export function createSiteApi(app, options = {}) {
+  // now: the clock for records; asOf: the date runs and tests are "as of" (the journeys fix it so invoice ages are stable, P5 M6).
   const now = options.now ?? (() => Date.now());
+  const asOf = options.asOf ?? now;
   const workspace = options.workspace ?? app.root;
-  const batches = new Batches(app, { now });
+  // Every decision made through this site (and the CLI and MCP server, which call the same) names the person and goes to the
+  // chained decision log (app/onboarding/decisions.mjs).
+  const decisionLog = app.decisions ?? recordDecisions(app);
+  const batches = new Batches(app, { now, asOf });
   const keychain = options.keychain ?? new Keychain({ backend: detectBackend() });
   const keys = new Keys({ root: app.root, keychain, checkBaseUrl: options.keyCheckBaseUrl ?? null, fetchImpl: options.fetchImpl ?? globalThis.fetch, now });
   const practiceData = new Map();
@@ -95,7 +105,22 @@ export function createSiteApi(app, options = {}) {
     } catch { /* a local timing note only; never blocks the person */ }
   }
   const head = flowId => { try { return app.foundry.store.workflow(flowId); } catch (error) { if (error.code === 'NOT_FOUND') return null; throw error; } };
-  const usesAI = builderId => !!builderId && !/^template-form\/|^stub-template-matcher\//.test(builderId);
+  const usesAI = usesModel;
+  const siteFile = name => path.join(siteDir, name);
+  const readSite = (name, fallback) => { try { return existsSync(siteFile(name)) ? JSON.parse(readFileSync(siteFile(name), 'utf8')) : fallback; } catch { return fallback; } };
+  const writeSite = (name, value) => { mkdirSync(siteDir, { recursive: true, mode: 0o700 }); const tmp = `${siteFile(name)}.tmp-${process.pid}`; writeFileSync(tmp, JSON.stringify(value, null, 2), { mode: 0o600 }); renameSync(tmp, siteFile(name)); };
+  // "Who decides the bigger ones?" is kept per automation, so a reload or another page records the same answer (P3 walkthrough B3).
+  const deciderOf = flowId => readSite('deciders.json', {})[flowId] ?? null;
+  // The approver's answers the person records (P3 walkthrough B4): the claims the decisions list shows as waiting for the approver.
+  function answersToRecord(flowId) {
+    const h = head(flowId), t = h ? templateOf(h.workflow) : null;
+    if (t?.id !== 'expense-approval') return { flowId, approver: null, waiting: [], answered: {} };
+    let rows = []; try { rows = JSON.parse(readFileSync(path.join(app.worldDir, 'sheets', 'expense-decisions.json'), 'utf8')); } catch { rows = []; }
+    const answered = approverAnswers(app.root, flowId), seen = new Set();
+    const waiting = (Array.isArray(rows) ? rows : []).filter(r => r?.decision === 'waiting for approver' && !seen.has(String(r.id)) && seen.add(String(r.id)))
+      .map(r => ({ id: String(r.id), person: r.employee ?? null, amount: r.amount ?? null, reason: r.reason ?? null, sentAt: r.at ?? null, answer: answered[String(r.id)] ?? null }));
+    return { flowId, card: FORMS.templates[t.id]?.card ?? t.title, approver: slotsOf(h.workflow)?.approver ?? null, waiting, answered };
+  }
 
   function automations() {
     const listed = app.list();
@@ -117,7 +142,7 @@ export function createSiteApi(app, options = {}) {
     const h = head(p.workflow.id);
     return { ...e, flowId: p.workflow.id, version: p.workflow.version, title: p.workflow.title, template: t?.id ?? null, card: t ? FORMS.templates[t.id]?.card : null,
       builder: p.workflow.metadata?.tags?.find(x => x.startsWith('builder:'))?.slice(8) ?? null, usesAI: usesAI(p.workflow.metadata?.tags?.find(x => x.startsWith('builder:'))?.slice(8)),
-      slots: slotsOf(p.workflow), promises: t ? promises(t, slotsOf(p.workflow)) : null, dryRun: dry ? { passed: dry.passed, at: new Date(dry.at).toISOString(), ...dry.body, practiceDir: undefined } : null,
+      slots: slotsOf(p.workflow), promises: t ? cardPromises(t, slotsOf(p.workflow)) : null, decider: deciderOf(p.workflow.id), dryRun: dry ? { passed: dry.passed, at: new Date(dry.at).toISOString(), ...dry.body, practiceDir: undefined } : null,
       basedOn: h && h.hash !== p.workflowHash ? { version: h.workflow.version, active: !!app.ledger.approvedFor(h.workflow.id, h.hash) } : null,
       active: !!app.ledger.approvedFor(p.workflow.id, p.workflowHash), sheets: t ? inputSheets(t.id) : [] };
   }
@@ -153,16 +178,23 @@ export function createSiteApi(app, options = {}) {
         const d = practiceData.get(body.practiceDataId);
         if (!d || d.expires < now()) bad('NOT_FOUND', 'That list has expired. Drop the file again.');
         sheets = d.sheets;
+      } else if (body.useLive === true) {
+        // The list the person already gave (practice-only mode tests the version that is on against it; nothing is made: P4 M8).
+        const t = templateOf(app.foundry.store.proposal(proposalId).workflow);
+        if (!t) bad('BAD_REQUEST', 'Only automations made from a card can be tested on your list');
+        const live = readWorld(app.worldDir).sheets;
+        sheets = Object.fromEntries(inputSheets(t.id).filter(x => live[x]).map(x => [x, live[x]]));
+        if (!Object.keys(sheets).length) bad('SHEET_NOT_FOUND', 'Foundry needs your list first');
       }
       // The person's own list is tested as of today (the same input a live run gets); pretend data keeps the card's own date.
-      const r = await app.dryRun({ proposalId, sheets, ...(sheets ? { input: { now: new Date(now()).toISOString() } } : {}) });
+      const r = await app.dryRun({ proposalId, sheets, ...(sheets ? { input: { now: new Date(asOf()).toISOString() } } : {}) });
       if (r.passed) milestone('firstVerified');
       return ok(r);
     }
     if (method === 'POST' && p === '/api/request-approval') return ok(app.requestApproval({ proposalId: str(body.proposalId, 'proposalId', 64) }));
     if (method === 'POST' && p === '/api/run') {
       const flowId = str(body.flowId, 'flowId', 64), h = head(flowId);
-      const input = body.input ?? (h && templateOf(h.workflow) ? { now: new Date(now()).toISOString() } : null);
+      const input = body.input ?? (h && templateOf(h.workflow) ? { now: new Date(asOf()).toISOString() } : null);
       if (!input) bad('BAD_REQUEST', 'This automation needs an input');
       return ok(await app.run({ flowId, input }));
     }
@@ -174,10 +206,16 @@ export function createSiteApi(app, options = {}) {
       if (!h && !props.length) bad('NOT_FOUND', `No automation named ${flowId}`);
       const wf = h?.workflow ?? props[0].workflow, t = templateOf(wf);
       const runs = app.foundry.store.runs().filter(r => r.workflowId === flowId).slice(0, 50).map(r => ({ runId: r.id, status: r.status, at: r.updatedAt, workflowHash: r.workflowHash }));
+      // The checks as the latest finished run of this version left them (P3 walkthrough M16: "Not checked yet" after a passed run).
+      const lastRun = h ? runs.find(r => r.workflowHash === h.hash && ['succeeded', 'failed', 'uncertain', 'cancelled'].includes(r.status)) : null;
+      const lastChecks = lastRun ? app.status({ runId: lastRun.runId }).checks : null;
+      const lists = batches.decided(flowId).map(b => ({ batchId: b.batchId, decision: b.decision, items: b.items.length, made: b.result?.made ?? null, runId: b.result?.runId ?? null, status: b.status }));
       return ok({ flowId, title: wf.title, card: t ? FORMS.templates[t.id]?.card : wf.title, template: t?.id ?? null, version: h?.workflow.version ?? null, workflowHash: h?.hash ?? null,
-        active: h ? !!app.ledger.approvedFor(flowId, h.hash) : false, slots: slotsOf(wf), summary: describeWorkflow(wf, app.registry), promises: t ? promises(t, slotsOf(wf)) : null,
+        active: h ? !!app.ledger.approvedFor(flowId, h.hash) : false, slots: slotsOf(wf), summary: describeWorkflow(wf, app.registry), promises: t ? cardPromises(t, slotsOf(wf)) : null,
         drafts: props.filter(x => x.status === 'proposed').map(x => ({ proposalId: x.id, version: x.workflow.version, dryRun: app.ledger.latestDryRun(x.id)?.passed ?? null })),
-        data: t ? liveSheets(app, t.id) : null, runs, approvals: app.ledger.forFlow(flowId) });
+        data: t ? liveSheets(app, t.id) : null, runs, approvals: app.ledger.forFlow(flowId), lastRun: lastRun ? { runId: lastRun.runId, status: lastRun.status, at: lastRun.at, checks: lastChecks } : null,
+        lists, decider: deciderOf(flowId), answers: t?.id === 'expense-approval' ? answersToRecord(flowId) : null,
+        activeProposalId: h ? app.ledger.approvedFor(flowId, h.hash)?.proposalId ?? null : null, today: new Date(asOf()).toISOString() });
     }
     // ------------------------------------------------------------------ the person's own data
     if (method === 'POST' && p === '/api/data/preview') return ok(csvPreview({ template: str(body.template, 'template', 64), sheet: str(body.sheet, 'sheet', 41), text: String(body.csv ?? '') }));
@@ -206,11 +244,52 @@ export function createSiteApi(app, options = {}) {
     if (method === 'POST' && p === '/api/batch/decline') return ok(batches.decline(str(body.batchId, 'batchId', 64), { channel: 'dashboard' }));
     if (method === 'GET' && p === '/api/batches') return ok({ open: batches.open() });
     if (method === 'GET' && (m = p.match(/^\/api\/batches\/([A-Za-z0-9-]{8,64})$/))) return ok(batches.get(m[1]));
-    if (method === 'GET' && p === '/api/drafts') return ok({ drafts: listDrafts(app) });
+    if (method === 'GET' && p === '/api/drafts') return ok({ drafts: [...listDrafts(app), ...listPosts(app)] });
+    if (method === 'POST' && (m = p.match(/^\/api\/drafts\/([a-zA-Z0-9_-]{4,80})\/sent$/))) {
+      const r = markSent(app, m[1], body.sent === true, { by: whoLabel(whoIsHere(app.root)), now });
+      decisionLog.append({ kind: 'draft-marked', decision: r.sent ? 'sent' : 'not sent', draft: m[1], channel: 'dashboard' });
+      return ok(r);
+    }
+    // ------------------------------------------------------------------ who decides, and the approver's answers (P3 walkthrough B3, B4)
+    if (method === 'GET' && p === '/api/deciders') return ok(readSite('deciders.json', {}));
+    if (method === 'POST' && p === '/api/deciders') {
+      const flowId = str(body.flowId, 'flowId', 64), choice = ['inform', 'team'].includes(body.choice) ? body.choice : bad('BAD_REQUEST', 'choice is inform or team');
+      const all = readSite('deciders.json', {});
+      all[flowId] = { choice, who: typeof body.who === 'string' ? body.who.slice(0, 254) : null, at: new Date(now()).toISOString() };
+      writeSite('deciders.json', all);
+      return ok(all[flowId]);
+    }
+    if (method === 'GET' && (m = p.match(/^\/api\/answers\/([A-Za-z][A-Za-z0-9_-]{0,63})$/))) return ok(answersToRecord(m[1]));
+    if (method === 'GET' && p === '/api/answers') return ok({ automations: app.list().flows.map(f => answersToRecord(f.flowId)).filter(a => a.waiting.some(w => !w.answer)) });
+    if (method === 'POST' && p === '/api/answers') {
+      const flowId = str(body.flowId, 'flowId', 64), id = str(body.id, 'id', 120);
+      if (!['approved', 'rejected'].includes(body.answer)) bad('BAD_REQUEST', 'answer is approved or rejected');
+      const view = answersToRecord(flowId);
+      if (!view.waiting.some(w => w.id === id)) bad('NOT_FOUND', 'That claim is not waiting for an answer');
+      const all = readSite('approver-answers.json', {});
+      const who = whoLabel(whoIsHere(app.root));
+      all[flowId] = { ...(all[flowId] ?? {}), [id]: { answer: body.answer, approver: view.approver, recordedBy: who, how: 'the approver\'s reply, recorded here by the person at this computer', at: new Date(now()).toISOString() } };
+      writeSite('approver-answers.json', all);
+      decisionLog.append({ kind: 'approver-answer', decision: body.answer, flowId, claim: id, approver: view.approver, channel: 'dashboard', how: 'recorded by the person at this computer from the approver\'s reply' });
+      return ok(all[flowId][id]);
+    }
     if (method === 'GET' && (m = p.match(/^\/api\/drafts\/([a-f0-9]{16,64})\.eml$/))) { const d = oneDraft(app, m[1]); return { download: { name: `draft-${m[1].slice(0, 8)}.eml`, type: 'message/rfc822', body: d.eml } }; }
     // ------------------------------------------------------------------ settings and keys
     if (method === 'GET' && p === '/api/settings') return ok(loadSettings(app.root));
     if (method === 'POST' && p === '/api/settings') return ok(saveSettings(app.root, body));
+    // Delete the lists the person gave (and their earlier versions); runs, drafts and records stay (P4 walkthrough M10).
+    if (method === 'POST' && p === '/api/data/forget') {
+      if (body.confirm !== 'delete my lists') bad('BAD_REQUEST', 'Say "delete my lists" to confirm');
+      const dir = path.join(app.worldDir, 'sheets');
+      const files = existsSync(dir) ? readdirSync(dir).filter(f => f.endsWith('.json')) : [];
+      for (const f of files) rmSync(path.join(dir, f), { force: true });
+      rmSync(path.join(dir, '.history'), { recursive: true, force: true });
+      decisionLog.append({ kind: 'lists-deleted', decision: 'deleted', count: files.length, channel: 'dashboard' });
+      return ok({ deleted: files.length });
+    }
+    if (method === 'GET' && p === '/api/build') return ok(buildInfo());
+    if (method === 'GET' && p === '/api/decisions') { const v = decisionLog.verify(); return ok({ ...v, lines: decisionLog.lines().slice(-200) }); }
+    if (method === 'GET' && p === '/api/whoami') return ok({ ...whoIsHere(app.root), label: whoLabel(whoIsHere(app.root)) });
     if (method === 'GET' && p === '/api/keys') return ok(keys.status());
     if (method === 'POST' && p === '/api/keys') { const r = await keys.save(str(body.provider, 'provider', 40), body.key); return ok(r); }
     if (method === 'DELETE' && (m = p.match(/^\/api\/keys\/([a-z]{2,40})$/))) return ok(keys.remove(m[1]));

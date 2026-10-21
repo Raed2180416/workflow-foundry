@@ -4,7 +4,8 @@ import { el, t, api } from '../site.js';
 import { statusChip, paidBadge } from '../components/ui.js';
 
 const ROWS = [
-  ['agents', [['claudeCode', 'works', '#/connect-agent'], ['cursor', 'works', '#/connect-agent'], ['codex', 'works', '#/connect-agent'], ['plugin', 'planned', '#/connect-agent']]],
+  // Preview: tested with a scripted client, not yet with a released Claude Code, Cursor or Codex (P1 M1, P4 M9).
+  ['agents', [['claudeCode', 'preview', '#/connect-agent'], ['cursor', 'preview', '#/connect-agent'], ['codex', 'preview', '#/connect-agent'], ['plugin', 'planned', '#/connect-agent']]],
   ['data', [['csv', 'works', null], ['json', 'works', null], ['apps', 'planned', '#/']]],
   ['sending', [['drafts', 'works', null], ['webhook', 'planned', '#/drafts'], ['gmail', 'planned', '#/drafts']]],
   ['ai', [['none', 'works', null], ['mercury', 'preview', '#/keys'], ['anthropic', 'planned', '#/keys']]],

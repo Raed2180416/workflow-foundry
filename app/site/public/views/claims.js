@@ -1,11 +1,14 @@
 // What we can show (#/claims): every claim the site makes, with its status, what kind of evidence it is, its date, and the file in
 // the repository it comes from (SPEC §17.3). A claim link elsewhere on the site lands here.
-import { el, t, claims } from '../site.js';
+import { el, t, claims, api } from '../site.js';
 import { statusChip, statusOf } from '../components/ui.js';
 
 export async function render({ query }) {
   const all = claims(), focus = query.get('c');
+  // Which copy of Foundry these claims are about (P5 walkthrough M16: a repository path without a commit can't be checked).
+  const build = await api('/api/build').catch(() => null);
   const node = el('div', { dataset: { layout: 'narrow' } }, el('h1', {}, t('claims.h1')), el('p', { class: 'lead' }, t('claims.lead')),
+    el('p', { class: 'muted small' }, build?.commit ? t('claims.commit', { commit: build.commit }) : t('claims.noCommit')),
     Object.entries(all).map(([id, c]) => el('section', { class: `card ${id === focus ? 'emph' : ''}`, id: `claim-${id}`, dataset: { claimCard: id } },
       el('h2', { class: 'h3' }, c.short, ' ', statusChip(statusOf(c.status))),
       el('p', {}, c.text), c.qualifier ? el('p', { class: 'muted' }, c.qualifier) : null,

@@ -14,14 +14,20 @@ test('an exact match is made, one click for the whole list; the batch file and t
   const batches = new Batches(app, { now: () => NOW });
   const b = await batches.preview(p.flowId);
   assert.equal(b.passed, true);
-  assert.deepEqual(b.items.map(i => i.subject), ['Final notice: invoice INV-2043', 'Friendly reminder: invoice INV-2042', 'Second reminder: invoice INV-2041', 'Invoice reminders: summary']);
+  // card-text r2 wording: no subject claims an earlier reminder (P2 walkthrough B4)
+  assert.deepEqual(b.items.map(i => i.subject), ['Payment overdue, action needed: invoice INV-2043', 'Payment overdue: invoice INV-2041', 'Payment reminder: invoice INV-2042', 'Invoice reminders: summary']);
+  assert.equal(b.items.filter(i => i.to !== 'me@example.com').some(i => /second reminder|final notice/i.test(i.body)), false, 'no customer is told about a reminder they never got');
+  assert.match(b.items[0].body, /€75\.50/, 'the amount is written as money');
+  // Two customers would get a firmer reminder although Foundry never reminded them: the list says so before the yes.
+  assert.deepEqual(b.notes.find(n => n.kind === 'firm-first')?.invoices.map(x => x.invoice).sort(), ['INV-2041', 'INV-2043']);
   assert.ok(b.items.every(i => i.body.length > 50 && /^[a-f0-9]{64}$/.test(i.digest)), 'every item carries its full text and a digest');
   assert.equal(listDrafts(app).length, 0, 'preview makes nothing');
   const r = await batches.approve(b.batchId, { channel: 'dashboard' });
   assert.equal(r.status, 'succeeded'); assert.equal(r.made.length, 4); assert.equal(r.stoppedAt, null);
   assert.equal(listDrafts(app).length, 4);
   const saved = JSON.parse(readFileSync(batchFile(dir), 'utf8'))[0];
-  assert.deepEqual([saved.status, saved.decision.by, saved.decision.channel, Object.keys(saved.usedBy).length], ['used', 'person', 'dashboard', 4]);
+  assert.deepEqual([saved.status, saved.decision.channel, Object.keys(saved.usedBy).length], ['used', 'dashboard', 4]);
+  assert.match(saved.decision.by, /\S+@\S+/, 'the decision names this computer\'s account and host');
   const decided = app.foundry.store.events(r.runId).filter(e => e.type === 'approval.decided');
   assert.equal(decided.length, 4); assert.ok(decided.every(e => e.actor === 'user' && e.approved === true));
 }));
@@ -58,19 +64,32 @@ test('an item is never used twice, an expired list is refused, a decline makes n
   await assert.rejects(batches.approve(b3.batchId), { code: 'BATCH_CLOSED' });
 }));
 
-// Known limit, kept as a test: the preview runs in a fresh practice store, so it cannot see what earlier live runs remembered. On a
-// second run the engine skips the reminders it already sent (never asks), and the summary's text ("new reminders sent this run: 0")
-// differs from the preview's ("3"), so the guard stops there and asks about the summary as a single card. Nothing unlisted is made.
-test('the second run of the same list: reminders already sent are skipped, and a summary whose text changed stops and asks', async () => withApp(async app => {
+// Fixed (P2 walkthrough B3; was a known limit): the preview starts from the live store's state, so the second run of the same list lists
+// only the summary (no reminder twice), its text matches the real run's ("drafts made this run: 0"), and the yes makes exactly it.
+test('the second run of the same list lists only what is new; the yes makes exactly that, and nothing waits', async () => withApp(async app => {
   const p = await invoiceFlowOn(app); liveInvoices(app);
   const batches = new Batches(app, { now: () => NOW });
   await batches.approve((await batches.preview(p.flowId)).batchId);
   const drafts = listDrafts(app).length;
-  const again = await batches.approve((await batches.preview(p.flowId)).batchId);
-  assert.deepEqual(again.made, [], 'no reminder is made twice');
-  assert.equal(again.stoppedAt.subject, 'Invoice reminders: summary');
-  assert.equal(listDrafts(app).length, drafts, 'nothing was made that the person did not see in full');
-  assert.equal(app.inbox().actions[0].subject, 'Invoice reminders: summary', 'the summary waits as a normal single card');
+  const second = await batches.preview(p.flowId);
+  assert.deepEqual(second.items.map(i => i.subject), ['Invoice reminders: summary'], 'no reminder is listed twice');
+  assert.match(second.items[0].body, /Reminder drafts made this run: 0/);
+  assert.equal(second.remembered, 3, 'the preview saw the three reminders made before');
+  assert.equal(second.notes.some(n => n.kind === 'firm-first'), false, 'no first-contact warning once Foundry has reminded them');
+  const again = await batches.approve(second.batchId);
+  assert.equal(again.stoppedAt, null); assert.equal(again.made.length, 1);
+  assert.equal(listDrafts(app).length, drafts + 1);
+  assert.equal(app.inbox().actions.length, 0, 'nothing waits as a single card');
+}));
+
+test('a new list replaces the open one; a yes closes every other open list of the automation', async () => withApp(async app => {
+  const p = await invoiceFlowOn(app); liveInvoices(app);
+  const batches = new Batches(app, { now: () => NOW });
+  const a = await batches.preview(p.flowId), b = await batches.preview(p.flowId);
+  assert.equal(batches.get(a.batchId).status, 'replaced');
+  assert.deepEqual(batches.open().map(x => x.batchId), [b.batchId]);
+  await batches.approve(b.batchId);
+  assert.equal(batches.open().length, 0);
 }));
 
 test('a changed head (a new version turned on after the list was made) is refused', async () => withApp(async app => {

@@ -1,6 +1,6 @@
 {
   "schema": "foundry-onboarding-forms/1",
-  "note": "How the site presents each frontier-written template (app/core/templates/*.json) as a card and a form. Presentation only: the template's slots, defaults, questions and the question policy stay the authority (app/core/library.mjs resolveSlots). kind: setting = a visible default the person can change; ask = a question whose wrong guess is harmful (harm comes from the template's `ask`); list = rows the person types. siteDefault replaces the template default only to show a question the person can switch off (e.g. the invoice summary). `skip` says what happens if the person does not answer.",
+  "note": "weak: keywords too common to name a card on their own ('approval', 'remind'): a request that matches only weak words gets 'these might be close', never 'this sounds like' (P3 walkthrough B1: 'refunds over $500 need my approval' was told it sounds like expense approvals). field: a plain input the person may fill, not a question (the e-mail signature). How the site presents each frontier-written template (app/core/templates/*.json) as a card and a form. Presentation only: the template's slots, defaults, questions and the question policy stay the authority (app/core/library.mjs resolveSlots). kind: setting = a visible default the person can change; ask = a question whose wrong guess is harmful (harm comes from the template's `ask`); list = rows the person types. siteDefault replaces the template default only to show a question the person can switch off (e.g. the invoice summary). `skip` says what happens if the person does not answer.",
   "order": [
     "invoice-chase",
     "expense-approval",
@@ -64,8 +64,10 @@
           "unit": "days after the due date (0 means none)"
         },
         "signature": {
-          "kind": "setting",
-          "label": "Signed"
+          "kind": "field",
+          "label": "How should the e-mails be signed?",
+          "placeholder": "e.g. Sam, Lark & Fern Florist",
+          "help": "If you leave it, they are signed \u201cAccounts team\u201d."
         },
         "sendSummary": {
           "kind": "toggle",
@@ -93,7 +95,8 @@
         "charge card",
         "charge cards",
         "refund"
-      ]
+      ],
+      "weak": ["payment", "payments", "remind", "reminder", "reminders", "collect", "outstanding"]
     },
     "expense-approval": {
       "card": "Approve small expenses",
@@ -125,7 +128,7 @@
         },
         "approver": {
           "kind": "ask",
-          "label": "Who decides the bigger ones? (their e-mail)",
+          "label": "Who decides claims over your limit? (their e-mail)",
           "skip": "Nothing is built: the bigger claims have to go to someone.",
           "inputType": "email",
           "placeholder": "name@yourbusiness.com"
@@ -141,8 +144,13 @@
       },
       "notKeywords": [
         "pay employees",
-        "payroll"
-      ]
+        "payroll",
+        "refund",
+        "refunds",
+        "customer refund",
+        "chargeback"
+      ],
+      "weak": ["approve", "approval", "spend"]
     },
     "weekly-report": {
       "card": "Weekly progress report",
@@ -187,7 +195,8 @@
       "notKeywords": [
         "weather",
         "stock price"
-      ]
+      ],
+      "weak": ["week", "weekly", "report", "progress", "tracker"]
     },
     "lead-triage": {
       "card": "Route new leads",
@@ -252,7 +261,8 @@
         "find leads",
         "cold email",
         "cold e-mail"
-      ]
+      ],
+      "weak": ["route", "assign", "sales"]
     },
     "support-deflection": {
       "card": "Answer common support questions",
@@ -305,7 +315,8 @@
       "notKeywords": [
         "write answers with ai",
         "translate"
-      ]
+      ],
+      "weak": ["question", "questions", "answer", "reply", "replies"]
     },
     "oncall-digest": {
       "card": "On-call alert digest",
@@ -357,7 +368,8 @@
         "restart",
         "fix the server",
         "reboot"
-      ]
+      ],
+      "weak": ["digest", "ops", "monitoring"]
     },
     "contact-sync": {
       "card": "Keep the newsletter list in step",
@@ -398,7 +410,8 @@
         "send the newsletter",
         "write the newsletter",
         "post on"
-      ]
+      ],
+      "weak": ["contacts", "sync", "crm", "audience"]
     }
   }
 }

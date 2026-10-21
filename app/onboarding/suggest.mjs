@@ -2,8 +2,10 @@
 // only; it never builds anything (research/onboarding-20261021/SPEC.md §3 R1). The words never leave this computer and are not stored.
 //
 // Scoring: a keyword or phrase from the card's list (app/onboarding/forms.json) that appears in the words scores 1 (a phrase of two or
-// more words scores 2). A card whose "not" phrase appears (for example "pay my suppliers" for invoice reminders) is dropped: the
-// template's own notFor says it cannot do that.
+// more words scores 2); a `weak` keyword (too common to name a card: "approval", "remind") scores a half. A card whose "not" phrase
+// appears (for example "pay my suppliers" for invoice reminders, "refund" for expense claims) is dropped: the template's own notFor says
+// it cannot do that. "This sounds like" needs a card clearly ahead AND at least one of its strong keywords: a match on weak words only
+// is "these might be close", never a confident answer (P3 walkthrough B1).
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,11 +38,12 @@ export function suggest(text, { forms = FORMS } = {}) {
     const matched = [...new Set(f.keywords.filter(k => has(norm, k)))];
     // A longer phrase that matched makes its own words redundant ("late payment" and "payment").
     const kept = matched.filter(k => !matched.some(o => o !== k && o.includes(' ') && normalise(o).includes(` ${normalise(k).trim()} `)));
-    const score = kept.reduce((s, k) => s + (k.trim().includes(' ') ? 2 : 1), 0);
-    if (score > 0) candidates.push({ id, title: f.card, summary: f.summary, score, matched: kept });
+    const weak = new Set(f.weak ?? []);
+    const score = kept.reduce((s, k) => s + (weak.has(k) ? 0.5 : k.trim().includes(' ') ? 2 : 1), 0);
+    if (score > 0) candidates.push({ id, title: f.card, summary: f.summary, score, matched: kept, weakOnly: kept.every(k => weak.has(k)) });
   }
   candidates.sort((a, b) => b.score - a.score || forms.order.indexOf(a.id) - forms.order.indexOf(b.id));
-  // "This sounds like" only when one card is clearly ahead; otherwise the page shows the close ones and the full list.
-  const top = candidates[0] ?? null, clear = !!top && (!candidates[1] || top.score > candidates[1].score);
-  return { candidates: candidates.slice(0, 3), best: clear ? top.id : null, method: 'keywords (no AI, on this computer)' };
+  // "This sounds like" only when one card is clearly ahead on at least one strong word; otherwise the close ones and the full list.
+  const top = candidates[0] ?? null, clear = !!top && !top.weakOnly && (!candidates[1] || top.score > candidates[1].score);
+  return { candidates: candidates.slice(0, 3), best: clear ? top.id : null, weakOnly: !!top && top.weakOnly, method: 'keywords (no AI, on this computer)' };
 }

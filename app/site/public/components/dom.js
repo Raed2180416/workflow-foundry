@@ -29,4 +29,11 @@ export const id = prefix => `${prefix}-${++uid}`;
 export function clear(node) { while (node.firstChild) node.firstChild.remove(); return node; }
 /** Plural helper for counts rendered from data: n and the right noun form. */
 export const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-export const when = t => { if (!t) return ''; const d = new Date(t); return Number.isFinite(d.getTime()) ? d.toLocaleString() : String(t); };
+/** A time for people: "21 Oct 2026, 18:42 GMT+1" (local, with the zone named, so it is never ambiguous; P5 walkthrough M6). */
+export const when = t => { if (!t) return ''; const d = new Date(t); return Number.isFinite(d.getTime()) ? d.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }) : String(t); };
+/** A time for records: "21 Oct 2026, 18:42:36 UTC". */
+export const whenUtc = t => { if (!t) return ''; const d = new Date(t); return Number.isFinite(d.getTime()) ? `${d.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC' })} UTC` : String(t); };
+/** A day: "21 Oct 2026". */
+export const day = t => { if (!t) return ''; const d = new Date(t); return Number.isFinite(d.getTime()) ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : String(t); };
+/** replaceChildren that skips null, undefined, false and '' (DOM replaceChildren writes null as the text "null": P2 walkthrough M4). */
+export function replace(node, ...children) { clear(node); return append(node, children); }

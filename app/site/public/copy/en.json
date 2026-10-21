@@ -5,7 +5,12 @@
     "skip": "Skip to content",
     "menu": "Menu",
     "noTokenTitle": "Open Foundry from its link",
-    "noToken": "This page needs the link that Foundry printed when it started. The link carries a one-time key, so the page knows it is you. In your terminal, run:"
+    "noToken": "This tab doesn't have Foundry's key yet. If Foundry is running, open the link it printed, or run this in a terminal on this computer to open Foundry again:",
+    "noTokenNotRunning": "If nothing opens, Foundry isn't running. Today someone technical has to start it again after the computer restarts.",
+    "noTokenHelp": "Help",
+    "noTokenStale": "This page's key is out of date (Foundry was given a new one). Open Foundry again with:",
+    "waitingNotice": "Something is waiting for your yes or no ({n}).",
+    "waitingNoticeLink": "Open it"
   },
   "nav": {
     "home": "Home",
@@ -52,12 +57,12 @@
     "goLive": "Use your own list"
   },
   "home": {
-    "h1": "Hand off the jobs you do every week.",
-    "lead": "Pick one below or describe it. Foundry builds it, tests it with pretend data, and shows you exactly what it will do. Nothing real happens until you say yes.",
+    "h1": "Let Foundry prepare the jobs you do every week.",
+    "lead": "Pick one below. Foundry tests it with pretend data first, then shows you everything it would make, in full. You check it, and you send it yourself. Nothing real happens until you say yes.",
     "cardsTitle": "Foundry can make these today",
     "factsLabel": "About this automation",
     "usesAiNo": "Uses AI: no",
-    "needs": "Needs: your {sheets} as a spreadsheet",
+    "needs": "Needs: your {sheets} (a CSV file; Excel can save one)",
     "start": "Start",
     "boxLabel": "Or describe it in your own words",
     "boxPlaceholder": "e.g. remind customers who haven't paid after a week",
@@ -67,19 +72,27 @@
     "n8nBody": "Drop an exported workflow to see what it does and what could come over. Zapier and Make: later.",
     "n8nLink": "Bring in an n8n workflow",
     "devTitle": "Use Claude Code, Cursor or Codex?",
-    "devLink": "Connect it with one line →",
-    "trust": "Runs on this computer. No account. {claim:C01} [How this is kept safe](#/trust)",
-    "proofTitle": "Why Foundry tests before it acts",
-    "proof": "{claim:C04}",
-    "proofQualifier": "These are development tests on one task family we wrote, not a promise about yours.",
+    "devLink": "Connect it with one line",
+    "trust": "Runs on this computer. No account. One limit: if you also use an AI coding tool on this computer, it could press yes for you. If you don't use one, this doesn't affect you. [How this is kept safe](#/trust)",
     "waiting": "Something is waiting for your yes or no ({n}).",
     "waitingOpen": "Open it",
     "yourAutomations": "Your automations ({n})",
     "managedTitle": "Your organisation manages Claude Code on this computer",
-    "managedBody": "Your IT team may want to see what Foundry does before you use it for real. You can hand them a one-page brief, and keep everything in practice until they say yes.",
+    "managedBody": "Your IT team may want to see what Foundry does before you use it for real. You can hand them a one-page brief, and keep this Foundry folder in practice until they say yes.",
     "managedBrief": "Get a one-page brief for IT",
     "managedPractice": "Turn on practice-only mode",
-    "practiceOnlyOn": "Practice-only mode is on."
+    "practiceOnlyOn": "Practice-only mode is on.",
+    "aiLine": "These cards follow fixed steps, written and checked in advance. No AI reads your data.",
+    "notReadyTitle": "Not ready to install on your own yet.",
+    "notReady": "Today someone technical has to install Foundry and start it again each time this computer restarts. It has been tested on Linux only; Windows and Mac are untested.",
+    "notReadyLink": "What that involves",
+    "teamTitle": "Setting this up for a team?",
+    "teamLink": "Write down who approves what",
+    "managedCheck": "Check whether your organisation's policy allows Foundry",
+    "managedCheckNote": "Reads only the parts of the policy about which servers are allowed. Nothing is changed.",
+    "managedYes": "Allowed: {why}",
+    "managedNo": "Not allowed: {why} Send IT the one-page brief.",
+    "managedUnknown": "Can't tell: {why} Send IT the one-page brief."
   },
   "describe": {
     "emptyTitle": "Describe what you want done",
@@ -94,7 +107,9 @@
     "noneLead": "Here's what I can make today. If one is close, pick it and change the settings.",
     "aiOffer": "Want Foundry to try with AI?",
     "aiLink": "Set up an AI key",
-    "aiNote": "(your words go to the AI provider)"
+    "aiNote": "(your words go to the AI provider)",
+    "notAMatch": "Closest cards, not a match",
+    "weakBody": "These share a common word with what you wrote, but may not do what you need. Read what each one does before you pick it. If none fits, Foundry can't make it yet."
   },
   "make": {
     "unknownTitle": "There is no automation by that name",
@@ -115,13 +130,13 @@
     "usesAI": "Uses AI:",
     "usesAINo": "No, it follows fixed steps.",
     "dataGoes": "Where your data goes:",
-    "dataGoesNowhere": "Nowhere. It reads the list you give it and writes on this computer.",
+    "dataGoesNowhere": "It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.",
     "runs": "When it runs:",
-    "runsWhen": "Only when you press Run. There is no schedule yet.",
+    "runsWhen": "Only when you start it, with Show me what it would make. There is no schedule yet.",
     "problemsTitle": "These settings don't fit together yet:",
     "test": "Test it with pretend {noun}",
     "back": "Back to all automations",
-    "testNote": "The test uses pretend data and a pretend inbox. Nothing real is sent.",
+    "testNote": "The test uses pretend data and a pretend inbox. Nothing real is made or sent.",
     "answerFirst": "Please answer this first. Foundry won't guess it.",
     "answerFirstSay": "Answer the highlighted question first.",
     "nothingMade": "Nothing was made or sent.",
@@ -129,9 +144,9 @@
     "tryAgain": "Try again",
     "noChange": "Nothing would change, so no new version was made.",
     "openAutomation": "Open the automation",
-    "testing": "Testing with pretend {noun}. Nothing real is sent.",
+    "testing": "Testing with pretend {noun}. Nothing real is made or sent.",
     "tested": "Test finished.",
-    "setBy": "Set in Who decides what. You can make it stricter here, not looser.",
+    "setBy": "Written down in Who decides what. You can make it stricter here, not looser.",
     "refusedNext": "Choose a stricter setting, or ask the person who set the rule to change it in Who decides what."
   },
   "ask": {
@@ -139,13 +154,12 @@
     "skip": "If you skip:"
   },
   "who": {
-    "legend": "Who decides the bigger ones?",
+    "legend": "How is their decision recorded?",
     "thatPerson": "The person you named",
-    "inform": "{who} gets an e-mail, and you record the decision here",
-    "team": "{who} decides, and their yes is recorded as theirs",
-    "me": "Just me, nobody else needs to know",
+    "inform": "{who} gets an e-mail. They reply, and you record their answer here.",
+    "team": "{who} signs in and decides, and their yes is recorded as theirs",
     "free": "Free",
-    "teamExplain": "For {who}'s yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you standing in for them."
+    "teamExplain": "For {who}'s yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you recording their answer."
   },
   "paid": {
     "badge": "Team plan",
@@ -157,16 +171,19 @@
     "failed": "Did not pass",
     "notRun": "Not checked yet",
     "howVerify": "How: Foundry re-read what the test left behind afterwards.",
-    "howRule": "How: a rule on the result."
+    "howRule": "How: a rule on the result.",
+    "howTitle": "How Foundry checks",
+    "howBody": "Some checks re-read what was written afterwards (the drafts, the lists). The others compare the result with your settings."
   },
   "checked": {
     "items": "items",
     "notTested": "This version has not been tested yet",
     "runTest": "Test it now",
-    "passedTitle": "Test passed. Nothing real was sent.",
+    "passedTitle": "Test passed. Nothing real was made or sent.",
     "failedTitle": "The test didn't pass, so it can't be turned on.",
-    "wouldHave": "It would have made",
-    "nothingSent": "Nothing real was sent.",
+    "wouldHave": "On pretend data it would have made",
+    "wouldHaveYours": "On your own list it would have made",
+    "nothingSent": "Nothing real was made or sent.",
     "nothingToDo": "nothing at all",
     "email": "e-mail",
     "emails": "e-mails",
@@ -176,6 +193,8 @@
     "mailsTo": "{count} to {to}",
     "postsTo": "{count} to {to}",
     "appends": "{what} added to {sheet} on this computer",
+    "row": "row",
+    "rows": "rows",
     "nothingToChase": "Nothing to chase: nobody on this list needs a reminder today.",
     "testedOnPretend": "Tested on: pretend {noun} that come with this automation.",
     "testedOnYours": "Tested on: your own list.",
@@ -190,7 +209,12 @@
     "cantTurnOn": "Nothing was turned on and nothing was sent.",
     "changeSetting": "Change a setting",
     "alreadyOn": "This version is on.",
-    "useOwnList": "Use your own list"
+    "useOwnList": "Use your own list",
+    "rowsTitle": "Add {n} lines to {sheet} (on this computer)",
+    "ownSectionTitle": "Try it on your real list first (optional)",
+    "ownSectionTitleOn": "Test this version on a list (optional)",
+    "ownSectionBody": "Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.",
+    "howTitle": "How Foundry checks"
   },
   "turnon": {
     "title": "Turn on '{title}' (version {version})?",
@@ -205,9 +229,9 @@
     "aiYes": "yes, only to build it",
     "who": "Who decides:",
     "whoYou": "you",
-    "whoInform": "you ({who} gets an e-mail)",
-    "whoTeam": "{who}, once the Team plan exists. Until then: you",
-    "change": "Change something",
+    "whoInform": "{who}, by replying to an e-mail; you record their answer here",
+    "whoTeam": "{who}, once the Team plan exists. Until then you record their answer here",
+    "change": "Change settings",
     "needs": "What it needs to go live:",
     "needsSheets": "your {sheets}",
     "yes": "Turn it on",
@@ -217,26 +241,28 @@
     "keepPractice": "Keep it in practice",
     "fine": "Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens.",
     "done": "Turned on. Nothing was sent.",
-    "notOn": "It was not turned on."
+    "notOn": "It was not turned on.",
+    "changeWho": "Change who decides",
+    "changeSettings": "Change settings"
   },
   "golive": {
     "onTitle": "On.",
-    "onBody": "It runs when you press Run. It won't run by itself.",
+    "onBody": "It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.",
     "notCard": "This automation wasn't made from a card, so it can't use a dropped list.",
     "notOnTitle": "Turn on {card} first",
     "notOnBody": "A version has to pass its test and be turned on before it can use your real list.",
     "toTurnOn": "See the test and turn it on",
     "toMake": "Start it",
-    "title": "Where's your {plain}?",
-    "lead": "Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here.",
-    "practiceOnly": "Practice-only mode is on, so nothing runs for real on this computer.",
+    "title": "Add your {plain}",
+    "lead": "Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.",
+    "practiceOnly": "Practice-only mode is on for this pilot. Foundry shows what a run would make, on your list, but won't make it. Ask whoever set up the pilot before turning it off.",
     "toSettings": "Open Settings",
-    "dropLabel": "Choose your {plain} (a CSV or JSON file)",
+    "dropLabel": "Choose your {plain} (a CSV file)",
     "dropHelp": "Foundry reads the file on this computer and keeps only the columns it needs.",
     "reading": "Reading your file…",
     "found": "Found {rows} {noun}.",
     "mappingTitle": "Which column is which?",
-    "keepsOnly": "Foundry keeps only these columns. It ignores: {columns}.",
+    "keepsOnly": "Foundry keeps only the columns above. It leaves out: {columns}.",
     "questionsTitle": "Before Foundry reads your list",
     "useColumns": "Use these columns",
     "useAndTest": "Use these columns and test",
@@ -249,8 +275,8 @@
     "have": "You gave Foundry your {plain} on {when} ({rows} {noun}).",
     "replace": "Replace it",
     "showList": "Show me what it would make",
-    "preparing": "Testing this version on your list first. Nothing real is sent.",
-    "ready": "{n} things to check.",
+    "preparing": "Testing this version on your list first. Nothing real is made.",
+    "ready": "The list is ready: {n} to check.",
     "testFailed": "A test of this version on your list did not pass: {headline}",
     "nothingMade": "Nothing was made.",
     "nothingTitle": "Nothing to make today",
@@ -259,7 +285,14 @@
     "howSend": "How should it send?",
     "drafts": "Make drafts you send yourself",
     "connected": "Send from Gmail, an e-mail account, or a Slack channel",
-    "insteadDrafts": "What you can do today: use drafts"
+    "insteadDrafts": "What you can do today: use drafts",
+    "onBodyAgent": "Go back to your coding agent and say \"go ahead\", or drop your list here and press Show me what it would make.",
+    "staleTitle": "Your list is from {date}.",
+    "staleBody": "Anything that changed since then (a customer who paid, say) is not in it. Drop a fresh export first.",
+    "staleAnyway": "Use the {date} list anyway",
+    "practiceOnlyTest": "Test on your list (nothing is made)",
+    "receiptMissing": "Your file has no receipt column, so no claim counts as having one: with Needs a receipt on, every claim goes to the person who decides.",
+    "howSendLegend": "Ways to send"
   },
   "drop": {
     "tooBig": "That file is over the size Foundry takes in one go. Export fewer rows.",
@@ -268,7 +301,8 @@
     "samples": "For example: {values}",
     "empty": "(empty)",
     "whichColumn": "Which column is the {plain}?",
-    "noneOfThem": "None of these"
+    "noneOfThem": "None of these",
+    "excel": "This is a spreadsheet file (Excel, Numbers or similar), not a CSV file. In your spreadsheet app choose File, then Save As or Export, pick CSV, and drop that file here."
   },
   "items": {
     "to": "To:",
@@ -279,18 +313,35 @@
   "batch": {
     "titleDrafts": "Make these {n} drafts?",
     "title": "Do these {n} things?",
-    "lead": "This is everything the real run would make (version {version}), in full. Read it before you say yes.",
+    "lead": "This is everything the real run would make (version {version}, as of {date}), in full. Read it before you say yes.",
     "make": "Make {n} drafts",
     "do": "Do these {n}",
     "makeNone": "Don't make any",
     "doNone": "Don't do any",
     "guard": "If the real run wants to make anything that isn't on this list, it stops and asks you.",
-    "alsoAppends": "Also: adds {rows} rows to {sheet} on this computer.",
+    "alsoAppends": "Also: adds {rows} lines to {sheet} on this computer.",
     "making": "Making exactly the list you approved…",
     "made": "Done: {n} made.",
     "stopped": "The real run wanted something that wasn't on your list, so it stopped and is asking you.",
     "notMade": "Nothing more was made.",
-    "declined": "Nothing was made."
+    "declined": "Nothing was made.",
+    "titleDraftsOne": "Make this draft?",
+    "titleDraftsMany": "Make these {n} drafts?",
+    "makeOne": "Make the draft",
+    "makeMany": "Make {n} drafts",
+    "madeOne": "Done: one made.",
+    "madeMany": "Done: {n} made.",
+    "countsNote": "Foundry counts a draft as done once it's made: it won't make that one again. Send it, or copy it, from the Drafts page.",
+    "firmFirstTitle": "Before you say yes",
+    "firmFirst": "Foundry has never reminded these customers, but their invoices are already late enough for a firmer reminder: {who}. Make these only if you have already reminded them yourself.",
+    "firmFirstYesOne": "I've reminded them before: make the draft",
+    "firmFirstYesMany": "I've reminded them before: make {n} drafts",
+    "firmFirstNo": "I haven't: don't make any yet",
+    "firmFirstNoAfter": "Nothing was made. To start everyone with a friendly reminder, set the firmer reminders to later days for now (Change settings), then make a new list.",
+    "alreadySent": "{n} of these claims already went to {who} on {date}. This run would send them again and add them to the decisions list again. Drop an updated list first, or record the answers in Waiting for you.",
+    "answered": "You recorded an answer for {n} of these.",
+    "remembered": "Foundry remembered what earlier runs made, so nothing on this list was made before.",
+    "madeSome": "Made {made} of the {total} on the list."
   },
   "action": {
     "titleDraft": "Make this draft?",
@@ -302,27 +353,44 @@
   },
   "drafts": {
     "title": "{n} drafts ready. Foundry didn't send anything.",
-    "lead": "Open each one in your mail app and send it yourself, or download it.",
+    "lead": "Open each one in your mail app and send it yourself.",
     "emptyTitle": "No drafts yet",
     "emptyBody": "Drafts appear here after you approve what an automation would make.",
     "showAll": "Show all drafts ({n})",
     "open": "Open in your mail app",
     "tooLong": "Too long for a mail link:",
-    "download": "Download .eml",
-    "downloaded": "Downloaded.",
+    "download": "Download a copy for Outlook or Apple Mail",
+    "downloaded": "Saved to your Downloads folder. Double-click it to open it in Outlook or Apple Mail.",
     "sentIt": "I sent it",
-    "sentNote": "\"I sent it\" is your own note, kept in this browser. Foundry can't see your mail."
+    "sentNote": "\"I sent it\" is your own note, kept in your Foundry folder. Foundry can't see your mail.",
+    "titleOne": "One draft ready. Foundry didn't send anything.",
+    "webmail": "Use Gmail or Outlook in your browser? Copy the address, the subject and the text into a new e-mail.",
+    "copyTo": "Copy address",
+    "copySubject": "Copy subject",
+    "copyText": "Copy text",
+    "copied": "Copied.",
+    "postTitle": "Paste this into {channel}",
+    "copyPost": "Copy the message",
+    "postNote": "Foundry doesn't post for you yet: copy the message and paste it into the channel.",
+    "countsNote": "Foundry counts a draft as done once it's made: it won't make that one again, even if you never send it."
   },
   "waiting": {
     "title": "Waiting for you ({n})",
     "emptyTitle": "Nothing is waiting for you",
     "emptyBody": "When an automation needs your yes or no, it appears here and in the number next to \"Waiting for you\".",
-    "lead": "Only a click here decides. Your coding agent can't.",
+    "lead": "You decide here, in your terminal, or in your coding agent's dialog. Foundry's tools can't decide for you. {claim:C01}",
     "steps": "Steps",
-    "asksFirst": "(asks you first)",
+    "asksFirst": "(you see it first)",
     "ticksFromTest": "Ticks come from the test with pretend data.",
     "no": "No",
-    "notTurnedOn": "Not turned on."
+    "notTurnedOn": "Not turned on.",
+    "answersTitle": "Answers to record",
+    "answersFor": "{card}: answers to record",
+    "answersLead": "{who} got an e-mail listing these claims. When they reply, record their answer here. Foundry can't see their reply.",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "recorded": "Recorded: {answer}.",
+    "claimLine": "{id}: {person}, {amount} ({reason})"
   },
   "automations": {
     "title": "Your automations",
@@ -335,25 +403,25 @@
     "last": "last: {result}, {when}",
     "dataHave": "{sheet}: {rows} rows",
     "dataMissing": "{sheet}: not given yet",
-    "runNow": "Run it",
+    "runNow": "Make a list",
     "draftsTitle": "Drafts",
     "draftPassed": "Test passed; waiting for your OK.",
     "draftFailed": "The test didn't pass.",
     "draftUntested": "Not tested yet."
   },
   "automation": {
-    "run": "Run it (shows you the list first)",
-    "change": "Change something",
+    "run": "Make a list (shows you everything first)",
+    "change": "Change settings",
     "brief": "Get a one-page brief for IT",
-    "decided": "You turned this version on through {channel} on {when}.",
+    "decided": "Turned on by {who} through {channel} on {when}.",
     "notDecided": "This version isn't on yet.",
-    "note": "Record: {note}",
-    "singlePerson": "You're the only person here, so you approve your own automations. The record says so.",
+    "note": "Noted: {note}",
+    "singlePerson": "You're the only person here, so you turn on your own automations. The record says so.",
     "dataTitle": "Your data",
     "dataHave": "{sheet}: {rows} rows, given {when}",
     "newList": "Use a new list",
     "reminderTitle": "A reminder, not a schedule",
-    "reminderBody": "Foundry can't run by itself yet. If you like, add a weekly calendar reminder to open it and press Run.",
+    "reminderBody": "Foundry can't run by itself yet. If you like, add a weekly calendar reminder to open it and make a list.",
     "ics": "Add a weekly calendar reminder",
     "icsDone": "Calendar file downloaded. Open it to add the reminder.",
     "versionsTitle": "Versions",
@@ -366,7 +434,15 @@
     "checksChanged": "what \"done\" means changed",
     "nothingChanged": "nothing in the steps",
     "fingerprint": "Fingerprint of this version: {hash}",
-    "noRuns": "No runs yet."
+    "noRuns": "No runs yet.",
+    "informed": "{who} gets an e-mail with the claims to decide; you record their answer in Waiting for you.",
+    "lastRun": "Last run ({when}): {result}.",
+    "decisionsTitle": "Decisions",
+    "decisionList": "A list of {n}: {decision} by {who} through {channel}, {when}",
+    "noDecisions": "No lists decided yet.",
+    "approvedWord": "approved",
+    "declinedWord": "declined",
+    "answersLink": "Record answers ({n} waiting)"
   },
   "channel": {
     "dashboard": "this page",
@@ -375,15 +451,17 @@
   },
   "runs": {
     "title": "Runs",
-    "lead": "Every run keeps a chained record. Foundry checks the chain each time you open this page.",
+    "lead": "Every run keeps a chained record. Foundry re-checks the chain each time you open this page.",
     "empty": "No runs yet.",
     "automation": "Automation",
     "result": "Result",
     "when": "When",
     "record": "Record",
-    "checked": "checked: {n} events, unbroken",
+    "checked": "consistent: {n} events, each linked to the one before",
     "notChecked": "could not be checked",
-    "openLabel": "Open the run of {flow} from {when}"
+    "openLabel": "Open the run of {flow} from {when}",
+    "auditorTitle": "For your auditor",
+    "auditorBody": "Open a run and download its evidence. Send the latest link of its record separately, by another route (a chat message, say), so your auditor can tell nothing changed later."
   },
   "run": {
     "back": "← All runs",
@@ -391,16 +469,16 @@
     "cost": "cost ${usd}, AI calls: {calls}",
     "failedStep": "It stopped at: {step}",
     "waiting": "This run is waiting for your yes or no.",
-    "recordOk": "Record checked: {n} events, unbroken.",
+    "recordOk": "Record consistent: {n} entries, each linked to the one before.",
     "recordBad": "The record could not be checked: {reason}",
     "chainHead": "Latest link of the chain: {hash}",
     "evidence": "Download evidence",
-    "evidenceDone": "Evidence file downloaded.",
+    "evidenceDone": "Saved {file} to your Downloads folder.",
     "gapsTitle": "What this record doesn't hold yet",
     "gaps": {
-      "decisions": "Your decisions (turning it on, each yes) are recorded beside the chain, not inside it yet.",
+      "decisions": "Your decisions (turning it on, the list you approved) are kept in their own chained log beside the run record, not inside the run's chain. Anyone using this computer account could rewrite both.",
       "transcripts": "If an AI helped build it, its transcript is not part of the chain.",
-      "anchor": "The chain's latest link isn't stored outside this computer unless you export it.",
+      "anchor": "The record's latest link isn't stored outside this computer unless you copy it somewhere else.",
       "secondPerson": "Approvals come from the person at this computer; a second person's own sign-in is planned."
     },
     "timeline": "Timeline ({n} events)",
@@ -418,6 +496,35 @@
       "waiting": "Waiting",
       "running": "Running",
       "ready": "Not started"
+    },
+    "recordMeaning": "This shows nothing changed later only if the latest link was saved somewhere else at the time.",
+    "copyHead": "Copy the latest link",
+    "evidenceFingerprint": "File fingerprint: {hash}",
+    "startedBy": "Started by {who} through {channel}, when they approved its list.",
+    "startedUnknown": "Who started this run was not recorded.",
+    "decisionsOnly": "Show decisions only",
+    "everything": "Show every event",
+    "who": "Who",
+    "byList": "{who}, through {channel}, from their yes to the list",
+    "events": {
+      "run.created": "Run created",
+      "runner.acquired": "Started",
+      "tool.intent": "About to do a step",
+      "node.started": "Step started",
+      "node.completed": "Step done",
+      "frame.created": "Prepared the next part",
+      "state.op": "Checked what earlier runs made",
+      "approval.requested": "Asked for a yes",
+      "approval.decided": "Yes applied",
+      "node.waiting_child": "Waiting for the steps inside",
+      "run.awaiting_approval": "Waiting for a yes",
+      "map.item.completed": "One item done",
+      "oracle.dispatched": "Check started",
+      "decision.recorded": "Check result recorded",
+      "run.verdict": "Result of the checks",
+      "run.succeeded": "Finished",
+      "run.failed": "Stopped with a problem",
+      "run.cancelled": "Stopped"
     }
   },
   "connections": {
@@ -441,7 +548,7 @@
     "items": {
       "claudeCode": {
         "name": "Claude Code",
-        "can": "Your agent drafts and tests automations. It can't turn them on or approve anything they make.",
+        "can": "Your agent drafts and tests automations. It can't turn them on or approve anything they make through Foundry.",
         "stores": "Nothing. The line you paste points at your Foundry folder.",
         "price": "Free",
         "until": "Use this page.",
@@ -567,8 +674,8 @@
         "can": "Their yes would be recorded as theirs.",
         "stores": "Not built.",
         "price": "Team plan",
-        "until": "They get an e-mail; you record the decision.",
-        "instead": "What you can do today: they get an e-mail, you record it"
+        "until": "They get an e-mail; you record their answer.",
+        "instead": "What you can do today: they get an e-mail, you record their answer"
       },
       "sso": {
         "name": "Single sign-on",
@@ -640,15 +747,16 @@
     "title": "Settings",
     "unreadable": "Foundry couldn't read its settings file, so it is treating this computer as practice-only until the file is fixed.",
     "practiceTitle": "Practice-only mode",
-    "practiceLabel": "Practice-only mode: nothing can run for real on this computer",
-    "practiceHelp": "Tests with pretend data still work. Your coding agent and the terminal are held to it too. Useful for a pilot your IT team runs.",
+    "practiceLabel": "Practice-only mode for this Foundry folder: nothing runs for real here",
+    "practiceHelp": "Tests with pretend data still work. Your coding agent and the terminal are held to it too. It covers this folder only, and it can be switched off here; for a pilot, IT can set it for the whole computer (see How this is kept safe).",
     "practiceOn": "Practice-only mode is on.",
     "practiceOff": "Practice-only mode is off.",
     "aiTitle": "Allowed AI",
     "aiLegend": "Which AI may build from your words?",
     "ai": {
       "none": "None (Foundry matches your words to a card)",
-      "mercury": "Mercury 3, with your own key"
+      "mercury": "Mercury 3, with your own key",
+      "haiku": "Claude Haiku (Anthropic), for developers who start Foundry with it"
     },
     "aiHelp": "With no AI, nothing you type leaves this computer.",
     "aiSaved": "Saved.",
@@ -665,34 +773,48 @@
     "where": "Your automations, your lists and every record live in this folder, readable only by your user:",
     "whereNote": "Foundry doesn't keep anything anywhere else.",
     "orgTitle": "Your organisation",
-    "orgLink": "Who decides what"
+    "orgLink": "Who decides what",
+    "managed": "Set by your organisation for this computer. It can't be changed here.",
+    "nameTitle": "Your name in records",
+    "nameLabel": "Your name",
+    "nameHelp": "Shown next to this computer's account in every decision you make (for example: Ravi Patel). Leave it empty to show the account only.",
+    "nameSave": "Save my name",
+    "nameSaved": "Saved. Records now show: {label}.",
+    "recordsAs": "Records show you as: {label}",
+    "forgetTitle": "Delete my lists",
+    "forgetBody": "Deletes every list you gave Foundry and their earlier versions. Your automations, drafts and records stay.",
+    "forgetLabel": "Type delete my lists to confirm",
+    "forgetButton": "Delete my lists",
+    "forgetDone": "Deleted {n} lists."
   },
   "connect": {
     "title": "Connect your coding agent",
-    "lead": "Paste one line into your agent's terminal. Foundry doesn't change your agent's settings for you, so your agent asks you before it trusts Foundry.",
+    "lead": "Paste one line into a terminal (a shell, not your agent's chat). Pasting it is your yes to adding Foundry. Foundry doesn't change your agent's settings for you.",
     "canTitle": "What your agent can and can't do with Foundry",
     "can": {
       "draft": "Draft an automation from what you ask for.",
       "test": "Test it with pretend data.",
-      "notTurnOn": "It can't turn anything on: you do.",
-      "notApprove": "It can't approve what an automation makes: you do, in a dialog or in this page."
+      "notTurnOn": "It can't turn anything on through Foundry: you do.",
+      "notApprove": "It can't approve what an automation makes through Foundry: you do, in a dialog or in this page. An agent allowed to run any command as you could; see How this is kept safe."
     },
     "claudeCode": {
       "name": "Claude Code",
-      "how": "In a terminal:",
-      "note": "Claude Code will ask you to trust the new server the first time. Not yet tested against a released Claude Code."
+      "how": "In a terminal, inside the project where you'll use Foundry:",
+      "note": "Then start claude there and type /mcp: foundry should show as connected. Claude Code asks you before each Foundry tool that is not read-only runs. Tested with a scripted client, not yet with a released Claude Code.",
+      "everyLead": "Or, for every project:",
+      "allowLead": "Optional: let your agent draft and test without asking each time. Add these names to permissions, allow, in your Claude Code settings:"
     },
     "cursor": {
       "name": "Cursor",
       "how": "Add this to .cursor/mcp.json in your project, or to your user settings:",
       "linkLead": "Or use a one-click link (built from Cursor's documented format; not yet tried in Cursor):",
       "linkLabel": "Cursor install link",
-      "note": "Cursor shows you the server before it adds it."
+      "note": "Cursor shows you the server before it adds it. Tested with a scripted client, not yet in Cursor."
     },
     "codex": {
       "name": "Codex",
       "how": "In a terminal:",
-      "note": "Codex has no documented dialog for your decisions, so Foundry opens your browser when it needs your yes."
+      "note": "Codex has no documented dialog for your decisions, so Foundry opens your browser when it needs your yes. Tested with a scripted client, not yet with a released Codex."
     },
     "plugin": {
       "name": "Plugin from your own copy",
@@ -703,7 +825,9 @@
     "example": "use Foundry to chase my unpaid invoices, summary to me@example.com",
     "allowlistLead": "For IT: the exact command, argument by argument, for an allowlist.",
     "allowlistLabel": "Command for an allowlist",
-    "allowlistNote": "Claude Code matches every argument in order; a server name is not a control."
+    "allowlistNote": "Claude Code matches every argument in order; a server name is not a control. This decides which command may start; it does not check Foundry's files.",
+    "cardsLead": "Foundry can make these today:",
+    "openLead": "To open Foundry's page yourself, at any time:"
   },
   "pricing": {
     "h1": "Free for one person. Paid only when someone else's yes has to count as theirs.",
@@ -716,10 +840,9 @@
       "Bringing in what you already have",
       "A checked record of every run",
       "Your own rules",
-      "A one-page brief for IT",
-      "Single sign-on, once accounts exist (planned, free)"
+      "A one-page brief for IT"
     ],
-    "ssoNote": "Single sign-on is free by decision; it needs accounts, which don't exist yet.",
+    "ssoNote": "Planned, and decided to be free: single sign-on, once accounts exist.",
     "teamTitle": "Team plan",
     "teamLead": "Not available yet. No price is set.",
     "team": [
@@ -728,7 +851,7 @@
       "Auditor access and evidence for a whole period",
       "Approvals from another device, hosted"
     ],
-    "teamInstead": "What you can do today: they get an e-mail, you record the decision",
+    "teamInstead": "What you can do today: they get an e-mail, and you record their answer",
     "packsTitle": "Verified packs",
     "packs": "Ready-made automations for one outcome, with pass rates from sealed tests. Not available yet.",
     "packsInstead": "What you can do today: the cards on the home page",
@@ -740,14 +863,14 @@
   },
   "trust": {
     "h1": "How this is kept safe",
-    "lead": "What Foundry does, where, and the one limit you should know about.",
+    "lead": "What Foundry does, where, what it keeps, and the one limit you should know about.",
     "where": {
       "title": "What runs where",
       "body": "Everything runs on this computer. The page listens on this computer only, and nothing listens on your network. Your automations and records are in this folder, private to your user:"
     },
     "leaves": {
       "title": "What leaves this computer",
-      "body": "Nothing, unless you turn on an AI builder. With Mercury, your words and answers go to Inception to fill in a card's settings. Nothing else does."
+      "body": "Foundry itself sends nothing: e-mails are drafts you send, chat messages are drafts you paste. If you use Foundry through a coding agent, what Foundry tells the agent (counts, step names, test results on pretend data) goes to that agent's AI provider under your agreement with them; the recipients and text of a real list are shown only in this page. AI builders: Mercury (Inception) only if Allowed AI says so and a key is saved; Claude Haiku (Anthropic) only if Foundry is started with it and Allowed AI says so. Neither is on by default."
     },
     "keys": {
       "title": "Keys",
@@ -755,7 +878,8 @@
     },
     "approve": {
       "title": "Who can approve",
-      "body": "Only you, with a click on this page, a typed yes in your own terminal, or the dialog your coding agent shows you. Your agent can draft and test, not approve. {claim:C02}"
+      "body": "You decide: with a click on this page, a typed yes in your own terminal, or the dialog your coding agent shows you. Foundry gives your agent no tool that approves. {claim:C02} Not covered: an agent using your terminal, or a hook that answers dialogs for you (below).",
+      "whyOnce": "Why Foundry asks once, about the whole list, rather than about each e-mail: {claim:C11}"
     },
     "limit": {
       "title": "The honest limit",
@@ -769,16 +893,18 @@
     "tested": {
       "title": "What's tested",
       "body": "{claim:C13}",
-      "users": "No user has tried this yet."
+      "users": "No user has tried this yet. The accessibility checks are our own automated ones, not an audit against WCAG."
     },
     "pilot": {
       "title": "For IT: the pilot we suggest",
       "items": [
-        "Practice-only mode on",
-        "No AI, or only the provider you approve; Mercury off",
-        "Linux or macOS developer machines",
+        "Practice-only mode for every Foundry folder on the pilot machines, set by IT in /etc/foundry/policy.json (owned by root): the page then shows it as set by your organisation, with no off switch",
+        "No AI, or only the provider you approve",
+        "Linux developer machines (macOS and Windows are untested)",
         "30 days",
-        "Allowlist the exact command below, not the name"
+        "Allowlist the exact command below, not the name, with Foundry installed where only root can change it",
+        "In Claude Code's managed settings, allowManagedHooksOnly on, so no hook can answer Foundry's dialog for the person",
+        "Check a machine at any time: node app/cli.mjs doctor --json"
       ],
       "settings": "Turn on practice-only mode",
       "brief": "Get a one-page brief for IT"
@@ -799,7 +925,19 @@
       "settingsLabel": "managed-settings entry",
       "mcpLead": "Or, if your organisation sets every server itself, a managed-mcp entry:",
       "mcpLabel": "managed-mcp entry",
-      "note": "Claude Code matches every argument in order; a server name is not a security control (code.claude.com/docs/en/managed-mcp, read on the day this was built). The paths are this computer's, so generate it on the machine you allow."
+      "note": "Claude Code matches every argument in order; a server name is not a security control (code.claude.com/docs/en/managed-mcp, read 2026-10-21). This entry decides which command may start. It does not check Foundry's files, which the user can edit, or variables such as NODE_OPTIONS that change what node loads: install Foundry in a folder only root can change, and allowlist that path. The paths are this computer's."
+    },
+    "hooks": {
+      "title": "Dialogs a hook can answer",
+      "body": "A hook in Claude Code's settings can answer Foundry's dialog without showing it to you. The line from the Connect page includes --consent, which lets Foundry read your Claude Code settings files (only their hooks) to look for such a hook; if it finds one, or your organisation manages Claude Code, it asks you in this page instead. IT can block such hooks for everyone with allowManagedHooksOnly in Claude Code's managed settings."
+    },
+    "data": {
+      "title": "What Foundry keeps, and how to delete it",
+      "body": "Only the columns a card needs from the lists you give, the drafts it made, run records and your decisions, all in your Foundry folder, readable by your user only. Replaced lists are kept until you delete them (Settings: Delete my lists). Foundry doesn't encrypt them; your computer's disk encryption does. To remove everything, delete the Foundry folder."
+    },
+    "remove": {
+      "title": "Removing Foundry",
+      "body": "Remove it from Claude Code with: claude mcp remove foundry (other agents: delete the foundry entry from their settings). Remove a saved AI key in Settings, AI keys. Then delete the Foundry folder. There is no background service, no auto-update and no schedule: stopping Foundry stops it."
     }
   },
   "docs": {
@@ -807,16 +945,17 @@
     "lead": "Three ways in. Pick the one that sounds like you.",
     "devTitle": "I use Claude Code",
     "devSteps": [
-      "Get the owner's copy of Foundry onto your computer.",
-      "Run the doctor: node app/cli.mjs doctor",
-      "Run node app/cli.mjs connect and paste the Claude Code line.",
+      "Get the owner's copy of Foundry onto your computer: git clone <the path or link they give you> foundry, then cd foundry.",
+      "Install its libraries (no install scripts run): npm ci --ignore-scripts",
+      "Check this computer: node app/cli.mjs doctor",
+      "Copy your agent's line from the Connect page and paste it into a terminal in your project.",
       "Ask your agent: \"use Foundry to …\""
     ],
     "devOthers": "Cursor and Codex use the same steps with their own line.",
     "devLink": "See every line",
     "opTitle": "I don't code",
-    "opBody": "Today someone needs to start Foundry for you, once, with this command (it needs Node 24). A one-click starter is planned.",
-    "opThen": "Then everything happens on the home page.",
+    "opBody": "Foundry isn't ready for you to install on your own yet. Today someone technical installs it and starts it with this command (it needs Node 24). They have to start it again each time the computer restarts. It has been tested on Linux only. A one-click starter is planned.",
+    "opThen": "Then bookmark the page it opens: while Foundry is running, the bookmark opens it. If the page asks for its link, run this in a terminal:",
     "opLink": "Go to the home page",
     "teamTitle": "I'm setting this up for a team or IT",
     "teamSteps": [
@@ -827,7 +966,10 @@
     ],
     "dataTitle": "Developers: your data without the page",
     "dataBody": "Each card reads a list. Put it as a JSON list of rows here, with the column names the card's page shows:",
-    "glossaryLink": "Words Foundry uses"
+    "glossaryLink": "Words Foundry uses",
+    "auditTitle": "I'm checking what happened",
+    "auditBody": "Runs lists every run. Open one to see its record and download its evidence file; check the file with: node app/cli.mjs check-evidence FILE",
+    "auditLink": "Open Runs"
   },
   "glossary": {
     "h1": "Words Foundry uses",
@@ -899,8 +1041,14 @@
         "Start with a card"
       ],
       [
+        "I closed the page. How do I get back?",
+        "While Foundry is running, your bookmark of its page opens it. If the page asks for its link, run the open command shown there in a terminal on this computer.",
+        "#/docs",
+        "Quickstart"
+      ],
+      [
         "Will it send anything without asking me?",
-        "No. It shows you everything it would make, in full, and waits for your yes.",
+        "No. It never sends: it makes drafts you send yourself, and it shows you every one in full before it makes them.",
         "#/trust",
         "How this is kept safe"
       ],
@@ -918,9 +1066,9 @@
       ],
       [
         "My coding agent wants to approve. Can it?",
-        "No. It can draft and test. You decide, in its dialog or in this page.",
-        "#/connect-agent",
-        "Connect your coding agent"
+        "Not through Foundry's tools. It can draft and test; you decide, in its dialog or in this page. An agent that can run any command as you could still approve as you.",
+        "#/trust",
+        "How this is kept safe"
       ],
       [
         "Something went wrong.",
@@ -950,7 +1098,9 @@
       "decided": "A decision",
       "documentation": "Vendor documentation",
       "literature": "Published research or vendor data"
-    }
+    },
+    "commit": "These claims are from this copy of Foundry: commit {commit}.",
+    "noCommit": "This copy is not a git checkout, so its commit is unknown."
   },
   "brief": {
     "downloadMd": "Download (Markdown)",
@@ -959,7 +1109,8 @@
     "general": "This is the general brief. Make an automation and test it to get one about exactly what it does.",
     "makeOne": "Make one",
     "item": "Item",
-    "value": "Value"
+    "value": "Value",
+    "copyAllowlist": "Copy the allowlist entry"
   },
   "import": {
     "h1": "Bring in an n8n workflow",
@@ -999,8 +1150,8 @@
   },
   "org": {
     "h1": "Who decides what",
-    "notEnforced": "Checked when an automation is made and tested. Not yet enforced while it runs: that needs named approvers, which are planned.",
-    "lead": "Write down who may approve what, and the rules that never break. Foundry uses it when an automation is made: it fills in limits you set and refuses settings that break them.",
+    "notEnforced": "Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.",
+    "lead": "Write down who may approve what, and the rules Foundry checks when you make an automation: it fills in limits you set and refuses settings that break them.",
     "startTitle": "Start from",
     "starters": {
       "just-me": {
@@ -1021,9 +1172,9 @@
       }
     },
     "startButton": "Start from this",
-    "youAlone": "You're the only person here, so you approve your own automations. The record says so.",
-    "savedTitle": "Version {version} saved.",
-    "bootstrapTitle": "One step left:",
+    "youAlone": "You're the only person here, so you turn on your own automations. The record says so.",
+    "savedTitle": "Version {version} saved by you (not signed).",
+    "bootstrapTitle": "Good to know:",
     "peopleTitle": "People and roles",
     "peopleLead": "Names stay on this computer. You hold every role until you give one to someone else.",
     "personName": "Add a person: name",
@@ -1033,34 +1184,34 @@
       "approver_rule-owner": "Approver and rule owner",
       "approver": "Approver",
       "rule-owner": "Rule owner",
-      "auditor": "Auditor",
+      "auditor": "Auditor (a label only today)",
       "builder": "Builder"
     },
     "addPerson": "Add",
     "personAdded": "Added {name}.",
     "teamFor": "For {name}'s yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. Until then you stand in for them, and the record says so.",
     "approvalsTitle": "Who approves what",
-    "approvalsLead": "For each kind of action: above what amount it needs a yes, and from whom. Reminders after a day; it stops waiting after three. Whoever asked for it can't approve it.",
+    "approvalsLead": "For each kind of action: above what amount it needs a yes, and from whom.",
     "actions": {
       "money-out": "Money going out",
       "message-outside": "A message leaving the company",
       "change-records": "Changing customer records",
       "delete": "Deleting anything"
     },
-    "aboveLabel": "Needs a yes above this amount (EUR)",
+    "aboveLabel": "Needs a yes above this amount",
     "whoApproves": "Who approves",
-    "nobody": "Nobody (no approval row)",
+    "nobody": "Nobody needs to approve",
     "rowFacts": "Reminder after a day; stops waiting after three days; the requester is excluded.",
-    "makeRule": "Make this a rule that never breaks",
+    "makeRule": "Make this a rule Foundry checks",
     "aboveAmount": "above {amount}",
     "always": "always",
     "needs": "needs {who}'s yes",
     "needsYou": "needs your yes",
-    "rulesTitle": "Rules that never break",
+    "rulesTitle": "Rules Foundry checks when you make an automation",
     "rulesLead": "A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.",
     "noRules": "No rules yet.",
     "noRulesYet": "No rules yet. Make one from a row above.",
-    "ownedBy": "Owned by {owner}.",
+    "ownedBy": "Written down by you for {owner}. {owner} has not confirmed it.",
     "isThisYourRule": "Is this your rule?",
     "caseAnswer": "Case {n}: what should happen",
     "answers": {
@@ -1094,7 +1245,7 @@
     "aiLegend": "AI allowed",
     "recordsHere": "Records stay on this computer.",
     "changeTitle": "Changing these rules:",
-    "changeBody": "proposed by {proposers}.",
+    "changeBody": "Who can change these rules: you. Each change is a new version, saved by you and recorded as self-approved.",
     "changeApprover": "Approved by",
     "proposerCant": "The proposer can't approve their own change.",
     "editingLead": "Nothing changes until you save a new version.",
@@ -1110,6 +1261,15 @@
     "versionHash": "Version {version}, fingerprint {hash}",
     "chainOk": "History checked: {n} versions, each linked to the one before.",
     "chainBad": "The history could not be checked.",
-    "versionLine": "Version {version}, {at}, signed by {by}"
+    "versionLine": "Version {version}, {at}, saved by {by} (not signed; self-approved)",
+    "remindersPlanned": "Planned: a reminder after a day. Today nothing reminds anyone.",
+    "requesterPlanned": "Planned: whoever asked for it can't approve it. Not checked yet.",
+    "currencyLabel": "Currency",
+    "ownedByYou": "Written down by you.",
+    "whenBroken": "When an automation is made, Foundry refuses settings that break this rule.",
+    "moreTitle": "More: where it runs, and changing these rules",
+    "emailLabel": "Their e-mail (optional)",
+    "emailHelp": "With an e-mail, a card that needs their yes uses it, and refuses any other address.",
+    "requesterInstead": "What you can do today: each run's page shows who started it and who approved its list"
   }
 }

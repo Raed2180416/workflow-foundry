@@ -2,7 +2,7 @@
 // (SPEC §1, A7). A live send in this preview writes one message file to <workspace>/outbox (the stand-in for e-mail, approved by the
 // person first); this module shows those messages as drafts the person opens in their own mail app (mailto:) or downloads as an
 // .eml file marked unsent (X-Unsent: 1), and sends themselves. Foundry sends nothing and cannot see the person's mail.
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { FoundryError } from '../../src/data.mjs';
 
@@ -25,15 +25,43 @@ export function eml({ to, subject, body, date = new Date() }) {
     'Content-Type: text/plain; charset=utf-8', 'Content-Transfer-Encoding: base64', 'X-Foundry: draft made on this computer; not sent', '', b64, ''].join('\r\n');
 }
 
+// "I sent it" is the person's own note, kept in the workspace (site/sent.json), so it survives a new browser tab, a new port and a new
+// coding-agent session (P1 walkthrough M9). Foundry still cannot see the person's mail.
+const sentFile = app => path.join(app.root, 'site', 'sent.json');
+export function sentMarks(app) { try { return existsSync(sentFile(app)) ? JSON.parse(readFileSync(sentFile(app), 'utf8')) : {}; } catch { return {}; } }
+export function markSent(app, id, sent, { by = null, now = Date.now } = {}) {
+  if (!/^[a-zA-Z0-9_-]{4,80}$/.test(String(id))) throw new FoundryError('NOT_FOUND', 'No such draft');
+  const marks = sentMarks(app);
+  if (sent) marks[id] = { at: new Date(now()).toISOString(), by }; else delete marks[id];
+  mkdirSync(path.dirname(sentFile(app)), { recursive: true, mode: 0o700 });
+  const tmp = `${sentFile(app)}.tmp-${process.pid}`; writeFileSync(tmp, JSON.stringify(marks, null, 2), { mode: 0o600 }); renameSync(tmp, sentFile(app));
+  return { id, sent: !!sent };
+}
+
 /** Every draft in the live outbox, newest first. */
 export function listDrafts(app) {
   const dir = app.outboxDir;
   if (!existsSync(dir)) return [];
+  const marks = sentMarks(app);
   return readdirSync(dir).filter(f => f.endsWith('.json') && ID.test(f.slice(0, -5))).map(f => {
     const m = JSON.parse(readFileSync(path.join(dir, f), 'utf8'));
-    return { id: f.slice(0, -5), to: m.to, subject: m.subject, body: m.body, runId: m.runId ?? null, flowId: null, at: statSync(path.join(dir, f)).mtime.toISOString(),
-      mailto: mailto(m), tooLongForLink: !mailto(m) };
+    const id = f.slice(0, -5);
+    return { id, kind: 'email', to: m.to, subject: m.subject, body: m.body, runId: m.runId ?? null, flowId: null, at: statSync(path.join(dir, f)).mtime.toISOString(),
+      mailto: mailto(m), tooLongForLink: !mailto(m), sent: marks[id] ?? null };
   }).sort((a, b) => b.at.localeCompare(a.at));
+}
+
+/** Chat posts a live run wrote (the on-call digest): drafts the person pastes into the channel themselves (P1 walkthrough M15). */
+export function listPosts(app) {
+  const dir = path.join(app.worldDir, 'chat');
+  if (!existsSync(dir)) return [];
+  const marks = sentMarks(app);
+  return readdirSync(dir).filter(f => f.endsWith('.json')).flatMap(f => {
+    let posts = []; try { posts = JSON.parse(readFileSync(path.join(dir, f), 'utf8')); } catch { posts = []; }
+    const at = statSync(path.join(dir, f)).mtime.toISOString();
+    return (Array.isArray(posts) ? posts : []).filter(p => p?.mode === 'live' && typeof p.postId === 'string').map(p => ({ id: `post-${p.postId}`, kind: 'post', to: p.channel, subject: null,
+      body: p.text, runId: p.runId ?? null, at, sent: marks[`post-${p.postId}`] ?? null }));
+  });
 }
 
 export function draft(app, id) {

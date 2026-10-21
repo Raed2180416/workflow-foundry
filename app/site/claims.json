@@ -13,6 +13,7 @@
     "C02": {
       "text": "In our tests, 10 of 10 attempts to get around your yes were refused.",
       "short": "Ways around your yes are refused",
+      "qualifier": "Tested on the earlier prototype's tools and page, before the exact-list approval was added; not yet re-run against it. Not covered: an agent using your terminal, or a hook that answers dialogs for you.",
       "status": "Works now",
       "evidence": "development",
       "date": "2026-10-21",

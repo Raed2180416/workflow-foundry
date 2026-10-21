@@ -33,11 +33,11 @@ async function withWorkspace(fn) {
   try { await fn(app, dir); } finally { await app.close(); rmSync(dir, { recursive: true, force: true }); }
 }
 
-test('tools/list: eight typed tools (list_templates added for onboarding); approve demands a person in Claude Code', async () => withWorkspace(async app => {
+test('tools/list: eight typed tools (list_templates added for onboarding); ask_person_to_turn_on demands a person in Claude Code', async () => withWorkspace(async app => {
   const { client } = await connect(app);
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map(t => t.name), ['propose_flow', 'explain_flow', 'dry_run', 'approve', 'run_flow', 'flow_status', 'list_flows', 'list_templates']);
-  const approve = tools.find(t => t.name === 'approve');
+  assert.deepEqual(tools.map(t => t.name), ['propose_flow', 'explain_flow', 'dry_run', 'ask_person_to_turn_on', 'run_flow', 'flow_status', 'list_flows', 'list_templates']);
+  const approve = tools.find(t => t.name === 'ask_person_to_turn_on');
   assert.equal(approve._meta['anthropic/requiresUserInteraction'], true);
   for (const t of tools) { assert.equal(t.inputSchema.type, 'object'); assert.equal(t.inputSchema.additionalProperties, false); }
   await client.close();
@@ -49,8 +49,8 @@ test('an agent without a person in the loop can propose and practise, never turn
   assert.equal(p.status, 'proposed'); assert.match(p.say, /will not/i);
   const d = await call('dry_run', { proposalId: p.proposalId });
   assert.equal(d.passed, true); assert.match(d.say, /Nothing real was sent/);
-  const a = await call('approve', { proposalId: p.proposalId });
-  assert.equal(a.status, 'awaiting_human'); assert.match(a.say, /cannot approve/);
+  const a = await call('ask_person_to_turn_on', { proposalId: p.proposalId });
+  assert.equal(a.status, 'awaiting_human'); assert.match(a.how, /cannot decide for them/);
   const r = await call('run_flow', { flowId: p.flowId, input: WEEK });
   assert.equal(r.isError, true); assert.equal(r.problem.code, 'NOT_APPROVED');
   // Arguments are checked against the advertised schema: a stringified object is refused, not coerced.
@@ -70,23 +70,26 @@ test('with a client that shows the person a dialog (elicitation), the person dec
   const { call, client } = await connect(app, { elicit: async request => { seen.push(request.params.message); return { action: 'accept', content: { decision: 'approve' } }; } });
   const p = await call('propose_flow', { request: MESSY });
   await call('dry_run', { proposalId: p.proposalId });
-  const a = await call('approve', { proposalId: p.proposalId });
+  const a = await call('ask_person_to_turn_on', { proposalId: p.proposalId });
   assert.equal(a.status, 'approved'); assert.equal(a.channel, 'mcp-elicitation');
-  assert.match(seen[0], /Turn on/); assert.match(seen[0], /Done means/);
+  assert.match(seen[0], /Turn on/); assert.match(seen[0], /makes and sends nothing/); assert.equal(/the delivered of|equals true/.test(seen[0]), false, 'no machine text in the dialog (P1 walkthrough M6)');
   const run = await call('run_flow', { flowId: p.flowId, input: WEEK });
   assert.equal(run.status, 'awaiting_approval');
-  // A declined dialog changes nothing.
+  // A declined dialog is a no, recorded as one; nothing is turned on and no browser opens (P1 walkthrough M5).
   const p2 = await call('propose_flow', { request: MESSY.replace('boss@example.com', 'cto@example.com'), flowId: p.flowId });
   assert.equal((await call('dry_run', { proposalId: p2.proposalId })).passed, true, 'a version-2 draft is practised as itself');
   await client.close();
   const { call: call2, client: client2 } = await connect(app, { elicit: async () => ({ action: 'decline' }) });
-  const a2 = await call2('approve', { proposalId: p2.proposalId });
-  assert.equal(a2.status, "awaiting_human", JSON.stringify(a2));
+  const a2 = await call2('ask_person_to_turn_on', { proposalId: p2.proposalId });
+  assert.equal(a2.status, 'rejected', JSON.stringify(a2)); assert.match(a2.say, /said no/);
+  assert.equal(app.ledger.forFlow(p2.flowId).find(x => x.proposalId === p2.proposalId)?.status, 'rejected');
   await client2.close();
   // A local hook could answer the dialog for the person (SPEC K12): with dialog off, nothing is shown to the client and the person decides elsewhere.
   let asked = 0;
   const { call: call3, client: client3 } = await connect(app, { dialog: false, elicit: async () => { asked += 1; return { action: 'accept', content: { decision: 'approve' } }; } });
-  const a3 = await call3('approve', { proposalId: p2.proposalId });
+  const p3 = await call3('propose_flow', { request: MESSY.replace('boss@example.com', 'ceo@example.com'), flowId: p.flowId });
+  await call3('dry_run', { proposalId: p3.proposalId });
+  const a3 = await call3('ask_person_to_turn_on', { proposalId: p3.proposalId });
   assert.equal(a3.status, 'awaiting_human'); assert.equal(asked, 0, 'no dialog a hook could answer');
   await client3.close();
 }));

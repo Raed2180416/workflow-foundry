@@ -1,8 +1,8 @@
 // "What I checked" (#/checked/:proposalId): the test result of this exact version, what a test can't prove, an optional test on
 // the person's own list (A4), and the turn-on card (SPEC §9.4, §9.5). Turning on doesn't send anything.
 import { el, t, api, templates, memory, navigate, say, decide, refreshBadge } from '../site.js';
-import { checkList, errorPanel, stepper, whoDecides, dropZone, columnMapper, dataQuestions, statusChip } from '../components/ui.js';
-import { plural } from '../components/dom.js';
+import { checkList, errorPanel, stepper, whoDecides, dropZone, columnMapper, dataQuestions, statusChip, howNote, rowsTable } from '../components/ui.js';
+import { plural, replace } from '../components/dom.js';
 
 /** "4 e-mails would have gone out: 3 to customers and 1 to me@example.com" (counts from the test, words from the card). */
 export function wouldDoSummary(wouldDo, slots, noun) {
@@ -13,7 +13,7 @@ export function wouldDoSummary(wouldDo, slots, noun) {
   if (toOthers.length) parts.push(t('checked.mailsToOthers', { count: plural(toOthers.length, t('checked.email'), t('checked.emails')), noun }));
   for (const addr of [...new Set(toOwn.map(m => m.to))]) parts.push(t('checked.mailsTo', { count: plural(toOwn.filter(m => m.to === addr).length, t('checked.email'), t('checked.emails')), to: addr }));
   for (const ch of [...new Set(posts.map(p => p.to))]) parts.push(t('checked.postsTo', { count: plural(posts.filter(p => p.to === ch).length, t('checked.post'), t('checked.posts')), to: ch }));
-  for (const a of appends) parts.push(t('checked.appends', { what: a.subject, sheet: a.to }));
+  for (const a of appends) parts.push(t('checked.appends', { what: Number.isFinite(a.count) ? plural(a.count, t('checked.row'), t('checked.rows')) : a.subject, sheet: a.to }));
   return parts.length ? parts : [t('checked.nothingToDo')];
 }
 
@@ -28,7 +28,7 @@ function ownListBranch(view, tpl, onTested) {
       area.replaceChildren(el('p', { role: 'status' }, t('golive.reading')));
       try {
         const pv = await api('/api/data/preview', { template: tpl.id, sheet: s.sheet, csv: text });
-        const mapper = columnMapper(pv), qs = dataQuestions(pv.questions);
+        const mapper = columnMapper(pv), qs = dataQuestions(pv.questions, { onColumn: (name, header) => mapper.set(name, header) });
         const go = el('button', { type: 'button', class: 'primary', dataset: { action: 'test-own' } }, i + 1 < sheets.length ? t('checked.ownNext') : t('checked.ownTest'));
         const err = el('div', {});
         go.addEventListener('click', async () => {
@@ -45,7 +45,7 @@ function ownListBranch(view, tpl, onTested) {
           } catch (error) { err.replaceChildren(errorPanel(error, { notDone: t('golive.notImported') })); }
           go.removeAttribute('aria-busy');
         });
-        area.replaceChildren(el('p', {}, t('golive.found', { rows: pv.rowCount, noun: s.rowNoun })), mapper.node,
+        replace(area, el('p', {}, t('golive.found', { rows: pv.rowCount, noun: s.rowNoun })), mapper.node,
           pv.unused.length ? el('p', { class: 'muted' }, t('golive.keepsOnly', { columns: pv.unused.join(', ') })) : null, qs.node, el('div', { class: 'actions' }, go), err);
       } catch (error) { area.replaceChildren(errorPanel(error, { notDone: t('golive.notImported') })); }
     } }), area);
@@ -76,7 +76,7 @@ export async function render({ params }) {
   if (passed) {
     root.append(el('h1', {}, t('checked.passedTitle')));
     const summary = wouldDoSummary(d.wouldDo, view.slots, noun);
-    root.append(el('p', { class: 'lead' }, t('checked.wouldHave'), ' ', summary.join(t('common.and')), '. ', t('checked.nothingSent')));
+    root.append(el('p', { class: 'lead' }, t(ownData ? 'checked.wouldHaveYours' : 'checked.wouldHave'), ' ', summary.join(t('common.and')), '. ', t('checked.nothingSent')));
     if (ownData && !d.wouldDo.some(w => w.action === 'send' && !Object.values(view.slots ?? {}).includes(w.to))) root.append(el('p', { class: 'banner', role: 'status' }, t('checked.nothingToChase')));
   } else {
     root.append(el('h1', {}, t('checked.failedTitle')));
@@ -84,16 +84,21 @@ export async function render({ params }) {
   }
   root.append(el('p', { class: 'pretend' }, ownData ? t('checked.testedOnYours') : t('checked.testedOnPretend', { noun })));
 
-  root.append(el('section', { 'aria-labelledby': 'checks-h' }, el('h2', { id: 'checks-h' }, t('checked.checksTitle')), checkList(d.checks)));
+  root.append(el('section', { 'aria-labelledby': 'checks-h' }, el('h2', { id: 'checks-h' }, t('checked.checksTitle')), checkList(d.checks), howNote()));
   if (d.wouldDo.length) root.append(el('section', { 'aria-labelledby': 'would-h' }, el('h2', { id: 'would-h' }, t('checked.wouldTitle')),
-    el('ol', { class: 'items' }, d.wouldDo.map(w => el('li', {}, el('div', { class: 'head' }, el('span', {}, el('b', {}, w.action === 'post' ? t('items.postTo') : w.action === 'append' ? t('items.addTo') : t('items.to')), ' ', w.to),
-      w.subject ? el('span', {}, el('b', {}, t('items.subject')), ' ', w.subject) : null), el('pre', {}, w.preview))))));
+    el('ol', { class: 'items' }, d.wouldDo.map(w => w.action === 'append'
+      ? el('li', {}, el('div', { class: 'head' }, el('b', {}, t('checked.rowsTitle', { n: w.count ?? w.rows?.length ?? '', sheet: w.to }))), w.rows ? rowsTable(w.rows) : el('pre', {}, w.preview))
+      : el('li', {}, el('div', { class: 'head' }, el('span', {}, el('b', {}, w.action === 'post' ? t('items.postTo') : t('items.to')), ' ', w.to),
+        w.subject ? el('span', {}, el('b', {}, t('items.subject')), ' ', w.subject) : null), el('pre', {}, w.preview))))));
 
-  // What a test can't prove, and the optional test on the person's own list (A4).
+  // The optional test on the person's own list (A4), before turning on (P3 walkthrough M15: it was tucked inside "what a test can't prove").
   const own = tpl ? ownListBranch({ proposalId }, tpl, () => navigate(`/checked/${proposalId}`)) : null;
   const ownButton = el('button', { type: 'button', 'aria-expanded': 'false', dataset: { action: 'own-list' } }, t('checked.ownButton'));
   ownButton.addEventListener('click', () => { const open = own.hidden; own.hidden = !open; ownButton.setAttribute('aria-expanded', String(open)); if (open) own.querySelector('input[type=file]')?.focus(); });
-  root.append(el('section', { class: 'box-limit', 'aria-labelledby': 'limit-h' }, el('h2', { id: 'limit-h' }, t('checked.limitTitle')), el('p', {}, t('checked.limitBody')), tpl ? el('div', { class: 'actions' }, ownButton) : null, own));
+  if (tpl && passed) root.append(el('section', { 'aria-labelledby': 'own-h', dataset: { ownSection: '' } }, el('h2', { id: 'own-h' }, t(view.active ? 'checked.ownSectionTitleOn' : 'checked.ownSectionTitle')), el('p', {}, t('checked.ownSectionBody')),
+    el('div', { class: 'actions' }, ownButton), own));
+  root.append(el('section', { class: 'box-limit', 'aria-labelledby': 'limit-h' }, el('h2', { id: 'limit-h' }, t('checked.limitTitle')), el('p', {}, t('checked.limitBody')),
+    tpl && !passed ? el('div', { class: 'actions' }, ownButton) : null, tpl && !passed ? own : null));
 
   // The turn-on card.
   if (passed && !view.active) root.append(turnOnCard(view, tpl, { checksPassed, ownData }));
@@ -104,18 +109,18 @@ export async function render({ params }) {
 
 function turnOnCard(view, tpl, { checksPassed, ownData }) {
   const headId = 'turn-on-h';
-  const remembered = memory[`decider:${view.proposalId}`];
+  // Who decides: what the person chose on the make page, kept with the automation (P3 walkthrough B3: a reload fell back to "you").
+  const remembered = view.decider ? { choice: view.decider.choice, who: view.decider.who } : memory[`decider:${view.proposalId}`];
   const status = el('div', {});
-  let who = remembered?.choice ?? 'me';
-  const whoName = remembered?.who ?? null;
+  let who = tpl?.decider ? remembered?.choice ?? 'inform' : 'me';
+  const whoName = remembered?.who ?? (tpl?.decider ? view.slots?.[tpl.decider] ?? null : null);
   const whoLine = el('dd', {});
   const whoEditor = el('div', { hidden: true });
-  const drawWho = () => whoLine.replaceChildren(who === 'inform' && whoName ? t('turnon.whoInform', { who: whoName }) : who === 'team' ? t('turnon.whoTeam', { who: whoName ?? t('who.thatPerson') }) : t('turnon.whoYou'), ' ',
-    el('button', { type: 'button', class: 'link', 'aria-expanded': String(!whoEditor.hidden), on: { click: e => { whoEditor.hidden = !whoEditor.hidden; e.currentTarget.setAttribute('aria-expanded', String(!whoEditor.hidden)); } } }, t('turnon.change')));
-  const choice = whoDecides({ name: whoName ?? '', onChange: v => { who = v; drawWho(); drawButtons(); } });
-  if (remembered) choice.node.querySelector(`input[value="${who}"]`).checked = true;
-  else choice.node.querySelector('input[value="me"]').checked = true;
-  whoEditor.append(choice.node);
+  const drawWho = () => replace(whoLine, who === 'inform' && whoName ? t('turnon.whoInform', { who: whoName }) : who === 'team' ? t('turnon.whoTeam', { who: whoName ?? t('who.thatPerson') }) : t('turnon.whoYou'), ' ',
+    tpl?.decider ? el('button', { type: 'button', class: 'link', 'aria-expanded': String(!whoEditor.hidden), on: { click: e => { whoEditor.hidden = !whoEditor.hidden; e.currentTarget.setAttribute('aria-expanded', String(!whoEditor.hidden)); } } }, t('turnon.changeWho')) : null);
+  const choice = whoDecides({ name: whoName ?? '', onChange: v => { who = v; drawWho(); drawButtons(); api('/api/deciders', { flowId: view.flowId, choice: v, who: whoName }).catch(() => null); } });
+  if (tpl?.decider) choice.node.querySelector(`input[value="${who}"]`).checked = true;
+  if (tpl?.decider) whoEditor.append(choice.node);
   drawWho();
   const buttons = el('div', { class: 'actions stack decision' });
   const turnOn = async (e, note) => {
@@ -128,7 +133,7 @@ function turnOnCard(view, tpl, { checksPassed, ownData }) {
     } catch (error) { status.replaceChildren(errorPanel(error, { notDone: t('turnon.notOn') })); b.disabled = false; }
     b.removeAttribute('aria-busy');
   };
-  const noteFor = () => who === 'inform' ? `who decides: the person at this computer; ${whoName ?? 'the named person'} is told by e-mail` : who === 'team' ? `who decides: the person at this computer, standing in for ${whoName ?? 'the named person'} (Team plan not available)` : 'who decides: the person at this computer (single-person mode)';
+  const noteFor = () => who === 'inform' ? `${whoName ?? 'The person named'} gets an e-mail; you record their answer here` : who === 'team' ? `${whoName ?? 'The person named'} decides once the Team plan exists; until then you record their answer` : null;
   function drawButtons() {
     buttons.replaceChildren();
     if (who === 'team') {
@@ -137,7 +142,7 @@ function turnOnCard(view, tpl, { checksPassed, ownData }) {
         el('button', { type: 'button', on: { click: () => navigate('/automations') } }, t('turnon.keepPractice')));
     } else {
       buttons.append(el('button', { type: 'button', class: 'primary', dataset: { action: 'turn-on' }, on: { click: e => turnOn(e, noteFor()) } }, t('turnon.yes')),
-        el('a', { class: 'button', href: `#/make/${view.template}${view.basedOn ? `?flow=${view.flowId}` : ''}` }, t('turnon.change')),
+        el('a', { class: 'button', href: `#/make/${view.template}${view.basedOn ? `?flow=${view.flowId}` : ''}` }, t('turnon.changeSettings')),
         el('a', { class: 'button', href: '#/automations' }, t('turnon.notNow')));
     }
   }

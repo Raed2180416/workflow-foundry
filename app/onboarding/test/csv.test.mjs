@@ -42,7 +42,8 @@ test('the accounting export: columns mapped in plain words, unneeded columns dro
   assert.match(pv.questions[0].question, /Is 03\/10\/2026 the 3rd of October 2026 or March 10th, 2026\?/);
   assert.throws(() => convert({ template: 'invoice-chase', sheet: 'invoices', text: fixture('invoices-accounting-export.csv'), mapping: pv.mapping }), { code: 'CSV_UNANSWERED' });
   const dmy = convert({ template: 'invoice-chase', sheet: 'invoices', text: fixture('invoices-accounting-export.csv'), mapping: pv.mapping, answers: { 'dateOrder:due': 'dmy' } });
-  assert.deepEqual(dmy.rows[0], { invoice: 'INV-2041', customer: 'Bramble Cafe', email: 'accounts@bramble-cafe.example', amount: 1240, due: '2026-10-03', status: 'open' });
+  // The amount is written as money for the e-mails: the header says EUR, so "1,240.00" becomes "€1,240.00" (P2 walkthrough M1).
+  assert.deepEqual(dmy.rows[0], { invoice: 'INV-2041', customer: 'Bramble Cafe', email: 'accounts@bramble-cafe.example', amount: '€1,240.00', due: '2026-10-03', status: 'open' });
   assert.deepEqual(Object.keys(dmy.rows[0]), ['invoice', 'customer', 'email', 'amount', 'due', 'status'], 'Notes and Issued are not kept');
   const mdy = convert({ template: 'invoice-chase', sheet: 'invoices', text: fixture('invoices-accounting-export.csv'), mapping: pv.mapping, answers: { 'dateOrder:due': 'mdy' } });
   assert.equal(mdy.rows.find(r => r.invoice === 'INV-2046').due, '2026-08-11', 'the other reading would chase an invoice not yet due');

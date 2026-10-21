@@ -11,7 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { FoundryError, digest, clone } from '../../src/data.mjs';
 import { validateData } from '../../src/validate.mjs';
-import { generateExamples, evaluate, flips, exampleProblems } from './rule-examples.mjs';
+import { generateExamples, evaluate, flips, exampleProblems, money } from './rule-examples.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const SCHEMA = JSON.parse(readFileSync(path.join(here, 'schema', 'authority-map-v1.schema.json'), 'utf8'));
@@ -61,7 +61,7 @@ export function ruleFromApproval(map, approvalId, { layer = 'org-policy', narrow
   const p = map.parameters[a.aboveParameter], who = map.principals.find(x => x.id === a.approverPrincipal)?.name ?? 'the approver';
   const owner = a.approverPrincipal && map.principals.find(x => x.id === a.approverPrincipal)?.roles.includes('rule-owner') ? a.approverPrincipal : 'you';
   const clause = { id: `R${map.clauses.length + 1}`, title: title ?? 'Money out above a limit needs a yes', layer, owner: { role: 'rule-owner', principal: owner }, assurance: ['provable'],
-    statement: `Money out above ${p.unit === 'EUR' ? '€' : ''}${p.value}${p.unit === 'EUR' ? '' : ` ${p.unit}`} needs ${who}'s yes; whoever asked for it can't approve it.`,
+    statement: `Money out above ${money(p.value, p.unit)} needs ${who}'s yes; whoever asked for it can't approve it.`,
     check: { kind: 'approval-above-threshold', parameter: a.aboveParameter, approverRole: a.approverRole, excludeRequester: a.excluded.includes('requester') },
     narrows, exceptions: [], evidence: [{ id: 'E1', what: 'the approval, bound to the case and the amount, with who gave it', source: 'Foundry run record and decision ledger' }],
     force: 'stop-unless-override', mode: 'preview', examples: [], doesNotCover: 'Only automations run by Foundry. Payments made directly in your bank or payment app are outside this rule.' };
@@ -109,8 +109,9 @@ export function mapProblems(map) {
   }
   for (const r of [...map.change.proposerRoles, map.change.approverRole]) if (!roles.has(r)) problems.push(`Change control names an unknown role ${r}`);
   for (const c of map.clauses) for (const e of c.examples) if (e.confirmed && evaluate(c, map, e.case) !== e.answer && !flips(map).some(f => f.clause === c.id && f.n === e.n)) problems.push(`${c.title}: case ${e.n} disagrees with the rule`);
-  // Every version is signed by the one person at this computer until a second person's own sign-in exists (Team plan).
-  if ((map.signedBy?.length ?? 0) < 2) warnings.push('Started by one person. Rules need a second person to approve changes; until then, you approved your own setup. Review within 14 days.');
+  // Every version is saved (not signed) by the one person at this computer until a second person's own sign-in exists (Team plan). No
+  // review deadline is promised: nothing would remind anyone of it (P3 walkthrough M20, P5 M12).
+  if ((map.signedBy?.length ?? 0) < 2) warnings.push('Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.');
   return { problems, warnings };
 }
 
@@ -152,7 +153,8 @@ export class AuthorityMaps {
     const file = path.join(this.dir, `authority-map.v${map.version}.json`), tmp = `${file}.tmp-${process.pid}`;
     writeFileSync(tmp, JSON.stringify(map, null, 2), { mode: 0o600 }); renameSync(tmp, file);
     const prev = this.#history().at(-1)?.lineHash ?? null;
-    const line = { version: map.version, hash: hashOf(map), supersedes: map.supersedes, at: map.createdAt, signedBy: map.signedBy, previousLine: prev };
+    // selfApproved: the person who proposed this version also approved it (there is no second person yet; P5 walkthrough M10).
+    const line = { version: map.version, hash: hashOf(map), supersedes: map.supersedes, at: map.createdAt, signedBy: map.signedBy, selfApproved: true, previousLine: prev };
     appendFileSync(path.join(this.dir, 'history.jsonl'), `${JSON.stringify({ ...line, lineHash: digest(line) })}\n`, { mode: 0o600 });
     return { saved: true, version: map.version, hash: line.hash, warnings, map };
   }

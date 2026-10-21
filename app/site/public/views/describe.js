@@ -17,8 +17,10 @@ export async function render() {
       el('div', { class: 'actions' }, el('a', { class: 'button primary', href: `#/make/${best.id}` }, t('describe.useThis')), el('a', { class: 'button', href: '#/' }, t('describe.notThis'))),
       suggestBox({ value: words }));
   }
+  // A match on common words only ("approval", "remind") is never "this sounds like" (P3 walkthrough B1): it says so.
   if (r.candidates.length) return el('div', {},
-    el('h1', {}, t('describe.close')), said, el('p', {}, t('describe.method')),
+    el('h1', {}, r.weakOnly ? t('describe.notAMatch') : t('describe.close')), said, el('p', {}, t('describe.method')),
+    r.weakOnly ? el('p', { class: 'banner wait' }, t('describe.weakBody')) : null,
     el('div', { class: 'grid' }, r.candidates.map(c => cardFor(byId[c.id]))),
     el('div', { class: 'actions' }, el('a', { class: 'button', href: '#/' }, t('describe.showAll'))), suggestBox({ value: words }));
   return el('div', {},

@@ -1,8 +1,13 @@
-// One Foundry window per workspace (SPEC §11): <workspace>/.lock holds the pid of the process serving the site. A second `site`
-// start on a live lock is refused with a plain sentence; `mcp --dashboard` sends the person to the window that is already open.
+// One Foundry window per workspace (SPEC §11): <workspace>/.lock holds the pid of the process serving the site and its address. A second
+// `site` (or `open`) start on a live lock opens the page that is already running instead of starting another (walkthroughs P1 B2, P2 B2:
+// the old refusal named no address and suggested another workspace, which looked like losing every automation); `mcp --dashboard`
+// sends the person to the window that is already open.
 // The lock guards only against two windows; the store itself is SQLite with WAL and tolerates several readers and writers.
 import { readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'cli.mjs');
 
 const fileOf = workspace => path.join(workspace, '.lock');
 export function alive(pid) {
@@ -17,7 +22,7 @@ export function readLock(workspace) {
 export function takeLock(workspace, kind) {
   const file = fileOf(workspace), current = readLock(workspace);
   if (current?.alive && current.pid !== process.pid)
-    return { ok: false, holder: current, say: `Foundry is already open for this workspace (pid ${current.pid}). Use that window, or start with --workspace <other>.` };
+    return { ok: false, holder: current, say: `Foundry is already running for this folder${current.url ? ` at ${current.url}` : ''}. To open it, run: node ${CLI} open --workspace "${workspace}"` };
   let state = { pid: process.pid, kind, startedAt: new Date().toISOString() };
   const write = () => writeFileSync(file, JSON.stringify(state), { mode: 0o600 });
   write();

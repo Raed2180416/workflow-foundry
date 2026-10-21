@@ -4,8 +4,11 @@
 // nice node --test --test-concurrency=1 app/site/test/journeys/p2-operator.mjs
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { journey, closeBrowser, assertBudget, fixturePath } from './harness.mjs';
+import { readFileSync, utimesSync } from 'node:fs';
+import path from 'node:path';
+import { journey, closeBrowser, assertBudget, fixturePath, browser, NOW } from './harness.mjs';
+import { invoiceFlowOn, liveInvoices } from '../../../onboarding/test/helpers.mjs';
+import { Batches } from '../../../onboarding/batch.mjs';
 
 after(closeBrowser);
 
@@ -169,5 +172,58 @@ test('P2 edges at 390 light: no match creates nothing; a suggestion; nothing to 
     checks.oddTested = await text(page, 'main p.lead');
     assert.match(checks.oddTested, /2 e-mails to customers/);
     await shot('d-tested');
+  });
+});
+
+// The P2 walkthrough's blockers B2 and B3, after the fixes: the next morning the same browser opens Foundry without the link; the
+// list from yesterday is flagged and replacing it comes first; the new list does not repeat yesterday's reminders; and a browser
+// that never had the key gets the one command that opens Foundry, not a dead end. 1280 light.
+test('P2 the next day: same browser, no link needed; yesterday\'s list replaced first; no reminder made twice; another browser is told how to open', async () => {
+  const DAY = 24 * 3600 * 1000;
+  await journey({ name: 'p2-next-day', siteOptions: { asOf: () => NOW + DAY, now: () => NOW + DAY },
+    before: async app => {
+      await invoiceFlowOn(app); liveInvoices(app);
+      const yesterday = new Date(NOW); utimesSync(path.join(app.worldDir, 'sheets', 'invoices.json'), yesterday, yesterday);
+      const batches = new Batches(app, { now: () => NOW });
+      const b = await batches.preview('invoice-chase');
+      await batches.approve(b.batchId, { channel: 'dashboard' });
+    } }, async ({ page, person, shot, base, log }) => {
+    const checks = log.checks = {};
+    person.precondition('yesterday they turned on "Chase unpaid invoices", dropped their list and made 4 drafts (as in P2), in this browser');
+    // Opening Foundry again from a bookmark: no key in the address; this browser kept it (P2 walkthrough B2).
+    await page.goto(`${base}/`);
+    await page.waitForSelector('main [data-template], main h1');
+    checks.openedWithoutLink = await text(page, 'main h1');
+    assert.doesNotMatch(checks.openedWithoutLink, /Open Foundry from its link/);
+    await shot('bookmark-opens', { note: 'the bookmark without a key opens: this browser kept the key for this computer\'s Foundry' });
+    await person.click(page.locator('[data-nav="automations"]'));
+    await person.click(page.locator('main a[href^="#/automations/invoice-chase"]').first());
+    await person.click(page.locator('main .actions a.button.primary'));
+    await page.waitForSelector('[data-stale]');
+    checks.stale = await text(page, '[data-stale]');
+    assert.match(checks.stale, /Your list is from 21 Oct 2026/); // the journey plays the morning of 22 Oct
+    await shot('stale-list', { note: 'yesterday\'s list no longer says who paid: replacing it comes first' });
+    await person.click(page.locator('[data-action="replace-stale"]'));
+    await person.upload(page.locator('[data-sheet="invoices"] input[type=file]'), fixturePath('invoices-accounting-export.csv'));
+    await page.waitForSelector('[data-question="dateOrder:due"]');
+    await person.choose(page.locator('[data-question="dateOrder:due"] input[value="dmy"]'));
+    await person.click(page.locator('[data-action="use-columns"]'));
+    await page.waitForSelector('[data-action="batch-approve"]', { timeout: 30000 });
+    checks.secondList = await page.locator('[data-decision-card][data-batch] li[data-item]').evaluateAll(li => li.map(x => x.querySelector('.head')?.textContent.replace(/\s+/g, ' ').trim()));
+    assert.equal(checks.secondList.length, 1, 'only the summary: no customer is reminded twice');
+    assert.match(checks.secondList[0], /To: me@example\.com/);
+    checks.secondSummary = await text(page, '[data-decision-card][data-batch] li[data-item] pre');
+    assert.match(checks.secondSummary, /Reminder drafts made this run: 0/);
+    await shot('no-repeats', { note: 'the reminders made yesterday are remembered; today\'s list has only the summary' });
+    // Another browser (or a cleared one) on the same computer: the page says the one command that opens Foundry with its key.
+    const other = await (await browser()).newContext({ viewport: { width: 1280, height: 900 } });
+    try {
+      const tab = await other.newPage();
+      await tab.goto(`${base}/`);
+      await tab.waitForFunction(() => /cli\.mjs" open --workspace|cli\.mjs open/.test(document.querySelector('main pre')?.textContent ?? ''));
+      checks.otherBrowser = { title: (await tab.locator('main h1').textContent()).trim(), command: (await tab.locator('main pre').textContent()).replace(/\/tmp\/[^"]+/g, '<ws>') };
+      assert.equal(/#t=/.test(await tab.locator('main').textContent()), false, 'the page without the key never shows the key');
+      await shot('other-browser', { of: tab, note: 'no key in this browser: the exact command to open Foundry (no key shown)' });
+    } finally { await other.close(); }
   });
 });

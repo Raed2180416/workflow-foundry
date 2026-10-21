@@ -13,7 +13,7 @@
       "target": "Bring in an n8n workflow",
       "steps": 1,
       "asks": 0,
-      "ms": 713
+      "ms": 1261
     },
     {
       "n": 1,
@@ -22,7 +22,7 @@
       "note": null,
       "steps": 1,
       "asks": 0,
-      "ms": 1093,
+      "ms": 1622,
       "route": "#/import",
       "h1": "Bring in an n8n workflow •Preview",
       "focus": "h1 Bring in an n8n workflow •Preview",
@@ -35,7 +35,7 @@
       "target": "Choose an exported n8n workflow (a JSON file)",
       "steps": 2,
       "asks": 0,
-      "ms": 1171
+      "ms": 1722
     },
     {
       "n": 2,
@@ -44,7 +44,7 @@
       "note": null,
       "steps": 2,
       "asks": 0,
-      "ms": 1625,
+      "ms": 2149,
       "route": "#/import",
       "h1": "Bring in an n8n workflow •Preview",
       "focus": "h1 Bring in an n8n workflow •Preview",
@@ -63,7 +63,7 @@
   },
   "totalSteps": 2,
   "totalAsks": 0,
-  "ms": 1625,
+  "ms": 2149,
   "shots": [
     "01-import-page.jpg",
     "02-verdict-and-risk.jpg"

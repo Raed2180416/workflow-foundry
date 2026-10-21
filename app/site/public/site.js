@@ -1,22 +1,28 @@
-// The site shell: copy, token, API wrapper, hash router, focus management, live regions, the "waiting" badge.
-// Views live in /views/*.js and render into <main>. The one-time key arrives in the URL fragment (#t=...&r=/route), moves to
-// sessionStorage and leaves the address bar; every /api call sends it in the x-foundry-token header.
+// The site shell: copy, token, API wrapper, hash router, focus management, live regions, the "waiting" badge and notice.
+// Views live in /views/*.js and render into <main>. The workspace's key arrives in the URL fragment (#t=...&r=/route), moves to this
+// address's storage (per port: another local port can't read it) and leaves the address bar; every /api call sends it in the
+// x-foundry-token header. Because the key is kept for this address and stays the same across Foundry starts (app/site/session.mjs),
+// a bookmark, a new tab or a typed address works while Foundry runs (P1 and P2 walkthroughs, B2). A link pasted into this tab works
+// without a reload (hashchange). Help and the glossary open without a key.
 import { el, clear, append } from './components/dom.js';
 export { el };
 
 const state = { copy: null, claims: null, templates: null, token: null, memory: {}, renderId: 0 };
 
 // ------------------------------------------------------------------------------------------------ token and first route
+const KEY = 'foundry-token';
+function storeToken(t) { for (const s of [() => localStorage, () => sessionStorage]) { try { s().setItem(KEY, t); } catch { /* storage off: keep it in memory */ } } }
+function forgetToken() { for (const s of [() => localStorage, () => sessionStorage]) { try { s().removeItem(KEY); } catch { /* storage off */ } } }
 function takeToken() {
   const raw = location.hash.slice(1);
   if (raw.startsWith('t=')) {
     const params = new URLSearchParams(raw);
     const t = params.get('t'), r = params.get('r');
-    try { sessionStorage.setItem('foundry-token', t); } catch { /* storage off: keep it in memory */ }
+    storeToken(t);
     history.replaceState(null, '', `${location.pathname}#${r && r.startsWith('/') ? r : '/'}`);
     return t;
   }
-  try { return sessionStorage.getItem('foundry-token'); } catch { return null; }
+  try { return localStorage.getItem(KEY) ?? sessionStorage.getItem(KEY); } catch { return null; }
 }
 
 // ------------------------------------------------------------------------------------------------ copy
@@ -73,6 +79,8 @@ export async function api(path, body, { method } = {}) {
     headers: { 'x-foundry-token': state.token ?? '', ...(body ? { 'content-type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const type = res.headers.get('content-type') ?? '';
   const data = type.includes('application/json') ? await res.json() : await res.text();
+  // A key from an earlier start of another folder on this port, or one replaced with --new-key: say so, never loop.
+  if (res.status === 401) { forgetToken(); state.token = null; state.staleToken = true; if (state.copy) renderNoToken(); }
   if (!res.ok) throw new ApiError(res.status, typeof data === 'string' ? { error: data } : data);
   if (data && typeof data === 'object' && data.ok === false && data.problem) throw new ApiError(409, data);
   return data;
@@ -107,8 +115,9 @@ let toastTimer = null;
 export function toast(message) {
   const node = document.getElementById('toast');
   node.textContent = message; node.hidden = false;
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => { node.hidden = true; }, 2500);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { node.hidden = true; }, 4000);
 }
+const clearToast = () => { clearTimeout(toastTimer); const node = document.getElementById('toast'); if (node) node.hidden = true; };
 let waitingCount = 0, pageTitle = 'Foundry';
 function setTitle(title) { pageTitle = title; document.title = `${waitingCount ? `(${waitingCount}) ` : ''}${title} · ${t('shell.brand')}`; }
 
@@ -118,10 +127,10 @@ const ROUTES = [
   [/^\/checked\/([A-Za-z0-9-]{8,64})$/, 'checked', 'home'], [/^\/go-live\/([A-Za-z][A-Za-z0-9_-]{0,63})$/, 'go-live', 'automations'],
   [/^\/drafts$/, 'drafts', 'automations'], [/^\/waiting$/, 'waiting', 'waiting'], [/^\/automations$/, 'automations', 'automations'],
   [/^\/automations\/([A-Za-z][A-Za-z0-9_-]{0,63})$/, 'automation', 'automations'], [/^\/runs$/, 'runs', 'runs'], [/^\/runs\/([A-Za-z0-9-]{1,64})$/, 'run', 'runs'],
-  [/^\/connections$/, 'connections', 'connections'], [/^\/keys$/, 'keys', 'connections'], [/^\/settings$/, 'settings', 'connections'],
+  [/^\/connections$/, 'connections', 'connections'], [/^\/keys$/, 'keys', 'connections'], [/^\/settings$/, 'settings', null],
   [/^\/connect-agent$/, 'connect-agent', 'connections'], [/^\/pricing$/, 'pricing', null], [/^\/trust$/, 'trust', null], [/^\/docs$/, 'docs', 'help'],
   [/^\/glossary$/, 'glossary', 'help'], [/^\/help$/, 'help', 'help'], [/^\/claims$/, 'claims', null], [/^\/it-brief(?:\/([A-Za-z][A-Za-z0-9_-]{0,63}))?$/, 'it-brief', null],
-  [/^\/import$/, 'import', 'home'], [/^\/org$/, 'org', 'connections']
+  [/^\/import$/, 'import', 'home'], [/^\/org$/, 'org', null]
 ];
 export const ROUTE_PATTERNS = ROUTES.map(r => r[0]);
 export function navigate(path) { if (location.hash === `#${path}`) render(); else location.hash = path; }
@@ -138,7 +147,8 @@ async function render() {
   document.querySelectorAll('[data-nav]').forEach(a => { if (a.dataset.nav === route.nav) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   document.querySelector('.nav')?.classList.remove('open');
   document.querySelector('.menu-button')?.setAttribute('aria-expanded', 'false');
-  if (!state.token) { renderNoToken(); return; }
+  clearToast();
+  if (!state.token && !NO_KEY_VIEWS.has(route.view)) { renderNoToken(); return; }
   node.setAttribute('aria-busy', 'true');
   let content;
   try {
@@ -159,10 +169,15 @@ async function render() {
   state.first = false;
   window.scrollTo(0, 0);
 }
+// Pages that hold no workspace data and need no key: the way back must never need the key it is about (P2 walkthrough B2).
+const NO_KEY_VIEWS = new Set(['help', 'glossary']);
 function renderNoToken() {
   const node = clear(main());
-  append(node, el('div', {}, el('h1', { tabindex: '-1' }, t('shell.noTokenTitle')), el('p', { class: 'lead' }, t('shell.noToken')),
-    el('pre', {}, 'node app/cli.mjs site'), el('p', {}, el('a', { href: '#/help' }, t('nav.help')))));
+  const command = el('pre', {}, 'node app/cli.mjs open');
+  // The exact command for this folder (absolute path, this workspace): the only thing the server says without a key.
+  fetch('/open-info', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(info => { if (info?.open) command.textContent = info.open; }).catch(() => {});
+  append(node, el('div', {}, el('h1', { tabindex: '-1' }, t('shell.noTokenTitle')), el('p', { class: 'lead' }, state.staleToken ? t('shell.noTokenStale') : t('shell.noToken')),
+    command, el('p', {}, t('shell.noTokenNotRunning')), el('p', {}, el('a', { href: '#/help' }, t('shell.noTokenHelp')))));
   setTitle(t('shell.noTokenTitle'));
 }
 
@@ -175,6 +190,14 @@ export async function refreshBadge() {
     const badge = document.getElementById('waiting-count');
     badge.hidden = !waitingCount; badge.textContent = String(waitingCount);
     badge.setAttribute('aria-label', t('nav.waitingCount', { n: waitingCount }));
+    // The page follows along when something new waits (a list your coding agent asked for, say): a notice on every page but
+    // Waiting itself and Home (which has its own), so nobody has to know to look (P1 walkthrough M13).
+    const notice = document.getElementById('notice'), route = parse();
+    if (notice) {
+      const show = waitingCount > 0 && !['waiting', 'home'].includes(route.view);
+      notice.hidden = !show;
+      if (show) notice.replaceChildren(el('p', {}, t('shell.waitingNotice', { n: waitingCount }), ' ', el('a', { href: '#/waiting' }, t('shell.waitingNoticeLink'))));
+    }
     setTitle(pageTitle);
   } catch { /* the badge is a convenience; the page keeps working */ }
 }
@@ -189,7 +212,11 @@ async function start() {
   document.querySelector('.skip').addEventListener('click', e => { e.preventDefault(); const h1 = main().querySelector('h1'); (h1 ?? main()).focus(); });
   const menu = document.querySelector('.menu-button');
   menu.addEventListener('click', () => { const open = document.querySelector('.nav').classList.toggle('open'); menu.setAttribute('aria-expanded', String(open)); });
-  window.addEventListener('hashchange', () => { if (location.hash.startsWith('#/') || location.hash === '' || location.hash === '#') render(); });
+  window.addEventListener('hashchange', () => {
+    // A keyed link pasted into this tab: take the key and go on, no reload needed (P2 walkthrough B2).
+    if (location.hash.startsWith('#t=')) { state.token = takeToken(); state.staleToken = false; render(); refreshBadge(); return; }
+    if (location.hash.startsWith('#/') || location.hash === '' || location.hash === '#') render();
+  });
   state.first = true;
   await render();
   refreshBadge();

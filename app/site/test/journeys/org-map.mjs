@@ -29,6 +29,7 @@ async function org(opts) {
     await person.click(page.locator('[data-action="add-person"]'));
     await shot('people');
     await person.fill(page.locator('[data-amount="money-out"]'), '250');
+    await person.choose(page.locator('[data-currency="money-out"]'), 'EUR'); // the browser says en-US, so dollars are offered first
     await person.choose(page.locator('[data-approver="money-out"]'), { label: 'Dana' });
     assert.equal(await page.locator('[data-action="money-out"] [data-paid]').count(), 1, 'the Team plan badge sits at the approver it applies to');
     await shot('money-out-row', { note: 'money out above €250 needs Dana: the Team plan badge sits here, at the one field it applies to' });
@@ -42,20 +43,20 @@ async function org(opts) {
     await page.waitForSelector('[data-saved-version="1"]');
     mark('v1');
     checks.bootstrap = await text(page, '[data-bootstrap]');
-    assert.match(checks.bootstrap, /Started by one person/);
+    assert.match(checks.bootstrap, /Only you have saved these rules\. A second person can confirm them once the Team plan exists\./);
     await shot('v1-saved', { note: 'version 1, with the bootstrap warning: one person signed it' });
     // The expense card: the limit arrives answered ("Set by Dana"), and a wider one is refused in words.
     await person.click(page.locator('main a[href="#/make/expense-approval"]'));
     await page.waitForSelector('[data-set-by="autoApproveUpTo"]');
     checks.setBy = await text(page, '[data-set-by="autoApproveUpTo"]');
-    assert.equal(checks.setBy, '€250 · Set by Dana (Org policy)');
+    assert.equal(checks.setBy, "€250 · set by you for Dana (Org policy). Dana hasn't confirmed it");
     await shot('expense-set-by');
     await person.fill(page.locator('[data-field="autoApproveUpTo"] input'), '2000');
     await person.fill(page.locator('[data-field="approver"] input'), 'dana@example.com');
     await person.click(page.locator('[data-action="test"]'));
     await page.waitForSelector('main [data-error-panel]');
     checks.refused = await text(page, 'main [data-error-panel]');
-    assert.match(checks.refused, /Not allowed here\. Dana set the limit at €250 \(Org policy\)\. This automation can only make it stricter\./);
+    assert.match(checks.refused, /Not allowed here\. The rule written down for Dana \(Org policy\) caps this at €250\. This automation can only make it stricter\./);
     assert.equal(app.list().proposals.length, 0, 'nothing was made');
     await shot('expense-refused');
     // A change that flips a confirmed example is blocked until the person says the new answer is right.

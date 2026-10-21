@@ -16,6 +16,9 @@ export function limitsFor(map, templateId) {
       const p = map.parameters[a.aboveParameter]; if (!p) continue;
       const rule = map.clauses.find(c => c.check.kind === 'approval-above-threshold' && c.check.parameter === a.aboveParameter);
       out.push({ slot: 'autoApproveUpTo', max: p.value, unit: p.unit, by: nameOf(rule?.owner.principal ?? a.approverPrincipal ?? 'you'), layer: LAYER_NAMES[rule?.layer ?? 'org-policy'] });
+      // The approver the map names, when it has their e-mail: the card's approver must be that address (P3 walkthrough M1).
+      const who = map.principals.find(x => x.id === a.approverPrincipal);
+      if (who?.email) out.push({ slot: 'approver', email: who.email.toLowerCase(), name: who.name, amount: money(p.value, p.unit), layer: LAYER_NAMES[rule?.layer ?? 'org-policy'] });
     }
     for (const b of map.bounds.filter(x => x.parameter === 'expenseAutoApproveMax' && typeof x.max === 'number')) out.push({ slot: 'autoApproveUpTo', max: b.max, unit: map.parameters.expenseAutoApproveMax?.unit ?? '', by: nameOf(b.owner), layer: LAYER_NAMES[b.layer] });
   }
@@ -34,9 +37,16 @@ export function orgPolicy(root, { emailSlots = {} } = {}) {
       const tightest = Math.min(...limits.filter(x => x.slot === l.slot && typeof x.max === 'number').map(x => x.max));
       if (l.max !== tightest) continue;
       const given = settings[l.slot];
-      if (given === undefined || given === '' || given === null) { prefill[l.slot] = l.max; answered.push({ slot: l.slot, value: l.max, by: l.by, layer: l.layer, text: `${money(l.max, l.unit)} · Set by ${l.by} (${l.layer})` }); }
-      else if (Number(given) > l.max) refusals.push({ slot: l.slot, message: `Not allowed here. ${l.by} set the limit at ${money(l.max, l.unit)} (${l.layer}). This automation can only make it stricter.`, by: l.by, layer: l.layer, max: l.max });
-      else answered.push({ slot: l.slot, value: Number(given), by: l.by, layer: l.layer, text: `${money(Number(given), l.unit)} · within ${l.by}'s limit of ${money(l.max, l.unit)} (${l.layer})` });
+      // Attribution says who wrote it down: the person at this computer, for the named owner (P3 walkthrough M5).
+      const forWhom = l.by === 'You' ? 'set by you' : `set by you for ${l.by}`;
+      if (given === undefined || given === '' || given === null) { prefill[l.slot] = l.max; answered.push({ slot: l.slot, value: l.max, by: l.by, layer: l.layer, text: `${money(l.max, l.unit)} · ${forWhom} (${l.layer})${l.by === 'You' ? '' : `. ${l.by} hasn't confirmed it`}` }); }
+      else if (Number(given) > l.max) refusals.push({ slot: l.slot, message: `Not allowed here. The rule written down ${l.by === 'You' ? 'by you' : `for ${l.by}`} (${l.layer}) caps this at ${money(l.max, l.unit)}. This automation can only make it stricter.`, by: l.by, layer: l.layer, max: l.max });
+      else answered.push({ slot: l.slot, value: Number(given), by: l.by, layer: l.layer, text: `${money(Number(given), l.unit)} · within the limit of ${money(l.max, l.unit)} ${forWhom} (${l.layer})` });
+    }
+    for (const l of limits.filter(x => x.email)) {
+      const given = typeof settings[l.slot] === 'string' ? settings[l.slot].trim().toLowerCase() : '';
+      if (!given) { prefill[l.slot] = l.email; answered.push({ slot: l.slot, value: l.email, by: l.name, layer: l.layer, text: `${l.email} · ${l.name} decides above ${l.amount} (${l.layer})` }); }
+      else if (given !== l.email) refusals.push({ slot: l.slot, message: `Not allowed here. Your rule says ${l.name} decides money going out above ${l.amount} (${l.layer}); their e-mail is ${l.email}.`, by: l.name, layer: l.layer });
     }
     for (const l of limits.filter(x => x.domain)) for (const slot of emailSlots[templateId] ?? []) {
       const v = settings[slot];

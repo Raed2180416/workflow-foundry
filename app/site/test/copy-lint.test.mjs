@@ -21,7 +21,7 @@ test('no phrase the product cannot back', () => {
 });
 
 test('numbers come from claims or data; only a short chrome allowlist is written into the copy', () => {
-  const ALLOW = ['127.0.0.1', 'Node 24', '30 days', 'n8n', 'Mercury 3', 'Haiku 5.5']; // addresses, product names and the pilot length
+  const ALLOW = ['127.0.0.1', 'Node 24', '30 days', 'n8n', 'Mercury 3', 'Haiku 5.5', '2026-10-21']; // addresses, product names, the pilot length, a source's read date
   for (const [k, v] of all) {
     let rest = v.replace(/\{claim:C\d{2}\}/g, '').replace(/\{[a-zA-Z0-9_]+\}/g, '');
     for (const a of ALLOW) rest = rest.split(a).join('');
@@ -31,7 +31,7 @@ test('numbers come from claims or data; only a short chrome allowlist is written
 
 test('operator pages stay in plain words; precise words only in developer and IT sections (R8)', () => {
   const PRECISE = /\bMCP\b|webhook|token cap|\bIR\b|\bhash\b|Control Plane|\bflow\b|\bproposal\b|activation|stand-in/i;
-  const DEV = /^(connect|trust\.allowlist|glossary|docs\.dev|docs\.data|run\.chainHead|automation\.fingerprint|connections\.items\.(claudeCode|cursor|codex|plugin))/;
+  const DEV = /^(connect|trust\.allowlist|trust\.remove|glossary|docs\.dev|docs\.data|run\.chainHead|automation\.fingerprint|connections\.items\.(claudeCode|cursor|codex|plugin))/;
   for (const [k, v] of all) if (!DEV.test(k)) assert.equal(PRECISE.test(v.replace(/\{[a-zA-Z0-9_:]+\}/g, '')), false, `${k} uses a precise word on an operator surface: ${v}`);
 });
 

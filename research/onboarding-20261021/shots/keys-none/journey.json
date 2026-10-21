@@ -14,7 +14,7 @@
       "note": null,
       "steps": 0,
       "asks": 0,
-      "ms": 862,
+      "ms": 1259,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -33,7 +33,7 @@
   },
   "totalSteps": 0,
   "totalAsks": 0,
-  "ms": 862,
+  "ms": 1259,
   "shots": [
     "01-no-keychain.jpg"
   ],

@@ -61,7 +61,7 @@ pre{white-space:pre-wrap;margin:6px 0 0;font:13px/1.4 ui-monospace,monospace;col
 
 /** Spawn the server from the parsed line and wrap the scripted agent's tool calls. */
 async function agent(argv, { elicitation, urlFile, transcript, onElicit }) {
-  const transport = new StdioClientTransport({ command: argv[0], args: argv.slice(1), env: { ...getDefaultEnvironment(), FOUNDRY_URL_FILE: urlFile, FOUNDRY_KEYCHAIN: 'ephemeral' }, stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: argv[0], args: argv.slice(1), env: { ...getDefaultEnvironment(), FOUNDRY_URL_FILE: urlFile, FOUNDRY_KEYCHAIN: 'ephemeral', FOUNDRY_TEST_AS_OF: NOW }, stderr: 'pipe' });
   const client = new Client({ name: elicitation ? 'journey-claude-code-stand-in' : 'journey-cursor-codex-stand-in', version: '1' }, { capabilities: elicitation ? { elicitation: { form: {} } } : {} });
   if (elicitation) client.setRequestHandler(ElicitRequestSchema, async req => onElicit(req.params));
   await client.connect(transport);
@@ -130,12 +130,12 @@ test('P1 Claude Code: one pasted line, then a request; first verified in 2 actio
       mark('firstVerified');
       checks.dryRunSay = d.say;
       await showTranscript('agent-request-and-test', 'first verified: list_templates, propose_flow, dry_run');
-      const ok = await a.call('approve', { proposalId: p.proposalId });
+      const ok = await a.call('ask_person_to_turn_on', { proposalId: p.proposalId });
       assert.equal(ok.status, 'approved'); assert.ok(elicited, 'the client showed the dialog');
       checks.elicitation = elicited.message.split('\n')[0];
       transcript.push({ who: 'agent', text: ok.say });
       await showTranscript('elicitation-accepted', 'the person approved in the client dialog (channel mcp-elicitation)');
-      const r = await a.call('run_flow', { flowId: p.flowId, input: { now: NOW } });
+      const r = await a.call('run_flow', { flowId: p.flowId, input: {} });
       assert.equal(r.status, 'awaiting_human', JSON.stringify(r)); assert.equal(r.count, 4);
       assert.equal(/#t=|token/i.test(JSON.stringify(r)), false, 'the tool result never carries the browser key');
       transcript.push({ who: 'agent', text: r.say });
@@ -149,7 +149,7 @@ test('P1 Claude Code: one pasted line, then a request; first verified in 2 actio
       await page.waitForSelector('[data-draft]');
       mark('firstLive', { accounts: 0, keys: 0, connections: 0 });
       await shot('drafts');
-      checks.notCounted = ['Claude Code trust prompt for a new stdio server (setup)', 'Claude Code permission prompt for the approve tool (anthropic/requiresUserInteraction): +1 click per approval, not verified in a real client'];
+      checks.notCounted = ['Claude Code trust prompt for a new stdio server (setup)', 'Claude Code permission prompt for the ask_person_to_turn_on tool (anthropic/requiresUserInteraction): +1 click per approval, not verified in a real client'];
     } finally { await a.close(); }
     writeFileSync(path.join(OUT, 'p1-claude-code', 'transcript.html'), transcriptHtml('Claude Code (stand-in) — foundry connected', transcript));
   });
@@ -223,8 +223,8 @@ test('P1 Cursor or Codex: the install link and the line both decode to the same 
       const d = await a.call('dry_run', { proposalId: p.proposalId });
       assert.equal(d.passed, true);
       mark('firstVerified');
-      const ok = await a.call('approve', { proposalId: p.proposalId });
-      assert.equal(ok.status, 'awaiting_human'); assert.match(ok.how, /opened in your browser/);
+      const ok = await a.call('ask_person_to_turn_on', { proposalId: p.proposalId });
+      assert.equal(ok.status, 'awaiting_human'); assert.match(ok.how, /opened in their browser/);
       transcript.push({ who: 'agent', text: `${ok.say} ${ok.how}` });
       await showTranscript('approve-awaits-you', 'no dialog: the agent cannot approve; the browser opens');
       const url = await waitForFile(urlFile);
@@ -236,7 +236,7 @@ test('P1 Cursor or Codex: the install link and the line both decode to the same 
       await shot('turned-on');
       person.external('tells the agent: "done, go ahead"');
       transcript.push({ who: 'person', text: 'done, go ahead' });
-      const r = await a.call('run_flow', { flowId: p.flowId, input: { now: NOW } });
+      const r = await a.call('run_flow', { flowId: p.flowId, input: {} });
       assert.equal(r.status, 'awaiting_human');
       transcript.push({ who: 'agent', text: r.say });
       await showTranscript('run-waits-for-you', 'the exact list waits in the same browser page');

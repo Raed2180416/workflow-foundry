@@ -14,7 +14,7 @@
       "note": "you do not need a key; the cards work without AI",
       "steps": 0,
       "asks": 0,
-      "ms": 790,
+      "ms": 1156,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -27,7 +27,7 @@
       "target": "Paste your Inception (Mercury 3) key",
       "steps": 1,
       "asks": 1,
-      "ms": 876
+      "ms": 1235
     },
     {
       "action": "click",
@@ -35,7 +35,7 @@
       "target": "Check and save",
       "steps": 2,
       "asks": 1,
-      "ms": 1118
+      "ms": 1410
     },
     {
       "n": 2,
@@ -44,7 +44,7 @@
       "note": null,
       "steps": 2,
       "asks": 1,
-      "ms": 1499,
+      "ms": 1904,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "button Check and save",
@@ -58,12 +58,12 @@
       "note": null,
       "steps": 2,
       "asks": 1,
-      "ms": 2199,
+      "ms": 2795,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
       "a11y": [],
-      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - paragraph: \"Works now Saved in your keychain: key ending wxyz (ephemeral).\"\n  - paragraph: Checked 10/21/2026, 9:00:00 AM.\n  - paragraph: Your words go to the provider when you ask Foundry to build from them. Nothing else does.\n  - button \"Remove the key\"\n  - status\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
+      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - paragraph: \"Works now Saved in your keychain: key ending wxyz (ephemeral).\"\n  - paragraph: Checked 21 Oct 2026, 09:00 UTC.\n  - paragraph: Your words go to the provider when you ask Foundry to build from them. Nothing else does.\n  - button \"Remove the key\"\n  - status\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
     }
   ],
   "errors": [],
@@ -79,11 +79,11 @@
     "responsesHaveKey": false,
     "filesHaveKey": false,
     "logHasKey": false,
-    "responses": 5
+    "responses": 6
   },
   "totalSteps": 2,
   "totalAsks": 1,
-  "ms": 2208,
+  "ms": 2799,
   "shots": [
     "01-keys-page.jpg",
     "02-saved-last-four.jpg",

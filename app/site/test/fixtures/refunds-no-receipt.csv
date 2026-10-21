@@ -1,0 +1,4 @@
+Refund ID,Customer,Customer email,Refund amount,Status
+R-1042,Lee Moss,lee@moss.example,749.99,Pending
+R-1043,Ana Ruiz,ana@ruiz.example,45.00,Pending
+R-1044,Sam Park,sam@park.example,120.50,Pending

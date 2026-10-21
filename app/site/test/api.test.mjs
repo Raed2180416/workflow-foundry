@@ -20,7 +20,7 @@ test('P2 reference path through the API: card -> test -> turn on -> own list -> 
     const d = await s.post('/api/practice', { proposalId: p.proposalId });
     assert.equal(d.passed, true); assert.equal(d.wouldDo.length, 4);
     const view = await s.get(`/api/proposals/${p.proposalId}`);
-    assert.equal(view.dryRun.passed, true); assert.equal(view.active, false); assert.ok(view.promises.willNotDo.some(x => /schedule/.test(x)));
+    assert.equal(view.dryRun.passed, true); assert.equal(view.active, false); assert.ok(view.promises.willNotDo.some(x => /Run by itself/.test(x))); assert.ok(view.promises.willNotDo.some(x => /Send anything: it writes drafts/.test(x)));
     const req = await s.post('/api/request-approval', { proposalId: p.proposalId });
     const on = await s.post('/api/decide', { kind: 'activation', approvalId: req.approvalId, decision: 'approve', note: 'who decides: the person at this computer' });
     assert.equal(on.status, 'approved');
@@ -120,11 +120,11 @@ test('who decides what: start, add a rule, confirm, save; the expense card is ca
     assert.equal(v1.version, 1);
     const cur = await s.get('/api/org/map');
     assert.equal(cur.notEnforced.startsWith('Checked when an automation is made'), true);
-    assert.ok(cur.warnings.some(w => /Started by one person/.test(w)));
+    assert.ok(cur.warnings.some(w => /Only you have saved these rules/.test(w)));
     const r = await s.post('/api/restate', { template: 'expense-approval', settings: {} });
-    assert.equal(r.setBy[0].text, '€250 · Set by Dana (Org policy)');
+    assert.equal(r.setBy[0].text, '€250 · set by you for Dana (Org policy). Dana hasn\'t confirmed it');
     const wide = await s.post('/api/propose', { template: 'expense-approval', settings: { autoApproveUpTo: 2000, approver: 'dana@example.com' } });
-    assert.equal(wide.status, 'build_failed'); assert.match(wide.reply, /Not allowed here\. Dana set the limit at €250 \(Org policy\)/);
+    assert.equal(wide.status, 'build_failed'); assert.match(wide.reply, /Not allowed here\. The rule written down for Dana \(Org policy\) caps this at €250/);
     const next = cur.current.map; next.parameters.moneyOutApprovalAbove.value = 300;
     const blocked = await s.post('/api/org/map', { map: next });
     assert.equal(blocked.status, 409); assert.equal(blocked.flips.length, 1); assert.match(blocked.flips[0].message, /case 4/);
@@ -138,7 +138,7 @@ test('connect prints only; the n8n import runs nothing; doctor reports in plain 
   try {
     const c = await s.get('/api/connect');
     assert.match(c.note, /Nothing was written/);
-    assert.deepEqual(c.allowlist.serverCommand.slice(2), ['mcp', '--dashboard', '--workspace', s.dir]);
+    assert.deepEqual(c.allowlist.serverCommand.slice(2), ['mcp', '--dashboard', '--consent', '--workspace', s.dir]);
     assert.deepEqual(JSON.parse(Buffer.from(c.cursorLink.split('config=')[1], 'base64').toString('utf8')), c.cursorJson.mcpServers.foundry);
     const imp = await s.post('/api/import/n8n', { json: fixture('n8n-synthetic.json') });
     assert.equal(imp.executed, false); assert.equal(imp.risk.length, 4);

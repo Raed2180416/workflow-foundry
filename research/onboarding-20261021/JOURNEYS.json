@@ -8,12 +8,12 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 7912,
+      "ms": 11938,
       "milestones": {
         "firstVerified": {
           "steps": 3,
           "asks": 1,
-          "ms": 3013,
+          "ms": 4982,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -21,7 +21,7 @@
         "firstLive": {
           "steps": 8,
           "asks": 4,
-          "ms": 7063,
+          "ms": 11014,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -46,9 +46,9 @@
       "shots": 11,
       "failure": null,
       "checks": {
-        "restatement": "Read the invoices sheet and pick the open invoices (not paid, not disputed)Send a friendly reminder once an invoice is 7 days late, a second reminder at 14 days, a final notice at 30 daysSend each invoice at most one reminder of each kind, ever: it remembers what it already sentE-mail the address you give a summary of the invoices due for a reminderCheck, by re-reading the outbox, that exactly the planned reminders went out, each intactAsk you before every e-mail",
-        "checked": "It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.",
-        "on": "On. It runs when you press Run. It won't run by itself.",
+        "restatement": "Read your invoice list and pick the invoices still open (not paid, not disputed)Write a friendly reminder once an invoice is 7 days lateWrite a firmer reminder once it is 14 days lateWrite a last reminder once it is 30 days lateMake each kind of reminder at most once per invoice: it remembers what it already madeWrite a summary for the address you give of the invoices that are lateShow you every e-mail in full before any is made. You send them yourself, from your own mail appCheck afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word",
+        "checked": "On pretend data it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.",
+        "on": "On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.",
         "mapping": {
           "invoice": "Invoice No.",
           "customer": "Client",
@@ -58,14 +58,14 @@
           "status": "Status"
         },
         "exactList": [
-          "To: hello@larkfern.exampleSubject: Final notice: invoice INV-2043",
-          "To: billing@northfield-gym.exampleSubject: Friendly reminder: invoice INV-2042",
-          "To: accounts@bramble-cafe.exampleSubject: Second reminder: invoice INV-2041",
+          "To: hello@larkfern.exampleSubject: Payment overdue, action needed: invoice INV-2043",
+          "To: accounts@bramble-cafe.exampleSubject: Payment overdue: invoice INV-2041",
+          "To: billing@northfield-gym.exampleSubject: Payment reminder: invoice INV-2042",
           "To: me@example.comSubject: Invoice reminders: summary"
         ],
         "drafts": "4 drafts ready. Foundry didn't send anything.",
         "eml": {
-          "file": "draft-5f891efa.eml",
+          "file": "draft-88822829.eml",
           "xUnsent": true,
           "to": "me@example.com",
           "subject": "Invoice reminders: summary"
@@ -79,12 +79,12 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 6914,
+      "ms": 7870,
       "milestones": {
         "firstVerified": {
           "steps": 3,
           "asks": 1,
-          "ms": 2458,
+          "ms": 3109,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -92,7 +92,7 @@
         "firstLive": {
           "steps": 8,
           "asks": 4,
-          "ms": 6253,
+          "ms": 7147,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -117,9 +117,9 @@
       "shots": 11,
       "failure": null,
       "checks": {
-        "restatement": "Read the invoices sheet and pick the open invoices (not paid, not disputed)Send a friendly reminder once an invoice is 7 days late, a second reminder at 14 days, a final notice at 30 daysSend each invoice at most one reminder of each kind, ever: it remembers what it already sentE-mail the address you give a summary of the invoices due for a reminderCheck, by re-reading the outbox, that exactly the planned reminders went out, each intactAsk you before every e-mail",
-        "checked": "It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.",
-        "on": "On. It runs when you press Run. It won't run by itself.",
+        "restatement": "Read your invoice list and pick the invoices still open (not paid, not disputed)Write a friendly reminder once an invoice is 7 days lateWrite a firmer reminder once it is 14 days lateWrite a last reminder once it is 30 days lateMake each kind of reminder at most once per invoice: it remembers what it already madeWrite a summary for the address you give of the invoices that are lateShow you every e-mail in full before any is made. You send them yourself, from your own mail appCheck afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word",
+        "checked": "On pretend data it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.",
+        "on": "On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.",
         "mapping": {
           "invoice": "Invoice No.",
           "customer": "Client",
@@ -129,14 +129,14 @@
           "status": "Status"
         },
         "exactList": [
-          "To: hello@larkfern.exampleSubject: Final notice: invoice INV-2043",
-          "To: billing@northfield-gym.exampleSubject: Friendly reminder: invoice INV-2042",
-          "To: accounts@bramble-cafe.exampleSubject: Second reminder: invoice INV-2041",
+          "To: hello@larkfern.exampleSubject: Payment overdue, action needed: invoice INV-2043",
+          "To: accounts@bramble-cafe.exampleSubject: Payment overdue: invoice INV-2041",
+          "To: billing@northfield-gym.exampleSubject: Payment reminder: invoice INV-2042",
           "To: me@example.comSubject: Invoice reminders: summary"
         ],
         "drafts": "4 drafts ready. Foundry didn't send anything.",
         "eml": {
-          "file": "draft-2e20ab7b.eml",
+          "file": "draft-7304944f.eml",
           "xUnsent": true,
           "to": "me@example.com",
           "subject": "Invoice reminders: summary"
@@ -150,12 +150,12 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 6512,
+      "ms": 7388,
       "milestones": {
         "firstVerified": {
           "steps": 3,
           "asks": 1,
-          "ms": 2462,
+          "ms": 2626,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -163,7 +163,7 @@
         "firstLive": {
           "steps": 8,
           "asks": 4,
-          "ms": 5956,
+          "ms": 6823,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -188,9 +188,9 @@
       "shots": 11,
       "failure": null,
       "checks": {
-        "restatement": "Read the invoices sheet and pick the open invoices (not paid, not disputed)Send a friendly reminder once an invoice is 7 days late, a second reminder at 14 days, a final notice at 30 daysSend each invoice at most one reminder of each kind, ever: it remembers what it already sentE-mail the address you give a summary of the invoices due for a reminderCheck, by re-reading the outbox, that exactly the planned reminders went out, each intactAsk you before every e-mail",
-        "checked": "It would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent.",
-        "on": "On. It runs when you press Run. It won't run by itself.",
+        "restatement": "Read your invoice list and pick the invoices still open (not paid, not disputed)Write a friendly reminder once an invoice is 7 days lateWrite a firmer reminder once it is 14 days lateWrite a last reminder once it is 30 days lateMake each kind of reminder at most once per invoice: it remembers what it already madeWrite a summary for the address you give of the invoices that are lateShow you every e-mail in full before any is made. You send them yourself, from your own mail appCheck afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word",
+        "checked": "On pretend data it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.",
+        "on": "On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.",
         "mapping": {
           "invoice": "Invoice No.",
           "customer": "Client",
@@ -200,14 +200,14 @@
           "status": "Status"
         },
         "exactList": [
-          "To: hello@larkfern.exampleSubject: Final notice: invoice INV-2043",
-          "To: billing@northfield-gym.exampleSubject: Friendly reminder: invoice INV-2042",
-          "To: accounts@bramble-cafe.exampleSubject: Second reminder: invoice INV-2041",
+          "To: hello@larkfern.exampleSubject: Payment overdue, action needed: invoice INV-2043",
+          "To: accounts@bramble-cafe.exampleSubject: Payment overdue: invoice INV-2041",
+          "To: billing@northfield-gym.exampleSubject: Payment reminder: invoice INV-2042",
           "To: me@example.comSubject: Invoice reminders: summary"
         ],
         "drafts": "4 drafts ready. Foundry didn't send anything.",
         "eml": {
-          "file": "draft-f6c12183.eml",
+          "file": "draft-c186fbb7.eml",
           "xUnsent": true,
           "to": "me@example.com",
           "subject": "Invoice reminders: summary"
@@ -221,12 +221,12 @@
       "passed": true,
       "steps": 7,
       "asks": 3,
-      "ms": 4528,
+      "ms": 5810,
       "milestones": {
         "ownTested": {
           "steps": 7,
           "asks": 3,
-          "ms": 4091
+          "ms": 5287
         }
       },
       "budgets": {
@@ -251,7 +251,7 @@
       "passed": true,
       "steps": 16,
       "asks": 5,
-      "ms": 5360,
+      "ms": 6597,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -268,7 +268,39 @@
         "nothingToChase": "Nothing to chase: nobody on this list needs a reminder today.",
         "unknownStatuses": "Your file says \"Overdue\", \"Part paid\" and \"Sent\". Which of these mean the invoice is still open?",
         "unanswered": "Please answer this first. Foundry won't guess it.",
-        "oddTested": "It would have made 2 e-mails to customers and 1 e-mail to me@example.com. Nothing real was sent."
+        "oddTested": "On your own list it would have made 2 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent."
+      }
+    },
+    "p2-next-day": {
+      "persona": "p2-next-day",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 7,
+      "asks": 2,
+      "ms": 4440,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [
+        "yesterday they turned on \"Chase unpaid invoices\", dropped their list and made 4 drafts (as in P2), in this browser"
+      ],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 4,
+      "failure": null,
+      "checks": {
+        "openedWithoutLink": "Let Foundry prepare the jobs you do every week.",
+        "stale": "Your list is from 21 Oct 2026. Anything that changed since then (a customer who paid, say) is not in it. Drop a fresh export first.Replace itUse the 21 Oct 2026 list anyway",
+        "secondList": [
+          "To: me@example.comSubject: Invoice reminders: summary"
+        ],
+        "secondSummary": "Unpaid late invoices, with the reminder their lateness calls for (3): - INV-2041 Bramble Cafe: €1,240.00, 19 days late (second reminder) - INV-2042 Northfield Gym: €480.00, 12 days late (reminder) - INV-2043 Lark & Fern Florist: €75.50, 51 days late (final notice) Reminder drafts made this run: 0 (you send them yourself). Paid and disputed invoices were left alone.",
+        "otherBrowser": {
+          "title": "Open Foundry from its link",
+          "command": "node \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" open --workspace \"<ws>\""
+        }
       }
     },
     "p3-expense": {
@@ -277,17 +309,17 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 6506,
+      "ms": 6878,
       "milestones": {
         "firstVerified": {
           "steps": 4,
           "asks": 2,
-          "ms": 4214
+          "ms": 4438
         },
         "turnedOn": {
           "steps": 9,
           "asks": 4,
-          "ms": 6266
+          "ms": 6468
         }
       },
       "budgets": {
@@ -307,12 +339,12 @@
       "checks": {
         "questions": [
           "Up to what amount should it approve on its own?",
-          "Who decides the bigger ones? (their e-mail)"
+          "Who decides claims over your limit? (their e-mail)"
         ],
         "paidBadges": 1,
-        "checked": "It would have made 1 e-mail to maria@example.com and 3 row(s) added to expense-decisions on this computer. Nothing real was sent.",
-        "who": "Uses AI:noTested on:pretend data, passed 6 of 6 checksWho decides:you (maria@example.com gets an e-mail) Change somethingWhat it needs to go live:your expense claims",
-        "disclosure": "For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you standing in for them. What the Team plan does",
+        "checked": "On pretend data it would have made 1 e-mail to maria@example.com and 3 rows added to expense-decisions on this computer. Nothing real was made or sent.",
+        "who": "Uses AI:noTested on:pretend data, passed 6 of 6 checksWho decides:maria@example.com, by replying to an e-mail; you record their answer here Change who decidesWhat it needs to go live:your expense claims",
+        "disclosure": "For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you recording their answer. What the Team plan does",
         "teamButtons": [
           "Turn it on with you recording decisions",
           "Keep it in practice"
@@ -325,17 +357,17 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 3920,
+      "ms": 4138,
       "milestones": {
         "firstVerified": {
           "steps": 4,
           "asks": 2,
-          "ms": 2247
+          "ms": 2478
         },
         "turnedOn": {
           "steps": 9,
           "asks": 4,
-          "ms": 3639
+          "ms": 3878
         }
       },
       "budgets": {
@@ -355,16 +387,59 @@
       "checks": {
         "questions": [
           "Up to what amount should it approve on its own?",
-          "Who decides the bigger ones? (their e-mail)"
+          "Who decides claims over your limit? (their e-mail)"
         ],
         "paidBadges": 1,
-        "checked": "It would have made 1 e-mail to maria@example.com and 3 row(s) added to expense-decisions on this computer. Nothing real was sent.",
-        "who": "Uses AI:noTested on:pretend data, passed 6 of 6 checksWho decides:you (maria@example.com gets an e-mail) Change somethingWhat it needs to go live:your expense claims",
-        "disclosure": "For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you standing in for them. What the Team plan does",
+        "checked": "On pretend data it would have made 1 e-mail to maria@example.com and 3 rows added to expense-decisions on this computer. Nothing real was made or sent.",
+        "who": "Uses AI:noTested on:pretend data, passed 6 of 6 checksWho decides:maria@example.com, by replying to an e-mail; you record their answer here Change who decidesWhat it needs to go live:your expense claims",
+        "disclosure": "For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you recording their answer. What the Team plan does",
         "teamButtons": [
           "Turn it on with you recording decisions",
           "Keep it in practice"
         ]
+      }
+    },
+    "p3-refunds": {
+      "persona": "p3-refunds",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 16,
+      "asks": 4,
+      "ms": 7094,
+      "milestones": {
+        "firstLive": {
+          "steps": 12,
+          "asks": 4,
+          "ms": 5220
+        }
+      },
+      "budgets": {
+        "firstLive": {
+          "steps": 12,
+          "asks": 5
+        }
+      },
+      "preconditions": [],
+      "errors": 0,
+      "refusals": 0,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 7,
+      "failure": null,
+      "checks": {
+        "refundRequest": "Let Foundry prepare the jobs you do every week.",
+        "receiptNote": "Your file has no receipt column, so no claim counts as having one: with Needs a receipt on, every claim goes to the person who decides.",
+        "exactList": [
+          "To: maria@example.comSubject: Expenses: 3 waiting for your approvalExpense claims waiting for your decision (3): - R-1042 Lee Moss: 749.99 for no description given (no category; no receipt) - R-1043 A"
+        ],
+        "toRecord": [
+          "R-1042",
+          "R-1043",
+          "R-1044"
+        ],
+        "recorded": "Recorded: Approved. 21 Oct 2026, 09:00 UTC",
+        "decisions": "DecisionsA list of 1: approved by root@vm through this page, 21 Oct 2026, 09:00 UTC Open"
       }
     },
     "p1-claude-code": {
@@ -373,22 +448,22 @@
       "passed": true,
       "steps": 5,
       "asks": 1,
-      "ms": 11872,
+      "ms": 18354,
       "milestones": {
         "setup": {
           "steps": 2,
           "asks": 0,
-          "ms": 2107
+          "ms": 4288
         },
         "firstVerified": {
           "steps": 3,
           "asks": 0,
-          "ms": 3350
+          "ms": 6446
         },
         "firstLive": {
           "steps": 5,
           "asks": 1,
-          "ms": 7594,
+          "ms": 14170,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -422,14 +497,15 @@
           "/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs",
           "mcp",
           "--dashboard",
+          "--consent",
           "--workspace",
           "<ws>"
         ],
-        "dryRunSay": "Practice run passed all 4 checks. It would have: sent “Invoice reminders: summary” to me@example.com; sent “Friendly reminder: invoice PR-101” to practice-cafe@example.org; sent “Second reminder: invoice PR-102” to practice-gym@example.org; sent “Final notice: invoice PR-103” to practice-florist@example.org. Nothing real was sent.",
-        "elicitation": "Turn on “Invoice reminders” (version 1, 880c7295)?",
+        "dryRunSay": "Practice run passed all 4 checks. On pretend data it would have drafted “Payment reminder: invoice PR-101” to practice-cafe@example.org; drafted “Payment overdue: invoice PR-102” to practice-gym@example.org; drafted “Payment overdue, action needed: invoice PR-103” to practice-florist@example.org; drafted “Invoice reminders: summary” to me@example.com. Nothing real was sent: a real run makes drafts the person sends themselves.",
+        "elicitation": "Turn on “Chase unpaid invoices”, version 1?",
         "notCounted": [
           "Claude Code trust prompt for a new stdio server (setup)",
-          "Claude Code permission prompt for the approve tool (anthropic/requiresUserInteraction): +1 click per approval, not verified in a real client"
+          "Claude Code permission prompt for the ask_person_to_turn_on tool (anthropic/requiresUserInteraction): +1 click per approval, not verified in a real client"
         ]
       }
     },
@@ -439,17 +515,17 @@
       "passed": true,
       "steps": 4,
       "asks": 1,
-      "ms": 4676,
+      "ms": 5993,
       "milestones": {
         "setup": {
           "steps": 2,
           "asks": 0,
-          "ms": 2749
+          "ms": 4014
         },
         "firstVerified": {
           "steps": 4,
           "asks": 1,
-          "ms": 4411
+          "ms": 5778
         }
       },
       "budgets": null,
@@ -481,22 +557,22 @@
       "passed": true,
       "steps": 7,
       "asks": 1,
-      "ms": 16833,
+      "ms": 17552,
       "milestones": {
         "setup": {
           "steps": 2,
           "asks": 0,
-          "ms": 2996
+          "ms": 2939
         },
         "firstVerified": {
           "steps": 3,
           "asks": 0,
-          "ms": 4178
+          "ms": 3769
         },
         "firstLive": {
           "steps": 7,
           "asks": 1,
-          "ms": 12725,
+          "ms": 13519,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -529,22 +605,22 @@
       "passed": true,
       "steps": 9,
       "asks": 0,
-      "ms": 4679,
+      "ms": 9942,
       "milestones": {
         "brief": {
           "steps": 2,
           "asks": 0,
-          "ms": 1639
+          "ms": 3141
         },
         "beforePracticeOnly": {
           "steps": 3,
           "asks": 0,
-          "ms": 2389
+          "ms": 4522
         },
         "practiceOnly": {
           "steps": 4,
           "asks": 0,
-          "ms": 2802
+          "ms": 4829
         }
       },
       "budgets": {
@@ -561,32 +637,61 @@
         "the organisation manages Claude Code on this computer (a stand-in managed-settings.json in FOUNDRY_MANAGED_DIR)"
       ],
       "errors": 0,
-      "refusals": 1,
+      "refusals": 0,
       "external": 0,
       "a11yIssues": 0,
       "a11yFirst": null,
-      "shots": 6,
+      "shots": 7,
       "failure": null,
       "checks": {
         "managed": "Your organisation manages Claude Code on this computer",
         "briefFile": "foundry-it-brief-invoice-chase.md",
-        "banner": "Practice-only mode is on, so nothing runs for real on this computer.Open Settings",
-        "refused": "That didn't workWhat happenedPractice-only mode is on, so nothing runs for real on this computer.What was not doneNothing was made.What to doTurn it off in Settings if you want to run it for real. Tests on pretend data still work.Open SettingsDetailsPRACTICE_ONLY Practice-only mode is on",
+        "banner": "✓Works now Practice-only mode is on for this pilot. Foundry shows what a run would make, on your list, but won't make it. Ask whoever set up the pilot before turning it off.",
+        "testedOn": "Tested on: your own list.",
         "trustAllowlist": true
+      }
+    },
+    "p4-policy": {
+      "persona": "p4-policy",
+      "variant": "light-1280",
+      "passed": true,
+      "steps": 1,
+      "asks": 0,
+      "ms": 2381,
+      "milestones": {},
+      "budgets": null,
+      "preconditions": [
+        "IT placed a policy file (here FOUNDRY_POLICY_FILE; on a real computer /etc/foundry/policy.json, owned by root)"
+      ],
+      "errors": 0,
+      "refusals": 1,
+      "external": 0,
+      "a11yIssues": 0,
+      "a11yFirst": null,
+      "shots": 2,
+      "failure": null,
+      "checks": {
+        "locked": {
+          "practiceOnly": true,
+          "checked": true
+        },
+        "managedNote": "✓Decided Set by your organisation for this computer. It can't be changed here.",
+        "apiRefused": 409,
+        "allowedAI": "What leaves this computerFoundry itself sends nothing over the network: e-mails are drafts the person sends, chat messages are drafts they paste.Through a coding agent: what Foundry's tools return goes to that agent's AI provider under the person's agreement with them. Foundry returns counts, step names and practice results; a live list is shown in the browser, and the agent sees only how many items it has.AI builders: Mercury (Inception) only if Allowed AI says so and a key is saved; Claude Haiku (Anthropic) only if Foundry is started with --builder haiku and Allowed AI says so. Allowed AI here: none (set by your organisation)."
       }
     },
     "p5-auditor": {
       "persona": "p5-auditor",
       "variant": "light-1280",
       "passed": true,
-      "steps": 3,
+      "steps": 4,
       "asks": 0,
-      "ms": 2544,
+      "ms": 4586,
       "milestones": {
         "evidence": {
           "steps": 3,
           "asks": 0,
-          "ms": 2267
+          "ms": 2784
         }
       },
       "budgets": {
@@ -605,20 +710,23 @@
       "shots": 4,
       "failure": null,
       "checks": {
-        "record": "✓Works now Record checked: 94 events, unbroken.Show detailsLatest link of the chain: 43bd3d0224a7c524c8dad634a2e1f595480060f35a74775e06f27a64e85c27ef",
+        "record": "✓Decided Record consistent: 94 entries, each linked to the one before.This shows nothing changed later only if the latest link was saved somewhere else at the time.Show detailsLatest link of the chain: 6552025220792145e7c0b2a11f2b77ee195b0817e8afe8f48bdde280f88719c4Copy the latest link",
         "decisionEvents": [
           "approval.requested",
           "run.awaiting_approval",
           "approval.decided"
         ],
+        "cliCheck": "Consistent: 94 run events and 2 decisions hash as recorded, each linked to the one before; the last event is the chain head the file states (6552025220792145e7c0b2a11f2b77ee195b0817e8afe8f48bdde280f88719c4). This shows nothing changed after the file was made only if you compare that head with a copy",
         "evidence": {
-          "file": "foundry-evidence-90667e68.json",
+          "file": "foundry-evidence-07313ac7.json",
           "events": 94,
-          "head": "43bd3d0224a7",
+          "head": "655202522079",
           "ledger": [
             "approved via dashboard"
           ],
           "actionDecisions": 4,
+          "listDecidedBy": "root@vm",
+          "personDecisions": 2,
           "gaps": 4
         }
       }
@@ -627,19 +735,19 @@
       "persona": "org",
       "variant": "light-1280",
       "passed": true,
-      "steps": 20,
+      "steps": 21,
       "asks": 4,
-      "ms": 6525,
+      "ms": 8604,
       "milestones": {
         "v1": {
-          "steps": 11,
+          "steps": 12,
           "asks": 1,
-          "ms": 3401
+          "ms": 5344
         },
         "v2": {
-          "steps": 20,
+          "steps": 21,
           "asks": 4,
-          "ms": 6217
+          "ms": 8265
         }
       },
       "budgets": {
@@ -658,7 +766,7 @@
       "shots": 9,
       "failure": null,
       "checks": {
-        "notEnforced": "•Preview Checked when an automation is made and tested. Not yet enforced while it runs: that needs named approvers, which are planned.",
+        "notEnforced": "•Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.",
         "examples": [
           "€0: allowedheld for a yesblocked",
           "€249.99: allowedheld for a yesblocked",
@@ -667,9 +775,9 @@
           "€5,000: allowedheld for a yesblocked",
           "€500, asked for by Dana (who would also approve it): allowedheld for a yesblocked"
         ],
-        "bootstrap": "One step left: Started by one person. Rules need a second person to approve changes; until then, you approved your own setup. Review within 14 days.",
-        "setBy": "€250 · Set by Dana (Org policy)",
-        "refused": "That didn't workWhat happenedNot allowed here. Dana set the limit at €250 (Org policy). This automation can only make it stricter.What was not doneNothing was made or sent.What to doChoose a stricter setting, or ask the person who set the rule to change it in Who decides what.Change the settings",
+        "bootstrap": "Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.",
+        "setBy": "€250 · set by you for Dana (Org policy). Dana hasn't confirmed it",
+        "refused": "That didn't workWhat happenedNot allowed here. The rule written down for Dana (Org policy) caps this at €250. This automation can only make it stricter.What was not doneNothing was made or sent.What to doChoose a stricter setting, or ask the person who set the rule to change it in Who decides what.Change the settings",
         "flip": "This change would change a confirmed answerThis change would turn case 4 (€250.01, held) into allowed. Confirm the new answer for case 4 or undo the change.Confirm the new answer for case 4 (allowed)Undo the change"
       }
     },
@@ -677,19 +785,19 @@
       "persona": "org",
       "variant": "-dark-390",
       "passed": true,
-      "steps": 20,
+      "steps": 21,
       "asks": 4,
-      "ms": 5449,
+      "ms": 5259,
       "milestones": {
         "v1": {
-          "steps": 11,
+          "steps": 12,
           "asks": 1,
-          "ms": 2932
+          "ms": 2940
         },
         "v2": {
-          "steps": 20,
+          "steps": 21,
           "asks": 4,
-          "ms": 5193
+          "ms": 5010
         }
       },
       "budgets": {
@@ -708,7 +816,7 @@
       "shots": 9,
       "failure": null,
       "checks": {
-        "notEnforced": "•Preview Checked when an automation is made and tested. Not yet enforced while it runs: that needs named approvers, which are planned.",
+        "notEnforced": "•Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.",
         "examples": [
           "€0: allowedheld for a yesblocked",
           "€249.99: allowedheld for a yesblocked",
@@ -717,9 +825,9 @@
           "€5,000: allowedheld for a yesblocked",
           "€500, asked for by Dana (who would also approve it): allowedheld for a yesblocked"
         ],
-        "bootstrap": "One step left: Started by one person. Rules need a second person to approve changes; until then, you approved your own setup. Review within 14 days.",
-        "setBy": "€250 · Set by Dana (Org policy)",
-        "refused": "That didn't workWhat happenedNot allowed here. Dana set the limit at €250 (Org policy). This automation can only make it stricter.What was not doneNothing was made or sent.What to doChoose a stricter setting, or ask the person who set the rule to change it in Who decides what.Change the settings",
+        "bootstrap": "Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.",
+        "setBy": "€250 · set by you for Dana (Org policy). Dana hasn't confirmed it",
+        "refused": "That didn't workWhat happenedNot allowed here. The rule written down for Dana (Org policy) caps this at €250. This automation can only make it stricter.What was not doneNothing was made or sent.What to doChoose a stricter setting, or ask the person who set the rule to change it in Who decides what.Change the settings",
         "flip": "This change would change a confirmed answerThis change would turn case 4 (€250.01, held) into allowed. Confirm the new answer for case 4 or undo the change.Confirm the new answer for case 4 (allowed)Undo the change"
       }
     },
@@ -729,7 +837,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 862,
+      "ms": 1259,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -750,7 +858,7 @@
       "passed": true,
       "steps": 2,
       "asks": 1,
-      "ms": 2208,
+      "ms": 2799,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -768,7 +876,7 @@
         "responsesHaveKey": false,
         "filesHaveKey": false,
         "logHasKey": false,
-        "responses": 5
+        "responses": 6
       }
     },
     "import": {
@@ -777,7 +885,7 @@
       "passed": true,
       "steps": 2,
       "asks": 0,
-      "ms": 1625,
+      "ms": 2149,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -798,7 +906,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5970,
+      "ms": 7585,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -812,8 +920,8 @@
       "checks": {
         "state": "empty",
         "width": 1280,
-        "pages": 33,
-        "linksFollowed": 33,
+        "pages": 32,
+        "linksFollowed": 32,
         "problems": []
       }
     },
@@ -823,7 +931,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6026,
+      "ms": 6596,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -837,8 +945,8 @@
       "checks": {
         "state": "empty",
         "width": 390,
-        "pages": 33,
-        "linksFollowed": 33,
+        "pages": 32,
+        "linksFollowed": 32,
         "problems": []
       }
     },
@@ -848,7 +956,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 4350,
+      "ms": 5889,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -862,8 +970,8 @@
       "checks": {
         "state": "draft",
         "width": 1280,
-        "pages": 34,
-        "linksFollowed": 34,
+        "pages": 33,
+        "linksFollowed": 33,
         "problems": []
       }
     },
@@ -873,7 +981,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5005,
+      "ms": 6313,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -887,8 +995,8 @@
       "checks": {
         "state": "draft",
         "width": 390,
-        "pages": 34,
-        "linksFollowed": 34,
+        "pages": 33,
+        "linksFollowed": 33,
         "problems": []
       }
     },
@@ -898,7 +1006,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 4290,
+      "ms": 5192,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -912,8 +1020,8 @@
       "checks": {
         "state": "tested",
         "width": 1280,
-        "pages": 34,
-        "linksFollowed": 34,
+        "pages": 33,
+        "linksFollowed": 33,
         "problems": []
       }
     },
@@ -923,7 +1031,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5501,
+      "ms": 6024,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -937,8 +1045,8 @@
       "checks": {
         "state": "tested",
         "width": 390,
-        "pages": 34,
-        "linksFollowed": 34,
+        "pages": 33,
+        "linksFollowed": 33,
         "problems": []
       }
     },
@@ -948,7 +1056,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5138,
+      "ms": 5724,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -962,8 +1070,8 @@
       "checks": {
         "state": "on",
         "width": 1280,
-        "pages": 38,
-        "linksFollowed": 38,
+        "pages": 37,
+        "linksFollowed": 37,
         "problems": []
       }
     },
@@ -973,7 +1081,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 11077,
+      "ms": 11344,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -987,8 +1095,8 @@
       "checks": {
         "state": "on",
         "width": 390,
-        "pages": 38,
-        "linksFollowed": 38,
+        "pages": 37,
+        "linksFollowed": 37,
         "problems": []
       }
     },
@@ -998,7 +1106,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5385,
+      "ms": 6829,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1023,7 +1131,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6037,
+      "ms": 7688,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1048,7 +1156,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5142,
+      "ms": 7638,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1073,7 +1181,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5832,
+      "ms": 7887,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1098,7 +1206,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6008,
+      "ms": 8039,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1112,8 +1220,8 @@
       "checks": {
         "state": "failed-run",
         "width": 1280,
-        "pages": 39,
-        "linksFollowed": 39,
+        "pages": 38,
+        "linksFollowed": 38,
         "problems": []
       }
     },
@@ -1123,7 +1231,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6353,
+      "ms": 8319,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1137,8 +1245,8 @@
       "checks": {
         "state": "failed-run",
         "width": 390,
-        "pages": 39,
-        "linksFollowed": 39,
+        "pages": 38,
+        "linksFollowed": 38,
         "problems": []
       }
     },
@@ -1148,7 +1256,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5541,
+      "ms": 6380,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1162,8 +1270,8 @@
       "checks": {
         "state": "no-keychain",
         "width": 1280,
-        "pages": 38,
-        "linksFollowed": 38,
+        "pages": 37,
+        "linksFollowed": 37,
         "problems": []
       }
     },
@@ -1173,7 +1281,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 7149,
+      "ms": 6634,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1187,8 +1295,8 @@
       "checks": {
         "state": "no-keychain",
         "width": 390,
-        "pages": 38,
-        "linksFollowed": 38,
+        "pages": 37,
+        "linksFollowed": 37,
         "problems": []
       }
     },
@@ -1198,7 +1306,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6036,
+      "ms": 5916,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1212,8 +1320,8 @@
       "checks": {
         "state": "practice-only",
         "width": 1280,
-        "pages": 38,
-        "linksFollowed": 38,
+        "pages": 37,
+        "linksFollowed": 37,
         "problems": []
       }
     },
@@ -1223,7 +1331,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6451,
+      "ms": 7277,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1237,8 +1345,8 @@
       "checks": {
         "state": "practice-only",
         "width": 390,
-        "pages": 38,
-        "linksFollowed": 38,
+        "pages": 37,
+        "linksFollowed": 37,
         "problems": []
       }
     },
@@ -1248,7 +1356,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5566,
+      "ms": 7125,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1262,8 +1370,8 @@
       "checks": {
         "state": "org-v1",
         "width": 1280,
-        "pages": 33,
-        "linksFollowed": 33,
+        "pages": 32,
+        "linksFollowed": 32,
         "problems": []
       }
     },
@@ -1273,7 +1381,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5920,
+      "ms": 6504,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1287,82 +1395,82 @@
       "checks": {
         "state": "org-v1",
         "width": 390,
-        "pages": 33,
-        "linksFollowed": 33,
+        "pages": 32,
+        "linksFollowed": 32,
         "problems": []
       }
     }
   },
   "run": {
-    "at": "2026-10-21T18:45:28.206Z",
+    "at": "2026-10-21T22:37:48.638Z",
     "files": [
       {
         "file": "p2-operator.mjs",
-        "pass": 5,
+        "pass": 6,
         "fail": 0,
-        "ms": 36288,
+        "ms": 54936,
         "failures": []
       },
       {
         "file": "p3-team-lead.mjs",
-        "pass": 2,
+        "pass": 3,
         "fail": 0,
-        "ms": 15924,
+        "ms": 25471,
         "failures": []
       },
       {
         "file": "p1-agents.mjs",
         "pass": 3,
         "fail": 0,
-        "ms": 37294,
+        "ms": 48163,
         "failures": []
       },
       {
         "file": "p4-it.mjs",
-        "pass": 1,
+        "pass": 2,
         "fail": 0,
-        "ms": 7488,
+        "ms": 20597,
         "failures": []
       },
       {
         "file": "p5-auditor.mjs",
         "pass": 1,
         "fail": 0,
-        "ms": 7790,
+        "ms": 13487,
         "failures": []
       },
       {
         "file": "org-map.mjs",
         "pass": 2,
         "fail": 0,
-        "ms": 15362,
+        "ms": 18739,
         "failures": []
       },
       {
         "file": "keys.mjs",
         "pass": 2,
         "fail": 0,
-        "ms": 6710,
+        "ms": 9344,
         "failures": []
       },
       {
         "file": "import.mjs",
         "pass": 1,
         "fail": 0,
-        "ms": 4965,
+        "ms": 6480,
         "failures": []
       },
       {
         "file": "crawl.mjs",
         "pass": 10,
         "fail": 0,
-        "ms": 141271,
+        "ms": 174721,
         "failures": []
       }
     ],
-    "screenshots": 157,
-    "screenshotBytes": 18165185,
-    "folderBytes": 18628930,
+    "screenshots": 171,
+    "screenshotBytes": 23678469,
+    "folderBytes": 24245858,
     "budgetBytes": 26214400
   }
 }

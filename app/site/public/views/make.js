@@ -86,6 +86,13 @@ export async function render({ params, query }) {
     }
     // Rows the person types (routing rules, canned answers): addresses in them are questions too.
     for (const s of tpl.slots.filter(x => x.kind === 'list')) questions.append(listEditor(s));
+    // Plain fields the person may fill (the e-mails' signature): shown, never a question (no data-ask: a default here harms nobody).
+    for (const s of tpl.slots.filter(x => x.kind === 'field')) {
+      const fid = uid(`field-${s.name}`), helpId = uid('help');
+      const input = el('input', { type: 'text', id: fid, name: s.name, autocomplete: 'off', placeholder: s.placeholder ?? '', value: changed[s.name] ?? base[s.name] ?? '', 'aria-describedby': helpId,
+        on: { input: e => { const v = e.target.value.trim(); if (v) changed[s.name] = v; else delete changed[s.name]; restate(); } } });
+      questions.append(el('div', { class: 'field', dataset: { field: s.name } }, el('label', { for: fid }, s.label), input, s.help ? el('p', { id: helpId, class: 'field-help' }, s.help) : null));
+    }
   }
   function listEditor(s) {
     const rows = Array.isArray(value(s.name)) ? value(s.name).map(r => ({ ...r })) : [];
@@ -152,7 +159,8 @@ export async function render({ params, query }) {
       }
       if (p.status === 'no_change') { status.replaceChildren(el('div', { class: 'banner', role: 'status' }, el('p', {}, t('make.noChange')), el('a', { href: `#/automations/${p.flowId}` }, t('make.openAutomation')))); return; }
       if (p.status !== 'proposed') { status.replaceChildren(errorPanel({ message: p.reply ?? t('errors.unknown'), problem: { what: p.reply, next: p.refusals?.length ? t('make.refusedNext') : (p.problems ?? []).filter(x => x !== p.reply).join(' ') || null } }, { notDone: t('make.nothingMade'), action: { label: t('make.fix'), onClick: () => testButton.focus() } })); return; }
-      if (decider) memory[`decider:${p.proposalId}`] = { choice: decider.value(), who: value(tpl.decider) };
+      // "Who decides the bigger ones" is kept with the automation, so a reload or the Waiting page records the same answer (P3 B3).
+      if (decider) { memory[`decider:${p.proposalId}`] = { choice: decider.value(), who: value(tpl.decider) }; await api('/api/deciders', { flowId: p.flowId, choice: decider.value(), who: value(tpl.decider) }).catch(() => null); }
       say(t('make.testing', { noun: tpl.noun }));
       const d = await api('/api/practice', { proposalId: p.proposalId });
       say(t('make.tested'));
@@ -169,7 +177,7 @@ export async function render({ params, query }) {
     el('h1', {}, tpl.card),
     flowId ? el('p', { class: 'banner', role: 'status' }, t('make.changing')) : null,
     el('section', { 'aria-labelledby': 'will-h' }, el('h2', { id: 'will-h' }, t('make.willTitle')), willList,
-      el('details', {}, el('summary', {}, t('make.wontTitle')), wontList)),
+      el('h3', { id: 'wont-h' }, t('make.wontTitle')), wontList),
     questions,
     el('section', { 'aria-labelledby': 'defaults-h' }, el('h2', { id: 'defaults-h' }, t('make.defaultsTitle')), el('p', { class: 'muted' }, t('make.defaultsLead')), defaultsList),
     el('dl', { class: 'facts' }, el('dt', {}, t('make.usesAI')), el('dd', {}, t('make.usesAINo')), el('dt', {}, t('make.dataGoes')), el('dd', {}, t('make.dataGoesNowhere')),

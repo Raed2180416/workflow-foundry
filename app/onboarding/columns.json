@@ -1,6 +1,6 @@
 {
   "schema": "foundry-onboarding-columns/1",
-  "note": "The columns each template sheet needs, in plain words, for the CSV drop (app/onboarding/csv.mjs). Types: text, email, number, date (YYYY-MM-DD), datetime (ISO with an offset), enum (values listed; each value has synonyms that map without asking), boolean. A column marked optional may be missing from the person's file. Names and types follow each template's `data` description in app/core/templates/*.json.",
+  "note": "The columns each template sheet needs, in plain words, for the CSV drop (app/onboarding/csv.mjs). Types: text, email, number, date (YYYY-MM-DD), datetime (ISO with an offset), enum (values listed; each value has synonyms that map without asking), boolean. A column marked optional may be missing from the person's file; `missing` is the value its rows get then (and for an empty cell). money: 'text' stores an amount as written money (currency sign and two decimals, e.g. €75.50) for a card that only shows it in its e-mails; the currency comes from the header or the cells; when neither says, the amount is written with two decimals and no sign. prefer: header names that mean what is still owed, chosen over a plain total; when a file has both kinds, Foundry asks which one (P2 walkthrough M2). Names and types follow each template's `data` description in app/core/templates/*.json.",
   "sheets": {
     "invoice-chase/invoices": {
       "plain": "invoice list",
@@ -9,7 +9,8 @@
         { "name": "invoice", "plain": "invoice number", "type": "text", "synonyms": ["invoice", "invoice no", "invoice number", "invoice #", "inv", "number", "no", "ref", "reference", "document", "id"] },
         { "name": "customer", "plain": "customer name", "type": "text", "synonyms": ["customer", "customer name", "client", "client name", "company", "name", "account", "bill to", "billed to"] },
         { "name": "email", "plain": "customer's e-mail address", "type": "email", "synonyms": ["email", "e-mail", "email address", "contact email", "billing email", "customer email", "client email", "mail"] },
-        { "name": "amount", "plain": "amount owed", "type": "number", "synonyms": ["amount", "amount due", "due amount", "balance", "balance due", "outstanding", "open balance", "total", "total due", "value", "sum"] },
+        { "name": "amount", "plain": "amount still owed", "type": "number", "money": "text", "synonyms": ["amount", "amount due", "due amount", "balance", "balance due", "outstanding", "open balance", "total", "total due", "value", "sum"],
+          "prefer": ["amount due", "due amount", "balance", "balance due", "open balance", "outstanding", "amount outstanding", "amount owed", "owed"] },
         { "name": "due", "plain": "due date", "type": "date", "synonyms": ["due", "due date", "date due", "payment due", "due on", "due by"] },
         { "name": "status", "plain": "status", "type": "enum", "synonyms": ["status", "state", "payment status", "invoice status"],
           "values": {
@@ -25,12 +26,12 @@
       "rowNoun": "claims",
       "columns": [
         { "name": "id", "plain": "claim number", "type": "text", "synonyms": ["id", "claim", "claim id", "claim no", "claim number", "ref", "reference", "number"] },
-        { "name": "employee", "plain": "employee name", "type": "text", "synonyms": ["employee", "name", "employee name", "submitted by", "staff", "person"] },
-        { "name": "email", "plain": "employee's e-mail address", "type": "email", "synonyms": ["email", "e-mail", "employee email", "email address"] },
+        { "name": "employee", "plain": "person's name", "type": "text", "synonyms": ["employee", "name", "employee name", "submitted by", "staff", "person"] },
+        { "name": "email", "plain": "person's e-mail address", "type": "email", "synonyms": ["email", "e-mail", "employee email", "email address"] },
         { "name": "amount", "plain": "amount", "type": "number", "synonyms": ["amount", "total", "value", "cost", "sum"] },
-        { "name": "category", "plain": "category", "type": "text", "optional": true, "synonyms": ["category", "type", "expense type", "kind"] },
-        { "name": "description", "plain": "description", "type": "text", "optional": true, "synonyms": ["description", "details", "note", "notes", "what", "purpose"] },
-        { "name": "receipt", "plain": "has a receipt", "type": "boolean", "synonyms": ["receipt", "has receipt", "receipt attached", "receipt?"] },
+        { "name": "category", "plain": "category", "type": "text", "optional": true, "missing": "no category", "synonyms": ["category", "type", "expense type", "kind"] },
+        { "name": "description", "plain": "description", "type": "text", "optional": true, "missing": "no description given", "synonyms": ["description", "details", "note", "notes", "what", "purpose"] },
+        { "name": "receipt", "plain": "receipt (yes or no)", "type": "boolean", "optional": true, "missing": false, "synonyms": ["receipt", "has receipt", "receipt attached", "receipt?"] },
         { "name": "status", "plain": "status", "type": "enum", "synonyms": ["status", "state"],
           "values": {
             "submitted": { "plain": "submitted, waiting for a decision", "synonyms": ["submitted", "new", "pending", "waiting", "open"] },
@@ -115,8 +116,8 @@
           },
           "ask": { "value": "critical", "question": "Your file says {values}. Which of these are critical?", "why": "Critical alerts can page someone. Missing a critical alert is the mistake this question prevents.", "otherwise": "warning" } },
         { "name": "message", "plain": "message", "type": "text", "synonyms": ["message", "description", "summary", "text"] },
-        { "name": "acknowledged", "plain": "acknowledged", "type": "boolean", "synonyms": ["acknowledged", "acked", "ack"] },
-        { "name": "resolved", "plain": "resolved", "type": "boolean", "synonyms": ["resolved", "closed", "fixed"] }
+        { "name": "acknowledged", "plain": "acknowledged (yes or no)", "type": "boolean", "synonyms": ["acknowledged", "acked", "ack"] },
+        { "name": "resolved", "plain": "resolved (yes or no)", "type": "boolean", "synonyms": ["resolved", "closed", "fixed"] }
       ]
     },
     "contact-sync/crm": {
@@ -127,7 +128,7 @@
         { "name": "name", "plain": "name", "type": "text", "synonyms": ["name", "full name", "contact"] },
         { "name": "company", "plain": "company", "type": "text", "optional": true, "synonyms": ["company", "organisation", "organization", "account"] },
         { "name": "tags", "plain": "tags", "type": "text", "optional": true, "synonyms": ["tags", "labels", "segments", "lists"] },
-        { "name": "unsubscribed", "plain": "unsubscribed", "type": "boolean", "synonyms": ["unsubscribed", "opted out", "opt out", "do not email"] }
+        { "name": "unsubscribed", "plain": "unsubscribed (yes or no)", "type": "boolean", "synonyms": ["unsubscribed", "opted out", "opt out", "do not email"] }
       ]
     },
     "contact-sync/newsletter": {

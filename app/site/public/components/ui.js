@@ -1,6 +1,6 @@
 // Shared parts of the site (SPEC §13.4): status chips, the paid badge, ask fields, check lists, the error panel, snippets,
 // the step marker, drop zone, column mapper, the list of things a run would make, and the turn-on and action cards.
-import { el, frag, id, plural, clear } from './dom.js';
+import { el, frag, id, plural, clear, day } from './dom.js';
 import { t, rich, api, decide, say, toast, download, navigate, refreshBadge } from '../site.js';
 
 // ------------------------------------------------------------------------------------------------ status
@@ -40,14 +40,25 @@ export function askField({ name, label, why, skip, harm, input }) {
 }
 
 // ------------------------------------------------------------------------------------------------ checks
-export function checkList(checks, { how = true } = {}) {
+// Each check in its plain sentence (a check with no plain sentence shows its exact form). "How" lines are for developers and IT, so they
+// are off by default; howNote() explains both kinds once, under a disclosure (P2 walkthrough M6, P3 M14). "Not checked yet" is visible
+// text, not only a mark (P5 walkthrough minor 8).
+export function checkList(checks, { how = false } = {}) {
   return el('ul', { class: 'checks' }, checks.map(c => {
     const mark = c.passed === true ? ['✓', 'mark-ok', t('checks.passed')] : c.passed === false ? ['✗', 'mark-bad', t('checks.failed')] : ['…', 'mark-wait', t('checks.notRun')];
     const isVerify = String(c.id ?? '').startsWith('verify.');
     return el('li', {}, el('span', { class: mark[1], 'aria-hidden': 'true' }, mark[0]),
-      el('span', {}, el('span', { class: 'sr-only' }, `${mark[2]}: `), c.plain ?? c.exact),
+      el('span', {}, c.passed === null || c.passed === undefined ? null : el('span', { class: 'sr-only' }, `${mark[2]}: `), c.plain ?? c.exact,
+        c.passed === null || c.passed === undefined ? el('span', { class: 'muted' }, ` (${t('checks.notRun').toLowerCase()})`) : null),
       how ? el('span', { class: 'how' }, isVerify ? t('checks.howVerify') : t('checks.howRule')) : null);
   }));
+}
+export const howNote = () => el('details', {}, el('summary', {}, t('checks.howTitle')), el('p', { class: 'small' }, t('checks.howBody')));
+/** Rows a run would add to a list, as a small table (P2 walkthrough M14: raw JSON cut off mid-word). */
+export function rowsTable(rows) {
+  const cols = [...new Set(rows.flatMap(r => Object.keys(r ?? {})))].filter(k => k !== 'at').slice(0, 6);
+  return el('div', { class: 'table-wrap' }, el('table', { class: 'rows-table' }, el('thead', {}, el('tr', {}, cols.map(c => el('th', { scope: 'col' }, c)))),
+    el('tbody', {}, rows.map(r => el('tr', {}, cols.map(c => el('td', {}, r?.[c] === null || r?.[c] === undefined ? '' : String(r[c]))))))));
 }
 
 // ------------------------------------------------------------------------------------------------ errors
@@ -84,11 +95,23 @@ export function stepper(current) {
 
 // ------------------------------------------------------------------------------------------------ drop zone and column mapper
 /** A real file button (drag is optional, WCAG 2.5.7). onText(text, file) gets the file's text. */
+// Excel, Numbers and OpenDocument files can be picked (so the picker doesn't hide them), and are answered with how to save a CSV, never
+// read as text (P2 walkthrough M3: an .xlsx dropped here gave binary garbage as column names).
+const SPREADSHEET = /\.(xlsx|xlsm|xls|numbers|ods)$/i;
 export function dropZone({ label, help, onText, harm = 'wrong-file' }) {
-  const input = el('input', { type: 'file', accept: '.csv,.tsv,.txt,.json,text/csv,application/json', dataset: { ask: harm } });
+  const input = el('input', { type: 'file', accept: '.csv,.tsv,.txt,.json,.xlsx,.xls,.numbers,.ods,text/csv,application/json', dataset: { ask: harm } });
   input.id = id('file');
-  const zone = el('div', { class: 'drop' }, el('label', { for: input.id }, label), help ? el('p', { class: 'field-help' }, help) : null, input);
-  const read = async file => { if (!file) return; if (file.size > 5 * 1024 * 1024) { toast(t('drop.tooBig')); return; } onText(await file.text(), file); };
+  const note = el('p', { class: 'field-error', role: 'alert', hidden: true });
+  const zone = el('div', { class: 'drop' }, el('label', { for: input.id }, label), help ? el('p', { class: 'field-help' }, help) : null, input, note);
+  const read = async file => {
+    if (!file) return;
+    note.hidden = true;
+    if (file.size > 5 * 1024 * 1024) { toast(t('drop.tooBig')); return; }
+    const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+    const zipOrOle = (head[0] === 0x50 && head[1] === 0x4b) || (head[0] === 0xd0 && head[1] === 0xcf);
+    if (SPREADSHEET.test(file.name) || zipOrOle) { note.textContent = t('drop.excel'); note.hidden = false; return; }
+    onText(await file.text(), file);
+  };
   input.addEventListener('change', () => read(input.files[0]));
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('over'));
@@ -108,15 +131,18 @@ export function columnMapper(preview) {
     sel.addEventListener('change', showSamples); showSamples();
     return el('div', { class: 'field' }, el('label', { for: sel.id }, t('drop.whichColumn', { plain: n.plain })), sel, samples);
   }));
-  return { node, mapping: () => Object.fromEntries(Object.entries(selects).map(([k, s]) => [k, s.value || null])) };
+  return { node, mapping: () => Object.fromEntries(Object.entries(selects).map(([k, s]) => [k, s.value || null])),
+    set: (name, header) => { const s = selects[name]; if (s && [...s.options].some(o => o.value === header)) { s.value = header; s.dispatchEvent(new Event('change')); } } };
 }
 /** The ambiguity questions (date order, decimal separator, which values mean "still open"): radios or checkboxes, data-ask set. */
-export function dataQuestions(questions) {
+export function dataQuestions(questions, { onColumn = null } = {}) {
   const read = {};
   const node = el('div', {}, questions.map(q => {
     const name = id('q');
     if (q.kind === 'choice') {
       const radios = q.choices.map(c => el('input', { type: 'radio', name, value: c.value, dataset: { ask: q.harm } }));
+      // "Which of these columns is it?" keeps the column chooser above in step with the answer.
+      if (q.syncColumn && onColumn) radios.forEach(r => r.addEventListener('change', () => { if (r.checked) onColumn(q.syncColumn, r.value); }));
       read[q.id] = () => radios.find(r => r.checked)?.value ?? null;
       return el('fieldset', { dataset: { question: q.id } }, el('legend', {}, q.question), el('p', { class: 'field-help' }, el('b', {}, t('ask.why')), ' ', q.why, el('br'), el('b', {}, t('ask.skip')), ' ', q.skip),
         q.choices.map((c, i) => el('label', { class: 'check-row' }, radios[i], el('span', {}, c.label))));
@@ -153,33 +179,50 @@ export function itemsList(items) {
     el('pre', {}, i.body ?? i.preview ?? ''))));
 }
 /** "Make these N drafts?" for one batch: Make / Don't make any. onDone(result) after the person decides. */
+// The notes a card adds before the yes (app/onboarding/cards.mjs). A firmer reminder as a customer's first contact turns the yes into
+// "I've reminded them before" and the no into "I haven't" (P2 walkthrough B4): the same one click, with the condition in its label.
+function batchNotes(batch) {
+  const notes = batch.notes ?? [];
+  const firm = notes.find(x => x.kind === 'firm-first');
+  const sent = notes.find(x => x.kind === 'already-sent'), answered = notes.find(x => x.kind === 'answered');
+  return { firm, node: notes.length ? el('div', { class: 'banner wait', dataset: { notes: notes.map(x => x.kind).join(' ') } },
+    firm ? el('p', {}, el('b', {}, t('batch.firmFirstTitle')), ' ', t('batch.firmFirst', { who: firm.invoices.map(x => `${x.invoice} (${x.to})`).join(', ') })) : null,
+    sent ? el('p', {}, t('batch.alreadySent', { n: sent.count, who: sent.approver ?? t('who.thatPerson'), date: day(sent.at) })) : null,
+    answered ? el('p', {}, t('batch.answered', { n: answered.count })) : null) : null };
+}
+/** "Make these N drafts?" for one batch: Make / Don't make any. onDone(result) after the person decides. */
 export function batchCard(batch, { onDone } = {}) {
   const n = batch.items.length, mails = batch.items.every(isMail);
   const headId = id('batch');
   const status = el('div', { role: 'status' });
-  const yes = el('button', { type: 'button', class: 'primary', dataset: { ask: 'irreversible', action: 'batch-approve' } }, mails ? t('batch.make', { n }) : t('batch.do', { n }));
-  const no = el('button', { type: 'button', dataset: { action: 'batch-decline' } }, mails ? t('batch.makeNone') : t('batch.doNone'));
+  const notes = batchNotes(batch);
+  const yesLabel = notes.firm ? (n === 1 ? t('batch.firmFirstYesOne') : t('batch.firmFirstYesMany', { n })) : mails ? (n === 1 ? t('batch.makeOne') : t('batch.makeMany', { n })) : t('batch.do', { n });
+  const yes = el('button', { type: 'button', class: 'primary', dataset: { ask: 'irreversible', action: 'batch-approve' } }, yesLabel);
+  const no = el('button', { type: 'button', dataset: { action: 'batch-decline' } }, notes.firm ? t('batch.firmFirstNo') : mails ? t('batch.makeNone') : t('batch.doNone'));
   yes.addEventListener('click', async e => {
     if (!e.isTrusted) return;
     yes.setAttribute('aria-busy', 'true'); yes.disabled = true; no.disabled = true; say(t('batch.making'));
     try {
       const r = await api('/api/batch/approve', { batchId: batch.batchId });
-      say(r.stoppedAt ? t('batch.stopped') : t('batch.made', { n: r.made.length }));
+      say(r.stoppedAt ? t('batch.stopped') : r.made.length === 1 ? t('batch.madeOne') : t('batch.madeMany', { n: r.made.length }));
       refreshBadge(); onDone?.(r);
     } catch (error) { status.replaceChildren(errorPanel(error, { notDone: t('batch.notMade') })); yes.disabled = false; no.disabled = false; }
     yes.removeAttribute('aria-busy');
   });
   no.addEventListener('click', async e => {
     if (!e.isTrusted) return;
-    try { await api('/api/batch/decline', { batchId: batch.batchId }); say(t('batch.declined')); refreshBadge(); onDone?.({ declined: true }); }
+    try { await api('/api/batch/decline', { batchId: batch.batchId }); say(t('batch.declined')); refreshBadge(); onDone?.({ declined: true, firmFirst: !!notes.firm }); }
     catch (error) { status.replaceChildren(errorPanel(error)); }
   });
   return el('article', { class: 'card emph waiting', 'aria-labelledby': headId, dataset: { decisionCard: '', batch: batch.batchId } },
-    el('h2', { id: headId }, mails ? t('batch.titleDrafts', { n, title: batch.title }) : t('batch.title', { n, title: batch.title })),
-    el('p', {}, t('batch.lead', { version: batch.version })),
+    el('h2', { id: headId }, mails ? (n === 1 ? t('batch.titleDraftsOne') : t('batch.titleDraftsMany', { n })) : t('batch.title', { n, title: batch.title })),
+    el('p', {}, t('batch.lead', { version: batch.version, date: day(batch.input?.now) })),
+    batch.remembered ? el('p', { class: 'muted' }, t('batch.remembered')) : null,
+    notes.node,
     itemsList(batch.items),
     batch.alsoDoes?.length ? el('p', {}, batch.alsoDoes.map(a => t('batch.alsoAppends', { rows: a.rows, sheet: a.sheet })).join(' ')) : null,
     el('p', { class: 'muted' }, t('batch.guard')),
+    mails ? el('p', { class: 'muted' }, t('batch.countsNote')) : null,
     el('div', { class: 'actions stack decision' }, yes, no), status);
 }
 
@@ -204,10 +247,11 @@ export function actionCard(action, full, { onDone } = {}) {
 
 // ------------------------------------------------------------------------------------------------ "Who decides"
 /** The three honest answers to "who else has to say yes" (SPEC §1 fix 6, §7.3). Returns { node, value() }. */
+// "Just me, nobody else needs to know" is gone: the card always e-mails the approver, so that answer did nothing (P3 walkthrough B3).
 export function whoDecides({ name, onChange } = {}) {
   const group = id('who');
   const who = name || t('who.thatPerson');
-  const opts = [['inform', t('who.inform', { who }), t('who.free')], ['team', t('who.team', { who }), null], ['me', t('who.me'), t('who.free')]];
+  const opts = [['inform', t('who.inform', { who }), t('who.free')], ['team', t('who.team', { who }), null]];
   const radios = opts.map(([v], i) => el('input', { type: 'radio', name: group, value: v, checked: i === 0, dataset: { ask: 'self-approval' } }));
   const paid = paidBadge(t('who.teamExplain', { who }));
   const node = el('fieldset', { dataset: { who: '' } }, el('legend', {}, t('who.legend')),

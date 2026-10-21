@@ -66,6 +66,10 @@ export function parse(text, delimiter = ',', { limit = true } = {}) {
 /** Header and records from CSV text (or a JSON array of objects). */
 export function readTable(text) {
   if (typeof text !== 'string') throw new FoundryError('CSV_TEXT', 'The file must be text');
+  // An Excel, Numbers or OpenDocument file read as text: a zip (PK..) or an old binary workbook, or NUL bytes. Say what to do instead
+  // of offering garbage as column names (P2 walkthrough M3).
+  if (/^PK\u0003\u0004|^\u00d0\u00cf\u0011\u00e0/.test(text) || text.slice(0, 4096).includes('\u0000'))
+    throw new FoundryError('CSV_BINARY', 'This is a spreadsheet file (Excel, Numbers or similar), not a CSV export. In your spreadsheet app choose File, then Save As (or Export), pick CSV, and drop that file here.');
   if (Buffer.byteLength(text, 'utf8') > LIMITS.bytes) throw new FoundryError('CSV_SIZE', 'The file is larger than 5 MB');
   const clean = text.replace(/^﻿/, '');
   if (/^\s*\[/.test(clean)) {
@@ -149,10 +153,13 @@ const FALSE = new Set(['false', 'no', 'n', '0', '', '-', 'none', 'missing', 'nei
 export function readBoolean(text) { const s = String(text).trim().toLowerCase(); return TRUE.has(s) ? { value: true } : FALSE.has(s) ? { value: false } : null; }
 
 // ------------------------------------------------------------------------------------------------ mapping
+// A header that names what is still owed ("Balance", "Amount due") beats a plain "Total" (column.prefer): a partly paid invoice must not
+// be chased for its whole total.
+const preferred = (header, column) => (column.prefer ?? []).map(norm).some(p => ` ${norm(header)} `.includes(` ${p} `));
 function headerScore(header, column) {
   const h = norm(header), syn = [column.name, column.plain, ...(column.synonyms ?? [])].map(norm);
-  if (syn.includes(h)) return 10;
-  if (syn.some(s => s.length > 2 && (` ${h} `.includes(` ${s} `)))) return 6;
+  if (syn.includes(h)) return 10 + (preferred(header, column) ? 2 : 0);
+  if (syn.some(s => s.length > 2 && (` ${h} `.includes(` ${s} `)))) return 6 + (preferred(header, column) ? 2 : 0);
   if (syn.some(s => s.length > 3 && h.includes(s))) return 3;
   return 0;
 }
@@ -198,6 +205,15 @@ const listText = values => values.length === 1 ? `"${values[0]}"` : `${values.sl
 export function questionsFor(spec, header, records, mapping) {
   const qs = [];
   for (const c of spec.columns) {
+    // Two columns could be the one Foundry needs, and only one of them is what is still owed: ask (P2 walkthrough M2).
+    if (c.prefer) {
+      const named = header.filter(x => headerScore(x, c) >= 6);
+      const owed = named.filter(x => preferred(x, c)), other = named.filter(x => !preferred(x, c));
+      if (owed.length && other.length) qs.push({ id: `column:${c.name}`, kind: 'choice', column: c.name, harm: 'wrong-amounts', syncColumn: c.name,
+        question: `Your file has ${listText([...other, ...owed])}. Which one is what the customer still owes?`,
+        why: 'A customer who already paid part of an invoice would be asked for the whole total. Foundry will not guess it.', skip: 'Nothing is imported until you choose.',
+        choices: [...owed, ...other].map(x => ({ value: x, label: x })) });
+    }
     const h = mapping[c.name];
     if (!h) continue;
     const idx = header.indexOf(h), values = records.map(r => r[idx] ?? '').filter(v => v !== '');
@@ -262,11 +278,31 @@ export function preview({ template, sheet, text }) {
     unused: table.header.filter(h => !Object.values(mapping).includes(h)) };
 }
 
+// ------------------------------------------------------------------------------------------------ money
+// The currency comes from the header ("Amount due (EUR)") or the cells ("$480.00"); when neither says, the amount is written with two
+// decimals and no sign rather than asked (one question fewer; the person reads every e-mail in full before any is made).
+const CODES = ['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'AUD', 'NZD', 'SEK', 'NOK', 'DKK', 'PLN', 'JPY', 'INR', 'ZAR', 'SGD', 'HKD'];
+const SIGNS = { '€': 'EUR', '£': 'GBP', '$': 'USD', '¥': 'JPY', '₹': 'INR' };
+/** The currency a header or its cells name, or null. */
+export function currencyOf(header, values = []) {
+  const find = t => { const code = String(t).toUpperCase().match(new RegExp(`\\b(${CODES.join('|')})\\b`)); if (code) return code[1]; const sign = [...String(t)].find(ch => SIGNS[ch]); return sign ? SIGNS[sign] : null; };
+  return find(header) ?? values.slice(0, 50).map(find).find(Boolean) ?? null;
+}
+/** €1,240.00 / $480.00 / 75.50 (two decimals, the currency's own sign). */
+export function moneyText(value, currency) {
+  if (!currency || currency === 'none') return value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  try { return new Intl.NumberFormat('en-GB', { style: 'currency', currency, currencyDisplay: 'narrowSymbol' }).format(value); }
+  catch { return `${value.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`; }
+}
+
 /** Typed rows from the mapping and the answers. Throws CSV_UNANSWERED while a question is open, CSV_MAPPING for a missing column. */
-export function convert({ template, sheet, text, mapping, answers = {} }) {
+export function convert({ template, sheet, text, mapping: given, answers = {} }) {
   const spec = sheetSpec(template, sheet);
   const table = readTable(text);
-  if (!mapping || typeof mapping !== 'object') throw new FoundryError('CSV_MAPPING', 'Say which column is which first');
+  if (!given || typeof given !== 'object') throw new FoundryError('CSV_MAPPING', 'Say which column is which first');
+  // An answer to "which of these columns is it?" is the mapping for that column.
+  const mapping = { ...given };
+  for (const c of spec.columns) { const a = answers[`column:${c.name}`]; if (typeof a === 'string' && table.header.includes(a)) mapping[c.name] = a; }
   for (const [name, h] of Object.entries(mapping)) {
     if (!spec.columns.some(c => c.name === name)) throw new FoundryError('CSV_MAPPING', `Unknown column ${String(name).slice(0, 40)}`);
     if (h !== null && !table.header.includes(h)) throw new FoundryError('CSV_MAPPING', `The file has no column "${String(h).slice(0, 60)}"`);
@@ -277,18 +313,24 @@ export function convert({ template, sheet, text, mapping, answers = {} }) {
   if (open.length) throw Object.assign(new FoundryError('CSV_UNANSWERED', `Answer first: ${open.map(q => q.question).join(' ')}`), { questions: open });
   const skipped = { noEmail: 0, unreadable: 0 }, problems = [];
   const rows = [];
+  const currency = Object.fromEntries(spec.columns.filter(c => c.money === 'text' && mapping[c.name]).map(c => {
+    const idx = table.header.indexOf(mapping[c.name]);
+    return [c.name, currencyOf(mapping[c.name], table.records.map(r => r[idx] ?? '').filter(Boolean))];
+  }));
   table.records.forEach((rec, ri) => {
     const row = {}; let bad = null;
     for (const c of spec.columns) {
       const h = mapping[c.name];
-      if (!h) continue;
+      if (!h) { if (c.missing !== undefined) row[c.name] = c.missing; continue; }
       const raw = rec[table.header.indexOf(h)] ?? '';
+      if (raw === '' && c.missing !== undefined) { row[c.name] = c.missing; continue; }
       let v;
       switch (c.type) {
         case 'email': { const e = raw.trim().toLowerCase().replace(/^mailto:/, ''); v = EMAIL.test(e) ? e : ''; if (!v) skipped.noEmail++; break; }
         case 'date': { const d = raw ? readDate(raw, answers[`dateOrder:${c.name}`] ?? null) : null; if (raw && !d?.iso) bad = `the ${c.plain} "${raw.slice(0, 30)}"`; v = d?.iso ?? ''; break; }
         case 'datetime': { const d = raw ? readDateTime(raw) : null; if (raw && !d?.iso) bad = `the ${c.plain} "${raw.slice(0, 30)}"`; v = d?.iso ?? ''; break; }
-        case 'number': { const n = raw ? readNumber(raw, answers[`decimal:${c.name}`] ?? null) : null; if (raw && (!n || n.ambiguous)) bad = `the ${c.plain} "${raw.slice(0, 30)}"`; v = n?.value ?? null; break; }
+        case 'number': { const n = raw ? readNumber(raw, answers[`decimal:${c.name}`] ?? null) : null; if (raw && (!n || n.ambiguous)) bad = `the ${c.plain} "${raw.slice(0, 30)}"`; v = n?.value ?? null;
+          if (c.money === 'text' && typeof v === 'number') v = moneyText(v, currency[c.name]); break; }
         case 'boolean': { const b = readBoolean(raw); v = b ? b.value : (answers[`values:${c.name}`] ?? []).includes(raw.trim()); break; }
         case 'enum': { v = enumReading(c, raw) ?? ((answers[`values:${c.name}`] ?? []).some(x => norm(x) === norm(raw)) ? c.ask.value : c.ask.otherwise); break; }
         default: v = raw;

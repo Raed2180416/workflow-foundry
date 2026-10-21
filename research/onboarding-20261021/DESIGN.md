@@ -72,17 +72,25 @@ answer harms or an irreversible yes. Times are the harness's wall-clock on a sha
 | P1 Claude Code (stdio MCP, form elicitation) | 1280 | setup 2 / 0; then **1 / 0** (3.4 s from start) | then **3 / 1** (7.6 s) | ≤ 2 / 0; ≤ 4 / 2 after setup | pass |
 | P1 agent guessed an address | 1280 | setup 2 / 0; then **2 / 1** (4.4 s) | — | +1 ask; nothing made before the answer | pass |
 | P1 Cursor or Codex (no dialog) | 1280 | setup 2 / 0; then 1 / 0 (4.2 s) | then **5 / 1** (12.7 s) | ≤ 5 after setup | pass |
-| P4 IT | 1280 | brief: 2 actions; practice-only: 1 | live run refused in plain words | ≤ 2; 1 | pass |
+| P4 IT | 1280 | brief: 2 actions; practice-only: 1 | a test on the real list, nothing made (was: a refused run) | ≤ 2; 1 | pass |
+| P4 policy file (added after the walkthroughs) | 1280 | Settings locked by the organisation; the API refuses | — | locked | pass |
 | P5 auditor | 1280 | evidence file: 3 actions | — | ≤ 3 | pass |
-| ORG: who decides what | 1280 light, 390 dark | version 1: 11 actions, 1 ask | flip blocks the save; version 2 at 20 actions | ≤ 12 to v1 | pass |
+| ORG: who decides what | 1280 light, 390 dark | version 1: 12 actions, 1 ask (+1: currency) | flip blocks the save; version 2 at 21 actions | ≤ 12 to v1 | pass |
+| P2 next day; P3 refunds (added after the walkthroughs) | 1280 | — | bookmark opens; no repeated reminder; refunds export without receipts; approver's answer recorded | no dead end | pass |
 | KEYS (none; keychain with a canary key) | 1280 | — | — | key absent from page, responses, files, log | pass |
 | IMPORT (n8n export) | 1280 | — | — | nothing made or run | pass |
 | CRAWL: 10 states × 1280 and 390 (and 320 for sideways scroll) | — | 33 to 39 pages per state, every internal link followed | — | §17.2 | pass, 0 problems |
 
-Totals: 27 journey tests in 9 files, all passing; 157 screenshots, 17.3 MB (budget 25 MB); 0 console or page errors; 0 external
-requests; 0 fallback accessibility issues.
+Totals after the persona walkthrough fixes:
 
-The unit suites pass one file at a time: app 35, onboarding 35, site 21. `browser-check.mjs` runs clean.
+- 30 journey tests in 9 files, all passing;
+- 171 screenshots, 22.6 MB (budget 25 MB);
+- 0 console or page errors, 0 external requests and 0 fallback accessibility issues;
+- 104 unit tests under `app/`, all passing.
+
+The times in the rows above are from the first build. The current per-journey numbers are in
+[WALKTHROUGH.md](WALKTHROUGH.md) §5 and [JOURNEYS.md](JOURNEYS.md). What changed after the walkthroughs, and what was declined, is
+in [WALKTHROUGH.md](WALKTHROUGH.md).
 
 **Baselines beside these numbers:**
 - **P1:** the surface spike's 3 person actions from request to first live (DESIGN §8.3, claim C12). The P1 Claude Code journey is 3 actions after setup, with the list in place.
@@ -144,13 +152,18 @@ Nothing here has been used by a person other than the harness.
 - **No user has seen this.** Every count is scripted. Real Claude Code, Cursor and Codex behaviour was not exercised:
   - Claude Code's own trust prompt and its per-call prompt for `approve` (+1 click) are reported, not measured;
   - Codex documents no elicitation, so Codex takes the browser path.
-- **Batch approval across runs.** A list preview runs in a fresh practice store, so it cannot see what earlier live runs already sent.
-  - On a second live run the summary e-mail's text differs from the preview, so the guard stops at that item and asks.
-  - This is safe (it stops and asks) but noisy. A unit test documents it. The fix is a preview that reads the live run state.
+- **Batch approval across runs: fixed after the walkthroughs.**
+  - A list preview now copies the automation's live cross-run state into the practice store (`app/onboarding/preview-run.mjs`).
+  - A second list leaves out what earlier runs made, and its summary matches the run.
+  - Lists older than today are flagged, and replacing them comes first.
+- **Card wording is an overlay.** `app/onboarding/card-text.json` revises the frozen templates' words after a card is filled.
+  Folding it into the templates needs a new template revision and manifest (owner).
 - **Linux only.** macOS and Windows keychains and launchers are untested. Headless Linux usually has no Secret Service, so keys are refused there, by design.
 - **One window per workspace** is guarded only by `<ws>/.lock`.
 - **Seven cards.** Requests outside them get "I can't make that yet" with every card offered; the box never builds.
-- **Practice-only mode** stops live runs and new live lists. It does not stop a test on pretend data, by design.
+- **Practice-only mode** stops live runs and new live lists. The go-live page offers a test on the person's list instead.
+  - A policy file (`/etc/foundry/policy.json`, owned by root, or `FOUNDRY_POLICY_FILE`) can force the mode and Allowed AI.
+  - Anyone with root, or a user who runs a modified copy, can still bypass it. It is a control for honest machines, not a sandbox.
 - **Who decides what** is checked when an automation is made, not while it runs.
 
 ## 7. Owner decisions (each reversible)
@@ -166,7 +179,7 @@ The spec's O-A to O-J stand as listed in SPEC §19. This build needs three more:
 ## 8. How to run it
 
 ```
-node app/cli.mjs site --workspace /path/to/workspace        # opens http://127.0.0.1:4178/#t=<one-time key> (another port if taken)
+node app/cli.mjs open --workspace /path/to/workspace        # opens the running page, or starts it on the folder's own port and key
 node app/cli.mjs connect --workspace /path/to/workspace     # prints the Claude Code / Codex lines and the Cursor link
 nice node --test --test-concurrency=1 app/site/test/api.test.mjs          # unit suites, one file at a time
 node app/site/test/journeys/run-all.mjs                                   # all journeys, then JOURNEYS.json and JOURNEYS.md

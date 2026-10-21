@@ -33,11 +33,18 @@ export async function render() {
   const flows = overview?.flows?.length ?? 0;
   const managed = doctor?.managed?.present;
   const practiceOnly = doctor?.settings?.mode === 'practice-only';
+  // Would the organisation's policy let Foundry's exact command start? Asked only on a click (it reads the managed policy's server keys).
+  const admission = el('p', { role: 'status' });
+  const check = el('button', { type: 'button', class: 'link', dataset: { action: 'check-policy' }, on: { click: async () => {
+    try { const d = await api('/api/doctor?consent=1'); const a = d.managed?.admission; admission.textContent = !a ? '' : a.admitted === 'yes' ? t('home.managedYes', { why: a.why }) : a.admitted === 'no' ? t('home.managedNo', { why: a.why }) : t('home.managedUnknown', { why: a.why }); }
+    catch (error) { admission.replaceChildren(errorPanel(error)); }
+  } } }, t('home.managedCheck'));
   const managedCard = managed ? el('section', { class: 'banner wait', 'aria-labelledby': 'managed-h', dataset: { managed: '' } },
     el('h2', { id: 'managed-h' }, t('home.managedTitle')), el('p', {}, t('home.managedBody')),
+    el('p', {}, check, ' ', el('span', { class: 'muted small' }, t('home.managedCheckNote'))), admission,
     el('div', { class: 'actions' }, el('a', { class: 'button', href: '#/it-brief' }, t('home.managedBrief')),
       practiceOnly ? el('span', { role: 'status' }, statusChip('works'), ' ', t('home.practiceOnlyOn'))
-        : el('button', { type: 'button', on: { click: async e => { const b = e.currentTarget; b.disabled = true; try { await api('/api/settings', { mode: 'practice-only' }); navigate('/settings'); } catch (error) { b.disabled = false; b.after(errorPanel(error)); } } } }, t('home.managedPractice')))) : null;
+        : el('button', { type: 'button', dataset: { action: 'practice-only' }, on: { click: async e => { const b = e.currentTarget; b.disabled = true; try { await api('/api/settings', { mode: 'practice-only' }); navigate('/settings'); } catch (error) { b.disabled = false; b.after(errorPanel(error)); } } } }, t('home.managedPractice')))) : null;
   return el('div', {},
     managedCard,
     waiting ? el('p', { class: 'banner wait', role: 'status' }, t('home.waiting', { n: waiting }), ' ', el('a', { href: '#/waiting' }, t('home.waitingOpen'))) : null,
@@ -45,10 +52,12 @@ export async function render() {
     el('p', { class: 'lead' }, t('home.lead')),
     flows ? el('p', {}, el('a', { href: '#/automations' }, t('home.yourAutomations', { n: flows }))) : null,
     el('h2', { id: 'cards-h' }, t('home.cardsTitle')),
+    el('p', { class: 'muted' }, t('home.aiLine')),
     el('div', { class: 'grid', role: 'list', 'aria-labelledby': 'cards-h' }, list.map(tpl => { const c = cardFor(tpl); c.setAttribute('role', 'listitem'); return c; })),
     suggestBox(),
-    el('div', { class: 'strip' }, el('p', {}, el('b', {}, t('home.n8nTitle')), ' ', t('home.n8nBody')), statusChip('preview'), el('a', { href: '#/import' }, t('home.n8nLink'))),
-    el('div', { class: 'strip' }, el('p', {}, el('b', {}, t('home.devTitle')), ' ', el('a', { href: '#/connect-agent' }, t('home.devLink')))),
     el('div', { class: 'strip' }, el('p', {}, rich('home.trust'))),
-    el('section', { 'aria-labelledby': 'proof-h' }, el('h2', { id: 'proof-h' }, t('home.proofTitle')), el('p', { class: 'prose' }, rich('home.proof')), el('p', { class: 'muted small prose' }, t('home.proofQualifier'))));
+    el('div', { class: 'strip', dataset: { notReady: '' } }, el('p', {}, el('b', {}, t('home.notReadyTitle')), ' ', t('home.notReady'), ' ', el('a', { href: '#/docs' }, t('home.notReadyLink')))),
+    el('div', { class: 'strip' }, el('p', {}, el('b', {}, t('home.teamTitle')), ' ', el('a', { href: '#/org' }, t('home.teamLink')))),
+    el('div', { class: 'strip' }, el('p', {}, el('b', {}, t('home.devTitle')), ' ', el('a', { href: '#/connect-agent' }, t('home.devLink')))),
+    el('div', { class: 'strip' }, el('p', {}, el('b', {}, t('home.n8nTitle')), ' ', t('home.n8nBody')), statusChip('preview'), el('a', { href: '#/import' }, t('home.n8nLink'))));
 }

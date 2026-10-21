@@ -18,6 +18,7 @@ import { failureText } from '../core/explain.mjs';
 import { FoundryApp } from '../core/service.mjs';
 import { handleDashboardApi, SECURITY } from '../dashboard/server.mjs';
 import { createSiteApi } from './api.mjs';
+import { connectInstructions } from '../cli.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const PUBLIC = path.join(here, 'public');
@@ -39,12 +40,14 @@ export async function siteApp({ workspace, builder = 'templates', tokenCap } = {
   return new FoundryApp({ workspace, builder: new SiteBuilder(text ? { text } : {}) });
 }
 
-/** Create (not start) the site server. options: token, now (clock for run inputs), keychain, keyCheckBaseUrl (tests: 127.0.0.1 only), log. */
+/** Create (not start) the site server. options: token (the workspace's session key, app/site/session.mjs), now (clock for records), asOf (the
+ *  date runs and tests are as of; defaults to now), keychain, keyCheckBaseUrl (tests: 127.0.0.1 only), log. */
 export function createSite(app, options = {}) {
   const token = options.token ?? randomBytes(24).toString('base64url');
   const expected = Buffer.from(token);
   let port = null;
   const api = createSiteApi(app, options);
+  const openCommand = options.openCommand ?? connectInstructions(options.workspace ?? app.root).openCommand;
   const send = (res, status, body, type = 'application/json; charset=utf-8', extra = {}) => {
     if (res.headersSent) return;
     res.writeHead(status, { ...SECURITY, 'content-type': type, ...extra });
@@ -61,9 +64,11 @@ export function createSite(app, options = {}) {
         if (!file.startsWith(PUBLIC + path.sep) || !existsSync(file)) return send(res, 404, { error: 'not found' });
         return send(res, 200, readFileSync(file), TYPES[path.extname(file)]);
       }
+      // The one thing the page may learn without the key: the command that opens Foundry again for this folder (no secret in it).
+      if (req.method === 'GET' && url.pathname === '/open-info') return send(res, 200, { open: openCommand });
       if (!url.pathname.startsWith('/api/')) return send(res, 404, { error: 'not found' });
       const given = Buffer.from(String(req.headers['x-foundry-token'] ?? ''));
-      if (given.length !== expected.length || !timingSafeEqual(given, expected)) return send(res, 401, { error: 'This page needs the link printed by `node app/cli.mjs site`.' });
+      if (given.length !== expected.length || !timingSafeEqual(given, expected)) return send(res, 401, { error: 'This page needs Foundry\'s key. Run `node app/cli.mjs open` in your terminal to get the link again.', code: 'NO_KEY' });
       if (await handleDashboardApi(app, req, res, url, send)) return;
       let body = null;
       if (['POST', 'PUT'].includes(req.method)) {

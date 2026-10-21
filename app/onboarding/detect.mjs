@@ -3,8 +3,10 @@
 // to the configured servers). Two checks parse a file, and only with the person's consent (consent: true), and only the named keys:
 //   managed Claude Code policy  managed-settings.json: allowedMcpServers, deniedMcpServers, allowManagedMcpServersOnly
 //                               managed-mcp.json: the server entries (to see whether Foundry's exact command is among them)
-//   answering hooks             ~/.claude/settings.json and ./.claude/settings.json: whether hooks.Elicitation or
-//                               hooks.ElicitationResult exist (a local hook can answer Foundry's dialog for the person)
+//   answering hooks             ~/.claude/settings.json, ~/.claude/settings.local.json, ./.claude/settings.json and
+//                               ./.claude/settings.local.json: whether hooks.Elicitation or hooks.ElicitationResult exist (a local hook
+//                               can answer Foundry's dialog for the person). Plugin hooks and managed hooks are not read: the brief tells
+//                               IT to set allowManagedHooksOnly, which keeps user, project, local and plugin hooks out.
 import { existsSync, statSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import path from 'node:path';
@@ -66,7 +68,7 @@ export async function detect({ env = process.env, os = platform(), home = env.FO
   }
   let hook = { checked: false };
   if (consent) {
-    const found = [path.join(home, '.claude', 'settings.json'), path.join(cwd, '.claude', 'settings.json')].filter(isFile).map(f => {
+    const found = [path.join(home, '.claude', 'settings.json'), path.join(home, '.claude', 'settings.local.json'), path.join(cwd, '.claude', 'settings.json'), path.join(cwd, '.claude', 'settings.local.json')].filter(isFile).map(f => {
       const hooks = readJson(f)?.hooks ?? {};
       return Object.hasOwn(hooks, 'Elicitation') || Object.hasOwn(hooks, 'ElicitationResult') ? f : null;
     }).filter(Boolean);
@@ -80,12 +82,12 @@ export async function detect({ env = process.env, os = platform(), home = env.FO
 export function detectLines(d) {
   const lines = [];
   const found = Object.entries({ 'Claude Code': d.agents.claudeCode, Cursor: d.agents.cursor, Codex: d.agents.codex }).filter(([, a]) => a.onPath || a.folder).map(([n]) => n);
-  lines.push({ check: 'Coding agents', ok: true, optional: true, say: found.length ? `Found ${found.join(', ')}. Connect one with: node app/cli.mjs connect` : 'No coding agent found. You can use Foundry in your browser without one.' });
+  lines.push({ check: 'Coding agents', ok: true, optional: true, say: found.length ? `Found ${found.join(', ')}. See the line to paste with: node app/cli.mjs connect (or on the page: Connections, then your agent)` : 'No coding agent found. You can use Foundry in your browser without one.' });
   if (d.managed.present) lines.push({ check: 'Managed computer', ok: true, optional: true, managed: true,
     say: `Your organisation manages Claude Code on this computer.${d.managed.admission ? ` Would Foundry be allowed: ${d.managed.admission.admitted} (${d.managed.admission.why})` : ''} A one-page brief for IT is in the site.` });
   lines.push({ check: 'Keychain', ok: true, optional: true, say: d.keychain === 'none' ? 'No keychain Foundry can use: AI keys cannot be saved (you do not need one).' : `AI keys, if you add one, go into your keychain (${d.keychain}).` });
   if (d.envKeyNames.length) lines.push({ check: 'Keys in your environment', ok: true, optional: true, say: `Set in your terminal: ${d.envKeyNames.join(', ')}. Foundry does not read their values unless you choose an AI builder.` });
   lines.push({ check: 'Port', ok: true, optional: true, say: d.port.free ? `Port ${d.port.default} is free.` : `Port ${d.port.default} is in use; Foundry will pick another.` });
-  if (d.hook.checked && d.hook.answeringHook) lines.push({ check: 'Answering hook', ok: true, optional: true, say: 'Your Claude Code has a hook that could answer Foundry\'s dialog for you. Start the MCP server with --consent and Foundry asks you in your browser instead.' });
+  if (d.hook.checked && d.hook.answeringHook) lines.push({ check: 'Answering hook', ok: true, optional: true, say: 'Your Claude Code has a hook that could answer Foundry\'s dialog for you, so Foundry asks you in your browser instead (the line from connect includes --consent for this).' });
   return lines;
 }

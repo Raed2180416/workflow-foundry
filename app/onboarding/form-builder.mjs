@@ -9,10 +9,13 @@
 //     answers only, never the settings the agent filled: an address the agent invented becomes the template's own question.
 //   - An optional policy hook (app/onboarding/proposal-check.mjs) prefills values a rule owner set and refuses a widening.
 import { FoundryError } from '../../src/data.mjs';
-import { loadLibrary, templateById, catalog, resolveSlots, instantiate, promises, practiceOf } from '../core/library.mjs';
+import { loadLibrary, templateById, catalog, resolveSlots, instantiate, practiceOf } from '../core/library.mjs';
 import { validateStrict } from '../core/practice.mjs';
+import { applyCardText, cardPromises } from './card-text.mjs';
 
-export const FORM_BUILDER_ID = 'template-form/1 (no model; the person or their agent filled the settings)';
+// /2: the card's wording revisions (app/onboarding/card-text.json) are applied to what it builds; the template stays the authority for
+// every step, check and capability.
+export const FORM_BUILDER_ID = 'template-form/2 (no model; card text r2; the person or their agent filled the settings)';
 export const ORIGINS = Object.freeze(['site-form', 'agent']);
 const SCALAR = v => ['string', 'number', 'boolean'].includes(typeof v);
 
@@ -84,11 +87,11 @@ export class TemplateFormBuilder {
     }
     if (r.problems.length) return { status: 'build_failed', builder: this.id, template: t.id, understood, problems: r.problems,
       reply: `These settings do not fit together: ${r.problems.join('; ')}. Change them and try again. Nothing was created.` };
-    const workflow = instantiate(t, r.values, { version: base ? base.version + 1 : 1, id: base?.id ?? null, builder: this.id });
+    const workflow = applyCardText(t, instantiate(t, r.values, { version: base ? base.version + 1 : 1, id: base?.id ?? null, builder: this.id }), r.values).workflow;
     const validation = validateStrict(workflow);
     if (!validation.valid) return { status: 'build_failed', builder: this.id, template: t.id, understood, problems: validation.errors.map(e => `${e.code}: ${e.message}`).slice(0, 6),
       reply: 'These settings make an automation that does not pass Foundry\'s own checks. Nothing was created.' };
-    const { willDo, willNotDo } = promises(t, r.values);
+    const { willDo, willNotDo } = cardPromises(t, r.values);
     return { status: 'ready', builder: this.id, template: t.id, workflow, understood, sampleInput: practiceOf(t).input, willDo, willNotDo,
       args: { template: t.id, settings, answers, origin, request } };
   }
@@ -97,7 +100,7 @@ export class TemplateFormBuilder {
   rebase(built, base) {
     if (built.status !== 'ready') return built;
     const t = templateById(built.template, this.library);
-    return { ...built, workflow: instantiate(t, built.understood.slots, { version: base.version + 1, id: base.id, builder: this.id }) };
+    return { ...built, workflow: applyCardText(t, instantiate(t, built.understood.slots, { version: base.version + 1, id: base.id, builder: this.id }), built.understood.slots).workflow };
   }
 }
 
@@ -112,7 +115,7 @@ export function restate({ template, settings = {}, library = loadLibrary(), poli
   const r = resolveSlots(t, { slots, notStated: t.slots.map(s => s.name).filter(n => !Object.hasOwn(slots, n)), questions: [], assumptions: [] }, { text: words(slots).join('\n') });
   const placeholder = s => s.type === 'email' ? 'the address you give' : s.type === 'channel' ? 'the channel you give' : ['number', 'integer'].includes(s.type) ? 'the amount you choose' : null;
   const shown = Object.fromEntries(t.slots.map(s => { const v = r.values[s.name] ?? s.default ?? null; return [s.name, v === null || v === '' ? placeholder(s) ?? v : v]; }));
-  const { willDo, willNotDo } = promises(t, shown);
+  const { willDo, willNotDo } = cardPromises(t, shown);
   return { template: t.id, values: r.values, defaults: r.defaults, questions: r.questions, problems: [...(checked.refusals ?? []).map(x => x.message), ...r.problems],
     setBy: checked.answered ?? [], willDo, willNotDo };
 }
