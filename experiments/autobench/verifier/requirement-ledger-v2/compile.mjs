@@ -62,7 +62,7 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
       const t = { email };
       if (pol === 'must') {
         add('msg_to', { target: t });
-        for (const l of lits) add('msg_has', { target: t, lit: l.text }, { computed: l.computed && !l.grounded });
+        for (const l of lits) add('msg_has', { target: t, lit: l.text, person: l.person }, { computed: l.computed && !l.grounded });
         for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: true });
       } else if (excl.length) for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: negWeak || sideWeak });
       else add('msg_none', { target: t }, { weak: negWeak || sideWeak });
@@ -71,7 +71,7 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
     const t = { ptr: req.record };
     if (pol === 'must') {
       add('rec_changed', { ptr: req.record, scope: 'reply' });
-      for (const l of lits) add('msg_has', { target: t, lit: l.text }, { computed: l.computed && !l.grounded });
+      for (const l of lits) add('msg_has', { target: t, lit: l.text, person: l.person }, { computed: l.computed && !l.grounded });
       for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: true });
     } else if (excl.length) for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: negWeak || sideWeak });
     else add('rec_unchanged', { ptr: req.record, scope: 'reply' }, { weak: negWeak || sideWeak });
@@ -79,7 +79,7 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
     const t = { channel: req.channel };
     if (pol === 'must') {
       add('post_in', { target: t });
-      for (const l of lits) add('msg_has', { target: t, lit: l.text }, { computed: l.computed && !l.grounded });
+      for (const l of lits) add('msg_has', { target: t, lit: l.text, person: l.person }, { computed: l.computed && !l.grounded });
       for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: true });
     } else if (excl.length) for (const l of excl) add('msg_lacks', { target: t, lit: l.text }, { weak: negWeak || sideWeak });
     else add('post_none', { target: t }, { weak: negWeak || sideWeak });
@@ -87,8 +87,8 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
     if (pol === 'must') {
       if (req.field && req.value && (req.valueGrounded || req.computed)) add('rec_field', { ptr: req.record, field: req.field, value: req.value }, { computed: !req.valueGrounded });
       else add('rec_changed', { ptr: req.record, scope: 'any' });
-      for (const l of lits) add('msg_has', { target: { ptr: req.record }, lit: l.text }, { computed: l.computed && !l.grounded });
-    } else if (req.field && req.value) add('rec_field_not', { ptr: req.record, field: req.field, value: req.value }, { weak: negWeak || sideWeak });
+      for (const l of lits) add('msg_has', { target: { ptr: req.record }, lit: l.text, person: l.person }, { computed: l.computed && !l.grounded });
+    } else if (req.field && req.value) add('rec_field_not', { ptr: req.record, field: req.field, value: req.value }, { weak: negWeak || sideWeak || req.type === 'scope' });
     // "do not process X" rarely means "do not touch X's record at all": without a field it is a soft guess
     else add('rec_unchanged', { ptr: req.record, scope: 'any' }, { weak: true });
   } else if (effect === 'delete_record' && req.record) {
@@ -99,7 +99,7 @@ export function compileRequirement(req, { itemLabels = new Map() } = {}) {
     const base = { app: req.app || req.container?.ptr.split('.')[0] || '', container: req.container?.id ?? null, label: null };
     if (pol === 'must') {
       add('created_in', base);
-      for (const l of lits) add('created_has', { ...base, lit: l.text }, { computed: l.computed && !l.grounded });
+      for (const l of lits) add('created_has', { ...base, lit: l.text, person: l.person }, { computed: l.computed && !l.grounded });
     } else {
       const dist = excl.length ? excl.map(l => l.text) : lits.length ? lits.map(l => l.text) : label ? [label] : [];
       for (const lit of dist) add('created_none', { app: base.app, container: base.container, lit }, { weak: negWeak || sideWeak });

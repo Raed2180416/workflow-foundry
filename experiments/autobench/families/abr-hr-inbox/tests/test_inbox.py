@@ -508,9 +508,10 @@ def test_derived_close_counts_equal_the_ideal_on_the_reference(ref_worlds):
                    and m["date"] >= int(gen.datetime.fromisoformat(em["derive"]["since"].replace("Z", "+00:00")).timestamp() * 1000))
         b["gmail"]["messages"].append(dict(copy.deepcopy(fwd), id="abababababababab"))
         assert oracle.derive_counts(b, em)["Benefits"] == em["counts"]["Benefits"] + 1
-        # last week's mail and a row Filed last week never count
-        w0 = stream["world0"]
-        assert oracle.derive_counts(dict(w0, google_sheets=w0["google_sheets"]), em)["Grievances"] == 0
+        # in world0 only the week-boundary forward (sent after Monday 00:00 UTC) is this week's; last week's mail, last
+        # week's fraud report and the rows Filed last week never count
+        d0 = oracle.derive_counts(stream["world0"], em)
+        assert d0["Grievances"] == 0 and d0["Fraud reports"] == 0 and sum(d0[c] for c in gen.CATEGORIES) == 1
 
 
 def test_week_boundary_forward_is_this_weeks_sent_mail(streams):
@@ -555,11 +556,13 @@ def test_payroll_requests_are_clear_of_the_amendment():
 
 
 def test_policy_text_matches_the_oracle():
-    policy = (FAMILY_DIR / "POLICY.md").read_text()
+    """Findings 3-5: what the stricter oracle checks is written in the policy every arm gets."""
+    policy = " ".join((FAMILY_DIR / "POLICY.md").read_text().split())
     for token in ["as a whole phrase and ignoring letter case, `direct deposit`", "in force at the event's `at`",
-                  "Name that one\n     category and no other", "never say that the request was changed, approved or done",
+                  "(exactly that: no prefix, no other category)", "Name that one category and no other",
+                  "never say that the request was changed, approved or done", "never say that the details were changed",
                   "never post a Case ID (in any form) or grievance details", "anyone the Description names",
-                  "no other\n`<label>: <number>` line", "A greeting or a sign-off around them is fine"]:
+                  "no other `<label>: <number>` line", "A greeting or a sign-off around them is fine", "Policy version 1.1."]:
         assert token in policy, token
 
 

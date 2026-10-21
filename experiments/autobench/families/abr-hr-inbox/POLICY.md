@@ -72,11 +72,10 @@ Apply the **first** rule that matches:
    (section 9).
 2. **Bank change from the wrong sender.** The request text asks to change bank or direct-deposit details (it contains,
    as a whole phrase and ignoring letter case, `direct deposit`, `bank details`, `bank account` or `routing number`)
-   and the sender's address is not the named
-   employee's Email in the Employee Directory (an outside address, a look-alike domain, or another employee's
-   address). Email `security-team@company.example.com`, and nobody else, with subject
-   `Possible fraud: <the email's subject>` and a body naming the sender's address and the Employee ID. No
-   acknowledgement, no forward, nothing else, and never say that the details were changed.
+   and the sender's address is not the named employee's Email in the Employee Directory (an outside address, a
+   look-alike domain, or another employee's address). Email `security-team@company.example.com`, and nobody else,
+   with subject `Possible fraud: <the email's subject>` and a body naming the sender's address and the Employee ID.
+   No acknowledgement, no forward, nothing else, and never say that the details were changed.
 3. **Wrong sender.** Any other request whose sender's address is not the named employee's Email: escalate.
 4. **No category.** The request text matches no category (below): escalate.
 5. **Route it.**

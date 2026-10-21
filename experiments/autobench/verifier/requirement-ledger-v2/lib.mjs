@@ -63,9 +63,9 @@ export function numericLiteral(s) {
   return m ? Number(m[1].replace(/,/g, '')) : null;
 }
 
-/** Does `text` contain `literal`? Normalized substring; a numeric literal also matches an equal number in the text.
- *  -> 'exact' | 'numeric' | null */
-export function containsLiteral(text, literal) {
+/** Does `text` contain `literal`? Normalized substring; a numeric literal also matches an equal number in the text; a
+ *  person's name also matches by first name. -> 'exact' | 'numeric' | 'first-name' | null */
+export function containsLiteral(text, literal, { person = false } = {}) {
   const t = norm(text), l = norm(literal);
   if (!l) return 'exact';
   if (t.includes(l)) {
@@ -75,6 +75,12 @@ export function containsLiteral(text, literal) {
   }
   const n = numericLiteral(literal);
   if (n !== null && numbersIn(text).some(x => Math.abs(x - n) < 1e-9)) return 'numeric';
+  // a person's full name (the grounding step marks names that the world's own people records or addresses show to be a
+  // person's) is matched by the first name as a whole word: people are addressed by first name in messages
+  if (person) {
+    const first = norm(String(literal).trim().split(/\s+/)[0]);
+    if (first.length >= 3 && new RegExp(`(?<![a-z0-9])${first.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![a-z0-9])`).test(t)) return 'first-name';
+  }
   return null;
 }
 
@@ -166,6 +172,17 @@ export function remapRecord(rec, dstIdx) {
     if (score > bestScore) { bestScore = score; best = r; }
   }
   return bestScore >= 0.6 ? best : same ?? null;
+}
+
+/** Is this literal a person's name in this world? Two or three words, and an address local part or a first/last name
+ *  record field pair in the world carries its first and last word. */
+export function isPersonName(literal, idx) {
+  const words = norm(literal).split(' ').filter(Boolean);
+  if (words.length < 2 || words.length > 3 || words.some(w => !/^[a-z'.-]+$/.test(w))) return false;
+  const first = words[0], last = words.at(-1).replace(/[.']/g, '');
+  if (first.length < 2 || last.length < 2) return false;
+  for (const e of idx.emails) { const local = e.split('@')[0]; if (local.includes(last) && (local.includes(first) || local.startsWith(first[0]))) return true; }
+  return idx.recs.some(r => norm(r.record.first_name ?? r.record.firstName ?? '') === first && norm(r.record.last_name ?? r.record.lastName ?? '') === words.at(-1));
 }
 
 export const sha = async s => (await import('node:crypto')).createHash('sha256').update(String(s)).digest('hex');

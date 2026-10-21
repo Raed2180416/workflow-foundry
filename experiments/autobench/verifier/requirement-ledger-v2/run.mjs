@@ -23,7 +23,9 @@ import { CHECK_VERSION, runCodeChecks } from './check.mjs';
 import { JUDGE_SCHEMA, JUDGE_VERSION, judgeInput, parseJudge } from './judge.mjs';
 import { indexWorld } from './lib.mjs';
 
-export const MODELS = Object.freeze({ haiku: 'claude-haiku-5-5', mercury: 'mercury-3', sonnet: 'claude-sonnet-5-5' });
+export const MODELS = Object.freeze({ haiku: 'claude-haiku-5-5', haikum: 'claude-haiku-5-5', mercury: 'mercury-3', sonnet: 'claude-sonnet-5-5' });
+// Reader decoding: haiku = reasoning low (1024 thinking tokens), haikum = reasoning medium (8000); mercury: its default (low).
+const READER_REASONING = Object.freeze({ haiku: 'low', haikum: 'medium', sonnet: 'low' });
 const CLAUDE = new Set(['claude-haiku-5-5', 'claude-sonnet-5-5']);
 const list = s => (s ? String(s).split(',').map(x => x.trim()).filter(Boolean) : null);
 
@@ -127,7 +129,7 @@ async function main() {
       while (queue.length && !stop) {
         const j = queue.shift();
         if (CLAUDE.has(j.rd.modelId) && usd >= usdCap) { stop = `Claude budget cap $${usdCap} reached`; return; }
-        const decoding = j.rd.model === 'mercury' ? { maxTokens: Number(o['mercury-max-tokens'] ?? 12000), reasoning: o['mercury-reasoning'] ?? 'low' } : { reasoning: o.reasoning ?? 'low' };
+        const decoding = j.rd.model === 'mercury' ? { maxTokens: Number(o['mercury-max-tokens'] ?? 20000), reasoning: o['mercury-reasoning'] ?? 'low' } : { reasoning: o.reasoning ?? READER_REASONING[j.rd.model] };
         let res;
         try { res = await port.call({ runId: `rl2-extract-${EXTRACT_VERSION}`, nodeKey: `${j.rd.name}:${j.x.key}`, modelId: j.rd.modelId, system: j.x.system, prompt: j.x.prompt, schema: LEDGER_SCHEMA, decoding, mode: 'replay-or-live', sampleIndex: j.rd.sample }); }
         catch (e) { res = { ok: false, error: { code: e.code ?? 'ERROR', message: String(e.message ?? e).slice(0, 300) }, costUsd: e.costUsd ?? 0 }; }

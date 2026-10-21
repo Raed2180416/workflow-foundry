@@ -9,7 +9,7 @@
 // data: the model is told so, and nothing in them is executed.
 import { createHash } from 'node:crypto';
 import { renderWorld, ruleSourceHints } from './render.mjs';
-import { emailsIn, findSpan, grounded, indexWorld, norm, numericLiteral, resolvePtr } from './lib.mjs';
+import { emailsIn, findSpan, grounded, indexWorld, isPersonName, norm, numericLiteral, resolvePtr } from './lib.mjs';
 
 export const EXTRACT_VERSION = 'rl2-extract-v3';
 export const TYPES = Object.freeze(['positive', 'negative', 'scope', 'value', 'side_effect']);
@@ -198,7 +198,7 @@ export function groundLedger(raw, { view, idx }) {
       for (const lit of strs(list)) {
         if (lit.length > 300) { out.dropped.push({ id, what: 'literal-too-long', value: lit.slice(0, 80) }); continue; }
         const g = inSources(lit);
-        dst.push({ text: lit, grounded: g, computed: !g && (req.computed || numericLiteral(lit) !== null) });
+        dst.push({ text: lit, grounded: g, computed: !g && (req.computed || numericLiteral(lit) !== null), person: isPersonName(lit, idx) });
       }
     }
     if (req.value) req.valueGrounded = inSources(req.value);

@@ -117,7 +117,7 @@ export function evaluateCheck(check, eff, ctx) {
     case 'msg_has': {
       const m = messagesTo(P.target, eff, ctx);
       if (!m.length) return { pass: false, evidence: `no message to ${tname(P.target)} to carry ${JSON.stringify(P.lit)}` };
-      const hit = m.find(x => containsLiteral(x.text, P.lit));
+      const hit = m.find(x => containsLiteral(x.text, P.lit, { person: P.person }));
       return hit ? { pass: true, evidence: hit.where } : { pass: false, evidence: `${m.length} message(s) to ${tname(P.target)} lack ${JSON.stringify(P.lit)}` };
     }
     case 'msg_lacks': {
@@ -167,7 +167,7 @@ export function evaluateCheck(check, eff, ctx) {
     case 'created_has': {
       const m = createdMatching(P, eff);
       if (!m.length) return { pass: false, evidence: `no new ${P.app || ''} record${P.container ? ` in ${P.container}` : ''}${P.label ? ` naming ${JSON.stringify(P.label)}` : ''}` };
-      const hit = m.find(c => containsLiteral(c.text, P.lit));
+      const hit = m.find(c => containsLiteral(c.text, P.lit, { person: P.person }));
       return hit ? { pass: true, evidence: `${hit.app}.${hit.coll}:${hit.id}` } : { pass: false, evidence: `${m.length} new record(s) lack ${JSON.stringify(P.lit)}` };
     }
     case 'created_none': {

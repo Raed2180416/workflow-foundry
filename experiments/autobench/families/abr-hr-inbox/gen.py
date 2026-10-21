@@ -871,8 +871,8 @@ class Gen:
             cat = r.choice(CATEGORIES)
             subj, ask = r.choice(PLAIN[cat])
             subj, body = self.compose(emp, subj, self.fill(ask), {})
-            got = self.monday - timedelta(minutes=r.randint(1, 2), seconds=r.randint(0, 50))
-            sent = self.monday + timedelta(minutes=r.randint(0, 1), seconds=r.randint(5, 50))
+            got = self.monday - timedelta(seconds=r.randint(60, 150))      # handled within 4 minutes, like any trigger
+            sent = self.monday + timedelta(seconds=r.randint(5, 80))
             box = RULES[CATEGORIES.index(cat)][2] if cat != PAYROLL else self.payroll_at(sent)
             self.mail0.append({"from": self.from_header(emp["name"], emp["email"]), "to": [INBOX], "subject": subj, "body": body,
                                "at": got, "sent": False, "rng": "boundary"})
