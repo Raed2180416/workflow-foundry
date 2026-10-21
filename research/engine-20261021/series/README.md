@@ -7,7 +7,7 @@ survive the container; the code is NOT merged into the tree yet.
 changes (`experiments/lib/{services,models,runner}.mjs`, `src/executors/{claude-code,sandboxed-command}.mjs`,
 `src/models/policy.mjs`, `policy/models.json`), and processes started after a merge behave differently (PDEATHSIG,
 update switches off, more environment-fault classes, a 5M default gateway token cap). **Merge after p2-sealed writes its
-summary.** COMP-1's remaining C-H-T builds and the AutomationBench devCheck chain will record engine v2 in their manifests
+summary AND the OT-0 paid chain (PREREG-OT0 frozen at 27ff324 on engine v1; `experiments/constitution/ot0-chain.sh`) logs ALL DONE**: its freeze table pins four runtime files this series changes, so a merge mid-chain makes `preregCheck()` refuse the remaining arms. COMP-1's remaining C-H-T builds and the AutomationBench devCheck chain will record engine v2 in their manifests
 if they start after the merge.
 
 **Contents:** see `research/engine-20261021/ENGINE-BUMP.md` once merged; summary: engine compatibility ranges (rank 5),
