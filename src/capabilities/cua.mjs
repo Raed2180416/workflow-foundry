@@ -32,6 +32,9 @@ export class UiSession {
   constructor({ browser, entry, origin, holdPaths, scrub, maxSteps, observationTokens }) {
     Object.assign(this, { browser, entry, origin, scrub, maxSteps, observationTokens, steps: 0, held: [], pending: new Map(), violations: [], items: [], basis: null, lastUrl: null, tracing: false });
     this.allowed = new Set([new URL(origin).origin]);
+    // The origin as shown in held-request descriptors: a development (loopback) entry's port is dropped, as in its pins, so the model and
+    // the approver see the same descriptor in every fresh world (replay at $0); held requests are only ever on the allowed origin.
+    this.shownOrigin = entry?.dev === true ? (u => { u.port = ''; return u.origin; })(new URL(origin)) : new URL(origin).origin;
     this.hold = new RegExp(`/(${holdPaths.join('|')})(/|$|\\?)`, 'i');
   }
   async open({ login = null } = {}) {
@@ -61,7 +64,7 @@ export class UiSession {
     if ((method === 'GET' || method === 'HEAD') && !this.hold.test(url.pathname)) return route.continue();
     const body = request.postDataBuffer() ?? Buffer.alloc(0), headers = await request.allHeaders();
     // Deterministic id (session counter + request hash), so a replayed run shows the model the same transcript.
-    const bodyHash = sha256(body), held = { id: `held-${this.held.length + 1}-${sha256(`${method} ${url.pathname}${url.search} ${bodyHash}`).slice(0, 8)}`, method, origin: url.origin, path: url.pathname + url.search, bodyHash,
+    const bodyHash = sha256(body), held = { id: `held-${this.held.length + 1}-${sha256(`${method} ${url.pathname}${url.search} ${bodyHash}`).slice(0, 8)}`, method, origin: this.shownOrigin, path: url.pathname + url.search, bodyHash,
       bodyPreview: this.scrub ? this.scrub.redact(body.subarray(0, 512).toString('utf8')) : body.subarray(0, 512).toString('utf8'),
       navigation: request.isNavigationRequest() };
     this.held.push(held);
