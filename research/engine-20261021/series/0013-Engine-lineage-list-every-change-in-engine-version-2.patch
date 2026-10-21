@@ -1,0 +1,32 @@
+From f050ab50f5babd9bca03b6597acfb2e49f260db3 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:28:30 +0000
+Subject: [PATCH 13/16] Engine lineage: list every change in engine version 2
+ and why version-1 records stay readable
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ src/engine-lineage.json | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/engine-lineage.json b/src/engine-lineage.json
+index 9188668..05451a8 100644
+--- a/src/engine-lineage.json
++++ b/src/engine-lineage.json
+@@ -5,7 +5,11 @@
+   "resumesFrom": 1,
+   "changes": [
+     "engine compatibility ranges and engine.migrated (this file; src/engine.mjs, src/runtime.mjs execute, src/audit.mjs engineBinding)",
+-    "orch-20261021 patches 01-09: typed STORAGE_FULL/STORAGE_UNAVAILABLE; a recorded cancel request stops new starts; a handled Ctrl-C refunds a pure task's attempt (run_interrupts); outages retry on the same model then park agent nodes (status waiting, parked, parks; read only by this engine, absent from version-1 records); PDEATHSIG lifeline on spawns; budget.maxTokens and TOKEN_BUDGET (a version-1 run's bound policy has no maxTokens and keeps no runtime token limit). Each reads a version-1 record as version 1 wrote it."
++    "orch-20261021 patches 01-09: typed STORAGE_FULL/STORAGE_UNAVAILABLE; a recorded cancel request stops new starts; a handled Ctrl-C refunds a pure task's attempt (run_interrupts); outages retry on the same model then park agent nodes (status waiting, parked, parks; read only by this engine, absent from version-1 records); PDEATHSIG lifeline on spawns; budget.maxTokens and TOKEN_BUDGET (a version-1 run's bound policy has no maxTokens and keeps no runtime token limit). Each reads a version-1 record as version 1 wrote it.",
++    "verdict.remedy per stop code (rank 15): a field added to new verdicts; version-1 verdicts are read and re-graded as before (recompute compares verdict, code and authority only).",
++    "principal requirements on human nodes and workflow segregation rules (compromise D1, src/principals.mjs): optional IR fields; a version-1 run's workflow has none, its human nodes carry no bound requirement, and its answers are taken as before.",
++    "children.mjs lifelineExecFailed: setpriv's own exec failure is a launch failure (PROCESS_LAUNCH), as the spawn error was in version 1.",
++    "models/policy.mjs: DISABLE_UPDATES in the closed child-env list; an executor-only session subset may have an empty models[] (validatePolicy option executorOnly). Neither changes a version-1 run's model policy, which is bound by its own hash (MODEL_POLICY_DRIFT applies as before)."
+   ],
+   "predecessors": [
+     {
+-- 
+2.43.0
+

@@ -1,0 +1,114 @@
+From 6203fb69c4e8ff01b363b09cba5d323981d2b27b Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:28:19 +0000
+Subject: [PATCH 09/16] Follow-ups to patches 05 and 09 found by the full test
+ suite
+
+- Patch 05's lifeline (setpriv) turned a missing binary into 'exited with 127'
+  (PROCESS_FAILED); children.mjs lifelineExecFailed recognises setpriv's own exec failure
+  and runProcess reports PROCESS_LAUNCH, as the spawn error was before the wrapper. The
+  spawn mock in tests/evaluator-audit.test.mjs unwraps the lifeline (8 tests).
+- Patch 09 binds the runtime's default maxTokens into every new run's policy: trials
+  carry the host's token bound in their reserved policy (its hash must match the run's),
+  and the legacy-store fixture comparison in tests/store-rows.test.mjs allows that
+  runtime addition, as it already allows dispatch.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ src/children.mjs               | 3 +++
+ src/process.mjs                | 4 +++-
+ src/trials.mjs                 | 4 +++-
+ tests/evaluator-audit.test.mjs | 8 ++++++--
+ tests/store-rows.test.mjs      | 5 ++++-
+ 5 files changed, 19 insertions(+), 5 deletions(-)
+
+diff --git a/src/children.mjs b/src/children.mjs
+index 05fe114..78ac67f 100644
+--- a/src/children.mjs
++++ b/src/children.mjs
+@@ -18,6 +18,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
+ const SETPRIV = process.platform === 'linux' ? (['/usr/bin/setpriv', '/bin/setpriv'].find(p => { try { return existsSync(p); } catch { return false; } }) ?? null) : null;
+ /** [command, args] for spawn(): `command` wrapped so that it dies with the process that spawns it (see SETPRIV); unchanged without setpriv. */
+ export function lifeline(command, args) { return SETPRIV ? [SETPRIV, ['--pdeathsig', 'KILL', '--', command, ...args]] : [command, args]; }
++/** Did setpriv itself fail to exec the wrapped command (it exits 126/127 and says so)? That is a launch failure of the command, as a spawn
++ *  ENOENT/EACCES was before the lifeline wrapped it, never a run of the command that failed. */
++export const lifelineExecFailed = (code, stderr = '') => !!SETPRIV && (code === 126 || code === 127) && /^setpriv: failed to execute /m.test(String(stderr));
+ 
+ /** Set by the runtime around a sandbox or model call: {add(child), remove(pid)}. */
+ export const childScope = new AsyncLocalStorage();
+diff --git a/src/process.mjs b/src/process.mjs
+index a457846..79be5d7 100644
+--- a/src/process.mjs
++++ b/src/process.mjs
+@@ -1,7 +1,7 @@
+ import { spawn } from 'node:child_process';
+ import { StringDecoder } from 'node:string_decoder';
+ import { FoundryError } from './data.mjs';
+-import { lifeline, trackChild } from './children.mjs';
++import { lifeline, lifelineExecFailed, trackChild } from './children.mjs';
+ 
+ /** Bounded argv-only subprocess. No shell parsing or inherited credential env. */
+ export async function runProcess(command, args, { cwd, env, input = '', timeoutMs = 60000, signal, maxBytes = 4 * 1024 * 1024 } = {}) {
+@@ -41,6 +41,8 @@ export async function runProcess(command, args, { cwd, env, input = '', timeoutM
+       if (failure) kill();
+       const result = { command, args, code, signal: terminationSignal, stdout, stderr, elapsedMs: Date.now() - startedAt };
+       if (failure) { failure.processResult = result; reject(failure); }
++      // The lifeline (setpriv) could not exec the command: a launch failure, as the spawn error was before the wrapper (patch 05 follow-up).
++      else if (lifelineExecFailed(code, stderr)) { const error = new FoundryError('PROCESS_LAUNCH', `${command} could not be launched: ${stderr.trim().split('\n').at(-1).slice(0, 200)}`); error.processResult = result; reject(error); }
+       else if (code !== 0) { const error = new FoundryError('PROCESS_FAILED', `${command} exited with ${code ?? terminationSignal}`); error.processResult = result; reject(error); }
+       else resolve(result);
+     });
+diff --git a/src/trials.mjs b/src/trials.mjs
+index 1c2244b..0a1f57c 100644
+--- a/src/trials.mjs
++++ b/src/trials.mjs
+@@ -35,7 +35,9 @@ export class TrialRunner {
+         return normal.allowedCapabilities.includes(name) && cap.risk === 'low' && !cap.requiresApproval && cap.effects !== 'non-idempotent' && cap.cost === 0;
+       }),
+       maxSteps: Math.min(maxSteps, normal.maxSteps), maxDurationMs: Math.min(maxDurationMs, normal.maxDurationMs),
+-      maxConcurrency: Math.min(2, normal.maxConcurrency), maxCost: 0, maxResumes: 1
++      maxConcurrency: Math.min(2, normal.maxConcurrency), maxCost: 0, maxResumes: 1,
++      // The host's token bound (orch-20261021 patch 09): the trial's runtime binds it into the run's policy, which must hash as reserved.
++      ...(Number.isSafeInteger(normal.maxTokens) ? { maxTokens: normal.maxTokens } : {})
+     };
+     this.limits = { maxPerRequest, maxTotal };
+   }
+diff --git a/tests/evaluator-audit.test.mjs b/tests/evaluator-audit.test.mjs
+index 2233d41..8cd24f1 100644
+--- a/tests/evaluator-audit.test.mjs
++++ b/tests/evaluator-audit.test.mjs
+@@ -299,8 +299,12 @@ for (const limit of [NaN, Infinity, -1]) audit(`invalid subprocess output bound
+ // protocol fixtures NEVER execute the selected binary, bubblewrap, or a model.
+ function syntheticSpawn(t, respond) {
+   const calls = [];
+-  const replacement = t.mock.method(childProcess, 'spawn', (command, args, options) => {
+-    calls.push({ command, args, options });
++  const replacement = t.mock.method(childProcess, 'spawn', (spawned, spawnedArgs, options) => {
++    // The lifeline (src/children.mjs, orch-20261021 patch 05) is transparent: on Linux every spawn is `setpriv --pdeathsig KILL -- command
++    // args`; the control sees the command it wraps.
++    const wrapped = /\/setpriv$/.test(spawned) && spawnedArgs?.[0] === '--pdeathsig' && spawnedArgs?.[2] === '--';
++    const command = wrapped ? spawnedArgs[3] : spawned, args = wrapped ? spawnedArgs.slice(4) : spawnedArgs;
++    calls.push({ command, args, options, lifeline: wrapped });
+     const child = new EventEmitter(); child.stdout = new PassThrough(); child.stderr = new PassThrough(); child.stdin = new PassThrough(); child.stdin.resume();
+     queueMicrotask(() => {
+       try {
+diff --git a/tests/store-rows.test.mjs b/tests/store-rows.test.mjs
+index f60415a..d5995cb 100644
+--- a/tests/store-rows.test.mjs
++++ b/tests/store-rows.test.mjs
+@@ -150,7 +150,10 @@ test('compatibility: the same workflow and input on the current store produce th
+   const run = runtime.create(workflow, { notes: 'legacy store', items: ['a', 'b', 'c'] });
+   const result = await runtime.execute(run.id);
+   assert.equal(result.status, 'succeeded');
+-  assert.deepEqual(scrub(result), scrub(record), 'the record');
++  // The runtime's default token budget (orch-20261021 patch 09, engine bump 2026-10-21) is bound into every new run's policy; the fixture
++  // predates it. It is the runtime's addition, not the store's, like `dispatch` below.
++  assert.equal(result.policy.maxTokens, runtime.policy.maxTokens);
++  assert.deepEqual(scrub(result), scrub({ ...record, policy: { ...record.policy, maxTokens: runtime.policy.maxTokens } }), 'the record');
+   assert.deepEqual(Object.keys(result).sort(), Object.keys(record).sort());
+   assert.deepEqual(store.run(run.id), result, 'what execute returns is what is stored');
+   const wanted = fixture.events.map(e => JSON.parse(e.body)), got = store.events(run.id);
+-- 
+2.43.0
+

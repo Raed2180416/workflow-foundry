@@ -1,0 +1,651 @@
+{
+ "arm": "B-H",
+ "case": "L2",
+ "expected": "lead-triage",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": "lead-triage",
+   "selection": {
+    "template": "lead-triage",
+    "reason": "The request is to route each new inbound lead to a specific person by simple rules (company size, referral source, otherwise a shared inbox), which is exactly what lead-triage does.",
+    "notCovered": [
+     "Keeping a log of who got each lead is part of the template, but the exact log format is the template's own and may not match any specific preference.",
+     "Routing is by company size and source only; the request has no region or budget rules, which the template supports but are not needed here."
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.000717,
+  "tokens": 5729,
+  "inputTokens": 4,
+  "outputTokens": 691,
+  "cacheReadTokens": 2245,
+  "cacheWriteTokens": 2789,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 230,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1678,
+   "costUsd": 0.00033307,
+   "costUnknown": false,
+   "latencyMs": 2732,
+   "journalId": 19
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 461,
+   "cacheReadTokens": 1433,
+   "cacheWriteTokens": 1111,
+   "costUsd": 0.000383905,
+   "costUnknown": false,
+   "latencyMs": 4218,
+   "journalId": 21
+  }
+ ],
+ "builderWallMs": 7237,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "lead-triage",
+ "slots": {
+  "rules": [
+   {
+    "field": "companySize",
+    "op": "atLeast",
+    "value": "500",
+    "assignTo": "raj@tallyhq.com"
+   },
+   {
+    "field": "source",
+    "op": "is",
+    "value": "referral",
+    "assignTo": "sofia@tallyhq.com"
+   }
+  ],
+  "defaultAssignee": "sales@tallyhq.com"
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "lead-triage",
+  "version": 1,
+  "title": "New lead routing",
+  "goal": "Each run, send every new lead to the first matching person (companySize at least 500 → raj@tallyhq.com; source is referral → sofia@tallyhq.com; otherwise sales@tallyhq.com), one e-mail per lead after a person approves it, and log the assignment.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The leads sheet holds one row per lead with name, email, company, region, country, source, companySize, budget, message and status",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "A lead sent to the wrong person or to no one",
+    "A lead's details sent outside the team"
+   ],
+   "successCriteria": [
+    "Every new lead was sent to exactly one person",
+    "Every assignment is in the lead log",
+    "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)"
+   ],
+   "unsupported": [
+    "Replying to leads",
+    "Changing the leads sheet",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 3000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the leads sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "fresh",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep the new leads that have an e-mail address",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "new"
+      },
+      {
+       "field": "email",
+       "op": "exists"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "routed",
+    "kind": "task",
+    "needs": [
+     "fresh"
+    ],
+    "description": "Pick the person for each lead",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.fresh.rows"
+     },
+     "rules": [
+      {
+       "field": "companySize",
+       "op": "gte",
+       "value": 500,
+       "set": {
+        "assignTo": "raj@tallyhq.com"
+       }
+      },
+      {
+       "field": "source",
+       "op": "eq",
+       "value": "referral",
+       "set": {
+        "assignTo": "sofia@tallyhq.com"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "sales@tallyhq.com"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify",
+    "kind": "map",
+    "needs": [
+     "routed"
+    ],
+    "description": "E-mail each lead to its person",
+    "items": {
+     "$ref": "nodes.routed.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the lead e-mail",
+       "tool": "core.template",
+       "args": {
+        "text": "New lead for you:\n\nName: {{name}}\nCompany: {{company}}\nE-mail: {{email}}\nRegion: {{region}} ({{country}})\nCompany size: {{size}}\nBudget: {{budget}}\nSource: {{source}}\n\nMessage:\n{{message}}\n\nPlease follow up within one business day.",
+        "variables": {
+         "name": {
+          "$ref": "item.name",
+          "default": ""
+         },
+         "company": {
+          "$ref": "item.company",
+          "default": ""
+         },
+         "email": {
+          "$ref": "item.email"
+         },
+         "region": {
+          "$ref": "item.region",
+          "default": ""
+         },
+         "country": {
+          "$ref": "item.country",
+          "default": ""
+         },
+         "size": {
+          "$ref": "item.companySize",
+          "default": ""
+         },
+         "budget": {
+          "$ref": "item.budget",
+          "default": ""
+         },
+         "source": {
+          "$ref": "item.source",
+          "default": ""
+         },
+         "message": {
+          "$ref": "item.message",
+          "default": ""
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject line",
+       "tool": "core.template",
+       "args": {
+        "text": "New lead: {{company}} ({{name}})",
+        "variables": {
+         "company": {
+          "$ref": "item.company",
+          "default": ""
+         },
+         "name": {
+          "$ref": "item.name",
+          "default": ""
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose",
+        "subject"
+       ],
+       "description": "E-mail the lead to its person (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.assignTo"
+        },
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "logRows",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "Prepare the assignment log rows",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.routed.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ],
+     "set": {
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log",
+    "kind": "task",
+    "needs": [
+     "logRows",
+     "notify"
+    ],
+    "description": "Log who got which lead in the lead-log sheet",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.logRows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "expected",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "Who should have received a lead e-mail",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.routed.rows"
+     },
+     "field": "assignTo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "expected",
+     "notify"
+    ],
+    "description": "Re-read the outbox: one e-mail per lead to its person, each intact",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.expected.items"
+      }
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.notify"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "logAudit",
+    "kind": "verify",
+    "needs": [
+     "log",
+     "routed"
+    ],
+    "description": "Re-read the lead log: one row per routed lead",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.routed.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.notify.count"
+    },
+    "right": {
+     "$ref": "nodes.routed.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.logAudit.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P02 fetch -> transform -> write, P04 draft -> check -> deliver",
+    "research/intent-20261021/corpus-prior.md (crm-or-commerce automations)",
+    "app/core/templates/lead-triage.json sha256 a281f1ea7bbbacd4dead5c702a7d496fbf97d5103f78fda4e767a598f099c702"
+   ],
+   "tags": [
+    "template:lead-triage",
+    "builder:model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974)",
+    "slots:{\"defaultAssignee\":\"sales@tallyhq.com\",\"rules\":[{\"assignTo\":\"raj@tallyhq.com\",\"field\":\"companySize\",\"op\":\"atLeast\",\"value\":\"500\"},{\"assignTo\":\"sofia@tallyhq.com\",\"field\":\"source\",\"op\":\"is\",\"value\":\"referral\"}]}"
+   ],
+   "rationale": "Frontier-written template \"lead-triage\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 5,
+   "approved": 5,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "sales@tallyhq.com",
+     "subject": "New lead: Bluegate (Kim Lee)",
+     "body": "New lead for you:\n\nName: Kim Lee\nCompany: Bluegate\nE-mail: kim@bluegate.example\nRegion: NA (Canada)\nCompany size: 499\nBudget: 15000\nSource: website\n\nMessage:\nPricing?\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "sales@tallyhq.com",
+     "subject": "New lead: Sparrow Apps (Jon Park)",
+     "body": "New lead for you:\n\nName: Jon Park\nCompany: Sparrow Apps\nE-mail: jon@sparrowapps.example\nRegion: APAC (Korea)\nCompany size: 15\nBudget: 2000\nSource: event\n\nMessage:\nSaw your talk\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "raj@tallyhq.com",
+     "subject": "New lead: Ferrovia Systems (Gia Moretti)",
+     "body": "New lead for you:\n\nName: Gia Moretti\nCompany: Ferrovia Systems\nE-mail: gia@ferrovia.example\nRegion: EMEA (Italy)\nCompany size: 1200\nBudget: 80000\nSource: website\n\nMessage:\nRollout for 40 stations\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "raj@tallyhq.com",
+     "subject": "New lead: Nordlys Energy (Ida Nygaard)",
+     "body": "New lead for you:\n\nName: Ida Nygaard\nCompany: Nordlys Energy\nE-mail: ida@nordlys.example\nRegion: EMEA (Norway)\nCompany size: 800\nBudget: 50000\nSource: referral\n\nMessage:\nReferred by our auditor\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "sofia@tallyhq.com",
+     "subject": "New lead: Tidewater Co (Hal Brooks)",
+     "body": "New lead for you:\n\nName: Hal Brooks\nCompany: Tidewater Co\nE-mail: hal@tidewater.example\nRegion: NA (USA)\nCompany size: 40\nBudget: 6000\nSource: referral\n\nMessage:\nSam said to reach out\n\nPlease follow up within one business day."
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "raj@tallyhq.com",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Ferrovia Systems",
+      "email": "gia@ferrovia.example",
+      "name": "Gia Moretti"
+     },
+     {
+      "assignTo": "sofia@tallyhq.com",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Tidewater Co",
+      "email": "hal@tidewater.example",
+      "name": "Hal Brooks"
+     },
+     {
+      "assignTo": "raj@tallyhq.com",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Nordlys Energy",
+      "email": "ida@nordlys.example",
+      "name": "Ida Nygaard"
+     },
+     {
+      "assignTo": "sales@tallyhq.com",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Sparrow Apps",
+      "email": "jon@sparrowapps.example",
+      "name": "Jon Park"
+     },
+     {
+      "assignTo": "sales@tallyhq.com",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Bluegate",
+      "email": "kim@bluegate.example",
+      "name": "Kim Lee"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b-h-1/worlds/foundry-live-PxWz2Z",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new lead was sent to exactly one person",
+    "exact": "the count of “E-mail each lead to its person” equals the count of “Pick the person for each lead”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every assignment is in the lead log",
+    "exact": "the pass of “Re-read the outbox: one e-mail per lead to its person, each intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)",
+    "exact": "the pass of “Re-read the lead log: one row per routed lead” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Re-read the outbox: one e-mail per lead to its person, each intact",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.logAudit",
+    "plain": "Re-read the lead log: one row per routed lead",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 6,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 1,
+  "slotChecksOk": 1
+ }
+}

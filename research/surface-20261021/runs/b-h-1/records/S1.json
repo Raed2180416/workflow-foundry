@@ -1,0 +1,708 @@
+{
+ "arm": "B-H",
+ "case": "S1",
+ "expected": "support-deflection",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": "support-deflection",
+   "selection": {
+    "template": "support-deflection",
+    "reason": "The request is to answer open tickets that match common questions (shipping and password) with the user's own reply text, and send every other ticket to a person in one digest, which is exactly what this template does.",
+    "notCovered": [
+     "Sending the digest to help@cobaltcandle.com is assumed to be the digest recipient; confirm that the template's digest address can be set to this address.",
+     "The shipping reply promises a tracking link by email; the template sends only the reply text the user wrote, so the link must be included in that text or sent separately."
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.00111,
+  "tokens": 6137,
+  "inputTokens": 4,
+  "outputTokens": 1163,
+  "cacheReadTokens": 812,
+  "cacheWriteTokens": 4158,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 388,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1683,
+   "costUsd": 0.00041269500000000003,
+   "costUnknown": false,
+   "latencyMs": 4442,
+   "journalId": 23
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 775,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 2475,
+   "costUsd": 0.000697075,
+   "costUnknown": false,
+   "latencyMs": 5379,
+   "journalId": 25
+  }
+ ],
+ "builderWallMs": 10081,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "support-deflection",
+ "slots": {
+  "answers": [
+   {
+    "keyword": "shipping",
+    "reply": "Orders ship within 2-3 business days. You will receive a tracking link by email once your order ships."
+   },
+   {
+    "keyword": "where is my order",
+    "reply": "Orders ship within 2-3 business days. You will receive a tracking link by email once your order ships."
+   },
+   {
+    "keyword": "password",
+    "reply": "To reset your password, please use the 'forgot password' link on the login page."
+   }
+  ],
+  "escalateTo": "help@cobaltcandle.com",
+  "signature": "The support team"
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "support-deflection",
+  "version": 1,
+  "title": "Support ticket answers and escalation",
+  "goal": "Each run, answer the open, non-urgent tickets that mention a known keyword with the person's reply for it, and send every other open ticket to help@cobaltcandle.com in one digest, after a person approves each e-mail.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The tickets sheet holds one row per ticket with id, from, subject, body, priority and status",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "An urgent or unusual ticket answered by a canned reply",
+    "A ticket that nobody sees"
+   ],
+   "successCriteria": [
+    "Every open ticket was either answered with a matching reply or sent to the person",
+    "No urgent ticket was answered automatically",
+    "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)"
+   ],
+   "unsupported": [
+    "Closing tickets",
+    "Writing new answers",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 3000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the tickets sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tickets"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep the open tickets",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "routed",
+    "kind": "task",
+    "needs": [
+     "open"
+    ],
+    "description": "Decide for each ticket: a known answer, or a person (urgent tickets always go to a person)",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open.rows"
+     },
+     "rules": [
+      {
+       "field": "priority",
+       "op": "eq",
+       "value": "urgent",
+       "set": {
+        "route": "person",
+        "answer": ""
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "shipping",
+       "set": {
+        "route": "auto",
+        "answer": "Orders ship within 2-3 business days. You will receive a tracking link by email once your order ships."
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "where is my order",
+       "set": {
+        "route": "auto",
+        "answer": "Orders ship within 2-3 business days. You will receive a tracking link by email once your order ships."
+       }
+      },
+      {
+       "field": [
+        "subject",
+        "body"
+       ],
+       "op": "contains",
+       "value": "password",
+       "set": {
+        "route": "auto",
+        "answer": "To reset your password, please use the 'forgot password' link on the login page."
+       }
+      }
+     ],
+     "otherwise": {
+      "route": "person",
+      "answer": ""
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "auto",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "The tickets with a known answer",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.routed.rows"
+     },
+     "where": [
+      {
+       "field": "route",
+       "op": "eq",
+       "value": "auto"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "person",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "The tickets a person must handle",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.routed.rows"
+     },
+     "where": [
+      {
+       "field": "route",
+       "op": "eq",
+       "value": "person"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "urgentAuto",
+    "kind": "task",
+    "needs": [
+     "auto"
+    ],
+    "description": "Urgent tickets among the automatic answers (used by a check: must be none)",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.auto.rows"
+     },
+     "where": [
+      {
+       "field": "priority",
+       "op": "eq",
+       "value": "urgent"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "reply",
+    "kind": "map",
+    "needs": [
+     "auto"
+    ],
+    "description": "Send each known answer",
+    "items": {
+     "$ref": "nodes.auto.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the reply",
+       "tool": "core.template",
+       "args": {
+        "text": "Hi,\n\nThanks for getting in touch about \"{{subject}}\".\n\n{{answer}}\n\nIf this does not answer your question, just reply to this e-mail and a person will pick it up.\n\nThe support team",
+        "variables": {
+         "subject": {
+          "$ref": "item.subject",
+          "default": "your message"
+         },
+         "answer": {
+          "$ref": "item.answer"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject line",
+       "tool": "core.template",
+       "args": {
+        "text": "Re: {{subject}} [ticket {{id}}]",
+        "variables": {
+         "subject": {
+          "$ref": "item.subject",
+          "default": "your message"
+         },
+         "id": {
+          "$ref": "item.id"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose",
+        "subject"
+       ],
+       "description": "E-mail the answer to the customer (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.from"
+        },
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "personLines",
+    "kind": "task",
+    "needs": [
+     "person"
+    ],
+    "description": "List the tickets for a person",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.person.rows"
+     },
+     "line": "- ticket {{id}} [{{priority}}] {{subject}} (from {{from}})\n  {{body}}",
+     "empty": "- none today"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest",
+    "kind": "task",
+    "needs": [
+     "personLines",
+     "auto"
+    ],
+    "description": "Write the digest for the person",
+    "tool": "core.template",
+    "args": {
+     "text": "Tickets that need a person ({{count}}):\n{{lines}}\n\nAnswered automatically with your replies: {{auto}}.",
+     "variables": {
+      "count": {
+       "$ref": "nodes.personLines.count"
+      },
+      "lines": {
+       "$ref": "nodes.personLines.text"
+      },
+      "auto": {
+       "$ref": "nodes.auto.count"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digestSubject",
+    "kind": "task",
+    "needs": [
+     "personLines"
+    ],
+    "description": "Write the digest subject",
+    "tool": "core.template",
+    "args": {
+     "text": "Support: {{count}} ticket(s) need a person",
+     "variables": {
+      "count": {
+       "$ref": "nodes.personLines.count"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "sendDigest",
+    "kind": "task",
+    "needs": [
+     "digest",
+     "digestSubject",
+     "reply"
+    ],
+    "description": "E-mail the digest to help@cobaltcandle.com (asks you first)",
+    "tool": "outbox.send",
+    "args": {
+     "to": "help@cobaltcandle.com",
+     "subject": {
+      "$ref": "nodes.digestSubject.text"
+     },
+     "body": {
+      "$ref": "nodes.digest.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "expected",
+    "kind": "task",
+    "needs": [
+     "auto"
+    ],
+    "description": "Which customers should have received an answer",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.auto.rows"
+     },
+     "field": "from"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "expected",
+     "sendDigest"
+    ],
+    "description": "Re-read the outbox: one answer per matched ticket plus one digest, each intact",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.expected.items"
+      },
+      "help@cobaltcandle.com"
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.reply"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.reply.count"
+    },
+    "right": {
+     "$ref": "nodes.auto.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.urgentAuto.count"
+    },
+    "right": 0
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.sendDigest.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P09 judge -> confidence gate -> review queue (escalate, never guess)",
+    "small-business ticket deflection pattern (escalate urgent and unmatched tickets to a person)",
+    "app/core/templates/support-deflection.json sha256 7e88accdc703f34dcbaefe750df6f1c7a0c0d2a719ab29bef9a3528c259188ac"
+   ],
+   "tags": [
+    "template:support-deflection",
+    "builder:model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974)",
+    "slots:{\"answers\":[{\"keyword\":\"shipping\",\"reply\":\"Orders ship within 2-3 business days. You will receive a tracking link by email once your order ships.\"},{\"keyword\":\"where is my order\",\"reply\":\"Orders ship within 2-3 business days. You will receive a tracking link by email once your order ships.\"},{\"keyword\":\"password\",\"reply\":\"To reset your password, please use the 'forgot password' link on the login page.\"}],\"escalateTo\":\"help@cobaltcandle.com\",\"signature\":\"The support team\"}"
+   ],
+   "rationale": "Frontier-written template \"support-deflection\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 3,
+   "approved": 3,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "rosa@mailbox.example",
+     "subject": "Re: Where is my order?? [ticket T-101]",
+     "body": "Hi,\n\nThanks for getting in touch about \"Where is my order??\".\n\nOrders ship within 2-3 business days. You will receive a tracking link by email once your order ships.\n\nIf this does not answer your question, just reply to this e-mail and a person will pick it up.\n\nThe support team"
+    },
+    {
+     "to": "dev@pixelmail.example",
+     "subject": "Re: Can't log in [ticket T-102]",
+     "body": "Hi,\n\nThanks for getting in touch about \"Can't log in\".\n\nTo reset your password, please use the 'forgot password' link on the login page.\n\nIf this does not answer your question, just reply to this e-mail and a person will pick it up.\n\nThe support team"
+    },
+    {
+     "to": "help@cobaltcandle.com",
+     "subject": "Support: 2 ticket(s) need a person",
+     "body": "Tickets that need a person (2):\n- ticket T-103 [normal] Bulk order for our hotel (from buyer@grandhotel.example)\n  Can we get 200 candles at a discount?\n- ticket T-104 [urgent] Shipping box arrived crushed (from amir@post.example)\n  Half the candles are broken. I want a refund now.\n\nAnswered automatically with your replies: 2."
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b-h-1/worlds/foundry-live-XQrzC8",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every open ticket was either answered with a matching reply or sent to the person",
+    "exact": "the count of “Send each known answer” equals the count of “The tickets with a known answer”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "No urgent ticket was answered automatically",
+    "exact": "the count of “Urgent tickets among the automatic answers (used by a check: must be none)” equals 0",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)",
+    "exact": "the delivered of “E-mail the digest to help@cobaltcandle.com (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "the pass of “Re-read the outbox: one answer per matched ticket plus one digest, each intact” equals true",
+    "exact": "the pass of “Re-read the outbox: one answer per matched ticket plus one digest, each intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Re-read the outbox: one answer per matched ticket plus one digest, each intact",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": {
+   "violated": false,
+   "hits": []
+  }
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 4,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 1,
+  "slotChecksOk": 1
+ }
+}

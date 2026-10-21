@@ -29,7 +29,7 @@ import { resumeRun } from '../../beds/ebed/host/replay.mjs';
 import { sandboxArm } from '../../beds/ebed/host/sandbox-arm.mjs';
 import { hashOf, sha256 } from '../../beds/lib/canonical.mjs';
 import { runClaudeCode, materialize, sandboxAvailable } from '../../src/executors/claude-code.mjs';
-import { buildRunner, isSessionModel, contractText } from '../ebed/build.mjs';
+import { buildRunner, isSessionModel } from '../ebed/build.mjs';
 import { serveMailbox, PRACTICE } from '../ebed/smoke-service.mjs';
 import { agentVArm } from '../agentv/arm.mjs';
 import { makeMeter, dryRunner, EXPECTED_WORLDS, armErrorsOf, validatorStats } from '../agentv/run.mjs';
@@ -41,7 +41,7 @@ import { renderPack } from './render.mjs';
 import { createOwnerSim, replayOwnerSim, askMetrics } from './owner-sim.mjs';
 import { historyOf, checkHistory } from './predicates.mjs';
 import { lidRules, CLASS_READINGS, attributeDivergence } from './attribute.mjs';
-import { ARMS, ARM_NAMES, ARMS_VERSION, NO_SPEC_BINDING, DERIVE_ITEM, deriveFiles, derivePrompt } from './spec1-arms.mjs';
+import { ARMS, ARM_NAMES, ARMS_VERSION, NO_SPEC_BINDING, DERIVE_ITEM, deriveFiles, derivePrompt, derivedContractText } from './spec1-arms.mjs';
 import { modelMatcher, scriptedPort, serialSim, restoredOwnerSim, serveAsk } from './ask-service.mjs';
 import { extractAndReview, scriptedExtraction } from './ledger-review.mjs';
 import { packSessionRunner, scriptedPackSession, runNode } from './pack-agent.mjs';
@@ -399,7 +399,7 @@ export async function runAgentLineage(o) {
   const { w, digest } = worldOf(world);
   const { pools, runs } = await e8.referenceRuns(w);
   const workRoot = path.join(liveDir, `w${world.seed}-d${world.d}`);
-  const arm = agentVArm({ id: label, model, workRoot, contract: contractText(), effort: A.effort, budgetUsdPerTick: A.tickBudgetUsd, minutesPerTick: A.tickMinutes,
+  const arm = agentVArm({ id: label, model, workRoot, contract: derivedContractText(), effort: A.effort, budgetUsdPerTick: A.tickBudgetUsd, minutesPerTick: A.tickMinutes,
     journal: path.join(liveDir, 'ticks.jsonl'), validatorJournal: path.join(liveDir, 'validator.jsonl'), schemas, retries: A.retries, meter, stopOnEnvFault: true, runner });
   const journalFile = path.join(liveDir, `journal-w${world.seed}-d${world.d}.jsonl`), blobDir = path.join(liveDir, `blobs-w${world.seed}-d${world.d}`);
   const hostOpts = { item: NO_SPEC_BINDING, world: w, arm, concurrency, callTimeoutMs, journalFile, blobDir };

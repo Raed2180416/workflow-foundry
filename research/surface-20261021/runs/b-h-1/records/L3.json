@@ -1,0 +1,703 @@
+{
+ "arm": "B-H",
+ "case": "L3",
+ "expected": "lead-triage",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": "lead-triage",
+   "selection": {
+    "template": "lead-triage",
+    "reason": "The request is to route each new lead to a specific salesperson based on country rules (Germany/Austria to Lena, France to Paul, everyone else to the user), which matches the lead-triage template's region/country-based routing.",
+    "notCovered": [
+     "Routing is only as specific as the template's rule set; confirm it supports a country-to-person mapping with a catch-all default to the user."
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "defaultAssignee",
+     "slot": "defaultAssignee",
+     "question": "Who should get leads that no rule covers? (one e-mail address)"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": "lead-triage",
+   "selection": {
+    "template": "lead-triage",
+    "reason": "The request is to route each new lead to a specific salesperson by country rules (Germany/Austria to Lena, France to Paul, everything else to the user), which is exactly what lead-triage does.",
+    "notCovered": [
+     "Assigning by country mapping for Lena and Paul needs the template's routing rules to be configured with those names and emails, which must be supplied",
+     "Lena's and Paul's contact addresses are not given in the request, so their routing targets are incomplete"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "defaultAssignee",
+   "slot": "defaultAssignee",
+   "question": "Who should get leads that no rule covers? (one e-mail address)",
+   "matched": [
+    "defaultAssignee"
+   ],
+   "answer": "Me: kai@brook-tools.de"
+  }
+ ],
+ "modelQuestions": [
+  {
+   "turn": 0,
+   "slot": "rules",
+   "question": "What are the e-mail addresses for Lena (Germany and Austria) and Paul (France)?"
+  }
+ ],
+ "answers": {
+  "defaultAssignee": "Me: kai@brook-tools.de"
+ },
+ "cost": {
+  "usd": 0.001836,
+  "tokens": 12182,
+  "inputTokens": 8,
+  "outputTokens": 2213,
+  "cacheReadTokens": 4490,
+  "cacheWriteTokens": 5471,
+  "calls": 4,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 211,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1632,
+   "costUsd": 0.00031782,
+   "costUnknown": false,
+   "latencyMs": 2343,
+   "journalId": 20
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 992,
+   "cacheReadTokens": 1433,
+   "cacheWriteTokens": 1067,
+   "costUsd": 0.0006439050000000001,
+   "costUnknown": false,
+   "latencyMs": 6755,
+   "journalId": 22
+  },
+  {
+   "turn": 1,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 239,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1669,
+   "costUsd": 0.000336445,
+   "costUnknown": false,
+   "latencyMs": 3694,
+   "journalId": 24
+  },
+  {
+   "turn": 1,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 771,
+   "cacheReadTokens": 1433,
+   "cacheWriteTokens": 1103,
+   "costUsd": 0.000537905,
+   "costUnknown": false,
+   "latencyMs": 4990,
+   "journalId": 26
+  }
+ ],
+ "builderWallMs": 18079,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "lead-triage",
+ "slots": {
+  "defaultAssignee": "kai@brook-tools.de",
+  "rules": []
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "lead-triage",
+  "version": 1,
+  "title": "New lead routing",
+  "goal": "Each run, send every new lead to the first matching person (no rules; otherwise kai@brook-tools.de), one e-mail per lead after a person approves it, and log the assignment.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The leads sheet holds one row per lead with name, email, company, region, country, source, companySize, budget, message and status",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "A lead sent to the wrong person or to no one",
+    "A lead's details sent outside the team"
+   ],
+   "successCriteria": [
+    "Every new lead was sent to exactly one person",
+    "Every assignment is in the lead log",
+    "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)"
+   ],
+   "unsupported": [
+    "Replying to leads",
+    "Changing the leads sheet",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 3000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the leads sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "fresh",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep the new leads that have an e-mail address",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "new"
+      },
+      {
+       "field": "email",
+       "op": "exists"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "routed",
+    "kind": "task",
+    "needs": [
+     "fresh"
+    ],
+    "description": "Pick the person for each lead",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.fresh.rows"
+     },
+     "rules": [],
+     "otherwise": {
+      "assignTo": "kai@brook-tools.de"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify",
+    "kind": "map",
+    "needs": [
+     "routed"
+    ],
+    "description": "E-mail each lead to its person",
+    "items": {
+     "$ref": "nodes.routed.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the lead e-mail",
+       "tool": "core.template",
+       "args": {
+        "text": "New lead for you:\n\nName: {{name}}\nCompany: {{company}}\nE-mail: {{email}}\nRegion: {{region}} ({{country}})\nCompany size: {{size}}\nBudget: {{budget}}\nSource: {{source}}\n\nMessage:\n{{message}}\n\nPlease follow up within one business day.",
+        "variables": {
+         "name": {
+          "$ref": "item.name",
+          "default": ""
+         },
+         "company": {
+          "$ref": "item.company",
+          "default": ""
+         },
+         "email": {
+          "$ref": "item.email"
+         },
+         "region": {
+          "$ref": "item.region",
+          "default": ""
+         },
+         "country": {
+          "$ref": "item.country",
+          "default": ""
+         },
+         "size": {
+          "$ref": "item.companySize",
+          "default": ""
+         },
+         "budget": {
+          "$ref": "item.budget",
+          "default": ""
+         },
+         "source": {
+          "$ref": "item.source",
+          "default": ""
+         },
+         "message": {
+          "$ref": "item.message",
+          "default": ""
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject line",
+       "tool": "core.template",
+       "args": {
+        "text": "New lead: {{company}} ({{name}})",
+        "variables": {
+         "company": {
+          "$ref": "item.company",
+          "default": ""
+         },
+         "name": {
+          "$ref": "item.name",
+          "default": ""
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose",
+        "subject"
+       ],
+       "description": "E-mail the lead to its person (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.assignTo"
+        },
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "logRows",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "Prepare the assignment log rows",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.routed.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ],
+     "set": {
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log",
+    "kind": "task",
+    "needs": [
+     "logRows",
+     "notify"
+    ],
+    "description": "Log who got which lead in the lead-log sheet",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.logRows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "expected",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "Who should have received a lead e-mail",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.routed.rows"
+     },
+     "field": "assignTo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "expected",
+     "notify"
+    ],
+    "description": "Re-read the outbox: one e-mail per lead to its person, each intact",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.expected.items"
+      }
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.notify"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "logAudit",
+    "kind": "verify",
+    "needs": [
+     "log",
+     "routed"
+    ],
+    "description": "Re-read the lead log: one row per routed lead",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.routed.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.notify.count"
+    },
+    "right": {
+     "$ref": "nodes.routed.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.logAudit.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P02 fetch -> transform -> write, P04 draft -> check -> deliver",
+    "research/intent-20261021/corpus-prior.md (crm-or-commerce automations)",
+    "app/core/templates/lead-triage.json sha256 a281f1ea7bbbacd4dead5c702a7d496fbf97d5103f78fda4e767a598f099c702"
+   ],
+   "tags": [
+    "template:lead-triage",
+    "builder:model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974)",
+    "slots:{\"defaultAssignee\":\"kai@brook-tools.de\",\"rules\":[]}"
+   ],
+   "rationale": "Frontier-written template \"lead-triage\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 5,
+   "approved": 5,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "kai@brook-tools.de",
+     "subject": "New lead: Alpenlicht (Mia Gruber)",
+     "body": "New lead for you:\n\nName: Mia Gruber\nCompany: Alpenlicht\nE-mail: mia@alpenlicht.example\nRegion: EMEA (Austria)\nCompany size: 25\nBudget: 4000\nSource: event\n\nMessage:\nDemo please\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "kai@brook-tools.de",
+     "subject": "New lead: Lumiere & Co (Noe Petit)",
+     "body": "New lead for you:\n\nName: Noe Petit\nCompany: Lumiere & Co\nE-mail: noe@lumiere-co.example\nRegion: EMEA (France)\nCompany size: 110\nBudget: 15000\nSource: website\n\nMessage:\nQuote for France\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "kai@brook-tools.de",
+     "subject": "New lead: Werkhaus (Lukas Bauer)",
+     "body": "New lead for you:\n\nName: Lukas Bauer\nCompany: Werkhaus\nE-mail: lukas@werkhaus.example\nRegion: EMEA (Germany)\nCompany size: 60\nBudget: 8000\nSource: website\n\nMessage:\nNeed 20 licences\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "kai@brook-tools.de",
+     "subject": "New lead: Costa Brava Tours (Pau Vidal)",
+     "body": "New lead for you:\n\nName: Pau Vidal\nCompany: Costa Brava Tours\nE-mail: pau@costabrava.example\nRegion: EMEA (Spain)\nCompany size: 12\nBudget: 1500\nSource: website\n\nMessage:\nSmall team\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "kai@brook-tools.de",
+     "subject": "New lead: Sole Group (Olga Rossi)",
+     "body": "New lead for you:\n\nName: Olga Rossi\nCompany: Sole Group\nE-mail: olga@solegroup.example\nRegion: EMEA (Italy)\nCompany size: 300\nBudget: 30000\nSource: referral\n\nMessage:\nPartner referral\n\nPlease follow up within one business day."
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "kai@brook-tools.de",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Werkhaus",
+      "email": "lukas@werkhaus.example",
+      "name": "Lukas Bauer"
+     },
+     {
+      "assignTo": "kai@brook-tools.de",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Alpenlicht",
+      "email": "mia@alpenlicht.example",
+      "name": "Mia Gruber"
+     },
+     {
+      "assignTo": "kai@brook-tools.de",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Lumiere & Co",
+      "email": "noe@lumiere-co.example",
+      "name": "Noe Petit"
+     },
+     {
+      "assignTo": "kai@brook-tools.de",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Sole Group",
+      "email": "olga@solegroup.example",
+      "name": "Olga Rossi"
+     },
+     {
+      "assignTo": "kai@brook-tools.de",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Costa Brava Tours",
+      "email": "pau@costabrava.example",
+      "name": "Pau Vidal"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b-h-1/worlds/foundry-live-x4XNSK",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new lead was sent to exactly one person",
+    "exact": "the count of “E-mail each lead to its person” equals the count of “Pick the person for each lead”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every assignment is in the lead log",
+    "exact": "the pass of “Re-read the outbox: one e-mail per lead to its person, each intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)",
+    "exact": "the pass of “Re-read the lead log: one row per routed lead” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Re-read the outbox: one e-mail per lead to its person, each intact",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.logAudit",
+    "plain": "Re-read the lead log: one row per routed lead",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to lena@brook-tools.de containing \"Werkhaus\"",
+   "outbox : missing a message to lena@brook-tools.de containing \"Alpenlicht\"",
+   "outbox : missing a message to paul@brook-tools.de containing \"Lumiere & Co\"",
+   "outbox : unexpected or wrong message to kai@brook-tools.de (\"New lead: Alpenlicht (Mia Gruber)\")",
+   "outbox : unexpected or wrong message to kai@brook-tools.de (\"New lead: Lumiere & Co (Noe Petit)\")",
+   "outbox : unexpected or wrong message to kai@brook-tools.de (\"New lead: Werkhaus (Lukas Bauer)\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 1,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 1,
+  "slotChecksOk": 1
+ }
+}

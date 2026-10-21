@@ -1,0 +1,639 @@
+{
+ "arm": "B-H",
+ "case": "L1",
+ "expected": "lead-triage",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": "lead-triage",
+   "selection": {
+    "template": "lead-triage",
+    "reason": "Routing new website-form leads to specific salespeople by region rules with a log matches the lead-triage template, and it explicitly excludes replying to leads.",
+    "notCovered": [
+     "Routing is by region (EMEA, NA, else), which the template handles via its rules; the request's fallback recipient is jo@peakline.io",
+     "Not emailing the leads themselves is a constraint the template already respects since it only routes leads to reps"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.000937,
+  "tokens": 5839,
+  "inputTokens": 4,
+  "outputTokens": 801,
+  "cacheReadTokens": 812,
+  "cacheWriteTokens": 4222,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 227,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1677,
+   "costUsd": 0.000331445,
+   "costUnknown": false,
+   "latencyMs": 2640,
+   "journalId": 14
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 574,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 2545,
+   "costUsd": 0.000605325,
+   "costUnknown": false,
+   "latencyMs": 4296,
+   "journalId": 17
+  }
+ ],
+ "builderWallMs": 7192,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "lead-triage",
+ "slots": {
+  "rules": [
+   {
+    "field": "region",
+    "op": "is",
+    "value": "EMEA",
+    "assignTo": "dana@peakline.io"
+   },
+   {
+    "field": "region",
+    "op": "is",
+    "value": "NA",
+    "assignTo": "marcus@peakline.io"
+   }
+  ],
+  "defaultAssignee": "jo@peakline.io"
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "lead-triage",
+  "version": 1,
+  "title": "New lead routing",
+  "goal": "Each run, send every new lead to the first matching person (region is EMEA → dana@peakline.io; region is NA → marcus@peakline.io; otherwise jo@peakline.io), one e-mail per lead after a person approves it, and log the assignment.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The leads sheet holds one row per lead with name, email, company, region, country, source, companySize, budget, message and status",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "A lead sent to the wrong person or to no one",
+    "A lead's details sent outside the team"
+   ],
+   "successCriteria": [
+    "Every new lead was sent to exactly one person",
+    "Every assignment is in the lead log",
+    "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)"
+   ],
+   "unsupported": [
+    "Replying to leads",
+    "Changing the leads sheet",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 3000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the leads sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "fresh",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep the new leads that have an e-mail address",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "new"
+      },
+      {
+       "field": "email",
+       "op": "exists"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "routed",
+    "kind": "task",
+    "needs": [
+     "fresh"
+    ],
+    "description": "Pick the person for each lead",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.fresh.rows"
+     },
+     "rules": [
+      {
+       "field": "region",
+       "op": "eq",
+       "value": "EMEA",
+       "set": {
+        "assignTo": "dana@peakline.io"
+       }
+      },
+      {
+       "field": "region",
+       "op": "eq",
+       "value": "NA",
+       "set": {
+        "assignTo": "marcus@peakline.io"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "jo@peakline.io"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify",
+    "kind": "map",
+    "needs": [
+     "routed"
+    ],
+    "description": "E-mail each lead to its person",
+    "items": {
+     "$ref": "nodes.routed.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the lead e-mail",
+       "tool": "core.template",
+       "args": {
+        "text": "New lead for you:\n\nName: {{name}}\nCompany: {{company}}\nE-mail: {{email}}\nRegion: {{region}} ({{country}})\nCompany size: {{size}}\nBudget: {{budget}}\nSource: {{source}}\n\nMessage:\n{{message}}\n\nPlease follow up within one business day.",
+        "variables": {
+         "name": {
+          "$ref": "item.name",
+          "default": ""
+         },
+         "company": {
+          "$ref": "item.company",
+          "default": ""
+         },
+         "email": {
+          "$ref": "item.email"
+         },
+         "region": {
+          "$ref": "item.region",
+          "default": ""
+         },
+         "country": {
+          "$ref": "item.country",
+          "default": ""
+         },
+         "size": {
+          "$ref": "item.companySize",
+          "default": ""
+         },
+         "budget": {
+          "$ref": "item.budget",
+          "default": ""
+         },
+         "source": {
+          "$ref": "item.source",
+          "default": ""
+         },
+         "message": {
+          "$ref": "item.message",
+          "default": ""
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject line",
+       "tool": "core.template",
+       "args": {
+        "text": "New lead: {{company}} ({{name}})",
+        "variables": {
+         "company": {
+          "$ref": "item.company",
+          "default": ""
+         },
+         "name": {
+          "$ref": "item.name",
+          "default": ""
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose",
+        "subject"
+       ],
+       "description": "E-mail the lead to its person (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.assignTo"
+        },
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "logRows",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "Prepare the assignment log rows",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.routed.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ],
+     "set": {
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log",
+    "kind": "task",
+    "needs": [
+     "logRows",
+     "notify"
+    ],
+    "description": "Log who got which lead in the lead-log sheet",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.logRows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "expected",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "Who should have received a lead e-mail",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.routed.rows"
+     },
+     "field": "assignTo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "expected",
+     "notify"
+    ],
+    "description": "Re-read the outbox: one e-mail per lead to its person, each intact",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.expected.items"
+      }
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.notify"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "logAudit",
+    "kind": "verify",
+    "needs": [
+     "log",
+     "routed"
+    ],
+    "description": "Re-read the lead log: one row per routed lead",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.routed.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.notify.count"
+    },
+    "right": {
+     "$ref": "nodes.routed.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.logAudit.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P02 fetch -> transform -> write, P04 draft -> check -> deliver",
+    "research/intent-20261021/corpus-prior.md (crm-or-commerce automations)",
+    "app/core/templates/lead-triage.json sha256 a281f1ea7bbbacd4dead5c702a7d496fbf97d5103f78fda4e767a598f099c702"
+   ],
+   "tags": [
+    "template:lead-triage",
+    "builder:model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974)",
+    "slots:{\"defaultAssignee\":\"jo@peakline.io\",\"rules\":[{\"assignTo\":\"dana@peakline.io\",\"field\":\"region\",\"op\":\"is\",\"value\":\"EMEA\"},{\"assignTo\":\"marcus@peakline.io\",\"field\":\"region\",\"op\":\"is\",\"value\":\"NA\"}]}"
+   ],
+   "rationale": "Frontier-written template \"lead-triage\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (claude-haiku-5-5; 7 templates 32026fedb974); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 4,
+   "approved": 4,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "marcus@peakline.io",
+     "subject": "New lead: Quillpoint (Ben Ortiz)",
+     "body": "New lead for you:\n\nName: Ben Ortiz\nCompany: Quillpoint\nE-mail: ben@quillpoint.example\nRegion: NA (USA)\nCompany size: 300\nBudget: 20000\nSource: website\n\nMessage:\nCan we book a demo?\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "dana@peakline.io",
+     "subject": "New lead: Solvane (Ana Ruiz)",
+     "body": "New lead for you:\n\nName: Ana Ruiz\nCompany: Solvane\nE-mail: ana@solvane.example\nRegion: EMEA (Spain)\nCompany size: 80\nBudget: 12000\nSource: website\n\nMessage:\nLooking for a quote for 3 sites\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "jo@peakline.io",
+     "subject": "New lead: Cantoria (Fay Lima)",
+     "body": "New lead for you:\n\nName: Fay Lima\nCompany: Cantoria\nE-mail: fay@cantoria.example\nRegion: LATAM (Brazil)\nCompany size: 150\nBudget: 9000\nSource: referral\n\nMessage:\nReferred by a partner\n\nPlease follow up within one business day."
+    },
+    {
+     "to": "jo@peakline.io",
+     "subject": "New lead: Harbin Labs (Chen Wei)",
+     "body": "New lead for you:\n\nName: Chen Wei\nCompany: Harbin Labs\nE-mail: chen@harbinlabs.example\nRegion: APAC (China)\nCompany size: 45\nBudget: 5000\nSource: event\n\nMessage:\nMet you at the expo\n\nPlease follow up within one business day."
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "dana@peakline.io",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Solvane",
+      "email": "ana@solvane.example",
+      "name": "Ana Ruiz"
+     },
+     {
+      "assignTo": "marcus@peakline.io",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Quillpoint",
+      "email": "ben@quillpoint.example",
+      "name": "Ben Ortiz"
+     },
+     {
+      "assignTo": "jo@peakline.io",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Harbin Labs",
+      "email": "chen@harbinlabs.example",
+      "name": "Chen Wei"
+     },
+     {
+      "assignTo": "jo@peakline.io",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Cantoria",
+      "email": "fay@cantoria.example",
+      "name": "Fay Lima"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b-h-1/worlds/foundry-live-NBWN5t",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new lead was sent to exactly one person",
+    "exact": "the count of “E-mail each lead to its person” equals the count of “Pick the person for each lead”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every assignment is in the lead log",
+    "exact": "the pass of “Re-read the outbox: one e-mail per lead to its person, each intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "This run delivered exactly the planned e-mails, each intact (checked by re-reading the outbox)",
+    "exact": "the pass of “Re-read the lead log: one row per routed lead” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Re-read the outbox: one e-mail per lead to its person, each intact",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.logAudit",
+    "plain": "Re-read the lead log: one row per routed lead",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 5,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 1,
+  "slotChecksOk": 1
+ }
+}

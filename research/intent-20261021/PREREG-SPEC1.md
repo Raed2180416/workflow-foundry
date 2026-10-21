@@ -55,9 +55,20 @@ run) is bound with `specE: ''` (`NO_SPEC_BINDING`), so `beds/ebed/host/host.mjs:
 each with a control (E8's own binding) that must and does expose SPEC-E. **Never grade a derived solver with
 `build.mjs --grade-only`** (DESIGN §9's planned command): that binds SPEC-E. Use `spec1.mjs grade`.
 
-**Decision to confirm at freeze.** DESIGN §3's none-agent row does not mention asking; §9's command passes `--budget 20`
-to all three SPEC-1 arms. This draft gives none-agent the owner with a run-wide budget of 20. Removing it is one line
-(`ARMS['none-agent'].ask`).
+**No SPEC-E by name either.** The contract text every E8 arm gets (`experiments/ebed/build.mjs contractText`) names
+SPEC-E in four places, two of them listing `spec/SPEC-E.md` among a tick's files. The derived arms (all five build arms and none-agent)
+get `spec1-arms.mjs derivedContractText()` instead: the same text with exactly four listed edits (`CONTRACT_EDITS`: the
+file is dropped from both file lists, "the sweep that spec-E names" becomes "the business's rules", and result latency
+points to the platform guide, `business/PLATFORM.md`). E8's own arms keep the original. `deriveFiles`, `derivePrompt`
+and `packPrompt` refuse any file name, file text or prompt that matches `/spec-e|spec\//i`, and `spec1.test.mjs` asserts
+it for every build arm's workspace and prompt and for every none-agent session's files and prompt, with E8's own contract
+as the control that does match.
+
+**Decision (orchestrator, 2026-10-21, under the owner's blanket permission): none-agent asks.** It gets the same owner
+channel as the derive arms (`ask.mjs`, the same simulator, the same Haiku match) and the same budget of 20 questions,
+counted over the whole run (every tick of every order) and shown to later sessions in `owner-answers.md`. Reason: without
+it, the comparison of the derive arms against none-agent would confound "derive a spec" with "may ask the owner". (DESIGN
+§3's none-agent row did not mention asking; §9's command passes `--budget 20` to all three SPEC-1 arms.)
 
 ## 3. Seeds, worlds, lineages
 
@@ -181,6 +192,12 @@ node experiments/specbiz/spec1.mjs perfect --worlds grading,shared
 node experiments/specbiz/score.mjs --json research/intent-20261021/runs/score.json --md research/intent-20261021/runs/SCORE.md
 ```
 
+**Done 2026-10-21 ($0):** `nice -n 15 node experiments/specbiz/spec1.mjs perfect --worlds grading,shared` reproduced
+1022/1022, 974/1022 and 1015/1022 (3011/3066; shared world 14, 11, 14 of 14), exit 0, about 37 s per lineage for the ten
+worlds; records in `runs/s-perfect-b1lh-e8-{1,2,3}/`. The failures are lineage 2's go-live classes (gl-intake 18,
+gl-awaiting 18, gl-dispatched 12, all `missed`) and lineage 3's `f4-reserve` (7, `outside-allowed`). Scored, S-perfect's
+pooled primary is 64/69 (92.8%) on both bounds. Before any reading the same command is re-run on the frozen code.
+
 The S-perfect regrade must reproduce 3011/3066 on the grading worlds (`perfect` checks it and exits 5 otherwise); a
 different count means the oracle drifted, and no reading is made until that is explained. A paid invocation refuses
 `--worlds`, `--concurrency`, `--root` and the cap overrides, and needs `--model` (a policy id, and Haiku 5.5).
@@ -207,11 +224,11 @@ d8f0afabd60ae710f2fef7e4b20996fd02106d94621d4eaeb18c7f49eeef988f  experiments/sp
 f68aa03c32a9889a84daba1c707122bf1ec067f92b861f8c487ab22f09e68e93  research/intent-20261021/rater2-labels.json
 48398f9e3ac43a41b7a3b8b135eb706f1ed05088d4b99d58e03d18345d6871cd  research/intent-20261021/corpus-prior.json
 77034dd7e5ad4815feb9d4864699ae3ec0d8e91f2bc39ca8ad5c1d4355059a43  research/need-router-20261014/tracker-e8/gold.json
-691b3da346e4f4804a24bfe1f726f2cba740f3db13ec772842b4dd1aeb6efac3  experiments/specbiz/spec1-arms.mjs
+fc03b1447295ea54d5fde89e917e1b5fe629907a6c89d70679fe10aca77a0aa4  experiments/specbiz/spec1-arms.mjs
 a20d5fc0320ea2753d7e4a88de3daba05eef247996642f50cd6f5de53472cf12  experiments/specbiz/ask-service.mjs
 400a198b8fc9d84602eaf6533d575499e796b1bd6d6b5fd98b33668ced0469e4  experiments/specbiz/ledger-review.mjs
-8f60c847567a16315555238e689c71306a8443bee7b453aa6879fc1d4319ea91  experiments/specbiz/pack-agent.mjs
-b5183e3593d57431145a33c70a5a36eebe4d1466aae216d38250fdd0962a5d26  experiments/specbiz/spec1.mjs
+f1c4d11e90b4609d4f321d0417a97a661be648677ce29a327289a281fe893d26  experiments/specbiz/pack-agent.mjs
+af3d74f515ff857785e44c37bf37b02357a002bc178b6bb83d3add13ba0cb416  experiments/specbiz/spec1.mjs
 6967fe1abce608441901325f437b613e94161a91f3ee34fb321c3d26f935202c  experiments/specbiz/spec1-freeze.mjs
 a9c328291838ca6aa48f71cd10821329f92be27b20eb8f5e0a56f6f70876c347  experiments/specbiz/score.mjs
 8fc87692fc30ac9610d9b25f764976145a8a8872b4ce33b32da5b9b8107a8558  experiments/tracker/extract.mjs
@@ -255,7 +272,21 @@ cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69  policy/models.
   own it; R4.3 cannot be attributed at all; readings are implicated only through case classes.
 - NW-INJECTION is unchecked; NW-STALE-SOP and NW-NEW-AFTER-CANCEL are approximate; notification text is unscored; there
   is no act-level "unscored anticipation" list.
-- The S-perfect builds saw SPEC-E at `c013c04c…` (before S10–S15, extra units, not gold); the pack is rendered from the
-  current SPEC-E `9fdbc1ee…`.
+- **S-perfect saw an older SPEC-E.** Its three builds were made from SPEC-E `c013c04c…`; the pack is rendered from the
+  current `9fdbc1ee…`, which adds the readings S10–S15 (same-instant knowledge, the ready instant, a review answer and a
+  cancel in one instant, endings and failures in a cancel's instant, a step that commits after its fulfilment failed, a
+  cancel after the cancellation is decided). In pack seed 1 they reach the builder by e-mail (S10, S11, S13, S14, in the
+  forwarded edge cases) and in SOP v3 (S12, S15).
+  - **Not in the scored id set.** S10–S15 are extra units, not among the 30 gold ids, so they enter neither the primary
+    metric nor R1–R3. They appear only in the secondary extras recall, where `attribute.mjs` never implicates them (no case
+    class reads them), so they read as implemented for every arm: the extras recall says nothing about them.
+  - **What it means for the ceiling.** The S-perfect counts (3011/3066) are oracle-2 regrades at the current SPEC-E, so the
+    ceiling is measured against the same rules the derived arms are graded on; only the builders' information differs.
+    The derived arms have six readings the ceiling's builders lacked, so the spec recovery ratio R can only be flattered by
+    it, never depressed: a refutation at R < 0.60 is robust to it, and R ≥ 0.95 ("derivation is not the bottleneck") is the
+    reading it could inflate. The size is bounded: S-perfect's 55 failures on the grading worlds are lineage 2's go-live
+    backlog (48) and lineage 3's partial-batch resubmission (7) (B1-E8-DEV; the 2026-10-21 regrade confirms the classes:
+    gl-intake, gl-awaiting, gl-dispatched and f4-reserve), none an S10–S15 reading, so a ceiling built
+    with S10–S15 would not have scored higher on these worlds.
 - always-ask is forced by instruction only; its compliance is measured.
 - The ledger review costs the owner no questions; it is reported as burden of its own (entries reviewed).

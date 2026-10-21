@@ -1,0 +1,269 @@
+From ebc81908eef01a2840c188f2a5306a6e897a9e03 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:10:48 +0000
+Subject: [PATCH 06/16] One runner per workdir: an exclusive lock in
+ run-compiled and call-host (gap rank 12, chaos F1)
+
+experiments/lib/workdir-lock.mjs: the record is written to a private O_EXCL file and
+hard-linked to the lock name (EEXIST as O_EXCL), so a half-written lock is never read; a
+holder is alive when its pid answers with its recorded start time; a stale lock is renamed
+aside before a new link. runCompiled refuses a second run in a held workdir (status
+'refused', WORKDIR_BUSY, nothing spent); call-host locks its interpret and agent workdirs.
+WORKDIR_BUSY joins ENV_FAULTS (the harness's fault, retried on resume).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ experiments/jit/call-host.mjs         | 12 +++++-
+ experiments/jit/run-compiled.mjs      | 19 +++++++++-
+ experiments/lib/runner.mjs            |  4 +-
+ experiments/lib/runner.test.mjs       |  4 +-
+ experiments/lib/workdir-lock.mjs      | 54 +++++++++++++++++++++++++++
+ experiments/lib/workdir-lock.test.mjs | 51 +++++++++++++++++++++++++
+ 6 files changed, 138 insertions(+), 6 deletions(-)
+ create mode 100644 experiments/lib/workdir-lock.mjs
+ create mode 100644 experiments/lib/workdir-lock.test.mjs
+
+diff --git a/experiments/jit/call-host.mjs b/experiments/jit/call-host.mjs
+index e71c111..15363f5 100644
+--- a/experiments/jit/call-host.mjs
++++ b/experiments/jit/call-host.mjs
+@@ -83,6 +83,7 @@ import { compileDataSchema, validateData } from '../../src/validate.mjs';
+ import { checkProfile, checkOptionsOf, profileSupports, PROFILE_SCHEMA } from './profile.mjs';
+ import { reserveFor } from '../lib/services.mjs';
+ import { ENV_FAULTS } from '../lib/runner.mjs';
++import { lockWorkdir } from '../lib/workdir-lock.mjs';
+ import { FoundryError } from '../../src/data.mjs';
+ 
+ export const FLOW_V3 = path.resolve(new URL('./flow-v3.mjs', import.meta.url).pathname);
+@@ -405,9 +406,13 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+   async function interpretChild({ entry, task, span, childPath, budgetUsd, timeoutMs, reason }) {
+     const workdir = workRoot ? path.join(workRoot, 'interpret', dirOf(childPath)) : null;
+     if (workdir) mkdirSync(workdir, { recursive: true });
++    // One runner per workdir (orch-20261021 rank 12): another host sharing this workRoot is refused, nothing spent.
++    const lock = workdir ? lockWorkdir(workdir, { label: `interpret:${childPath}` }) : null;
++    if (lock && !lock.ok) return { ok: false, error: { code: 'WORKDIR_BUSY', message: `interpret workdir in use by pid ${lock.holder?.pid ?? '?'}` }, costUsd: 0, costUnknown: false, traceId: null };
+     let r;
+     try { r = (await interpreter({ task, outputSchema: entry.contract.output, budgetUsd, timeoutMs, workdir, name: span?.replace(/^call:|#\d+$/g, '') ?? null, span, path: childPath, callee: entry.hash, reason, arm, taskKey })) ?? {}; }
+     catch (error) { return { ok: false, error: { code: error.code ?? 'INTERPRETER', message: short(error, 400) }, costUsd: 0, costUnknown: false, traceId: null }; }
++    finally { lock?.release(); }
+     const costUnknown = !!r.costUnknown, costUsd = usd(costUnknown ? Math.max(r.costUsd ?? 0, budgetUsd) : (r.costUsd ?? 0));
+     const traceId = r.traceId ?? null;
+     if (r.answer == null) return { ok: false, error: r.error ?? { code: 'NO_ANSWER' }, costUsd, costUnknown, traceId };
+@@ -664,6 +669,9 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+       const stallMs = Number.isInteger(req.stallMs) && req.stallMs > 0 ? req.stallMs : agentCfg.stallMs;
+       const workdir = workRoot ? path.join(workRoot, 'agents', `${dirOf(nodePath)}-a${attempt}`) : null;
+       let run = null, spent = 0, restarts = 0, stalls = 0, costUnknown = false;
++      // One runner per workdir (orch-20261021 rank 12): the agent's workdir (and its -rN restart dirs) belong to this host while it runs.
++      const lock = workdir ? lockWorkdir(workdir, { label: `agent:${nodePath}` }) : null;
++      try {
+       await reserveOn(scope, amount, gatewayHoldUsd, async () => {
+         await acquireSlot();
+         try {
+@@ -674,7 +682,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+             if (stallMs) { timer = setInterval(() => { if (Date.now() - last > stallMs) { stalled = true; ac.abort(); } }, Math.max(5, Math.min(1000, Math.floor(stallMs / 4)))); timer.unref?.(); }
+             let r;
+             try {
+-              r = (await agentCfg.runner({ instructions: req.instructions, files, inputs: req.inputs, returns: req.returns, model, tools, budgetUsd: usd(amount - spent), timeoutMs,
++              if (lock && !lock.ok) r = { answer: null, costUsd: 0, error: { code: 'WORKDIR_BUSY', message: `agent workdir in use by pid ${lock.holder?.pid ?? '?'}` } };
++              else r = (await agentCfg.runner({ instructions: req.instructions, files, inputs: req.inputs, returns: req.returns, model, tools, budgetUsd: usd(amount - spent), timeoutMs,
+                 workdir: workdir ? (restarts ? `${workdir}-r${restarts}` : workdir) : null, signal: ac.signal, progress: () => { last = Date.now(); }, retryReason, name, span, attempt,
+                 path: nodePath, arm, taskKey })) ?? {};
+             } catch (error) { r = { answer: null, costUsd: 0, error: { code: error.code ?? 'AGENT_RUNNER', message: short(error, 400) } }; }
+@@ -690,6 +699,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+           }
+         } finally { releaseSlot(); }
+       });
++      } finally { lock?.release(); }
+       scope.spentUsd += spent;
+       // Void, failed or ok (the verify is the caller's).
+       let result;
+diff --git a/experiments/jit/run-compiled.mjs b/experiments/jit/run-compiled.mjs
+index 0f5f4a9..de2aada 100644
+--- a/experiments/jit/run-compiled.mjs
++++ b/experiments/jit/run-compiled.mjs
+@@ -12,6 +12,7 @@ import { loadFamily } from '../lib/beds.mjs';
+ import { validateOutput } from './interpret.mjs';
+ import { FoundryError } from '../../src/data.mjs';
+ import { REPLAYABLE_ERRORS } from '../../src/journal.mjs';
++import { lockWorkdir } from '../lib/workdir-lock.mjs';
+ 
+ export const DEOPT_EXIT = 75, ENV_EXIT = 76, MAX_TRACE_EVENTS = 5000;
+ // DEFAULT_FLOW is the version-1 SDK (frozen); a prompt-version-2 arm passes flowPath = FLOW_V2 (stream.mjs, prompts.mjs flowFileOf).
+@@ -275,9 +276,23 @@ export async function runCompiled(args = {}) {
+   return { ...r, ...cost, status: 'deopt', output: null, deopt: { kind: INVARIANCE_KIND, name: v.violated.relation, detail: { violations: v.violated.violations.slice(0, 10), info: v.violated.info } }, meta };
+ }
+ 
+-async function runOnce({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs = 20 * 60 * 1000, workdir, familyId = null, outputSchema = null,
++// One run per workdir (orch-20261021 rank 12, chaos F1): the run holds an exclusive lock file in its workdir from before it clears or
++// writes anything there until it has read its results back. A second run in the same workdir, in this process or another, is refused
++// (status 'refused', WORKDIR_BUSY, nothing spent) instead of sharing the gateway files, answers and trace; WORKDIR_BUSY is an
++// environment fault (experiments/lib/runner.mjs ENV_FAULTS), retried on resume, never a task failure.
++async function runOnce(args) {
++  if (!args?.solvePath || !args?.task || !args?.workdir) throw new Error('runCompiled needs solvePath, task and workdir');
++  const label = args.label ?? 'compiled', lock = lockWorkdir(args.workdir, { label });
++  if (!lock.ok) {
++    return { status: 'refused', output: null, deopt: null, trace: [], flags: flagsOf([]), costUsd: 0, costUnknown: false, imputedUsd: 0, latencyMs: 0,
++      error: { code: 'WORKDIR_BUSY', message: `workdir ${args.workdir} is in use by another run (pid ${lock.holder?.pid ?? '?'}, ${lock.holder?.label ?? 'unlabelled'})` },
++      meta: { exitCode: null, calls: 0, errors: {}, refusals: { WORKDIR_BUSY: 1 }, unknownCalls: 0, unknownUpperUsd: 0, spentUsd: 0, overshootUsd: 0, workdirHolder: lock.holder } };
++  }
++  try { return await runLocked(args); } finally { lock.release(); }
++}
++
++async function runLocked({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs = 20 * 60 * 1000, workdir, familyId = null, outputSchema = null,
+   allowedModels = null, flowPath = DEFAULT_FLOW, label = 'compiled', flowOverride = null, flowOverrideData, ledger: givenLedger = null, flowScope = null, resume = null }) {
+-  if (!solvePath || !task || !workdir) throw new Error('runCompiled needs solvePath, task and workdir');
+   // S0-2 (opt-in): flowOverride is the path of an ESM module whose default export is flow-v2's override(callSite, request)
+   // (see flow-v2.mjs); it is copied in as tools/flow-override.mjs, and flowOverrideData (any JSON) as tools/flow-override.json
+   // for it to read. flow.mjs (version 1, frozen) has no hook, so an override with it is refused rather than ignored.
+diff --git a/experiments/lib/runner.mjs b/experiments/lib/runner.mjs
+index fd67f6d..d20ec23 100644
+--- a/experiments/lib/runner.mjs
++++ b/experiments/lib/runner.mjs
+@@ -19,7 +19,9 @@ export const armHash = arm => createHash('sha256').update(canonical({ id: arm.id
+ // Host infrastructure (orch-20261021 C2): a full disk, a quota, an exhausted file table or a store that cannot be written is the host's
+ // fault, never the task's; autobench/run.mjs INFRA_FAULT already treated them so, the generic runner and the call host did not.
+ export const ENV_FAULTS = Object.freeze(new Set(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL',
+-  'ENOSPC', 'EDQUOT', 'EMFILE', 'ENFILE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE']));
++  'ENOSPC', 'EDQUOT', 'EMFILE', 'ENFILE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE',
++  // A run refused because another run holds its workdir (experiments/lib/workdir-lock.mjs, orch-20261021 rank 12): the harness's fault.
++  'WORKDIR_BUSY']));
+ const INFRA_TEXT = /ENOSPC|EDQUOT|EMFILE|ENFILE|no space left|database or disk is full|SQLITE_FULL|No usable temporary directory/i;
+ export const metEnvFault = r => ENV_FAULTS.has(r?.error?.code) || Object.keys(r?.meta?.errors ?? {}).some(c => ENV_FAULTS.has(c))
+   || INFRA_TEXT.test(`${r?.error?.message ?? ''} ${r?.error?.errstr ?? ''}`);
+diff --git a/experiments/lib/runner.test.mjs b/experiments/lib/runner.test.mjs
+index 957bfa9..2559902 100644
+--- a/experiments/lib/runner.test.mjs
++++ b/experiments/lib/runner.test.mjs
+@@ -30,9 +30,9 @@ const arm = (id, fault = () => null, version = 1) => ({
+ 
+ test('the environment-fault classes are the pre-registered ones', () => {
+   // The five pre-registered classes, plus host infrastructure (a full disk, a quota, an exhausted file table, a store that cannot be written)
+-  // added by orch-20261021 patch 06 (chaos C2): the host's fault, never the task's. A run that pre-registered the five records the change as
++  // added by orch-20261021 patch 06 (chaos C2), and a run refused for a busy workdir (rank 12): the host's fault, never the task's. A run that pre-registered the five records the change as
+   // dependency drift (experiments/lib/runner.mjs is hashed by sealed runs).
+-  assert.deepEqual([...ENV_FAULTS].sort(), ['EDQUOT', 'EMFILE', 'ENFILE', 'ENOSPC', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL', 'MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE']);
++  assert.deepEqual([...ENV_FAULTS].sort(), ['EDQUOT', 'EMFILE', 'ENFILE', 'ENOSPC', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL', 'MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'WORKDIR_BUSY']);
+   assert.equal(metEnvFault({ error: { code: 'SCRIPT_ERROR', message: 'Error: ENOSPC: no space left on device, write' } }), true, 'infrastructure text in a task error is the host\'s fault');
+   assert.equal(metEnvFault({ error: { code: 'SQLITE_ERROR', errstr: 'database or disk is full' } }), true);
+   assert.deepEqual([...BUILD_ENV_FAULTS].sort(), [...ENV_FAULTS].sort(), 'constructions and trials share one fault rule');
+diff --git a/experiments/lib/workdir-lock.mjs b/experiments/lib/workdir-lock.mjs
+new file mode 100644
+index 0000000..af9b9a2
+--- /dev/null
++++ b/experiments/lib/workdir-lock.mjs
+@@ -0,0 +1,54 @@
++// One runner per workdir (orch-20261021 rank 12, chaos F1): two orchestrators that ran compiled solvers in one shared workdir both
++// reported "ok" with each other's traces and answers mixed in. A runner now takes an exclusive lock file in the workdir before it
++// writes anything there; a second runner, in this process or another, is refused (WORKDIR_BUSY) while the holder lives.
++//
++// Creation is atomic and complete: the record is written to a private file opened O_EXCL, then hard-linked to the lock name, which
++// fails with EEXIST exactly as an O_EXCL open would, so no runner ever reads a half-written lock. A lock whose holder is gone (its
++// pid is dead, or now belongs to another process: the start time differs) is stale and taken over: it is renamed aside first, so of
++// two runners that find it stale only one moves it, and both then race for a fresh link.
++//
++//   const lock = lockWorkdir(dir, { label });   // -> { ok: true, release() } | { ok: false, holder: {pid, label, at} }
++import { closeSync, linkSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeSync } from 'node:fs';
++import { randomUUID } from 'node:crypto';
++import path from 'node:path';
++import { startOf } from '../../src/children.mjs';
++
++export const LOCK_FILE = '.foundry-workdir.lock';
++
++const alive = pid => { try { process.kill(pid, 0); return true; } catch (error) { return error.code === 'EPERM'; } };
++// The holder still runs: its pid answers and, where /proc gives start times, it is the same process (not a reused pid).
++function holds(record) {
++  if (!Number.isInteger(record?.pid) || !alive(record.pid)) return false;
++  const start = startOf(record.pid);
++  return record.start == null || start == null || start === record.start;
++}
++const readLock = file => { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return null; } };
++
++export function lockWorkdir(workdir, { label = null } = {}) {
++  mkdirSync(workdir, { recursive: true });
++  const file = path.join(workdir, LOCK_FILE), token = randomUUID(), mine = `${file}.${token}`;
++  const record = { pid: process.pid, start: startOf(process.pid), token, label, at: Date.now() };
++  const fd = openSync(mine, 'wx', 0o600);
++  try { writeSync(fd, JSON.stringify(record)); } finally { closeSync(fd); }
++  try {
++    for (let tries = 0; tries < 4; tries++) {
++      try { linkSync(mine, file); }
++      catch (error) {
++        if (error.code !== 'EEXIST') throw error;
++        const held = readLock(file);
++        if (held && holds(held)) return { ok: false, holder: { pid: held.pid, label: held.label ?? null, at: held.at ?? null } };
++        // Stale (or unreadable, which a linked lock never is): move it aside and race again for a fresh link.
++        const aside = `${file}.stale-${token}-${tries}`;
++        try { renameSync(file, aside); rmSync(aside, { force: true }); } catch (e) { if (e.code !== 'ENOENT') throw e; }
++        continue;
++      }
++      return {
++        ok: true, file, token,
++        // Released only by its holder, and only while the lock is still its own (never another runner's).
++        release() { if (readLock(file)?.token === token) rmSync(file, { force: true }); },
++      };
++    }
++    const held = readLock(file);
++    return { ok: false, holder: { pid: held?.pid ?? null, label: held?.label ?? null, at: held?.at ?? null } };
++  } finally { rmSync(mine, { force: true }); }
++}
+diff --git a/experiments/lib/workdir-lock.test.mjs b/experiments/lib/workdir-lock.test.mjs
+new file mode 100644
+index 0000000..dbfef90
+--- /dev/null
++++ b/experiments/lib/workdir-lock.test.mjs
+@@ -0,0 +1,51 @@
++// One runner per workdir (orch-20261021 rank 12, chaos F1). $0, local files and one short-lived child process only.
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import path from 'node:path';
++import { spawn } from 'node:child_process';
++import { lockWorkdir, LOCK_FILE } from './workdir-lock.mjs';
++import { startOf } from '../../src/children.mjs';
++
++const scratch = t => { const dir = mkdtempSync(path.join(tmpdir(), 'wd-lock-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; };
++
++test('a second runner in the same process is refused while the first holds the workdir; release frees it', t => {
++  const dir = path.join(scratch(t), 'w');
++  const a = lockWorkdir(dir, { label: 'A' });
++  assert.equal(a.ok, true);
++  const b = lockWorkdir(dir, { label: 'B' });
++  assert.equal(b.ok, false); assert.equal(b.holder.pid, process.pid); assert.equal(b.holder.label, 'A');
++  a.release();
++  assert.equal(existsSync(path.join(dir, LOCK_FILE)), false);
++  const c = lockWorkdir(dir, { label: 'C' });
++  assert.equal(c.ok, true); c.release();
++  assert.deepEqual(readdirSync(dir), [], 'no temporary or stale files are left behind');
++});
++
++test('a lock whose holder is gone is taken over; a live holder in another process is refused; release never removes another runner\'s lock', async t => {
++  const dir = path.join(scratch(t), 'w');
++  const sleeper = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 20000)'], { stdio: 'ignore' });
++  t.after(() => { try { sleeper.kill('SIGKILL'); } catch {} });
++  await new Promise(resolve => sleeper.once('spawn', resolve));
++  const file = path.join(dir, LOCK_FILE);
++  const first = lockWorkdir(dir); first.release();
++  // Held by another live process (same start time as on record): refused.
++  writeFileSync(file, JSON.stringify({ pid: sleeper.pid, start: startOf(sleeper.pid), token: 'other', label: 'elsewhere', at: Date.now() }));
++  const refused = lockWorkdir(dir);
++  assert.equal(refused.ok, false); assert.equal(refused.holder.label, 'elsewhere');
++  // The same pid with another start time is a reused pid: stale.
++  if (startOf(sleeper.pid) !== null) {
++    writeFileSync(file, JSON.stringify({ pid: sleeper.pid, start: '1', token: 'reused', label: 'old', at: 1 }));
++    const taken = lockWorkdir(dir);
++    assert.equal(taken.ok, true, 'a reused pid does not hold the lock');
++    // Another runner's lock replaces ours behind our back: our release leaves it alone.
++    writeFileSync(file, JSON.stringify({ pid: sleeper.pid, start: startOf(sleeper.pid), token: 'theirs', label: 'theirs', at: Date.now() }));
++    taken.release();
++    assert.equal(JSON.parse(readFileSync(file, 'utf8')).token, 'theirs');
++  }
++  // A dead holder: stale, taken over.
++  sleeper.kill('SIGKILL'); await new Promise(resolve => sleeper.once('exit', resolve));
++  const after = lockWorkdir(dir);
++  assert.equal(after.ok, true); after.release();
++});
+-- 
+2.43.0
+

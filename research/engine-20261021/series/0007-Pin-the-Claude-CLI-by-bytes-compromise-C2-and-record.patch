@@ -1,0 +1,761 @@
+From 83d9e7133e3e0db75152bf74bac4ed95adfe638d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:16:18 +0000
+Subject: [PATCH 07/16] Pin the Claude CLI by bytes (compromise C2) and record
+ the version per call (gap rank 16, chaos D4)
+
+- src/cli-pin.mjs resolveCli(): with a lock named (FOUNDRY_CLI_LOCK), the verified binary at
+  .foundry/cli/<sha256>/claude by absolute path, hashed once per process and re-hashed when
+  its identity (dev, inode, size, mtime, ctime) changes; CLI_DRIFT on other bytes,
+  CLI_UNPINNED when the pin is not acquired; never a fallback to PATH. cliPinChange()
+  for resume comparisons.
+- claude-cli provider: pinned calls run the pinned path (engineVersion names its sha256);
+  unpinned calls ask --version on every call (about 50 ms; it was cached per binary per
+  process, so a CLI that updated mid-run was misrecorded). A pin that cannot be honoured
+  fails as MODEL_PROTOCOL naming the CLI_ code.
+- verify-run warns MIXED_ENGINE_VERSIONS when one harness served a run in two versions.
+- DISABLE_UPDATES joins CHILD_ENV_ALLOWED; policy 2026-10-21.3 sets DISABLE_AUTOUPDATER and
+  DISABLE_UPDATES for claude -p children; executor sessions always get both. runClaudeCode
+  runs the pinned CLI (kept read-only in the sandbox) when a lock is named.
+- research/manifests/claude-cli.lock.json: 2.1.306 sha256/size per platform from the
+  release manifest (HTTPS; the installed CLI matches linux-x64), npm sha512 as a second
+  root; signature NOT verified (the keyserver key has no user ID; recorded as such).
+- scripts/fetch-cli.mjs: fetch or copy the raw binary, verify, never npm install; 1 GB
+  disk guard; GC keeps 2 versions, never the lock's or one an unfinished run references.
+Tests: tests/cli-pin.test.mjs 5/5 (fake CLIs; one check hashes the installed CLI), and
+the env/version pins in models-port, claude-cli-env and executor-sandbox.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ policy/models.json                      |   9 +-
+ research/manifests/claude-cli.lock.json |  46 +++++++++
+ scripts/fetch-cli.mjs                   | 108 +++++++++++++++++++++
+ src/cli-pin.mjs                         |  79 +++++++++++++++
+ src/executors/claude-code.mjs           |  17 +++-
+ src/models/policy.mjs                   |   4 +-
+ src/models/providers/claude-cli.mjs     |  42 +++++---
+ src/verify-run.mjs                      |  19 ++++
+ tests/claude-cli-env.test.mjs           |  14 +--
+ tests/cli-pin.test.mjs                  | 124 ++++++++++++++++++++++++
+ tests/executor-sandbox.test.mjs         |   2 +-
+ tests/models-port.test.mjs              |   6 +-
+ 12 files changed, 437 insertions(+), 33 deletions(-)
+ create mode 100644 research/manifests/claude-cli.lock.json
+ create mode 100644 scripts/fetch-cli.mjs
+ create mode 100644 src/cli-pin.mjs
+ create mode 100644 tests/cli-pin.test.mjs
+
+diff --git a/policy/models.json b/policy/models.json
+index 3c49b3c..956ea8d 100644
+--- a/policy/models.json
++++ b/policy/models.json
+@@ -1,5 +1,5 @@
+ {
+-  "policyVersion": "2026-10-21.2",
++  "policyVersion": "2026-10-21.3",
+   "owner": "Raed2180416 (decision D1, granted 2026-10-06: free choice of Haiku 4.5 / Sonnet 5.5 / Opus 5.5 plus open-weight models for any role)",
+   "notes": [
+     "This file is the ONLY source of model ids for the Foundry runtime. Any id not listed here is rejected (tests/model-policy.test.mjs).",
+@@ -12,7 +12,8 @@
+     "2026-10-15 (P0 policy batch: research/architecture-20261014/MEMORY-ROUTING-RECURSION.md §2 changes 1 and 6, §5 row 1; recorded as deviation D6 in research/need-router-20261014/PREREG-NEED-V1.md §13). (1) Jev is pinned: the judgment model id is the served version jev-1.13.0, not the moving alias jev-latest (which serves jev-1.13.0 today; jev-1.14.0 shipped on 2026-10-14 behind jev-preview). Callers request the pinned id; a deliberate re-read on another version names that id explicitly (score-served.mjs and jev-need.mjs --jev-model), and the id must be listed here. Every judgment still records the version its response names. (2) inputBudgetTokensByClass M, L and F are 100000 (were 8000, 16000, 32000). The 8000 class-M budget dates from class M meaning a 7-14B open model; M1 (research/need-router-20261014/runs/m1) measured one Haiku 5.5 call solving 45-64K-token tasks. 100000 is the Haiku price-tier boundary in its price source; L and F get the same budget so an escalation never lands in a smaller one. S stays 4000 (parked). (3) defaultsByRole is removed: no code read it, and wiring a role-based automatic assignment is on the design's do-not-build list (§4).",
+     "2026-10-15.2 (same deviation D6, before the NL0 stamp): jev-1.14.0 is listed beside the pinned jev-1.13.0 so the planned J0 re-read can name it explicitly; the default pinned id is unchanged (the first judgment entry).",
+     "2026-10-21.1 (owner decision 2026-10-21, research/mercury-20261021/PROVISIONING.md): Inception's Mercury models are added as a second cheap executor beside Haiku 5.5. Provider inception has the new kind openai-chat-https (a remote OpenAI-compatible chat.completions endpoint, https only; validated in src/models/policy.mjs: no credential field, no key-like value, no field outside a closed list). The key is named by credentialEnv (INCEPTION_API_KEY), read only by src/executors/openai-chat.mjs at call time from the host environment, never passed into the executor sandbox, never stored, logged or committed. The models are listed under executorModels, apart from models[], as judgmentModels are: ModelPort has no provider for this kind, so class resolution and escalation never route a typed node to one; they serve only executor sessions (the tool-using loop of src/executors/openai-chat.mjs, tools run in the claude-code executor sandbox). Class M is the tier of record: hosted models without a public parameter count are placed by price tier (notes above), S is the parked local <=4B band with a 4,000-token input budget, and Mercury's listed prices put mercury-2.5 beside Haiku (M); mercury-3 is listed free today. The placement must be justified by measurement like any other. Every entry above is unchanged.",
+-    "2026-10-21.2 (orchestrator request 2026-10-21, research/mercury-20261021/): ModelPort may now serve an executor model, but only for a call that names its id (src/models/policy.mjs portModelById): class resolution, escalation targets and the verifier-independence check still read models[] alone, so no node is ever moved to Mercury by class and nothing falls back silently (a call naming mercury-3 is served by mercury-3 or fails). The provider is src/models/providers/openai-chat.mjs: one structured-output request per typed call, no tools, a per-call and a required per-run token cap. It is registered only where a session explicitly allows the model (experiments/lib/models.mjs createModelPort allowedModels + tokenCap). Workflow IR nodes still resolve model.id through models[] only. This note supersedes the sentence of the 2026-10-21.1 note that says ModelPort has no provider for this kind; no entry changed."
++    "2026-10-21.2 (orchestrator request 2026-10-21, research/mercury-20261021/): ModelPort may now serve an executor model, but only for a call that names its id (src/models/policy.mjs portModelById): class resolution, escalation targets and the verifier-independence check still read models[] alone, so no node is ever moved to Mercury by class and nothing falls back silently (a call naming mercury-3 is served by mercury-3 or fails). The provider is src/models/providers/openai-chat.mjs: one structured-output request per typed call, no tools, a per-call and a required per-run token cap. It is registered only where a session explicitly allows the model (experiments/lib/models.mjs createModelPort allowedModels + tokenCap). Workflow IR nodes still resolve model.id through models[] only. This note supersedes the sentence of the 2026-10-21.1 note that says ModelPort has no provider for this kind; no entry changed.",
++    "2026-10-21.3 (engine bump, compromise C2, research/engine-20261021/ENGINE-BUMP.md section 4): claude-cli.childEnv also sets DISABLE_AUTOUPDATER=1 and DISABLE_UPDATES=1 (DISABLE_UPDATES added to the closed list in src/models/policy.mjs), so a CLI cannot replace itself under a run (incident I3: 2.1.300 -> 2.1.306 between runs). Neither changes the decoding; both are recorded per call in providerRequest.env. The pin by bytes is separate and opt-in (research/manifests/claude-cli.lock.json, FOUNDRY_CLI_LOCK, src/cli-pin.mjs). A run created under 2026-10-21.2 has another policy hash and resumes only under that policy (MODEL_POLICY_DRIFT)."
+   ],
+   "classOrder": [
+     "S",
+@@ -51,7 +52,9 @@
+       },
+       "childEnv": {
+         "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+-        "FORCE_PROMPT_CACHING_5M": "1"
++        "FORCE_PROMPT_CACHING_5M": "1",
++        "DISABLE_AUTOUPDATER": "1",
++        "DISABLE_UPDATES": "1"
+       }
+     },
+     "llama-server": {
+diff --git a/research/manifests/claude-cli.lock.json b/research/manifests/claude-cli.lock.json
+new file mode 100644
+index 0000000..0155729
+--- /dev/null
++++ b/research/manifests/claude-cli.lock.json
+@@ -0,0 +1,46 @@
++{
++  "kind": "foundry.cli-lock/1",
++  "tool": "claude-code",
++  "version": "2.1.306",
++  "description": "Pin of the Claude Code CLI by bytes, not by version string (compromise C2; research/compromises-20261021/FIXES.md action 2; research/engine-20261021/ENGINE-BUMP.md section 4). src/cli-pin.mjs resolveCli() accepts only a binary at .foundry/cli/<sha256>/claude whose sha256 (and size) equal this platform's entry; scripts/fetch-cli.mjs fetches and verifies it. A null sha256 means the pin is not acquired for that platform and resolveCli refuses (CLI_UNPINNED) rather than falling back to PATH.",
++  "platforms": {
++    "linux-x64": { "binary": "claude", "sha256": "520bc6c1f40af466bd03a278b5ae1af1a2938bc7de5b9e5cb15526da20d71cfe", "size": 290532720 },
++    "linux-arm64": { "binary": "claude", "sha256": "77d257d5e8b8730ec61d5a4992a8eb65550aaf9589f464988aa1a9684338d801", "size": 290447544 },
++    "darwin-arm64": { "binary": "claude", "sha256": "b5d795b7760032d79954b55a9cd1876dcf3a8dc9608fd6bb9f618593f69fd44b", "size": 272984176 },
++    "darwin-x64": { "binary": "claude", "sha256": "fc273f4caaeb11189bfed82251496728cf1e650563cb9b5f70d91ec6bec42c17", "size": 284167840 }
++  },
++  "sources": {
++    "manifest": {
++      "url": "https://downloads.claude.ai/claude-code-releases/2.1.306/manifest.json",
++      "sha256": "2c2e75d5231f4169ca23e4a14f62608bd862bca4e21d7eb64456e8a9140f7896",
++      "bytes": 2101,
++      "commit": "01ae8327ca9931db91a0802d6e8e377419dd44e6",
++      "buildDate": "2026-10-21T01:32:56Z",
++      "binaryUrlTemplate": "https://downloads.claude.ai/claude-code-releases/2.1.306/<platform>/claude",
++      "binaryUrlChecked": "HEAD of the linux-x64 URL on 2026-10-21: HTTP 200, stored content length 290532720 (equal to the manifest size); body not downloaded"
++    },
++    "signature": {
++      "url": "https://downloads.claude.ai/claude-code-releases/2.1.306/manifest.json.sig",
++      "bytes": 833,
++      "issuerFingerprint": "31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE",
++      "documentedFingerprint": "31DD DE24 ... CACE (as quoted in research/compromises-20261021/FIXES.md; the visible parts match the issuer)",
++      "verified": false,
++      "note": "Not verified cryptographically from this environment: keys.openpgp.org serves the key for this fingerprint without a user ID, and neither gpg --import nor gpgv accepts it (No public key). Verify once with the publisher's full key before relying on the signature root."
++    },
++    "npm": {
++      "package": "@anthropic-ai/claude-code@2.1.306",
++      "url": "https://registry.npmjs.org/@anthropic-ai/claude-code/2.1.306",
++      "integrity": "sha512-7biQtEqwnigGbezCgmpkGfcleiRddNy7Z9FXLCxmaizBnC11Qk9dxnr6mPBMX5eTRbnoMGHHIsL5M5el1vWhlw==",
++      "shasum": "19ee36814fd23f840c75f3a61600c413ce75c56f",
++      "tarball": "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-2.1.306.tgz",
++      "unpackedSize": 189395,
++      "note": "Second root for the version: the registry's integrity of the 2.1.306 package tarball (a launcher, 189 KB unpacked), not of the native binary's bytes. Never installed (no npm install, no install hooks)."
++    }
++  },
++  "acquisition": {
++    "date": "2026-10-21T14:25:23Z",
++    "method": "HTTPS GET of the manifest, its detached signature and the npm version document through the session proxy; no binary was downloaded",
++    "outcome": "manifest and npm metadata fetched; sha256 and size per platform copied from the manifest. Cross-check: the CLI installed on this host (/opt/claude-code/bin/claude, reporting 2.1.306) has sha256 520bc6c1...71cfe and 290532720 bytes, equal to the linux-x64 entry. Signature not verified (see sources.signature). The binary itself is not in .foundry/cli yet: run node scripts/fetch-cli.mjs (needs >= 1 GB free disk) or copy a verified binary there.",
++    "licence": "Proprietary (Anthropic Commercial Terms; npm license field: SEE LICENSE IN README.md). Fetched for local execution only; never committed or redistributed (.foundry/ is git-ignored)."
++  }
++}
+diff --git a/scripts/fetch-cli.mjs b/scripts/fetch-cli.mjs
+new file mode 100644
+index 0000000..1f20d7d
+--- /dev/null
++++ b/scripts/fetch-cli.mjs
+@@ -0,0 +1,108 @@
++#!/usr/bin/env node
++// Put the pinned Claude Code CLI where src/cli-pin.mjs looks for it: <cliRoot>/<sha256>/claude, verified against the lock
++// (research/manifests/claude-cli.lock.json; compromise C2, research/engine-20261021/ENGINE-BUMP.md §4). Never runs npm install and
++// never runs anything it fetched. The raw binary comes from the release URL in the lock, or from a local file (--from) when an
++// identical binary is already on the host; either way it is accepted only if its size and sha256 equal the lock's.
++//
++//   node scripts/fetch-cli.mjs [--lock FILE] [--cli-root DIR] [--from LOCAL_BINARY] [--gc-only] [--scan DIR ...]
++//
++// Disk: refuses below 1 GB free (a binary is about 290 MB). Garbage collection keeps at most 2 versions and never deletes the
++// version the lock names or one referenced by an unfinished run (a launch.json under a --scan root, default /var/tmp/foundry-work,
++// whose cli.sha256 names it and that has no summary.json beside it).
++import { chmodSync, copyFileSync, createWriteStream, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, statfsSync } from 'node:fs';
++import { createHash, randomUUID } from 'node:crypto';
++import path from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { DEFAULT_CLI_ROOT, DEFAULT_LOCK, fileSha256, platformKey, readCliLock } from '../src/cli-pin.mjs';
++
++export const MIN_FREE_BYTES = 1024 ** 3, KEEP_VERSIONS = 2, DEFAULT_SCAN = ['/var/tmp/foundry-work'];
++const HEX64 = /^[0-9a-f]{64}$/;
++
++export function freeBytes(dir) { const s = statfsSync(dir); return Number(s.bavail) * Number(s.bsize); }
++
++/** Install the pinned binary. -> {path, sha256, size, source, already}. Throws when the disk guard, the lock or the bytes refuse it. */
++export async function installCli({ lockFile = DEFAULT_LOCK, cliRoot = DEFAULT_CLI_ROOT, from = null, platform = platformKey(), minFreeBytes = MIN_FREE_BYTES, fetchImpl = globalThis.fetch } = {}) {
++  const lock = readCliLock(lockFile, platform);
++  if (!lock.entry) throw Object.assign(new Error(`${lockFile} has no sha256 for ${platform}: acquire the pin first`), { code: 'CLI_UNPINNED' });
++  const { sha256, size } = lock.entry, dir = path.join(cliRoot, sha256), target = path.join(dir, 'claude');
++  mkdirSync(cliRoot, { recursive: true });
++  if (existsSync(target)) {
++    if (fileSha256(target) !== sha256) throw Object.assign(new Error(`${target} exists with other bytes: remove it, then fetch again`), { code: 'CLI_DRIFT' });
++    return { path: target, sha256, size: statSync(target).size, source: 'present', already: true };
++  }
++  const free = freeBytes(cliRoot);
++  if (free < minFreeBytes + (size ?? 0)) throw Object.assign(new Error(`refusing to fetch: ${Math.floor(free / 1e6)} MB free, need ${Math.ceil((minFreeBytes + (size ?? 0)) / 1e6)} MB`), { code: 'DISK_GUARD' });
++  const partial = path.join(cliRoot, `.partial-${randomUUID()}`);
++  let source;
++  try {
++    if (from) {
++      // A local copy: a hard link when it is on the same file system (no extra space), a copy otherwise.
++      try { linkSync(from, partial); } catch { copyFileSync(from, partial); }
++      source = `local:${path.resolve(from)}`;
++    } else {
++      const manifest = JSON.parse(readFileSync(lockFile, 'utf8')).sources?.manifest ?? {};
++      const url = String(manifest.binaryUrlTemplate ?? '').replace('<platform>', platform);
++      if (!/^https:\/\//.test(url)) throw Object.assign(new Error(`${lockFile} names no https binary URL`), { code: 'CLI_LOCK_INVALID' });
++      const res = await fetchImpl(url);
++      if (!res.ok || !res.body) throw Object.assign(new Error(`GET ${url}: HTTP ${res.status}`), { code: 'CLI_FETCH' });
++      const hash = createHash('sha256'), out = createWriteStream(partial, { mode: 0o600 });
++      let bytes = 0;
++      for await (const chunk of res.body) {
++        bytes += chunk.length; hash.update(chunk);
++        if (size != null && bytes > size) throw Object.assign(new Error(`GET ${url}: more than the locked ${size} bytes`), { code: 'CLI_DRIFT' });
++        if (!out.write(chunk)) await new Promise(resolve => out.once('drain', resolve));
++      }
++      await new Promise((resolve, reject) => out.end(error => (error ? reject(error) : resolve())));
++      source = url;
++    }
++    const got = fileSha256(partial), bytes = statSync(partial).size;
++    if (got !== sha256 || (size != null && bytes !== size)) throw Object.assign(new Error(`the fetched CLI is not the pinned ${lock.version}: sha256 ${got.slice(0, 12)}, ${bytes} bytes; the lock says ${sha256.slice(0, 12)}, ${size} bytes`), { code: 'CLI_DRIFT' });
++    mkdirSync(dir, { recursive: true });
++    chmodSync(partial, 0o755);
++    renameSync(partial, target);
++    return { path: target, sha256, size: bytes, source, already: false };
++  } finally { rmSync(partial, { force: true }); }
++}
++
++/** CLI versions referenced by unfinished runs: launch.json files (depth <= 3 under each root) with cli.sha256 and no summary.json. */
++export function referencedVersions(roots = DEFAULT_SCAN) {
++  const out = new Set();
++  const walk = (dir, depth) => {
++    let names; try { names = readdirSync(dir, { withFileTypes: true }); } catch { return; }
++    if (names.some(d => d.isFile() && d.name === 'launch.json') && !names.some(d => d.name === 'summary.json')) {
++      try { const sha = JSON.parse(readFileSync(path.join(dir, 'launch.json'), 'utf8'))?.cli?.sha256; if (HEX64.test(sha ?? '')) out.add(sha); } catch {}
++    }
++    if (depth < 3) for (const d of names) if (d.isDirectory() && !d.isSymbolicLink()) walk(path.join(dir, d.name), depth + 1);
++  };
++  for (const root of roots) walk(root, 0);
++  return out;
++}
++
++/** Keep at most `keep` versions under cliRoot; never delete a protected one (the lock's, or one an unfinished run references).
++ *  Oldest (by mtime) go first. -> {kept: [sha], removed: [sha], protected: [sha]} */
++export function gcCli({ cliRoot = DEFAULT_CLI_ROOT, keep = KEEP_VERSIONS, protect = [], scan = DEFAULT_SCAN } = {}) {
++  let entries = [];
++  try { entries = readdirSync(cliRoot, { withFileTypes: true }).filter(d => d.isDirectory() && HEX64.test(d.name)).map(d => d.name); } catch { return { kept: [], removed: [], protected: [] }; }
++  const guarded = new Set([...protect, ...referencedVersions(scan)]);
++  const byAge = entries.map(sha => ({ sha, mtime: (() => { try { return statSync(path.join(cliRoot, sha)).mtimeMs; } catch { return 0; } })() })).sort((a, b) => b.mtime - a.mtime);
++  const removed = [];
++  let count = byAge.length;
++  for (const { sha } of [...byAge].reverse()) {
++    if (count <= keep) break;
++    if (guarded.has(sha)) continue;
++    rmSync(path.join(cliRoot, sha), { recursive: true, force: true }); removed.push(sha); count--;
++  }
++  return { kept: byAge.map(e => e.sha).filter(sha => !removed.includes(sha)), removed, protected: [...guarded].filter(sha => entries.includes(sha)) };
++}
++
++if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
++  const argv = process.argv.slice(2), opt = name => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : null; };
++  const lockFile = opt('--lock') ?? DEFAULT_LOCK, cliRoot = opt('--cli-root') ?? DEFAULT_CLI_ROOT;
++  const scan = argv.flatMap((a, i) => (a === '--scan' ? [argv[i + 1]] : []));
++  try {
++    const installed = argv.includes('--gc-only') ? null : await installCli({ lockFile, cliRoot, from: opt('--from') });
++    const lock = readCliLock(lockFile);
++    const gc = gcCli({ cliRoot, protect: lock.entry ? [lock.entry.sha256] : [], scan: scan.length ? scan : DEFAULT_SCAN });
++    console.log(JSON.stringify({ installed, gc }, null, 1));
++  } catch (error) { console.error(JSON.stringify({ error: { code: error.code ?? 'ERROR', message: error.message } })); process.exit(1); }
++}
+diff --git a/src/cli-pin.mjs b/src/cli-pin.mjs
+new file mode 100644
+index 0000000..50344a6
+--- /dev/null
++++ b/src/cli-pin.mjs
+@@ -0,0 +1,79 @@
++// The Claude Code CLI pinned by bytes, not by version string (compromise C2; research/engine-20261021/ENGINE-BUMP.md §4).
++// A CLI auto-update between or inside runs changed the harness under paid experiments (incident I3: 2.1.300 -> 2.1.306 changed
++// the tool list). A lock file (research/manifests/claude-cli.lock.json) names the version and, per platform, the sha256 and size
++// from the publisher's release manifest; the binary lives at <cliRoot>/<sha256>/claude (scripts/fetch-cli.mjs puts it there).
++//
++// resolveCli({ lockFile }) -> {path, version, sha256, size, lockFile} | null
++//   null when no lock is named (pinning is off: the caller uses its configured binary and records the version per call). With a
++//   lock named it never falls back to PATH: an unacquired pin is CLI_UNPINNED, and a binary whose bytes differ is CLI_DRIFT.
++//   The file is hashed once per process and re-hashed only when its identity (device, inode, size, mtime, ctime) changes.
++// A lock is named by the caller or by FOUNDRY_CLI_LOCK (the owner's launcher for paid and sealed runs).
++import { closeSync, existsSync, openSync, readFileSync, readSync, statSync } from 'node:fs';
++import { createHash } from 'node:crypto';
++import path from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { FoundryError } from './data.mjs';
++
++export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
++export const DEFAULT_LOCK = path.join(REPO_ROOT, 'research/manifests/claude-cli.lock.json');
++export const DEFAULT_CLI_ROOT = path.join(REPO_ROOT, '.foundry/cli');
++/** The release manifest's platform key for this host (linux-x64, darwin-arm64, ...). */
++export const platformKey = (platform = process.platform, arch = process.arch) => `${platform}-${arch}`;
++const HEX64 = /^[0-9a-f]{64}$/;
++
++/** The lock file, checked: {version, entry: this platform's {sha256, size} or null, file}. */
++export function readCliLock(file = DEFAULT_LOCK, platform = platformKey()) {
++  let lock;
++  try { lock = JSON.parse(readFileSync(file, 'utf8')); }
++  catch (error) { throw new FoundryError('CLI_LOCK_INVALID', `CLI lock ${file} cannot be read: ${error.code ?? error.message}`); }
++  if (lock?.kind !== 'foundry.cli-lock/1' || typeof lock.version !== 'string' || !/^\d+\.\d+\.\d+$/.test(lock.version) || !lock.platforms || typeof lock.platforms !== 'object')
++    throw new FoundryError('CLI_LOCK_INVALID', `CLI lock ${file} is not a foundry.cli-lock/1 document with a version and platforms`);
++  const raw = lock.platforms[platform] ?? null;
++  if (raw && raw.sha256 != null && !HEX64.test(raw.sha256)) throw new FoundryError('CLI_LOCK_INVALID', `CLI lock ${file}: ${platform}.sha256 must be 64 lowercase hex characters or null`);
++  if (raw && raw.size != null && !(Number.isSafeInteger(raw.size) && raw.size > 0)) throw new FoundryError('CLI_LOCK_INVALID', `CLI lock ${file}: ${platform}.size must be a positive integer or null`);
++  return { version: lock.version, entry: raw?.sha256 ? { sha256: raw.sha256, size: raw.size ?? null } : null, file: path.resolve(file) };
++}
++
++// sha256 of a file by identity: absolute path -> {dev, ino, size, mtimeMs, ctimeMs, sha256}. Read in 4 MiB chunks (a 290 MB binary
++// hashes in about 0.3 s and never sits in memory whole).
++const hashes = new Map();
++export function fileSha256(file) {
++  const abs = path.resolve(file), s = statSync(abs), seen = hashes.get(abs);
++  if (seen && seen.dev === s.dev && seen.ino === s.ino && seen.size === s.size && seen.mtimeMs === s.mtimeMs && seen.ctimeMs === s.ctimeMs) return seen.sha256;
++  const hash = createHash('sha256'), buffer = Buffer.allocUnsafe(4 * 1024 * 1024), fd = openSync(abs, 'r');
++  try { for (let n; (n = readSync(fd, buffer, 0, buffer.length, null)) > 0;) hash.update(buffer.subarray(0, n)); } finally { closeSync(fd); }
++  const sha256 = hash.digest('hex');
++  hashes.set(abs, { dev: s.dev, ino: s.ino, size: s.size, mtimeMs: s.mtimeMs, ctimeMs: s.ctimeMs, sha256 });
++  return sha256;
++}
++
++export function resolveCli({ lockFile = process.env.FOUNDRY_CLI_LOCK || null, cliRoot = process.env.FOUNDRY_CLI_ROOT || DEFAULT_CLI_ROOT, platform = platformKey() } = {}) {
++  if (!lockFile) return null;
++  const lock = readCliLock(lockFile, platform);
++  if (!lock.entry) throw new FoundryError('CLI_UNPINNED', `CLI lock ${lock.file} has no sha256 for ${platform}: the pin is not acquired, and a pinned run never falls back to the CLI on PATH`);
++  const file = path.join(path.resolve(cliRoot), lock.entry.sha256, 'claude');
++  if (!existsSync(file)) throw new FoundryError('CLI_UNPINNED', `The pinned CLI ${lock.version} (${lock.entry.sha256.slice(0, 12)}) is not at ${file}: fetch it with node scripts/fetch-cli.mjs`, { path: file });
++  const size = statSync(file).size, sha256 = fileSha256(file);
++  if (sha256 !== lock.entry.sha256 || (lock.entry.size != null && size !== lock.entry.size))
++    throw new FoundryError('CLI_DRIFT', `The CLI at ${file} is not the pinned ${lock.version}: sha256 ${sha256.slice(0, 12)}, ${size} bytes; the lock says ${lock.entry.sha256.slice(0, 12)}, ${lock.entry.size ?? '?'} bytes`, { path: file, sha256, expected: lock.entry.sha256 });
++  return { path: file, version: lock.version, sha256, size, lockFile: lock.file };
++}
++
++/** The identity to record for a CLI binary: {version, sha256, pinned} (unpinned: the hash of the file a name resolves to on PATH). */
++export function cliIdentityOf(binary, version, { pinned = false, pathEnv = process.env.PATH ?? '' } = {}) {
++  let file = binary;
++  if (!path.isAbsolute(file)) file = String(pathEnv).split(':').filter(d => path.isAbsolute(d)).map(d => path.join(d, binary)).find(p => { try { return statSync(p).isFile(); } catch { return false; } }) ?? null;
++  let sha256 = null;
++  try { sha256 = file ? fileSha256(file) : null; } catch { sha256 = null; }
++  return { version: version ?? null, sha256, pinned: !!pinned };
++}
++
++/** Why resuming with `current` differs from the CLI a run was launched with (`prior`), or null. A launch without a recorded hash (an
++ *  older run) accepts any CLI, and the change is the caller's to record. */
++export function cliPinChange(prior, current) {
++  if (!prior?.sha256) return null;
++  if (!current?.sha256) return `the run was launched with CLI ${prior.version ?? '?'} (sha256 ${prior.sha256.slice(0, 12)}); its identity cannot be read now`;
++  if (current.sha256 !== prior.sha256) return `the CLI changed since launch: ${prior.version ?? '?'} (${prior.sha256.slice(0, 12)}) -> ${current.version ?? '?'} (${current.sha256.slice(0, 12)})`;
++  if (!!prior.pinned && !current.pinned) return `the run was launched with a pinned CLI; resume it with the same lock (FOUNDRY_CLI_LOCK)`;
++  return null;
++}
+diff --git a/src/executors/claude-code.mjs b/src/executors/claude-code.mjs
+index 8939631..07a57fc 100644
+--- a/src/executors/claude-code.mjs
++++ b/src/executors/claude-code.mjs
+@@ -10,6 +10,7 @@ import path from 'node:path';
+ import { FoundryError } from '../data.mjs';
+ import { CHILD_ENV_ALLOWED } from '../models/policy.mjs';
+ import { lifeline, trackChild } from '../children.mjs';
++import { resolveCli } from '../cli-pin.mjs';
+ 
+ // An executor sees only its own workdir under WORK_ROOT and at most one kit under KIT_ROOT.
+ export const WORK_ROOT = '/var/tmp/foundry-work', KIT_ROOT = '/opt/foundry-kit';
+@@ -124,7 +125,8 @@ export function executorEnv({ env = process.env, extraEnv = {}, hidden = DEFAULT
+     if (k === 'HOME') throw new FoundryError('SANDBOX_ENV', 'HOME is set by the executor (a hidden path), not by the caller');
+   }
+   const base = Object.fromEntries(Object.entries(env).filter(([k, v]) => typeof v === 'string' && (EXECUTOR_ENV_ALLOWED.includes(k) || EXECUTOR_ENV_PATTERN.test(k))));
+-  return { ...base, TMPDIR: '/tmp', HOME: executorHome(env, hidden), ...extraEnv };
++  // The CLI never replaces itself during a session (compromise C2; incident I3): both switches the CLI has read, set last.
++  return { ...base, TMPDIR: '/tmp', HOME: executorHome(env, hidden), ...extraEnv, DISABLE_AUTOUPDATER: '1', DISABLE_UPDATES: '1' };
+ }
+ 
+ // Transcript scan (pre-registered: a count > 0 voids the run). Tool uses that start a nested Claude CLI or call the
+@@ -295,14 +297,20 @@ export function sessionError({ result, stderr = '', timedOut = false, sandboxRea
+ // then costUnknown is true and costUpperUsd is the session budget (a soft bound: the CLI checks it between turns).
+ export async function runClaudeCode({
+   model, prompt, workdir, files = {}, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, tools = DEFAULT_TOOLS,
+-  hidden = DEFAULT_HIDDEN, keepRo = DEFAULT_KEEP_RO, kitDir = null, systemPrompt = null, appendSystemPrompt = null, effort = null, binary = 'claude', signal,
+-  env: extraEnv = {}, hostEnv = process.env,
++  hidden = DEFAULT_HIDDEN, keepRo = DEFAULT_KEEP_RO, kitDir = null, systemPrompt = null, appendSystemPrompt = null, effort = null, binary = null, signal,
++  env: extraEnv = {}, hostEnv = process.env, cliLock = hostEnv?.FOUNDRY_CLI_LOCK || null, cliRoot = hostEnv?.FOUNDRY_CLI_ROOT || undefined,
+ } = {}) {
+   if (!model) throw new FoundryError('EXECUTOR_MODEL', 'An explicit model id from the policy file is required');
+   if (!sandboxAvailable()) throw new FoundryError('SANDBOX_UNAVAILABLE', 'User/mount/pid namespaces are required to hide oracles from executors');
+   // Extra variables for the whole session (C0: the model gateway, so even a direct call of the kit's CLI is policed).
+   // hostEnv is the environment the allow-list draws from (tests seed a fake one).
+   const env = executorEnv({ env: hostEnv, extraEnv, hidden });
++  // Compromise C2 (src/cli-pin.mjs): with a lock named, the session runs the verified pinned CLI by its absolute path, kept visible
++  // read-only in the sandbox; CLI_UNPINNED or CLI_DRIFT stops it before launch. A binary the caller names (a step guard, a test fake)
++  // runs as given. Without a lock, `claude` on PATH, as before.
++  const pin = binary ? null : resolveCli({ lockFile: cliLock, ...(cliRoot ? { cliRoot } : {}) });
++  const program = binary ?? pin?.path ?? 'claude';
++  if (pin) keepRo = [...keepRo, pin.path];
+   materialize(workdir, files);
+   const args = ['-p', '--model', model, '--output-format', 'stream-json', '--verbose', '--no-session-persistence',
+     '--safe-mode', '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--disable-slash-commands',
+@@ -310,7 +318,7 @@ export async function runClaudeCode({
+   if (systemPrompt) args.push('--system-prompt', systemPrompt);
+   if (appendSystemPrompt) args.push('--append-system-prompt', appendSystemPrompt);
+   if (effort) args.push('--effort', effort);
+-  const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [binary, ...args]);
++  const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [program, ...args]);
+   const started = Date.now();
+   // lifeline: the session dies with this process; trackChild: a run executing it can find it after a crash (orch-20261021 B3).
+   const child = spawn(...lifeline('unshare', [...UNSHARE_ARGS, 'sh', '-c', script]), { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
+@@ -346,6 +354,7 @@ export async function runClaudeCode({
+     streamUsage: streamUsageOf(events), turns: result?.num_turns ?? null, sessionId: init?.session_id ?? result?.session_id ?? null,
+     usage: result?.usage ?? null, durationMs: Date.now() - started, toolUses,
+     label: `executor:claude-code:${model}`, transcript: path.join(workdir, '.executor-transcript.jsonl'),
++    cli: pin ? { version: pin.version, sha256: pin.sha256, pinned: true } : null,
+   };
+ }
+ 
+diff --git a/src/models/policy.mjs b/src/models/policy.mjs
+index 0bbb8aa..8e531eb 100644
+--- a/src/models/policy.mjs
++++ b/src/models/policy.mjs
+@@ -64,7 +64,9 @@ function validateRemoteChatProvider(name, p) {
+ // CLI builds by about 165 tokens, see research/review-20261007/cli-flags-20261008/). A value is "1" (set) or null (removed from the child).
+ // "0" is rejected: the CLI tests some of these variables for presence, so "0" does not reliably mean off (measured 2026-10-08:
+ // CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0 behaves exactly as =1, FORCE_PROMPT_CACHING_5M=0 as absent; cli-flags-20261008/zero-probe.json).
+-export const CHILD_ENV_ALLOWED = Object.freeze(['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_ERROR_REPORTING', 'DISABLE_AUTOUPDATER']);
++// DISABLE_UPDATES (compromise C2, 2026-10-21): with DISABLE_AUTOUPDATER, keeps a CLI from replacing itself under a run (incident I3); the
++// pin by bytes is src/cli-pin.mjs. Neither changes the decoding.
++export const CHILD_ENV_ALLOWED = Object.freeze(['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_ERROR_REPORTING', 'DISABLE_AUTOUPDATER', 'DISABLE_UPDATES']);
+ /** Check a childEnv block ({ NAME: "1" | null }); `where` names it in the error. Returns the block. */
+ export function validateChildEnv(childEnv, where = 'childEnv') {
+   // A plain object only: a Map or class instance has no enumerable entries and would pass as an empty block.
+diff --git a/src/models/providers/claude-cli.mjs b/src/models/providers/claude-cli.mjs
+index 7f5b178..77eddb9 100644
+--- a/src/models/providers/claude-cli.mjs
++++ b/src/models/providers/claude-cli.mjs
+@@ -7,6 +7,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import path from 'node:path';
+ import { FoundryError } from '../../data.mjs';
++import { resolveCli } from '../../cli-pin.mjs';
+ import { runProcess } from '../../process.mjs';
+ import { CHILD_ENV_ALLOWED, isPolicyModel, validateChildEnv } from '../policy.mjs';
+ import { DECODING_BY_KIND, THINKING } from '../port.mjs';
+@@ -19,7 +20,6 @@ export { THINKING };
+ const SCRUBBED = SCRUBBED_ENV;
+ // Rate limits, overload and subscription usage limits are environment faults, never model outcomes.
+ const RATE = /\b(429|529)\b|overloaded|rate.?limit|usage limit|hit your (usage )?limit|limit reached/i;
+-const versions = new Map();
+ 
+ const fail = (code, message, extra = {}) => Object.assign(new FoundryError(code, message), extra);
+ // Wait for a shared promise (the per-binary version probe), but stop waiting when this caller's signal aborts. The probe keeps
+@@ -118,25 +118,32 @@ export function interpretResult(result, { modelId, stderr = '' } = {}) {
+ export class ClaudeCliProvider {
+   // childEnv: replaces the policy's `childEnv` block (an A/B measurement can pass nulls to switch the flags off); absent (undefined), the
+   // policy block applies, and absent there the DEFAULT_CHILD_ENV. An explicit null is not "absent": it is refused like any non-object.
+-  constructor({ policy, providerName = 'claude-cli', binary, maxBudgetUsd = 1, timeoutMs = 300000, env = process.env, maxOutputBytes = 8 * 1024 * 1024, childEnv } = {}) {
++  // cliLock (compromise C2, src/cli-pin.mjs): a lock file that pins the CLI by bytes; every call then runs the verified pinned binary by its
++  // absolute path, never the configured name on PATH. Default: FOUNDRY_CLI_LOCK in `env`; absent, the configured binary runs unpinned.
++  constructor({ policy, providerName = 'claude-cli', binary, maxBudgetUsd = 1, timeoutMs = 300000, env = process.env, maxOutputBytes = 8 * 1024 * 1024, childEnv,
++    cliLock = env?.FOUNDRY_CLI_LOCK || null, cliRoot = env?.FOUNDRY_CLI_ROOT || undefined } = {}) {
+     const config = policy?.providers?.[providerName];
+     if (!config || config.kind !== 'claude-cli') throw new FoundryError('MODEL_POLICY_INVALID', `Policy has no claude-cli provider named ${providerName}`);
+     if (config.invocation.some(a => a === '--fallback-model' || a.startsWith('--fallback-model='))) throw new FoundryError('MODEL_POLICY_INVALID', '--fallback-model is never passed');
+     if (typeof maxBudgetUsd !== 'number' || !(maxBudgetUsd > 0 && maxBudgetUsd <= 25)) throw new FoundryError('MODEL_REQUEST', 'maxBudgetUsd must be in (0, 25]');
+     // Only an absent block means "the default": an explicit null in a policy object that bypassed validatePolicy is refused, not defaulted.
+     const block = childEnv === undefined ? validateChildEnv(config.childEnv === undefined ? DEFAULT_CHILD_ENV : config.childEnv, `provider ${providerName} childEnv`) : validateChildEnv(childEnv, 'childEnv');
+-    Object.assign(this, { policy, providerName, binary: binary ?? config.binary, invocation: [...config.invocation], maxBudgetUsd, timeoutMs, env, maxOutputBytes, childEnv: Object.freeze({ ...block }) });
++    Object.assign(this, { policy, providerName, binary: binary ?? config.binary, invocation: [...config.invocation], maxBudgetUsd, timeoutMs, env, maxOutputBytes, childEnv: Object.freeze({ ...block }),
++      cliLock, cliRoot });
+   }
+ 
++  // The binary this call runs and the version that serves it ({binary, engineVersion}). Pinned: the lock's version, after the bytes were
++  // checked (src/cli-pin.mjs; hashed once per process, re-hashed when the file's identity changes; CLI_DRIFT on a mismatch). Unpinned:
++  // `--version` is asked for every call (the Agent SDK's per-connect check; each `claude -p` is a connect, about 50 ms against a call of
++  // seconds), so a CLI that updated itself between two calls of one run is recorded as the version that served each (orch-20261021 rank
++  // 16, chaos D4; it was cached per binary per process, and a run spanning two versions recorded one). verify-run flags a run whose calls
++  // span versions (MIXED_ENGINE_VERSIONS).
+   async engineVersion() {
+-    if (!versions.has(this.binary)) {
+-      // Same child environment as a call (minus the thinking budget), so the probe does no non-essential startup traffic either.
+-      const probe = runProcess(this.binary, ['--version'], { env: claudeChildEnv(this.env, this.childEnv), timeoutMs: 30000, maxBytes: 64 * 1024 })
+-        .then(r => `claude-code ${r.stdout.trim().split(/\s+/)[0]}`);
+-      versions.set(this.binary, probe);
+-      probe.catch(() => versions.delete(this.binary));
+-    }
+-    return versions.get(this.binary);
++    const pin = resolveCli({ lockFile: this.cliLock, ...(this.cliRoot ? { cliRoot: this.cliRoot } : {}) });
++    if (pin) return { binary: pin.path, engineVersion: `claude-code ${pin.version} sha256:${pin.sha256.slice(0, 12)}`, pinned: pin };
++    // Same child environment as a call (minus the thinking budget), so the probe does no non-essential startup traffic either.
++    const r = await runProcess(this.binary, ['--version'], { env: claudeChildEnv(this.env, this.childEnv), timeoutMs: 30000, maxBytes: 64 * 1024 });
++    return { binary: this.binary, engineVersion: `claude-code ${r.stdout.trim().split(/\s+/)[0]}`, pinned: null };
+   }
+ 
+   effectiveDecoding(decoding) { return claudeCliDecoding(decoding); }
+@@ -150,22 +157,25 @@ export class ClaudeCliProvider {
+ 
+   async complete({ modelEntry, system, prompt, schema, decoding = {}, signal, timeoutMs = this.timeoutMs }) {
+     if (!modelEntry || !isPolicyModel(this.policy, modelEntry.id) || modelEntry.provider !== this.providerName) throw new FoundryError('MODEL_NOT_IN_POLICY', `Model ${modelEntry?.id} is not a ${this.providerName} model in the policy`);
+-    let engineVersion;
+-    try { engineVersion = await untilAborted(this.engineVersion(), signal); }
++    let engineVersion, binary;
++    try { ({ engineVersion, binary } = await untilAborted(this.engineVersion(), signal)); }
+     catch (error) {
+-      // A cancellation (or the port's deadline) while the shared version probe runs ends this call at once; no call was launched, so no spend.
++      // A cancellation (or the port's deadline) while the version probe runs ends this call at once; no call was launched, so no spend.
+       if (error.code === 'CANCELLED') throw error;
++      // A pin that cannot be honoured is never worked around: the call fails as a harness fault (MODEL_PROTOCOL, terminal, never retried
++      // as an outage), its message naming CLI_DRIFT, CLI_UNPINNED or CLI_LOCK_INVALID.
++      if (/^CLI_/.test(error.code ?? '')) throw fail('MODEL_PROTOCOL', `${error.code}: ${error.message}`, { cliError: error.code });
+       throw fail('MODEL_UNAVAILABLE', `claude CLI version probe failed: ${error.code ?? error.message}`);
+     }
+     const args = this.args({ modelEntry, system, schema, decoding }), applied = claudeCliDecoding(decoding);
+     const childProcessEnv = claudeChildEnv(this.env, this.childEnv, applied.thinkingTokens);
+-    const request = { binary: path.basename(this.binary), args: args.map(a => a === system ? '<system>' : a), temperature: applied.temperature,
++    const request = { binary: path.basename(binary), args: args.map(a => a === system ? '<system>' : a), temperature: applied.temperature,
+       maxTokens: applied.maxTokens, effort: applied.effort, thinkingTokens: applied.thinkingTokens, maxBudgetUsd: this.maxBudgetUsd,
+       env: childEnvRecord(childProcessEnv, this.childEnv) };
+     const cwd = mkdtempSync(path.join(tmpdir(), 'foundry-claude-'));
+     let processResult, launchError;
+     try {
+-      processResult = await runProcess(this.binary, args, { cwd, env: childProcessEnv, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
++      processResult = await runProcess(binary, args, { cwd, env: childProcessEnv, input: prompt, timeoutMs: Math.min(timeoutMs, 3600000), signal, maxBytes: this.maxOutputBytes });
+     } catch (error) {
+       launchError = error; processResult = error.processResult;
+     } finally { rmSync(cwd, { recursive: true, force: true }); }
+diff --git a/src/verify-run.mjs b/src/verify-run.mjs
+index 7044378..701baf6 100644
+--- a/src/verify-run.mjs
++++ b/src/verify-run.mjs
+@@ -316,5 +316,24 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
+   for (const miss of replay.mismatches) add(onlyThisEngine ? 'error' : 'warn', 'WAIT_REPLAY_MISMATCH', `Event ${miss.seq}${miss.nodeKey ? ` (${miss.nodeKey})` : ''}: ${miss.message} [${miss.code}]`, { seq: miss.seq, nodeKey: miss.nodeKey, rule: miss.code });
+   for (const drift of signalCheckpointDrift(run, events)) add('error', 'SIGNAL_EDITED', `The run record's ${drift} differs from what its chain recorded`, { drift });
+   checks.waits = { waits: replay.waits, deliveries: replay.deliveries, decisions: replay.decisions, mismatches: replay.mismatches.length };
++
++  // 6d. Harness versions (orch-20261021 rank 16, chaos D4): every model call records the version of the harness that served it (the
++  // claude-cli provider asks on every call, or names its pinned bytes). A run whose calls were served by more than one version of one
++  // harness (a CLI that updated itself mid-run, or a resume on another machine) is flagged: its results mix two programs. A warning,
++  // not an error: the record is intact, the evidence is mixed.
++  const served = new Map();
++  for (const e of events) {
++    if (!CALL_EVENTS.has(e.type) || typeof e.engineVersion !== 'string' || !e.engineVersion.trim()) continue;
++    const [harness, ...rest] = e.engineVersion.trim().split(/\s+/), version = rest.join(' ') || '(unversioned)';
++    const byVersion = served.get(harness) ?? new Map();
++    if (!byVersion.has(version)) byVersion.set(version, { version, firstSeq: e.seq, calls: 0 });
++    byVersion.get(version).calls++;
++    served.set(harness, byVersion);
++  }
++  for (const [harness, byVersion] of served) if (byVersion.size > 1) {
++    const versions = [...byVersion.values()].sort((a, b) => a.firstSeq - b.firstSeq);
++    add('warn', 'MIXED_ENGINE_VERSIONS', `The run's ${harness} calls were served by ${versions.length} versions (${versions.map(v => `${v.version} from event ${v.firstSeq}, ${v.calls} call${v.calls === 1 ? '' : 's'}`).join('; ')}): pin the CLI (research/manifests/claude-cli.lock.json, FOUNDRY_CLI_LOCK) for runs whose evidence must come from one program`, { harness, versions });
++  }
++  checks.harness = Object.fromEntries([...served].map(([harness, byVersion]) => [harness, [...byVersion.keys()]]));
+   return result();
+ }
+diff --git a/tests/claude-cli-env.test.mjs b/tests/claude-cli-env.test.mjs
+index c904350..84528a9 100644
+--- a/tests/claude-cli-env.test.mjs
++++ b/tests/claude-cli-env.test.mjs
+@@ -17,6 +17,8 @@ const { policy } = loadPolicy();
+ const HAIKU = 'claude-haiku-5-5';
+ const schema = { type: 'object', properties: { label: { type: 'string' } }, required: ['label'], additionalProperties: false };
+ const NE = 'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', CACHE = 'FORCE_PROMPT_CACHING_5M';
++// The owner policy's block since 2026-10-21.3 also switches the CLI's self-update off (compromise C2): the default policy block is these four.
++const POLICY_ENV = Object.freeze({ [NE]: '1', [CACHE]: '1', DISABLE_AUTOUPDATER: '1', DISABLE_UPDATES: '1' });
+ // Cache-tier variables outside the closed list (recorded when inherited); stripped from the test rig's base environment like the closed list.
+ const CACHE_TIER = /^(DISABLE_PROMPT_CACHING(_[A-Z]+)?|ENABLE_PROMPT_CACHING_1H(_BEDROCK)?|CLAUDE_CODE_(SUBAGENT_)?PROMPT_CACHE_TTL)$/;
+ 
+@@ -57,7 +59,7 @@ function rig(t, { policy: pol = policy, ambient = {}, script = FAKE, ...options
+ const withChildEnv = childEnv => { const p = structuredClone(policy); if (childEnv === undefined) delete p.providers['claude-cli'].childEnv; else p.providers['claude-cli'].childEnv = childEnv; return p; };
+ 
+ test('the owner policy carries the two flags, and the child process sees them by default', async t => {
+-  assert.deepEqual(policy.providers['claude-cli'].childEnv, { [NE]: '1', [CACHE]: '1' });
++  assert.deepEqual(policy.providers['claude-cli'].childEnv, POLICY_ENV);
+   assert.deepEqual(DEFAULT_CHILD_ENV, { [NE]: '1', [CACHE]: '1' });
+   const { call, seen, journal } = rig(t);
+   const r = await call();
+@@ -66,7 +68,7 @@ test('the owner policy carries the two flags, and the child process sees them by
+   assert.equal(child[NE], '1'); assert.equal(child[CACHE], '1');
+   assert.equal(child.MAX_THINKING_TOKENS, '0', 'the decoding-driven variable is still set per call');
+   assert.equal(child.GH_TOKEN, null, 'repository credentials are still scrubbed');
+-  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1' }, 'the flags are auditable in the journal request');
++  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, POLICY_ENV, 'the flags are auditable in the journal request');
+ });
+ 
+ // A CLI that dies without a result object, and one that is cancelled mid-call: the journal row of a failed call names the flags too.
+@@ -95,7 +97,7 @@ test('a failed or cancelled call records the flags in its journal row as well; a
+   const dying = rig(t, { script: DYING });
+   const failed = await dying.call();
+   assert.equal(failed.ok, false); assert.equal(failed.error.code, 'MODEL_PROTOCOL');
+-  assert.deepEqual(dying.journal.get(failed.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1' });
++  assert.deepEqual(dying.journal.get(failed.journalId).request.providerRequest.env, POLICY_ENV);
+   assert.equal(dying.seen()[0][NE], '1', 'the dying child still ran with the flags');
+ 
+   const slow = rig(t, { script: SLOW });
+@@ -110,7 +112,7 @@ test('a failed or cancelled call records the flags in its journal row as well; a
+   controller.abort();
+   await assert.rejects(pending, error => {
+     assert.equal(error.code, 'CANCELLED');
+-    assert.deepEqual(slow.journal.get(error.details.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1' });
++    assert.deepEqual(slow.journal.get(error.details.journalId).request.providerRequest.env, POLICY_ENV);
+     return true;
+   });
+   // No orphan: the CLI and its helper both ignore SIGTERM; the group SIGKILL ends them (allow the kernel a moment).
+@@ -138,7 +140,7 @@ test('the journal records what the child saw: a closed-list variable the block l
+   // The default block plus an inherited DISABLE_AUTOUPDATER: both flags and the inherited variable are on the record.
+   const dflt = rig(t, { ambient: { DISABLE_AUTOUPDATER: '1' } });
+   const d = await dflt.call();
+-  assert.deepEqual(dflt.journal.get(d.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1', DISABLE_AUTOUPDATER: '1' });
++  assert.deepEqual(dflt.journal.get(d.journalId).request.providerRequest.env, POLICY_ENV);
+   // Only closed-list names are ever recorded; the rest of the environment (credentials included) never is.
+   assert.deepEqual(childEnvRecord({ PATH: '/bin', GH_TOKEN: 'x', ANTHROPIC_BASE_URL: 'http://x', [CACHE]: '1' }, { [NE]: null }), { [NE]: null, [CACHE]: '1' });
+ });
+@@ -247,7 +249,7 @@ test('an inherited cache-tier variable that can override the cache flag is on th
+   const { call, seen, journal } = rig(t, { ambient: { DISABLE_PROMPT_CACHING: '1', CLAUDE_CODE_PROMPT_CACHE_TTL: '1h' } });
+   const r = await call();
+   assert.equal(seen()[0].DISABLE_PROMPT_CACHING, '1', 'not a decoding variable: it passes through');
+-  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { [NE]: '1', [CACHE]: '1', CLAUDE_CODE_PROMPT_CACHE_TTL: '1h', DISABLE_PROMPT_CACHING: '1' });
++  assert.deepEqual(journal.get(r.journalId).request.providerRequest.env, { ...POLICY_ENV, CLAUDE_CODE_PROMPT_CACHE_TTL: '1h', DISABLE_PROMPT_CACHING: '1' });
+   assert.deepEqual(childEnvRecord({ PATH: '/bin', ENABLE_PROMPT_CACHING_1H: '1', DISABLE_PROMPT_CACHING_HAIKU: '1' }, {}), { DISABLE_PROMPT_CACHING_HAIKU: '1', ENABLE_PROMPT_CACHING_1H: '1' });
+ });
+ 
+diff --git a/tests/cli-pin.test.mjs b/tests/cli-pin.test.mjs
+new file mode 100644
+index 0000000..803f7ca
+--- /dev/null
++++ b/tests/cli-pin.test.mjs
+@@ -0,0 +1,124 @@
++// The Claude Code CLI pinned by bytes (compromise C2; src/cli-pin.mjs, scripts/fetch-cli.mjs, research/manifests/claude-cli.lock.json).
++// Fake CLIs (shell scripts) stand in for two CLI versions; no model is called and nothing is downloaded. One check reads the CLI
++// installed on this host (hash only) when it is the locked version. Development/diagnostic evidence, not sealed evaluation.
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { appendFileSync, chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import path from 'node:path';
++import { spawnSync } from 'node:child_process';
++import { cliIdentityOf, cliPinChange, DEFAULT_LOCK, fileSha256, platformKey, readCliLock, resolveCli } from '../src/cli-pin.mjs';
++import { gcCli, installCli, referencedVersions } from '../scripts/fetch-cli.mjs';
++import { loadPolicy } from '../src/models/policy.mjs';
++import { ClaudeCliProvider } from '../src/models/providers/claude-cli.mjs';
++
++const policy = loadPolicy().policy, model = policy.models.find(m => m.provider === 'claude-cli');
++const scratch = t => { const dir = mkdtempSync(path.join(tmpdir(), 'cli-pin-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; };
++// A fake CLI of `version` whose answer names its tool list; `log` (optional) records every launch, --version included.
++const fakeCli = (version, { log = null } = {}) => `#!/bin/sh
++${log ? `echo "$$ $*" >> ${JSON.stringify(log)}` : ''}
++if [ "$1" = "--version" ]; then echo "${version} (Claude Code)"; exit 0; fi
++cat > /dev/null
++printf '%s\\n' '${JSON.stringify({ type: 'result', subtype: 'success', is_error: false, result: 'ok', structured_output: { version, tools: version === '2.1.300' ? ['Bash'] : ['Bash', 'Read'] }, total_cost_usd: 0, usage: { input_tokens: 1, output_tokens: 1 }, modelUsage: { [model.id]: {} } })}'
++`;
++// Install a fake as a pinned binary under root/<sha>/claude and write its lock. -> {lock, sha256, file}
++function pinned(dir, root, version, name = version) {
++  const staged = path.join(dir, `stage-${name}`); writeFileSync(staged, fakeCli(version)); chmodSync(staged, 0o755);
++  const sha256 = fileSha256(staged), size = statSync(staged).size, file = path.join(root, sha256, 'claude');
++  mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, readFileSync(staged)); chmodSync(file, 0o755);
++  const lock = path.join(dir, `lock-${name}.json`);
++  writeFileSync(lock, JSON.stringify({ kind: 'foundry.cli-lock/1', tool: 'claude-code', version, platforms: { [platformKey()]: { binary: 'claude', sha256, size } } }));
++  return { lock, sha256, file, staged };
++}
++const call = provider => provider.complete({ modelEntry: model, system: 's', prompt: 'p', schema: { type: 'object' } });
++
++test('the lock in the repository is well formed, and on a host whose CLI is the locked version its bytes are the locked ones', t => {
++  const lock = readCliLock(DEFAULT_LOCK, 'linux-x64');
++  assert.equal(lock.version, '2.1.306'); assert.match(lock.entry.sha256, /^[0-9a-f]{64}$/); assert.equal(lock.entry.size, 290532720);
++  const installed = '/opt/claude-code/bin/claude';
++  const version = existsSync(installed) ? spawnSync(installed, ['--version'], { encoding: 'utf8', env: { PATH: '/usr/bin:/bin', HOME: tmpdir(), DISABLE_AUTOUPDATER: '1', DISABLE_UPDATES: '1' }, timeout: 20000 }).stdout ?? '' : '';
++  if (platformKey() !== 'linux-x64' || !version.startsWith('2.1.306')) { t.skip(`installed CLI is not 2.1.306 on linux-x64 (${version.trim() || 'absent'})`); return; }
++  assert.equal(statSync(installed).size, lock.entry.size);
++  assert.equal(fileSha256(installed), lock.entry.sha256, 'the release manifest hash is the bytes of the CLI on this host');
++});
++
++test('resolveCli: the pinned bytes resolve to an absolute path; a 1-byte tamper is CLI_DRIFT; no lock, no pin; an unacquired pin is refused', t => {
++  const dir = scratch(t), root = path.join(dir, 'cli'), p = pinned(dir, root, '2.1.300');
++  const r = resolveCli({ lockFile: p.lock, cliRoot: root });
++  assert.equal(r.path, p.file); assert.ok(path.isAbsolute(r.path)); assert.equal(r.version, '2.1.300'); assert.equal(r.sha256, p.sha256);
++  assert.equal(resolveCli({ lockFile: null, cliRoot: root }), null, 'pinning is off without a lock');
++  appendFileSync(p.file, 'x');
++  assert.throws(() => resolveCli({ lockFile: p.lock, cliRoot: root }), { code: 'CLI_DRIFT' });
++  // Same size, one byte changed, mtime restored: the identity cache still notices (ctime and the content hash).
++  const bytes = readFileSync(p.staged); bytes[bytes.length - 2] ^= 1; writeFileSync(p.file, bytes);
++  const { atime, mtime } = statSync(p.staged); utimesSync(p.file, atime, mtime);
++  assert.throws(() => resolveCli({ lockFile: p.lock, cliRoot: root }), { code: 'CLI_DRIFT' });
++  const unacquired = path.join(dir, 'unacquired.json');
++  writeFileSync(unacquired, JSON.stringify({ kind: 'foundry.cli-lock/1', tool: 'claude-code', version: '2.1.306', platforms: { [platformKey()]: { sha256: null, size: null } } }));
++  assert.throws(() => resolveCli({ lockFile: unacquired, cliRoot: root }), { code: 'CLI_UNPINNED' });
++  rmSync(root, { recursive: true, force: true });
++  assert.throws(() => resolveCli({ lockFile: p.lock, cliRoot: root }), { code: 'CLI_UNPINNED' }, 'a lock whose binary is not fetched never falls back to PATH');
++});
++
++test('a pinned provider never launches the fake `claude` first on PATH, and records the pinned version that served each call', async t => {
++  const dir = scratch(t), root = path.join(dir, 'cli'), bin = path.join(dir, 'bin'), log = path.join(dir, 'path-claude.log');
++  mkdirSync(bin); writeFileSync(path.join(bin, 'claude'), fakeCli('9.9.9', { log })); chmodSync(path.join(bin, 'claude'), 0o755);
++  const p = pinned(dir, root, '2.1.300');
++  const env = { PATH: `${bin}:/usr/bin:/bin`, HOME: dir };
++  const provider = new ClaudeCliProvider({ policy, env, binary: 'claude', cliLock: p.lock, cliRoot: root });
++  const r = await call(provider);
++  assert.deepEqual(r.value, { version: '2.1.300', tools: ['Bash'] });
++  assert.equal(r.engineVersion, `claude-code 2.1.300 sha256:${p.sha256.slice(0, 12)}`);
++  assert.equal(existsSync(log), false, 'the CLI on PATH was never launched, not even for --version');
++  // The pinned file is swapped behind the provider's back: the next call is refused, nothing runs.
++  writeFileSync(p.file, fakeCli('2.1.306')); chmodSync(p.file, 0o755);
++  await assert.rejects(call(provider), error => error.code === 'MODEL_PROTOCOL' && /^CLI_DRIFT/.test(error.message));
++  assert.equal(existsSync(log), false);
++  // Unpinned, the same provider runs the CLI on PATH and asks it for its version on every call.
++  const loose = new ClaudeCliProvider({ policy, env, binary: 'claude', cliLock: null });
++  assert.equal((await call(loose)).engineVersion, 'claude-code 9.9.9');
++  assert.equal((await call(loose)).engineVersion, 'claude-code 9.9.9');
++  assert.equal(readFileSync(log, 'utf8').split('\n').filter(l => / --version$/.test(l)).length, 2, 'one version probe per call (the per-connect check)');
++});
++
++test('incident replay: resumed at the 2.1.300 lock while PATH has 2.1.306, the run gets the 2.1.300 tool list; bumping the lock is refused on resume', async t => {
++  const dir = scratch(t), root = path.join(dir, 'cli'), bin = path.join(dir, 'bin');
++  mkdirSync(bin); writeFileSync(path.join(bin, 'claude'), fakeCli('2.1.306')); chmodSync(path.join(bin, 'claude'), 0o755);
++  const old = pinned(dir, root, '2.1.300'), bumped = pinned(dir, root, '2.1.306', 'bumped');
++  const env = { PATH: `${bin}:/usr/bin:/bin`, HOME: dir };
++  const launch = resolveCli({ lockFile: old.lock, cliRoot: root });
++  const recorded = { version: launch.version, sha256: launch.sha256, pinned: true };
++  const resumed = await call(new ClaudeCliProvider({ policy, env, binary: 'claude', cliLock: old.lock, cliRoot: root }));
++  assert.deepEqual(resumed.value.tools, ['Bash'], 'the 2.1.300 tool list, not the 2.1.306 one on PATH');
++  assert.equal(cliPinChange(recorded, { ...resolveCli({ lockFile: old.lock, cliRoot: root }), pinned: true }), null, 'the same pin resumes');
++  const now = resolveCli({ lockFile: bumped.lock, cliRoot: root });
++  assert.match(cliPinChange(recorded, { version: now.version, sha256: now.sha256, pinned: true }), /CLI changed since launch: 2\.1\.300 .* -> 2\.1\.306/);
++  assert.match(cliPinChange(recorded, cliIdentityOf('claude', '2.1.306', { pathEnv: env.PATH })), /CLI changed since launch/, 'nor resumed unpinned on another binary');
++  assert.equal(cliPinChange({ version: '2.1.300' }, { version: '2.1.306', sha256: now.sha256 }), null, 'a launch that recorded no hash (an older run) is not refused here');
++});
++
++test('fetch-cli: installs only the locked bytes (from a local file here), refuses below the disk guard; GC never deletes a pinned or referenced version', async t => {
++  const dir = scratch(t), root = path.join(dir, 'cli'), src = pinned(dir, path.join(dir, 'elsewhere'), '2.1.300');
++  const got = await installCli({ lockFile: src.lock, cliRoot: root, from: src.staged });
++  assert.equal(got.sha256, src.sha256); assert.equal(got.already, false); assert.equal(resolveCli({ lockFile: src.lock, cliRoot: root }).path, got.path);
++  assert.equal((await installCli({ lockFile: src.lock, cliRoot: root, from: src.staged })).already, true);
++  const wrong = path.join(dir, 'wrong'); writeFileSync(wrong, fakeCli('2.1.306'));
++  const other = path.join(dir, 'other-root');
++  await assert.rejects(installCli({ lockFile: src.lock, cliRoot: other, from: wrong }), { code: 'CLI_DRIFT' });
++  assert.equal(existsSync(path.join(other, src.sha256, 'claude')), false, 'nothing is installed from wrong bytes');
++  await assert.rejects(installCli({ lockFile: src.lock, cliRoot: path.join(dir, 'tiny'), from: src.staged, minFreeBytes: Number.MAX_SAFE_INTEGER }), { code: 'DISK_GUARD' });
++  let fetched = 0;
++  await assert.rejects(installCli({ lockFile: src.lock, cliRoot: path.join(dir, 'net'), fetchImpl: async () => { fetched++; return { ok: true, body: null, status: 200 }; } }), { code: 'CLI_LOCK_INVALID' }, 'a lock without a release URL is not fetched');
++  assert.equal(fetched, 0);
++  // GC: four versions; the lock's and one an unfinished run's launch.json names are kept; at most two remain otherwise.
++  const shas = ['a', 'b', 'c', 'd'].map(x => x.repeat(64));
++  shas.forEach((sha, i) => { mkdirSync(path.join(root, sha), { recursive: true }); const s = new Date(Date.now() - (10 - i) * 60000); utimesSync(path.join(root, sha), s, s); });
++  const runs = path.join(dir, 'runs');
++  mkdirSync(path.join(runs, 'r1'), { recursive: true }); writeFileSync(path.join(runs, 'r1', 'launch.json'), JSON.stringify({ cli: { version: '2.1.300', sha256: shas[0] } }));
++  mkdirSync(path.join(runs, 'r2'), { recursive: true }); writeFileSync(path.join(runs, 'r2', 'launch.json'), JSON.stringify({ cli: { sha256: shas[1] } })); writeFileSync(path.join(runs, 'r2', 'summary.json'), '{}');
++  assert.deepEqual([...referencedVersions([runs])], [shas[0]], 'a finished run (summary.json) does not hold its version');
++  const gc = gcCli({ cliRoot: root, protect: [src.sha256], scan: [runs] });
++  assert.ok(existsSync(path.join(root, src.sha256, 'claude')), 'the pinned version is never deleted');
++  assert.ok(existsSync(path.join(root, shas[0])), 'a version an unfinished run references is never deleted');
++  assert.deepEqual(gc.removed.sort(), [shas[1], shas[2], shas[3]].sort());
++});
+diff --git a/tests/executor-sandbox.test.mjs b/tests/executor-sandbox.test.mjs
+index 2316569..45b8909 100644
+--- a/tests/executor-sandbox.test.mjs
++++ b/tests/executor-sandbox.test.mjs
+@@ -90,7 +90,7 @@ test('executorEnv is an allow-list: no credential-like name but CLAUDE_CODE_OAUT
+   assert.ok(Object.keys(host).filter(k => CREDENTIAL_LIKE.test(k)).length >= 27, 'the fake environment carries the probe\'s credential load');
+   const env = executorEnv({ env: host, hidden });
+   assert.deepEqual(Object.keys(env).filter(k => CREDENTIAL_LIKE.test(k)), ['CLAUDE_CODE_OAUTH_TOKEN']);
+-  assert.deepEqual(Object.keys(env).sort(), ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'CLAUDE_CODE_OAUTH_TOKEN', 'DISABLE_AUTOUPDATER', 'FORCE_PROMPT_CACHING_5M', 'HOME', 'LANG', 'LC_ALL', 'LC_TIME', 'LOGNAME', 'PATH', 'TERM', 'TMPDIR', 'USER']);
++  assert.deepEqual(Object.keys(env).sort(), ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'CLAUDE_CODE_OAUTH_TOKEN', 'DISABLE_AUTOUPDATER', 'DISABLE_UPDATES', 'FORCE_PROMPT_CACHING_5M', 'HOME', 'LANG', 'LC_ALL', 'LC_TIME', 'LOGNAME', 'PATH', 'TERM', 'TMPDIR', 'USER']);
+   assert.equal(env.TMPDIR, '/tmp'); assert.equal(env.HOME, home);
+   for (const k of Object.keys(env)) assert.ok(['TMPDIR', 'HOME'].includes(k) || EXECUTOR_ENV_ALLOWED.includes(k) || /^LC_/.test(k), k);
+   // The old deny-list would have passed the third-party keys (the measured leak).
+diff --git a/tests/models-port.test.mjs b/tests/models-port.test.mjs
+index d75b13f..5a6b450 100644
+--- a/tests/models-port.test.mjs
++++ b/tests/models-port.test.mjs
+@@ -358,8 +358,10 @@ test('claude-cli provider: argv, stdin prompt, empty throwaway cwd, parsing and
+   const { pid } = entries().find(e => e.scenario === 'hang');
+   for (let i = 0; i < 40; i++) { try { process.kill(pid, 0); } catch { break; } await sleep(50); }
+   assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' }, 'the process group was killed');
+-  const versionProbes = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse).filter(e => e.version).length;
+-  assert.equal(versionProbes, 1, 'claude --version runs once per binary');
++  // orch-20261021 rank 16: the version is asked for on every call (the per-connect check), so a CLI that updates itself between two calls
++  // is recorded as the version that served each; it used to be asked once per binary per process.
++  const logged = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse), versionProbes = logged.filter(e => e.version).length;
++  assert.equal(versionProbes, logged.filter(e => !e.version).length, 'claude --version runs once per call');
+ 
+   const missing = await portOf({ journal, providers: { 'claude-cli': new ClaudeCliProvider({ policy, binary: path.join(dir, 'nope') }) } }).call(req({ modelId: HAIKU, nodeKey: 'missing' }));
+   assert.equal(missing.error.code, 'MODEL_UNAVAILABLE');
+-- 
+2.43.0
+

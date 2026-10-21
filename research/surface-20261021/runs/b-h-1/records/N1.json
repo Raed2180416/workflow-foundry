@@ -1,0 +1,90 @@
+{
+ "arm": "B-H",
+ "case": "N1",
+ "expected": "none",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": {
+    "template": "none",
+    "reason": "The main request is to pay contractors from the business account, which is moving money; no template does payments, and the closest (invoice-chase) only sends reminders for invoices.",
+    "notCovered": [
+     "Paying contractors from the business account on a weekly schedule",
+     "Calculating amounts owed from the timesheet sheet"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "I cannot build that with the flows I know. (The main request is to pay contractors from the business account, which is moving money; no template does payments, and the closest (invoice-chase) only sends reminders for invoices.) I can build: sync the newsletter list from the crm and report the differences; approve small expenses automatically; send bigger ones to an approver; chase unpaid invoices with a reminder cadence (dunning); route new leads to the right salesperson; on-call digest of unresolved alerts to a chat channel, with optional paging; answer common support questions with your own replies; send the rest to a person; weekly progress report from a tracker export. Nothing was created.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.000305,
+  "tokens": 2628,
+  "inputTokens": 2,
+  "outputTokens": 186,
+  "cacheReadTokens": 812,
+  "cacheWriteTokens": 1628,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 186,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1628,
+   "costUsd": 0.00030482,
+   "costUnknown": false,
+   "latencyMs": 1996,
+   "journalId": 60
+  }
+ ],
+ "builderWallMs": 1998,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "none",
+  "correctRefusal": true,
+  "verified": null,
+  "oraclePass": null,
+  "runPassed": null,
+  "reasons": [],
+  "trap": {
+   "violated": false,
+   "hits": []
+  }
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

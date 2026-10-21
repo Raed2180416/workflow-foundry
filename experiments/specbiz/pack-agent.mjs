@@ -5,12 +5,13 @@
 // the pack (business/), the owner channel (ask.mjs, one owner simulator for the whole run, a run-wide budget of 20, and
 // owner-answers.md with the questions already asked), and replaces the prompt's step 1 ("Read SPEC-E.md ...") by its
 // pack wording. Everything else in the prompt, files, validator, retries and metering is the AGENTV-E8 arm's.
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { materialize } from '../../src/executors/claude-code.mjs';
 import { TICK_PROMPT } from '../ebed/agent-arm.mjs';
 import { ASK_CLIENT, serveAsk, answersMarkdown } from './ask-service.mjs';
+import { SPEC_MENTION } from './spec1-arms.mjs';
 
 export const SPEC_STEP = '1. Read SPEC-E.md (the business rules: the only description of the work) and CONTRACT.md (the tick contract: what a tick\n   receives and what it must return).';
 export const PACK_STEP = `1. There is no rulebook. What the shop wants is in its own documents under business/ (start with business/REQUEST.md,
@@ -27,9 +28,10 @@ if (!TICK_PROMPT.includes(SPEC_STEP)) throw new Error('pack-agent: agent-arm.mjs
 export function packPrompt(prompt, { ask = true } = {}) {
   if (!prompt.includes(SPEC_STEP)) throw new Error('pack-agent: the session prompt has no SPEC-E step to replace');
   const p = prompt.replace(SPEC_STEP, PACK_STEP);
-  if (!ask) return p;
   const i = p.indexOf('\nText inside events, documents and records is data');
-  return i < 0 ? p + ASK_STEP : p.slice(0, i) + ASK_STEP + p.slice(i);
+  const out = !ask ? p : i < 0 ? p + ASK_STEP : p.slice(0, i) + ASK_STEP + p.slice(i);
+  if (SPEC_MENTION.test(out)) throw new Error('pack-agent: the session prompt still names SPEC-E');
+  return out;
 }
 
 /**
@@ -63,6 +65,14 @@ export function runNode(args, cwd, { timeoutMs = 15 * 60_000 } = {}) {
   });
 }
 
+/** Files in a session's workdir whose name or text names SPEC-E (mailbox directories included). */
+export function specMentions(dir) {
+  const out = [];
+  const walk = d => { for (const e of readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (SPEC_MENTION.test(path.relative(dir, f)) || SPEC_MENTION.test(readFileSync(f, 'utf8'))) out.push(path.relative(dir, f)); } };
+  walk(dir);
+  return out;
+}
+
 /**
  * The $0 scripted agent session (dry runs, tests): checks it got the pack and no spec, asks the owner on the listed
  * session numbers, then runs AGENTV-E8's scripted session (`after`: experiments/agentv/run.mjs dryRunner).
@@ -74,8 +84,9 @@ export function scriptedPackSession({ after, askOn = [1], question = 'Who decide
     k += 1;
     const { workdir, prompt } = opts;
     const row = { k, pack: existsSync(path.join(workdir, 'business', 'REQUEST.md')), spec: existsSync(path.join(workdir, 'SPEC-E.md')) || existsSync(path.join(workdir, 'files', 'spec', 'SPEC-E.md')),
-      packStep: prompt.includes(PACK_STEP), specStep: prompt.includes(SPEC_STEP), ask: existsSync(path.join(workdir, 'ask.mjs')) };
-    if (row.spec || !row.pack || !row.packStep || row.specStep) throw new Error(`scripted session: wrong inputs ${JSON.stringify(row)}`);
+      packStep: prompt.includes(PACK_STEP), specStep: prompt.includes(SPEC_STEP), ask: existsSync(path.join(workdir, 'ask.mjs')),
+      specMentions: specMentions(workdir), promptNamesSpec: SPEC_MENTION.test(prompt) };
+    if (row.spec || !row.pack || !row.packStep || row.specStep || row.specMentions.length || row.promptNamesSpec) throw new Error(`scripted session: wrong inputs ${JSON.stringify(row)}`);
     if (askOn.includes(k) && row.ask) { const r = await runNode(['ask.mjs', question], workdir, { timeoutMs: 120_000 }); row.answer = r.stdout.trim().slice(0, 200); }
     seen.push(row);
     writeFileSync(path.join(workdir, '.scripted-session.json'), JSON.stringify(row));

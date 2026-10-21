@@ -1,0 +1,122 @@
+From 9ec7ff9280603acda5c63311fdedce42ea188873 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:37:50 +0000
+Subject: [PATCH 15/16] call-host: child workdirs unique by construction;
+ experiment-side follow-ups to patches 06-08
+
+- call-host served several solver runs (each check case) whose child spans repeat, so
+  concurrent cases shared a workdir (the F1 hazard) and the new lock refused two of them;
+  calls/, interpret/ and agents/ workdirs now carry a host tag and a sequence number (the
+  plan's 'unique workdirs by construction'); the lock stays as the guard.
+- jit/stats.mjs ENV_FAULT_CODES follows runner.mjs ENV_FAULTS (patch 06, WORKDIR_BUSY), as
+  its test requires.
+- slice2-wiring: the flow-v3 pin moves with patch 07 (the old bytes are SOP-Bench p2's
+  frozen SDK copy, unchanged); the host check's three identical leaf calls are now one
+  joined call (patch 08 single flight), so it pays one judge, not three.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ experiments/jit/call-host.mjs               | 14 ++++++++++----
+ experiments/jit/stats.mjs                   |  5 ++++-
+ experiments/jit/test/slice2-wiring.test.mjs |  9 +++++++--
+ 3 files changed, 21 insertions(+), 7 deletions(-)
+
+diff --git a/experiments/jit/call-host.mjs b/experiments/jit/call-host.mjs
+index 15363f5..fada599 100644
+--- a/experiments/jit/call-host.mjs
++++ b/experiments/jit/call-host.mjs
+@@ -74,7 +74,7 @@
+ // - Harvest (I8) drops a script that is byte-identical to a file the node was given (a shipped decoder copied out).
+ import path from 'node:path';
+ import { readFileSync, writeFileSync, appendFileSync, mkdirSync, existsSync } from 'node:fs';
+-import { createHash } from 'node:crypto';
++import { createHash, randomUUID } from 'node:crypto';
+ import { runCompiled, canonicalJson, FLOW_V2 } from './run-compiled.mjs';
+ import { validateOutput } from './interpret.mjs';
+ import { AGENT_TOOLS, DEFAULT_AGENT_TOOLS, MAX_AGENT_TOOLS, DEFAULT_AGENT_FLOOR_USD, DEFAULT_AGENT_CONCURRENCY, DEFAULT_AGENTS_PER_RUN, DEFAULT_MAX_AGENT_DEPTH,
+@@ -274,6 +274,12 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+   const events = [], journalOut = [], spans = new Map(), memo = new Map(), inflightCalls = new Map();
+   for (const row of journal ?? []) if (row?.key && row.result?.status === 'ok') memo.set(row.key, { result: row.result, replayed: true });   // call and agent rows (keys differ)
+   const tree = { children: 0 };
++  // Child workdirs are unique by construction (orch-20261021 rank 12): one host serves several solver runs (each check case), whose
++  // child spans repeat (call:x#0 in every case), so a name from the span alone was shared by concurrent cases and their files clobbered
++  // each other. A host tag and a sequence number make every child's directory its own; the workdir lock stays as the guard.
++  const hostTag = randomUUID().slice(0, 8);
++  let workdirSeq = 0;
++  const uniqueDir = name => `${name}~${hostTag}-${++workdirSeq}`;
+   const agentCfg = agentConfigOf(agent, { allowedModels, modelPort });
+   const agentState = { admitted: 0, started: 0, nodePaths: new Set(), running: 0, queue: [], harvests: [], ordinals: new Map() };
+   const envFaults = [];   // review fix C1/I5: {code, path, kind} per environment fault met anywhere in the tree
+@@ -392,7 +398,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+       }
+       return out;
+     }
+-    const workdir = path.join(workRoot, 'calls', dirOf(child.path));
++    const workdir = path.join(workRoot, 'calls', uniqueDir(dirOf(child.path)));
+     // runCompiled writes tools/flow-scope.json itself (after clearing a stale one), from flowScope.
+     const r = await runCompiled({ solvePath: entry.solvePath, task, modelPort: wrapPort(child), perTaskUsd: child.budgetUsd, timeoutMs, workdir, outputSchema: entry.contract.output,
+       allowedModels: withCallModel(allowedModels), flowPath: entry.flowVersion === 2 ? FLOW_V2 : FLOW_V3, label: `call:${entry.hash.slice(7, 19)}`,
+@@ -404,7 +410,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+   // FLOW-V3 §1.5 local deopt: the interpreter on the child task alone, under budgetUsd (already reserved by the caller).
+   // Returns {ok, output?, error?, costUsd, costUnknown, traceId}; never throws.
+   async function interpretChild({ entry, task, span, childPath, budgetUsd, timeoutMs, reason }) {
+-    const workdir = workRoot ? path.join(workRoot, 'interpret', dirOf(childPath)) : null;
++    const workdir = workRoot ? path.join(workRoot, 'interpret', uniqueDir(dirOf(childPath))) : null;
+     if (workdir) mkdirSync(workdir, { recursive: true });
+     // One runner per workdir (orch-20261021 rank 12): another host sharing this workRoot is refused, nothing spent.
+     const lock = workdir ? lockWorkdir(workdir, { label: `interpret:${childPath}` }) : null;
+@@ -667,7 +673,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+       agentState.admitted++;
+       const timeoutMs = Math.min(agentCfg.maxTimeoutMs, Number.isInteger(req.timeoutMs) && req.timeoutMs > 0 ? req.timeoutMs : 10 * 60 * 1000);
+       const stallMs = Number.isInteger(req.stallMs) && req.stallMs > 0 ? req.stallMs : agentCfg.stallMs;
+-      const workdir = workRoot ? path.join(workRoot, 'agents', `${dirOf(nodePath)}-a${attempt}`) : null;
++      const workdir = workRoot ? path.join(workRoot, 'agents', uniqueDir(`${dirOf(nodePath)}-a${attempt}`)) : null;
+       let run = null, spent = 0, restarts = 0, stalls = 0, costUnknown = false;
+       // One runner per workdir (orch-20261021 rank 12): the agent's workdir (and its -rN restart dirs) belong to this host while it runs.
+       const lock = workdir ? lockWorkdir(workdir, { label: `agent:${nodePath}` }) : null;
+diff --git a/experiments/jit/stats.mjs b/experiments/jit/stats.mjs
+index 507f287..79aac41 100644
+--- a/experiments/jit/stats.mjs
++++ b/experiments/jit/stats.mjs
+@@ -42,7 +42,10 @@ export const RHO_PREREG = 0.1;          // assumed within-lineage ICC of the pai
+ export const ENV_FAULT_LIMIT = 0.25;    // PREREG §6: an arm whose env-impaired tasks exceed 25% of planned tasks is invalid
+ // The environment-fault codes stream.mjs retries once and then records in faults.jsonl (experiments/lib/runner.mjs
+ // ENV_FAULTS; the test pins this copy to it). A faults.jsonl line is written only for these.
+-export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL']);
++// Host infrastructure codes (a full disk, a quota, the file table, an unwritable store) and WORKDIR_BUSY joined ENV_FAULTS with the
++// 2026-10-21 engine bump (orch-20261021 patch 06 and rank 12).
++export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL',
++  'ENOSPC', 'EDQUOT', 'EMFILE', 'ENFILE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'WORKDIR_BUSY']);
+ 
+ export const DECISION_RULE = 'Effect reported only if: no arm invalid by the 25% env-fault rule; K >= 2 streams; pooled gap >= 3 points and every '
+   + 'stream\'s gap >= 3 points in the same direction; exact two-sided McNemar p < 0.05 on pooled pairs; and the 95% lineage-clustered CI '
+diff --git a/experiments/jit/test/slice2-wiring.test.mjs b/experiments/jit/test/slice2-wiring.test.mjs
+index e7fcc34..ecba984 100644
+--- a/experiments/jit/test/slice2-wiring.test.mjs
++++ b/experiments/jit/test/slice2-wiring.test.mjs
+@@ -27,7 +27,9 @@ const OPTS = { traces: 3, regressions: 1, minutes: 30, gatewayUsd: 1.5, perTaskU
+ const FLOW_V3_FILE = new URL('../flow-v3.mjs', import.meta.url).pathname;
+ // flow-v3.mjs as of the slice 2 review fixes (FLOW-V3-SLICE2 §17; slice 2b's was 161ac935…35f6, slice 2a's a67bcbb6…81c8): a
+ // prompt-version-5 arm's SDK bytes. Update this pin, and the E2 freeze record, whenever flow-v3.mjs changes.
+-const FLOW_V3_SHA256 = '15da5c24efd537afb30eb8754955583c735fb6f36e8c55ca3646c13aa848f06b';
++// The pin moved with orch-20261021 patch 07 (an outage stops flow-v3 with ENV_EXIT instead of escalating; engine bump 2026-10-21). The
++// earlier bytes, 15da5c24..., are the SOP-Bench phase-2 frozen SDK copy (experiments/sopbench/frozen/p2/sdk/flow.mjs), which is unchanged.
++const FLOW_V3_SHA256 = 'e198c9c239fa16a268e84523f2fbffdd7810e73e0265fcf71c4d883725a1b47c';
+ 
+ test('prompt version 5: runs on flow-v3.mjs; without a library its text is version 4\'s byte for byte; with one it adds library/index.json, flow.call and method item 9 (inserted lines only)', () => {
+   assert.deepEqual([...PROMPT_VERSIONS], [1, 2, 3, 4, 5]);
+@@ -111,6 +113,9 @@ test('sandboxed: a prompt-version-5 compile with a library: the builder sees lib
+   assert.equal(record.library.entries, 1); assert.equal(record.library.indexSha256, sha(JSON.stringify(library.list(), null, 1)));
+   assert.equal(record.library.checkCalls.childCalls, 3, 'one library call per case in the host check'); assert.equal(record.library.checkCalls.ends, 3);
+   assert.ok(record.library.builderCalls.childCalls >= 1);
+-  assert.ok(Math.abs(record.checkCostUsd - 0.009) < 1e-9, `three leaf judges at $0.003, charged through the check ledger (${record.checkCostUsd})`);
++  // The three cases call the leaf with the same input ({n: 810}: the three prompts have one length), so the calls share one key. Since
++  // orch-20261021 patch 08 (single flight, chaos A9) an identical call in flight is joined: one leaf judge runs and is paid, the other two
++  // cases get its answer (before, each in-flight duplicate ran and was paid: $0.009).
++  assert.ok(Math.abs(record.checkCostUsd - 0.003) < 1e-9, `one leaf judge at $0.003 for one call key, charged through the check ledger (${record.checkCostUsd})`);
+   assert.equal(leaf.version, 1);
+ });
+-- 
+2.43.0
+

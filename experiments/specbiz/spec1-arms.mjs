@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as e8 from '../../beds/ebed/e8/index.mjs';
-import { buildFiles, taskText } from '../ebed/build.mjs';
+import { buildFiles, taskText, contractText } from '../ebed/build.mjs';
 import { clientInstructions } from '../ebed/smoke-service.mjs';
 import { ASK_CLIENT } from './ask-service.mjs';
 
@@ -37,6 +37,32 @@ export const NO_SPEC_BINDING = Object.freeze({ ...e8.binding, specE: '' });
 /** The E8 item with the no-spec binding and no spec text (smoke-service.mjs and the grading take an item). */
 export const DERIVE_ITEM = Object.freeze({ ...e8, binding: NO_SPEC_BINDING, specE: Object.freeze({ file: null, sha256: null, text: '' }) });
 
+/** What a derived arm must never be shown: SPEC-E by name, or the spec file a tick of E8's own arms gets. */
+export const SPEC_MENTION = /spec-e|spec\//i;
+
+/**
+ * Exact, audited replacements that turn the contract text every E8 arm gets (experiments/ebed/build.mjs contractText:
+ * BED-CONTRACT v1.1 §3.1-§3.4 and the host README's arm interface) into the derived arms' CONTRACT.md: the four places
+ * that name SPEC-E or list spec/SPEC-E.md among a tick's files. E8's own arms keep contractText() unchanged.
+ */
+export const CONTRACT_EDITS = Object.freeze([
+  ['calendar/<id>.json, docs/<eventId>.txt, api/<system>.schema.json, spec/SPEC-E.md', 'calendar/<id>.json, docs/<eventId>.txt, api/<system>.schema.json'],
+  ['of the sweep that spec-E names for them.', 'of the sweep that the business\'s rules name for them.'],
+  ['latency ≥ 1 minute as declared per\n  system in spec-E, so no result', 'latency ≥ 1 minute as declared per\n  system in the platform guide (business/PLATFORM.md), so no result'],
+  ['`ctx` gives `files` (`spec/SPEC-E.md`, `master/`,', '`ctx` gives `files` (`master/`,'],
+]);
+/** CONTRACT.md for every derived arm (build arms and none-agent): contractText() with CONTRACT_EDITS, no SPEC-E left. */
+export function derivedContractText() {
+  let c = contractText();
+  for (const [from, to] of CONTRACT_EDITS) {
+    const n = c.split(from).length - 1;
+    if (n !== 1) throw new Error(`CONTRACT edit applies ${n} times (want 1): ${from.slice(0, 60)}`);
+    c = c.replace(from, to);
+  }
+  if (SPEC_MENTION.test(c)) throw new Error(`the derived contract still names SPEC-E: ${c.match(new RegExp(`.{0,40}${SPEC_MENTION.source}.{0,40}`, 'i'))?.[0]}`);
+  return c;
+}
+
 /** Exact, audited replacements that turn B1L-H's E8 TASK.md into the derived one (each must apply exactly once). */
 export const TASK_EDITS = Object.freeze([
   ['that implements every rule of SPEC-E.md exactly.', 'that handles this shop\'s orders the way the shop wants them handled (see "The shop" below).'],
@@ -51,7 +77,7 @@ There is no rulebook. What this shop (Hollin Retail) wants is in its own documen
 business/REQUEST.md (the owner's request), business/PLATFORM.md (the platform and its systems, exact), the wiki, the
 inbox and the records exports. Like any real business's documents they overlap, some are out of date, and not everything
 in them is the shop's policy. The business documents are not in ctx.files at run time: your solver must carry what it
-needs. (CONTRACT.md lists spec/SPEC-E.md among the files a tick may get: this shop has no such file.)
+needs.
 `;
 
 export const ASK_SECTION = `
@@ -113,7 +139,9 @@ export function deriveTaskText(armName) {
 /** The prompt the build session starts with (B1L-H: `${TASK}\nRead SPEC-E.md, CONTRACT.md and api/*.schema.json first.`). */
 export function derivePrompt(armName, files) {
   const extra = [ARMS[armName].ledger ? 'LEDGER.md' : null, ARMS[armName].prior ? 'PRIOR.md' : null].filter(Boolean);
-  return `${files['TASK.md']}\nRead business/REQUEST.md and the other files under business/, ${extra.length ? `${extra.join(', ')}, ` : ''}CONTRACT.md and api/*.schema.json first.`;
+  const p = `${files['TASK.md']}\nRead business/REQUEST.md and the other files under business/, ${extra.length ? `${extra.join(', ')}, ` : ''}CONTRACT.md and api/*.schema.json first.`;
+  if (SPEC_MENTION.test(p)) throw new Error('the derived build prompt names SPEC-E');
+  return p;
 }
 
 /** The corpus prior card (DESIGN §5): P(feature | family) for automation/event and orchestration/event, from corpus-prior.json. */
@@ -149,6 +177,7 @@ export function deriveFiles(armName, pack, { ledgerMd = null, priorFile } = {}) 
   if (!arm || arm.kind !== 'build') throw new Error(`not a build arm: ${armName}`);
   const files = buildFiles(e8, { loop: 'smoke' });
   delete files['SPEC-E.md'];
+  files['CONTRACT.md'] = derivedContractText();
   files['TASK.md'] = deriveTaskText(armName);
   for (const [p, text] of Object.entries(pack.files)) files[`business/${p}`] = text;
   if (arm.ask !== 'off') files['ask.mjs'] = ASK_CLIENT;
@@ -157,5 +186,7 @@ export function deriveFiles(armName, pack, { ledgerMd = null, priorFile } = {}) 
     if (typeof ledgerMd !== 'string' || !ledgerMd) throw new Error('derive-ledger needs the reviewed ledger (LEDGER.md)');
     files['LEDGER.md'] = ledgerMd;
   }
+  const named = Object.entries(files).filter(([k, v]) => SPEC_MENTION.test(k) || SPEC_MENTION.test(v)).map(([k]) => k);
+  if (named.length) throw new Error(`derived workspace names SPEC-E in ${named.join(', ')}`);
   return files;
 }

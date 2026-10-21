@@ -1,0 +1,891 @@
+From a52769e58329d1d764e08007956313bdd8da6dad Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:49:33 +0000
+Subject: [PATCH 16/16] Chaos 35/43 re-run on the final HEAD; ENGINE-BUMP.md
+ records the late follow-ups
+
+Same 8 failures (A4 B8 B10 B11 C3 C4 C5 E1, design-only ranks). Final suites on this HEAD:
+tests/ 73 files 1187 pass 0 fail; experiment suites (lib, autobench, constitution, sopbench,
+heal kit-gate, jit) 63 files 553 pass 0 fail.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ research/engine-20261021/ENGINE-BUMP.md       |  10 +-
+ research/orch-20261021/chaos-landed/MATRIX.md |   6 +-
+ .../orch-20261021/chaos-landed/matrix.json    | 219 +++++++++---------
+ 3 files changed, 118 insertions(+), 117 deletions(-)
+
+diff --git a/research/engine-20261021/ENGINE-BUMP.md b/research/engine-20261021/ENGINE-BUMP.md
+index 50277b7..c8bd5f6 100644
+--- a/research/engine-20261021/ENGINE-BUMP.md
++++ b/research/engine-20261021/ENGINE-BUMP.md
+@@ -69,7 +69,13 @@ still reaped through the group on file). Found while landing, not named by the p
+ environment-fault classes (patch 06 adds the infrastructure codes), `tests/verdict.test.mjs` pins the inconclusive codes (patch 09
+ adds `TOKEN_BUDGET`), and patch 05's lifeline turned a missing binary into "exited with 127" (`PROCESS_FAILED`) instead of
+ `PROCESS_LAUNCH` and showed `setpriv` to a test's spawn mock: `src/children.mjs` `lifelineExecFailed` restores the launch failure,
+-and the mock in `tests/evaluator-audit.test.mjs` unwraps the lifeline (8 tests).
++and the mock in `tests/evaluator-audit.test.mjs` unwraps the lifeline (8 tests); patch 09 binds the runtime's default `maxTokens`
++into every new run's policy, so trials now reserve the host's token bound in their policy (`src/trials.mjs`; its hash must match the
++run's) and the legacy-store fixture in `tests/store-rows.test.mjs` allows that runtime addition, as it already allowed `dispatch`.
++On the experiment side: `experiments/jit/stats.mjs` keeps a copy of the environment-fault codes pinned to `runner.mjs` (updated);
++`experiments/jit/test/slice2-wiring.test.mjs` pinned `flow-v3.mjs` to its pre-patch-07 bytes (`15da5c24…`, which are SOP-Bench p2's
++frozen SDK copy, untouched; the pin moved) and expected a host check's three identical leaf calls to run three times (patch 08 joins
++them: one judge is paid).
+ 
+ Chaos (`nice -n 15 node experiments/orch/chaos.mjs`): repository before this bump 20/43; scratch copy with the patches 32/43;
+ this worktree after the patches 32/43 with the same 11 failures
+@@ -83,7 +89,7 @@ this bump **35/43** ([../orch-20261021/chaos-landed/MATRIX.md](../orch-20261021/
+ |---|---|---|
+ | 21 | `sessionError({cancelled})`: a session the caller aborted, with no result, is `CANCELLED`, not `EXECUTOR_PROTOCOL` (which runners retried as an environment fault); an abort before launch reads the same | `tests/executor-sandbox.test.mjs` (unit cases and an end-to-end abort of a fake CLI) |
+ | 15 | `REMEDIES` and `remedyOf(run)` (`src/verdict.mjs`): for every stop (failed, cancelled, uncertain, parked on an outage, waiting, awaiting a person or an approval) the code, cause, whether the run can continue and the next action, naming real commands; sealed in terminal verdicts as `verdict.remedy`; `Foundry.publicRun` adds it to CLI, HTTP and MCP output | chaos G1 green; `tests/verdict.test.mjs`. G1's extraction now also reads `remedyOf(record)` (a parked run has no error and no verdict); its checks are unchanged |
+-| 12 | `experiments/lib/workdir-lock.mjs`: a lock file per workdir, created complete and exclusively (a private `O_EXCL` file hard-linked into place), holder = pid + start time, stale locks moved aside atomically; `runCompiled` refuses a second run in a held workdir (`refused`, `WORKDIR_BUSY`, nothing spent; an environment fault), call-host locks its interpret and agent workdirs | chaos F1 green; `experiments/lib/workdir-lock.test.mjs` |
++| 12 | `experiments/lib/workdir-lock.mjs`: a lock file per workdir, created complete and exclusively (a private `O_EXCL` file hard-linked into place), holder = pid + start time, stale locks moved aside atomically; `runCompiled` refuses a second run in a held workdir (`refused`, `WORKDIR_BUSY`, nothing spent; an environment fault), call-host locks its interpret and agent workdirs. Call-host child workdirs are now unique by construction (host tag + sequence): one host serves several check cases whose child spans repeat, so concurrent cases used to share (and clobber) one workdir | chaos F1 green; `experiments/lib/workdir-lock.test.mjs`; the jit suite |
+ | 16 | the claude-cli provider asks `--version` on every call (the per-connect check; about 50 ms, measured, against calls of seconds) instead of once per binary per process; `verify-run` warns `MIXED_ENGINE_VERSIONS` when one harness served a run in two versions | chaos D4 green (calls a, b, c record 2.1.300, 2.1.306, 2.1.306; the run is flagged) |
+ 
+ ## 4. Pinning the Claude CLI by bytes (compromise C2)
+diff --git a/research/orch-20261021/chaos-landed/MATRIX.md b/research/orch-20261021/chaos-landed/MATRIX.md
+index b52da82..a4b25e3 100644
+--- a/research/orch-20261021/chaos-landed/MATRIX.md
++++ b/research/orch-20261021/chaos-landed/MATRIX.md
+@@ -1,4 +1,4 @@
+-# Chaos matrix (2026-10-21T16:30:19.202Z)
++# Chaos matrix (2026-10-21T16:49:22.910Z)
+ 
+ node v24.21.0, linux; 35/43 scenarios pass.
+ 
+@@ -22,11 +22,11 @@ node v24.21.0, linux; 35/43 scenarios pass.
+ | B7 | poison pill: a node that crashes its owner every time (OOM stand-in), under a naive restart loop | the crash loop stops by itself within maxAttempts + 1 executions with a typed, user-visible reason; no unbounded restarts | **PASS** | (info) the reason names a crash loop (not only an attempt budget): p exhausted its total attempt budget |
+ | B8 | a wait across days: signal 2 days later, after a restart (library host vs shipped surfaces) | a run can wait days for a signal and finish after a restart; the shipped CLI/MCP surfaces allow it | **FAIL** | shipped surfaces (default policy): a 3-day wait is accepted: failed WAIT_DEADLINE: the default runtime policy caps every run at 1 h and no CLI flag raises it |
+ | B9 | one transient model timeout in an agent node | a transient environment fault is retried (bounded, with backoff) or parks the run resumable; it never ends the run terminally | **PASS** |  |
+-| B10 | parent death cancels its children (flow.call child running when the parent solver is killed) | cancellation propagates downward: the child stops within 1 s of the parent; the host returns within the parent timeout + 1 s | **FAIL** | child stopped within 1 s of the parent's death: child ran on 6597 ms after the parent died; host returned within the parent timeout + 1 s: 8111 ms (gateway close waits for in-flight calls up to 330 s) |
++| B10 | parent death cancels its children (flow.call child running when the parent solver is killed) | cancellation propagates downward: the child stops within 1 s of the parent; the host returns within the parent timeout + 1 s | **FAIL** | child stopped within 1 s of the parent's death: child ran on 6588 ms after the parent died; host returned within the parent timeout + 1 s: 8104 ms (gateway close waits for in-flight calls up to 330 s) |
+ | B11 | kill -9 during a fan-out of 20 model calls: spend of calls in flight at the crash | no answered call is paid twice; every call the provider received is accounted (known or bounded unknown spend) in the run's cost | **FAIL** | every provider call is accounted in the run (journal rows == provider calls): 28 provider calls, 20 journal rows, run cost $0.20: 8 call(s) in flight at a crash left no row and no bound |
+ | C1 | disk full mid-run (real ENOSPC on a 6 MB tmpfs), then space freed and resume | the failure is reported as a typed disk-full fault; no corrupted record; after freeing space the run resumes to the fault-free result; each effect applied once per key | **PASS** |  |
+ | C2 | disk full in the experiment runners: fault classification and a torn JSONL tail | a host disk/file-table fault is an environment fault (retried on resume, never scored as a task failure); appending after a torn tail loses no record | **PASS** |  |
+-| C3 | no /proc (macOS, BSD, hidepid containers): orphan reaping and owner liveness | the model CLI a dead owner left is stopped by cancel; a dead owner is never taken for alive because its pid was reused | **FAIL** | a dead owner with a reused pid is not taken for alive (resume works): RUN_BUSY: Another live runner owns this run; cancel --force can still close it, without signalling the stranger: {"cancel":{"outcome":"not-stopped","message":"Cancellation of Run 825fdd4a-5832-443b-a7d5-c1d6db5b1273 (Reused) is recorded, but its owner (pid 15995) had not stopped after 0.5 s. It will stop when it next looks (it checks every fraction of a second). If it is stuck, run `foundry cancel 825fdd4a-5832-443b-a7d5-c1d6db5b1273 --force` to kill it and its sandboxes and model processes. Not killed: the run recorded no start time for its owner, so the process cannot be identified."},"strangerAlive":true} |
++| C3 | no /proc (macOS, BSD, hidepid containers): orphan reaping and owner liveness | the model CLI a dead owner left is stopped by cancel; a dead owner is never taken for alive because its pid was reused | **FAIL** | a dead owner with a reused pid is not taken for alive (resume works): RUN_BUSY: Another live runner owns this run; cancel --force can still close it, without signalling the stranger: {"cancel":{"outcome":"not-stopped","message":"Cancellation of Run 2f3673de-1749-4806-a66c-157c26ccdcdc (Reused) is recorded, but its owner (pid 15189) had not stopped after 0.5 s. It will stop when it next looks (it checks every fraction of a second). If it is stuck, run `foundry cancel 2f3673de-1749-4806-a66c-157c26ccdcdc --force` to kill it and its sandboxes and model processes. Not killed: the run recorded no start time for its owner, so the process cannot be identified."},"strangerAlive":true} |
+ | C4 | clock steps forward 2 h mid-run (NTP step, VM resume) | a wall-clock step does not fail a run whose elapsed time is within budget (or the failure names the clock step) | **FAIL** | run not failed by the clock step: failed DEADLINE; (info) a failure names the clock step, not an exhausted budget: Run deadline exhausted |
+ | C5 | clock steps back 1 h while a 1.5 s timer wait is parked | a short timer still fires after about its real delay | **FAIL** | timer fires 2.5 s later although the clock stepped back: waiting (due timers: 0); with the clock right it ends succeeded |
+ | C6 | three orchestrator processes write one SQLite workspace at once | contention only slows runs down: all three succeed, none fails with SQLITE_BUSY/locked | **PASS** |  |
+diff --git a/research/orch-20261021/chaos-landed/matrix.json b/research/orch-20261021/chaos-landed/matrix.json
+index 930ef52..b9ae8d1 100644
+--- a/research/orch-20261021/chaos-landed/matrix.json
++++ b/research/orch-20261021/chaos-landed/matrix.json
+@@ -1,7 +1,7 @@
+ {
+  "meta": {
+-  "started": "2026-10-21T16:28:31.379Z",
+-  "finished": "2026-10-21T16:30:19.202Z",
++  "started": "2026-10-21T16:47:35.027Z",
++  "finished": "2026-10-21T16:49:22.910Z",
+   "node": "v24.21.0",
+   "platform": "linux",
+   "selected": [
+@@ -78,7 +78,7 @@
+     {
+      "name": "memory growth < 512 MB",
+      "pass": true,
+-     "observed": "132 MB"
++     "observed": "129 MB"
+     },
+     {
+      "name": "verify-run ok",
+@@ -88,22 +88,22 @@
+     {
+      "name": "per-item orchestration overhead < 50 ms",
+      "pass": true,
+-     "observed": "3.7 ms/item, 4007 events",
++     "observed": "5.4 ms/item, 4007 events",
+      "info": true
+     }
+    ],
+    "observed": {
+     "status": "succeeded",
+     "error": null,
+-    "ms": 3680,
+-    "msPerItem": 3.68,
++    "ms": 5359,
++    "msPerItem": 5.359,
+     "events": 4007,
+     "peak": 16,
+-    "rssDeltaMb": 132
++    "rssDeltaMb": 129
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 3883,
++   "ms": 5595,
+    "file": "a-concurrency.mjs"
+   },
+   {
+@@ -123,7 +123,7 @@
+     {
+      "name": "map of 1,000 judges completes",
+      "pass": true,
+-     "observed": "exit 0 {\"n\":1000} .092Z\",\"model\":\"claude-haiku-5-5\",\"status\":200,\"ok\":true,\"costUsd\":0,\"spentUsd\":0}\n[model] {\"at\":\"2026-10-21T16:28:36.092Z\",\"model\":\"claude-haiku-5-5\",\"status\":200,\"ok\":true,\"costUsd\":0,\"spentUsd\":0}\n"
++     "observed": "exit 0 {\"n\":1000} .288Z\",\"model\":\"claude-haiku-5-5\",\"status\":200,\"ok\":true,\"costUsd\":0,\"spentUsd\":0}\n[model] {\"at\":\"2026-10-21T16:47:41.288Z\",\"model\":\"claude-haiku-5-5\",\"status\":200,\"ok\":true,\"costUsd\":0,\"spentUsd\":0}\n"
+     },
+     {
+      "name": "model calls in flight <= 16",
+@@ -146,12 +146,12 @@
+      },
+      "peak": 16,
+      "calls": 1000,
+-     "ms": 722
++     "ms": 568
+     }
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 846,
++   "ms": 691,
+    "file": "a-concurrency.mjs"
+   },
+   {
+@@ -176,7 +176,7 @@
+     {
+      "name": "run ended within timeout x attempts + 2 s",
+      "pass": true,
+-     "observed": "3068 ms"
++     "observed": "3037 ms"
+     },
+     {
+      "name": "collect mode: run succeeded with exactly 1 failed item",
+@@ -186,7 +186,7 @@
+    ],
+    "observed": {
+     "status": "succeeded",
+-    "ms": 3068,
++    "ms": 3037,
+     "siblingsDoneWhileHanging": 11,
+     "failedItems": 1,
+     "visible": {
+@@ -196,7 +196,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 3101,
++   "ms": 3067,
+    "file": "a-concurrency.mjs"
+   },
+   {
+@@ -211,7 +211,7 @@
+     {
+      "name": "run returns promptly (< 2 s)",
+      "pass": true,
+-     "observed": "508 ms"
++     "observed": "511 ms"
+     },
+     {
+      "name": "no work still running when the run reports its status",
+@@ -227,13 +227,13 @@
+    "observed": {
+     "status": "uncertain",
+     "error": null,
+-    "returnedMs": 508,
++    "returnedMs": 511,
+     "stillRunningAtReturn": 1,
+     "finishedLater": 1
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 3731,
++   "ms": 3769,
+    "file": "a-concurrency.mjs"
+   },
+   {
+@@ -305,7 +305,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1467,
++   "ms": 1555,
+    "file": "a-concurrency.mjs"
+   },
+   {
+@@ -343,7 +343,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 102,
++   "ms": 131,
+    "file": "a-concurrency.mjs"
+   },
+   {
+@@ -363,7 +363,7 @@
+     {
+      "name": "stopped within 1 s of the request",
+      "pass": true,
+-     "observed": "27 ms"
++     "observed": "41 ms"
+     },
+     {
+      "name": "no item started after the cancel was recorded",
+@@ -381,7 +381,7 @@
+     {
+      "name": "completed items stay recorded",
+      "pass": true,
+-     "observed": 32
++     "observed": 31
+     },
+     {
+      "name": "verify-run ok",
+@@ -391,15 +391,15 @@
+    ],
+    "observed": {
+     "status": "cancelled",
+-    "stopMs": 27,
++    "stopMs": 41,
+     "startedAfterCancelEvent": 0,
+-    "completedItems": 32,
++    "completedItems": 31,
+     "aborted": 7,
+     "active": 0
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 452,
++   "ms": 488,
+    "file": "a-concurrency.mjs"
+   },
+   {
+@@ -430,7 +430,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1806,
++   "ms": 1945,
+    "file": "a-concurrency.mjs"
+   },
+   {
+@@ -468,7 +468,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 397,
++   "ms": 412,
+    "file": "a-concurrency.mjs"
+   },
+   {
+@@ -541,12 +541,7 @@
+     {
+      "name": "seed 47: ended succeeded (or uncertain with the effect applied <= 1)",
+      "pass": true,
+-     "observed": "succeeded  after 5 kills"
+-    },
+-    {
+-     "name": "seed 47: same output as the fault-free run",
+-     "pass": true,
+-     "observed": true
++     "observed": "uncertain  after 5 kills"
+     },
+     {
+      "name": "seed 47: 30 items applied, one key per item",
+@@ -554,13 +549,13 @@
+      "observed": {
+       "ids": 30,
+       "keys": 30,
+-      "deliveries": 30
++      "deliveries": 31
+      }
+     },
+     {
+      "name": "seed 47: non-idempotent effect applied <= 1",
+      "pass": true,
+-     "observed": 1
++     "observed": 0
+     },
+     {
+      "name": "seed 47: verify-run ok",
+@@ -574,7 +569,7 @@
+      {
+       "seed": 11,
+       "kills": 4,
+-      "attempts": 5,
++      "attempts": 4,
+       "status": "succeeded",
+       "error": null,
+       "outputMatches": true,
+@@ -603,13 +598,13 @@
+       "seed": 47,
+       "kills": 5,
+       "attempts": 6,
+-      "status": "succeeded",
++      "status": "uncertain",
+       "error": null,
+-      "outputMatches": true,
+-      "idemDeliveries": 30,
++      "outputMatches": false,
++      "idemDeliveries": 31,
+       "idemKeys": 30,
+       "idemIds": 30,
+-      "effectApplied": 1,
++      "effectApplied": 0,
+       "verifyOk": true,
+       "verifyFindings": []
+      }
+@@ -617,7 +612,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 14009,
++   "ms": 12401,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -634,11 +629,11 @@
+      "pass": true,
+      "observed": [
+       {
+-       "pid": 12087,
+-       "pgid": 12087,
+-       "start": "1991995",
++       "pid": 10229,
++       "pgid": 10229,
++       "start": "2106377",
+        "kind": "sandbox",
+-       "at": 1792600141916
++       "at": 1792601285736
+       }
+      ]
+     },
+@@ -654,17 +649,17 @@
+     }
+    ],
+    "observed": {
+-    "recordedGroup": 12087,
++    "recordedGroup": 10229,
+     "orphanAfter5s": 0,
+     "cancel": {
+      "outcome": "cancelled",
+-     "message": "Run 34c587f1-c76d-4416-960a-41a2942f00ec (Orphan) cancelled: stopped 1 running node (root/spin code). The run is closed and will not be resumed. Effects that completed before the stop remain recorded."
++     "message": "Run a9258815-593f-4b3e-b516-a3fe99bc3cd7 (Orphan) cancelled: stopped 1 running node (root/spin code). The run is closed and will not be resumed. Effects that completed before the stop remain recorded."
+     },
+-    "reapedMs": 327
++    "reapedMs": 292
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 7610,
++   "ms": 7486,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -693,7 +688,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 4222,
++   "ms": 4186,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -748,7 +743,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 3290,
++   "ms": 3474,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -802,7 +797,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1409,
++   "ms": 1745,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -828,7 +823,7 @@
+      "name": "one resumer succeeded, the other was refused or saw the result",
+      "pass": true,
+      "observed": [
+-      "succeeded",
++      "RUN_CLOSED",
+       "succeeded"
+      ]
+     }
+@@ -836,23 +831,23 @@
+    "observed": {
+     "parked": "awaiting_approval",
+     "approvals": [
+-     [],
++     null,
+      [
+       {
+-       "id": "32b0fd4c0063ea0802685b043c411ba0190f55e0c3a0188ddf278616df1cc346",
++       "id": "a8e12ec400878507fbc06d14c33915a718700759df196fac388b27c9a2e291ef",
+        "ok": true
+       }
+      ]
+     ],
+     "resumes": [
+-     "succeeded",
++     "RUN_CLOSED",
+      "succeeded"
+     ],
+     "applied": 1
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1045,
++   "ms": 1177,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -905,7 +900,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1772,
++   "ms": 1795,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -942,11 +937,11 @@
+     },
+     "shipped": {
+      "phase": "result",
+-     "runId": "54895cc0-5c03-4f22-b1a5-fff99ed5cb39",
++     "runId": "9667e8e0-79cb-4843-bf48-0d567b7f1adf",
+      "status": "failed",
+      "error": {
+       "code": "WAIT_DEADLINE",
+-      "message": "w: its timer (2026-10-24T16:29:22.022Z) falls after the run deadline (2026-10-21T17:29:22.005Z); raise maxDurationMs (the workflow budget and the runtime policy) or shorten the timer"
++      "message": "w: its timer (2026-10-24T16:48:26.954Z) falls after the run deadline (2026-10-21T17:48:26.936Z); raise maxDurationMs (the workflow budget and the runtime policy) or shorten the timer"
+      },
+      "verdict": {
+       "verdict": "inconclusive",
+@@ -966,7 +961,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1542,
++   "ms": 2041,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -999,7 +994,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1313,
++   "ms": 1230,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -1014,24 +1009,24 @@
+     {
+      "name": "child stopped within 1 s of the parent's death",
+      "pass": false,
+-     "observed": "child ran on 6597 ms after the parent died"
++     "observed": "child ran on 6588 ms after the parent died"
+     },
+     {
+      "name": "host returned within the parent timeout + 1 s",
+      "pass": false,
+-     "observed": "8111 ms (gateway close waits for in-flight calls up to 330 s)"
++     "observed": "8104 ms (gateway close waits for in-flight calls up to 330 s)"
+     }
+    ],
+    "observed": {
+     "parentKilled": true,
+-    "parentExitMs": 1514,
+-    "hostReturnedMs": 8111,
+-    "childEndedAfterParentMs": 6597,
++    "parentExitMs": 1516,
++    "hostReturnedMs": 8104,
++    "childEndedAfterParentMs": 6588,
+     "childSpendBooked": 0.05
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 8120,
++   "ms": 8107,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -1070,7 +1065,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 2955,
++   "ms": 2903,
+    "file": "b-failure.mjs"
+   },
+   {
+@@ -1126,7 +1121,7 @@
+     "closeErrors": [],
+     "resumed": {
+      "phase": "result",
+-     "runId": "32ce889c-bd96-4a50-9dae-eb1785c4046c",
++     "runId": "e62eed5f-8ef7-434a-a738-d535421d4d3c",
+      "status": "succeeded",
+      "error": null,
+      "verdict": {
+@@ -1170,7 +1165,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 2775,
++   "ms": 2517,
+    "file": "c-environment.mjs"
+   },
+   {
+@@ -1243,7 +1238,7 @@
+      "pass": true,
+      "observed": {
+       "outcome": "cancelled",
+-      "message": "Run 272b8a15-9793-4a48-bc01-8f6969cb8e89 (NoProc) cancelled: stopped 1 running node (root/j agent). The run is closed and will not be resumed. Effects that completed before the stop remain recorded."
++      "message": "Run 7a08701e-d690-4dd2-bb0d-a432e47e101e (NoProc) cancelled: stopped 1 running node (root/j agent). The run is closed and will not be resumed. Effects that completed before the stop remain recorded."
+      }
+     },
+     {
+@@ -1262,7 +1257,7 @@
+      "observed": {
+       "cancel": {
+        "outcome": "not-stopped",
+-       "message": "Cancellation of Run 825fdd4a-5832-443b-a7d5-c1d6db5b1273 (Reused) is recorded, but its owner (pid 15995) had not stopped after 0.5 s. It will stop when it next looks (it checks every fraction of a second). If it is stuck, run `foundry cancel 825fdd4a-5832-443b-a7d5-c1d6db5b1273 --force` to kill it and its sandboxes and model processes. Not killed: the run recorded no start time for its owner, so the process cannot be identified."
++       "message": "Cancellation of Run 2f3673de-1749-4806-a66c-157c26ccdcdc (Reused) is recorded, but its owner (pid 15189) had not stopped after 0.5 s. It will stop when it next looks (it checks every fraction of a second). If it is stuck, run `foundry cancel 2f3673de-1749-4806-a66c-157c26ccdcdc --force` to kill it and its sandboxes and model processes. Not killed: the run recorded no start time for its owner, so the process cannot be identified."
+       },
+       "strangerAlive": true
+      }
+@@ -1271,7 +1266,7 @@
+    "observed": {
+     "cancel": {
+      "outcome": "cancelled",
+-     "message": "Run 272b8a15-9793-4a48-bc01-8f6969cb8e89 (NoProc) cancelled: stopped 1 running node (root/j agent). The run is closed and will not be resumed. Effects that completed before the stop remain recorded."
++     "message": "Run 7a08701e-d690-4dd2-bb0d-a432e47e101e (NoProc) cancelled: stopped 1 running node (root/j agent). The run is closed and will not be resumed. Effects that completed before the stop remain recorded."
+     },
+     "orphans": [],
+     "nsStderr": "",
+@@ -1285,14 +1280,14 @@
+      "phase": "result",
+      "cancel": {
+       "outcome": "not-stopped",
+-      "message": "Cancellation of Run 825fdd4a-5832-443b-a7d5-c1d6db5b1273 (Reused) is recorded, but its owner (pid 15995) had not stopped after 0.5 s. It will stop when it next looks (it checks every fraction of a second). If it is stuck, run `foundry cancel 825fdd4a-5832-443b-a7d5-c1d6db5b1273 --force` to kill it and its sandboxes and model processes. Not killed: the run recorded no start time for its owner, so the process cannot be identified."
++      "message": "Cancellation of Run 2f3673de-1749-4806-a66c-157c26ccdcdc (Reused) is recorded, but its owner (pid 15189) had not stopped after 0.5 s. It will stop when it next looks (it checks every fraction of a second). If it is stuck, run `foundry cancel 2f3673de-1749-4806-a66c-157c26ccdcdc --force` to kill it and its sandboxes and model processes. Not killed: the run recorded no start time for its owner, so the process cannot be identified."
+      }
+     },
+     "strangerAlive": true
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 8270,
++   "ms": 8622,
+    "file": "c-environment.mjs"
+   },
+   {
+@@ -1320,7 +1315,7 @@
+     "jumped": true,
+     "result": {
+      "phase": "result",
+-     "runId": "a7d350e5-e0d0-47cc-84c9-09b20c9be22f",
++     "runId": "1ee8dee4-4051-42c6-a100-c850393fcd3e",
+      "status": "failed",
+      "error": {
+       "code": "DEADLINE",
+@@ -1344,7 +1339,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 984,
++   "ms": 1094,
+    "file": "c-environment.mjs"
+   },
+   {
+@@ -1375,7 +1370,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 3537,
++   "ms": 3570,
+    "file": "c-environment.mjs"
+   },
+   {
+@@ -1399,7 +1394,7 @@
+     {
+      "name": "wall time for 900 items (3 processes)",
+      "pass": true,
+-     "observed": "4505 ms",
++     "observed": "4189 ms",
+      "info": true
+     }
+    ],
+@@ -1409,11 +1404,11 @@
+      "succeeded",
+      "succeeded"
+     ],
+-    "ms": 4505
++    "ms": 4189
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 4851,
++   "ms": 4538,
+    "file": "c-environment.mjs"
+   },
+   {
+@@ -1452,7 +1447,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 3769,
++   "ms": 3733,
+    "file": "d-harness.mjs"
+   },
+   {
+@@ -1497,7 +1492,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 102,
++   "ms": 92,
+    "file": "d-harness.mjs"
+   },
+   {
+@@ -1527,7 +1522,7 @@
+    ],
+    "observed": {
+     "phase": "result",
+-    "runId": "27e496f6-e51b-4476-a67b-0a588ebf7163",
++    "runId": "2fd92c8b-1326-4f49-ae9f-6f9d4bac69f4",
+     "status": "waiting",
+     "error": null,
+     "verdict": null,
+@@ -1539,7 +1534,7 @@
+      "j": {
+       "code": "MODEL_RATE_LIMIT",
+       "message": "j: claude CLI rate limited or overloaded: success: You've hit your usage limit · resets 3pm (UTC)",
+-      "retryAt": 1792601099173
++      "retryAt": 1792602243834
+      }
+     },
+     "stats": {
+@@ -1551,7 +1546,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 453,
++   "ms": 458,
+    "file": "d-harness.mjs"
+   },
+   {
+@@ -1594,7 +1589,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1532,
++   "ms": 1292,
+    "file": "d-harness.mjs"
+   },
+   {
+@@ -1617,7 +1612,7 @@
+    ],
+    "observed": {
+     "phase": "result",
+-    "runId": "461908fc-5fb7-4f34-a287-ed8208bd1d5d",
++    "runId": "d9d2e652-e4cb-4edd-89aa-5db9801c5dff",
+     "status": "failed",
+     "error": {
+      "code": "MODEL_PROTOCOL",
+@@ -1640,7 +1635,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 537,
++   "ms": 431,
+    "file": "d-harness.mjs"
+   },
+   {
+@@ -1677,7 +1672,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 400,
++   "ms": 329,
+    "file": "e-resources.mjs"
+   },
+   {
+@@ -1720,7 +1715,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 204,
++   "ms": 201,
+    "file": "e-resources.mjs"
+   },
+   {
+@@ -1778,7 +1773,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 328,
++   "ms": 307,
+    "file": "e-resources.mjs"
+   },
+   {
+@@ -1807,7 +1802,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 292,
++   "ms": 208,
+    "file": "e-resources.mjs"
+   },
+   {
+@@ -1886,7 +1881,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 2290,
++   "ms": 2422,
+    "file": "f-multiagent.mjs"
+   },
+   {
+@@ -1902,8 +1897,8 @@
+      "name": "one succeeded, one refused RUN_BUSY",
+      "pass": true,
+      "observed": [
+-      "succeeded",
+-      "RUN_BUSY"
++      "RUN_BUSY",
++      "succeeded"
+      ]
+     },
+     {
+@@ -1916,15 +1911,15 @@
+    ],
+    "observed": {
+     "outcomes": [
+-     "succeeded",
+-     "RUN_BUSY"
++     "RUN_BUSY",
++     "succeeded"
+     ],
+     "deliveries": 20,
+     "keys": 20
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1204,
++   "ms": 965,
+    "file": "f-multiagent.mjs"
+   },
+   {
+@@ -1941,7 +1936,7 @@
+      "pass": true,
+      "observed": {
+       "phase": "result",
+-      "runId": "a37e5bee-b216-4491-bb21-895cc2efc951",
++      "runId": "2aa5fada-004e-433f-af78-af8e60a1d625",
+       "status": "cancelled",
+       "error": {
+        "code": "CANCELLED",
+@@ -1979,7 +1974,7 @@
+     },
+     "aExit": {
+      "phase": "result",
+-     "runId": "a37e5bee-b216-4491-bb21-895cc2efc951",
++     "runId": "2aa5fada-004e-433f-af78-af8e60a1d625",
+      "status": "cancelled",
+      "error": {
+       "code": "CANCELLED",
+@@ -2005,7 +2000,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 2271,
++   "ms": 1856,
+    "file": "f-multiagent.mjs"
+   },
+   {
+@@ -2046,7 +2041,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 1328,
++   "ms": 1300,
+    "file": "f-multiagent.mjs"
+   },
+   {
+@@ -2087,7 +2082,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 96,
++   "ms": 94,
+    "file": "f-multiagent.mjs"
+   },
+   {
+@@ -2127,7 +2122,7 @@
+     },
+     "runtime": {
+      "phase": "result",
+-     "runId": "1d1f5e32-ea12-44f9-894c-f0af98c21432",
++     "runId": "f82b37e5-d072-4873-8988-ed25ea275a31",
+      "status": "failed",
+      "error": {
+       "code": "CAPABILITY_DENIED",
+@@ -2151,7 +2146,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 446,
++   "ms": 543,
+    "file": "f-multiagent.mjs"
+   },
+   {
+@@ -2189,7 +2184,7 @@
+      "status": "waiting",
+      "code": "MODEL_RATE_LIMIT",
+      "reason": null,
+-     "message": "Parked, not failed: root/j hit MODEL_RATE_LIMIT. The run can continue and resumes after 2026-10-21T16:30:14.183Z (foundry tick, or foundry resume RUN after that time). The provider limited the rate or the usage; resume the run (foundry resume RUN) after the limit resets. Completed work is kept."
++     "message": "Parked, not failed: root/j hit MODEL_RATE_LIMIT. The run can continue and resumes after 2026-10-21T16:49:17.873Z (foundry tick, or foundry resume RUN after that time). The provider limited the rate or the usage; resume the run (foundry resume RUN) after the limit resets. Completed work is kept."
+     },
+     "cost-budget": {
+      "status": "failed",
+@@ -2216,7 +2211,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 5413,
++   "ms": 5472,
+    "file": "g-observability.mjs"
+   },
+   {
+@@ -2233,7 +2228,7 @@
+      "pass": true,
+      "observed": {
+       "code": 130,
+-      "runId": "f5489dd1-0055-4dd9-a947-193428df0e50"
++      "runId": "95eb1ea3-84e3-4e19-8664-04e5df1cb901"
+      }
+     },
+     {
+@@ -2257,8 +2252,8 @@
+    ],
+    "observed": {
+     "exit": 130,
+-    "stderr": "{\"interrupted\":\"SIGINT\",\"runs\":[\"f5489dd1-0055-4dd9-a947-193428df0e50\"],\"resumable\":true}\n",
+-    "runId": "f5489dd1-0055-4dd9-a947-193428df0e50",
++    "stderr": "{\"interrupted\":\"SIGINT\",\"runs\":[\"95eb1ea3-84e3-4e19-8664-04e5df1cb901\"],\"resumable\":true}\n",
++    "runId": "95eb1ea3-84e3-4e19-8664-04e5df1cb901",
+     "resume": {
+      "exit": 0,
+      "status": "succeeded",
+@@ -2276,7 +2271,7 @@
+    },
+    "note": null,
+    "harnessError": false,
+-   "ms": 3664,
++   "ms": 3637,
+    "file": "g-observability.mjs"
+   }
+  ]
+-- 
+2.43.0
+

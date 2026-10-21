@@ -1,0 +1,556 @@
+From 985f4630cb8144529135d5ef93649af0680ced4a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 14:01:48 +0000
+Subject: [PATCH 01/16] Engine compatibility ranges (gap rank 5): lineage,
+ engine.migrated, one-way resume
+
+src/engine-lineage.json (in the engine identity) declares this engine's version (2), the
+oldest version whose runs it resumes (1) and each predecessor's exact file map. A recorded
+engine hash is recognised only when that map plus this host's platform fields hashes to it.
+Runtime.execute resumes such a run and commits engine.migrated with runner.acquired,
+moving the record's engineHash by compare-and-swap; anything else is ENGINE_DRIFT, and an
+older engine refuses a migrated run. engineBinding(events) is the chain's engine for the
+runtime, identityChanges and verify-run (ENGINE_MIGRATED, ENGINE_MIGRATION_INVALID).
+Version 1 = commit 96cab64 (hash 358cb020... on node v24.21.0/linux/x64/ajv 8.20.0).
+Design: research/engine-20261021/ENGINE-BUMP.md section 1. tools/engine-lineage.mjs prints
+the entry to freeze at the next release.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ package.json                            |   1 +
+ research/engine-20261021/ENGINE-BUMP.md |  54 ++++++++++++
+ src/audit.mjs                           |  27 +++++-
+ src/engine-lineage.json                 |  41 +++++++++
+ src/engine.mjs                          |  51 +++++++++--
+ src/runtime.mjs                         |  25 ++++--
+ src/verify-run.mjs                      |  19 +++--
+ tests/engine-binding.test.mjs           | 108 +++++++++++++++++++++++-
+ tests/packaging.test.mjs                |   4 +-
+ tools/engine-lineage.mjs                |  24 ++++++
+ 10 files changed, 327 insertions(+), 27 deletions(-)
+ create mode 100644 research/engine-20261021/ENGINE-BUMP.md
+ create mode 100644 src/engine-lineage.json
+ create mode 100644 tools/engine-lineage.mjs
+
+diff --git a/package.json b/package.json
+index fc4260a..9c33c46 100644
+--- a/package.json
++++ b/package.json
+@@ -13,6 +13,7 @@
+   "files": [
+     "bin/foundry.mjs",
+     "src/*.mjs",
++    "src/engine-lineage.json",
+     "src/models/*.mjs",
+     "src/models/providers/*.mjs",
+     "src/executors/*.mjs",
+diff --git a/research/engine-20261021/ENGINE-BUMP.md b/research/engine-20261021/ENGINE-BUMP.md
+new file mode 100644
+index 0000000..6f19db3
+--- /dev/null
++++ b/research/engine-20261021/ENGINE-BUMP.md
+@@ -0,0 +1,54 @@
++# Engine bump 2026-10-21 (PLAN-3DAY Day 2, pulled forward from 11-04)
++
++*Development evidence. Everything here was built and tested in an isolated worktree with synthetic capabilities and scripted
++models ($0); no paid call was made. Inputs: [../orch-20261021/GAPS-AND-PLAN.md](../orch-20261021/GAPS-AND-PLAN.md),
++[../compromises-20261021/REGISTER.md](../compromises-20261021/REGISTER.md) (C2, C6, D1),
++[../business-20261021/ATTACK-FABLE.md](../business-20261021/ATTACK-FABLE.md) §2-§3.1, [../decisions-20261021.md](../decisions-20261021.md) (D15).*
++
++## 1. Engine compatibility ranges (gap rank 5)
++
++**Problem.** A run records `engineHash`, the sha256 of a descriptor of every engine source file plus the Node version, platform,
++architecture and validator version (`src/engine.mjs`). Resume refused any other hash (`ENGINE_DRIFT`), so every engine change,
++including each fix in this bump, stranded every in-flight and parked run (incident I8).
++
++**Mechanism (the smallest sound one).** Temporal's answer is `patched()`: new code keeps the old branch under a marker so an old
++history replays the same way. Foundry does not replay code (it resumes from a checkpoint and a journal), so the requirement is
++weaker: the new engine must read an old run's record correctly. That is a property of a release, reviewed once, so it is declared
++once per release rather than per branch:
++
++1. **Lineage, in the engine.** `src/engine-lineage.json` holds this engine's `version` (an integer), `resumesFrom` (the oldest
++   version whose runs it may resume) and, for each predecessor, its exact file map (name to sha256). The file is in the hashed
++   set of `src/engine.mjs`, so changing a declared range is itself an engine change, and it is reviewed source: no model, run or
++   host option can widen it. `src/engine.mjs` validates it at import (a malformed lineage fails like a syntax error).
++2. **Recognition is exact.** A recorded hash is a predecessor only if the predecessor's file map, combined with *this host's*
++   Node version, platform, architecture and validator, hashes to it (`engineOf`). Nothing is trusted from the run record. A run
++   created under another Node or validator version is not recognised: a platform change is not a declared migration.
++3. **Resume.** `Runtime.execute`: same engine, as before. A recognised predecessor with `version >= resumesFrom`: the run resumes,
++   and the same store transaction that takes ownership (`runner.acquired`) appends `engine.migrated {from, to, fromVersion,
++   toVersion, resumesFrom}` and moves the record's `engineHash` to this engine, compare-and-swap on the old value
++   (`STATE_CONFLICT` if another process moved it). Anything else: `ENGINE_DRIFT`, now naming the recorded version and the range.
++4. **One way.** Because the record then names the newer engine, an older engine refuses the run (`ENGINE_DRIFT`): it cannot
++   resume a record a newer engine has written.
++5. **The chain decides.** `engineBinding(events)` (`src/audit.mjs`) is the engine the chain binds: the birth engine, then each
++   migration, each of which must start from the engine bound before it. The runtime (`ENGINE_BINDING_CORRUPT`), `identityChanges`
++   and `verify-run` compare the record with it, so an edited `engineHash` without a migration event is still caught.
++   `verify-run` reports each migration (`ENGINE_MIGRATED`, info), an inconsistent migration chain (`ENGINE_MIGRATION_INVALID`,
++   error), and judges "same engine" (verdict recompute, wait replay) against every engine the run ran under.
++
++**This bump.** Version 1 is commit 96cab64 (the engine of every run in flight on 2026-10-21; on the owner's host,
++node v24.21.0 / linux x64 / ajv 8.20.0, its hash is `358cb020…caad9f6`, and `engineOf` recognises it). Version 2 is this bump and
++declares `resumesFrom: 1`, because every change in it reads version-1 records as version 1 wrote them (section 2 lists them and
++why). Release procedure: `node tools/engine-lineage.mjs` on version N prints the entry to freeze into N+1's `predecessors`; set
++`version` and `resumesFrom`; list the changes.
++
++**Tests.** `tests/engine-binding.test.mjs` (6/6): version 1 recognised on this host; the chain decides the bound engine; and an
++end-to-end run in three real engine copies (child processes): a run created by a predecessor resumes under a successor that
++declares it compatible, with exactly one `engine.migrated` committed just before `runner.acquired`; a successor that lists the
++predecessor but no longer resumes its version refuses without writing; the predecessor refuses the migrated run; the run then
++completes and `verify-run` is `ok` with `ENGINE_MIGRATED`.
++
++**Limits.** (a) Platform drift (a Node upgrade) still strands runs; a lineage could later declare platforms too. (b) The
++historical-outcome observers (`src/outcome-repair.mjs`, `src/outcome-history.mjs`) pin their own bytes and `src/data.mjs`, and
++compare the birth engine with the record: they refuse a migrated run (`OUTCOME_EVIDENCE`), which fails closed; they were left
++unchanged on purpose. (c) A declared range is a reviewer's judgement that the new engine reads old records correctly; the tests
++check the mechanism, not that judgement.
+diff --git a/src/audit.mjs b/src/audit.mjs
+index 801ffbe..ed5bf77 100644
+--- a/src/audit.mjs
++++ b/src/audit.mjs
+@@ -60,15 +60,36 @@ export function journalRowsAfter(db, runId, afterId) {
+   return db.prepare('SELECT id, ok, error_code FROM model_calls WHERE run_id=? AND id>? ORDER BY id').all(runId, afterId);
+ }
+ 
++/** The engine a run's chain binds (research/engine-20261021/ENGINE-BUMP.md §1): the birth event's engine, then each `engine.migrated`
++ *  event in order, each of which must start from the engine bound before it. -> {valid, hash, engines: [birth, ...targets], migrations}.
++ *  Pure function of the chain; whether a migration was allowed is the migrating engine's lineage, recorded in the event. */
++export function engineBinding(events) {
++  const birth = events?.[0];
++  let hash = birth?.engineHash ?? null, valid = true;
++  const engines = [hash], migrations = [];
++  for (const e of events ?? []) {
++    if (e?.type !== 'engine.migrated') continue;
++    if (e.from !== hash || typeof e.to !== 'string' || e.to === hash) valid = false;
++    migrations.push({ seq: e.seq ?? null, from: e.from ?? null, to: e.to ?? null, fromVersion: e.fromVersion ?? null, toVersion: e.toVersion ?? null });
++    hash = e.to ?? null; engines.push(hash);
++  }
++  return { valid, hash, engines, migrations };
++}
++
+ /** The identity fields of a run record that no longer match its immutable birth event: the workflow, input, policy, engine, registry and
+  *  model binding the run was created with. Nothing rewrites these after creation, so every name returned is an edit of the record (the
+- *  runtime refuses to resume such a run; verify-run reports it). A field the birth event does not carry (an older run) is not compared. */
+-export function identityChanges(run, birth) {
++ *  runtime refuses to resume such a run; verify-run reports it). A field the birth event does not carry (an older run) is not compared.
++ *  The one exception is the engine, which a recorded `engine.migrated` event may move: with `events`, the record's engine is compared
++ *  with the engine the chain binds (engineBinding), and an inconsistent migration chain is reported as `engineMigration`. */
++export function identityChanges(run, birth, events = null) {
+   const changed = [];
+   const same = (name, actual, expected) => { if (expected !== undefined && (actual ?? null) !== (expected ?? null)) changed.push(name); };
+   same('workflowHash', run.workflowHash, birth?.workflowHash);
+   same('registryHash', run.registryHash, birth?.registryHash);
+-  same('engineHash', run.engineHash, birth?.engineHash);
++  // The engine is the one the chain binds now: the birth engine, or the target of the last recorded migration (engineBinding).
++  const engine = events ? engineBinding(events) : null;
++  if (engine && !engine.valid) changed.push('engineMigration');
++  same('engineHash', run.engineHash, engine?.valid ? engine.hash : birth?.engineHash);
+   same('input', digest(run.input ?? null), birth?.inputHash);
+   same('policy', digest(run.policy ?? null), birth?.policyHash);
+   if (birth && Object.hasOwn(birth, 'modelPolicyHash')) {
+diff --git a/src/engine-lineage.json b/src/engine-lineage.json
+new file mode 100644
+index 0000000..54e9216
+--- /dev/null
++++ b/src/engine-lineage.json
+@@ -0,0 +1,41 @@
++{
++  "contract": "foundry-engine-lineage/1",
++  "description": "Engine compatibility ranges (research/engine-20261021/ENGINE-BUMP.md section 1). `version` is this engine's release number; a run whose bound engine is a predecessor with version >= `resumesFrom` may resume under this engine, and the runtime records the migration (engine.migrated) in the run's chain. A predecessor is recognised only by its exact source identity: its `files` map, combined with this host's node/platform/architecture/validator, must hash to the engine hash the run recorded. Anything else is ENGINE_DRIFT, as before. This file is part of the engine identity (src/engine.mjs), so a change to a declared range is itself an engine change. It is written by the engine's maintainer after review, never by a model or a run.",
++  "version": 2,
++  "resumesFrom": 1,
++  "changes": [
++    "engine compatibility ranges and engine.migrated (this file; src/engine.mjs, src/runtime.mjs execute, src/audit.mjs engineBinding)"
++  ],
++  "predecessors": [
++    {
++      "version": 1,
++      "source": "commit 96cab64 (2026-10-21), the engine the 10-21 paid runs were created with",
++      "files": {
++        "engine.mjs": "ea151e74b1ffec5fd436b85e3b5688cdbf6c5333d99b6a5d0ecdc89e5cfc216e",
++        "runtime.mjs": "73621cdade19c2956bbc94e41886f61ee97a990182ef8b740cb2bfdc36558bd1",
++        "store.mjs": "5b607599f8b46afae803f962a83bcdfba27df6e5e081539525b01c1abbe48198",
++        "run-rows.mjs": "68ce673181a90b678f3aa2e9370fb9bd8e9bd69999239c75aa310bb789a8d473",
++        "data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
++        "dataflow.mjs": "5df69b3c7d0d0c31d961e2842c2c529f5d773a939420b5a58768976fc71202b6",
++        "validate.mjs": "45d418c4a52e3f7ffe3c346ffe59819d408475e06961bd249c2fabcc96c55126",
++        "lint.mjs": "1ec7a60e1db24b4dedbce4fc1b9004c2a0eb5063a42abc8f7e207639558b495a",
++        "acceptance.mjs": "222a316212b2b213fec35ef052b73538f8a1435a9e59001a4f19b02499f3ebbf",
++        "capabilities.mjs": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
++        "context.mjs": "f1024b4bf689374713a589899c7ac4a83d3a7044d82230c7ebbdfd89b485fe5d",
++        "verdict.mjs": "729d36a23a90667b78458189ba0780e9e038144986ee44e4b0124fe871a11673",
++        "audit.mjs": "b1059e3ce7320078061d5279553ce67c657df21594aeebe1e19d06fea98c14a6",
++        "sandbox.mjs": "871aa71a43e60f553ac0322b1d1e2b09fc1771071e04cca58eb004001dc63f26",
++        "children.mjs": "68a763b3e9f948cda0286e12381bb6bbda19f360fa29fbf76e9ebee9c715d6c5",
++        "schema-subset.mjs": "20a6f35b8c9b25ce43820f08adf5de1c31a6115444c0bbabfa43ddd3ab2ef5eb",
++        "models/port.mjs": "bdc48f1fcd53ba2c7c788c0d97922965dbaff686a859a55f1dd3638b1068873a",
++        "models/policy.mjs": "95390dec17adbfa0c68dc0e05314e7a95192e79e303b006412a1bedb4500b572",
++        "journal.mjs": "090e019434a64676690af187187e110bfa78d0f51745aa7b43d2e02d938ffef7",
++        "state.mjs": "72a27fd7aa34f66420de31b5e79032cd81e320627227b80112ad74fef16cafd5",
++        "signals.mjs": "617b96c34050cbcacb71c174078c295390554400279fbbd9b3b4342e66dd268a",
++        "../schemas/workflow.schema.json": "8993fd829bc9422ac2265a54f979e3097f78e775f38e358b8666f72f7e19bfef",
++        "../schemas/identity.schema.json": "19196a563018fc0650dd3f86878413117bc68782624e4de177be2174f124cfcd",
++        "../schemas/decision.schema.json": "a1207a41cbc62036d193e487c163307520b67366a0257420b528359253dd2570"
++      }
++    }
++  ]
++}
+diff --git a/src/engine.mjs b/src/engine.mjs
+index 6636f6c..35af395 100644
+--- a/src/engine.mjs
++++ b/src/engine.mjs
+@@ -7,15 +7,52 @@ import { createRequire } from 'node:module';
+ // identity, not remote attestation or a defense against a privileged host attacker.
+ const require = createRequire(import.meta.url);
+ // Every module whose semantics a run depends on: execution, validation, context compilation,
+-// verdicts, sandboxing, model policy/replay keys and the journal, plus the trace contracts.
++// verdicts, sandboxing, model policy/replay keys and the journal, plus the trace contracts, and
++// the lineage that declares which earlier engines' runs this one may resume.
+ const paths = ['engine.mjs', 'runtime.mjs', 'store.mjs', 'run-rows.mjs', 'data.mjs', 'dataflow.mjs', 'validate.mjs', 'lint.mjs', 'acceptance.mjs', 'capabilities.mjs',
+   'context.mjs', 'verdict.mjs', 'audit.mjs', 'sandbox.mjs', 'children.mjs', 'schema-subset.mjs', 'models/port.mjs', 'models/policy.mjs', 'journal.mjs', 'state.mjs',
+-  'signals.mjs', '../schemas/workflow.schema.json', '../schemas/identity.schema.json', '../schemas/decision.schema.json'];
+-const files = Object.fromEntries(paths.map(name => [name, createHash('sha256').update(readFileSync(new URL(name, import.meta.url))).digest('hex')]));
++  'signals.mjs', '../schemas/workflow.schema.json', '../schemas/identity.schema.json', '../schemas/decision.schema.json', 'engine-lineage.json'];
++const sha256 = data => createHash('sha256').update(data).digest('hex');
++const files = Object.fromEntries(paths.map(name => [name, sha256(readFileSync(new URL(name, import.meta.url)))]));
+ const ajv = JSON.parse(readFileSync(require.resolve('ajv/package.json'), 'utf8'));
+-const descriptor = Object.freeze({ contract: 'native-engine-identity/1', node: process.version, platform: process.platform,
+-  architecture: process.arch, validator: `ajv@${ajv.version}`, files: Object.freeze(files) });
+-export const engineHash = createHash('sha256').update(JSON.stringify(descriptor)).digest('hex');
++const platform = Object.freeze({ contract: 'native-engine-identity/1', node: process.version, platform: process.platform,
++  architecture: process.arch, validator: `ajv@${ajv.version}` });
++// The descriptor's key order is part of the hash: contract, node, platform, architecture, validator, files.
++const hashOf = fileMap => sha256(JSON.stringify({ ...platform, files: fileMap }));
++const descriptor = Object.freeze({ ...platform, files: Object.freeze(files) });
++export const engineHash = hashOf(files);
++
++// Engine compatibility ranges (research/engine-20261021/ENGINE-BUMP.md §1; Temporal's versioning idea, at release granularity).
++// The lineage is checked-in engine source (hashed above), written by the maintainer when a release is cut: this engine's version,
++// the oldest predecessor version whose runs it resumes, and each predecessor's exact file map. A malformed lineage is a broken
++// engine: the import fails, as a syntax error would.
++const lineage = JSON.parse(readFileSync(new URL('engine-lineage.json', import.meta.url), 'utf8'));
++const HEX64 = /^[0-9a-f]{64}$/;
++{
++  const bad = message => { throw new Error(`src/engine-lineage.json: ${message}`); };
++  if (lineage?.contract !== 'foundry-engine-lineage/1') bad('contract must be foundry-engine-lineage/1');
++  if (!Number.isSafeInteger(lineage.version) || lineage.version < 1) bad('version must be a positive integer');
++  if (!Number.isSafeInteger(lineage.resumesFrom) || lineage.resumesFrom < 1 || lineage.resumesFrom > lineage.version) bad('resumesFrom must be an integer in [1, version]');
++  if (!Array.isArray(lineage.predecessors)) bad('predecessors must be a list');
++  const seen = new Set();
++  for (const p of lineage.predecessors) {
++    if (!Number.isSafeInteger(p?.version) || p.version < 1 || p.version >= lineage.version || seen.has(p.version)) bad('each predecessor needs a distinct version below this one');
++    seen.add(p.version);
++    if (!p.files || typeof p.files !== 'object' || Array.isArray(p.files) || !Object.keys(p.files).length || Object.values(p.files).some(h => !HEX64.test(h))) bad(`predecessor ${p.version} needs its file map (name -> sha256)`);
++  }
++}
++export const engineVersion = lineage.version, engineResumesFrom = lineage.resumesFrom;
++// A predecessor is known on this host only: its file map with this host's node, platform, architecture and validator. A run created
++// under another Node version or validator is not recognised (ENGINE_DRIFT, as before): a platform change is not a declared migration.
++const predecessors = new Map(lineage.predecessors.map(p => [hashOf(p.files), Object.freeze({ version: p.version, source: p.source ?? null })]));
++
++/** What this engine knows about a recorded engine hash: itself, a predecessor (with whether its runs may resume here), or null. */
++export function engineOf(hash) {
++  if (hash === engineHash) return { version: engineVersion, current: true, resumable: true };
++  const known = predecessors.get(hash);
++  return known ? { version: known.version, source: known.source, current: false, resumable: known.version >= engineResumesFrom } : null;
++}
+ export function engineIdentity() {
+-  return { hash: engineHash, ...structuredClone(descriptor), scope: 'Native engine source/schema and execution platform/validator version; not remote capability or model attestation' };
++  return { hash: engineHash, version: engineVersion, resumesFrom: engineResumesFrom, ...structuredClone(descriptor),
++    scope: 'Native engine source/schema and execution platform/validator version; not remote capability or model attestation' };
+ }
+diff --git a/src/runtime.mjs b/src/runtime.mjs
+index 9a4729d..9e6c824 100644
+--- a/src/runtime.mjs
++++ b/src/runtime.mjs
+@@ -5,14 +5,14 @@ import path from 'node:path';
+ import { setTimeout as delay } from 'node:timers/promises';
+ import { checkData, clone, condition, digest, errorData, FoundryError, references, resolve } from './data.mjs';
+ import { approvalGated, bindOutput, controlPolicyMessage, labelPolicyMessage, modelNodes, OUTPUT_KEY, requireWorkflow, stateArgs, stateLabelMessage, stateNodes, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
+-import { engineHash } from './engine.mjs';
++import { engineHash, engineOf, engineResumesFrom, engineVersion } from './engine.mjs';
+ import { compileContext, contextInputs, inheritedLabel, joinLabels } from './context.mjs';
+ import { verdictOf } from './verdict.mjs';
+ import { runCode } from './sandbox.mjs';
+ import { childScope, reapChildren } from './children.mjs';
+ import { classIndex, modelById, modelsForClass, nextClass, validatePolicy } from './models/policy.mjs';
+ import { MODES } from './models/port.mjs';
+-import { AUDIT, identityChanges, journalSeal } from './audit.mjs';
++import { AUDIT, engineBinding, identityChanges, journalSeal } from './audit.mjs';
+ import { MATERIALIZE, STATE_BYTES, STATE_ITEMS } from './run-rows.mjs';
+ import { isStateWrite, journalRequest, slotIdentity, slotOf, stateOpHash, stateReplayKey, stateRequest } from './state.mjs';
+ import { cancelledBy, claimant, correlateTemplates, declaredSignals, isSignalWait, keyHashOf, matches, normalizeSignal, parseAt, pickSignal, routeOf, SIGNAL_LIMITS, signalCheckpointDrift, subscriptionsOf, timeoutMode } from './signals.mjs';
+@@ -648,13 +648,19 @@ class Invocation {
+       const closed = closingSeal(log);
+       if (closed) throw closedError(closed, run.status);
+       if (!run.engineHash) throw new FoundryError('ENGINE_UNBOUND', 'This historical run has no native engine binding. Inspect it or use its original frozen runtime; do not silently resume it under changed semantics.');
+-      if (run.engineHash !== engineHash) throw new FoundryError('ENGINE_DRIFT', 'The native execution engine differs from the version that created this run. Resume with the original engine or create a separately reviewed new run.', { recorded: run.engineHash, current: engineHash });
+-      const birth = log[0];
+-      if (birth?.engineHash !== run.engineHash) throw new FoundryError('ENGINE_BINDING_CORRUPT', 'Run engine identity does not match its immutable creation event');
++      // Engine compatibility ranges (research/engine-20261021/ENGINE-BUMP.md §1): a run bound to another engine resumes only when this
++      // engine's lineage (src/engine-lineage.json) recognises that engine exactly and declares its version resumable here; the migration is
++      // then recorded in the chain with the runner.acquired below. Anything else stays ENGINE_DRIFT. An older engine never resumes a run a
++      // newer one migrated: the record names the newer engine, which the older lineage does not know.
++      const from = run.engineHash === engineHash ? null : engineOf(run.engineHash);
++      if (run.engineHash !== engineHash && !from?.resumable) throw new FoundryError('ENGINE_DRIFT', `The native execution engine differs from the version that created this run${from ? ` (engine version ${from.version}; this engine, version ${engineVersion}, resumes runs of version ${engineResumesFrom} or later)` : ' and is not a predecessor this engine declares compatible'}. Resume with the original engine or create a separately reviewed new run.`, { recorded: run.engineHash, current: engineHash, recordedVersion: from?.version ?? null, currentVersion: engineVersion, resumesFrom: engineResumesFrom });
++      const birth = log[0], bound = engineBinding(log);
++      if (!bound.valid || bound.hash !== run.engineHash) throw new FoundryError('ENGINE_BINDING_CORRUPT', 'Run engine identity does not match its immutable creation event and recorded migrations');
++      const migration = from ? { type: 'engine.migrated', from: run.engineHash, to: engineHash, fromVersion: from.version, toVersion: engineVersion, resumesFrom: engineResumesFrom } : null;
+       if (modelBound && (birth?.modelPolicyHash ?? null) !== run.modelPolicyHash) throw new FoundryError('MODEL_POLICY_BINDING_CORRUPT', 'Run model policy binding does not match its immutable creation event');
+       // The rest of the run's identity, against the same event: the record is a checkpoint any writer to the workspace can edit, and the
+       // runtime executes the workflow, input and policy (allowed capabilities, budgets) it names, so an edit there would widen the run.
+-      const changed = identityChanges(run, birth);
++      const changed = identityChanges(run, birth, log);
+       if (changed.length) throw new FoundryError('RUN_BINDING_CORRUPT', `The run record no longer matches its immutable creation event (${changed.join(', ')}): the record was edited, so the run is not resumed`, { changed });
+       const forged = forgedAnswers(this.workflow, run, log);
+       if (forged.length) throw new FoundryError('CHECKPOINT_TAMPERED', `The run record holds human answers its chain did not record (${forged.slice(0, 5).join(', ')}): the record was edited, so the run is not resumed`, { nodeKeys: forged });
+@@ -673,7 +679,12 @@ class Invocation {
+           r.resumeCount = (r.resumeCount ?? 0) + 1;
+           r.owner = { token: this.token, pid: process.pid, processStart: startStamp(process.pid), acquiredAt: Date.now() };
+           r.status = 'running';
+-        }, { type: 'runner.acquired', token: this.token }, { result: 'header' });
++          if (migration) {
++            // Compare-and-swap on the engine binding: another process may have migrated (or edited) it since the checks above.
++            if (r.engineHash !== migration.from) throw new FoundryError('STATE_CONFLICT', 'The run engine binding changed while this execution was starting');
++            r.engineHash = engineHash;
++          }
++        }, migration ? [migration, { type: 'runner.acquired', token: this.token }] : { type: 'runner.acquired', token: this.token }, { result: 'header' });
+       } catch (error) {
+         // Closed (cancelled) by another process while this execution was starting: the result is the closed run, as when it was closed before.
+         if (error.details?.closedWhileStarting) return this.current();
+diff --git a/src/verify-run.mjs b/src/verify-run.mjs
+index be7c06c..7044378 100644
+--- a/src/verify-run.mjs
++++ b/src/verify-run.mjs
+@@ -4,10 +4,10 @@
+ import { lstatSync, readFileSync, realpathSync } from 'node:fs';
+ import path from 'node:path';
+ import { digest } from './data.mjs';
+-import { AUDIT, anchorOfEvents, bindRow, identityChanges, journalRow, journalRowsAfter, journalSeal, sha256, verdictInputsHash } from './audit.mjs';
++import { AUDIT, anchorOfEvents, bindRow, engineBinding, identityChanges, journalRow, journalRowsAfter, journalSeal, sha256, verdictInputsHash } from './audit.mjs';
+ import { REPLAYABLE_ERRORS } from './journal.mjs';
+ import { verdictOf } from './verdict.mjs';
+-import { engineHash } from './engine.mjs';
++import { engineHash, engineOf } from './engine.mjs';
+ import { replayWaits, signalCheckpointDrift } from './signals.mjs';
+ import { stateOpHash } from './state.mjs';
+ 
+@@ -82,8 +82,13 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
+ 
+   // 1b. The run record's identity against its immutable birth event: the workflow, input, policy, engine, registry and model binding
+   // the run was created with. Nothing rewrites these after creation, so any difference is an edit (07 §4.4).
+-  const birth = events[0], identity = identityChanges(run, birth);
++  const birth = events[0], identity = identityChanges(run, birth, events);
+   if (identity.length) add('error', 'RUN_IDENTITY_EDITED', `The run record no longer matches its birth event (${identity.join(', ')})`, { changed: identity });
++  // Engine migrations (research/engine-20261021/ENGINE-BUMP.md §1): each one recorded is reported; a chain whose migrations do not follow
++  // on from each other is an error (identityChanges names it too). Whether each was allowed was the migrating engine's lineage.
++  const engines = engineBinding(events);
++  if (!engines.valid) add('error', 'ENGINE_MIGRATION_INVALID', 'The run\'s engine.migrated events do not follow on from its birth engine and from each other');
++  for (const m of engines.migrations) add('info', 'ENGINE_MIGRATED', `The run moved from engine ${String(m.from).slice(0, 12)} (version ${m.fromVersion ?? '?'}) to ${String(m.to).slice(0, 12)} (version ${m.toVersion ?? '?'}) at event ${m.seq}${engineOf(m.to) ? '' : '; this engine does not know the target engine'}`, { seq: m.seq, fromVersion: m.fromVersion, toVersion: m.toVersion });
+   // The workflow the run executed, by its content hash: an edited or deleted body cannot be the one the chain names.
+   let workflow = null;
+   try { workflow = store.workflow(birth.workflowHash).workflow; }
+@@ -216,8 +221,8 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
+     if (edited.length) add('error', 'VERDICT_EDITED', `The run's stored verdict differs from the verdict sealed in the chain at event ${current.seq} (${edited.join(', ')})`, { seq: current.seq, changed: edited });
+     else if (inputsMatch) {
+       // Informational unless the engine is unchanged: a later engine may grade the same evidence differently.
+-      // The engine identity comes from the birth event, not the (editable) run record.
+-      const sameEngine = birth.engineHash === engineHash;
++      // The engine identity comes from the chain (birth event and recorded migrations), not the (editable) run record.
++      const sameEngine = engines.valid && engines.hash === engineHash;
+       let recomputed = null;
+       if (workflow) try { recomputed = verdictOf(run, { workflow }); } catch (cause) { add('warn', 'VERDICT_NOT_RECOMPUTED', `The verdict could not be recomputed: ${cause.code ?? cause.message}`); }
+       if (recomputed && ['verdict', 'code', 'authority'].some(key => (recomputed[key] ?? null) !== (current[key] ?? null)))
+@@ -306,7 +311,9 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
+   // decisions against the chain. A re-derived decision that differs is an error on the engine that recorded it (the rule is a pure function
+   // of the chain), a warning on another (a later engine may decide differently). Read-only.
+   const replay = replayWaits(events);
+-  for (const miss of replay.mismatches) add(birth.engineHash === engineHash ? 'error' : 'warn', 'WAIT_REPLAY_MISMATCH', `Event ${miss.seq}${miss.nodeKey ? ` (${miss.nodeKey})` : ''}: ${miss.message} [${miss.code}]`, { seq: miss.seq, nodeKey: miss.nodeKey, rule: miss.code });
++  // The waits were decided by every engine the run ran under: an error only when that was this engine throughout.
++  const onlyThisEngine = engines.valid && engines.engines.every(hash => hash === engineHash);
++  for (const miss of replay.mismatches) add(onlyThisEngine ? 'error' : 'warn', 'WAIT_REPLAY_MISMATCH', `Event ${miss.seq}${miss.nodeKey ? ` (${miss.nodeKey})` : ''}: ${miss.message} [${miss.code}]`, { seq: miss.seq, nodeKey: miss.nodeKey, rule: miss.code });
+   for (const drift of signalCheckpointDrift(run, events)) add('error', 'SIGNAL_EDITED', `The run record's ${drift} differs from what its chain recorded`, { drift });
+   checks.waits = { waits: replay.waits, deliveries: replay.deliveries, decisions: replay.decisions, mismatches: replay.mismatches.length };
+   return result();
+diff --git a/tests/engine-binding.test.mjs b/tests/engine-binding.test.mjs
+index 6b81908..782fe2c 100644
+--- a/tests/engine-binding.test.mjs
++++ b/tests/engine-binding.test.mjs
+@@ -1,11 +1,13 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+-import { mkdtempSync, mkdirSync, copyFileSync, symlinkSync, appendFileSync, readFileSync, rmSync } from 'node:fs';
++import { mkdtempSync, mkdirSync, copyFileSync, symlinkSync, appendFileSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+ import { tmpdir } from 'node:os';
+ import path from 'node:path';
+ import { spawnSync } from 'node:child_process';
+ import { Foundry } from '../src/foundry.mjs';
+-import { engineHash, engineIdentity } from '../src/engine.mjs';
++import { engineHash, engineIdentity, engineOf, engineResumesFrom, engineVersion } from '../src/engine.mjs';
++import { engineBinding, identityChanges } from '../src/audit.mjs';
++import { verifyRun } from '../src/verify-run.mjs';
+ 
+ const sourceRoot = path.resolve(import.meta.dirname, '..');
+ const workflow = () => ({ schemaVersion: '1.0', id: 'EngineBound', version: 1,
+@@ -81,3 +83,105 @@ test('Engine binding: an actual second process with changed engine source reject
+   assert.equal(foundry.store.run(run.id).status, 'awaiting_human');
+   assert.ok(readFileSync(path.join(sourceRoot, 'src/runtime.mjs'), 'utf8').includes('ENGINE_DRIFT'));
+ });
++
++// Engine compatibility ranges (research/engine-20261021/ENGINE-BUMP.md §1).
++// A copy of exactly the engine identity set (src/ modules, schemas, lineage) under dir/name, changed by `edit(srcDir)`.
++function engineCopy(dir, name, edit = () => {}) {
++  const copied = path.join(dir, name);
++  for (const file of Object.keys(engineIdentity().files)) {
++    const target = path.join(copied, 'src', file);
++    mkdirSync(path.dirname(target), { recursive: true });
++    copyFileSync(path.join(sourceRoot, 'src', file), target);
++  }
++  symlinkSync(path.join(sourceRoot, 'node_modules'), path.join(copied, 'node_modules'), 'dir');
++  edit(path.join(copied, 'src'));
++  return copied;
++}
++// Run `action` against the workspace in a second process that loads the engine copy.
++function underEngine(copied, workspace, action, runId = null) {
++  const url = file => JSON.stringify(new URL(`file://${path.join(copied, 'src', file)}`).href);
++  const code = `
++    import {Store} from ${url('store.mjs')};
++    import {Runtime} from ${url('runtime.mjs')};
++    import {createDefaultRegistry} from ${url('capabilities.mjs')};
++    import {engineHash, engineIdentity} from ${url('engine.mjs')};
++    const store=new Store(${JSON.stringify(workspace)});
++    const action=${JSON.stringify(action)};
++    try {
++      if (action==='identity') console.log(JSON.stringify({engineHash, files: engineIdentity().files}));
++      else {
++        const runtime=new Runtime(store,createDefaultRegistry());
++        const id = action==='create' ? runtime.create(${JSON.stringify(workflow())}, {}).id : ${JSON.stringify(runId)};
++        const r=await runtime.execute(id); console.log(JSON.stringify({id, status:r.status, engineHash}));
++      }
++    } catch(error){console.log(JSON.stringify({code:error.code, details:error.details ?? null, message:error.message, engineHash}));}
++    finally {store.close();}
++  `;
++  const child = spawnSync(process.execPath, ['--input-type=module', '--eval', code], { env: { PATH: process.env.PATH, NODE_NO_WARNINGS: '1' }, timeout: 15000, encoding: 'utf8' });
++  assert.equal(child.status, 0, child.stderr); return JSON.parse(child.stdout);
++}
++const lineageOf = srcDir => JSON.parse(readFileSync(path.join(srcDir, 'engine-lineage.json'), 'utf8'));
++
++test('Engine lineage: version 1 (commit 96cab64, the engine of the 10-21 runs) is a resumable predecessor on this host', () => {
++  assert.ok(engineVersion >= 2 && engineResumesFrom <= 1);
++  assert.deepEqual(engineOf(engineHash), { version: engineVersion, current: true, resumable: true });
++  assert.equal(engineOf('0'.repeat(64)), null);
++  // The hash the 10-21 runs recorded on the owner's host (node v24.21.0, linux x64, ajv 8.20.0): it must be recognised as version 1.
++  const id = engineIdentity();
++  if (id.node === 'v24.21.0' && id.platform === 'linux' && id.architecture === 'x64' && id.validator === 'ajv@8.20.0')
++    assert.equal(engineOf('358cb02019b9826d7181bc313b8f5084a35c45c47c50b051f8149e863caad9f6')?.version, 1);
++  assert.ok(id.files['engine-lineage.json'], 'the lineage is part of the engine identity');
++});
++
++test('Engine lineage: the chain decides the bound engine; a broken migration chain is an identity change', () => {
++  const [a, b, c] = ['a', 'b', 'c'].map(x => x.repeat(64));
++  const birth = { type: 'run.created', engineHash: a };
++  assert.deepEqual(engineBinding([birth]), { valid: true, hash: a, engines: [a], migrations: [] });
++  const moved = [birth, { type: 'engine.migrated', seq: 2, from: a, to: b, fromVersion: 1, toVersion: 2 }];
++  assert.equal(engineBinding(moved).hash, b);
++  assert.deepEqual(identityChanges({ engineHash: b }, birth, moved), []);
++  assert.deepEqual(identityChanges({ engineHash: a }, birth, moved), ['engineHash'], 'the record must follow the migration');
++  const skipped = [...moved, { type: 'engine.migrated', seq: 3, from: a, to: c }];
++  assert.equal(engineBinding(skipped).valid, false);
++  assert.ok(identityChanges({ engineHash: c }, birth, skipped).includes('engineMigration'));
++});
++
++test('Engine lineage: a run of a declared-compatible predecessor resumes with engine.migrated in its chain; outside the range, and backwards, it refuses', async t => {
++  const { dir, foundry } = await setup(t), workspace = foundry.store.workspace;
++  // "old": an engine differing from this checkout by one comment. Its exact file map is what a successor freezes into its lineage.
++  const old = engineCopy(dir, 'old', src => appendFileSync(path.join(src, 'runtime.mjs'), '\n// Synthetic predecessor engine (test only).\n'));
++  const oldId = underEngine(old, workspace, 'identity');
++  const created = underEngine(old, workspace, 'create');
++  assert.equal(created.status, 'awaiting_human'); assert.equal(foundry.store.run(created.id).engineHash, oldId.engineHash);
++  const successor = (name, version, resumesFrom) => engineCopy(dir, name, src => {
++    const lineage = lineageOf(src);
++    writeFileSync(path.join(src, 'engine-lineage.json'), JSON.stringify({ ...lineage, version, resumesFrom, predecessors: [{ version: version - 1, source: 'test: old', files: oldId.files }] }));
++  });
++  // A successor that lists the predecessor but no longer resumes its version: ENGINE_DRIFT, naming both versions; nothing is written.
++  const before = foundry.store.events(created.id);
++  const far = underEngine(successor('far', 3, 3), workspace, 'resume', created.id);
++  assert.equal(far.code, 'ENGINE_DRIFT'); assert.equal(far.details.recordedVersion, 2); assert.equal(far.details.resumesFrom, 3);
++  assert.deepEqual(foundry.store.events(created.id), before);
++  // A successor declaring it compatible: the run resumes, and the migration is in its chain, once.
++  const next = successor('next', 3, 2);
++  const resumed = underEngine(next, workspace, 'resume', created.id);
++  assert.equal(resumed.status, 'awaiting_human');
++  const migrations = () => foundry.store.events(created.id).filter(e => e.type === 'engine.migrated');
++  assert.deepEqual(migrations().map(({ from, to, fromVersion, toVersion, resumesFrom }) => ({ from, to, fromVersion, toVersion, resumesFrom })),
++    [{ from: oldId.engineHash, to: resumed.engineHash, fromVersion: 2, toVersion: 3, resumesFrom: 2 }]);
++  const migratedAt = migrations()[0].seq, events = foundry.store.events(created.id);
++  assert.equal(events[migratedAt].type, 'runner.acquired', 'the migration commits with the ownership it precedes');
++  assert.equal(foundry.store.run(created.id).engineHash, resumed.engineHash);
++  assert.equal(underEngine(next, workspace, 'resume', created.id).status, 'awaiting_human');
++  assert.equal(migrations().length, 1, 'a second resume under the same engine records no migration');
++  // The older engine never resumes a run a newer engine migrated: the record names an engine its lineage does not know.
++  const back = underEngine(old, workspace, 'resume', created.id);
++  assert.equal(back.code, 'ENGINE_DRIFT'); assert.equal(back.details.recordedVersion, null);
++  foundry.runtime.answer(created.id, 'root/question', true);
++  assert.equal(underEngine(next, workspace, 'resume', created.id).status, 'succeeded');
++  // verify-run (under this checkout's engine) accepts the migrated record and reports the migration.
++  const report = verifyRun(foundry.store, created.id);
++  assert.equal(report.ok, true, JSON.stringify(report.findings));
++  assert.ok(report.findings.some(f => f.code === 'ENGINE_MIGRATED' && f.fromVersion === 2 && f.toVersion === 3));
++  assert.ok(!report.findings.some(f => f.code === 'RUN_IDENTITY_EDITED'));
++});
+diff --git a/tests/packaging.test.mjs b/tests/packaging.test.mjs
+index dfa2ce6..4d60c0f 100644
+--- a/tests/packaging.test.mjs
++++ b/tests/packaging.test.mjs
+@@ -26,7 +26,7 @@ const exampleFiles = ['examples/hello.json', 'examples/incident.json', 'examples
+ const documentationFiles = ['docs/ARCHITECTURE.md', 'docs/OUTCOME-REPAIR.md', 'docs/PACKAGING.md', 'docs/REPAIR-LIFECYCLE.md', 'docs/SOURCE-COVERAGE.md'];
+ const publicationPath = relative => {
+   if (/(?:^|\/)(?:\.[^/]+|private|credentials|corpus|research|evals|tests|artifacts|__pycache__|node_modules)(?:\/|$)/i.test(relative)) return false;
+-  if (['package.json', 'README.md', 'bin/foundry.mjs', 'schemas/workflow.schema.json', 'schemas/identity.schema.json', 'schemas/decision.schema.json', 'policy/models.json', ...webFiles, ...exampleFiles, ...documentationFiles].includes(relative)) return true;
++  if (['package.json', 'README.md', 'bin/foundry.mjs', 'src/engine-lineage.json', 'schemas/workflow.schema.json', 'schemas/identity.schema.json', 'schemas/decision.schema.json', 'policy/models.json', ...webFiles, ...exampleFiles, ...documentationFiles].includes(relative)) return true;
+   return /^src\/(?:models\/(?:providers\/)?|executors\/)?[a-z][a-z0-9-]*\.mjs$/.test(relative)
+     || /^skills\/[a-z][a-z0-9-]*\/(?:SKILL\.md|references\/[A-Za-z0-9_./-]+\.(?:md|json|txt))$/.test(relative);
+ };
+@@ -207,7 +207,7 @@ test('packaging inventory gate rejects private state and evidence even under oth
+   for (const relative of ['web/artifacts/screenshot.png', 'adapters/langgraph/__pycache__/runtime.pyc', 'src/__pycache__/module.pyc', 'src/.env', 'src/private/key.mjs', 'skills/workflow-foundry/references/private/token.txt', 'docs/private.md', 'corpus/vendor/LICENSE', 'evals/runs/receipt.json', '.npmrc']) assert.equal(publicationPath(relative), false, relative);
+   // Decision D6 removed the LangGraph/n8n export adapters; their former paths must not re-enter the archive.
+   for (const relative of ['adapters/index.mjs', 'adapters/langgraph/export.mjs', 'adapters/langgraph/runtime.py', 'adapters/langgraph/requirements.txt', 'adapters/n8n/export.mjs', 'adapters/n8n/portable.mjs']) assert.equal(publicationPath(relative), false, relative);
+-  for (const relative of [...webFiles, ...exampleFiles, 'src/generator.mjs', 'src/models/port.mjs', 'src/models/providers/claude-cli.mjs', 'src/executors/claude-code.mjs', 'policy/models.json', 'schemas/decision.schema.json', 'skills/domain-science/references/source-map.md']) assert.equal(publicationPath(relative), true, relative);
++  for (const relative of [...webFiles, ...exampleFiles, 'src/engine-lineage.json', 'src/generator.mjs', 'src/models/port.mjs', 'src/models/providers/claude-cli.mjs', 'src/executors/claude-code.mjs', 'policy/models.json', 'schemas/decision.schema.json', 'skills/domain-science/references/source-map.md']) assert.equal(publicationPath(relative), true, relative);
+ });
+ 
+ test('packaging actual tarball, project installers and generated stdio MCP commands', { skip: enabled ? false : 'opt-in lane: set FOUNDRY_PACKAGING_E2E=1 (needs corpus/ from release archive-20261006)', timeout: 90000 }, async t => {
+diff --git a/tools/engine-lineage.mjs b/tools/engine-lineage.mjs
+new file mode 100644
+index 0000000..c7fcb76
+--- /dev/null
++++ b/tools/engine-lineage.mjs
+@@ -0,0 +1,24 @@
++#!/usr/bin/env node
++// Engine compatibility ranges (research/engine-20261021/ENGINE-BUMP.md §1): the maintainer's release helper. Read-only.
++//
++//   node tools/engine-lineage.mjs                 this engine: hash, version, resumesFrom and its predecessor entry (to freeze)
++//   node tools/engine-lineage.mjs --check HASH    what this engine knows about a recorded engine hash (a run's engineHash)
++//
++// Cutting engine version N+1: (1) before changing anything, run this on version N and copy its `predecessor` object into
++// src/engine-lineage.json `predecessors`; (2) set `version` to N+1 and `resumesFrom` to the oldest version whose runs N+1 may
++// resume after review (N+1 itself when it may not resume any); (3) list the changes. A run's chain then records engine.migrated
++// when it resumes across versions; anything outside the range stays ENGINE_DRIFT.
++import { engineIdentity, engineOf } from '../src/engine.mjs';
++
++const args = process.argv.slice(2);
++const at = args.indexOf('--check');
++if (at >= 0) {
++  const hash = args[at + 1] ?? '';
++  if (!/^[0-9a-f]{64}$/.test(hash)) { console.error('--check needs a 64-hex engine hash'); process.exit(2); }
++  console.log(JSON.stringify({ hash, known: engineOf(hash) }, null, 1));
++} else {
++  const id = engineIdentity();
++  console.log(JSON.stringify({ hash: id.hash, version: id.version, resumesFrom: id.resumesFrom,
++    platform: { node: id.node, platform: id.platform, architecture: id.architecture, validator: id.validator },
++    predecessor: { version: id.version, source: 'commit <sha> (<date>)', files: id.files } }, null, 1));
++}
+-- 
+2.43.0
+

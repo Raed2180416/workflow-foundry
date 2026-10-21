@@ -1,0 +1,104 @@
+From 03c19e2b1f894f65eab092ff4755f8e620a37c7f Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:10:47 +0000
+Subject: [PATCH 04/16] Executor: a session the caller aborts ends CANCELLED,
+ not EXECUTOR_PROTOCOL (gap rank 21)
+
+sessionError({cancelled}) returns CANCELLED when the caller's signal killed a session that
+printed no result, so runners no longer retry the user's own cancellation as an
+environment fault (orch-20261021 d3, probe L3). A signal already aborted before launch
+reads the same; the abort listener is removed after the session. Tests: sessionError
+cases and an end-to-end abort of a fake CLI (charged at its bound).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ src/executors/claude-code.mjs   | 14 ++++++++++----
+ tests/executor-sandbox.test.mjs | 22 ++++++++++++++++++++++
+ 2 files changed, 32 insertions(+), 4 deletions(-)
+
+diff --git a/src/executors/claude-code.mjs b/src/executors/claude-code.mjs
+index 55289f6..8939631 100644
+--- a/src/executors/claude-code.mjs
++++ b/src/executors/claude-code.mjs
+@@ -275,8 +275,12 @@ export function streamUsageOf(events) {
+ }
+ const LIMITED = /rate.?limit|overloaded|usage limit|hit your (usage )?limit|limit reached/i;
+ // Classify one session's end from the CLI's result event (null: none was printed). Exported for tests.
+-export function sessionError({ result, stderr = '', timedOut = false, sandboxReady = true }) {
++export function sessionError({ result, stderr = '', timedOut = false, sandboxReady = true, cancelled = false }) {
+   const status = Number(result?.api_error_status);
++  // The caller's own abort (orch-20261021 d3, probe L3): a session killed because its caller cancelled it ends without a result. That is
++  // CANCELLED, not EXECUTOR_PROTOCOL or SANDBOX_UNAVAILABLE, which runners retry as environment faults. A session that printed its result
++  // before the abort landed keeps its own classification.
++  if (cancelled && !result) return 'CANCELLED';
+   if (!sandboxReady && !result) return 'SANDBOX_UNAVAILABLE';
+   if (timedOut) return 'EXECUTOR_TIMEOUT';
+   if (result?.subtype === 'error_max_budget_usd') return 'EXECUTOR_BUDGET';
+@@ -317,18 +321,20 @@ export async function runClaudeCode({
+   child.stderr.on('data', d => { if (stderr.length < 64 * 1024) stderr += d; });
+   const kill = () => { try { process.kill(-child.pid, 'SIGKILL'); } catch {} };
+   const timer = setTimeout(() => { timedOut = true; kill(); }, timeoutMs);
+-  signal?.addEventListener('abort', kill, { once: true });
++  let cancelled = false;
++  const onAbort = () => { cancelled = true; kill(); };
++  if (signal?.aborted) onAbort(); else signal?.addEventListener('abort', onAbort, { once: true });
+   child.stdin.on('error', () => {});
+   child.stdin.end(prompt);
+   const code = await new Promise(resolve => child.on('close', resolve));
+-  clearTimeout(timer);
++  clearTimeout(timer); signal?.removeEventListener('abort', onAbort);
+   const { ready, stderr: errText } = splitReady(stderr);
+   const events = stdout.split('\n').filter(Boolean).map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
+   writeFileSync(path.join(workdir, '.executor-transcript.jsonl'), stdout);
+   const result = [...events].reverse().find(e => e.type === 'result');
+   const toolUses = events.filter(e => e.type === 'assistant').flatMap(e => (e.message?.content ?? []).filter(c => c.type === 'tool_use').map(c => ({ name: c.name, input: c.input })));
+   const init = events.find(e => e.type === 'system' && e.subtype === 'init');
+-  const errorCode = sessionError({ result, stderr: errText, timedOut, sandboxReady: ready });
++  const errorCode = sessionError({ result, stderr: errText, timedOut, sandboxReady: ready, cancelled });
+   const reported = typeof result?.total_cost_usd === 'number' && Number.isFinite(result.total_cost_usd);
+   // A CLI that emitted no stream event never reached the agent loop (system/init precedes the first model call), so
+   // nothing was spent; this covers both a sandbox that never got ready and a CLI that bailed at startup.
+diff --git a/tests/executor-sandbox.test.mjs b/tests/executor-sandbox.test.mjs
+index 84dee75..2316569 100644
+--- a/tests/executor-sandbox.test.mjs
++++ b/tests/executor-sandbox.test.mjs
+@@ -186,6 +186,11 @@ test('sessionError: budget before rate limits, usage limits are rate limits, a s
+   assert.equal(sessionError({ result: null, sandboxReady: false }), 'SANDBOX_UNAVAILABLE');
+   assert.equal(sessionError({ result: null, timedOut: true }), 'EXECUTOR_TIMEOUT');
+   assert.equal(sessionError({ result: { is_error: false, result: 'done' } }), null);
++  // The caller's own abort is CANCELLED (orch-20261021 rank 21), whatever else a resultless end would read as; a result printed first stands.
++  assert.equal(sessionError({ result: null, cancelled: true }), 'CANCELLED');
++  assert.equal(sessionError({ result: null, sandboxReady: false, cancelled: true }), 'CANCELLED');
++  assert.equal(sessionError({ result: null, stderr: 'API Error: 529 overloaded', cancelled: true }), 'CANCELLED');
++  assert.equal(sessionError({ result: { is_error: false, result: 'done' }, cancelled: true }), null);
+   assert.deepEqual(splitReady(`${SANDBOX_READY}\nwarn\n`), { ready: true, stderr: 'warn\n' });
+   assert.deepEqual(splitReady('mount: failed\n'), { ready: false, stderr: 'mount: failed\n' });
+ });
+@@ -221,6 +226,23 @@ test('a killed executor session is charged at its budget bound, never $0 (R5)',
+   assert.equal(finished.ok, true); assert.equal(finished.costUsd, 0.123); assert.equal(finished.costUnknown, false); assert.equal(finished.costUpperUsd, 0.123);
+ });
+ 
++test('a session the caller aborts ends CANCELLED, not EXECUTOR_PROTOCOL (orch-20261021 rank 21, probe L3), and is charged at its bound', { skip: live }, async t => {
++  const root = tmpRoot(); t.after(() => rmSync(root, { recursive: true, force: true }));
++  const workdir = path.join(root, 'aborted'); mkdirSync(workdir);
++  writeFileSync(path.join(workdir, 'fake-claude'), FAKE_CLI({ result: false })); chmodSync(path.join(workdir, 'fake-claude'), 0o755);
++  const halt = new AbortController();
++  const pending = runClaudeCode({ model: 'claude-haiku-4-5-20251001', prompt: 'x', workdir, budgetUsd: 0.75, timeoutMs: 30000, binary: path.join(workdir, 'fake-claude'), signal: halt.signal });
++  // Abort once the session has started (its init event is on stdout); the fake CLI would otherwise sleep 30 s.
++  setTimeout(() => halt.abort(), 1500);
++  const started = Date.now(), r = await pending;
++  assert.ok(Date.now() - started < 20000, 'the abort ended the session');
++  assert.equal(r.error.code, 'CANCELLED'); assert.equal(r.ok, false);
++  assert.equal(r.costUnknown, true); assert.equal(r.costUpperUsd, 0.75, 'a cancelled session is still charged at its bound');
++  const early = new AbortController(); early.abort();
++  const before = await runClaudeCode({ model: 'claude-haiku-4-5-20251001', prompt: 'x', workdir, budgetUsd: 0.75, timeoutMs: 30000, binary: path.join(workdir, 'fake-claude'), signal: early.signal });
++  assert.equal(before.error.code, 'CANCELLED', 'a signal aborted before launch also reads as CANCELLED');
++});
++
+ test('live sandbox: own workdir only, nested hidden paths, read-only host, own pid namespace, optional no-network (R1)', { skip: live }, async t => {
+   const root = tmpRoot(); t.after(() => rmSync(root, { recursive: true, force: true }));
+   const workdir = path.join(root, 'mine'), other = path.join(root, 'other'); mkdirSync(workdir); mkdirSync(other); writeFileSync(path.join(other, 'answer.json'), '{"secret":1}');
+-- 
+2.43.0
+

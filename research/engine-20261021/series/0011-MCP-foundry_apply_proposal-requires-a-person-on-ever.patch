@@ -1,0 +1,60 @@
+From 8404900e3c55165d19233009797a89b6ce7cd903 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:28:19 +0000
+Subject: [PATCH 11/16] MCP: foundry_apply_proposal requires a person on every
+ call (surface patch 0001, decision D15)
+
+Applied research/surface-20261021/patches/0001 unchanged: the tool carries
+_meta anthropic/requiresUserInteraction, which tools/list forwards. Test: only that tool
+carries the mark.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ src/mcp.mjs                    |  7 ++++++-
+ tests/mcp-annotations.test.mjs | 12 ++++++++++++
+ 2 files changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/src/mcp.mjs b/src/mcp.mjs
+index 95d146b..6453e21 100644
+--- a/src/mcp.mjs
++++ b/src/mcp.mjs
+@@ -54,9 +54,14 @@ export function toolDefinitions(foundry) {
+   // can invoke host-selected external adapters; do not advertise a universally
+   // closed/additive world merely because the bundled examples are local.
+   const dispatches = new Set(['foundry_run', 'foundry_run_json', 'foundry_resume', 'foundry_trial', 'foundry_trial_json']);
++  // Applying a proposal changes which program future runs execute. Claude Code shows a person a permission prompt for a tool marked
++  // anthropic/requiresUserInteraction on every call, in every permission mode, and never offers "don't ask again"
++  // (code.claude.com/docs/en/mcp, "Require approval for a specific tool"; read 2026-10-21). Other clients ignore the key.
++  const personOnly = new Set(['foundry_apply_proposal']);
+   return defs.map(([name, description, inputSchema, execute, readOnly]) => ({
+     name, description, inputSchema, execute,
+-    annotations: { readOnlyHint: readOnly, destructiveHint: !readOnly, idempotentHint: readOnly, openWorldHint: dispatches.has(name) }
++    annotations: { readOnlyHint: readOnly, destructiveHint: !readOnly, idempotentHint: readOnly, openWorldHint: dispatches.has(name) },
++    ...(personOnly.has(name) ? { _meta: { 'anthropic/requiresUserInteraction': true } } : {})
+   }));
+ }
+ 
+diff --git a/tests/mcp-annotations.test.mjs b/tests/mcp-annotations.test.mjs
+index 683e2c7..60c8065 100644
+--- a/tests/mcp-annotations.test.mjs
++++ b/tests/mcp-annotations.test.mjs
+@@ -18,3 +18,15 @@ test('MCP hints do not promise closed-world/additive execution for configurable
+   }
+   for (const name of ['foundry_validate', 'foundry_inspect', 'foundry_delivery']) assert.equal(tools.get(name).annotations.readOnlyHint, true);
+ });
++
++// Surface patch 0001 (decision D15, applied with the 2026-10-21 engine bump): applying a proposal changes which program future runs execute,
++// so a person must confirm every call; Claude Code prompts on each call of a tool marked anthropic/requiresUserInteraction, in every mode.
++test('MCP: foundry_apply_proposal requires a person on every call; no other tool carries the mark', async t => {
++  const directory = mkdtempSync(path.join(tmpdir(), 'foundry-mcp-person-'));
++  const foundry = new Foundry(directory);
++  t.after(async () => { await foundry.close(); rmSync(directory, { recursive: true, force: true }); });
++  const tools = toolDefinitions(foundry);
++  const marked = tools.filter(tool => tool._meta?.['anthropic/requiresUserInteraction'] === true).map(tool => tool.name);
++  assert.deepEqual(marked, ['foundry_apply_proposal']);
++  assert.equal(tools.find(tool => tool.name === 'foundry_apply_proposal').annotations.readOnlyHint, false);
++});
+-- 
+2.43.0
+

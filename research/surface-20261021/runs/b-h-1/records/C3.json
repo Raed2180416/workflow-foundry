@@ -1,0 +1,88 @@
+{
+ "arm": "B-H",
+ "case": "C3",
+ "expected": "contact-sync",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": {
+    "template": "none",
+    "reason": "The user wants a read-only comparison that lists CRM contacts missing from the newsletter list and changes nothing, but contact-sync always adds the missing contacts to the list, which is the opposite of what was asked, so no template fits.",
+    "notCovered": [
+     "Read-only report of CRM contacts missing from the newsletter list with no changes made"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "I cannot build that with the flows I know. (The user wants a read-only comparison that lists CRM contacts missing from the newsletter list and changes nothing, but contact-sync always adds the missing contacts to the list, which is the opposite of what was asked, so no template fits.) I can build: sync the newsletter list from the crm and report the differences; approve small expenses automatically; send bigger ones to an approver; chase unpaid invoices with a reminder cadence (dunning); route new leads to the right salesperson; on-call digest of unresolved alerts to a chat channel, with optional paging; answer common support questions with your own replies; send the rest to a person; weekly progress report from a tracker export. Nothing was created.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.000444,
+  "tokens": 2904,
+  "inputTokens": 2,
+  "outputTokens": 466,
+  "cacheReadTokens": 812,
+  "cacheWriteTokens": 1624,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 466,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1624,
+   "costUsd": 0.00044432,
+   "costUnknown": false,
+   "latencyMs": 3193,
+   "journalId": 52
+  }
+ ],
+ "builderWallMs": 3196,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "no flow ran: the builder ended unsupported"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 2,
+  "slotChecksOk": 0
+ }
+}

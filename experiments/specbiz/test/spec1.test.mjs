@@ -13,7 +13,7 @@ import { DatabaseSync } from 'node:sqlite';
 import * as e8 from '../../../beds/ebed/e8/index.mjs';
 import { createHost, bindItem } from '../../../beds/ebed/host/host.mjs';
 import { smokeReport, clientInstructions } from '../../ebed/smoke-service.mjs';
-import { buildFiles, taskText } from '../../ebed/build.mjs';
+import { buildFiles, taskText, contractText } from '../../ebed/build.mjs';
 import { TICK_PROMPT } from '../../ebed/agent-arm.mjs';
 import { agentVArm, VALIDATOR_PROMPT } from '../../agentv/arm.mjs';
 import { dryRunner } from '../../agentv/run.mjs';
@@ -23,10 +23,11 @@ import { loadSpec, specUnits } from '../spec-units.mjs';
 import { shingles, unitShingles } from '../leak.mjs';
 import { createOwnerSim, replayOwnerSim, MATCH_JUDGMENT, stubMatcher } from '../owner-sim.mjs';
 import { NO_MATCH_ANSWER, BUDGET_ANSWER, UNITS } from '../content.mjs';
-import { ARMS, NO_SPEC_BINDING, DERIVE_ITEM, deriveFiles, deriveTaskText, derivePrompt, TASK_EDITS, ASK_SECTION, NO_ASK_SECTION, FORCED_ASK, PRIOR_SECTION, LEDGER_SECTION, SHOP_SECTION } from '../spec1-arms.mjs';
+import { ARMS, NO_SPEC_BINDING, DERIVE_ITEM, deriveFiles, deriveTaskText, derivePrompt, TASK_EDITS, ASK_SECTION, NO_ASK_SECTION, FORCED_ASK, PRIOR_SECTION, LEDGER_SECTION, SHOP_SECTION,
+  SPEC_MENTION, CONTRACT_EDITS, derivedContractText } from '../spec1-arms.mjs';
 import { ASK_CLIENT, serveAsk, modelMatcher, scriptedPort, serialSim, restoredOwnerSim, matchPrompt, questionOf } from '../ask-service.mjs';
 import { extractAndReview, scriptedExtraction, ownerReview, packText } from '../ledger-review.mjs';
-import { packPrompt, packSessionRunner, scriptedPackSession, runNode, PACK_STEP, SPEC_STEP } from '../pack-agent.mjs';
+import { packPrompt, packSessionRunner, scriptedPackSession, runNode, PACK_STEP, SPEC_STEP, specMentions } from '../pack-agent.mjs';
 import { reserveAll, settle, spendTotals, CapRefused, CAPS, gradeSolver, PACK_DIGESTS } from '../spec1.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -92,7 +93,7 @@ test('build items 1 and 3: agent sessions get the pack and never SPEC-E; ask wor
     const sim = serialSim(createOwnerSim({ pack, matcher: modelMatcher({ port, modelId: HAIKU, runId: 't' }) }));
     const run = async (binding, sub) => {
       const session = scriptedPackSession({ after: dryRunner, askOn: [1] });
-      const arm = agentVArm({ id: 'a', model: HAIKU, workRoot: path.join(dir, sub), contract: 'CONTRACT', schemas: bindItem(NO_SPEC_BINDING).schemas, retries: 0,
+      const arm = agentVArm({ id: 'a', model: HAIKU, workRoot: path.join(dir, sub), contract: derivedContractText(), schemas: bindItem(NO_SPEC_BINDING).schemas, retries: 0,
         runner: packSessionRunner({ inner: session, pack, sim, askJournal: path.join(dir, `${sub}.ask.jsonl`) }), budgetUsdPerTick: 0.01, minutesPerTick: 1 });
       const w = e8.generateWorld({ seed: TINY.seed, difficulty: TINY.d, size: 3 });
       const host = createHost({ item: binding, world: w, arm, concurrency: 1, callTimeoutMs: 60_000, maxWakeups: 400 });
@@ -102,7 +103,7 @@ test('build items 1 and 3: agent sessions get the pack and never SPEC-E; ask wor
     const ok = await run(NO_SPEC_BINDING, 'derived');
     assert.equal(ok.status, 'complete');
     assert.equal(ok.errors.length, 0);
-    assert.ok(ok.session.seen.length >= 3 && ok.session.seen.every(s => s.pack && !s.spec && s.packStep && !s.specStep && s.ask));
+    assert.ok(ok.session.seen.length >= 3 && ok.session.seen.every(s => s.pack && !s.spec && s.packStep && !s.specStep && s.ask && !s.specMentions.length && !s.promptNamesSpec));
     assert.match(ok.session.seen[0].answer, /Only Mara \(owner\) and Joost/);
     assert.equal(sim.journal().length, 1);
     const bad = await run(e8.binding, 'control');
@@ -121,12 +122,40 @@ test('the derived build workspace: B1L-H\'s files with the pack instead of SPEC-
     assert.ok(!f['SPEC-E.md'] && !Object.keys(f).some(k => /spec/i.test(k)), arm);
     const biz = Object.fromEntries(Object.entries(f).filter(([k]) => k.startsWith('business/')).map(([k, v]) => [k.slice('business/'.length), v]));
     assert.deepEqual(biz, disk, `${arm}: business/ is the committed pack`);
-    for (const k of ['CONTRACT.md', 'smoke.mjs', ...Object.keys(b1lh).filter(x => x.startsWith('api/'))]) assert.equal(f[k], b1lh[k], `${arm}: ${k} as B1L-H`);
+    for (const k of ['smoke.mjs', ...Object.keys(b1lh).filter(x => x.startsWith('api/'))]) assert.equal(f[k], b1lh[k], `${arm}: ${k} as B1L-H`);
+    assert.equal(f['CONTRACT.md'], derivedContractText(), `${arm}: the derived contract`);
     const rest = Object.fromEntries(Object.entries(f).filter(([k]) => !k.startsWith('business/')));
     assert.deepEqual([...specIn(rest).unit], [], `${arm}: no SPEC-E rule text outside business/`);
     assert.doesNotMatch(f['TASK.md'], /SPEC-E\.md exactly|in SPEC-E\.md|the spec,/);
     assert.doesNotMatch(derivePrompt(arm, f), /Read SPEC-E/);
   }
+});
+
+test('no derived-arm prompt or file names SPEC-E or spec/SPEC-E.md; E8\'s own contract still does (control)', async () => {
+  // the contract variant: E8's contract text with exactly the four listed edits, and E8's own arms keep the original
+  const orig = contractText();
+  assert.ok(SPEC_MENTION.test(orig), 'control: the contract every E8 arm gets names SPEC-E');
+  let c = orig;
+  for (const [from, to] of CONTRACT_EDITS) { assert.equal(c.split(from).length - 1, 1, from); c = c.replace(from, to); }
+  assert.equal(derivedContractText(), c);
+  assert.ok(!SPEC_MENTION.test(c));
+  assert.equal(buildFiles(e8, { loop: 'smoke' })['CONTRACT.md'], orig, 'E8\'s own B1 arms are unchanged');
+  // every build arm: every file name and text, and the session prompt
+  for (const arm of Object.keys(ARMS).filter(a => ARMS[a].kind === 'build')) {
+    const f = deriveFiles(arm, pack, { ledgerMd: '# ledger\n' });
+    assert.deepEqual(Object.entries(f).filter(([k, v]) => SPEC_MENTION.test(k) || SPEC_MENTION.test(v)).map(([k]) => k), [], arm);
+    assert.ok(!SPEC_MENTION.test(derivePrompt(arm, f)), `${arm}: prompt`);
+  }
+  // none-agent: the session prompt (with the validator paragraph and a retry paragraph) and the contract it is given
+  assert.ok(!SPEC_MENTION.test(packPrompt(TICK_PROMPT + VALIDATOR_PROMPT)));
+  assert.ok(!SPEC_MENTION.test(packPrompt(TICK_PROMPT + VALIDATOR_PROMPT, { ask: false })));
+  assert.throws(() => packPrompt(`${TICK_PROMPT}\nsee spec/SPEC-E.md`), /still names SPEC-E/);
+  // the guard: a workspace that would name SPEC-E is refused at build time
+  const dir = tmp();
+  try {
+    writeFileSync(path.join(dir, 'CONTRACT.md'), orig);
+    assert.deepEqual(specMentions(dir), ['CONTRACT.md']);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('TASK.md per arm: B1L-H\'s text with the listed edits and its smoke paragraph, plus the arm\'s sections', () => {

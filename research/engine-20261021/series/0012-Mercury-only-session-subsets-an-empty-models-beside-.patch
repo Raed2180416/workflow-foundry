@@ -1,0 +1,105 @@
+From a81447eb584beec18e7f13203fd7708cf2eab51c Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:28:19 +0000
+Subject: [PATCH 12/16] Mercury-only session subsets: an empty models[] beside
+ executorModels (PORT-PROBE finding 1)
+
+validatePolicy(policy, {executorOnly}) lets subsetPolicy build a subset of executor models
+alone (models: []); the owner policy file and the Runtime still need a non-empty models[].
+Class resolution reads models[] only, so it reaches nothing (MODEL_CLASS_EMPTY) and never an
+executor model; calls name their model. Test in tests/openai-chat-provider.test.mjs.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ experiments/lib/models.mjs          |  7 +++++--
+ src/models/policy.mjs               | 10 ++++++++--
+ tests/openai-chat-provider.test.mjs | 27 +++++++++++++++++++++++++++
+ 3 files changed, 40 insertions(+), 4 deletions(-)
+
+diff --git a/experiments/lib/models.mjs b/experiments/lib/models.mjs
+index 0ec1114..17d96e8 100644
+--- a/experiments/lib/models.mjs
++++ b/experiments/lib/models.mjs
+@@ -22,10 +22,13 @@ export function subsetPolicy(owner, ids) {
+   // A session subset holds generative models only: judgment models (judgmentModels, System One; added 2026-10-09 for hosted Jev)
+   // never enter a ModelPort, and their providers are not kept, so they are left out with them. Executor models (executorModels,
+   // remote chat endpoints; added 2026-10-21 for Mercury) stay only when listed by id, with their provider: ModelPort serves
+-  // one only when a call names it (policy.mjs portModelById). A subset that lists none is unchanged from before.
++  // one only when a call names it (policy.mjs portModelById). A subset that lists none is unchanged from before. A subset of executor
++  // models alone (Mercury only; research/mercury-20261021/PORT-PROBE.md finding 1) has an empty models[]: nothing resolves by class, and
++  // every call names its model (engine bump 2026-10-21, item 5).
+   const { judgmentModels: _judgment, executorModels: _executor, ...generative } = owner;
+   return freeze(validatePolicy(structuredClone({ ...generative, policyVersion: `${owner.policyVersion}+only:${[...ids].sort().join(',')}`, models,
+-    ...(execs.length ? { executorModels: execs } : {}), providers: Object.fromEntries(Object.entries(owner.providers).filter(([n]) => used.has(n))) })));
++    ...(execs.length ? { executorModels: execs } : {}), providers: Object.fromEntries(Object.entries(owner.providers).filter(([n]) => used.has(n))) }),
++    { executorOnly: models.length === 0 && execs.length > 0 }));
+ }
+ 
+ // tokenCap / callTokens: the per-run and per-call token caps of a remote chat provider (providers/openai-chat.mjs). It is
+diff --git a/src/models/policy.mjs b/src/models/policy.mjs
+index 8e531eb..8272a69 100644
+--- a/src/models/policy.mjs
++++ b/src/models/policy.mjs
+@@ -78,7 +78,8 @@ export function validateChildEnv(childEnv, where = 'childEnv') {
+   return childEnv;
+ }
+ 
+-export function validatePolicy(policy) {
++// executorOnly: a session subset that lists executor models alone (experiments/lib/models.mjs subsetPolicy); only then may models[] be empty.
++export function validatePolicy(policy, { executorOnly = false } = {}) {
+   try { checkData(policy, { maxBytes: 1024 * 1024 }); } catch (error) { invalid(error.message); }
+   if (!isObject(policy)) invalid('must be a JSON object');
+   if (!nonEmpty(policy.policyVersion)) invalid('policyVersion is required');
+@@ -105,7 +106,12 @@ export function validatePolicy(policy) {
+     }
+     if (p.kind === REMOTE_CHAT_KIND) validateRemoteChatProvider(name, p);
+   }
+-  if (!Array.isArray(policy.models) || !policy.models.length) invalid('models must be a non-empty list');
++  // models[] may be empty only in an executor-only session subset (executorOnly, with a non-empty executorModels[]: a Mercury-only stream,
++  // research/mercury-20261021/PORT-PROBE.md finding 1). Class resolution (modelsForClass, nextClass, resolve) reads models[] only, so it
++  // finds nothing and never reaches an executor model; every call must name its executor model (portModelById). The owner policy file and
++  // the Runtime (agent nodes resolve models[] by class or id) still need a non-empty models[].
++  const emptyAllowed = executorOnly === true && Array.isArray(policy.models) && Array.isArray(policy.executorModels) && policy.executorModels.length > 0;
++  if (!Array.isArray(policy.models) || (!policy.models.length && !emptyAllowed)) invalid('models must be a non-empty list (it may be empty only in an executor-only session subset)');
+   const ids = new Set(), ports = new Set();
+   for (const m of policy.models) {
+     if (!isObject(m) || typeof m.id !== 'string' || !ID.test(m.id)) invalid(`model id ${JSON.stringify(m?.id)} is not a valid id`);
+diff --git a/tests/openai-chat-provider.test.mjs b/tests/openai-chat-provider.test.mjs
+index debea68..708550f 100644
+--- a/tests/openai-chat-provider.test.mjs
++++ b/tests/openai-chat-provider.test.mjs
+@@ -176,3 +176,30 @@ test('the gateway serves a named executor model to a solver and books its tokens
+   const refused = await fetch(`${svc.url}/model`, { method: 'POST', headers: { authorization: `Bearer ${svc.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ model: 'mercury-2.5', system: 's', prompt: 'p', schema }) });
+   assert.equal(refused.status, 403, 'a model the session does not allow is refused before the port');
+ });
++
++// research/mercury-20261021/PORT-PROBE.md finding 1 (engine bump 2026-10-21, item 5): a Mercury-only session subset. models[] is empty, the
++// executor model is listed by id, and nothing resolves by class: class routing can never reach an executor model.
++test('a Mercury-only subset is a valid policy; calls that name mercury-3 are served; class resolution reaches nothing', async t => {
++  const only = subsetPolicy(policy, ['mercury-3']);
++  assert.deepEqual([only.models, only.executorModels.map(m => m.id), Object.keys(only.providers)], [[], ['mercury-3'], ['inception']]);
++  for (const cls of policy.classOrder) assert.deepEqual(modelsForClass(only, cls), [], `class ${cls} resolves to no model`);
++  assert.throws(() => resolve(only, { class: policy.classOrder[0] }), { code: 'MODEL_CLASS_EMPTY' });
++  assert.equal(nextClass(only, policy.classOrder[0]), null);
++  assert.throws(() => modelById(only, 'mercury-3'), { code: 'MODEL_NOT_IN_POLICY' }, 'workflow IR nodes resolve models[] only');
++  assert.equal(portModelById(only, 'mercury-3').provider, 'inception');
++  const ep = await fakeEndpoint(t, [answer('{"answer":"only mercury"}')]);
++  const port = new ModelPort({ policy: only, providers: { inception: new OpenAIChatProvider({ policy: only, providerName: 'inception', baseUrl: ep.baseUrl, hostEnv: env, retry: FAST, runTokenCap: 100_000 }) }, journal: new Journal(new DatabaseSync(':memory:')) });
++  const r = await port.call(req());
++  assert.equal(r.ok, true, JSON.stringify(r.error)); assert.deepEqual(r.value, { answer: 'only mercury' });
++  await assert.rejects(port.call(req('x', { modelId: 'claude-haiku-5-5' })), { code: 'MODEL_NOT_IN_POLICY' }, 'a class model is not in a Mercury-only session');
++  assert.equal(ep.requests.length, 1);
++  // createModelPort builds it (the remote provider still needs its token cap) and registers no claude-cli provider.
++  const dir = mkdtempSync(path.join(tmpdir(), 'foundry-ocp-only-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
++  assert.throws(() => createModelPort({ journalFile: path.join(dir, 'a.sqlite'), allowedModels: ['mercury-3'] }), /need tokenCap/);
++  const built = createModelPort({ journalFile: path.join(dir, 'b.sqlite'), allowedModels: ['mercury-3'], tokenCap: 50_000 });
++  assert.deepEqual(Object.keys(built.port.providers), ['inception']); built.db.close();
++  // Only a session subset may be executor-only: the owner policy (and the Runtime) still need models[], and so does a subset without one.
++  const { validatePolicy } = await import('../src/models/policy.mjs');
++  assert.throws(() => validatePolicy({ ...structuredClone(policy), models: [] }), { code: 'MODEL_POLICY_INVALID' });
++  assert.throws(() => validatePolicy({ ...structuredClone(policy), models: [], executorModels: [] }, { executorOnly: true }), { code: 'MODEL_POLICY_INVALID' });
++});
+-- 
+2.43.0
+

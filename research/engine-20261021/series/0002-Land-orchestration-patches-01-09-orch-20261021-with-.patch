@@ -1,0 +1,879 @@
+From 8b00b4a400d2cb033284ed3da9ed43e8ca693df2 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 14:15:28 +0000
+Subject: [PATCH 02/16] Land orchestration patches 01-09 (orch-20261021) with
+ the test updates the plan names
+
+Applied in order, unchanged: 01 typed STORAGE_FULL/STORAGE_UNAVAILABLE and no masking
+ROLLBACK; 02 a recorded cancel request stops new starts; 03 run_interrupts and a
+refunded attempt after a handled Ctrl-C; 04 same-model retries honouring retry-after,
+then parking agent nodes; 05 setpriv --pdeathsig lifeline on every spawn and tracked
+executor groups; 06 infra codes as environment faults and torn JSONL tails; 07 flow-v3
+outages stop with ENV_EXIT, never escalate; 08 call-host single flight; 09
+budget.maxTokens, TOKEN_BUDGET and a gateway token cap.
+
+Tests: runtime-agent outage cases now expect same-model retries then a park and a
+same-model resume (never escalate, no other model); cancel.test.mjs:699 expects the
+question not to be asked after the cancel; three cli-cancel tests are fate-sharing
+aware (PDEATHSIG kills the sandbox/CLI with its owner, the grandchild helper is still
+reaped through its group); runner.test.mjs registers the infra fault classes.
+Engine lineage: these are part of engine version 2 (resumes version 1).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ bin/foundry.mjs                     |  2 +
+ experiments/jit/call-host.mjs       | 11 +++-
+ experiments/jit/flow-v3.mjs         | 17 ++++++
+ experiments/jit/run-compiled.mjs    |  9 ++-
+ experiments/lib/results.mjs         | 10 +++-
+ experiments/lib/runner.mjs          |  9 ++-
+ experiments/lib/runner.test.mjs     |  7 ++-
+ experiments/lib/services.mjs        | 12 +++-
+ schemas/workflow.schema.json        |  3 +-
+ src/children.mjs                    | 10 +++-
+ src/engine-lineage.json             |  3 +-
+ src/executors/claude-code.mjs       |  6 +-
+ src/executors/sandboxed-command.mjs |  6 +-
+ src/models/providers/claude-cli.mjs |  3 +-
+ src/process.mjs                     |  4 +-
+ src/runtime.mjs                     | 87 +++++++++++++++++++++++++----
+ src/sandbox.mjs                     |  4 +-
+ src/store.mjs                       | 23 +++++++-
+ src/verdict.mjs                     |  4 +-
+ tests/cancel.test.mjs               |  5 +-
+ tests/cli-cancel.test.mjs           | 35 ++++++++----
+ tests/runtime-agent.test.mjs        | 48 +++++++++++++---
+ 22 files changed, 264 insertions(+), 54 deletions(-)
+
+diff --git a/bin/foundry.mjs b/bin/foundry.mjs
+index 31a40ed..f13591e 100755
+--- a/bin/foundry.mjs
++++ b/bin/foundry.mjs
+@@ -49,6 +49,8 @@ const executing = new Set(['run', 'resume', 'tick', 'trial']);
+ function interruptOnSignal(foundry, halt) {
+   const handler = (name, code) => () => {
+     halt.abort();
++    // Recorded so that `foundry resume` treats this as the user's interruption, not as a failed attempt of the running tasks.
++    for (const id of foundry.active.keys()) { try { foundry.store.markInterrupted(id, { pid: process.pid, signal: name }); } catch { /* best effort */ } }
+     try { process.stderr.write(JSON.stringify({ interrupted: name, runs: [...foundry.active.keys()], resumable: true }) + '\n'); } catch {}
+     process.exit(code);
+   };
+diff --git a/experiments/jit/call-host.mjs b/experiments/jit/call-host.mjs
+index 7e48368..e71c111 100644
+--- a/experiments/jit/call-host.mjs
++++ b/experiments/jit/call-host.mjs
+@@ -270,7 +270,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+   if (!NOVEL_MODES.includes(novelMode)) throw new Error(`createCallHost: novelMode must be one of ${NOVEL_MODES.join(', ')}`);
+   if (interpreter != null && typeof interpreter !== 'function') throw new Error('createCallHost: interpreter must be a function ({task, outputSchema, budgetUsd, timeoutMs, workdir, ...}) => {answer, costUsd}');
+   if (!(typeof interpretFloorUsd === 'number' && interpretFloorUsd >= 0)) throw new Error('createCallHost: interpretFloorUsd must be a number >= 0');
+-  const events = [], journalOut = [], spans = new Map(), memo = new Map();
++  const events = [], journalOut = [], spans = new Map(), memo = new Map(), inflightCalls = new Map();
+   for (const row of journal ?? []) if (row?.key && row.result?.status === 'ok') memo.set(row.key, { result: row.result, replayed: true });   // call and agent rows (keys differ)
+   const tree = { children: 0 };
+   const agentCfg = agentConfigOf(agent, { allowedModels, modelPort });
+@@ -426,7 +426,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+     const itemAttempt = itemAttemptOf(req);
+     const key = callee && inputDigest ? callKeyOf({ callee, inputDigest, parentPath: scope.path, promptDigest, itemAttempt }) : null;
+     const onRefuse = ON_REFUSE.includes(req.onRefuse) ? req.onRefuse : 'deopt', onDeopt = ON_DEOPT.includes(req.onDeopt) ? req.onDeopt : 'propagate';
+-    let entry = null, span = null, applicability = { checked: false }, warning = null;
++    let entry = null, span = null, applicability = { checked: false }, warning = null, landed = null;
+     if (name) {
+       // The SDK's span id is used when well formed and unused in this scope (it is deterministic: fixed in call order);
+       // otherwise the host numbers it.
+@@ -522,8 +522,13 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+       }
+       const hit = memo.get(key);
+       if (hit) return finish({ ...hit.result, memo: hit.replayed ? 'replay' : 'repeat' });
++      // Single flight (orch-20261021 A9): an identical call (same key) already running is joined instead of run a second time; the memo
++      // above only knows calls that have ended. A joined call that did not end ok runs on its own, as before.
++      const flying = inflightCalls.get(key);
++      if (flying) { const settled = await flying; if (settled?.status === 'ok') return finish({ ...settled, memo: 'joined' }); }
+       const no = budgetRefusal(childUsd, entry.minBudgetUsd ?? budgetFloorUsd);
+       if (no) return refuse(no[0], no[1]);
++      inflightCalls.set(key, new Promise(resolve => { landed = resolve; }));
+ 
+       // Reserve, run, release. The reservation returns to the caller when the child ends; its spend is booked to the caller.
+       tree.children++;
+@@ -565,8 +570,10 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
+       }
+       const envFault = childFault ?? (interp && !interp.ok ? envFaultOf({ error: interp.error }) : null);
+       if (envFault) result = { ...result, envFault };
++      if (landed) { inflightCalls.delete(key); landed(result); landed = null; }
+       return finish(result, { costUsd, costUnknown: !!r.costUnknown || !!interp?.costUnknown, child });
+     } catch (error) {
++      if (landed) { inflightCalls.delete(key); landed(null); landed = null; }
+       // A host fault before the child ran (a malformed registry entry, a profile that cannot be read): a child deopt.
+       return finish({ status: 'deopt', childStatus: 'host-error', deopt: { kind: 'host-error', name: null, detail: short(error, 400) } });
+     }
+diff --git a/experiments/jit/flow-v3.mjs b/experiments/jit/flow-v3.mjs
+index c97f002..1d8dae2 100644
+--- a/experiments/jit/flow-v3.mjs
++++ b/experiments/jit/flow-v3.mjs
+@@ -118,6 +118,12 @@ import { AsyncLocalStorage } from 'node:async_hooks';
+ import { callModel } from './model.mjs';
+ 
+ export const DEOPT_EXIT = 75;
++// An outage (rate or usage limit, provider down, timeout) is the environment's, not the solver's: the run stops with ENV_EXIT and
++// env-fault.json {code, name, detail} instead of escalating to a dearer tier or deopting (DESIGN §5.1 "outages never escalate";
++// orch-20261021 D2). run-compiled.mjs reports it as an environment fault, which the streams retry after the outage.
++export const ENV_EXIT = 76;
++const ENV_FAULT_RE = /\b(MODEL_RATE_LIMIT|MODEL_UNAVAILABLE|MODEL_TIMEOUT)\b|model call failed: (429|502|503|504|529)\b/;
++const envCodeOf = text => (/\b(MODEL_RATE_LIMIT|MODEL_UNAVAILABLE|MODEL_TIMEOUT)\b/.exec(text)?.[1]) ?? (/model call failed: (429|529)\b/.test(text) ? 'MODEL_RATE_LIMIT' : 'MODEL_UNAVAILABLE');
+ const MAX_EVENTS = 5000, MAX_TEXT = 64 * 1024, HEAD_TEXT = 2048, MAX_FLAG_NAMES = 50;
+ const TRACE = 'trace.jsonl', DEOPT = 'deopt.json';
+ const CALLS = new URL('./calls.jsonl', import.meta.url);   // model.mjs appends one line per call (with its costUsd) here
+@@ -417,6 +423,17 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
+         if (state.spentUsd >= budgetUsd) { record({ ok: false }); deopt('budget', name, { spentUsd: usd(state.spentUsd), budgetUsd, tiersTried }); }
+         const results = await Promise.all(Array.from({ length: samples }, (_, i) => ask(model, k, i)));
+         const cost = usd(results.reduce((s, r) => s + r.cost, 0));
++        // An outage on this tier with no usable sample: stop as an environment fault, never try the next (dearer) tier.
++        const outage = results.find(r => r.error && ENV_FAULT_RE.test(r.error));
++        if (outage && !results.some(r => !r.error && !r.problem)) {
++          tiersTried.push({ model, ok: false, error: outage.error, costUsd: cost });
++          record({ ok: false });
++          const code = envCodeOf(outage.error), detail = { tier: model, error: outage.error.slice(0, 300), spentUsd: usd(state.spentUsd) };
++          try { writeFileSync('env-fault.json', JSON.stringify({ code, name, detail }, null, 1)); } catch {}
++          event({ kind: 'env-fault', name, code, detail, ...totals() });
++          state.deopted = true;
++          process.exit(ENV_EXIT);
++        }
+         // The gateway refused the call for budget: no stronger tier can help.
+         if (results.some(r => /model call failed: 402\b/.test(r.error ?? ''))) {
+           tiersTried.push({ model, ok: false, error: 'gateway budget exhausted', costUsd: cost });
+diff --git a/experiments/jit/run-compiled.mjs b/experiments/jit/run-compiled.mjs
+index 933034f..0f5f4a9 100644
+--- a/experiments/jit/run-compiled.mjs
++++ b/experiments/jit/run-compiled.mjs
+@@ -13,7 +13,7 @@ import { validateOutput } from './interpret.mjs';
+ import { FoundryError } from '../../src/data.mjs';
+ import { REPLAYABLE_ERRORS } from '../../src/journal.mjs';
+ 
+-export const DEOPT_EXIT = 75, MAX_TRACE_EVENTS = 5000;
++export const DEOPT_EXIT = 75, ENV_EXIT = 76, MAX_TRACE_EVENTS = 5000;
+ // DEFAULT_FLOW is the version-1 SDK (frozen); a prompt-version-2 arm passes flowPath = FLOW_V2 (stream.mjs, prompts.mjs flowFileOf).
+ export const DEFAULT_FLOW = path.resolve(new URL('./flow.mjs', import.meta.url).pathname);
+ export const FLOW_V2 = path.resolve(new URL('./flow-v2.mjs', import.meta.url).pathname);
+@@ -286,7 +286,7 @@ async function runOnce({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs =
+   const schema = outputSchema ?? (familyId ? (await loadFamily(familyId)).outputSchema : null);
+   const source = readFileSync(solvePath, 'utf8');
+   mkdirSync(path.join(workdir, 'tools'), { recursive: true });
+-  for (const stale of ['deopt.json', 'trace.jsonl', '.solve.stdout', '.solve.stderr', 'tools/flow-override.mjs', 'tools/flow-override.json', SCOPE_FILE]) rmSync(path.join(workdir, stale), { force: true });
++  for (const stale of ['deopt.json', 'env-fault.json', 'trace.jsonl', '.solve.stdout', '.solve.stderr', 'tools/flow-override.mjs', 'tools/flow-override.json', SCOPE_FILE]) rmSync(path.join(workdir, stale), { force: true });
+   if (flowScope != null) {
+     if (typeof flowScope !== 'object' || typeof flowScope.span !== 'string' || typeof flowScope.path !== 'string' || !Number.isInteger(flowScope.depth)) throw new Error('runCompiled: flowScope must be {span, parent, path, depth}');
+     if (!flowPath || path.resolve(flowPath) !== FLOW_V3) throw new Error('runCompiled: flowScope needs flow-v3.mjs (only flow-v3 reads tools/flow-scope.json)');
+@@ -319,6 +319,11 @@ async function runOnce({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs =
+   if (!r.sandboxReady && !r.timedOut) { status = 'crash'; error = { code: 'SANDBOX_UNAVAILABLE', message: r.stderr.slice(-400) }; }
+   else if (r.timedOut) { status = 'timeout'; error = { code: 'SCRIPT_TIMEOUT' }; }
+   else if (r.code === DEOPT_EXIT) { status = 'deopt'; deopt ??= { kind: 'unknown', detail: 'exit 75 without deopt.json' }; }
++  else if (r.code === ENV_EXIT) {
++    // flow-v3 stopped on an outage (ENV_EXIT): an environment fault the stream retries, never a deopt or a solver crash (orch-20261021 D2).
++    let fault = null; try { fault = JSON.parse(readFileSync(path.join(workdir, 'env-fault.json'), 'utf8')); } catch {}
++    status = 'crash'; error = { code: fault?.code ?? 'MODEL_UNAVAILABLE', message: `environment fault at ${fault?.name ?? '?'}: ${String(fault?.detail?.error ?? '').slice(0, 300)}` };
++  }
+   else if (r.code !== 0) { status = 'crash'; error = { code: 'SCRIPT_ERROR', exitCode: r.code, message: r.stderr.slice(-400) }; }
+   else {
+     output = lastJsonLine(r.stdout);
+diff --git a/experiments/lib/results.mjs b/experiments/lib/results.mjs
+index d65b4cd..704509e 100644
+--- a/experiments/lib/results.mjs
++++ b/experiments/lib/results.mjs
+@@ -7,8 +7,14 @@ export class Results {
+   constructor(file) {
+     this.file = file; mkdirSync(path.dirname(file), { recursive: true });
+     this.done = new Map();
+-    if (existsSync(file)) for (const line of readFileSync(file, 'utf8').split('\n').filter(Boolean)) {
+-      try { const r = JSON.parse(line); this.done.set(Results.key(r), r); } catch {}
++    if (existsSync(file)) {
++      const text = readFileSync(file, 'utf8');
++      for (const line of text.split('\n').filter(Boolean)) {
++        try { const r = JSON.parse(line); this.done.set(Results.key(r), r); } catch {}
++      }
++      // A write cut short (disk full, a kill) leaves a torn last line: end it, so the next record does not join it and get lost too
++      // (orch-20261021 C2). The torn line stays in the file as evidence; it parses as nothing.
++      if (text.length && !text.endsWith('\n')) appendFileSync(file, '\n');
+     }
+   }
+   static key(r) { return `${r.arm}|${r.taskKey}|${r.trial}`; }
+diff --git a/experiments/lib/runner.mjs b/experiments/lib/runner.mjs
+index 363f4a2..fd67f6d 100644
+--- a/experiments/lib/runner.mjs
++++ b/experiments/lib/runner.mjs
+@@ -16,8 +16,13 @@ export const armHash = arm => createHash('sha256').update(canonical({ id: arm.id
+ // retries it; more than 25% faulted trials (after at least 8 attempts in one runExperiment call) stops the run as a stall.
+ // strictResume (opt-in) refuses to resume over trials recorded by another version of an arm (a different armHash).
+ // Both are opt-in so experiments already in progress keep the semantics they started with.
+-export const ENV_FAULTS = Object.freeze(new Set(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL']));
+-export const metEnvFault = r => ENV_FAULTS.has(r?.error?.code) || Object.keys(r?.meta?.errors ?? {}).some(c => ENV_FAULTS.has(c));
++// Host infrastructure (orch-20261021 C2): a full disk, a quota, an exhausted file table or a store that cannot be written is the host's
++// fault, never the task's; autobench/run.mjs INFRA_FAULT already treated them so, the generic runner and the call host did not.
++export const ENV_FAULTS = Object.freeze(new Set(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL',
++  'ENOSPC', 'EDQUOT', 'EMFILE', 'ENFILE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE']));
++const INFRA_TEXT = /ENOSPC|EDQUOT|EMFILE|ENFILE|no space left|database or disk is full|SQLITE_FULL|No usable temporary directory/i;
++export const metEnvFault = r => ENV_FAULTS.has(r?.error?.code) || Object.keys(r?.meta?.errors ?? {}).some(c => ENV_FAULTS.has(c))
++  || INFRA_TEXT.test(`${r?.error?.message ?? ''} ${r?.error?.errstr ?? ''}`);
+ export const faultsFileOf = resultsFile => resultsFile.replace(/\.jsonl$/, '') + '.faults.jsonl';
+ export const STALL_MIN_ATTEMPTS = 8, STALL_FRACTION = 0.25;
+ 
+diff --git a/experiments/lib/runner.test.mjs b/experiments/lib/runner.test.mjs
+index 147ced5..957bfa9 100644
+--- a/experiments/lib/runner.test.mjs
++++ b/experiments/lib/runner.test.mjs
+@@ -29,7 +29,12 @@ const arm = (id, fault = () => null, version = 1) => ({
+ });
+ 
+ test('the environment-fault classes are the pre-registered ones', () => {
+-  assert.deepEqual([...ENV_FAULTS].sort(), ['EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL', 'MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE']);
++  // The five pre-registered classes, plus host infrastructure (a full disk, a quota, an exhausted file table, a store that cannot be written)
++  // added by orch-20261021 patch 06 (chaos C2): the host's fault, never the task's. A run that pre-registered the five records the change as
++  // dependency drift (experiments/lib/runner.mjs is hashed by sealed runs).
++  assert.deepEqual([...ENV_FAULTS].sort(), ['EDQUOT', 'EMFILE', 'ENFILE', 'ENOSPC', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL', 'MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE']);
++  assert.equal(metEnvFault({ error: { code: 'SCRIPT_ERROR', message: 'Error: ENOSPC: no space left on device, write' } }), true, 'infrastructure text in a task error is the host\'s fault');
++  assert.equal(metEnvFault({ error: { code: 'SQLITE_ERROR', errstr: 'database or disk is full' } }), true);
+   assert.deepEqual([...BUILD_ENV_FAULTS].sort(), [...ENV_FAULTS].sort(), 'constructions and trials share one fault rule');
+   assert.equal(metEnvFault({ error: { code: 'MODEL_RATE_LIMIT' } }), true);
+   assert.equal(metEnvFault({ error: { code: 'SCRIPT_ERROR' }, meta: { errors: { MODEL_UNAVAILABLE: 2 } } }), true, 'a fault met by any model call counts');
+diff --git a/experiments/lib/services.mjs b/experiments/lib/services.mjs
+index 89c5b3b..82d8bec 100644
+--- a/experiments/lib/services.mjs
++++ b/experiments/lib/services.mjs
+@@ -29,12 +29,16 @@ const readBody = req => new Promise((resolve, reject) => {
+ // whose spend could not be observed (a killed hosted call) add their bound to unknownUpperUsd (null: unbounded).
+ // A call in flight holds a reservation against the cap (reserveFor), so concurrent calls cannot overshoot it;
+ // refusals counts requests the gateway turned away (GATEWAY_BUDGET, GATEWAY_MODEL, MODEL_NOT_IN_POLICY, ...).
++// A session token cap beside the dollar cap (orch-20261021 E2; the $0-priced model that ran 97M tokens): tokens as the runtime counts
++// them (input, output, cache writes, a tenth of cache reads). null = no token cap.
++export const DEFAULT_SESSION_TOKENS = 5000000;
+ export class Ledger {
+-  constructor({ capUsd, label }) {
+-    this.capUsd = capUsd; this.label = label; this.spentUsd = 0; this.imputedUsd = 0; this.calls = 0; this.errors = {}; this.unknownCalls = 0; this.unknownUpperUsd = 0;
++  constructor({ capUsd, label, tokenCap = DEFAULT_SESSION_TOKENS }) {
++    this.capUsd = capUsd; this.label = label; this.tokenCap = tokenCap; this.spentUsd = 0; this.imputedUsd = 0; this.calls = 0; this.errors = {}; this.unknownCalls = 0; this.unknownUpperUsd = 0;
+     this.reservedUsd = 0; this.inFlight = 0; this.refusals = {}; this.waiters = [];
+   }
+   remaining() { return this.capUsd - this.spentUsd - this.reservedUsd; }
++  tokensUsed() { const u = this.usage; return u ? Math.ceil(u.inputTokens + u.outputTokens + u.cacheWriteTokens + 0.1 * u.cacheReadTokens) : 0; }
+   // The share of prompt tokens read from the prompt cache (cache reads / all prompt tokens), or null before any usage.
+   cacheReadShare() {
+     const u = this.usage; if (!u) return null;
+@@ -147,6 +151,10 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
+       if (url.pathname === '/model') {
+         if (!modelPort) { ledger.refuse?.('GATEWAY_NO_MODELS'); return json(res, 403, { error: 'no model access in this session' }); }
+         if (allowedModels && !allowedModels.includes(body.model)) { ledger.refuse('GATEWAY_MODEL'); log(`/model refused: ${body.model} not allowed`); return json(res, 403, { error: `model not allowed in this session: ${body.model}` }); }
++        if (ledger.tokenCap != null && ledger.tokensUsed() >= ledger.tokenCap) {
++          ledger.refuse('GATEWAY_TOKENS'); log(`/model refused: token budget (${ledger.tokensUsed()} of ${ledger.tokenCap})`);
++          return json(res, 402, { error: 'token budget exhausted', tokensUsed: ledger.tokensUsed(), tokenCap: ledger.tokenCap });
++        }
+         const schema = body.schema ?? { type: 'object', properties: { text: { type: 'string' } }, required: ['text'], additionalProperties: false };
+         const entry = modelPort.policy?.models?.find(m => m.id === body.model);
+         const reserve = reserveFor(modelPort.policy, { ...body, schema }, modelPort.providers?.[entry?.provider]?.maxBudgetUsd ?? 1);
+diff --git a/schemas/workflow.schema.json b/schemas/workflow.schema.json
+index c1c8d4d..a3a8a93 100644
+--- a/schemas/workflow.schema.json
++++ b/schemas/workflow.schema.json
+@@ -30,7 +30,8 @@
+         "maxSteps": {"type": "integer", "minimum": 1, "maximum": 100000},
+         "maxConcurrency": {"type": "integer", "minimum": 1, "maximum": 16},
+         "maxDurationMs": {"type": "integer", "minimum": 1, "maximum": 2592000000},
+-        "maxCost": {"type": "number", "minimum": 0, "maximum": 1000000}
++        "maxCost": {"type": "number", "minimum": 0, "maximum": 1000000},
++        "maxTokens": {"type": "integer", "minimum": 1, "maximum": 10000000000, "description": "Model tokens the run may use (input, output and cache writes in full, cache reads at a tenth), whatever they cost in dollars."}
+       }
+     },
+     "nodes": {"$ref": "#/definitions/nodes"},
+diff --git a/src/children.mjs b/src/children.mjs
+index c8a6396..05fe114 100644
+--- a/src/children.mjs
++++ b/src/children.mjs
+@@ -9,7 +9,15 @@
+ //
+ // Dependency-free on purpose (it is imported by process.mjs and sandbox.mjs, which the model providers use).
+ import { AsyncLocalStorage } from 'node:async_hooks';
+-import { readdirSync, readFileSync } from 'node:fs';
++import { existsSync, readdirSync, readFileSync } from 'node:fs';
++
++// Linux only: setpriv(1) sets PR_SET_PDEATHSIG before it execs the command, so the kernel SIGKILLs the child the moment the process that
++// spawned it dies, however it dies (SIGKILL, the OOM killer). Detached groups otherwise outlive a killed owner until a cancel or resume
++// reaps them, and the experiment executors record nothing to reap (orch-20261021 B2, B3). Elsewhere (macOS has no PDEATHSIG) the
++// recorded groups and reapChildren stay the only cleanup.
++const SETPRIV = process.platform === 'linux' ? (['/usr/bin/setpriv', '/bin/setpriv'].find(p => { try { return existsSync(p); } catch { return false; } }) ?? null) : null;
++/** [command, args] for spawn(): `command` wrapped so that it dies with the process that spawns it (see SETPRIV); unchanged without setpriv. */
++export function lifeline(command, args) { return SETPRIV ? [SETPRIV, ['--pdeathsig', 'KILL', '--', command, ...args]] : [command, args]; }
+ 
+ /** Set by the runtime around a sandbox or model call: {add(child), remove(pid)}. */
+ export const childScope = new AsyncLocalStorage();
+diff --git a/src/engine-lineage.json b/src/engine-lineage.json
+index 54e9216..9188668 100644
+--- a/src/engine-lineage.json
++++ b/src/engine-lineage.json
+@@ -4,7 +4,8 @@
+   "version": 2,
+   "resumesFrom": 1,
+   "changes": [
+-    "engine compatibility ranges and engine.migrated (this file; src/engine.mjs, src/runtime.mjs execute, src/audit.mjs engineBinding)"
++    "engine compatibility ranges and engine.migrated (this file; src/engine.mjs, src/runtime.mjs execute, src/audit.mjs engineBinding)",
++    "orch-20261021 patches 01-09: typed STORAGE_FULL/STORAGE_UNAVAILABLE; a recorded cancel request stops new starts; a handled Ctrl-C refunds a pure task's attempt (run_interrupts); outages retry on the same model then park agent nodes (status waiting, parked, parks; read only by this engine, absent from version-1 records); PDEATHSIG lifeline on spawns; budget.maxTokens and TOKEN_BUDGET (a version-1 run's bound policy has no maxTokens and keeps no runtime token limit). Each reads a version-1 record as version 1 wrote it."
+   ],
+   "predecessors": [
+     {
+diff --git a/src/executors/claude-code.mjs b/src/executors/claude-code.mjs
+index 61fa065..55289f6 100644
+--- a/src/executors/claude-code.mjs
++++ b/src/executors/claude-code.mjs
+@@ -9,6 +9,7 @@ import os from 'node:os';
+ import path from 'node:path';
+ import { FoundryError } from '../data.mjs';
+ import { CHILD_ENV_ALLOWED } from '../models/policy.mjs';
++import { lifeline, trackChild } from '../children.mjs';
+ 
+ // An executor sees only its own workdir under WORK_ROOT and at most one kit under KIT_ROOT.
+ export const WORK_ROOT = '/var/tmp/foundry-work', KIT_ROOT = '/opt/foundry-kit';
+@@ -307,7 +308,10 @@ export async function runClaudeCode({
+   if (effort) args.push('--effort', effort);
+   const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [binary, ...args]);
+   const started = Date.now();
+-  const child = spawn('unshare', [...UNSHARE_ARGS, 'sh', '-c', script], { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
++  // lifeline: the session dies with this process; trackChild: a run executing it can find it after a crash (orch-20261021 B3).
++  const child = spawn(...lifeline('unshare', [...UNSHARE_ARGS, 'sh', '-c', script]), { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
++  const untrack = trackChild(child, 'executor');
++  child.once('close', untrack);
+   let stdout = '', stderr = '', timedOut = false;
+   child.stdout.on('data', d => { stdout += d; });
+   child.stderr.on('data', d => { if (stderr.length < 64 * 1024) stderr += d; });
+diff --git a/src/executors/sandboxed-command.mjs b/src/executors/sandboxed-command.mjs
+index 6d86e83..e022553 100644
+--- a/src/executors/sandboxed-command.mjs
++++ b/src/executors/sandboxed-command.mjs
+@@ -5,6 +5,7 @@
+ // reached only through a unix socket inside the workdir). Used to run B1 scripts.
+ import { spawn } from 'node:child_process';
+ import { FoundryError } from '../data.mjs';
++import { lifeline, trackChild } from '../children.mjs';
+ import { DEFAULT_HIDDEN, UNSHARE_ARGS, maskSteps, sandboxAvailable, sandboxScript, splitReady } from './claude-code.mjs';
+ 
+ const SCRUBBED = /^(GH_TOKEN|GITHUB_TOKEN|GIT_CONFIG_.*|GIT_ASKPASS|CLOUDSDK_AUTH_ACCESS_TOKEN|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|CLAUDE_CODE_SESSION_ACCESS_TOKEN|CLAUDE_SESSION_INGRESS_TOKEN_FILE)$/;
+@@ -17,7 +18,10 @@ export async function runSandboxed({ command, args = [], workdir, env = {}, time
+   // (No NODE_EXTRA_CA_CERTS: the proxy CA bundle lives under the hidden /root; pass it in env with keepRo if ever needed.)
+   const base = { PATH: '/opt/node24/bin:/usr/local/bin:/usr/bin:/bin', LANG: 'C.UTF-8', HOME: workdir };
+   for (const k of Object.keys(env)) if (SCRUBBED.test(k)) throw new FoundryError('SANDBOX_ENV', `refusing to pass credential variable ${k}`);
+-  const child = spawn('unshare', [...UNSHARE_ARGS, ...(network ? [] : ['--net']), 'sh', '-c', script], { env: { ...base, ...env }, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
++  // lifeline: the sandbox dies with this process (its timeout is a timer here); trackChild: a run executing it can find it (orch-20261021 B3).
++  const child = spawn(...lifeline('unshare', [...UNSHARE_ARGS, ...(network ? [] : ['--net']), 'sh', '-c', script]), { env: { ...base, ...env }, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
++  const untrack = trackChild(child, 'sandbox');
++  child.once('close', untrack);
+   let stdout = '', stderr = '', timedOut = false, truncated = false;
+   child.stdout.on('data', d => { if (stdout.length < maxOutputBytes) stdout += d; else truncated = true; });
+   child.stderr.on('data', d => { if (stderr.length < 256 * 1024) stderr += d; });
+diff --git a/src/models/providers/claude-cli.mjs b/src/models/providers/claude-cli.mjs
+index 3eb8f9c..7f5b178 100644
+--- a/src/models/providers/claude-cli.mjs
++++ b/src/models/providers/claude-cli.mjs
+@@ -102,7 +102,8 @@ export function interpretResult(result, { modelId, stderr = '' } = {}) {
+     const status = Number(result.api_error_status);
+     const detail = `${result.subtype ?? 'error'}${result.api_error_status ? ` (HTTP ${result.api_error_status})` : ''}`;
+     if (result.subtype === 'error_max_budget_usd') throw fail('MODEL_BUDGET', 'claude CLI hit the per-call --max-budget-usd cap', extra);
+-    if (status === 429 || status === 529 || RATE.test(`${result.result ?? ''} ${stderr}`)) throw fail('MODEL_RATE_LIMIT', `claude CLI rate limited or overloaded: ${detail}`, extra);
++    // The CLI's own text carries what the user needs (a usage limit's reset time, a retry-after): it is kept, cut short (orch-20261021 D3).
++    if (status === 429 || status === 529 || RATE.test(`${result.result ?? ''} ${stderr}`)) throw fail('MODEL_RATE_LIMIT', `claude CLI rate limited or overloaded: ${detail}${result.result ? `: ${String(result.result).slice(0, 200)}` : ''}`, extra);
+     if (/structured.?output/i.test(result.subtype ?? '')) throw fail('MODEL_SCHEMA', `claude CLI could not produce structured output: ${detail}`, extra);
+     if (result.stop_reason === 'refusal') throw fail('MODEL_REFUSAL', 'The model refused the request', extra);
+     if (status >= 500 || status === 401 || status === 403) throw fail('MODEL_UNAVAILABLE', `claude CLI API error: ${detail}`, extra);
+diff --git a/src/process.mjs b/src/process.mjs
+index 8886694..a457846 100644
+--- a/src/process.mjs
++++ b/src/process.mjs
+@@ -1,7 +1,7 @@
+ import { spawn } from 'node:child_process';
+ import { StringDecoder } from 'node:string_decoder';
+ import { FoundryError } from './data.mjs';
+-import { trackChild } from './children.mjs';
++import { lifeline, trackChild } from './children.mjs';
+ 
+ /** Bounded argv-only subprocess. No shell parsing or inherited credential env. */
+ export async function runProcess(command, args, { cwd, env, input = '', timeoutMs = 60000, signal, maxBytes = 4 * 1024 * 1024 } = {}) {
+@@ -11,7 +11,7 @@ export async function runProcess(command, args, { cwd, env, input = '', timeoutM
+   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 64 * 1024 * 1024) throw new FoundryError('PROCESS_OUTPUT_LIMIT', 'Output budget must be an integer between one byte and 64 MiB');
+   if (signal?.aborted) throw new FoundryError('CANCELLED', 'Subprocess was cancelled before launch');
+   return new Promise((resolve, reject) => {
+-    const child = spawn(command, args, { cwd, env, shell: false, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
++    const child = spawn(...lifeline(command, args), { cwd, env, shell: false, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
+     const untrack = trackChild(child, 'process'); // recorded with the run executing it (src/children.mjs), so a killed owner's child can be found and stopped
+     let stdout = '', stderr = '', bytes = 0, failure = null, killTimer;
+     const decoders = { stdout: new StringDecoder('utf8'), stderr: new StringDecoder('utf8') };
+diff --git a/src/runtime.mjs b/src/runtime.mjs
+index 9e6c824..975f5d5 100644
+--- a/src/runtime.mjs
++++ b/src/runtime.mjs
+@@ -88,12 +88,22 @@ const providerFaults = new Set(['MODEL_PROTOCOL', 'MODEL_BUDGET']);
+ const retryable = new Set(['MODEL_SCHEMA', 'MODEL_TRUNCATED']);
+ // onError:"continue" and map failure:"collect" never hide an environment fault, a budget stop, a cancellation,
+ // a policy violation or a harness integrity failure.
+-const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'COST_BUDGET', 'STEP_BUDGET',
++const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'COST_BUDGET', 'TOKEN_BUDGET', 'STEP_BUDGET',
+   'DEADLINE', 'STATE_BUDGET', 'STATE_CONFLICT', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
+   'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT', 'JOURNAL_TAMPERED', 'APPROVAL_TAMPERED', 'STATE_DRIFT', 'STATE_CORRUPT',
+   // Cross-run state faults of the harness, not refusals of the data (src/state.mjs STATE_REFUSALS are the handleable ones).
+   'STATE_CLOCK', 'STATE_OP', 'STATE_TRANSACTION', 'STATE_SLOT_UNKNOWN']);
+ const cancelled = error => ['CANCELLED', 'ABORT_ERR'].includes(error?.code);
++// Tokens a call used, as the token budget counts them: input, output and cache writes in full, cache reads at a tenth (their price ratio).
++const tokensOf = u => !u ? 0 : Math.ceil((u.inputTokens ?? 0) + (u.outputTokens ?? 0) + (u.cacheWriteTokens ?? 0) + 0.1 * (u.cacheReadTokens ?? 0));
++// Outages (orch-20261021): up to ENV_RETRIES inline retries of a model call, each at most ENV_RETRY_INLINE_MAX_MS away; past that an agent
++// node parks (status waiting, timer at retryAt) at most MAX_PARKS times. retry-after (seconds) in the provider's message wins; a usage
++// limit ("resets ...") parks for 15 minutes at a time; otherwise exponential backoff with jitter.
++const ENV_RETRIES = 3, ENV_RETRY_INLINE_MAX_MS = 60000, MAX_PARKS = 8;
++const retryAfterMs = message => { const m = /retry.?after[^0-9]{0,4}(\d+(?:\.\d+)?)/i.exec(String(message ?? '')); return m ? Math.ceil(Number(m[1]) * 1000) : null; };
++const jitter = ms => Math.round(ms * (0.8 + 0.4 * Math.random()));
++const outageDelayMs = (message, n) => retryAfterMs(message) ?? (/usage limit|limit reached|resets/i.test(String(message ?? '')) ? Infinity : jitter(Math.min(30000, 1000 * 2 ** n)));
++const parkDelayMs = (message, parks) => retryAfterMs(message) ?? (/usage limit|limit reached|resets/i.test(String(message ?? '')) ? 15 * 60000 : jitter(Math.min(30 * 60000, 60000 * 2 ** parks)));
+ // A call cut short because the run deadline, not its own timeout, set its limit is the deadline's outcome.
+ const deadlineStop = (what, details) => new FoundryError('DEADLINE', `Run deadline exhausted while ${what} was running`, details);
+ // The E1 retry note sits outside every untrusted fence, so it carries only the port's model-safe feedback (fixed text
+@@ -172,7 +182,7 @@ const cancelRequested = run => run.cancelRequest ? new FoundryError('RUN_CLOSED'
+ const PARKED = new Set(['waiting', 'awaiting_human', 'awaiting_approval']);
+ const policyDefaults = registry => ({
+   allowedCapabilities: registry.list().filter(c => c.risk === 'low').map(c => c.name),
+-  maxSteps: 5000, maxConcurrency: 4, maxDurationMs: 3600000, maxCost: 0, maxResumes: 1000
++  maxSteps: 5000, maxConcurrency: 4, maxDurationMs: 3600000, maxCost: 0, maxResumes: 1000, maxTokens: 5000000
+ });
+ 
+ export class Runtime {
+@@ -185,7 +195,7 @@ export class Runtime {
+   // constructing the runtime turns it on, so an edit of a run record (`extra` is not bound to the birth event) cannot make a host kill itself.
+   constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000, now = Date.now, faultHooks = false } = {}) {
+     this.store = store; this.registry = registry; this.policy = { ...policyDefaults(registry), ...clone(policy) };
+-    for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
++    for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes', 'maxTokens']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
+     if (!Array.isArray(this.policy.allowedCapabilities) || this.policy.allowedCapabilities.some(x => !registry.get(x))) throw new FoundryError('POLICY', 'Allowed capabilities must be registered');
+     if (!Number.isFinite(this.policy.maxCost) || this.policy.maxCost < 0) throw new FoundryError('POLICY', 'maxCost must be nonnegative');
+     const owner = modelPolicy?.policy ?? modelPolicy;
+@@ -526,6 +536,13 @@ class Invocation {
+     signal.addEventListener('abort', abandon, { once: true });
+     return { lapse: promise, done: () => { clearTimeout(timer); signal.removeEventListener('abort', abandon); } };
+   }
++  // A cancel request found in the record outside the poll (checkBudget): the execution aborts as watchCancel would, after the
++  // current update (the abort listeners kill processes and settle promises; they must not run inside the transaction).
++  noteCancel(request) {
++    if (this.cancelRequest) return;
++    this.cancelRequest = request; this.userCancelled = true;
++    queueMicrotask(() => this.abort.abort());
++  }
+   // Best effort: a store that was closed under a running execution reads as no request.
+   readCancelRequest() { try { return this.store.cancelRequest(this.runId); } catch { return null; } }
+   // The whole record (every row): for the checks when a run is resumed. Everything else reads the rows it needs (store.rows).
+@@ -564,9 +581,13 @@ class Invocation {
+   }
+   checkBudget(run = this.head(), cost = 0) {
+     if (this.signal().aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');
++    // A cancel request already in the record stops every new start at once, not one poll later (orch-20261021 A7): charge()
++    // runs this inside the update that would start the node, so nothing starts after the request committed.
++    if (run.cancelRequest) { this.noteCancel(run.cancelRequest); throw new FoundryError('CANCELLED', 'Run cancellation was requested; no new node starts'); }
+     if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
+     if (run.steps >= Math.min(run.policy.maxSteps, this.workflow.budget.maxSteps)) throw new FoundryError('STEP_BUDGET', 'Run step budget exhausted');
+     if (run.cost + cost > Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost) + 1e-12) throw new FoundryError('COST_BUDGET', 'Run cost budget exhausted');
++    if ((run.tokens ?? 0) >= this.tokenLimit(run)) throw new FoundryError('TOKEN_BUDGET', `Run token budget exhausted (${run.tokens} of ${this.tokenLimit(run)} tokens)`);
+     // The stored size and JSON value count of the run (kept by the store as rows change), not a re-serialisation of it.
+     let bytes = run[STATE_BYTES], items = run[STATE_ITEMS];
+     if (bytes === undefined || items === undefined) ({ bytes, items } = this.rows.raw(this.runId));
+@@ -595,6 +616,9 @@ class Invocation {
+     }, status === 'handled_error' ? 'node.handled_error' : 'node.completed', { outputHash: digest(output), output, ...state });
+   }
+   costLimit(run) { return Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost); }
++  // Tokens bound a run whatever the model costs (a $0-priced local model ran 97M tokens under a dollar budget: orch-20261021 E2). A run
++  // created before the token budget existed has none in its bound policy and keeps no limit but the workflow's.
++  tokenLimit(run) { return Math.min(run.policy.maxTokens ?? Infinity, this.workflow.budget.maxTokens ?? Infinity); }
+   // The integrity labels a reference in `templates` can inherit (inheritedLabel): the frame's own labels plus the non-trusted output label of each
+   // node a reference names (`nodes.X...`; a bare `nodes` reads them all). Only those nodes' labels are fetched.
+   labelScope(frameKey, ...templates) {
+@@ -691,6 +715,10 @@ class Invocation {
+         throw error;
+       }
+       owned = true;
++      // Did the earlier owner stop on a signal it handled (Ctrl-C, SIGTERM)? Only an interruption recorded by that same process counts.
++      const interrupt = this.store.interruptOf?.(this.runId) ?? null;
++      const graceful = interrupt && run.owner && interrupt.pid === run.owner.pid ? interrupt : null;
++      if (interrupt) this.store.forgetInterrupt(this.runId);
+       // Process groups an earlier owner of this run left running (it was killed) are stopped before this execution starts its own.
+       const stale = reapChildren(this.store, this.runId).filter(child => child.killed);
+       if (stale.length) this.update(() => {}, { type: 'children.reaped', children: stale.map(({ pid, kind }) => ({ pid, kind })) });
+@@ -701,7 +729,7 @@ class Invocation {
+       if (this.cancelRequest) throw new FoundryError('CANCELLED', 'Execution was cancelled before it started');
+       if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted before resume');
+       this.semaphore = new Semaphore(Math.min(run.policy.maxConcurrency, this.workflow.budget.maxConcurrency));
+-      this.recover();
++      this.recover(graceful);
+       const result = await this.flow(this.workflow, 'root', run.input, {});
+       let status = result.done ? 'succeeded' : 'waiting';
+       if (this.rows.anyWithStatus(this.runId, 'awaiting_human')) status = 'awaiting_human';
+@@ -737,16 +765,22 @@ class Invocation {
+       }, r => [...swept, ...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: 'run.stopped', error: errorData(reported), ...(request ? { cancel: request } : {}) }], { result: 'run', final: true });
+     } finally { clearInterval(this.cancelTimer); this.outerSignal?.removeEventListener('abort', this.onAbort); }
+   }
+-  recover() {
++  // Tasks an earlier owner left running. `graceful`: that owner stopped on Ctrl-C or SIGTERM (bin/foundry.mjs records it in
++  // run_interrupts before it exits): an interruption by the user is not a failed attempt, so a pure or idempotent task gets its
++  // attempt back (with maxAttempts 1, the common case, Ctrl-C made the run unresumable although the CLI printed resumable: true,
++  // orch-20261021 G2). An unexplained death (SIGKILL, out of memory, a native crash) still costs the attempt, which is what bounds
++  // a task that kills its owner every time (B7).
++  recover(graceful = null) {
+     for (const { frameKey, nodeId: id, state } of this.rows.withStatus(this.runId, 'running')) {
+       if (state.kind !== 'task') continue;
+       const cap = this.registry.get(state.tool);
+       if (!cap) throw new FoundryError('CAPABILITY_DRIFT', 'Interrupted operation capability is missing');
+-      const uncertain = cap.effects === 'non-idempotent';
++      const uncertain = cap.effects === 'non-idempotent', refund = !!graceful && !uncertain && (state.attempts ?? 0) > 0;
+       this.eventNode(frameKey, id, current => {
+         current.nodes[id].status = uncertain ? 'uncertain' : 'pending';
+         current.nodes[id].recovered = true;
+-      }, uncertain ? 'effect.uncertain' : 'node.recovered', { effects: cap.effects });
++        if (refund) current.nodes[id].attempts -= 1;
++      }, uncertain ? 'effect.uncertain' : 'node.recovered', { effects: cap.effects, ...(refund ? { attemptRefunded: true, interruptedBy: graceful.signal } : {}) });
+     }
+   }
+   context(frameKey, input, locals) {
+@@ -1159,17 +1193,33 @@ class Invocation {
+   }
+ 
+   async agent(node, frameKey, ctx, state, resumed) {
++    const nodeKey = `${frameKey}/${node.id}`;
++    if (state.status === 'waiting' && state.parked) {
++      // A node parked on an outage (below) is due again: it runs on, within the same attempt.
++      this.store.clearTimer(this.runId, nodeKey);
++      this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { ...f.nodes[node.id], status: 'running', parked: null }; }, 'model.unparked', { parks: state.parks ?? 0 });
++    }
+     try {
+-      const { value, compiled, entry, escalations } = await this.modelLoop(node, frameKey, ctx, state, resumed, { returns: node.returns, checks: node.checks ?? [] });
++      const { value, compiled, entry, escalations } = await this.modelLoop(node, frameKey, ctx, state, resumed, { returns: node.returns, checks: node.checks ?? [], park: true });
+       this.complete(frameKey, node, value, 'completed', { state: { ...labelState(compiled.outputLabel), modelId: entry.id, modelClass: entry.class, escalations, receiptHash: compiled.receiptHash } });
+     } catch (error) {
++      // An outage (rate limit, usage limit, provider down, timeout) that outlasted the inline retries parks this node: the run is
++      // `waiting` with a timer at retryAt, so `foundry tick` (or a resume after it) continues it, the work done so far is kept and the user
++      // sees why and until when. Bounded: after MAX_PARKS the outage is the run's result (orch-20261021 B9, D1, D3).
++      if (error.code === 'ENV_PARK') {
++        const parks = (this.stateOf(frameKey, node.id)?.parks ?? 0) + 1, { retryAt, cause } = error.details;
++        if (parks > MAX_PARKS || retryAt >= this.head().deadline) throw new FoundryError(cause.code, `${node.id}: ${cause.message} (outage outlasted ${parks - 1} park(s) or the run deadline)`, { parks: parks - 1 });
++        this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { ...f.nodes[node.id], status: 'waiting', parked: { code: cause.code, message: cause.message.slice(0, 300), retryAt }, parks }; }, 'model.parked', { errorCode: cause.code, retryAt, parks });
++        this.store.setTimer(this.runId, nodeKey, retryAt);
++        return;
++      }
+       if (node.onError !== 'continue' || unhandled.has(error.code)) throw error;
+       this.complete(frameKey, node, { ok: false, error: errorData(error) }, 'handled_error');
+     }
+   }
+   // DESIGN §5.1. The journal is the loop's memory: a resumed attempt recompiles the same requests,
+   // and ModelPort serves already-journaled calls of this (run, node, attempt) without a provider call.
+-  async modelLoop(node, frameKey, ctx, state, resumed, { returns, checks, excludeFamily = new Set(), extraInputs = [] }) {
++  async modelLoop(node, frameKey, ctx, state, resumed, { returns, checks, excludeFamily = new Set(), extraInputs = [], park = false }) {
+     const models = this.runtime.models, policy = this.runtime.modelPolicy;
+     if (!models) throw new FoundryError('MODEL_PORT_REQUIRED', `${node.id} needs a ModelPort; this runtime was created without one`);
+     const run = this.head(), nodeKey = `${frameKey}/${node.id}`, attempt = state.attempts, limits = policy.escalation ?? {};
+@@ -1182,7 +1232,7 @@ class Invocation {
+     if (classIndex(policy, entry.class) > classIndex(policy, max)) throw new FoundryError('ASSIGNMENT_INVALID', `${entry.id} (class ${entry.class}) exceeds maxClass ${max} of ${node.id}`);
+     if (resumed) this.eventNode(frameKey, node.id, () => {}, 'node.resumed', { attempt, source: 'journal' });
+     const inputs = [...contextInputs(node, ctx, this.labelScope(frameKey, ...(node.context?.inputs ?? []).map(spec => spec.ref).filter(ref => typeof ref === 'string'))), ...extraInputs];
+-    let retries = 0, resamples = 0, sampleIndex = 0, escalations = 0, retryNote = null, recovered = false;
++    let retries = 0, resamples = 0, sampleIndex = 0, escalations = 0, retryNote = null, recovered = false, envRetries = 0;
+     const escalate = (rule, code, message) => {
+       let target = null;
+       if (escalations < rules.maxEscalations)
+@@ -1230,8 +1280,22 @@ class Invocation {
+         journalId: result.journalId ?? null, replayed: result.replayed === true && !recovered, ...(result.replayedFrom ? { replayedFrom: result.replayedFrom } : {}), ...unknownOf(result) });
+       const spent = this.head();
+       if (spent.cost > this.costLimit(spent) + 1e-12) throw new FoundryError('COST_BUDGET', `Run cost budget exhausted by a model call at ${node.id}`);
++      if ((spent.tokens ?? 0) > this.tokenLimit(spent)) throw new FoundryError('TOKEN_BUDGET', `Run token budget exhausted by a model call at ${node.id} (${spent.tokens} of ${this.tokenLimit(spent)} tokens)`);
+       if (!result.ok) {
+         const message = result.error?.message ?? code;
++        if (environmentFaults.has(code)) {
++          // A transient outage is retried here, on the same model (an outage never escalates), honouring a retry-after the provider sent;
++          // a longer one parks the node (agent nodes) or ends the run as an environment fault (other model nodes).
++          const waitMs = outageDelayMs(message, envRetries);
++          if (envRetries < ENV_RETRIES && waitMs <= ENV_RETRY_INLINE_MAX_MS && Date.now() + waitMs < this.head().deadline) {
++            envRetries++;
++            this.eventNode(frameKey, node.id, () => {}, 'model.env_retry', { errorCode: code, modelId: entry.id, retry: envRetries, delayMs: waitMs });
++            try { await delay(waitMs, undefined, { signal }); }
++            catch (error) { if (error.code === 'ABORT_ERR') throw new FoundryError('CANCELLED', 'Execution cancelled during an outage backoff'); throw error; }
++            continue;
++          }
++          if (park) throw new FoundryError('ENV_PARK', `${node.id}: parked on ${code}`, { retryAt: Date.now() + parkDelayMs(message, state.parks ?? 0), cause: { code, message: `${node.id}: ${message}` } });
++        }
+         if (environmentFaults.has(code) || providerFaults.has(code)) throw new FoundryError(code, `${node.id}: ${message}`, { journalId: result.journalId ?? null, modelId: entry.id });
+         if (retryable.has(code) && retries < rules.schemaRetries) {
+           retries++; retryNote = `Retry ${retries} of ${rules.schemaRetries} on this model. ${code}: ${result.error?.feedback ?? RETRY_FEEDBACK[code]}`;
+@@ -1264,8 +1328,9 @@ class Invocation {
+       const s = f.nodes[node.id], seen = s.journalIds ?? [];
+       if (call.journalId != null && seen.includes(call.journalId)) return; // already charged before a crash
+       s.journalIds = [...seen, call.journalId]; s.modelCalls = (s.modelCalls ?? 0) + 1;
+-      const cost = call.costUsd ?? 0;
++      const cost = call.costUsd ?? 0, tokens = tokensOf(call.usage);
+       s.costUsd = (s.costUsd ?? 0) + cost; s.imputedUsd = (s.imputedUsd ?? 0) + (call.imputedUsd ?? 0); r.cost += cost;
++      if (tokens) { s.tokens = (s.tokens ?? 0) + tokens; r.tokens = (r.tokens ?? 0) + tokens; }
+       if (call.costUnknown === true) for (const t of [s, r]) { t.costUnknownCalls = (t.costUnknownCalls ?? 0) + 1; t.costUnknownUpperUsd = addBound(t.costUnknownUpperUsd, call.costUpperUsd); }
+     }, type, event);
+   }
+diff --git a/src/sandbox.mjs b/src/sandbox.mjs
+index cfceedf..166643b 100644
+--- a/src/sandbox.mjs
++++ b/src/sandbox.mjs
+@@ -1,7 +1,7 @@
+ import { spawn } from 'node:child_process';
+ import { existsSync, readFileSync, realpathSync } from 'node:fs';
+ import { checkData, FoundryError } from './data.mjs';
+-import { trackChild } from './children.mjs';
++import { lifeline, trackChild } from './children.mjs';
+ 
+ // DESIGN §1.2. Code runs in fresh user+net+mount+pid namespaces: every inherited mount is
+ // remounted read-only, the environment holds PATH only, and source plus input arrive on stdin.
+@@ -169,7 +169,7 @@ export async function runCode({ lang, source, input = null, timeoutMs = 10000, m
+   const startedAt = Date.now();
+   return new Promise((resolve, reject) => {
+     let child;
+-    try { child = spawn(unshareBinary, argv, { cwd: '/', env: { PATH: SAFE_PATH }, shell: false, detached: true, stdio: ['pipe', 'pipe', 'pipe'], ...identity }); }
++    try { child = spawn(...lifeline(unshareBinary, argv), { cwd: '/', env: { PATH: SAFE_PATH }, shell: false, detached: true, stdio: ['pipe', 'pipe', 'pipe'], ...identity }); }
+     catch (error) { reject(new FoundryError('SANDBOX_UNAVAILABLE', `Sandbox launch failed: ${error.message}`)); return; }
+     const untrack = trackChild(child, 'sandbox'); // recorded with the run executing it (src/children.mjs), so a killed owner's sandbox can be found and stopped
+     const stdout = [], stderr = [];
+diff --git a/src/store.mjs b/src/store.mjs
+index 79bcb22..a65adb5 100644
+--- a/src/store.mjs
++++ b/src/store.mjs
+@@ -17,6 +17,16 @@ function liveJobOwner(job) {
+ const COUNT_EVERY = 64;
+ const timerRow = row => ({ runId: row.run_id, nodeKey: row.node_key, wakeAt: row.wake_at });
+ 
++// A full disk, a quota or an exhausted file table is an environment fault the user can act on (free space, then resume): it
++// is typed STORAGE_FULL / STORAGE_UNAVAILABLE instead of surfacing as a raw SQLite or errno error (orch-20261021 C1).
++const FULL = /SQLITE_FULL|database or disk is full|ENOSPC|EDQUOT|no space left/i, UNAVAILABLE = /SQLITE_IOERR|SQLITE_CANTOPEN|EMFILE|ENFILE|EROFS/i;
++export function storageFault(error) {
++  if (!error || error instanceof FoundryError) return error;
++  const text = `${error.code ?? ''} ${error.errstr ?? ''} ${error.message ?? ''}`;
++  if (FULL.test(text)) return new FoundryError('STORAGE_FULL', `The workspace disk is full (${(error.errstr ?? error.message ?? '').slice(0, 120)}): free space, then resume the run; nothing was committed by the failed write`, { cause: error.code ?? null });
++  if (UNAVAILABLE.test(text)) return new FoundryError('STORAGE_UNAVAILABLE', `The workspace store cannot be written (${(error.errstr ?? error.message ?? '').slice(0, 120)}): fix the host, then resume`, { cause: error.code ?? null });
++  return error;
++}
+ export class Store {
+   // The updateRun in progress (its run id and the decisions recorded during it), so a decision commits with its chain event.
+   #scope = null;
+@@ -53,6 +63,7 @@ export class Store {
+       CREATE TABLE IF NOT EXISTS timers(run_id TEXT NOT NULL, node_key TEXT NOT NULL, wake_at INTEGER NOT NULL, PRIMARY KEY(run_id,node_key));
+       CREATE INDEX IF NOT EXISTS timers_due ON timers(wake_at);
+       CREATE TABLE IF NOT EXISTS run_children(run_id TEXT NOT NULL, pid INTEGER NOT NULL, pgid INTEGER NOT NULL, start TEXT, kind TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY(run_id,pid));
++      CREATE TABLE IF NOT EXISTS run_interrupts(run_id TEXT PRIMARY KEY, pid INTEGER NOT NULL, signal TEXT NOT NULL, at INTEGER NOT NULL);
+       CREATE TABLE IF NOT EXISTS signals(id TEXT PRIMARY KEY, run_id TEXT NOT NULL, digest TEXT NOT NULL, at INTEGER NOT NULL);
+     `);
+     // Run state is per-node rows (src/run-rows.mjs). `limits` are the state bounds; an instance may lower them (tests do).
+@@ -65,7 +76,12 @@ export class Store {
+   transaction(fn) {
+     this.db.exec('BEGIN IMMEDIATE'); this.#depth++;
+     try { const result = fn(); this.db.exec('COMMIT'); return result; }
+-    catch (error) { this.db.exec('ROLLBACK'); throw error; }
++    catch (error) {
++      // SQLite rolls a transaction back by itself on some errors (SQLITE_FULL on COMMIT among them). A second ROLLBACK then
++      // throws "cannot rollback - no transaction is active" and would replace the error that matters (orch-20261021 C1).
++      if (this.db.isTransaction) { try { this.db.exec('ROLLBACK'); } catch { /* keep the original error */ } }
++      throw storageFault(error);
++    }
+     finally { this.#depth--; }
+   }
+   #workflow(hash) {
+@@ -145,6 +161,11 @@ export class Store {
+   recordChild(runId, { pid, pgid, start = null, kind }) { this.rows.stmt('INSERT OR REPLACE INTO run_children(run_id,pid,pgid,start,kind,at) VALUES(?,?,?,?,?,?)').run(runId, pid, pgid, start, kind, Date.now()); }
+   forgetChild(runId, pid) { this.rows.stmt('DELETE FROM run_children WHERE run_id=? AND pid=?').run(runId, pid); }
+   forgetChildren(runId) { this.rows.stmt('DELETE FROM run_children WHERE run_id=?').run(runId); }
++  // An owner that stops on a signal it handles (bin/foundry.mjs interruptOnSignal) records it, so the next owner can tell a user's
++  // interruption from a crash (Runtime recover). Advisory: the refund it allows is recorded in the chain (node.recovered attemptRefunded).
++  markInterrupted(runId, { pid, signal }) { this.rows.stmt('INSERT OR REPLACE INTO run_interrupts(run_id,pid,signal,at) VALUES(?,?,?,?)').run(runId, pid, String(signal).slice(0, 16), Date.now()); }
++  interruptOf(runId) { const row = this.rows.stmt('SELECT pid,signal,at FROM run_interrupts WHERE run_id=?').get(runId); return row ? { ...row } : null; }
++  forgetInterrupt(runId) { this.rows.stmt('DELETE FROM run_interrupts WHERE run_id=?').run(runId); }
+   children(runId) { return this.rows.stmt('SELECT pid,pgid,start,kind,at FROM run_children WHERE run_id=? ORDER BY at,pid').all(runId).map(row => ({ ...row })); }
+   /** The ids of runs that have recorded process groups still on file. */
+   childRunIds() { return this.rows.stmt('SELECT DISTINCT run_id FROM run_children ORDER BY run_id').all().map(row => row.run_id); }
+diff --git a/src/verdict.mjs b/src/verdict.mjs
+index 65b2410..2a1d03d 100644
+--- a/src/verdict.mjs
++++ b/src/verdict.mjs
+@@ -16,8 +16,8 @@ export const AUTHORITY_FLAGS = Object.freeze({ grantsActionAuthority: false, est
+ // the awaited event did not come within its declared bound (src/signals.mjs); and a wait whose timer falls after the run deadline (WAIT_DEADLINE)
+ // is the run's time budget, as DEADLINE is.
+ export const INCONCLUSIVE_CODES = Object.freeze(['VERIFY_FAILED', 'ACCEPTANCE_FAILED', 'ASSERTION_FAILED', 'NODE_CHECK_FAILED',
+-  'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'DEADLINE', 'STATE_VERSION_CONFLICT', 'STATE_FULL', 'WAIT_TIMEOUT', 'WAIT_DEADLINE']);
+-export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT', 'SANDBOX_UNAVAILABLE',
++  'LOOP_EXHAUSTED', 'STEP_BUDGET', 'COST_BUDGET', 'TOKEN_BUDGET', 'DEADLINE', 'STATE_VERSION_CONFLICT', 'STATE_FULL', 'WAIT_TIMEOUT', 'WAIT_DEADLINE']);
++export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_TIMEOUT', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE',
+   'NETWORK', 'MODEL_TRANSPORT', 'ECONNREFUSED', 'ECONNRESET', 'ECONNABORTED', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT',
+   'EHOSTUNREACH', 'ENETUNREACH', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT']);
+ const inconclusive = new Set(INCONCLUSIVE_CODES), env = new Set(ENV_FAULT_CODES);
+diff --git a/tests/cancel.test.mjs b/tests/cancel.test.mjs
+index 53a2374..8388d38 100644
+--- a/tests/cancel.test.mjs
++++ b/tests/cancel.test.mjs
+@@ -696,7 +696,10 @@ test('a cancel that lands while the run is pausing (a question, a timer) is hono
+     assert.equal(events.at(-1).cancel.actor, 'ui');
+     assert.equal(final.nodes.gate.status, 'completed', 'the tool that ended on its own keeps its result');
+   }
+-  assert.equal(finals.RaceAsk.nodes.ask.status, 'awaiting_human', 'the question is left open, unanswered');
++  // orch-20261021 patch 02: a cancel request in the record stops every new start inside the update that would start it, so the question
++  // is never asked after the request committed (before the patch it was asked, then left open); the node ends as a stopped node does.
++  assert.equal(finals.RaceAsk.nodes.ask.status, 'failed', 'the question is not asked after the cancel');
++  assert.equal(finals.RaceAsk.nodes.ask.error?.code, 'CANCELLED');
+   assert.throws(() => p.other.runtime.answer(asking.id, 'root/ask', true), error => error.code === 'RUN_CLOSED');
+   assert.deepEqual(p.other.store.timers(pausing.id), [], 'the timer is gone: no tick restarts the run');
+   assert.equal((await p.other.tick({ now: Date.now() + 2 * 3600000 })).due, 0);
+diff --git a/tests/cli-cancel.test.mjs b/tests/cli-cancel.test.mjs
+index 1f3a7b7..c81c2b8 100644
+--- a/tests/cli-cancel.test.mjs
++++ b/tests/cli-cancel.test.mjs
+@@ -19,7 +19,10 @@ import { ModelPort } from '../src/models/port.mjs';
+ import { Journal } from '../src/journal.mjs';
+ import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
+ import { sandboxStatus } from '../src/sandbox.mjs';
+-import { startOf } from '../src/children.mjs';
++import { lifeline, startOf } from '../src/children.mjs';
++// orch-20261021 patch 05: on Linux with setpriv every spawn shares its owner's fate (PDEATHSIG), so a killed owner takes its sandbox or model
++// CLI with it; only a grandchild that leaves its parent's process group behind outlives it. Elsewhere the leftovers stay until cancel/resume.
++const fateShared = lifeline('x', [])[0] !== 'x';
+ import { cmdline, groupMembers, isRunning, processes, until } from './support/processes.mjs';
+ 
+ const cli = new URL('../bin/foundry.mjs', import.meta.url).pathname;
+@@ -400,7 +403,7 @@ test('--journal: a run that journaled its model calls in another database is clo
+ 
+ // A killed owner cannot clean up after itself: its sandbox keeps running, a busy loop with no CPU limit. The groups a run starts are on file
+ // (table run_children) while they run, so the next `cancel`, `stop-all` or `resume` can find and stop them.
+-test('an owner killed with SIGKILL leaves its sandbox running: cancel stops the group found on file, then closes the run', { skip, timeout: 120000 }, async t => {
++test('an owner killed with SIGKILL: its sandbox dies with it where fate is shared (else cancel stops the group found on file); cancel then closes the run', { skip, timeout: 120000 }, async t => {
+   const { workspace, write } = scratch(t);
+   const owner = launch(t, ['run', write('wf.json', spinning('OrphanCancel')), '--workspace', workspace]);
+   const group = await sandboxGroup(t, owner);
+@@ -409,21 +412,25 @@ test('an owner killed with SIGKILL leaves its sandbox running: cancel stops the
+   assert.deepEqual(store.children(record.id).map(c => [c.pid, c.pgid, c.kind]), [[group, group, 'sandbox']], 'the sandbox is on file with the run');
+   owner.child.kill('SIGKILL');
+   assert.equal((await owner.exited).signal, 'SIGKILL');
+-  assert.ok(groupMembers(group).length >= 2, 'the sandbox outlived its owner: the leftover the file exists for');
++  if (fateShared) assert.ok(await gone(group), 'the sandbox died with its owner, without anyone acting (PDEATHSIG)');
++  else assert.ok(groupMembers(group).length >= 2, 'the sandbox outlived its owner: the leftover the file exists for');
+   assert.equal(store.rows.header(record.id).status, 'running');
+   const cancelled = await run(['cancel', record.id, '--workspace', workspace]);
+   assert.equal(cancelled.status, 0, cancelled.stderr);
+   const report = cancelled.json();
+   assert.equal(report.outcome, 'cancelled', report.message);
+-  assert.deepEqual(report.orphans, [{ pid: group, kind: 'sandbox', killed: true }], cancelled.stdout);
+-  assert.match(report.message, /Stopped 1 process group its dead owner had left running \(sandbox\)/);
++  if (fateShared) assert.equal(report.orphans, undefined, 'nothing was left to stop');
++  else {
++    assert.deepEqual(report.orphans, [{ pid: group, kind: 'sandbox', killed: true }], cancelled.stdout);
++    assert.match(report.message, /Stopped 1 process group its dead owner had left running \(sandbox\)/);
++  }
+   assert.ok(await gone(group), 'the orphaned sandbox is stopped');
+   assert.deepEqual(store.children(record.id), [], 'and forgotten');
+   assert.equal(store.run(record.id).nodes.spin.status, 'failed');
+   await verify(workspace, record.id);
+ });
+ 
+-test('a run resumed after its owner was killed first stops what that owner left running, and says so on its chain', { skip, timeout: 120000 }, async t => {
++test('a run resumed after its owner was killed first stops what that owner left running (nothing, where fate is shared), and says so on its chain', { skip, timeout: 120000 }, async t => {
+   const { workspace, write } = scratch(t);
+   const first = launch(t, ['run', write('wf.json', spinning('OrphanResume')), '--workspace', workspace]);
+   const oldGroup = await sandboxGroup(t, first);
+@@ -431,13 +438,17 @@ test('a run resumed after its owner was killed first stops what that owner left
+   const record = await until(() => runOf(store, 'OrphanResume'));
+   first.child.kill('SIGKILL');
+   await first.exited;
+-  assert.ok(groupMembers(oldGroup).length >= 2);
++  if (fateShared) assert.ok(await gone(oldGroup), 'the sandbox died with its owner (PDEATHSIG)');
++  else assert.ok(groupMembers(oldGroup).length >= 2);
+   const second = launch(t, ['resume', record.id, '--workspace', workspace]);
+   const newGroup = await sandboxGroup(t, second);
+   assert.notEqual(newGroup, oldGroup);
+   assert.ok(await gone(oldGroup), 'the earlier owner\'s sandbox was stopped when the run was taken over');
+-  const reaped = (await until(() => store.events(record.id).find(e => e.type === 'children.reaped')));
+-  assert.deepEqual(reaped.children, [{ pid: oldGroup, kind: 'sandbox' }]);
++  if (fateShared) assert.equal(store.events(record.id).find(e => e.type === 'children.reaped'), undefined, 'nothing was left running to reap');
++  else {
++    const reaped = (await until(() => store.events(record.id).find(e => e.type === 'children.reaped')));
++    assert.deepEqual(reaped.children, [{ pid: oldGroup, kind: 'sandbox' }]);
++  }
+   assert.deepEqual(store.children(record.id).map(c => c.pid), [newGroup], 'only the new sandbox is on file');
+   const cancelled = await run(['cancel', record.id, '--workspace', workspace]);
+   assert.equal(cancelled.json().outcome, 'cancelled');
+@@ -476,7 +487,11 @@ process.stdin.on('end', () => { fs.appendFileSync(process.env.FAKE_CLAUDE_LOG, J
+   assert.deepEqual(store.children(record.id).map(c => [c.pid, c.kind]), [[pids.pid, 'process']]);
+   owner.child.kill('SIGKILL');
+   await owner.exited;
+-  assert.ok(isRunning(pids.pid) && isRunning(pids.helper), 'the model CLI and its helper outlived the owner');
++  // The model CLI shares its owner's fate where PDEATHSIG exists; its helper (a grandchild in the CLI's process group) is outside its reach
++  // and outlives the owner either way: that leftover, found through the group on file, is what stop-all must stop.
++  if (fateShared) assert.ok(await until(() => !isRunning(pids.pid), 10000), 'the model CLI died with its owner (PDEATHSIG)');
++  else assert.ok(isRunning(pids.pid), 'the model CLI outlived the owner');
++  assert.ok(isRunning(pids.helper), 'its helper outlived the owner');
+   // A run that ended but still has a process group on file (a record that was never forgotten), pointing at a real process of this test.
+   assert.equal((await run(['run', write('f.json', workflow('OrphanDone', [{ id: 'a', kind: 'assert', needs: [], description: 'Nothing to hold', checks: [{ op: 'eq', left: 1, right: 1 }] }], [{ op: 'exists', value: { $ref: 'nodes.a' } }])), '--workspace', workspace])).json().status, 'succeeded');
+   const sleeper = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });
+diff --git a/tests/runtime-agent.test.mjs b/tests/runtime-agent.test.mjs
+index 2e4048c..6f7094f 100644
+--- a/tests/runtime-agent.test.mjs
++++ b/tests/runtime-agent.test.mjs
+@@ -133,22 +133,54 @@ test('agent: E7 caps escalation at two even when maxClass allows more; maxClass
+ });
+ 
+ test('agent: outages and provider faults are environment/harness faults and never escalate', async t => {
+-  for (const [code, verdict] of [['MODEL_UNAVAILABLE', 'env_fault'], ['MODEL_RATE_LIMIT', 'env_fault'], ['MODEL_TIMEOUT', 'env_fault'], ['MODEL_PROTOCOL', 'harness_fault']]) {
++  // An outage (orch-20261021 patch 04) is retried inline on the same model, honouring the provider's retry-after (10 ms here), at most 3
++  // times; past that the agent node parks (status waiting, a timer at retryAt) instead of ending the run. It never escalates and no other
++  // model is tried. A provider (harness) fault is still terminal at once.
++  const outage = code => ({ error: { code, message: `${code}: overloaded, retry after 0.01 s` } });
++  for (const code of ['MODEL_UNAVAILABLE', 'MODEL_RATE_LIMIT', 'MODEL_TIMEOUT']) {
+     await t.test(code, async t => {
+-      const h = harness(t, base([agent('norm')], accept('norm')), { script: { [S]: [{ error: code }], [M]: [{ value: { amount: 1 } }] } });
++      const h = harness(t, base([agent('norm')], accept('norm')), { script: { [S]: [outage(code), outage(code), outage(code), outage(code), { value: { amount: 1 } }], [M]: [{ value: { amount: 1 } }] } });
+       const run = await h.runtime.execute(h.run.id);
+-      assert.equal(run.status, 'failed');
+-      assert.equal(run.error.code, code);
+-      assert.equal(run.verdict.verdict, verdict);
++      assert.equal(run.status, 'waiting', JSON.stringify(run.error));
++      assert.equal(run.nodes.norm.status, 'waiting');
++      assert.equal(run.nodes.norm.parked.code, code);
++      assert.ok(run.nodes.norm.parked.retryAt > Date.now() - 1000 && run.nodes.norm.parked.retryAt < Date.now() + 60000, 'parked until the retry-after');
++      assert.deepEqual(h.of('model.env_retry').map(e => [e.errorCode, e.retry, e.modelId]), [1, 2, 3].map(n => [code, n, S]));
++      assert.equal(h.of('model.parked').length, 1);
+       assert.equal(h.of('model.escalated').length, 0);
+-      assert.deepEqual(h.provider.calls.map(c => c.modelId), [S], 'no other model is tried');
++      assert.deepEqual(h.provider.calls.map(c => c.modelId), [S, S, S, S], 'no other model is tried');
+       assert.equal(new Journal(h.store).forRun(run.id)[0].errorCode, code, 'the failure is journaled with the call');
++      // The outage ends: the parked node runs on, on the same model, within the same attempt, and the run succeeds.
++      const resumed = await h.runtime.execute(h.run.id);
++      assert.equal(resumed.status, 'succeeded', JSON.stringify(resumed.error));
++      assert.deepEqual(h.provider.calls.map(c => c.modelId), [S, S, S, S, S]);
++      assert.equal(h.of('model.unparked').length, 1);
++      assert.equal(resumed.nodes.norm.attempts, 1);
+     });
+   }
++  await t.test('a single transient outage is absorbed by one same-model retry', async t => {
++    const h = harness(t, base([agent('norm')], accept('norm')), { script: { [S]: [outage('MODEL_RATE_LIMIT'), { value: { amount: 1 } }] } });
++    const run = await h.runtime.execute(h.run.id);
++    assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
++    assert.deepEqual(h.provider.calls.map(c => c.modelId), [S, S]);
++    assert.equal(h.of('model.env_retry').length, 1); assert.equal(h.of('model.escalated').length, 0);
++  });
++  await t.test('MODEL_PROTOCOL', async t => {
++    const h = harness(t, base([agent('norm')], accept('norm')), { script: { [S]: [{ error: 'MODEL_PROTOCOL' }], [M]: [{ value: { amount: 1 } }] } });
++    const run = await h.runtime.execute(h.run.id);
++    assert.equal(run.status, 'failed');
++    assert.equal(run.error.code, 'MODEL_PROTOCOL');
++    assert.equal(run.verdict.verdict, 'harness_fault');
++    assert.equal(h.of('model.escalated').length, 0);
++    assert.deepEqual(h.provider.calls.map(c => c.modelId), [S], 'no other model is tried');
++    assert.equal(new Journal(h.store).forRun(run.id)[0].errorCode, 'MODEL_PROTOCOL', 'the failure is journaled with the call');
++  });
+   await t.test('onError continue does not hide an outage', async t => {
+-    const h = harness(t, base([agent('norm', { onError: 'continue' })], [{ op: 'exists', value: { $ref: 'nodes.norm' } }]), { script: { [S]: [{ error: 'MODEL_UNAVAILABLE' }] } });
++    const h = harness(t, base([agent('norm', { onError: 'continue' })], [{ op: 'exists', value: { $ref: 'nodes.norm' } }]), { script: { [S]: Array.from({ length: 4 }, () => outage('MODEL_UNAVAILABLE')) } });
+     const run = await h.runtime.execute(h.run.id);
+-    assert.equal(run.error.code, 'MODEL_UNAVAILABLE');
++    assert.equal(run.status, 'waiting');
++    assert.equal(run.nodes.norm.status, 'waiting', 'parked, not completed as a handled error');
++    assert.equal(run.nodes.norm.parked.code, 'MODEL_UNAVAILABLE');
+   });
+   await t.test('onError continue records an exhausted model judgment as a handled error', async t => {
+     const h = harness(t, base([agent('norm', { onError: 'continue', model: { class: 'S' } })], [{ op: 'eq', left: { $ref: 'nodes.norm.ok' }, right: false }]), { script: { [S]: [{ text: 'x' }, { text: 'y' }] } });
+-- 
+2.43.0
+

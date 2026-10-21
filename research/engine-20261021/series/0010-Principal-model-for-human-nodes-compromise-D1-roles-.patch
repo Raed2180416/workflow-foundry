@@ -1,0 +1,709 @@
+From 880a67f859e6f01bd0e40a8b3745fbaaa5052787 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 21 Oct 2026 16:28:19 +0000
+Subject: [PATCH 10/16] Principal model for human nodes (compromise D1): roles,
+ delegation of authority, segregation of duties
+
+src/principals.mjs, in OT-0's constitution vocabulary (roles; principals {id, kind, roles};
+class ids like cust:*). IR (optional; old workflows unchanged, said in the schema): a
+human node's principal {role, threshold?: {amount, above, role}} and the workflow's
+segregation [{nodes}]. The role matrix is the host's (Foundry/Runtime option principals,
+foundry answer --principals FILE --actor ID), never the workflow's or a model's.
+Runtime: the requirement is bound when the question is asked (an amount above the
+threshold, unreadable, or derived from untrusted data needs the threshold role); answers
+are refused without a matrix, without an actor, from an unknown actor, without the roles,
+or against a segregation rule (read from the hash chain, re-checked inside the CAS
+update); human.answered records actor, roles and matrix hash. Validation: structure
+always; with a matrix, the workflow satisfiability problem (PRINCIPAL_ROLE_UNHELD,
+SOD_UNSATISFIABLE, SOD_UNSATISFIABLE_ABOVE_THRESHOLD) or a satisfying assignment.
+principals.mjs joins the engine identity. docs/ARCHITECTURE.md describes it.
+Tests: tests/principals.test.mjs 5/5 with constitution v1.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_011geBy7JvDqKuqhDyfmzd1U
+---
+ bin/foundry.mjs              |  13 ++-
+ docs/ARCHITECTURE.md         |  22 +++++
+ schemas/workflow.schema.json |  30 +++++++
+ src/engine.mjs               |   2 +-
+ src/foundry.mjs              |   5 +-
+ src/http.mjs                 |   2 +-
+ src/principals.mjs           | 131 +++++++++++++++++++++++++++++
+ src/runtime.mjs              |  55 ++++++++++--
+ src/validate.mjs             |  23 +++++-
+ tests/principals.test.mjs    | 156 +++++++++++++++++++++++++++++++++++
+ 10 files changed, 422 insertions(+), 17 deletions(-)
+ create mode 100644 src/principals.mjs
+ create mode 100644 tests/principals.test.mjs
+
+diff --git a/bin/foundry.mjs b/bin/foundry.mjs
+index f13591e..faea4b6 100755
+--- a/bin/foundry.mjs
++++ b/bin/foundry.mjs
+@@ -38,6 +38,7 @@ const definitions = {
+   , strict: { type: 'boolean' }, 'fail-on': { type: 'string' }
+   , 'check-anchors': { type: 'string' }, 'append-anchor': { type: 'string' }, 'expect-head': { type: 'string' }, 'require-bound': { type: 'boolean' }, journal: { type: 'string' }
+   , reason: { type: 'string' }, grace: { type: 'string' }, force: { type: 'boolean' }, 'executing-only': { type: 'boolean' }
++  , actor: { type: 'string' }, principals: { type: 'string' }
+   , name: { type: 'string' }, id: { type: 'string' }, key: { type: 'string' }, payload: { type: 'string' }
+ };
+ // Ctrl-C or SIGTERM while a command executes runs in this process. The command stops as a crash would (each run stays resumable with
+@@ -68,7 +69,8 @@ function checkModelArguments(command, args) {
+     ...['reason', 'grace'].filter(name => args[name] !== undefined && !['cancel', 'stop-all'].includes(command)),
+     ...(args.force !== undefined && command !== 'cancel' ? ['force'] : []), ...(args['executing-only'] !== undefined && command !== 'stop-all' ? ['executing-only'] : []),
+     ...(args['append-anchor'] !== undefined && !['verify-run', 'run', 'resume'].includes(command) ? ['append-anchor'] : []),
+-    ...['name', 'id', 'key', 'payload'].filter(name => args[name] !== undefined && command !== 'signal')];
++    ...['name', 'id', 'key', 'payload'].filter(name => args[name] !== undefined && command !== 'signal'),
++    ...(args.actor !== undefined && command !== 'answer' ? ['actor'] : [])];
+   if (misplaced.length) throw new FoundryError('CLI_ARGUMENT', `--${misplaced[0]} is not supported by ${command}. Use --help.`);
+   if (args['max-cost'] !== undefined && !/^(0|[1-9][0-9]{0,6})(\.[0-9]{1,6})?$/.test(args['max-cost'])) throw new FoundryError('CLI_ARGUMENT', '--max-cost must be a non-negative decimal number of USD');
+   if (args['fail-on'] !== undefined && !['error', 'warning'].includes(args['fail-on'])) throw new FoundryError('CLI_ARGUMENT', '--fail-on must be error or warning');
+@@ -194,7 +196,9 @@ const usage = `Workflow Foundry 0.1.0 — experimental, source/evidence qualifie
+ `  foundry resume RUN_ID [--policy MODEL_POLICY.json] [--append-anchor FILE] --workspace PATH\n` +
+ `  foundry tick [--policy MODEL_POLICY.json] --workspace PATH  (resume runs whose wait timers are due)\n` +
+ `  foundry calls --run RUN_ID --workspace PATH  (journaled model calls with cost)\n` +
+-`  foundry answer RUN_ID --node root/NODE --answer JSON --workspace PATH\n` +
++`  foundry answer RUN_ID --node root/NODE --answer JSON [--actor ID --principals ROLE_MATRIX.json] --workspace PATH\n` +
++`      (a human node with a principal requirement takes an answer only from an actor the host's role matrix (an OT-0 constitution or\n` +
++`       {roles, principals}) gives the required roles, never from one its segregation rules set apart in the same run)\n` +
+ `  foundry approve RUN_ID APPROVAL_ID --approved|--rejected --workspace PATH\n` +
+ `  foundry signal [RUN_ID] [--workflow WORKFLOW_ID] --name SIGNAL --id SIGNAL_ID [--key JSON] [--payload JSON_OR_FILE] --workspace PATH\n` +
+ `      (deliver a signal to a run, or without RUN_ID (then --workflow is required) to the one run of that workflow whose wait correlates on --key; the id is the idempotency key:\n` +
+@@ -366,7 +370,8 @@ async function main() {
+     }
+     const host = modelCommands.has(command) ? await modelHost(args, command) : null;
+     const maxCost = args['max-cost'] === undefined ? undefined : Number(args['max-cost']);
+-    foundry = new Foundry(workspace, { registry, ...(host ? { modelPolicy: host.modelPolicy, models: host.models } : {}), ...(maxCost === undefined ? {} : { policy: { maxCost } }) });
++    foundry = new Foundry(workspace, { registry, ...(host ? { modelPolicy: host.modelPolicy, models: host.models } : {}), ...(maxCost === undefined ? {} : { policy: { maxCost } }),
++      ...(args.principals === undefined ? {} : { principals: readJson(args.principals) }) });
+     const halt = new AbortController();
+     if (executing.has(command)) interruptOnSignal(foundry, halt);
+     // Control surface (src/control.mjs). The run's own process records its cancelled verdict; a run nothing executes is closed here.
+@@ -486,7 +491,7 @@ async function main() {
+       const journal = new Journal(foundry.store);
+       print({ runId: args.run, calls: journal.forRun(args.run).map(callSummary), totals: journal.costForRun(args.run) }); return;
+     }
+-    if (command === 'answer') { print(foundry.publicRun(foundry.runtime.answer(item, args.node, jsonValue(args.answer, null)))); return; }
++    if (command === 'answer') { print(foundry.publicRun(foundry.runtime.answer(item, args.node, jsonValue(args.answer, null), { actor: args.actor === undefined ? null : String(args.actor), channel: 'cli' }))); return; }
+     if (command === 'signal') {
+       if (positionals.length > 2) throw new FoundryError('CLI_ARGUMENT', 'signal takes at most one RUN_ID. Use --help.');
+       // --key is JSON text only (a value naming a file is not read as that file); --payload may be JSON or a JSON file.
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 9d6d3e7..e10f643 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -64,6 +64,28 @@ response. Risk/authority approvals are separate runtime decisions bound to the
+ exact tool, arguments and workflow hash; a human-answer node or model text cannot
+ grant them. Changes in preference can trigger a versioned workflow proposal.
+ 
++A human node may also name a **principal requirement** (`principal: {role,
++threshold?: {amount, above, role}}`, since the 2026-10-21 engine bump;
++`src/principals.mjs`). The workflow names roles only; the role matrix (who holds
++which role, in the vocabulary of the OT-0 constitution: `roles` and `principals`)
++is supplied by the host (`Foundry`/`Runtime` option `principals`, `foundry answer
++--principals FILE --actor ID`), never by the workflow or a model. The requirement is
++bound when the question is asked: the actor must hold `role`, and when the amount
++is above `above` (or unreadable, or decided by untrusted data) also
++`threshold.role` (delegation of authority). A workflow-level `segregation` rule
++(`[{nodes: [A, B]}]`) makes the actors who answer the named nodes of one run
++pairwise distinct; who answered is read from the hash chain. The runtime refuses an
++answer from an actor without the roles (`PRINCIPAL_ROLE`), from an unknown actor,
++without an actor, on a host without a matrix, or against a segregation rule
++(`SOD_VIOLATION`); the `human.answered` event records the actor, the roles that
++authorised it and the matrix hash. With a matrix, validation solves the workflow
++satisfiability problem and rejects a workflow whose rules its principals can never
++satisfy (`SOD_UNSATISFIABLE`, `PRINCIPAL_ROLE_UNHELD`), returning a satisfying
++assignment otherwise. Without `principal`, a human node accepts any answer, as
++before. The actor is only as authenticated as the channel that supplies it (CLI
++flag, local HTTP); the MCP surface has no answer tool, and its
++`foundry_apply_proposal` requires a person on every call.
++
+ Map/loop nodes contain a nested workflow; output and per-iteration execution state
+ are namespaced. Every nested step is charged to the parent budget. Adapters must
+ reject constructs whose semantics they cannot preserve.
+diff --git a/schemas/workflow.schema.json b/schemas/workflow.schema.json
+index a3a8a93..ffe70d2 100644
+--- a/schemas/workflow.schema.json
++++ b/schemas/workflow.schema.json
+@@ -38,6 +38,18 @@
+     "acceptance": {"$ref": "#/definitions/checks"},
+     "labels": {"type": "object", "maxProperties": 256, "propertyNames": {"maxLength": 512, "pattern": "^input(\\.[A-Za-z0-9_-]+)*$"}, "additionalProperties": {"$ref": "#/definitions/label"}},
+     "discovery": {"type": "boolean"},
++    "segregation": {
++      "type": "array", "maxItems": 50,
++      "description": "Segregation of duties (2026-10-21, compromise D1; src/principals.mjs): the actors who answer the named human nodes of one run must be pairwise distinct. Each named node is one human node with a principal. Optional: a workflow without it, or without principals, behaves exactly as before.",
++      "items": {
++        "type": "object", "additionalProperties": false, "required": ["nodes"],
++        "properties": {
++          "id": {"$ref": "#/definitions/id"},
++          "nodes": {"type": "array", "minItems": 2, "maxItems": 10, "uniqueItems": true, "items": {"$ref": "#/definitions/id"}},
++          "description": {"type": "string", "maxLength": 1000}
++        }
++      }
++    },
+     "state": {"type": "object", "maxProperties": 32, "propertyNames": {"pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"}, "additionalProperties": {"$ref": "#/definitions/stateSlot"},
+       "description": "Cross-run keyed state shared by every run (and version) of this workflow id, one slot per name (src/state.mjs). Read and written only by state nodes; only the slot's declared writer writes it."},
+     "defaultClass": {"type": "string", "minLength": 1, "maxLength": 16, "description": "The model class most nodes are expected to start on. A model node that starts above it needs model.justification (strict lint CLASS_ABOVE_DEFAULT_UNJUSTIFIED). Absent: the cheapest class any model node starts on."},
+@@ -60,6 +72,22 @@
+   },
+   "definitions": {
+     "id": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,63}$"},
++    "roleId": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,59}$"},
++    "principal": {
++      "type": "object", "additionalProperties": false, "required": ["role"],
++      "description": "Who may answer a human node (2026-10-21, compromise D1; src/principals.mjs). Roles are names from the host's role matrix (the OT-0 constitution's roles and principals), which the host supplies and the workflow never does. The answer must carry an actor that holds `role`; with `threshold`, an amount above `above` (or unreadable, or decided by untrusted data) also needs `threshold.role` (delegation of authority). Optional: a human node without it accepts any answer, as before.",
++      "properties": {
++        "role": {"$ref": "#/definitions/roleId"},
++        "threshold": {
++          "type": "object", "additionalProperties": false, "required": ["amount", "above", "role"],
++          "properties": {
++            "amount": {"anyOf": [{"type": "number"}, {"type": "object", "required": ["$ref"]}]},
++            "above": {"type": "number", "minimum": 0},
++            "role": {"$ref": "#/definitions/roleId"}
++          }
++        }
++      }
++    },
+     "texts": {"type": "array", "maxItems": 200, "items": {"type": "string", "maxLength": 10000}},
+     "nonemptyTexts": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"type": "string", "minLength": 1, "maxLength": 10000}},
+     "label": {"type": "string", "maxLength": 512, "pattern": "^(?:trusted|untrusted:[A-Za-z0-9_.:-]+(?:\\+[A-Za-z0-9_.:-]+)*)$"},
+@@ -158,6 +186,7 @@
+         "checks": {"$ref": "#/definitions/checks"},
+         "question": {"type": "string", "minLength": 1, "maxLength": 10000},
+         "answerSchema": {"type": "object"},
++        "principal": {"$ref": "#/definitions/principal"},
+         "body": {"$ref": "#/definitions/flow"},
+         "input": {},
+         "items": {},
+@@ -201,6 +230,7 @@
+         {"if": {"properties": {"kind": {"const": "task"}}}, "then": {"required": ["tool", "args", "timeoutMs", "retry"]}},
+         {"if": {"properties": {"kind": {"const": "assert"}}}, "then": {"required": ["checks"]}},
+         {"if": {"properties": {"kind": {"const": "human"}}}, "then": {"required": ["question", "answerSchema"]}},
++        {"if": {"required": ["principal"]}, "then": {"properties": {"kind": {"const": "human"}}}},
+         {"if": {"properties": {"kind": {"const": "map"}}}, "then": {"required": ["items", "maxItems", "body"]}},
+         {"if": {"properties": {"kind": {"const": "loop"}}}, "then": {"required": ["maxIterations", "body", "until", "initial"]}},
+         {"if": {"properties": {"kind": {"const": "wait"}}}, "then": {"anyOf": [{"required": ["delayMs"]}, {"required": ["at"]}, {"required": ["signal"]}, {"required": ["race"]}]}},
+diff --git a/src/engine.mjs b/src/engine.mjs
+index 35af395..96702c7 100644
+--- a/src/engine.mjs
++++ b/src/engine.mjs
+@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
+ // the lineage that declares which earlier engines' runs this one may resume.
+ const paths = ['engine.mjs', 'runtime.mjs', 'store.mjs', 'run-rows.mjs', 'data.mjs', 'dataflow.mjs', 'validate.mjs', 'lint.mjs', 'acceptance.mjs', 'capabilities.mjs',
+   'context.mjs', 'verdict.mjs', 'audit.mjs', 'sandbox.mjs', 'children.mjs', 'schema-subset.mjs', 'models/port.mjs', 'models/policy.mjs', 'journal.mjs', 'state.mjs',
+-  'signals.mjs', '../schemas/workflow.schema.json', '../schemas/identity.schema.json', '../schemas/decision.schema.json', 'engine-lineage.json'];
++  'signals.mjs', 'principals.mjs', '../schemas/workflow.schema.json', '../schemas/identity.schema.json', '../schemas/decision.schema.json', 'engine-lineage.json'];
+ const sha256 = data => createHash('sha256').update(data).digest('hex');
+ const files = Object.fromEntries(paths.map(name => [name, sha256(readFileSync(new URL(name, import.meta.url)))]));
+ const ajv = JSON.parse(readFileSync(require.resolve('ajv/package.json'), 'utf8'));
+diff --git a/src/foundry.mjs b/src/foundry.mjs
+index 36abf0d..42c40a3 100644
+--- a/src/foundry.mjs
++++ b/src/foundry.mjs
+@@ -39,13 +39,14 @@ export class Foundry {
+   // modelPolicy defaults to the committed owner policy; models (a ModelPort) is never created implicitly,
+   // so no workflow can spend on a model unless the host wires a port in explicitly. A host may pass
+   // models as a factory store => ModelPort when its journal must live in this workspace's store.
+-  constructor(workspace, { registry = createDefaultRegistry(), policy = {}, trialPolicy = {}, modelPolicy, models = null, codeRunner, cancelPollMs, cancelGraceMs } = {}) {
++  // principals: the host's role matrix for human nodes with a principal requirement (src/principals.mjs); never the workflow's.
++  constructor(workspace, { registry = createDefaultRegistry(), policy = {}, trialPolicy = {}, modelPolicy, models = null, codeRunner, cancelPollMs, cancelGraceMs, principals = null } = {}) {
+     if (modelPolicy === undefined) {
+       try { modelPolicy = loadPolicy(); } catch (error) { modelPolicy = null; this.modelPolicyError = errorData(error); }
+     }
+     this.store = new Store(workspace); this.registry = registry; this.modelPolicy = modelPolicy;
+     if (typeof models === 'function') models = models(this.store);
+-    this.runtime = new Runtime(this.store, registry, policy, { models, modelPolicy, ...(codeRunner ? { codeRunner } : {}), ...(cancelPollMs === undefined ? {} : { cancelPollMs }), ...(cancelGraceMs === undefined ? {} : { cancelGraceMs }) }); this.active = new Map();
++    this.runtime = new Runtime(this.store, registry, policy, { models, modelPolicy, principals, ...(codeRunner ? { codeRunner } : {}), ...(cancelPollMs === undefined ? {} : { cancelPollMs }), ...(cancelGraceMs === undefined ? {} : { cancelGraceMs }) }); this.active = new Map();
+     this.trialRunner = new TrialRunner(this, trialPolicy);
+   }
+   async close() { await this.trialRunner.close(); await Promise.allSettled([...this.active.values()].map(x => x.promise)); this.store.close(); }
+diff --git a/src/http.mjs b/src/http.mjs
+index a7ff7d9..c62a714 100644
+--- a/src/http.mjs
++++ b/src/http.mjs
+@@ -89,7 +89,7 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
+         }
+         if (parts.length === 4 && parts[1] === 'runs') {
+           if (parts[3] === 'answers') {
+-            foundry.runtime.answer(parts[2], data.nodeId, data.answer);
++            foundry.runtime.answer(parts[2], data.nodeId, data.answer, { actor: typeof data.actor === 'string' ? data.actor : null, channel: 'http' });
+             foundry.startRun(parts[2]).catch(error => console.error('Foundry resume:', error.code, error.message));
+             return json(202, foundry.inspectRun(parts[2]));
+           }
+diff --git a/src/principals.mjs b/src/principals.mjs
+new file mode 100644
+index 0000000..1f97dbf
+--- /dev/null
++++ b/src/principals.mjs
+@@ -0,0 +1,131 @@
++// Principals for human nodes (compromise D1; research/business-20261021/ATTACK-FABLE.md §3.1 I1; research/engine-20261021/ENGINE-BUMP.md §5).
++//
++// The vocabulary is OT-0's constitution (experiments/constitution/schema/constitution-v0.schema.json): roles [{id, description}] and
++// principals [{id, kind: human | service | customer-class, roles: [role id]}]; a principal id ending in "*" names a class whose members
++// are actors with that prefix (cust:* covers cust:42). The role matrix is the HOST's: a constitution document (or the same two lists)
++// handed to the runtime, never a field of the workflow and never chosen by a model. The workflow only names roles:
++//
++//   human node   "principal": {"role": R, "threshold": {"amount": <number or $ref>, "above": T, "role": R2}}
++//                the answering actor must hold R; when the amount is above T it must also hold R2 (delegation of authority, the
++//                constitution's approval-above-threshold). An amount that cannot be read, or that untrusted data decided, counts as
++//                above (fail closed: injected text cannot talk an amount under the threshold).
++//   workflow     "segregation": [{"nodes": [A, B, ...]}]   the actors who answer the named human nodes of one run are pairwise distinct
++//                (the constitution's sodExclude between the entering and the approving duty).
++//
++// Static validation (validate.mjs) checks the structure always, and with a role matrix solves the workflow satisfiability problem
++// (list colouring over the segregation constraints; steps are few, so backtracking is exact): it returns a satisfying assignment as
++// evidence, or names why none exists.
++import { digest, FoundryError } from './data.mjs';
++
++const KINDS = new Set(['human', 'service', 'customer-class']);
++const ROLE = /^[A-Za-z][A-Za-z0-9_.:-]{0,59}$/;
++const bad = message => new FoundryError('PRINCIPALS_INVALID', message);
++
++/** A host role matrix, checked: {roles: Set, principals: [{id, kind, roles, prefix}], hash}. Extra keys (a whole constitution) are ignored. */
++export function roleMatrix(doc) {
++  if (!doc || typeof doc !== 'object' || !Array.isArray(doc.roles) || !Array.isArray(doc.principals)) throw bad('A role matrix needs roles [] and principals [] (the OT-0 constitution shape)');
++  if (doc.roles.length > 500 || doc.principals.length > 10000) throw bad('A role matrix holds at most 500 roles and 10000 principals');
++  const roles = new Set();
++  for (const role of doc.roles) {
++    const id = typeof role === 'string' ? role : role?.id;
++    if (typeof id !== 'string' || !ROLE.test(id) || roles.has(id)) throw bad(`Role ids are unique names of 1-60 characters (${JSON.stringify(id)})`);
++    roles.add(id);
++  }
++  const seen = new Set(), principals = [];
++  for (const p of doc.principals) {
++    if (!p || typeof p.id !== 'string' || !p.id || p.id.length > 80 || seen.has(p.id)) throw bad(`Principal ids are unique strings of 1-80 characters (${JSON.stringify(p?.id)})`);
++    if (!KINDS.has(p.kind)) throw bad(`Principal ${p.id}: kind is one of ${[...KINDS].join(', ')}`);
++    if (!Array.isArray(p.roles) || p.roles.some(r => !roles.has(r))) throw bad(`Principal ${p.id}: every role must be one of the matrix's roles`);
++    seen.add(p.id);
++    principals.push(Object.freeze({ id: p.id, kind: p.kind, roles: Object.freeze([...new Set(p.roles)].sort()), prefix: p.id.endsWith('*') ? p.id.slice(0, -1) : null }));
++  }
++  const hash = digest({ roles: [...roles].sort(), principals: principals.map(({ id, kind, roles: r }) => ({ id, kind, roles: r })).sort((a, b) => (a.id < b.id ? -1 : 1)) });
++  return Object.freeze({ roles, principals: Object.freeze(principals), hash });
++}
++
++/** The principal an actor id names: an exact id, else the class with the longest matching prefix. */
++export function principalOf(matrix, actor) {
++  if (typeof actor !== 'string' || !actor || actor.length > 200) return null;
++  const exact = matrix.principals.find(p => !p.prefix && p.id === actor);
++  if (exact) return exact;
++  return matrix.principals.filter(p => p.prefix !== null && actor.startsWith(p.prefix) && actor.length > p.prefix.length)
++    .sort((a, b) => b.prefix.length - a.prefix.length)[0] ?? null;
++}
++
++/** The roles a human node's answer needs, bound when its question is asked: {roles, threshold?: {amount, above, role, above: bool, why}}. */
++export function requirementOf(principal, { amount = undefined, trusted = true } = {}) {
++  const roles = [principal.role];
++  if (!principal.threshold) return { roles };
++  const t = principal.threshold, readable = typeof amount === 'number' && Number.isFinite(amount);
++  const why = !readable ? 'amount unreadable' : !trusted ? 'amount derived from untrusted data' : amount > t.above ? 'amount above threshold' : null;
++  if (why && !roles.includes(t.role)) roles.push(t.role);
++  return { roles, threshold: { amount: readable ? amount : null, limit: t.above, role: t.role, applied: !!why, ...(why ? { why } : {}) } };
++}
++
++/** Human nodes anywhere in the workflow by id: Map id -> [{node, path}]. */
++export function humanNodesOf(workflow) {
++  const out = new Map();
++  const walk = (nodes, at) => {
++    for (const [i, n] of (nodes ?? []).entries()) {
++      if (n.kind === 'human') out.set(n.id, [...(out.get(n.id) ?? []), { node: n, path: `${at}[${i}]` }]);
++      if (n.body) walk(n.body.nodes, `${at}[${i}].body.nodes`);
++    }
++  };
++  walk(workflow.nodes, 'nodes');
++  return out;
++}
++
++/** The roles each principal-bearing human node needs at least (below any threshold) and at most (above it). */
++const needsOf = node => ({ least: [node.principal.role], most: [...new Set([node.principal.role, ...(node.principal.threshold ? [node.principal.threshold.role] : [])])] });
++
++/** Structural problems of principals and segregation rules (no role matrix needed). -> [{code, message, path}] */
++export function principalProblems(workflow) {
++  const problems = [], humans = humanNodesOf(workflow);
++  (workflow.segregation ?? []).forEach((rule, i) => {
++    for (const id of rule.nodes) {
++      const found = humans.get(id) ?? [];
++      if (!found.length) problems.push({ code: 'SOD_NODE', message: `Segregation rule ${rule.id ?? i} names ${id}, which is not a human node of this workflow`, path: `segregation[${i}]` });
++      else if (found.length > 1) problems.push({ code: 'SOD_NODE', message: `Segregation rule ${rule.id ?? i} names ${id}, which is ${found.length} human nodes (ids must name one)`, path: `segregation[${i}]` });
++      else if (!found[0].node.principal) problems.push({ code: 'SOD_NODE', message: `Segregation rule ${rule.id ?? i} names ${id}, a human node without a principal requirement: its actor is not identified, so the rule could not be enforced`, path: `segregation[${i}]` });
++    }
++  });
++  return problems;
++}
++
++/** The workflow satisfiability problem against a role matrix. -> {problems: [{code, severity, message, path}], assignment|null}
++ *  error PRINCIPAL_ROLE_UNHELD: nobody may answer a node (or its above-threshold path); error SOD_UNSATISFIABLE: no distinct actors exist even
++ *  below every threshold; warning SOD_UNSATISFIABLE_ABOVE_THRESHOLD: they exist below, not above. Classes count as many distinct actors. */
++export function satisfiability(workflow, matrix, { maxNodes = 40 } = {}) {
++  const problems = [], humans = [...humanNodesOf(workflow)].filter(([, found]) => found.length === 1 && found[0].node.principal).map(([id, [{ node, path }]]) => ({ id, node, path }));
++  const holders = roles => matrix.principals.filter(p => roles.every(r => p.roles.includes(r)));
++  for (const h of humans) {
++    const { least, most } = needsOf(h.node);
++    if (!holders(least).length) problems.push({ code: 'PRINCIPAL_ROLE_UNHELD', severity: 'error', message: `No principal in the role matrix holds ${least.join(' + ')}, so nobody may answer ${h.id}`, path: h.path });
++    else if (!holders(most).length) problems.push({ code: 'PRINCIPAL_ROLE_UNHELD', severity: 'error', message: `No principal holds ${most.join(' + ')}, so ${h.id} can never be answered above its threshold`, path: h.path });
++  }
++  const rules = (workflow.segregation ?? []).map(rule => rule.nodes.filter(id => humans.some(h => h.id === id)));
++  const constrained = humans.filter(h => rules.some(nodes => nodes.includes(h.id)));
++  if (constrained.length > maxNodes) return { problems: [...problems, { code: 'SOD_NOT_CHECKED', severity: 'warning', message: `${constrained.length} human nodes take part in segregation rules; satisfiability is checked up to ${maxNodes}`, path: 'segregation' }], assignment: null };
++  const conflicts = (a, b) => rules.some(nodes => nodes.includes(a) && nodes.includes(b));
++  const solve = level => {
++    const options = constrained.map(h => ({ id: h.id, candidates: holders(needsOf(h.node)[level]) })).sort((a, b) => a.candidates.length - b.candidates.length);
++    const chosen = new Map();
++    const place = k => {
++      if (k === options.length) return true;
++      const { id, candidates } = options[k];
++      for (const p of candidates) {
++        // A class supplies as many distinct actors as needed; an individual is one actor.
++        if (!p.prefix && [...chosen].some(([other, q]) => q.id === p.id && conflicts(id, other))) continue;
++        chosen.set(id, p);
++        if (place(k + 1)) return true;
++        chosen.delete(id);
++      }
++      return false;
++    };
++    return place(0) ? Object.fromEntries([...chosen].map(([id, p]) => [id, p.id])) : null;
++  };
++  const least = rules.length ? solve('least') : {}, most = rules.length && least ? solve('most') : least;
++  if (rules.length && !least) problems.push({ code: 'SOD_UNSATISFIABLE', severity: 'error', message: `No assignment of distinct principals satisfies the segregation rules (${(workflow.segregation ?? []).map((r, i) => r.id ?? i).join(', ')}) with the roles the nodes need: the run could never be completed by the people in the role matrix`, path: 'segregation' });
++  else if (rules.length && !most) problems.push({ code: 'SOD_UNSATISFIABLE_ABOVE_THRESHOLD', severity: 'warning', message: 'The segregation rules can be met below every threshold but not above one: an above-threshold case could never be completed', path: 'segregation' });
++  return { problems, assignment: least ?? null };
++}
+diff --git a/src/runtime.mjs b/src/runtime.mjs
+index 975f5d5..3c71ba0 100644
+--- a/src/runtime.mjs
++++ b/src/runtime.mjs
+@@ -14,6 +14,7 @@ import { classIndex, modelById, modelsForClass, nextClass, validatePolicy } from
+ import { MODES } from './models/port.mjs';
+ import { AUDIT, engineBinding, identityChanges, journalSeal } from './audit.mjs';
+ import { MATERIALIZE, STATE_BYTES, STATE_ITEMS } from './run-rows.mjs';
++import { principalOf, requirementOf, roleMatrix } from './principals.mjs';
+ import { isStateWrite, journalRequest, slotIdentity, slotOf, stateOpHash, stateReplayKey, stateRequest } from './state.mjs';
+ import { cancelledBy, claimant, correlateTemplates, declaredSignals, isSignalWait, keyHashOf, matches, normalizeSignal, parseAt, pickSignal, routeOf, SIGNAL_LIMITS, signalCheckpointDrift, subscriptionsOf, timeoutMode } from './signals.mjs';
+ 
+@@ -193,7 +194,9 @@ export class Runtime {
+   // now: the clock of cross-run state (src/state.mjs: TTL expiry and the time journaled with each operation); tests pass a simulated one.
+   // faultHooks: test-only fault injection (a run's `extra.crashAfterWaitDecision` kills the process at that point). Off unless the caller
+   // constructing the runtime turns it on, so an edit of a run record (`extra` is not bound to the birth event) cannot make a host kill itself.
+-  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000, now = Date.now, faultHooks = false } = {}) {
++  // principals: the host's role matrix for human nodes that name a principal (src/principals.mjs; an OT-0 constitution document works as is).
++  // It is the host's, never the workflow's or a model's; without it, such a node's answer is refused (PRINCIPAL_MATRIX_REQUIRED).
++  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000, now = Date.now, faultHooks = false, principals = null } = {}) {
+     this.store = store; this.registry = registry; this.policy = { ...policyDefaults(registry), ...clone(policy) };
+     for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes', 'maxTokens']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
+     if (!Array.isArray(this.policy.allowedCapabilities) || this.policy.allowedCapabilities.some(x => !registry.get(x))) throw new FoundryError('POLICY', 'Allowed capabilities must be registered');
+@@ -208,10 +211,12 @@ export class Runtime {
+     if (!Number.isSafeInteger(cancelGraceMs) || cancelGraceMs < 1 || cancelGraceMs > 600000) throw new FoundryError('POLICY', 'cancelGraceMs must be an integer of 1 to 600000');
+     if (typeof now !== 'function') throw new FoundryError('POLICY', 'now must be a function returning milliseconds');
+     this.models = models; this.codeRunner = codeRunner; this.cancelPollMs = cancelPollMs; this.cancelGraceMs = cancelGraceMs; this.now = now; this.faultHooks = faultHooks === true;
++    this.principals = principals ? roleMatrix(principals) : null;
+   }
+   create(workflow, input = {}, options = {}) {
+     const { modelMode = 'live', sampleSalt = null, assignment = null, identity = null, ...rest } = options;
+-    const { hash } = requireWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy });
++    // With a role matrix, a workflow whose segregation rules its principals can never satisfy is refused here (src/principals.mjs).
++    const { hash } = requireWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy, principals: this.principals });
+     if (workflow.inputSchema) validateData(workflow.inputSchema, input, 'workflow input'); else checkData(input);
+     this.store.workflow(hash); // The exact immutable version must already be saved.
+     if (!MODES.includes(modelMode)) throw new FoundryError('RUN_OPTIONS', `modelMode must be one of ${MODES.join('|')}`);
+@@ -303,7 +308,11 @@ export class Runtime {
+     // the same Store but must not share mutable in-flight fields.
+     return new Invocation(this, runId, signal).execute();
+   }
+-  answer(runId, nodeKey, answer) {
++  // `actor` is who answers, as the host's channel identified them (the CLI's --actor, the HTTP surface); `channel` names the channel. A human
++  // node with a principal requirement (bound when its question was asked) takes an answer only from an actor the host's role matrix gives
++  // the required roles, and never from the actor who answered a node its segregation rules set apart in this run (compromise D1). The
++  // actor, the roles that authorised it and the matrix hash go on the chain. A node without a requirement takes any answer, as before.
++  answer(runId, nodeKey, answer, { actor = null, channel = null } = {}) {
+     const run = this.store.rows.header(runId); // NOT_FOUND; the run's own fields are enough here
+     if (finished.has(run.status)) throw new FoundryError('RUN_CLOSED', 'A terminal run cannot accept answers');
+     const closed = closingSeal(this.store.events(runId));
+@@ -311,15 +320,40 @@ export class Runtime {
+     if (cancelRequested(run)) throw cancelRequested(run);
+     const state = this.store.rows.nodeState(runId, ...splitKey(nodeKey));
+     if (!state || state.status !== 'awaiting_human') throw new FoundryError('NO_QUESTION', 'No pending question exists at this node');
++    if (actor !== null && (typeof actor !== 'string' || !actor || actor.length > 200)) throw new FoundryError('PRINCIPAL_REQUIRED', 'An actor is a non-empty identity of at most 200 characters');
++    const authority = state.principal ? this.authorizeAnswer(runId, run.workflowHash, nodeKey, state.principal, actor) : null;
+     validateData(state.answerSchema, answer, 'human answer');
+     return this.store.updateRun(runId, r => {
+       if (finished.has(r.status)) throw new FoundryError('RUN_CLOSED', 'A terminal run cannot accept answers');
+       if (cancelRequested(r)) throw cancelRequested(r);
+       const current = locateNode(r, nodeKey);
+       if (current.state.status !== 'awaiting_human') throw new FoundryError('ANSWER_CONFLICT', 'This question was already answered');
++      // Segregation of duties, again inside the update (compare-and-swap with any answer committed since the check above).
++      if (authority) this.checkSegregation(runId, r.workflowHash, nodeKey, actor);
+       current.state.status = 'completed'; current.state.completedAt = Date.now();
++      if (actor !== null) current.state.answeredBy = actor;
+       current.frame.outputs[current.id] = { answer: clone(answer) }; r.status = 'ready';
+-    }, { type: 'human.answered', nodeKey, answerHash: digest(answer) });
++    }, { type: 'human.answered', nodeKey, answerHash: digest(answer), ...(actor !== null ? { actor, actorVerified: !!authority } : {}), ...(channel ? { channel: String(channel).slice(0, 40) } : {}),
++      ...(authority ? { principal: authority } : {}) });
++  }
++  authorizeAnswer(runId, workflowHash, nodeKey, required, actor) {
++    if (!this.principals) throw new FoundryError('PRINCIPAL_MATRIX_REQUIRED', `${nodeKey} needs an answer from a principal holding ${required.roles.join(' + ')}; this host supplied no role matrix (Foundry/Runtime option principals, foundry --principals FILE)`);
++    if (actor === null) throw new FoundryError('PRINCIPAL_REQUIRED', `${nodeKey} needs an answer from a principal holding ${required.roles.join(' + ')}; the answer names no actor (foundry answer ... --actor ID)`);
++    const principal = principalOf(this.principals, actor);
++    if (!principal) throw new FoundryError('PRINCIPAL_UNKNOWN', `${actor} is not a principal in the host's role matrix`, { actor });
++    const missing = required.roles.filter(role => !principal.roles.includes(role));
++    if (missing.length) throw new FoundryError('PRINCIPAL_ROLE', `${actor} does not hold ${missing.join(' + ')}, which ${nodeKey} needs${required.threshold?.applied ? ` (${required.threshold.why}: delegation of authority above ${required.threshold.limit})` : ''}`, { actor, missing });
++    this.checkSegregation(runId, workflowHash, nodeKey, actor);
++    return { principal: principal.id, roles: required.roles, matrixHash: this.principals.hash };
++  }
++  // The other human nodes a segregation rule sets apart from this one must not have been answered by the same actor in this run. Who answered
++  // is read from the hash-chained human.answered events, not from the editable record.
++  checkSegregation(runId, workflowHash, nodeKey, actor) {
++    const workflow = this.store.workflow(workflowHash).workflow, id = splitKey(nodeKey)[1];
++    const apart = new Set((workflow.segregation ?? []).filter(rule => rule.nodes.includes(id)).flatMap(rule => rule.nodes).filter(other => other !== id));
++    if (!apart.size) return;
++    const clash = this.store.events(runId).find(e => e.type === 'human.answered' && e.actor === actor && apart.has(splitKey(e.nodeKey)[1]));
++    if (clash) throw new FoundryError('SOD_VIOLATION', `${actor} answered ${clash.nodeKey} in this run; segregation of duties forbids the same actor at ${nodeKey}`, { actor, other: clash.nodeKey });
+   }
+   approve(runId, approvalId, decision, actor = 'user') {
+     if (typeof decision !== 'boolean' || actor !== 'user') throw new FoundryError('APPROVAL_AUTHORITY', 'An explicit user approval decision is required');
+@@ -900,9 +934,18 @@ class Invocation {
+       this.complete(frameKey, node, { passed: true }); return;
+     }
+     if (node.kind === 'human') {
++      // A principal requirement is bound when the question is asked (src/principals.mjs): the roles, and for a delegation-of-authority
++      // threshold the amount as it stands now. An amount that untrusted data decided counts as above the threshold.
++      let principal = null;
++      if (node.principal) {
++        const template = node.principal.threshold?.amount;
++        let amount;
++        try { amount = template === undefined ? undefined : resolve(template, ctx); } catch { amount = undefined; }
++        principal = requirementOf(node.principal, { amount, trusted: template === undefined || labelOf(template, this.labelScope(frameKey, template)) === 'trusted' });
++      }
+       this.eventNode(frameKey, node.id, f => {
+-        Object.assign(f.nodes[node.id], { status: 'awaiting_human', question: node.question, answerSchema: clone(node.answerSchema), ...controlState(control) });
+-      }, 'human.requested', { question: node.question }); return;
++        Object.assign(f.nodes[node.id], { status: 'awaiting_human', question: node.question, answerSchema: clone(node.answerSchema), ...(principal ? { principal } : {}), ...controlState(control) });
++      }, 'human.requested', { question: node.question, ...(principal ? { principal } : {}) }); return;
+     }
+     if (node.kind === 'wait') return this.wait(node, frameKey, state);
+     if (node.kind === 'map') return this.map(node, frameKey, ctx, input);
+diff --git a/src/validate.mjs b/src/validate.mjs
+index aaef20d..0e1969a 100644
+--- a/src/validate.mjs
++++ b/src/validate.mjs
+@@ -8,6 +8,7 @@ import { classIndex, modelById, modelsForClass } from './models/policy.mjs';
+ import { lintWorkflow } from './lint.mjs';
+ import { correlateTemplates, isSignalWait, parseAt, routeOf, subscriptionsOf, timeoutMode } from './signals.mjs';
+ import { CURSOR_ORDERS, instantNanos, isStateWrite, slotOf, STATE_ARGS, STATE_LIMITS, STATE_OPS } from './state.mjs';
++import { principalProblems, roleMatrix, satisfiability } from './principals.mjs';
+ 
+ export { bindOutput, OUTPUT_KEY };
+ 
+@@ -101,7 +102,7 @@ const entry = (key, label) => label === 'trusted' ? {} : { [key]: label };
+ const common = new Set(['id', 'kind', 'needs', 'description', 'when', 'join']);
+ const fields = {
+   task: ['tool', 'args', 'timeoutMs', 'retry', 'onError'], assert: ['checks'],
+-  human: ['question', 'answerSchema'], wait: ['delayMs', 'at', 'signal', 'race', 'correlate', 'schema', 'timeoutMs', 'onTimeout', 'label'],
++  human: ['question', 'answerSchema', 'principal'], wait: ['delayMs', 'at', 'signal', 'race', 'correlate', 'schema', 'timeoutMs', 'onTimeout', 'label'],
+   map: ['items', 'maxItems', 'body', 'input', 'concurrency', 'failure'],
+   loop: ['maxIterations', 'body', 'until', 'initial', 'input'],
+   agent: ['role', 'instructions', 'context', 'returns', 'model', 'decoding', 'checks', 'escalation', 'quarantined', 'timeoutMs', 'onError'],
+@@ -301,7 +302,10 @@ function checkWaitRoute(node, byId, at, add) {
+ 
+ // strict: also run the construction lint (lint.mjs). Its error findings make the workflow invalid, its warnings are
+ // appended to `warnings`, and the structured report is returned as `lint`. Default validation is unchanged.
+-export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPolicy = null, strict = false } = {}) {
++// principals: the host's role matrix (src/principals.mjs roleMatrix, or a constitution document). With it, a workflow whose human nodes and
++// segregation rules can never be satisfied by the principals it lists is invalid (SOD_UNSATISFIABLE, PRINCIPAL_ROLE_UNHELD); without it only
++// the structure of principals and segregation rules is checked. Workflows without principals are unaffected either way.
++export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPolicy = null, strict = false, principals = null } = {}) {
+   const errors = [], warnings = [];
+   try { checkData(workflow); } catch (e) { return { valid: false, errors: [{ code: e.code, message: e.message }], warnings }; }
+   if (!shape(workflow)) return { valid: false, errors: shape.errors.map(e => ({ code: 'SCHEMA', path: e.instancePath, message: `${e.message} ${JSON.stringify(e.params)}` })), warnings };
+@@ -481,6 +485,18 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
+     }
+   }
+   if (workflow.inputSchema) try { compileDataSchema(workflow.inputSchema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, 'inputSchema'); }
++  // Principals and segregation of duties (compromise D1, src/principals.mjs).
++  let principalAssignment;
++  for (const p of principalProblems(workflow)) add(p.code, p.message, p.path);
++  if (principals && !errors.some(e => e.code === 'SOD_NODE')) {
++    let matrix = null;
++    try { matrix = principals.hash && principals.roles instanceof Set ? principals : roleMatrix(principals); } catch (e) { add(e.code ?? 'PRINCIPALS_INVALID', e.message, 'principals'); }
++    if (matrix) {
++      const solved = satisfiability(workflow, matrix);
++      for (const { severity, ...p } of solved.problems) (severity === 'error' ? errors : warnings).push({ code: p.code, message: p.message, path: p.path });
++      principalAssignment = solved.assignment;
++    }
++  }
+   if (!errors.length) {
+     const dataflow = analyzeDataflow(workflow, registry);
+     errors.push(...dataflow.errors); warnings.push(...dataflow.warnings);
+@@ -495,7 +511,8 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
+     for (let i = warnings.length - 1; i >= 0; i--) if (warnings[i].code === 'ERROR_COLLECTION' || warnings[i].code === 'ERROR_CONTINUATION') warnings.splice(i, 1);
+     for (const { severity, ...finding } of lint.findings) (severity === 'error' ? errors : warnings).push({ ...finding, severity });
+   }
+-  return { valid: errors.length === 0, errors, warnings, nodeCount: total, ...(strict ? { strict: true, lint } : {}), ...(errors.length ? {} : { hash: digest(workflow) }) };
++  return { valid: errors.length === 0, errors, warnings, nodeCount: total, ...(strict ? { strict: true, lint } : {}), ...(errors.length ? {} : { hash: digest(workflow) }),
++    ...(principalAssignment && Object.keys(principalAssignment).length ? { principalAssignment } : {}) };
+ }
+ 
+ export function requireWorkflow(workflow, options) {
+diff --git a/tests/principals.test.mjs b/tests/principals.test.mjs
+new file mode 100644
+index 0000000..aaa8056
+--- /dev/null
++++ b/tests/principals.test.mjs
+@@ -0,0 +1,156 @@
++// Principals for human nodes (compromise D1; src/principals.mjs): role requirements, delegation of authority above a threshold, segregation
++// of duties, and static satisfiability against the host's role matrix. The matrix is OT-0's constitution v1
++// (experiments/constitution/instances/v1.json), used as the host supplies it. Synthetic local runs only; no model, no spend.
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import path from 'node:path';
++import { Foundry } from '../src/foundry.mjs';
++import { createDefaultRegistry } from '../src/capabilities.mjs';
++import { validateWorkflow } from '../src/validate.mjs';
++import { principalOf, requirementOf, roleMatrix, satisfiability } from '../src/principals.mjs';
++import { verifyRun } from '../src/verify-run.mjs';
++
++const constitution = JSON.parse(readFileSync(new URL('../experiments/constitution/instances/v1.json', import.meta.url), 'utf8'));
++// v1 plus a CFO who holds both finance-approver and controller: someone may approve above the threshold.
++const hostMatrix = { ...constitution, principals: [...constitution.principals, { id: 'u-cfo', kind: 'human', roles: ['finance-approver', 'controller'] }] };
++const human = (id, extra = {}) => ({ id, kind: 'human', needs: [], description: `${id} decides`, question: `${id}?`, answerSchema: { type: 'boolean' }, ...extra });
++const refund = ({ labels, segregation = [{ id: 'C2', nodes: ['enter', 'approve'] }], approve = {} } = {}) => ({
++  schemaVersion: '1.0', id: 'Refund', version: 1, title: 'Refund with four eyes', goal: 'Refund only with an authorised, distinct approver.', domain: 'general',
++  envelope: { assumptions: ['Synthetic'], risks: ['An unauthorised refund'], successCriteria: ['A distinct finance approver approved it'] },
++  budget: { maxSteps: 10, maxConcurrency: 1, maxDurationMs: 60000, maxCost: 0 },
++  inputSchema: { type: 'object', required: ['amountMinor'], properties: { amountMinor: { type: 'integer' } } },
++  nodes: [human('enter', { principal: { role: 'cs-agent' } }),
++    human('approve', { needs: ['enter'], principal: { role: 'finance-approver', threshold: { amount: { $ref: 'input.amountMinor' }, above: 50000, role: 'controller' } }, ...approve })],
++  acceptance: [{ op: 'eq', left: { $ref: 'nodes.approve.answer' }, right: true }],
++  ...(segregation ? { segregation } : {}), ...(labels ? { labels } : {})
++});
++function setup(t, { principals = hostMatrix } = {}) {
++  const dir = mkdtempSync(path.join(tmpdir(), 'foundry-principals-'));
++  const foundry = new Foundry(path.join(dir, 'workspace'), { principals });
++  t.after(async () => { await foundry.close(); rmSync(dir, { recursive: true, force: true }); });
++  return foundry;
++}
++const codes = (workflow, options = {}) => validateWorkflow(workflow, { registry: createDefaultRegistry(), ...options }).errors.map(e => e.code);
++
++test('schema: a workflow without principals is unchanged; principal is for human nodes; segregation names principal-bearing human nodes', () => {
++  const plain = refund({ segregation: null });
++  plain.nodes = plain.nodes.map(({ principal, ...n }) => n);
++  assert.deepEqual(codes(plain), []);
++  assert.deepEqual(codes(plain, { principals: hostMatrix }), [], 'a matrix changes nothing for a workflow without principals');
++  const onTask = refund(); onTask.nodes.push({ id: 'pay', kind: 'assert', needs: ['approve'], description: 'x', checks: [{ op: 'eq', left: 1, right: 1 }], principal: { role: 'controller' } });
++  assert.ok(codes(onTask).includes('SCHEMA'), 'a principal on a non-human node is refused');
++  assert.deepEqual(codes(refund({ segregation: [{ nodes: ['enter', 'ghost'] }] })), ['SOD_NODE']);
++  const bare = refund(); delete bare.nodes[0].principal;
++  assert.deepEqual(codes(bare), ['SOD_NODE'], 'a segregation rule needs identified actors on every node it names');
++  assert.ok(codes(refund({ segregation: [{ nodes: ['enter', 'enter'] }] })).includes('SCHEMA'), 'a node is never segregated from itself');
++});
++
++test('static satisfiability against the role matrix: an assignment as evidence, or a named refusal', () => {
++  const ok = validateWorkflow(refund(), { registry: createDefaultRegistry(), principals: hostMatrix });
++  assert.equal(ok.valid, true, JSON.stringify(ok.errors));
++  const a = ok.principalAssignment;
++  assert.notEqual(a.enter, a.approve);
++  const m = roleMatrix(hostMatrix);
++  assert.ok(principalOf(m, a.enter).roles.includes('cs-agent') && principalOf(m, a.approve).roles.includes('finance-approver'));
++  // Under v1 as written nobody holds finance-approver + controller: the above-threshold path can never be answered.
++  assert.deepEqual(codes(refund(), { principals: constitution }), ['PRINCIPAL_ROLE_UNHELD']);
++  // One person holds both duties: the rule can never be met.
++  const solo = { roles: ['cs-agent', 'finance-approver', 'controller'], principals: [{ id: 'p1', kind: 'human', roles: ['cs-agent', 'finance-approver', 'controller'] }] };
++  assert.deepEqual(codes(refund(), { principals: solo }), ['SOD_UNSATISFIABLE']);
++  // Two people, but the only one who may approve above the threshold is also the only one who may enter: met below, never above.
++  const tight = { roles: ['cs-agent', 'finance-approver', 'controller'], principals: [{ id: 'p1', kind: 'human', roles: ['cs-agent', 'finance-approver', 'controller'] }, { id: 'p2', kind: 'human', roles: ['finance-approver'] }] };
++  const r = satisfiability(refund(), roleMatrix(tight));
++  assert.deepEqual(r.problems.map(p => [p.code, p.severity]), [['SOD_UNSATISFIABLE_ABOVE_THRESHOLD', 'warning']]);
++  assert.deepEqual(r.assignment, { enter: 'p1', approve: 'p2' });
++  // A class principal supplies many distinct actors.
++  const customers = { roles: ['customer'], principals: [{ id: 'cust:*', kind: 'customer-class', roles: ['customer'] }] };
++  const twoCustomers = refund({ segregation: [{ nodes: ['enter', 'approve'] }] });
++  twoCustomers.nodes[0].principal = { role: 'customer' }; twoCustomers.nodes[1].principal = { role: 'customer' };
++  assert.deepEqual(codes(twoCustomers, { principals: customers }), []);
++  assert.equal(principalOf(roleMatrix(customers), 'cust:42').id, 'cust:*'); assert.equal(principalOf(roleMatrix(customers), 'cust:'), null);
++  assert.throws(() => roleMatrix({ roles: ['a'], principals: [{ id: 'x', kind: 'human', roles: ['b'] }] }), { code: 'PRINCIPALS_INVALID' });
++});
++
++test('delegation of authority is bound when the question is asked; an unreadable or untrusted amount counts as above', () => {
++  const p = { role: 'finance-approver', threshold: { amount: { $ref: 'input.a' }, above: 50000, role: 'controller' } };
++  assert.deepEqual(requirementOf(p, { amount: 100, trusted: true }).roles, ['finance-approver']);
++  assert.deepEqual(requirementOf(p, { amount: 50001, trusted: true }).roles, ['finance-approver', 'controller']);
++  assert.equal(requirementOf(p, { amount: 100, trusted: false }).threshold.why, 'amount derived from untrusted data');
++  assert.equal(requirementOf(p, { amount: 'lots', trusted: true }).threshold.why, 'amount unreadable');
++});
++
++test('runtime: role, delegation of authority and segregation of duties are enforced on answers; the chain records who and under which matrix', async t => {
++  const foundry = setup(t);
++  foundry.save(refund());
++  const run = foundry.createRun('Refund', { amountMinor: 60000 });
++  assert.equal((await foundry.startRun(run.id)).status, 'awaiting_human');
++  const answer = (node, actor) => foundry.runtime.answer(run.id, `root/${node}`, true, { actor, channel: 'test' });
++  assert.throws(() => foundry.runtime.answer(run.id, 'root/enter', true), { code: 'PRINCIPAL_REQUIRED' });
++  assert.throws(() => answer('enter', 'mallory'), { code: 'PRINCIPAL_UNKNOWN' });
++  assert.throws(() => answer('enter', 'u-fin2'), { code: 'PRINCIPAL_ROLE' });
++  answer('enter', 'u-cs1');
++  const asked = await foundry.startRun(run.id);
++  assert.equal(asked.status, 'awaiting_human');
++  assert.deepEqual(asked.nodes.approve.principal.roles, ['finance-approver', 'controller'], 'EUR 600.00 is above the threshold');
++  assert.throws(() => answer('approve', 'u-fin2'), error => error.code === 'PRINCIPAL_ROLE' && /controller/.test(error.message) && /delegation of authority above 50000/.test(error.message));
++  // u-cs1 holds finance-approver but entered the refund: refused for segregation, not for lack of a role.
++  const narrow = setup(t, { principals: { ...hostMatrix, principals: hostMatrix.principals.map(p => (p.id === 'u-cs1' ? { ...p, roles: [...p.roles, 'controller'] } : p)) } });
++  narrow.save(refund());
++  const second = narrow.createRun('Refund', { amountMinor: 60000 });
++  await narrow.startRun(second.id);
++  narrow.runtime.answer(second.id, 'root/enter', true, { actor: 'u-cs1' });
++  await narrow.startRun(second.id);
++  assert.throws(() => narrow.runtime.answer(second.id, 'root/approve', true, { actor: 'u-cs1' }), { code: 'SOD_VIOLATION' });
++  // The CFO holds both roles and did not enter it.
++  answer('approve', 'u-cfo');
++  const done = await foundry.startRun(run.id);
++  assert.equal(done.status, 'succeeded');
++  const answered = foundry.store.events(run.id).filter(e => e.type === 'human.answered');
++  assert.deepEqual(answered.map(e => [e.nodeKey, e.actor, e.actorVerified, e.principal.principal, e.principal.roles]),
++    [['root/enter', 'u-cs1', true, 'u-cs1', ['cs-agent']], ['root/approve', 'u-cfo', true, 'u-cfo', ['finance-approver', 'controller']]]);
++  assert.ok(answered.every(e => e.principal.matrixHash === roleMatrix(hostMatrix).hash && e.channel === 'test'));
++  assert.equal(verifyRun(foundry.store, run.id).ok, true);
++});
++
++test('runtime: below the threshold one role suffices, an untrusted amount does not; no matrix, no principal answers; old workflows unchanged', async t => {
++  const foundry = setup(t);
++  foundry.save(refund());
++  const low = foundry.createRun('Refund', { amountMinor: 100 });
++  await foundry.startRun(low.id);
++  foundry.runtime.answer(low.id, 'root/enter', true, { actor: 'u-cs2' });
++  assert.deepEqual((await foundry.startRun(low.id)).nodes.approve.principal.roles, ['finance-approver']);
++  foundry.runtime.answer(low.id, 'root/approve', true, { actor: 'u-fin2' });
++  assert.equal((await foundry.startRun(low.id)).status, 'succeeded');
++  // The same small amount, but the input field is labelled untrusted (e.g. copied from a customer's e-mail): fail closed.
++  const tainted = setup(t);
++  tainted.save(refund({ labels: { 'input.amountMinor': 'untrusted:customer-email' } }));
++  const tr = tainted.createRun('Refund', { amountMinor: 100 });
++  await tainted.startRun(tr.id);
++  tainted.runtime.answer(tr.id, 'root/enter', true, { actor: 'u-cs2' });
++  const held = await tainted.startRun(tr.id);
++  assert.deepEqual(held.nodes.approve.principal.roles, ['finance-approver', 'controller']);
++  assert.equal(held.nodes.approve.principal.threshold.why, 'amount derived from untrusted data');
++  // No role matrix on this host: principal answers are refused, never waved through; creation still works (structure only).
++  const bare = setup(t, { principals: null });
++  bare.save(refund());
++  const br = bare.createRun('Refund', { amountMinor: 1 });
++  await bare.startRun(br.id);
++  assert.throws(() => bare.runtime.answer(br.id, 'root/enter', true, { actor: 'u-cs2' }), { code: 'PRINCIPAL_MATRIX_REQUIRED' });
++  // A workflow the matrix can never satisfy is refused at creation.
++  const strict = setup(t, { principals: { roles: ['cs-agent', 'finance-approver', 'controller'], principals: [{ id: 'p1', kind: 'human', roles: ['cs-agent', 'finance-approver', 'controller'] }] } });
++  strict.save(refund());
++  assert.throws(() => strict.createRun('Refund', { amountMinor: 1 }), error => error.code === 'INVALID_WORKFLOW' && error.details.some(e => e.code === 'SOD_UNSATISFIABLE'));
++  // A workflow without principals: any answer, with or without an actor (recorded, not verified).
++  const plain = refund({ segregation: null }); plain.id = 'Plain'; plain.nodes = plain.nodes.map(({ principal, ...n }) => n);
++  foundry.save(plain);
++  const pr = foundry.createRun('Plain', { amountMinor: 1 });
++  await foundry.startRun(pr.id);
++  foundry.runtime.answer(pr.id, 'root/enter', true);
++  await foundry.startRun(pr.id);
++  foundry.runtime.answer(pr.id, 'root/approve', true, { actor: 'anyone' });
++  assert.equal((await foundry.startRun(pr.id)).status, 'succeeded');
++  const e = foundry.store.events(pr.id).filter(x => x.type === 'human.answered');
++  assert.equal(e[0].actor, undefined); assert.deepEqual([e[1].actor, e[1].actorVerified, e[1].principal], ['anyone', false, undefined]);
++});
+-- 
+2.43.0
+
