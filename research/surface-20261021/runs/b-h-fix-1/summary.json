@@ -1,0 +1,70 @@
+{
+ "arm": "B-H",
+ "label": "b-h-fix-1",
+ "started": "2026-10-21T17:09:34.646Z",
+ "finished": "2026-10-21T17:11:23.698Z",
+ "casesFile": "research/surface-20261021/eval/cases.json",
+ "casesSha256": "ee852fb05277fe526f77e93e5f67860919a7109f892582cbf75c55d782d25006",
+ "manifestSha256": "b228ff4bb2ba0fc3a783f76cdee311a8bd7009bb58cc3f8c0a450d63415ab539",
+ "libraryHash": "9c0b7e265cb5d9fe78065f85ef16a972f05264586ab12734fff4529297842b63",
+ "capUsd": 0.3,
+ "notScored": [],
+ "environmentFaults": [],
+ "spentUsdIncludingFaults": 0.024665,
+ "tokenMeter": {},
+ "cases": 24,
+ "fitCases": 21,
+ "noneCases": 3,
+ "verified": 21,
+ "verifiedRate": 1,
+ "oraclePassIgnoringVerdict": 21,
+ "builtAndValid": 21,
+ "correctRefusals": 3,
+ "falseRefusals": 0,
+ "outcomes": {
+  "ready": 21,
+  "unsupported": 3
+ },
+ "templateCorrect": 24,
+ "slotChecks": {
+  "ok": 57,
+  "total": 57
+ },
+ "requiredQuestions": {
+  "asked": 9,
+  "total": 9
+ },
+ "questionRecall": 1,
+ "unnecessaryQuestions": 0,
+ "repeatQuestions": 0,
+ "questionsAsked": 9,
+ "modelProposedQuestions": 9,
+ "traps": {
+  "total": 5,
+  "avoided": 5,
+  "violated": []
+ },
+ "personActionsToFirstVerifiedRun": {
+  "mean": 3.71,
+  "median": 3,
+  "beforeRunMean": 1.43
+ },
+ "cost": {
+  "usdTotal": 0.0247,
+  "usdPerRequest": 0.00103,
+  "tokensTotal": 174186,
+  "tokensPerRequest": 7258,
+  "calls": 61,
+  "costUnknownCalls": 0
+ },
+ "wallSeconds": {
+  "mean": 8.8,
+  "median": 7.4,
+  "total": 211.6
+ },
+ "repairs": {
+  "rounds": 0,
+  "casesWithRepair": 0
+ },
+ "errors": []
+}

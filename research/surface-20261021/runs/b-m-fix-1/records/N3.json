@@ -1,0 +1,87 @@
+{
+ "arm": "B-M",
+ "case": "N3",
+ "expected": "none",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": {
+    "template": "none",
+    "reason": "No template covers monitoring external competitor websites for price changes; this requires web scraping and price tracking capabilities.",
+    "notCovered": [
+     "Daily website monitoring of competitor prices",
+     "Price drop detection and alerting"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "I cannot build that with the flows I know. (No template covers monitoring external competitor websites for price changes; this requires web scraping and price tracking capabilities.) I can build: sync the newsletter list from the crm and report the differences; approve small expenses automatically; send bigger ones to an approver; chase unpaid invoices with a reminder cadence (dunning); route new leads to the right salesperson; on-call digest of unresolved alerts to a chat channel, with optional paging; answer common support questions with your own replies; send the rest to a person; weekly progress report from a tracker export. Nothing was created.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0,
+  "tokens": 1261,
+  "inputTokens": 1114,
+  "outputTokens": 147,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "mercury-3",
+   "ok": true,
+   "error": null,
+   "inputTokens": 1114,
+   "outputTokens": 147,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 0,
+   "costUsd": 0,
+   "costUnknown": false,
+   "latencyMs": 873,
+   "journalId": 62
+  }
+ ],
+ "builderWallMs": 989,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "none",
+  "correctRefusal": true,
+  "verified": null,
+  "oraclePass": null,
+  "runPassed": null,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

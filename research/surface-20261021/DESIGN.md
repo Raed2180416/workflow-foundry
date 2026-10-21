@@ -7,6 +7,9 @@ agent through an MCP … seamless and super intuitive to even the dumbest human 
 evidence only: nothing here is a sealed or claim-bearing result. No model was called; no file under `src/`, `policy/`, `beds/` or
 `experiments/` was changed (one proposed engine change is a patch file, §9).*
 
+*Update 2026-10-21 (BUILDER-1, [BUILDER-1.md](BUILDER-1.md)): the stub builder is replaced by a real cheap-model builder over a
+7-template, frontier-written library, measured against a one-shot baseline in hidden worlds (§8.3, §8.5). `src/` is still unchanged.*
+
 ---
 
 ## 0. The answer in one paragraph
@@ -50,8 +53,8 @@ The teardown's lessons (TEARDOWN §0) become eight rules. Each is enforced in co
  ├──────────────────────────┤         │  run  status  list  inbox             │ runs     │  tool+args+hash, uncertain,  │
  │ Dashboard (loopback page)│ HTTP    │  import  wrap                         │          │  signals, timers, state)     │
  │  inbox, flows, runs,     ├────────►│                                       │          │ Validator + strict lint      │
- │  checks, versions        │ + token │ Builders: stub (now) | Mercury 3 /    │          │ Capability registry (host-   │
- ├──────────────────────────┤         │  Haiku 5.5 via ModelPort (next)       │          │  trusted contracts)          │
+ │  checks, versions        │ + token │ Builders: stub ($0) | Haiku 5.5 /     │          │ Capability registry (host-   │
+ ├──────────────────────────┤         │  Mercury 3 over templates (BUILDER-1) │          │  trusted contracts)          │
  │ Chat (web; later)        ├────────►│ Importers: n8n (prototype), GHA, ...  │          │ verify-run, anchors          │
  └──────────────────────────┘         │ Activation ledger (CAS, human channel)│          └──────────────────────────────┘
                                       └───────────────────────────────────────┘
@@ -184,8 +187,10 @@ Screenshots of the spike page (built by `app/dashboard/browser-check.mjs`, 0 con
 conversation: code owns the turn loop and termination; each Mercury call is one typed decision (which template; fill these slots;
 which question to ask; does this answer satisfy the slot), with a JSON schema, at most 2 schema retries, then an escalation to the
 policy's class-M model (Haiku 5.5) that is logged and shown ("I asked a stronger model to check this"). Model ids come only from
-`policy/models.json`; Mercury is not in the policy yet (owner decision, §11). Construction quality of a cheap builder is the
-research question of C0/E8 (README Results), not something this surface may claim.
+`policy/models.json` (Mercury 3 is listed under `executorModels` since policy 2026-10-21.1 and served by ModelPort when a call names it).
+**Built (BUILDER-1):** `app/core/builder-model.mjs` does exactly this loop over the template library (`select` and `fill` calls; code-owned
+grounding, question policy, practice run, ≤ 3 repairs, ≤ 2 schema retries; the escalation is implemented and was off in the evaluation).
+Its measured quality on 24 messy requests is in §8.5; it is development evidence on requests the library was written to cover.
 
 **The few questions that matter** (rule U2). The builder asks a question only when a wrong default would do something the person
 would refuse: the target (who receives, which account, which channel), irreversible or paid actions, and data leaving the machine.
@@ -280,7 +285,7 @@ definition of done the person writes.
 | `node:sqlite` | required | "Runs are recorded in a local database file." |
 | Workspace | `~/.foundry` (Windows `%LOCALAPPDATA%\Foundry`), mode 0700; `FOUNDRY_HOME` overrides | where flows and records live |
 | Sandbox for code steps | bubblewrap on Linux | "No sandbox: flows with code steps are refused; everything else works." |
-| Models | none needed for templates | "No model key needed: this preview builds from templates and calls no model." |
+| Models | none needed for the stub | "No model key needed: the default builder fills templates by code and calls no model. `--builder haiku` or `--builder mercury` lets a cheap model build from the template library (Mercury needs INCEPTION_API_KEY and a token cap)." |
 | Network | loopback only; works offline | "Works offline. The dashboard listens on 127.0.0.1 only." |
 
 ### 6.3 Per platform
@@ -333,20 +338,25 @@ middle of building: the free tier has no complexity ceiling.
 | Path | What it is |
 |---|---|
 | `app/core/service.mjs` | `FoundryApp`: propose, explain, dryRun, requestApproval, decideActivation, run, status, list, inbox, decideAction; wraps the unchanged engine |
-| `app/core/builder.mjs` | **stub builder** (no model): one frontier-written template ("weekly progress report from a tracker export"), slot filling by code, the question policy, will/won't-do |
+| `app/core/builder.mjs` | **stub builder** (no model, the $0 default): one template ("weekly progress report from a tracker export"), slot filling by code, the question policy, will/won't-do |
+| `app/core/builder-model.mjs` | **model builder** (BUILDER-1): Haiku 5.5 or Mercury 3 through the journaled ModelPort picks a template or refuses, fills typed slots, proposes questions; code grounds targets, applies the question policy, validates, practises, repairs ≤ 3 rounds; same return shape |
+| `app/core/templates/*.json`, `app/core/library.mjs` | 7 frontier-written templates (weekly report, invoice chase, lead routing, support deflection, expense approval, newsletter sync, on-call digest) and the slot machinery |
+| `app/core/stand-ins.mjs`, `app/core/practice.mjs` | local stand-ins (`sheet.*`, `chat.*`, `rows.*`, `outbox.audit`) in `<workspace>/world`, and running a flow once in a fresh world |
 | `app/core/capabilities.mjs` | host capabilities: `report.tally`, `outbox.send` (live: non-idempotent, approval-gated; practice: stand-in), `outbox.check` (independent verifier re-reading what was delivered) |
 | `app/core/explain.mjs` | plain-language steps, checks, run status and failure text, from records only |
 | `app/core/ledger.mjs` | activation ledger: dry runs and approvals, compare-and-swap, human channels only |
 | `app/mcp/server.mjs` | stdio MCP server, seven tools, elicitation, person-only flag on `approve` |
 | `app/dashboard/` | loopback server (token, Host check, CSP) and page (inbox, flows, runs, run detail, versions and diffs); `browser-check.mjs` (opt-in, Chromium) |
-| `app/cli.mjs` | `start`, `mcp [--dashboard]`, `doctor`, `connect`, `approve` (real terminal only) |
+| `app/cli.mjs` | `start`, `mcp [--dashboard] [--builder stub\|haiku\|mercury]`, `doctor`, `connect`, `approve` (real terminal only) |
 | `app/importers/` | n8n importer, sample runner, acquisition script, Python parity harness |
-| `app/test/` | 19 tests: service 5, MCP and dashboard 7, importer 7 |
+| `app/test/` | 35 tests: service 5, MCP and dashboard 7, importer 7, template library 7, model builder 9 (scripted ModelPort, $0) |
+| `experiments/surface/` | BUILDER-1 harness: B0 baseline, oracle, simulated person, metrics, runner, freeze manifest, report; 8 tests (evaluator validity 5, harness 3) |
 
 ### 8.2 Run it
 
 ```sh
-node --test --test-concurrency=1 app/test/*.test.mjs        # 19 tests, about 6 s, $0
+nice -n 15 node --test --test-concurrency=1 app/test/<file>.test.mjs   # one file at a time; 35 app tests + 8 harness tests, $0
+node app/cli.mjs mcp --builder haiku --workspace /tmp/fws     # the model builder (Haiku 5.5 via the claude CLI; journal in the workspace)
 node app/cli.mjs doctor
 node app/cli.mjs start --workspace /tmp/fws                  # dashboard + connect lines
 claude mcp add --transport stdio foundry -- node "$PWD/app/cli.mjs" mcp --dashboard --workspace /tmp/fws
@@ -359,7 +369,14 @@ node app/dashboard/browser-check.mjs /tmp/shots              # optional, needs P
 
 | Measure | Result | Baseline / note |
 |---|---|---|
-| App tests | **19/19 pass** (`node --test --test-concurrency=1 app/test/*.test.mjs`, about 6 s) | — |
+| App tests | **35/35 pass** (5 files, one at a time), plus 8/8 BUILDER-1 harness tests | — |
+| **Model builder, hidden-world verified** (BUILDER-1, 21 messy requests a template covers, preregistered, K = 1) | **Haiku 5.5: 18/21; Mercury 3: 18/21** | **one-shot Haiku baseline (schema + capabilities → workflow JSON): 5/21**; reference slots 21/21 |
+| "None fits" refusals (3 requests no template covers) | 3/3 for all three arms | — |
+| Over-reach traps avoided (5) | Haiku 5/5, Mercury 5/5 | baseline 4/5 (auto-answered an urgent complaint) |
+| Required questions asked (9) / unnecessary questions | Haiku 7/9 / 3; Mercury 6/9 / 2 | baseline 3/9 / 2 |
+| Builder cost and time per request | Haiku $0.0011, 7.8K tokens, 7.7 s median; Mercury $0 listed, 4.4K tokens, 3.6 s | baseline $0.0047, 23.7K tokens, 21 s |
+| Person actions to first verified run | mean 3.5 (Haiku), of which 1.3 answers + turn-on, 2.2 approvals of outside actions | baseline 2.8 on its 5 easy verified cases |
+| After four post-hoc fixes (same cases: training evidence) | Haiku 21/21, Mercury 21/21, 9/9 questions, 5/5 traps | — |
 | Weekly-report journey, request to first verified run | **3 person actions** (answer the recipient question, turn it on, allow the send); 2 if the request names the recipient. Agent tool calls: 4–5 | no measured baseline (products in TEARDOWN not run) |
 | Same journey, checks | 5/5 checks pass on the live run (4 acceptance + 1 independent verifier re-reading the outbox); run verdict `pass`; record verified (22 events) | — |
 | Bypass attempts refused | **10/10**: approval before a passing practice run; run before approval; activation by a non-human channel (3 variants); a second decision on a decided request; action approval by a non-human channel; run of a head that changed without approval; a v1 practice run reused for v2; stringified input over MCP; missing dashboard key; a foreign Host header | each a test |
@@ -377,19 +394,31 @@ that an MCP client can drive end to end; a client with elicitation lets the pers
 can read the real hash-chained record read-only and explain it in plain words; an n8n importer can give honest compile verdicts and a
 wrap path on real third-party files.
 
-**Does not prove:** that anyone finds it intuitive (no user has seen it); that a cheap model can build flows (the builder is a stub
-with one template; that is the C0/E8 research question); that imported flows behave like the originals (0 executed); that approvals
+**Does not prove:** that anyone finds it intuitive (no user has seen it); that a cheap model can build flows for requests outside the
+7 templates, or that the library covers what people ask for (BUILDER-1's cases were written by the template author; §8.5); that imported flows behave like the originals (0 executed); that approvals
 are safe against an agent with a shell (§6.4); anything on Windows or macOS (Linux only); notification of waiting approvals; real
 delivery (the outbox is a file). Not covered by a test: `mcp --dashboard` opening the person's browser (the opener is a
 platform command; tests run without it), `start`, and the terminal `approve` command (it refuses without a real terminal).
 
 ---
 
+### 8.5 BUILDER-1 in one paragraph ([BUILDER-1.md](BUILDER-1.md))
+
+Preregistered ([PREREG-BUILDER-1.md](PREREG-BUILDER-1.md); eval set frozen by sha256 `0fd70ccd…` before the first paid call), K = 1,
+24 hand-written messy requests (3 per template, 3 that no template fits), each judged in a hidden world by an oracle validated at $0 (the
+reference slots pass 21/21, all 23 bad controls fail). The template builder verified 18/21 with Haiku and 18/21 with Mercury 3; the same
+Haiku writing the workflow JSON in one shot verified 5/21 (all 21 valid, but missing the template's invariants: chasing a 3-day-old invoice,
+auto-answering an urgent ticket, reading an output sheet that does not exist, dropping a target it never asked for). Every template-arm
+failure was a defect in the builder's code or a card (a guard that rejected "under 200" as 199.99; a dropped routing question; a card hiding
+the report-only mode; a 600-token select allowance), fixed post hoc (21/21 for both, training evidence). The practice/repair loop ran 0
+repairs. The claude CLI route exposed the account's own e-mail to Haiku: the grounding guard caught it; the baseline e-mailed a summary to
+it. Spend: Haiku $0.164, Mercury 211,987 tokens.
+
 ## 9. What is still missing, and proposed engine changes
 
 **Missing, in the order the journeys need them:**
-1. A real builder behind `buildFromIntent`: Mercury 3 / Haiku 5.5 through `ModelPort` with token caps and logged escalation, over a
-   template library (frontier-written), measured against the stub and a single-call baseline.
+1. ~~A real builder behind `buildFromIntent`~~ **built (BUILDER-1)**. Still missing: a library that covers real requests (measured on cases
+   from another author or real users), K ≥ 3, and repair on harder slots where the practice loop can earn its keep.
 2. Notifications for "waiting for you" (desktop, e-mail, Slack, phone) and standing approvals ("send this report to this one
    address, at most once per run, after the checks pass" without asking every week), which needs an engine change: approvals today
    bind exact arguments.
@@ -406,7 +435,10 @@ platform command; tests run without it), `start`, and the terminal `approve` com
   Today the spike decides first, applies second, and marks the approval `superseded` if the apply fails; a crash between the two
   leaves an approved request with no head change, which the next approval attempt sees.
 - Record the approval channel and principal in the `approval.decided` chain event.
-- Standing approvals with a bound (recipient, count per run, checks passed) as a capability-level policy.
+- Standing approvals with a bound (recipient, count per run, checks passed) as a capability-level policy. BUILDER-1 measured the need:
+  approving each outside action is 62% of the person's actions to a first verified run.
+- The claude-cli provider lets account identity (the account e-mail) reach the model; strip it or declare it in the policy (BUILDER-1 §3).
+- Retry a `MODEL_TRUNCATED` reply with a larger allowance in ModelPort policy rather than in each caller.
 
 ---
 

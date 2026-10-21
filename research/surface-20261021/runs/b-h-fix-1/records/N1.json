@@ -1,0 +1,90 @@
+{
+ "arm": "B-H",
+ "case": "N1",
+ "expected": "none",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": {
+    "template": "none",
+    "reason": "The main request is paying contractors from the business account, which is moving money, and no template does payments; the closest (invoice-chase, expense-approval) only send reminders or approvals and do not pay anyone.",
+    "notCovered": [
+     "Paying contractors from the business account on a weekly schedule",
+     "Calculating amounts owed from the timesheet sheet"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "I cannot build that with the flows I know. (The main request is paying contractors from the business account, which is moving money, and no template does payments; the closest (invoice-chase, expense-approval) only send reminders or approvals and do not pay anyone.) I can build: sync the newsletter list from the crm and report the differences; approve small expenses automatically; send bigger ones to an approver; chase unpaid invoices with a reminder cadence (dunning); route new leads to the right salesperson; on-call digest of unresolved alerts to a chat channel, with optional paging; answer common support questions with your own replies; send the rest to a person; weekly progress report from a tracker export. Nothing was created.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.000313,
+  "tokens": 2655,
+  "inputTokens": 2,
+  "outputTokens": 198,
+  "cacheReadTokens": 812,
+  "cacheWriteTokens": 1643,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 198,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1643,
+   "costUsd": 0.000312695,
+   "costUnknown": false,
+   "latencyMs": 2291,
+   "journalId": 56
+  }
+ ],
+ "builderWallMs": 2293,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "none",
+  "correctRefusal": true,
+  "verified": null,
+  "oraclePass": null,
+  "runPassed": null,
+  "reasons": [],
+  "trap": {
+   "violated": false,
+   "hits": []
+  }
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

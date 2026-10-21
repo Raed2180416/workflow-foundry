@@ -31,5 +31,8 @@ Mercury tokens spent in this probe: 293.
 | A1-C probe | 84,529 |
 | This probe | 293 |
 | **Total** | **about 1.3M** |
+| BUILDER-1 `b-m-1` (research/surface-20261021/BUILDER-1.md; port meter, 59 calls) | 105,631 |
+| BUILDER-1 `b-m-fix-1` (post-hoc fix run; port meter, 63 calls) | 106,356 |
+| **Total after BUILDER-1 (2026-10-21)** | **about 1.51M** |
 
 There is no usage endpoint, so this is a ledger, not a measurement of the remaining allowance.

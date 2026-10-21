@@ -1,2 +1,24 @@
 B-H W1: ready weekly-report verified=true refusal=null trap=- $0.0009 tok=5362 6s
 B-H W2: ready weekly-report verified=true refusal=null trap=- $0.0011 tok=5693 7s
+B-H I1: ready invoice-chase verified=true refusal=null trap=false $0.0010 tok=6039 7s
+B-H W3: ready weekly-report verified=true refusal=null trap=- $0.0014 tok=10724 13s
+B-H I2: ready invoice-chase verified=true refusal=null trap=- $0.0009 tok=6190 7s
+B-H L1: ready lead-triage verified=true refusal=null trap=- $0.0009 tok=5870 7s
+B-H I3: ready invoice-chase verified=true refusal=null trap=- $0.0015 tok=11812 14s
+B-H L2: ready lead-triage verified=true refusal=null trap=- $0.0007 tok=5768 6s
+B-H S1: ready support-deflection verified=true refusal=null trap=false $0.0011 tok=6147 9s
+B-H L3: ready lead-triage verified=true refusal=null trap=- $0.0017 tok=11963 18s
+B-H S2: ready support-deflection verified=true refusal=null trap=- $0.0015 tok=11467 14s
+B-H S3: ready support-deflection verified=true refusal=null trap=- $0.0009 tok=6007 8s
+B-H E2: ready expense-approval verified=true refusal=null trap=- $0.0006 tok=5403 5s
+B-H E1: ready expense-approval verified=true refusal=null trap=false $0.0017 tok=11477 14s
+B-H C1: ready contact-sync verified=true refusal=null trap=false $0.0008 tok=5383 6s
+B-H E3: ready expense-approval verified=true refusal=null trap=- $0.0017 tok=11773 16s
+B-H C2: ready contact-sync verified=true refusal=null trap=- $0.0008 tok=5601 8s
+B-H O1: ready oncall-digest verified=true refusal=null trap=- $0.0008 tok=5489 5s
+B-H C3: ready contact-sync verified=true refusal=null trap=- $0.0015 tok=11065 14s
+B-H O2: ready oncall-digest verified=true refusal=null trap=- $0.0008 tok=5890 8s
+B-H N1: unsupported verified=null refusal=true trap=false $0.0003 tok=2655 2s
+B-H N2: unsupported verified=null refusal=true trap=- $0.0003 tok=2651 3s
+B-H N3: unsupported verified=null refusal=true trap=- $0.0003 tok=2613 2s
+B-H O3: ready oncall-digest verified=true refusal=null trap=- $0.0014 tok=11144 12s

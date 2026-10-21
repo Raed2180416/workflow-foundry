@@ -1,0 +1,88 @@
+{
+ "arm": "B-H",
+ "case": "N3",
+ "expected": "none",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": {
+    "template": "none",
+    "reason": "Checking competitor websites for price changes requires reading websites, which no template does; none of the templates covers web monitoring.",
+    "notCovered": [
+     "Daily checking of three competitor websites",
+     "Detecting price drops on web pages",
+     "Notifying the user about price changes"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "I cannot build that with the flows I know. (Checking competitor websites for price changes requires reading websites, which no template does; none of the templates covers web monitoring.) I can build: sync the newsletter list from the crm and report the differences; approve small expenses automatically; send bigger ones to an approver; chase unpaid invoices with a reminder cadence (dunning); route new leads to the right salesperson; on-call digest of unresolved alerts to a chat channel, with optional paging; answer common support questions with your own replies; send the rest to a person; weekly progress report from a tracker export. Nothing was created.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.000298,
+  "tokens": 2613,
+  "inputTokens": 2,
+  "outputTokens": 172,
+  "cacheReadTokens": 812,
+  "cacheWriteTokens": 1627,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 172,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1627,
+   "costUsd": 0.000297695,
+   "costUnknown": false,
+   "latencyMs": 1818,
+   "journalId": 60
+  }
+ ],
+ "builderWallMs": 1819,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "none",
+  "correctRefusal": true,
+  "verified": null,
+  "oraclePass": null,
+  "runPassed": null,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

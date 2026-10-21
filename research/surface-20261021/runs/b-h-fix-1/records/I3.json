@@ -1,0 +1,829 @@
+{
+ "arm": "B-H",
+ "case": "I3",
+ "expected": "invoice-chase",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": "invoice-chase",
+   "selection": {
+    "template": "invoice-chase",
+    "reason": "The request is to send reminders for overdue unpaid invoices on a escalating cadence (7/21/45 days) plus a summary to the user, which matches invoice-chase's dunning purpose exactly.",
+    "notCovered": [
+     "Exact 7/21/45-day cadence may need to be confirmed against the template's configurable reminder schedule",
+     "The summary to the user is only covered if the template's optional self-summary is enabled"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "summaryTo",
+     "slot": "summaryTo",
+     "question": "What e-mail address should the summary be sent to?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": "invoice-chase",
+   "selection": {
+    "template": "invoice-chase",
+    "reason": "The request is to send escalating reminder e-mails to customers with overdue invoices at 7/21/45-day stages, which is the invoice-chase dunning template, and the summary to ops@quill-and-ink.com fits its optional summary-to-self feature.",
+    "notCovered": [
+     "Specific day thresholds (7/21/45) may need to be mapped to the template's reminder cadence settings"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "summaryTo",
+   "slot": "summaryTo",
+   "question": "What e-mail address should the summary be sent to?",
+   "matched": [
+    "summaryTo"
+   ],
+   "answer": "ops@quill-and-ink.com"
+  }
+ ],
+ "modelQuestions": [
+  {
+   "turn": 0,
+   "slot": "summaryTo",
+   "question": "What e-mail address should the summary be sent to?"
+  }
+ ],
+ "answers": {
+  "summaryTo": "ops@quill-and-ink.com"
+ },
+ "cost": {
+  "usd": 0.001533,
+  "tokens": 11812,
+  "inputTokens": 8,
+  "outputTokens": 1564,
+  "cacheReadTokens": 4608,
+  "cacheWriteTokens": 5632,
+  "calls": 4,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 229,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1636,
+   "costUsd": 0.00032732000000000003,
+   "costUnknown": false,
+   "latencyMs": 3271,
+   "journalId": 13
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 625,
+   "cacheReadTokens": 1492,
+   "cacheWriteTokens": 1147,
+   "costUsd": 0.00047099500000000004,
+   "costUnknown": false,
+   "latencyMs": 4552,
+   "journalId": 15
+  },
+  {
+   "turn": 1,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 219,
+   "cacheReadTokens": 812,
+   "cacheWriteTokens": 1669,
+   "costUsd": 0.00032644499999999997,
+   "costUnknown": false,
+   "latencyMs": 2722,
+   "journalId": 17
+  },
+  {
+   "turn": 1,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 491,
+   "cacheReadTokens": 1492,
+   "cacheWriteTokens": 1180,
+   "costUsd": 0.00040812000000000004,
+   "costUnknown": false,
+   "latencyMs": 3510,
+   "journalId": 19
+  }
+ ],
+ "builderWallMs": 14272,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "invoice-chase",
+ "slots": {
+  "firstAfterDays": 7,
+  "secondAfterDays": 21,
+  "finalAfterDays": 45,
+  "sendSummary": true,
+  "summaryTo": "ops@quill-and-ink.com",
+  "signature": "Accounts team"
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "invoice-chase",
+  "version": 1,
+  "title": "Invoice reminders",
+  "goal": "Each run, e-mail every customer whose open invoice is overdue the reminder its age calls for (a friendly reminder once an invoice is 7 days late, a second reminder at 21 days, a final notice at 45 days), never twice for the same stage, after a person approves each send.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The invoices sheet holds one row per invoice with invoice, customer, email, amount, due (YYYY-MM-DD) and status (open, paid or disputed)",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "Chasing a customer who already paid or disputes the invoice",
+    "Sending the same reminder twice",
+    "Sending a reminder to the wrong address"
+   ],
+   "successCriteria": [
+    "Every overdue open invoice got the reminder its age calls for",
+    "This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox)"
+   ],
+   "unsupported": [
+    "Payments",
+    "Changing the invoices sheet",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 4000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "state": {
+   "reminded": {
+    "type": "set",
+    "writer": "mark",
+    "maxItems": 100000,
+    "ttlDays": 400,
+    "description": "invoice|stage pairs already reminded"
+   }
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the invoices sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "invoices"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep open invoices only (not paid, not disputed)",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "field": "email",
+       "op": "exists"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "open"
+    ],
+    "description": "Work out how many days late each open invoice is",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open.rows"
+     },
+     "field": "due",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "days",
+     "as": "daysLate"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "staged",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Decide which reminder each invoice is due for",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "rules": [
+      {
+       "field": "daysLate",
+       "op": "gte",
+       "value": 45,
+       "set": {
+        "stage": "final notice",
+        "subjectPrefix": "Final notice",
+        "opening": "This is a final notice."
+       }
+      },
+      {
+       "field": "daysLate",
+       "op": "gte",
+       "value": 21,
+       "set": {
+        "stage": "second reminder",
+        "subjectPrefix": "Second reminder",
+        "opening": "This is our second reminder."
+       }
+      },
+      {
+       "field": "daysLate",
+       "op": "gte",
+       "value": 7,
+       "set": {
+        "stage": "reminder",
+        "subjectPrefix": "Friendly reminder",
+        "opening": "Just a friendly reminder."
+       }
+      }
+     ],
+     "otherwise": {
+      "stage": "none",
+      "subjectPrefix": "",
+      "opening": ""
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "due",
+    "kind": "task",
+    "needs": [
+     "staged"
+    ],
+    "description": "Keep the invoices due for a reminder",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.staged.rows"
+     },
+     "where": [
+      {
+       "field": "stage",
+       "op": "ne",
+       "value": "none"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "remind",
+    "kind": "map",
+    "needs": [
+     "due"
+    ],
+    "description": "Remind each customer once per stage",
+    "items": {
+     "$ref": "nodes.due.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "plan",
+       "kind": "task",
+       "needs": [],
+       "description": "Note who this reminder is for",
+       "tool": "core.identity",
+       "args": {
+        "to": {
+         "$ref": "item.email"
+        },
+        "invoice": {
+         "$ref": "item.invoice"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "key",
+       "kind": "task",
+       "needs": [],
+       "description": "Name this invoice and stage",
+       "tool": "core.template",
+       "args": {
+        "text": "{{invoice}}|{{stage}}",
+        "variables": {
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "stage": {
+          "$ref": "item.stage"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "mark",
+       "kind": "state",
+       "needs": [
+        "key"
+       ],
+       "description": "Remember this reminder; skip it if it was sent before",
+       "slot": "reminded",
+       "op": "add",
+       "key": {
+        "$ref": "nodes.key.text"
+       }
+      },
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the reminder",
+       "tool": "core.template",
+       "args": {
+        "text": "Hello {{customer}},\n\n{{opening}} Invoice {{invoice}} for {{amount}} was due on {{due}} ({{days}} days ago) and we have not received payment yet.\n\nIf you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out.\n\nThank you,\nAccounts team",
+        "variables": {
+         "customer": {
+          "$ref": "item.customer"
+         },
+         "opening": {
+          "$ref": "item.opening"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "due": {
+          "$ref": "item.due"
+         },
+         "days": {
+          "$ref": "item.daysLate"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject line",
+       "tool": "core.template",
+       "args": {
+        "text": "{{prefix}}: invoice {{invoice}}",
+        "variables": {
+         "prefix": {
+          "$ref": "item.subjectPrefix"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "mark",
+        "compose",
+        "subject",
+        "plan"
+       ],
+       "when": {
+        "op": "eq",
+        "left": {
+         "$ref": "nodes.mark.added"
+        },
+        "right": true
+       },
+       "description": "E-mail the reminder to the customer (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "nodes.plan.to"
+        },
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "any",
+       "conditions": [
+        {
+         "op": "eq",
+         "left": {
+          "$ref": "nodes.mark.added"
+         },
+         "right": false
+        },
+        {
+         "op": "eq",
+         "left": {
+          "$ref": "nodes.send.delivered",
+          "default": false
+         },
+         "right": true
+        }
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "id": "fresh",
+    "kind": "task",
+    "needs": [
+     "remind"
+    ],
+    "description": "List the reminders this run actually sent",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.remind.items"
+     },
+     "where": [
+      {
+       "field": "mark.added",
+       "op": "eq",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "expected",
+    "kind": "task",
+    "needs": [
+     "fresh"
+    ],
+    "description": "Who should have received a reminder this run",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.fresh.rows"
+     },
+     "field": "plan.to"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "sumLines",
+    "kind": "task",
+    "needs": [
+     "due"
+    ],
+    "description": "List the invoices due for a reminder",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.due.rows"
+     },
+     "line": "- {{invoice}} {{customer}}: {{amount}}, {{daysLate}} days late ({{stage}})",
+     "empty": "- none"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "sumText",
+    "kind": "task",
+    "needs": [
+     "sumLines",
+     "expected"
+    ],
+    "description": "Write the summary",
+    "tool": "core.template",
+    "args": {
+     "text": "Unpaid invoices due for a reminder ({{count}}):\n{{lines}}\n\nNew reminders sent this run: {{sent}}. Paid and disputed invoices were left alone.",
+     "variables": {
+      "count": {
+       "$ref": "nodes.sumLines.count"
+      },
+      "lines": {
+       "$ref": "nodes.sumLines.text"
+      },
+      "sent": {
+       "$ref": "nodes.expected.count"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "sendSummary",
+    "kind": "task",
+    "needs": [
+     "sumText"
+    ],
+    "description": "E-mail the summary to ops@quill-and-ink.com (asks you first)",
+    "tool": "outbox.send",
+    "args": {
+     "to": "ops@quill-and-ink.com",
+     "subject": "Invoice reminders: summary",
+     "body": {
+      "$ref": "nodes.sumText.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "expected",
+     "sendSummary"
+    ],
+    "description": "Re-read the outbox: exactly the planned e-mails went out this run, each intact",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.expected.items"
+      },
+      [
+       "ops@quill-and-ink.com"
+      ]
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.remind"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.remind.count"
+    },
+    "right": {
+     "$ref": "nodes.due.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.sendSummary.delivered"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P04 draft -> check -> deliver",
+    "research/business-20261021/OPEN-CORE-AND-INVARIANTS.md (dunning cadence as a clock obligation)",
+    "research/intent-20261021/corpus-prior.md (idempotency 8% of business automations)",
+    "app/core/templates/invoice-chase.json sha256 5333af87fefe7f248573ddf4f040aea9456693557c0819e4819178db4396f737"
+   ],
+   "tags": [
+    "template:invoice-chase",
+    "builder:model-template-builder/1 (claude-haiku-5-5; 7 templates 9c0b7e265cb5)",
+    "slots:{\"finalAfterDays\":45,\"firstAfterDays\":7,\"secondAfterDays\":21,\"sendSummary\":true,\"signature\":\"Accounts team\",\"summaryTo\":\"ops@quill-and-ink.com\"}"
+   ],
+   "rationale": "Frontier-written template \"invoice-chase\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (claude-haiku-5-5; 7 templates 9c0b7e265cb5); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 5,
+   "approved": 5,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "studio@larkyoga.example",
+     "subject": "Second reminder: invoice QI-4",
+     "body": "Hello Lark Yoga,\n\nThis is our second reminder. Invoice QI-4 for 180 was due on 2026-09-10 (40 days ago) and we have not received payment yet.\n\nIf you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out.\n\nThank you,\nAccounts team"
+    },
+    {
+     "to": "ap@northpier.example",
+     "subject": "Friendly reminder: invoice QI-1",
+     "body": "Hello North Pier Hotel,\n\nJust a friendly reminder. Invoice QI-1 for 300 was due on 2026-10-10 (10 days ago) and we have not received payment yet.\n\nIf you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out.\n\nThank you,\nAccounts team"
+    },
+    {
+     "to": "billing@atlasfreight.example",
+     "subject": "Final notice: invoice QI-3",
+     "body": "Hello Atlas Freight,\n\nThis is a final notice. Invoice QI-3 for 2400 was due on 2026-09-01 (49 days ago) and we have not received payment yet.\n\nIf you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out.\n\nThank you,\nAccounts team"
+    },
+    {
+     "to": "ops@quill-and-ink.com",
+     "subject": "Invoice reminders: summary",
+     "body": "Unpaid invoices due for a reminder (4):\n- QI-1 North Pier Hotel: 300, 10 days late (reminder)\n- QI-2 Wren Florals: 145, 16 days late (reminder)\n- QI-3 Atlas Freight: 2400, 49 days late (final notice)\n- QI-4 Lark Yoga: 180, 40 days late (second reminder)\n\nNew reminders sent this run: 4. Paid and disputed invoices were left alone."
+    },
+    {
+     "to": "wren@wrenflorals.example",
+     "subject": "Friendly reminder: invoice QI-2",
+     "body": "Hello Wren Florals,\n\nJust a friendly reminder. Invoice QI-2 for 145 was due on 2026-10-04 (16 days ago) and we have not received payment yet.\n\nIf you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out.\n\nThank you,\nAccounts team"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b-h-fix-1/worlds/foundry-live-c34el7",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every overdue open invoice got the reminder its age calls for",
+    "exact": "the count of “Remind each customer once per stage” equals the count of “Keep the invoices due for a reminder”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "This run delivered exactly the planned reminders, each intact (checked by re-reading the outbox)",
+    "exact": "the pass of “Re-read the outbox: exactly the planned e-mails went out this run, each intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "the delivered of “E-mail the summary to ops@quill-and-ink.com (asks you first)” equals true",
+    "exact": "the delivered of “E-mail the summary to ops@quill-and-ink.com (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Re-read the outbox: exactly the planned e-mails went out this run, each intact",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 1,
+  "personActions": 7,
+  "personActionsBeforeRun": 2,
+  "slotChecks": 5,
+  "slotChecksOk": 5
+ }
+}

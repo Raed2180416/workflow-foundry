@@ -35,3 +35,6 @@ beds/ebed/e8/.mutants/
 # SOP-Bench (CC BY-NC 4.0): per-row results carry upstream-derived values; kept outside git (aggregates only)
 research/sopbench-20261021/runs/**/results.jsonl
 research/sopbench-20261021/runs/**/rows/
+
+# Model journals can carry host account identity (claude -p puts the session account e-mail in context); keep them outside git.
+research/surface-20261021/runs/**/journal.sqlite*

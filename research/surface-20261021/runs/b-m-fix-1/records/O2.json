@@ -1,0 +1,636 @@
+{
+ "arm": "B-M",
+ "case": "O2",
+ "expected": "oncall-digest",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": "oncall-digest",
+   "selection": {
+    "template": "oncall-digest",
+    "reason": "The request is to post a summary of recent unresolved alerts to a chat channel, with optional email paging for unacknowledged critical alerts, which matches the oncall-digest template.",
+    "notCovered": []
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0,
+  "tokens": 3173,
+  "inputTokens": 1401,
+  "outputTokens": 762,
+  "cacheReadTokens": 1010,
+  "cacheWriteTokens": 0,
+  "calls": 2,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "mercury-3",
+   "ok": true,
+   "error": null,
+   "inputTokens": 1140,
+   "outputTokens": 361,
+   "cacheReadTokens": 9,
+   "cacheWriteTokens": 0,
+   "costUsd": 0,
+   "costUnknown": false,
+   "latencyMs": 1166,
+   "journalId": 55
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "mercury-3",
+   "ok": true,
+   "error": null,
+   "inputTokens": 261,
+   "outputTokens": 401,
+   "cacheReadTokens": 1001,
+   "cacheWriteTokens": 0,
+   "costUsd": 0,
+   "costUnknown": false,
+   "latencyMs": 1288,
+   "journalId": 57
+  }
+ ],
+ "builderWallMs": 2564,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "oncall-digest",
+ "slots": {
+  "channel": "#oncall",
+  "windowHours": 12,
+  "minSeverity": "critical",
+  "page": true,
+  "pageTo": "pager@fennec.dev"
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "oncall-digest",
+  "version": 1,
+  "title": "On-call digest for #oncall",
+  "goal": "Each run, post one digest of the unresolved alerts of the last 12 hours (critical and above) to #oncall after a person approves the post.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The alerts sheet holds one row per alert with id, at, service, severity, message, acknowledged and resolved",
+    "The channel is a local file standing in for chat and the outbox stands in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "Posting to the wrong channel",
+    "Missing a critical alert",
+    "Paging the wrong person or paging for nothing"
+   ],
+   "successCriteria": [
+    "One digest was posted to the channel you named",
+    "This run left exactly the planned post and e-mails, each intact (checked by re-reading them)"
+   ],
+   "unsupported": [
+    "Fixing anything",
+    "Phone or SMS paging",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the alerts sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "alerts"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Work out how many hours ago each alert was raised",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "field": "at",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "hours",
+     "as": "hoursAgo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "recent",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Keep unresolved alerts in the window at the chosen severity or above",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "hoursAgo",
+       "op": "lte",
+       "value": 12
+      },
+      {
+       "field": "hoursAgo",
+       "op": "gte",
+       "value": 0
+      },
+      {
+       "field": "resolved",
+       "op": "ne",
+       "value": true
+      },
+      {
+       "field": "severity",
+       "op": "in",
+       "value": [
+        "critical"
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "lines",
+    "kind": "task",
+    "needs": [
+     "recent"
+    ],
+    "description": "List the alerts",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recent.rows"
+     },
+     "line": "- [{{severity}}] {{service}}: {{message}} (alert {{id}}, {{hoursAgo}}h ago, acknowledged: {{acknowledged}})",
+     "empty": "- nothing unresolved. A quiet shift."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "digest",
+    "kind": "task",
+    "needs": [
+     "lines"
+    ],
+    "description": "Write the digest",
+    "tool": "core.template",
+    "args": {
+     "text": "On-call digest: {{n}} unresolved alert(s) in the last 12 hours (critical and above)\n{{lines}}",
+     "variables": {
+      "n": {
+       "$ref": "nodes.lines.count"
+      },
+      "lines": {
+       "$ref": "nodes.lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "post",
+    "kind": "task",
+    "needs": [
+     "digest"
+    ],
+    "description": "Post the digest to #oncall (asks you first)",
+    "tool": "chat.post",
+    "args": {
+     "channel": "#oncall",
+     "text": {
+      "$ref": "nodes.digest.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "critical",
+    "kind": "task",
+    "needs": [
+     "recent"
+    ],
+    "description": "Critical alerts nobody acknowledged",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.recent.rows"
+     },
+     "where": [
+      {
+       "field": "severity",
+       "op": "eq",
+       "value": "critical"
+      },
+      {
+       "field": "acknowledged",
+       "op": "ne",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pages",
+    "kind": "map",
+    "needs": [
+     "critical",
+     "post"
+    ],
+    "description": "Page pager@fennec.dev about each one",
+    "items": {
+     "$ref": "nodes.critical.rows"
+    },
+    "maxItems": 200,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the page",
+       "tool": "core.template",
+       "args": {
+        "text": "CRITICAL alert {{id}} on {{service}}: {{message}}\nRaised {{hours}}h ago and not acknowledged.",
+        "variables": {
+         "id": {
+          "$ref": "item.id"
+         },
+         "service": {
+          "$ref": "item.service"
+         },
+         "message": {
+          "$ref": "item.message",
+          "default": ""
+         },
+         "hours": {
+          "$ref": "item.hoursAgo"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "subject",
+       "kind": "task",
+       "needs": [],
+       "description": "Write the subject",
+       "tool": "core.template",
+       "args": {
+        "text": "Page: {{service}} critical (alert {{id}})",
+        "variables": {
+         "service": {
+          "$ref": "item.service"
+         },
+         "id": {
+          "$ref": "item.id"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose",
+        "subject"
+       ],
+       "description": "E-mail the page (asks you first)",
+       "tool": "outbox.send",
+       "args": {
+        "to": "pager@fennec.dev",
+        "subject": {
+         "$ref": "nodes.subject.text"
+        },
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "pageList",
+    "kind": "task",
+    "needs": [
+     "critical"
+    ],
+    "description": "One expected page per critical alert",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.critical.rows"
+     },
+     "fields": [
+      "id"
+     ],
+     "set": {
+      "to": "pager@fennec.dev"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pageExpected",
+    "kind": "task",
+    "needs": [
+     "pageList"
+    ],
+    "description": "Who should have been paged",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.pageList.rows"
+     },
+     "field": "to"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "chatAudit",
+    "kind": "verify",
+    "needs": [
+     "post"
+    ],
+    "description": "Re-read the channel: exactly one digest from this run, intact",
+    "method": "capability",
+    "tool": "chat.audit",
+    "args": {
+     "channel": "#oncall",
+     "posts": 1
+    },
+    "subject": {
+     "$ref": "nodes.post"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "mailAudit",
+    "kind": "verify",
+    "needs": [
+     "pages",
+     "pageExpected",
+     "post"
+    ],
+    "description": "Re-read the outbox: only the planned pages went out (none when paging is off)",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      {
+       "$ref": "nodes.pageExpected.items"
+      }
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.post"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.post.posted"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.chatAudit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.mailAudit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.pages.count"
+    },
+    "right": {
+     "$ref": "nodes.critical.count"
+    }
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "experiments/library/cards/catalog.json P01 linear pipeline, P04 draft -> check -> deliver",
+    "research/intent-20261021/corpus-prior.md (messaging automations: schedules 44%, failure notification 15%)",
+    "app/core/templates/oncall-digest.json sha256 afa75d3e3383ace11cd449670ddd50672249841a86722860e8b6f293b7930486"
+   ],
+   "tags": [
+    "template:oncall-digest",
+    "builder:model-template-builder/1 (mercury-3; 7 templates 9c0b7e265cb5)",
+    "slots:{\"channel\":\"#oncall\",\"minSeverity\":\"critical\",\"page\":true,\"pageTo\":\"pager@fennec.dev\",\"windowHours\":12}"
+   ],
+   "rationale": "Frontier-written template \"oncall-digest\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (mercury-3; 7 templates 9c0b7e265cb5); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 2,
+   "approved": 2,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "pager@fennec.dev",
+     "subject": "Page: payments critical (alert B-1)",
+     "body": "CRITICAL alert B-1 on payments: Card processor timeouts\nRaised 3h ago and not acknowledged."
+    }
+   ],
+   "chat": {
+    "#oncall": [
+     "On-call digest: 2 unresolved alert(s) in the last 12 hours (critical and above)\n- [critical] payments: Card processor timeouts (alert B-1, 3h ago, acknowledged: false)\n- [critical] auth: Login latency p99 over 5s (alert B-2, 6h ago, acknowledged: true)"
+    ]
+   },
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b-m-fix-1/worlds/foundry-live-KxMRCJ",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "One digest was posted to the channel you named",
+    "exact": "the posted of “Post the digest to #oncall (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "This run left exactly the planned post and e-mails, each intact (checked by re-reading them)",
+    "exact": "the pass of “Re-read the channel: exactly one digest from this run, intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "the pass of “Re-read the outbox: only the planned pages went out (none when paging is off)” equals true",
+    "exact": "the pass of “Re-read the outbox: only the planned pages went out (none when paging is off)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "the count of “Page pager@fennec.dev about each one” equals the count of “Critical alerts nobody acknowledged”",
+    "exact": "the count of “Page pager@fennec.dev about each one” equals the count of “Critical alerts nobody acknowledged”",
+    "passed": true
+   },
+   {
+    "id": "verify.chatAudit",
+    "plain": "Re-read the channel: exactly one digest from this run, intact",
+    "exact": "chat.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.mailAudit",
+    "plain": "Re-read the outbox: only the planned pages went out (none when paging is off)",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 3,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 5,
+  "slotChecksOk": 5
+ }
+}

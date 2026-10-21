@@ -12,7 +12,7 @@
     "template": "weekly-report",
     "reason": "The main ask is a recurring summary of what the Mobile squad finished, plus open and blocked items, taken from their task tracker export and e-mailed to one person, which is exactly what weekly-report does.",
     "notCovered": [
-     "Recipient is ambiguous: the request says 'send it to me' but gives tom@ortega-apps.co, while the account email is randstuff904@gmail.com. Confirm the intended address before setup.",
+     "Recipient is ambiguous: the request says 'send it to me' but gives tom@ortega-apps.co, while the account email is <account-email-redacted>. Confirm the intended address before setup.",
      "Assumes the squad's tracker data is available as an export file; live reading of Jira, Linear, or Asana is not supported."
     ]
    },

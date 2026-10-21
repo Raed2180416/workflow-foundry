@@ -69,7 +69,7 @@
     "Only invoices with status open are reminded; disputed and paid invoices are skipped.",
     "A reminder fires when days overdue exactly equals 7, 21 or 45, so the flow must run once per day.",
     "Recipients are the email column of the invoices sheet.",
-    "The summary goes to the user's own address, randstuff904@gmail.com, and needs approval before dispatch."
+    "The summary goes to the user's own address, <account-email-redacted>, and needs approval before dispatch."
    ],
    "risks": [
     "If a scheduled run is skipped, invoices that reach a threshold on that day get no reminder.",
@@ -476,7 +476,7 @@
     "description": "Send the run summary to the user (asks a person first).",
     "tool": "outbox.send",
     "args": {
-     "to": "randstuff904@gmail.com",
+     "to": "<account-email-redacted>",
      "subject": "Overdue invoice reminders summary",
      "body": {
       "$ref": "nodes.summary_text.text"
@@ -552,7 +552,7 @@
   "effects": {
    "outbox": [
     {
-     "to": "randstuff904@gmail.com",
+     "to": "<account-email-redacted>",
      "subject": "Overdue invoice reminders summary",
      "body": "Overdue invoice reminder run 2026-10-20T09:00:00Z\nReminders sent: 0\nTotal value reminded: 0\n\nNo reminders were due today."
     }
@@ -607,7 +607,7 @@
    "outbox : missing a message to billing@atlasfreight.example containing \"QI-3\", \"final\"",
    "outbox : missing a message to studio@larkyoga.example containing \"QI-4\" without final",
    "outbox : missing a message to ops@quill-and-ink.com containing one of [QI-1 | North Pier], one of [QI-2 | Wren], one of [QI-3 | Atlas], one of [QI-4 | Lark]",
-   "outbox : unexpected or wrong message to randstuff904@gmail.com (\"Overdue invoice reminders summary\")"
+   "outbox : unexpected or wrong message to <account-email-redacted> (\"Overdue invoice reminders summary\")"
   ],
   "trap": null
  },
