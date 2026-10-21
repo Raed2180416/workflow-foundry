@@ -21,6 +21,8 @@ export const FROZEN = Object.freeze([
   'experiments/ebed/agent-arm.mjs', 'experiments/ebed/build.mjs', 'experiments/ebed/smoke-service.mjs', 'experiments/agentv/arm.mjs',
   'research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs', 'research/enterprise-20261014/runs/b1nh-e8-2/solver.mjs', 'research/enterprise-20261014/runs/b1nh-e8-3/solver.mjs',
   'policy/models.json',
+  // the session runtime of the paid arms (engine v2's patch series changes these: the freeze names the version the rows ran on)
+  'src/executors/claude-code.mjs', 'src/executors/openai-chat.mjs', 'src/models/policy.mjs', 'src/models/providers/claude-cli.mjs',
 ]);
 const shaOf = f => createHash('sha256').update(readFileSync(path.join(ROOT, f))).digest('hex');
 

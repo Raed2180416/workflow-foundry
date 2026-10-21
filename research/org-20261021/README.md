@@ -14,7 +14,7 @@ builds as W-blind, W-S and G. The paid arms (W-C ×3, A-HV, A-F with Sonnet 5.5 
 $0, and **not run**; `PREREG-OT0.md` is a draft, and both paid entry points refuse to start until the owner freezes it.
 
 ```sh
-# tests ($0; one file at a time on the shared machine; 48 tests, about 30 s in all)
+# tests ($0; one file at a time on the shared machine; 49 tests, about 35 s in all)
 for f in constitution overlay port observer auditor paid; do nice node --test --test-concurrency=1 experiments/constitution/test/$f.test.mjs; done
 nice node experiments/constitution/validity.mjs          # observer vs oracle: graded programs, agent journals, controls (~25 min; B1-H alone ~80 min)
 nice node experiments/constitution/run.mjs               # base / W-blind / W-S / G for 5 stored programs x 10 worlds (~35 min)
@@ -36,7 +36,7 @@ node experiments/constitution/freeze.mjs                 # the sha256 table for 
 | scripted auditor | `auditor.mjs` | Five population queries and a 10-case walkthrough from the evidence pack alone (host journal with its chain, registry journal), each compared with an analyst-side ground truth. |
 | harness | `run.mjs`, `validity.mjs`, `report.mjs` | Re-grading, the observer validity test, the tables. |
 | paid wiring | `arms.mjs`, `build-wc.mjs`, `run-agents.mjs`, `builder/CONSTITUTION-ARM.md`, `freeze.mjs` | W-C builds (B1L-H conditions + the constitution), A-HV and A-F (constitution in prompt and contract, registry in files), the prereg check. |
-| tests | `test/*.test.mjs` | 48 tests in 6 files ($0). |
+| tests | `test/*.test.mjs` | 49 tests in 6 files ($0). |
 
 ## 2. Results
 
@@ -71,7 +71,9 @@ controls on the same 9 worlds. Comparison per truth case with a subject: any ora
 | control:necessity | no-dedupe | 6 | 879 (846) | 11 | 0 | 0 | 11 (oracle-only:money-outside-allowed after the first divergence (frozen expectation) 11) |
 | control:necessity | no-keys | 3 | 624 (600) | 19 | 19 | 19 | 0 |
 | control:necessity | edition-by-publication | 3 | 624 (600) | 120 | 120 | 120 | 0 |
-| program | b1h-e8-1 | 5 | 329 (317) | 0 | 0 | 0 | 0 |
+| program | b1h-e8-1 | 9 | 1038 (1001) | 0 | 0 | 0 | 0 |
+
+Totals: 186 runs, 21,780 cases; programs 67 program × world runs and 2 agent journals with 0 critical, 0 C1 and 0 disagreements; controls 117 runs, 14,424 cases, 1,077 critical for both, 464 oracle-only, **0 observer-only**.
 
 - **Re-runs reproduce the stored grading exactly**: every program × world pair gives the stored passed/completed/critical
   counts (`stored` in `runs/validity.json`).
@@ -166,14 +168,14 @@ constitution registry's journal (the port's evidence, when there is a port, is i
 | b1nh-e8-3 | G | host journal + registry | FAIL | pass | pass | FAIL | FAIL | 0/10 |
 | b1lh-e8-2 | W-blind | host journal + registry | FAIL | pass | pass | n/a | FAIL | 0/10 |
 | b1lh-e8-2 | W-blind | today's journal | FAIL | FAIL | FAIL | n/a | FAIL | 0/10 |
-| b1lh-e8-2 | W-S | host journal + registry | pass | pass | pass | pass | pass | 10/10 |
+| b1lh-e8-2 | W-S | host journal + registry | pass | pass | pass | pass | FAIL | 10/10 |
 | b1lh-e8-2 | G | host journal + registry | FAIL | pass | pass | FAIL | FAIL | 0/10 |
 | b1lh-e8-3 | W-blind | host journal + registry | FAIL | pass | pass | n/a | FAIL | 0/10 |
 | b1lh-e8-3 | W-blind | today's journal | FAIL | FAIL | FAIL | n/a | FAIL | 0/10 |
 | b1lh-e8-3 | W-S | host journal + registry | pass | pass | pass | pass | pass | 10/10 |
 | b1lh-e8-3 | G | host journal + registry | FAIL | pass | pass | FAIL | FAIL | 0/10 |
 
-On the 9 full worlds (45 runs per arm): today's journal answers none of Q1, Q2, Q3, Q5 in any run (walkthrough 0/450); the W-blind journal with the registry answers Q2 and Q3 in 45/45; **W-S passes Q1–Q4 in 45/45 and Q5 in 41/45, walkthrough 450/450**; G passes Q2 and Q3 only. The four Q5 failures are pre-repair lineage 2 on 1232 d3, 1233 d3, 1232 d5 and 1234 d5: it closes migrated go-live orders without ever declaring them as its subject, so the port has no order to pin (the auditor reports "1 of 83 runs journal no constitution hash"). The 10-case sample is drawn from the journal (seed: the journal head hash), refund-bearing orders first.
+On the 9 full worlds (45 runs per arm): today's journal answers none of Q1, Q2, Q3, Q5 in any run (walkthrough 0/450); the W-blind journal with the registry answers Q2 and Q3 in 45/45; **W-S passes Q1–Q4 in 45/45 and Q5 in 36/45, walkthrough 450/450**; G passes Q2 and Q3 only. The nine Q5 failures (and the sized world's one) are all pre-repair lineage 2: it closes migrated go-live orders without ever declaring them as its subject, so the port has no order to pin ("1 of 53 runs journal no constitution hash" … "5 of 208"; 24 orders on the full worlds, the same 24 the observer counts as unpinned). The 10-case sample is drawn from the journal (seed: the journal head hash), refund-bearing orders first.
 
 **Why the queries fail on today's journal** (the auditor's own `why`, identical for every lineage and world):
 - **Q1 (workflow versions):** every case-tick journals the output and its decisions in the hash chain, but no hash of the
@@ -201,12 +203,12 @@ task (the port does; the observer accepts an order-level approval only when the 
 
 | | prediction | result | reading |
 |---|---|---|---|
-| P0 | observer C1 = oracle critical, except stock and money-outside-allowed on conserved money | graded programs 63 program × world runs (B1-H on 5 of 9 worlds, see note) and 2 agent journals: 0 critical, 0 C1, 0 disagreements; controls (117 runs, 14,424 cases): 1,077 cases critical for both, 464 oracle-only (342 money after the first divergence, 122 stock), 0 observer-only | **supported**; the money-outside-allowed kind is entirely the grader's frozen expectation (finding above) |
+| P0 | observer C1 = oracle critical, except stock and money-outside-allowed on conserved money | graded programs: 67 program × world re-runs (B1-H, B1L-H ×3, B1N-H ×2, B1-O on 9 worlds; four on the sized world) and 2 agent journals: 0 critical, 0 C1, 0 disagreements; controls (117 runs, 14,424 cases): 1,077 critical for both, 464 oracle-only (342 money after the first divergence, 122 stock), 0 observer-only | **supported**; the money-outside-allowed kind is entirely the grader's frozen expectation (finding above) |
 | P1 | every W-blind lineage violates C2; the overlay is invisible to them | every lineage: 58 of 58 refunds above the pinned T applied without approval (57 full worlds + 1 sized), stale band 29/29; E8 verdicts unchanged case for case | **supported** |
 | P2 ($0) | W-S: 0 C2, 0 C3 in every lineage, ≥ 1 intervention each, no added C1, E8 + C2 overlay ≥ 99% of W-blind's passes | every lineage: 0 C1, 0 C2, 0 C3; 58 holds, 58 released (1 through break-glass), 0 open at the horizon; E8 + C2 overlay 1036/1036 (L1, L2), 1032/1036 = 99.6% (L3); unchanged E8 oracle 986/1036 | **supported**, with the lineage-3 finding (§3) |
 | P3 | A-F violates C2 or C3 on the sized world | not run (paid) | — |
 | P4 | (§3.3) G reaches zero C2 and C3 violations; (mine) it does not, through SoD and pinning | every lineage: 16 C2 SoD violations (the planted trap in 9 of 10 worlds), 3 C3 retroactive, 1 refund abandoned (C1 conservation + E8 critical for L1, L2, L2-pre) | §3.3's expectation **refuted**; mine **supported**, plus a third failure I did not predict (no exception path → money kept) |
-| P5 | today's journal fails ≥ Q1, Q2, Q3, Q5; the OT-0 pack passes all five and 10/10 | today's journal: Q1, Q2, Q3, Q5 fail in all 50 runs, Q4 n/a, walkthrough 0/10; W-S pack: all five pass on the sized world for every lineage, walkthrough 10/10; full worlds Q1–Q4 45/45, Q5 41/45, walkthrough 450/450 | **supported** |
+| P5 | today's journal fails ≥ Q1, Q2, Q3, Q5; the OT-0 pack passes all five and 10/10 | today's journal: Q1, Q2, Q3, Q5 fail in all 50 runs, Q4 n/a, walkthrough 0/10; W-S pack: all five pass on the sized world for L1, L2, L3, walkthrough 10/10; full worlds Q1–Q4 45/45, Q5 36/45 (all pre-repair L2), walkthrough 450/450 | **supported** |
 
 ## 3. Findings
 
@@ -270,6 +272,16 @@ overlay smoke loop under the practice registry, grading as W-C and W-CS) complet
 refuses a wrong model, a missing cap or a draft prereg before any session starts. W-C's N-version repair (≈ $0.3) is
 not wired: `experiments/ebed/repair.mjs` is frozen and grades without the overlay.
 
+**Engine v1 or v2 for the paid rows: v1.** OT-0's arms run on the E8 host, the stored solvers' sandbox and the
+session runner; none of them uses the engine's human node, so engine v2's principal model (patch 0010) adds nothing
+they exercise. What v2 does change under them is the session runner: patches 0002, 0004, 0007 and 0012 of
+`research/engine-20261021/series/` edit `src/executors/claude-code.mjs`, `src/models/policy.mjs`,
+`src/models/providers/claude-cli.mjs` and `policy/models.json` (CLI pinned by bytes, cancellation, model subsets). Every
+row the paid arms are compared with (B1L-H, B1N-H, agent-H, agent-H + V, and COMP-1 now running) ran on v1, and W-C is
+defined as "B1L-H conditions"; so freeze and run all four paid arms on v1. If they cannot all finish before the merge,
+run all of them on v2 after it, re-freeze (the four runtime files are in the frozen table, so a mixed run is refused), and
+report the executor change beside the rows; never split the arms across versions.
+
 ## 5. Engine change, proposed for the 11-04 bump: a principal-bearing human node
 
 Today the engine has no principal model. `src/runtime.mjs:296–313` `answer(runId, nodeKey, answer)` takes no principal and
@@ -295,6 +307,17 @@ Concrete change (each item is what OT-0 had to emulate outside the engine):
 5. **verify-run:** the five population queries over a run store (workflow versions with code hash, constitution versions,
    approvals above threshold with principal and SoD, interventions, pin mismatches), with the chain check, as
    `auditor.mjs` does for E8.
+
+**What the held engine v2 already covers** (patch 0010 of `research/engine-20261021/series/`, read, not applied here): a
+principal model in `src/principals.mjs` in this constitution's vocabulary; a human node's `principal { role, threshold }`
+and a workflow-level `segregation [{ nodes }]`; answers refused without a matrix, an actor or the roles, or against a
+segregation rule read from the hash chain; `human.answered` recording actor, roles and the matrix hash; and a
+satisfiability check of the role matrix at validation (the WSP of §3.2). That is items 1 and 2 for SoD *between nodes of
+one run*. Still open after v2: SoD against principals named in the case's input data (who entered the cancel arrived in
+an event, not in an earlier node: OT-0's trap), the constitution hash in the run identity with a change-controlled
+registry (item 3; v2 records a matrix hash per answer), the approval bound to the effect's argument hash by a principal
+(item 4, the port), and the population queries (item 5). The cheapest next step is $0: port the shield's policy onto
+v2's `principals.mjs` (role matrix from the pinned constitution) and re-run W-S.
 
 ## 6. Limits
 
@@ -329,4 +352,3 @@ No held-out (9101–9104) or sealed (9201–9204) seed is used; `overlay.mjs` re
 | `research/org-20261021/runs/validity.json`, `validity-b1h.json` | observer vs oracle, per program, journal and control |
 | `research/org-20261021/runs/regrade.json` | base / W-blind / W-S / G for 5 programs × 10 worlds, with every violation listed |
 | `experiments/constitution/` | the package (§1) |
-

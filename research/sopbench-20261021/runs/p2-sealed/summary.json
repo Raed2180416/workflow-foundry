@@ -4,7 +4,7 @@
  "freeze": "research/sopbench-20261021/FREEZE-p2.json",
  "freezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
  "evidence": "SEALED rows (frozen split, frozen workflows and code)",
- "stopped": "environment fault at A-video_classification-15-0: MODEL_RATE_LIMIT",
+ "stopped": "environment fault at W-referral_abuse_detection_v2-46-0: ENOSPC: no space left on device, write",
  "k": 3,
  "arms": [
   "W",
@@ -24,9 +24,9 @@
   "video_classification",
   "warehouse_package_inspection"
  ],
- "runs": 1139,
- "spentUsd": 0.9772230950000004,
+ "runs": 2814,
+ "spentUsd": 2.5480518450000016,
  "capUsd": 40,
- "finishedAt": "2026-10-21T15:58:19.128Z",
+ "finishedAt": "2026-10-21T17:35:02.351Z",
  "dependencyDrift": []
 }
