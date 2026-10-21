@@ -9,9 +9,11 @@
 // Scoring is against the frozen SPEC-E only (FROZEN_SPEC_E: git 48535bb, the text gold.json's spans and anchors were
 // written on). The working-tree SPEC-E has moved since the freeze (lines shift by 7 before §4 as of 2026-10-21), and a
 // moved text makes every span wrong and some anchors unlocatable (the scorer used to crash on a null anchor). `score`
-// therefore reads the frozen revision from git by default, and scoreExtraction refuses any text, or any ledger, whose
-// sha256 is not the gold's (compromise register E1, FIXES Action 3).
-import { readFileSync } from 'node:fs';
+// therefore reads the frozen text by default, and scoreExtraction refuses any text, or any ledger, whose sha256 is not
+// the gold's, and any gold or ledger that carries no source sha256 (compromise register E1, FIXES Action 3). The frozen
+// text is committed next to the gold (FROZEN_SPEC_E.copy) and checked against the frozen sha256 on every read, so a
+// shallow clone without 48535bb can still score; where git has 48535bb, `git show` must give the same bytes.
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -21,8 +23,12 @@ import { indexText, isNormative } from './ledger.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const sha256 = s => createHash('sha256').update(s).digest('hex');
 
-/** The SPEC-E revision the frozen gold was written against (gold.json source.sha256; tracker-e8/freeze.json specE). */
-export const FROZEN_SPEC_E = Object.freeze({ rev: '48535bb', file: 'beds/ebed/e8/spec/SPEC-E.md', sha256: 'c013c04c80636682f46fd9bdbc2bf436712ed53233b03a06ba74bd88824f8cf1' });
+/**
+ * The SPEC-E revision the frozen gold was written against (gold.json source.sha256; tracker-e8/freeze.json specE), and
+ * the committed byte copy of it (`copy`, same sha256) that scoring reads.
+ */
+export const FROZEN_SPEC_E = Object.freeze({ rev: '48535bb', file: 'beds/ebed/e8/spec/SPEC-E.md', sha256: 'c013c04c80636682f46fd9bdbc2bf436712ed53233b03a06ba74bd88824f8cf1',
+  copy: 'research/need-router-20261014/tracker-e8/SPEC-E.48535bb.md' });
 export const GOLD_FILE = 'research/need-router-20261014/tracker-e8/gold.json';
 /**
  * The go-live paragraph of the frozen SPEC-E (§3.5, lines 91–93; FIXES Action 3 acceptance). Coverage is judged per
@@ -31,14 +37,31 @@ export const GOLD_FILE = 'research/need-router-20261014/tracker-e8/gold.json';
  */
 export const GO_LIVE_LINES = Object.freeze([91, 93]);
 
-/** The frozen SPEC-E text, read from git (never from the working tree); throws unless its sha256 is the frozen one. */
-export function frozenSpecE({ rev, file, sha256: want } = FROZEN_SPEC_E, { root = ROOT } = {}) {
-  let text;
-  try { text = execFileSync('git', ['show', `${rev}:${file}`], { cwd: root, encoding: 'utf8', maxBuffer: 16 << 20, stdio: ['ignore', 'pipe', 'pipe'] }); }
-  catch (e) { throw new Error(`cannot read the frozen SPEC-E (git show ${rev}:${file}): ${String(e?.stderr || e?.message || e).trim().slice(0, 200)}`); }
+/**
+ * The frozen SPEC-E text: the committed copy (never the working-tree SPEC-E); throws unless its sha256 is the frozen one.
+ * No fallback: a missing or changed copy is an error.
+ */
+export function frozenSpecE({ copy, sha256: want } = FROZEN_SPEC_E, { root = ROOT } = {}) {
+  const f = path.resolve(root, copy);
+  if (!existsSync(f)) throw new Error(`cannot read the frozen SPEC-E: no ${copy}`);
+  const text = readFileSync(f, 'utf8');
+  const got = sha256(text);
+  if (got !== want) throw new Error(`${copy} has sha256 ${got}, not the frozen ${want}`);
+  return text;
+}
+
+/**
+ * The extra check where git has the frozen revision: `git show <rev>:<file>` must be the committed copy, byte for byte.
+ * → { checked: true } when it is (throws when it is not), or { checked: false, why } when this clone lacks the object
+ * (a shallow clone); the caller reports that, it is never taken as a pass.
+ */
+export function frozenSpecEGitCheck({ rev, file, sha256: want } = FROZEN_SPEC_E, { root = ROOT } = {}) {
+  try { execFileSync('git', ['cat-file', '-e', `${rev}:${file}`], { cwd: root, stdio: 'ignore' }); }
+  catch { return { checked: false, why: `git object ${rev}:${file} is not in this clone` }; }
+  const text = execFileSync('git', ['show', `${rev}:${file}`], { cwd: root, encoding: 'utf8', maxBuffer: 16 << 20, stdio: ['ignore', 'pipe', 'pipe'] });
   const got = sha256(text);
   if (got !== want) throw new Error(`git show ${rev}:${file} has sha256 ${got}, not the frozen ${want}`);
-  return text;
+  return { checked: true, sha256: got };
 }
 
 /** Sentences starting on lines [lo, hi] and the ledger entries whose located quote overlaps each. */
@@ -57,9 +80,11 @@ export const idsOf = (span, spans) => Object.entries(spans).filter(([, s]) => sp
 /** scoreExtraction(ledger, gold, text) → mechanical recall metrics (PREREG §a). `text` must be the gold's (frozen) text. */
 export function scoreExtraction(ledger, gold, text) {
   const ix = indexText(text);
-  if (gold.source?.sha256 && ix.sha256 !== gold.source.sha256)
+  if (!gold.source?.sha256) throw new Error('the gold carries no source sha256: the text its spans refer to is unknown');
+  if (ix.sha256 !== gold.source.sha256)
     throw new Error(`the text is not the one the gold was written against (sha256 ${ix.sha256}, gold ${gold.source.sha256}); score against the frozen SPEC-E (frozenSpecE())`);
-  if (ledger.source?.sha256 && ledger.source.sha256 !== ix.sha256)
+  if (!ledger.source?.sha256) throw new Error('the ledger carries no source sha256: the text its spans refer to is unknown');
+  if (ledger.source.sha256 !== ix.sha256)
     throw new Error(`the ledger was extracted from another text (sha256 ${ledger.source.sha256}, scored text ${ix.sha256}); its spans do not refer to the gold's lines`);
   const ranges = ledger.requirements.map(r => ({ id: r.id, at: ix.locate(r.quote), span: r.span })).filter(r => r.at);
   const covered = spans => Object.keys(spans).filter(id => ranges.some(r => r.span.line >= spans[id][0] && r.span.lineEnd <= spans[id][1]));
@@ -136,11 +161,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const get = k => args.flatMap((a, i) => (a === `--${k}` ? [args[i + 1]] : []));
   if (args[0] === 'score') {
     const gold = JSON.parse(readFileSync(get('gold')[0] ?? path.join(ROOT, GOLD_FILE), 'utf8'));
-    const text = get('text').length ? readFileSync(get('text')[0], 'utf8') : frozenSpecE();   // either way it must hash to the gold's
+    const text = get('text').length ? readFileSync(get('text')[0], 'utf8') : frozenSpecE();   // either way it must hash to the gold's (scoreExtraction)
     for (const f of get('ledger')) console.log(JSON.stringify({ ledger: f, ...scoreExtraction(JSON.parse(readFileSync(f, 'utf8')), gold, text) }));
   } else if (args[0] === 'adjudicate') {
     const ledger = JSON.parse(readFileSync(get('ledger')[0], 'utf8'));
     const r = await adjudicate({ ledger, solverSource: readFileSync(get('build')[0], 'utf8'), log: s => console.error(s) });
     console.log(JSON.stringify(r, null, 1));
-  } else { console.error('usage: eval-e8.mjs score --ledger L.json [...] [--gold gold.json] [--text SPEC-E.md, default: git show 48535bb] | adjudicate --ledger L.json --build solver.mjs'); process.exit(2); }
+  } else { console.error('usage: eval-e8.mjs score --ledger L.json [...] [--gold gold.json] [--text SPEC-E.md, default: the frozen copy of 48535bb] | adjudicate --ledger L.json --build solver.mjs'); process.exit(2); }
 }

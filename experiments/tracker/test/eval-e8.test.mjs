@@ -1,13 +1,14 @@
 // The analyst-side scorer (eval-e8.mjs) scores against the frozen SPEC-E only (FIXES Action 3, register E1): the text is
-// read from git 48535bb, its sha256 must be the frozen gold's, and a moved text or a ledger from another text is refused
-// instead of crashing or scoring against shifted spans. $0, no model call.
+// the committed copy of git 48535bb, its sha256 must be the frozen gold's (and git show 48535bb must give the same bytes
+// where the clone has that object), and a moved text, a ledger from another text, or a gold or ledger with no source hash
+// is refused instead of crashing or scoring against shifted spans. $0, no model call.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FROZEN_SPEC_E, GOLD_FILE, frozenSpecE, scoreExtraction, linesCoverage } from '../eval-e8.mjs';
+import { FROZEN_SPEC_E, GOLD_FILE, frozenSpecE, frozenSpecEGitCheck, scoreExtraction, linesCoverage } from '../eval-e8.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const DIR = path.join(ROOT, 'research/need-router-20261014/tracker-e8');
@@ -18,12 +19,22 @@ const S0 = json(path.join(DIR, 'extraction/haiku.s0.json'));
 
 test('the frozen SPEC-E hashes to the gold\'s sha256 (fails if either moves)', () => {
   const text = frozenSpecE();
-  assert.equal(sha256(text), GOLD.source.sha256, 'git show 48535bb:beds/ebed/e8/spec/SPEC-E.md is the text gold.json was written against');
+  assert.equal(sha256(text), GOLD.source.sha256, 'the committed copy of 48535bb:beds/ebed/e8/spec/SPEC-E.md is the text gold.json was written against');
+  assert.equal(sha256(readFileSync(path.join(ROOT, FROZEN_SPEC_E.copy))), GOLD.source.sha256, 'byte for byte (no line-ending conversion)');
   assert.equal(FROZEN_SPEC_E.sha256, GOLD.source.sha256);
   assert.equal(json(path.join(DIR, 'freeze.json')).specE, GOLD.source.sha256, 'the tracker-e8 freeze recorded the same text');
   assert.equal(GOLD.source.file, FROZEN_SPEC_E.file);
   assert.equal(S0.source.sha256, GOLD.source.sha256, 'the primary sample was extracted from the frozen text');
   assert.throws(() => frozenSpecE({ ...FROZEN_SPEC_E, sha256: '0'.repeat(64) }), /not the frozen/);
+  assert.throws(() => frozenSpecE({ ...FROZEN_SPEC_E, copy: 'research/need-router-20261014/tracker-e8/no-such-copy.md' }), /no research/);
+});
+
+test('where the clone has git 48535bb, git show gives the committed copy byte for byte (a shallow clone skips, visibly)', t => {
+  const g = frozenSpecEGitCheck();
+  if (!g.checked) { t.skip(g.why); return; }
+  assert.equal(g.sha256, GOLD.source.sha256);
+  assert.throws(() => frozenSpecEGitCheck({ ...FROZEN_SPEC_E, sha256: '0'.repeat(64) }), /not the frozen/);
+  assert.deepEqual(frozenSpecEGitCheck({ ...FROZEN_SPEC_E, rev: '0'.repeat(40) }).checked, false, 'a missing object reports checked: false, never a pass');
 });
 
 test('scoring the primary sample (Haiku s0) on the frozen text reproduces the REPORT §2 row', () => {
@@ -48,4 +59,10 @@ test('scoring refuses a text that is not the gold\'s, and a ledger extracted fro
   if (sha256(working) !== GOLD.source.sha256) assert.throws(() => scoreExtraction(S0, GOLD, working), /frozenSpecE/, 'the moved working-tree SPEC-E is refused, not crashed on');
   const other = { ...S0, source: { ...S0.source, sha256: 'f'.repeat(64) } };
   assert.throws(() => scoreExtraction(other, GOLD, frozen), /extracted from another text/);
+  // no hash, no score: a ledger or gold without a source sha256 could refer to any text (review m2)
+  const { sha256: _l, ...noLedgerHash } = S0.source;
+  assert.throws(() => scoreExtraction({ ...S0, source: noLedgerHash }, GOLD, frozen), /ledger carries no source sha256/);
+  assert.throws(() => scoreExtraction({ ...S0, source: undefined }, GOLD, frozen), /ledger carries no source sha256/);
+  const { sha256: _g, ...noGoldHash } = GOLD.source;
+  assert.throws(() => scoreExtraction(S0, { ...GOLD, source: noGoldHash }, frozen), /gold carries no source sha256/);
 });
