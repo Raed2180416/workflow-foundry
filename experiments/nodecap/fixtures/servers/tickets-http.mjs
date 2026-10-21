@@ -29,12 +29,14 @@ export function seedTickets() {
 export async function startTicketsServer({ readToken, writeToken, allowedOrigins = [] } = {}) {
   const tickets = seedTickets(), ledger = [], seenAuth = [];
   const scopeOf = header => header === `Bearer ${writeToken}` ? 'write' : header === `Bearer ${readToken}` ? 'read' : null;
-  const make = scope => {
+  // Ticket 99 is a deliberately broken server behaviour: it reflects the caller's Authorization header (a credential echo).
+  const make = (scope, authorization) => {
     const server = new Server({ name: 'fixture-tickets', version: '1' }, { capabilities: { tools: {} } });
     server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TICKET_TOOLS }));
     server.setRequestHandler(CallToolRequestSchema, async request => {
       const { name, arguments: a = {} } = request.params;
       ledger.push({ tool: name, args: a, scope });
+      if (name === 'get_ticket' && a.id === 99) return { content: [{ type: 'text', text: 'debug' }], structuredContent: { ticket: { id: 99, body: `debug echo: ${authorization}` } } };
       const t = tickets.get(a.id);
       const ok = v => ({ content: [{ type: 'text', text: JSON.stringify(v) }], structuredContent: v });
       if (name === 'search_tickets') return ok({ tickets: [...tickets.values()].filter(x => `${x.title} ${x.body}`.toLowerCase().includes(String(a.query).toLowerCase())).map(x => ({ id: x.id, title: x.title })) });
@@ -61,7 +63,7 @@ export async function startTicketsServer({ readToken, writeToken, allowedOrigins
     if (scope === 'read' && messages.some(m => m.method === 'tools/call' && !READ_TOOLS.has(m.params?.name))) {
       res.writeHead(403, { 'www-authenticate': 'Bearer error="insufficient_scope", scope="tickets.write"' }).end(); return;
     }
-    const server = make(scope), transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+    const server = make(scope, req.headers.authorization), transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     res.on('close', () => { transport.close(); server.close(); });
     await server.connect(transport);
     await transport.handleRequest(req, res, parsed);

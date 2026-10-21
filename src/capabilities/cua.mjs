@@ -60,7 +60,8 @@ export class UiSession {
     const method = request.method();
     if ((method === 'GET' || method === 'HEAD') && !this.hold.test(url.pathname)) return route.continue();
     const body = request.postDataBuffer() ?? Buffer.alloc(0), headers = await request.allHeaders();
-    const held = { id: `held-${randomUUID().slice(0, 8)}`, method, origin: url.origin, path: url.pathname + url.search, bodyHash: sha256(body),
+    // Deterministic id (session counter + request hash), so a replayed run shows the model the same transcript.
+    const bodyHash = sha256(body), held = { id: `held-${this.held.length + 1}-${sha256(`${method} ${url.pathname}${url.search} ${bodyHash}`).slice(0, 8)}`, method, origin: url.origin, path: url.pathname + url.search, bodyHash,
       bodyPreview: this.scrub ? this.scrub.redact(body.subarray(0, 512).toString('utf8')) : body.subarray(0, 512).toString('utf8'),
       navigation: request.isNavigationRequest() };
     this.held.push(held);

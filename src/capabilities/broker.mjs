@@ -157,7 +157,7 @@ export class Dispatcher {
     if (member.effects === 'none') return this.#out(ctx, refusal('EFFECT_CLASS_MISMATCH', { hint: 'This tool has no effects: use action read' }));
     const state = this.state(ctx, node), granted = this.acquire(ctx, node, memberId, state, { via: 'act', approvalId });
     if (granted.result !== 'bound' && granted.result !== 'granted') return this.#out(ctx, refusal(granted.code, { tool: decision.tool }));
-    return this.#call(ctx, node, member, decision, state, { approvalId });
+    return this.#call(ctx, node, member, decision, state);
   }
   async #request(ctx, node, decision, state) {
     const need = decision.need;
@@ -206,7 +206,7 @@ export class Dispatcher {
       diff: { added: outside.map(c => ({ member: c.id, effects: c.effects, trust: c.trust, egress: c.egress })) }, riskSummary,
       evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey } });
   }
-  async #call(ctx, node, member, decision, state, { approvalId = null } = {}) {
+  async #call(ctx, node, member, decision, state) {
     const section = this.lock.nodes[node];
     if ((state.calls.get(member.id) ?? 0) >= section.maxCallsPerMember) return this.#out(ctx, refusal('BUDGET_EXHAUSTED', { tool: member.view.name }));
     let result;
@@ -222,7 +222,8 @@ export class Dispatcher {
       return this.#out(ctx, refusal(error.code === 'SCHEMA_MISMATCH' ? 'ARGS_INVALID' : error.code, { tool: member.view.name, member: member.id }));
     }
     const view = boundView(result, member.modelViewTokens ?? 1500);
-    return this.#out(ctx, { ok: true, member: member.id, tool: member.view.name, result: view.value, ...(view.truncated ? { truncated: true } : {}), ...(approvalId ? { approvalId } : {}) });
+    // (The approval id stays out of the model-visible output: it is run-specific, so it would break replay; the grant decision holds it.)
+    return this.#out(ctx, { ok: true, member: member.id, tool: member.view.name, result: view.value, ...(view.truncated ? { truncated: true } : {}) });
   }
   #out(ctx, value) { this.host.scrub.assertClean(value, 'a node output'); return value; }
   log(args) {
