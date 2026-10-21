@@ -118,7 +118,7 @@ test('after across modules resolves to the emitting module; carry and output sta
   const pay = { step() { return { output: null, effects: [charge('c1')] }; } };
   const note = { step() { return { output: null, effects: [{ key: 'n1', system: 'notify', op: 'send', args: { template: 'order-cancelled' }, after: 'c1' }] }; } };
   const parent = { tick(i, c) { c.call('pay', 'F', { amount: 1 }); c.call('note', 'O', {}); return { decisions: { subject: 'O' } }; } };
-  const o = createComposedSolver({ manifest: M(), parent, modules: { pay, note } }).tick(tickIn(), hostCtx());
+  const o = createComposedSolver({ manifest: M(), parent, modules: { pay, note }, kindsOf: kindsOfE8 }).tick(tickIn(), hostCtx());
   assert.equal(o.effects[1].after, 'pay/F/c1');
   assert.ok(JSON.stringify(o.carry).length < 64 * 1024);
 });

@@ -31,3 +31,7 @@ beds/ebed/e8/.mutants/
 # need-router label-run directory locks (experiments/need-router/label-run.mjs): live-process state, never committed
 **/.label-run.lock
 **/.label-run.lock.stale-*
+
+# SOP-Bench (CC BY-NC 4.0): per-row results carry upstream-derived values; kept outside git (aggregates only)
+research/sopbench-20261021/runs/**/results.jsonl
+research/sopbench-20261021/runs/**/rows/

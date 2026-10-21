@@ -870,6 +870,42 @@ def cmd_probe(a):
     print(json.dumps(report, indent=1))
 
 
+def cmd_worldcheck(a):
+    """World-filter invariance on dev rows: every tool whose parameters can all be filled from a dev row's own columns is
+    called with them in the dev world and in the full (upstream-identical) world, twice there (a tool whose two full-world
+    results differ is nondeterministic, not a world effect). Prints, per SOP, the (row, tool) pairs whose dev-world result
+    differs from a deterministic full-world result: rows whose lookup key also belongs to an earlier row outside the dev
+    world, where upstream answers with that other row's data. Results themselves are not printed. Diagnostic; reads the
+    full world only to compare results for dev-row arguments."""
+    up = _up(a)
+    data = _data_dir(a, up)
+    split = load_split(Path(a.split))
+    report = {}
+    for name in (a.sops.split(",") if a.sops else sorted(split["sops"])):
+        sop = Sop(data, name)
+        allowed = allowed_rows(split, name, sealed=False, freeze=None)
+        dev, full = World(up, sop, allowed), World(up, sop, None)
+        st = {"rows": len(allowed), "calls": 0, "differ": [], "nondeterministic": 0, "errors_both": 0}
+        for rid in sorted(allowed):
+            row = sop.row(rid)
+            for spec in sop.catalog():
+                props = spec["input_schema"].get("properties", {}) or {}
+                req = spec["input_schema"].get("required", list(props))
+                if not all(p in row for p in req):
+                    continue
+                args = jsonsafe({p: row[p] for p in props if p in row})
+                d, f1, f2 = dev.call(spec["name"], dict(args)), full.call(spec["name"], dict(args)), full.call(spec["name"], dict(args))
+                st["calls"] += 1
+                if f1.get("content") != f2.get("content"):
+                    st["nondeterministic"] += 1
+                elif not d.get("ok") and not f1.get("ok"):
+                    st["errors_both"] += 1
+                elif d.get("content") != f1.get("content"):
+                    st["differ"].append({"row": rid, "tool": spec["name"], "devOk": bool(d.get("ok")), "fullOk": bool(f1.get("ok"))})
+        report[name] = st
+    print(json.dumps(report, indent=1))
+
+
 def main():
     ap = argparse.ArgumentParser(prog="bridge.py")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -897,6 +933,7 @@ def main():
     for nm, fn in (("grade", cmd_grade), ("official", cmd_official)):
         s = sub.add_parser(nm); common(s); s.add_argument("--answers", required=True); s.add_argument("--out", required=True); s.set_defaults(fn=fn)
     s = sub.add_parser("probe"); common(s); s.add_argument("--sops"); s.set_defaults(fn=cmd_probe)
+    s = sub.add_parser("worldcheck"); common(s); s.add_argument("--sops"); s.set_defaults(fn=cmd_worldcheck)
     a = ap.parse_args()
     try:
         a.fn(a)
