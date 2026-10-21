@@ -39,6 +39,15 @@
 
   All four runs answered a multi-step refund calculation correctly (184). **We treat the effort setting as having no
   effect until shown otherwise.**
+
+  *Note added 2026-10-21 (compromise register A6):* one problem per setting shows no effect; it cannot show the
+  absence of one. Inception documents four values, `instant`, `low`, `medium` and `high`, and mercury-3 defaults to
+  `low` when the field is omitted (docs.inceptionlabs.ai/capabilities/reasoning-efforts, read 2026-10-21). Our executor
+  accepts only low, medium and high and refuses `instant` (`src/executors/openai-chat.mjs:48`, `:306`). The official
+  dev60 run's reasoning count of 0 (OFFICIAL-DEV60) is a metering gap: the official harness reads reasoning tokens only
+  from Responses-style `output_tokens_details` (`corpus/AutomationBench/automationbench/clients.py:245-251`). In our
+  own executor's stored Mercury responses, completion_tokens ≥ reasoning_tokens in 140 of 140 (median reasoning share
+  0.72; `research/compromises-20261021/action0/a6.py`), so reasoning is most likely counted inside output.
 - **Web search.** The owner mentioned it. It is not in the models listing and was not tested. It is not used in any
   benchmark run, because AutomationBench and E8 are closed worlds.
 

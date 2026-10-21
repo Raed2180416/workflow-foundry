@@ -88,6 +88,12 @@ Strict pass by domain:
   differs on 9 tasks between two runs with nearly the same setup), so k = 1 cannot attribute it to the note.
 - **A single run per task moves about 10–15% of tasks.** Any configuration choice (AM-10) and the frozen test run should
   use k ≥ 2 per task, or a pooled comparison like the one above, not a single run.
+  *Note added 2026-10-21 (compromise register A4; `research/compromises-20261021/action0/a4.py`, $0):* at a fixed
+  number of runs, k ≥ 2 per task is the less efficient way to buy power. The variance of the mean paired difference is
+  (k·σ²_between + σ²_within)/N, which grows with k whenever tasks differ; on these replications the SE at k = 2 is
+  1.05–1.20 times the SE at k = 1 for the same 120 runs per arm. So spend the runs on more tasks at k = 1, and keep
+  k ≥ 2 for pass^k claims. The power level itself depends on the assumed effect and is not identifiable from two
+  replications (0.26–0.96 at 120 tasks × k = 1 across three estimators).
 - **Still development evidence:** these are devTrain tasks read during development.
 
 **Next.**

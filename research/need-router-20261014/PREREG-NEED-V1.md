@@ -1261,9 +1261,15 @@ label exists):
     2.67×); at the documented rate that re-price is lower and the gap wider. D6 is a LEGACY diagnostic, and its gate
     (block-until-verified) does not depend on the Sonnet rate.
   - *What is not changed here.* The table keeps 0.20, marked, because `stages.json` still meters 0.2 and the two must
-    agree. Before any stage that books a Sonnet 5.5 judge, `stages.json` and the table change to 0.1 together, with
+    agree. Before any metered Sonnet 5.5 session, `stages.json` and the table change to 0.1 together, with
     `prereg-check` re-run. `stages.json` is also pinned by sha256 in the SPEC-1 draft
     (`research/intent-20261021/PREREG-SPEC1.md` §9), so `spec1-freeze.mjs` is re-run after that change.
+  - *Other meters on the same table* (added 2026-10-21 after review). `stages.json`'s `priceTable` is not only this
+    preregistration's meter. `experiments/agentv/run.mjs` (:241, :271) meters every session it runs with it, for any
+    `--model`, and `experiments/specbiz/spec1.mjs` (:342, :394) meters SPEC-1's sessions with it. A Sonnet 5.5 session
+    in either is booked at twice the documented cache-read price today, which is why the trigger above is any metered
+    Sonnet 5.5 session, not only this preregistration's judges. The one committed agentv run (`agentv-e8-s12`) is
+    Haiku 5.5; other runs were not checked.
 
 ## 14. What this file resolved, what stays open
 

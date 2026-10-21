@@ -277,7 +277,12 @@ All arms are scored on the 14 shared cases. Build arms are also scored on worlds
 - All results are development evidence; no claim rests on E8 alone (§0.3).
 - *Added 2026-10-21 (compromise register B3):* I-2 and I-6 read L3 recall, a per-layer number, and the L2/L3 boundary
   has κ 0.36 between the two raters (§8 item 2, [RATER2.md](RATER2.md)). They are read under both raters' labels, and a
-  prediction counts as supported or refuted only if the reading is the same under both.
+  prediction counts as supported or refuted only if the reading is the same under both. The counts in I-2 and I-6 are
+  rater 1's: its gold L3 set has 16 ids, 3 of them owner-only. Rater 2's has 15 (12 shared with rater 1), 2 of them
+  owner-only (`research/compromises-20261021/action0/b3.py`). Under rater 2 the thresholds are read as the same
+  proportions of its own set. I-2's band 0.45–0.75 is 7–12 of 16 for rater 1 and 7–11 of 15 for rater 2. Its
+  refutation "≥ 15/16" (0.94) needs 15/15 for rater 2. I-6's "L3 ≤ 13/16" (all owner-only ids lost) is ≤ 13/15 for
+  rater 2.
 
 | # | Prediction | Refuted if |
 |---|---|---|

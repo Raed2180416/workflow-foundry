@@ -81,6 +81,10 @@ Every score is mechanical: an entry covers an id when its verbatim quote lies in
 
 **Other samples:**
 - Haiku s1 missed only S3 and S4. The union of s0 and s1 covers 28/30 ids, for $0.023.
+  *Note added 2026-10-21 (compromise register E1):* S3 and S4 are missed by all six stored samples (three Haiku, three
+  Sonnet), and the union of the three Haiku samples is also exactly 28/30. A K = 3 union of ledgers from the same prompt
+  is therefore likely to cap near 28/30; the planned fix is re-scoped to passes with different views, starting with a
+  gleaning pass over the uncovered list (compromises FIXES.md E1).
 - **Sonnet**, on every sample, missed R1.2, R1.3, R4.3, R7.1 and all nine readings. It wrote shorter ledgers
   (4–5K output tokens against Haiku's 18–22K).
 

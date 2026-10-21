@@ -208,6 +208,12 @@ row measures that gap rather than the arm. dup-same is reported beside dup-delay
 or headline number. `fault-run.mjs` writes one row per world and fault and pools nothing; any pooled fault figure
 built from its output excludes dup-same. The fix (keyed start: same-round starts grouped by key) changes SPEC-E, so it
 needs an owner-approved version bump and reruns (compromises FIXES.md B6).
+The wrong figure also reached a frozen prediction: [PREREG-COMP1.md](PREREG-COMP1.md) P3 reads "at least one C-H build
+loses fewer cases than the best monolith (32 of 43 lost on 1161 d2)", while the best monolith loses 8 (35/43 passed).
+Read as written, a C-H build losing 9–31 cases would beat it. The prereg is not edited here: the COMP-1 track or the
+owner adds a dated amendment (best monolith loses 8 of 43) to PREREG-COMP1. COMP-1's result, committed after this note
+was drafted (`RESULT-COMP1.md` §6.1, main branch f1cdab6), already reports M4d as ambiguous as written (C-H builds lose
+11, 11 and 9) and keeps P3 out of the H-COMP verdict.
 
 ### 4.3 Mis-composed variants of the reference (`runs/variant-*.json`)
 
