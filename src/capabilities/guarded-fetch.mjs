@@ -1,7 +1,7 @@
 // The only fetch an HTTP MCP connection uses, ARCHITECTURE.md §3.3: https only (loopback http for development entries), no redirects
 // (any 3xx is an error), the Authorization header attached only for the entry's own origin, a response size cap, and a record of what
 // was sent (for the canary sweep). The SDK's StreamableHTTPClientTransport takes it as its `fetch` option.
-import { fail } from './common.mjs';
+import { fail, sanitizeScopes } from './common.mjs';
 
 const LOOPBACK = new Set(['127.0.0.1', 'localhost', '[::1]']);
 
@@ -20,7 +20,8 @@ export function guardedFetch({ origin, dev = false, bearer = null, maxBytes = 2 
     if (response.status >= 300 && response.status < 400) fail('REDIRECT_REFUSED', `The MCP server answered with a redirect (${response.status}); redirects are refused`);
     if (response.status === 401 || response.status === 403) {
       const challenge = response.headers.get('www-authenticate') ?? '';
-      if (/insufficient_scope/i.test(challenge)) fail('SCOPE_INSUFFICIENT', 'The server requires a scope this connection does not hold; a scope step-up is a person\'s decision', { status: response.status });
+      // The challenged scopes are server text: sanitized to scope-shaped tokens; any error_description is dropped.
+      if (/insufficient_scope/i.test(challenge)) fail('SCOPE_INSUFFICIENT', 'The server requires a scope this connection does not hold; a scope step-up is a person\'s decision', { status: response.status, scopes: sanitizeScopes(/(?:^|[\s,])scope="([^"]*)"/i.exec(challenge)?.[1] ?? '') });
       if (response.status === 401) fail('AUTH_REQUIRED', 'The server requires authorization this connection does not hold', { status: 401 });
     }
     const length = Number(response.headers.get('content-length') ?? 0);

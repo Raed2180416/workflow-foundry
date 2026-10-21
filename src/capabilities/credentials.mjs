@@ -18,6 +18,22 @@ export function osKeychain({ service, account }, { platform = process.platform, 
     (error, stdout) => error ? reject(Object.assign(new Error('keychain lookup failed'), { code: 'CREDENTIAL_UNAVAILABLE' })) : resolve(stdout.replace(/\n$/, ''))));
 }
 
+/**
+ * Store a secret in the OS keychain (used for OAuth token records, custody C1). Linux: `secret-tool store`, with the secret on STDIN (never
+ * on argv, where other processes could read it), no shell. macOS `security add-generic-password` takes the secret on argv, so it is
+ * refused in this spike (CREDENTIAL_STORE_UNSUPPORTED). Tests inject a stand-in.
+ */
+export function osKeychainStore({ service, account }, value, { platform = process.platform, timeoutMs = 5000 } = {}) {
+  if (!KEYCHAIN.test(service ?? '') || !KEYCHAIN.test(account ?? '')) fail('CREDENTIAL_REF', 'Keychain service and account are plain names');
+  if (platform !== 'linux') return Promise.reject(Object.assign(new Error('keychain store unsupported on this platform in the spike'), { code: 'CREDENTIAL_STORE_UNSUPPORTED' }));
+  return new Promise((resolve, reject) => {
+    const child = execFile('secret-tool', ['store', '--label', `workflow-foundry ${service}`, 'service', service, 'account', account], { shell: false, timeout: timeoutMs,
+      env: { PATH: process.env.PATH ?? '/usr/bin:/bin', DBUS_SESSION_BUS_ADDRESS: process.env.DBUS_SESSION_BUS_ADDRESS ?? '' } },
+    error => error ? reject(Object.assign(new Error('keychain store failed'), { code: 'CREDENTIAL_STORE_FAILED' })) : resolve());
+    child.stdin.end(value);
+  });
+}
+
 export class ScrubSet {
   #values = new Set();
   add(value) { if (typeof value === 'string' && value.length >= 6) this.#values.add(value); return value; }

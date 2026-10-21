@@ -17,6 +17,7 @@ import { indexMembers } from './rank.mjs';
 import { renderView } from './members.mjs';
 import { viewIndex } from './resolve.mjs';
 import { decisionRecord, nodecapDecisions, record } from './journal.mjs';
+import { stepUpProposal } from './oauth.mjs';
 
 /** Selection thresholds for a typed need (score ≥ τ and margin ≥ δ grant a single best match). Development defaults; NC-1 freezes them on D1-D6. */
 export const THRESHOLDS = Object.freeze({ tau: 1.0, delta: 0.5 });
@@ -219,6 +220,9 @@ export class Dispatcher {
       if (!(error instanceof FoundryError)) throw error;
       if (error.code === 'DEFINITION_CHANGED' && this.ledger) this.ledger.putProposal({ kind: 'capability.definition-changed', flowId: this.lock.flowId, node, fromLockHash: this.lockHash,
         diff: { added: [] }, riskSummary: { entry: member.entryId, fieldDiff: error.details?.fieldDiff ?? [] }, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey } });
+      // A 403 insufficient_scope is never stepped up automatically: it becomes a scope.step-up proposal a person decides (dashboard or CLI).
+      if (error.code === 'SCOPE_INSUFFICIENT' && this.ledger) stepUpProposal(this.ledger, { entry: this.host.entry(member.entryId), scopeClass: member.effects === 'none' ? 'read' : 'write',
+        scopes: error.details?.scopes ?? [], flowId: this.lock.flowId, node, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey, member: member.id } });
       if (['CANCELLED', 'SECRET_EXPOSURE'].includes(error.code)) throw error;
       // Host-chosen code only: upstream text never reaches the model.
       return this.#out(ctx, refusal(error.code === 'SCHEMA_MISMATCH' ? 'ARGS_INVALID' : error.code, { tool: member.view.name, member: member.id }));

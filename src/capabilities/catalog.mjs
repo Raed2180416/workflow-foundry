@@ -19,8 +19,14 @@ const secretRef = { type: 'object', additionalProperties: false, minProperties: 
   env: { type: 'string', pattern: ENV, maxLength: 128 },
   keychain: { type: 'object', additionalProperties: false, required: ['service', 'account'], properties: {
     service: { type: 'string', pattern: '^[A-Za-z0-9._-]{1,128}$' }, account: { type: 'string', pattern: '^[A-Za-z0-9._@-]{1,128}$' } } } } };
+const scopeList = { type: 'array', maxItems: 20, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z0-9_.:/-]{1,80}$' } };
+// OAuth (src/capabilities/oauth.mjs): an owner-attested issuer, a pre-registered public client id, and the scopes of each scope class.
+// The tokens live in the OS keychain under the credential's read and write refs (custody C1); the catalog never holds a token.
+const oauthSchema = { type: 'object', additionalProperties: false, required: ['issuer', 'clientId', 'scopes'], properties: {
+  issuer: { type: 'string', minLength: 8, maxLength: 2048 }, clientId: { type: 'string', pattern: '^[A-Za-z0-9._:-]{1,200}$' },
+  scopes: { type: 'object', additionalProperties: false, required: ['read', 'write'], properties: { read: scopeList, write: scopeList } } } };
 const credential = { type: 'object', additionalProperties: false, required: ['custody'], properties: {
-  custody: { enum: CUSTODY }, read: secretRef, write: secretRef, scopes: { type: 'object', additionalProperties: false, properties: {
+  custody: { enum: CUSTODY }, read: secretRef, write: secretRef, oauth: oauthSchema, scopes: { type: 'object', additionalProperties: false, properties: {
     read: { type: 'array', maxItems: 20, items: { type: 'string', maxLength: 120 } }, write: { type: 'array', maxItems: 20, items: { type: 'string', maxLength: 120 } } } } } };
 const view = { type: 'object', additionalProperties: false, required: ['name', 'summary', 'inputSchema'], properties: {
   name: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,63}$' }, summary: { type: 'string', minLength: 1, maxLength: 200 }, inputSchema: { type: 'object' } } };
@@ -119,6 +125,12 @@ export function checkCatalog(catalog, { allowDev = false } = {}) {
     if (entry.kind === 'mcp-http') {
       const url = entry.source.url;
       if (!url.startsWith('https://') && !(entry.dev === true && loopback(url))) fail('CATALOG_TRANSPORT', `Entry ${entry.id}: remote MCP servers must use https (loopback http only for dev entries)`, { id: entry.id });
+    }
+    const oauth = entry.credential?.oauth;
+    if (oauth) {
+      if (!['mcp-http', 'connection'].includes(entry.kind)) fail('CATALOG_OAUTH', `Entry ${entry.id}: OAuth applies to remote MCP servers (MCP authorization: stdio servers take credentials from the environment)`);
+      if (entry.credential.custody !== 'C1' || !entry.credential.read?.keychain || !entry.credential.write?.keychain) fail('CATALOG_OAUTH', `Entry ${entry.id}: OAuth tokens are held in the OS keychain (custody C1) under keychain read and write refs`);
+      if (!oauth.issuer.startsWith('https://') && !(entry.dev === true && loopback(oauth.issuer))) fail('CATALOG_TRANSPORT', `Entry ${entry.id}: the authorization server must use https (loopback http only for dev entries)`);
     }
     if (entry.kind === 'cua') for (const origin of entry.source.origins) if (!origin.startsWith('https://') && !(entry.dev === true && loopback(origin))) fail('CATALOG_TRANSPORT', `Entry ${entry.id}: UI origins must be https (loopback http only for dev entries)`);
     if (['mcp-stdio', 'mcp-http', 'builtin'].includes(entry.kind) && !entry.members) fail('CATALOG_MEMBERS', `Entry ${entry.id} attests no members; an unattested tool is never bindable`, { id: entry.id });

@@ -9,7 +9,8 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { ToolListChangedNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
 import { fail, FoundryError } from './common.mjs';
 import { guardedFetch } from './guarded-fetch.mjs';
-import { resolveCredential } from './credentials.mjs';
+import { osKeychain, osKeychainStore, resolveCredential } from './credentials.mjs';
+import { oauthBearer } from './oauth.mjs';
 
 export const CLIENT_INFO = Object.freeze({ name: 'workflow-foundry-nodecap', version: '1' });
 const MAX_PAGES = 10;
@@ -17,9 +18,9 @@ const MAX_PAGES = 10;
 export class McpConnection {
   #clients = new Map();
   #listeners = new Set();
-  constructor(entry, { connection = null, scrub = null, env = process.env, keychain, cwd = undefined, onRequest = null, timeoutMs = 15000 } = {}) {
+  constructor(entry, { connection = null, scrub = null, env = process.env, keychain, keychainStore = null, cwd = undefined, onRequest = null, timeoutMs = 15000, now = Date.now } = {}) {
     if (!['mcp-stdio', 'mcp-http'].includes(entry.kind)) fail('MCP_ENTRY', `Entry ${entry.id} is not an MCP server`);
-    Object.assign(this, { entry, connection, scrub, env, keychain, cwd, onRequest, timeoutMs });
+    Object.assign(this, { entry, connection, scrub, env, keychain, keychainStore, cwd, onRequest, timeoutMs, now });
     this.negotiated = new Map();
     this.listChanges = 0; // notifications/tools/list_changed seen on any session of this connection
   }
@@ -28,7 +29,7 @@ export class McpConnection {
     const credential = this.entry.credential ?? this.connection?.credential ?? null;
     if (!credential) return null;
     const ref = scope === 'write' ? credential.write ?? null : credential.read ?? null;
-    return ref ? { ref, custody: credential.custody } : null;
+    return ref ? { ref, custody: credential.custody, credential } : null;
   }
   async #client(scope) {
     // stdio servers have one session (one process); credentials do not apply. HTTP keeps one session per credential scope.
@@ -48,7 +49,10 @@ export class McpConnection {
       transport.stderr?.resume();
     } else {
       const found = this.credentialRef(scope);
-      const bearer = found ? () => resolveCredential(found.ref, { custody: found.custody, scrub: this.scrub, env: this.env, keychain: this.keychain }) : null;
+      // OAuth tokens (C1) come through oauthBearer: audience-checked, refreshed by host code, never re-authorized or up-scoped by the SDK.
+      const bearer = !found ? null : found.credential.oauth
+        ? oauthBearer({ ...this.entry, credential: found.credential }, { scopeClass: scope, keychain: this.keychain ?? osKeychain, keychainStore: this.keychainStore ?? (this.keychain ? null : osKeychainStore), scrub: this.scrub, now: this.now })
+        : () => resolveCredential(found.ref, { custody: found.custody, scrub: this.scrub, env: this.env, keychain: this.keychain });
       transport = new StreamableHTTPClientTransport(new URL(this.entry.source.url), {
         fetch: guardedFetch({ origin: this.entry.source.url, dev: this.entry.dev === true, bearer, onRequest: this.onRequest }) });
     }

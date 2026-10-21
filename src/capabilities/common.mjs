@@ -28,5 +28,7 @@ export function toolNodeOf(nodeKey) {
   if (!match) fail('NODECAP_NODE_KEY', 'A nodecap dispatcher runs only inside a lowered tool node');
   return { node: match[1], turn: Number(match[2]), body: match[3] };
 }
+/** Scope tokens from server text (a WWW-Authenticate challenge, metadata): kept only if they look like scope names, at most ten. */
+export const sanitizeScopes = list => [...new Set((Array.isArray(list) ? list : String(list ?? '').split(/\s+/)).filter(s => /^[A-Za-z0-9_.:/-]{1,80}$/.test(s)))].slice(0, 10);
 /** A one-line, host-authored error for model-visible results: the code, never upstream text. */
 export const refusal = (code, extra = {}) => ({ ok: false, code, ...extra });

@@ -1,5 +1,5 @@
 // Nodecap P2: streamable-HTTP MCP adapter with env bearer credentials (ARCHITECTURE.md §3.3, §2.6). Loopback fixture servers only; $0.
-// OAuth (PKCE, RFC 8707 resource, RFC 9207 iss) is designed but not exercised in this spike: see ARCHITECTURE.md §5.
+// OAuth (PKCE, RFC 8707 resource, RFC 9207 iss, refresh, step-up as a proposal) is exercised in tests/nodecap-oauth.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';

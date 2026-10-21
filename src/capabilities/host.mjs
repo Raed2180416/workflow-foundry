@@ -15,9 +15,9 @@ import { uiMembers, invokeUi, UiSessions } from './cua.mjs';
 import { memberRecord } from './members.mjs';
 
 export class NodecapHost {
-  constructor({ catalog, ledger = null, envelope, env = process.env, keychain, chromium = null, scrub = new ScrubSet(), now = Date.now, codeRunner } = {}) {
-    Object.assign(this, { catalog, ledger, envelope, env, keychain, scrub, now, codeRunner });
-    this.pool = new McpPool(catalog, { scrub, env, keychain });
+  constructor({ catalog, ledger = null, envelope, env = process.env, keychain, keychainStore = null, chromium = null, scrub = new ScrubSet(), now = Date.now, codeRunner } = {}) {
+    Object.assign(this, { catalog, ledger, envelope, env, keychain, keychainStore, scrub, now, codeRunner });
+    this.pool = new McpPool(catalog, { scrub, env, keychain, keychainStore, now });
     this.sessions = chromium ? new UiSessions({ chromium, scrub, env, keychain }) : null;
     this.members = new Map(); this.guards = new Map(); this.skills = new Map(); this.failures = [];
     this.builtins = createDefaultRegistry();
