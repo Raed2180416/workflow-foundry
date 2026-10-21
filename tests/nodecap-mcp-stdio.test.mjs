@@ -39,7 +39,7 @@ test('mcp stdio: qualification pins every tool and builds members whose text is 
   const guard = new PinGuard(entry, connection, { pins: q.pins, tools: q.tools, verifiedAt: q.listedAt, seenChanges: q.changesBefore });
   const out = await invokeMcp(search, { connection, guard }, { query: 'Ada' });
   assert.equal(out.contacts[0].email, 'ada@analytical.example');
-  assert.equal(guard.relists, 0, 'a fresh pin is not re-listed for a read');
+  assert.equal(guard.relists, 1, 'every call re-lists against the pins first (a late list_changed must not open a window)');
   assert.deepEqual(ledgerLines(ledgerFile).map(l => l.tool), ['search_contacts']);
 });
 

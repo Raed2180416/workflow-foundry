@@ -200,10 +200,12 @@ export class Dispatcher {
     const riskSummary = { candidates: outside.map(c => ({ member: c.id, trust: c.trust, effects: c.effects, egress: c.egress, status: c.status, flags: flags(c) })),
       flags: [...new Set(outside.flatMap(flags))], noCandidate: outside.length === 0 };
     const header = ctx.store.rows.header(ctx.runId);
-    return this.ledger.putProposal({ kind: outside.length ? 'capability.bind' : 'capability.admit', flowId: this.lock.flowId, fromWorkflowHash: header.workflowHash, fromLockHash: this.lockHash,
+    // Deny-listed candidates are reported (flagged) but never offered for binding.
+    const offered = outside.filter(c => !denyListed(this.envelope, { id: c.id, tool: c.id.split('.').pop() }));
+    return this.ledger.putProposal({ kind: offered.some(c => c.status === 'active') ? 'capability.bind' : 'capability.admit', flowId: this.lock.flowId, fromWorkflowHash: header.workflowHash, fromLockHash: this.lockHash,
       node, need: { ...need, label: this.lock.nodes[node].controlLabel },
-      quoted: outside.map(c => ({ text: c.summary, label: 'untrusted:catalog', sourceHash: digest({ c: c.summary }) })),
-      diff: { added: outside.map(c => ({ member: c.id, effects: c.effects, trust: c.trust, egress: c.egress })) }, riskSummary,
+      quoted: offered.map(c => ({ text: c.summary, label: 'untrusted:catalog', sourceHash: digest({ c: c.summary }) })),
+      diff: { added: offered.map(c => ({ member: c.id, effects: c.effects, trust: c.trust, egress: c.egress })) }, riskSummary,
       evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey } });
   }
   async #call(ctx, node, member, decision, state) {

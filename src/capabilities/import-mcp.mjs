@@ -142,9 +142,14 @@ export function toOutput(member, result) {
   checkData(value, { maxBytes: MAX_OUTPUT });
   return value;
 }
-/** Call one MCP member: pin check (forced for effects), argument mapping, scope by effects, typed output. */
+/**
+ * Call one MCP member: pin check, argument mapping, scope by effects, typed output. The pins are re-listed before EVERY call, reads
+ * included. Observed in the NC-1 bed test under machine load: with a TTL for reads, a server that flipped right after a verified
+ * listing served one read before its (late) list_changed notification arrived. `list_changed` is a SHOULD, so it cannot be relied on.
+ * The remaining window is the time between this listing and the call.
+ */
 export async function invokeMcp(member, { connection, guard }, args, { signal, idempotencyKey } = {}) {
-  await guard.check({ force: member.effects !== 'none' });
+  await guard.check({ force: true });
   let bound = mapArgs(member.argMap, args);
   if (member.idempotencyArgument) bound = { ...bound, [member.idempotencyArgument]: idempotencyKey };
   const result = await connection.call(member.tool, bound, { signal, timeoutMs: member.maxTimeoutMs, scope: member.effects === 'none' ? 'read' : 'write' });

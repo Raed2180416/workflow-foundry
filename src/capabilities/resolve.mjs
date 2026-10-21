@@ -61,7 +61,8 @@ export function resolve({ workflow, sidecar, members, catalogDigest, envelope, e
     if (found.prefix) fail('SIDECAR_NODE', `Tool node ${id} is nested; the spike lowers top-level tool nodes only`);
     const bound = [], skills = [];
     for (const requirement of toolNode.requires ?? []) {
-      const eligible = members.filter(m => typeMatch(m.type, requirement.type) > 0 && m.kind !== 'skill' && !denyListed(envelope, m)
+      // A skill body is bound through `skills`; an admitted skill SCRIPT is a typed member and may satisfy a requirement.
+      const eligible = members.filter(m => typeMatch(m.type, requirement.type) > 0 && !(m.kind === 'skill' && !m.script) && !denyListed(envelope, m)
         && effectRank(m.effects) <= effectRank(typeInfo(types, m.type)?.effectCeiling ?? 'non-idempotent'));
       if (!eligible.length) { gaps.push({ node: id, as: requirement.as, type: requirement.type, code: 'UNBOUND_REQUIREMENT' }); continue; }
       const { sorted, tie } = orderCandidates(eligible, requirement.type);
