@@ -5,8 +5,8 @@
 //  - bloated: an SOP's real tools plus 20 generated distractors in the style of upstream's own (a plausible domain operation
 //    named after one of the task's fields, e.g. validateWeatherConditions(video_id, weather); paper v2 §3.3.2 "semantically
 //    similar but functionally redundant tools"). Like upstream's stubs, every distractor answers null.
-// The bridge serves a catalog file with --catalog: its tool list replaces toolspecs.json; a distractor answers null; a tool
-// left out of a minimal catalog is an unknown tool.
+// The bridge serves a catalog file with --catalog: the real tools it names (specs from the clone's toolspecs.json) and its
+// distractors, in its order, replace toolspecs.json; a distractor answers null; a tool left out is an unknown tool.
 //   node experiments/sopbench/distractors.mjs --sop dangerous_goods --kind bloated --prep <live>/prep/dangerous_goods [--n 20]
 //   node experiments/sopbench/distractors.mjs --sop video_annotation --kind minimal --prep <live>/prep/video_annotation --stubs a,b,...
 import path from 'node:path';
@@ -33,7 +33,7 @@ export function makeDistractors({ sop, catalog, fields, n = 20, seed = SEED }) {
   // The id parameter of the first real tool (every SOP's tools take a record id first).
   const first = catalog[0]?.input_schema ?? {};
   const idParam = (first.required ?? Object.keys(first.properties ?? {}))[0];
-  const idSpec = idParam ? (first.properties?.[idParam] ?? { type: 'string' }) : null;
+  const idSpec = idParam ? { type: 'string', description: 'The record identifier.' } : null;   // our wording, not upstream's
   const r = rng(`${seed}:${sop}`);
   const pick = xs => xs[Math.floor(r() * xs.length)];
   const fieldList = shuffled([...new Set(fields.filter(f => f !== idParam))], `${seed}:${sop}:fields`);
@@ -49,16 +49,18 @@ export function makeDistractors({ sop, catalog, fields, n = 20, seed = SEED }) {
   return out;
 }
 
+// A catalog file holds no upstream text (CC BY-NC): the real tools by name only (the bridge takes their specs from the
+// pinned clone), our generated distractor specs, and the order in which the agent and the builder see the tools.
 export function bloatedCatalog({ sop, catalog, fields, n = 20, seed = SEED }) {
-  const distractors = makeDistractors({ sop, catalog, fields, n, seed });
-  const tools = shuffled([...catalog, ...distractors], `${seed}:${sop}:order`);
-  const body = { sop, kind: 'bloated', seed, real: catalog.map(t => t.name), distractors: distractors.map(t => t.name), tools };
+  const distractorSpecs = makeDistractors({ sop, catalog, fields, n, seed });
+  const order = shuffled([...catalog.map(t => t.name), ...distractorSpecs.map(t => t.name)], `${seed}:${sop}:order`);
+  const body = { sop, kind: 'bloated', seed, real: catalog.map(t => t.name), removed: [], distractors: distractorSpecs.map(t => t.name), distractorSpecs, order };
   return { ...body, sha256: sha256(JSON.stringify(body)) };
 }
 
 export function minimalCatalog({ sop, catalog, stubs }) {
-  const tools = catalog.filter(t => !stubs.includes(t.name));
-  const body = { sop, kind: 'minimal', real: tools.map(t => t.name), removed: stubs, distractors: [], tools };
+  const real = catalog.map(t => t.name).filter(nm => !stubs.includes(nm));
+  const body = { sop, kind: 'minimal', real, removed: stubs, distractors: [], distractorSpecs: [], order: real };
   return { ...body, sha256: sha256(JSON.stringify(body)) };
 }
 
@@ -71,5 +73,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     : bloatedCatalog({ sop: a.sop, catalog, fields: [...meta.input_columns, ...props], n: Number(a.n ?? 20) });
   const out = path.join(HERE, 'ablation', `${a.sop}-${a.kind}.json`);
   writeJson(out, c);
-  console.log(JSON.stringify({ out, tools: c.tools.length, distractors: c.distractors.length, removed: c.removed ?? [], sha256: c.sha256 }));
+  console.log(JSON.stringify({ out, tools: c.order.length, distractors: c.distractors.length, removed: c.removed, sha256: c.sha256 }));
 }

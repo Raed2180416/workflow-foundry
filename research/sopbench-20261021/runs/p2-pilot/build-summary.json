@@ -1,0 +1,161 @@
+{
+ "runId": "p2-pilot",
+ "evidence": "development: builds and repairs on SPLIT.json build/repair rows only; no sealed row was prepared, served or graded",
+ "stopped": null,
+ "builderModel": "claude-haiku-5-5",
+ "judgeModels": [
+  "claude-haiku-5-5"
+ ],
+ "budgets": {
+  "build": 3,
+  "repair": 1.5,
+  "buildMinutes": 30,
+  "repairMinutes": 20,
+  "rounds": 2,
+  "builderJudgeUsd": 0.5
+ },
+ "prompts": {
+  "buildTemplateSha256": "8c69d8b593015f86dbb2de1bbccf783bee097223bb20e5c620a363af4805f132",
+  "repairTemplateSha256": "f5ff28a3e56b5050c5857298c82d64418c07a1d25155361202f06585c4cf2aa5"
+ },
+ "spentUsd": 0.3611146600000001,
+ "capUsd": 15,
+ "sops": {
+  "dangerous_goods": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 0,
+   "artifactSha256": "8e7b18221a16eae23db331e3eb96b2ae0388405d6e0d20e8a8826ce6a69ac875",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.02801083,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.02801083,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 13,
+     "minutes": 2.2,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 7,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "8e7b18221a16eae23db331e3eb96b2ae0388405d6e0d20e8a8826ce6a69ac875"
+    }
+   ]
+  },
+  "customer_service": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 1,
+   "artifactSha256": "decfabf7c336274aaa4e5d46eff3c55b3f77fa3a7d52520703eec493bcd62d89",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.24686774000000003,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.21565764000000004,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 21,
+     "minutes": 7.6,
+     "buildPass": 5,
+     "repairPass": 14,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 4.95,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "b3708baffa5c742df025e34d718ac86c048146c1584002786ec2338b3e2669c6"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.0312101,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 17,
+     "minutes": 2.5,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 5.15,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "decfabf7c336274aaa4e5d46eff3c55b3f77fa3a7d52520703eec493bcd62d89"
+    }
+   ]
+  },
+  "email_intent": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 1,
+   "artifactSha256": "035ef1a6e2b5d0167452e1264d1dfec298356494df79b4cc8d8e80f7461e95e7",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.08623609,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.05512353,
+     "judgeUsd": 0.008256430000000004,
+     "checkUsd": 0.00380529,
+     "turns": 23,
+     "minutes": 6.6,
+     "buildPass": 5,
+     "repairPass": 14,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 3,
+     "judgeCallsPerRun": 1.2,
+     "nestedModelUses": 0,
+     "artifactSha256": "daac7d658cc04c7b8e4cd50a6fd64fee34fc6a449ec9c82a61e7978e916805ae"
+    },
+    {
+     "round": 1,
+     "sessionError": null,
+     "costUsd": 0.00945358,
+     "judgeUsd": 0.006531659999999997,
+     "checkUsd": 0.0030655999999999995,
+     "turns": 10,
+     "minutes": 2,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 3,
+     "judgeCallsPerRun": 1.2,
+     "nestedModelUses": 0,
+     "artifactSha256": "035ef1a6e2b5d0167452e1264d1dfec298356494df79b4cc8d8e80f7461e95e7"
+    }
+   ]
+  }
+ },
+ "live": "/var/tmp/foundry-work/sopbench/p2-pilot",
+ "finishedAt": "2026-10-21T12:31:59.277Z"
+}

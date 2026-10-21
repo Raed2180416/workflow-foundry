@@ -15,7 +15,9 @@ import { loadSplit } from './split.mjs';
 import { BUILD_PROMPT, REPAIR_PROMPT } from './build.mjs';
 import { W_DEFAULTS, artifactFiles, artifactSha256 } from './exec.mjs';
 import { DEFAULTS as A_DEFAULTS } from './run.mjs';
-import { codeHashes } from './sealed.mjs';
+import { codeHashes, dependencyHashes } from './sealed.mjs';
+import { MODEL_TOOL } from '../c0/construct.mjs';
+import { FLOW_SDK, SOP_PORT, writeFiles } from './exec.mjs';
 
 export const DECISION_RULE = Object.freeze({
   metric: 'strict pass^k per sealed row (all k runs pass the strict grader); per SOP the mean over its sealed rows; headline the macro mean over the frozen SOPs',
@@ -89,6 +91,11 @@ export function makeFreeze({ id, builds, sops, capUsd, agentModel = 'claude-haik
     artifacts[s] = freezeArtifact(recs[s], path.join(frozenRoot, s));
     dev[s] = { devPass: recs[s].devPass, devRows: recs[s].devRows, buildPass: recs[s].buildPass, repairPass: recs[s].repairPass, buildCostUsd: recs[s].costUsd };
   }
+  // The workflow SDK, frozen as the copy every W run gets (flow-v3.mjs, the gateway client, the tool port).
+  const sdkDir = path.join(frozenRoot, 'sdk');
+  writeFiles(sdkDir, { 'flow.mjs': readFileSync(FLOW_SDK, 'utf8'), 'model.mjs': MODEL_TOOL, 'sop.mjs': readFileSync(SOP_PORT, 'utf8') });
+  const sdk = { dir: path.relative(REPO, sdkDir), from: { 'flow.mjs': 'experiments/jit/flow-v3.mjs', 'model.mjs': 'experiments/c0/construct.mjs MODEL_TOOL', 'sop.mjs': 'experiments/sopbench/kit/sop.mjs' },
+    files: Object.fromEntries(['flow.mjs', 'model.mjs', 'sop.mjs'].map(f => [f, sha256(readFileSync(path.join(sdkDir, f)))])) };
   const builderModels = [...new Set(sops.map(s => recs[s]?.builderModel).filter(Boolean))], judgeModels = [...new Set(sops.flatMap(s => recs[s]?.judgeModels ?? []))];
   const buildCostUsd = sops.reduce((a, s) => a + (recs[s]?.costUsd ?? 0), 0);
   const freeze = {
@@ -98,7 +105,7 @@ export function makeFreeze({ id, builds, sops, capUsd, agentModel = 'claude-haik
     rows: Object.fromEntries(sops.map(s => [s, { n: split.sops[s].sealed.length, sealedSha256: split.sops[s].sealedSha256, sealed: split.sops[s].sealed }])),
     k: DECISION_RULE.k,
     arms: {
-      W: { builderModels, judgeModels, buildRuns: builds, maxSteps: W_DEFAULTS.maxSteps, budgetUsdPerRun: W_DEFAULTS.budgetUsd, timeoutMs: W_DEFAULTS.timeoutMs, buildCostUsd,
+      W: { builderModels, judgeModels, buildRuns: builds, sdk, maxSteps: W_DEFAULTS.maxSteps, budgetUsdPerRun: W_DEFAULTS.budgetUsd, timeoutMs: W_DEFAULTS.timeoutMs, buildCostUsd,
         sandbox: 'runSandboxed, network off; tools via the bridge mailbox; judges via the gateway unix socket' },
       A: { model: agentModel, budgetUsd: A_DEFAULTS.budgetUsd, maxSteps: A_DEFAULTS.maxSteps, timeoutMin: A_DEFAULTS.timeoutMin, effort: null, tools: A_DEFAULTS.tools,
         prompt: 'run.mjs systemPrompt + userPrompt (unchanged from the phase-1 dev baseline)' },
@@ -106,6 +113,7 @@ export function makeFreeze({ id, builds, sops, capUsd, agentModel = 'claude-haik
     artifacts, devResults: dev, orchestrationOnly: ['aircraft_inspection'],
     prompts: { buildTemplateSha256: sha256(BUILD_PROMPT.toString()), repairTemplateSha256: sha256(REPAIR_PROMPT.toString()) },
     code: codeHashes(),
+    dependencies: dependencyHashes(),
     decisionRule: DECISION_RULE,
     caps: { sealedRunCapUsd: capUsd, phase2CapUsd: 100 },
     ablation: ablation ? { design: 'DESIGN.md §8', cells: ablationCells({ id, split, ...ablation }) } : null,

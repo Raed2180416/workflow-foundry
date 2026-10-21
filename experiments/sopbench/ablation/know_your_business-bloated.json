@@ -1,0 +1,491 @@
+{
+ "sop": "know_your_business",
+ "kind": "bloated",
+ "seed": "sopbench-20261021-distractors-v1",
+ "real": [
+  "performSanctionsCheck",
+  "getBusinessProfile",
+  "getOwnershipData",
+  "verifyBankAccount",
+  "getBankData",
+  "calculateRiskScore",
+  "verifyUBO",
+  "verifyBusinessRegistration"
+ ],
+ "removed": [],
+ "distractors": [
+  "reviewBusinessRegistrationStateProfile",
+  "validateBankAccountTypeTrend",
+  "verifyRegistrationNumberStatus",
+  "verifyBankAccountNumber",
+  "assessBankingInstitutionTrend",
+  "validateUboListConsistency",
+  "checkLicenseNumberConsistency",
+  "checkBusinessRegistrationStateStatus",
+  "summarizeBankAccountTypeSummary",
+  "assessRegistrationNumberHistory",
+  "validateBankAccountNumber",
+  "validateBankingInstitution",
+  "analyzeUboListSummary",
+  "reviewLicenseNumberConsistency",
+  "reviewBusinessRegistrationStateTrend",
+  "auditBankAccountTypeTrend",
+  "checkRegistrationNumberHistory",
+  "analyzeBankAccountNumberConsistency",
+  "auditBankingInstitutionHistory",
+  "reconcileUboList"
+ ],
+ "distractorSpecs": [
+  {
+   "name": "reviewBusinessRegistrationStateProfile",
+   "description": "Reviews the business registration state against the current policy reference data and records the outcome. Includes the profile.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "business_registration_state": {
+      "type": "string",
+      "description": "The business registration state of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "business_registration_state"
+    ]
+   }
+  },
+  {
+   "name": "validateBankAccountTypeTrend",
+   "description": "Validates historical bank account type data to support the decision process. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "bank_account_type": {
+      "type": "string",
+      "description": "The bank account type of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "bank_account_type"
+    ]
+   }
+  },
+  {
+   "name": "verifyRegistrationNumberStatus",
+   "description": "Verifys the registration number against the current policy reference data and records the outcome. Includes the status.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "registration_number": {
+      "type": "string",
+      "description": "The registration number of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "registration_number"
+    ]
+   }
+  },
+  {
+   "name": "verifyBankAccountNumber",
+   "description": "Verifys the bank account number for the record and returns the result of the check.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "bank_account_number": {
+      "type": "string",
+      "description": "The bank account number of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "bank_account_number"
+    ]
+   }
+  },
+  {
+   "name": "assessBankingInstitutionTrend",
+   "description": "Assesss historical banking institution data to support the decision process. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "banking_institution": {
+      "type": "string",
+      "description": "The banking institution of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "banking_institution"
+    ]
+   }
+  },
+  {
+   "name": "validateUboListConsistency",
+   "description": "Runs a validate step over the ubo list as part of the standard review workflow. Includes the consistency.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "ubo_list": {
+      "type": "string",
+      "description": "The ubo list of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "ubo_list"
+    ]
+   }
+  },
+  {
+   "name": "checkLicenseNumberConsistency",
+   "description": "Checks the license number against the current policy reference data and records the outcome. Includes the consistency.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "license_number": {
+      "type": "string",
+      "description": "The license number of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "license_number"
+    ]
+   }
+  },
+  {
+   "name": "checkBusinessRegistrationStateStatus",
+   "description": "Checks the business registration state for the record and returns the result of the check. Includes the status.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "business_registration_state": {
+      "type": "string",
+      "description": "The business registration state of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "business_registration_state"
+    ]
+   }
+  },
+  {
+   "name": "summarizeBankAccountTypeSummary",
+   "description": "Summarizes the bank account type for the record and returns the result of the check. Includes the summary.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "bank_account_type": {
+      "type": "string",
+      "description": "The bank account type of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "bank_account_type"
+    ]
+   }
+  },
+  {
+   "name": "assessRegistrationNumberHistory",
+   "description": "Runs a assess step over the registration number as part of the standard review workflow. Includes the history.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "registration_number": {
+      "type": "string",
+      "description": "The registration number of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "registration_number"
+    ]
+   }
+  },
+  {
+   "name": "validateBankAccountNumber",
+   "description": "Validates historical bank account number data to support the decision process.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "bank_account_number": {
+      "type": "string",
+      "description": "The bank account number of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "bank_account_number"
+    ]
+   }
+  },
+  {
+   "name": "validateBankingInstitution",
+   "description": "Runs a validate step over the banking institution as part of the standard review workflow.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "banking_institution": {
+      "type": "string",
+      "description": "The banking institution of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "banking_institution"
+    ]
+   }
+  },
+  {
+   "name": "analyzeUboListSummary",
+   "description": "Analyzes the ubo list against the current policy reference data and records the outcome. Includes the summary.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "ubo_list": {
+      "type": "string",
+      "description": "The ubo list of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "ubo_list"
+    ]
+   }
+  },
+  {
+   "name": "reviewLicenseNumberConsistency",
+   "description": "Reviews the license number against the current policy reference data and records the outcome. Includes the consistency.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "license_number": {
+      "type": "string",
+      "description": "The license number of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "license_number"
+    ]
+   }
+  },
+  {
+   "name": "reviewBusinessRegistrationStateTrend",
+   "description": "Reviews the business registration state against the current policy reference data and records the outcome. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "business_registration_state": {
+      "type": "string",
+      "description": "The business registration state of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "business_registration_state"
+    ]
+   }
+  },
+  {
+   "name": "auditBankAccountTypeTrend",
+   "description": "Audits the bank account type for the record and returns the result of the check. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "bank_account_type": {
+      "type": "string",
+      "description": "The bank account type of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "bank_account_type"
+    ]
+   }
+  },
+  {
+   "name": "checkRegistrationNumberHistory",
+   "description": "Checks the registration number for the record and returns the result of the check. Includes the history.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "registration_number": {
+      "type": "string",
+      "description": "The registration number of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "registration_number"
+    ]
+   }
+  },
+  {
+   "name": "analyzeBankAccountNumberConsistency",
+   "description": "Runs a analyze step over the bank account number as part of the standard review workflow. Includes the consistency.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "bank_account_number": {
+      "type": "string",
+      "description": "The bank account number of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "bank_account_number"
+    ]
+   }
+  },
+  {
+   "name": "auditBankingInstitutionHistory",
+   "description": "Audits historical banking institution data to support the decision process. Includes the history.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "banking_institution": {
+      "type": "string",
+      "description": "The banking institution of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "banking_institution"
+    ]
+   }
+  },
+  {
+   "name": "reconcileUboList",
+   "description": "Runs a reconcile step over the ubo list as part of the standard review workflow.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "business_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "ubo_list": {
+      "type": "string",
+      "description": "The ubo list of the record."
+     }
+    },
+    "required": [
+     "business_id",
+     "ubo_list"
+    ]
+   }
+  }
+ ],
+ "order": [
+  "getBusinessProfile",
+  "auditBankingInstitutionHistory",
+  "assessRegistrationNumberHistory",
+  "checkRegistrationNumberHistory",
+  "calculateRiskScore",
+  "verifyBankAccount",
+  "summarizeBankAccountTypeSummary",
+  "reviewBusinessRegistrationStateTrend",
+  "verifyRegistrationNumberStatus",
+  "performSanctionsCheck",
+  "validateBankAccountNumber",
+  "assessBankingInstitutionTrend",
+  "verifyUBO",
+  "auditBankAccountTypeTrend",
+  "verifyBankAccountNumber",
+  "checkBusinessRegistrationStateStatus",
+  "getBankData",
+  "validateBankingInstitution",
+  "analyzeBankAccountNumberConsistency",
+  "checkLicenseNumberConsistency",
+  "getOwnershipData",
+  "validateBankAccountTypeTrend",
+  "analyzeUboListSummary",
+  "reconcileUboList",
+  "reviewLicenseNumberConsistency",
+  "validateUboListConsistency",
+  "verifyBusinessRegistration",
+  "reviewBusinessRegistrationStateProfile"
+ ],
+ "sha256": "05d56552d62507992ace563dbf7159c92affc0478848daa8acbabd66ea0b312a"
+}

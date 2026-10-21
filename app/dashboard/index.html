@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Foundry dashboard</title>
+  <link rel="stylesheet" href="/dashboard.css">
+  <script type="module" src="/dashboard.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div><strong>Foundry</strong> <span class="muted">local preview</span></div>
+    <div id="waiting" class="pill" role="status">Loading…</div>
+  </header>
+  <main>
+    <p id="error" class="error" role="alert" hidden></p>
+    <section aria-labelledby="inbox-h">
+      <h2 id="inbox-h">Waiting for you</h2>
+      <p class="muted">Nothing here runs or sends until you say yes. Only you can say yes: your coding agent cannot.</p>
+      <div id="inbox"></div>
+    </section>
+    <section aria-labelledby="flows-h">
+      <h2 id="flows-h">Your flows</h2>
+      <div id="flows"></div>
+    </section>
+    <section aria-labelledby="runs-h">
+      <h2 id="runs-h">Recent runs</h2>
+      <div id="runs"></div>
+    </section>
+    <section id="detail" aria-labelledby="detail-h" hidden>
+      <h2 id="detail-h">Details</h2>
+      <div id="detail-body"></div>
+    </section>
+  </main>
+  <footer class="muted" id="mode"></footer>
+</body>
+</html>

@@ -7,9 +7,15 @@ carries over from one trigger to the next. Design: [RECURRING-DESIGN.md §4.8](.
 statutory 30-day deadline checked at the daily close (`schedule`).
 
 **Status (2026-10-15).** Development, $0. Built: the generator, the oracle, an observable-only reference workflow,
-24 bad controls, the $0 validity gates and the tests. No model has run on this family, so there is no arm result and
+25 bad controls, the $0 validity gates and the tests. No model has run on this family, so there is no arm result and
 no capability number yet. Everything below is development evidence on practice and dev seeds (601–650). No held-out
 seed (8801+) has been generated or looked at.
+
+**Re-verified 2026-10-21** ($0, same venv, AutomationBench `4a8e106`). Before any change, the 27 tests passed, `gates.py`
+exited 0 and every number below reproduced exactly. One gap was found and closed: no blocked request ever reached day 30
+at a daily close (the oldest was 27 days over 601–650), so the rule "only `Verification Sent` requests are closed" was
+never tested against a legal hold that outlasts the deadline. The new trap `deadline-held`, the control `close-held` and
+one POLICY.md sentence (§8.1) cover it (History). Reference: still every trigger and every week.
 
 ## What an arm does
 
@@ -80,7 +86,7 @@ deletion or an audit breach. A workflow built once should pay, and more so as th
 (a W = 5V sensitivity is proposed). Proposed split: held-out (near, forced).
 
 What the controls show, and what they do not: each single-rule mistake costs 3–34% of triggers on the dev streams
-(78% for writing At as a date only, which spoils every log row). None of the 24 controls keeps all five weeks clean;
+(78% for writing At as a date only, which spoils every log row). None of the 25 controls keeps all five weeks clean;
 the best keep 3 of 5. That fits the hypothesis but does not test
 it; only an agent-H run does.
 
@@ -93,7 +99,7 @@ it; only an agent-H run does.
 | [gen.py](gen.py) | Seeded generator: `world0` (validated as AutomationBench `WorldState`, round-tripped), arm-visible `payloads`, host-only `triggers` (payload + delta + traps), `truth`, `end`, one `serve-inputs` row per trigger (`assertions: []`), `meta` with sha256. Uses `random.Random(f"{family}:{version}:{seed}:{difficulty}")` with no wall clock; an unschedulable plan is redrawn from a numbered sub-seed. The plan says only what happens in the world; the truth is derived by applying the policy to it, step by step, and the plan's intent is asserted against that derivation. Refuses held-out seeds |
 | [oracle.py](oracle.py) | Per-trigger grader: an effect ledger from `world_before` / `world_after` (attribution), the audit checks, exact effects, the envelope, AutomationBench's own `AssertionRegistry` checks, and the end-of-week state at the Friday close. Outcomes: correct, abstained, miss, wrong |
 | [reference.py](reference.py) | Reference workflow: author-written code, no model. It sees only the payload, the policy constants and the tools, keeps no private state, and imports only the standard library. At most 14 tool steps per trigger |
-| [controls.py](controls.py) | 24 bad controls (below) |
+| [controls.py](controls.py) | 25 bad controls (below) |
 | [harness.py](harness.py) | `$0` stream runner. It applies each delta and calls the tools through `bridge.Rollout.batch`: the official `env_response` path with the determinism shim, clock = trigger time. It grades every trigger, in carry and rebased modes |
 | [gates.py](gates.py) | The $0 validity gates of RECURRING-DESIGN §3.11 |
 | [tests/test_gdpr.py](tests/test_gdpr.py) | pytest suite |
@@ -137,12 +143,13 @@ act differently. Every trap is resolvable from `POLICY.md` and the tools.
 | T-stale | `re-request` | an earlier request for the address ended `Closed - Unverified` | §4: handled as new |
 | | `hold-lifted-row` | a Lifted hold row for the exact address | §5: only Active rows hold |
 | | `batch-changed` (d3) | `Batch_Reference` changes mid-week, under a `Previous_Batch_Reference` row | §8: the setting named exactly `Batch_Reference`, read at the close |
-| T-timing | `deadline`, `deadline-late` (d3), `deadline-not-yet`, `deadline-day` | a closure at age 30; a postal letter entered 31–33 days after its date, closed at that day's close; an open request at age 29; a verification on the morning of day 30 | §8: `>= 30` at a close, state `Verification Sent` only |
+| T-timing | `deadline`, `deadline-late` (d3), `deadline-not-yet`, `deadline-day`, `deadline-held` | a closure at age 30; a postal letter entered 31–33 days after its date, closed at that day's close; an open request at age 29; a verification on the morning of day 30; a request blocked by a legal hold that is 30 or more days old at a close (pre-seeded 30–47 days old) | §8: `>= 30` at a close, state `Verification Sent` only; a blocked request is verified and answered, so it is never closed |
 | T-state | `hold-lift`, `hold-still` (d3), `count-lift` | a hold lifted (purge at that trigger); one of two holds lifted (still held); today's summary includes a hold-lift purge | §7, §8 |
 
 ## Numbers [measured, $0, development evidence]
 
-From `gates.py` (default seeds: dev 610–614, practice 601–609) and `harness.py`, 2026-10-15. Generator version 1.0.0.
+From `gates.py` (default seeds: dev 610–614, practice 601–609) and `harness.py`, 2026-10-15, re-run 2026-10-21 after the
+`deadline-held` fix. Generator version 1.0.0.
 
 **Stream shape** (seeds 601–650):
 
@@ -152,10 +159,11 @@ From `gates.py` (default seeds: dev 610–614, practice 601–609) and `harness.
 | Purged per week | | 4–7 | 4–5 |
 | Blocked per week | | 0–1 | 1–2 |
 | Closed - Unverified per week | | 1–2 | 4 |
-| Share of triggers with an exposed trap (design) | 0.27 | **0.56** (0.45) | **0.81** (0.75) |
+| Share of triggers with an exposed trap (design) | 0.27 | **0.58** (0.45) | **0.81** (0.75) |
 
 Each kind also appears within the spec's per-week range. Every pre-seeded open request is at most 29 days old on
-Monday, as the spec says, and reaches day 30 during the week. Both difficulties sit above the design rates.
+Monday, as the spec says, and reaches day 30 during the week. A pre-seeded request that is already verified and
+blocked by a legal hold may be older (30–47 days; `deadline-held`, in 13 of 26 d2 weeks and 17 of 24 d3 weeks). Both difficulties sit above the design rates.
 Duplicates, hold changes, non-verifying replies and deadline closes are traps by construction, and they already make
 up about a third of a d2 week. The base rates (users in organizations, tagged tickets, capitalized and body-only
 replies) were lowered once, which brought d2 from 0.58 to about 0.55. That tuning used practice and dev seeds only,
@@ -194,12 +202,13 @@ The deliverable bar is ≥ 95% on 5 dev seeds. Result: **131/131 (100%) on 610�
 | `dedupe-any` | any earlier request makes a duplicate | 121 | 0.924 | 0/5 | 10 wrong |
 | `exact-deadline` | closes only at exactly day 30 | 127 | 0.970 | 3/5 | 4 wrong |
 | `late-deadline` | closes from day 31 | 114 | 0.870 | 0/5 | 17 wrong |
+| `close-held` | also closes Blocked requests at day 30 or later | 120 | 0.916 | 2/5 | 9 wrong, 2 miss |
 | `count-all` | the summary counts every row in the log | 106 | 0.809 | 0/5 | 25 wrong |
 | `stale-batch` | first setting containing `Batch` | 121 | 0.924 | 3/5 (the d2 weeks) | 10 wrong |
 | `snippet-only` | looks for the ID in the payload subject and snippet only | 110 | 0.840 | 0/5 | 10 wrong, 11 miss |
 | `at-date` | writes At as the date only | 29 | 0.221 | 0/5 | 102 wrong |
 
-Every control fails: none passes every trigger or keeps every week clean. 23 of the 24 are below the 95% bar
+Every control fails: none passes every trigger or keeps every week clean. 24 of the 25 are below the 95% bar
 (`exact-deadline`, at 0.970, is the exception: it is wrong only on the late postal requests). The
 tests also check that each plausible control is rejected **on its own trap**: for example `any-sender` on the spoof
 triggers, `text-search` on `cc-user`, `exact-deadline` on `deadline-late` and `snippet-only` on `id-in-body`. They
@@ -215,11 +224,11 @@ In rebased mode every spoofed verification that `any-sender` accepts is a wrong 
 | leakage | 0 problems on 610–614. Payload keys are fixed per event. Sheet payloads equal the world's cells after the delta, and email payloads equal the inbound message. No trap id, trigger kind or plan word appears in payloads or world0. Request rows and inbound emails arrive with their trigger. Serve rows carry no assertions or records. The reference imports only the standard library |
 | solvability | 376/376 triggers, 14/14 clean weeks on 601–614; rebased 131/131 on 610–614 |
 | controls | As above. `null` passes exactly the 18 no-op triggers; `naive` scores 0.311 at d3 (below 60%) |
-| trap coverage (610–613) | lookalike 9, authority 10, note 21, repeat 13, format 24, stale 12, timing 23, state 9 (each ≥ 5) |
+| trap coverage (610–613) | lookalike 9, authority 10, note 21, repeat 13, format 24, stale 12, timing 33, state 9 (each ≥ 5) |
 | oracle mutation | 3,249/3,249 single-fault mutants killed on 610–614 (score 1.000, 43 operators). Examples: a dropped or duplicated log row, an edited or deleted earlier row, a log row's At moved or blanked, rows of one request swapped, an email with an extra CC or without the Request ID, a ticket with replaced tags or a comment, another user's ticket prefixed, a user left undeleted, a summary count off by one, a stale batch, a trashed inbound email |
 | oracle specificity | 838/838 policy-neutral variants accepted: an At with `+00:00` or without seconds, Transition and Email in other case, Reference ids reordered with `;`, a display name or upper case in To, a longer body, a padded subject, reordered tags, a trailing period on the post, the inbound email marked read. An equivalent solver (append by worksheet title, the tags endpoint, the channel id, lower-case transitions, offsets in At) passes 131/131 |
 
-**Tests:** 27 passed (pytest 9.0.2 in the AutomationBench venv, 130 s).
+**Tests:** 28 passed (pytest 9.0.2 in the AutomationBench venv, 149 s; 2026-10-21).
 
 ## Limits and open items
 
@@ -263,3 +272,23 @@ In rebased mode every spoofed verification that `any-sender` accepts is a wrong 
   - the spoofed-verification test runs in rebased mode (see the controls note).
 
   The generator stays at version 1.0.0, because no stream from it has been used for any label.
+- 2026-10-21, re-verification and one fix ($0, no model):
+  - Reproduced first: 27 tests passed; `gates.py` exit 0; reference 131/131 on 610–614; every control row unchanged.
+  - Gap: a pre-seeded blocked request was 8–25 days old on Monday, so none reached day 30 at a close, and a solver that
+    also closes held requests passed 131/131 (an uncommitted probe). Fix: with a separate seeded draw (`r_held`, so every
+    other draw of a stream is unchanged), a pre-seeded blocked request is 22 days older (30–47) with probability 0.5
+    (hold lifted this week) or 0.8 (still held), at d2 and d3 only. The day close labels `deadline-held` when a request in
+    `Blocked - Legal Hold` is 30 or more days old. POLICY.md §8.1 now says that requests in any other state, including
+    `Blocked - Legal Hold`, are not closed (§3 already called a blocked request verified and open; the sentence removes
+    the doubt). New control `close-held`: 120/131, 2/5 clean weeks; over 601–650 it fails 102 of 1,347 triggers. New
+    test `test_held_requests_past_day_30_are_not_closed`.
+  - Effect on the streams: trigger counts and kinds are unchanged; world0 changes in 36 of 50 weeks (a request date, and
+    request ids, which follow request dates). The d2 trap share rises from 0.558 to 0.581 (601–650 mean), d3 from 0.809
+    to 0.814. Reference: 1,347/1,347 and 50/50 clean weeks on 601–650, 809/809 rebased on 601–630, 210/210 (d1) and
+    298/298 (d3) on 631–640. Mutation 3,249/3,249, specificity 838/838, unchanged.
+  - An uncommitted ad-hoc probe tried ten more one-rule mistakes on 610–614; each failed where its rule applies:
+    no Not Found email 119/131; no hold notice 123/131; verifying a request in any state 126/131; blocking at intake
+    instead of sending a verification 123/131; Purged with an empty Reference 100/131; a CC on every email 65/131; an extra
+    acknowledgement post 69/131; the summary without its date 106/131; the Verified row after the outcome row 100/131;
+    closing held requests 120/131. Two policy-neutral variants passed 131/131: Verified and the outcome appended in one
+    call with two rows, and terse email bodies that still name the Request ID.

@@ -157,7 +157,26 @@ class Sop:
             self.input_columns = [c for c in cols if c in src[1] and c not in self.output_columns]
             self.inputs_source = f"columns of {src[0]} (upstream legacy mode would pass the whole row)"
         self.toolspecs = load_json(self.dir / "toolspecs.json")
+        self.catalog_file = None
+        self.distractors = set()
         self.tool_names = [(s.get("toolSpec") or s).get("name") for s in self.toolspecs]
+
+    def use_catalog(self, path):
+        """The distractor ablation (experiments/sopbench/distractors.mjs): a catalog file's tool list replaces
+        toolspecs.json (simple {name, description, input_schema} entries); its distractors answer null; a tool left out
+        (a minimal catalog) is an unknown tool."""
+        c = load_json(path)
+        if c.get("sop") != self.name:
+            raise ValueError(f"catalog file is for {c.get('sop')}, not {self.name}")
+        self.catalog_file = {"path": str(path), "sha256": file_sha(path), "kind": c.get("kind")}
+        real = {(s.get("toolSpec") or s)["name"]: s for s in self.toolspecs}
+        extra = {t["name"]: {"name": t["name"], "description": t["description"], "inputSchema": {"json": t["input_schema"]}} for t in c.get("distractorSpecs") or []}
+        missing = [n for n in c["real"] if n not in real]
+        if missing or set(extra) & set(real):
+            raise ValueError(f"catalog file does not fit {self.name}: missing {missing}, clashes {sorted(set(extra) & set(real))}")
+        self.toolspecs = [real[n] if n in real else extra[n] for n in c["order"]]
+        self.distractors = set(extra)
+        self.tool_names = list(c["order"])
 
     @property
     def n(self):
@@ -349,6 +368,9 @@ class World:
             rec.update(error="arguments", content="Error: arguments must be a JSON object")
             return rec
         rec["arguments"] = params
+        if name in self.sop.distractors:
+            rec.update(ok=True, distractor=True, content=json.dumps(None))
+            return rec
         if not self.tm.has_tool(name):
             rec.update(error="unknown_tool", upstreamFatal="unknown tool: ToolManager.execute_tool raises outside its try (manager.py:120-125)",
                        content=f"Error: Tool '{name}' not found. Available tools: {', '.join(self.tm.get_tool_names())}")
@@ -713,6 +735,8 @@ def cmd_prepare(a):
     data = _data_dir(a)
     split = load_split(Path(a.split))
     sop = Sop(data, a.sop)
+    if a.catalog:
+        sop.use_catalog(Path(a.catalog))
     rows = _parse_rows(a.rows)
     allowed = allowed_rows(split, a.sop, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None, world=a.world)
     check_rows(rows, allowed, a.sop)
@@ -721,7 +745,7 @@ def cmd_prepare(a):
     (out / "sop.txt").write_text((sop.dir / "sop.txt").read_text(encoding="utf-8", errors="replace"), encoding="utf-8")
     write_json(out / "catalog.json", sop.catalog())
     contract = sop.contract()
-    meta = {"sop": a.sop, "output_columns": sop.output_columns, "input_columns": sop.input_columns, "inputs_source": sop.inputs_source,
+    meta = {"sop": a.sop, "catalog": sop.catalog_file, "output_columns": sop.output_columns, "input_columns": sop.input_columns, "inputs_source": sop.inputs_source,
             "n": sop.n, "contract_sha256": sha(contract), "contract": contract, "splitSha256": split["splitSha256"], "sealed": bool(a.sealed)}
     write_json(out / "meta.json", meta)
     for rid in rows:
@@ -736,6 +760,8 @@ def _world(a, up, sop_name):
     data = _data_dir(a, up)
     split = load_split(Path(a.split))
     sop = Sop(data, sop_name)
+    if getattr(a, "catalog", None):
+        sop.use_catalog(Path(a.catalog))
     allowed = allowed_rows(split, sop_name, sealed=a.sealed, freeze=Path(a.freeze) if a.freeze else None, world=a.world)
     return sop, allowed, World(up, sop, allowed)
 
@@ -745,7 +771,7 @@ def _finish(host: Path, r: Rollout, world: World, meta: dict):
     with open(host / "calls.jsonl", "w", encoding="utf-8") as f:
         for rec in r.log:
             f.write(json.dumps(jsonsafe(rec), ensure_ascii=False) + "\n")
-    write_json(host / "serve.json", {**meta, "steps": r.steps, "calls": sum(1 for x in r.log if "name" in x),
+    write_json(host / "serve.json", {**meta, "catalog": world.sop.catalog_file, "distractorCalls": sum(1 for x in r.log if x.get("distractor")), "steps": r.steps, "calls": sum(1 for x in r.log if "name" in x),
                                      "upstreamFatal": sum(1 for x in r.log if x.get("upstreamFatal")), "worldReads": sorted(set(world.proxy.reads)),
                                      "alignment": world.alignment})
 
@@ -925,6 +951,7 @@ def main():
             sp.add_argument("--sealed", action="store_true")
             sp.add_argument("--freeze", default=None)
             sp.add_argument("--world", default="dev", choices=["build", "dev"], help="without --sealed: build rows only, or build + repair rows")
+            sp.add_argument("--catalog", default=None, help="an ablation catalog file (distractors.mjs)")
 
     s = sub.add_parser("stats"); common(s, split=False); s.set_defaults(fn=cmd_stats)
     s = sub.add_parser("rows"); common(s, split=False); s.add_argument("--sops"); s.set_defaults(fn=cmd_rows)

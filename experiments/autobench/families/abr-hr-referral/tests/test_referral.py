@@ -83,6 +83,30 @@ def test_stream_shape_matches_family_json(streams):
         assert out["triggers"][-1] is runs[-1]                   # Friday's run closes the week
 
 
+# RECURRING-DESIGN §4.11 (and the 2026-10-14 build spec): triggers per week by kind, 20-35 in all.
+DESIGN_PER_WEEK = {"referral.submitted": (6, 10), "candidate.hired": (4, 8), "employee.left": (1, 2),
+                   "hold.changed": (1, 2), "broadcast.request": (1, 2), "payout.run": (5, 5)}
+
+
+def test_volumes_inside_the_design_ranges():
+    """Every practice and dev seed, generated at d2 and at d3, stays inside the design's per-kind ranges, and
+    family.json declares exactly those ranges (v1.0.0 put d3 one above the submission and hold ranges)."""
+    for kind, rng in DESIGN_PER_WEEK.items():
+        assert tuple(FAMILY["triggerKinds"][kind]["perWeek"]) == rng, kind
+    for s in PRACTICE + DEV:
+        for d in ("d2", "d3"):
+            out = gen.generate(s, d, validate=False)
+            assert 20 <= out["meta"]["n_triggers"] <= 35, (s, d)
+            kinds = Counter(t["kind"] for t in out["triggers"])
+            assert set(kinds) == set(DESIGN_PER_WEEK), (s, d, kinds)
+            for kind, (lo, hi) in DESIGN_PER_WEEK.items():
+                assert lo <= kinds[kind] <= hi, (s, d, kind, kinds[kind])
+            if d == "d3":   # top of the range, with the unauthorized hold and the re-delivered submission inside it
+                assert kinds["referral.submitted"] >= 9 and kinds["hold.changed"] == 2
+                labels = Counter(x for t in out["truth"] for x in t["traps"])
+                assert labels["hold-unauthorized"] == 1 and labels["retry"] == 1, (s, labels)
+
+
 def test_trap_rates_near_design(streams):
     for out in streams.values():
         share = out["meta"]["trigger_trap_share"]

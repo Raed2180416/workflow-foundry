@@ -1,0 +1,483 @@
+{
+ "sop": "dangerous_goods",
+ "kind": "bloated",
+ "seed": "sopbench-20261021-distractors-v1",
+ "real": [
+  "calculate_disposal_score",
+  "calculate_handling_score",
+  "calculate_transportation_score",
+  "calculate_sds_label_score"
+ ],
+ "removed": [],
+ "distractors": [
+  "review_handling_and_storage_guidelines_consistency",
+  "assess_assessment_form_id",
+  "summarize_disposal_guidelines",
+  "reconcile_transportation_requirements_compliance",
+  "validate_sds_label_text_history",
+  "audit_handling_and_storage_guidelines_history",
+  "validate_disposal_guidelines",
+  "normalize_transportation_requirements_trend",
+  "normalize_sds_label_text_status",
+  "review_handling_and_storage_guidelines",
+  "reconcile_assessment_form_id_summary",
+  "validate_disposal_guidelines_consistency",
+  "audit_transportation_requirements_compliance",
+  "analyze_sds_label_text_consistency",
+  "check_handling_and_storage_guidelines_profile",
+  "assess_assessment_form_id_summary",
+  "analyze_disposal_guidelines_history",
+  "validate_transportation_requirements_profile",
+  "assess_sds_label_text_status",
+  "normalize_handling_and_storage_guidelines"
+ ],
+ "distractorSpecs": [
+  {
+   "name": "review_handling_and_storage_guidelines_consistency",
+   "description": "Reviews historical handling and storage guidelines data to support the decision process. Includes the consistency.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "handling_and_storage_guidelines": {
+      "type": "string",
+      "description": "The handling and storage guidelines of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "handling_and_storage_guidelines"
+    ]
+   }
+  },
+  {
+   "name": "assess_assessment_form_id",
+   "description": "Assesss historical assessment form id data to support the decision process.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "assessmentFormId": {
+      "type": "string",
+      "description": "The assessment form id of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "assessmentFormId"
+    ]
+   }
+  },
+  {
+   "name": "summarize_disposal_guidelines",
+   "description": "Summarizes the disposal guidelines for the record and returns the result of the check.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "disposal_guidelines": {
+      "type": "string",
+      "description": "The disposal guidelines of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "disposal_guidelines"
+    ]
+   }
+  },
+  {
+   "name": "reconcile_transportation_requirements_compliance",
+   "description": "Reconciles the transportation requirements for the record and returns the result of the check. Includes the compliance.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "transportation_requirements": {
+      "type": "string",
+      "description": "The transportation requirements of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "transportation_requirements"
+    ]
+   }
+  },
+  {
+   "name": "validate_sds_label_text_history",
+   "description": "Validates the sds label text for the record and returns the result of the check. Includes the history.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "sds_label_text": {
+      "type": "string",
+      "description": "The sds label text of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "sds_label_text"
+    ]
+   }
+  },
+  {
+   "name": "audit_handling_and_storage_guidelines_history",
+   "description": "Runs a audit step over the handling and storage guidelines as part of the standard review workflow. Includes the history.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "handling_and_storage_guidelines": {
+      "type": "string",
+      "description": "The handling and storage guidelines of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "handling_and_storage_guidelines"
+    ]
+   }
+  },
+  {
+   "name": "validate_disposal_guidelines",
+   "description": "Validates the disposal guidelines against the current policy reference data and records the outcome.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "disposal_guidelines": {
+      "type": "string",
+      "description": "The disposal guidelines of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "disposal_guidelines"
+    ]
+   }
+  },
+  {
+   "name": "normalize_transportation_requirements_trend",
+   "description": "Normalizes the transportation requirements for the record and returns the result of the check. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "transportation_requirements": {
+      "type": "string",
+      "description": "The transportation requirements of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "transportation_requirements"
+    ]
+   }
+  },
+  {
+   "name": "normalize_sds_label_text_status",
+   "description": "Normalizes historical sds label text data to support the decision process. Includes the status.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "sds_label_text": {
+      "type": "string",
+      "description": "The sds label text of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "sds_label_text"
+    ]
+   }
+  },
+  {
+   "name": "review_handling_and_storage_guidelines",
+   "description": "Reviews the handling and storage guidelines against the current policy reference data and records the outcome.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "handling_and_storage_guidelines": {
+      "type": "string",
+      "description": "The handling and storage guidelines of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "handling_and_storage_guidelines"
+    ]
+   }
+  },
+  {
+   "name": "reconcile_assessment_form_id_summary",
+   "description": "Reconciles the assessment form id against the current policy reference data and records the outcome. Includes the summary.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "assessmentFormId": {
+      "type": "string",
+      "description": "The assessment form id of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "assessmentFormId"
+    ]
+   }
+  },
+  {
+   "name": "validate_disposal_guidelines_consistency",
+   "description": "Validates the disposal guidelines for the record and returns the result of the check. Includes the consistency.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "disposal_guidelines": {
+      "type": "string",
+      "description": "The disposal guidelines of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "disposal_guidelines"
+    ]
+   }
+  },
+  {
+   "name": "audit_transportation_requirements_compliance",
+   "description": "Audits historical transportation requirements data to support the decision process. Includes the compliance.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "transportation_requirements": {
+      "type": "string",
+      "description": "The transportation requirements of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "transportation_requirements"
+    ]
+   }
+  },
+  {
+   "name": "analyze_sds_label_text_consistency",
+   "description": "Analyzes the sds label text for the record and returns the result of the check. Includes the consistency.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "sds_label_text": {
+      "type": "string",
+      "description": "The sds label text of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "sds_label_text"
+    ]
+   }
+  },
+  {
+   "name": "check_handling_and_storage_guidelines_profile",
+   "description": "Runs a check step over the handling and storage guidelines as part of the standard review workflow. Includes the profile.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "handling_and_storage_guidelines": {
+      "type": "string",
+      "description": "The handling and storage guidelines of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "handling_and_storage_guidelines"
+    ]
+   }
+  },
+  {
+   "name": "assess_assessment_form_id_summary",
+   "description": "Runs a assess step over the assessment form id as part of the standard review workflow. Includes the summary.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "assessmentFormId": {
+      "type": "string",
+      "description": "The assessment form id of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "assessmentFormId"
+    ]
+   }
+  },
+  {
+   "name": "analyze_disposal_guidelines_history",
+   "description": "Analyzes the disposal guidelines for the record and returns the result of the check. Includes the history.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "disposal_guidelines": {
+      "type": "string",
+      "description": "The disposal guidelines of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "disposal_guidelines"
+    ]
+   }
+  },
+  {
+   "name": "validate_transportation_requirements_profile",
+   "description": "Validates the transportation requirements against the current policy reference data and records the outcome. Includes the profile.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "transportation_requirements": {
+      "type": "string",
+      "description": "The transportation requirements of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "transportation_requirements"
+    ]
+   }
+  },
+  {
+   "name": "assess_sds_label_text_status",
+   "description": "Assesss the sds label text against the current policy reference data and records the outcome. Includes the status.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "sds_label_text": {
+      "type": "string",
+      "description": "The sds label text of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "sds_label_text"
+    ]
+   }
+  },
+  {
+   "name": "normalize_handling_and_storage_guidelines",
+   "description": "Normalizes historical handling and storage guidelines data to support the decision process.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "handling_and_storage_guidelines": {
+      "type": "string",
+      "description": "The handling and storage guidelines of the record."
+     }
+    },
+    "required": [
+     "product_id",
+     "handling_and_storage_guidelines"
+    ]
+   }
+  }
+ ],
+ "order": [
+  "audit_transportation_requirements_compliance",
+  "assess_assessment_form_id",
+  "audit_handling_and_storage_guidelines_history",
+  "check_handling_and_storage_guidelines_profile",
+  "summarize_disposal_guidelines",
+  "calculate_handling_score",
+  "calculate_transportation_score",
+  "calculate_sds_label_score",
+  "validate_transportation_requirements_profile",
+  "validate_sds_label_text_history",
+  "validate_disposal_guidelines",
+  "review_handling_and_storage_guidelines",
+  "assess_sds_label_text_status",
+  "normalize_handling_and_storage_guidelines",
+  "validate_disposal_guidelines_consistency",
+  "reconcile_assessment_form_id_summary",
+  "normalize_transportation_requirements_trend",
+  "analyze_disposal_guidelines_history",
+  "review_handling_and_storage_guidelines_consistency",
+  "analyze_sds_label_text_consistency",
+  "reconcile_transportation_requirements_compliance",
+  "calculate_disposal_score",
+  "assess_assessment_form_id_summary",
+  "normalize_sds_label_text_status"
+ ],
+ "sha256": "176061e671863fcea550132324e27f579cc246e117e5c9a921872e93586f9597"
+}

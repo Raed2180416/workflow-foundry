@@ -3,7 +3,7 @@
  "version": "1.0.0",
  "domain": "support",
  "title": "GDPR erasure requests",
- "status": "dev: generator, oracle, observable-only reference, controls and gates built; no arm has run (no model, $0)",
+ "status": "dev: generator, oracle, observable-only reference, controls and gates built; re-verified 2026-10-21 (deadline-held trap and close-held control added); no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.8",
  "grounding": [
   {"task": "support.zendesk_gdpr_purge", "span": "automationbench/domains/support/tasks.py:22601-23005",

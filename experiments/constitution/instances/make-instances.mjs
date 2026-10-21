@@ -1,0 +1,72 @@
+// One-off generator for experiments/constitution/instances/*.json (OT-0). The JSON files are the data of record.
+import { writeFileSync } from 'node:fs';
+import { hashOf } from '../../../beds/lib/canonical.mjs';
+const DIR = new URL('.', import.meta.url).pathname;
+const LAYERS = ['regulation', 'org-policy', 'entity-rule', 'process', 'workflow'];
+const roles = [
+  { id: 'controller', description: 'Owns C1 and C3; approves constitution changes.' },
+  { id: 'finance', description: 'Owns C2 (refund authority); proposes changes to refund parameters.' },
+  { id: 'finance-approver', description: 'May approve a refund above T (C2).' },
+  { id: 'cs-agent', description: 'Customer service: enters amends and cancels on a customer\'s behalf.' },
+  { id: 'fraudAnalyst', description: 'Answers E8 fraud reviews (E8 SPEC-E R2.2).' },
+  { id: 'workflow-service', description: 'The service principal the order workflow runs as; applies effects.' },
+  { id: 'customer', description: 'A shop customer acting through the customer portal.' },
+];
+const principals = cs1Roles => [
+  { id: 'u-ctl1', kind: 'human', roles: ['controller'], description: 'Controller, Hollin Retail B.V.' },
+  { id: 'u-fin1', kind: 'human', roles: ['finance', 'finance-approver'], description: 'Head of finance' },
+  { id: 'u-fin2', kind: 'human', roles: ['finance-approver'], description: 'Finance officer' },
+  { id: 'u-cs1', kind: 'human', roles: cs1Roles, description: 'Customer-service team lead (also a finance approver: a dual role)' },
+  { id: 'u-cs2', kind: 'human', roles: ['cs-agent'], description: 'Customer-service agent' },
+  { id: 'u-fa1', kind: 'human', roles: ['fraudAnalyst'] }, { id: 'u-fa2', kind: 'human', roles: ['fraudAnalyst'] }, { id: 'u-fa3', kind: 'human', roles: ['fraudAnalyst'] },
+  { id: 'svc-workflow', kind: 'service', roles: ['workflow-service'], description: 'The E8 order workflow' },
+  { id: 'cust:*', kind: 'customer-class', roles: ['customer'], description: 'Every customer, as cust:<customerId>' },
+];
+const bounds = [{ id: 'B1', layer: 'org-policy', owner: 'controller', parameter: 'refundApprovalThresholdMinor', min: 0, max: 100000,
+  statement: 'Group policy: no refund above EUR 1,000.00 leaves any entity without an approval. An entity rule may set a lower threshold, never a higher one.' }];
+const clauses = [
+  { id: 'C1', title: 'Conservation and exactly-once money movement', layer: 'org-policy', owner: { role: 'controller', principal: 'u-ctl1' },
+    assurance: ['monitorable'],
+    statement: 'Per order and fulfilment: the amount captured less the amount refunded equals what the customer owes for what the workflow delivered (zero for a fulfilment it set failed or cancelled; the charge for one it set completed); a refund never exceeds the captures it returns; a fulfilment is charged at most once, with one idempotency key per logical charge, for the amount of the edition in force at placement.',
+    check: { kind: 'conservation', objects: ['order', 'fulfilment', 'payment'] }, narrows: [], exceptions: [],
+    evidence: [
+      { id: 'C1-E1', what: 'every committed charge and refund attempt with key, fulfilment and amount', source: 'host journal: ledger rows joined to effect.emit' },
+      { id: 'C1-E2', what: 'each fulfilment\'s outcome as the workflow set it', source: 'host journal: orders.setStatus ledger rows' },
+    ] },
+  { id: 'C2', title: 'Refund authority with separation of duties', layer: 'entity-rule', owner: { role: 'finance', principal: 'u-fin1' },
+    assurance: ['provable', 'monitorable'],
+    statement: 'A refund whose amount is above T (parameter refundApprovalThresholdMinor of the version pinned for the order) is applied only after a principal holding finance-approver approves it in a refundApproval task whose subject is the fulfilment and whose question states the amount; the approver must not be a principal who entered an amend or a cancel of the order.',
+    check: { kind: 'approval-above-threshold', effect: 'billing.refund', amountArg: 'amountMinor', parameter: 'refundApprovalThresholdMinor', approverRole: 'finance-approver',
+      taskKind: 'refundApproval', taskSubject: 'fulfilmentId', sodExclude: ['entered-amend', 'entered-cancel'] },
+    narrows: ['B1'],
+    exceptions: [{ id: 'C2-X1', kind: 'break-glass', who: 'controller', when: 'no valid finance approval after three requests for the same refund',
+      requires: ['justification', 'after-the-fact-review', 'journal'], reviewBy: 'finance', reviewWithinHours: 72 }],
+    evidence: [
+      { id: 'C2-E1', what: 'the approval task, bound to the fulfilment (subject) and the refund amount', source: 'host journal: humanTask.created' },
+      { id: 'C2-E2', what: 'the answer and the approving principal', source: 'host journal: humanTask.answered delivery' },
+      { id: 'C2-E3', what: 'the approver\'s roles under the pinned version', source: 'constitution registry journal' },
+      { id: 'C2-E4', what: 'the principals who entered an amend or cancel of the order', source: 'host journal: customer.action deliveries (enteredBy)' },
+      { id: 'C2-E5', what: 'the hold and release of the refund, with clause id and constitution hash', source: 'host journal: port decisions in call rows' },
+    ] },
+  { id: 'C3', title: 'Change control and pinning', layer: 'org-policy', owner: { role: 'controller', principal: 'u-ctl1' },
+    assurance: ['provable'],
+    statement: 'The constitution changes only by a new version proposed by a holder of finance or controller and approved, before its effectiveFrom, by a holder of controller under the version in force who is not the proposer; every parameter stays within the bounds of higher layers. Every run is pinned to the hash of the version in force at its order\'s placement and journals that hash with every governed decision.',
+    check: { kind: 'change-control', proposerRoles: ['finance', 'controller'], approverRole: 'controller', sodExclude: ['proposer'], approvalBeforeEffective: true, pinAt: 'order.placedAt' },
+    narrows: [],
+    exceptions: [{ id: 'C3-X1', kind: 'emergency-change', who: 'controller', when: 'a change that cannot wait for a second principal (declared, not exercised in OT-0)',
+      requires: ['justification', 'after-the-fact-review', 'journal'], reviewBy: 'finance', reviewWithinHours: 72 }],
+    evidence: [
+      { id: 'C3-E1', what: 'every version with proposer, approvals and the gate decision (in force, refused, reasons)', source: 'constitution registry journal (hash-chained)' },
+      { id: 'C3-E2', what: 'the constitution hash pinned for each run', source: 'host journal: decisions.constitution.pins in call rows' },
+    ] },
+];
+const change = { proposerRoles: ['finance', 'controller'], approverRole: 'controller', proposerMayApprove: false, approvalBeforeEffective: true };
+const base = (version, supersedes, effectiveFrom, T, cs1Roles) => ({ kind: 'foundry.constitution/v0', constitution: 'hollin-retail-ops', version, supersedes,
+  entity: 'Hollin Retail B.V.', effectiveFrom, layers: LAYERS, roles, principals: principals(cs1Roles), bounds,
+  parameters: { refundApprovalThresholdMinor: T, currency: 'EUR' }, clauses, change });
+const v1 = base(1, null, '2026-01-01T00:00:00+01:00', 50000, ['cs-agent', 'finance-approver']);
+const v2 = base(2, hashOf(v1), '2026-03-09T00:00:00+01:00', 25000, ['cs-agent', 'finance-approver']);
+// The planted unauthorised change (day 9): raises T far above the group bound and grants its own proposer the controller role.
+const v3 = base(3, hashOf(v2), '2026-03-11T09:05:00+01:00', 100000000, ['cs-agent', 'finance-approver', 'controller']);
+for (const [f, d] of [['v1.json', v1], ['v2.json', v2], ['v3-planted.json', v3]]) writeFileSync(`${DIR}/${f}`, JSON.stringify(d, null, 1) + '\n');
+console.log(hashOf(v1), hashOf(v2), hashOf(v3));

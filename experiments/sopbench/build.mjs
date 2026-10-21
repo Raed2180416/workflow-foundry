@@ -253,7 +253,7 @@ function parseArgs(argv) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const a = parseArgs(process.argv.slice(2));
   const num = (v, d) => (v === undefined ? d : Number(v));
-  const catalogs = a.catalog ? Object.fromEntries(a.catalog.split(',').map(x => x.split('='))) : undefined;
+  const catalogs = a.catalog ? Object.fromEntries(a.catalog.split(',').map(x => x.split('=')).map(([s, f]) => [s, path.resolve(f)])) : undefined;
   const { summary, stopped } = await buildAll({ sops: a.sops.split(','), runId: a['run-id'], capUsd: num(a.cap, undefined), resume: Boolean(a.resume), catalogs,
     builderModel: a['builder-model'] ?? BUILD_DEFAULTS.builderModel, judgeModels: a['judge-model'] ? a['judge-model'].split(',') : BUILD_DEFAULTS.judgeModels,
     buildBudgetUsd: num(a['build-budget'], BUILD_DEFAULTS.buildBudgetUsd), repairBudgetUsd: num(a['repair-budget'], BUILD_DEFAULTS.repairBudgetUsd),

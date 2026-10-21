@@ -1,0 +1,9 @@
+{
+ "label": "tpl-opus-1",
+ "model": "claude-opus-5-5",
+ "costUsd": 3.4986089999999996,
+ "turns": 15,
+ "error": null,
+ "wallMs": 1088423,
+ "problems": []
+}

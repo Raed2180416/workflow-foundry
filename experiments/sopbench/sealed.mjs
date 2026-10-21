@@ -10,7 +10,7 @@
 //   --grade-every 40 (answers graded in batches)
 // Environment faults (rate/usage limit, sandbox, a workflow env status) stop the run (exit 3) and are never scored; rerun
 // the same command with --resume. The cap stops it too (exit 4).
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { WORK_ROOT, runClaudeCode } from '../../src/executors/claude-code.mjs';
 import { loadPolicy, modelById } from '../../src/models/policy.mjs';
@@ -20,14 +20,28 @@ import { loadSplit } from './split.mjs';
 import { ROWS_ROOT, gradeAnswers, isEnvFault, runAgentRow } from './run.mjs';
 import { artifactFiles, artifactSha256, prepareRows, runWorkflowRow } from './exec.mjs';
 
-/** The code a sealed run depends on; each file's sha256 is frozen. */
+/** Our code a sealed run depends on; each file's sha256 is frozen and a run refuses if one changed. The workflow SDK
+ * (flow.mjs, model.mjs, sop.mjs) is a frozen copy under the freeze's sdkDir. */
 export const FROZEN_CODE = Object.freeze(['experiments/sopbench/bridge.py', 'experiments/sopbench/upstream.py', 'experiments/sopbench/lib.mjs', 'experiments/sopbench/split.mjs',
-  'experiments/sopbench/run.mjs', 'experiments/sopbench/scorer.mjs', 'experiments/sopbench/tool.mjs', 'experiments/sopbench/exec.mjs', 'experiments/sopbench/kit/sop.mjs',
-  'experiments/sopbench/sealed.mjs', 'experiments/jit/flow-v3.mjs', 'experiments/c0/construct.mjs', 'experiments/lib/services.mjs']);
-export const codeHashes = () => Object.fromEntries(FROZEN_CODE.map(f => [f, sha256(readFileSync(path.join(REPO, f)))]));
+  'experiments/sopbench/run.mjs', 'experiments/sopbench/scorer.mjs', 'experiments/sopbench/tool.mjs', 'experiments/sopbench/exec.mjs', 'experiments/sopbench/sealed.mjs']);
+/** Shared host code (other teams' files): recorded at the freeze and at run time; drift is reported, not refused. */
+export const DEPENDENCIES = Object.freeze(['experiments/lib/services.mjs', 'experiments/lib/models.mjs', 'experiments/lib/runner.mjs', 'experiments/autobench/accounting.mjs',
+  'src/executors/claude-code.mjs', 'src/executors/sandboxed-command.mjs', 'src/models/policy.mjs', 'src/models/port.mjs', 'policy/models.json']);
+const hashes = list => Object.fromEntries(list.map(f => [f, existsSync(path.join(REPO, f)) ? sha256(readFileSync(path.join(REPO, f))) : null]));
+export const codeHashes = () => hashes(FROZEN_CODE);
+export const dependencyHashes = () => hashes(DEPENDENCIES);
 
 const readRecords = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
 const mean = xs => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+
+/** Disk (~2 GB free on the shared machine): after a run is audited, drop its bulky host files, keeping their sha256 and
+ * size in the record (agent transcripts; a finished workflow's stdout/stderr). Calls, traces and deopts stay. */
+function pruneHost(live, tag, arm, rec) {
+  const files = arm === 'A' ? [path.join(live, 'host', tag, 'transcript.jsonl')] : rec.status === 'done' ? [path.join(live, 'wf-host', tag, 'stdio.txt')] : [];
+  for (const f of files) {
+    try { const buf = readFileSync(f); (rec.pruned ??= []).push({ file: path.basename(f), bytes: buf.length, sha256: sha256(buf) }); rmSync(f, { force: true }); } catch {}
+  }
+}
 
 /** Verify a freeze file against the split, the code and the artifacts; returns it. */
 export function verifyFreeze(file, { split = loadSplit(), checkCode = true, root = REPO } = {}) {
@@ -36,6 +50,7 @@ export function verifyFreeze(file, { split = loadSplit(), checkCode = true, root
   if (f.kind !== 'sopbench-freeze') bad.push('kind');
   if (f.splitSha256 !== split.splitSha256) bad.push('splitSha256');
   if (checkCode) for (const [p, h] of Object.entries(f.code ?? {})) if (!existsSync(path.join(REPO, p)) || sha256(readFileSync(path.join(REPO, p))) !== h) bad.push(`code ${p}`);
+  for (const [file, h] of Object.entries(f.arms?.W?.sdk?.files ?? {})) if (!existsSync(path.resolve(root, f.arms.W.sdk.dir, file)) || sha256(readFileSync(path.resolve(root, f.arms.W.sdk.dir, file))) !== h) bad.push(`sdk ${file}`);
   for (const [sop, a] of Object.entries(f.artifacts ?? {})) {
     const files = artifactFiles(path.resolve(root, a.dir));
     if (!files || artifactSha256(files) !== a.sha256) bad.push(`artifact ${sop}`);
@@ -166,7 +181,8 @@ export async function sealedRun(o) {
         } else if (job.arm === 'W') {
           const w = freeze.arms.W;
           const x = await runWorkflowRow({ files: files[job.sop], prepDir: path.join(live, 'prep', job.sop), sop: job.sop, row: job.row, live, tag, sealed: true, freeze: o.freeze,
-            modelPort: port, judgeModels: w.judgeModels, budgetUsd: w.budgetUsdPerRun, timeoutMs: w.timeoutMs, maxSteps: w.maxSteps, catalog: catalogOf(job.sop), ...io });
+            modelPort: port, judgeModels: w.judgeModels, budgetUsd: w.budgetUsdPerRun, timeoutMs: w.timeoutMs, maxSteps: w.maxSteps, catalog: catalogOf(job.sop),
+            sdkDir: w.sdk ? path.resolve(o.root ?? REPO, w.sdk.dir) : null, ...io });
           rec = { ...job, status: x.status, answerText: x.answerText, costUsd: x.costUsd, judgeCalls: x.judgeCalls, steps: x.steps, toolCalls: x.toolCalls, sections: x.sections.length,
             deopt: x.deopt, error: x.error ? String(x.error).slice(-400) : null, durationMs: x.durationMs, envFault: x.status === 'env' };
         } else {
@@ -178,6 +194,7 @@ export async function sealedRun(o) {
             sessionError: r.sessionError ?? null, harnessError: r.harnessError ?? null, durationMs: r.durationMs ?? null, envFault: isEnvFault(r) };
         }
         reserved -= b; spent += rec.costUsd ?? 0;
+        pruneHost(live, tag, job.arm, rec);
         if (rec.envFault) { appendFileSync(faultsFile, JSON.stringify(rec) + '\n'); stopped ??= `environment fault at ${tag}: ${rec.sessionError ?? rec.harnessError ?? rec.error ?? rec.status}`; break; }
         appendFileSync(rawFile, JSON.stringify(rec) + '\n');
         pending.push(rec);
@@ -195,7 +212,8 @@ export async function sealedRun(o) {
   if (orphans.length) { pending.push(...orphans); await gradePending(); }
   const all = readRecords(gradedFile);
   const summary = { runId: o.runId, cell: launch.cell, freeze: path.relative(REPO, o.freeze), freezeSha256: launch.freezeSha256, evidence: 'SEALED rows (frozen split, frozen workflows and code)', stopped, k, arms, sops,
-    runs: all.length, spentUsd: spent, capUsd: o.capUsd, finishedAt: new Date().toISOString() };
+    runs: all.length, spentUsd: spent, capUsd: o.capUsd, finishedAt: new Date().toISOString(),
+    dependencyDrift: Object.entries(dependencyHashes()).filter(([p, h]) => (freeze.dependencies ?? {})[p] !== undefined && freeze.dependencies[p] !== h).map(([p]) => p) };
   if (!stopped) {
     const an = analyse(all, { sops, arms, k });
     const orch = freeze.orchestrationOnly ?? [];

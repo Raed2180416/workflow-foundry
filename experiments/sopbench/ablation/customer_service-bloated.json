@@ -1,0 +1,495 @@
+{
+ "sop": "customer_service",
+ "kind": "bloated",
+ "seed": "sopbench-20261021-distractors-v1",
+ "real": [
+  "getAuthenticationDetails",
+  "createSessionAndOpenTicket",
+  "checkAccountStatus",
+  "performTechnicalDiagnostics",
+  "validateAccount",
+  "checkServiceAreaOutage",
+  "executeTroubleshooting",
+  "checkPaymentStatus",
+  "createEscalation",
+  "checkAccountSuspensionStatus"
+ ],
+ "removed": [],
+ "distractors": [
+  "analyzeSubscribedBandwidthSummary",
+  "assessServiceTypeHistory",
+  "analyzeSessionTokenSummary",
+  "reconcileTicketIdCompliance",
+  "validateRootCausesCompliance",
+  "summarizeEscalationRequiredCompliance",
+  "summarizeServiceAreaCodeConsistency",
+  "assessMetricsImprovedPostTroubleshootingTrend",
+  "checkIsAuthenticatedCompliance",
+  "normalizeIsAccountIdValidSummary",
+  "validateSubscribedBandwidthTrend",
+  "analyzeServiceTypeHistory",
+  "analyzeSessionTokenProfile",
+  "checkTicketIdStatus",
+  "summarizeRootCausesTrend",
+  "auditEscalationRequiredStatus",
+  "summarizeServiceAreaCodeTrend",
+  "analyzeMetricsImprovedPostTroubleshootingSummary",
+  "reviewIsAuthenticatedSummary",
+  "assessIsAccountIdValidTrend"
+ ],
+ "distractorSpecs": [
+  {
+   "name": "analyzeSubscribedBandwidthSummary",
+   "description": "Analyzes historical subscribed bandwidth data to support the decision process. Includes the summary.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "subscribed_bandwidth": {
+      "type": "string",
+      "description": "The subscribed bandwidth of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "subscribed_bandwidth"
+    ]
+   }
+  },
+  {
+   "name": "assessServiceTypeHistory",
+   "description": "Assesss the service type against the current policy reference data and records the outcome. Includes the history.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "service_type": {
+      "type": "string",
+      "description": "The service type of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "service_type"
+    ]
+   }
+  },
+  {
+   "name": "analyzeSessionTokenSummary",
+   "description": "Analyzes the session token against the current policy reference data and records the outcome. Includes the summary.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "session_token": {
+      "type": "string",
+      "description": "The session token of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "session_token"
+    ]
+   }
+  },
+  {
+   "name": "reconcileTicketIdCompliance",
+   "description": "Reconciles the ticket id against the current policy reference data and records the outcome. Includes the compliance.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "ticket_id": {
+      "type": "string",
+      "description": "The ticket id of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "ticket_id"
+    ]
+   }
+  },
+  {
+   "name": "validateRootCausesCompliance",
+   "description": "Runs a validate step over the root causes as part of the standard review workflow. Includes the compliance.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "root_causes": {
+      "type": "string",
+      "description": "The root causes of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "root_causes"
+    ]
+   }
+  },
+  {
+   "name": "summarizeEscalationRequiredCompliance",
+   "description": "Runs a summarize step over the escalation required as part of the standard review workflow. Includes the compliance.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "escalation_required": {
+      "type": "string",
+      "description": "The escalation required of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "escalation_required"
+    ]
+   }
+  },
+  {
+   "name": "summarizeServiceAreaCodeConsistency",
+   "description": "Summarizes the service area code for the record and returns the result of the check. Includes the consistency.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "service_area_code": {
+      "type": "string",
+      "description": "The service area code of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "service_area_code"
+    ]
+   }
+  },
+  {
+   "name": "assessMetricsImprovedPostTroubleshootingTrend",
+   "description": "Runs a assess step over the metrics improved post troubleshooting as part of the standard review workflow. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "metrics_improved_post_troubleshooting": {
+      "type": "string",
+      "description": "The metrics improved post troubleshooting of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "metrics_improved_post_troubleshooting"
+    ]
+   }
+  },
+  {
+   "name": "checkIsAuthenticatedCompliance",
+   "description": "Checks historical is authenticated data to support the decision process. Includes the compliance.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "is_authenticated": {
+      "type": "string",
+      "description": "The is authenticated of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "is_authenticated"
+    ]
+   }
+  },
+  {
+   "name": "normalizeIsAccountIdValidSummary",
+   "description": "Runs a normalize step over the is account id valid as part of the standard review workflow. Includes the summary.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "is_account_id_valid": {
+      "type": "string",
+      "description": "The is account id valid of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "is_account_id_valid"
+    ]
+   }
+  },
+  {
+   "name": "validateSubscribedBandwidthTrend",
+   "description": "Validates historical subscribed bandwidth data to support the decision process. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "subscribed_bandwidth": {
+      "type": "string",
+      "description": "The subscribed bandwidth of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "subscribed_bandwidth"
+    ]
+   }
+  },
+  {
+   "name": "analyzeServiceTypeHistory",
+   "description": "Runs a analyze step over the service type as part of the standard review workflow. Includes the history.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "service_type": {
+      "type": "string",
+      "description": "The service type of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "service_type"
+    ]
+   }
+  },
+  {
+   "name": "analyzeSessionTokenProfile",
+   "description": "Analyzes the session token for the record and returns the result of the check. Includes the profile.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "session_token": {
+      "type": "string",
+      "description": "The session token of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "session_token"
+    ]
+   }
+  },
+  {
+   "name": "checkTicketIdStatus",
+   "description": "Runs a check step over the ticket id as part of the standard review workflow. Includes the status.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "ticket_id": {
+      "type": "string",
+      "description": "The ticket id of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "ticket_id"
+    ]
+   }
+  },
+  {
+   "name": "summarizeRootCausesTrend",
+   "description": "Summarizes the root causes for the record and returns the result of the check. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "root_causes": {
+      "type": "string",
+      "description": "The root causes of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "root_causes"
+    ]
+   }
+  },
+  {
+   "name": "auditEscalationRequiredStatus",
+   "description": "Runs a audit step over the escalation required as part of the standard review workflow. Includes the status.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "escalation_required": {
+      "type": "string",
+      "description": "The escalation required of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "escalation_required"
+    ]
+   }
+  },
+  {
+   "name": "summarizeServiceAreaCodeTrend",
+   "description": "Summarizes the service area code for the record and returns the result of the check. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "service_area_code": {
+      "type": "string",
+      "description": "The service area code of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "service_area_code"
+    ]
+   }
+  },
+  {
+   "name": "analyzeMetricsImprovedPostTroubleshootingSummary",
+   "description": "Runs a analyze step over the metrics improved post troubleshooting as part of the standard review workflow. Includes the summary.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "metrics_improved_post_troubleshooting": {
+      "type": "string",
+      "description": "The metrics improved post troubleshooting of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "metrics_improved_post_troubleshooting"
+    ]
+   }
+  },
+  {
+   "name": "reviewIsAuthenticatedSummary",
+   "description": "Reviews the is authenticated for the record and returns the result of the check. Includes the summary.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "is_authenticated": {
+      "type": "string",
+      "description": "The is authenticated of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "is_authenticated"
+    ]
+   }
+  },
+  {
+   "name": "assessIsAccountIdValidTrend",
+   "description": "Assesss historical is account id valid data to support the decision process. Includes the trend.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "account_id": {
+      "type": "string",
+      "description": "The record identifier."
+     },
+     "is_account_id_valid": {
+      "type": "string",
+      "description": "The is account id valid of the record."
+     }
+    },
+    "required": [
+     "account_id",
+     "is_account_id_valid"
+    ]
+   }
+  }
+ ],
+ "order": [
+  "analyzeSessionTokenSummary",
+  "summarizeRootCausesTrend",
+  "getAuthenticationDetails",
+  "analyzeMetricsImprovedPostTroubleshootingSummary",
+  "summarizeEscalationRequiredCompliance",
+  "validateAccount",
+  "validateRootCausesCompliance",
+  "checkAccountSuspensionStatus",
+  "summarizeServiceAreaCodeTrend",
+  "assessIsAccountIdValidTrend",
+  "analyzeSessionTokenProfile",
+  "checkAccountStatus",
+  "createEscalation",
+  "checkPaymentStatus",
+  "createSessionAndOpenTicket",
+  "checkTicketIdStatus",
+  "normalizeIsAccountIdValidSummary",
+  "analyzeServiceTypeHistory",
+  "analyzeSubscribedBandwidthSummary",
+  "reconcileTicketIdCompliance",
+  "performTechnicalDiagnostics",
+  "reviewIsAuthenticatedSummary",
+  "validateSubscribedBandwidthTrend",
+  "assessServiceTypeHistory",
+  "assessMetricsImprovedPostTroubleshootingTrend",
+  "checkIsAuthenticatedCompliance",
+  "auditEscalationRequiredStatus",
+  "executeTroubleshooting",
+  "checkServiceAreaOutage",
+  "summarizeServiceAreaCodeConsistency"
+ ],
+ "sha256": "f5e261317e2c237a07a8e8d30c3a375ba8438ba1ca161ee90b8438e031f9a66b"
+}

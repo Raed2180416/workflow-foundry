@@ -1,0 +1,117 @@
+{
+ "description": "Foundry constitution v0 (OT-0, research/org-20261021). One document is one version of an organisation's constitution: principals and roles, parameter bounds by layer, and clauses with an accountable owner, a layer, an assurance class, authorised exceptions and an evidence requirement. Portable JSON Schema subset (the engine's and the E-bed host's keyword set), so the host-side validator can check it.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": ["kind", "constitution", "version", "supersedes", "entity", "effectiveFrom", "layers", "roles", "principals", "bounds", "parameters", "clauses", "change"],
+ "properties": {
+  "kind": { "const": "foundry.constitution/v0" },
+  "constitution": { "type": "string", "minLength": 1, "maxLength": 80, "description": "the constitution's stable id" },
+  "version": { "type": "integer", "minimum": 1 },
+  "supersedes": { "type": ["string", "null"], "minLength": 64, "maxLength": 64, "description": "sha256 of the canonical JSON of the version this one replaces; null for the first" },
+  "entity": { "type": "string", "minLength": 1, "maxLength": 120 },
+  "effectiveFrom": { "type": "string", "minLength": 20, "maxLength": 40, "description": "ISO time with offset" },
+  "layers": {
+   "description": "highest first: a lower layer may only narrow what a higher layer allows",
+   "type": "array", "minItems": 5, "maxItems": 5,
+   "items": { "enum": ["regulation", "org-policy", "entity-rule", "process", "workflow"] }
+  },
+  "roles": {
+   "type": "array", "minItems": 1, "maxItems": 50,
+   "items": { "type": "object", "additionalProperties": false, "required": ["id", "description"],
+    "properties": { "id": { "type": "string", "minLength": 1, "maxLength": 60 }, "description": { "type": "string", "maxLength": 400 } } }
+  },
+  "principals": {
+   "type": "array", "minItems": 1, "maxItems": 500,
+   "items": { "type": "object", "additionalProperties": false, "required": ["id", "kind", "roles"],
+    "properties": {
+     "id": { "type": "string", "minLength": 1, "maxLength": 80 },
+     "kind": { "enum": ["human", "service", "customer-class"] },
+     "roles": { "type": "array", "maxItems": 20, "items": { "type": "string", "minLength": 1, "maxLength": 60 } },
+     "description": { "type": "string", "maxLength": 400 }
+    } }
+  },
+  "bounds": {
+   "description": "limits a higher layer puts on a parameter that lower layers set",
+   "type": "array", "maxItems": 50,
+   "items": { "type": "object", "additionalProperties": false, "required": ["id", "layer", "owner", "parameter", "statement"],
+    "properties": {
+     "id": { "type": "string", "minLength": 1, "maxLength": 60 },
+     "layer": { "enum": ["regulation", "org-policy", "entity-rule", "process", "workflow"] },
+     "owner": { "type": "string", "minLength": 1, "maxLength": 60, "description": "the accountable role" },
+     "parameter": { "type": "string", "minLength": 1, "maxLength": 80 },
+     "min": { "type": "number" },
+     "max": { "type": "number" },
+     "statement": { "type": "string", "maxLength": 1000 }
+    } }
+  },
+  "parameters": {
+   "type": "object", "additionalProperties": false, "required": ["refundApprovalThresholdMinor", "currency"],
+   "properties": {
+    "refundApprovalThresholdMinor": { "type": "integer", "minimum": 0, "description": "T: a refund strictly above this amount (minor units) needs an approval (C2)" },
+    "currency": { "enum": ["EUR"] }
+   }
+  },
+  "clauses": {
+   "type": "array", "minItems": 1, "maxItems": 50,
+   "items": {
+    "type": "object", "additionalProperties": false,
+    "required": ["id", "title", "layer", "owner", "assurance", "statement", "check", "narrows", "exceptions", "evidence"],
+    "properties": {
+     "id": { "type": "string", "minLength": 1, "maxLength": 20 },
+     "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+     "layer": { "enum": ["regulation", "org-policy", "entity-rule", "process", "workflow"] },
+     "owner": { "type": "object", "additionalProperties": false, "required": ["role", "principal"],
+      "properties": { "role": { "type": "string", "minLength": 1, "maxLength": 60 }, "principal": { "type": "string", "minLength": 1, "maxLength": 80 } } },
+     "assurance": { "type": "array", "minItems": 1, "maxItems": 3, "items": { "enum": ["provable", "monitorable", "judged"] } },
+     "statement": { "type": "string", "minLength": 1, "maxLength": 2000 },
+     "check": {
+      "description": "the machine-checkable reading of the clause, interpreted by experiments/constitution (observer, shield, gate)",
+      "type": "object", "additionalProperties": false, "required": ["kind"],
+      "properties": {
+       "kind": { "enum": ["conservation", "approval-above-threshold", "change-control"] },
+       "effect": { "type": "string", "maxLength": 80 },
+       "amountArg": { "type": "string", "maxLength": 40 },
+       "parameter": { "type": "string", "maxLength": 80 },
+       "approverRole": { "type": "string", "maxLength": 60 },
+       "taskKind": { "type": "string", "maxLength": 60 },
+       "taskSubject": { "enum": ["fulfilmentId", "orderId"] },
+       "sodExclude": { "type": "array", "maxItems": 10, "items": { "enum": ["entered-amend", "entered-cancel", "proposer"] } },
+       "proposerRoles": { "type": "array", "maxItems": 10, "items": { "type": "string", "maxLength": 60 } },
+       "approvalBeforeEffective": { "type": "boolean" },
+       "pinAt": { "enum": ["order.placedAt"] },
+       "objects": { "type": "array", "maxItems": 10, "items": { "type": "string", "maxLength": 40 } }
+      }
+     },
+     "narrows": { "type": "array", "maxItems": 10, "items": { "type": "string", "maxLength": 60 }, "description": "ids of the higher-layer bounds this clause's parameters must stay within" },
+     "exceptions": {
+      "type": "array", "maxItems": 10,
+      "items": { "type": "object", "additionalProperties": false, "required": ["id", "kind", "who", "when", "requires", "reviewBy", "reviewWithinHours"],
+       "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "kind": { "enum": ["break-glass", "emergency-change"] },
+        "who": { "type": "string", "maxLength": 60, "description": "the role that may authorise the exception" },
+        "when": { "type": "string", "maxLength": 400 },
+        "requires": { "type": "array", "maxItems": 5, "items": { "enum": ["justification", "after-the-fact-review", "journal"] } },
+        "reviewBy": { "type": "string", "maxLength": 60 },
+        "reviewWithinHours": { "type": "integer", "minimum": 1, "maximum": 720 }
+       } }
+     },
+     "evidence": {
+      "type": "array", "minItems": 1, "maxItems": 10,
+      "items": { "type": "object", "additionalProperties": false, "required": ["id", "what", "source"],
+       "properties": { "id": { "type": "string", "maxLength": 40 }, "what": { "type": "string", "maxLength": 400 }, "source": { "type": "string", "maxLength": 200 } } }
+     }
+    }
+   }
+  },
+  "change": {
+   "type": "object", "additionalProperties": false, "required": ["proposerRoles", "approverRole", "proposerMayApprove", "approvalBeforeEffective"],
+   "properties": {
+    "proposerRoles": { "type": "array", "minItems": 1, "maxItems": 10, "items": { "type": "string", "maxLength": 60 } },
+    "approverRole": { "type": "string", "maxLength": 60 },
+    "proposerMayApprove": { "type": "boolean" },
+    "approvalBeforeEffective": { "type": "boolean" }
+   }
+  }
+ }
+}

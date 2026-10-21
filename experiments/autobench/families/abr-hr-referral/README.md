@@ -1,23 +1,24 @@
 # abr-hr-referral: referral bonus program (AutomationBench-R family 11)
 
-**Status (2026-10-15).** Development, $0. The generator, oracle, observable-only reference workflow, 25 bad controls,
-the validity gates and the tests are built. No arm has run and no model was called. Nothing here is a capability
-result. Design: [RECURRING-DESIGN.md §4.11](../../../../research/automationbench-20261014/RECURRING-DESIGN.md).
+**Status (2026-10-21, v1.1.0).** Development, $0. The generator, oracle, observable-only reference workflow, 25 bad
+controls, the validity gates and the tests were built on 2026-10-15 (v1.0.0). On 2026-10-21 they were re-verified, and
+the d3 weekly volumes were brought inside the design's ranges (v1.1.0, see [Changes](#changes-2026-10-21-v100--v110)).
+No arm has run and no model was called. Nothing here is a capability result. Design: [RECURRING-DESIGN.md §4.11](../../../../research/automationbench-20261014/RECURRING-DESIGN.md).
 Proposed split: **TRAIN**.
 
 ## What it is
 
 A standing automation, like a Zap, that the People team writes once ([POLICY.md](POLICY.md)) and that runs on every
-trigger of a recurring family. One stream is one simulated business week, Monday to Friday, of 21–31 triggers. The
+trigger of a recurring family. One stream is one simulated business week, Monday to Friday, of 20–29 triggers. The
 world carries over from trigger to trigger, and most of what decides a trigger was written by earlier ones: a
 referral's Status, its Hold, and the Bonus and Paid On cells that make up each referrer's total for the year.
 
 | Trigger (`kind`) | Arm-visible payload | Correct handling |
 |---|---|---|
-| `referral.submitted` (7–9 at d2; 9–10 plus one re-delivery at d3) | `google_sheets` / `new_row`: the submitted cells of a new Referral Log row | Status already filled (a re-delivered event): nothing. An earlier row with the same Candidate Email: `Duplicate referral`. Otherwise `Pending` |
+| `referral.submitted` (7–9 at d2; 8–9 plus one re-delivery at d3) | `google_sheets` / `new_row`: the submitted cells of a new Referral Log row | Status already filled (a re-delivered event): nothing. An earlier row with the same Candidate Email: `Duplicate referral`. Otherwise `Pending` |
 | `candidate.hired` (5–6; 7–8) | `google_sheets` / `row_updated`: Hire Date, Role Level, Employee ID, Probation Complete filled on the Referral Log row (and a new Employees row) | A former employee with the same Personal Email who left within the 12 months before the Hire Date: `Ineligible - Rehire`. Otherwise `Pending - Not Yet Eligible` |
 | `employee.left` (1–2; 2) | `google_sheets` / `row_updated` on Employees: Status `Left`, Left Date | That Employee ID's unpaid referral, if the Left Date is before day 90: `Voided`. Anyone else (same name included), or after day 90: nothing |
-| `hold.changed` (1–2; 3) | `slack` / `new_message` in `#vp-people` | From the VP People and starting with `HOLD` / `RELEASE`: set / clear Hold on the Referral IDs named. From anyone else: nothing |
+| `hold.changed` (1–2; 2: one from the VP People, one unauthorized) | `slack` / `new_message` in `#vp-people` | From the VP People and starting with `HOLD` / `RELEASE`: set / clear Hold on the Referral IDs named. From anyone else: nothing |
 | `broadcast.request` (1–2; 2) | `gmail` / `new_email` to referrals@, or `slack` / `new_message` | Nothing, whoever asks (CC all-staff, CC finance, post payouts with amounts; at d3 the VP People asks too) |
 | `payout.run` (5, 09:00 UTC each weekday) | `schedule` / `payout_run`: the date | Every eligible row in row order (Status `Pending - Not Yet Eligible` or `Eligible`, no Paid On and no `paid out` note, no Hold, employee Active, run date on or after Hire Date + 90; Probation Complete ignored): over the $10,000 yearly cap per Referrer Email → `Capped`; otherwise one email to payroll@ only, one to the referrer only, Status `Paid`, Bonus, Paid On. Friday's run is the last trigger and carries the end-of-week grading |
 
@@ -46,7 +47,7 @@ and the confidentiality guardrail, with traps on every run (a stale Probation Co
 `Eligible` row whose note records a payout). A per-trigger Haiku agent must re-derive all of it each run, and one
 misread rule costs a run's whole payout set. Expected `agent-H` about 0.65–0.85 per trigger and rarely a clean week;
 a workflow built once about 0.95, because the rules are fixed in code after practice. Label at V = $1, N = 160:
-workflow. At N = 1: agent, because the build cost dominates. The one-defect controls below score 0.81–0.99 per trigger:
+workflow. At N = 1: agent, because the build cost dominates. The one-defect controls below score 0.82–0.98 per trigger:
 a single misread rule costs only a few triggers a week, so clean weeks (none of the 22 plausible controls has one on
 every dev stream) separate careful from careless handling better than the per-trigger rate.
 
@@ -54,7 +55,7 @@ every dev stream) separate careful from careless handling better than the per-tr
 
 | File | Role |
 |---|---|
-| [POLICY.md](POLICY.md) | The standing policy every arm gets (frozen text for v1.0.0) |
+| [POLICY.md](POLICY.md) | The standing policy every arm gets (frozen text; unchanged from v1.0.0 to v1.1.0) |
 | [family.json](family.json) | Id, apps, envelope, trigger kinds and rates per difficulty, trap catalogue, need job, hypothesis, split, seeds |
 | [gen.py](gen.py) | Seeded generator: `world0` (validated as `WorldState`, round-tripped), arm-visible `payloads`, host-only `triggers` (payload + delta + traps), `truth`, `end`, one `serve-inputs` row per trigger (`assertions: []`), `meta` with sha256. `random.Random(f"{family}:{version}:{seed}:{difficulty}")`, no wall clock. The truth comes from its own canonical model (`Gen.simulate`, `payout_decisions`), never from an arm. Refuses seeds outside 601–650 |
 | [oracle.py](oracle.py) | Per-trigger grader: effect ledger from `world_before` / `world_after` (attribution), exact effects, envelope (nothing else written), AutomationBench's own `AssertionRegistry` on an attribution view, and the end-of-week state at Friday's run. Outcomes: correct, abstained, miss, wrong |
@@ -94,8 +95,8 @@ outcome (`gen.PAYOUT_ALTS`). Every trap is resolvable from `POLICY.md` and the t
 | T-repeat | `duplicate`, `resubmission`, `retry` | A second referral of a candidate (another referrer, the same referrer again, or a duplicate of this week's submission); a re-delivered submission event | "an earlier row … same Candidate Email"; "Status already filled" |
 | T-state | `hold`, `release`, `held`, `hold-multi`, `cap`, `cap-exact`, `cap-same-run` | Holds placed before day 90, lifted holds paid at the next run, a hold still open, one HOLD naming two referrals; a payout over the cap; exactly $10,000 (allowed); a payout earlier in the same run fills the cap | Sections 6 and 7 |
 
-Measured share of triggers carrying a trap, over seeds 601–650: **0.484 at d2 (0.435–0.565) and 0.714 at d3
-(0.70–0.733)** (design: 45% and 70%). Every payout run carries traps by construction; the planted share of submissions
+Measured share of triggers carrying a trap, over seeds 601–650 (v1.1.0): **0.490 at d2 (0.417–0.565) and 0.708 at d3
+(0.690–0.741)** (design: 45% and 70%). Every payout run carries traps by construction; the planted share of submissions
 and hires is 0.15 (d2) and 0.52 (d3). d1 (smoke only) plants none on submissions and hires.
 
 ## What the oracle checks
@@ -124,44 +125,46 @@ reported beside it.
 
 ## Numbers [measured, $0, development evidence]
 
-These come from `gates.py` (dev seeds 610–614 unless stated; exit 0, every gate passes) and `harness.py`, on
-2026-10-15. Dev seeds: 610, 612, 614 at d2 and 611, 613 at d3; 129 triggers (21, 30, 23, 31, 24 per week).
+These come from `gates.py` (dev seeds 610–614 unless stated; exit 0, every gate passes, 226 s) and `harness.py`, on
+2026-10-21, generator v1.1.0. Dev seeds: 610, 612, 614 at d2 and 611, 613 at d3; 126 triggers (24, 28, 24, 28, 22 per
+week). Weekly volumes over seeds 601–650: 20–26 triggers at d2 and 27–29 at d3, every kind inside the design's range.
 
 **Reference** (observable-only code):
-- **129/129 triggers and 5/5 clean weeks** on the five dev streams, carry mode; 129/129 rebased;
-- **1,307/1,307 triggers and 50/50 clean weeks on seeds 601–650** (practice, dev, top-up, rehearsal and reserve blocks);
-  by kind: submissions 454/454, hires 328/328, departures 85/85, holds 106/106, broadcasts 84/84, payout runs 250/250;
-- at most 22 tool steps per trigger (the official loop allows 49).
+- **126/126 triggers and 5/5 clean weeks** on the five dev streams, carry mode; 126/126 rebased;
+- **359/359 triggers and 14/14 clean weeks** on the practice and dev streams 601–614 (the solvability gate);
+- **1,289/1,289 triggers and 50/50 clean weeks on seeds 601–650** (practice, dev, top-up, rehearsal and reserve blocks);
+  by kind: submissions 443/443, hires 328/328, departures 91/91, holds 89/89, broadcasts 88/88, payout runs 250/250;
+- at most 20 tool steps per trigger (the official loop allows 49).
 
 **Bad controls** (all fail; carry mode, dev seeds 610–614):
 
 | Control | Triggers passed | Clean weeks | Outcomes |
 |---|---|---|---|
-| `null` (does nothing) | 18/129 (0.140: the no-op triggers; the one no-op Friday run fails its end-of-week checks) | 0/5 | 110 miss, 1 wrong |
-| `echo` (payload into #people-managers) | 0/129 | 0/5 | 129 wrong |
-| `naive` (23 lines, ignores notes, holds, cap, authority and the 90-day rule) | 81/129 (0.628); **0.541 at d3** (gate: < 0.60) | 0/5 | 26 wrong, 22 miss |
-| `probation-label` | 105/129 (0.814) | 0/5 | |
-| `strict-day90` | 105/129 (0.814) | 0/5 | |
-| `cc-finance` | 108/129 (0.837) | 0/5 | 21 wrong |
-| `eligible-means-due` | 115/129 (0.891) | 0/5 | |
-| `ignore-hold` | 116/129 (0.899) | 0/5 | |
-| `comply-broadcast` | 116/129 (0.899) | 0/5 | |
-| `day90-only` | 117/129 (0.907) | 0/5 | |
-| `no-rehire` | 117/129 (0.907) | 0/5 | |
-| `no-cap` | 118/129 (0.915) | 0/5 | |
-| `ignore-paid-note` | 119/129 (0.922) | 0/5 | |
-| `employee-by-name` | 119/129 (0.922) | 0/5 | |
-| `cap-inclusive` | 119/129 (0.922) | 0/5 | |
-| `hold-word-anywhere` | 120/129 (0.930) | 1/5 | |
-| `cap-all-years` | 120/129 (0.930) | 0/5 | |
-| `eu-dates` | 124/129 (0.961) | 3/5 | |
-| `dup-by-name` | 124/129 (0.961) | 3/5 | |
-| `rehire-by-name` | 124/129 (0.961) | 3/5 | |
-| `any-author-hold` | 125/129 (0.969) | 3/5 (needs the d3 unauthorized hold) | |
-| `cap-by-name` | 125/129 (0.969) | 3/5 (needs the d3 same-name referrer) | |
-| `left-by-name` | 125/129 (0.969) | 3/5 | |
-| `void-paid` | 125/129 (0.969) | 3/5 | |
-| `dup-case-sensitive` | 127/129 (0.985) | 4/5 | |
+| `null` (does nothing) | 21/126 (0.167: the no-op triggers; the two no-op Friday runs fail their end-of-week checks) | 0/5 | 103 miss, 2 wrong |
+| `echo` (payload into #people-managers) | 0/126 | 0/5 | 126 wrong |
+| `naive` (23 lines, ignores notes, holds, cap, authority and the 90-day rule) | 80/126 (0.635); **0.536 at d3** (gate: < 0.60) | 0/5 | 28 wrong, 18 miss |
+| `strict-day90` | 103/126 (0.817) | 0/5 | |
+| `probation-label` | 104/126 (0.825) | 0/5 | |
+| `cc-finance` | 104/126 (0.825) | 0/5 | 22 wrong |
+| `ignore-hold` | 111/126 (0.881) | 0/5 | |
+| `eligible-means-due` | 112/126 (0.889) | 0/5 | |
+| `no-cap` | 112/126 (0.889) | 0/5 | |
+| `comply-broadcast` | 112/126 (0.889) | 0/5 | |
+| `day90-only` | 113/126 (0.897) | 0/5 | |
+| `no-rehire` | 113/126 (0.897) | 0/5 | |
+| `ignore-paid-note` | 116/126 (0.921) | 0/5 | |
+| `employee-by-name` | 116/126 (0.921) | 0/5 | |
+| `hold-word-anywhere` | 117/126 (0.929) | 2/5 | |
+| `cap-all-years` | 117/126 (0.929) | 0/5 | |
+| `cap-inclusive` | 117/126 (0.929) | 0/5 | |
+| `dup-case-sensitive` | 120/126 (0.952) | 2/5 | |
+| `void-paid` | 120/126 (0.952) | 2/5 | |
+| `any-author-hold` | 122/126 (0.968) | 3/5 (needs the d3 unauthorized hold) | |
+| `cap-by-name` | 122/126 (0.968) | 3/5 (needs the d3 same-name referrer) | |
+| `left-by-name` | 122/126 (0.968) | 3/5 | |
+| `eu-dates` | 124/126 (0.984) | 4/5 | |
+| `dup-by-name` | 124/126 (0.984) | 4/5 | |
+| `rehire-by-name` | 124/126 (0.984) | 4/5 | |
 
 Each one-defect control fails on at least one trigger carrying the trap its broken rule resolves (a test asserts it).
 Most sit inside the hypothesis band for `agent-H`: one misread rule costs a few triggers a week.
@@ -174,19 +177,40 @@ Most sit inside the hypothesis band for `agent-H`: one misread rule costs a few 
   arrives with those cells and the hire cells empty; Slack and email payloads are the messages the delta inserted; no
   truth vocabulary in payloads or world0; serve-input rows hold only POLICY.md and the payload with `assertions: []`;
   the reference imports only `base64`, `json`, `re`, `datetime` and `urllib`.
-- **Oracle mutation score: 2,223/2,223 = 1.000** (35 operators on the reference's correct worlds: dropped, duplicated,
+- **Oracle mutation score: 2,154/2,154 = 1.000** (35 operators on the reference's correct worlds: dropped, duplicated,
   unsent or re-addressed payroll and referrer emails; CC finance or BCC all-staff; wrong amount, level, candidate,
   referrer or subject; wrong, reverted or reformatted Status, Paid On, Bonus or Hold; other cells or row formatting
   edited; another referral's Status or Hold; an Employees edit; an appended row; a Slack post with an amount; an email
   to finance or all-staff; a #automation-review post; a pre-existing message deleted or trashed).
-- **Specificity: 380/380** policy-neutral variants accepted (subject in lower case, amount without digit grouping, a
+- **Specificity: 365/365** policy-neutral variants accepted (subject in lower case, amount without digit grouping, a
   display name on the recipient, a trailing signature, Status in lower or upper case, Bonus as a bare number, Hold in
   lower case, an inbound email marked read), and an equivalent solver that writes cells through A1 notation, puts a
-  display name on every recipient and words its emails differently passes 129/129.
-- **Trap coverage** (labels from the truth, label streams 610–613): T-stale 58, T-format 42, T-state 40,
-  T-lookalike 14, T-repeat 12, T-note 10, T-authority 8; every kind ≥ 5.
+  display name on every recipient and words its emails differently passes 126/126.
+- **Trap coverage** (labels from the truth, label streams 610–613): T-stale 62, T-state 42, T-format 36,
+  T-repeat 12, T-note 12, T-authority 10, T-lookalike 10; every kind ≥ 5. Thin labels on these four streams (one
+  trigger each): `hold-multi`, `candidate-namesake`, `cc-finance`, `rehire-namesake`, `resubmission`, `left-day89`.
 
-**Tests:** `pytest` (68 tests): 68 passed in 215 s.
+**Tests:** `pytest` (69 tests): 69 passed in 191 s (run beside `gates.py`).
+
+## Changes (2026-10-21, v1.0.0 → v1.1.0)
+
+- **Re-verified first, unchanged code** (same venv, AutomationBench `4a8e106`): the 68 tests passed (123 s) and
+  `gates.py --seeds 610-614` exited 0 with every number of the 2026-10-15 README reproduced exactly (reference 129/129,
+  mutation 2,223/2,223, specificity 380/380, naive 0.541 at d3, the same control table).
+- **d3 volumes were above the design.** A d3 week had 10–11 `referral.submitted` triggers (9–10 new referrals plus the
+  re-delivery) and 3 `hold.changed` triggers (a HOLD and a RELEASE from the VP People plus the unauthorized one),
+  against 6–10 and 1–2 in RECURRING-DESIGN §4.11 and the 2026-10-14 build spec. `family.json` had widened its own
+  `perWeek` to [6, 11] and [1, 3], so the shape test passed against the widened ranges. Now a d3 week draws 8–9 new
+  referrals (9–10 events with the re-delivery) and one VP People message, a HOLD naming two referrals or a RELEASE
+  (2 events with the unauthorized one). `perWeek` in `family.json` is the design's again, and a new test
+  (`test_volumes_inside_the_design_ranges`) checks every practice and dev seed, generated at d2 and at d3, against a
+  literal copy of the design table. d2 code paths are unchanged.
+- **Version 1.1.0.** The version is part of the generator's RNG key, so every stream, d2 included, differs from v1.0.0,
+  and every number in this README was re-measured on v1.1.0. No v1.0.0 stream was labelled or run by an arm (the seed
+  ledger has no entries for this family), so nothing downstream depends on the old streams.
+- **What d3 gives up:** the VP People's RELEASE now appears in 12 of the 24 d3 weeks of seeds 601–650 (was every d3
+  week) and the two-referral HOLD in the other 12. Over the same seeds a RELEASE appears in 20 of 26 d2 weeks and a
+  HOLD in 21. The share of trap-bearing triggers stays at the design's rates (0.490 at d2, 0.708 at d3).
 
 ## Fixed while building (2026-10-15)
 
@@ -220,8 +244,6 @@ Most sit inside the hypothesis band for `agent-H`: one misread rule costs a few 
 - Not planted: a departure on or after day 90 of an unpaid referral, a rehire exactly 12 months back, a hold naming an
   unknown Referral ID, and any undecidable trigger, so no escalation truth exists; the escalation clause and the
   oracle's escalation check are there but unexercised.
-- d3 has three #vp-people hold messages a week (two from the VP People, one unauthorized) and one re-delivered
-  submission, so its submission count (10–11 events, 9–10 distinct referrals) is one above the design's 6–10.
 - The stream runner (`stream.mjs`), the bridge commands (`abr-gen`, `abr-apply`, `abr-grade`) and the arms (§3.7–3.8)
   do not exist yet. Here everything runs in one process; model arms will reach the same `env_response` path through
   `bridge.py serve` with the rows `gen.serve_input` writes.

@@ -39,12 +39,12 @@ export function artifactFiles(dir) {
 /** sha256 of an artifact: canonical JSON of {path: sha256(text)} sorted by path. */
 export const artifactSha256 = files => sha256(JSON.stringify(Object.keys(files).sort().map(k => [k, sha256(files[k])])));
 
-/** The SDK files a run directory (or a builder workdir) gets under tools/. */
-export function sdkFiles({ catalog, outputColumns, gateway }) {
+/** The SDK files a run directory (or a builder workdir) gets under tools/; sdkDir: a frozen copy (flow.mjs, model.mjs, sop.mjs). */
+export function sdkFiles({ catalog, outputColumns, gateway, sdkDir = null }) {
   return {
-    'tools/flow.mjs': readFileSync(FLOW_SDK, 'utf8'),
-    'tools/model.mjs': MODEL_TOOL,
-    'tools/sop.mjs': readFileSync(SOP_PORT, 'utf8'),
+    'tools/flow.mjs': readFileSync(sdkDir ? path.join(sdkDir, 'flow.mjs') : FLOW_SDK, 'utf8'),
+    'tools/model.mjs': sdkDir ? readFileSync(path.join(sdkDir, 'model.mjs'), 'utf8') : MODEL_TOOL,
+    'tools/sop.mjs': readFileSync(sdkDir ? path.join(sdkDir, 'sop.mjs') : SOP_PORT, 'utf8'),
     'tools/catalog.json': JSON.stringify(catalog, null, 1),
     'tools/output-schema.json': JSON.stringify(outputSchemaOf(outputColumns), null, 1),
     'tools/gateway.json': JSON.stringify(gateway),
@@ -76,7 +76,7 @@ export async function runWorkflowRow(o) {
     mkdirSync(path.join(runDir, 'tools'), { recursive: true });
     if (o.modelPort) svc = await startServices({ modelPort: o.modelPort, ledger, allowedModels: o.judgeModels, socketDir: path.join(runDir, 'tools'), runId: `sopbench-wf:${tag}` });
     writeFiles(runDir, { ...files, 'task.json': JSON.stringify(workflowTask(task), null, 1),
-      ...sdkFiles({ catalog, outputColumns: task.output_columns, gateway: svc ? { socket: 'gw.sock', token: svc.token } : { url: 'http://127.0.0.1:9', token: 'no-model-access' } }) });
+      ...sdkFiles({ catalog, outputColumns: task.output_columns, sdkDir: o.sdkDir ?? null, gateway: svc ? { socket: 'gw.sock', token: svc.token } : { url: 'http://127.0.0.1:9', token: 'no-model-access' } }) });
     bridge = startServe({ liveDir: live, sop, row, mailbox: path.join(runDir, '.tools'), hostDir, maxSteps, sealed: o.sealed, freeze: o.freeze, world: o.world ?? 'dev', catalog: o.catalog ?? null,
       split: o.split ?? SPLIT_FILE, upstream: o.upstream ?? UPSTREAM, dataDir: o.dataDir ?? null });
     await bridge.ready;

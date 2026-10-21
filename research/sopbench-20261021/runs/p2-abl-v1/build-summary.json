@@ -1,0 +1,59 @@
+{
+ "runId": "p2-abl-v1",
+ "evidence": "development: builds and repairs on SPLIT.json build/repair rows only; no sealed row was prepared, served or graded",
+ "stopped": null,
+ "builderModel": "claude-haiku-5-5",
+ "judgeModels": [
+  "claude-haiku-5-5"
+ ],
+ "budgets": {
+  "build": 3,
+  "repair": 1.5,
+  "buildMinutes": 30,
+  "repairMinutes": 20,
+  "rounds": 2,
+  "builderJudgeUsd": 0.5
+ },
+ "prompts": {
+  "buildTemplateSha256": "8c69d8b593015f86dbb2de1bbccf783bee097223bb20e5c620a363af4805f132",
+  "repairTemplateSha256": "f5ff28a3e56b5050c5857298c82d64418c07a1d25155361202f06585c4cf2aa5"
+ },
+ "spentUsd": 0.19196054000000004,
+ "capUsd": 6,
+ "sops": {
+  "video_annotation": {
+   "devPass": 20,
+   "devRows": 20,
+   "buildPass": 5,
+   "repairPass": 15,
+   "bestRound": 0,
+   "artifactSha256": "1e488f4efad8b8e59dc594388b01c2a06e8308c068225b5a1a042f09fde29561",
+   "failedBuild": false,
+   "envFault": null,
+   "costUsd": 0.19196054000000004,
+   "rounds": [
+    {
+     "round": 0,
+     "sessionError": null,
+     "costUsd": 0.19196054000000004,
+     "judgeUsd": 0,
+     "checkUsd": 0,
+     "turns": 27,
+     "minutes": 5.4,
+     "buildPass": 5,
+     "repairPass": 15,
+     "kept": true,
+     "statuses": {
+      "done": 20
+     },
+     "sectionsPerRun": 5.75,
+     "judgeCallsPerRun": 0,
+     "nestedModelUses": 0,
+     "artifactSha256": "1e488f4efad8b8e59dc594388b01c2a06e8308c068225b5a1a042f09fde29561"
+    }
+   ]
+  }
+ },
+ "live": "/var/tmp/foundry-work/sopbench/p2-abl-v1",
+ "finishedAt": "2026-10-21T12:40:30.227Z"
+}

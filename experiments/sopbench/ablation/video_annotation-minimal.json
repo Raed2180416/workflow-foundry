@@ -1,0 +1,45 @@
+{
+ "sop": "video_annotation",
+ "kind": "minimal",
+ "real": [
+  "validateVideoFormat",
+  "validateLidarData",
+  "executeSegmentation",
+  "performObjectDetection",
+  "performHumanValidation",
+  "runAutomatedQC"
+ ],
+ "removed": [
+  "processHighResolution",
+  "validateOutputFormat",
+  "checkProcessingStatus",
+  "optimizeTrackingSettings",
+  "calibrateCameraSensors",
+  "synchronizeLidarTimestamp",
+  "generateDepthMap",
+  "validateWeatherConditions",
+  "optimizeFrameRate",
+  "enhanceLowLightFootage",
+  "adjustBitDepth",
+  "validateChannelCount",
+  "validateTemporalConsistency",
+  "checkSpatialAccuracy",
+  "validateAnnotatorScores",
+  "trackObjectMotion",
+  "validateCameraIntrinsics",
+  "processNightTimeFootage",
+  "analyzeCameraStability",
+  "validateSceneContext"
+ ],
+ "distractors": [],
+ "distractorSpecs": [],
+ "order": [
+  "validateVideoFormat",
+  "validateLidarData",
+  "executeSegmentation",
+  "performObjectDetection",
+  "performHumanValidation",
+  "runAutomatedQC"
+ ],
+ "sha256": "472e9470687d33431a54f55db42f6fbd6045a4e4059cc74221619babdcc84ca2"
+}

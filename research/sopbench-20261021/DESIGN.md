@@ -194,3 +194,29 @@ runs are sandbox-bound (≈ 2–5 s each plus judges).
 - **Lenient upstream scorer**: never the headline (§7).
 - **Orchestration-only SOPs** inflate any macro; reported with and without.
 - **Small SOPs**: order_fulfillment has 23 sealed rows; its interval will be wide.
+
+## 13. As built (2026-10-21, before the freeze)
+
+Implementation of §2–§8, with the parameters the freeze records. Deviations from the text above are marked.
+
+- **Code**: `experiments/sopbench/kit/sop.mjs` (the tool port and section contracts: schema-checked input and output per
+  section, a per-section tool allow-list, every section a `flow.phase` span, every tool request tagged with its section in
+  the host log), `exec.mjs` (a workflow on one row: `runSandboxed`, network off, mailbox + gateway socket only),
+  `build.mjs` (builder and repair sessions, host checks, version selection), `kit/run-solver.mjs` and `kit/check.mjs`
+  (the builder's own test tools), `sealed.mjs` (both arms, k runs, interleaved, freeze-verified, ablation cells),
+  `freeze.mjs`, `distractors.mjs`. Bridge: `--world build|dev` and `--catalog`. The A-H arm is phase 1's per-row code,
+  moved into `run.mjs runAgentRow` without a change in behaviour (the 14 tests and a scripted run agree).
+- **Builder input** as §3. **Deviation:** a repair session sees all dev rows (build + repair) with their expected answers,
+  plus failure files (result, deopt, trace, tool calls with results) for the rows it got wrong, not the failing rows only.
+  Repair rows are training data either way (§4).
+- **Workflow limits**: at most 40 tool requests per row (the agent: 10 tool steps, each a call or a batch), $0.05 of judge
+  calls per run, 180 s per run. The builder prompt states the 40.
+- **Pilot gate (§11 step 2)**: passed. `p2-pilot` built dangerous_goods, customer_service and email_intent; all three reach
+  20/20 dev rows after at most one repair round, for under $0.40 in total (`runs/p2-pilot/build-summary.json`); Haiku 5.5
+  builder sessions cost $0.01–0.22 each, far below the §10 estimate.
+- **Ablation catalogs** (`experiments/sopbench/ablation/*.json`, deterministic): they name the real tools (specs taken from
+  the pinned clone at run time) and hold only our generated distractor specs, so no upstream text is committed. V1 minimal
+  = video_annotation's 6 real tools; V2 bloated = 20 distractors each for dangerous_goods, customer_service and
+  know_your_business. Each cell's workflows are built under its own catalog, on dev rows, like the primary ones.
+- **Models** are policy ids (`--builder-model`, `--judge-model`, `--agent-model` at freeze time); the harness accepts only
+  `claude-cli` models today and says so for any other provider.
