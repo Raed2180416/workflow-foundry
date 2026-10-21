@@ -1,0 +1,625 @@
+{
+ "arm": "B0-H",
+ "case": "I3",
+ "expected": "invoice-chase",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.006641,
+  "tokens": 25206,
+  "inputTokens": 2,
+  "outputTokens": 9573,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14766,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 9573,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14766,
+   "costUsd": 0.0066411,
+   "costUnknown": false,
+   "latencyMs": 39230,
+   "journalId": 6
+  }
+ ],
+ "builderWallMs": 39242,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "overdue-invoice-reminders",
+  "version": 1,
+  "title": "Overdue invoice reminders at 7, 21 and 45 days with run summary",
+  "goal": "Find open invoices that are exactly 7, 21 or 45 days overdue, send each customer a reminder matching the stage (each send needs a person's approval), verify the sends, then send the user a summary of the run.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Only invoices with status open are reminded; disputed and paid invoices are skipped.",
+    "A reminder fires when days overdue exactly equals 7, 21 or 45, so the flow must run once per day.",
+    "Recipients are the email column of the invoices sheet.",
+    "The summary goes to the user's own address, randstuff904@gmail.com, and needs approval before dispatch."
+   ],
+   "risks": [
+    "If a scheduled run is skipped, invoices that reach a threshold on that day get no reminder.",
+    "If the flow runs more than once on the same day, the same reminders are sent again.",
+    "Each customer send is a live outbound message and requires a person's approval before dispatch."
+   ],
+   "successCriteria": [
+    "Every reminder that was routed has been sent and independently confirmed by outbox.check.",
+    "outbox.audit confirms the recipients of this run match the expected list.",
+    "The summary email is sent and confirmed by outbox.check.",
+    "The number of reminders sent equals the number of routed invoices."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_invoices",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the invoices sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "invoices"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_invoices",
+    "kind": "task",
+    "needs": [
+     "read_invoices"
+    ],
+    "description": "Keep only open invoices.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_invoices.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "open_invoices"
+    ],
+    "description": "Compute whole days overdue from the due date.",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_invoices.rows"
+     },
+     "field": "due",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "days",
+     "as": "days_overdue"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "due_stage",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Keep invoices exactly 7, 21 or 45 days overdue.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "days_overdue",
+       "op": "in",
+       "value": [
+        7,
+        21,
+        45
+       ]
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "routed",
+    "kind": "task",
+    "needs": [
+     "due_stage"
+    ],
+    "description": "Attach the reminder stage, subject and wording to each invoice.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.due_stage.rows"
+     },
+     "rules": [
+      {
+       "field": "days_overdue",
+       "op": "eq",
+       "value": 7,
+       "set": {
+        "stage": "7-day reminder",
+        "subject": "Payment reminder: invoice 7 days overdue",
+        "template": "Hello {{customer}},\n\nInvoice {{invoice}} for {{amount}} was due on {{due}} and is now 7 days overdue. Please arrange payment at your earliest convenience. If you have already paid, please disregard this message."
+       }
+      },
+      {
+       "field": "days_overdue",
+       "op": "eq",
+       "value": 21,
+       "set": {
+        "stage": "21-day reminder",
+        "subject": "Second reminder: invoice 21 days overdue",
+        "template": "Hello {{customer}},\n\nThis is a second reminder that invoice {{invoice}} for {{amount}}, due on {{due}}, is now 21 days overdue. Please arrange payment as soon as possible or contact us about it. If you have already paid, please disregard this message."
+       }
+      },
+      {
+       "field": "days_overdue",
+       "op": "eq",
+       "value": 45,
+       "set": {
+        "stage": "45-day reminder",
+        "subject": "Final reminder: invoice 45 days overdue",
+        "template": "Hello {{customer}},\n\nFinal reminder: invoice {{invoice}} for {{amount}}, due on {{due}}, is now 45 days overdue. Please pay now or contact us immediately to avoid further action. If you have already paid, please disregard this message."
+       }
+      }
+     ],
+     "otherwise": {
+      "stage": "none",
+      "subject": "none",
+      "template": "none"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "map_reminders",
+    "kind": "map",
+    "needs": [
+     "routed"
+    ],
+    "description": "Compose, send and verify one reminder per routed invoice. Each send needs a person's approval.",
+    "items": {
+     "$ref": "nodes.routed.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose_reminder",
+       "kind": "task",
+       "needs": [],
+       "description": "Fill the reminder wording for this invoice.",
+       "tool": "core.template",
+       "args": {
+        "text": {
+         "$ref": "item.template"
+        },
+        "variables": {
+         "customer": {
+          "$ref": "item.customer"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "due": {
+          "$ref": "item.due"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send_reminder",
+       "kind": "task",
+       "needs": [
+        "compose_reminder"
+       ],
+       "description": "Send the reminder to the customer (asks a person first).",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.email"
+        },
+        "subject": {
+         "$ref": "item.subject"
+        },
+        "body": {
+         "$ref": "nodes.compose_reminder.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      },
+      {
+       "id": "check_reminder",
+       "kind": "verify",
+       "needs": [
+        "send_reminder"
+       ],
+       "description": "Re-read the sent reminder and compare its hash.",
+       "method": "capability",
+       "tool": "outbox.check",
+       "args": {
+        "messageId": {
+         "$ref": "nodes.send_reminder.messageId"
+        },
+        "sha256": {
+         "$ref": "nodes.send_reminder.sha256"
+        }
+       },
+       "subject": {
+        "$ref": "nodes.send_reminder"
+       },
+       "independence": "execution",
+       "gate": true,
+       "timeoutMs": 10000
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.check_reminder.pass"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "recipients",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "List the recipient emails of the routed invoices.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.routed.rows"
+     },
+     "field": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit_sends",
+    "kind": "verify",
+    "needs": [
+     "map_reminders",
+     "recipients"
+    ],
+    "description": "Confirm this run's outbox messages match the expected recipients and hashes.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": {
+      "$ref": "nodes.recipients.items"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.map_reminders"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "totals",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "Total invoice value reminded today.",
+    "tool": "core.aggregate",
+    "args": {
+     "operation": "sum",
+     "values": {
+      "$ref": "nodes.routed.rows"
+     },
+     "field": "amount"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "lines",
+    "kind": "task",
+    "needs": [
+     "routed"
+    ],
+    "description": "One summary line per reminded invoice.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.routed.rows"
+     },
+     "line": "{{invoice}} | {{customer}} | {{amount}} | due {{due}} | {{stage}}",
+     "empty": "No reminders were due today."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "summary_text",
+    "kind": "task",
+    "needs": [
+     "audit_sends",
+     "totals",
+     "lines",
+     "map_reminders"
+    ],
+    "description": "Build the run summary text.",
+    "tool": "core.template",
+    "args": {
+     "text": "Overdue invoice reminder run {{now}}\nReminders sent: {{sent}}\nTotal value reminded: {{total}}\n\n{{lines}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "sent": {
+       "$ref": "nodes.map_reminders.count"
+      },
+      "total": {
+       "$ref": "nodes.totals.value"
+      },
+      "lines": {
+       "$ref": "nodes.lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "summary_send",
+    "kind": "task",
+    "needs": [
+     "summary_text"
+    ],
+    "description": "Send the run summary to the user (asks a person first).",
+    "tool": "outbox.send",
+    "args": {
+     "to": "randstuff904@gmail.com",
+     "subject": "Overdue invoice reminders summary",
+     "body": {
+      "$ref": "nodes.summary_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_summary",
+    "kind": "verify",
+    "needs": [
+     "summary_send"
+    ],
+    "description": "Re-read the summary email and compare its hash.",
+    "method": "capability",
+    "tool": "outbox.check",
+    "args": {
+     "messageId": {
+      "$ref": "nodes.summary_send.messageId"
+     },
+     "sha256": {
+      "$ref": "nodes.summary_send.sha256"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.summary_send"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_sends.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_summary.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.map_reminders.count"
+    },
+    "right": {
+     "$ref": "nodes.routed.count"
+    }
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "randstuff904@gmail.com",
+     "subject": "Overdue invoice reminders summary",
+     "body": "Overdue invoice reminder run 2026-10-20T09:00:00Z\nReminders sent: 0\nTotal value reminded: 0\n\nNo reminders were due today."
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-yOCuob",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every reminder that was routed has been sent and independently confirmed by outbox.check.",
+    "exact": "the pass of “Confirm this run's outbox messages match the expected recipients and hashes.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "outbox.audit confirms the recipients of this run match the expected list.",
+    "exact": "the pass of “Re-read the summary email and compare its hash.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "The summary email is sent and confirmed by outbox.check.",
+    "exact": "the count of “Compose, send and verify one reminder per routed invoice. Each send needs a person's approval.” equals the count of “Attach the reminder stage, subject and wording to each invoice.”",
+    "passed": true
+   },
+   {
+    "id": "verify.audit_sends",
+    "plain": "Confirm this run's outbox messages match the expected recipients and hashes.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_summary",
+    "plain": "Re-read the summary email and compare its hash.",
+    "exact": "outbox.check (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to ap@northpier.example containing \"QI-1\" without final",
+   "outbox : missing a message to wren@wrenflorals.example containing \"QI-2\" without second, final",
+   "outbox : missing a message to billing@atlasfreight.example containing \"QI-3\", \"final\"",
+   "outbox : missing a message to studio@larkyoga.example containing \"QI-4\" without final",
+   "outbox : missing a message to ops@quill-and-ink.com containing one of [QI-1 | North Pier], one of [QI-2 | Wren], one of [QI-3 | Atlas], one of [QI-4 | Lark]",
+   "outbox : unexpected or wrong message to randstuff904@gmail.com (\"Overdue invoice reminders summary\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

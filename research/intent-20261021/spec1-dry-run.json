@@ -1,5 +1,5 @@
 {
- "what": "SPEC-1 / INTENT-1 runner, $0 DRY runs (2026-10-21): scripted builders (each copies a fixed existing solver built from SPEC-E), scripted agent sessions and a scripted Haiku stand-in behind the journaled ModelPort. NO model was called. The numbers prove plumbing, caps, journals and scoring only; they say NOTHING about any arm. Readings computed on them are wiring checks, not results.",
+ "what": "SPEC-1 / INTENT-1 runner, $0 DRY runs (2026-10-21, final code incl. the derived contract): scripted builders (each copies a fixed existing solver built from SPEC-E), scripted agent sessions and a scripted Haiku stand-in behind the journaled ModelPort. NO model was called. The numbers prove plumbing, caps, journals and scoring only; they say NOTHING about any arm. Readings computed on them are wiring checks, not results.",
  "commands": [
   "node experiments/specbiz/spec1.mjs --arm <arm> --dry --lineages 2 --worlds shared,g:1232:2   (each of the six arms)",
   "node experiments/specbiz/spec1.mjs perfect --dry --worlds shared,g:1232:2",
@@ -18,7 +18,6 @@
    "label": "dry-spec1-always-ask-p1-l1",
    "arm": "always-ask",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
    "summary": {
     "grading": {
@@ -40,8 +39,10 @@
    "ownerReplayOk": true,
    "modelPortRows": 20,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": null,
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -50,7 +51,6 @@
    "label": "dry-spec1-always-ask-p1-l2",
    "arm": "always-ask",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
    "summary": {
     "grading": {
@@ -72,8 +72,10 @@
    "ownerReplayOk": true,
    "modelPortRows": 20,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": null,
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -82,7 +84,6 @@
    "label": "dry-spec1-derive-ledger-p1-l1",
    "arm": "derive-ledger",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
    "summary": {
     "grading": {
@@ -104,6 +105,7 @@
    "ownerReplayOk": true,
    "modelPortRows": 3,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": {
     "entries": 26,
     "confirmed": 18,
@@ -111,6 +113,7 @@
     "struck": 1
    },
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -119,7 +122,6 @@
    "label": "dry-spec1-derive-ledger-p1-l2",
    "arm": "derive-ledger",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
    "summary": {
     "grading": {
@@ -141,6 +143,7 @@
    "ownerReplayOk": true,
    "modelPortRows": 3,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": {
     "entries": 26,
     "confirmed": 18,
@@ -148,6 +151,7 @@
     "struck": 1
    },
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -156,7 +160,6 @@
    "label": "dry-spec1-derive-p1-l1",
    "arm": "derive",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
    "summary": {
     "grading": {
@@ -178,8 +181,10 @@
    "ownerReplayOk": true,
    "modelPortRows": 5,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": null,
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -188,7 +193,6 @@
    "label": "dry-spec1-derive-p1-l2",
    "arm": "derive",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
    "summary": {
     "grading": {
@@ -210,8 +214,10 @@
    "ownerReplayOk": true,
    "modelPortRows": 5,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": null,
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -220,7 +226,6 @@
    "label": "dry-spec1-derive-prior-p1-l1",
    "arm": "derive-prior",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
    "summary": {
     "grading": {
@@ -242,8 +247,10 @@
    "ownerReplayOk": true,
    "modelPortRows": 3,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": null,
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -252,7 +259,6 @@
    "label": "dry-spec1-derive-prior-p1-l2",
    "arm": "derive-prior",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1lh-e8-2/solver.mjs",
    "summary": {
     "grading": {
@@ -274,8 +280,10 @@
    "ownerReplayOk": true,
    "modelPortRows": 3,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": null,
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -284,7 +292,6 @@
    "label": "dry-spec1-no-ask-p1-l1",
    "arm": "no-ask",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1o-e8-1/solver.mjs",
    "summary": {
     "grading": {
@@ -306,8 +313,10 @@
    "ownerReplayOk": null,
    "modelPortRows": 0,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": null,
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -316,7 +325,6 @@
    "label": "dry-spec1-no-ask-p1-l2",
    "arm": "no-ask",
    "kind": "build",
-   "scripted": true,
    "dryStandIn": "copies research/enterprise-20261014/runs/b1o-e8-1/solver.mjs",
    "summary": {
     "grading": {
@@ -338,8 +346,10 @@
    "ownerReplayOk": null,
    "modelPortRows": 0,
    "smokeRuns": 1,
+   "contractSha256": "2987f32570f52186b6c38ae35e34fe8da6b6dc1e6f4504c9b06367d2c374cb32",
    "ledger": null,
    "agentTicks": null,
+   "agentArmErrors": null,
    "statuses": [
     "complete"
    ]
@@ -348,8 +358,7 @@
    "label": "dry-spec1-none-agent-p1-l1",
    "arm": "none-agent",
    "kind": "agent",
-   "scripted": true,
-   "dryStandIn": "agentv dryRunner session (minimal output)",
+   "dryStandIn": "scripted pack session (checks pack present, no SPEC-E file or mention), then AGENTV-E8 dryRunner (minimal output)",
    "summary": {
     "grading": {
      "worlds": 0,
@@ -370,8 +379,10 @@
    "ownerReplayOk": true,
    "modelPortRows": 2,
    "smokeRuns": null,
+   "contractSha256": null,
    "ledger": null,
    "agentTicks": 21,
+   "agentArmErrors": 0,
    "statuses": [
     "complete"
    ]
@@ -380,8 +391,7 @@
    "label": "dry-spec1-none-agent-p1-l2",
    "arm": "none-agent",
    "kind": "agent",
-   "scripted": true,
-   "dryStandIn": "agentv dryRunner session (minimal output)",
+   "dryStandIn": "scripted pack session (checks pack present, no SPEC-E file or mention), then AGENTV-E8 dryRunner (minimal output)",
    "summary": {
     "grading": {
      "worlds": 0,
@@ -402,8 +412,10 @@
    "ownerReplayOk": true,
    "modelPortRows": 2,
    "smokeRuns": null,
+   "contractSha256": null,
    "ledger": null,
    "agentTicks": 21,
+   "agentArmErrors": 0,
    "statuses": [
     "complete"
    ]

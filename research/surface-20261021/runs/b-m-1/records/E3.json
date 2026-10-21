@@ -1,0 +1,97 @@
+{
+ "arm": "B-M",
+ "case": "E3",
+ "expected": "expense-approval",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "error",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": {
+    "code": "BUILDER_MODEL",
+    "message": "The builder model call select failed: MODEL_TRUNCATED: Generation stopped at the token limit (finish_reason=length)",
+    "details": {
+     "code": "MODEL_TRUNCATED"
+    }
+   }
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0,
+  "tokens": 1723,
+  "inputTokens": 616,
+  "outputTokens": 592,
+  "cacheReadTokens": 515,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "mercury-3",
+   "ok": false,
+   "error": {
+    "code": "MODEL_TRUNCATED",
+    "message": "Generation stopped at the token limit (finish_reason=length)"
+   },
+   "inputTokens": 616,
+   "outputTokens": 592,
+   "cacheReadTokens": 515,
+   "cacheWriteTokens": 0,
+   "costUsd": 0,
+   "costUnknown": false,
+   "latencyMs": 2073,
+   "journalId": 40
+  }
+ ],
+ "builderWallMs": 2086,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "error",
+ "error": {
+  "code": "BUILDER_MODEL",
+  "message": "The builder model call select failed: MODEL_TRUNCATED: Generation stopped at the token limit (finish_reason=length)",
+  "details": {
+   "code": "MODEL_TRUNCATED"
+  }
+ },
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "no flow ran: the builder ended error"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 3,
+  "slotChecksOk": 0
+ }
+}

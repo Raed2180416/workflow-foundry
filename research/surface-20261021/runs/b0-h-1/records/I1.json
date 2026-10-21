@@ -1,0 +1,480 @@
+{
+ "arm": "B0-H",
+ "case": "I1",
+ "expected": "invoice-chase",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.005415,
+  "tokens": 22793,
+  "inputTokens": 2,
+  "outputTokens": 7108,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14818,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 7108,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14818,
+   "costUsd": 0.0054151,
+   "costUnknown": false,
+   "latencyMs": 32425,
+   "journalId": 4
+  }
+ ],
+ "builderWallMs": 32438,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "chase-overdue-invoices",
+  "version": 1,
+  "title": "Chase overdue invoices with escalating reminders",
+  "goal": "Send payment reminders to customers with open, overdue invoices from the invoices sheet. Tone starts friendly and gets firmer the longer an invoice is overdue. Disputed invoices are not chased. Each reminder is signed as Hannah at Little Fern Bakery.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "Only invoices with status 'open' and a due date before the run date are chased; 'disputed' and 'paid' invoices are skipped.",
+    "Escalation: under 15 days overdue is friendly, 15 to 30 days is firm, 31 days or more is final.",
+    "Each outbound email is approved by a person before it is sent."
+   ],
+   "risks": [
+    "Customers who opted out in the CRM are not checked, so a reminder could go to someone who unsubscribed.",
+    "A customer with several overdue invoices receives one reminder per invoice.",
+    "If the invoices sheet is out of date, reminders may show wrong amounts or dates.",
+    "A reminder may reach a customer who is already disputing a bill with us, even though their own invoice is not marked disputed."
+   ],
+   "successCriteria": [
+    "Every open overdue invoice (not disputed or paid) gets exactly one reminder email, or is skipped if a person declines it.",
+    "Each email uses the tone that matches its days overdue and is signed Hannah @ Little Fern Bakery.",
+    "The outbox audit confirms the sent recipients match the expected list."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 1800000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_invoices",
+    "kind": "task",
+    "needs": [],
+    "description": "Read every row of the invoices sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "invoices"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "age_due",
+    "kind": "task",
+    "needs": [
+     "read_invoices"
+    ],
+    "description": "Add daysOverdue: whole days between each invoice's due date and now (positive when past due).",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_invoices.rows"
+     },
+     "field": "due",
+     "now": {
+      "$ref": "input.now"
+     },
+     "unit": "days",
+     "as": "daysOverdue"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_overdue",
+    "kind": "task",
+    "needs": [
+     "age_due"
+    ],
+    "description": "Keep only open invoices that are past due. Disputed and paid invoices are excluded.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.age_due.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      },
+      {
+       "field": "daysOverdue",
+       "op": "gt",
+       "value": 0
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route_tone",
+    "kind": "task",
+    "needs": [
+     "open_overdue"
+    ],
+    "description": "Set the reminder tone for each overdue invoice: friendly under 15 days, firm 15 to 30 days, final 31 days or more.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_overdue.rows"
+     },
+     "rules": [
+      {
+       "field": "daysOverdue",
+       "op": "lt",
+       "value": 15,
+       "set": {
+        "tone": "friendly",
+        "opening": "Hope you're well! Just a friendly reminder that",
+        "closing": "If you've already paid, thank you, and please ignore this message."
+       }
+      },
+      {
+       "field": "daysOverdue",
+       "op": "lt",
+       "value": 31,
+       "set": {
+        "tone": "firm",
+        "opening": "We haven't received payment yet, and our records show that",
+        "closing": "Please arrange payment within 7 days. If there's a problem with this invoice, reply and we'll look into it."
+       }
+      }
+     ],
+     "otherwise": {
+      "tone": "final",
+      "opening": "This is our final reminder before we take further steps. Our records show that",
+      "closing": "Please pay within 7 days or contact us today to agree a plan. If there's a problem with this invoice, reply and we'll look into it."
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "emails",
+    "kind": "task",
+    "needs": [
+     "route_tone"
+    ],
+    "description": "List the recipient email for each reminder, for the independent audit.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.route_tone.rows"
+     },
+     "field": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "chase",
+    "kind": "map",
+    "needs": [
+     "route_tone"
+    ],
+    "description": "For each overdue invoice: draft the subject and body, then send the reminder after a person approves it.",
+    "items": {
+     "$ref": "nodes.route_tone.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "subject_draft",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the reminder subject line for this invoice.",
+       "tool": "core.template",
+       "args": {
+        "text": "Payment reminder: invoice {{invoice}}",
+        "variables": {
+         "invoice": {
+          "$ref": "item.invoice"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "body_draft",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the reminder body with the tone for this invoice.",
+       "tool": "core.template",
+       "args": {
+        "text": "Hi {{customer}},\n\n{{opening}} invoice {{invoice}} for {{amount}} was due on {{due}} and is still unpaid ({{daysOverdue}} days overdue).\n\n{{closing}}\n\nThanks,\nHannah\nLittle Fern Bakery",
+        "variables": {
+         "customer": {
+          "$ref": "item.customer"
+         },
+         "opening": {
+          "$ref": "item.opening"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "due": {
+          "$ref": "item.due"
+         },
+         "daysOverdue": {
+          "$ref": "item.daysOverdue"
+         },
+         "closing": {
+          "$ref": "item.closing"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send_reminder",
+       "kind": "task",
+       "needs": [
+        "subject_draft",
+        "body_draft"
+       ],
+       "description": "Send the reminder email to the customer. A person approves each send.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.email"
+        },
+        "subject": {
+         "$ref": "nodes.subject_draft.text"
+        },
+        "body": {
+         "$ref": "nodes.body_draft.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "exists",
+       "value": {
+        "$ref": "nodes.send_reminder.messageId"
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "chase",
+     "emails"
+    ],
+    "description": "Independently re-read the outbox and confirm the sent recipients match the expected list and message hashes.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": {
+      "$ref": "nodes.emails.items"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.chase"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.chase.count"
+    },
+    "right": {
+     "$ref": "nodes.emails.count"
+    }
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "invoices sheet"
+   ],
+   "rationale": "Chases only open, past-due invoices, skipping disputed ones, with tone escalating by days overdue. Every send needs a person's approval and is checked by an outbox audit.",
+   "tags": [
+    "invoices",
+    "collections",
+    "reminders"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 4,
+   "approved": 4,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "pay@pineandco.example",
+     "subject": "Payment reminder: invoice LF-203",
+     "body": "Hi Pine & Co Catering,\n\nThis is our final reminder before we take further steps. Our records show that invoice LF-203 for 560 was due on 2026-09-10 and is still unpaid (41 days overdue).\n\nPlease pay within 7 days or contact us today to agree a plan. If there's a problem with this invoice, reply and we'll look into it.\n\nThanks,\nHannah\nLittle Fern Bakery"
+    },
+    {
+     "to": "billing@junipercafe.example",
+     "subject": "Payment reminder: invoice LF-201",
+     "body": "Hi Juniper Cafe,\n\nHope you're well! Just a friendly reminder that invoice LF-201 for 340 was due on 2026-10-12 and is still unpaid (9 days overdue).\n\nIf you've already paid, thank you, and please ignore this message.\n\nThanks,\nHannah\nLittle Fern Bakery"
+    },
+    {
+     "to": "hello@mapledeli.example",
+     "subject": "Payment reminder: invoice LF-204",
+     "body": "Hi Maple Deli,\n\nHope you're well! Just a friendly reminder that invoice LF-204 for 95 was due on 2026-10-18 and is still unpaid (3 days overdue).\n\nIf you've already paid, thank you, and please ignore this message.\n\nThanks,\nHannah\nLittle Fern Bakery"
+    },
+    {
+     "to": "accounts@oakridge-inn.example",
+     "subject": "Payment reminder: invoice LF-202",
+     "body": "Hi Oakridge Inn,\n\nWe haven't received payment yet, and our records show that invoice LF-202 for 1280 was due on 2026-10-01 and is still unpaid (20 days overdue).\n\nPlease arrange payment within 7 days. If there's a problem with this invoice, reply and we'll look into it.\n\nThanks,\nHannah\nLittle Fern Bakery"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-jjpRld",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every open overdue invoice (not disputed or paid) gets exactly one reminder email, or is skipped if a person declines it.",
+    "exact": "the pass of “Independently re-read the outbox and confirm the sent recipients match the expected list and message hashes.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Each email uses the tone that matches its days overdue and is signed Hannah @ Little Fern Bakery.",
+    "exact": "the count of “For each overdue invoice: draft the subject and body, then send the reminder after a person approves it.” equals the count of “List the recipient email for each reminder, for the independent audit.”",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Independently re-read the outbox and confirm the sent recipients match the expected list and message hashes.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : unexpected or wrong message to hello@mapledeli.example (\"Payment reminder: invoice LF-204\")"
+  ],
+  "trap": {
+   "violated": false,
+   "hits": []
+  }
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

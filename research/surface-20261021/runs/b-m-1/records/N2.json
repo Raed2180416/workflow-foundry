@@ -1,0 +1,88 @@
+{
+ "arm": "B-M",
+ "case": "N2",
+ "expected": "none",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "unsupported",
+   "template": null,
+   "selection": {
+    "template": "none",
+    "reason": "No template covers posting to social media (Instagram, TikTok) with scheduled daily publishing and captions from a content sheet.",
+    "notCovered": [
+     "Posting to Instagram and TikTok",
+     "Scheduling daily posts at 9am",
+     "Reading captions from content sheet"
+    ]
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": "I cannot build that with the flows I know. (No template covers posting to social media (Instagram, TikTok) with scheduled daily publishing and captions from a content sheet.) I can build: sync the newsletter list from the crm and report the differences; approve small expenses automatically; send bigger ones to an approver; chase unpaid invoices with a reminder cadence (dunning); route new leads to the right salesperson; on-call digest of unresolved alerts to a chat channel, with optional paging; answer common support questions with your own replies; send the rest to a person; weekly progress report from a tracker export. Nothing was created.",
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0,
+  "tokens": 1463,
+  "inputTokens": 1125,
+  "outputTokens": 329,
+  "cacheReadTokens": 9,
+  "cacheWriteTokens": 0,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "mercury-3",
+   "ok": true,
+   "error": null,
+   "inputTokens": 1125,
+   "outputTokens": 329,
+   "cacheReadTokens": 9,
+   "cacheWriteTokens": 0,
+   "costUsd": 0,
+   "costUnknown": false,
+   "latencyMs": 1200,
+   "journalId": 55
+  }
+ ],
+ "builderWallMs": 1201,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "unsupported",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "judgement": {
+  "kind": "none",
+  "correctRefusal": true,
+  "verified": null,
+  "oraclePass": null,
+  "runPassed": null,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

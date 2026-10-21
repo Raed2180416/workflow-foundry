@@ -1,0 +1,761 @@
+{
+ "arm": "B-M",
+ "case": "E1",
+ "expected": "expense-approval",
+ "templateArm": true,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "needs_answers",
+   "template": "expense-approval",
+   "selection": {
+    "template": "expense-approval",
+    "reason": "The request matches expense-approval: auto-approve small eligible expenses and forward the larger ones to a designated approver by email.",
+    "notCovered": []
+   },
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [
+    {
+     "id": "autoApproveUpTo",
+     "slot": "autoApproveUpTo",
+     "question": "Up to what amount should expenses be approved automatically?"
+    }
+   ],
+   "reply": null,
+   "error": null
+  },
+  {
+   "turn": 1,
+   "status": "ready",
+   "template": "expense-approval",
+   "selection": {
+    "template": "expense-approval",
+    "reason": "The request matches expense-approval: auto-approve expenses up to $50 and send larger ones to a single approver by email.",
+    "notCovered": []
+   },
+   "repairs": [],
+   "practiceRuns": [
+    {
+     "round": 0,
+     "status": "succeeded",
+     "passed": true
+    }
+   ],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [
+  {
+   "turn": 0,
+   "id": "autoApproveUpTo",
+   "slot": "autoApproveUpTo",
+   "question": "Up to what amount should expenses be approved automatically?",
+   "matched": [
+    "autoApproveUpTo"
+   ],
+   "answer": "anything up to $50 is fine"
+  }
+ ],
+ "modelQuestions": [
+  {
+   "turn": 0,
+   "slot": "autoApproveUpTo",
+   "question": "Up to what amount should expenses be approved automatically?"
+  }
+ ],
+ "answers": {
+  "autoApproveUpTo": "anything up to $50 is fine"
+ },
+ "cost": {
+  "usd": 0,
+  "tokens": 7984,
+  "inputTokens": 4734,
+  "outputTokens": 3214,
+  "cacheReadTokens": 36,
+  "cacheWriteTokens": 0,
+  "calls": 4,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "mercury-3",
+   "ok": true,
+   "error": null,
+   "inputTokens": 1122,
+   "outputTokens": 439,
+   "cacheReadTokens": 9,
+   "cacheWriteTokens": 0,
+   "costUsd": 0,
+   "costUnknown": false,
+   "latencyMs": 1618,
+   "journalId": 34
+  },
+  {
+   "turn": 0,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "mercury-3",
+   "ok": true,
+   "error": null,
+   "inputTokens": 1238,
+   "outputTokens": 1909,
+   "cacheReadTokens": 9,
+   "cacheWriteTokens": 0,
+   "costUsd": 0,
+   "costUnknown": false,
+   "latencyMs": 4697,
+   "journalId": 36
+  },
+  {
+   "turn": 1,
+   "nodeKey": "select",
+   "attempt": 0,
+   "modelId": "mercury-3",
+   "ok": true,
+   "error": null,
+   "inputTokens": 1144,
+   "outputTokens": 264,
+   "cacheReadTokens": 9,
+   "cacheWriteTokens": 0,
+   "costUsd": 0,
+   "costUnknown": false,
+   "latencyMs": 971,
+   "journalId": 38
+  },
+  {
+   "turn": 1,
+   "nodeKey": "fill.r0",
+   "attempt": 0,
+   "modelId": "mercury-3",
+   "ok": true,
+   "error": null,
+   "inputTokens": 1230,
+   "outputTokens": 602,
+   "cacheReadTokens": 9,
+   "cacheWriteTokens": 0,
+   "costUsd": 0,
+   "costUnknown": false,
+   "latencyMs": 1625,
+   "journalId": 39
+  }
+ ],
+ "builderWallMs": 9038,
+ "repairs": 0,
+ "practiceRuns": 1,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": "expense-approval",
+ "slots": {
+  "autoApproveUpTo": 50,
+  "approver": "finance@lumen-dental.com",
+  "requireReceipt": true,
+  "notifyEmployees": false
+ },
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "expense-approval",
+  "version": 1,
+  "title": "Expense approvals",
+  "goal": "Each run, approve automatically the submitted claims up to 50 with a receipt, record every decision, and e-mail finance@lumen-dental.com the claims that need a decision, after a person approves the send.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The expenses sheet holds one row per claim with id, employee, email, amount, category, description, receipt and status",
+    "Delivery is a local outbox file standing in for e-mail; nothing leaves this machine"
+   ],
+   "risks": [
+    "Approving spending over the limit",
+    "A claim nobody decides on"
+   ],
+   "successCriteria": [
+    "Every approval is within the limit (and has a receipt when required)",
+    "Every submitted claim is recorded with its decision",
+    "The approver received the claims that need a decision",
+    "This run delivered exactly the planned e-mails and rows (checked by re-reading them)"
+   ],
+   "unsupported": [
+    "Payments",
+    "Several approvers",
+    "Running on a schedule by itself"
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 40
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 3000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the expenses sheet",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "expenses"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "submitted",
+    "kind": "task",
+    "needs": [
+     "read"
+    ],
+    "description": "Keep the submitted claims",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "submitted"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "decided",
+    "kind": "task",
+    "needs": [
+     "submitted"
+    ],
+    "description": "Decide each claim: approved within the limit, otherwise waiting for the approver",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.submitted.rows"
+     },
+     "rules": [
+      {
+       "field": "receipt",
+       "op": "ne",
+       "value": true,
+       "set": {
+        "decision": "waiting for approver",
+        "reason": "no receipt"
+       }
+      },
+      {
+       "field": "amount",
+       "op": "lte",
+       "value": 50,
+       "set": {
+        "decision": "approved",
+        "reason": "within the limit"
+       }
+      }
+     ],
+     "otherwise": {
+      "decision": "waiting for approver",
+      "reason": "over the limit"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "approved",
+    "kind": "task",
+    "needs": [
+     "decided"
+    ],
+    "description": "The claims approved automatically",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decided.rows"
+     },
+     "where": [
+      {
+       "field": "decision",
+       "op": "eq",
+       "value": "approved"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "waiting",
+    "kind": "task",
+    "needs": [
+     "decided"
+    ],
+    "description": "The claims that need the approver",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decided.rows"
+     },
+     "where": [
+      {
+       "field": "decision",
+       "op": "eq",
+       "value": "waiting for approver"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "withinLimit",
+    "kind": "task",
+    "needs": [
+     "approved"
+    ],
+    "description": "Recheck the approvals against the limit a second way (used by a check)",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.approved.rows"
+     },
+     "where": [
+      {
+       "field": "amount",
+       "op": "lte",
+       "value": 50
+      },
+      {
+       "field": "receipt",
+       "op": "eq",
+       "value": true
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "recordRows",
+    "kind": "task",
+    "needs": [
+     "decided"
+    ],
+    "description": "Prepare the decision rows",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.decided.rows"
+     },
+     "fields": [
+      "id",
+      "employee",
+      "amount",
+      "decision",
+      "reason"
+     ],
+     "set": {
+      "at": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "record",
+    "kind": "task",
+    "needs": [
+     "recordRows",
+     "withinLimit"
+    ],
+    "description": "Record every decision in the expense-decisions sheet",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.recordRows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "waitingLines",
+    "kind": "task",
+    "needs": [
+     "waiting"
+    ],
+    "description": "List the claims for the approver",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.waiting.rows"
+     },
+     "line": "- {{id}} {{employee}}: {{amount}} for {{description}} ({{category}}; {{reason}})",
+     "empty": "- nothing today"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "approvedLines",
+    "kind": "task",
+    "needs": [
+     "approved"
+    ],
+    "description": "List the claims approved automatically",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.approved.rows"
+     },
+     "line": "- {{id}} {{employee}}: {{amount}} for {{description}}",
+     "empty": "- none"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "message",
+    "kind": "task",
+    "needs": [
+     "waitingLines",
+     "approvedLines"
+    ],
+    "description": "Write the e-mail to the approver",
+    "tool": "core.template",
+    "args": {
+     "text": "Expense claims waiting for your decision ({{n}}):\n{{waiting}}\n\nApproved automatically (up to 50 with a receipt) ({{m}}):\n{{approved}}\n\nReply to approve or reject the waiting ones. This flow never pays anything.",
+     "variables": {
+      "n": {
+       "$ref": "nodes.waitingLines.count"
+      },
+      "waiting": {
+       "$ref": "nodes.waitingLines.text"
+      },
+      "m": {
+       "$ref": "nodes.approvedLines.count"
+      },
+      "approved": {
+       "$ref": "nodes.approvedLines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "subject",
+    "kind": "task",
+    "needs": [
+     "waitingLines"
+    ],
+    "description": "Write the subject line",
+    "tool": "core.template",
+    "args": {
+     "text": "Expenses: {{n}} waiting for your approval",
+     "variables": {
+      "n": {
+       "$ref": "nodes.waitingLines.count"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "sendApprover",
+    "kind": "task",
+    "needs": [
+     "message",
+     "subject",
+     "record"
+    ],
+    "description": "E-mail finance@lumen-dental.com the claims that need a decision (asks you first)",
+    "tool": "outbox.send",
+    "args": {
+     "to": "finance@lumen-dental.com",
+     "subject": {
+      "$ref": "nodes.subject.text"
+     },
+     "body": {
+      "$ref": "nodes.message.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "sendApprover"
+    ],
+    "description": "Re-read the outbox: exactly the planned e-mails went out, each intact",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      "finance@lumen-dental.com",
+      []
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.sendApprover"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "sheetAudit",
+    "kind": "verify",
+    "needs": [
+     "record",
+     "decided"
+    ],
+    "description": "Re-read the decisions sheet: one row per submitted claim",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "expense-decisions",
+     "rows": {
+      "$ref": "nodes.decided.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.record"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.withinLimit.count"
+    },
+    "right": {
+     "$ref": "nodes.approved.count"
+    }
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.sendApprover.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.sheetAudit.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "sources": [
+    "research/business-20261021/OPEN-CORE-AND-INVARIANTS.md (delegation-of-authority thresholds)",
+    "experiments/library/cards/catalog.json P09 gate -> review queue",
+    "app/core/templates/expense-approval.json sha256 dcd2d030fc9425d3b1dbc12250c33e1735b3776c08311321e0e11fea3c135697"
+   ],
+   "tags": [
+    "template:expense-approval",
+    "builder:model-template-builder/1 (mercury-3; 7 templates 32026fedb974)",
+    "slots:{\"approver\":\"finance@lumen-dental.com\",\"autoApproveUpTo\":50,\"notifyEmployees\":false,\"requireReceipt\":true}"
+   ],
+   "rationale": "Frontier-written template \"expense-approval\" (author: claude-opus-5-5 (frontier author; hand-written 2026-10-21 for research/surface-20261021 BUILDER-1)). Slots filled by model-template-builder/1 (mercury-3; 7 templates 32026fedb974); every step, check and capability comes from the template."
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "finance@lumen-dental.com",
+     "subject": "Expenses: 3 waiting for your approval",
+     "body": "Expense claims waiting for your decision (3):\n- X-3 Cara Diaz: 75 for Team dinner (meals; over the limit)\n- X-4 Dev Rao: 30 for Printer paper (office; no receipt)\n- X-5 Eva Moss: 400 for Flight to Lisbon (travel; over the limit)\n\nApproved automatically (up to 50 with a receipt) (2):\n- X-1 Ana Silva: 12.5 for Coffee with supplier\n- X-2 Ben Cho: 48 for Taxi to conference\n\nReply to approve or reject the waiting ones. This flow never pays anything."
+    }
+   ],
+   "chat": {},
+   "appended": {
+    "expense-decisions": [
+     {
+      "amount": 12.5,
+      "at": "2026-10-21T12:00:00Z",
+      "decision": "approved",
+      "employee": "Ana Silva",
+      "id": "X-1",
+      "reason": "within the limit"
+     },
+     {
+      "amount": 48,
+      "at": "2026-10-21T12:00:00Z",
+      "decision": "approved",
+      "employee": "Ben Cho",
+      "id": "X-2",
+      "reason": "within the limit"
+     },
+     {
+      "amount": 75,
+      "at": "2026-10-21T12:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Cara Diaz",
+      "id": "X-3",
+      "reason": "over the limit"
+     },
+     {
+      "amount": 30,
+      "at": "2026-10-21T12:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Dev Rao",
+      "id": "X-4",
+      "reason": "no receipt"
+     },
+     {
+      "amount": 400,
+      "at": "2026-10-21T12:00:00Z",
+      "decision": "waiting for approver",
+      "employee": "Eva Moss",
+      "id": "X-5",
+      "reason": "over the limit"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b-m-1/worlds/foundry-live-cBHrUD",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every approval is within the limit (and has a receipt when required)",
+    "exact": "the count of “Recheck the approvals against the limit a second way (used by a check)” equals the count of “The claims approved automatically”",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Every submitted claim is recorded with its decision",
+    "exact": "the delivered of “E-mail finance@lumen-dental.com the claims that need a decision (asks you first)” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.2",
+    "plain": "The approver received the claims that need a decision",
+    "exact": "the pass of “Re-read the outbox: exactly the planned e-mails went out, each intact” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.3",
+    "plain": "This run delivered exactly the planned e-mails and rows (checked by re-reading them)",
+    "exact": "the pass of “Re-read the decisions sheet: one row per submitted claim” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Re-read the outbox: exactly the planned e-mails went out, each intact",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   },
+   {
+    "id": "verify.sheetAudit",
+    "plain": "Re-read the decisions sheet: one row per submitted claim",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": {
+   "violated": false,
+   "hits": []
+  }
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 1,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 1,
+  "personActions": 3,
+  "personActionsBeforeRun": 2,
+  "slotChecks": 2,
+  "slotChecksOk": 2
+ }
+}

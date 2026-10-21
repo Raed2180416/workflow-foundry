@@ -1,0 +1,402 @@
+{
+ "arm": "B0-H",
+ "case": "L3",
+ "expected": "lead-triage",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004428,
+  "tokens": 20787,
+  "inputTokens": 2,
+  "outputTokens": 5144,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14776,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 5144,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14776,
+   "costUsd": 0.00442785,
+   "costUnknown": false,
+   "latencyMs": 23206,
+   "journalId": 9
+  }
+ ],
+ "builderWallMs": 23213,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "route-leads-by-country",
+  "version": 1,
+  "title": "Route new leads to country owners",
+  "goal": "Read the leads sheet, skip spam, assign Germany and Austria leads to Lena, France leads to Paul, and all other leads to me; append each routed lead to lead-log and verify the appended rows.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Country values are written as country names (Germany, Austria, France) or common codes (DE, AT, FR); any other spelling falls through to 'me'.",
+    "Leads with status 'spam' are not routed; all other leads are routed, including already contacted ones.",
+    "'Anyone else -> me' is recorded as assignTo 'me'.",
+    "assignedAt is the run input time."
+   ],
+   "risks": [
+    "A country spelled differently from the listed values is assigned to 'me' rather than the country owner.",
+    "Routing is re-run over the whole leads sheet, so leads already in lead-log may get a second routed row."
+   ],
+   "successCriteria": [
+    "Every non-spam lead in the leads sheet gets exactly one lead-log row.",
+    "Germany/Austria leads go to Lena, France leads to Paul, all others to me.",
+    "The audit of lead-log confirms the rows appended by this run."
+   ]
+  },
+  "budget": {
+   "maxSteps": 1000,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read every row of the leads sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "active_leads",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Drop leads marked as spam.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "ne",
+       "value": "spam"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route_leads",
+    "kind": "task",
+    "needs": [
+     "active_leads"
+    ],
+    "description": "Label each lead with its owner by country; Germany/Austria to Lena, France to Paul, everything else to me.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.active_leads.rows"
+     },
+     "rules": [
+      {
+       "field": "country",
+       "op": "in",
+       "value": [
+        "Germany",
+        "Deutschland",
+        "DE",
+        "Austria",
+        "Österreich",
+        "AT"
+       ],
+       "set": {
+        "assignTo": "Lena"
+       }
+      },
+      {
+       "field": "country",
+       "op": "in",
+       "value": [
+        "France",
+        "FR"
+       ],
+       "set": {
+        "assignTo": "Paul"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "me"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_leads",
+    "kind": "map",
+    "needs": [
+     "route_leads"
+    ],
+    "description": "Append one lead-log row per routed lead.",
+    "items": {
+     "$ref": "nodes.route_leads.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "append_one",
+       "kind": "task",
+       "needs": [],
+       "description": "Append this lead's routing row to lead-log.",
+       "tool": "sheet.append",
+       "args": {
+        "sheet": "lead-log",
+        "rows": [
+         {
+          "name": {
+           "$ref": "item.name"
+          },
+          "email": {
+           "$ref": "item.email"
+          },
+          "company": {
+           "$ref": "item.company"
+          },
+          "assignTo": {
+           "$ref": "item.assignTo"
+          },
+          "assignedAt": {
+           "$ref": "input.now"
+          }
+         }
+        ]
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.append_one.appended"
+       },
+       "right": 1
+      }
+     ]
+    }
+   },
+   {
+    "id": "verify_log",
+    "kind": "verify",
+    "needs": [
+     "append_leads"
+    ],
+    "description": "Independently re-read lead-log and confirm this run's rows are present as written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.route_leads.count"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_leads"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_log.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_leads.count"
+    },
+    "right": {
+     "$ref": "nodes.route_leads.count"
+    }
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {
+    "lead-log": [
+     {
+      "assignTo": "Lena",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Werkhaus",
+      "email": "lukas@werkhaus.example",
+      "name": "Lukas Bauer"
+     },
+     {
+      "assignTo": "Lena",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Alpenlicht",
+      "email": "mia@alpenlicht.example",
+      "name": "Mia Gruber"
+     },
+     {
+      "assignTo": "Paul",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Lumiere & Co",
+      "email": "noe@lumiere-co.example",
+      "name": "Noe Petit"
+     },
+     {
+      "assignTo": "me",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Sole Group",
+      "email": "olga@solegroup.example",
+      "name": "Olga Rossi"
+     },
+     {
+      "assignTo": "me",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Costa Brava Tours",
+      "email": "pau@costabrava.example",
+      "name": "Pau Vidal"
+     },
+     {
+      "assignTo": "Lena",
+      "assignedAt": "2026-10-21T08:00:00Z",
+      "company": "Blauberg",
+      "email": "quinn@blauberg.example",
+      "name": "Quinn Doyle"
+     }
+    ]
+   }
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-SaPZFG",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every non-spam lead in the leads sheet gets exactly one lead-log row.",
+    "exact": "the pass of “Independently re-read lead-log and confirm this run's rows are present as written.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Germany/Austria leads go to Lena, France leads to Paul, all others to me.",
+    "exact": "the count of “Append one lead-log row per routed lead.” equals the count of “Label each lead with its owner by country; Germany/Austria to Lena, France to Paul, everything else to me.”",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_log",
+    "plain": "Independently re-read lead-log and confirm this run's rows are present as written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to lena@brook-tools.de containing \"Werkhaus\"",
+   "outbox : missing a message to lena@brook-tools.de containing \"Alpenlicht\"",
+   "outbox : missing a message to paul@brook-tools.de containing \"Lumiere & Co\"",
+   "outbox : missing a message to kai@brook-tools.de containing \"Sole Group\"",
+   "outbox : missing a message to kai@brook-tools.de containing \"Costa Brava Tours\""
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 2,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

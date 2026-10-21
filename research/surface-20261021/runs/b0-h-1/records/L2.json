@@ -1,0 +1,377 @@
+{
+ "arm": "B0-H",
+ "case": "L2",
+ "expected": "lead-triage",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.003913,
+  "tokens": 19792,
+  "inputTokens": 2,
+  "outputTokens": 4102,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14823,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 4102,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14823,
+   "costUsd": 0.003912725,
+   "costUnknown": false,
+   "latencyMs": 20877,
+   "journalId": 8
+  }
+ ],
+ "builderWallMs": 20886,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "route-inbound-leads",
+  "version": 1,
+  "title": "Route inbound leads to sales owners",
+  "goal": "Assign each new, non-spam lead that has not already been routed: companies with 500+ employees go to Raj (raj@tallyhq.com), referrals go to Sofia (sofia@tallyhq.com), and everything else goes to the shared inbox (sales@tallyhq.com). Record each assignment in lead-log.",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Referral leads are identified by a source value containing 'referral' (case ignored).",
+    "Leads with status 'spam' are never routed.",
+    "A lead is considered already routed when its email appears in lead-log, so re-runs do not duplicate assignments.",
+    "Rule order is enterprise first, then referral, then shared inbox, matching the request order."
+   ],
+   "risks": [
+    "A lead whose companySize is missing is not treated as enterprise and falls through to referral or the shared inbox.",
+    "Routing is internal only; no e-mail is sent to Raj, Sofia or the shared inbox by this flow."
+   ],
+   "successCriteria": [
+    "Every new, non-spam lead not yet in lead-log is appended to lead-log exactly once with an assignTo owner.",
+    "Enterprise leads (companySize >= 500) are assigned to raj@tallyhq.com before any other rule applies.",
+    "The appended row count matches the number of leads routed, and the sheet audit passes."
+   ]
+  },
+  "budget": {
+   "maxSteps": 12,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all lead rows.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_log",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the lead-log rows already routed.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "lead-log"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "not_spam",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Drop leads marked as spam.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "ne",
+       "value": "spam"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "new_only",
+    "kind": "task",
+    "needs": [
+     "not_spam",
+     "read_log"
+    ],
+    "description": "Keep only leads whose email is not already in lead-log.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.not_spam.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_log.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "assign",
+    "kind": "task",
+    "needs": [
+     "new_only"
+    ],
+    "description": "Label each new lead with its owner: enterprise first, then referral, otherwise the shared inbox.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.new_only.missing"
+     },
+     "rules": [
+      {
+       "field": "companySize",
+       "op": "gte",
+       "value": 500,
+       "set": {
+        "assignTo": "raj@tallyhq.com"
+       }
+      },
+      {
+       "field": "source",
+       "op": "contains",
+       "value": "referral",
+       "set": {
+        "assignTo": "sofia@tallyhq.com"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "sales@tallyhq.com"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "log_rows",
+    "kind": "task",
+    "needs": [
+     "assign"
+    ],
+    "description": "Shape each routed lead into a lead-log row with its assignment time.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.assign.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ],
+     "set": {
+      "assignedAt": {
+       "$ref": "input.now"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_log",
+    "kind": "task",
+    "needs": [
+     "log_rows"
+    ],
+    "description": "Append the routed leads to lead-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.log_rows.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit_log",
+    "kind": "verify",
+    "needs": [
+     "append_log"
+    ],
+    "description": "Independently confirm the appended lead-log rows are in the sheet as written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.append_log.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_log.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.append_log.appended"
+    },
+    "right": {
+     "$ref": "nodes.log_rows.count"
+    }
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "harness_fault",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": {
+   "code": "SHEET_NOT_FOUND",
+   "message": "There is no sheet named lead-log"
+  },
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-jYysyT",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new, non-spam lead not yet in lead-log is appended to lead-log exactly once with an assignTo owner.",
+    "exact": "the pass of “Independently confirm the appended lead-log rows are in the sheet as written.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Enterprise leads (companySize >= 500) are assigned to raj@tallyhq.com before any other rule applies.",
+    "exact": "the appended of “Append the routed leads to lead-log.” equals the count of “Shape each routed lead into a lead-log row with its assignment time.”",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_log",
+    "plain": "Independently confirm the appended lead-log rows are in the sheet as written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   }
+  ],
+  "failedStep": "Read the lead-log rows already routed."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict harness_fault): SHEET_NOT_FOUND",
+   "outbox : missing a message to raj@tallyhq.com containing \"Ferrovia Systems\"",
+   "outbox : missing a message to raj@tallyhq.com containing \"Nordlys Energy\"",
+   "outbox : missing a message to sofia@tallyhq.com containing \"Tidewater Co\"",
+   "outbox : missing a message to sales@tallyhq.com containing \"Sparrow Apps\"",
+   "outbox : missing a message to sales@tallyhq.com containing \"Bluegate\""
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

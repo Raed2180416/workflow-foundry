@@ -1,0 +1,102 @@
+{
+ "arm": "B-M",
+ "label": "b-m-1",
+ "started": "2026-10-21T17:02:30.865Z",
+ "finished": "2026-10-21T17:03:31.838Z",
+ "casesFile": "research/surface-20261021/eval/cases.json",
+ "casesSha256": "ee852fb05277fe526f77e93e5f67860919a7109f892582cbf75c55d782d25006",
+ "manifestSha256": "0fd70ccd81affee0d0d684644b06fea32ea56e7beaca94021dc00987ca5a6905",
+ "libraryHash": "32026fedb9743079defa78d813bd3351cabbf991d46c48ee81c360253fa0144d",
+ "capUsd": 1.4,
+ "notScored": [],
+ "environmentFaults": [],
+ "spentUsdIncludingFaults": 0,
+ "tokenMeter": {
+  "inception": {
+   "cap": 380000,
+   "callCap": 20000,
+   "spent": 105631,
+   "reserved": 0,
+   "calls": 59,
+   "refused": 0,
+   "unknown": 0
+  }
+ },
+ "cases": 24,
+ "fitCases": 21,
+ "noneCases": 3,
+ "verified": 18,
+ "verifiedRate": 0.8571,
+ "oraclePassIgnoringVerdict": 18,
+ "builtAndValid": 19,
+ "correctRefusals": 3,
+ "falseRefusals": 0,
+ "outcomes": {
+  "ready": 19,
+  "error": 2,
+  "unsupported": 3
+ },
+ "templateCorrect": 22,
+ "slotChecks": {
+  "ok": 52,
+  "total": 57
+ },
+ "requiredQuestions": {
+  "asked": 6,
+  "total": 9
+ },
+ "questionRecall": 0.6667,
+ "unnecessaryQuestions": 2,
+ "repeatQuestions": 0,
+ "questionsAsked": 8,
+ "modelProposedQuestions": 7,
+ "traps": {
+  "total": 5,
+  "avoided": 5,
+  "violated": []
+ },
+ "personActionsToFirstVerifiedRun": {
+  "mean": 3.67,
+  "median": 3,
+  "beforeRunMean": 1.39
+ },
+ "cost": {
+  "usdTotal": 0,
+  "usdPerRequest": 0,
+  "tokensTotal": 105631,
+  "tokensPerRequest": 4401,
+  "calls": 59,
+  "costUnknownCalls": 0
+ },
+ "wallSeconds": {
+  "mean": 4.8,
+  "median": 3.6,
+  "total": 115.8
+ },
+ "repairs": {
+  "rounds": 0,
+  "casesWithRepair": 0
+ },
+ "errors": [
+  {
+   "case": "E3",
+   "error": {
+    "code": "BUILDER_MODEL",
+    "message": "The builder model call select failed: MODEL_TRUNCATED: Generation stopped at the token limit (finish_reason=length)",
+    "details": {
+     "code": "MODEL_TRUNCATED"
+    }
+   }
+  },
+  {
+   "case": "C3",
+   "error": {
+    "code": "BUILDER_MODEL",
+    "message": "The builder model call select failed: MODEL_TRUNCATED: Generation stopped at the token limit (finish_reason=length)",
+    "details": {
+     "code": "MODEL_TRUNCATED"
+    }
+   }
+  }
+ ]
+}

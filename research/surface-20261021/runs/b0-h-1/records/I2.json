@@ -1,0 +1,484 @@
+{
+ "arm": "B0-H",
+ "case": "I2",
+ "expected": "invoice-chase",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.006094,
+  "tokens": 24160,
+  "inputTokens": 2,
+  "outputTokens": 8464,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14829,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 8464,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14829,
+   "costUsd": 0.006094474999999999,
+   "costUnknown": false,
+   "latencyMs": 37636,
+   "journalId": 5
+  }
+ ],
+ "builderWallMs": 37646,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "overdue-invoice-reminder",
+  "version": 1,
+  "title": "One polite reminder at 10 days overdue, plus list to accounts",
+  "goal": "Read the invoices sheet, find open invoices that are exactly 10 days past their due date, send each customer one polite reminder signed Verdant Studio, then email accounts@verdant-studio.com the list of who was reminded. Invoices that are not yet 10 days overdue or are older than 10 days are not reminded.",
+  "domain": "finance",
+  "envelope": {
+   "assumptions": [
+    "Invoices are net 30; the due column holds the due date (YYYY-MM-DD).",
+    "Only invoices with status open are considered; paid and disputed invoices are skipped.",
+    "The flow runs once per day, so an invoice that is exactly 10 days overdue is reminded once and never again.",
+    "Each invoice's email column is the customer's address."
+   ],
+   "risks": [
+    "There is no reminder log: if a daily run is missed, that invoice gets no reminder; if the flow runs twice on the same day, customers may get duplicate reminders.",
+    "Each outbox.send asks a person before dispatch when run live."
+   ],
+   "successCriteria": [
+    "Every open invoice exactly 10 days past due receives exactly one reminder email.",
+    "No reminder is sent for invoices that are not exactly 10 days overdue.",
+    "The reminder list is audited against the sent messages before it is emailed.",
+    "The list email to accounts@verdant-studio.com is delivered."
+   ]
+  },
+  "budget": {
+   "maxSteps": 1600,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read_invoices",
+    "kind": "task",
+    "needs": [],
+    "description": "Read every row of the invoices sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "invoices"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_invoices",
+    "kind": "task",
+    "needs": [
+     "read_invoices"
+    ],
+    "description": "Keep only open invoices.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_invoices.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "aged",
+    "kind": "task",
+    "needs": [
+     "open_invoices"
+    ],
+    "description": "Compute whole days overdue from the due date against the run time.",
+    "tool": "rows.age",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_invoices.rows"
+     },
+     "field": "due",
+     "now": {
+      "$ref": "input.now"
+     },
+     "as": "days_overdue",
+     "unit": "days"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "due_now",
+    "kind": "task",
+    "needs": [
+     "aged"
+    ],
+    "description": "Keep only invoices exactly 10 days overdue.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.aged.rows"
+     },
+     "where": [
+      {
+       "field": "days_overdue",
+       "op": "eq",
+       "value": 10
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "emails",
+    "kind": "task",
+    "needs": [
+     "due_now"
+    ],
+    "description": "Collect the customer emails that should be reminded.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.due_now.rows"
+     },
+     "field": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "reminders",
+    "kind": "map",
+    "needs": [
+     "due_now"
+    ],
+    "description": "Send one polite reminder per invoice exactly 10 days overdue.",
+    "items": {
+     "$ref": "nodes.due_now.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "subject_line",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the reminder subject.",
+       "tool": "core.template",
+       "args": {
+        "text": "Friendly reminder: invoice {{invoice}}",
+        "variables": {
+         "invoice": {
+          "$ref": "item.invoice"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "body_text",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the polite reminder body, signed Verdant Studio.",
+       "tool": "core.template",
+       "args": {
+        "text": "Hello {{customer}},\n\nA friendly reminder that invoice {{invoice}} for {{amount}}, due on {{due}}, still appears to be unpaid. If you have already sent payment, please disregard this note. Otherwise, could you arrange payment at your earliest convenience? Let us know if you have any questions.\n\nThank you,\nVerdant Studio",
+        "variables": {
+         "customer": {
+          "$ref": "item.customer"
+         },
+         "invoice": {
+          "$ref": "item.invoice"
+         },
+         "amount": {
+          "$ref": "item.amount"
+         },
+         "due": {
+          "$ref": "item.due"
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send_reminder",
+       "kind": "task",
+       "needs": [
+        "subject_line",
+        "body_text"
+       ],
+       "description": "Send the reminder to the invoice customer (one attempt only).",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.email"
+        },
+        "subject": {
+         "$ref": "nodes.subject_line.text"
+        },
+        "body": {
+         "$ref": "nodes.body_text.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send_reminder.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "list",
+    "kind": "task",
+    "needs": [
+     "due_now"
+    ],
+    "description": "Render the list of reminded customers.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.due_now.rows"
+     },
+     "line": "{{invoice}} | {{customer}} | {{email}} | {{amount}} | due {{due}}",
+     "empty": "No invoices were exactly 10 days overdue on this run."
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "report_text",
+    "kind": "task",
+    "needs": [
+     "list"
+    ],
+    "description": "Build the list email body.",
+    "tool": "core.template",
+    "args": {
+     "text": "Overdue reminder run for {{run}}.\n\nReminders sent (invoices exactly 10 days overdue):\n{{list}}\n\nVerdant Studio",
+     "variables": {
+      "run": {
+       "$ref": "input.now"
+      },
+      "list": {
+       "$ref": "nodes.list.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "audit",
+    "kind": "verify",
+    "needs": [
+     "reminders",
+     "emails"
+    ],
+    "description": "Independently confirm the reminders left in the outbox match the expected customer list.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": {
+      "$ref": "nodes.emails.items"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.reminders"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "send_report",
+    "kind": "task",
+    "needs": [
+     "audit",
+     "report_text"
+    ],
+    "description": "Email the list of reminded customers to accounts@verdant-studio.com.",
+    "tool": "outbox.send",
+    "args": {
+     "to": "accounts@verdant-studio.com",
+     "subject": "Overdue invoice reminders sent",
+     "body": {
+      "$ref": "nodes.report_text.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send_report.delivered"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "accounts@verdant-studio.com",
+     "subject": "Overdue invoice reminders sent",
+     "body": "Overdue reminder run for 2026-10-22T09:00:00Z.\n\nReminders sent (invoices exactly 10 days overdue):\nNo invoices were exactly 10 days overdue on this run.\n\nVerdant Studio"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-RfU6ln",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every open invoice exactly 10 days past due receives exactly one reminder email.",
+    "exact": "the pass of “Independently confirm the reminders left in the outbox match the expected customer list.” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "No reminder is sent for invoices that are not exactly 10 days overdue.",
+    "exact": "the delivered of “Email the list of reminded customers to accounts@verdant-studio.com.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.audit",
+    "plain": "Independently confirm the reminders left in the outbox match the expected customer list.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": true,
+  "reasons": [
+   "outbox : missing a message to orders@harlowbooks.example containing \"VS-11\", \"verdant\" without final",
+   "outbox : missing a message to office@tealdental.example containing \"VS-13\", \"verdant\" without final, second",
+   "outbox : missing a message to accounts@verdant-studio.com containing one of [VS-11 | Harlow Books], one of [VS-13 | Teal Dental] without VS-12, Quarry Gym",
+   "outbox : unexpected or wrong message to accounts@verdant-studio.com (\"Overdue invoice reminders sent\")"
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

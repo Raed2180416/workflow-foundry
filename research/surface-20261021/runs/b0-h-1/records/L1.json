@@ -1,0 +1,513 @@
+{
+ "arm": "B0-H",
+ "case": "L1",
+ "expected": "lead-triage",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.005061,
+  "tokens": 22088,
+  "inputTokens": 2,
+  "outputTokens": 6400,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14821,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 6400,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14821,
+   "costUsd": 0.005061475,
+   "costUnknown": false,
+   "latencyMs": 30054,
+   "journalId": 7
+  }
+ ],
+ "builderWallMs": 30067,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "lead-routing-emea-na",
+  "version": 1,
+  "title": "Route new website leads by region",
+  "goal": "Read new leads, skip any already in lead-log, assign EMEA leads to dana@peakline.io, NA leads to marcus@peakline.io and all others to jo@peakline.io, log each assignment in lead-log, and notify the assigned rep by email (never the lead).",
+  "domain": "general",
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "envelope": {
+   "assumptions": [
+    "Region values in the leads sheet are EMEA/Europe for Europe and NA/North America/US/USA/Canada for North America; anything else goes to Jo.",
+    "Leads already present in lead-log (matched by email) are not routed again, so repeated runs do not re-notify reps.",
+    "lead-log rows contain name, email, company and assignTo; assignedAt is not filled because the sheet flow has no constant timestamp field available.",
+    "Rep notification emails go only to the assigned rep and do not contact the lead."
+   ],
+   "risks": [
+    "Unexpected region spellings would fall through to Jo.",
+    "Each rep email requires human approval before it is sent."
+   ],
+   "successCriteria": [
+    "Every new lead not yet logged is assigned to exactly one rep by region.",
+    "Each assignment is appended to lead-log and the append is verified.",
+    "Each assigned rep receives one notification and the outbox audit passes."
+   ]
+  },
+  "budget": {
+   "maxSteps": 2000,
+   "maxConcurrency": 1,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_leads",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the leads sheet.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "leads"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "read_log",
+    "kind": "task",
+    "needs": [],
+    "description": "Read the lead-log sheet to find leads already routed.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "lead-log"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "new_leads",
+    "kind": "task",
+    "needs": [
+     "read_leads"
+    ],
+    "description": "Keep only leads with status new.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_leads.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "new"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "unlogged",
+    "kind": "task",
+    "needs": [
+     "new_leads",
+     "read_log"
+    ],
+    "description": "Drop leads whose email is already in lead-log.",
+    "tool": "rows.reconcile",
+    "args": {
+     "left": {
+      "$ref": "nodes.new_leads.rows"
+     },
+     "right": {
+      "$ref": "nodes.read_log.rows"
+     },
+     "key": "email"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "route",
+    "kind": "task",
+    "needs": [
+     "unlogged"
+    ],
+    "description": "Label each new lead with its assignee by region.",
+    "tool": "rows.route",
+    "args": {
+     "rows": {
+      "$ref": "nodes.unlogged.missing"
+     },
+     "rules": [
+      {
+       "field": "region",
+       "op": "in",
+       "value": [
+        "EMEA",
+        "Europe"
+       ],
+       "set": {
+        "assignTo": "dana@peakline.io"
+       }
+      },
+      {
+       "field": "region",
+       "op": "in",
+       "value": [
+        "NA",
+        "North America",
+        "US",
+        "USA",
+        "Canada"
+       ],
+       "set": {
+        "assignTo": "marcus@peakline.io"
+       }
+      }
+     ],
+     "otherwise": {
+      "assignTo": "jo@peakline.io"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "select_log",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "Keep the lead-log columns.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.route.rows"
+     },
+     "fields": [
+      "name",
+      "email",
+      "company",
+      "assignTo"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "append_log",
+    "kind": "task",
+    "needs": [
+     "select_log"
+    ],
+    "description": "Append the routed leads to lead-log.",
+    "tool": "sheet.append",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.select_log.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "pluck_to",
+    "kind": "task",
+    "needs": [
+     "route"
+    ],
+    "description": "List the assignee address for each routed lead.",
+    "tool": "core.pluck",
+    "args": {
+     "items": {
+      "$ref": "nodes.route.rows"
+     },
+     "field": "assignTo"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "notify",
+    "kind": "map",
+    "needs": [
+     "route"
+    ],
+    "description": "Email each assigned rep one notification per lead.",
+    "items": {
+     "$ref": "nodes.route.rows"
+    },
+    "maxItems": 500,
+    "concurrency": 1,
+    "body": {
+     "nodes": [
+      {
+       "id": "compose",
+       "kind": "task",
+       "needs": [],
+       "description": "Build the rep notification text for one lead.",
+       "tool": "core.template",
+       "args": {
+        "text": "New lead assigned to you.\nName: {{name}}\nCompany: {{company}}\nEmail: {{email}}\nCountry: {{country}}\nRegion: {{region}}\nMessage: {{message}}",
+        "variables": {
+         "name": {
+          "$ref": "item.name",
+          "default": ""
+         },
+         "company": {
+          "$ref": "item.company",
+          "default": ""
+         },
+         "email": {
+          "$ref": "item.email",
+          "default": ""
+         },
+         "country": {
+          "$ref": "item.country",
+          "default": ""
+         },
+         "region": {
+          "$ref": "item.region",
+          "default": ""
+         },
+         "message": {
+          "$ref": "item.message",
+          "default": ""
+         }
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 2
+       }
+      },
+      {
+       "id": "send",
+       "kind": "task",
+       "needs": [
+        "compose"
+       ],
+       "description": "Send the notification to the assigned rep.",
+       "tool": "outbox.send",
+       "args": {
+        "to": {
+         "$ref": "item.assignTo"
+        },
+        "subject": "New lead assigned to you",
+        "body": {
+         "$ref": "nodes.compose.text"
+        }
+       },
+       "timeoutMs": 10000,
+       "retry": {
+        "maxAttempts": 1
+       }
+      }
+     ],
+     "acceptance": [
+      {
+       "op": "eq",
+       "left": {
+        "$ref": "nodes.send.delivered"
+       },
+       "right": true
+      }
+     ]
+    }
+   },
+   {
+    "id": "audit_mail",
+    "kind": "verify",
+    "needs": [
+     "notify",
+     "pluck_to"
+    ],
+    "description": "Independently re-read the outbox and confirm recipients and bodies match.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": {
+      "$ref": "nodes.pluck_to.items"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.notify.items"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   },
+   {
+    "id": "audit_log",
+    "kind": "verify",
+    "needs": [
+     "append_log"
+    ],
+    "description": "Independently confirm the lead-log rows were written.",
+    "method": "capability",
+    "tool": "sheet.audit",
+    "args": {
+     "sheet": "lead-log",
+     "rows": {
+      "$ref": "nodes.append_log.appended"
+     }
+    },
+    "subject": {
+     "$ref": "nodes.append_log"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_mail.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.audit_log.pass"
+    },
+    "right": true
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "harness_fault",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": {
+   "code": "SHEET_NOT_FOUND",
+   "message": "There is no sheet named lead-log"
+  },
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-54QUan",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every new lead not yet logged is assigned to exactly one rep by region.",
+    "exact": "the pass of “Independently re-read the outbox and confirm recipients and bodies match.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "Each assignment is appended to lead-log and the append is verified.",
+    "exact": "the pass of “Independently confirm the lead-log rows were written.” equals true",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_mail",
+    "plain": "Independently re-read the outbox and confirm recipients and bodies match.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": null
+   },
+   {
+    "id": "verify.audit_log",
+    "plain": "Independently confirm the lead-log rows were written.",
+    "exact": "sheet.audit (independent execution check)",
+    "passed": null
+   }
+  ],
+  "failedStep": "Read the lead-log sheet to find leads already routed."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict harness_fault): SHEET_NOT_FOUND",
+   "outbox : missing a message to dana@peakline.io containing \"Solvane\"",
+   "outbox : missing a message to marcus@peakline.io containing \"Quillpoint\"",
+   "outbox : missing a message to jo@peakline.io containing \"Harbin Labs\"",
+   "outbox : missing a message to jo@peakline.io containing \"Cantoria\""
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

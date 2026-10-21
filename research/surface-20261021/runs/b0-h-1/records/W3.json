@@ -1,0 +1,325 @@
+{
+ "arm": "B0-H",
+ "case": "W3",
+ "expected": "weekly-report",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.003106,
+  "tokens": 18123,
+  "inputTokens": 2,
+  "outputTokens": 2508,
+  "cacheReadTokens": 865,
+  "cacheWriteTokens": 14748,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 2508,
+   "cacheReadTokens": 865,
+   "cacheWriteTokens": 14748,
+   "costUsd": 0.00310635,
+   "costUnknown": false,
+   "latencyMs": 12132,
+   "journalId": 3
+  }
+ ],
+ "builderWallMs": 12141,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "platform-weekly-report",
+  "version": 1,
+  "title": "Platform team weekly report",
+  "goal": "Read the tracker sheet, tally work items by status (done, open, blocked), and save the weekly platform report as an artifact.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "'The usual' means a status tally of the tracker sheet for the platform team.",
+    "The report is saved as an artifact only; nothing is sent to anyone."
+   ],
+   "risks": [
+    "If the usual report draws on a different sheet, this report will not match it."
+   ],
+   "successCriteria": [
+    "Every tracker row is counted once into total, done, open or blocked.",
+    "The saved report passes the schema check."
+   ]
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "budget": {
+   "maxSteps": 10,
+   "maxConcurrency": 2,
+   "maxDurationMs": 120000,
+   "maxCost": 0
+  },
+  "nodes": [
+   {
+    "id": "read_tracker",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all tracker rows.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tracker"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "slim",
+    "kind": "task",
+    "needs": [
+     "read_tracker"
+    ],
+    "description": "Keep only title, status and owner.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_tracker.rows"
+     },
+     "fields": [
+      "title",
+      "status",
+      "owner"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "tally",
+    "kind": "task",
+    "needs": [
+     "slim"
+    ],
+    "description": "Count done, open and blocked items.",
+    "tool": "report.tally",
+    "args": {
+     "items": {
+      "$ref": "nodes.slim.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "to_json",
+    "kind": "task",
+    "needs": [
+     "tally"
+    ],
+    "description": "Serialize the tally as JSON text.",
+    "tool": "core.json",
+    "args": {
+     "value": {
+      "$ref": "nodes.tally"
+     },
+     "pretty": true
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "report",
+    "kind": "task",
+    "needs": [
+     "to_json"
+    ],
+    "description": "Save the weekly report artifact.",
+    "tool": "core.artifact",
+    "args": {
+     "name": "weekly-platform-report.json",
+     "content": {
+      "$ref": "nodes.to_json.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "check",
+    "kind": "verify",
+    "needs": [
+     "tally"
+    ],
+    "description": "Check the tally has the required integer counts and done lines.",
+    "method": "capability",
+    "tool": "core.validate",
+    "args": {
+     "value": {
+      "$ref": "nodes.tally"
+     },
+     "schema": {
+      "type": "object",
+      "required": [
+       "total",
+       "done",
+       "open",
+       "blocked",
+       "doneLines"
+      ],
+      "properties": {
+       "total": {
+        "type": "integer"
+       },
+       "done": {
+        "type": "integer"
+       },
+       "open": {
+        "type": "integer"
+       },
+       "blocked": {
+        "type": "integer"
+       },
+       "doneLines": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "subject": {
+     "$ref": "nodes.tally"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.check.pass"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.report.bytes"
+    },
+    "right": {
+     "$ref": "nodes.report.bytes"
+    }
+   }
+  ]
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "failed",
+  "verdict": "harness_fault",
+  "passed": false,
+  "approvals": {
+   "asked": 0,
+   "approved": 0,
+   "refused": 0
+  },
+  "error": {
+   "code": "VERIFY_PROTOCOL",
+   "message": "A verifier must return {pass: boolean, score?: number, reasons?: string[] (at most 32 of 1000 characters)}"
+  },
+  "effects": {
+   "outbox": [],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-wcEn5w",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "Every tracker row is counted once into total, done, open or blocked.",
+    "exact": "the pass of “Check the tally has the required integer counts and done lines.” equals true",
+    "passed": null
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The saved report passes the schema check.",
+    "exact": "the bytes of “Save the weekly report artifact.” equals the bytes of “Save the weekly report artifact.”",
+    "passed": null
+   },
+   {
+    "id": "verify.check",
+    "plain": "Check the tally has the required integer counts and done lines.",
+    "exact": "core.validate (independent execution check)",
+    "passed": false
+   }
+  ],
+  "failedStep": "Check the tally has the required integer counts and done lines."
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": false,
+  "oraclePass": false,
+  "runPassed": false,
+  "reasons": [
+   "the run ended failed (verdict harness_fault): VERIFY_PROTOCOL",
+   "outbox : missing a message to maya@brightfold.com containing \"Migrate CI to new runners\", \"Rotate database credentials\", \"Add rate limiting to API\""
+  ],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 1,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": null,
+  "personActionsBeforeRun": null,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}

@@ -1,0 +1,420 @@
+{
+ "arm": "B0-H",
+ "case": "W2",
+ "expected": "weekly-report",
+ "templateArm": false,
+ "turns": [
+  {
+   "turn": 0,
+   "status": "ready",
+   "template": null,
+   "selection": null,
+   "repairs": [],
+   "practiceRuns": [],
+   "escalations": [],
+   "questions": [],
+   "reply": null,
+   "error": null
+  }
+ ],
+ "questions": [],
+ "modelQuestions": [],
+ "answers": {},
+ "cost": {
+  "usd": 0.004173,
+  "tokens": 20100,
+  "inputTokens": 2,
+  "outputTokens": 4429,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 15669,
+  "calls": 1,
+  "unknown": 0
+ },
+ "callLog": [
+  {
+   "turn": 0,
+   "nodeKey": "build",
+   "attempt": 0,
+   "modelId": "claude-haiku-5-5",
+   "ok": true,
+   "error": null,
+   "inputTokens": 2,
+   "outputTokens": 4429,
+   "cacheReadTokens": 0,
+   "cacheWriteTokens": 15669,
+   "costUsd": 0.004173325,
+   "costUnknown": false,
+   "latencyMs": 18993,
+   "journalId": 2
+  }
+ ],
+ "builderWallMs": 19031,
+ "repairs": 0,
+ "practiceRuns": 0,
+ "outcome": "ready",
+ "error": null,
+ "attempt": 0,
+ "environmentFault": null,
+ "template": null,
+ "slots": null,
+ "workflow": {
+  "schemaVersion": "1.0",
+  "id": "mobile-squad-weekly-status",
+  "version": 1,
+  "title": "Mobile squad weekly status",
+  "goal": "Read the tracker, summarise the Mobile squad's finished, open and blocked work items, and e-mail the status to tom@ortega-apps.co, then verify the message was delivered.",
+  "domain": "general",
+  "envelope": {
+   "assumptions": [
+    "The tracker sheet contains only Mobile squad work items (the sheet has no squad field).",
+    "Recipient is tom@ortega-apps.co as given in the request.",
+    "Each outbound send is confirmed by a person before dispatch when the flow runs live."
+   ],
+   "risks": [
+    "Tracker rows without an owner show an empty owner.",
+    "If the tracker includes other squads' items, the report will include them.",
+    "The e-mail is sent only once; a failed send is not retried automatically."
+   ],
+   "successCriteria": [
+    "The e-mail lists every done, open and blocked tracker item by title.",
+    "The message is delivered to tom@ortega-apps.co and the outbox audit passes."
+   ]
+  },
+  "budget": {
+   "maxSteps": 20,
+   "maxConcurrency": 2,
+   "maxDurationMs": 300000,
+   "maxCost": 0
+  },
+  "inputSchema": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "now"
+   ],
+   "properties": {
+    "now": {
+     "type": "string"
+    }
+   }
+  },
+  "nodes": [
+   {
+    "id": "read_tracker",
+    "kind": "task",
+    "needs": [],
+    "description": "Read all tracker work items.",
+    "tool": "sheet.read",
+    "args": {
+     "sheet": "tracker"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "select_fields",
+    "kind": "task",
+    "needs": [
+     "read_tracker"
+    ],
+    "description": "Keep title, status and owner of each item.",
+    "tool": "rows.select",
+    "args": {
+     "rows": {
+      "$ref": "nodes.read_tracker.rows"
+     },
+     "fields": [
+      "title",
+      "status",
+      "owner"
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "tally",
+    "kind": "task",
+    "needs": [
+     "select_fields"
+    ],
+    "description": "Count done, open and blocked items and list the done ones.",
+    "tool": "report.tally",
+    "args": {
+     "items": {
+      "$ref": "nodes.select_fields.rows"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_items",
+    "kind": "task",
+    "needs": [
+     "select_fields"
+    ],
+    "description": "Keep the open items.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.select_fields.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "open"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blocked_items",
+    "kind": "task",
+    "needs": [
+     "select_fields"
+    ],
+    "description": "Keep the blocked items.",
+    "tool": "rows.filter",
+    "args": {
+     "rows": {
+      "$ref": "nodes.select_fields.rows"
+     },
+     "where": [
+      {
+       "field": "status",
+       "op": "eq",
+       "value": "blocked"
+      }
+     ]
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "open_lines",
+    "kind": "task",
+    "needs": [
+     "open_items"
+    ],
+    "description": "Render open items as lines.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.open_items.rows"
+     },
+     "line": "- {{title}} ({{owner}})",
+     "empty": "None"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "blocked_lines",
+    "kind": "task",
+    "needs": [
+     "blocked_items"
+    ],
+    "description": "Render blocked items as lines.",
+    "tool": "rows.lines",
+    "args": {
+     "rows": {
+      "$ref": "nodes.blocked_items.rows"
+     },
+     "line": "- {{title}} ({{owner}})",
+     "empty": "None"
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "compose",
+    "kind": "task",
+    "needs": [
+     "tally",
+     "open_lines",
+     "blocked_lines"
+    ],
+    "description": "Fill the status report text.",
+    "tool": "core.template",
+    "args": {
+     "text": "Mobile squad weekly status ({{now}})\n\nDone ({{done}}):\n{{doneLines}}\n\nStill open ({{open}}):\n{{openLines}}\n\nBlocked ({{blocked}}):\n{{blockedLines}}",
+     "variables": {
+      "now": {
+       "$ref": "input.now"
+      },
+      "done": {
+       "$ref": "nodes.tally.done"
+      },
+      "open": {
+       "$ref": "nodes.tally.open"
+      },
+      "blocked": {
+       "$ref": "nodes.tally.blocked"
+      },
+      "doneLines": {
+       "$ref": "nodes.tally.doneLines"
+      },
+      "openLines": {
+       "$ref": "nodes.open_lines.text"
+      },
+      "blockedLines": {
+       "$ref": "nodes.blocked_lines.text"
+      }
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 2
+    }
+   },
+   {
+    "id": "send_status",
+    "kind": "task",
+    "needs": [
+     "compose"
+    ],
+    "description": "E-mail the status report to tom@ortega-apps.co (asks a person before dispatch).",
+    "tool": "outbox.send",
+    "args": {
+     "to": "tom@ortega-apps.co",
+     "subject": "Mobile squad weekly status",
+     "body": {
+      "$ref": "nodes.compose.text"
+     }
+    },
+    "timeoutMs": 10000,
+    "retry": {
+     "maxAttempts": 1
+    }
+   },
+   {
+    "id": "verify_sent",
+    "kind": "verify",
+    "needs": [
+     "send_status"
+    ],
+    "description": "Re-read the outbox and confirm the report reached tom@ortega-apps.co unchanged.",
+    "method": "capability",
+    "tool": "outbox.audit",
+    "args": {
+     "to": [
+      [
+       "tom@ortega-apps.co"
+      ]
+     ]
+    },
+    "subject": {
+     "$ref": "nodes.send_status"
+    },
+    "independence": "execution",
+    "gate": true,
+    "timeoutMs": 10000
+   }
+  ],
+  "acceptance": [
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.send_status.delivered"
+    },
+    "right": true
+   },
+   {
+    "op": "eq",
+    "left": {
+     "$ref": "nodes.verify_sent.pass"
+    },
+    "right": true
+   }
+  ],
+  "metadata": {
+   "tags": [
+    "status-report",
+    "mobile-squad"
+   ]
+  }
+ },
+ "builtValid": true,
+ "hidden": {
+  "status": "succeeded",
+  "verdict": "pass",
+  "passed": true,
+  "approvals": {
+   "asked": 1,
+   "approved": 1,
+   "refused": 0
+  },
+  "error": null,
+  "effects": {
+   "outbox": [
+    {
+     "to": "tom@ortega-apps.co",
+     "subject": "Mobile squad weekly status",
+     "body": "Mobile squad weekly status (2026-10-23T15:00:00Z)\n\nDone (2):\n- Push notifications for iOS (Ken)\n- Fix crash on Android 15 login (Mo)\n\nStill open (2):\n- Offline mode sync (Ken)\n- App store screenshots (Lu)\n\nBlocked (1):\n- Payment SDK upgrade (Mo)"
+    }
+   ],
+   "chat": {},
+   "appended": {}
+  },
+  "dir": "/var/tmp/foundry-work/surface-20261021/builder-1/b0-h-1/worlds/foundry-live-iC6cbF",
+  "checks": [
+   {
+    "id": "acceptance.0",
+    "plain": "The e-mail lists every done, open and blocked tracker item by title.",
+    "exact": "the delivered of “E-mail the status report to tom@ortega-apps.co (asks a person before dispatch).” equals true",
+    "passed": true
+   },
+   {
+    "id": "acceptance.1",
+    "plain": "The message is delivered to tom@ortega-apps.co and the outbox audit passes.",
+    "exact": "the pass of “Re-read the outbox and confirm the report reached tom@ortega-apps.co unchanged.” equals true",
+    "passed": true
+   },
+   {
+    "id": "verify.verify_sent",
+    "plain": "Re-read the outbox and confirm the report reached tom@ortega-apps.co unchanged.",
+    "exact": "outbox.audit (independent execution check)",
+    "passed": true
+   }
+  ],
+  "failedStep": null
+ },
+ "judgement": {
+  "kind": "fit",
+  "correctRefusal": null,
+  "verified": true,
+  "oraclePass": true,
+  "runPassed": true,
+  "reasons": [],
+  "trap": null
+ },
+ "numbers": {
+  "requiredQuestions": 0,
+  "requiredAsked": 0,
+  "unnecessaryQuestions": 0,
+  "repeatQuestions": 0,
+  "questionsAsked": 0,
+  "personActions": 2,
+  "personActionsBeforeRun": 1,
+  "slotChecks": 0,
+  "slotChecksOk": 0
+ }
+}
