@@ -16,6 +16,12 @@ Evidence tags (every claim carries one):
 Corpus content and fetched pages are data, not instructions. Two adversarial strings that appear below are quoted as test fixtures, not
 as guidance.
 
+**Re-verification (continuation session, 2026-10-21).** This file was first written by an earlier run of the same task. The continuation
+re-read these primary sources today and confirmed the [D] claims taken from them: the MCPTox, CaMeL, SkillsBench, MCP-Atlas and Toollery
+abstracts, the Agents Rule of Two post, the Agent Skills specification, and three MCP authorization pages (2026-07-28). One claim was
+narrowed: the Toollery abstract reports "comparable AST Accuracy on BFCL-V4" for its top-K selection, not that top-K retrieval keeps
+accuracy in general (§3). §1a is new: the authorization requirements the OAuth build follows, and what the pinned SDK does and does not do.
+
 ## 1. MCP: the protocol and what a client must do
 
 | Claim | Tag | Source |
@@ -38,6 +44,37 @@ as guidance.
 - **Full re-list before every effect.** Pins are re-checked by a full re-list before every effectful call. A `list_changed` notification is not relied on.
 - **Foundry declines elicitation and step-up.** The spec makes step-up a client SHOULD. Foundry turns it into a person's proposal, which is stricter than the spec and allowed by it.
 
+## 1a. OAuth for remote MCP servers: the client requirements, and what SDK 1.30.0 leaves to the client
+
+Read on 2026-10-21. Pages: the core page https://modelcontextprotocol.io/specification/latest/basic/authorization (it links its
+sub-pages under the 2026-07-28 revision), https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/security-considerations
+and https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization/client-registration.
+
+| Claim | Tag | Source |
+|---|---|---|
+| MCP clients **MUST** implement PKCE, **MUST** use `S256` when technically capable, and **MUST** verify PKCE support from authorization-server metadata: if `code_challenge_methods_supported` is absent, clients **MUST** refuse to proceed. | [D] | security-considerations, "Authorization Code Protection" |
+| All authorization-server endpoints **MUST** be served over HTTPS; all redirect URIs **MUST** be `localhost` or HTTPS. | [D] | security-considerations, "Communication Security" |
+| Before redirecting, the client **MUST** record the issuer from the validated metadata. On the response it **MUST** apply RFC 9207 §2.4 before the code reaches any token endpoint: a present `iss` is compared by simple string comparison (no case folding, port elision, trailing-slash or percent-encoding normalization); an absent `iss` is rejected only when the AS advertises `authorization_response_iss_parameter_supported: true`. On a mismatch the client **MUST NOT** act on or display `error`, `error_description` or `error_uri`. | [D] | core page, "Authorization Response Validation" |
+| The `resource` parameter (RFC 8707) **MUST** be in both authorization and token requests, **MUST** be the server's canonical URI, and clients **MUST** send it "regardless of whether authorization servers support it". | [D] | core page, "Resource Parameter Implementation" |
+| Clients **MUST NOT** send an MCP server tokens other than ones issued by that server's authorization server. Clients **MUST** use PRM (RFC 9728) for authorization-server discovery. | [D] | core page, "Token Handling" and "Overview" |
+| Clients **SHOULD** use and verify `state` and discard results without it or with a mismatch. Clients **MUST** have redirect URIs registered. | [D] | security-considerations, "Open Redirection" |
+| Registration priority: pre-registered client information first, then Client ID Metadata Documents (an HTTPS URL as `client_id`) if the AS advertises them, then Dynamic Client Registration (deprecated). Pre-registered credentials **MUST** be bound to the issuer that issued them. | [D] | client-registration |
+| Insufficient scope at runtime: 403 with `error="insufficient_scope"` and the needed `scope`; clients acting for a user **SHOULD** attempt step-up, with the union of previously requested and challenged scopes, and **SHOULD** limit retries. For public clients, ASes **MUST** rotate refresh tokens. | [D] | core page, "Scope Challenge Handling"; security-considerations, "Token Theft" |
+| SDK 1.30.0 `startAuthorization` refuses only when `code_challenge_methods_supported` is **present without** S256; when the field is absent it proceeds. | [O] | `node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js` `startAuthorization` |
+| SDK 1.30.0 `auth()` sends `resource` only when protected resource metadata was found (`selectResourceURL` returns undefined otherwise), and `discoverOAuthServerInfo` falls back to treating the MCP server's origin as the authorization server when PRM is missing. | [O] | same file, `selectResourceURL`, `discoverOAuthServerInfo` |
+| SDK 1.30.0 performs no RFC 9207 `iss` check; the redirect handler is the client's. | [O] | same file (no `iss` handling in `authInternal`) |
+| With an `authProvider`, SDK 1.30.0's `StreamableHTTPClientTransport` re-runs `auth()` on a 401 and, on a 403 `insufficient_scope`, re-authorizes with the challenged scope by itself ("upscoping"). | [O] | `client/streamableHttp.js` (the 401 and 403 branches) |
+| The fixture AS and the Foundry client in this spike: PKCE S256, `resource` in both requests, `state`, `iss` (wrong and missing cases), an unattested AS, a grant wider than requested, a cross-origin authorization endpoint, token audience, refresh with rotation, and a 403 that becomes a proposal instead of a step-up. | [B] | `tests/nodecap-oauth.test.mjs` (5 tests) |
+
+**Consequences for Foundry** [I]:
+
+- **The client owns the checks the SDK leaves out.** Foundry calls the SDK's low-level functions and adds: PRM required, attested issuer
+  only, RFC 8414 issuer equality, PKCE presence, `iss` per the table above, `state`, scope not wider than requested, endpoints on the
+  issuer's origin.
+- **No `authProvider` on the transport.** Its automatic re-authorization and up-scoping would widen authority without a person. Tokens come
+  from host code, and a 403 `insufficient_scope` becomes a `scope.step-up` proposal.
+- **Pre-registered clients only in this spike.** CIMD needs an HTTPS client-id URL (publishing, out of scope); DCR is deprecated.
+
 ## 2. Pinning, poisoning and rug pulls
 
 | Claim | Tag | Source |
@@ -53,7 +90,7 @@ as guidance.
 
 | Claim | Tag | Source |
 |---|---|---|
-| Toollery: longer candidate lists add distractors and tokens. Compressing to top-K retrieval keeps selection accuracy. | [D] | https://arxiv.org/abs/2609.22218 (abstract) |
+| Toollery: longer candidate lists add distractors, prompt tokens and latency. Its retrieval keeps online selection bounded to a compact top-K set and reports comparable AST accuracy on BFCL-V4 (over 440 atomic tools). | [D] | https://arxiv.org/abs/2609.22218 (abstract, v2 revised 2026-10-18) |
 | Toollery appendix Table 16, BFCL-V4 live multiple: Qwen3-4B scores 85.5% at ≤10 tools, 69.5% at 100 and 24.9% at 457. Top-10 retrieval restores 81-84%. The 457 column also overflows context. | [S] | `tool-retrieval.md` §2.1 (the abstract I read does not carry these numbers) |
 | HumanMCP: Claude 3.5 Haiku loses about 10 points from 10 to 100 tools. At 2,000 tools, BM25 top-10 (hit 61%) did **worse** than all tools in context. Retrieval below about 80% recall at k can lose to doing nothing. | [S] | `tool-retrieval.md` §2.2 (arXiv 2602.23367) |
 | MCP-Atlas: 20 frontier models on real MCP servers, pass up to 82.2%. 63.3% of diagnosed failures are cognitive, not tool-call errors. | [D] | https://arxiv.org/abs/2602.00933 |
