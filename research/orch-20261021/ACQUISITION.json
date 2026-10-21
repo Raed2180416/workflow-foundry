@@ -75,11 +75,34 @@
    "packages/inngest/src/components/InngestStepTools.ts",
    "packages/inngest/src/components/execution"
   ],
-  "outcome": "cloned-sparse-source-not-executed",
+  "outcome": "cloned-sparse-source-not-executed; deleted-after-study",
   "commit": "eceb780afb11e42c208a12b017602cc6fc068755",
   "commitDate": "2026-10-21T00:42:00+01:00",
   "checkedOutFiles": 1299,
   "bytesOnDisk": 1572864,
-  "licenses": []
+  "licenses": [],
+  "deletedAt": "2026-10-21T12:57:48.394Z"
+ },
+ {
+  "repository": "langchain-ai/langgraph",
+  "url": "https://github.com/langchain-ai/langgraph.git",
+  "acquiredAt": "2026-10-21T12:57:48.542Z",
+  "method": "git clone --depth 1 --filter=blob:none --sparse --no-tags (hooks off, no submodules, no LFS); sparse-checkout --no-cone",
+  "paths": [
+   "libs/langgraph/langgraph/pregel",
+   "libs/langgraph/langgraph/types.py",
+   "libs/langgraph/langgraph/errors.py"
+  ],
+  "outcome": "cloned-sparse-source-not-executed",
+  "commit": "3cd57c038ad827d05f80c6488adea9994156c58c",
+  "commitDate": "2026-10-21T21:22:40+09:00",
+  "checkedOutFiles": 695,
+  "bytesOnDisk": 1220608,
+  "licenses": [
+   {
+    "path": "LICENSE",
+    "firstLine": "MIT License"
+   }
+  ]
  }
 ]

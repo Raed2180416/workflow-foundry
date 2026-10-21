@@ -107,9 +107,8 @@ test('token caps: a call over the per-call cap or past the run cap is refused MO
   const { port } = portWith(big);
   const r = await port.call(req('x'.repeat(30_000)));
   assert.equal(r.ok, false); assert.equal(r.error.code, 'MODEL_BUDGET'); assert.match(r.error.message, /per-call cap of 5000/); assert.equal(ep.requests.length, 0);
-  // Run cap 20,000: the first call projects ~8.1K (input + an 8K output allowance) and spends 3.5K; the second fits (3.5K + 8.1K);
-  // a third would pass (7K + 8.1K + 8.1K in flight is refused only when concurrent; sequentially 7K + 8.1K fits), a fourth at
-  // 10.5K + 8.1K fits, a fifth at 14K + 8.1K does not.
+  // Run cap 20,000: each call projects ~8.1K (its input + an 8K output allowance) and spends 3.5K. Calls 1-4 fit (at most
+  // 10.5K spent + 8.1K); the fifth (14K spent + 8.1K) would pass the cap and is refused without a request.
   const ep2 = await fakeEndpoint(t, [answer('{"answer":"ok"}', { usage: { prompt_tokens: 3000, completion_tokens: 500 } })]);
   const capped = provider(ep2.baseUrl, { runTokenCap: 20_000 });
   const { port: p2 } = portWith(capped);
@@ -143,7 +142,7 @@ test('errors map to the ModelPort codes after bounded retries; the key is redact
   }
   // No credential: MODEL_UNAVAILABLE without a request.
   const ep = await fakeEndpoint(t, [answer('{"answer":"x"}')]);
-  const { port } = portWith(new OpenAIChatProvider({ policy, providerName: 'inception', baseUrl: ep.baseUrl, hostEnv: { ...process.env, INCEPTION_API_KEY: '' }, retry: FAST, runTokenCap: 1000 }));
+  const { port } = portWith(new OpenAIChatProvider({ policy, providerName: 'inception', baseUrl: ep.baseUrl, hostEnv: { ...process.env, INCEPTION_API_KEY: '' }, retry: FAST, runTokenCap: 100_000 }));
   assert.equal((await port.call(req())).error.code, 'MODEL_UNAVAILABLE'); assert.equal(ep.requests.length, 0);
 });
 

@@ -534,6 +534,303 @@
     "critical": 0,
     "armErrors": 0
    }
+  },
+  {
+   "subject": "b1lh-e8-2",
+   "kind": "program",
+   "world": "1233-d5",
+   "oracle": {
+    "completed": 208,
+    "passed": 200,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8
+    },
+    "failing": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008"
+    ]
+   },
+   "observerC1": {},
+   "cases": 208,
+   "bothCritical": 0,
+   "disagreements": 0,
+   "byKind": {},
+   "completed": {
+    "cases": 203,
+    "bothCritical": 0,
+    "disagreements": 0,
+    "byKind": {}
+   },
+   "examples": [],
+   "stored": {
+    "completed": 208,
+    "passed": 200,
+    "critical": 0,
+    "armErrors": 0
+   }
+  },
+  {
+   "subject": "b1lh-e8-2",
+   "kind": "program",
+   "world": "1234-d5",
+   "oracle": {
+    "completed": 205,
+    "passed": 197,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8
+    },
+    "failing": [
+     "o0001",
+     "o0002",
+     "o0003",
+     "o0004",
+     "o0005",
+     "o0006",
+     "o0007",
+     "o0008"
+    ]
+   },
+   "observerC1": {},
+   "cases": 208,
+   "bothCritical": 0,
+   "disagreements": 0,
+   "byKind": {},
+   "completed": {
+    "cases": 200,
+    "bothCritical": 0,
+    "disagreements": 0,
+    "byKind": {}
+   },
+   "examples": [],
+   "stored": {
+    "completed": 205,
+    "passed": 197,
+    "critical": 0,
+    "armErrors": 0
+   }
+  },
+  {
+   "subject": "b1lh-e8-3",
+   "kind": "program",
+   "world": "1232-d2",
+   "oracle": {
+    "completed": 52,
+    "passed": 52,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "observerC1": {},
+   "cases": 53,
+   "bothCritical": 0,
+   "disagreements": 0,
+   "byKind": {},
+   "completed": {
+    "cases": 52,
+    "bothCritical": 0,
+    "disagreements": 0,
+    "byKind": {}
+   },
+   "examples": [],
+   "stored": {
+    "completed": 52,
+    "passed": 52,
+    "critical": 0,
+    "armErrors": 0
+   }
+  },
+  {
+   "subject": "b1lh-e8-3",
+   "kind": "program",
+   "world": "1233-d2",
+   "oracle": {
+    "completed": 51,
+    "passed": 51,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "observerC1": {},
+   "cases": 53,
+   "bothCritical": 0,
+   "disagreements": 0,
+   "byKind": {},
+   "completed": {
+    "cases": 51,
+    "bothCritical": 0,
+    "disagreements": 0,
+    "byKind": {}
+   },
+   "examples": [],
+   "stored": {
+    "completed": 51,
+    "passed": 51,
+    "critical": 0,
+    "armErrors": 0
+   }
+  },
+  {
+   "subject": "b1lh-e8-3",
+   "kind": "program",
+   "world": "1234-d2",
+   "oracle": {
+    "completed": 52,
+    "passed": 52,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "observerC1": {},
+   "cases": 53,
+   "bothCritical": 0,
+   "disagreements": 0,
+   "byKind": {},
+   "completed": {
+    "cases": 52,
+    "bothCritical": 0,
+    "disagreements": 0,
+    "byKind": {}
+   },
+   "examples": [],
+   "stored": {
+    "completed": 52,
+    "passed": 52,
+    "critical": 0,
+    "armErrors": 0
+   }
+  },
+  {
+   "subject": "b1lh-e8-3",
+   "kind": "program",
+   "world": "1232-d3",
+   "oracle": {
+    "completed": 85,
+    "passed": 85,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "observerC1": {},
+   "cases": 85,
+   "bothCritical": 0,
+   "disagreements": 0,
+   "byKind": {},
+   "completed": {
+    "cases": 83,
+    "bothCritical": 0,
+    "disagreements": 0,
+    "byKind": {}
+   },
+   "examples": [],
+   "stored": {
+    "completed": 85,
+    "passed": 85,
+    "critical": 0,
+    "armErrors": 0
+   }
+  },
+  {
+   "subject": "b1lh-e8-3",
+   "kind": "program",
+   "world": "1233-d3",
+   "oracle": {
+    "completed": 81,
+    "passed": 81,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "observerC1": {},
+   "cases": 85,
+   "bothCritical": 0,
+   "disagreements": 0,
+   "byKind": {},
+   "completed": {
+    "cases": 79,
+    "bothCritical": 0,
+    "disagreements": 0,
+    "byKind": {}
+   },
+   "examples": [],
+   "stored": {
+    "completed": 81,
+    "passed": 81,
+    "critical": 0,
+    "armErrors": 0
+   }
+  },
+  {
+   "subject": "b1lh-e8-3",
+   "kind": "program",
+   "world": "1234-d3",
+   "oracle": {
+    "completed": 86,
+    "passed": 86,
+    "critical": 0,
+    "codes": {},
+    "failing": []
+   },
+   "observerC1": {},
+   "cases": 85,
+   "bothCritical": 0,
+   "disagreements": 0,
+   "byKind": {},
+   "completed": {
+    "cases": 84,
+    "bothCritical": 0,
+    "disagreements": 0,
+    "byKind": {}
+   },
+   "examples": [],
+   "stored": {
+    "completed": 86,
+    "passed": 86,
+    "critical": 0,
+    "armErrors": 0
+   }
+  },
+  {
+   "subject": "b1lh-e8-3",
+   "kind": "program",
+   "world": "1232-d5",
+   "oracle": {
+    "completed": 202,
+    "passed": 200,
+    "critical": 0,
+    "codes": {
+     "L2:outside-allowed": 2
+    },
+    "failing": [
+     "o0072",
+     "o0106"
+    ]
+   },
+   "observerC1": {},
+   "cases": 208,
+   "bothCritical": 0,
+   "disagreements": 0,
+   "byKind": {},
+   "completed": {
+    "cases": 197,
+    "bothCritical": 0,
+    "disagreements": 0,
+    "byKind": {}
+   },
+   "examples": [],
+   "stored": {
+    "completed": 202,
+    "passed": 200,
+    "critical": 0,
+    "armErrors": 0
+   }
   }
  ]
 }
