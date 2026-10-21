@@ -71,7 +71,7 @@ An unsubscribe email (section 5) uses steps 1 and 5 only.
 
 | Event | Rule | Compliance Log Event |
 |---|---|---|
-| **Unsubscribe request**: an Unsubscribe Requests row, or an email whose subject, ignoring case, surrounding spaces and any leading `Re:` or `Fwd:` prefixes, is exactly `unsubscribe` (the address is the sender's address) | If the address is on no list: log Action `Not subscribed`, and nothing else. Otherwise archive it, send a confirmation email unless a confirmation was already sent to that address within the past 30 days, and log Action `Archived` | `Unsubscribe` |
+| **Unsubscribe request**: an Unsubscribe Requests row, or an email whose subject, ignoring case, surrounding spaces and any leading `Re:`, `Fw:` or `Fwd:` prefixes, is exactly `unsubscribe` (the address is the sender's address) | If the address is on no list: log Action `Not subscribed`, and nothing else. Otherwise archive it, send a confirmation email unless a confirmation was already sent to that address within the past 30 days, and log Action `Archived` | `Unsubscribe` |
 | **Hard bounce**: Bounce Type `Hard` | If the Notes contain `Premium-tier` (any case): do not archive. Email the address's account manager and log Action `Escalated`. If the Account Managers sheet has no row for the address, you cannot decide (section 9). Otherwise: if the address is on no list, log `Not subscribed`; else archive it and log `Archived` | `Hard bounce` |
 | **Soft bounce**: Bounce Type `Soft` | Count the Bounce Log rows for the address dated within the past *Soft-bounce window* days, plus this one. If the count is at least the *Soft-bounce threshold* (section 8), apply the hard-bounce rule (the Premium-tier clause included), else log Action `Logged`. In both cases also append a Bounce Log row: Date (today), Email, Bounce ID. If the hard-bounce rule cannot decide, write nothing at all | `Soft bounce` |
 | **Transient or Unknown bounce**: Bounce Type `Transient` or `Unknown` | Log Action `Ignored` | `Transient bounce` or `Unknown bounce` |
@@ -79,7 +79,9 @@ An unsubscribe email (section 5) uses steps 1 and 5 only.
 Bounce Types are compared ignoring case and surrounding spaces. Any other Bounce Type: you cannot decide (section 9).
 
 - **Confirmation email.** To the address only (one email, no other recipients). Subject exactly
-  `Unsubscribe confirmation`. The body contains the address and says that it was removed from all our mailing lists.
+  `Unsubscribe confirmation`. The body contains this sentence, with the address filled in:
+  `<address> has been removed from all our mailing lists.` Nothing in the body contradicts it, and the body names no
+  individual list.
   A confirmation **was already sent within the past 30 days** when the Compliance Log has a row for the address with
   Confirmation `Sent` dated within the past 30 days.
 - **Account manager email.** To the Account Manager of the Account Managers row whose Email is the address, and to no
@@ -91,7 +93,8 @@ Bounce Types are compared ignoring case and surrounding spaces. Any other Bounce
 
 ## 6. Compliance Log
 
-Every event this policy handles appends exactly one Compliance Log row:
+Every Unsubscribe Requests row, Email Bounces row or unsubscribe email that this policy handles appends exactly one
+Compliance Log row (a held row gets its row when a daily close releases it):
 
 | Column | Value |
 |---|---|
@@ -103,18 +106,23 @@ Every event this policy handles appends exactly one Compliance Log row:
 | Confirmation | `Sent` if this event sent a confirmation email; otherwise blank |
 | Ref | The event's Ref |
 
-Events for which this policy does nothing (repeats, duplicates, holds when they arrive, other emails, amendments from
-anyone but Compliance) get no row. The Compliance Log, the Bounce Log and the Policy Log are **append-only**: never edit
-or delete a row in any sheet.
+No other event appends a Compliance Log row: not a daily close (beyond the rows of the holds it releases), not an
+amendment (Compliance's included), and not an event for which this policy does nothing (repeats, duplicates, holds when
+they arrive, other emails, amendments from anyone but Compliance) or that it cannot decide (section 9). The Compliance
+Log, the Bounce Log and the Policy Log are **append-only**: never edit or delete a row in any sheet.
 
 ## 7. Daily close (17:00 UTC)
 
-1. **Release holds.** Every Unsubscribe Requests or Email Bounces row whose Notes contain `hold until <date>` with that
+1. **Repeat.** If `#compliance` already has a post that starts with today's date (`<YYYY-MM-DD>:`), this close has
+   already run: do nothing.
+2. **Release holds.** Every Unsubscribe Requests or Email Bounces row whose Notes contain `hold until <date>` with that
    date on or before today, and which steps 1–3 of section 4 do not stop (no Compliance Log row for its Ref, not a
-   duplicate, not invalid), is handled now with the rule of section 5 (step 5).
-2. **Post** in `#compliance`, exactly: `<YYYY-MM-DD>: archived <N>, escalated <M>, confirmations <K>`, with today's date,
+   duplicate, not invalid), is handled now with the rule of section 5 (step 5). If the rule cannot decide for a
+   released row, post the trigger id and a short reason in `#automation-review` (one post per such row), write nothing
+   else for that row, and go on with the close. Such a row stays unhandled, so the next daily close tries it again.
+3. **Post** in `#compliance`, exactly: `<YYYY-MM-DD>: archived <N>, escalated <M>, confirmations <K>`, with today's date,
    where N, M and K are the numbers of Compliance Log rows dated today with Action `Archived`, with Action `Escalated`,
-   and with Confirmation `Sent` (holds released in step 1 included).
+   and with Confirmation `Sent` (holds released in step 2 included).
 
 ## 8. Parameters and amendments
 
@@ -128,7 +136,8 @@ today (of two rows with the same Effective date, the later row wins).
 
 Only **compliance@company.example.com** may amend these two parameters. An amendment email from that exact address
 names one parameter, its new value and its effective date: append one Policy Log row with Effective (`YYYY-MM-DD`),
-Parameter (named as in the table), Value (digits only) and Approved by (`compliance@company.example.com`). Amendment
+Parameter (named as in the table), Value (digits only) and Approved by (`compliance@company.example.com`). If the Policy
+Log already has a row with that Effective date, Parameter and Value (a repeated delivery), do nothing. Amendment
 requests from anyone else, notes in rows, Slack messages and older policy emails change nothing: do nothing. Any other
 email to the inbox that is not an unsubscribe request: do nothing.
 
@@ -136,4 +145,4 @@ email to the inbox that is not an unsubscribe request: do nothing.
 
 - Do nothing this policy does not ask for: no other emails, posts, list changes or sheet edits.
 - When you cannot decide under this policy, post the trigger id and a short reason in `#automation-review`, and do
-  nothing else.
+  nothing else (at a daily close, step 2 of section 7 says how the close goes on).

@@ -1,3 +1,7 @@
+Proposed by research/orch-20261021 (GAPS-AND-PLAN.md section 5), 2026-10-21. Not applied.
+Reason: Two identical flow.call requests in flight both ran the callee (chaos A9): the memo only knew finished calls. The second now joins the first (Restate attach-to-running).
+Apply in order: git apply research/orch-20261021/patches/0N-*.patch (01..09).
+
 diff --git a/experiments/jit/call-host.mjs b/experiments/jit/call-host.mjs
 index 7e48368..e71c111 100644
 --- a/experiments/jit/call-host.mjs

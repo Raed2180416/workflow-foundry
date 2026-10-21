@@ -1,3 +1,7 @@
+Proposed by research/orch-20261021 (GAPS-AND-PLAN.md section 5), 2026-10-21. Not applied.
+Reason: Sandboxes and model CLIs outlived a SIGKILLed owner until someone ran cancel/resume; experiment executors recorded nothing at all (chaos B2, B3). On Linux every spawn goes through setpriv --pdeathsig KILL, so the kernel kills the child with its owner; executors record their groups with trackChild. Three tests in tests/cli-cancel.test.mjs assume the orphan survives and must change. macOS needs a watchdog instead (GAPS rank 3).
+Apply in order: git apply research/orch-20261021/patches/0N-*.patch (01..09).
+
 diff --git a/src/children.mjs b/src/children.mjs
 index c8a6396..05fe114 100644
 --- a/src/children.mjs

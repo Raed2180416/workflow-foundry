@@ -1,5 +1,7 @@
 # Chaos matrix (2026-10-21T13:27:08.424Z)
 
+*The repository as it is (no patch applied), `nice -n 10 node experiments/orch/chaos.mjs`. Synthetic capabilities and scripted models, $0. Every observation: [matrix.json](matrix.json). Catalogue: [../WORST-CASE.md](../WORST-CASE.md); ranking: [../GAPS-AND-PLAN.md](../GAPS-AND-PLAN.md).*
+
 node v24.21.0, linux; 20/43 scenarios pass.
 
 | id | scenario | invariant | result | failing checks (observed) |

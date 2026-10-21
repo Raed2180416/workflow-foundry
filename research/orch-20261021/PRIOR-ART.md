@@ -72,7 +72,7 @@ the agent queue in memory). Spawn by content hash stays (no rival pins children 
 | **Foundry** | src: `join: all_success | all_resolved`, a failing node aborts its frame scope and waits for running siblings (`src/runtime.mjs:744-827`), map `failure: collect` with typed `$error` and `ERROR_COLLECTED` verdict; flow-v3: `wide` coverage `{done, failed, skipped}` and `onItemError` policies | [M] |
 
 **Adopt.** Nothing structural: Foundry's join semantics are stricter than all rows above (a collected error cannot pass as
-success: `src/verdict.mjs:46-48`). Keep LangGraph's rule explicitly in tests: a resumed frame re-runs only unfinished items
+success: `src/verdict.mjs:54-55`). Keep LangGraph's rule explicitly in tests: a resumed frame re-runs only unfinished items
 (chaos A3, B1 hold).
 
 ## 3. Wait / signal (external events, human input)
@@ -147,7 +147,7 @@ a child dies with its owner (patch 05: `setpriv --pdeathsig KILL`).
 | Trigger.dev | config default; `retry.fetch` with `byStatus` and header strategies (`x-ratelimit-reset`) | `AbortTaskRunError` | yes | [D] docs/errors-retrying.mdx:12-124 |
 | Hatchet | `retries` + optional backoff | `NonRetryable` | — | [D] retry-policies.mdx:21-97 |
 | Claude CLI 2.1.306 | 10 retries over about 3 min for 429/529/timeouts; honours `retry-after` only for the first retries | — | partly | [P] P1-P3, P7 |
-| **Foundry** | tasks: `retry.maxAttempts` + fixed `backoffMs`; model nodes: schema retries and escalation, but **outages are thrown at once** (`src/runtime.mjs:1244` region); flow-v3 judge escalates to the next tier on any call error | — | no | [M] |
+| **Foundry** | tasks: `retry.maxAttempts` + fixed `backoffMs`; model nodes: schema retries and escalation, but **outages are thrown at once** (`src/runtime.mjs:1224`); flow-v3 judge escalates to the next tier on any call error | — | no | [M] |
 
 **Adopt.** Restate's split (retryable with `retryAfter` vs terminal) for model outages: bounded inline retries on the same model
 that honour `retry-after`, then *park* the node with a timer instead of failing the run (patch 04; chaos B9, D1, D3). Never let
@@ -203,7 +203,7 @@ fixes land without killing runs. MAF's graph-signature check is the same rule Fo
 | Claude Code Workflow tool | `min(16, CPUs-2)` concurrent agents, 1,000 agents per workflow, 4,096 items per call | [T] |
 | Managed Agents | 64 threads, 1,000 agents per run, 24 h, 10 open runs | [M] PRIOR-ART-MANAGED-AGENTS-DW.md §1 |
 | Kimi Agent Swarm | up to 100-300 subagents, thousands of tool calls per task (vendor claims) | [M] PRIOR-ART-SWARMS.md §2 |
-| **Foundry** | src: map `maxItems` ≤ 1,000, `concurrency` ≤ 16, run semaphore, per-provider semaphores; flow-v3: `wide` ≤ 64 (refusal `fanout`), agent nodes ≤ 2 concurrent / 16 per run, call tree ≤ 1,000 | [M] schemas/workflow.schema.json; flow-v3.mjs:158; call-host.mjs:91 |
+| **Foundry** | src: map `maxItems` ≤ 1,000, `concurrency` ≤ 16, run semaphore, per-provider semaphores; flow-v3: `wide` ≤ 64 (refusal `fanout`), agent nodes ≤ 2 concurrent / 16 per run, call tree ≤ 1,000 | [M] schemas/workflow.schema.json; flow-v3.mjs:158; call-host.mjs:90 |
 
 **Adopt.** Keyed limits across runs (Inngest/Hatchet/DBOS): today every limit is per run or per process, so two orchestrators
 on one machine (this week: several agents, 4 CPUs) each think they own the provider. A workspace-level semaphore per provider

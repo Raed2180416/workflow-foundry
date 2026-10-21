@@ -1,3 +1,7 @@
+Proposed by research/orch-20261021 (GAPS-AND-PLAN.md section 5), 2026-10-21. Not applied.
+Reason: flow-v3's judge escalated to the next (dearer) tier on any call error, including a 429 (chaos D2), against DESIGN 5.1. An outage now stops the solver with ENV_EXIT 76 and env-fault.json; run-compiled reports an environment fault the streams retry. Do not land while an experiment that uses flow-v3 is mid-stream.
+Apply in order: git apply research/orch-20261021/patches/0N-*.patch (01..09).
+
 diff --git a/experiments/jit/flow-v3.mjs b/experiments/jit/flow-v3.mjs
 index c97f002..1d8dae2 100644
 --- a/experiments/jit/flow-v3.mjs

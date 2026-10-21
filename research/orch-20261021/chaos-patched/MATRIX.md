@@ -1,5 +1,7 @@
 # Chaos matrix (2026-10-21T13:31:06.930Z)
 
+*The same 43 scenarios on a scratch copy of the repository with [../patches/](../patches/) 01-09 applied in order (none is applied to the repository). Shows which failures the patches close; the rest need the designs in [../GAPS-AND-PLAN.md](../GAPS-AND-PLAN.md).*
+
 node v24.21.0, linux; 32/43 scenarios pass.
 
 | id | scenario | invariant | result | failing checks (observed) |

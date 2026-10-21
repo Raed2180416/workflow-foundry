@@ -145,6 +145,12 @@ export function toOcel({ rows, registry = null, ref = null }) {
       pinSeen.add(`${O}|${h}`);
       ev('run-pinned', c.at, { hash: h, port: k.port }, [{ objectId: obj('order', norm(O)), qualifier: 'run' }, { objectId: obj('constitution-version', h), qualifier: 'pinned' }]);
     }
+    // Under a port, a constitution-aware solver's own pins (kept under `solver`): the builder's compliance, not the run's record.
+    for (const [O, h] of Object.entries(k.solver?.pins ?? {})) {
+      if (pinSeen.has(`solver|${O}|${h}`)) continue;
+      pinSeen.add(`solver|${O}|${h}`);
+      ev('solver-pinned', c.at, { hash: h }, [{ objectId: obj('order', norm(O)), qualifier: 'run' }, { objectId: obj('constitution-version', h), qualifier: 'pinned' }]);
+    }
     for (const x of [...(k.interventions ?? []).map(y => ({ ...y, kind: 'intervention' })), ...(k.releases ?? []).map(y => ({ ...y, kind: 'release', action: 'release' }))]) {
       const rels = [];
       if (x.orderId) rels.push({ objectId: obj('order', norm(x.orderId)), qualifier: 'order' });
@@ -296,6 +302,9 @@ export function evaluate(ocel, { registry }) {
     if (amount > Tnow) C3.push({ clause: 'C3', code: 'retroactive', order: idOf(O), fulfilment: F ? idOf(F) : null, amountMinor: amount, pinnedThreshold: Tp, thresholdAtRequest: Tnow });
     else overEscalation.push({ order: idOf(O), task: attr(e, 'taskId'), amountMinor: amount, thresholdMinor: Tp });
   }
+  // The builder's own pins under a port (W-CS): how often the solver pinned the version in force itself.
+  const builderPins = { orders: 0, mismatches: 0 };
+  for (const e of byType('solver-pinned')) { const o = orders.get(relOf(e, 'run')[0]); if (!o?.version) continue; builderPins.orders += 1; if (attr(e, 'hash') !== o.version.hash) builderPins.mismatches += 1; }
   const interventions = {};
   for (const e of byType('port-intervention')) { const k = attr(e, 'action'); interventions[k] = (interventions[k] ?? 0) + 1; }
   const count = list => list.reduce((m, x) => ({ ...m, [x.code]: (m[x.code] ?? 0) + 1 }), {});
@@ -303,7 +312,7 @@ export function evaluate(ocel, { registry }) {
     C1: { violations: C1, byCode: count(C1) },
     C2: { violations: C2, byCode: count(C2), refundsAboveT: aboveT.length, compliant: aboveT.filter(x => x.ok).length, exceptions },
     C3: { violations: C3, byCode: count(C3), unpinnedRuns: unpinned, unpinnedGovernedRuns: unpinnedGoverned, staleWindow: stale },
-    overEscalation: overEscalation.length, interventions, refundsAboveT: aboveT,
+    overEscalation: overEscalation.length, interventions, builderPins, refundsAboveT: aboveT,
     approvals: { requested: requested.length, decided: decided.length },
   };
 }

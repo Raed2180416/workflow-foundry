@@ -1,3 +1,7 @@
+Proposed by research/orch-20261021 (GAPS-AND-PLAN.md section 5), 2026-10-21. Not applied.
+Reason: SQLite rolls back by itself on SQLITE_FULL; the store's second ROLLBACK threw 'cannot rollback - no transaction is active' and hid the disk-full error from the user (chaos C1, incident I1). Keeps the original error and types storage faults as environment faults (STORAGE_FULL / STORAGE_UNAVAILABLE) with 'free space, then resume'.
+Apply in order: git apply research/orch-20261021/patches/0N-*.patch (01..09).
+
 diff --git a/src/runtime.mjs b/src/runtime.mjs
 index 9a4729d..c3f18be 100644
 --- a/src/runtime.mjs

@@ -1,3 +1,7 @@
+Proposed by research/orch-20261021 (GAPS-AND-PLAN.md section 5), 2026-10-21. Not applied.
+Reason: ENOSPC/EDQUOT/EMFILE and SQLite-full were scored as task failures by experiments/lib/runner.mjs (autobench had its own regex), and a record appended after a torn JSONL tail was lost with it (chaos C2, incident I1).
+Apply in order: git apply research/orch-20261021/patches/0N-*.patch (01..09).
+
 diff --git a/experiments/lib/results.mjs b/experiments/lib/results.mjs
 index d65b4cd..704509e 100644
 --- a/experiments/lib/results.mjs

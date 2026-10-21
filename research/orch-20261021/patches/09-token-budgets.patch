@@ -1,3 +1,7 @@
+Proposed by research/orch-20261021 (GAPS-AND-PLAN.md section 5), 2026-10-21. Not applied.
+Reason: Budgets were dollars and steps only: a $0-priced model ran 90 M tokens under a $1 budget (chaos E2; incident I7, 97 M tokens). Adds budget.maxTokens to the IR, a runtime default of 5 M (TOKEN_BUDGET, inconclusive) and a gateway session token cap (default 5 M). The defaults are an owner decision (GAPS section 4).
+Apply in order: git apply research/orch-20261021/patches/0N-*.patch (01..09).
+
 diff --git a/experiments/lib/services.mjs b/experiments/lib/services.mjs
 index 89c5b3b..82d8bec 100644
 --- a/experiments/lib/services.mjs

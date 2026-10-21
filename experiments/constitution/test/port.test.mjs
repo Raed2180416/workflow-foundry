@@ -159,3 +159,16 @@ test('an invalid solver output passes through untouched (the host judges it)', a
   const arm = effectPort({ id: 'x', async tick() { return 'not an object'; } }, { policy: shieldPolicy({ registry: reg }) });
   assert.equal(await tick(arm, [placed('2026-03-13T02:28:00+01:00')], '2026-03-13T02:28:00+01:00'), 'not an object');
 });
+
+test('a held refund re-emitted in the tick its approval arrives is released once, not held again', async () => {
+  const comp = compensation(43793);
+  const reemit = { effects: [(({ after, ...e }) => e)(comp[1])] };
+  const inner = scripted([{}, { effects: comp }, reemit]);
+  const arm = shieldArm(inner, { registry: reg });
+  await tick(arm, [placed('2026-03-13T02:28:00+01:00')], '2026-03-13T02:28:00+01:00');
+  const o1 = await tick(arm, [cancel('2026-03-13T02:40:00+01:00', 'u-cs1')], '2026-03-13T02:40:00+01:00');
+  const o2 = await tick(arm, [answered(o1.humanTasks[0].id, 'u-fin1', 'approve', '2026-03-13T02:55:00+01:00'), { id: 'r', type: 'effect.result', at: '2026-03-13T02:55:00+01:00', payload: {} }], '2026-03-13T02:55:00+01:00', ctx({ csh: 'committed' }));
+  assert.deepEqual(o2.effects.map(e => e.key), ['rf', 'rel']);
+  assert.equal(o2.humanTasks, undefined);
+  assert.equal(arm.holds.length, 1);
+});

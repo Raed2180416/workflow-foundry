@@ -125,6 +125,7 @@ export function effectPort(inner, { policy, id = `port(${inner.id})`, workflowHa
       const k = effKey(e);
       const open = byKey.get(k);
       if (open && open.state === 'asking') { heldHere.set(k, open); J.interventions.push({ action: 'dedupe-held', hold: open.id, key: k }); continue; }
+      if (open && open.state === 'approved') { kept.push(e); continue; }                    // approved this tick: released as the solver re-emits it
       if (settled.get(k) === 'released') { kept.push(e); continue; }                       // already approved: the host deduplicates it
       if (settled.get(k) === 'refused') { J.interventions.push({ action: 'suppress', reason: 'approval was rejected', key: k }); continue; }
       const dep = (e.after && heldHere.get(e.after)) || [...heldHere.values()].find(h => e.system === 'inventory' && e.op === 'release' && e.args?.fulfilmentId === h.F);
@@ -184,7 +185,9 @@ export function effectPort(inner, { policy, id = `port(${inner.id})`, workflowHa
     const pinOf = st.subject ? policy.pin?.(norm(st.subject), orders.get(norm(st.subject)) ?? null) ?? null : null;
     const any = J.interventions.length || J.releases.length || J.answers.length;
     if (policy.evidence || any) {
-      res.decisions = { ...out.decisions, constitution: { port: policy.name, policy: policy.hash ?? null,
+      // A constitution-aware solver's own evidence (its pins) is kept under `solver`; the port's pins are the run's record.
+      const own = isObj(out.decisions.constitution) ? { solver: out.decisions.constitution } : {};
+      res.decisions = { ...out.decisions, constitution: { ...own, port: policy.name, policy: policy.hash ?? null,
         ...(policy.evidence ? { workflow: workflowHash, pins: pinOf ? { [norm(st.subject)]: pinOf.hash } : {} } : {}),
         ...(any ? J : {}) } };
     }

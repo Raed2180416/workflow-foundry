@@ -1,3 +1,7 @@
+Proposed by research/orch-20261021 (GAPS-AND-PLAN.md section 5), 2026-10-21. Not applied.
+Reason: A durable cancel request was only seen on the 250 ms poll, so nodes kept starting after it committed (chaos A7: 2 items). checkBudget runs inside the update that starts a node; it now refuses once cancelRequest is set. tests/cancel.test.mjs:699 expects the question node left awaiting_human; with this patch the question is not asked after the cancel.
+Apply in order: git apply research/orch-20261021/patches/0N-*.patch (01..09).
+
 diff --git a/src/runtime.mjs b/src/runtime.mjs
 index c3f18be..14b87da 100644
 --- a/src/runtime.mjs

@@ -1,3 +1,7 @@
+Proposed by research/orch-20261021 (GAPS-AND-PLAN.md section 5), 2026-10-21. Not applied.
+Reason: A single 429, usage limit or model timeout ended the run terminally and resume could not continue it (chaos B9, D1, D3; incidents I2, I6). Same-model inline retries honour retry-after (never escalate); a longer outage parks the agent node with a timer (status waiting) at most 8 times. The CLI's own text (reset time) is kept in the error. tests/runtime-agent.test.mjs:139-152 encode the old behaviour and must change.
+Apply in order: git apply research/orch-20261021/patches/0N-*.patch (01..09).
+
 diff --git a/src/models/providers/claude-cli.mjs b/src/models/providers/claude-cli.mjs
 index 3eb8f9c..7f5b178 100644
 --- a/src/models/providers/claude-cli.mjs

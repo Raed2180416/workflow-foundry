@@ -1,3 +1,7 @@
+Proposed by research/orch-20261021 (GAPS-AND-PLAN.md section 5), 2026-10-21. Not applied.
+Reason: Ctrl-C/SIGTERM charged the interrupted task's attempt, so with maxAttempts 1 the run failed RETRY_EXHAUSTED on resume although the CLI printed resumable: true (chaos G2). The CLI records a handled interruption; recovery refunds the attempt of pure/idempotent tasks only for that owner. Unexplained deaths still count, which keeps the crash-loop bound (chaos B7).
+Apply in order: git apply research/orch-20261021/patches/0N-*.patch (01..09).
+
 diff --git a/bin/foundry.mjs b/bin/foundry.mjs
 index 31a40ed..f13591e 100755
 --- a/bin/foundry.mjs

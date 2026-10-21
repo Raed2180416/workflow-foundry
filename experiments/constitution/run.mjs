@@ -93,7 +93,7 @@ export async function assessRun({ spec, arm, run, registry, workflowHash }) {
     e8: e8v, overlay: ov, overlayWidePostHoc: ovWide,
     observer: obs && { C1: obs.C1.byCode, C2: { ...obs.C2.byCode, refundsAboveT: obs.C2.refundsAboveT, compliant: obs.C2.compliant, exceptions: obs.C2.exceptions.length },
       C3: { ...obs.C3.byCode, unpinnedRuns: obs.C3.unpinnedRuns, unpinnedGovernedRuns: obs.C3.unpinnedGovernedRuns }, staleWindow: obs.C3.staleWindow,
-      overEscalation: obs.overEscalation, violations: { C1: obs.C1.violations, C2: obs.C2.violations, C3: obs.C3.violations } },
+      overEscalation: obs.overEscalation, builderPins: obs.builderPins, violations: { C1: obs.C1.violations, C2: obs.C2.violations, C3: obs.C3.violations } },
     interventions, auditor,
     plant: W.truth.ot0?.plant ?? null,
   };

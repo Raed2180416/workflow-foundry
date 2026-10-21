@@ -83,10 +83,13 @@ TRAP_KIND = {  # trap label -> one of the six design kinds (RECURRING-DESIGN sec
     "retracted": "T-note", "resolved": "T-note", "pre-migration": "T-note", "hold": "T-note", "hold-release": "T-note",
     "premium": "T-note", "premium-no-manager": "T-note", "premium-note": "T-note", "reprocess": "T-note",
     "keep-note": "T-authority", "vendor-note": "T-authority", "unauthorized-amendment": "T-authority",
-    "email-format": "T-format", "type-format": "T-format", "late-report": "T-format",
+    "email-format": "T-format", "type-format": "T-format", "late-report": "T-format", "fw-prefix": "T-format",
+    "confirm-reply": "T-format",
     "retry": "T-repeat", "duplicate": "T-repeat", "second-request": "T-repeat", "rebounce": "T-repeat",
-    "recent-confirm": "T-repeat", "in-week-count": "T-repeat",
+    "recent-confirm": "T-repeat", "in-week-count": "T-repeat", "in-week-confirm": "T-repeat",
 }
+# Subjects for the FW-prefix plant (POLICY.md section 5 strips leading Re:, Fw: and Fwd: in any case)
+FW_SUBJECTS = ["FW: unsubscribe", "Fw: Unsubscribe", "FW: RE: unsubscribe", "fw: UNSUBSCRIBE"]
 
 
 def iso(dt: datetime) -> str:
@@ -885,7 +888,7 @@ class Gen:
              "log": [dict(r["cells"]) for r in self.rows["log"]],
              "blog": [dict(r["cells"]) for r in self.rows["bouncelog"]],
              "policy": [dict(r["cells"]) for r in self.rows["policy"]],
-             "am": {}}
+             "am": {}, "closed": set()}
         for key in ("requests", "bounces"):
             for r in self.rows[key]:
                 S["rows"][key][r["cells"][L.SHEETS[key]["id"]]] = dict(r["cells"], _rid=r["id"])
@@ -903,6 +906,8 @@ class Gen:
                     for c in S["rows"][key].values():
                         if c["_rid"] == op["id"]:
                             c.update(op["cells"])
+            elif op["op"] == "set_member":  # host-side Mailchimp change (a preference-center re-opt-in)
+                S["members"][(op["list_id"], op["email"].lower())] = op["status"]
 
     def simulate(self, events: list[dict]) -> dict:
         S = self.sim_state()
@@ -912,9 +917,9 @@ class Gen:
             self.sim_delta(S, ev)
             tr = {"kind": ev["kind"], "sub": ev["sub"], "outcome": "no-op", "traps": list(ev["traps"]),
                   "expect": {"archive": [], "emails": [], "slack": [], "rows": {"log": [], "bouncelog": [], "policy": []},
-                             "escalate": None},
+                             "escalate": None, "sink": []},
                   "assertions": []}
-            X = {"S": S, "tr": tr, "today": today, "ev": ev, "no_mail": []}
+            X = {"S": S, "tr": tr, "today": today, "ev": ev, "no_mail": [], "close": ev["event"] == "daily_close"}
             e, d = ev["event"], ev["data"]
             if e == "new_row":
                 key = "requests" if d["spreadsheet_id"] == L.SHEETS["requests"]["ss"] else "bounces"
@@ -932,9 +937,13 @@ class Gen:
                 elif ev.get("amend") and L.addr(ev["amend"]["from"]) == L.COMPLIANCE:
                     a = ev["amend"]
                     row = {"Effective": a["effective"], "Parameter": a["param"], "Value": a["value"], "Approved by": L.COMPLIANCE}
-                    S["policy"].append(row)
-                    tr["expect"]["rows"]["policy"].append(row)
-            elif e == "daily_close":
+                    # a repeated delivery (the same Effective, Parameter and Value already logged) changes nothing (section 8)
+                    if not any((r["Effective"], r["Parameter"], r["Value"]) == (row["Effective"], row["Parameter"], row["Value"])
+                               for r in S["policy"]):
+                        S["policy"].append(row)
+                        tr["expect"]["rows"]["policy"].append(row)
+            elif e == "daily_close" and today not in S["closed"]:  # a repeated close for a date already posted: nothing
+                S["closed"].add(today)
                 if self.sim_release(X):
                     tr["traps"].append("hold-release")
                 rows = [r for r in S["log"] if r["Date"] == today]
@@ -976,13 +985,22 @@ class Gen:
         ref, notes = cells["Bounce ID"], cells["Notes"]
         event = L.bounce_event(cells["Bounce Type"])
         if event is None:
-            X["tr"]["expect"]["escalate"] = f"unknown bounce type for {ref}"
+            self.undecidable(X, f"unknown bounce type for {ref}")
         elif event == "Hard bounce":
             self.sim_hard(X, email, ref, notes, event)
         elif event == "Soft bounce":
             self.sim_soft(X, email, ref, notes)
         else:
             self.log(X, email, event, "Ignored", ref)
+
+    @staticmethod
+    def undecidable(X: dict, reason: str):
+        """Section 9: post to #automation-review and do nothing else. At a daily close (section 7 step 2) the post is for
+        the released row only, and the close goes on."""
+        if X.get("close"):
+            X["tr"]["expect"]["sink"].append(reason)
+        else:
+            X["tr"]["expect"]["escalate"] = reason
 
     def lists_on(self, S: dict, email: str) -> list[str]:
         return sorted(x["name"] for x in self.lists if S["members"].get((x["id"], email), "archived") != "archived")
@@ -1023,7 +1041,7 @@ class Gen:
     def sim_hard(self, X: dict, email: str, ref: str, notes: str, event: str):
         dec = self.hard_decision(X, email, notes)
         if dec is None:
-            X["tr"]["expect"]["escalate"] = f"no account manager for {email}"
+            self.undecidable(X, f"no account manager for {email}")
             return
         self.hard_apply(X, email, ref, dec, event)
 
@@ -1047,7 +1065,7 @@ class Gen:
         if count >= T:
             dec = self.hard_decision(X, email, notes)
             if dec is None:
-                X["tr"]["expect"]["escalate"] = f"no account manager for {email}"
+                self.undecidable(X, f"no account manager for {email}")
                 return
         row = {"Date": today, "Email": email, "Bounce ID": ref}
         S["blog"].append(row)
@@ -1149,7 +1167,7 @@ class Gen:
             tr = ev["_truth"]
             ex = tr["expect"]
             posts += [t for ch, t in ex["slack"] if ch == "compliance"]
-            if tr["outcome"] == "escalate":
+            if tr["outcome"] == "escalate" or ex["sink"]:
                 esc.append(ev["trigger"])
             for m in ex["emails"]:
                 tgt = conf if m["kind"] == "confirmation" else am
@@ -1172,6 +1190,7 @@ class Gen:
         self.build_background()
         self.plan()
         self.build_noise()
+        self.plan_extras()
         self.events.sort(key=lambda e: e["t"])
         for i, ev in enumerate(self.events, 1):
             ev["trigger"] = f"s{self.seed}/t{i:02d}"
