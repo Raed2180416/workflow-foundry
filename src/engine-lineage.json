@@ -4,7 +4,8 @@
   "version": 2,
   "resumesFrom": 1,
   "changes": [
-    "engine compatibility ranges and engine.migrated (this file; src/engine.mjs, src/runtime.mjs execute, src/audit.mjs engineBinding)"
+    "engine compatibility ranges and engine.migrated (this file; src/engine.mjs, src/runtime.mjs execute, src/audit.mjs engineBinding)",
+    "orch-20261021 patches 01-09: typed STORAGE_FULL/STORAGE_UNAVAILABLE; a recorded cancel request stops new starts; a handled Ctrl-C refunds a pure task's attempt (run_interrupts); outages retry on the same model then park agent nodes (status waiting, parked, parks; read only by this engine, absent from version-1 records); PDEATHSIG lifeline on spawns; budget.maxTokens and TOKEN_BUDGET (a version-1 run's bound policy has no maxTokens and keeps no runtime token limit). Each reads a version-1 record as version 1 wrote it."
   ],
   "predecessors": [
     {

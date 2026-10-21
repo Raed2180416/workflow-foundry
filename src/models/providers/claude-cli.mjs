@@ -102,7 +102,8 @@ export function interpretResult(result, { modelId, stderr = '' } = {}) {
     const status = Number(result.api_error_status);
     const detail = `${result.subtype ?? 'error'}${result.api_error_status ? ` (HTTP ${result.api_error_status})` : ''}`;
     if (result.subtype === 'error_max_budget_usd') throw fail('MODEL_BUDGET', 'claude CLI hit the per-call --max-budget-usd cap', extra);
-    if (status === 429 || status === 529 || RATE.test(`${result.result ?? ''} ${stderr}`)) throw fail('MODEL_RATE_LIMIT', `claude CLI rate limited or overloaded: ${detail}`, extra);
+    // The CLI's own text carries what the user needs (a usage limit's reset time, a retry-after): it is kept, cut short (orch-20261021 D3).
+    if (status === 429 || status === 529 || RATE.test(`${result.result ?? ''} ${stderr}`)) throw fail('MODEL_RATE_LIMIT', `claude CLI rate limited or overloaded: ${detail}${result.result ? `: ${String(result.result).slice(0, 200)}` : ''}`, extra);
     if (/structured.?output/i.test(result.subtype ?? '')) throw fail('MODEL_SCHEMA', `claude CLI could not produce structured output: ${detail}`, extra);
     if (result.stop_reason === 'refusal') throw fail('MODEL_REFUSAL', 'The model refused the request', extra);
     if (status >= 500 || status === 401 || status === 403) throw fail('MODEL_UNAVAILABLE', `claude CLI API error: ${detail}`, extra);

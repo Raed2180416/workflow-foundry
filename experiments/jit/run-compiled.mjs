@@ -13,7 +13,7 @@ import { validateOutput } from './interpret.mjs';
 import { FoundryError } from '../../src/data.mjs';
 import { REPLAYABLE_ERRORS } from '../../src/journal.mjs';
 
-export const DEOPT_EXIT = 75, MAX_TRACE_EVENTS = 5000;
+export const DEOPT_EXIT = 75, ENV_EXIT = 76, MAX_TRACE_EVENTS = 5000;
 // DEFAULT_FLOW is the version-1 SDK (frozen); a prompt-version-2 arm passes flowPath = FLOW_V2 (stream.mjs, prompts.mjs flowFileOf).
 export const DEFAULT_FLOW = path.resolve(new URL('./flow.mjs', import.meta.url).pathname);
 export const FLOW_V2 = path.resolve(new URL('./flow-v2.mjs', import.meta.url).pathname);
@@ -286,7 +286,7 @@ async function runOnce({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs =
   const schema = outputSchema ?? (familyId ? (await loadFamily(familyId)).outputSchema : null);
   const source = readFileSync(solvePath, 'utf8');
   mkdirSync(path.join(workdir, 'tools'), { recursive: true });
-  for (const stale of ['deopt.json', 'trace.jsonl', '.solve.stdout', '.solve.stderr', 'tools/flow-override.mjs', 'tools/flow-override.json', SCOPE_FILE]) rmSync(path.join(workdir, stale), { force: true });
+  for (const stale of ['deopt.json', 'env-fault.json', 'trace.jsonl', '.solve.stdout', '.solve.stderr', 'tools/flow-override.mjs', 'tools/flow-override.json', SCOPE_FILE]) rmSync(path.join(workdir, stale), { force: true });
   if (flowScope != null) {
     if (typeof flowScope !== 'object' || typeof flowScope.span !== 'string' || typeof flowScope.path !== 'string' || !Number.isInteger(flowScope.depth)) throw new Error('runCompiled: flowScope must be {span, parent, path, depth}');
     if (!flowPath || path.resolve(flowPath) !== FLOW_V3) throw new Error('runCompiled: flowScope needs flow-v3.mjs (only flow-v3 reads tools/flow-scope.json)');
@@ -319,6 +319,11 @@ async function runOnce({ solvePath, task, modelPort, perTaskUsd = 1, timeoutMs =
   if (!r.sandboxReady && !r.timedOut) { status = 'crash'; error = { code: 'SANDBOX_UNAVAILABLE', message: r.stderr.slice(-400) }; }
   else if (r.timedOut) { status = 'timeout'; error = { code: 'SCRIPT_TIMEOUT' }; }
   else if (r.code === DEOPT_EXIT) { status = 'deopt'; deopt ??= { kind: 'unknown', detail: 'exit 75 without deopt.json' }; }
+  else if (r.code === ENV_EXIT) {
+    // flow-v3 stopped on an outage (ENV_EXIT): an environment fault the stream retries, never a deopt or a solver crash (orch-20261021 D2).
+    let fault = null; try { fault = JSON.parse(readFileSync(path.join(workdir, 'env-fault.json'), 'utf8')); } catch {}
+    status = 'crash'; error = { code: fault?.code ?? 'MODEL_UNAVAILABLE', message: `environment fault at ${fault?.name ?? '?'}: ${String(fault?.detail?.error ?? '').slice(0, 300)}` };
+  }
   else if (r.code !== 0) { status = 'crash'; error = { code: 'SCRIPT_ERROR', exitCode: r.code, message: r.stderr.slice(-400) }; }
   else {
     output = lastJsonLine(r.stdout);

@@ -118,6 +118,12 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { callModel } from './model.mjs';
 
 export const DEOPT_EXIT = 75;
+// An outage (rate or usage limit, provider down, timeout) is the environment's, not the solver's: the run stops with ENV_EXIT and
+// env-fault.json {code, name, detail} instead of escalating to a dearer tier or deopting (DESIGN §5.1 "outages never escalate";
+// orch-20261021 D2). run-compiled.mjs reports it as an environment fault, which the streams retry after the outage.
+export const ENV_EXIT = 76;
+const ENV_FAULT_RE = /\b(MODEL_RATE_LIMIT|MODEL_UNAVAILABLE|MODEL_TIMEOUT)\b|model call failed: (429|502|503|504|529)\b/;
+const envCodeOf = text => (/\b(MODEL_RATE_LIMIT|MODEL_UNAVAILABLE|MODEL_TIMEOUT)\b/.exec(text)?.[1]) ?? (/model call failed: (429|529)\b/.test(text) ? 'MODEL_RATE_LIMIT' : 'MODEL_UNAVAILABLE');
 const MAX_EVENTS = 5000, MAX_TEXT = 64 * 1024, HEAD_TEXT = 2048, MAX_FLAG_NAMES = 50;
 const TRACE = 'trace.jsonl', DEOPT = 'deopt.json';
 const CALLS = new URL('./calls.jsonl', import.meta.url);   // model.mjs appends one line per call (with its costUsd) here
@@ -417,6 +423,17 @@ export function createFlow({ budgetUsd = 0.5, autoFlag = false, override = fileO
         if (state.spentUsd >= budgetUsd) { record({ ok: false }); deopt('budget', name, { spentUsd: usd(state.spentUsd), budgetUsd, tiersTried }); }
         const results = await Promise.all(Array.from({ length: samples }, (_, i) => ask(model, k, i)));
         const cost = usd(results.reduce((s, r) => s + r.cost, 0));
+        // An outage on this tier with no usable sample: stop as an environment fault, never try the next (dearer) tier.
+        const outage = results.find(r => r.error && ENV_FAULT_RE.test(r.error));
+        if (outage && !results.some(r => !r.error && !r.problem)) {
+          tiersTried.push({ model, ok: false, error: outage.error, costUsd: cost });
+          record({ ok: false });
+          const code = envCodeOf(outage.error), detail = { tier: model, error: outage.error.slice(0, 300), spentUsd: usd(state.spentUsd) };
+          try { writeFileSync('env-fault.json', JSON.stringify({ code, name, detail }, null, 1)); } catch {}
+          event({ kind: 'env-fault', name, code, detail, ...totals() });
+          state.deopted = true;
+          process.exit(ENV_EXIT);
+        }
         // The gateway refused the call for budget: no stronger tier can help.
         if (results.some(r => /model call failed: 402\b/.test(r.error ?? ''))) {
           tiersTried.push({ model, ok: false, error: 'gateway budget exhausted', costUsd: cost });

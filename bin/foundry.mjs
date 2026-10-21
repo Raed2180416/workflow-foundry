@@ -49,6 +49,8 @@ const executing = new Set(['run', 'resume', 'tick', 'trial']);
 function interruptOnSignal(foundry, halt) {
   const handler = (name, code) => () => {
     halt.abort();
+    // Recorded so that `foundry resume` treats this as the user's interruption, not as a failed attempt of the running tasks.
+    for (const id of foundry.active.keys()) { try { foundry.store.markInterrupted(id, { pid: process.pid, signal: name }); } catch { /* best effort */ } }
     try { process.stderr.write(JSON.stringify({ interrupted: name, runs: [...foundry.active.keys()], resumable: true }) + '\n'); } catch {}
     process.exit(code);
   };

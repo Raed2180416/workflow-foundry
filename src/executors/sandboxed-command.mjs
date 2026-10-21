@@ -5,6 +5,7 @@
 // reached only through a unix socket inside the workdir). Used to run B1 scripts.
 import { spawn } from 'node:child_process';
 import { FoundryError } from '../data.mjs';
+import { lifeline, trackChild } from '../children.mjs';
 import { DEFAULT_HIDDEN, UNSHARE_ARGS, maskSteps, sandboxAvailable, sandboxScript, splitReady } from './claude-code.mjs';
 
 const SCRUBBED = /^(GH_TOKEN|GITHUB_TOKEN|GIT_CONFIG_.*|GIT_ASKPASS|CLOUDSDK_AUTH_ACCESS_TOKEN|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|CLAUDE_CODE_SESSION_ACCESS_TOKEN|CLAUDE_SESSION_INGRESS_TOKEN_FILE)$/;
@@ -17,7 +18,10 @@ export async function runSandboxed({ command, args = [], workdir, env = {}, time
   // (No NODE_EXTRA_CA_CERTS: the proxy CA bundle lives under the hidden /root; pass it in env with keepRo if ever needed.)
   const base = { PATH: '/opt/node24/bin:/usr/local/bin:/usr/bin:/bin', LANG: 'C.UTF-8', HOME: workdir };
   for (const k of Object.keys(env)) if (SCRUBBED.test(k)) throw new FoundryError('SANDBOX_ENV', `refusing to pass credential variable ${k}`);
-  const child = spawn('unshare', [...UNSHARE_ARGS, ...(network ? [] : ['--net']), 'sh', '-c', script], { env: { ...base, ...env }, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
+  // lifeline: the sandbox dies with this process (its timeout is a timer here); trackChild: a run executing it can find it (orch-20261021 B3).
+  const child = spawn(...lifeline('unshare', [...UNSHARE_ARGS, ...(network ? [] : ['--net']), 'sh', '-c', script]), { env: { ...base, ...env }, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
+  const untrack = trackChild(child, 'sandbox');
+  child.once('close', untrack);
   let stdout = '', stderr = '', timedOut = false, truncated = false;
   child.stdout.on('data', d => { if (stdout.length < maxOutputBytes) stdout += d; else truncated = true; });
   child.stderr.on('data', d => { if (stderr.length < 256 * 1024) stderr += d; });

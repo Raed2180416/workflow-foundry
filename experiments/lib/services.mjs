@@ -29,12 +29,16 @@ const readBody = req => new Promise((resolve, reject) => {
 // whose spend could not be observed (a killed hosted call) add their bound to unknownUpperUsd (null: unbounded).
 // A call in flight holds a reservation against the cap (reserveFor), so concurrent calls cannot overshoot it;
 // refusals counts requests the gateway turned away (GATEWAY_BUDGET, GATEWAY_MODEL, MODEL_NOT_IN_POLICY, ...).
+// A session token cap beside the dollar cap (orch-20261021 E2; the $0-priced model that ran 97M tokens): tokens as the runtime counts
+// them (input, output, cache writes, a tenth of cache reads). null = no token cap.
+export const DEFAULT_SESSION_TOKENS = 5000000;
 export class Ledger {
-  constructor({ capUsd, label }) {
-    this.capUsd = capUsd; this.label = label; this.spentUsd = 0; this.imputedUsd = 0; this.calls = 0; this.errors = {}; this.unknownCalls = 0; this.unknownUpperUsd = 0;
+  constructor({ capUsd, label, tokenCap = DEFAULT_SESSION_TOKENS }) {
+    this.capUsd = capUsd; this.label = label; this.tokenCap = tokenCap; this.spentUsd = 0; this.imputedUsd = 0; this.calls = 0; this.errors = {}; this.unknownCalls = 0; this.unknownUpperUsd = 0;
     this.reservedUsd = 0; this.inFlight = 0; this.refusals = {}; this.waiters = [];
   }
   remaining() { return this.capUsd - this.spentUsd - this.reservedUsd; }
+  tokensUsed() { const u = this.usage; return u ? Math.ceil(u.inputTokens + u.outputTokens + u.cacheWriteTokens + 0.1 * u.cacheReadTokens) : 0; }
   // The share of prompt tokens read from the prompt cache (cache reads / all prompt tokens), or null before any usage.
   cacheReadShare() {
     const u = this.usage; if (!u) return null;
@@ -147,6 +151,10 @@ export async function startServices({ modelPort, ledger, familyId = null, probes
       if (url.pathname === '/model') {
         if (!modelPort) { ledger.refuse?.('GATEWAY_NO_MODELS'); return json(res, 403, { error: 'no model access in this session' }); }
         if (allowedModels && !allowedModels.includes(body.model)) { ledger.refuse('GATEWAY_MODEL'); log(`/model refused: ${body.model} not allowed`); return json(res, 403, { error: `model not allowed in this session: ${body.model}` }); }
+        if (ledger.tokenCap != null && ledger.tokensUsed() >= ledger.tokenCap) {
+          ledger.refuse('GATEWAY_TOKENS'); log(`/model refused: token budget (${ledger.tokensUsed()} of ${ledger.tokenCap})`);
+          return json(res, 402, { error: 'token budget exhausted', tokensUsed: ledger.tokensUsed(), tokenCap: ledger.tokenCap });
+        }
         const schema = body.schema ?? { type: 'object', properties: { text: { type: 'string' } }, required: ['text'], additionalProperties: false };
         const entry = modelPort.policy?.models?.find(m => m.id === body.model);
         const reserve = reserveFor(modelPort.policy, { ...body, schema }, modelPort.providers?.[entry?.provider]?.maxBudgetUsd ?? 1);

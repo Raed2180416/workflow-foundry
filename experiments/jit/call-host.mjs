@@ -270,7 +270,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
   if (!NOVEL_MODES.includes(novelMode)) throw new Error(`createCallHost: novelMode must be one of ${NOVEL_MODES.join(', ')}`);
   if (interpreter != null && typeof interpreter !== 'function') throw new Error('createCallHost: interpreter must be a function ({task, outputSchema, budgetUsd, timeoutMs, workdir, ...}) => {answer, costUsd}');
   if (!(typeof interpretFloorUsd === 'number' && interpretFloorUsd >= 0)) throw new Error('createCallHost: interpretFloorUsd must be a number >= 0');
-  const events = [], journalOut = [], spans = new Map(), memo = new Map();
+  const events = [], journalOut = [], spans = new Map(), memo = new Map(), inflightCalls = new Map();
   for (const row of journal ?? []) if (row?.key && row.result?.status === 'ok') memo.set(row.key, { result: row.result, replayed: true });   // call and agent rows (keys differ)
   const tree = { children: 0 };
   const agentCfg = agentConfigOf(agent, { allowedModels, modelPort });
@@ -426,7 +426,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     const itemAttempt = itemAttemptOf(req);
     const key = callee && inputDigest ? callKeyOf({ callee, inputDigest, parentPath: scope.path, promptDigest, itemAttempt }) : null;
     const onRefuse = ON_REFUSE.includes(req.onRefuse) ? req.onRefuse : 'deopt', onDeopt = ON_DEOPT.includes(req.onDeopt) ? req.onDeopt : 'propagate';
-    let entry = null, span = null, applicability = { checked: false }, warning = null;
+    let entry = null, span = null, applicability = { checked: false }, warning = null, landed = null;
     if (name) {
       // The SDK's span id is used when well formed and unused in this scope (it is deterministic: fixed in call order);
       // otherwise the host numbers it.
@@ -522,8 +522,13 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       }
       const hit = memo.get(key);
       if (hit) return finish({ ...hit.result, memo: hit.replayed ? 'replay' : 'repeat' });
+      // Single flight (orch-20261021 A9): an identical call (same key) already running is joined instead of run a second time; the memo
+      // above only knows calls that have ended. A joined call that did not end ok runs on its own, as before.
+      const flying = inflightCalls.get(key);
+      if (flying) { const settled = await flying; if (settled?.status === 'ok') return finish({ ...settled, memo: 'joined' }); }
       const no = budgetRefusal(childUsd, entry.minBudgetUsd ?? budgetFloorUsd);
       if (no) return refuse(no[0], no[1]);
+      inflightCalls.set(key, new Promise(resolve => { landed = resolve; }));
 
       // Reserve, run, release. The reservation returns to the caller when the child ends; its spend is booked to the caller.
       tree.children++;
@@ -565,8 +570,10 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       }
       const envFault = childFault ?? (interp && !interp.ok ? envFaultOf({ error: interp.error }) : null);
       if (envFault) result = { ...result, envFault };
+      if (landed) { inflightCalls.delete(key); landed(result); landed = null; }
       return finish(result, { costUsd, costUnknown: !!r.costUnknown || !!interp?.costUnknown, child });
     } catch (error) {
+      if (landed) { inflightCalls.delete(key); landed(null); landed = null; }
       // A host fault before the child ran (a malformed registry entry, a profile that cannot be read): a child deopt.
       return finish({ status: 'deopt', childStatus: 'host-error', deopt: { kind: 'host-error', name: null, detail: short(error, 400) } });
     }

@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { FoundryError } from '../data.mjs';
 import { CHILD_ENV_ALLOWED } from '../models/policy.mjs';
+import { lifeline, trackChild } from '../children.mjs';
 
 // An executor sees only its own workdir under WORK_ROOT and at most one kit under KIT_ROOT.
 export const WORK_ROOT = '/var/tmp/foundry-work', KIT_ROOT = '/opt/foundry-kit';
@@ -307,7 +308,10 @@ export async function runClaudeCode({
   if (effort) args.push('--effort', effort);
   const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [binary, ...args]);
   const started = Date.now();
-  const child = spawn('unshare', [...UNSHARE_ARGS, 'sh', '-c', script], { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
+  // lifeline: the session dies with this process; trackChild: a run executing it can find it after a crash (orch-20261021 B3).
+  const child = spawn(...lifeline('unshare', [...UNSHARE_ARGS, 'sh', '-c', script]), { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
+  const untrack = trackChild(child, 'executor');
+  child.once('close', untrack);
   let stdout = '', stderr = '', timedOut = false;
   child.stdout.on('data', d => { stdout += d; });
   child.stderr.on('data', d => { if (stderr.length < 64 * 1024) stderr += d; });

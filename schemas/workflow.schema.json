@@ -30,7 +30,8 @@
         "maxSteps": {"type": "integer", "minimum": 1, "maximum": 100000},
         "maxConcurrency": {"type": "integer", "minimum": 1, "maximum": 16},
         "maxDurationMs": {"type": "integer", "minimum": 1, "maximum": 2592000000},
-        "maxCost": {"type": "number", "minimum": 0, "maximum": 1000000}
+        "maxCost": {"type": "number", "minimum": 0, "maximum": 1000000},
+        "maxTokens": {"type": "integer", "minimum": 1, "maximum": 10000000000, "description": "Model tokens the run may use (input, output and cache writes in full, cache reads at a tenth), whatever they cost in dollars."}
       }
     },
     "nodes": {"$ref": "#/definitions/nodes"},

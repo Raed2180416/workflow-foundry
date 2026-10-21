@@ -9,7 +9,15 @@
 //
 // Dependency-free on purpose (it is imported by process.mjs and sandbox.mjs, which the model providers use).
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+
+// Linux only: setpriv(1) sets PR_SET_PDEATHSIG before it execs the command, so the kernel SIGKILLs the child the moment the process that
+// spawned it dies, however it dies (SIGKILL, the OOM killer). Detached groups otherwise outlive a killed owner until a cancel or resume
+// reaps them, and the experiment executors record nothing to reap (orch-20261021 B2, B3). Elsewhere (macOS has no PDEATHSIG) the
+// recorded groups and reapChildren stay the only cleanup.
+const SETPRIV = process.platform === 'linux' ? (['/usr/bin/setpriv', '/bin/setpriv'].find(p => { try { return existsSync(p); } catch { return false; } }) ?? null) : null;
+/** [command, args] for spawn(): `command` wrapped so that it dies with the process that spawns it (see SETPRIV); unchanged without setpriv. */
+export function lifeline(command, args) { return SETPRIV ? [SETPRIV, ['--pdeathsig', 'KILL', '--', command, ...args]] : [command, args]; }
 
 /** Set by the runtime around a sandbox or model call: {add(child), remove(pid)}. */
 export const childScope = new AsyncLocalStorage();
