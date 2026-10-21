@@ -692,7 +692,7 @@ class Gen:
         param, value = rng.choice(cands)
         self.events.append(self.amend_event(ta, L.SALES_OPS, "Morgan Ellis, Sales Operations", param, value, eff, "authorized"))
         tb = self.slot(lo, hi + timedelta(hours=20))
-        bad_from = rng.choice([rng.choice(self.users)["email"], f"sales-ops@company-example.com", f"sales.ops@{L.ORG}",
+        bad_from = rng.choice([rng.choice(self.users)["email"], f"sales-ops@company.example.net", f"sales.ops@{L.ORG}",
                                "revops@northpeak-advisory.example.com"])
         p2 = rng.choice(L.PARAMS[:4])
         self.events.append(self.amend_event(tb, bad_from, "Sales team", p2, f"{AMEND_ADDR[p2]}-{rng.randint(2, 9)}@{L.ORG}",

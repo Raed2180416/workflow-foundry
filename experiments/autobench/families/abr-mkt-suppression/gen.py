@@ -69,12 +69,17 @@ MUST_TRAPS = {"unsub": ["keep-note"], "hard": ["vendor-note"]}  # planted first,
 SOFT_TRAPS = ["boundary-out", "lookalike", "chain", "boundary-in", "case", "resolved", "late-report"]
 OTHER_TRAPS = ["type-format", "premium-note"]
 REPEATS = ["retry", "duplicate", "second-request", "rebounce"]
+# A Policy Log row Compliance has already approved for a later date (d2 and d3). Candidates (parameter, value); the
+# generator keeps the one that changes the fewest (but at least one) of this week's event outcomes for a solver that
+# ignores the Effective date, so the "on or before today" clause of POLICY.md section 8 is exercised every week.
+FUTURE_ROWS = [("Soft-bounce threshold", "2"), ("Soft-bounce threshold", "4"), ("Soft-bounce window", "14"),
+               ("Soft-bounce window", "60")]
 
 TRAP_KIND = {  # trap label -> one of the six design kinds (RECURRING-DESIGN section 3.4)
     "case": "T-lookalike", "plus-address": "T-lookalike", "digit-domain": "T-lookalike", "am-lookalike": "T-lookalike",
     "soft-lookalike": "T-lookalike",
     "old-confirm": "T-stale", "confirm-boundary": "T-stale", "window-boundary-out": "T-stale",
-    "window-boundary-in": "T-stale", "amended-parameter": "T-stale",
+    "window-boundary-in": "T-stale", "amended-parameter": "T-stale", "future-parameter": "T-stale",
     "retracted": "T-note", "resolved": "T-note", "pre-migration": "T-note", "hold": "T-note", "hold-release": "T-note",
     "premium": "T-note", "premium-no-manager": "T-note", "premium-note": "T-note", "reprocess": "T-note",
     "keep-note": "T-authority", "vendor-note": "T-authority", "unauthorized-amendment": "T-authority",
@@ -127,6 +132,8 @@ class Gen:
         self.amend_spec: dict | None = None
         self.names: dict[str, tuple[str, str]] = {}
         self.guard_world: list[str] = []
+        self.future_spec: dict | None = None
+        self._ignore_effective = False  # True only while plan_future_row simulates the "ignores Effective" mistake
 
     # ------------------------------------------------------------------ ids, names, time
     def rid(self, prefix: str, n: int = 12, alphabet: str = "0123456789abcdef") -> str:
@@ -820,6 +827,48 @@ class Gen:
         uvalue = str(rng.choice([5, 6, 10])) if uparam == "Soft-bounce threshold" else str(rng.choice([7, 90]))
         self.amend_event(tu, who[0], who[1], uparam, uvalue, tu.date(), "unauthorized")
 
+    def plan_future_row(self):
+        """T-stale, future-dated: a Policy Log row that Compliance approved for a date after this week (world0).
+
+        Drawn from its own seeded stream (so every other draw of the week is unchanged) and only at d2 and d3. The truth
+        ignores it (its Effective date is never on or before any trigger's today). Of the candidates, the one that changes
+        the fewest, but at least one, event outcomes for a solver that ignores the Effective date is kept, and those
+        triggers carry the trap label `future-parameter`.
+        """
+        if self.diff == "d1":
+            return
+        rng = random.Random(f"{L.FAMILY}:{L.VERSION}:{self.seed}:{self.diff}:future-row")
+        eff = self.friday + timedelta(days=3 + 7 * rng.randint(0, 4))  # a Monday one to five weeks after this week
+        while True:
+            rid = "pl" + "".join(rng.choice("0123456789abcdef") for _ in range(6))
+            if rid not in self.used_ids:
+                self.used_ids.add(rid)
+                break
+        base = [L.canon(t["expect"]) for t in self.simulate(self.events)["truth"]]
+        options = []
+        for param, value in FUTURE_ROWS:
+            row = {"id": rid, "cells": {"Effective": ds(eff), "Parameter": param, "Value": value, "Approved by": L.COMPLIANCE}}
+            self.rows["policy"].append(row)
+            self._ignore_effective = True
+            try:
+                alt = [L.canon(t["expect"]) for t in self.simulate(self.events)["truth"]]
+            finally:
+                self._ignore_effective = False
+                self.rows["policy"].pop()
+            diff = [ev["trigger"] for ev, a, b in zip(self.events, base, alt) if ev["kind"] != "day.close" and a != b]
+            options.append((row, diff))
+        live = [o for o in options if o[1]]
+        if live:
+            least = min(len(d) for _, d in live)
+            row, diff = rng.choice([o for o in live if len(o[1]) == least])
+        else:
+            row, diff = rng.choice(options)
+        self.rows["policy"].append(row)
+        for ev in self.events:
+            if ev["trigger"] in diff:
+                ev["traps"].append("future-parameter")
+        self.future_spec = {**row["cells"], "discriminating": len(diff)}
+
     def amend_event(self, t: datetime, sender: str, signature: str, param: str, value: str, eff: date, sub: str):
         when = "today" if eff == t.date() else f"on {eff.strftime('%A')}"
         unit = "soft bounces" if param == "Soft-bounce threshold" else "days"
@@ -992,7 +1041,7 @@ class Gen:
 
     def sim_soft(self, X: dict, email: str, ref: str, notes: str):
         S, today = X["S"], X["today"]
-        T, W = self.params_rows_at(S["policy"], today)
+        T, W = self.params_rows_at(S["policy"], "9999-12-31" if self._ignore_effective else today)
         count = 1 + sum(1 for r in S["blog"] if r["Email"].strip().lower() == email and L.in_window(r["Date"], today, W))
         dec = None
         if count >= T:
@@ -1126,6 +1175,7 @@ class Gen:
         self.events.sort(key=lambda e: e["t"])
         for i, ev in enumerate(self.events, 1):
             ev["trigger"] = f"s{self.seed}/t{i:02d}"
+        self.plan_future_row()
         sim = self.simulate(self.events)
         triggers, truth = [], []
         for ev in self.events:
@@ -1153,7 +1203,8 @@ class Gen:
                 "traps": dict(sorted(traps.items())), "trap_kinds": dict(sorted(tkinds.items())),
                 "trap_rate_events": round(sum(1 for t in evs if t["traps"]) / max(1, len(evs)), 3),
                 "trap_rate_all": round(sum(1 for t in truth if t["traps"]) / max(1, len(truth)), 3),
-                "amendment": ({k: (v if k != "t" else iso(v)) for k, v in self.amend_spec.items()} if self.amend_spec else None)}
+                "amendment": ({k: (v if k != "t" else iso(v)) for k, v in self.amend_spec.items()} if self.amend_spec else None),
+                "future_row": self.future_spec}
 
 
 def generate(seed: int, difficulty: str | None = None) -> dict:

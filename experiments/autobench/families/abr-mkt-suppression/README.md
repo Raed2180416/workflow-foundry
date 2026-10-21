@@ -29,7 +29,10 @@ State that crosses triggers lives in the world, visible to every arm: the Compli
 confirmation dedupe, the daily counts), the Bounce Log (30-day soft-bounce counters, pre-seeded with earlier weeks), the
 hold notes in the source sheets (some pre-seeded holds from last week fall due this week), Mailchimp member status
 (archiving again is a no-op), and the Suppression Policy Log (parameter editions; the authorized d3 amendment lowers the
-threshold to 2 or moves the window to 14, 21, 45 or 60 days mid-week).
+threshold to 2 or moves the window to 14, 21, 45 or 60 days mid-week). At d2 and d3 the Policy Log also holds a row
+Compliance has already approved for a Monday one to five weeks after the week (threshold 2 or 4, or window 14 or 60
+days). It does not apply yet; the generator keeps the candidate that changes the fewest, but at least one, of the week's
+event outcomes for a solver that ignores the Effective date, and labels those triggers `future-parameter` (T-stale).
 
 ## Grounded on (AutomationBench public set, commit `4a8e106`)
 
@@ -65,7 +68,7 @@ held-out (near), so the dev streams 610–613 are for harness rehearsal only, ne
 | [gen.py](gen.py) | Seeded generator: `world0.json`, `triggers.jsonl` (payload + host-only delta + trap ids), `truth.jsonl`, `end.json`, `meta.json`. `random.Random("abr-mkt-suppression:1.0.0:<seed>:<difficulty>")`, no wall clock. The truth comes from its own model of the business (`Gen.simulate`), never from an arm |
 | [oracle.py](oracle.py) | Grades one trigger (world before vs after) and the end of the week. Never reads an arm's output to decide what was right |
 | [reference.py](reference.py) | The reference workflow: observable-only, written from POLICY.md, standard library only; reaches the world only through `api.fetch` (AutomationBench's `api_fetch`) |
-| [controls.py](controls.py) | Thirteen bad controls: `null`, `echo`, `naive` (33 lines) and ten one-defect variants of the reference |
+| [controls.py](controls.py) | Fourteen bad controls: `null`, `echo`, `naive` (33 lines) and eleven one-defect variants of the reference |
 | [harness.py](harness.py) | In-process stream runner and the $0 validity gates (§3.11): `run`, `controls`, `gates`, `mutation`, `export` |
 | [tests/test_suppression.py](tests/test_suppression.py) | pytest, inside AutomationBench's venv |
 

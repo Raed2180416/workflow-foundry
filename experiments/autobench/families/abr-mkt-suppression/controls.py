@@ -16,6 +16,7 @@
     keepproduct   follows the marketing manager: never archives from Product Updates
     noreprocess   ignores the "system error, reprocess" updates
     noskip        ignores RESOLVED / pre-migration / retracted notes
+    effectivenow  reads the Policy Log ignoring Effective dates (a row approved for a later date applies at once)
 """
 from __future__ import annotations
 
@@ -138,6 +139,11 @@ class NoSkip(R.Suppression):
         return False
 
 
+class EffectiveNow(R.Suppression):
+    def params(self, today):
+        return super().params("9999-12-31")
+
+
 def variant(cls):
     def run(payload, api):
         cls(api).handle(payload)
@@ -148,6 +154,6 @@ def variant(cls):
 CONTROLS = {"null": null, "echo": echo, "naive": naive, "nodedupe": variant(NoDedupe), "fuzzy": variant(Fuzzy),
             "nohold": variant(NoHold), "nopremium": variant(NoPremium), "nowindow": variant(NoWindow),
             "confirmall": variant(ConfirmAll), "anyauthor": variant(AnyAuthor), "keepproduct": variant(KeepProduct),
-            "noreprocess": variant(NoReprocess), "noskip": variant(NoSkip)}
+            "noreprocess": variant(NoReprocess), "noskip": variant(NoSkip), "effectivenow": variant(EffectiveNow)}
 
 assert not [n for n in CONTROLS if not re.fullmatch(r"[a-z]+", n)]

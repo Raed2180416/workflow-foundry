@@ -182,3 +182,11 @@ kinds where that rule applies: for example, priority checks for `stale-threshold
   - added `gates.py`, the tests and this README.
 
   The generator stays at version 1.0.0, because no stream from it has been used for any label.
+- 2026-10-21, re-verification (no code change, $0): the 38 tests pass again (about 50 s), and `gates.py --seeds 610-614`
+  reproduces every number above. An uncommitted ad-hoc probe tried five more one-rule mistakes on 610–614. Each one
+  failed on the trigger kind where its rule applies:
+  - Calendly wall clock with the UTC offset ignored: 88/100;
+  - no escalation: 97/100, the 3 escalations graded `miss`;
+  - week count including retracted tasks: 95/100;
+  - an extra acknowledgement post on retraction: 90/100;
+  - internal invitees handled: 95/100.

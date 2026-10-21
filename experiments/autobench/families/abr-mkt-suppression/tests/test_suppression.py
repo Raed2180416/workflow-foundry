@@ -38,10 +38,10 @@ BAD = list(C.CONTROLS)
 BITES = {"nodedupe": {"retry"}, "fuzzy": {"plus-address", "digit-domain", "soft-lookalike", "am-lookalike"},
          "nohold": {"hold", "hold-release"}, "nopremium": {"premium"}, "nowindow": {"window-boundary-out"},
          "confirmall": {"recent-confirm", "reprocess"}, "anyauthor": {"unauthorized-amendment"}, "noreprocess": {"reprocess"},
-         "noskip": {"resolved", "retracted", "pre-migration"}}
+         "noskip": {"resolved", "retracted", "pre-migration"}, "effectivenow": {"future-parameter"}}
 # variants whose clause exists only in some weeks (amendments and reprocess at d3, window edges, recent confirmations,
 # invalid-note rows)
-NARROW = {"anyauthor", "noreprocess", "nowindow", "confirmall", "noskip"}
+NARROW = {"anyauthor", "noreprocess", "nowindow", "confirmall", "noskip", "effectivenow"}
 
 
 @pytest.fixture(scope="module")
@@ -206,6 +206,19 @@ def test_every_bad_control_fails(bad, name):
     assert rate < 1.0 and not all(res["clean_week"] for res in bad[name].values()), (name, rate)
     if name not in NARROW:
         assert rate < 0.95, (name, rate)
+
+
+def test_ignoring_effective_dates_fails_every_week(gens):
+    """The world0 Policy Log holds a row Compliance approved for a date after the week (d2 and d3). A solver that ignores
+    the Effective date applies it at once; the generator keeps a row that changes at least one outcome every week."""
+    for s, g in gens.items():
+        fr = g["meta"]["future_row"]
+        assert fr and fr["Effective"] > g["triggers"][-1]["at"][:10] and fr["discriminating"] >= 1, (s, fr)
+        assert sum("future-parameter" in t["traps"] for t in g["triggers"]) == fr["discriminating"]
+        res = H.run_stream("effectivenow", s, g=g)
+        assert not res["clean_week"], s
+        assert any(not r["pass"] and "future-parameter" in r["traps"] for r in res["rows"]), s
+    assert G.generate(631, "d1")["meta"]["future_row"] is None
 
 
 def test_naive_heuristic_scores_below_60_percent_at_d3(bad):

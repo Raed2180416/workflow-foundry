@@ -162,7 +162,7 @@ def run_stream(solver: str, seed: int, difficulty: str | None = None, mode: str 
                 v["pass"] = False
                 v["outcome"] = "wrong" if v["effects"] else "miss"
             v["end_pass"] = e["pass"]
-        rows.append({"taskKey": trig["trigger"].replace(f"s{seed}/", f"s{seed}/"), "stream": seed, "trigger": k + 1,
+        rows.append({"taskKey": trig["trigger"], "stream": seed, "trigger": k + 1,
                      "kind": trig["kind"], "sub": trig["sub"], "truth": truth["outcome"], "traps": trig["traps"],
                      "pass": v["pass"], "outcome": v["outcome"], "score": v["score"], "calls": api.calls, "error": err,
                      "failed": [[n, _short(d)] for n, d in v["failed"]][:8]})
@@ -249,14 +249,22 @@ def gate_leakage(g: dict) -> dict:
 
 # -- oracle mutation score: mutate a correct (reference) after-world, the oracle must flag it ---------------------------
 def _new(before: dict, after: dict, path: tuple[str, str], key) -> list[int]:
-    seen = {key(x) for x in before[path[0]][path[1]]}
-    return [i for i, x in enumerate(after[path[0]][path[1]]) if key(x) not in seen]
+    """Indexes of records in `after` that are not in `before`, matched as a multiset by `key`."""
+    seen = Counter(key(x) for x in before[path[0]][path[1]])
+    out = []
+    for i, x in enumerate(after[path[0]][path[1]]):
+        k = key(x)
+        if seen[k] > 0:
+            seen[k] -= 1
+        else:
+            out.append(i)
+    return out
 
 
 def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
     out = []
     em = _new(before, after, ("gmail", "messages"), lambda m: m["id"])
-    sl = _new(before, after, ("slack", "messages"), lambda m: (m["channel_id"], m["ts"]))
+    sl = _new(before, after, ("slack", "messages"), L.canon)
     rw = _new(before, after, ("google_sheets", "rows"), lambda r: r["id"])
 
     def mut(name, fn):
@@ -272,6 +280,10 @@ def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
         mut("extra-recipient", lambda a: a["gmail"]["messages"][em[0]].__setitem__("cc", [other]))
         mut("email-amount-format", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", r"\$(\d{1,3}),(\d{3})", r"$\1\2"))
         mut("email-subject", lambda a: a["gmail"]["messages"][em[0]].__setitem__("subject", "Deal closed"))
+        if (truth["expect"].get("closing") or {}).get("tier"):
+            wrong_tier = next(t for t in O.TIER_WORDS if t != truth["expect"]["closing"]["tier"])
+            mut("email-other-tier", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", r"$", f"\nSalesforce tier: {wrong_tier}"))
+            mut("email-other-amount", lambda a: _sub(a["gmail"]["messages"][em[0]], "body_plain", r"$", "\nList price: $1,000"))
     if sl:
         mut("drop-slack", lambda a: a["slack"]["messages"].pop(sl[-1]))
         mut("dup-slack", lambda a: a["slack"]["messages"].append(dict(a["slack"]["messages"][sl[0]], ts="1999999999.000001")))
@@ -295,6 +307,18 @@ def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
             b = next(o for o in before["salesforce"]["opportunities"] if o["id"] == c["opp"])
             o["description"] = b.get("description")
         mut("drop-description", undo_desc)
+
+        def opp_set(a, field, value):
+            o = next(o for o in a["salesforce"]["opportunities"] if o["id"] == c["opp"])
+            if field == "description":
+                v = (o.get("description") or "").replace("\nAnnounced in #deal-wins", " Announced in #deal-wins")
+                if v == o.get("description"):
+                    return False
+                value = v
+            o[field] = value
+        mut("description-same-line", lambda a: opp_set(a, "description", None))
+        mut("sf-closedate", lambda a: opp_set(a, "close_date", "2020-01-01T00:00:00"))
+        mut("sf-probability", lambda a: opp_set(a, "probability", 3))
         if c["set_fields"]:
             def amount(a):
                 o = next(o for o in a["salesforce"]["opportunities"] if o["id"] == c["opp"])
@@ -312,6 +336,8 @@ def mutations(before: dict, after: dict, truth: dict) -> list[tuple[str, dict]]:
         o = next(o for o in a["salesforce"]["opportunities"] if o["id"] != (c or {}).get("opp"))
         o["description"] = (o.get("description") or "") + " touched"
     mut("extra-sf-write", other_opp)
+    mut("post-then-delete", lambda a: a["slack"]["messages"].append({**copy.deepcopy(a["slack"]["messages"][0]), "ts": "1999999999.000004",
+                                                                    "channel_id": L.CHANNELS["exec-wins"], "text": "CLOSED: test", "is_deleted": True}))
     mut("sink-post", lambda a: a["slack"]["messages"].append({**copy.deepcopy(a["slack"]["messages"][0]), "ts": "1999999999.000003",
                                                              "channel_id": L.CHANNELS["automation-review"], "text": "checked"}))
     return out

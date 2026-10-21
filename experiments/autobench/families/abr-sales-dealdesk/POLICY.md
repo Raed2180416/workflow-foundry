@@ -1,6 +1,6 @@
 # Deal Desk automation: standing policy
 
-Owner: Sales Ops (sales-ops@company.example.com). Policy version 1.
+Owner: Sales Ops (sales-ops@company.example.com). Policy version 1.1.
 
 > Every closed deal is announced once, to the right people, in our house format.
 
@@ -66,8 +66,8 @@ A deal closes when an envelope is completed, or when an opportunity's stage chan
    `support-escalation@company.example.com` if the opportunity's account, or its parent account (one level up only), has
    a case with Priority `Critical` or `High` whose Status is not `Closed`.
 8. **Email.** Subject exactly `Deal Closed Notification`. The body names the opportunity (its Salesforce name), the USD
-   amount in the format above and the tier. Send one email to all recipients, or one email per recipient. No other
-   recipients, and each recipient gets the notice once.
+   amount in the format above and the tier. It names no other tier and no other `$` amount. Send one email to all
+   recipients, or one email per recipient. No other recipients, and each recipient gets the notice once.
 9. **Slack.** Post in `#deal-wins` exactly:
    `CLOSED: <Opportunity Name> | $<USD> | <Tier> | AE: <Owner>`
    with the opportunity's Salesforce name and its owner's Salesforce user name. If the USD amount is at or above the

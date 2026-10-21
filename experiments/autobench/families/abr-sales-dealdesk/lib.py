@@ -10,7 +10,7 @@ import re
 from decimal import ROUND_HALF_UP, Decimal
 
 FAMILY = "abr-sales-dealdesk"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 APPS = ["salesforce", "docusign", "google_sheets", "gmail", "slack"]
 
 ORG = "company.example.com"

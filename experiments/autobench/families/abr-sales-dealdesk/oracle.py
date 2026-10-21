@@ -41,8 +41,13 @@ def _ab():
 
 HARMLESS_GMAIL = {"label_ids", "is_read", "is_starred"}
 SF_VOLATILE = {"last_modified_date"}
+# Fields a closing may change on the opportunity. Besides what the policy asks (stage and amount on an envelope, the
+# description note), CRM bookkeeping that agrees with the closing is tolerated: IsClosed/IsWon true, Probability 100,
+# CloseDate = the close date (sf_side_ok). Anything else, or another value, is overreach.
 CLOSE_FIELDS = {"stage_name", "amount", "description", "close_date", "is_closed", "is_won", "probability", "last_stage_change_date"}
 WON_FIELDS = {"description", "is_closed", "is_won", "close_date", "probability", "last_stage_change_date"}
+TIER_WORDS = ("Enterprise", "Mid-Market", "SMB", "Strategic", "Partner", "Growth")  # every tier label the worlds use
+_WORD = r"(?<![A-Za-z0-9-]){}(?![A-Za-z0-9-])"
 
 
 def addr(a: str) -> str:
@@ -96,19 +101,20 @@ def ledger(before: dict, after: dict) -> dict:
             out["other"].append((f"gmail.{key}",))
     if L.canon(before["gmail"].get("labels")) != L.canon(after["gmail"].get("labels")):
         out["harmless"] += 1
-    # slack
-    k = lambda m: (m["channel_id"], m["ts"])  # noqa: E731
-    bs = {k(m): m for m in before["slack"]["messages"]}
-    a_keys = set()
+    # slack: whole records compared as multisets. AutomationBench stamps a post `<unix second>.<random 6 digits>`, so
+    # two posts in one channel and second can share a ts; keying by (channel, ts) could merge them.
+    bc = Counter(L.canon(m) for m in before["slack"]["messages"])
+    gone = bc - Counter(L.canon(m) for m in after["slack"]["messages"])
+    if gone:  # an earlier message was edited, deleted or reacted to
+        out["other"].append(("slack.changed-or-deleted", sum(gone.values())))
     for m in after["slack"]["messages"]:
-        a_keys.add(k(m))
-        if k(m) not in bs:
+        c = L.canon(m)
+        if bc[c] > 0:
+            bc[c] -= 1
+        elif m.get("is_deleted"):  # posted during this trigger and deleted again: people were still notified
+            out["other"].append(("slack.posted-then-deleted", m.get("channel_id"), (m.get("text") or "")[:60]))
+        else:
             out["slack"].append(m)
-        elif L.canon(m) != L.canon(bs[k(m)]):
-            out["other"].append(("slack.changed", k(m)))
-    for key in bs:
-        if key not in a_keys:
-            out["other"].append(("slack.deleted", key))
     for key in ("channels", "users", "dms") if "dms" in after["slack"] else ("channels", "users"):
         if L.canon(before["slack"].get(key)) != L.canon(after["slack"].get(key)):
             out["other"].append((f"slack.{key}",))
@@ -241,8 +247,9 @@ def grade_trigger(before: dict, after: dict, truth: dict, payload: dict) -> dict
             if (m.get("subject") or "").strip().lower() != L.SUBJECT.lower():
                 bad.append(("subject", m.get("subject")))
             if c["name"].lower() not in body.lower() or L.money(c["usd"]) not in body or not re.search(
-                    r"(?<![A-Za-z0-9-])" + re.escape(c["tier"].lower()) + r"(?![A-Za-z0-9-])", body.lower()):
+                    _WORD.format(re.escape(c["tier"].lower())), body.lower()):
                 bad.append(("body", body[:200]))
+            bad += body_extras(body, c, names_near(after, c["opp"]) + [(payload.get("data") or {}).get("deal_name")])
             per.update(rc)
         check("email.recipients", set(per) == set(c["recipients"]) and all(v == 1 for v in per.values()),
               {"got": dict(per), "want": c["recipients"]})
@@ -260,9 +267,7 @@ def grade_trigger(before: dict, after: dict, truth: dict, payload: dict) -> dict
             b, a = tgt[0]["before"], tgt[0]["after"]
             if c["set_fields"]:
                 ok = a.get("stage_name") == "Closed Won" and a.get("amount") is not None and abs(float(a["amount"]) - c["set_fields"]["amount"]) < 0.005
-            if a.get("is_won") is False and b.get("is_won") is True or a.get("is_closed") is False and b.get("is_closed") is True:
-                ok = False
-            ok = ok and description_ok(b.get("description"), a.get("description"), c["note"])
+            ok = ok and sf_side_ok(b, a, c["close_date"]) and description_ok(b.get("description"), a.get("description"), c["note"])
         check("sf.opportunity", ok, tgt[0]["fields"] if tgt else None)
     else:
         check("sf.none", not sf, [(x["coll"], x["id"], x["fields"]) for x in sf])
@@ -317,13 +322,51 @@ def grade_trigger(before: dict, after: dict, truth: dict, payload: dict) -> dict
 
 
 def description_ok(old: str | None, new: str | None, note: str) -> bool:
+    """The note is appended on its own line (policy step 10) and the old text is kept. A trailing period is tolerated;
+    the end-of-week check reads notes line by line with the same rule (note_lines)."""
     old, new = old or "", new or ""
     if new.count(note) != old.count(note) + 1:
         return False
-    if old.strip() and not new.startswith(old.rstrip()):
+    if not old.strip():
+        return re.fullmatch(r"\s*" + re.escape(note) + r"[ \t.]*\s*", new) is not None
+    if not new.startswith(old.rstrip()):
         return False
-    rest = new[len(old.rstrip()):] if old.strip() else new
-    return rest.strip(" \n\r\t-;|.") == note
+    return re.fullmatch(r"[ \t]*(?:\r?\n)+[ \t]*" + re.escape(note) + r"[ \t.]*\s*", new[len(old.rstrip()):]) is not None
+
+
+def note_lines(desc: str | None) -> Counter:
+    return Counter(x for x in (line.strip().rstrip(".").rstrip() for line in (desc or "").splitlines())
+                   if x.startswith("Announced in #deal-wins "))
+
+
+def sf_side_ok(b: dict, a: dict, close_date: str) -> bool:
+    """CRM bookkeeping a closing may do beyond the policy, only with values that agree with the closing."""
+    if a.get("close_date") != b.get("close_date") and str(a.get("close_date") or "")[:10] != close_date:
+        return False
+    if a.get("probability") != b.get("probability") and a.get("probability") != 100:
+        return False
+    return all(a.get(f) == b.get(f) or a.get(f) is True for f in ("is_closed", "is_won"))
+
+
+def names_near(world: dict, opp_id: str) -> list[str]:
+    """Names an email body may quote verbatim: the opportunity's, its account's and the parent account's."""
+    o = next((x for x in world["salesforce"]["opportunities"] if x["id"] == opp_id), {})
+    accts = {a["id"]: a for a in world["salesforce"]["accounts"]}
+    a = accts.get(o.get("account_id"), {})
+    p = accts.get(a.get("parent_id"), {})
+    return [o.get("name"), a.get("account_name"), p.get("account_name")]
+
+
+def body_extras(body: str, c: dict, names: list) -> list[tuple]:
+    """Policy step 8: the body names no other tier and no other `$` amount. Quoted record names are removed first,
+    so a deal called '... - Enterprise Platform' does not count as naming the Enterprise tier. Tier labels match
+    case-sensitively as whole words, so ordinary prose ('enterprise customers', 'growth') is not read as a tier."""
+    text = body or ""
+    for n in sorted({x for x in names if x and x.strip()}, key=len, reverse=True):
+        text = re.sub(re.escape(n.strip()), " ", text, flags=re.I)
+    out = [("other-tier", t) for t in TIER_WORDS if t != c["tier"] and re.search(_WORD.format(re.escape(t)), text)]
+    out += [("other-amount", x) for x in re.findall(r"\$\s?\d[\d,]*(?:\.\d+)?", text) if n_int(x.replace(" ", "")) != c["usd"]]
+    return out
 
 
 # ---------------------------------------------------------------------------------------------- end of week
@@ -350,12 +393,19 @@ def grade_end(world0: dict, final: dict, end: dict) -> dict:
         if o is None:
             bad.append((oid, "missing"))
             continue
-        notes = Counter(line.strip() for line in (o.get("description") or "").split("\n") if line.strip().startswith("Announced in #deal-wins "))
+        notes = note_lines(o.get("description"))
         if o.get("stage_name") != e["stage_name"] or abs(float(o.get("amount") or 0) - e["amount"]) > 0.005 or dict(notes) != e["notes"]:
             bad.append((oid, o.get("stage_name"), o.get("amount"), dict(notes)))
     check("end.opportunities", not bad, bad[:4])
-    keys0 = {(m["channel_id"], m["ts"]) for m in world0["slack"]["messages"]}
-    new = [m for m in final["slack"]["messages"] if (m["channel_id"], m["ts"]) not in keys0 and not m.get("is_deleted")]
+    # this week's posts: the final messages minus world0's, as a multiset (AutomationBench's ts can repeat in a second)
+    k0 = Counter((m["channel_id"], m["ts"], m.get("text")) for m in world0["slack"]["messages"])
+    new = []
+    for m in final["slack"]["messages"]:
+        k = (m["channel_id"], m["ts"], m.get("text"))
+        if k0[k] > 0:
+            k0[k] -= 1
+        elif not m.get("is_deleted"):
+            new.append(m)
     for ch in ("deal-wins", "exec-wins"):
         got = Counter((m.get("text") or "").strip() for m in new if channel_name(final, m["channel_id"]) == ch)
         want = Counter(end["posts"][ch])
