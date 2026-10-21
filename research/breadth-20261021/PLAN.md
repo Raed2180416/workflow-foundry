@@ -36,7 +36,7 @@ AgentDojo, AppWorld and the family-factory prototype for node V**; τ² telecom 
 
 ## 0. Bottom line
 
-1. **The claim has no held-out evidence today, and the dev evidence points below the margin's comfort zone.** "Cheap model
+1. **The claim has no held-out evidence today, and the dev evidence puts Haiku + Foundry below Sonnet alone.** "Cheap model
    + Foundry is non-inferior to a frontier model alone, at lower cost" rests on development runs of one external bed. Under
    the date note, Haiku + A1 is 18/60 against Sonnet 5.5 alone 20/60 on dev60 [M, DEV60-A0-A1.md]; on devCheck, Haiku + A1
    and + A1-C are 20/60 against Sonnet alone 23/60 [S-obs; C-obs, `a0s-devcheck-1/summary.json` pass rate 0.383]. So
@@ -61,11 +61,11 @@ AgentDojo, AppWorld and the family-factory prototype for node V**; τ² telecom 
    factory families, power 0.81 if clean-stream rates are 0.75 against 0.35 and 0.35 if they are 0.70 against 0.45 [C-obs,
    `critic-owner2/estream_power.txt`]. V is where Foundry's mechanism (construct once, verify, reuse, adapt to an amendment,
    code owns the clocks) should carry the result, and the only place superiority over Opus is reachable this round.
-6. **Tier 1, built in the next phase** (§4.3; JSON at the end of the orchestrator reply): **WorkBench + the shared facade**,
+6. **Tier 1, built in the next phase** (§4.3): **WorkBench + the shared facade**,
    **AgentDojo**, **AppWorld**, and the **family-factory prototype** that produces V's streams. Installs ≈ 0.76 GB under
    D16. τ² telecom moves to the head of Tier 2 (venv size unverified, K = 3, public and possibly vendor-targeted).
-7. **Cost** (list price, [I] until dev pilots measure it; §10): sealed primary ≈ **$965** for ten beds (≈ $880 for the
-   eight core), sealed extras ≈ $75, dev ≈ $400, factory build ≈ $30: ≈ **$1.47k without V**; V adds $350–880 under its own
+7. **Cost** (list price, [I] until dev pilots measure it; §10): sealed primary ≈ **$975** for ten beds (≈ $890 for the
+   eight core), sealed extras ≈ $75, dev ≈ $400, bed cards ≈ $65, factory build ≈ $30: ≈ **$1.55k without V**; V adds $350–880 under its own
    preregistration. Frontier session-hours fall from 126 (rev 2) to 61, plus 25–45 for V [calc, `plan3/cost4.txt`; C-obs].
    Build agents are the hidden cost (§10.3): Haiku 5.5 max writes adapter code, Opus reviews.
 8. **The binding constraint is the 7-day usage window** (§9). Rev 2 had no 7-day rule; its 5-hour throttle allowed about
@@ -97,7 +97,7 @@ held-out evaluation.
 | Level | Unit | Why |
 |---|---|---|
 | Portfolio | **bed**: an independent source with its own harness, oracle and task population | Var(μ̂) ≈ τ²/B + v/T: for 480 tasks, SE 0.034 as 4 × 120, 0.029 as 8 × 60, 0.027 as 12 × 40 at τ = 0.05 [S-obs, methodology `meth-sims/calc_tables.py`]. Beds buy precision faster than tasks |
-| Bed | **cluster**: template (WorkBench), scenario (AppWorld), user task (AgentDojo; two-way with injection task, §8.2), task type × level (NaturalPlan), intent × subtask count × persona (τ²), task (SpreadsheetBench V2), family (factory) | WorkBench's design effect is about 5 at 10 instances per template [S-obs]; instances inflate n |
+| Bed | **cluster**: template (WorkBench), scenario (AppWorld), user task (AgentDojo; two-way with injection task, §8.3), task type × level (NaturalPlan), intent × subtask count × persona (τ²), task (SpreadsheetBench V2), family (factory) | WorkBench's design effect is about 5 at 10 instances per template [S-obs]; instances inflate n |
 | Cluster | instance × run | Runs average out the 10–15% of tasks that flip between identical runs on AB [M, DEV60-A0-A1.md] |
 
 **Axes of breadth**: domain, workflow shape, recurrence and horizon, arm (model; Foundry or not), host harness.
@@ -274,10 +274,10 @@ bed per host, descriptive. L4 needs ≥ 2 hosts × ≥ 3 beds × n_eff 60; not r
 
 | Candidate | V | R | L | C | n | $ sealed | E | G | Decision (rev 2 → rev 3) |
 |---|---|---|---|---|---|---|---|---|---|
-| WorkBench @`49c7dfd` | 3 (gold 690/690; floor 124/690; digest stable) | 3 (131 MB) | MIT | H2-ext if regeneration changes answers, else H4 | 40 templates | 23 | 1 | 2 | bed 1 → **Tier 1, bed 1**, conditional on the assay screen (near ceiling: published Haiku 4.5 74.8%, Sonnet 4.6 88.3% [S-obs]); oversample multi_domain and state-changing templates |
+| WorkBench @`49c7dfd` | 3 (gold 690/690; floor 124/690; digest stable) | 3 (131 MB) | MIT | H2-ext if regeneration changes answers, else H4 | 40 templates | 24 | 1 | 2 | bed 1 → **Tier 1, bed 1**, conditional on the assay screen (near ceiling: published Haiku 4.5 74.8%, Sonnet 4.6 88.3% [S-obs]); oversample multi_domain and state-changing templates |
 | AgentDojo 0.1.35, v1.2.2 | 2 (utility gold 97/97; injection pairing unresolved) | 3 (166 MB) | MIT | H3 on H4 | 58 user tasks × ≥ 20 authored injections | 24 | 1.5 | 3 | bed 2 → **Tier 1, bed 2**; utility (benign and under attack) is the margin outcome, security is co-reported and enters the harm guard; out of nodes D and E |
 | AppWorld 0.1.3.post1 | 3 (gold 147/147, null 0/147 on train+dev) | 3 (389 MB) | Apache-2.0 + encryption and no-look terms | **H1e** | 56 scenarios | 283 | 2–3 | 3 | bed 5 → **Tier 1, bed 3**; best validity; BG-8 probe from inside `execute(code)` |
-| τ² telecom solo @`57e54143` | 2 (ENV_ASSERTION; ACTION on 32 tasks needs a BG-6 audit) | 2 (pinned; venv not built, est. 300–500 MB) | MIT | H4, possibly vendor-targeted [mem] | ≈ 34 cells | 198 | 3 | 2 | bed 4 → **Tier 2, bed 4**; relabelled policy-bound tool use (not dialogue) |
+| τ² telecom solo @`57e54143` | 2 (ENV_ASSERTION; ACTION on 32 tasks needs a BG-6 audit) | 2 (pinned; venv not built, est. 300–500 MB) | MIT | H4, possibly vendor-targeted [mem] | ≈ 34 cells | 206 | 3 | 2 | bed 4 → **Tier 2, bed 4**; relabelled policy-bound tool use (not dialogue) |
 | BFCL v4 multi-turn | 3 (gold 800/800, null 0/800) | 3 (106 MB) | Apache-2.0 | H4 | ≈ 40 | 27 | 1–1.5 | 1 | bed 6 → **Tier 2, bed 5**, conditional on a $0 multi-turn and miss_func driver check through `claude -p` + MCP (otherwise that category drops); published Sonnet 4.5 − Haiku 4.5 gap 7.8 points [S-obs], so it may fail the assay screen |
 | SpreadsheetBench V2, non-chart | 2 (chart tasks VLM-judged: excluded) | 2 (134 MB) | MIT (card) | H4, released 2026-09 | ≥ 20 needed | 63 | 2–3 | 1 | substitute 3 → **Tier 2, bed 6**, if its gates pass with ≥ 20 clusters |
 | NaturalPlan, as an agent bed | 2 (calendar feasibility checker specified) | 3 (50 MB) | Apache-2.0 / CC BY 4.0 | H2-own via our generator, else H4 | ≈ 27 | 16 | 1–2 | 1 | bed 3 (F-build vs one call) → **Tier 2, bed 7**, every arm an agent with the code tool (§5.2) |
@@ -304,9 +304,10 @@ passes [C-obs, cost §7].
 MIT, read 2026-10-21 by two sweeps).
 - *Facade v0* (§5.1) is built here: tools, reset/snapshot, host-side grade, the sandboxed Python tool, the date and
   identity declaration, hardened flags, init-event logging, the meter capture.
-- *Split.* Templates are clusters. Order within each domain by `sha256(salt + template_id)` with the salt taken from a later
-  commit's SHA (§8.2); the first round(0.42 · n) are dev (29), the rest held out (40). Sealed: 3 regenerated instances per
-  held-out template (120), **oversampling multi_domain and state-changing templates** by declared stratum weights.
+- *Split.* Templates are clusters. Order within each domain by `sha256(salt + template_id)`, the salt being the SHA of the
+  first autosave commit after the split-rule commit (PREREG §1.3); the first round(0.42 · n) are dev (29), the rest held out
+  (40). Sealed: 3 regenerated instances per held-out template **plus 1 more per held-out multi_domain template** (≈ 132),
+  analysed with population-share weights; the margin is co-reported on the state-changing subset.
 - *Gates still to do.* Seed control of `workbench-generate-data`; regenerated instances pass gold replay 100% with a stable
   digest twice and **change the answers** (else H4); mutation operators wrong-argument, extra write, duplicate write.
 - *$0 pre-screen.* The published per-task verdicts of 24 models give the frontier premium on dev templates before any
@@ -425,8 +426,8 @@ One Foundry arm per bed, frozen by hash before the sealed run. Bed-agnostic core
 3. **Gating acceptance.** A run whose own `verify` fails ends as a failure.
 4. **F-reuse** (beds 1, 2, 3, 4, 7, slot 9): after a run whose own verification passes, the workflow is kept for that
    cluster; the next instance passes a typed applicability gate and runs it; a refusal or deopt falls back to construction.
-   No oracle feedback on sealed instances. Lineages = random stream orders (3; 2 on AppWorld, τ², EnterpriseOps-Gym [C-obs,
-   cost §6]).
+   No oracle feedback on sealed instances. Lineages = random stream orders (3; 2 on AppWorld and EnterpriseOps-Gym [C-obs,
+   cost §6]; 3 on τ² for pass^3).
 5. **F-live** (beds 5, 6, 8): construction per task, no cross-task reuse.
 6. **F-build** only in pool B (§4.4).
 7. **Budgets.** Same caps as the A arms (§5.2); construction and verification cost charged to the task; prompts under 100K
@@ -602,7 +603,7 @@ Proposed by the vision critique as the single most important addition; adopted w
   external twin is ERP-Bench per-pattern streams on the laptop (fresh `generate-tasks` instances, CP-SAT-certified verifier,
   CC0 per metadata), which needs OD-12 for its ≈ 861 MB images.
 - **Cost** [C-obs, I]: $350–880 in total (A-O ≈ $8–20 per stream); 25–45 frontier session-hours. Funded by thinning A-S and
-  moving Opus to anchors on the external beds: rev 3's sealed primary is ≈ $815 below rev 2's (§10).
+  moving Opus to anchors on the external beds: rev 3's sealed primary is ≈ $805 below rev 2's (§10).
 - **Freeze.** PREREG-V-1 is drafted after B3's gates pass and before any V arm runs; dev streams only until then.
 
 ### 6.7 The factory's own claim
@@ -645,7 +646,7 @@ of comparator arms if the pooled upper bound already excludes the margin.
 | Arm | Where | Depth |
 |---|---|---|
 | A-H Haiku 5.5 alone | every bed | full sample, K = 2 (3 on τ²) |
-| F-H Haiku 5.5 + Foundry | every bed | full sample, 3 lineages (2 on AppWorld, τ², EnterpriseOps-Gym) |
+| F-H Haiku 5.5 + Foundry | every bed | full sample, 3 lineages (2 on AppWorld and EnterpriseOps-Gym) |
 | A-S Sonnet 5.5 alone (high) | every bed | **n_eff 60** per bed (cluster-capped), K = 2 (3 on τ²) |
 | A-O Opus 5.5 alone (xhigh) | **every bed** | **20-task anchors**, one task per cluster, K = 2 (3 on τ²); full depth on a bed only through the Opus depth gate (pooled dev F-H − A-O ≥ −0.02, decided at the freeze) |
 | A-HN Haiku 5.5 + notes file | beds 1–3 | full sample, K = 2: the naive-memory control (same tools and card; a notes file carried along each cluster stream) |
@@ -687,7 +688,8 @@ tasks; otherwise to A-S). Descriptive. It also stops F-H being forced onto beds 
    ≥ 0.20 at 30 pairs; extend to **60 pairs** if it lies in [0, 0.20) and enter if ≥ 0.10 at 60; otherwise "no frontier premium
    here" (cost compared only). At 30 pairs the SE is about 0.10: a bed with a true 0.15 lift was skipped 31% of the time [C-obs].
 2. **Portfolio dev gate**: after the dev pilots of beds 1–3 (≈ 180 pairs, SE ≈ 0.04), sealed comparator arms start only if the
-   pooled dev F-H − A-S ≥ −0.03. Otherwise the F-kit iterates on dev (looks counted) and Haiku arms may run sealed alone.
+   pooled dev F-H − A-S ≥ −0.03. Otherwise the F-kit iterates on dev (looks counted) and the bed waits: no arm runs sealed,
+   because all arms of a task must interleave (§5.2).
 3. **Opus depth gate** (§8.2).
 4. **Run order**: cheap beds first (1, 2, then 5–7), before committing to AppWorld, τ² and EnterpriseOps-Gym sealed.
 
@@ -744,7 +746,7 @@ testable in V, not here. Raising B with valid scouted beds is the efficient leve
      finishes (D19), and a bed's sealed run waits until all its arms can interleave (§5.2).
 - **Owner option (OD-15)**: comparator arms on owner-provisioned API billing would move about 71% of breadth's sealed draw off
   the plan meter, at real money ≈ $690 list for A-S and A-O on ten beds [calc].
-- **Load.** Ten beds: ≈ 9,000 sessions, ≈ 255 session-hours, 61 of them frontier [calc]; V adds 25–45 frontier hours.
+- **Load.** Ten beds: ≈ 9,100 sessions, ≈ 260 session-hours, 61 of them frontier [calc]; V adds 25–45 frontier hours.
 
 ### 9.2 Days
 
@@ -784,21 +786,21 @@ F-H on agent beds is priced at 2× A-H per run; the measured devCheck ratio is 2
 
 | # | Bed | Haiku tasks (clusters) | A-S tasks (n_eff) | $ A-H | $ F-H | $ A-S | $ A-O (20 × K) | **Sealed $** | Sessions | Session-h | Frontier h |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | WorkBench | 120 (40) | 77 (60) | 1.9 | 5.8 | 9.2 | 6.0 | **23** | 794 | 9.3 | 2.3 |
+| 1 | WorkBench | 132 (40) | 77 (60) | 2.1 | 6.3 | 9.2 | 6.0 | **24** | 854 | 10.0 | 2.3 |
 | 2 | AgentDojo | 174 (58) | 61 (60) | 2.8 | 8.4 | 7.3 | 6.0 | **24** | 1,032 | 13.8 | 2.2 |
 | 3 | AppWorld | 168 (56) | 64 (60) | 33.6 | 67.2 | 102.4 | 80.0 | **283** | 840 | 70.0 | 14.0 |
-| | **Tier 1 (beds 1–3)** | | | 38 | 81 | 119 | 92 | **331** | 2,666 | 93 | 18 |
-| 4 | τ² telecom (K = 3) | 100 (34) | 75 (60) | 15.0 | 16.0 | 101.2 | 66.0 | **198** | 785 | 39.2 | 14.2 |
+| | **Tier 1 (beds 1–3)** | | | 38 | 82 | 119 | 92 | **331** | 2,726 | 94 | 18 |
+| 4 | τ² telecom (K = 3) | 100 (34) | 75 (60) | 15.0 | 24.0 | 101.2 | 66.0 | **206** | 885 | 44.2 | 14.2 |
 | 5 | BFCL-MT | 160 (40) | 69 (60) | 1.9 | 5.8 | 11.0 | 8.0 | **27** | 978 | 11.4 | 2.1 |
 | 6 | SpreadsheetBench V2 | 120 (60) | 60 (60) | 7.2 | 21.6 | 18.0 | 16.0 | **63** | 760 | 25.3 | 5.3 |
 | 7 | NaturalPlan (agent) | 270 (27) | 77 (60) | 2.2 | 6.5 | 4.6 | 3.0 | **16** | 1,544 | 12.9 | 1.6 |
 | 8 | EnterpriseOps-Gym (laptop) | 120 (40) | 69 (60) | 19.2 | 36.0 | 110.4 | 80.0 | **246** | 658 | 43.9 | 11.9 |
-| | **Core 8** | | | 84 | 167 | 364 | 265 | **≈ 880** | 7,391 | 226 | 54 |
+| | **Core 8** | | | 84 | 176 | 364 | 265 | **≈ 890** | 7,551 | 231 | 54 |
 | 9 | DABstep-fresh (cond.) | 120 (40) | 77 (60) | 4.8 | 14.4 | 23.1 | 14.8 | **57** | 794 | 19.9 | 4.8 |
 | 10 | scouted bed (cond.) | 120 (30) | 80 (60) | 1.4 | 4.3 | 12.8 | 8.0 | **27** | 800 | 9.3 | 2.3 |
-| | **All 10, sealed** | | | 90 | 186 | 400 | 288 | **≈ 965** | 8,985 | 255 | 61 |
+| | **All 10, sealed** | | | 90 | 194 | 400 | 288 | **≈ 975** | 9,145 | 261 | 61 |
 
-Opus xhigh at 4× Sonnet per task instead of 2.5×: ≈ $1,137 [calc]. Raw transcripts would be ≈ 8.5 GB, hence §5.6.
+Opus xhigh at 4× Sonnet per task instead of 2.5×: ≈ $1,145 [calc]. Raw transcripts would be ≈ 8.7 GB, hence §5.6.
 
 ### 10.3 Extras, dev, factory, V, build agents and totals
 
@@ -809,15 +811,15 @@ Opus xhigh at 4× Sonnet per task instead of 2.5×: ≈ $1,137 [calc]. Raw trans
 | Dev, beds 4–10 | ≈ 220 |
 | Bed cards for all primary and substitute beds before the first sealed run | ≈ 65 |
 | Factory B0–B3 (specs, panel, gates) | ≈ 30 |
-| **Primary portfolio, without V** | **≈ 1.5k** (sealed 965 + extras 75 + dev 400 + cards 65 + factory 30) |
+| **Primary portfolio, without V** | **≈ 1.55k** (sealed 975 + extras 75 + dev 400 + cards 65 + factory 30) |
 | Node V (own preregistration) | 350–880 |
 | **With V** | **≈ 1.9k–2.4k** |
 | Build agents (Haiku max implementers, Opus review), list-equivalent, on the meter | ≈ 150–400 [I]; rev 2 omitted this (all-Opus builders would be ≈ $1.0k–2.7k [C-obs]) |
 | Pools X additions (other tracks' budgets): OD-9 SOP-Bench A-S + A-O ≈ $100–115; OD-8 AB-v1 arms | ≈ 150–200 |
 
 Policy pause: the $500 single-experiment rule (`policy/models.json` `spend` [M]) is crossed by the core-8 sealed stage
-(≈ $880) and by V's upper range. **OD-1**: record the owner's "full speed ahead, I don't mind" (2026-10-21, already the
-authority for D22's $40) as the decision for this program, with a README note that states **the dollar figure (≈ $1.5k without
+(≈ $890) and by V's upper range. **OD-1**: record the owner's "full speed ahead, I don't mind" (2026-10-21, already the
+authority for D22's $40) as the decision for this program, with a README note that states **the dollar figure (≈ $1.55k without
 V, ≈ $2.4k with it) and the projected meter draw in weeks of the 7-day allowance** (from the dose test) and what that does to
 other tracks, before the first sealed stage starts.
 
@@ -826,13 +828,13 @@ other tracks, before the first sealed stage starts.
 | Bed | Sealed clusters | $ per cluster, all arms | Frontier session-h |
 |---|---|---|---|
 | NaturalPlan | 27 | 0.59 | 1.6 |
-| WorkBench | 40 | 0.58 | 2.3 |
+| WorkBench | 40 | 0.60 | 2.3 |
 | AgentDojo | 58 | 0.41 | 2.2 |
 | BFCL-MT | 40 | 0.68 | 2.1 |
 | SpreadsheetBench V2 | 60 | 1.05 | 5.3 |
 | DABstep-fresh | 40 | 1.43 | 4.8 |
 | AppWorld | 56 | 5.05 | 14.0 |
-| τ² telecom | 34 | 5.82 | 14.2 |
+| τ² telecom | 34 | 6.06 | 14.2 |
 | EnterpriseOps-Gym | 40 | 6.15 | 11.9 |
 
 The cheap arms are nearly free; the comparators set the price of breadth (71% of sealed cost). The three expensive beds are
@@ -848,7 +850,7 @@ recorded as dated D-numbers under that grant.
 | # | Question | Recommendation | Who | Blocks |
 |---|---|---|---|---|
 | OD-0 | Rev 2's author published PLAN.md rev 2 as a private claude.ai artifact without being asked (https://claude.ai/artifact/6j3uXc1FS5gZYHw68LyH3x); AGENTS.md has no-publishing as a boundary | do not update or republish it (nothing in this revision did); whether to delete it is the owner's call | owner | — |
-| OD-1 | Budget ≈ $1.5k (≈ $2.4k with V); stages above the $500 pause | record "full speed ahead, I don't mind" with a README note stating dollars and meter weeks | orchestrator | first sealed stage |
+| OD-1 | Budget ≈ $1.55k (≈ $2.4k with V); stages above the $500 pause | record "full speed ahead, I don't mind" with a README note stating dollars and meter weeks | orchestrator | first sealed stage |
 | OD-2 | THESIS D10 (no executor reads third-party text): every arm reads benchmark text; AgentDojo's is adversarial | accept as for AutomationBench: facade and sandboxed tools only, no network, host-side grading | orchestrator | all beds |
 | OD-4 | K = 1 | keep K = 2 (owner rule "no K = 1 comparative proof") | owner rule | — |
 | OD-5 | Margin | δ = 0.10 absolute, retention gate on the words, assay label and r on every verdict | orchestrator | freeze |
@@ -970,7 +972,7 @@ and why. "Adopted", "modified" or "not adopted" is stated. No critique's claim w
 | C5e | AgentDojo clustering | ≥ 20 authored injection tasks; two-way clustering as sensitivity | adopted |
 | C5f | τ² telecom m = 4 vs cap 3 | m ≤ 3 in the design effect | adopted |
 | C5g | "Lean: C cannot be tested" wrong | C over anchors on every bed | adopted |
-| C6 | Recommended design ≈ $1,038 (bed 10 → NESTFUL) | rev 3 sealed ≈ $965 on ten beds with a different bed list (validity drops) | modified: NESTFUL is a negative control only (validity: G = 0); the slot goes to scouting |
+| C6 | Recommended design ≈ $1,038 (bed 10 → NESTFUL) | rev 3 sealed ≈ $975 on ten beds with a different bed list (validity drops) | modified: NESTFUL is a negative control only (validity: G = 0); the slot goes to scouting |
 | C7 | Gates before sealed comparator spend; cheap beds first; OD-8/OD-9 cheapest extra evidence | §8.4; §7 pool X | adopted |
 | C8 | Artifact; stale DISPOSALS claim; OD-1 should state meter draw | OD-0; §13; OD-1 | adopted |
 

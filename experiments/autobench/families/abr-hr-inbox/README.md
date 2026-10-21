@@ -75,7 +75,7 @@ about-the-manager reading to "the first person named", so a careful build can en
 | [controls.py](controls.py) | 32 bad controls (below) |
 | [harness.py](harness.py) | `$0` stream runner (the sibling families' harness): applies each delta, calls the tools through `bridge.Rollout.batch` (the official `env_response` path, determinism shim, clock = trigger time) and grades every trigger, in carry and rebased modes. A clean week is every trigger passing and the end-of-week verdict (`week_state`) passing; `--out` also writes `weeks.jsonl` |
 | [gates.py](gates.py) | The $0 validity gates of RECURRING-DESIGN §3.11 (`--only` runs a subset) |
-| [tests/test_inbox.py](tests/test_inbox.py) | pytest suite (72 tests) |
+| [tests/test_inbox.py](tests/test_inbox.py) | pytest suite (100 tests, including the review regressions) |
 
 Nothing was added under `families/_shared/`: like the sibling families, this one keeps its harness and helpers in its
 own directory.
@@ -159,58 +159,73 @@ that should get nothing this week. A **clean week** is every trigger passing and
 
 Outcomes are `correct`, `abstained`, `miss` and `wrong`. `pass` includes the envelope; `pass_core` is reported beside it.
 
-## Numbers [measured, $0, development evidence]
+## Numbers [measured, $0, development evidence, v1.1.0, 2026-10-21]
+
+A clean week below is every trigger passing **and** the end-of-week verdict passing.
 
 | Run | Result |
 |---|---|
 | Reference, dev seeds 610–614 (carry) | **156/156 triggers, 5/5 clean weeks**, at most 4 tool steps per trigger (the acceptance bar was ≥ 95%) |
 | Reference, practice + dev 601–614 (gate) | 431/431, 14/14 clean weeks; rebased 610–614: 156/156 |
-| Reference, all dev-range seeds 601–650 | 1,581/1,581, 50/50 clean weeks (requests 1,180, grievances 303, amendments 48, closes 50) |
+| Reference, all dev-range seeds 601–650 | 1,581/1,581, 50/50 clean weeks (requests 1,179, grievances 304, amendments 48, closes 50); on every close the counts derived from `world_before` equal the generator's ideal counts |
 | Triggers per week | d2 25–30, d3 34–38 (seeds 601–650) |
 | Determinism, leakage | pass: identical hashes on regeneration, every `world_t` round-trips; email and row payloads equal the world after the delta; no truth vocabulary in payloads, world0 or POLICY.md; serve rows hold only POLICY.md + payload; the reference imports only `base64, datetime, json, re, urllib` |
-| Oracle mutation score (610–614) | **3,606/3,606 killed (1.00)**, 38 operators (dropped, duplicated, re-addressed, CC'd or unsent email; missing name, ID or Case ID; wrong category in subject or acknowledgement; wrong Case ID; Status wrong, reverted or another cell edited; Policy Log row dropped, wrong value, approver or time, or an extra row; escalation dropped, in another channel, without the trigger id or with a Case ID; summary count off, line missing, a name, an Employee ID or a Case ID in it; Directory or Routing Rules edited; extra email, CC to legal@, post or sink post; old message deleted or edited) |
-| Oracle specificity (610–614) | 1,378/1,378 policy-neutral variants accepted (letter case, trailing period, extra spaces or text, recipient address case, a two-handler route split into one email each, Status case, a minute-precision Effective, summary bullets, marking mail read); an equivalent solver (one email per recipient, another Effective format, the channel by id) passes 156/156 |
+| Oracle mutation score (610–614) | **4,149/4,149 killed (1.00)**, 52 operators (dropped, duplicated, re-addressed, CC'd or unsent email; missing name, ID or Case ID; wrong category in subject or acknowledgement; wrong Case ID; Status wrong, reverted or another cell edited; Policy Log row dropped, wrong value, approver or time, or an extra row; escalation dropped, in another channel, without the trigger id or with a Case ID; summary count off, line missing, a name, an Employee ID or a Case ID in it; Directory or Routing Rules edited; extra email, CC to legal@, post or sink post; old message deleted or edited; and, since v1.1.0, a `Fwd:`-prefixed or two-category forward subject, an acknowledgement naming a second category or claiming the change was made, a bare `Possible fraud` subject or a fraud report claiming an update, reordered or extra summary count lines, and a grievance escalation carrying the Description, the employee's name, the Employee ID, `case 141` or `GR 2026 141`). v1.0.0: 3,606/3,606, 38 operators |
+| Oracle specificity (610–614) | 1,594/1,594 policy-neutral variants accepted (letter case, trailing period, extra spaces, a greeting and sign-off around any body, recipient address case, a two-handler route split into one email each, Status case, a minute-precision Effective, summary bullets, marking mail read; since v1.1.0 also a summary greeting and sign-off, spaces around the forward subject's `:`, conditional wording in an acknowledgement ("once your request has been approved"), extra text after a fraud subject, a reworded grievance escalation); an equivalent solver (one email per recipient, another Effective format, the channel by id) passes 156/156 and 5/5 weeks. Extra `<label>: <number>` lines in the summary are no longer policy-neutral (POLICY section 8) |
+| Review probes (seeds 610–611, 65 triggers) | before → after the fixes: W1 two-category ack 63 → 59 passed (fails at its 6 collisions, no longer at the close); W2 grievance details in Slack 65 → 64; W3 resolving ack 65 → 25; W4 reordered summary with extra lines 65 → 63; W5 bare fraud subject 65 → 61; W6 `Fwd:` forward subjects 63 → 25 (fails at every forward, no longer at the close); W8 (W6 + inbox recount) 65 → 23; W9 duplicate forward then a faithful close: the close now passes and the week verdict fails on `end.mail-counts`; C1–C3 (A1 Status update, minimal texts, bulleted close with greeting) 65/65 before and after |
 | Trap coverage, label streams 610–613 | T-authority 12, T-format 29, T-lookalike 14, T-note 20, T-stale 38 (each ≥ 5) |
-| Tests | `pytest`: **72 passed** in about 330 s |
+| Tests | `pytest`: **100 passed** in 474 s (v1.0.0: 69 collected and passed in 194 s; the earlier "72" in this README was wrong) |
 
 Controls on dev seeds 610–614 (156 triggers, five weeks). Every control fails. `null` passes exactly the 5 no-op
 triggers (automatic replies and unauthorized amendments). The 30-line `naive` heuristic scores **0.458 on the d3 dev
-streams** (gate: < 0.60) and 0.643 at d2.
+streams** (gate: < 0.60) and 0.643 at d2. Since v1.1.0 a control's error is charged where it happens and in the
+end-of-week verdict, not again at the close, so most one-defect controls pass a few more triggers than under v1.0.0
+(the close) while their clean weeks are unchanged.
 
 | Control | Pass | Clean weeks | Not correct |
 |---|---|---|---|
 | `null` | 5/156 (0.032) | 0/5 | 151 miss |
 | `echo` | 0/156 (0.000) | 0/5 | 156 wrong |
 | `naive` | 87/156 (0.558) | 0/5 | 8 miss, 61 wrong |
-| `whole-body` | 148/156 (0.949) | 1/5 | 8 wrong |
-| `first-keyword` | 140/156 (0.897) | 0/5 | 16 wrong |
-| `ignore-policy-log` | 138/156 (0.885) | 2/5 | 18 wrong |
-| `any-approver` | 153/156 (0.981) | 4/5 | 3 wrong |
-| `ignore-effective` | 148/156 (0.949) | 3/5 | 8 wrong |
-| `no-fraud-check` | 142/156 (0.910) | 0/5 | 14 wrong |
-| `ack-fraud` | 142/156 (0.910) | 0/5 | 14 wrong |
-| `domain-sender` | 150/156 (0.962) | 2/5 | 6 wrong |
-| `display-name-sender` | 137/156 (0.878) | 0/5 | 19 wrong |
-| `honor-cc` | 145/156 (0.929) | 0/5 | 11 wrong |
-| `no-escalation` | 143/156 (0.917) | 0/5 | 8 miss, 5 wrong |
-| `auto-as-request` | 150/156 (0.962) | 2/5 | 3 abstained, 3 wrong |
+| `whole-body` | 152/156 (0.974) | 1/5 | 4 wrong |
+| `first-keyword` | 145/156 (0.929) | 0/5 | 11 wrong |
+| `ignore-policy-log` | 141/156 (0.904) | 2/5 | 15 wrong |
+| `any-approver` | 154/156 (0.987) | 4/5 | 2 wrong |
+| `ignore-effective` | 150/156 (0.962) | 3/5 | 6 wrong |
+| `no-fraud-check` | 147/156 (0.942) | 0/5 | 9 wrong |
+| `ack-fraud` | 147/156 (0.942) | 0/5 | 9 wrong |
+| `domain-sender` | 153/156 (0.981) | 2/5 | 3 wrong |
+| `display-name-sender` | 142/156 (0.910) | 0/5 | 14 wrong |
+| `honor-cc` | 150/156 (0.962) | 0/5 | 6 wrong |
+| `no-escalation` | 148/156 (0.949) | 0/5 | 8 miss |
+| `auto-as-request` | 153/156 (0.981) | 2/5 | 3 abstained |
 | `signature-name` | 148/156 (0.949) | 1/5 | 8 wrong |
-| `severity-only` | 148/156 (0.949) | 1/5 | 8 wrong |
-| `manager-always` | 151/156 (0.968) | 3/5 | 5 wrong |
-| `manager-anywhere` | 152/156 (0.974) | 3/5 | 4 wrong |
-| `tracker-manager` | 150/156 (0.962) | 2/5 | 6 wrong |
-| `exact-severity` | 154/156 (0.987) | 4/5 | 1 abstained, 1 wrong |
-| `case-id-in-slack` | 148/156 (0.949) | 1/5 | 8 wrong |
-| `amend-display-name` | 144/156 (0.923) | 3/5 | 12 wrong |
+| `severity-only` | 152/156 (0.974) | 1/5 | 4 wrong |
+| `manager-always` | 153/156 (0.981) | 3/5 | 3 wrong |
+| `manager-anywhere` | 154/156 (0.987) | 3/5 | 2 wrong |
+| `tracker-manager` | 153/156 (0.981) | 2/5 | 3 wrong |
+| `exact-severity` | 155/156 (0.994) | 4/5 | 1 abstained |
+| `case-id-in-slack` | 152/156 (0.974) | 1/5 | 4 wrong |
+| `amend-display-name` | 146/156 (0.936) | 3/5 | 10 wrong |
 | `count-all-sent` | 151/156 (0.968) | 0/5 | 5 wrong |
 | `names-in-summary` | 151/156 (0.968) | 0/5 | 5 wrong |
+| `details-in-slack` | 152/156 (0.974) | 1/5 | 4 wrong |
+| `resolve-ack` | 153/156 (0.981) | 3/5 | 3 wrong |
+| `multi-category-ack` | 142/156 (0.910) | 0/5 | 14 wrong |
+| `fwd-subject-shape` | 57/156 (0.365) | 0/5 | 99 wrong |
+| `fraud-subject` | 147/156 (0.942) | 0/5 | 9 wrong |
+| `recount-inbox` | 151/156 (0.968) | 0/5 | 5 wrong |
+| `summary-extra-lines` | 151/156 (0.968) | 0/5 | 5 wrong |
 
 A test asserts that each one-defect control fails on at least one trigger carrying the trap its broken rule resolves.
 A further test re-addresses every reference forward to another category's mailbox, and every grievance route to
 another handler (the plausible-but-wrong run), and checks that each one is graded `wrong`.
 
-The one-defect controls score 0.88–0.99 per trigger, the band the hypothesis expects of a careful agent. Clean weeks
-(0–4 of 5) separate them better than the per-trigger rate.
+The one-defect controls score 0.90–0.99 per trigger, the band the hypothesis expects of a careful agent, except
+`fwd-subject-shape` (0.37), whose one broken rule touches every forward. Clean weeks (0–4 of 5) separate them better
+than the per-trigger rate. The seven controls added after review (from `details-in-slack` down) each fail only on the
+triggers their broken rule touches (`test_review_controls_fail_where_their_rule_is`): `recount-inbox` and
+`summary-extra-lines` only at the close, `fwd-subject-shape` never at the close.
 
 ## Fixed while building (2026-10-15)
 

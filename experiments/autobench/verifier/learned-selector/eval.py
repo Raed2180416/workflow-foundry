@@ -268,6 +268,7 @@ def main():
     oof_dump = {m['rid']: {} for m in meta}
 
     def run(name, kind, names, mask=None, extra=None, pools=POOLS, cls_masks=None):
+        print(f'[{time.time() - t_start:7.1f}s] {name}', file=sys.stderr, flush=True)
         X = matrix(cands, names, extra)
         p, inner, info = cv_predict(kind, X, y, folds, mask)
         thr = {i['fold']: i['threshold'] for i in info}
@@ -328,6 +329,7 @@ def main():
             'selection': selection_report(meta, pools6, np.nan_to_num(jp, nan=-1.0), None, guard=False)}
 
     # Pool consensus (pool-dependent): trained per pool on that pool's rows.
+    print(f'[{time.time() - t_start:7.1f}s] consensus', file=sys.stderr, flush=True)
     light = load_views_for_consensus(a.vlab)
     cons = {}
     for pname, parms in POOLS.items():
@@ -362,6 +364,7 @@ def main():
         R['controls'][f'primary on {mk} rows'] = R['variants']['LR-FULL (primary)']['cls'][mk]
 
     # Label-shuffle control: permute training labels (row level) and re-run the primary; AUROC should be ~0.5.
+    print(f'[{time.time() - t_start:7.1f}s] controls', file=sys.stderr, flush=True)
     sh = []
     for s in range(a.shuffle_seeds):
         rng = np.random.default_rng(1000 + s)
