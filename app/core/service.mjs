@@ -20,6 +20,8 @@ import { runInWorld } from './practice.mjs';
 import { describeWorkflow, explainRun, failureText } from './explain.mjs';
 import { Ledger, HUMAN_CHANNELS } from './ledger.mjs';
 
+// The digest that binds a planned outside action to its full content: sha256 of the canonical {tool, args} (batch approval matches on it).
+export const effectDigest = (tool, args) => digest({ tool, args });
 const problem = (error, extra = {}) => ({ ok: false, problem: { ...(failureText(errorData(error)) ?? {}), code: error.code ?? 'ERROR', details: errorData(error).message }, ...extra });
 
 export class FoundryApp {
@@ -48,11 +50,13 @@ export class FoundryApp {
   }
 
   /** describe-intent -> a version-bound proposal, questions, or an honest refusal. Never runs anything. Asynchronous: a model may build. */
-  async propose({ request, answers = {}, flowId = null }) {
+  // template / settings / origin (onboarding site, app/onboarding/form-builder.mjs): a template id and its settings filled from a form
+  // (origin 'site-form') or by the person's coding agent (origin 'agent'); builders that do not know them ignore them.
+  async propose({ request, answers = {}, flowId = null, template = undefined, settings = undefined, origin = undefined }) {
     let head = flowId ? this.#head(flowId) : null;
     if (flowId && !head) return problem(new FoundryError('NOT_FOUND', `No flow named ${flowId}`));
     let built;
-    try { built = await this.builder.build({ request, answers, base: this.#baseOf(head) }); }
+    try { built = await this.builder.build({ request, answers, base: this.#baseOf(head), ...(template !== undefined ? { template, settings, origin } : {}) }); }
     catch (error) { if (['REQUEST_TEXT', 'ANSWERS'].includes(error.code)) throw error; return problem(error, { builder: this.builder.id }); }
     const report = built.buildReport ? (({ callLog, ...rest }) => rest)(built.buildReport) : null;
     if (built.status !== 'ready') { const { args, buildReport, ...rest } = built; return { ok: true, ...rest, ...(report ? { build: report } : {}) }; }
@@ -65,7 +69,8 @@ export class FoundryApp {
         reply: 'Nothing in the flow would change, so no new version was made. Schedules and connectors are not part of this preview yet.', ...(report ? { build: report } : {}) };
     const validation = this.foundry.validate(built.workflow, { strict: true });
     if (!validation.valid) return problem(new FoundryError('INVALID_PROPOSAL', 'The builder produced a workflow that does not validate'), { validation, builder: built.builder });
-    const designRequest = this.foundry.store.createAgentDesignRequest({ task: request, workflowId: head ? head.workflow.id : null, expectedHash: head?.hash ?? null });
+    const task = typeof request === 'string' && request.trim() ? request : `Settings for template ${built.template} filled in a form: ${JSON.stringify(settings ?? {}).slice(0, 4000)}`;
+    const designRequest = this.foundry.store.createAgentDesignRequest({ task, workflowId: head ? head.workflow.id : null, expectedHash: head?.hash ?? null });
     const proposal = this.foundry.propose({ requestId: designRequest.id, workflow: built.workflow,
       rationale: `Built by ${built.builder} from template ${built.template}. Understood: ${JSON.stringify(built.understood)}` });
     return { ok: true, status: 'proposed', builder: built.builder, template: built.template, ...(report ? { build: report } : {}), proposalId: proposal.id, requestId: designRequest.id, flowId: built.workflow.id,
@@ -87,10 +92,11 @@ export class FoundryApp {
   }
 
   /** Run the exact proposed workflow on practice data in its own store, with the practice registry. Records the result. */
-  async dryRun({ proposalId, input }) {
+  // sheets (library flows only): the person's own rows instead of the template's practice sheets (dataSource 'your-data').
+  async dryRun({ proposalId, input, sheets = null }) {
     const proposal = this.foundry.store.proposal(proposalId);
     const template = templateOf(proposal.workflow);
-    if (template) return this.#dryRunLibrary(proposal, template, input);
+    if (template) return this.#dryRunLibrary(proposal, template, input, sheets);
     const dir = path.join(this.practiceRoot, `${proposalId.slice(0, 8)}-${randomUUID().slice(0, 8)}`), outbox = path.join(dir, 'outbox');
     const registry = appRegistry({ mode: 'practice', outboxDir: outbox });
     const practice = new Foundry(dir, { registry });
@@ -103,7 +109,7 @@ export class FoundryApp {
       events = practice.store.events(done.id);
       const wouldDo = existsSync(outbox) ? readdirSync(outbox).filter(f => f.endsWith('.json')).map(f => {
         const m = JSON.parse(readFileSync(path.join(outbox, f), 'utf8'));
-        return { action: 'send', to: m.to, subject: m.subject, preview: m.body.slice(0, 400) };
+        return { action: 'send', to: m.to, subject: m.subject, preview: m.body.slice(0, 400), digest: effectDigest('outbox.send', { to: m.to, subject: m.subject, body: m.body }) };
       }) : [];
       const explained = explainRun(done, proposal.workflow, events);
       const passed = done.status === 'succeeded' && done.verdict?.verdict === 'pass';
@@ -117,18 +123,20 @@ export class FoundryApp {
   }
 
   /** A library flow's dry run: the template's practice sheets in a fresh practice world, the practice registry, the exact version. */
-  async #dryRunLibrary(proposal, template, input) {
+  async #dryRunLibrary(proposal, template, input, ownSheets = null) {
     mkdirSync(this.practiceRoot, { recursive: true, mode: 0o700 });
     const world = practiceOf(template), runInput = input ?? world.input;
-    const res = await runInWorld(proposal.workflow, { sheets: world.sheets, input: runInput, mode: 'practice', keep: true, root: this.practiceRoot });
+    const dataSource = ownSheets && Object.keys(ownSheets).length ? 'your-data' : 'template';
+    const sheets = dataSource === 'your-data' ? { ...world.sheets, ...ownSheets } : world.sheets;
+    const res = await runInWorld(proposal.workflow, { sheets, input: runInput, mode: 'practice', keep: true, root: this.practiceRoot });
     if (['invalid', 'input-refused'].includes(res.status)) return problem(Object.assign(new FoundryError(res.error?.code ?? 'VALIDATION', res.error?.message ?? 'refused'), {}), { practice: true, passed: false, next: 'Fix the practice input or ask for a changed flow.' });
-    const wouldDo = [...res.effects.outbox.map(m => ({ action: 'send', to: m.to, subject: m.subject, preview: m.body.slice(0, 400) })),
-      ...Object.entries(res.effects.chat).flatMap(([channel, posts]) => posts.map(text => ({ action: 'post', to: channel, subject: null, preview: text.slice(0, 400) }))),
-      ...Object.entries(res.effects.appended).map(([sheet, rows]) => ({ action: 'append', to: sheet, subject: `${rows.length} row(s)`, preview: JSON.stringify(rows.slice(0, 3)).slice(0, 400) }))];
+    const wouldDo = [...res.effects.outbox.map(m => ({ action: 'send', to: m.to, subject: m.subject, preview: m.body.slice(0, 400), digest: effectDigest('outbox.send', { to: m.to, subject: m.subject, body: m.body }) })),
+      ...Object.entries(res.effects.chat).flatMap(([channel, posts]) => posts.map(text => ({ action: 'post', to: channel, subject: null, preview: text.slice(0, 400), digest: effectDigest('chat.post', { channel, text }) }))),
+      ...Object.entries(res.effects.appended).map(([sheet, rows]) => ({ action: 'append', to: sheet, subject: `${rows.length} row(s)`, preview: JSON.stringify(rows.slice(0, 3)).slice(0, 400), digest: effectDigest('sheet.append', { sheet, rows }) }))];
     const explained = res.explained;
     const record = this.ledger.recordDryRun({ proposalId: proposal.id, workflowHash: proposal.workflowHash, registryHash: res.run.registryHash, practiceRunId: res.run.id, passed: res.passed,
-      body: { headline: explained.headline, checks: explained.checks, wouldDo, inputHash: digest(runInput), practiceDir: res.dir, template: template.id } });
-    return { ok: true, practice: true, dryRunId: record.id, passed: res.passed, headline: explained.headline, checks: explained.checks, wouldDo, problem: explained.problem,
+      body: { headline: explained.headline, checks: explained.checks, wouldDo, inputHash: digest(runInput), sheetsHash: digest(sheets), dataSource, practiceDir: res.dir, template: template.id } });
+    return { ok: true, practice: true, dryRunId: record.id, passed: res.passed, dataSource, headline: explained.headline, checks: explained.checks, wouldDo, problem: explained.problem,
       practiceRunId: res.run.id, workflowHash: proposal.workflowHash, practiceRegistryHash: res.run.registryHash, liveRegistryHash: this.registry.hash(),
       caveat: 'Practice used stand-ins for sending, posting and the sheets, with the template\'s practice data. It shows the flow behaves as described; it does not show delivery works.',
       next: res.passed ? 'Ask the person to approve it (approve). They decide in their own window, not you.' : 'Do not ask for approval: the practice run did not pass.' };
@@ -166,6 +174,7 @@ export class FoundryApp {
 
   /** Run the current, approved version. Refuses unapproved or stale versions. */
   async run({ flowId, input }) {
+    if (this.practiceOnly()) return problem(new FoundryError('PRACTICE_ONLY', 'Practice-only mode is on for this workspace (or its settings.json could not be read)'));
     const head = this.#head(flowId);
     if (!head) {
       const proposed = this.foundry.store.proposals().some(p => p.workflow.id === flowId && p.status === 'proposed');
@@ -180,6 +189,12 @@ export class FoundryApp {
     if (created.workflowHash !== head.hash) { await this.foundry.cancel(created.id, { graceMs: 0 }); return problem(new FoundryError('STALE_APPROVAL', 'The flow changed while starting')); }
     await this.foundry.startRun(created.id).catch(() => {});
     return this.status({ runId: created.id });
+  }
+
+  /** Practice-only mode (<workspace>/settings.json mode: 'practice-only', set by the person in the site's Settings): no live run starts. */
+  practiceOnly() {
+    try { return JSON.parse(readFileSync(path.join(this.root, 'settings.json'), 'utf8'))?.mode === 'practice-only'; }
+    catch (error) { if (error.code === 'ENOENT') return false; return true; } // an unreadable settings file fails closed
   }
 
   status({ runId }) {

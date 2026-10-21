@@ -18,8 +18,8 @@ import { explainRun, describeWorkflow, failureText } from '../core/explain.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const STATIC = { '/': ['index.html', 'text/html; charset=utf-8'], '/dashboard.js': ['dashboard.js', 'text/javascript; charset=utf-8'], '/dashboard.css': ['dashboard.css', 'text/css; charset=utf-8'] };
-const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
-const SECURITY = { 'content-security-policy': CSP, 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'cache-control': 'no-store', 'cross-origin-resource-policy': 'same-origin' };
+export const CSP = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+export const SECURITY = { 'content-security-policy': CSP, 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'cache-control': 'no-store', 'cross-origin-resource-policy': 'same-origin' };
 const MAX_BODY = 16 * 1024;
 
 /** Node-level diff of two workflow versions: what a person needs to see before turning a new version on. */
@@ -34,12 +34,12 @@ export function diffVersions(before, after) {
     checksChanged: digest(before?.acceptance ?? null) !== digest(after.acceptance), limitsChanged: digest(before?.budget ?? null) !== digest(after.budget) };
 }
 
-function readStore(file, fn) {
+export function readStore(file, fn) {
   const reader = StoreReader.open(file);
   try { return reader.snapshot(fn); } finally { reader.close(); }
 }
 
-function runSummaries(file) {
+export function runSummaries(file) {
   return readStore(file, r => r.runIds().reverse().slice(0, 200).map(id => {
     const h = r.header(id), chain = r.events(id, { header: h });
     return { runId: id, flowId: h.workflowId, status: h.status, verdict: h.verdict?.verdict ?? null, costUsd: h.cost ?? 0, steps: h.steps ?? 0,
@@ -47,7 +47,7 @@ function runSummaries(file) {
   }));
 }
 
-function runDetail(app, file, runId) {
+export function runDetail(app, file, runId) {
   const raw = readStore(file, r => {
     const h = r.header(runId), chain = r.events(runId, { header: h }), wf = r.workflow(h.workflowHash);
     return { header: h, chain, workflow: wf.workflow, workflowNote: wf.reason ?? null, journal: r.hasJournal() };
@@ -61,7 +61,7 @@ function runDetail(app, file, runId) {
       costUsd: calls.reduce((s, c) => s + (c.costUsd ?? 0), 0) } };
 }
 
-function flowDetail(app, file, flowId) {
+export function flowDetail(app, file, flowId) {
   const versions = readStore(file, r => r.db.prepare('SELECT hash, version FROM workflows WHERE id=? ORDER BY version').all(flowId).map(v => ({ hash: v.hash, version: v.version, workflow: r.workflow(v.hash).workflow })));
   const proposals = app.foundry.store.proposals().filter(p => p.workflow.id === flowId).reverse();
   const all = [...versions.map(v => ({ ...v, state: 'version' })), ...proposals.filter(p => p.status === 'proposed').map(p => ({ hash: p.workflowHash, version: p.workflow.version, workflow: p.workflow, state: 'draft', proposalId: p.id }))];
@@ -69,6 +69,36 @@ function flowDetail(app, file, flowId) {
     versions: all.map((v, i) => ({ version: v.version, hash: v.hash, state: v.state, proposalId: v.proposalId ?? null, title: v.workflow?.title ?? null,
       active: !!app.ledger.approvedFor(flowId, v.hash), summary: v.workflow ? describeWorkflow(v.workflow, app.registry) : null,
       diffFromPrevious: v.workflow ? diffVersions(all[i - 1]?.workflow ?? null, v.workflow) : null })) };
+}
+
+/**
+ * The dashboard's API routes (overview, run detail, flow versions, a person's decision), shared with the onboarding site
+ * (app/site/server.mjs mounts it). The caller has already checked the Host header and the token. Returns true when it answered.
+ */
+export async function handleDashboardApi(app, req, res, url, send) {
+  const file = app.storeFile;
+  if (req.method === 'GET' && url.pathname === '/api/overview') {
+    const listed = app.list();
+    send(res, 200, { workspace: app.root, flows: listed.flows, proposals: listed.proposals, inbox: app.inbox(), runs: runSummaries(file),
+      mode: { approvers: 'you (single-person mode)', note: 'Flows that need a second approver or a rule owner are the paid Control Plane; not in this preview.' } });
+    return true;
+  }
+  let m;
+  if (req.method === 'GET' && (m = url.pathname.match(/^\/api\/runs\/([A-Za-z0-9-]{1,64})$/))) { send(res, 200, runDetail(app, file, m[1])); return true; }
+  if (req.method === 'GET' && (m = url.pathname.match(/^\/api\/flows\/([A-Za-z][A-Za-z0-9_-]{0,63})$/))) { send(res, 200, flowDetail(app, file, m[1])); return true; }
+  if (req.method === 'POST' && url.pathname === '/api/decide') {
+    if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) { send(res, 415, { error: 'JSON only' }); return true; }
+    let size = 0; const chunks = [];
+    for await (const chunk of req) { size += chunk.length; if (size > MAX_BODY) { send(res, 413, { error: 'too large' }); return true; } chunks.push(chunk); }
+    const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    if (!['approve', 'reject'].includes(body.decision)) { send(res, 400, { error: 'decision is approve or reject' }); return true; }
+    const yes = body.decision === 'approve';
+    if (body.kind === 'activation' && typeof body.approvalId === 'string') { send(res, 200, app.decideActivation(body.approvalId, yes, { channel: 'dashboard', note: typeof body.note === 'string' ? body.note.slice(0, 1000) : null })); return true; }
+    if (body.kind === 'action' && typeof body.runId === 'string' && typeof body.approvalId === 'string') { send(res, 200, await app.decideAction(body.runId, body.approvalId, yes, { channel: 'dashboard' })); return true; }
+    send(res, 400, { error: 'kind is activation (approvalId) or action (runId, approvalId)' });
+    return true;
+  }
+  return false;
 }
 
 /** Create (not start) the dashboard server for one FoundryApp. */
@@ -90,26 +120,7 @@ export function createDashboard(app, { token = randomBytes(24).toString('base64u
       if (!url.pathname.startsWith('/api/')) return send(res, 404, { error: 'not found' });
       const given = Buffer.from(String(req.headers['x-foundry-token'] ?? ''));
       if (given.length !== expected.length || !timingSafeEqual(given, expected)) return send(res, 401, { error: 'This page needs the link printed by `node app/cli.mjs start`.' });
-      const file = app.storeFile;
-      if (req.method === 'GET' && url.pathname === '/api/overview') {
-        const listed = app.list();
-        return send(res, 200, { workspace: app.root, flows: listed.flows, proposals: listed.proposals, inbox: app.inbox(), runs: runSummaries(file),
-          mode: { approvers: 'you (single-person mode)', note: 'Flows that need a second approver or a rule owner are the paid Control Plane; not in this preview.' } });
-      }
-      let m;
-      if (req.method === 'GET' && (m = url.pathname.match(/^\/api\/runs\/([A-Za-z0-9-]{1,64})$/))) return send(res, 200, runDetail(app, file, m[1]));
-      if (req.method === 'GET' && (m = url.pathname.match(/^\/api\/flows\/([A-Za-z][A-Za-z0-9_-]{0,63})$/))) return send(res, 200, flowDetail(app, file, m[1]));
-      if (req.method === 'POST' && url.pathname === '/api/decide') {
-        if (!String(req.headers['content-type'] ?? '').startsWith('application/json')) return send(res, 415, { error: 'JSON only' });
-        let size = 0; const chunks = [];
-        for await (const chunk of req) { size += chunk.length; if (size > MAX_BODY) return send(res, 413, { error: 'too large' }); chunks.push(chunk); }
-        const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-        if (!['approve', 'reject'].includes(body.decision)) return send(res, 400, { error: 'decision is approve or reject' });
-        const yes = body.decision === 'approve';
-        if (body.kind === 'activation' && typeof body.approvalId === 'string') return send(res, 200, app.decideActivation(body.approvalId, yes, { channel: 'dashboard', note: typeof body.note === 'string' ? body.note : null }));
-        if (body.kind === 'action' && typeof body.runId === 'string' && typeof body.approvalId === 'string') return send(res, 200, await app.decideAction(body.runId, body.approvalId, yes, { channel: 'dashboard' }));
-        return send(res, 400, { error: 'kind is activation (approvalId) or action (runId, approvalId)' });
-      }
+      if (await handleDashboardApi(app, req, res, url, send)) return;
       return send(res, 404, { error: 'not found' });
     } catch (error) {
       return send(res, error.code === 'NOT_FOUND' ? 404 : 409, { error: errorData(error), problem: failureText(errorData(error)) });

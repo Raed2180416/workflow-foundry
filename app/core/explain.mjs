@@ -39,6 +39,7 @@ const FAILURES = {
   BUILDER_TOKEN_CAP: ['The builder has no token cap for this model.', 'Set a token cap before using a model listed at $0.'],
   MODEL_BUDGET: ['The builder reached its token or spending cap.', 'Nothing was created. The flows you have keep running.'],
   SHEET_NOT_FOUND: ['A sheet the flow reads is not in your workspace.', 'Put the sheet (a JSON list of rows) in the workspace world/sheets folder, then run again.'],
+  PRACTICE_ONLY: ['Practice-only mode is on, so nothing runs for real on this computer.', 'Turn it off in Settings if you want to run it for real. Tests on pretend data still work.'],
   ROWS_DATE: ['A date in your sheet is not in a form the flow can read.', 'Use YYYY-MM-DD, or a date and time with a time zone.']
 };
 const isRef = value => value !== null && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 1 && typeof value.$ref === 'string';
