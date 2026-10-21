@@ -10,7 +10,11 @@ import { fileURLToPath } from 'node:url';
 import { createModelPort } from '../../lib/models.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const OUT = path.join(ROOT, 'research/need-router-20261014/router1/mercury-raw.json');
+// Pass 1 (CATEGORIES) produced almost only one-off requests, even for the categories meant to elicit ongoing work
+// (devops, oss, casual): pass 2 (--pass 2, CATEGORIES2) asks for ongoing and multi-party work explicitly, so the
+// independent-text slice has positives too. Both passes were run before any router code existed.
+const PASS = process.argv.includes('--pass') ? Number(process.argv[process.argv.indexOf('--pass') + 1]) : 1;
+const OUT = path.join(ROOT, `research/need-router-20261014/router1/mercury-raw${PASS === 1 ? '' : `-${PASS}`}.json`);
 const MODEL = 'mercury-3';
 
 export const CATEGORIES = Object.freeze([
@@ -26,6 +30,13 @@ export const CATEGORIES = Object.freeze([
   ['m-casual', 'short, casual, lowercase chat messages to an AI assistant from busy people asking it to handle something for them, the way people text a colleague']
 ]);
 
+export const CATEGORIES2 = Object.freeze([
+  ['m2-ongoing', 'requests asking an AI agent to take over an ongoing responsibility at a company, something that keeps happening (each new item, every week, whenever something occurs), across their tools'],
+  ['m2-process', 'requests asking an AI agent to run a multi-step business or engineering process that involves other people\'s approvals, waiting for replies or signatures, or deadlines days or weeks away'],
+  ['m2-program', 'requests asking an AI agent to run a research or engineering program that must follow explicit rules, protocols or audit requirements over many steps'],
+  ['m2-casual', 'short casual chat messages asking an AI assistant to handle something from now on or on a regular basis, the way people text a colleague']
+]);
+
 const SYSTEM = 'You write realistic test data: requests that real people type to an AI assistant or agent. Output JSON only.';
 const promptFor = desc => `Write 8 different realistic requests that a person might send to an AI assistant or AI agent, of this kind:\n\n${desc}\n\n` +
   'Vary the length (from one short line to a detailed paragraph of up to 6 sentences), the tone, the industry and the specifics (names, numbers, tools). ' +
@@ -35,9 +46,9 @@ const SCHEMA = { type: 'object', additionalProperties: false, required: ['reques
 async function main() {
   if (existsSync(OUT) && !process.argv.includes('--force')) { console.log(`exists: ${path.relative(ROOT, OUT)} (pass --force to regenerate)`); return; }
   mkdirSync('/var/tmp/foundry-work/need/router1', { recursive: true });
-  const { port, tokens } = createModelPort({ journalFile: '/var/tmp/foundry-work/need/router1/mercury-author.sqlite', allowedModels: [MODEL], tokenCap: 60000, callTokens: 6000 });
+  const { port, tokens } = createModelPort({ journalFile: '/var/tmp/foundry-work/need/router1/mercury-author.sqlite', allowedModels: ['claude-haiku-5-5', MODEL], tokenCap: 60000, callTokens: 6000 });
   const out = { model: MODEL, at: new Date().toISOString(), system: SYSTEM, promptTemplate: promptFor('<category description>'), categories: [] };
-  for (const [id, desc] of CATEGORIES) {
+  for (const [id, desc] of PASS === 1 ? CATEGORIES : CATEGORIES2) {
     const r = await port.call({ runId: `router1-mercury-author:${id}`, nodeKey: 'author', modelId: MODEL, system: SYSTEM, prompt: promptFor(desc), schema: SCHEMA,
       decoding: { maxTokens: 3000 }, salt: 'router1-mercury-author-v1' });
     if (!r.ok) { console.log(`${id}: ERROR ${r.error?.code} ${r.error?.message?.slice(0, 200)}`); out.categories.push({ id, description: desc, ok: false, error: r.error }); continue; }
