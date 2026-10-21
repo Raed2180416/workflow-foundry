@@ -1,0 +1,104 @@
+{
+ "about": "Frozen before the first paid gleaning call (compromise register E1, research/compromises-20261021/FIXES.md Action 3, \"Milestone A\"). DEVELOPMENT EVIDENCE ONLY: SPEC-E is in-sample for the gleaning prompt, which was written after reading which SPEC-E sentences the primary Haiku ledger missed. Practice/diagnostic use; nothing here is held-out evidence.",
+ "frozenAt": "2026-10-21T18:22:43.212Z",
+ "gitHead": "d08a0ae781d96ac65a7cea448d66a4ec9fa33582",
+ "inputs": {
+  "primaryLedger": {
+   "file": "research/need-router-20261014/tracker-e8/extraction/haiku.s0.json",
+   "sha256": "3f3a8772e9e82e5c82013dc2119cfaab4192aa0d3569366140bce62913182f0d",
+   "note": "the frozen primary sample s0 of the 2026-10-14 tracker run (78 entries, 37 uncovered sentences)"
+  },
+  "secondaryLedgers": [
+   {
+    "file": "research/need-router-20261014/tracker-e8/extraction/haiku.s1.json",
+    "sha256": "47869fcdcc9cd6da3ef6c352551aa80bbeb83ef69f251eb3a1fb4adcc7738832"
+   },
+   {
+    "file": "research/need-router-20261014/tracker-e8/extraction/haiku.s2.json",
+    "sha256": "dd228080c6dbba4cafeeb140acf2d682791299511d7bace10724bd9421c5dad6"
+   }
+  ],
+  "specE": {
+   "rev": "48535bb",
+   "file": "beds/ebed/e8/spec/SPEC-E.md",
+   "sha256": "c013c04c80636682f46fd9bdbc2bf436712ed53233b03a06ba74bd88824f8cf1"
+  },
+  "gold": {
+   "file": "research/need-router-20261014/tracker-e8/gold.json",
+   "sha256": "77034dd7e5ad4815feb9d4864699ae3ec0d8e91f2bc39ca8ad5c1d4355059a43"
+  }
+ },
+ "code": {
+  "experiments/tracker/run.mjs": "f630ca1909cb218bffe5a3f02b81f28df2500ad522e4c1eacecd1ea57df1a51e",
+  "experiments/tracker/eval-e8.mjs": "446b78ecf578be399768c91e8b51c136d544dc348e88c2aee6e81fd2b8a2bd3e",
+  "experiments/tracker/ledger.mjs": "2d0a6483eba7d6ab755a1ebd8149b18b9eb2da4d821089dae8c7c9fce0b215da",
+  "experiments/tracker/extract.mjs": "8fc87692fc30ac9610d9b25f764976145a8a8872b4ce33b32da5b9b8107a8558",
+  "experiments/lib/models.mjs": "d868e7d95c442b35fca25fac5e6e81b548f7f02f85e714d3303a94317d23b4d9",
+  "src/models/providers/claude-cli.mjs": "a934bb2e261f7eeeba7c5ae507c9d0ed89d5bd40d5d414a25030d30664e1d247",
+  "src/models/port.mjs": "bdc48f1fcd53ba2c7c788c0d97922965dbaff686a859a55f1dd3638b1068873a"
+ },
+ "model": {
+  "id": "claude-haiku-5-5",
+  "class": "M",
+  "route": "claude-cli via experiments/lib/models.mjs createModelPort (journaled)",
+  "policyVersion": "2026-10-21.2",
+  "policySha256": "cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69",
+  "reasoning": "none",
+  "prompt": "tracker-glean/1"
+ },
+ "runs": [
+  {
+   "id": "P",
+   "role": "primary (the acceptance run)",
+   "ledger": "haiku.s0",
+   "sample": 0
+  },
+  {
+   "id": "R1",
+   "role": "repeat of P (variance only, no threshold)",
+   "ledger": "haiku.s0",
+   "sample": 1
+  },
+  {
+   "id": "R2",
+   "role": "repeat of P (variance only, no threshold)",
+   "ledger": "haiku.s0",
+   "sample": 2
+  },
+  {
+   "id": "X1",
+   "role": "secondary: the second valid Haiku sample",
+   "ledger": "haiku.s1",
+   "sample": 0
+  },
+  {
+   "id": "X2",
+   "role": "secondary: the raw-failure Haiku sample (1 entry, 93 uncovered); can a second pass rescue it?",
+   "ledger": "haiku.s2",
+   "sample": 0
+  }
+ ],
+ "order": "P, R1, R2, X1, X2. Each command gets --budget = $0.05 minus the spend so far; a run is skipped (and reported as skipped) if less than $0.01 remains.",
+ "acceptance": {
+  "run": "P only, scored by `node experiments/tracker/eval-e8.mjs score` (frozen SPEC-E 48535bb, frozen gold.json)",
+  "idRecall": ">= 0.90, i.e. >= 27 of 30 gold ids (baseline s0: 23/30 = 0.767)",
+  "goLive": "goLive.normative covered == 3 of 3: every sentence starting on frozen lines 91-93 that the coverage guard counts as normative is overlapped by a ledger entry (baseline s0: 1 of 3; the descriptive opening sentence on line 91 is reported as goLive.all, without a threshold)",
+  "costUsd": "<= 0.005 for the gleaning call (provider-reported list price, journal / model-calls.jsonl)",
+  "verdict": "met only if all three hold; otherwise not met, reported as measured"
+ },
+ "reportedWithoutThreshold": [
+  "uRecall",
+  "clauseCoverage",
+  "entries added and their kinds",
+  "nonNormative entries (section 6 / headings)",
+  "guardYield",
+  "answered none / unanswered / invalid",
+  "latency and CLI turns",
+  "R1/R2 spread",
+  "X1, X2"
+ ],
+ "budget": {
+  "totalCapUsd": 0.05,
+  "note": "all paid calls of this action together"
+ }
+}
