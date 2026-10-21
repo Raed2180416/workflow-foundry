@@ -1,0 +1,12 @@
+# FH-1 worker B (PREREG-FH1.md §3): "<incident> <arm> <k>", run in file order
+ch-e8-1 H-N 1
+ch-e8-2 H-N 1
+ch-e8-3 H-N 1
+cht-e8-1 H-N 1
+cht-e8-2 H-N 1
+cht-e8-3 H-N 1
+b1lh-e8-2 H-N 1
+b1lh-e8-3 H-N 1
+cht-e8-1 H-C 2
+cht-e8-2 H-C 2
+cht-e8-3 H-C 2
