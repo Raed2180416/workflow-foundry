@@ -742,3 +742,5 @@ The owner asked to try the harness "with haiku or opus whatever works the best".
 - The Opus probe (`a0o-dev-first6`) was stopped before any task finished. No Opus result exists, and its partial spend is booked in its live directory.
 - The alternative-model arms under AM-10 are now A0-S and A1-S: `claude-sonnet-5-5`, effort high, `--date-note`, session budget $1.50.
 - The AM-10 selection rule and budgets apply unchanged, with Sonnet in place of Opus.
+
+**AM-12 (2026-10-21) Group-sequential dev comparisons, frozen:** [PREREG-AB-v1-AMEND-1.md](PREREG-AB-v1-AMEND-1.md). Under D23, strict pass is tested first at α 0.05 and partial credit only after it, with stopping on strict pass only; each arm has its own first look; the plan sha256 is `3cd586bd…2ea4`.

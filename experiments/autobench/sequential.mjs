@@ -89,7 +89,7 @@ export const PREREG_DEVCHECK = Object.freeze({ prefix: '74cf7615', suffix: '25a7
  * The frozen plan's sha256, pinned here at freeze (PREREG-AB-v1-AMEND-1 §9). null while the amendment is a DRAFT: then a
  * plan reads only as DRAFT (analyses are labelled so) and `look --exec` refuses to start a paid run.
  */
-export const FROZEN_PLAN_SHA256 = null;
+export const FROZEN_PLAN_SHA256 = '3cd586bd7994a4a4bd0de00e771568516eeda808dc45b0297575d9a659cd2ea4';   // SEQUENTIAL-PLAN-v1.json, frozen 2026-10-21 (D23)
 /** run.mjs options a look may not pass: the task list comes from the plan, and the repo copy is what `analyze` reads. */
 export const REFUSED_RUN_OPTIONS = Object.freeze(['--tasks', '--pool', '--subset', '--seed', '--domains', '--test-run', '--no-copy', '--dry-run']);
 
