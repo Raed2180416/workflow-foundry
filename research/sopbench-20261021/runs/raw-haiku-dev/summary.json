@@ -1,0 +1,209 @@
+{
+ "runId": "raw-haiku-dev",
+ "label": "model claude-haiku-5-5",
+ "model": "claude-haiku-5-5",
+ "policy": null,
+ "evidence": "development/diagnostic: SOP-Bench dev rows (SPLIT.json build + repair); not held-out",
+ "stopped": null,
+ "complete": true,
+ "n": 247,
+ "of": 247,
+ "upstream": {
+  "micro": 0.6963562753036437,
+  "macro": 0.7043956043956043
+ },
+ "strict": {
+  "micro": 0.6963562753036437,
+  "macro": 0.7043956043956043
+ },
+ "bySop": {
+  "aircraft_inspection": {
+   "n": 20,
+   "of": 20,
+   "upstream": 0.6,
+   "strict": 0.6,
+   "costUsd": 0.04956126999999999,
+   "meanCostUsd": 0.0024780634999999997,
+   "meanSteps": 2.25
+  },
+  "content_flagging": {
+   "n": 20,
+   "of": 20,
+   "upstream": 0.3,
+   "strict": 0.3,
+   "costUsd": 0.03809948999999999,
+   "meanCostUsd": 0.0019049744999999996,
+   "meanSteps": 3
+  },
+  "customer_service": {
+   "n": 20,
+   "of": 20,
+   "upstream": 0.85,
+   "strict": 0.85,
+   "costUsd": 0.06431477000000001,
+   "meanCostUsd": 0.0032157385000000003,
+   "meanSteps": 6.5
+  },
+  "dangerous_goods": {
+   "n": 20,
+   "of": 20,
+   "upstream": 1,
+   "strict": 1,
+   "costUsd": 0.02676499,
+   "meanCostUsd": 0.0013382494999999999,
+   "meanSteps": 1
+  },
+  "email_intent": {
+   "n": 20,
+   "of": 20,
+   "upstream": 0.85,
+   "strict": 0.85,
+   "costUsd": 0.017242809999999997,
+   "meanCostUsd": 0.0008621404999999999,
+   "meanSteps": 0.85
+  },
+  "know_your_business": {
+   "n": 20,
+   "of": 20,
+   "upstream": 0.35,
+   "strict": 0.35,
+   "costUsd": 0.05128707000000001,
+   "meanCostUsd": 0.0025643535000000007,
+   "meanSteps": 2.6
+  },
+  "order_fulfillment": {
+   "n": 7,
+   "of": 7,
+   "upstream": 0.8571428571428571,
+   "strict": 0.8571428571428571,
+   "costUsd": 0.0073985200000000004,
+   "meanCostUsd": 0.0010569314285714287,
+   "meanSteps": 2
+  },
+  "referral_abuse_detection_v1": {
+   "n": 20,
+   "of": 20,
+   "upstream": 1,
+   "strict": 1,
+   "costUsd": 0.03431411,
+   "meanCostUsd": 0.0017157055,
+   "meanSteps": 1.65
+  },
+  "referral_abuse_detection_v2": {
+   "n": 20,
+   "of": 20,
+   "upstream": 1,
+   "strict": 1,
+   "costUsd": 0.044608709999999996,
+   "meanCostUsd": 0.0022304355,
+   "meanSteps": 1.25
+  },
+  "traffic_spoofing_detection": {
+   "n": 20,
+   "of": 20,
+   "upstream": 0.7,
+   "strict": 0.7,
+   "costUsd": 0.03958866,
+   "meanCostUsd": 0.001979433,
+   "meanSteps": 2.7
+  },
+  "video_annotation": {
+   "n": 20,
+   "of": 20,
+   "upstream": 0.5,
+   "strict": 0.5,
+   "costUsd": 0.07426763,
+   "meanCostUsd": 0.0037133815,
+   "meanSteps": 2.15
+  },
+  "video_classification": {
+   "n": 20,
+   "of": 20,
+   "upstream": 0.6,
+   "strict": 0.6,
+   "costUsd": 0.052284260000000006,
+   "meanCostUsd": 0.002614213,
+   "meanSteps": 4.75
+  },
+  "warehouse_package_inspection": {
+   "n": 20,
+   "of": 20,
+   "upstream": 0.55,
+   "strict": 0.55,
+   "costUsd": 0.03974042999999999,
+   "meanCostUsd": 0.0019870214999999996,
+   "meanSteps": 2.8
+  }
+ },
+ "scorer": {
+  "graded": 247,
+  "jsUpstreamCovered": 247,
+  "jsUpstreamAgree": 247,
+  "jsUpstreamDisagree": 0,
+  "strictAgree": 247,
+  "gradeErrors": 0
+ },
+ "world": {
+  "upstreamFatalRows": 0,
+  "unknownToolRows": 0,
+  "stepLimitRows": 1,
+  "meanSteps": 2.6072874493927127
+ },
+ "headlineOverrides": [],
+ "sessionErrors": [],
+ "cost": {
+  "spentUsd": 0.5394727200000001,
+  "perRowUsd": 0.00218410008097166,
+  "unknownCostSessions": 0,
+  "faultSpendUsd": 0,
+  "capUsd": 7.99,
+  "budgetUsdPerSession": 0.25
+ },
+ "tokens": {
+  "inputTokens": 1772,
+  "outputTokens": 5740,
+  "cacheReadTokens": 6504022,
+  "cacheWriteTokens": 1284334
+ },
+ "envFaults": {
+  "records": 0
+ },
+ "settings": {
+  "maxSteps": 10,
+  "budgetUsd": 0.25,
+  "timeoutMin": 10,
+  "effort": null,
+  "tools": [
+   "Bash"
+  ],
+  "concurrency": 3,
+  "rowsPerSop": 20,
+  "excluded": [
+   "patient_intake"
+  ]
+ },
+ "provenance": {
+  "upstream": {
+   "url": "https://github.com/amazon-science/sop-bench",
+   "commit": "f6d43858b94cf439854038101bce0eecd3e16eae"
+  },
+  "splitSha256": "1d957bebcca48aa28127713ca4193541661d71f145d72ff3abbe2a124fd6e84a",
+  "bridgeSha256": "5a3846f1af836a3771abe12107da13a4d1a2bab37cd1e9678d6a66ba58867ec6",
+  "toolClientSha256": "53918f7c1fcb5ee96260ff0144db5e88cd8bb2433cef9aa476d99cec8c9d018f",
+  "runnerSha256": "e049d317a9fbc82246c69fdd368cd9e5e90c00d17435dc74da4a330b76cdd22c",
+  "scorerSha256": "7ae987729ef034a6986f030b1f5deeb5cbe5def15847da04acb367151f7ac531",
+  "policyVersion": "2026-10-21.1",
+  "policyHash": "5f99b66fc915ddac8864af04aa6c1632c13b67050b3ac76d5f4d90b441ed787f",
+  "node": "v24.21.0",
+  "cli": "2.1.306 (Claude Code)",
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  }
+ },
+ "live": "/var/tmp/foundry-work/sopbench/raw-haiku-dev",
+ "finishedAt": "2026-10-21T12:02:19.103Z"
+}

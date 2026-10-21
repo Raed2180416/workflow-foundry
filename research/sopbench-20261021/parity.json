@@ -1,0 +1,882 @@
+{
+ "kind": "sopbench-parity",
+ "at": "2026-10-21T12:02:11.984Z",
+ "splitSha256": "1d957bebcca48aa28127713ca4193541661d71f145d72ff3abbe2a124fd6e84a",
+ "rows": 263,
+ "sops": 14,
+ "evidence": "development/diagnostic, $0: scripted policies on SPLIT.json dev rows only; no model",
+ "policies": {
+  "oracle": {
+   "upstream": {
+    "micro": 1,
+    "macro": 1
+   },
+   "strict": {
+    "micro": 1,
+    "macro": 1
+   },
+   "n": 263,
+   "bySop": {
+    "aircraft_inspection": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "content_flagging": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "customer_service": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "dangerous_goods": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "email_intent": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "know_your_business": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "order_fulfillment": {
+     "n": 7,
+     "upstream": 1,
+     "strict": 1
+    },
+    "patient_intake": {
+     "n": 16,
+     "upstream": 1,
+     "strict": 1
+    },
+    "referral_abuse_detection_v1": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "referral_abuse_detection_v2": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "traffic_spoofing_detection": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "video_annotation": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "video_classification": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    },
+    "warehouse_package_inspection": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 1
+    }
+   }
+  },
+  "wrong": {
+   "upstream": {
+    "micro": 0,
+    "macro": 0
+   },
+   "strict": {
+    "micro": 0,
+    "macro": 0
+   },
+   "n": 263,
+   "bySop": {
+    "aircraft_inspection": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "content_flagging": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "customer_service": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "dangerous_goods": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "email_intent": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "know_your_business": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "order_fulfillment": {
+     "n": 7,
+     "upstream": 0,
+     "strict": 0
+    },
+    "patient_intake": {
+     "n": 16,
+     "upstream": 0,
+     "strict": 0
+    },
+    "referral_abuse_detection_v1": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "referral_abuse_detection_v2": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "traffic_spoofing_detection": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "video_annotation": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "video_classification": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "warehouse_package_inspection": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    }
+   }
+  },
+  "labelswap": {
+   "upstream": {
+    "micro": 0,
+    "macro": 0
+   },
+   "strict": {
+    "micro": 0,
+    "macro": 0
+   },
+   "n": 263,
+   "bySop": {
+    "aircraft_inspection": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "content_flagging": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "customer_service": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "dangerous_goods": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "email_intent": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "know_your_business": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "order_fulfillment": {
+     "n": 7,
+     "upstream": 0,
+     "strict": 0
+    },
+    "patient_intake": {
+     "n": 16,
+     "upstream": 0,
+     "strict": 0
+    },
+    "referral_abuse_detection_v1": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "referral_abuse_detection_v2": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "traffic_spoofing_detection": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "video_annotation": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "video_classification": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "warehouse_package_inspection": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    }
+   }
+  },
+  "gaming": {
+   "upstream": {
+    "micro": 0.9961977186311787,
+    "macro": 0.9964285714285713
+   },
+   "strict": {
+    "micro": 0,
+    "macro": 0
+   },
+   "n": 263,
+   "bySop": {
+    "aircraft_inspection": {
+     "n": 20,
+     "upstream": 0.95,
+     "strict": 0
+    },
+    "content_flagging": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "customer_service": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "dangerous_goods": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "email_intent": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "know_your_business": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "order_fulfillment": {
+     "n": 7,
+     "upstream": 1,
+     "strict": 0
+    },
+    "patient_intake": {
+     "n": 16,
+     "upstream": 1,
+     "strict": 0
+    },
+    "referral_abuse_detection_v1": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "referral_abuse_detection_v2": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "traffic_spoofing_detection": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "video_annotation": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "video_classification": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    },
+    "warehouse_package_inspection": {
+     "n": 20,
+     "upstream": 1,
+     "strict": 0
+    }
+   }
+  },
+  "empty": {
+   "upstream": {
+    "micro": 0,
+    "macro": 0
+   },
+   "strict": {
+    "micro": 0,
+    "macro": 0
+   },
+   "n": 263,
+   "bySop": {
+    "aircraft_inspection": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "content_flagging": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "customer_service": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "dangerous_goods": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "email_intent": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "know_your_business": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "order_fulfillment": {
+     "n": 7,
+     "upstream": 0,
+     "strict": 0
+    },
+    "patient_intake": {
+     "n": 16,
+     "upstream": 0,
+     "strict": 0
+    },
+    "referral_abuse_detection_v1": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "referral_abuse_detection_v2": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "traffic_spoofing_detection": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "video_annotation": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "video_classification": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    },
+    "warehouse_package_inspection": {
+     "n": 20,
+     "upstream": 0,
+     "strict": 0
+    }
+   }
+  }
+ },
+ "officialPath": {
+  "loaders": {
+   "aircraft_inspection": "upstream",
+   "content_flagging": "upstream",
+   "customer_service": "upstream",
+   "dangerous_goods": "upstream",
+   "email_intent": "upstream",
+   "know_your_business": "upstream",
+   "order_fulfillment": "upstream",
+   "patient_intake": "upstream",
+   "referral_abuse_detection_v1": "upstream",
+   "referral_abuse_detection_v2": "upstream",
+   "traffic_spoofing_detection": "upstream",
+   "video_annotation": "upstream",
+   "video_classification": "upstream",
+   "warehouse_package_inspection": "ours (upstream loader failed: ValueError: Failed to load benchmark 'warehouse_package_inspection': Error loading test data: Row 0: Could not determine expected output. CSV must have 'expected_output' or)"
+  },
+  "upstreamInputsContainOutputs": {
+   "aircraft_inspection": [],
+   "content_flagging": [
+    "final_decision"
+   ],
+   "customer_service": [],
+   "dangerous_goods": [],
+   "email_intent": [],
+   "know_your_business": [],
+   "order_fulfillment": [
+    "expected_output"
+   ],
+   "patient_intake": [],
+   "referral_abuse_detection_v1": [],
+   "referral_abuse_detection_v2": [],
+   "traffic_spoofing_detection": [],
+   "video_annotation": [],
+   "video_classification": []
+  },
+  "toolCalls": {
+   "compared": 1215,
+   "equal": 1192,
+   "differ": [
+    {
+     "id": "oracle:content_flagging:38",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.96, \"device_consistency_score\": 0.62}",
+     "official": "{\"bot_probability_index\": 0.61, \"device_consistency_score\": 0.31}"
+    },
+    {
+     "id": "oracle:content_flagging:48",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.65, \"device_consistency_score\": 0.02}",
+     "official": "{\"bot_probability_index\": 0.88, \"device_consistency_score\": 0.72}"
+    },
+    {
+     "id": "oracle:content_flagging:65",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.49, \"device_consistency_score\": 0.95}",
+     "official": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.44}"
+    },
+    {
+     "id": "oracle:content_flagging:67",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.36, \"device_consistency_score\": 0.97}",
+     "official": "{\"bot_probability_index\": 0.25, \"device_consistency_score\": 0.27}"
+    },
+    {
+     "id": "oracle:content_flagging:162",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.39}",
+     "official": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.26}"
+    },
+    {
+     "id": "oracle:content_flagging:11",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.18}",
+     "official": "{\"bot_probability_index\": 0.38, \"device_consistency_score\": 0.47}"
+    },
+    {
+     "id": "oracle:content_flagging:14",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.49, \"device_consistency_score\": 0.95}",
+     "official": "{\"bot_probability_index\": 0.32, \"device_consistency_score\": 0.54}"
+    },
+    {
+     "id": "oracle:content_flagging:16",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.21, \"device_consistency_score\": 0.24}",
+     "official": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.09}"
+    },
+    {
+     "id": "oracle:content_flagging:22",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.47, \"device_consistency_score\": 0.58}",
+     "official": "{\"bot_probability_index\": 0.33, \"device_consistency_score\": 0.91}"
+    },
+    {
+     "id": "oracle:content_flagging:23",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.21, \"device_consistency_score\": 0.98}",
+     "official": "{\"bot_probability_index\": 0.95, \"device_consistency_score\": 0.48}"
+    },
+    {
+     "id": "oracle:content_flagging:30",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.82, \"device_consistency_score\": 0.57}",
+     "official": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.11}"
+    },
+    {
+     "id": "oracle:content_flagging:33",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.19}",
+     "official": "{\"bot_probability_index\": 0.71, \"device_consistency_score\": 0.14}"
+    },
+    {
+     "id": "oracle:content_flagging:42",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.64, \"device_consistency_score\": 0.92}",
+     "official": "{\"bot_probability_index\": 0.31, \"device_consistency_score\": 0.62}"
+    },
+    {
+     "id": "oracle:content_flagging:75",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.53, \"device_consistency_score\": 0.34}",
+     "official": "{\"bot_probability_index\": 0.71, \"device_consistency_score\": 0.12}"
+    },
+    {
+     "id": "oracle:content_flagging:96",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.99, \"device_consistency_score\": 0.23}",
+     "official": "{\"bot_probability_index\": 0.67, \"device_consistency_score\": 0.34}"
+    },
+    {
+     "id": "oracle:content_flagging:97",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.08, \"device_consistency_score\": 0.79}",
+     "official": "{\"bot_probability_index\": 0.37, \"device_consistency_score\": 0.89}"
+    },
+    {
+     "id": "oracle:content_flagging:102",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 1.0, \"device_consistency_score\": 0.19}",
+     "official": "{\"bot_probability_index\": 0.75, \"device_consistency_score\": 0.06}"
+    },
+    {
+     "id": "oracle:email_intent:126",
+     "i": 0,
+     "name": "get_product_price",
+     "ours": "{\"product_id\": \"P45W6X\", \"listing_price\": 69.99}",
+     "official": "{\"product_id\": \"P45W6X\", \"listing_price\": 0.0}"
+    },
+    {
+     "id": "oracle:email_intent:126",
+     "i": 1,
+     "name": "get_product_description",
+     "ours": "{\"product_id\": \"P45W6X\", \"product_description\": \"LED desk lamp\"}",
+     "official": "{\"product_id\": \"P45W6X\", \"product_description\": \"Meal replacement\"}"
+    },
+    {
+     "id": "oracle:email_intent:126",
+     "i": 2,
+     "name": "get_inventory_status",
+     "ours": "{\"product_id\": \"P45W6X\", \"marketplace_id\": \"US\", \"current_stock\": 85}",
+     "official": "{\"product_id\": \"P45W6X\", \"marketplace_id\": \"US\", \"current_stock\": 0}"
+    },
+    {
+     "id": "oracle:content_flagging:107",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.26, \"device_consistency_score\": 0.54}",
+     "official": "{\"bot_probability_index\": 0.21, \"device_consistency_score\": 0.66}"
+    },
+    {
+     "id": "oracle:content_flagging:129",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.59, \"device_consistency_score\": 0.04}",
+     "official": "{\"bot_probability_index\": 0.46, \"device_consistency_score\": 0.11}"
+    },
+    {
+     "id": "oracle:content_flagging:160",
+     "i": 0,
+     "name": "calculateBotProbabilityIndex",
+     "ours": "{\"bot_probability_index\": 0.59, \"device_consistency_score\": 0.86}",
+     "official": "{\"bot_probability_index\": 0.62, \"device_consistency_score\": 0.57}"
+    }
+   ],
+   "differCount": 23
+  },
+  "verdicts": {
+   "compared": 1315,
+   "equal": 1315,
+   "differ": []
+  }
+ },
+ "scorerBattery": {
+  "answers": 8153,
+  "variants": 31,
+  "jsUpstreamCovered": 6368,
+  "jsUpstreamAgree": 6368,
+  "strictAgree": 8153,
+  "disagreements": [],
+  "disagreementCount": 0,
+  "byVariant": {
+   "oracle": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "upper": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "underscores": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "hyphens": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "padded": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "prefix": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "suffix": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "substring": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "first-word": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 130,
+    "jsCovered": 263
+   },
+   "not": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "gaming": {
+    "n": 263,
+    "upstreamPass": 262,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "labelswap": {
+    "n": 263,
+    "upstreamPass": 0,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "nulls": {
+    "n": 263,
+    "upstreamPass": 0,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "na-strings": {
+    "n": 263,
+    "upstreamPass": 0,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "unknown": {
+    "n": 263,
+    "upstreamPass": 0,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "bool-json": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "number-json": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "number-1e": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "keys-upper": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "dup-keys": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "missing-first": {
+    "n": 263,
+    "upstreamPass": 0,
+    "strictPass": 0,
+    "jsCovered": 56
+   },
+   "extra-keys": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "two-blocks-wrong-last": {
+    "n": 263,
+    "upstreamPass": 0,
+    "strictPass": 0,
+    "jsCovered": 263
+   },
+   "two-blocks-right-last": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "broken-json": {
+    "n": 263,
+    "upstreamPass": 207,
+    "strictPass": 0,
+    "jsCovered": 0
+   },
+   "tag-case": {
+    "n": 263,
+    "upstreamPass": 263,
+    "strictPass": 263,
+    "jsCovered": 263
+   },
+   "nested": {
+    "n": 263,
+    "upstreamPass": 207,
+    "strictPass": 0,
+    "jsCovered": 0
+   },
+   "list-value": {
+    "n": 263,
+    "upstreamPass": 262,
+    "strictPass": 0,
+    "jsCovered": 0
+   },
+   "xml-fallback": {
+    "n": 263,
+    "upstreamPass": 207,
+    "strictPass": 0,
+    "jsCovered": 0
+   },
+   "plain": {
+    "n": 263,
+    "upstreamPass": 207,
+    "strictPass": 0,
+    "jsCovered": 0
+   },
+   "empty": {
+    "n": 263,
+    "upstreamPass": 0,
+    "strictPass": 0,
+    "jsCovered": 0
+   }
+  }
+ },
+ "runPathScorer": {
+  "oracle": {
+   "graded": 263,
+   "jsUpstreamCovered": 263,
+   "jsUpstreamAgree": 263,
+   "jsUpstreamDisagree": 0,
+   "strictAgree": 263,
+   "gradeErrors": 0
+  },
+  "wrong": {
+   "graded": 263,
+   "jsUpstreamCovered": 263,
+   "jsUpstreamAgree": 263,
+   "jsUpstreamDisagree": 0,
+   "strictAgree": 263,
+   "gradeErrors": 0
+  },
+  "labelswap": {
+   "graded": 263,
+   "jsUpstreamCovered": 263,
+   "jsUpstreamAgree": 263,
+   "jsUpstreamDisagree": 0,
+   "strictAgree": 263,
+   "gradeErrors": 0
+  },
+  "gaming": {
+   "graded": 263,
+   "jsUpstreamCovered": 263,
+   "jsUpstreamAgree": 263,
+   "jsUpstreamDisagree": 0,
+   "strictAgree": 263,
+   "gradeErrors": 0
+  },
+  "empty": {
+   "graded": 263,
+   "jsUpstreamCovered": 0,
+   "jsUpstreamAgree": 0,
+   "jsUpstreamDisagree": 0,
+   "strictAgree": 263,
+   "gradeErrors": 0
+  }
+ },
+ "worldFlags": {
+  "oracle": {
+   "upstreamFatalRows": 263,
+   "unknownToolRows": 263,
+   "stepLimitRows": 0,
+   "meanSteps": 2
+  }
+ }
+}
