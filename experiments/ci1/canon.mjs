@@ -46,11 +46,14 @@ export function tokens(text) {
 /** The item's static vocabulary: every token written anywhere in the reference workflow definition (parameters and code). */
 export function staticVocabulary(workflow) {
   const vocab = new Set();
-  const walk = v => { if (typeof v === 'string') for (const t of tokens(v)) vocab.add(t); else if (Array.isArray(v)) v.forEach(walk); else if (isObj(v)) for (const [k, x] of Object.entries(v)) { for (const t of tokens(k)) vocab.add(t); walk(x); } };
+  // Escapes inside code and expression strings ("\n\nBest regards") would glue words to the escape letter: unescape first.
+  const unescape = s => s.replace(/\\[nrtbfv0]/g, ' ').replace(/\\u[0-9a-fA-F]{4}/g, ' ').replace(/\\(["'`\\])/g, ' $1 ');
+  const walk = v => { if (typeof v === 'string') for (const t of [...tokens(v), ...tokens(unescape(v))]) vocab.add(t); else if (Array.isArray(v)) v.forEach(walk); else if (isObj(v)) for (const [k, x] of Object.entries(v)) { for (const t of tokens(k)) vocab.add(t); walk(x); } };
   for (const n of workflow.nodes ?? []) { if (String(n.type).endsWith('stickyNote')) continue; walk(n.parameters ?? {}); for (const t of tokens(n.name)) vocab.add(t); }
   return vocab;
 }
-export function factsOf(text, vocab) { return [...new Set(tokens(text).filter(t => !vocab.has(t)))]; }
+/** Facts: tokens not written in the definition, plus every e-mail address and URL (a literal address in a message still matters). */
+export function factsOf(text, vocab) { return [...new Set(tokens(text).filter(t => !vocab.has(t) || /@|^https?:/.test(t)))]; }
 
 // ---------------------------------------------------------------------------------------------------- canonical forms
 /** From n8n-sim's raw effects (+ final sheets of the sheets either side may write). */
@@ -132,7 +135,7 @@ export function equivalent(ref, cand, decl = {}) {
   else rr.forEach((r, i) => {
     const c = cr[i];
     if (decl.respondCode && Number(r.code) !== Number(c.code)) reasons.push(`response ${i + 1}: status ${c.code}, expected ${r.code}`);
-    if (isObj(r.body) || Array.isArray(r.body)) { if (JSON.stringify(normJson(r.body)) !== JSON.stringify(normJson(typeof c.body === 'string' ? tryJson(c.body) : c.body))) reasons.push(`response ${i + 1}: body differs`); }
+    if (isObj(r.body) || Array.isArray(r.body)) { const why = jsonDiff(r.body, typeof c.body === 'string' ? tryJson(c.body) : c.body, vocab); if (why) reasons.push(`response ${i + 1}: ${why}`); }
     else { const tk = new Set(tokens(typeof c.body === 'string' ? c.body : JSON.stringify(c.body))); const miss = factsOf(String(r.body ?? ''), vocab).filter(f => !tk.has(f)); if (miss.length) reasons.push(`response ${i + 1}: missing facts [${miss.slice(0, 6).join(', ')}]`); }
   });
   // sheets
@@ -160,6 +163,19 @@ export function equivalent(ref, cand, decl = {}) {
   return { pass: reasons.length === 0, reasons };
 }
 const tryJson = s => { try { return JSON.parse(s); } catch { return s; } };
+/** JSON body comparison: same keys and array lengths; prose leaves (text with spaces, > 20 chars) by facts; other leaves exactly. */
+export function jsonDiff(r, c, vocab, at = 'body') {
+  if (Array.isArray(r)) { if (!Array.isArray(c)) return `${at} is not a list`; if (r.length !== c.length) return `${at} has ${c.length} entries, expected ${r.length}`; for (let i = 0; i < r.length; i++) { const d = jsonDiff(r[i], c[i], vocab, `${at}[${i}]`); if (d) return d; } return null; }
+  if (isObj(r)) {
+    if (!isObj(c)) return `${at} is not an object`;
+    const rk = Object.keys(r).filter(k => r[k] !== undefined).sort(), ck = Object.keys(c).filter(k => c[k] !== undefined).sort();
+    if (JSON.stringify(rk) !== JSON.stringify(ck)) return `${at} keys [${ck.join(', ')}], expected [${rk.join(', ')}]`;
+    for (const k of rk) { const d = jsonDiff(r[k], c[k], vocab, `${at}.${k}`); if (d) return d; }
+    return null;
+  }
+  if (typeof r === 'string' && /\s/.test(r.trim()) && r.length > 20) { const tk = new Set(tokens(typeof c === 'string' ? c : JSON.stringify(c))); const miss = factsOf(r, vocab).filter(f => !tk.has(f)); return miss.length ? `${at} misses [${miss.slice(0, 5).join(', ')}]` : null; }
+  return normCell(r) === normCell(c) ? null : `${at} is ${JSON.stringify(c)?.slice(0, 60)}, expected ${JSON.stringify(r)?.slice(0, 60)}`;
+}
 
 /** Identity tokens per world row: tokens of the row's text cells that occur in no other row and are not static (leak detection). */
 export function rowIdentities(world, vocab) {

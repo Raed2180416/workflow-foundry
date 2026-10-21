@@ -16,7 +16,8 @@ export const SIM_VERSION = 'n8n-sim/1';
 export const ASSUMPTIONS = [
   'executionOrder v1 for every workflow: depth-first, children ordered by canvas position (y, then x); a node with several inputs waits for all inputs that receive data, and runs with what it has when nothing else is left',
   'a single-input node fed by two parents runs once per arriving batch',
-  'Google Sheets read/lookup runs once per input item (n8n v4 behaviour) unless the node has executeOnce',
+  'Google Sheets read/lookup runs once per input item (n8n v4 behaviour) unless the node has executeOnce; with filters it returns every matching row unless the node asks for the first match',
+  'Google Sheets append with automatic mapping writes only the sheet\'s existing columns unless the node asks to insert new ones',
   'Google Sheets update/appendOrUpdate change the FIRST row whose matching column equals the item value (string comparison)',
   'Gmail and SMTP sends are recorded per recipient; Gmail attribution text is not appended',
   'times: $now is the world clock in the workflow timezone (settings.timezone, else the binding zone, else UTC)',
@@ -167,7 +168,7 @@ export function createSim({ vm, crypto }) {
     let seed = 0x9e3779b9 ^ [...String(world.id ?? '')].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
     const rand = () => { seed = (seed + 0x6d2b79f5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
     const makeRealm = extended => {
-      const ctx = vm.createContext({ DateTime, Duration, Interval, console: { log() {}, info() {}, warn() {}, error() {}, debug() {} }, Buffer: { from: (s, e) => Buffer.from(s, e) } });
+      const ctx = vm.createContext({ DateTime, Duration, Interval, console: { log() {}, info() {}, warn() {}, error() {}, debug() {} }, Buffer });
       vm.runInContext(`(() => { const D = Date; const fixed = ${nowMs};
         class FrozenDate extends D { constructor(...a) { if (a.length === 0) super(fixed); else super(...a); } static now() { return fixed; } }
         globalThis.Date = FrozenDate; })();`, ctx);
@@ -627,8 +628,8 @@ export function createSim({ vm, crypto }) {
               const evald = filters.map(f => ({ col: evalParam(f.lookupColumn, H.name, H.items, i, H.extra), val: evalParam(f.lookupValue, H.name, H.items, i, H.extra) }));
               const combine = (H.P.combineFilters ?? H.P.options?.combineFilters ?? 'AND').toUpperCase();
               rows = rows.filter(r => { const t = evald.map(f => cellEq(r[f.col], f.val)); return combine === 'OR' ? t.some(Boolean) : t.every(Boolean); });
-              const all = H.P.options?.returnAllMatches ?? H.P.options?.returnFirstMatch;
-              const firstOnly = all === 'returnFirstMatch' || all === false || (op === 'lookup' && H.P.options?.returnAllMatches !== true && all !== 'returnAllMatches');
+              const o = H.P.options ?? {};
+              const firstOnly = o.returnFirstMatch === true || o.returnAllMatches === 'returnFirstMatch' || o.returnAllMatches === false || (op === 'lookup' && o.returnAllMatches !== true && o.returnAllMatches !== 'returnAllMatches');
               if (firstOnly) rows = rows.slice(0, 1);
             }
             for (const r of rowsOut(name, rows)) out.push(H.derive(r, H.items[i]));
@@ -685,6 +686,7 @@ export function createSim({ vm, crypto }) {
           for (const m of msgs.slice(0, limit)) out.push({ json: clone(m), lin: {} });
           return [out];
         }
+        if (op === 'get') { H.items.forEach((it, i) => { const id = H.param('messageId', i); const m = W.inbox.find(x => String(x.id) === String(id)); if (!m) throw new NodeError(H.name, `no message ${id}`); out.push(H.derive(clone(m), it)); }); return [out]; }
         if (['addLabels', 'removeLabels', 'markAsRead', 'markAsUnread'].includes(op)) {
           H.items.forEach((it, i) => { const id = H.param('messageId', i); const m = W.inbox.find(x => x.id === id); if (m) { if (op === 'markAsRead') m.read = true; if (op === 'markAsUnread') m.read = false; const labels = H.param('labelIds', i, []); if (op === 'addLabels') m.labelIds = [...new Set([...(m.labelIds ?? []), ...labels])]; if (op === 'removeLabels') m.labelIds = (m.labelIds ?? []).filter(l => !labels.includes(l)); } H.fx({ kind: `mail.${op}`, id: String(id) }); out.push(H.derive({ id, labelIds: m?.labelIds ?? [] }, it)); });
           return [out];
@@ -721,7 +723,7 @@ export function createSim({ vm, crypto }) {
           const sel = H.P.select ?? 'channel';
           const rl = sel === 'user' ? H.param('user', i) : (H.param('channelId', i) ?? H.param('channel', i));
           const raw = rlValue(rl);
-          const channel = binding.channels?.[H.name] ?? `#${slug(rlName(rl))}`;
+          const channel = binding.channels?.[H.name] ?? binding.channelValues?.[String(raw)] ?? `#${slug(rlName(rl))}`;
           let text = String(H.param('text', i, '') ?? '');
           if ((H.P.messageType ?? 'text') === 'block') { const b = H.param('blocksUi', i); const s = typeof b === 'string' ? b : JSON.stringify(b ?? {}); text = [text, ...[...s.matchAll(/"text"\s*:\s*"((?:[^"\\]|\\.)*)"/g)].map(m => JSON.parse(`"${m[1]}"`))].filter(Boolean).join('\n'); }
           H.fx({ kind: 'chat', service: 'slack', channel, text });
@@ -732,7 +734,7 @@ export function createSim({ vm, crypto }) {
       telegram: H => {
         const out = [];
         H.items.forEach((it, i) => {
-          const raw = H.param('chatId', i); const channel = binding.channels?.[H.name] ?? `#${slug(raw)}`;
+          const raw = H.param('chatId', i); const channel = binding.channels?.[H.name] ?? binding.channelValues?.[String(raw)] ?? `#${slug(raw)}`;
           const text = String(H.param('text', i, '') ?? '');
           const fmt = H.P.additionalFields?.parse_mode; const plain = fmt === 'HTML' ? stripHtml(text) : text;
           H.fx({ kind: 'chat', service: 'telegram', channel, text: plain });
