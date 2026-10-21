@@ -132,5 +132,18 @@ Recorded here, with date and reason, if any step above changes after this file i
   limit with no answer (`MODEL_TRUNCATED`, reasoning_tokens 999); they stay fault rows, are not re-asked, and fall back to
   the code decision in `router+mercury` (§7). The decoding (maxTokens 1,000) is unchanged. Mercury total stays under the
   owner's 0.5M: about 15K (author pass) + 0.7K (smoke) + 148.6K (dev) + at most 300K (test).
+- **D4 (2026-10-21T22:20Z; the test judge passes were running, no test-split router output and no test judge row had been
+  computed or read): detectors v1.1.** A product test written for the integration (`app/test/need.test.mjs`) exposed a v1
+  defect: in "Every Monday at 9, pull last week's signups ...", the retrospective scope ("last week") switched off the schedule
+  in the same sentence. 36 requests written after the freeze to look for defects of this kind (`probes.mjs`, labelled by the
+  rubric, tuning data, never evidence) found 6 binary errors in v1. Changes (`need-primitives/1.1`): the retrospective scope
+  applies only to questions and past-tense sentences; a first-person habit ("I review PRs every day; ...") is scoped down
+  unless it asks for something; new cues `watch-and-tell` (recurrence), `for-approval`, generalised `once-done`,
+  `chase-until`, `after-period`, `program-stages` (waits), `w3-program` (rules); `all-the` accepts a number ("all 12
+  vendors"); `no-outside-effect` does not fire on a W3 program; `thresholdAt` is exact at s = 0, 0.5, 1. Refit on dev only:
+  t_default 0.416704 (dev 0/84 FP, 42/42), dev CV FP 1/84, recall 40/42 (as v1); step 4 rerun on dev: δ = 0 again (code only).
+  **Both are evaluated on test, once:** v1 (frozen f9641ff9 + δ = 0, a runnable copy in `frozen-v1/`) stays the
+  preregistered primary for E1-E5; v1.1 is reported beside it as the version that ships in `src/need/`. v1.1 is held out from
+  tuning in the same sense (no test output existed when it was frozen) but had one more author pass, over synthetic requests.
 - **Diagnostic added (no change to any rule):** a 5-fold dev cluster cross-validation of the fit and threshold rule
   (`fit.mjs --cv`), reported as development evidence only.

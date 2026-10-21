@@ -15,7 +15,7 @@
 export const PRIMITIVES = Object.freeze(['recurrence', 'waits', 'effects', 'multiParty', 'rules', 'volume', 'audit', 'reuse']);
 export const DAMPENERS = Object.freeze(['question', 'mention', 'hypothetical', 'singleAction', 'coding']);
 export const FEATURES = Object.freeze([...PRIMITIVES, ...DAMPENERS]);
-export const DETECTOR_VERSION = 'need-primitives/1';
+export const DETECTOR_VERSION = 'need-primitives/1.1';
 export const MAX_SCAN_CHARS = 20000;
 
 const DAY = '(?:day|morning|afternoon|evening|night|weekday|weekend|week|month|quarter|year|hour|business day|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)';
@@ -37,6 +37,7 @@ const RECURRENCE = [
   ['from-now-on', '\\b(?:from now on|going forward|moving forward|on an ongoing basis|from here on|until (?:i|we) say (?:stop|otherwise))\\b', 0.9],
   ['ongoing', '\\bongoing\\b', 0.45],
   ['keep-watch', '\\b(?:keep an eye on|keep watch|keep tabs on|watch for)\\b', 0.7],
+  ['watch-and-tell', '\\b(?:watch|monitor|track|check)\\b[^.]{0,60}\\b(?:and|then)\\s+(?:tell|let|notify|alert|ping|message|email|text)\\s+(?:me|us|the team|\\w+)\\b[^.]{0,20}\\b(?:when|whenever|if|as soon as)\\b', 0.85],
   ['monitor', '\\bmonitor(?:s|ing)?\\b', 0.5],
   ['keep-synced', '\\bkeep\\s+(?:\\w+\\s+){0,4}(?:in sync|synced|up to date|updated|tracked|current)\\b', 0.6],
   ['take-over', '\\b(?:take over|takes over|be in charge of|you (?:now )?own|own our|own the|you curate|you handle|you manage)\\b', 0.6],
@@ -58,8 +59,11 @@ const WAITS = [
   ['until', '\\buntil\\b', 0.4],
   ['get-approval', '\\b(?:get|gets|obtain|collect|secure|chase|request|need|needs|await|route (?:it|them) to [^.]{0,40} for)\\b[^.]{0,50}\\b(?:approval|approvals|sign-?off|signature|signatures|consent|go-ahead)\\b', 0.85],
   ['approval-word', '\\b(?:approval|approvals|sign-?off|signature|signed|countersign\\w*)\\b', 0.35],
-  ['once-done', '\\b(?:once|after|when)\\s+(?:it is |it\'s |they are |they\'re )?(?:approved|signed|confirmed|they (?:reply|respond|confirm|approve|sign)|the (?:cfo|manager|board|customer|client) (?:approves|signs|confirms|replies))\\b', 0.9],
+  ['once-done', '\\b(?:once|after|when)\\s+(?:it is |it\'s |they are |they\'re )?(?:approved|signed|confirmed)\\b|\\b(?:once|after|when|as soon as)\\s+(?:she|he|they|it|[A-Z][a-z]+|the \\w+)\\s+(?:approves|signs|confirms|replies|responds|agrees|accepts|returns|pays|arrives|clears)\\b', 0.9],
+  ['for-approval', '\\b(?:send|submit|route|forward|pass|take)\\b[^.]{0,50}\\bfor\\s+(?:her |his |their )?(?:approval|sign-?off|signature|review and approval)\\b', 0.85],
   ['only-then', '\\b(?:only then|and only then|then and only then)\\b', 0.6],
+  ['chase-until', '\\b(?:chase|nudge|remind|ping)\\b[^.]{0,60}\\b(?:who (?:has|have)n\'t|who has not|who have not|until|if (?:they|he|she) (?:haven\'t|hasn\'t|don\'t|doesn\'t))\\b', 0.8],
+  ['after-period', `\\bafter\\s+${N}\\s*(?:days?|hours?|weeks?|business days?)\\b`, 0.55],
   ['follow-up-until', '\\bfollow(?:\\s|-)?up\\b(?!\\s+(?:email|message|note|call|letter))[^.]{0,60}\\b(?:if|until|within|unless|before)\\b', 0.75],
   ['within-period', `\\bwithin\\s+${N}\\s*${UNIT}\\b`, 0.55],
   ['period-end', '\\b(?:at|on)\\s+the\\s+end\\s+of\\s+(?:the|their|its)\\s+(?:billing period|billing cycle|term|trial|contract|month|quarter|notice period)\\b', 0.75],
@@ -72,6 +76,8 @@ const WAITS = [
   ['next-meeting', '\\bat\\s+the\\s+next\\s+(?:board\\s+)?meeting\\b', 0.6],
   ['then-step', '\\bthen\\s+(?:deploy|send|submit|release|pay|schedule|route|notify|publish|merge|release|forward|escalate)\\b', 0.35],
   ['escalate', '\\bescalat(?:e|es|ed|ing|ion)\\b', 0.3],
+  // v1.1: a rule-bound multi-stage program (rubric W3) spans stages over time: the long-horizon primitive.
+  ['program-stages', '\\b(?:preregistered (?:evaluation|study|analysis|protocol|trial|experiment)|systematic (?:literature )?review (?:protocol|of (?:the literature|studies|trials))|systematic literature review|review protocol|regulated (?:procedure|process)|clinical (?:trial|protocol|study)|(?:validation|qualification) protocol|report every deviation|deviations? from the protocol)\\b', 0.6],
   ['case-tick', '\\b(?:case-tick|process instance|instance of your process|over days|across days|several days)\\b', 0.8]
 ];
 const EFFECTS = [
@@ -115,12 +121,13 @@ const RULES = [
   ['threshold', '\\b(?:if|when|unless|anything|any)\\b[^.]{0,60}\\b(?:over|above|below|under|exceeds?|more than|less than|greater than|at least|>|<)\\s*\\$?\\d', 0.5],
   ['age-threshold', '(?:>|>=|\\bover\\s|\\bolder than\\s|\\bmore than\\s|\\bpast\\s|\\bunder\\s|\\bbelow\\s|\\babove\\s)\\s*\\$?\\d+(?:[.,]\\d+)?\\s*(?:d|days?|hours?|h|hrs?|weeks?|k|%|minutes?)?\\b', 0.35],
   ['tolerance', '\\b(?:tolerance|threshold|thresholds|limit|limits|band|bands|tier|tiers)\\b', 0.3],
+  ['w3-program', '\\b(?:preregistered (?:evaluation|study|analysis|protocol|trial|experiment)|systematic (?:literature )?review (?:protocol|of (?:the literature|studies|trials))|systematic literature review|review protocol|regulated (?:procedure|process)|clinical (?:trial|protocol|study)|(?:validation|qualification) protocol|report every deviation|deviations? from the protocol)\\b', 0.7],
   ['locked', '\\b(?:locked|preregist\\w+|pre-regist\\w+|registered protocol|independent(?:ly)?|blind(?:ed)?|second person|four-eyes|two-person)\\b', 0.45],
   ['match-on', '\\b(?:match on|matched against|cross-check|three-way match|reconcile against|verify (?:that|each|every))\\b', 0.35]
 ];
 const VOLUME = [
   ['for-each', '\\b(?:for\\s+)?(?:each|every)\\s+(?:one\\s+)?(?:of\\s+(?:the|our|these|those|its)\\s+)?(?:\\d[\\d,]*\\s+)?(?:[\\w-]+\\s)?(?:row|item|ticket|lead|package|employee|invoice|order|customer|record|request|sample|service|microservice|page|file|vendor|candidate|account|transaction|payout|claim|case|event|submission|repo|repository|user|contact|deal|opportunity|configuration|batch|receipt|referral|site|store|region|project|form|message|report|entry|document|patient|participant|subject)s?\\b', 0.65],
-  ['all-the', '\\ball\\s+(?:of\\s+)?(?:the\\s+|our\\s+|open\\s+|pending\\s+|unassigned\\s+|new\\s+|incoming\\s+|outstanding\\s+|overdue\\s+|unpaid\\s+|active\\s+)+(?:\\w+\\s)?(?:leads|tickets|requests|invoices|orders|packages|items|records|customers|employees|pages|services|cases|claims|accounts|vendors|receipts|referrals|submissions|deals|contacts|sites)\\b', 0.6],
+  ['all-the', '\\ball\\s+(?:of\\s+)?(?:\\d[\\d,]*\\s+|the\\s+|our\\s+|open\\s+|pending\\s+|unassigned\\s+|new\\s+|incoming\\s+|outstanding\\s+|overdue\\s+|unpaid\\s+|active\\s+)+(?:\\w+\\s)?(?:leads|tickets|requests|invoices|orders|packages|items|records|customers|employees|pages|services|cases|claims|accounts|vendors|receipts|referrals|submissions|deals|contacts|sites)\\b', 0.6],
   ['n-things', '\\b\\d[\\d,]*\\s+(?:\\w+\\s){0,2}(?:employees|customers|tickets|leads|invoices|orders|abstracts|records|rows|samples|services|microservices|configurations|pages|payouts|transactions|accounts|files|strings|names|users|vendors|sites|repos|repositories|requests|items|entries|stores|clients|contracts|candidates|papers)\\b', 0.35],
   ['batch-queue', '\\b(?:batch|batches|queue|queues|backlog|inbox|pending|unassigned|incoming)\\b', 0.3],
   ['process-the', '\\b(?:process|processes|processing|triage|triaging|route|routing|handle|handling)\\s+(?:the\\s+|all\\s+|our\\s+|any\\s+|incoming\\s+|pending\\s+|new\\s+|unassigned\\s+)+(?:\\w+\\s)?\\w+s\\b', 0.5],
@@ -200,6 +207,12 @@ const SCOPE = {
   configure: /\b(?:add|create|write|set up|setup|configure|install)\b[^.]{0,40}\b(?:github actions?|gitlab ci|ci (?:job|step|pipeline|config)|cron ?(?:job|line|entry|tab)?|crontab|workflow file|yaml|alert|alerts|alerting rule|alarm|webhook|pre-commit hook|git hook|monitoring|metrics|health ?checks?|logging)\b/i,
   descriptive: /\b(?:currently|current|right now|at the moment|today it|it runs|which runs|that runs|runs nightly|instead of|rather than|used to|the old|the existing|existing|keeps? (?:rebuilding|failing|finding)|i keep|we keep finding|every time (?:it|we|the page|the user|i))\b/i,
   retrospective: /\b(?:last|previous|past)\s+(?:year|quarter|month|week)\b|\bin 20\d\d\b|\bhistorically\b/i,
+  // v1.1: a past window inside a scheduled job ("every Monday, pull last week's signups") is the job's data, not the past:
+  // the retrospective scope applies only to questions and past-tense sentences.
+  pastOrQuestion: /\?|\b(?:did|was|were|had|spent|made|earned|happened|used to)\b/i,
+  // v1.1: a first-person statement of a habit ("I review PRs every day") is context, not a request, unless it asks for something.
+  firstPersonHabit: /^(?:i|we)\s+(?!(?:need|want|would|'d|have to|must|should|will need)\b)/i,
+  asks: /\b(?:you|please|for (?:me|us)|can you|could you)\b/i,
   artifact: /\b(?:daily|weekly|monthly|quarterly)\s+(?:meal plan|plan|planner|schedule|budget|spreadsheet|sheet|calendar|workout|routine|template|chart|tracker|pipeline spreadsheet|pipeline sheet)\b/i,
   // A standing preference about how the assistant itself writes or behaves is not a job that runs.
   preference: /\b(?:from now on|going forward|moving forward|in future|in the future)\b,?\s+(?:please\s+)?(?:always\s+|never\s+)?(?:use|write|answer|reply|respond|call me|speak|talk|format|be (?:more|less)|keep (?:it|your|answers|replies)|don't|do not|address me|refer to|spell|sign (?:off|emails)|add emojis|stop)\b/i
@@ -232,7 +245,8 @@ function scopeRecurrence(sentence) {
   if (SCOPE.reminder.test(sentence)) return 0;
   if (SCOPE.preference.test(sentence)) return 0.1;
   if (SCOPE.configure.test(sentence)) return 0.2;
-  if (SCOPE.retrospective.test(sentence)) return 0.2;
+  if (SCOPE.retrospective.test(sentence) && SCOPE.pastOrQuestion.test(sentence)) return 0.2;
+  if (SCOPE.firstPersonHabit.test(sentence) && !SCOPE.asks.test(sentence)) return 0.4;
   if (SCOPE.descriptive.test(sentence)) return 0.25;
   if (SCOPE.artifact.test(sentence)) return 0.3;
   return 1;
@@ -303,7 +317,7 @@ export function detectPrimitives(text, context = {}) {
   }
   // No outside effect, no repetition, no wait, no set of items: the work is on the material itself (rubric: analysis or
   // transformation of material, however long or rule-dense, is none).
-  if (!verbs.length && features.recurrence < 0.5 && features.waits < 0.5 && features.volume < 0.5) addCue('question', 'no-outside-effect', 0.35, 'no effect verb');
+  if (!verbs.length && features.recurrence < 0.5 && features.waits < 0.5 && features.volume < 0.5 && !evidence.rules.some(h => h.id === 'w3-program')) addCue('question', 'no-outside-effect', 0.35, 'no effect verb');
   const p = countParties(raw);
   const k = p.systems.length + p.parties.length + p.channels.length + p.emails.length;
   features.multiParty = PARTY_SCORE[Math.min(k, PARTY_SCORE.length - 1)] * (gateParties ? 0.5 : 1);

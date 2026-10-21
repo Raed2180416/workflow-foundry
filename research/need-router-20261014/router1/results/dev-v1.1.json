@@ -1,8 +1,9 @@
 {
  "split": "dev",
+ "router": "v1.1",
  "n": 126,
- "paramsSha": "af44b52a7b9f2643f0479e3f3e2b11892d1df77ab23b369a3ad1ef8e161b1c53",
- "tDefault": 0.392892,
+ "paramsSha": "102928b5ef8493dce79939e45c42949c1850d095c3d9e7dcaa8b04c736881e58",
+ "tDefault": 0.416704,
  "middle": {
   "judge": null,
   "delta": 0
@@ -176,8 +177,8 @@
    "modeAccuracy": 0.9921,
    "costPerDecisionUsd": 0,
    "costTotalUsd": 0,
-   "latencyMedianMs": 0.3835,
-   "latencyP95Ms": 8.268
+   "latencyMedianMs": 0.4568,
+   "latencyP95Ms": 11.1086
   },
   "final": {
    "n": 126,
@@ -197,8 +198,8 @@
    "modeAccuracy": 0.9921,
    "costPerDecisionUsd": 0,
    "costTotalUsd": 0,
-   "latencyMedianMs": 0.3835,
-   "latencyP95Ms": 8.268
+   "latencyMedianMs": 0.4568,
+   "latencyP95Ms": 11.1086
   }
  },
  "modeConfusion": {
@@ -317,21 +318,21 @@
   },
   {
    "sensitivity": 0.25,
-   "threshold": 0.6964,
+   "threshold": 0.7084,
    "fp": 0,
    "recall": 0.8095,
    "precision": 1
   },
   {
    "sensitivity": 0.5,
-   "threshold": 0.3929,
+   "threshold": 0.4167,
    "fp": 0,
    "recall": 1,
    "precision": 1
   },
   {
    "sensitivity": 0.75,
-   "threshold": 0.1964,
+   "threshold": 0.2084,
    "fp": 8,
    "recall": 1,
    "precision": 0.84
@@ -395,8 +396,8 @@
     "modeAccuracy": 0.9863,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.5005,
-    "latencyP95Ms": 8.4533
+    "latencyMedianMs": 0.6882,
+    "latencyP95Ms": 13.9525
    },
    "final": {
     "n": 73,
@@ -416,8 +417,8 @@
     "modeAccuracy": 0.9863,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.5005,
-    "latencyP95Ms": 8.4533
+    "latencyMedianMs": 0.6882,
+    "latencyP95Ms": 13.9525
    },
    "haiku": {
     "n": 73,
@@ -502,8 +503,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.2553,
-    "latencyP95Ms": 1.4805
+    "latencyMedianMs": 0.2769,
+    "latencyP95Ms": 4.4638
    },
    "final": {
     "n": 53,
@@ -523,8 +524,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.2553,
-    "latencyP95Ms": 1.4805
+    "latencyMedianMs": 0.2769,
+    "latencyP95Ms": 4.4638
    },
    "haiku": {
     "n": 53,
@@ -609,8 +610,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.3878,
-    "latencyP95Ms": 8.314
+    "latencyMedianMs": 0.4605,
+    "latencyP95Ms": 13.19
    },
    "final": {
     "n": 110,
@@ -630,8 +631,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.3878,
-    "latencyP95Ms": 8.314
+    "latencyMedianMs": 0.4605,
+    "latencyP95Ms": 13.19
    },
    "haiku": {
     "n": 110,
@@ -718,8 +719,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.2553,
-    "latencyP95Ms": 1.4805
+    "latencyMedianMs": 0.2769,
+    "latencyP95Ms": 4.4638
    },
    "final": {
     "n": 53,
@@ -739,8 +740,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.2553,
-    "latencyP95Ms": 1.4805
+    "latencyMedianMs": 0.2769,
+    "latencyP95Ms": 4.4638
    },
    "haiku": {
     "n": 53,
@@ -825,8 +826,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.4688,
-    "latencyP95Ms": 2.4329
+    "latencyMedianMs": 0.4618,
+    "latencyP95Ms": 6.4661
    },
    "final": {
     "n": 45,
@@ -846,8 +847,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.4688,
-    "latencyP95Ms": 2.4329
+    "latencyMedianMs": 0.4618,
+    "latencyP95Ms": 6.4661
    },
    "haiku": {
     "n": 45,
@@ -932,8 +933,8 @@
     "modeAccuracy": 0.9167,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.4916,
-    "latencyP95Ms": 2.5198
+    "latencyMedianMs": 0.9525,
+    "latencyP95Ms": 2.1519
    },
    "final": {
     "n": 12,
@@ -953,8 +954,8 @@
     "modeAccuracy": 0.9167,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.4916,
-    "latencyP95Ms": 2.5198
+    "latencyMedianMs": 0.9525,
+    "latencyP95Ms": 2.1519
    },
    "haiku": {
     "n": 12,
@@ -1039,8 +1040,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.1911,
-    "latencyP95Ms": 1.8552
+    "latencyMedianMs": 0.2656,
+    "latencyP95Ms": 0.2687
    },
    "final": {
     "n": 4,
@@ -1060,8 +1061,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.1911,
-    "latencyP95Ms": 1.8552
+    "latencyMedianMs": 0.2656,
+    "latencyP95Ms": 0.2687
    },
    "haiku": {
     "n": 4,
@@ -1146,8 +1147,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.5308,
-    "latencyP95Ms": 7.7833
+    "latencyMedianMs": 2.8622,
+    "latencyP95Ms": 11.1086
    },
    "final": {
     "n": 6,
@@ -1167,8 +1168,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 0.5308,
-    "latencyP95Ms": 7.7833
+    "latencyMedianMs": 2.8622,
+    "latencyP95Ms": 11.1086
    },
    "haiku": {
     "n": 6,
@@ -1253,8 +1254,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 8.314,
-    "latencyP95Ms": 9.5774
+    "latencyMedianMs": 13.9525,
+    "latencyP95Ms": 18.7889
    },
    "final": {
     "n": 5,
@@ -1274,8 +1275,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 8.314,
-    "latencyP95Ms": 9.5774
+    "latencyMedianMs": 13.9525,
+    "latencyP95Ms": 18.7889
    },
    "haiku": {
     "n": 5,
@@ -1360,8 +1361,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 9.7561,
-    "latencyP95Ms": 9.7561
+    "latencyMedianMs": 15.7886,
+    "latencyP95Ms": 15.7886
    },
    "final": {
     "n": 1,
@@ -1381,8 +1382,8 @@
     "modeAccuracy": 1,
     "costPerDecisionUsd": 0,
     "costTotalUsd": 0,
-    "latencyMedianMs": 9.7561,
-    "latencyP95Ms": 9.7561
+    "latencyMedianMs": 15.7886,
+    "latencyP95Ms": 15.7886
    },
    "haiku": {
     "n": 1,

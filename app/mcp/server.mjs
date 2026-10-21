@@ -91,7 +91,7 @@ export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
   ];
   // propose_flow also carries the need router's advice (additive field; code only, $0).
   const propose = defs[0];
-  propose[4] = async a => { const r = await app.propose(a); return r && r.ok !== false ? { ...r, need: await needAdvice({ request: a.request }) } : r; };
+  propose[3] = async a => { const r = await app.propose(a); return r && r.ok !== false ? { ...r, need: await needAdvice({ request: a.request }) } : r; };
   return defs.map(([name, description, inputSchema, execute, readOnly]) => ({
     name, description, inputSchema, execute,
     annotations: { readOnlyHint: readOnly, destructiveHint: false, idempotentHint: readOnly, openWorldHint: name === 'run_flow' },

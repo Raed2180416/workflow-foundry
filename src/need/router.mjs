@@ -62,7 +62,10 @@ export function loadParams() {
 /** Threshold for a sensitivity s in [0, 1]: t(0) = 1, t(0.5) = tDefault, t(1) = 0, linear in between. */
 export function thresholdAt(sensitivity, tDefault) {
   const s = Math.min(1, Math.max(0, Number.isFinite(sensitivity) ? sensitivity : DEFAULT_SENSITIVITY));
-  return s <= 0.5 ? 1 - (1 - tDefault) * 2 * s : tDefault * (2 - 2 * s);
+  if (s === 0) return 1;
+  if (s === 0.5) return tDefault;            // exact at the anchor points (v1 computed 1 - (1 - t), off by one ulp)
+  if (s === 1) return 0;
+  return s < 0.5 ? tDefault + (1 - tDefault) * (1 - 2 * s) : tDefault * (2 - 2 * s);
 }
 
 /** p(needs a workflow) from detector features: logistic in the weighted features. */

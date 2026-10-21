@@ -21,15 +21,15 @@
    "delta": 0.2,
    "fp": 2,
    "recall": 1,
-   "judged": 9,
+   "judged": 8,
    "fallbacks": 0
   },
   {
    "judge": "mercury",
    "delta": 0.3,
-   "fp": 3,
+   "fp": 2,
    "recall": 1,
-   "judged": 26,
+   "judged": 16,
    "fallbacks": 1
   },
   {
@@ -61,7 +61,7 @@
    "delta": 0.2,
    "fp": 1,
    "recall": 1,
-   "judged": 9,
+   "judged": 8,
    "fallbacks": 0
   },
   {
@@ -69,7 +69,7 @@
    "delta": 0.3,
    "fp": 1,
    "recall": 1,
-   "judged": 27,
+   "judged": 17,
    "fallbacks": 0
   },
   {

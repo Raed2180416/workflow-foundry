@@ -1,6 +1,6 @@
 {
  "schema": "foundry.need-router-params/1",
- "detector": "need-primitives/1",
+ "detector": "need-primitives/1.1",
  "features": [
   "recurrence",
   "waits",
@@ -17,22 +17,22 @@
   "coding"
  ],
  "weights": {
-  "recurrence": 2.183748,
-  "waits": 1.804464,
-  "effects": 0.930672,
-  "multiParty": 1.47222,
-  "rules": 1.256723,
-  "volume": 1.002555,
-  "audit": 0.123891,
-  "reuse": 0.677718,
-  "question": -1.996203,
-  "mention": -0.231858,
-  "hypothetical": -0.013655,
-  "singleAction": -1.350772,
-  "coding": -1.008075
+  "recurrence": 2.185088,
+  "waits": 1.807425,
+  "effects": 0.936764,
+  "multiParty": 1.478687,
+  "rules": 1.261382,
+  "volume": 0.964142,
+  "audit": 0.119981,
+  "reuse": 0.679262,
+  "question": -1.991824,
+  "mention": -0.232522,
+  "hypothetical": -0.013669,
+  "singleAction": -1.352882,
+  "coding": -1.010615
  },
- "bias": -1.764527,
- "tDefault": 0.392892,
+ "bias": -1.765965,
+ "tDefault": 0.416704,
  "modeRules": {
   "recurrenceMin": 0.5,
   "irreversibleMin": 0.8,
@@ -51,9 +51,9 @@
   "positives": 42,
   "lambda": 1,
   "margin": 0.02,
-  "loss": 26.359001,
+  "loss": 26.410206,
   "iters": 20001,
-  "devNegMaxP": 0.372892,
+  "devNegMaxP": 0.396704,
   "devRecallAtDefault": 1,
   "rule": "PREREG-ROUTER-1 §3 steps 1-2"
  }
