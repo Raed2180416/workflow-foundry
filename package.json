@@ -13,6 +13,7 @@
   "files": [
     "bin/foundry.mjs",
     "src/*.mjs",
+    "src/engine-lineage.json",
     "src/models/*.mjs",
     "src/models/providers/*.mjs",
     "src/executors/*.mjs",

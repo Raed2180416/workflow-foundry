@@ -60,15 +60,36 @@ export function journalRowsAfter(db, runId, afterId) {
   return db.prepare('SELECT id, ok, error_code FROM model_calls WHERE run_id=? AND id>? ORDER BY id').all(runId, afterId);
 }
 
+/** The engine a run's chain binds (research/engine-20261021/ENGINE-BUMP.md §1): the birth event's engine, then each `engine.migrated`
+ *  event in order, each of which must start from the engine bound before it. -> {valid, hash, engines: [birth, ...targets], migrations}.
+ *  Pure function of the chain; whether a migration was allowed is the migrating engine's lineage, recorded in the event. */
+export function engineBinding(events) {
+  const birth = events?.[0];
+  let hash = birth?.engineHash ?? null, valid = true;
+  const engines = [hash], migrations = [];
+  for (const e of events ?? []) {
+    if (e?.type !== 'engine.migrated') continue;
+    if (e.from !== hash || typeof e.to !== 'string' || e.to === hash) valid = false;
+    migrations.push({ seq: e.seq ?? null, from: e.from ?? null, to: e.to ?? null, fromVersion: e.fromVersion ?? null, toVersion: e.toVersion ?? null });
+    hash = e.to ?? null; engines.push(hash);
+  }
+  return { valid, hash, engines, migrations };
+}
+
 /** The identity fields of a run record that no longer match its immutable birth event: the workflow, input, policy, engine, registry and
  *  model binding the run was created with. Nothing rewrites these after creation, so every name returned is an edit of the record (the
- *  runtime refuses to resume such a run; verify-run reports it). A field the birth event does not carry (an older run) is not compared. */
-export function identityChanges(run, birth) {
+ *  runtime refuses to resume such a run; verify-run reports it). A field the birth event does not carry (an older run) is not compared.
+ *  The one exception is the engine, which a recorded `engine.migrated` event may move: with `events`, the record's engine is compared
+ *  with the engine the chain binds (engineBinding), and an inconsistent migration chain is reported as `engineMigration`. */
+export function identityChanges(run, birth, events = null) {
   const changed = [];
   const same = (name, actual, expected) => { if (expected !== undefined && (actual ?? null) !== (expected ?? null)) changed.push(name); };
   same('workflowHash', run.workflowHash, birth?.workflowHash);
   same('registryHash', run.registryHash, birth?.registryHash);
-  same('engineHash', run.engineHash, birth?.engineHash);
+  // The engine is the one the chain binds now: the birth engine, or the target of the last recorded migration (engineBinding).
+  const engine = events ? engineBinding(events) : null;
+  if (engine && !engine.valid) changed.push('engineMigration');
+  same('engineHash', run.engineHash, engine?.valid ? engine.hash : birth?.engineHash);
   same('input', digest(run.input ?? null), birth?.inputHash);
   same('policy', digest(run.policy ?? null), birth?.policyHash);
   if (birth && Object.hasOwn(birth, 'modelPolicyHash')) {

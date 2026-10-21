@@ -5,14 +5,14 @@ import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkData, clone, condition, digest, errorData, FoundryError, references, resolve } from './data.mjs';
 import { approvalGated, bindOutput, controlPolicyMessage, labelPolicyMessage, modelNodes, OUTPUT_KEY, requireWorkflow, stateArgs, stateLabelMessage, stateNodes, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
-import { engineHash } from './engine.mjs';
+import { engineHash, engineOf, engineResumesFrom, engineVersion } from './engine.mjs';
 import { compileContext, contextInputs, inheritedLabel, joinLabels } from './context.mjs';
 import { verdictOf } from './verdict.mjs';
 import { runCode } from './sandbox.mjs';
 import { childScope, reapChildren } from './children.mjs';
 import { classIndex, modelById, modelsForClass, nextClass, validatePolicy } from './models/policy.mjs';
 import { MODES } from './models/port.mjs';
-import { AUDIT, identityChanges, journalSeal } from './audit.mjs';
+import { AUDIT, engineBinding, identityChanges, journalSeal } from './audit.mjs';
 import { MATERIALIZE, STATE_BYTES, STATE_ITEMS } from './run-rows.mjs';
 import { isStateWrite, journalRequest, slotIdentity, slotOf, stateOpHash, stateReplayKey, stateRequest } from './state.mjs';
 import { cancelledBy, claimant, correlateTemplates, declaredSignals, isSignalWait, keyHashOf, matches, normalizeSignal, parseAt, pickSignal, routeOf, SIGNAL_LIMITS, signalCheckpointDrift, subscriptionsOf, timeoutMode } from './signals.mjs';
@@ -648,13 +648,19 @@ class Invocation {
       const closed = closingSeal(log);
       if (closed) throw closedError(closed, run.status);
       if (!run.engineHash) throw new FoundryError('ENGINE_UNBOUND', 'This historical run has no native engine binding. Inspect it or use its original frozen runtime; do not silently resume it under changed semantics.');
-      if (run.engineHash !== engineHash) throw new FoundryError('ENGINE_DRIFT', 'The native execution engine differs from the version that created this run. Resume with the original engine or create a separately reviewed new run.', { recorded: run.engineHash, current: engineHash });
-      const birth = log[0];
-      if (birth?.engineHash !== run.engineHash) throw new FoundryError('ENGINE_BINDING_CORRUPT', 'Run engine identity does not match its immutable creation event');
+      // Engine compatibility ranges (research/engine-20261021/ENGINE-BUMP.md §1): a run bound to another engine resumes only when this
+      // engine's lineage (src/engine-lineage.json) recognises that engine exactly and declares its version resumable here; the migration is
+      // then recorded in the chain with the runner.acquired below. Anything else stays ENGINE_DRIFT. An older engine never resumes a run a
+      // newer one migrated: the record names the newer engine, which the older lineage does not know.
+      const from = run.engineHash === engineHash ? null : engineOf(run.engineHash);
+      if (run.engineHash !== engineHash && !from?.resumable) throw new FoundryError('ENGINE_DRIFT', `The native execution engine differs from the version that created this run${from ? ` (engine version ${from.version}; this engine, version ${engineVersion}, resumes runs of version ${engineResumesFrom} or later)` : ' and is not a predecessor this engine declares compatible'}. Resume with the original engine or create a separately reviewed new run.`, { recorded: run.engineHash, current: engineHash, recordedVersion: from?.version ?? null, currentVersion: engineVersion, resumesFrom: engineResumesFrom });
+      const birth = log[0], bound = engineBinding(log);
+      if (!bound.valid || bound.hash !== run.engineHash) throw new FoundryError('ENGINE_BINDING_CORRUPT', 'Run engine identity does not match its immutable creation event and recorded migrations');
+      const migration = from ? { type: 'engine.migrated', from: run.engineHash, to: engineHash, fromVersion: from.version, toVersion: engineVersion, resumesFrom: engineResumesFrom } : null;
       if (modelBound && (birth?.modelPolicyHash ?? null) !== run.modelPolicyHash) throw new FoundryError('MODEL_POLICY_BINDING_CORRUPT', 'Run model policy binding does not match its immutable creation event');
       // The rest of the run's identity, against the same event: the record is a checkpoint any writer to the workspace can edit, and the
       // runtime executes the workflow, input and policy (allowed capabilities, budgets) it names, so an edit there would widen the run.
-      const changed = identityChanges(run, birth);
+      const changed = identityChanges(run, birth, log);
       if (changed.length) throw new FoundryError('RUN_BINDING_CORRUPT', `The run record no longer matches its immutable creation event (${changed.join(', ')}): the record was edited, so the run is not resumed`, { changed });
       const forged = forgedAnswers(this.workflow, run, log);
       if (forged.length) throw new FoundryError('CHECKPOINT_TAMPERED', `The run record holds human answers its chain did not record (${forged.slice(0, 5).join(', ')}): the record was edited, so the run is not resumed`, { nodeKeys: forged });
@@ -673,7 +679,12 @@ class Invocation {
           r.resumeCount = (r.resumeCount ?? 0) + 1;
           r.owner = { token: this.token, pid: process.pid, processStart: startStamp(process.pid), acquiredAt: Date.now() };
           r.status = 'running';
-        }, { type: 'runner.acquired', token: this.token }, { result: 'header' });
+          if (migration) {
+            // Compare-and-swap on the engine binding: another process may have migrated (or edited) it since the checks above.
+            if (r.engineHash !== migration.from) throw new FoundryError('STATE_CONFLICT', 'The run engine binding changed while this execution was starting');
+            r.engineHash = engineHash;
+          }
+        }, migration ? [migration, { type: 'runner.acquired', token: this.token }] : { type: 'runner.acquired', token: this.token }, { result: 'header' });
       } catch (error) {
         // Closed (cancelled) by another process while this execution was starting: the result is the closed run, as when it was closed before.
         if (error.details?.closedWhileStarting) return this.current();
