@@ -65,8 +65,8 @@ const compile = (ledgers, inv = INV, src = SRC) => { const m = mergeLedgers(ledg
 test('1 termination: with maxRounds 0 a hard failure never starts a repair; the reason says "single pass"', () => {
   const res = (hard, pass) => ({ pc: { hard }, pass });
   const base = { responsesUsed: 20, maxResponses: 50, stepsUsed: 10, maxWorldSteps: 49, round: 0, maxRounds: 0, usdLeft: 0.5, msLeft: 600_000 };
-  assert.deepEqual(terminationDecision({ ...base, results: [res(true, false), res(true, false)] }), { repair: false, reason: 'single pass (repairs off): 2 hard check(s) fail', failing: 2 });
-  assert.deepEqual(terminationDecision({ ...base, results: [res(true, true)] }), { repair: false, reason: 'all checks pass' });
+  assert.deepEqual(terminationDecision({ ...base, results: [res(true, false), res(true, false)] }), { repair: false, reason: 'single pass (repairs off): 2 hard check(s) fail', failing: 2, category: 'hard-fail', undecided: 0 });
+  assert.deepEqual(terminationDecision({ ...base, results: [res(true, true)] }), { repair: false, reason: 'all checks pass', category: 'all-pass', undecided: 0 });
   assert.equal(terminationDecision({ ...base, results: [res(false, false)] }).reason, 'only advisory checks fail');
   // maxRounds > 0 keeps v1's semantics (not evaluated in v2).
   assert.equal(terminationDecision({ ...base, maxRounds: 2, results: [res(true, false)] }).repair, true);
@@ -185,9 +185,11 @@ test('4 effect table: every row traces to the shipped index, every index app is 
   // The committed table is the generator's current output.
   const r = spawnSync(process.execPath, [path.join(V2_DIR, 'build-effects.mjs'), '--check'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  // Messaging channels are hand-written for the messaging operations only.
-  assert.deepEqual([...new Set(EFFECTS.rows.filter(x => x.channel).map(x => x.channel))].sort(), ['chat', 'dm', 'email', 'esign', 'reply', 'sms', 'social']);
-  assert.ok(EFFECTS.rows.filter(x => x.channel).every(x => x.effect === 'send'));
+  // Messaging channels come from one stated rule (build-effects.mjs MESSAGING_RULE; codeowned-v2-review.test.mjs m1); an
+  // outgoing channel makes a send, an internal note stays a create.
+  assert.deepEqual([...new Set(EFFECTS.rows.filter(x => x.channel).map(x => x.channel))].sort(), ['chat', 'dm', 'email', 'esign', 'note', 'reply', 'sms', 'social']);
+  assert.ok(EFFECTS.rows.filter(x => x.channel && x.channel !== 'note').every(x => x.effect === 'send'));
+  assert.ok(EFFECTS.rows.filter(x => x.channel === 'note').every(x => x.effect === 'create'));
 });
 
 test('4 app-faithful compile: a post compiles to its own app (never Slack for another app); kinds ignore case and plural; a comment on a record is child_created; lists use membership; a DM resolves to the im channel; no predicate is judged', () => {
@@ -213,10 +215,11 @@ test('4 app-faithful compile: a post compiles to its own app (never Slack for an
   // A kind named with its parent kind is the child kind, in the listing's name.
   const cal = { ...INV, connected: [...INV.connected, 'google_calendar'], records: [...INV.records, rec('google_calendar:calendar_list:team', { id: 'team', summary: 'Team' }), rec('google_calendar:event_list:e1', { id: 'e1', summary: 'Standup' })] };
   assert.deepEqual(kindFor({ app: 'google_calendar', target: 'the team calendar', statement: 'Create a calendar event for the dock inspection' }, cal), { kind: 'event_list', parent: { param: 'calendarId', kind: 'calendar' } });
-  // A child kind whose listing never names a parent (events listed per calendar): any new record of the kind with the values.
+  // A child kind whose listing never names a parent (events listed per calendar) cannot tie a new record to its parent:
+  // unobservable either way (review of 2026-10-21; it used to pass any new record of the kind).
   const ev = { id: 'P9', type: 'child_created', hard: true, params: { parent: 'google_calendar:calendar_list:team', kind: 'event_list', values: ['Dock inspection'] } };
-  assert.equal(evaluate(ev, cal, { ...cal, records: [...cal.records, rec('google_calendar:event_list:e2', { id: 'e2', summary: 'Dock inspection' })] }).pass, true);
-  assert.equal(evaluate(ev, cal, cal).pass, false);
+  assert.equal(evaluate(ev, cal, { ...cal, records: [...cal.records, rec('google_calendar:event_list:e2', { id: 'e2', summary: 'Dock inspection' })] }).pass, null);
+  assert.equal(evaluate(ev, cal, cal).unobservable, true);
   // Where the listing does name the parent, a new record must name this one.
   const tk = { records: [rec('zendesk:tickets:7', { id: 7 }), rec('zendesk:tickets:8', { id: 8 }), rec('zendesk:comments:c1', { id: 'c1', ticket: 8, body: 'old' })] };
   const cm = { id: 'P10', type: 'child_created', hard: true, params: { parent: 'zendesk:tickets:7', kind: 'comment', values: ['Replace the hinge'] } };
@@ -264,7 +267,7 @@ test('5 unobservable: a check on an app the re-read cannot list is null with no 
   assert.equal(judged, 0);
   assert.deepEqual(chk.results.map(r => [r.pass, r.evidence, r.observable]), [[null, 'unobservable', false], [null, 'unobservable', false]]);
   assert.equal(chk.results.filter(r => r.pc.hard && r.pass === null).length, 2);       // the round row's nullHard
-  assert.match(renderChecks(pcs), /not observable here/);
+  assert.doesNotMatch(renderChecks(pcs), /observable/);                           // observability stays host-side
   // An app whose listing shows only the account (no posts) cannot observe a missing post; one that lists posts can.
   const post = { id: 'P3', type: 'channel_posted', hard: true, params: { app: 'twitter', channel: null, text: ['Quillfeather'], bodyNot: [] } };
   const before = { records: [rec('twitter:me:u1', { id: 'u1', username: 'orchid' })] };
@@ -405,8 +408,8 @@ test('9 gate decisions: routes, MIME decoding, refusals, identical resends, per-
   const cfg3 = { ...CFG, rules: [...CFG.rules, { pid: 'P3', app: 'slack', channels: [{ id: 'C10', name: 'misc' }], literals: [{ text: 'Brackenridge Tools', rule: null }] }] };
   log = [...log];
   assert.deepEqual(decide([{ name: 'api_fetch', arguments: JSON.stringify({ method: 'POST', url: 'https://slack.com/api/chat.postMessage', body: JSON.stringify({ channel: 'misc', text: 'Brackenridge Tools' }) }) }], cfg3, log).map(x => x.action), ['cap']);
-  // In a batch only the violating call is refused.
-  assert.deepEqual(decide([read, sendMail('finance-lead@orchid.example', 'only Brackenridge Tools'), read], CFG, []).map(x => x.action), ['send', 'refuse', 'send']);
+  // A batch with a violating call is held whole (no partial send).
+  assert.deepEqual(decide([read, sendMail('finance-lead@orchid.example', 'only Brackenridge Tools'), read], CFG, []).map(x => x.action), ['held', 'refuse', 'held']);
   // The refusal note: what to fix, no world step, no grading vocabulary.
   const ds = decide([sendMail('finance-lead@orchid.example', 'Brackenridge Tools')], CFG, []);
   const txt = refusalText(ds[0], sendMail('finance-lead@orchid.example', 'Brackenridge Tools'));
@@ -477,17 +480,20 @@ test('9 gated client: byte-compatible with tool.mjs for everything it does not r
     const r2 = await runClient(gated, ['batch', banned], { [GATE_ENV]: gdir });
     assert.equal(r2.code, 0);
     assert.match(r2.stdout, /^### result 1: api_fetch\nok \d+\.1 api_fetch\n$/);
-    // In a batch only the violating call is refused; the others go out in one step, numbered as given.
+    // A batch with a violating call is refused whole: nothing is sent (codeowned-v2-review.test.mjs e2 covers the resend).
     const mixed = JSON.stringify([read, { ...sendMail('finance-lead@orchid.example', 'x'), arguments: JSON.parse(JSON.stringify(sendMail('ops@orchid.example', 'x').arguments)) }, { name: 'api_fetch', arguments: JSON.stringify({ method: 'POST', url: 'https://slack.com/api/chat.postMessage', body: JSON.stringify({ channel: 'C9', text: 'Brackenridge Tools 980' }) }) }]);
+    const reqs = () => readdirSync(path.join(gated, '.tools')).filter(f => /^req-\d+\.json$/.test(f)).length;
+    const n3 = reqs();
     const r3 = await runClient(gated, ['batch', mixed], { [GATE_ENV]: gdir });
     assert.equal(r3.code, 1);
-    assert.match(r3.stdout, /^### result 1: api_fetch\nok (\d+)\.1 api_fetch\n### result 2: api_fetch\nok \1\.2 api_fetch\n$/);
+    assert.equal(r3.stdout, '');
+    assert.equal(reqs(), n3);
     assert.match(r3.stderr, /Call 3 \(POST \/api\/chat\.postMessage\) to #ledger-ops contains "Brackenridge Tools", which P2 leaves out/);
-    assert.match(r3.stderr, /The other calls of this batch were sent/);
+    assert.match(r3.stderr, /No call of this batch was sent/);
     // The host reads the log back without following a link, with a size cap.
     const lg = readGateLog(path.join(gated, '.tools', 'gate-log.jsonl'));
     assert.equal(lg.status, 'ok');
-    assert.deepEqual(lg.lines.map(l => l.kind), ['refused', 'resent', 'refused']);
+    assert.deepEqual(lg.lines.map(l => l.kind).filter(k => k !== 'loaded'), ['refused', 'resent', 'held', 'held', 'refused']);
     const linkDir = tmp('loglink');
     writeFileSync(path.join(linkDir, 'secret.json'), '{"kind":"refused"}\n');
     symlinkSync(path.join(linkDir, 'secret.json'), path.join(linkDir, 'gate-log.jsonl'));
@@ -660,9 +666,15 @@ test('18 L1 + devTrain literals: no devTrain task name, world string (>= 16 char
     const w = words(text);
     for (let i = 0; i + 8 <= w.length; i++) if (shingles.has(w.slice(i, i + 8).join(' '))) hits.push(`${f}: prompt shingle at word ${i}`);
   }
-  // effects.json holds the shipped API index (operation ids and paths), not task content; it is scanned for names only.
+  // effects.json holds the shipped API index (operation ids, paths, the messaging rule), not task content: it is scanned
+  // for every task name, devTrain world string and prompt shingle as well (review:correctness 13; the test-split scan is
+  // open, §7 of the design doc).
   const fx = readFileSync(path.join(V2_DIR, 'effects.json'), 'utf8');
   for (const n of L.names) if (fx.includes(n)) hits.push(`effects.json: task name ${n}`);
+  const fxLow = fx.toLowerCase();
+  for (const s of L.strings) if (fxLow.includes(s.toLowerCase())) hits.push(`effects.json: world string (${s.length} chars)`);
+  const fw = words(fx);
+  for (let i = 0; i + 8 <= fw.length; i++) if (shingles.has(fw.slice(i, i + 8).join(' '))) hits.push(`effects.json: prompt shingle at word ${i}`);
   assert.deepEqual([...new Set(hits)], []);
 });
 
@@ -674,7 +686,8 @@ test('19 manifest: v2 id and version, the v2 files, the gated client and the eff
   assert.deepEqual(c2.gate, { envVar: 'AB_GATE_DIR', client: 'harness/v2/tool-gated.mjs' });
   assert.equal(c2.pipeline.maxRounds, 0);
   assert.equal(c2.pipeline.preSendLint, false);
-  assert.equal(c2.knowledge.length, 8);
+  assert.equal(c2.knowledge.length, 13);
+  assert.equal(c2.knowledge.filter(k => k.startsWith('D21 ')).length, 5);       // every grader-tuned rule and threshold (D21)
   assert.deepEqual(c2.knowledge.slice(0, 4), [...V1.KNOWLEDGE]);
   assert.match(c2.knowledge[5], new RegExp(EFFECTS.source.indexTxtSha256));
   const files = V2.manifestFiles();
@@ -728,7 +741,7 @@ const two = prompt => {
   return l;
 };
 
-test('21 end to end (v2, scripted): the gate is installed for the act session; act and check-0 run with no repair; the audit is clean; nothing grader-side reaches a node', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 600_000 }, async () => {
+test('21 end to end (v2, scripted): with no content rule the lint is not installed; act and check-0 run with no repair; the audit is clean; nothing grader-side reaches a node', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 600_000 }, async () => {
   const live = tmp('e2e');
   const seenNodes = [], seenSessions = [];
   const { summary: sum, results } = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], harness: 'codeowned-v2', det: 'record', liveRoot: live, outDir: path.join(live, 'out'), log: quiet, dateNote: true, pipeline: { preSendLint: true },
@@ -739,14 +752,13 @@ test('21 end to end (v2, scripted): the gate is installed for the act session; a
   assert.deepEqual(f.session.violations, []);
   assert.equal(f.steps, f.session.codeSteps + f.session.sessionSteps);
   assert.equal(p.termination.reason, 'all checks pass');
+  assert.equal(p.termination.category, 'all-pass');
   assert.equal(p.rounds, 0);
-  assert.equal(p.gate.installed, true);
+  // preSendLint is on, but this ledger has no content rule: nothing to lint, so no gate (review: zero-rule gate).
+  assert.equal(p.gate.installed, false);
   assert.equal(typeof p.checks[0].nullHard, 'number');
-  // The gate: AB_GATE_DIR names the act session's read-only step-guard directory, which holds gate.json; the client is the gated one.
   const act = seenSessions[0];
-  assert.ok(act.keepRo.includes(act.env[GATE_ENV]));
-  assert.ok(existsSync(path.join(act.env[GATE_ENV], 'gate.json')));
-  assert.ok(readFileSync(path.join(act.env[GATE_ENV], 'gate.json'), 'utf8').includes('"routes"'));
+  assert.equal(act.env, null);
   // The readers saw the standing instructions; the act session the official prompt and the brief.
   const prep = path.join(live, 'prep', PHONE_TASK);
   const official = readJson(path.join(prep, 'prompt.json'));
@@ -754,7 +766,7 @@ test('21 end to end (v2, scripted): the gate is installed for the act session; a
   assert.ok(act.system.startsWith(official.system + '\n\n## Tools in this environment'));
   assert.equal(act.prompt, official.user);
   assert.match(act.system, /no second session follows/);
-  assert.match(act.system, /HARNESS GATE/);
+  assert.doesNotMatch(act.system, /HARNESS GATE/);
   const info = JSON.parse(readJson(path.join(prep, 'input.json')).info);
   const served = readFileSync(path.join(live, 'host', PHONE_TASK, 'fork-0', 'calls.jsonl'), 'utf8');
   const inputs = [...seenNodes, ...seenSessions].map(s => `${s.system}\n${s.prompt}`).join('\n');
@@ -765,8 +777,8 @@ test('21 end to end (v2, scripted): the gate is installed for the act session; a
     for (const v of vals) if (inputs.includes(v)) assert.ok(official.user.includes(v) || official.system.includes(v) || served.includes(v) || served.includes(JSON.stringify(v).slice(1, -1)), `value reached a node from outside the world: ${v}`);
   }
   assert.ok(!inputs.includes(PHONE_TASK));
-  for (const n of ['satisfiability.json', 'gate-log.json', 'check-0.json']) assert.ok(existsSync(path.join(live, 'host', PHONE_TASK, 'fork-0', 'pipeline', n)), n);
-  assert.ok(readJson(path.join(live, 'host', PHONE_TASK, 'fork-0', 'pipeline', 'check-0.json')).every(c => typeof c.observable === 'boolean'));
+  for (const n of ['satisfiability.json', 'check-0.json']) assert.ok(existsSync(path.join(live, 'host', PHONE_TASK, 'fork-0', 'pipeline', n)), n);
+  assert.ok(readJson(path.join(live, 'host', PHONE_TASK, 'fork-0', 'pipeline', 'check-0.json')).every(c => typeof c.observable === 'boolean' && typeof c.notReread === 'boolean'));
   assert.equal(sum.arm, 'A1-C v2 (code-owned harness)');
   assert.equal(sum.harness.id, 'codeowned-v2');
   assert.equal(sum.harness.version, 'a1c-v2');
@@ -790,10 +802,15 @@ test('1 end to end (v2, scripted): a failing hard check ends the pipeline (singl
     runner: stubSessionRunner({ appendLeftOut: true, perCall: true, resendOnGate: true }), nodeRunner: stubNodeRunner({ replies: { ledger: two } }) });
   const fg = g.results[0].forks[0];
   assert.equal(fg.pipeline.gate.installed, true);
+  assert.equal(fg.pipeline.gate.active, true);
   assert.equal(fg.pipeline.gate.refused, 1, JSON.stringify(fg.pipeline.gate));
   assert.equal(fg.pipeline.gate.resentIdentical, 1);
+  // The gate: AB_GATE_DIR names the act session's read-only step-guard directory, which holds gate.json.
+  const gdir = readJson(path.join(live, 'host', PHONE_TASK, 'fork-0', 'pipeline', 'nodes.json')).find(n => n.name === 'act').gate;
+  assert.equal(gdir.client.path, 'harness/v2/tool-gated.mjs');
   const glog = readJson(path.join(live, 'host', PHONE_TASK, 'fork-0', 'pipeline', 'gate-log.json'));
-  assert.deepEqual(glog.lines.map(l => l.kind), ['refused', 'resent']);
+  assert.deepEqual(glog.lines.map(l => l.kind).filter(k => k !== 'loaded'), ['refused', 'resent']);
+  assert.ok(glog.lines.filter(l => l.kind === 'loaded').length >= 2);
   // The refusal used no world step: the session issued one step per write plus the resend, and the refused try is not among them.
   assert.equal(fg.session.sessionSteps, 2);
   assert.deepEqual(fg.session.violations, []);
