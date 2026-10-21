@@ -391,6 +391,7 @@ export function fieldMatches(v, expected) {
   return String(expected).length > 80 && hasValue(String(v), expected);
 }
 const MSG_TEXT = d => `${d.subject ?? ''}\n${d.body_plain ?? d.snippet ?? ''}\n${d.body_html ?? ''}`;
+const POST_KINDS = /feed|update|post|tweet|message|status|share|media/i;
 const banned = (text, list) => (list ?? []).filter(s => hasValue(text, s));
 
 /** Evaluate one check on (initial inventory, fresh read). -> {pass: true|false|null, evidence, unobservable?} */
@@ -412,7 +413,9 @@ export function evaluate(pc, before, after) {
     }
     case 'slack_posted':
     case 'slack_not_posted': {
-      const inCh = d.added.filter(r => r.app === 'slack' && r.kind === 'message' && ((P.channel.id && r.data.channel === P.channel.id) || (P.channel.name && String(r.data.name ?? '').toLowerCase() === String(P.channel.name).toLowerCase()) || (!P.channel.id && String(r.ptr).split(':')[2]?.split('/')[0] === P.channel.name)));
+      // A direct message: any im channel of that member in the fresh read (one may have been opened by the work).
+      const ims = new Set(P.channel.user ? after.records.filter(r => r.app === 'slack' && r.kind === 'channel_list' && String(r.data.user ?? '') === P.channel.user).map(r => String(r.data.id)) : []);
+      const inCh = d.added.filter(r => r.app === 'slack' && r.kind === 'message' && ((P.channel.id && r.data.channel === P.channel.id) || ims.has(String(r.data.channel)) || (!P.channel.dm && P.channel.name && String(r.data.name ?? '').toLowerCase() === String(P.channel.name).toLowerCase()) || (!P.channel.id && !P.channel.dm && String(r.ptr).split(':')[2]?.split('/')[0] === P.channel.name)));
       if (pc.type === 'slack_not_posted') return inCh.length ? { pass: false, evidence: `new message(s) in #${P.channel.name ?? P.channel.id}: ${inCh.map(r => r.ptr).join(', ')}` } : { pass: true, evidence: 'no new message in the channel' };
       if (!inCh.length) return { pass: false, evidence: `no new message in ${P.channel.dm ? '' : '#'}${P.channel.name ?? P.channel.id}` };
       const scored = inCh.map(r => { const text = r.data.text ?? recordText(r.data); return { r, miss: [...(P.text ?? []).filter(s => !hasValue(text, s)).map(s => `"${s}"`), ...banned(text, P.bodyNot).map(s => `left-out "${s}" present`)] }; }).sort((x, y) => x.miss.length - y.miss.length);
@@ -420,6 +423,8 @@ export function evaluate(pc, before, after) {
     }
     case 'channel_posted': {
       const fresh = d.added.filter(r => r.app === P.app && (!P.channel || hasValue(recordText(r.data), P.channel) || String(r.ptr).includes(P.channel)));
+      // The app's listing may show only the account (no posts): then a missing post cannot be observed.
+      if (!fresh.length && !after.records.some(r => r.app === P.app && POST_KINDS.test(r.kind))) return { pass: null, evidence: `unobservable: the ${P.app} listing shows no posts`, unobservable: true };
       if (!fresh.length) return { pass: false, evidence: `no new ${P.app} post${P.channel ? ` in ${P.channel}` : ''}` };
       const scored = fresh.map(r => { const text = recordText(r.data); return { r, miss: [...(P.text ?? []).filter(s => !hasValue(text, s)).map(s => `"${s}"`), ...banned(text, P.bodyNot).map(s => `left-out "${s}" present`)] }; }).sort((x, y) => x.miss.length - y.miss.length);
       return scored[0].miss.length ? { pass: false, evidence: `post ${scored[0].r.ptr}: ${scored[0].miss.join(', ')}` } : { pass: true, evidence: `post ${scored[0].r.ptr}` };

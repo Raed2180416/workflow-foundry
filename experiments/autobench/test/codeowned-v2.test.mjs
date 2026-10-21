@@ -247,6 +247,20 @@ test('5 unobservable: a check on an app the re-read cannot list is null with no 
   assert.deepEqual(chk.results.map(r => [r.pass, r.evidence, r.observable]), [[null, 'unobservable', false], [null, 'unobservable', false]]);
   assert.equal(chk.results.filter(r => r.pc.hard && r.pass === null).length, 2);       // the round row's nullHard
   assert.match(renderChecks(pcs), /not observable here/);
+  // An app whose listing shows only the account (no posts) cannot observe a missing post; one that lists posts can.
+  const post = { id: 'P3', type: 'channel_posted', hard: true, params: { app: 'twitter', channel: null, text: ['Quillfeather'], bodyNot: [] } };
+  const before = { records: [rec('twitter:me:u1', { id: 'u1', username: 'orchid' })] };
+  assert.equal(evaluate(post, before, before).unobservable, true);
+  const fb = { ...post, params: { ...post.params, app: 'facebook_pages' } };
+  const feed = { records: [rec('facebook_pages:feed:f1', { id: 'f1', message: 'old news', page: 'pg1' })] };
+  assert.equal(evaluate(fb, feed, feed).pass, false);
+  assert.equal(evaluate(fb, feed, { records: [...feed.records, rec('facebook_pages:feed:f2', { id: 'f2', message: 'Quillfeather joins', page: 'pg1' })] }).pass, true);
+  // A direct message posted in an im channel the work opened is found through the member.
+  const dm = { id: 'P4', type: 'slack_posted', hard: true, params: { channel: { id: null, name: '@ivo', dm: true, user: 'U9' }, text: ['Quillfeather'], bodyNot: [] } };
+  const b0 = { records: [rec('slack:channel_list:C9', { id: 'C9', name: 'ledger-ops' })] };
+  const a0 = { records: [...b0.records, rec('slack:channel_list:D9', { id: 'D9', is_im: true, user: 'U9' }), rec('slack:message:D9/1.0', { channel: 'D9', text: 'Quillfeather Supply is confirmed' })] };
+  assert.equal(evaluate(dm, b0, a0).pass, true);
+  assert.equal(evaluate(dm, b0, { records: [...b0.records, rec('slack:message:C9/2.0', { channel: 'C9', name: 'ledger-ops', text: 'Quillfeather' })] }).pass, false);
 });
 
 // ---------------------------------------------------------------------------------------------------------------
