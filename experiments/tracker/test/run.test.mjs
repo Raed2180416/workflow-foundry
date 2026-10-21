@@ -10,10 +10,12 @@ import { sandboxAvailable } from '../../../src/executors/claude-code.mjs';
 import * as e8 from '../../../beds/ebed/e8/index.mjs';
 import { buildLedger, writeLedger, readLedger } from '../ledger.mjs';
 import { checkBuilds, calibrate, main } from '../run.mjs';
+import { frozenSpecE } from '../eval-e8.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '../../..');
-const SPEC = readFileSync(path.join(ROOT, 'beds/ebed/e8/spec/SPEC-E.md'), 'utf8');
+// The frozen SPEC-E (git 48535bb): FN_BY_LINE below keys that text's lines (the working-tree file has moved).
+const SPEC = frozenSpecE();
 const skip = !sandboxAvailable() && 'sandbox unavailable';
 const ITEM = { binding: e8.binding, generateWorld: e8.generateWorld, oracleItem: e8.oracleItem };
 const BUILD = l => path.join(ROOT, `research/enterprise-20261014/runs/${l}/solver.mjs`);
