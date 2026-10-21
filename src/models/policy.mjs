@@ -17,6 +17,44 @@ const LOOPBACK_URL = /^http:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d{1,5})?(\/[^
 const ENV_NAME = /^[A-Z][A-Z0-9_]{0,63}$/;
 const SECRET_FIELD = /^(api[-_]?key|key|token|secret|password|bearer|authorization)$/i;
 
+// Remote OpenAI-compatible chat endpoints (POST <baseUrl>/chat/completions over HTTPS; research/mercury-20261021/), served
+// only as executor sessions: src/executors/openai-chat.mjs runs the tool-calling loop on the host and every tool inside the
+// executor sandbox. Their models are listed under executorModels, apart from models[], as judgmentModels are: ModelPort has
+// no provider for this kind, so class resolution and escalation never route a typed node to one (modelById reads models[]
+// only). The provider names its credential variable (credentialEnv), never a value, and carries no other field than these.
+export const REMOTE_CHAT_KIND = 'openai-chat-https';
+const REMOTE_CHAT_PROVIDER_KEYS = Object.freeze(['kind', 'baseUrl', 'credentialEnv', 'requestDefaults', 'auth', 'docs', 'knownGaps', 'features']);
+/** Request fields a remote-chat provider may fix for every call (sent as is; nothing else is configurable). */
+export const REQUEST_DEFAULT_KEYS = Object.freeze(['temperature', 'max_tokens']);
+const EXECUTOR_MODEL_KEYS = Object.freeze(['id', 'class', 'family', 'provider', 'price', 'contextTokens', 'maxOutputTokens', 'note']);
+const EXECUTOR_PRICE_KEYS = Object.freeze(['inputPerMTok', 'outputPerMTok', 'cacheReadPerMTok', 'source']);
+// Defence in depth beside the field-name check: a long unbroken run of key-like characters mixing letters and digits is
+// refused anywhere in a remote-chat provider entry (an API key pasted into a description, say). Prose, URLs and variable
+// names do not match.
+const KEY_LIKE = /[A-Za-z0-9_-]{32,}/;
+const keyLike = s => typeof s === 'string' && (s.match(new RegExp(KEY_LIKE.source, 'g')) ?? []).some(run => /[0-9]/.test(run) && /[A-Za-z]/.test(run));
+const strings = v => (typeof v === 'string' ? [v] : Array.isArray(v) ? v.flatMap(strings) : isObject(v) ? Object.values(v).flatMap(strings) : []);
+function validateRemoteChatProvider(name, p) {
+  const secretField = Object.keys(p).find(k => SECRET_FIELD.test(k));
+  if (secretField) invalid(`provider ${name} may not carry a credential field (${secretField}); name the environment variable in credentialEnv`);
+  const unknown = Object.keys(p).filter(k => !REMOTE_CHAT_PROVIDER_KEYS.includes(k));
+  if (unknown.length) invalid(`provider ${name} (kind ${REMOTE_CHAT_KIND}) has unknown fields: ${unknown.join(', ')} (allowed: ${REMOTE_CHAT_PROVIDER_KEYS.join(', ')})`);
+  if (!nonEmpty(p.baseUrl) || !HTTPS_URL.test(p.baseUrl)) invalid(`provider ${name} needs an https baseUrl (a remote endpoint; plain http is refused)`);
+  if (typeof p.credentialEnv !== 'string' || !ENV_NAME.test(p.credentialEnv)) invalid(`provider ${name} credentialEnv must name an environment variable; a credential value never goes in the policy`);
+  if (p.requestDefaults !== undefined) {
+    const d = p.requestDefaults;
+    if (!isObject(d)) invalid(`provider ${name} requestDefaults must be an object`);
+    const extra = Object.keys(d).filter(k => !REQUEST_DEFAULT_KEYS.includes(k));
+    if (extra.length) invalid(`provider ${name} requestDefaults has unknown fields: ${extra.join(', ')} (allowed: ${REQUEST_DEFAULT_KEYS.join(', ')})`);
+    if (d.temperature !== undefined && !(typeof d.temperature === 'number' && d.temperature >= 0 && d.temperature <= 2)) invalid(`provider ${name} requestDefaults.temperature must be a number 0..2`);
+    if (d.max_tokens !== undefined && !(Number.isInteger(d.max_tokens) && d.max_tokens >= 1)) invalid(`provider ${name} requestDefaults.max_tokens must be a positive integer`);
+  }
+  if (p.features !== undefined && (!isObject(p.features) || Object.values(p.features).some(v => typeof v !== 'boolean'))) invalid(`provider ${name} features must map names to booleans`);
+  if (p.knownGaps !== undefined && (!Array.isArray(p.knownGaps) || p.knownGaps.some(g => !nonEmpty(g)))) invalid(`provider ${name} knownGaps must be a list of strings`);
+  for (const k of ['auth', 'docs']) if (p[k] !== undefined && !nonEmpty(p[k])) invalid(`provider ${name} ${k} must be a non-empty string`);
+  if (strings(p).some(keyLike)) invalid(`provider ${name} holds a key-like value; a credential value never goes in the policy (name its variable in credentialEnv)`);
+}
+
 // Environment variables a claude-cli provider config may set in (or remove from, with null) the child process. A closed list:
 // an environment variable can change what the CLI sends (model, thinking budget, base URL, caching), and a variable that changes
 // the decoding would have to enter the replay key. Everything here is transport, telemetry or cache-pricing tuning; none changes
@@ -61,6 +99,7 @@ export function validatePolicy(policy) {
       const secretField = Object.keys(p).find(k => SECRET_FIELD.test(k));
       if (secretField) invalid(`provider ${name} may not carry a credential field (${secretField}); name the environment variable in credentialEnv`);
     }
+    if (p.kind === REMOTE_CHAT_KIND) validateRemoteChatProvider(name, p);
   }
   if (!Array.isArray(policy.models) || !policy.models.length) invalid('models must be a non-empty list');
   const ids = new Set(), ports = new Set();
@@ -72,6 +111,7 @@ export function validatePolicy(policy) {
     const provider = policy.providers[m.provider];
     if (!provider) invalid(`model ${m.id} names unknown provider ${m.provider}`);
     if (provider.kind === JUDGMENT_KIND) invalid(`model ${m.id}: provider ${m.provider} serves typed judgments only; list it under judgmentModels`);
+    if (provider.kind === REMOTE_CHAT_KIND) invalid(`model ${m.id}: provider ${m.provider} serves executor sessions only; list it under executorModels`);
     if (!isObject(m.price) || !money(m.price.inputPerMTok) || !money(m.price.outputPerMTok)) invalid(`model ${m.id} needs non-negative price.inputPerMTok/outputPerMTok`);
     if (provider.kind === 'openai-compatible-http') {
       if (!Number.isInteger(m.port) || m.port < 1024 || m.port > 65535) invalid(`model ${m.id} needs an unprivileged port`);
@@ -91,6 +131,26 @@ export function validatePolicy(policy) {
       if (!provider || provider.kind !== JUDGMENT_KIND) invalid(`judgment model ${m.id} needs a provider of kind ${JUDGMENT_KIND}`);
       const priceOk = v => v === null || money(v);
       if (!isObject(m.price) || !priceOk(m.price.inputPerMTok) || !priceOk(m.price.outputPerMTok) || !nonEmpty(m.price.source)) invalid(`judgment model ${m.id} needs price.inputPerMTok/outputPerMTok (non-negative, or null when unknown) and price.source`);
+    }
+  }
+  // Executor models (a remote chat endpoint driven as a tool-using session; REMOTE_CHAT_KIND above). Kept apart from models[]
+  // so ModelPort, class resolution and escalation never reach one; the class records the tier for reports only.
+  if (policy.executorModels !== undefined) {
+    if (!Array.isArray(policy.executorModels)) invalid('executorModels must be a list');
+    for (const m of policy.executorModels) {
+      if (!isObject(m) || typeof m.id !== 'string' || !ID.test(m.id)) invalid(`executor model id ${JSON.stringify(m?.id)} is not a valid id`);
+      const unknown = Object.keys(m).filter(k => !EXECUTOR_MODEL_KEYS.includes(k));
+      if (unknown.length) invalid(`executor model ${m.id} has unknown fields: ${unknown.join(', ')} (allowed: ${EXECUTOR_MODEL_KEYS.join(', ')})`);
+      if (ids.has(m.id)) invalid(`duplicate model id ${m.id}`); ids.add(m.id);
+      if (!order.includes(m.class)) invalid(`executor model ${m.id} has class ${m.class} outside classOrder`);
+      if (!nonEmpty(m.family)) invalid(`executor model ${m.id} needs a family`);
+      const provider = policy.providers[m.provider];
+      if (!provider || provider.kind !== REMOTE_CHAT_KIND) invalid(`executor model ${m.id} needs a provider of kind ${REMOTE_CHAT_KIND}`);
+      if (!isObject(m.price) || Object.keys(m.price).some(k => !EXECUTOR_PRICE_KEYS.includes(k)) || !money(m.price.inputPerMTok) || !money(m.price.outputPerMTok)
+        || (m.price.cacheReadPerMTok !== undefined && !money(m.price.cacheReadPerMTok)) || !nonEmpty(m.price.source))
+        invalid(`executor model ${m.id} needs price.inputPerMTok/outputPerMTok (non-negative), an optional non-negative cacheReadPerMTok and price.source, nothing else`);
+      for (const k of ['contextTokens', 'maxOutputTokens']) if (m[k] !== undefined && !(Number.isInteger(m[k]) && m[k] > 0)) invalid(`executor model ${m.id} ${k} must be a positive integer`);
+      if (m.note !== undefined && !nonEmpty(m.note)) invalid(`executor model ${m.id} note must be a non-empty string`);
     }
   }
   const esc = policy.escalation;
@@ -130,6 +190,20 @@ export function judgmentModelById(policy, id) {
   const entry = typeof id === 'string' ? (policy.judgmentModels ?? []).find(m => m.id === id) : undefined;
   if (!entry) throw new FoundryError('MODEL_NOT_IN_POLICY', `Judgment model ${JSON.stringify(id)} is not listed in the model policy`, { modelId: id ?? null, policyVersion: policy.policyVersion });
   return { entry, provider: providerConfig(policy, entry) };
+}
+
+/** An executor model (executorModels[]) with its provider config; refuses an id the policy does not list there. */
+export function executorModelById(policy, id) {
+  const entry = typeof id === 'string' ? (policy.executorModels ?? []).find(m => m.id === id) : undefined;
+  if (!entry) throw new FoundryError('MODEL_NOT_IN_POLICY', `Executor model ${JSON.stringify(id)} is not listed in the model policy`, { modelId: id ?? null, policyVersion: policy.policyVersion });
+  return { entry, provider: providerConfig(policy, entry) };
+}
+/** The model of an executor session: an executorModels entry (kind REMOTE_CHAT_KIND) or a models[] entry (its provider's
+ * kind, e.g. claude-cli). Refuses an id the policy lists in neither. */
+export function sessionModelById(policy, id) {
+  if (typeof id === 'string' && (policy.executorModels ?? []).some(m => m.id === id)) return { ...executorModelById(policy, id), kind: REMOTE_CHAT_KIND };
+  const entry = modelById(policy, id), provider = providerConfig(policy, entry);
+  return { entry, provider, kind: provider.kind };
 }
 
 export function classIndex(policy, cls) {

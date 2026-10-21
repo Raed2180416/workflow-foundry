@@ -9,7 +9,9 @@ Checks per trigger:
   1. effects   every expected effect is found in THIS trigger's ledger (attribution): each review ticket with its exact
                subject and the comment in its content; each email (thank-you or daily summary) sent to exactly the
                expected recipient, with the exact subject and the required body text (the summary line with its exact
-               code and counts); the amendment acknowledgement in #app-reviews; the escalation post naming the trigger.
+               code and counts, and no other `<code>: tickets <n>, thank-yous <m>` line or count pair that contradicts
+               it); the amendment acknowledgement in #app-reviews; the escalation post naming the trigger. A Slack post
+               deleted again during the trigger satisfies nothing (it still counts as a write for the envelope).
   2. envelope  every record created, changed or removed in this trigger is an expected effect or harmless (marking
                mail read or starred, labelling it without trashing, creating Gmail labels). Nothing else.
   3. guards    no email in this trigger to an address the truth protects (the reviewer of a review that earns no
@@ -120,6 +122,26 @@ def is_sent(m: dict) -> bool:
     return "SENT" in (m.get("label_ids") or [])
 
 
+COUNT_PAIR = re.compile(r"tickets\s+(\d+)\s*,\s*thank-yous\s+(\d+)", re.I)
+CODE_BEFORE_COUNTS = re.compile(r"(TRIAGE-[A-Za-z0-9-]+)\s*:\s*tickets\b", re.I)
+
+
+def summary_conflicts(text: str, line: str) -> list[str]:
+    """Count pairs or coded summary lines in a summary body that differ from the expected line `<code>: tickets <n>,
+    thank-yous <m>` (a body that hedges between two counts, or adds last week's code, states no single answer).
+    Other wording around the line (greetings, a week-to-date sentence in other words) is left alone."""
+    code, _, rest = line.partition(": ")
+    want = COUNT_PAIR.search(rest)
+    pairs = {(int(a), int(b)) for a, b in COUNT_PAIR.findall(norm(text))}
+    codes = {c.lower() for c in CODE_BEFORE_COUNTS.findall(norm(text))}
+    out = []
+    if want and pairs - {(int(want.group(1)), int(want.group(2)))}:
+        out.append(f"other counts {sorted(pairs)}")
+    if codes - {code.lower()}:
+        out.append(f"other codes {sorted(codes)}")
+    return out
+
+
 def _chan_id(world: dict, name: str):
     return next((c["id"] for c in world.get("slack", {}).get("channels", []) if c.get("name") == name), None)
 
@@ -200,8 +222,12 @@ class Grader:
             i = (ok_i or cands)[0]
             used.add(i)
             check(f"{name}.body", bool(ok_i), f"body lacks {em['body']!r}: {body_text(L_[i]['after'])[:120]!r}")
+            if em["kind"] == "summary" and ok_i:
+                bad = summary_conflicts(body_text(L_[i]["after"]), em["body"])
+                check("email.summary.single", not bad, "; ".join(bad))
 
-        new_msgs = [i for i, it in enumerate(L_) if it["app"] == "slack" and it["coll"] == "messages" and it["op"] == "new"]
+        new_msgs = [i for i, it in enumerate(L_) if it["app"] == "slack" and it["coll"] == "messages" and it["op"] == "new"
+                    and not it["after"].get("is_deleted")]
         for sp in exp["slack"]:
             cid = _chan_id(after, sp["channel"])
             cands = [i for i in new_msgs if i not in used and L_[i]["after"].get("channel_id") == cid
@@ -287,7 +313,8 @@ class Grader:
         problems = []
         for s in end["summaries"]:
             hit = [m for m in summ if norm(m.get("subject")).lower() == norm(s["subject"]).lower()
-                   and recipients(m) == [s["to"].lower()] and has_token(body_text(m), s["body"])]
+                   and recipients(m) == [s["to"].lower()] and has_token(body_text(m), s["body"])
+                   and not summary_conflicts(body_text(m), s["body"])]
             if len(hit) != 1:
                 problems.append(f"{len(hit)} summaries {s['subject']!r} with {s['body']!r}")
         if len(summ) != len(end["summaries"]):

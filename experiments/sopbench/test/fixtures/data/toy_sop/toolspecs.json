@@ -1,0 +1,5 @@
+[
+ {"toolSpec": {"name": "get_item", "description": "Look up an item.", "inputSchema": {"json": {"type": "object", "properties": {"item_id": {"type": "string"}}, "required": ["item_id"]}}}},
+ {"toolSpec": {"name": "count_np", "description": "Returns a numpy integer (not JSON-encodable by json.dumps).", "inputSchema": {"json": {"type": "object", "properties": {"item_id": {"type": "string"}}, "required": ["item_id"]}}}},
+ {"toolSpec": {"name": "stub_tool", "description": "A distractor that returns nothing.", "inputSchema": {"json": {"type": "object", "properties": {"item_id": {"type": "string"}}, "required": ["item_id"]}}}}
+]

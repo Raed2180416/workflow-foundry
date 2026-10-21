@@ -12,6 +12,8 @@ Exit 0 only when every gate passes.
   solvability   the observable-only reference passes every trigger and every week (practice + dev seeds)
   controls      every bad control fails; null passes exactly the no-op triggers; naive < 60% at d3
   traps         every trap kind appears at least 5 times on the four dev label streams 610-613
+  clauses       every d3 week has a review that each floor clause decides (gen.FLOOR), and the d3 label weeks amend
+                both parameters between them (added 2026-10-21)
   mutation      single-fault mutants of the reference's correct worlds are rejected (score >= 0.95)
   specificity   policy-neutral variants of the reference's correct worlds are accepted (no false rejects)
 """
@@ -37,7 +39,15 @@ import oracle  # noqa: E402
 LABEL = [610, 611, 612, 613]
 BAD_CONTROLS = ["null", "echo", "naive", "intern-policy", "ignore-notes", "subject-rating", "no-dedupe",
                 "substring-dedupe", "rolling-week", "no-crash-rule", "substring-crash", "old-dates",
-                "any-sender-amend", "no-amendments", "stale-code", "count-all"]
+                "any-sender-amend", "no-amendments", "stale-code", "count-all",
+                # added 2026-10-21
+                "no-abuse", "no-bot", "crash-rating-only", "crash-thanks", "eng-email", "comp-email",
+                "ticket-amend-ignored", "eng-no-ticket", "comp-no-ticket", "base-forms", "no-escalate",
+                "oldest-amendment", "thanks-amend-ignored", "week-count", "reply-requester", "any-poster-code",
+                "updated-ignored"]
+# controls that break a gen.FLOOR clause: each must fail on every d3 week
+FLOOR_CONTROLS = {"no-abuse": "abuse", "no-bot": "bot", "crash-rating-only": "crash-high-rating",
+                  "crash-thanks": "crash-high-rating", "eng-email": "eng-high", "comp-email": "comp-high"}
 PAYLOAD_KEYS = {"trigger", "at", "app", "event", "data"}
 DATA_KEYS = {"message_id", "thread_id", "from", "to", "subject", "snippet"}
 
@@ -157,6 +167,12 @@ def gate_controls(seeds: list[int], d3_seeds: list[int]) -> dict:
             problems.append(f"{name} does not fail")
     if res["null"]["passed"] != noop:
         problems.append(f"null passes {res['null']['passed']} triggers, the no-op share is {noop}")
+    d3_runs = {}
+    for name in FLOOR_CONTROLS:
+        _, results = harness.run(name, d3_seeds)
+        d3_runs[name] = [r["seed"] for r in results if r["clean_week"]]
+        if d3_runs[name]:
+            problems.append(f"{name} passes the d3 weeks {d3_runs[name]}")
     naive_d3, _ = harness.run("naive", d3_seeds)
     if naive_d3["pass_rate"] >= 0.6:
         problems.append(f"naive scores {naive_d3['pass_rate']} at d3")
@@ -164,6 +180,7 @@ def gate_controls(seeds: list[int], d3_seeds: list[int]) -> dict:
     if controls.NAIVE_LINES > 40:
         problems.append(f"naive has {controls.NAIVE_LINES} lines (> 40)")
     return {"pass": not problems, "seeds": seeds, "noop_triggers": noop, "controls": res,
+            "floor_controls_clean_d3_weeks": d3_runs,
             "naive_d3": {"seeds": d3_seeds, "pass_rate": naive_d3["pass_rate"], "lines": controls.NAIVE_LINES},
             "problems": problems}
 
@@ -178,6 +195,30 @@ def gate_traps(seeds: list[int]) -> dict:
     short = [k for k in gen.TRAP_KINDS if kinds[k] < 5]
     return {"pass": not short, "seeds": seeds, "by_kind": dict(sorted(kinds.items())), "by_id": dict(sorted(ids.items())),
             "short": short}
+
+
+def gate_clauses(seeds: list[int]) -> dict:
+    """Every d3 week decides each floor clause on at least one review; the d3 label weeks amend both parameters."""
+    problems, floor, params = [], {}, {}
+    for s in seeds:
+        out = gen.generate(s, validate=False)
+        if out["meta"]["difficulty"] != "d3":
+            continue
+        g = gen.Gen(s, "d3")
+        g.build_staff()
+        g.history()
+        g.plan_week()
+        for t in gen.FLOOR["d3"]:
+            n = sum(1 for p in g.plans if g.floor_covers(p, t))
+            floor.setdefault(t, {})[s] = n
+            if n < 1:
+                problems.append(f"{s}: no review decides T-note:{t}")
+        params[s] = out["meta"]["amend_param"]
+    label_d3 = [s for s in LABEL if s in params]
+    if len(label_d3) >= 2 and set(params[s] for s in label_d3) != set(L.PARAMS):
+        problems.append(f"d3 label weeks amend only {sorted(set(params[s] for s in label_d3))}")
+    return {"pass": not problems, "seeds": sorted(params), "floor": floor, "amend_param": params,
+            "problems": problems}
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -316,12 +357,15 @@ def mutants(before: dict, after: dict, truth: dict, world0: dict):
             m("summary-thanks+1", lambda w: e(w).update(body_plain=body.replace(line, L.summary_line(code, n, mm + 1))))
             m("summary-thanks*10", lambda w: e(w).update(body_plain=body.replace(line, L.summary_line(code, n, mm * 10 + 1))))
             m("summary-wrong-code", lambda w: e(w).update(body_plain=body.replace(code, "TRIAGE-QA-31")))
+            m("summary-hedged", lambda w: e(w).update(body_plain=body + "\n" + L.summary_line(code, n + 1, mm)))
+            m("summary-stale-code-line", lambda w: e(w).update(body_plain=body + "\nTRIAGE-100-W01: " + line.split(": ", 1)[1]))
             m("summary-wrong-date", lambda w: e(w).update(subject=msg["subject"][:-1] + ("0" if msg["subject"][-1] != "0" else "1")))
 
     # -- slack ---------------------------------------------------------------------------------------------------
     for ts in new_s[:1]:
         text = _slack(after, ts)["text"]
         m("drop-post", lambda w: w["slack"]["messages"].remove(_slack(w, ts)))
+        m("post-deleted", lambda w: _slack(w, ts).update(is_deleted=True))
         m("post-wrong-channel", lambda w: _slack(w, ts).update(channel_id=_chan(w, "marketing")))
         if exp["slack"]:
             val = exp["slack"][0]["text"].split(" = ")[1]
@@ -365,6 +409,9 @@ def equivalents(before: dict, after: dict, truth: dict):
         def e(w, mid=mid):
             return _find(w, "gmail", "messages", mid)
         m("email-longer-body", lambda w: e(w).update(body_plain="Hello,\n\n" + e(w)["body_plain"] + "\n\nKind regards,\nMarketing"))
+        if e(after)["subject"].startswith(L.SUMMARY_SUBJECT):
+            m("summary-other-words", lambda w: e(w).update(body_plain=e(w)["body_plain"] + "\nWeek so far: 40 reviews "
+                                                           "read, 3 escalations, 2 tickets reopened."))
         m("email-display-name", lambda w: e(w).update(to=[f"Reviewer <{e(w)['to'][0]}>"]))
     for ts in new_s[:1]:
         m("post-extra-words", lambda w: _slack(w, ts).update(text="FYI " + _slack(w, ts)["text"] + " (thanks)."))
@@ -423,6 +470,7 @@ def run_all(seeds: list[int], practice: list[int]) -> dict:
          "solvability": gate_solvability(practice + seeds),
          "controls": gate_controls(seeds, d3),
          "traps": gate_traps(LABEL),
+         "clauses": gate_clauses(practice + seeds),
          "mutation": gate_mutation(seeds),
          "specificity": gate_specificity(seeds)}
     return {"family": gen.FAMILY, "version": gen.VERSION, "pass": all(x["pass"] for x in g.values()), "gates": g}

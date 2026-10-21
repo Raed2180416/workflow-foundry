@@ -1,0 +1,9 @@
+item_id,qty,price,decision
+I-0,5,20,ship
+I-1,0,30,backorder
+I-2,3,150,review
+I-3,7,10,ship
+I-4,0,500,backorder
+I-5,2,101,review
+I-6,9,99,ship
+I-7,1,1,ship

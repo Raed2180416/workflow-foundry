@@ -1,0 +1,8 @@
+From: Joost Bakker <joost@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-02-27 19:14 +01:00
+Subject: Re: Correction: carrier status updates
+
++1. I'll fix the wiki page after go-live.
+
+Joost

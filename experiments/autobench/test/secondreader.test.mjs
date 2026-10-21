@@ -13,9 +13,10 @@ import { loadSplit } from '../split.mjs';
 import { ARM, HARNESS_ID, READER_SYSTEM, REVIEW_BEGIN, appsOfUrl, diffReads, hideCodeSteps, manifestFiles, maskClock, nodeModels, pipelineConfig, pipelineManifest, readMailboxFile,
   readReview, readerPrompt, reviewSection, sessionCalls } from '../harness/secondreader.mjs';
 import { stubNodeRunner, stubSessionRunner, stubReview, sendEmail } from '../harness/secondreader-stubs.mjs';
+import { cliVersion } from '../harness/foundry.mjs';
 
-// The runner with the pipeline registry: run.mjs once it is merged, the wired copy run-sr-wip.mjs until then.
-const { runTasks, DEFAULTS: RUN_DEFAULTS } = mainRunner.PIPELINE_HARNESSES?.secondreader ? mainRunner : await import('../run-sr-wip.mjs');
+// The runner with the pipeline registry (PIPELINE_HARNESSES).
+const { runTasks, DEFAULTS: RUN_DEFAULTS } = mainRunner;
 const tmp = p => mkdtempSync(path.join(os.tmpdir(), `autobench-sr-${p}-`));
 const HAVE_VENV = existsSync(VENV_PY);
 const quiet = () => {};
@@ -271,15 +272,26 @@ test('end to end (A0+SR, scripted): the response budget is the sum over every ca
   // ... and no world step follows the spent budget: the post-read (it serves only the reader) is skipped too.
   assert.equal(rb.forks[0].pipeline.postRead.done, false);
   assert.ok(!rb.forks[0].session.violations.some(v => /code-issued/.test(v)), rb.forks[0].session.violations.join('; '));
-  // An environment fault in the reader: no repair; the fault is the task's session error, so the runner defers the task.
+  // An environment fault in the reader, i.e. after the act session changed the world: no repair, and the task is NOT
+  // rerun (a rerun would be a second attempt, drawn more often for unfinished-looking work): the world is graded as it
+  // stands and the fault is recorded.
   const seen = [], live = tmp('fault');
   const c = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], harness: 'secondreader', det: 'record', liveRoot: live, outDir: null, log: quiet,
     runner: stubSessionRunner({ seen }), nodeRunner: stubNodeRunner({ fault: 'MODEL_RATE_LIMIT' }) });
   assert.deepEqual(seen.map(s => s.node), ['act']);
   const nodes = readJson(path.join(live, 'host', PHONE_TASK, 'fork-0', 'pipeline', 'nodes.json'));
   assert.equal(nodes.find(n => n.error)?.error, 'MODEL_RATE_LIMIT');
-  if (c.results.length) assert.equal(c.results[0].forks[0].sessionError, 'MODEL_RATE_LIMIT');
-  else assert.match(String(c.summary.stopped), /MODEL_RATE_LIMIT/);
+  assert.equal(c.summary.stopped, undefined);
+  assert.equal(c.results.length, 1);
+  assert.equal(c.results[0].forks[0].sessionError, null);
+  assert.equal(c.results[0].forks[0].pipeline.envFaultAfterAct, 'MODEL_RATE_LIMIT');
+  assert.ok(c.results[0].final);
+  // A fault in the act session itself (the A0 session) is not an outcome: the task is deferred (rerun on --resume), as for A0.
+  const limited = async args => { const r = await stubSessionRunner()(args); return { ...r, ok: false, error: { code: 'MODEL_RATE_LIMIT' } }; };
+  const d = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], harness: 'secondreader', det: 'record', liveRoot: tmp('fault-act'), outDir: null, log: quiet,
+    runner: limited, nodeRunner: stubNodeRunner() });
+  assert.equal(d.results.length, 0);
+  assert.match(String(d.summary.stopped), /MODEL_RATE_LIMIT/);
 });
 
 test('A0+SR\'s act call is A0\'s runner call: same model, prompts, workdir, budget, effort, tools, no guard (only the wall timeout keeps a reserve); A0+SR refuses test tasks', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 300_000 }, async () => {
@@ -309,4 +321,8 @@ test('A0+SR\'s act call is A0\'s runner call: same model, prompts, workdir, budg
   // also proves the hash matched; shown on an unknown name, so no test task could be touched).
   const hash = pipelineManifest(pipelineConfig({ ...RUN_DEFAULTS, cli: null })).sha256;
   await assert.rejects(runTasks({ harness: 'secondreader', tasks: ['sales.__not_a_task__'], harnessHash: hash, runner: never, nodeRunner: never, liveRoot: tmp('guards4'), outDir: null, log: quiet }), /not dev-split tasks/);
+  // A0+SR is a dev-only probe (not a PREREG §3 arm): even a model run given the hash it recomputes is refused test tasks.
+  const model = 'claude-haiku-5-5', cli = cliVersion();
+  const modelHash = pipelineManifest(pipelineConfig({ ...RUN_DEFAULTS, model, cli })).sha256;
+  await assert.rejects(runTasks({ harness: 'secondreader', model, capUsd: 1, tasks: ['sales.__not_a_task__'], harnessHash: modelHash, liveRoot: tmp('guards5'), outDir: null, log: quiet }), /not dev-split tasks/);
 });

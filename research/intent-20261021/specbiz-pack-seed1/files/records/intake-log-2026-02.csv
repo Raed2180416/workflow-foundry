@@ -1,0 +1,8 @@
+# intake log, exported 2026-02-28 by joost from the order admin (period 2026-02-01 .. 2026-02-27)
+event_id,received_at,order_ref_as_received,action_taken
+ev-4752,2026-02-10 09:27,ORD-0226-0335,booked
+ev-4753,2026-02-10 09:46,ORD-0226-0800,booked
+ev-4754,2026-02-10 09:56,ORD-0226-0800,nothing (already booked)
+ev-4755,2026-02-10 10:19,ORD-0226-0830,booked
+ev-4756,2026-02-10 10:43, #ord-0226-0335,nothing (already booked)
+ev-4757,2026-02-10 11:08,ORD-0226-0980,booked

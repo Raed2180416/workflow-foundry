@@ -15,8 +15,10 @@ Writes into HOSTDIR (host-only; nothing generated is committed):
                      (assertions: [], current_time = trigger time; see serve_input)
   meta.json          family, version, seed, difficulty, counts and sha256 of every file
 
-Determinism: one random.Random(f"{family}:{version}:{seed}:{difficulty}"); no wall clock, no set iteration order, and
-every datetime field of every record is written explicitly, so no pydantic default factory ever fires.
+Determinism: one random.Random(f"{family}:{version}:{seed}:{difficulty}") for the stream, plus its own
+random.Random(f"...:floor") for the d3 clause floor (plan_floor, added 2026-10-21 so that every earlier draw stays
+unchanged); no wall clock, no set iteration order, and every datetime field of every record is written explicitly, so
+no pydantic default factory ever fires.
 
 The truth is computed from the generator's own canonical model of the business (the planned reviews with their
 ratings, notes and dates, the amendment timeline, and the state after correct handling of every earlier trigger),
@@ -54,6 +56,13 @@ BENIGN_NOTE_RATE = 0.15                                             # harmless n
 SUPPORT_TICKET_RATE = {"d1": 0.0, "d2": 0.4, "d3": 0.7}            # other teams' tickets created on a given day
 OLD_AMEND_PAIR_RATE = {"d1": 0.0, "d2": 0.0, "d3": 0.5}            # world0: an old product@ amendment and its revert
 QA_CODE_DECOY = {"d1": False, "d2": False, "d3": True}             # world0: someone else posts a TRIAGE-like code
+# d3 clause floor (2026-10-21): every d3 week carries at least one review that each of these note clauses decides, so
+# the hard weeks always test them (they were rare under the rotation: 0.04-0.46 per week). See plan_floor.
+FLOOR = {"d1": (), "d2": (), "d3": ("abuse", "bot", "crash-high-rating", "eng-high", "comp-high")}
+# planted review traps a floor conversion may re-use (only while the week keeps another of the same id), so the
+# share of trapped triggers stays near the design rate
+FLOOR_DONORS = ("T-stale:old-date", "T-lookalike:freezer", "T-format:comment-stars", "T-format:subject-mismatch",
+                "T-format:crash-form", "T-note:eng-low", "T-note:comp-low")
 RATING_W = {1: 18, 2: 17, 3: 15, 4: 22, 5: 28}
 
 TRAP_KINDS = ["T-note", "T-stale", "T-format", "T-lookalike", "T-authority", "T-repeat"]
@@ -229,11 +238,12 @@ class Gen:
         s = self.r.randint(0, int((hi - lo).total_seconds()))
         return self.unique_time(lo + timedelta(seconds=s))
 
-    def fresh_address(self, domain: str | None = None) -> tuple[str, str]:
+    def fresh_address(self, domain: str | None = None, rng: random.Random | None = None) -> tuple[str, str]:
+        r = rng or self.r
         for _ in range(10_000):
-            first, last = self.r.choice(FIRST), self.r.choice(LAST)
-            local = self.r.choice([f"{first}.{last}", f"{first}.{last}", f"{first[0]}{last}", f"{first}{self.r.randint(2, 99)}"])
-            a = f"{local}@{domain or self.r.choice(DOMAINS)}".lower()
+            first, last = r.choice(FIRST), r.choice(LAST)
+            local = r.choice([f"{first}.{last}", f"{first}.{last}", f"{first[0]}{last}", f"{first}{r.randint(2, 99)}"])
+            a = f"{local}@{domain or r.choice(DOMAINS)}".lower()
             if a not in self.addresses and not any(a in x or x in a for x in self.addresses):
                 self.addresses.add(a)
                 return a, f"{first} {last}"
@@ -424,6 +434,7 @@ class Gen:
                                "traps": [], "tags": [], "delta_extra": []})
         self.plans.sort(key=lambda p: p["at"])
         self.plan_support_tickets()
+        self.plan_floor()
 
     # unauthorized amendment-shaped requests: (sender, parameter, requested value)
     UNAUTH_AMEND = {"dev-skip3": (L.DEV, "Ticket ratings", "1-2"), "dev-thank5": (L.DEV, "Thank-you ratings", "5"),
@@ -438,7 +449,10 @@ class Gen:
         if self.d == "d1":
             return
         if self.d == "d3":
-            param = r.choice(L.PARAMS)
+            r.choice(L.PARAMS)              # the original draw, kept so every later draw is unchanged
+            # balanced by seed (2026-10-21): consecutive d3 seeds of a block (611/613, 8802/8804, ...) amend different
+            # parameters, so each label set tests both (a coin left both d3 dev weeks on Thank-you ratings)
+            param = L.PARAMS[(self.seed // 2) % 2]
             value = "1-3" if param == "Ticket ratings" else "5"
             at = self.slot(r.choice([0, 1]), lo=(9, 30), hi=(15, 0))
             self.plans.append({"kind": "policy.message", "sub": "amend", "at": at, "sender": L.PRODUCT, "param": param,
@@ -575,6 +589,7 @@ class Gen:
                     look = self.lookalike_of(q["reviewer"])
                     if look:
                         q["locked"] = True          # the source keeps its ticket (never turned malformed later)
+                        q["source"] = True          # ... and is never a floor donor (plan_floor)
                         break
                 if not look:
                     t = "freezer"
@@ -659,6 +674,62 @@ class Gen:
             nxt.setdefault("delta_extra", []).append({"op": "insert", "app": "hubspot", "collection": "tickets", "record": rec})
             self.support_days.add(d)
             self.support_ids.append(rec["id"])
+
+    def floor_covers(self, p: dict, t: str) -> bool:
+        """p is a review on which ignoring note clause t changes the outcome under either parameter value: abuse and
+        bot at 1, 2 or 5 stars (a ticket or a thank-you otherwise); crash, Engineering and COMP at 5 stars (a
+        thank-you otherwise; a crash review would also get no ticket under the rating rule)."""
+        if p["kind"] != "review.new" or f"T-note:{t}" not in p["traps"] or p["date"] != p["at"].date():
+            return False
+        return p["rating"] in (1, 2, 5) if t in ("abuse", "bot") else p["rating"] == 5
+
+    def plan_floor(self):
+        """d3 clause floor. For each clause in FLOOR[d] that no review of the week decides, convert one review: a
+        donor (a planted review trap of a kind the week has at least twice, so the share of trapped triggers does not
+        change) or, failing that, a plain review. Its own seeded stream, so every other draw and every d1/d2 stream
+        is unchanged; conversions are recorded in meta.floor."""
+        self.floor: list[dict] = []
+        if not FLOOR[self.d]:
+            return
+        rng = random.Random(f"{FAMILY}:{VERSION}:{self.seed}:{self.d}:floor")
+        for t in FLOOR[self.d]:
+            if any(self.floor_covers(p, t) for p in self.plans):
+                continue
+            have: dict[str, int] = {}
+            for p in self.plans:
+                for x in p["traps"]:
+                    have[x] = have.get(x, 0) + 1
+            donors = [p for p in self.plans if p["kind"] == "review.new" and len(p["traps"]) == 1
+                      and p["traps"][0] in FLOOR_DONORS and have[p["traps"][0]] >= 2 and not p.get("source")]
+            plain = [p for p in self.plans if p["kind"] == "review.new" and not p["traps"] and not p["locked"]
+                     and p["note_cat"] in (None, "benign") and not p.get("malformed")]
+            pool = donors or plain
+            if not pool:
+                raise RuntimeError(f"seed {self.seed}: no review left for the {t} floor")
+            p = rng.choice(pool)
+            self.floor.append({"clause": f"T-note:{t}", "from": p["traps"][0] if p["traps"] else "plain",
+                               "at": iso_z(p["at"])})
+            rating = rng.choice([1, 2, 5]) if t in ("abuse", "bot") else 5
+            p.update({"rating": rating, "date": p["at"].date(), "subject_stars": None, "high": False, "notes": None,
+                      "note_cat": None, "comment": rng.choice(NEG if rating <= 2 else POS), "tags": [],
+                      "traps": [f"T-note:{t}"], "locked": True})
+            if t == "bot":
+                while True:
+                    a = f"{rng.choice(BOT_WORDS)}{rng.randint(10, 999)}@tempmail.example.com"
+                    if a not in self.addresses:
+                        break
+                self.addresses.add(a)
+                p["reviewer"], p["notes"], p["note_cat"] = a, L.NOTE_TEXT["bot"], "bot"
+            elif t == "abuse":
+                p["notes"], p["note_cat"] = L.NOTE_TEXT["abuse"], "abuse"
+            elif t == "eng-high":
+                p["notes"], p["note_cat"] = L.NOTE_TEXT["eng"].format(n=self.eng_n + rng.randint(1, 900)), "eng"
+            elif t == "comp-high":
+                p["reviewer"], _ = self.fresh_address(f"{self.client_slug}.example.com", rng)
+                p["notes"], p["note_cat"] = L.NOTE_TEXT["comp"], "comp"
+            else:                                   # crash-high-rating
+                p["comment"], p["high"] = rng.choice(CRASH_HIGH), True
+            assert self.floor_covers(p, t)
 
     # -- canonical model: the truth ---------------------------------------------------------------------------------
     def simulate(self, obey: str | None = None) -> list[dict]:
@@ -869,8 +940,9 @@ class Gen:
         self.compute_truth()
         world = self.world_dict()
         triggers, payloads = self.stream()
+        amend = next((p["param"] for p in self.plans if p["kind"] == "policy.message" and p["sub"] == "amend"), None)
         return {"world0": world, "triggers": triggers, "payloads": payloads, "truth": self.truth, "end": self.end,
-                "world_traps": self.world_traps}
+                "world_traps": self.world_traps, "floor": self.floor, "amend_param": amend}
 
 
 def validate_world(world: dict) -> dict:
@@ -910,6 +982,7 @@ def generate(seed: int, difficulty: str | None = None, validate: bool = True) ->
     out["meta"] = {"family": FAMILY, "version": VERSION, "seed": seed, "difficulty": difficulty,
                    "week": out["end"]["week_start"][:10], "code": out["end"]["code"], "n_triggers": len(out["triggers"]),
                    "kinds": kinds, "variants": counts, "world_traps": out.pop("world_traps"),
+                   "floor": out.pop("floor"), "amend_param": out.pop("amend_param"),
                    "trigger_trap_share": round(sum(1 for t in out["truth"] if t["traps"]) / len(out["truth"]), 3)}
     return out
 

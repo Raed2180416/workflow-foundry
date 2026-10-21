@@ -467,7 +467,7 @@ test('end to end (A1-C, scripted): a failing hard check triggers a repair round 
   assert.equal(rc.forks[0].session.nodes.find(n => n.name === 'check-0').steps, 0);
 });
 
-test('end to end (A1-C, scripted): an environment fault in any model node stops the pipeline before acting and is the task\'s session error (not a task outcome)', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 600_000 }, async () => {
+test('end to end (A1-C, scripted): an environment fault before acting stops the pipeline and is the task\'s session error (not a task outcome); after acting the world is graded as it stands', { skip: !HAVE_VENV && 'AutomationBench venv missing', timeout: 600_000 }, async () => {
   const stub = stubNodeRunner({ replies: { ledger: phoneLedger } });
   let calls = 0;
   const limited = async args => { const n = ++calls; const r = await stub(args); return n === 2 ? { ...r, ok: false, error: { code: 'MODEL_RATE_LIMIT' }, result: null } : r; };
@@ -481,6 +481,27 @@ test('end to end (A1-C, scripted): an environment fault in any model node stops 
   // The runner sees the fault as the session error (a runner with the environment-fault rule defers the task instead).
   if (results.length) assert.equal(results[0].forks[0].sessionError, 'MODEL_RATE_LIMIT');
   else assert.match(String(summary.stopped), /MODEL_RATE_LIMIT/);
+  // After the act session the world has changed: a fault there (here in the repair session, which runs only because a
+  // check failed) stops the pipeline but is NOT a rerun (that would re-draw unfinished-looking tasks more often): the world
+  // is graded as it stands and the fault is recorded.
+  const two = prompt => {
+    const l = phoneLedger(prompt);
+    const addr = prompt.match(/\[salesforce:Contact:[^\]]+\][^\n]*Jordan Lee[^\n]*?"Email":"([^"]+)"/)?.[1];
+    if (addr) l.requirements.push({ id: 'R2', polarity: 'positive', action: 'send_email', app: 'gmail', target: addr, statement: 'confirm to the contact', source: 'request', fields: [{ name: 'to', quote: addr, source: 'request' }] });
+    return l;
+  };
+  const sess = stubSessionRunner({ skipLast: true });
+  const repairLimited = async args => (args.task?.name === 'repair' ? { ...(await sess(args)), ok: false, error: { code: 'MODEL_RATE_LIMIT' }, result: null } : sess(args));
+  const live2 = tmp('fault-after');
+  const after = await runTasks({ tasks: [PHONE_TASK], domains: ['simple'], harness: 'codeowned', det: 'record', liveRoot: live2, outDir: null, log: quiet,
+    runner: repairLimited, nodeRunner: stubNodeRunner({ replies: { ledger: two } }) });
+  assert.equal(after.summary.stopped, undefined);
+  assert.equal(after.results.length, 1);
+  const fa = after.results[0].forks[0];
+  assert.equal(fa.sessionError, null);
+  assert.equal(fa.pipeline.envFaultAfterAct, 'MODEL_RATE_LIMIT');
+  assert.deepEqual(fa.session.nodes.map(n => n.name), ['inventory', 'ledger-1', 'ledger-2', 'ledger-3', 'act', 'check-0', 'repair-1']);
+  assert.ok(after.results[0].final);
 });
 
 // The runner as it was before the A1-C wiring (the last commit that changed run.mjs before it), loaded from git into a

@@ -30,7 +30,7 @@ export const renderChecks = pcs => pcs.map(pcLine).join('\n');
 export function briefSection({ inv, merged, pcs, stepsLeft, responseCap, inventoryText, inline = true }) {
   const today = merged.today ? `${merged.today.value} (from ${merged.today.source ?? '?'}${merged.today.quote ? `: "${String(merged.today.quote).slice(0, 120)}"` : ''}; ${merged.today.votes ?? 1} of ${merged.readers} readers)` : 'not established: take it from the records';
   return `${BRIEF_BEGIN}
-This brief was prepared by the harness that runs this session, before the session started: code read every connected app (no change was made), three independent readers wrote the request's requirements with the source of every value, and code wrote the checks it will run on the systems after you stop. The user message is still the task; this brief is help, not a new instruction. Where the brief and the records disagree, the records win.
+This brief was prepared by the harness that runs this session, before the session started: code read every connected app (no change was made), ${['no', 'one', 'two', 'three', 'four', 'five'][merged.readers ?? 3] ?? merged.readers} independent readers wrote the request's requirements with the source of every value, and code wrote the checks it will run on the systems after you stop. The user message is still the task; this brief is help, not a new instruction. Where the brief and the records disagree, the records win.
 
 - Today's date for this task: ${today}.
 - Connected apps: ${inv.connected.join(', ') || 'none'}. Not connected (calls fail with 401; do not use): ${inv.outOfScope.join(', ') || 'none'}.
@@ -39,7 +39,7 @@ This brief was prepared by the harness that runs this session, before the sessio
 ${inv.precedents?.length ? `- Precedents (existing records of the kinds you may create; follow their format and conventions): ${inv.precedents.map(p => p.ptr).join(', ')}.\n` : ''}
 ### Requirements (MUST = do it; MUST NOT = a cited rule forbids it; copy quoted values exactly)
 ${renderLedger(merged) || '(none extracted: work from the request and the records)'}
-${merged.dropped?.length ? `\nNot rules (a reader proposed them without a cited rule; they are not forbidden): ${merged.dropped.map(d => d.statement).filter(Boolean).slice(0, 8).join(' | ')}\n` : ''}
+${merged.dropped?.length ? `\nNot rules (a reader proposed them without a cited rule; they are not forbidden): ${[...new Set(merged.dropped.map(d => d.statement).filter(Boolean))].slice(0, 8).join(' | ')}\n` : ''}
 ### Checks the harness runs after you stop
 ${renderChecks(pcs) || '(none)'}
 If a check above is wrong for the request (the records show otherwise), follow the request and the records.

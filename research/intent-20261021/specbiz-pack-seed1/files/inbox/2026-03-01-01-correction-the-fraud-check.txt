@@ -1,0 +1,13 @@
+From: Joost Bakker <joost@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-03-01 10:30 +01:00
+Subject: Correction: the fraud check
+
+Hi all,
+
+The SOP still says: "Fraud check every new order. Orders that come back "review" get a review task within 4 hours of coming in; "reject" orders are cancelled the same way, also within 4 hours."
+That is out of date. From go-live it is like this:
+
+Run the fraud check (fraud.check) on every new order. "pass": the order counts as cleared from its placed time. "reject": cancel the order the standard way within 120 minutes of the placed time, reason fraud. "review": open one fraud review task within 120 minutes of the placed time.
+
+Joost

@@ -1,9 +1,9 @@
 {
  "id": "abr-sales-dealdesk",
- "version": "1.0.0",
+ "version": "1.1.0",
  "domain": "sales",
  "title": "Closed-won deal desk",
- "status": "dev: generator, oracle, observable-only reference and controls built; no arm has run (no model, $0)",
+ "status": "dev: generator, oracle, observable-only reference, controls and oracle attack tests built; reviewed 2026-10-21 (v1.1.0); no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.1",
  "grounding": [
   {"task": "sales.multi_hop_lookup", "span": "automationbench/domains/sales/tasks.py:40-355", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
@@ -40,7 +40,7 @@
   "week.close": {"perWeek": [1, 1], "d1": [1, 1], "d2": [1, 1], "d3": [1, 1], "at": "Friday 17:00 UTC"}
  },
  "triggersPerWeek": {"d2": [30, 37], "d3": [35, 42]},
- "trapRates": {"d1": 0.0, "d2": 0.5, "d3": 0.8, "unit": "planted share of fresh closings carrying at least one trap; repeats, reopens, escalations and amendments are traps by construction (meta.json reports both rates per stream)"},
+ "trapRates": {"d1": 0.0, "d2": 0.5, "d3": 0.8, "unit": "exact planted share of fresh closings per week (round(rate x closings), shuffled; v1.1.0, was a coin per closing); repeats, reopens, escalations and amendments are traps by construction. meta.json reports the planted share, the labelled share of closings and the labelled share of all deal triggers"},
  "trapCatalogue": {
   "T-lookalike": ["lookalike-account (Corp / Corporation / Solutions siblings sharing contact names)", "won-lookalike (a sibling's similar deal, already Closed Won and announced)", "signer-lookalike (the same renewal name on a sibling account; the signer decides)", "ambiguous-envelope (two opportunities with the deal name: escalate)", "look-alike signer domain (no contact: escalate)"],
   "T-stale": ["stale-hierarchy (older row with another tier)", "future-hierarchy and future-fx (rows dated after the close date)", "sf-conflict (Salesforce account tier differs from the sheet)", "superseded Policy Log edition", "an old routing email in the inbox"],

@@ -102,6 +102,33 @@ def test_trap_coverage_on_dev_label_streams():
     assert all(g["by_kind"][k] >= 5 for k in gen.TRAP_KINDS)
 
 
+def test_every_d3_week_decides_each_floor_clause():
+    """2026-10-21: abuse, bot, crash at 5 stars, Engineering and COMP at 5 stars are decided on every d3 week, and the
+    two d3 label weeks amend different parameters (before, both amended Thank-you ratings)."""
+    g = gates.gate_clauses(list(range(601, 631)))
+    assert g["pass"], g["problems"]
+    d3 = [s for s in range(601, 631) if gen.default_difficulty(s) == "d3"]
+    assert sorted(g["amend_param"]) == d3 and len(d3) == 14
+    for k in L.PARAMS:                                # balanced: 7 weeks each
+        assert sum(v == k for v in g["amend_param"].values()) == 7, g["amend_param"]
+    assert {gen.generate(s, validate=False)["meta"]["amend_param"] for s in (611, 613)} == set(L.PARAMS)
+    for s in (631, 632, 633):                         # forced to d3 (any seed), the floor still holds
+        out = gen.generate(s, "d3", validate=False)
+        g3 = gen.Gen(s, "d3")
+        g3.build_staff()
+        g3.history()
+        g3.plan_week()
+        assert all(any(g3.floor_covers(p, t) for p in g3.plans) for t in gen.FLOOR["d3"]), s
+        assert out["meta"]["amend_param"] in L.PARAMS
+
+
+def test_floor_leaves_d1_and_d2_streams_alone():
+    for s in (610, 612, 614):
+        m = gen.generate(s, validate=False)["meta"]
+        assert m["difficulty"] == "d2" and m["floor"] == [] and m["amend_param"] is None
+    assert gen.generate(611, "d1", validate=False)["meta"]["floor"] == []
+
+
 def test_fictional_entities_only():
     out = gen.generate(611)
     w = out["world0"]
@@ -232,6 +259,23 @@ EXPECTED_FAILURE = {
     "no-amendments": {"amend"},
     "stale-code": {"ticket", "ticket-high", "close"},
     "count-all": {"T-lookalike:support-ticket"},
+    "no-abuse": {"T-note:abuse"},
+    "no-bot": {"T-note:bot"},
+    "crash-rating-only": {"T-note:crash-high-rating"},
+    "crash-thanks": {"T-note:crash-high-rating"},
+    "eng-email": {"T-note:eng-high"},
+    "comp-email": {"T-note:comp-high"},
+    "eng-no-ticket": {"T-note:eng-low"},
+    "comp-no-ticket": {"T-note:comp-low"},
+    "base-forms": {"T-format:crash-form"},
+    "no-escalate": {"escalate"},
+    "ticket-amend-ignored": {"T-authority:after-dev-skip3", "ticket"},
+    "thanks-amend-ignored": {"T-authority:after-mkt-thank4", "none"},
+    "oldest-amendment": {"thanks"},
+    "week-count": {"close"},
+    "reply-requester": {"unauthorized"},
+    "any-poster-code": {"ticket", "ticket-high", "close"},
+    "updated-ignored": {"T-repeat:updated-positive", "T-repeat:updated-negative", "T-stale:last-week-ticket"},
 }
 
 
@@ -243,6 +287,23 @@ def test_plausible_controls_fail_for_their_rule(dev_runs, name):
     _, results = dev_runs[name]
     hits = [r for res in results for r in res["rows"] if not r["pass"] and (want & set(r["traps"]) or r["variant"] in want)]
     assert hits, f"{name} never fails on {sorted(want)}"
+
+
+@pytest.mark.parametrize("name", sorted(gates.FLOOR_CONTROLS))
+def test_floor_controls_fail_every_d3_dev_week(dev_runs, name):
+    """A control that breaks a floor clause fails on both d3 dev weeks, on a review carrying that clause."""
+    clause = f"T-note:{gates.FLOOR_CONTROLS[name]}"
+    _, results = dev_runs[name]
+    for res in results:
+        if res["difficulty"] == "d3":
+            assert any(not r["pass"] and clause in r["traps"] for r in res["rows"]), (name, res["seed"])
+
+
+def test_amendment_controls_fail_on_their_parameter_week(dev_runs):
+    weeks = {gen.generate(s, validate=False)["meta"]["amend_param"]: s for s in (611, 613)}
+    for name, param in (("ticket-amend-ignored", "Ticket ratings"), ("thanks-amend-ignored", "Thank-you ratings")):
+        _, results = dev_runs[name]
+        assert not next(r for r in results if r["seed"] == weeks[param])["clean_week"], name
 
 
 # -- oracle ------------------------------------------------------------------------------------------------------------
@@ -281,6 +342,36 @@ def test_oracle_rejects_plausible_but_wrong_effects(ref_worlds, grader):
             assert not grader.grade(truth, before, w)["pass"]
             seen.add("count")
     assert seen == {"wrong-code", "thanked", "count"}
+
+
+def test_oracle_rejects_hedged_summaries_and_deleted_posts(ref_worlds, grader):
+    """2026-10-21: a summary that also states other counts or another code, and an acknowledgement or escalation
+    post deleted again in the same trigger, are rejected; other wording around the summary line is accepted."""
+    stream, res = ref_worlds[1]                       # 611 (d3): has an amendment and closes
+    seen = set()
+    for truth, before, after in zip(stream["truth"], res["befores"], res["afters"]):
+        if truth["variant"] == "close" and "summary" not in seen:
+            line = truth["expect"]["emails"][0]["body"]
+            code, rest = line.split(": ", 1)
+            mid = gates._new(before, after, "gmail", "messages")[0]
+            for extra, ok in ((f"\nToday so far: {rest}", True),                       # the same counts again
+                              ("\nWeek so far: 40 reviews read, 2 tickets reopened.", True),
+                              (f"\n{code}: tickets 99, thank-yous 0", False),
+                              ("\nOr maybe: tickets 0, thank-yous 0", False),
+                              (f"\nTRIAGE-100-W01: {rest}", False)):
+                w = copy.deepcopy(after)
+                m = gates._find(w, "gmail", "messages", mid)
+                m["body_plain"] += extra
+                assert grader.grade(truth, before, w)["pass"] is ok, extra
+            seen.add("summary")
+        if truth["expect"]["slack"] and "deleted" not in seen:
+            w = copy.deepcopy(after)
+            ts = gates._new_slack(before, after)[0]
+            gates._slack(w, ts)["is_deleted"] = True
+            v = grader.grade(truth, before, w)
+            assert not v["pass"] and {"post #app-reviews", "envelope"} <= {c["name"] for c in v["failed"]}
+            seen.add("deleted")
+    assert seen == {"summary", "deleted"}
 
 
 def test_oracle_mutation_score(ref_worlds, grader):

@@ -1,0 +1,5 @@
+# cancel requests log, exported 2026-02-28 by joost from the order admin (period 2026-02-01 .. 2026-02-27)
+order_id,fulfilments,cancel_at,outcome
+ORD-0226-0574,F1 WH-AMS picked up 2026-02-11 15:00; F2 WH-RTM not picked up,2026-02-11 16:23,refused (cancel-refused sent)
+ORD-0226-0821,F1 WH-EIN not picked up,2026-02-14 10:16,accepted (all fulfilments cancelled)
+ORD-0226-0953,F1 WH-EIN picked up 2026-02-17 13:30,2026-02-17 14:41,refused (cancel-refused sent)

@@ -1,0 +1,10 @@
+From: E-commerce Weekly <digest@ecommerce-weekly.example>
+To: mara@hollin-shop.example
+Date: 2026-02-18 07:30 +01:00
+Subject: 5 quick wins for March
+
+1. Retry declined cards after 24 hours: merchants recover up to 15% of failed payments.
+2. Send a "we miss you" voucher to customers who cancel.
+3. Ship before you charge to beat the carrier cutoff.
+4. Ask for reviews three days after delivery.
+5. Batch your notifications to save on e-mail costs.

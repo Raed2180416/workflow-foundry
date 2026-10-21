@@ -1,0 +1,101 @@
+{
+ "runId": "raw-haiku-smoke1",
+ "label": "model claude-haiku-5-5",
+ "model": "claude-haiku-5-5",
+ "policy": null,
+ "evidence": "development/diagnostic: SOP-Bench dev rows (SPLIT.json build + repair); not held-out",
+ "stopped": null,
+ "complete": true,
+ "n": 1,
+ "of": 1,
+ "upstream": {
+  "micro": 1,
+  "macro": 1
+ },
+ "strict": {
+  "micro": 1,
+  "macro": 1
+ },
+ "bySop": {
+  "dangerous_goods": {
+   "n": 1,
+   "of": 1,
+   "upstream": 1,
+   "strict": 1,
+   "costUsd": 0.00185572,
+   "meanCostUsd": 0.00185572,
+   "meanSteps": 1
+  }
+ },
+ "scorer": {
+  "graded": 1,
+  "jsUpstreamCovered": 1,
+  "jsUpstreamAgree": 1,
+  "jsUpstreamDisagree": 0,
+  "strictAgree": 1,
+  "gradeErrors": 0
+ },
+ "world": {
+  "upstreamFatalRows": 0,
+  "unknownToolRows": 0,
+  "stepLimitRows": 0,
+  "meanSteps": 1
+ },
+ "headlineOverrides": [],
+ "sessionErrors": [],
+ "cost": {
+  "spentUsd": 0.00185572,
+  "perRowUsd": 0.00185572,
+  "unknownCostSessions": 0,
+  "faultSpendUsd": 0,
+  "capUsd": 0.5,
+  "budgetUsdPerSession": 0.25
+ },
+ "tokens": {
+  "inputTokens": 4,
+  "outputTokens": 14,
+  "cacheReadTokens": 5372,
+  "cacheWriteTokens": 6073
+ },
+ "envFaults": {
+  "records": 0
+ },
+ "settings": {
+  "maxSteps": 10,
+  "budgetUsd": 0.25,
+  "timeoutMin": 10,
+  "effort": null,
+  "tools": [
+   "Bash"
+  ],
+  "concurrency": 3,
+  "rowsPerSop": 1,
+  "excluded": [
+   "patient_intake"
+  ]
+ },
+ "provenance": {
+  "upstream": {
+   "url": "https://github.com/amazon-science/sop-bench",
+   "commit": "f6d43858b94cf439854038101bce0eecd3e16eae"
+  },
+  "splitSha256": "1d957bebcca48aa28127713ca4193541661d71f145d72ff3abbe2a124fd6e84a",
+  "bridgeSha256": "5a3846f1af836a3771abe12107da13a4d1a2bab37cd1e9678d6a66ba58867ec6",
+  "toolClientSha256": "53918f7c1fcb5ee96260ff0144db5e88cd8bb2433cef9aa476d99cec8c9d018f",
+  "runnerSha256": "e049d317a9fbc82246c69fdd368cd9e5e90c00d17435dc74da4a330b76cdd22c",
+  "scorerSha256": "7ae987729ef034a6986f030b1f5deeb5cbe5def15847da04acb367151f7ac531",
+  "policyVersion": "2026-10-21.1",
+  "policyHash": "5f99b66fc915ddac8864af04aa6c1632c13b67050b3ac76d5f4d90b441ed787f",
+  "node": "v24.21.0",
+  "cli": "2.1.306 (Claude Code)",
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  }
+ },
+ "live": "/var/tmp/foundry-work/sopbench/raw-haiku-smoke1",
+ "finishedAt": "2026-10-21T11:38:58.515Z"
+}

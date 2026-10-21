@@ -77,6 +77,16 @@ def test_stream_shape_matches_the_family_spec(gens):
         assert subs == ([] if d == "d2" else ["authorized", "unauthorized"])
 
 
+def test_trap_shares_match_the_spec(gens):
+    """Spec: at least one trap on about 50% (d2) / 80% (d3) of deal triggers. The planted share of fresh closings is
+    exact per week; repeats, reopens and escalations are traps by construction, so the share of deal triggers is higher."""
+    for s, g in gens.items():
+        m = g["meta"]
+        target = {"d2": 0.5, "d3": 0.8}[m["difficulty"]]
+        assert abs(m["trap_rate_planted"] - target) <= 0.03, (s, m["trap_rate_planted"])
+        assert target <= m["trap_rate_deal_triggers"] <= target + 0.15, (s, m["trap_rate_deal_triggers"])
+
+
 def test_write_out_files_and_hashes(tmp_path):
     meta = G.write_out(G.generate(610), tmp_path)
     for name in ("world0.json", "triggers.jsonl", "truth.jsonl", "end.json"):
@@ -186,6 +196,8 @@ def test_every_bad_control_fails(bad, name):
 def test_naive_heuristic_scores_below_60_percent_at_d3(bad):
     rows = [r for s in (611, 613) for r in bad["naive"][s]["rows"]]
     assert sum(r["pass"] for r in rows) / len(rows) < 0.6
+    src = (FAM / "controls.py").read_text().split("\ndef naive(", 1)[1].split("\nclass ", 1)[0]
+    assert len([x for x in ("def naive(" + src).splitlines() if x.strip()]) <= 40  # the design's <= 40-line heuristic
 
 
 @pytest.mark.parametrize("name,kind", [("nodedupe", "deal.repeat"), ("noretract", "deal.reopened"),

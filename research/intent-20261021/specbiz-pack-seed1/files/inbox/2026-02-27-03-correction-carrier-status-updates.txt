@@ -1,0 +1,13 @@
+From: Mara Hollin <mara@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-02-27 12:11 +01:00
+Subject: Correction: carrier status updates
+
+Hi all,
+
+The SOP still says: "Mark the fulfilment completed as soon as the carrier confirms pickup."
+That is out of date. From go-live it is like this:
+
+Carrier updates about a fulfilment (translate the carrier's code first): collected, set the fulfilment to dispatched within 120 minutes of the message; delivered, set it to completed within 120 minutes, and if it was never set to dispatched, set dispatched first (same time limit, dispatched before completed); inTransit or info, nothing; collectionFailed, the fulfilment has failed (see When things go wrong).
+
+Mara

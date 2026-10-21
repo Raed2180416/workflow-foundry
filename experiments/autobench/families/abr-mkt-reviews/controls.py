@@ -21,6 +21,26 @@ do-nothing run, an echo, and plausible-but-wrong runs, and that every policy rul
   no-amendments      the reference, but Product's amendments are neither acknowledged nor applied
   stale-code         the reference, but the code is the one in the newest summary email (the intern's advice)
   count-all          the reference, but the daily count includes every ticket created today (other teams' too)
+
+Added 2026-10-21 (one rule each; the first seven passed every dev week before the d3 clause floor and the balanced
+amendment parameter, see README "Changes"):
+  no-abuse             the abuse note is ignored (only `Bot Suspected` suppresses)
+  no-bot               the `Bot Suspected` note is ignored (only abuse suppresses)
+  crash-rating-only    crash words only prefix tickets the rating earns: no ticket for a crash at a 3-5 star rating
+  crash-thanks         high priority does not block the thank-you
+  eng-email            the Engineering note does not block emails
+  comp-email           the COMP / non-solicitation note does not block emails
+  ticket-amend-ignored Product's `Ticket ratings` amendments are acknowledged but not applied
+  eng-no-ticket        the Engineering note also blocks the ticket (the upstream task's reading)
+  comp-no-ticket       the COMP note also blocks the ticket
+  base-forms           only `crash` and `freeze` count, not the other listed forms
+  no-escalate          a notification without a usable rating or reviewer is skipped instead of escalated
+  oldest-amendment     the oldest Product amendment per parameter wins instead of the newest
+  thanks-amend-ignored Product's `Thank-you ratings` amendments are acknowledged but not applied
+  week-count           the daily summary counts this week's tickets and thank-yous instead of today's
+  reply-requester      the policy is applied, but unauthorized requesters get a polite reply
+  any-poster-code      the code is the newest TRIAGE code in #app-reviews, whoever posted it
+  updated-ignored      updated reviews are skipped as already handled
 """
 from __future__ import annotations
 
@@ -28,8 +48,8 @@ import json
 import re
 from datetime import timedelta
 
-from reference import (DEFAULTS, EMAIL, GMAIL, HUB, SLACK, STAR, THANKS, ReviewWorkflow, bare, norm, parse_dt,
-                       raw_email)
+from reference import (DEFAULTS, EMAIL, GMAIL, HUB, PRODUCT, SLACK, STAR, STORE, THANKS, ReviewWorkflow, bare, norm,
+                       parse_dt, ratings, raw_email)
 
 NAIVE_LINES = 0          # set below from the source of `naive`
 
@@ -176,6 +196,132 @@ class CountAll(ReviewWorkflow):
         return n + extra, m
 
 
+class NoAbuse(ReviewWorkflow):
+    def suppressed(self, notes):
+        return "bot suspected" in notes.lower()
+
+
+class NoBot(ReviewWorkflow):
+    def suppressed(self, notes):
+        return "abuse" in notes.lower()
+
+
+class CrashRatingOnly(ReviewWorkflow):
+    def review(self, msg):
+        f = self.fields(msg.get("body_plain") or "")
+        rating = self.rating(f, msg)
+        if self.is_high(f.get("Comment", "")) and rating is not None and rating not in ratings(self.params()["Ticket ratings"]):
+            return None
+        return super().review(msg)
+
+
+class CrashThanks(ReviewWorkflow):
+    """The reference's handling, then a thank-you also for a high-priority review at a thank-you rating."""
+    def review(self, msg):
+        out = super().review(msg)
+        f = self.fields(msg.get("body_plain") or "")
+        rating, who, notes = self.rating(f, msg), self.reviewer(f), f.get("Notes", "")
+        if (rating is not None and who and not self.is_old(f) and not self.suppressed(notes)
+                and self.is_high(f.get("Comment", "")) and rating in ratings(self.params()["Thank-you ratings"])
+                and not self.emails_blocked(notes)):
+            self.send(who, THANKS, "Thank you for your review of Fernleaf Planner!")
+        return out
+
+
+class EngEmail(ReviewWorkflow):
+    def emails_blocked(self, notes):
+        n = notes.lower()
+        return "comp account" in n or "non-solicitation" in n
+
+
+class CompEmail(ReviewWorkflow):
+    def emails_blocked(self, notes):
+        return "escalated to engineering" in notes.lower()
+
+
+class EngNoTicket(ReviewWorkflow):
+    def suppressed(self, notes):
+        return super().suppressed(notes) or "escalated to engineering" in notes.lower()
+
+
+class CompNoTicket(ReviewWorkflow):
+    def suppressed(self, notes):
+        n = notes.lower()
+        return super().suppressed(notes) or "comp account" in n or "non-solicitation" in n
+
+
+class BaseForms(ReviewWorkflow):
+    def is_high(self, comment):
+        return re.search(r"\b(crash|freeze)\b", comment or "", re.I) is not None
+
+
+class NoEscalate(ReviewWorkflow):
+    def escalate(self, reason):
+        return None
+
+
+class OldestAmendment(ReviewWorkflow):
+    def params(self):
+        out, when = dict(DEFAULTS), {}
+        for m in self.messages(f"from:{PRODUCT}"):
+            if not self.is_amendment(m) or parse_dt(m.get("date")) >= self.at:
+                continue
+            pv = self.amendment_value(m)
+            if pv and (pv[0] not in when or parse_dt(m["date"]) < when[pv[0]]):
+                out[pv[0]], when[pv[0]] = pv[1], parse_dt(m["date"])
+        return out
+
+
+class TicketAmendIgnored(ReviewWorkflow):
+    def params(self):
+        return dict(super().params(), **{"Ticket ratings": DEFAULTS["Ticket ratings"]})
+
+
+class ThanksAmendIgnored(ReviewWorkflow):
+    def params(self):
+        return dict(super().params(), **{"Thank-you ratings": DEFAULTS["Thank-you ratings"]})
+
+
+class WeekCount(ReviewWorkflow):
+    def daily_counts(self, code):
+        n = sum(1 for t in self.week_tickets() if "app review" in norm(t.get("subject")).lower()
+                and code.lower() in norm(t.get("subject")).lower())
+        m = sum(1 for x in self.messages("label:SENT subject:thank")
+                if "SENT" in (x.get("label_ids") or []) and norm(x.get("subject")).lower() == THANKS.lower()
+                and parse_dt(x.get("date")) >= self.monday)
+        return n, m
+
+
+class ReplyRequester(ReviewWorkflow):
+    def run(self):
+        out = super().run()
+        if self.t.get("app") == "gmail":
+            msg = self.ctx.fetch_json("GET", GMAIL + f"messages/{self.t['data']['message_id']}")
+            sender = bare(msg.get("from"))
+            if sender not in STORE and sender != PRODUCT:
+                self.send(sender, "Re: " + (msg.get("subject") or ""),
+                          "Thanks for reaching out. Only Product can change the review triage policy.")
+        return out
+
+
+class AnyPosterCode(ReviewWorkflow):
+    def code(self):
+        hist = self.ctx.fetch_json("GET", SLACK + "conversations.history", params={"channel": "app-reviews", "limit": 500})
+        posts = [m for m in hist.get("messages", []) if float(m.get("ts", 0)) <= self.at.timestamp()]
+        for m in sorted(posts, key=lambda m: float(m["ts"]), reverse=True):
+            g = re.search(r"TRIAGE-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*", m.get("text") or "")
+            if g:
+                return g.group(0)
+        return None
+
+
+class UpdatedIgnored(ReviewWorkflow):
+    def review(self, msg):
+        if "updated" in norm(msg.get("subject")).lower():
+            return None
+        return super().review(msg)
+
+
 def _wrap(cls):
     def handle(trigger, ctx):
         return cls(trigger, ctx).run()
@@ -200,6 +346,23 @@ CONTROLS = {
     "no-amendments": _wrap(NoAmendments),
     "stale-code": _wrap(StaleCode),
     "count-all": _wrap(CountAll),
+    "no-abuse": _wrap(NoAbuse),
+    "no-bot": _wrap(NoBot),
+    "crash-rating-only": _wrap(CrashRatingOnly),
+    "crash-thanks": _wrap(CrashThanks),
+    "eng-email": _wrap(EngEmail),
+    "comp-email": _wrap(CompEmail),
+    "ticket-amend-ignored": _wrap(TicketAmendIgnored),
+    "eng-no-ticket": _wrap(EngNoTicket),
+    "comp-no-ticket": _wrap(CompNoTicket),
+    "base-forms": _wrap(BaseForms),
+    "no-escalate": _wrap(NoEscalate),
+    "oldest-amendment": _wrap(OldestAmendment),
+    "thanks-amend-ignored": _wrap(ThanksAmendIgnored),
+    "week-count": _wrap(WeekCount),
+    "reply-requester": _wrap(ReplyRequester),
+    "any-poster-code": _wrap(AnyPosterCode),
+    "updated-ignored": _wrap(UpdatedIgnored),
 }
 
 

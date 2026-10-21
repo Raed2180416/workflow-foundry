@@ -1,0 +1,2 @@
+1. Look up the item with get_item.
+2. If qty is 0, the decision is "backorder". If price is above 100, the decision is "review". Otherwise "ship".

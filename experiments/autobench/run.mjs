@@ -24,12 +24,15 @@
 //   --date-note (AM-9: both arms say the session date is the host's, not the task's; recorded in the summary)
 //   --harness codeowned [--node-models role=model,...] (arm A1-C: harness/codeowned.mjs, the host-run pipeline; every model
 //                                                        call of the pipeline counts toward the 50 responses; --scripted stub = $0)
+//   --harness secondreader [--node-models role=model,...] (arm A0+SR: harness/secondreader.mjs, A0 unchanged + one clean-context
+//                                                        reader call + at most one repair session; same accounting; --scripted stub = $0)
 // Every fork is audited host-side after its session (accounting.mjs): model responses as the official loop counts them,
 // world usage, the H3 rule (more than max-steps responses, or a world step issued by response >= max-steps) and L5
 // (other models, network or package commands, benchmark references, no host transcript); a violation scores as a fail
 // in the headline and the live grade is kept as liveFinal.
 // Split hygiene (PREREG-AB-v1 §1.3, §6.1), every arm and mode: test-split tasks are refused before anything is prepared,
-// except A1 given the frozen harness hash and A0 given --test-run AB-v1 (model runs only; never a dry or scripted run).
+// except A1 given the frozen harness hash and A0 given --test-run AB-v1 (model runs only; never a dry or scripted run, and
+// never a dev-only probe arm such as A0+SR).
 // A run that holds devCheck or test tasks is sealed: no per-task grade is logged, and the repo copy keeps the per-task
 // records in results.sealed.jsonl (read only after the go/no-go or the analysis, PREREG §5, §6.3).
 // Environment faults (a rate or usage limit, the model unavailable, no sandbox; experiments/lib ENV_FAULTS) are not task
@@ -46,6 +49,7 @@ import { auditSession, readCalls, readStream, worldUsage } from './accounting.mj
 import { assertDevOnly, domainOf, loadSplit } from './split.mjs';
 import { HARNESS_ID, HARNESS_VERSION, cliVersion, collectLedger, harnessConfig, harnessManifest, harnessSystemPrompt, writeCliGuard } from './harness/foundry.mjs';
 import { ENV_FAULTS } from '../lib/runner.mjs';
+import { executorForModel } from '../../src/executors/openai-chat.mjs';
 
 /** Host infrastructure failures (disk full, no temporary directory, file-table exhaustion): environment faults too. */
 const INFRA_FAULT = /ENOSPC|EDQUOT|EMFILE|ENFILE|No usable temporary directory/;
@@ -61,6 +65,9 @@ export const DEFAULTS = Object.freeze({ k: 1, budgetUsd: 0.75, concurrency: 4, m
 export const TEST_RUN_TOKEN = 'AB-v1';
 /** Arm A1-C's harness id (harness/codeowned.mjs, loaded only when selected). */
 export const CODEOWNED = 'codeowned';
+/** Host-run pipeline harnesses (every model call is a node; loaded only when selected) and their $0 stand-ins. */
+export const PIPELINE_HARNESSES = Object.freeze({ [CODEOWNED]: './harness/codeowned.mjs', secondreader: './harness/secondreader.mjs' });
+export const PIPELINE_STUBS = Object.freeze({ [CODEOWNED]: './harness/codeowned-stubs.mjs', secondreader: './harness/secondreader-stubs.mjs' });
 
 /** The cost- and prompt-relevant variables the CLI child inherits (the policy's closed childEnv list): name -> value or
  * null. The executor passes these through from the host shell, so they are recorded per run. */
@@ -73,6 +80,19 @@ function provenance(policy, { cli = null } = {}) {
     toolClientSha256: file(TOOL_CLIENT), runnerSha256: file(new URL(import.meta.url).pathname), policyHash: policy?.hash ?? null,
     policyVersion: policy?.policy?.policyVersion ?? null, policyFileSha256: file(path.join(REPO, 'policy/models.json')), node: process.version,
     cli, childEnv: childEnvSnapshot() };
+}
+
+// --- Mercury hook (research/mercury-20261021/) ---------------------------------------------------------------------------
+// A model listed under the policy's executorModels (provider kind openai-chat-https, e.g. mercury-3) runs its session through
+// src/executors/openai-chat.mjs: the same arguments, result and transcript shape as runClaudeCode, tools in the same sandbox.
+// Every claude-cli model keeps runClaudeCode, byte for byte as before. Only the plain session arms (A0, A1) are wired: the
+// pipeline arms' node models stay claude-cli only. Returns null for a claude-cli model, else the executor and the policy
+// entries the A1 manifest pins in place of the claude-cli ones.
+export function remoteSessionExecutor(policy, model, { pipeline = false } = {}) {
+  const ex = executorForModel(policy, model); // refuses ids the policy does not list, and kinds no session executor serves
+  if (ex.kind === 'claude-code') return null;
+  if (pipeline) throw new Error(`model ${model} (${ex.kind} executor) is not wired into the pipeline arms`);
+  return { ...ex, manifestPolicy: { provider: ex.provider, model: ex.entry }, manifestExecutor: 'src/executors/openai-chat.mjs runOpenAIChat (tools in the claude-code executor sandbox: DEFAULT_HIDDEN, OPENAI_CHAT_KEEP_RO + the step-guard directory, no network); maxTurns enforced natively' };
 }
 
 /** A hard USD cap over reserved session budgets: a session starts only if spent + reserved + its budget <= cap. */
@@ -149,23 +169,25 @@ export async function runTasks(o) {
   const opt = { ...DEFAULTS, ...o };
   const log = opt.log ?? (m => process.stderr.write(m + '\n'));
   const scripted = Boolean(opt.runner);
-  const runner = opt.runner ?? runClaudeCode;
+  let runner = opt.runner ?? runClaudeCode, remote = null; // remote: the Mercury hook's executor (null: runClaudeCode)
   // Arm A1 (harness/foundry.mjs). A0 (no harness) keeps every byte of its prompt and runner arguments.
   const harness = opt.harness ?? null;
-  if (harness !== null && harness !== HARNESS_ID && harness !== CODEOWNED) throw new Error(`unknown harness ${harness} (known: ${HARNESS_ID}, ${CODEOWNED})`);
+  if (harness !== null && harness !== HARNESS_ID && !Object.hasOwn(PIPELINE_HARNESSES, harness)) throw new Error(`unknown harness ${harness} (known: ${[HARNESS_ID, ...Object.keys(PIPELINE_HARNESSES)].join(', ')})`);
   if (harness && opt.k !== 1) throw new Error('the Foundry harness (A1) acts once per task in one world: k > 1 is forked rehearsal (A1F), a separate arm');
-  // Arm A1-C (harness/codeowned.mjs) is loaded only when selected, so A0 and A1 load nothing new.
-  const co = harness === CODEOWNED ? await import(new URL('./harness/codeowned.mjs', import.meta.url).href) : null;
+  // Pipeline arms (A1-C: harness/codeowned.mjs; A0+SR: harness/secondreader.mjs) are loaded only when selected, so A0 and A1
+  // load nothing new.
+  const co = harness && Object.hasOwn(PIPELINE_HARNESSES, harness) ? await import(new URL(PIPELINE_HARNESSES[harness], import.meta.url).href) : null;
   const models = co ? co.nodeModels(opt.model, opt.nodeModels) : null;
   const cliMaxTurns = harness === HARNESS_ID ? (opt.cliMaxTurns ?? opt.maxSteps - 1) : null;
   // The guard may be off (0) or tighter, never looser than the official loop (maxSteps - 1 tool-calling responses).
   if (harness === HARNESS_ID && !(Number.isInteger(cliMaxTurns) && cliMaxTurns >= 0 && cliMaxTurns <= opt.maxSteps - 1)) throw new Error(`--cli-max-turns must be off or an integer in 1..${opt.maxSteps - 1}`);
-  if (co && scripted && !opt.dryRun && !opt.nodeRunner) throw new Error('a scripted A1-C run needs scripted model nodes too (nodeRunner; CLI: --scripted stub)');
+  if (co && scripted && !opt.dryRun && !opt.nodeRunner) throw new Error(`a scripted ${harness === CODEOWNED ? 'A1-C' : harness} run needs scripted model nodes too (nodeRunner; CLI: --scripted stub)`);
   let policy = null;
   if (!scripted && !opt.dryRun) {
     policy = loadPolicy();
-    const entry = modelById(policy.policy, opt.model); // refuses ids the policy does not list
-    if (entry.provider !== 'claude-cli') throw new Error(`model ${opt.model} is not served by the claude-cli provider`);
+    remote = remoteSessionExecutor(policy.policy, opt.model, { pipeline: Boolean(co) }); // refuses ids the policy does not list
+    if (remote) runner = args => remote.run({ ...args, policy: policy.policy }); // the policy loaded (and hashed) at launch
+    else if (modelById(policy.policy, opt.model).provider !== 'claude-cli') throw new Error(`model ${opt.model} is not served by the claude-cli provider`);
     for (const m of new Set(Object.values(models ?? {}))) if (modelById(policy.policy, m).provider !== 'claude-cli') throw new Error(`model ${m} is not served by the claude-cli provider`);
     if (!(opt.capUsd > 0)) throw new Error('--cap (hard USD cap for the run) is required for model runs');
   }
@@ -187,13 +209,14 @@ export async function runTasks(o) {
   // disk and this run's settings; A0 (a model run) given --test-run AB-v1. A dry run prints a task's prompt and a
   // scripted A0 run grades host-side, so neither ever touches a test task.
   if (opt.testRun != null && opt.testRun !== TEST_RUN_TOKEN) throw new Error(`--test-run must be ${TEST_RUN_TOKEN}`);
-  const cli = scripted ? null : cliVersion();
+  const cli = scripted || remote ? null : cliVersion();
   let manifest = null, guard = null;
   if (harness) {
-    manifest = co ? co.codeownedManifest(co.codeownedConfig({ ...opt, cli })) : harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli }));
+    manifest = co ? (co.pipelineManifest ?? co.codeownedManifest)((co.pipelineConfig ?? co.codeownedConfig)({ ...opt, cli })) : harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli, ...(remote ? { policy: remote.manifestPolicy, executor: remote.manifestExecutor } : {}) }));
     if (opt.harnessHash && opt.harnessHash !== manifest.sha256) throw new Error(`harness hash mismatch: given ${opt.harnessHash}, recomputed ${manifest.sha256} (files or settings changed)`);
   }
-  const testRunAuthorized = !opt.dryRun && (harness ? Boolean(opt.harnessHash) : !scripted && opt.testRun === TEST_RUN_TOKEN);
+  // AM-4: a scripted run is never exempt. A dev-only pipeline arm (A0+SR, a probe not declared in PREREG §3) never is either.
+  const testRunAuthorized = !opt.dryRun && !scripted && !co?.DEV_ONLY && (harness ? Boolean(opt.harnessHash) : opt.testRun === TEST_RUN_TOKEN);
   if (!testRunAuthorized) assertDevOnly(tasks);
   // Resume: a live directory that already holds a run continues only with --resume and the launch settings unchanged.
   const resultsFile = path.join(live, 'results.jsonl'), faultsFile = path.join(live, 'results.faults.jsonl'), launchFile = path.join(live, 'launch.json');
@@ -385,9 +408,9 @@ export async function runTasks(o) {
   const byDomain = Object.fromEntries(taskDomains.map(d => { const rs = results.filter(r => r.domain === d); return [d, { n: rs.length, pass_rate: mean(rs.map(pass)), mean_partial_credit: mean(rs.map(pc)) }]; }));
   const fork0 = results.map(r => r.forks.find(f => f.fork === 0)).filter(Boolean);
   const summary = {
-    runId, label: scripted ? 'scripted (no model)' : `model ${opt.model}`, model: scripted ? null : opt.model, scripted,
+    runId, label: scripted ? 'scripted (no model)' : `model ${opt.model}`, model: scripted ? null : opt.model, scripted, ...(remote ? { executor: remote.kind } : {}),
     evidence: tasks.some(t => split.test.includes(t)) ? 'sealed: PREREG-AB-v1 test split (held-out half of the public set)' : 'development/diagnostic (public AutomationBench set; not held-out)',
-    arm: co ? 'A1-C (code-owned harness)' : harness ? 'A1 (harness)' : 'A0 (no harness)', sealed, testSplitTasks: tasks.filter(t => split.test.includes(t)).length,
+    arm: co ? (co.ARM ?? 'A1-C (code-owned harness)') : harness ? 'A1 (harness)' : 'A0 (no harness)', sealed, testSplitTasks: tasks.filter(t => split.test.includes(t)).length,
     harness: co ? { id: co.HARNESS_ID, version: co.HARNESS_VERSION, manifestSha256: manifest.sha256, frozenHashGiven: Boolean(opt.harnessHash), nodeModels: models, pipeline: manifest.config.pipeline,
       extraModelCalls: results.reduce((s, r) => s + r.forks.reduce((t, f) => t + (f.session?.extraModelCalls ?? 0), 0), 0) }
       : harness ? { id: HARNESS_ID, version: HARNESS_VERSION, manifestSha256: manifest.sha256, frozenHashGiven: Boolean(opt.harnessHash), cliMaxTurns, stepGuard: Boolean(guard), extraModelCalls: 0 } : null,
@@ -443,9 +466,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const a = parseArgs(process.argv.slice(2));
   const num = (v, d) => (v === undefined ? d : Number(v));
   let runner, nodeRunner;
-  if (a.scripted && a.harness === 'codeowned') {
-    // Scripted A1-C stand-ins ($0; `--scripted stub`): harness/codeowned-stubs.mjs.
-    const { stubNodeRunner, stubSessionRunner } = await import(new URL('./harness/codeowned-stubs.mjs', import.meta.url).href);
+  if (a.scripted && Object.hasOwn(PIPELINE_STUBS, a.harness ?? '')) {
+    // Scripted pipeline stand-ins ($0; `--scripted stub`): harness/codeowned-stubs.mjs (A1-C), harness/secondreader-stubs.mjs (A0+SR).
+    const { stubNodeRunner, stubSessionRunner } = await import(new URL(PIPELINE_STUBS[a.harness], import.meta.url).href);
     runner = stubSessionRunner(); nodeRunner = stubNodeRunner();
   } else if (a.scripted && a.harness) {
     // Scripted A1 stand-in ($0): steps.json = {task: [{calls} | {write: {content, append}} | both]} (harness/scripted-session.mjs).

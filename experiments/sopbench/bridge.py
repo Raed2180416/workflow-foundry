@@ -46,6 +46,7 @@ import sys
 import time
 from pathlib import Path
 
+sys.dont_write_bytecode = True  # leave the clone untouched: no __pycache__ beside upstream files
 PROTO = "@@bridge "
 MAX_REQUEST_BYTES = 1_000_000
 TEST_FILE = "test_set_with_outputs.csv"
@@ -87,6 +88,19 @@ def write_json(path: Path, obj, indent=1):
 
 def load_json(p):
     return json.loads(Path(p).read_text(encoding="utf-8"))
+
+
+def jsonsafe(v):
+    """A JSON value JS can parse: numpy scalars as Python values, NaN/inf floats as null."""
+    if isinstance(v, dict):
+        return {str(k): jsonsafe(x) for k, x in v.items()}
+    if isinstance(v, (list, tuple)):
+        return [jsonsafe(x) for x in v]
+    if not isinstance(v, (str, int, float, bool, type(None))):
+        v = py_default(v)
+    if isinstance(v, float) and not math.isfinite(v):
+        return None
+    return v
 
 
 def py_default(o):
@@ -705,7 +719,7 @@ def cmd_prepare(a):
     write_json(out / "meta.json", meta)
     for rid in rows:
         d = out / "rows" / str(rid)
-        write_json(d / "task.json", {"sop": a.sop, "row": rid, "inputs": sop.inputs(rid), "task_text": sop.task_text(rid), "output_columns": sop.output_columns,
+        write_json(d / "task.json", {"sop": a.sop, "row": rid, "inputs": jsonsafe(sop.inputs(rid)), "task_text": sop.task_text(rid), "output_columns": sop.output_columns,
                                      "row_sha256": sop.row_hash(rid)})
         write_json(d / "expected.json", {"sop": a.sop, "row": rid, "output_columns": sop.output_columns, "expected": sop.expected_export(rid)})
     emit("prepared", sop=a.sop, rows=len(rows), contract=meta["contract_sha256"])
@@ -723,7 +737,7 @@ def _finish(host: Path, r: Rollout, world: World, meta: dict):
     host.mkdir(parents=True, exist_ok=True)
     with open(host / "calls.jsonl", "w", encoding="utf-8") as f:
         for rec in r.log:
-            f.write(json.dumps(rec, ensure_ascii=False, default=py_default) + "\n")
+            f.write(json.dumps(jsonsafe(rec), ensure_ascii=False) + "\n")
     write_json(host / "serve.json", {**meta, "steps": r.steps, "calls": sum(1 for x in r.log if "name" in x),
                                      "upstreamFatal": sum(1 for x in r.log if x.get("upstreamFatal")), "worldReads": sorted(set(world.proxy.reads)),
                                      "alignment": world.alignment})
@@ -778,7 +792,7 @@ def cmd_grade(a):
                     "strict": strict_verdict(q.get("text") or "", sop.expected_export(rid), sop.output_columns)})
     with open(a.out, "w", encoding="utf-8") as f:
         for r in out:
-            f.write(json.dumps(r, ensure_ascii=False, default=py_default) + "\n")
+            f.write(json.dumps(jsonsafe(r), ensure_ascii=False) + "\n")
     emit("graded", n=len(out))
 
 
@@ -818,7 +832,7 @@ def cmd_official(a):
                     "loader": "upstream" if b is not None else f"ours (upstream loader failed: {fb[1]})", "upstreamTaskInputs": task_inputs})
     with open(a.out, "w", encoding="utf-8") as f:
         for r in out:
-            f.write(json.dumps(r, ensure_ascii=False, default=py_default) + "\n")
+            f.write(json.dumps(jsonsafe(r), ensure_ascii=False) + "\n")
     emit("official", n=len(out))
 
 

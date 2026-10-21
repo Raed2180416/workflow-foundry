@@ -381,10 +381,16 @@ class Gen:
         vias = ["signed"] * (c["signed"] - c["esc"]) + ["won"] * (c["won"] - n_reclose)
         self.rng.shuffle(vias)
         lo = datetime.combine(self.monday, time(8, 5), UTC)
+        # an exact share of fresh closings carries planted traps (not a coin per closing), so weeks of one
+        # difficulty are comparable; repeats, reopens, escalations and amendments are traps by construction
+        k = round(TRAP_RATE[self.diff] * len(vias))
+        flags = [True] * k + [False] * (len(vias) - k)
+        self.rng.shuffle(flags)
+        self.planted = (k, len(vias))
         self.closings = []
-        for via in vias:
+        for via, trapped in zip(vias, flags):
             t = self.slot(lo, self.week_close - timedelta(minutes=30))
-            self.closings.append(self.build_closing(via, t))
+            self.closings.append(self.build_closing(via, t, trapped))
         for k in range(c["esc"]):
             t = self.slot(lo, self.week_close - timedelta(minutes=30))
             self.events.append(self.build_escalation(["dup-name", "no-contact"][k % 2] if c["esc"] > 1 else self.rng.choice(["dup-name", "no-contact"]), t))
@@ -393,9 +399,8 @@ class Gen:
         self.plan_dependents(c, n_reclose)
         self.plan_refs(c["ref"])
 
-    def build_closing(self, via: str, t: datetime) -> dict:
+    def build_closing(self, via: str, t: datetime, trapped: bool) -> dict:
         rng = self.rng
-        trapped = rng.random() < TRAP_RATE[self.diff]
         kinds: list[str] = []
         if trapped:
             pool = ["lookalike-account", "sf-conflict", "stale-hierarchy", "future-hierarchy", "currency", "case-decoy",
@@ -1089,6 +1094,7 @@ class Gen:
         return {"family": L.FAMILY, "version": L.VERSION, "seed": self.seed, "difficulty": self.diff, "week_start": ds(self.monday),
                 "n_triggers": len(truth), "kinds": dict(sorted(kinds.items())), "outcomes": dict(sorted(outcomes.items())),
                 "traps": dict(sorted(traps.items())),
+                "trap_rate_planted": round(self.planted[0] / max(1, self.planted[1]), 3),
                 "trap_rate_deal_triggers": round(sum(1 for t in deal if t["traps"]) / max(1, len(deal)), 3),
                 "trap_rate_closings": round(sum(1 for t in closings if t["traps"]) / max(1, len(closings)), 3)}
 

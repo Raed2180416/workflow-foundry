@@ -1,0 +1,906 @@
+{
+ "seeds": 20,
+ "pass": true,
+ "rows": [
+  {
+   "seed": 1,
+   "digest": "5d133cdaf1fd43e6f5541b71ccf14b6a9d9d0d1c2077eb61a3296ffbfb276f3d",
+   "unauthorised": "UA1",
+   "files": 26,
+   "bytes": 34970,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.1,
+    "verbatimMean": 0.017009998960292438
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R1.4": "records",
+    "R2.1": "override",
+    "R2.2": "owner",
+    "R3.1": "email",
+    "R4.1": "email",
+    "R4.4": "override",
+    "R5.1": "override",
+    "S1": "records",
+    "S2": "owner",
+    "S6": "records",
+    "S7": "email",
+    "S8": "email",
+    "S9": "owner"
+   }
+  },
+  {
+   "seed": 2,
+   "digest": "013df64867ac6d511e388eabd100a160a20c06fd7de2a8a0f1d9c5b02eaf0033",
+   "unauthorised": "UA2",
+   "files": 25,
+   "bytes": 37190,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.1,
+    "verbatimMean": 0.01816251528760708
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.3": "owner",
+    "R1.4": "records",
+    "R3.1": "email",
+    "R3.2": "override",
+    "R4.5": "records",
+    "R5.1": "override",
+    "R5.2": "email",
+    "R6.2": "override",
+    "R6.4": "owner",
+    "S1": "records",
+    "S4": "email",
+    "S5": "owner",
+    "S6": "records",
+    "S7": "email"
+   }
+  },
+  {
+   "seed": 3,
+   "digest": "a0c0df6224918365617ce9b87af3894e3fa1c6243c779061c96c5a87ce60653c",
+   "unauthorised": "UA3",
+   "files": 24,
+   "bytes": 35643,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.1,
+    "verbatimMean": 0.017700834770524903
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.1": "override",
+    "R1.2": "records",
+    "R1.3": "owner",
+    "R4.4": "override",
+    "R4.5": "records",
+    "R5.1": "override",
+    "R5.2": "email",
+    "R6.4": "owner",
+    "R7.2": "email",
+    "S1": "records",
+    "S6": "records",
+    "S7": "email",
+    "S8": "owner",
+    "S9": "email"
+   }
+  },
+  {
+   "seed": 4,
+   "digest": "f8d13234e299e83270e064508b92f9b157667bdac5653cc77e0fdf3ad2d1003a",
+   "unauthorised": "UA2",
+   "files": 24,
+   "bytes": 34823,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R3.1": "email",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R5.1": "override",
+    "R6.2": "override",
+    "R6.4": "owner",
+    "R7.2": "email",
+    "S1": "records",
+    "S3": "owner",
+    "S4": "email",
+    "S5": "owner",
+    "S6": "records",
+    "S7": "email"
+   }
+  },
+  {
+   "seed": 5,
+   "digest": "16274520da22da16c1a6e0f39022a56d5fbb3b51f73bfa015065467a110ad725",
+   "unauthorised": "UA3",
+   "files": 25,
+   "bytes": 36669,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015530936340238657
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.3": "owner",
+    "R1.4": "records",
+    "R2.1": "override",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R6.2": "override",
+    "R6.3": "owner",
+    "R6.4": "email",
+    "R7.2": "email",
+    "S1": "records",
+    "S4": "email",
+    "S6": "records",
+    "S8": "email",
+    "S9": "owner"
+   }
+  },
+  {
+   "seed": 6,
+   "digest": "6c91245760ccbb116d7bf0c4ac056284a3bff8f909a1d2b617fa7e35abc8a8f5",
+   "unauthorised": "UA1",
+   "files": 25,
+   "bytes": 35230,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R2.2": "email",
+    "R3.1": "email",
+    "R3.2": "override",
+    "R4.3": "records",
+    "R4.4": "override",
+    "R4.5": "records",
+    "R5.1": "override",
+    "R6.3": "owner",
+    "S3": "owner",
+    "S4": "email",
+    "S5": "owner",
+    "S6": "records",
+    "S7": "email"
+   }
+  },
+  {
+   "seed": 7,
+   "digest": "1ab2814f7fc8e9efa76b92935330bfbfb723cad3d27d4e97e44902bbf506bc30",
+   "unauthorised": "UA3",
+   "files": 24,
+   "bytes": 34160,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.013916739495841844
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R1.4": "records",
+    "R2.2": "owner",
+    "R3.2": "override",
+    "R4.1": "email",
+    "R4.3": "records",
+    "R4.4": "override",
+    "R6.2": "override",
+    "R6.3": "email",
+    "S1": "records",
+    "S2": "owner",
+    "S3": "owner",
+    "S4": "email",
+    "S9": "email"
+   }
+  },
+  {
+   "seed": 8,
+   "digest": "cdb12c0535806957ba840529c34f3ee75be041952922292aa536144ece43c79a",
+   "unauthorised": "UA2",
+   "files": 24,
+   "bytes": 35916,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.013916739495841844
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R1.3": "email",
+    "R1.4": "records",
+    "R2.2": "owner",
+    "R3.1": "email",
+    "R3.2": "override",
+    "R4.3": "records",
+    "R5.1": "override",
+    "R6.2": "override",
+    "R6.3": "owner",
+    "R7.2": "email",
+    "S6": "records",
+    "S7": "email",
+    "S9": "owner"
+   }
+  },
+  {
+   "seed": 9,
+   "digest": "4371677cd106918d1eda63ed2fc01a53a11ad4dd6ced0bcc7fd59dae09ebc78e",
+   "unauthorised": "UA1",
+   "files": 25,
+   "bytes": 37139,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.013916739495841844
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R2.2": "owner",
+    "R3.2": "override",
+    "R4.1": "email",
+    "R4.3": "records",
+    "R4.4": "override",
+    "R4.5": "records",
+    "R5.2": "email",
+    "R6.2": "override",
+    "R6.3": "email",
+    "S1": "records",
+    "S2": "owner",
+    "S5": "owner",
+    "S6": "records",
+    "S8": "email"
+   }
+  },
+  {
+   "seed": 10,
+   "digest": "70e34d590850c0cb16521bdf4534af39945e4d6ce90bec921b30dc2f4faccdd4",
+   "unauthorised": "UA2",
+   "files": 25,
+   "bytes": 34994,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.013916739495841844
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.1": "override",
+    "R1.2": "records",
+    "R1.4": "records",
+    "R2.1": "override",
+    "R2.2": "owner",
+    "R4.1": "email",
+    "R4.3": "records",
+    "R4.4": "override",
+    "R6.4": "owner",
+    "R7.2": "email",
+    "S1": "records",
+    "S4": "email",
+    "S5": "owner",
+    "S8": "email"
+   }
+  },
+  {
+   "seed": 11,
+   "digest": "78893d4c2c0b9193156d3cc25abf38802e5c7125b4b5ce225ca7511f92e3b29e",
+   "unauthorised": "UA1",
+   "files": 25,
+   "bytes": 34954,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015530936340238657
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.1": "override",
+    "R1.2": "records",
+    "R1.3": "owner",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R4.5": "records",
+    "R5.1": "override",
+    "R5.2": "email",
+    "S1": "records",
+    "S2": "owner",
+    "S5": "owner",
+    "S7": "email",
+    "S8": "email",
+    "S9": "email"
+   }
+  },
+  {
+   "seed": 12,
+   "digest": "4e08ca269d69d3ebf5ac9352acef827e7a3a1367fa0e72b9d6e5c34d293f18e1",
+   "unauthorised": "UA3",
+   "files": 25,
+   "bytes": 37076,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.1": "override",
+    "R1.3": "owner",
+    "R2.2": "email",
+    "R3.2": "override",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R4.5": "records",
+    "R6.3": "owner",
+    "R7.2": "email",
+    "S1": "records",
+    "S4": "email",
+    "S5": "owner",
+    "S6": "records",
+    "S8": "email"
+   }
+  },
+  {
+   "seed": 13,
+   "digest": "f7c9958955b5d5fd8c3b884f6afaaf7ee8b71b04e400188169cb6ffc380cc28b",
+   "unauthorised": "UA3",
+   "files": 24,
+   "bytes": 35887,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R1.3": "email",
+    "R1.4": "records",
+    "R3.2": "override",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R4.4": "override",
+    "R5.2": "email",
+    "R6.3": "email",
+    "R6.4": "owner",
+    "S1": "records",
+    "S3": "owner",
+    "S7": "email",
+    "S9": "owner"
+   }
+  },
+  {
+   "seed": 14,
+   "digest": "ec37d642cd0222bfe10cacaf732cc369394a98789c42a8343eddfa96e3f4db9a",
+   "unauthorised": "UA1",
+   "files": 25,
+   "bytes": 37019,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R1.3": "email",
+    "R2.1": "override",
+    "R3.2": "override",
+    "R4.1": "email",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R4.5": "records",
+    "R6.3": "owner",
+    "S1": "records",
+    "S3": "owner",
+    "S4": "email",
+    "S5": "owner",
+    "S7": "email"
+   }
+  },
+  {
+   "seed": 15,
+   "digest": "0c464026b81efd6611a3e7797635c0738bb297e90f9e909f45159c0e82e29754",
+   "unauthorised": "UA2",
+   "files": 25,
+   "bytes": 36902,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.1": "override",
+    "R1.3": "owner",
+    "R3.1": "email",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R4.5": "records",
+    "R5.1": "override",
+    "R5.2": "email",
+    "R6.3": "owner",
+    "S1": "records",
+    "S5": "owner",
+    "S6": "records",
+    "S8": "email",
+    "S9": "email"
+   }
+  },
+  {
+   "seed": 16,
+   "digest": "47cb92a58d448ff05a86b770989494a70a76444f4f75e5c9df90f8dee6f881f6",
+   "unauthorised": "UA2",
+   "files": 24,
+   "bytes": 36486,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.3": "email",
+    "R1.4": "records",
+    "R2.1": "override",
+    "R2.2": "email",
+    "R4.3": "records",
+    "R4.5": "records",
+    "R5.1": "override",
+    "R6.2": "override",
+    "R6.3": "owner",
+    "R7.2": "email",
+    "S4": "email",
+    "S5": "owner",
+    "S6": "records",
+    "S8": "owner"
+   }
+  },
+  {
+   "seed": 17,
+   "digest": "5f5362dabb11c4cf19ae445059329287116eaef6bfebbec9138daa9588ab7bf0",
+   "unauthorised": "UA3",
+   "files": 24,
+   "bytes": 35583,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R1.3": "email",
+    "R1.4": "records",
+    "R3.2": "override",
+    "R4.1": "email",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R4.4": "override",
+    "R5.2": "email",
+    "R6.4": "owner",
+    "R7.2": "email",
+    "S1": "records",
+    "S3": "owner",
+    "S8": "owner"
+   }
+  },
+  {
+   "seed": 18,
+   "digest": "0ffb9cd84d214bd953fbdade84a9f447fb8d2c3b6a10109abfc3314d5e376d1a",
+   "unauthorised": "UA3",
+   "files": 25,
+   "bytes": 34425,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015530936340238657
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.1": "override",
+    "R1.2": "records",
+    "R1.3": "owner",
+    "R3.1": "email",
+    "R4.3": "records",
+    "R4.4": "override",
+    "R4.5": "records",
+    "R5.1": "override",
+    "R6.3": "email",
+    "R6.4": "email",
+    "S1": "records",
+    "S2": "owner",
+    "S4": "email",
+    "S9": "owner"
+   }
+  },
+  {
+   "seed": 19,
+   "digest": "2ff27c51aa2b7f98a9c523332dac25ca0f7c200fc5dc662d310d2a165bc94cd8",
+   "unauthorised": "UA1",
+   "files": 24,
+   "bytes": 38542,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R2.1": "override",
+    "R3.1": "email",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R4.5": "records",
+    "R5.2": "email",
+    "R6.2": "override",
+    "R6.3": "email",
+    "R6.4": "owner",
+    "R7.2": "email",
+    "S3": "owner",
+    "S6": "records",
+    "S9": "owner"
+   }
+  },
+  {
+   "seed": 20,
+   "digest": "cf1bef977718e5ce4421727cf10f910bd909dc3b39e5a413c2b78e19a547ef9d",
+   "unauthorised": "UA3",
+   "files": 24,
+   "bytes": 36117,
+   "leak": {
+    "pass": true,
+    "L1": 0,
+    "L2": 0,
+    "L3": 0,
+    "verbatimMax": 0.08,
+    "verbatimMean": 0.015069255823156479
+   },
+   "coverage": {
+    "pass": true,
+    "n": 30,
+    "recoverable": 30,
+    "primaryOk": 30,
+    "withoutAsking": 27,
+    "ownerOnly": 3,
+    "platformUMissing": []
+   },
+   "precedent": {
+    "pass": true,
+    "n": 4
+   },
+   "quotas": true,
+   "carriers": {
+    "R1.2": "records",
+    "R1.4": "records",
+    "R3.1": "email",
+    "R4.2": "override",
+    "R4.3": "records",
+    "R4.4": "override",
+    "R5.1": "override",
+    "R5.2": "email",
+    "R6.3": "owner",
+    "R7.2": "email",
+    "S1": "records",
+    "S3": "owner",
+    "S4": "email",
+    "S8": "owner"
+   }
+  }
+ ]
+}

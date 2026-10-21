@@ -36,15 +36,13 @@ def echo(payload, api):
 def naive(payload, api):  # <= 40 lines: the shortcut a careless automation takes
     d, ev, w = payload.get("data") or {}, payload.get("event"), R.DealDesk(api)
     if ev == "week_close":
-        _, log = w.sheet(R.DEAL_LOG)
-        rows = [r for r in log if r.get("Status") == "Announced"]
+        rows = [r for r in w.sheet(R.DEAL_LOG)[1] if r.get("Status") == "Announced"]
         return w.post("deal-wins", f"Weekly closed-won: ${sum(int(r['USD']) for r in rows):,} across {len(rows)} deals")
     if ev == "new_email":
         m = api.fetch("GET", f"{R.GMAIL}/messages/{d['message_id']}")
         f = dict(x.split(":", 1) for x in (m.get("body_plain") or "").splitlines() if x.split(":", 1)[0] in ("Parameter", "New value", "Effective"))
         if f:
-            hdr, _ = w.sheet(R.POLICY_LOG)
-            w.append(R.POLICY_LOG, hdr, {"Effective": f["Effective"].strip(), "Parameter": f["Parameter"].strip(), "Value": f["New value"].strip(), "Approved by": R.email_addr(m.get("from"))})
+            w.append(R.POLICY_LOG, w.sheet(R.POLICY_LOG)[0], {"Effective": f["Effective"].strip(), "Parameter": f["Parameter"].strip(), "Value": f["New value"].strip(), "Approved by": R.email_addr(m.get("from"))})
         return
     if ev == "envelope_completed":
         env = api.fetch("GET", f"{R.DOCUSIGN}/envelopes/{d['envelope_id']}")
@@ -70,12 +68,10 @@ def naive(payload, api):  # <= 40 lines: the shortcut a careless automation take
     text = f"CLOSED: {opp['Name']} | ${usd:,} | {tier} | AE: {owner}"
     w.send(to, R.SUBJECT, f"{opp['Name']} closed for ${usd:,} ({tier})")
     w.post("deal-wins", text)
-    if usd >= 250000:
-        w.post("exec-wins", text)
+    w.post("exec-wins", text) if usd >= 250000 else None
     date = (d.get("completed_at") or d.get("changed_at"))[:10]
     api.fetch("PATCH", f"{R.SF}/sobjects/Opportunity/{oid}", None, dict(upd, Description=f"Announced in #deal-wins {date}"))
-    hdr, _ = w.sheet(R.DEAL_LOG)
-    w.append(R.DEAL_LOG, hdr, {"Event ID": d["event_id"], "Opportunity ID": oid, "Opportunity": opp["Name"], "Closed At": date, "USD": str(usd), "Tier": tier, "Routed To": ", ".join(to), "Status": "Announced"})
+    w.append(R.DEAL_LOG, w.sheet(R.DEAL_LOG)[0], {"Event ID": d["event_id"], "Opportunity ID": oid, "Opportunity": opp["Name"], "Closed At": date, "USD": str(usd), "Tier": tier, "Routed To": ", ".join(to), "Status": "Announced"})
 
 
 class NoDedupe(R.DealDesk):

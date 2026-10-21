@@ -1,0 +1,8 @@
+From: Mara Hollin <mara@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-03-01 21:07 +01:00
+Subject: Re: Correction: the fraud check
+
++1. I'll fix the wiki page after go-live.
+
+Mara

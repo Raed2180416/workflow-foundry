@@ -1,0 +1,24 @@
+From: Joost Bakker <joost@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-02-28 10:49 +01:00
+Subject: Fwd: edge cases from Ruben (agreed, this is how we work)
+
+Hi all,
+
+Ruben wrote these down when he built the 2025 version. I went through them with him; they are how we work, so treat them as policy:
+
+* What we knew at an instant: our step came before a message about the order if we took it at an earlier instant, or at the same instant but in a call that had not yet been handed that message (a call only reacts to what it was handed). If the call already had the message, or the step came at a later instant, the step came after the message. This settles which steps a counted cancel or action makes pointless, and which forward steps after a cancel are new (forbidden) versus already in flight.
+
+* The ready instant itself already counts as processing. So if a cancel carries the same timestamp as the approve or the counted amend that made the order ready, and arrives after it, treat it as a cancel during processing. If a customer action reaches us before the order it refers to has been placed (inside one instant, customer actions come in before placed orders), there is no order for it yet and it changes nothing for that order: do nothing for it (no effect, no task, no wake-up; just close the instance it opened), and skip unknown-order for it, since that order did get placed in the same instant.
+
+* Anything that reached us before a cancel happened before it, and carrier reports delivered in the cancel's instant reach us first. So: a delivered report that closes the last open fulfilment means the order was already over (the cancel does nothing; cancel-refused allowed). A collectionFailed report fails that fulfilment first, and the cancel then covers the order's remaining open fulfilments (if there are none, the order was already over, as with the delivery). Declined charges and permanent carrier errors only come back with their result a minute after the attempt, so an attempt made in the cancel's instant is not before the cancel: the cancel counts, and that fulfilment is unwound and set to cancelled rather than failed.
+
+* A step of a failing fulfilment that was already in flight and commits after the failure is unwound within 120 minutes of its commit; the fulfilment's unwinding, its failed status and its fulfilment-failed e-mail are then due within 120 minutes of the later of the failure and that commit.
+
+Joost
+
+---------- Forwarded message ----------
+From: Ruben de Wit <ruben@dewit-dev.example>
+Subject: edge cases
+
+(see above)

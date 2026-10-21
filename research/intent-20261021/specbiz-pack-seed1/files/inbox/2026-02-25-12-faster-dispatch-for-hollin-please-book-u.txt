@@ -1,0 +1,12 @@
+From: Pieter van Dijk <pieter.vandijk@velox-partners.example>
+To: team@hollin-shop.example
+Date: 2026-02-25 10:02 +01:00
+Subject: Faster dispatch for Hollin: please book us first
+
+Hi team,
+
+To get your parcels on the same-day Velox run more often, please book the shipment with us before you charge the card. If the payment fails we simply cancel the label on our side, no cost to you. From next week we assume you work this way.
+
+Kind regards,
+Pieter van Dijk
+Account Manager, Velox Partners

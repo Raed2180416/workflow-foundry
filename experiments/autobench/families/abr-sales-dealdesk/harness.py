@@ -393,7 +393,8 @@ def gate_traps(gens: list[dict]) -> dict:
     for g in gens:
         for t in g["truth"]:
             c.update(set(t["traps"]))
-        rates.append({"seed": g["meta"]["seed"], "difficulty": g["meta"]["difficulty"], "closings": g["meta"]["trap_rate_closings"],
+        rates.append({"seed": g["meta"]["seed"], "difficulty": g["meta"]["difficulty"], "planted": g["meta"]["trap_rate_planted"],
+                      "closings": g["meta"]["trap_rate_closings"],
                       "deal_triggers": g["meta"]["trap_rate_deal_triggers"], "n": g["meta"]["n_triggers"]})
     kinds6 = {"T-lookalike": c["lookalike-account"] + c["won-lookalike"] + c["signer-lookalike"],
               "T-stale": c["stale-hierarchy"] + c["future-hierarchy"] + c["future-fx"],

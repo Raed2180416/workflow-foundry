@@ -18,7 +18,9 @@
 // Every model call counts toward the 50 model responses (the same counting as accounting.mjs), every world step
 // (code-issued or session-issued) toward the bridge's 49; both are audited per task (auditPipeline). An environment
 // fault in any node (experiments/lib ENV_FAULTS: rate or usage limit, model unavailable, no sandbox) stops the pipeline
-// at once and is returned as the task's session error, so the runner treats the task as not run, like an A0 session. Nothing here
+// at once. Up to and including the act session it is returned as the task's session error, so the runner treats the task
+// as not run, like an A0 session; after the act session the world is graded as it stands (pipelineStop: a rerun there
+// would re-draw unfinished-looking tasks more often than finished ones). Nothing here
 // reads the task's name, the prepared task files, the initial-world dump, assertions, grades or host directories: the
 // pipeline receives the official prompt, the tool catalog and a mailbox, and writes host-side logs it never reads back.
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync, constants as fsc } from 'node:fs';
@@ -113,6 +115,36 @@ export function servedSteps(mailbox) {
   return n;
 }
 const lastText = events => { const a = events.filter(e => e?.type === 'assistant').flatMap(e => (e.message?.content ?? []).filter(c => c?.type === 'text').map(c => c.text)); return a.at(-1) ?? null; };
+
+/** Host infrastructure failures (run.mjs INFRA_FAULT): disk full, no temporary directory, file-table exhaustion. */
+export const INFRA_FAULT = /ENOSPC|EDQUOT|EMFILE|ENFILE|No usable temporary directory/;
+/**
+ * How a pipeline that stopped on an error ends (A1-C and A0+SR). -> { actError, rethrow }.
+ * Up to and including the act session, an environment fault (or a host infrastructure failure, rethrown so the runner
+ * records it as its harness error) means the task was not run: it reruns on --resume, as an A0 session does.
+ * After the act session the live world has changed, so a rerun would be a second attempt, and the nodes that run after
+ * acting (checker, repair, reader) run more often when the work looks unfinished: rerunning on their faults would re-draw
+ * failing tasks more often than passing ones (H5: no re-run, no choosing among attempts). There the pipeline stops, the
+ * world is graded as it stands, and the fault is recorded (stats.envFaultAfterAct).
+ */
+export function pipelineStop({ e, halted, envFault, acted, actError, stats, log = () => {}, tag = '[pipeline]', last = '?' }) {
+  const fault = envFault ?? null;
+  if (fault && acted) {
+    stats.envFaultAfterAct = fault;
+    if (!halted) stats.error = String(e?.stack ?? e).slice(0, 1500);
+    log(`${tag} environment fault ${fault} after the act session (node ${last ?? '?'}): pipeline stopped; the world is graded as it stands`);
+    return { actError, rethrow: null };
+  }
+  if (halted) {
+    stats.envFault = envFault;
+    log(`${tag} environment fault ${envFault}: pipeline stopped after node ${last ?? '?'}`);
+    return { actError: envFault, rethrow: null };
+  }
+  stats.error = String(e?.stack ?? e).slice(0, 1500);
+  log(`${tag} pipeline error: ${String(e?.message ?? e).slice(0, 300)}`);
+  if (!acted && INFRA_FAULT.test(String(e?.message ?? e))) return { actError: actError ?? 'PIPELINE_ERROR', rethrow: e };
+  return { actError: envFault ?? actError ?? 'PIPELINE_ERROR', rethrow: null };
+}
 
 // ---------------------------------------------------------------------------------------------------------------
 // The pipeline
@@ -238,7 +270,7 @@ export async function runPipeline(o) {
   };
 
   const stats = { inventory: null, ledger: null, checks: [], rounds: 0, termination: null };
-  let actError = null;
+  let actError = null, acted = false, rethrow = null;
   try {
     // 1. INVENTORY
     const inv = await codeNode('inventory', () => buildInventory({ request: o.official.user, client, maxSteps: P.inventorySteps, node: 'inventory' }));
@@ -309,6 +341,7 @@ export async function runPipeline(o) {
     const act = await sessionNode('act', 'act', brief, actCap, actBudget);
     actError = act?.error?.code ?? null;
     halt();
+    acted = true;
 
     // 5-6. CHECK, then code-owned TERMINATION with repair rounds
     // The checker decides only what code cannot; after round 0 only when a hard check depends on it (advisory verdicts
@@ -335,19 +368,14 @@ export async function runPipeline(o) {
       halt();
     }
   } catch (e) {
-    if (e === HALT) {
-      actError = envFault;
-      stats.envFault = envFault;
-      log(`[codeowned] environment fault ${envFault}: pipeline stopped after node ${nodes.filter(Boolean).at(-1)?.name ?? '?'}`);
-    } else {
-      actError = envFault ?? actError ?? 'PIPELINE_ERROR';
-      stats.error = String(e?.stack ?? e).slice(0, 1500);
-      log(`[codeowned] pipeline error: ${String(e?.message ?? e).slice(0, 300)}`);
-    }
+    ({ actError, rethrow } = pipelineStop({ e, halted: e === HALT, envFault, acted, actError, stats, log, tag: '[codeowned]', last: nodes.filter(Boolean).at(-1)?.name }));
   }
-  hostWrite('client-log.json', client.log);
-  for (let i = 0; i < nodes.length; i++) if (!nodes[i]) nodes[i] = { idx: i, name: 'unfinished', kind: 'code', responses: 0, steps: 0, started: 0, ended: 0 };
-  hostWrite('nodes.json', nodes);
+  try {
+    hostWrite('client-log.json', client.log);
+    for (let i = 0; i < nodes.length; i++) if (!nodes[i]) nodes[i] = { idx: i, name: 'unfinished', kind: 'code', responses: 0, steps: 0, started: 0, ended: 0 };
+    hostWrite('nodes.json', nodes);
+  } catch (e) { if (!rethrow) throw e; }
+  if (rethrow) throw rethrow;
   return { ok: !actError, error: actError ? { code: actError } : null, costUsd: unknown ? null : spent, costUnknown: unknown, costUpperUsd: upper, turns: responses, durationMs: Date.now() - t0, toolUses,
     nodes, clientLog: client.log, pipeline: { ...stats, responses, nodes: nodes.map(n => ({ name: n.name, kind: n.kind, model: n.model ?? null, responses: n.responses, steps: n.steps ?? null, cap: n.cap ?? null, costUsd: n.costUsd ?? null, error: n.error ?? null, parsed: n.parsed ?? null })) }, label: `pipeline:${HARNESS_ID}` };
 }

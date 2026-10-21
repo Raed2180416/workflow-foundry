@@ -1,0 +1,13 @@
+From: Mara Hollin <mara@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-02-25 20:16 +01:00
+Subject: Re: asking the customer about out-of-stock items
+
+Hi all,
+
+Just so it's written down somewhere:
+
+When the allocation plan has a fulfilment that is not available (available false, location null): within 120 minutes of the order being cleared, put the order on customerActionRequired and send the customer the action-required e-mail.
+
+Thanks,
+Mara

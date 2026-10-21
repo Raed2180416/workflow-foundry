@@ -1,0 +1,13 @@
+From: Joost Bakker <joost@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-02-24 15:33 +01:00
+Subject: Re: which pickup reports count against a cancel
+
+Hi all,
+
+Just so it's written down somewhere:
+
+To decide whether a shipment counted as picked up at the cancel's time, look only at carrier reports we had received by the cancel: those that came in at an earlier instant, plus those that came in during the cancel's own instant. A report like that proves pickup when its meaning is collected, inTransit or delivered and its reportedAt is no later than the cancel's time. Reports that come in after the cancel are ignored for this, even if their reportedAt is earlier.
+
+Thanks,
+Joost

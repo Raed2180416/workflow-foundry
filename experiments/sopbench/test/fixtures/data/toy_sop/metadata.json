@@ -1,0 +1,1 @@
+{"name": "toy_sop", "output_columns": ["decision"], "input_columns": ["item_id"]}

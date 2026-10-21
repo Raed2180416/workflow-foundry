@@ -181,7 +181,7 @@ export function createComposedSolver({ manifest, parent, modules, kindsOf = e =>
   const declOf = who => (who === 'parent' ? M.parent : M.modules[who]);
 
   function tick(input, hostCtx) {
-    const carry = isObj(input.carry) && input.carry.cv === 1 ? jcopy(input.carry) : { cv: 1, p: null, m: {}, own: {}, ob: {}, tk: {} };
+    const carry = isObj(input.carry) && input.carry.cv === 1 ? jcopy(input.carry) : { cv: 1, p: null, m: {} };
     const out = { effects: [], owners: [], upsert: [], cancel: [], tasks: [] };
     const trace = { v: 1, owners: out.owners, calls: [], violations: [], dropped: [] };
     const undo = [];                              // undo log for atomic calls
@@ -190,36 +190,51 @@ export function createComposedSolver({ manifest, parent, modules, kindsOf = e =>
     const strict = mode === 'strict';
     const refuse = (code, who, detail) => { violation(code, who, detail); if (strict) throw new InterfaceError(code, detail); };
 
-    // --- effect, timer and task intake, attributed to `who` ---
-    const keysOf = e => [...(typeof e.key === 'string' ? [e.key] : []), ...(Array.isArray(e?.args?.items) ? e.args.items.map(i => i?.key).filter(k => typeof k === 'string') : [])];
-    const ownerTag = (who, ikey) => (who === 'parent' ? 'parent' : `${who}\u0001${ikey}`);
-    function takeEffect(who, ikey, e) {
-      if (!isObj(e) || typeof e.system !== 'string' || typeof e.op !== 'string') { violation('bad-effect', who, 'an effect must be { system, op, args, key? }'); if (strict) return; }
-      const decl = declOf(who);
-      const kinds = isObj(e) ? kindsOf(e) : [];
-      const declared = decl.effects ?? [];
-      const ok = kinds.some(k => declared.includes(k));
-      if (!ok) {
-        violation(who === 'parent' ? 'parent-effect-undeclared' : 'effect-undeclared', who, `${kinds.at(-1) ?? '?'} is not among ${JSON.stringify(declared).slice(0, 200)}`, { kind: kinds.at(-1) ?? null });
-        if (strict) { trace.dropped.push({ owner: who, kind: kinds.at(-1) ?? null, key: keysOf(e)[0] ?? null }); return; }
-      }
-      const tag = ownerTag(who, ikey);
-      for (const k of keysOf(e)) {
-        const prev = carry.own[k];
-        if (prev !== undefined && prev !== tag) {
-          violation('key-foreign', who, `key ${k} belongs to ${prev.split('\u0001')[0]}`);
-          if (strict) { trace.dropped.push({ owner: who, kind: kinds.at(-1) ?? null, key: k }); return; }
-        }
-      }
-      for (const k of keysOf(e)) if (carry.own[k] === undefined) { carry.own[k] = tag; undo.push(() => { delete carry.own[k]; }); }
-      out.effects.push(e); out.owners.push(who);
-      undo.push(() => { out.effects.pop(); out.owners.pop(); });
-    }
-    const nsId = (who, ikey, local) => {
+    // --- names: every key, timer id and task id of a module instance lives in its own namespace
+    //     `<module>/<instance key>/<local>`, so routing back to it is parsed from the name, never remembered (a crash
+    //     that loses the carry loses no routing). The parent's names are its own, unprefixed, without '/'.
+    const ns = (who, ikey, local) => {
+      if (who === 'parent') return local;
       const s = `${who}/${ikey}/${local}`;
-      if (s.length > MAX_ID) throw new InterfaceError('id-too-long', `${s.slice(0, 60)}...`);
+      if (s.length > MAX_ID) throw new InterfaceError('id-too-long', `${who}: ${s.slice(0, 80)}... is longer than ${MAX_ID} characters (shorten the instance key or the local name)`);
       return s;
     };
+    const parse = name => {
+      if (typeof name !== 'string') return null;
+      const i = name.indexOf('/'), j = i < 0 ? -1 : name.indexOf('/', i + 1);
+      if (i < 0 || j < 0) return null;
+      const mid = name.slice(0, i);
+      return own(M.modules, mid) ? { module: mid, key: name.slice(i + 1, j), local: name.slice(j + 1) } : null;
+    };
+    const emittedLocal = new Map();               // local key -> full key, for `after` across modules in one tick
+
+    // --- effect, timer and task intake, attributed to `who` ---
+    function takeEffect(who, ikey, e0) {
+      if (!isObj(e0) || typeof e0.system !== 'string' || typeof e0.op !== 'string') { violation('bad-effect', who, 'an effect must be { system, op, args, key? }'); return; }
+      const e = jcopy(e0);
+      const decl = declOf(who);
+      const kinds = kindsOf(e);
+      const declared = decl.effects ?? [];
+      if (!kinds.some(k => declared.includes(k))) {
+        violation(who === 'parent' ? 'parent-effect-undeclared' : 'effect-undeclared', who, `${kinds.at(-1) ?? '?'} is not among ${JSON.stringify(declared).slice(0, 200)}`, { kind: kinds.at(-1) ?? null });
+        if (strict) { trace.dropped.push({ owner: who, kind: kinds.at(-1) ?? null, key: e.key ?? e.args?.items?.[0]?.key ?? null }); return; }
+      }
+      if (who === 'parent' && [e.key, ...(Array.isArray(e.args?.items) ? e.args.items.map(i => i?.key) : [])].some(x => typeof x === 'string' && x.includes('/'))) {
+        violation('parent-key', who, 'parent keys may not contain "/" (reserved for module namespaces)');
+        if (strict) return;
+      }
+      const locals = [];
+      if (typeof e.key === 'string') { locals.push(e.key); e.key = ns(who, ikey, e.key); }
+      if (Array.isArray(e.args?.items)) for (const it of e.args.items) if (isObj(it) && typeof it.key === 'string') { locals.push(it.key); it.key = ns(who, ikey, it.key); }
+      for (const ref of ['after', 'compensates']) if (typeof e[ref] === 'string') {
+        const mine = ns(who, ikey, e[ref]);
+        e[ref] = out.effects.some(x => x.key === mine) ? mine : (emittedLocal.get(e[ref]) ?? mine);
+      }
+      out.effects.push(e); out.owners.push(who);
+      const added = [];
+      for (const l of locals) if (!emittedLocal.has(l)) { emittedLocal.set(l, ns(who, ikey, l)); added.push(l); }
+      undo.push(() => { out.effects.pop(); out.owners.pop(); for (const l of added) emittedLocal.delete(l); });
+    }
     function takeObligations(who, ikey, ob) {
       if (ob === undefined || ob === null) return;
       if (!isObj(ob)) { violation('bad-result', who, 'obligations must be { upsert, cancel }'); return; }
@@ -228,18 +243,9 @@ export function createComposedSolver({ manifest, parent, modules, kindsOf = e =>
       if (who !== 'parent' && declOf(who).timers !== true) { violation('timer-undeclared', who, 'timers: true is not declared'); if (strict) return; }
       for (const o of up) {
         if (!isObj(o) || typeof o.id !== 'string') { violation('bad-result', who, 'an obligation needs an id'); continue; }
-        if (who === 'parent') { out.upsert.push(o); undo.push(() => out.upsert.pop()); continue; }
-        const id2 = nsId(who, ikey, o.id);
-        const had = carry.ob[id2];
-        carry.ob[id2] = [who, ikey, o.id];
-        out.upsert.push({ ...o, id: id2 });
-        undo.push(() => { out.upsert.pop(); if (had === undefined) delete carry.ob[id2]; else carry.ob[id2] = had; });
+        out.upsert.push({ ...o, id: ns(who, ikey, o.id) }); undo.push(() => out.upsert.pop());
       }
-      for (const c of cancel) {
-        if (typeof c !== 'string') continue;
-        const id2 = who === 'parent' ? c : nsId(who, ikey, c);
-        out.cancel.push(id2); undo.push(() => out.cancel.pop());
-      }
+      for (const c of cancel) if (typeof c === 'string') { out.cancel.push(ns(who, ikey, c)); undo.push(() => out.cancel.pop()); }
     }
     function takeTasks(who, ikey, tasks) {
       if (tasks === undefined || tasks === null) return;
@@ -250,34 +256,29 @@ export function createComposedSolver({ manifest, parent, modules, kindsOf = e =>
           violation(who === 'parent' ? 'parent-task-undeclared' : 'task-undeclared', who, `task kind ${t.kind} is not declared`, { kind: t.kind ?? null });
           if (strict) continue;
         }
-        if (who === 'parent') { out.tasks.push(t); undo.push(() => out.tasks.pop()); continue; }
-        const id2 = nsId(who, ikey, t.id);
-        const had = carry.tk[id2];
-        carry.tk[id2] = [who, ikey, t.id];
-        out.tasks.push({ ...t, id: id2 });
-        undo.push(() => { out.tasks.pop(); if (had === undefined) delete carry.tk[id2]; else carry.tk[id2] = had; });
+        out.tasks.push({ ...t, id: ns(who, ikey, t.id) }); undo.push(() => out.tasks.pop());
       }
     }
 
-    // --- ownership of inbound events (provenance, never business meaning) ---
-    function ownerOf(ev) {
+    // --- ownership of inbound events (provenance from the names, never business meaning) ---
+    const nameOf = ev => {
       if (!isObj(ev) || !isObj(ev.payload)) return null;
       const p = ev.payload;
-      let tag = null, local = null;
-      if (ev.type === 'effect.result') {
-        const k = typeof p.key === 'string' ? p.key : Array.isArray(p.items) ? p.items.map(i => i?.key).find(x => typeof x === 'string') : null;
-        tag = k ? carry.own[k] ?? null : null;
-        if (tag === 'parent') tag = null;
-        return tag ? { module: tag.split('\u0001')[0], key: tag.split('\u0001').slice(1).join('\u0001') } : null;
-      }
-      if (ev.type === 'timer.fired') local = carry.ob[p.obligationId];
-      else if (typeof ev.type === 'string' && ev.type.startsWith('humanTask.')) local = carry.tk[p.taskId];
-      return Array.isArray(local) ? { module: local[0], key: local[1] } : null;
-    }
+      if (ev.type === 'effect.result') return typeof p.key === 'string' ? p.key : Array.isArray(p.items) ? p.items.map(i => i?.key).find(x => typeof x === 'string') ?? null : null;
+      if (ev.type === 'timer.fired') return p.obligationId ?? null;
+      if (typeof ev.type === 'string' && ev.type.startsWith('humanTask.')) return p.taskId ?? null;
+      return null;
+    };
+    function ownerOf(ev) { const o = parse(nameOf(ev)); return o ? { module: o.module, key: o.key } : null; }
     const localise = ev => {
       const e = jcopy(ev);
-      if (e.type === 'timer.fired' && Array.isArray(carry.ob[e.payload.obligationId])) e.payload.obligationId = carry.ob[e.payload.obligationId][2];
-      if (typeof e.type === 'string' && e.type.startsWith('humanTask.') && Array.isArray(carry.tk[e.payload.taskId])) e.payload.taskId = carry.tk[e.payload.taskId][2];
+      const strip = n => parse(n)?.local ?? n;
+      if (e.type === 'effect.result') {
+        if (typeof e.payload.key === 'string') e.payload.key = strip(e.payload.key);
+        if (Array.isArray(e.payload.items)) for (const it of e.payload.items) if (isObj(it) && typeof it.key === 'string') it.key = strip(it.key);
+      }
+      if (e.type === 'timer.fired') e.payload.obligationId = strip(e.payload.obligationId);
+      if (typeof e.type === 'string' && e.type.startsWith('humanTask.')) e.payload.taskId = strip(e.payload.taskId);
       return e;
     };
 
@@ -293,7 +294,7 @@ export function createComposedSolver({ manifest, parent, modules, kindsOf = e =>
       return {
         files: () => realm.toRealm(who, hostCtx.files),
         query: (table, filter) => { checkRead(String(table).split('.')[0]); return realm.toRealm(who, hostCtx.query(table, filter)); },
-        status: (system, key) => { checkRead(system); return hostCtx.status(system, key); },
+        status: (system, key) => { checkRead(system); return hostCtx.status(system, who === 'parent' ? key : ns(who, ikey, String(key))); },
         instances: f => { if (who !== 'parent') refuse('instances-module', who, 'only the parent reads the open-instance index'); return realm.toRealm(who, hostCtx.instances(f)); },
         call: (mid, key, inp) => realm.toRealm(who, invoke(who, mid, key, 'call', inp)),
         deliver: ev => {
@@ -312,7 +313,7 @@ export function createComposedSolver({ manifest, parent, modules, kindsOf = e =>
       const rec = [caller, mid, ikey, kind, 'ok'];
       trace.calls.push(rec);
       if (!decl || !modules[mid]) { rec[4] = 'refused'; throw new InterfaceError('unknown-module', `${mid} is not a declared module`); }
-      if (typeof ikey !== 'string' || !ikey || ikey.length > 120) { rec[4] = 'refused'; throw new InterfaceError('bad-key', `${mid}: the instance key must be a string of 1-120 characters`); }
+      if (typeof ikey !== 'string' || !ikey || ikey.length > 80 || ikey.includes('/')) { rec[4] = 'refused'; throw new InterfaceError('bad-key', `${mid}: the instance key must be a string of 1-80 characters without '/'`); }
       if (stack.includes(mid)) { rec[4] = 'refused'; violation('recursion', mid, `${[...stack, mid].join(' -> ')}`); throw new InterfaceError('recursion', `${[...stack, mid].join(' -> ')}`); }
       if (stack.length >= MAX_DEPTH) { rec[4] = 'refused'; throw new InterfaceError('depth', `call depth above ${MAX_DEPTH}`); }
       const allowed = kind === 'event' && caller === 'parent' ? reach.has(mid) : (declOf(caller).calls ?? []).includes(mid);
@@ -384,11 +385,6 @@ export function createComposedSolver({ manifest, parent, modules, kindsOf = e =>
     takeObligations('parent', input.instance, r.obligations);
     takeTasks('parent', input.instance, r.humanTasks);
     if (own(r, 'state')) carry.p = r.state ?? null;
-    // Fired timers and answered tasks leave the routing tables once their event was delivered to this tick.
-    for (const ev of input.events ?? []) {
-      if (ev?.type === 'timer.fired' && carry.ob[ev.payload?.obligationId] && !out.upsert.some(o => o.id === ev.payload.obligationId)) delete carry.ob[ev.payload.obligationId];
-    }
-    for (const c of out.cancel) delete carry.ob[c];
     const decisions = isObj(r.decisions) ? { ...r.decisions, composition: trace } : r.decisions;
     const output = { decisions, effects: out.effects, obligations: { upsert: out.upsert, cancel: out.cancel }, humanTasks: out.tasks, carry };
     if (own(r, 'merge')) output.merge = r.merge;

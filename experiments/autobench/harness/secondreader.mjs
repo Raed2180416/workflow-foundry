@@ -29,9 +29,11 @@
 //                 (the items with their quotes, what already changed, do not redo), the official user message, REVIEW.md
 //                 and RECORDS.md in the working directory, a CLI step guard at the remaining responses.
 // Every model call counts toward the 50 responses and every world step (code or session) toward the bridge's 49; the
-// per-task audit is A1-C's (codeowned.mjs auditPipeline). An environment fault in any node stops the pipeline and is the
-// task's session error (the runner treats the task as not run). Nothing here reads the task's name, the prepared task
-// files, the initial-world dump, assertions, grades or host directories.
+// per-task audit is A1-C's (codeowned.mjs auditPipeline). An environment fault in any node stops the pipeline; in the pre-read
+// or the act session it is the task's session error (the runner treats the task as not run, as for A0), after the act
+// session the world is graded as it stands (codeowned.mjs pipelineStop). A dev-only probe: run.mjs never runs it on the
+// test split (DEV_ONLY). Nothing here reads the task's name, the prepared task files, the initial-world dump, assertions,
+// grades or host directories.
 import { closeSync, constants as fsc, copyFileSync, existsSync, fstatSync, lstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,7 +43,7 @@ import { DATE_NOTE, REPO, adapterText, sha256 } from '../lib.mjs';
 import { MUTATING, auditSession, readStream } from '../accounting.mjs';
 import { ENV_FAULTS } from '../../lib/runner.mjs';
 import { corpusPin, localImports, writeCliGuard } from './foundry.mjs';
-import { auditPipeline } from './codeowned.mjs';
+import { auditPipeline, pipelineStop } from './codeowned.mjs';
 import { bridgeClient } from './bridge-client.mjs';
 import { ENUM_PLAN, buildInventory, compactRecord, renderInventory } from './inventory.mjs';
 import { copyLiteral, parseJsonReply, sourceMap } from './ledger.mjs';
@@ -65,11 +67,13 @@ export const KNOWLEDGE = Object.freeze([
   'the official system prompt and the api tool catalog, as every A0 session receives them (no task-specific content)',
 ]);
 
+/** A0+SR is a development probe, not an arm declared for the test run (PREREG-AB-v1 §3): run.mjs never lifts the dev-only
+ * split guard for it, whatever hash is given. */
+export const DEV_ONLY = true;
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-// The runner that loads this harness: run.mjs once the pipeline registry (PIPELINE_HARNESSES) is merged into it; until then
-// the wired copy run-sr-wip.mjs (kept apart so that paid runs launched with the current run.mjs resume unchanged).
-const MAIN_RUNNER = path.resolve(HERE, '../run.mjs'), WIP_RUNNER = path.resolve(HERE, '../run-sr-wip.mjs');
-const RUNNER = !readFileSync(MAIN_RUNNER, 'utf8').includes("secondreader: './harness/secondreader.mjs'") && existsSync(WIP_RUNNER) ? WIP_RUNNER : MAIN_RUNNER;
+// The runner that loads this harness (run.mjs; its pipeline registry PIPELINE_HARNESSES names this module).
+const RUNNER = path.resolve(HERE, '../run.mjs');
 
 // ---------------------------------------------------------------------------------------------------------------
 // Manifest and configuration (the same shape as A1-C's, so run.mjs pins and records it the same way)
@@ -463,7 +467,7 @@ export async function runPipeline(o) {
 
   const a0System = actSystemPrompt(o.official.system, o.catalog, maxSteps, { dateNote: o.dateNote });
   const stats = { preRead: null, act: null, postRead: null, reader: null, repair: null, skipped: null };
-  let actError = null;
+  let actError = null, acted = false, rethrow = null;
   try {
     // 0. PRE-READ (code), then hide its mailbox files from the session.
     const inv = await codeNode('pre-read', () => buildInventory({ request: o.official.user, client, maxSteps: P.preSteps, node: 'pre-read' }));
@@ -478,7 +482,8 @@ export async function runPipeline(o) {
       timeoutMs: Math.max(60_000, o.timeoutMs - P.actReserveMs), effort: o.effort ?? null, tools: o.tools ?? ['Bash'], task: { name: 'act', fork: 0 } }, null);
     actError = act?.error?.code ?? null;
     halt();
-    const actWindow = { lo: t0 / 1000 - 120, hi: Date.now() / 1000 + 120 };
+    acted = true;
+    const actWindow ={ lo: t0 / 1000 - 120, hi: Date.now() / 1000 + 120 };
     stats.act = { responses: responses, steps: stepsUsed() - hiddenSteps, error: actError };
 
     // 2. POST-READ (code) and the diff; the session's own calls from the mailbox.
@@ -535,19 +540,16 @@ export async function runPipeline(o) {
       }
     }
   } catch (e) {
-    if (e === HALT) {
-      actError = envFault;
-      stats.envFault = envFault;
-      log(`[secondreader] environment fault ${envFault}: pipeline stopped after node ${nodes.filter(Boolean).at(-1)?.name ?? '?'}`);
-    } else {
-      actError = envFault ?? actError ?? 'PIPELINE_ERROR';
-      stats.error = String(e?.stack ?? e).slice(0, 1500);
-      log(`[secondreader] pipeline error: ${String(e?.message ?? e).slice(0, 300)}`);
-    }
+    // Up to and including the act session a fault means "not run" (rerun on --resume, as for A0); after it the world is
+    // graded as it stands (codeowned.mjs pipelineStop).
+    ({ actError, rethrow } = pipelineStop({ e, halted: e === HALT, envFault, acted, actError, stats, log, tag: '[secondreader]', last: nodes.filter(Boolean).at(-1)?.name }));
   }
-  hostWrite('client-log.json', client.log);
-  for (let i = 0; i < nodes.length; i++) if (!nodes[i]) nodes[i] = { idx: i, name: 'unfinished', kind: 'code', responses: 0, steps: 0, started: 0, ended: 0 };
-  hostWrite('nodes.json', nodes);
+  try {
+    hostWrite('client-log.json', client.log);
+    for (let i = 0; i < nodes.length; i++) if (!nodes[i]) nodes[i] = { idx: i, name: 'unfinished', kind: 'code', responses: 0, steps: 0, started: 0, ended: 0 };
+    hostWrite('nodes.json', nodes);
+  } catch (e) { if (!rethrow) throw e; }
+  if (rethrow) throw rethrow;
   return { ok: !actError, error: actError ? { code: actError } : null, costUsd: unknown ? null : spent, costUnknown: unknown, costUpperUsd: upper, turns: responses, durationMs: Date.now() - t0, toolUses,
     nodes, clientLog: client.log, pipeline: { ...stats, responses, nodes: nodes.map(n => ({ name: n.name, kind: n.kind, model: n.model ?? null, responses: n.responses, steps: n.steps ?? null, cap: n.cap ?? null, costUsd: n.costUsd ?? null, error: n.error ?? null, parsed: n.parsed ?? null })) },
     label: `pipeline:${HARNESS_ID}` };

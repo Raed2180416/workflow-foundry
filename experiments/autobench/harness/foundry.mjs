@@ -178,7 +178,7 @@ export function cliVersion(binary = 'claude') {
 export function harnessConfig(o) {
   return { harness: HARNESS_ID, version: HARNESS_VERSION, model: o.model ?? null, effort: o.effort ?? null, budgetUsd: o.budgetUsd, timeoutMin: o.timeoutMin,
     maxSteps: o.maxSteps, cliMaxTurns: o.cliMaxTurns, tools: o.tools, det: o.det, k: o.k, concurrency: o.concurrency, dateNote: Boolean(o.dateNote),
-    executor: 'src/executors/claude-code.mjs runClaudeCode, DEFAULT_HIDDEN, DEFAULT_KEEP_RO + the step-guard directory', cli: o.cli ?? null,
+    executor: o.executor ?? 'src/executors/claude-code.mjs runClaudeCode, DEFAULT_HIDDEN, DEFAULT_KEEP_RO + the step-guard directory', cli: o.cli ?? null,
     childEnv: o.childEnv ?? Object.fromEntries(CHILD_ENV_ALLOWED.map(k => [k, typeof process.env[k] === 'string' ? process.env[k] : null])),
     policy: o.policy ?? policyEntries(o.model ?? null), corpus: o.corpus ?? corpusPin(), knowledge: o.knowledge ?? [...KNOWLEDGE] };
 }

@@ -8,9 +8,14 @@ Per trigger (RECURRING-DESIGN section 3.6):
                  *attribution view*: world_after in which Gmail and Slack messages and sheet rows are restricted to
                  the records created or changed during this trigger (so an earlier trigger's email never counts again);
   2. exact       our predicates on the effect ledger: the exact Slack texts as a multiset, the email recipient set
-                 (each recipient once, subject, body with the exact `$` format), the opportunity fields, the log row;
+                 (each recipient once, subject, body with the exact `$` format and no other tier or `$` amount), the
+                 opportunity fields (the note on its own line; bookkeeping fields only with values that agree with
+                 the closing), the log row;
   3. guardrails  `gmail_message_not_sent_to` and `slack_message_not_in_channel` assertions in the truth;
-  4. envelope    every write in the ledger must be an expected effect or harmless (mail read flags and labels).
+  4. envelope    every write in the ledger must be an expected effect or harmless (mail read flags and labels). A
+                 Slack post made and deleted again during the trigger is a write.
+Slack records are compared as multisets of whole records, never keyed by ts: AutomationBench stamps a post
+`<unix second>.<random 6 digits>`, so two posts can share a ts.
 Outcome: correct | abstained (only #automation-review posts, escalation not expected) | miss (no effects although
 some were expected) | wrong (anything else).
 
@@ -354,17 +359,29 @@ def names_near(world: dict, opp_id: str) -> list[str]:
     accts = {a["id"]: a for a in world["salesforce"]["accounts"]}
     a = accts.get(o.get("account_id"), {})
     p = accts.get(a.get("parent_id"), {})
-    return [o.get("name"), a.get("account_name"), p.get("account_name")]
+    return [o.get("name"), *str(o.get("name") or "").split(" - "), a.get("account_name"), p.get("account_name")]
+
+
+def names_tier(text: str, t: str) -> bool:
+    """Does the text name tier t? 'SMB' and 'Mid-Market' are tier labels wherever they stand (case-sensitive, whole
+    word). Enterprise, Strategic, Partner and Growth are also ordinary words ('Strategic win for the team'), so they
+    count only within three words of the word 'tier' ('Tier: Strategic', 'Strategic tier', 'tier Enterprise per the
+    sheet')."""
+    w = _WORD.format(re.escape(t))
+    if t in ("SMB", "Mid-Market"):
+        return re.search(w, text) is not None
+    near = r"(?:[\w-]+\W{1,4}){0,3}?"
+    return re.search(r"(?i:\btier\b)\W{1,4}" + near + w + "|" + w + r"\W{1,4}" + near + r"(?i:tier\b)", text) is not None
 
 
 def body_extras(body: str, c: dict, names: list) -> list[tuple]:
-    """Policy step 8: the body names no other tier and no other `$` amount. Quoted record names are removed first,
-    so a deal called '... - Enterprise Platform' does not count as naming the Enterprise tier. Tier labels match
-    case-sensitively as whole words, so ordinary prose ('enterprise customers', 'growth') is not read as a tier."""
+    """Policy step 8: the body names no other tier and no other `$` amount. Quoted record names (the opportunity, its
+    parts, its account and parent, the envelope's typed deal name) are removed first, so a deal called
+    '... - Enterprise Platform' does not count as naming the Enterprise tier."""
     text = body or ""
-    for n in sorted({x for x in names if x and x.strip()}, key=len, reverse=True):
-        text = re.sub(re.escape(n.strip()), " ", text, flags=re.I)
-    out = [("other-tier", t) for t in TIER_WORDS if t != c["tier"] and re.search(_WORD.format(re.escape(t)), text)]
+    for n in sorted({x.strip() for x in names if x and x.strip()}, key=len, reverse=True):
+        text = re.sub(re.escape(n), " ", text, flags=re.I)
+    out = [("other-tier", t) for t in TIER_WORDS if t != c["tier"] and names_tier(text, t)]
     out += [("other-amount", x) for x in re.findall(r"\$\s?\d[\d,]*(?:\.\d+)?", text) if n_int(x.replace(" ", "")) != c["usd"]]
     return out
 

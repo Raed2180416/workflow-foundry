@@ -10,7 +10,7 @@
  "harness": {
   "id": "codeowned",
   "version": "a1c-v1",
-  "manifestSha256": "eea17321f11d5fc7cefcb586cb828972cab42d0b5942d3710385ca170a0d4940",
+  "manifestSha256": "57c3d282f203dc77935fa6f012f24d884ffeaa8c3b0e73ad7b26fe9fabf5c92a",
   "frozenHashGiven": false,
   "nodeModels": {
    "ledger": null,
@@ -34,7 +34,8 @@
    "nodeBudgetShare": 0.1,
    "reserveShare": 0.25,
    "pcmap": true,
-   "parallelLedgers": true
+   "parallelLedgers": true,
+   "minCheckerMs": 45000
   },
   "extraModelCalls": 18
  },
@@ -155,6 +156,7 @@
   "sessions": 6,
   "skipped": 0
  },
+ "launchHistory": [],
  "envFaults": {
   "records": 0,
   "tasks": 0,
@@ -169,10 +171,10 @@
   "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
   "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
   "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
-  "runnerSha256": "e46bf1d89692f50568410903c7e5a4f1f009fa910637ed84c5f1a8e608d0057b",
+  "runnerSha256": "0709e4ffbe6494a99580532c8c48d21ebfdcad1168b58436acd1916264e31a82",
   "policyHash": null,
   "policyVersion": null,
-  "policyFileSha256": "3364011cae3741fb4409386d16cfa2439aaa340181382ce1694a8f7778fd3793",
+  "policyFileSha256": "c5b31ae3eb121b9aed70add285ac9124eeea6e46390853af5456095b63a93ac8",
   "node": "v24.21.0",
   "cli": null,
   "childEnv": {
@@ -183,8 +185,8 @@
    "DISABLE_AUTOUPDATER": "1"
   },
   "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
-  "harnessManifestSha256": "eea17321f11d5fc7cefcb586cb828972cab42d0b5942d3710385ca170a0d4940"
+  "harnessManifestSha256": "57c3d282f203dc77935fa6f012f24d884ffeaa8c3b0e73ad7b26fe9fabf5c92a"
  },
  "live": "/var/tmp/foundry-work/autobench/a1c-smoke-scripted-11",
- "finishedAt": "2026-10-15T11:22:09.606Z"
+ "finishedAt": "2026-10-21T11:43:36.573Z"
 }

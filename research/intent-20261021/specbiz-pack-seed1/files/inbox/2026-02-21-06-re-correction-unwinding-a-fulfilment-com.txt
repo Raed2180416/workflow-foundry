@@ -1,0 +1,8 @@
+From: Mara Hollin <mara@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-02-21 14:09 +01:00
+Subject: Re: Correction: unwinding a fulfilment (compensation)
+
++1. I'll fix the wiki page after go-live.
+
+Mara

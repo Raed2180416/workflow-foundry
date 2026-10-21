@@ -11,7 +11,7 @@ import path from 'node:path';
 import { REPO, VENV_PY, adapterText, listTasks, readJson } from '../lib.mjs';
 import { DEFAULTS, TEST_RUN_TOKEN, runTasks } from '../run.mjs';
 import { auditSession, commandFlags, sessionResponses, worldUsage } from '../accounting.mjs';
-import { LEDGER_FILE, SECTION_BEGIN, SECTION_END, collectLedger, harnessConfig, harnessManifest, harnessSection, harnessSystemPrompt, ledgerStats, manifestFiles, policyEntries, writeCliGuard } from '../harness/foundry.mjs';
+import { LEDGER_FILE, SECTION_BEGIN, SECTION_END, collectLedger, harnessConfig, harnessManifest, harnessSection, harnessSystemPrompt, ledgerStats, manifestFiles, policyEntries, writeCliGuard, cliVersion } from '../harness/foundry.mjs';
 import { scriptedHarnessRunner } from '../harness/scripted-session.mjs';
 import { procedureScript } from '../harness/smoke.mjs';
 import { runClaudeCode, sandboxAvailable } from '../../../src/executors/claude-code.mjs';
@@ -217,10 +217,14 @@ test('A1 refuses test-split tasks without the frozen harness hash, a wrong hash,
   await assert.rejects(runTasks({ ...base, tasks: [PHONE_TASK], k: 2 }), /forked rehearsal/);
   await assert.rejects(runTasks({ ...base, tasks: [PHONE_TASK], cliMaxTurns: 50 }), /cli-max-turns/);
   await assert.rejects(runTasks({ ...base, harness: 'other', tasks: [PHONE_TASK] }), /unknown harness/);
-  // The matching hash lifts the dev-only guard (shown on an unknown name, so no test task is touched): the run gets
-  // past the guards and fails later, in the official dataset build.
+  // AM-4: a scripted run is never exempt, even given the hash it recomputes (the hash check runs first, so /not dev-split/
+  // also shows the hash matched; shown on an unknown name, so no test task could be touched).
   const hash = harnessManifest(harnessConfig({ ...DEFAULTS, cliMaxTurns: DEFAULTS.maxSteps - 1, cli: null })).sha256;
-  await assert.rejects(runTasks({ ...base, tasks: ['sales.__not_a_task__'], harnessHash: hash }), e => !/not dev-split|hash mismatch/.test(e.message));
+  await assert.rejects(runTasks({ ...base, tasks: ['sales.__not_a_task__'], harnessHash: hash }), /not dev-split tasks/);
+  // A model run given the matching hash gets past the guards and fails later, in the official dataset build (no session).
+  const model = 'claude-haiku-5-5', cli = cliVersion();
+  const modelHash = harnessManifest(harnessConfig({ ...DEFAULTS, model, cliMaxTurns: DEFAULTS.maxSteps - 1, cli })).sha256;
+  await assert.rejects(runTasks({ ...base, runner: undefined, model, capUsd: 1, tasks: ['sales.__not_a_task__'], harnessHash: modelHash }), e => !/not dev-split|hash mismatch/.test(e.message));
 });
 
 // ---------------------------------------------------------------------------------------------------------------

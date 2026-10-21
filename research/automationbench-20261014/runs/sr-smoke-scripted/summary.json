@@ -10,7 +10,7 @@
  "harness": {
   "id": "secondreader",
   "version": "sr-v1",
-  "manifestSha256": "f71bec8698b78b8af9c6d3ea0fe511c41b3e52c2e4167e214fda7c2cafa79ec0",
+  "manifestSha256": "e27cff71ce8e242bbfe343859305709ded2534dd13e487312af127a4a194c75d",
   "frozenHashGiven": false,
   "nodeModels": {
    "act": null,
@@ -171,10 +171,10 @@
   "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
   "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
   "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
-  "runnerSha256": "48b3023761f43597870b6226bb31b33f1b1c4ec0c463109335c44928e4ddbcdb",
+  "runnerSha256": "f0ab70554a509cdaa9fba2660f08ed62525e88621d14a2d569bd2cc14fb97423",
   "policyHash": null,
   "policyVersion": null,
-  "policyFileSha256": "3364011cae3741fb4409386d16cfa2439aaa340181382ce1694a8f7778fd3793",
+  "policyFileSha256": "c5b31ae3eb121b9aed70add285ac9124eeea6e46390853af5456095b63a93ac8",
   "node": "v24.21.0",
   "cli": null,
   "childEnv": {
@@ -185,8 +185,8 @@
    "DISABLE_AUTOUPDATER": "1"
   },
   "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
-  "harnessManifestSha256": "f71bec8698b78b8af9c6d3ea0fe511c41b3e52c2e4167e214fda7c2cafa79ec0"
+  "harnessManifestSha256": "e27cff71ce8e242bbfe343859305709ded2534dd13e487312af127a4a194c75d"
  },
  "live": "/var/tmp/foundry-work/autobench/sr-smoke-scripted",
- "finishedAt": "2026-10-15T12:58:42.325Z"
+ "finishedAt": "2026-10-21T11:45:05.147Z"
 }

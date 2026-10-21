@@ -1,0 +1,13 @@
+From: Mara Hollin <mara@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-02-26 08:27 +01:00
+Subject: Re: when an order starts processing
+
+Hi all,
+
+Just so it's written down somewhere:
+
+An order with nothing unavailable is ready as soon as it is cleared. When an order becomes ready at time t, set the order to processing and every available fulfilment to processing, within 60 minutes of t. Never touch an order (a status, a reservation) before it has been booked in the order system.
+
+Thanks,
+Mara

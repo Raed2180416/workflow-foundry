@@ -88,7 +88,7 @@ $PY -I -m pytest -p no:cacheprovider -q $F/tests
 
 The harness accepts only seeds 601–650 (practice and dev). Held-out seeds (8801+) are refused and were never generated.
 
-## Results ($0, development evidence; 2026-10-15)
+## Results ($0, development evidence; 2026-10-15, re-run 2026-10-21 after the change in [Changes](#changes))
 
 Dev seeds 610–614 (610, 612, 614 at d2; 611, 613 at d3): 250 triggers, 46/55/47/55/47 per week.
 
@@ -108,10 +108,12 @@ Dev seeds 610–614 (610, 612, 614 at d2; 611, 613 at d3): 250 triggers, 46/55/4
 | `keepproduct` (obeys the manager: keeps Product Updates) | 174/250 (0.696) | 0/5 | 0.732 |
 | `noreprocess` (ignores "system error, reprocess") | 239/250 (0.956) | 1/5 | 0.984 |
 | `noskip` (ignores RESOLVED / pre-migration / retracted) | 233/250 (0.932) | 1/5 | 0.968 |
+| `effectivenow` (reads the Policy Log ignoring Effective dates) | 229/250 (0.916) | 0/5 | 0.956 |
 
 Every control fails the bar the reference meets (every trigger, every week clean). The narrow one-defect variants
 (`nowindow`, `confirmall`, `anyauthor`, `noreprocess`, `noskip`) only bite where their clause applies, so some of their
 weeks are clean; each fails on its own clause's triggers (tests check the trap labels of the failing rows).
+`effectivenow` fails every week: 0/5 clean here, and 0/50 clean weeks (2,314/2,513 triggers) on seeds 601–650.
 
 Other gates on the same seeds:
 - **Determinism and round trip:** two generations give identical hashes, and `world0` and every `world_t` validate as
@@ -120,7 +122,7 @@ Other gates on the same seeds:
   contains truth vocabulary; `world0` holds no record a delta creates; the reference imports only the standard library
   (`__future__`, `base64`, `datetime`, `re`, `urllib`).
 - **Solvability, wider:** the reference passes 2,513/2,513 triggers with 50/50 clean weeks on seeds 601–650 (practice,
-  dev and rehearsal blocks). Generator and reference therefore agree on every effect of every one of those triggers.
+  dev and rehearsal blocks; re-run 2026-10-21, at most 129 tool calls in one trigger). Generator and reference therefore agree on every effect of every one of those triggers.
 - **Non-triviality:** `null` passes exactly the no-op share (0.092); the 33-line `naive` heuristic scores 0.555 at d3
   (gate: below 0.60).
 - **Oracle mutation score:** 4,088/4,088 = 1.000 over 27 operators on the reference's correct worlds (an archive undone,
@@ -131,11 +133,12 @@ Other gates on the same seeds:
 - **Oracle specificity:** a policy-neutral variant of the reference (another confirmation wording, display-name
   recipients, archive by `PATCH status=archived`, upper-case log values, lists reversed and comma-separated) passes
   250/250: no false rejects.
-- **Trap coverage** (triggers carrying each kind, five weeks): T-lookalike 27, T-stale 14, T-note 47, T-authority 13,
-  T-format 20, T-repeat 28; every kind ≥ 5. Share of event triggers with a trap: d2 0.44–0.48, d3 0.76–0.78 on these
-  seeds; over seeds 601–650, d2 0.43–0.51 (mean 0.46) and d3 0.72–0.80 (mean 0.76). Weeks have 42–49 triggers at d2
+- **Trap coverage** (triggers carrying each kind, five weeks): T-lookalike 27, T-stale 19 (11 of them
+  `future-parameter`), T-note 47, T-authority 13, T-format 20, T-repeat 28; every kind ≥ 5. Share of event triggers
+  with a trap: d2 0.44–0.55, d3 0.76–0.78 on these seeds; over seeds 601–650, d2 0.43–0.55 (mean 0.48) and d3
+  0.72–0.80 (mean 0.76). Weeks have 42–49 triggers at d2
   and 52–59 at d3.
-- **Tests:** `tests/test_suppression.py`, 44 passed in 228 s (pytest 9.0.2 in the pinned venv, Python 3.13).
+- **Tests:** `tests/test_suppression.py`, 47 passed in 147 s (pytest 9.0.2 in the pinned venv, Python 3.13).
 
 ## What the oracle checks
 
@@ -180,6 +183,35 @@ AutomationBench assertions (`mailchimp_subscriber_is_archived`, `mailchimp_subsc
 - **Packaging** follows the sibling families (`experiments/autobench/families/<id>/`, self-contained) rather than the
   design's `experiments/autobench/abr/` layout; no shared piece was needed, so nothing was written under `_shared/`.
 
+## Changes
+
+- 2026-10-21, re-verification and one generator fix ($0, no model). Before the fix, the 44 tests passed again and
+  `harness.py run|controls|gates --seeds 610-614` reproduced every number above. An ad-hoc probe (not committed) then
+  tried nine more one-rule mistakes on 610–614. Eight failed on the triggers where their rule applies:
+  - a 31-day window for both 30-day rules: 242/250;
+  - the soft count without "this one included": 199/250;
+  - no Bounce Log row when a soft bounce reaches the threshold: 216/250;
+  - the daily count taken before the holds are released: 239/250;
+  - no #automation-review post when the policy cannot decide: 244/250;
+  - confirmations cc'd to marketing-ops@ (the old Q4 email): 181/250;
+  - no log row for `Not subscribed`: 233/250;
+  - Premium-tier escalation on unsubscribe requests: 236/250.
+
+  The ninth, reading the Policy Log **without the Effective date** (POLICY.md section 8, "on or before today"), passed
+  250/250 with 5/5 clean weeks, and 47/50 weeks were clean on seeds 601–650: the d2 weeks have no amendments, and the
+  d3 amendment usually takes effect before any soft bounce whose outcome it would change. The clause was in the
+  policy but the streams never tested it. The fix:
+  - `gen.py plan_future_row`: at d2 and d3, `world0`'s Policy Log gets one more row, approved by Compliance, effective
+    on a Monday one to five weeks after the week. It is drawn from its own seeded stream (`...:future-row`), so every
+    other draw, the truth and the reference's effects are unchanged. The generator keeps the candidate (threshold 2
+    or 4, window 14 or 60) that changes the fewest, but at least one, event outcomes for a solver that ignores the
+    Effective date, and labels those triggers `future-parameter` (T-stale). `meta.json` reports it as `future_row`.
+  - `controls.py` gets `effectivenow`, and the tests check that it fails every dev week on a `future-parameter` trigger.
+  - The reference, the oracle and POLICY.md are unchanged. Every earlier control number is unchanged; the trap shares
+    rose slightly (d2 mean 0.46 → 0.48).
+
+  The generator stays at version 1.0.0, because no stream from it has been used for any label.
+
 ## Not done yet
 
 - The stream runner (`stream.mjs`), the bridge commands (`abr-gen`, `abr-apply`, `abr-grade`) and the arms (§3.7–3.8)
@@ -190,3 +222,5 @@ AutomationBench assertions (`mailchimp_subscriber_is_archived`, `mailchimp_subsc
 - Effect masking for ids and timestamps from the bridge's `--det` shim is not needed in process. The oracle matches
   records by id (rows, messages) or by (list, address) (members) and compares contents.
 - The ledger has no seed entries yet; no labelled stream was run.
+- Still not exercised: a d3 soft bounce between the authorized amendment's arrival and its later Effective date (a
+  solver that applies an amendment from the moment it arrives is caught only when such a trigger happens to occur).

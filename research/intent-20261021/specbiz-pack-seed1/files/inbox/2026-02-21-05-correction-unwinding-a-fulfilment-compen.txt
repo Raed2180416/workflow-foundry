@@ -1,0 +1,13 @@
+From: Joost Bakker <joost@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-02-21 17:27 +01:00
+Subject: Correction: unwinding a fulfilment (compensation)
+
+Hi all,
+
+The SOP still says: "To unwind a fulfilment: release the stock, refund the customer, then cancel the courier booking."
+That is out of date. From go-live it is like this:
+
+Unwinding a fulfilment undoes what actually went through, newest first: cancel its shipment (only if one was booked and the carrier did not report collectionFailed), then refund its charge (the full amountMinor, only if the charge went through), then release each reserved item (only items whose reservation went through; among the items of one fulfilment any order is fine). A step went through if its result was ok, or if the outcome was unknown and status(key) says committed. Never undo a step that did not go through, and never undo anything twice.
+
+Joost

@@ -1,0 +1,13 @@
+From: Mara Hollin <mara@hollin-shop.example>
+To: team@hollin-shop.example
+Date: 2026-02-22 17:22 +01:00
+Subject: Re: a cancel after a counted amend
+
+Hi all,
+
+Following up on Thursday's call:
+
+"Later actions change nothing" is about the waiting period only. Once an amend has counted, the order is ready and in processing, so a cancel that comes after it is handled exactly like a cancel during processing.
+
+Thanks,
+Mara
