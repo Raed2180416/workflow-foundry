@@ -1,0 +1,1031 @@
+{
+ "subject": "program:research/composition-20261021/runs/cht-e8-2/program",
+ "date": "2026-10-21",
+ "evidence": "development (dev worlds); $0",
+ "worlds": [
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60
+  }
+ ],
+ "results": [
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "none",
+   "status": "complete",
+   "ms": 3356,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 40,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 40,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "restart",
+   "status": "complete",
+   "ms": 17635,
+   "injected": 65,
+   "sameJournalAsFaultFree": true,
+   "oracle": {
+    "completed": 43,
+    "passed": 40,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 40,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "crash",
+   "status": "complete",
+   "ms": 17739,
+   "injected": 64,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 39,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3,
+     "L2:outside-allowed": 1
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 39,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "42/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "42/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "dup-delayed",
+   "status": "complete",
+   "ms": 4201,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 40,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 40,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "41/43",
+     "customer-action": "42/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "dup-same",
+   "status": "complete",
+   "ms": 4429,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 43,
+    "passed": 32,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3,
+     "L2:outside-allowed": 8
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 30,
+    "byCapability": {
+     "intake": "42/43",
+     "fraud": "43/43",
+     "capture": "41/43",
+     "refund": "43/43",
+     "reservation": "42/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "41/43",
+     "tracking": "33/43",
+     "customer-action": "34/43",
+     "cancellation": "43/43",
+     "notifications": "35/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "fault": "downstream",
+   "status": "complete",
+   "ms": 2540,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 42,
+    "passed": 39,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 3
+    }
+   },
+   "capabilities": {
+    "completed": 42,
+    "passed": 39,
+    "byCapability": {
+     "intake": "41/42",
+     "fraud": "42/42",
+     "capture": "42/42",
+     "refund": "42/42",
+     "reservation": "41/42",
+     "shipment": "42/42",
+     "compensation": "42/42",
+     "failure": "42/42",
+     "tracking": "40/42",
+     "customer-action": "41/42",
+     "cancellation": "42/42",
+     "notifications": "42/42",
+     "exactly-once": "42/42"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 24,
+    "complete": 24,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "none",
+   "status": "complete",
+   "ms": 5078,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 39,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 5
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 38,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "40/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "40/43",
+     "customer-action": "41/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "restart",
+   "status": "complete",
+   "ms": 20755,
+   "injected": 83,
+   "sameJournalAsFaultFree": true,
+   "oracle": {
+    "completed": 44,
+    "passed": 39,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 5
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 38,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "40/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "40/43",
+     "customer-action": "41/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "crash",
+   "status": "complete",
+   "ms": 19921,
+   "injected": 68,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 39,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 5
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 37,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "42/43",
+     "refund": "43/43",
+     "reservation": "40/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "42/43",
+     "tracking": "40/43",
+     "customer-action": "41/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "dup-delayed",
+   "status": "complete",
+   "ms": 5328,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 39,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 5
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 38,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "43/43",
+     "refund": "43/43",
+     "reservation": "40/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "43/43",
+     "tracking": "40/43",
+     "customer-action": "41/43",
+     "cancellation": "43/43",
+     "notifications": "43/43",
+     "exactly-once": "43/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "dup-same",
+   "status": "complete",
+   "ms": 5681,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 44,
+    "passed": 35,
+    "critical": 2,
+    "codes": {
+     "L3:missed": 5,
+     "L2:outside-allowed": 3,
+     "L2:key-split": 1
+    }
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 33,
+    "byCapability": {
+     "intake": "41/43",
+     "fraud": "43/43",
+     "capture": "42/43",
+     "refund": "43/43",
+     "reservation": "40/43",
+     "shipment": "43/43",
+     "compensation": "43/43",
+     "failure": "42/43",
+     "tracking": "37/43",
+     "customer-action": "38/43",
+     "cancellation": "43/43",
+     "notifications": "39/43",
+     "exactly-once": "42/43"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 1,
+    "money": 0,
+    "examples": [
+     {
+      "case": "o0035",
+      "id": "notify:ORD-1162-0035:cancel-refused",
+      "n": 2
+     }
+    ]
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "fault": "downstream",
+   "status": "complete",
+   "ms": 3571,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 46,
+    "passed": 41,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 5
+    }
+   },
+   "capabilities": {
+    "completed": 45,
+    "passed": 40,
+    "byCapability": {
+     "intake": "43/45",
+     "fraud": "45/45",
+     "capture": "45/45",
+     "refund": "45/45",
+     "reservation": "42/45",
+     "shipment": "45/45",
+     "compensation": "45/45",
+     "failure": "45/45",
+     "tracking": "42/45",
+     "customer-action": "43/45",
+     "cancellation": "45/45",
+     "notifications": "45/45",
+     "exactly-once": "45/45"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 29,
+    "complete": 29,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "none",
+   "status": "complete",
+   "ms": 6473,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 60,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 59,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "67/67",
+     "refund": "67/67",
+     "reservation": "63/67",
+     "shipment": "67/67",
+     "compensation": "67/67",
+     "failure": "67/67",
+     "tracking": "62/67",
+     "customer-action": "64/67",
+     "cancellation": "67/67",
+     "notifications": "67/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 19,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "restart",
+   "status": "complete",
+   "ms": 31328,
+   "injected": 119,
+   "sameJournalAsFaultFree": true,
+   "oracle": {
+    "completed": 69,
+    "passed": 60,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 59,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "67/67",
+     "refund": "67/67",
+     "reservation": "63/67",
+     "shipment": "67/67",
+     "compensation": "67/67",
+     "failure": "67/67",
+     "tracking": "62/67",
+     "customer-action": "64/67",
+     "cancellation": "67/67",
+     "notifications": "67/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 19,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "crash",
+   "status": "complete",
+   "ms": 29255,
+   "injected": 105,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 58,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8,
+     "L2:outside-allowed": 2,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 56,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "65/67",
+     "refund": "67/67",
+     "reservation": "63/67",
+     "shipment": "67/67",
+     "compensation": "67/67",
+     "failure": "64/67",
+     "tracking": "62/67",
+     "customer-action": "64/67",
+     "cancellation": "67/67",
+     "notifications": "67/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 19,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "dup-delayed",
+   "status": "complete",
+   "ms": 7785,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 60,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 59,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "67/67",
+     "refund": "67/67",
+     "reservation": "63/67",
+     "shipment": "67/67",
+     "compensation": "67/67",
+     "failure": "67/67",
+     "tracking": "62/67",
+     "customer-action": "64/67",
+     "cancellation": "67/67",
+     "notifications": "67/67",
+     "exactly-once": "67/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 19,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "dup-same",
+   "status": "complete",
+   "ms": 8185,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 69,
+    "passed": 46,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 9,
+     "L2:outside-allowed": 10,
+     "L2:key-split": 3,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 39,
+    "byCapability": {
+     "intake": "64/67",
+     "fraud": "67/67",
+     "capture": "62/67",
+     "refund": "67/67",
+     "reservation": "63/67",
+     "shipment": "67/67",
+     "compensation": "67/67",
+     "failure": "61/67",
+     "tracking": "51/67",
+     "customer-action": "54/67",
+     "cancellation": "67/67",
+     "notifications": "54/67",
+     "exactly-once": "64/67"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 3,
+    "money": 0,
+    "examples": [
+     {
+      "case": "o0035",
+      "id": "notify:ORD-1164-0035:cancel-refused",
+      "n": 2
+     },
+     {
+      "case": "o0036",
+      "id": "notify:ORD-1164-0036:cancel-refused",
+      "n": 2
+     },
+     {
+      "case": "o0043",
+      "id": "notify:ORD-1164-0043:cancel-refused",
+      "n": 2
+     }
+    ]
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 19,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "fault": "downstream",
+   "status": "complete",
+   "ms": 5051,
+   "injected": 0,
+   "sameJournalAsFaultFree": null,
+   "oracle": {
+    "completed": 70,
+    "passed": 61,
+    "critical": 0,
+    "codes": {
+     "L3:missed": 8,
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 68,
+    "passed": 60,
+    "byCapability": {
+     "intake": "65/68",
+     "fraud": "68/68",
+     "capture": "68/68",
+     "refund": "68/68",
+     "reservation": "64/68",
+     "shipment": "68/68",
+     "compensation": "68/68",
+     "failure": "68/68",
+     "tracking": "63/68",
+     "customer-action": "65/68",
+     "cancellation": "68/68",
+     "notifications": "68/68",
+     "exactly-once": "68/68"
+    }
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "examples": []
+   },
+   "compensation": {
+    "due": 39,
+    "complete": 39,
+    "incomplete": []
+   },
+   "interface": {
+    "violations": 0,
+    "byCode": {},
+    "dropped": 0,
+    "integrity": 0
+   },
+   "armErrors": 0
+  }
+ ]
+}
