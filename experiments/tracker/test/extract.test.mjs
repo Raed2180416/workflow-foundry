@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { loadPolicy } from '../../../src/models/policy.mjs';
 import { ModelPort, checkPortableSchema } from '../../../src/models/port.mjs';
@@ -13,9 +12,10 @@ import { ScriptedProvider } from '../../../src/models/providers/scripted.mjs';
 import { subsetPolicy } from '../../lib/models.mjs';
 import { extractLedger, extractPrompt, EXTRACT_SCHEMA, budgetedPort, BudgetError, defaultModels, checkModelId } from '../extract.mjs';
 import { WRITE_SCHEMA } from '../checks.mjs';
+import { frozenSpecE } from '../eval-e8.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const SPEC = readFileSync(path.join(here, '../../../beds/ebed/e8/spec/SPEC-E.md'), 'utf8');
+// The frozen SPEC-E (git 48535bb): the line numbers below are that text's (the working-tree file has moved).
+const SPEC = frozenSpecE();
 const { writer: HAIKU, escalate: SONNET } = defaultModels();
 const portWith = script => {
   const provider = new ScriptedProvider(script);
