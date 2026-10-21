@@ -30,6 +30,13 @@ PREDICTION.md §1. Practice worlds for the W-C smoke loop: 1235–1237 (d2, d3, 
 | A-F (Sonnet) | frontier agent alone per tick, same inputs, sized world | `node experiments/constitution/run-agents.mjs --arm A-F --model claude-sonnet-5-5 --label af-sonnet-s12 --cap 20` | $20 |
 | A-F (Opus) | as above | `node experiments/constitution/run-agents.mjs --arm A-F --model claude-opus-5-5 --label af-opus-s12 --cap 45` | $45 |
 
+**Engine version: v1** (the version every comparison row ran on: B1L-H, B1N-H, agent-H, agent-H + V, COMP-1). The held
+engine v2 series changes the paid arms' session runner (`src/executors/claude-code.mjs`, `src/models/policy.mjs`,
+`src/models/providers/claude-cli.mjs`, `policy/models.json`; patches 0002, 0004, 0007, 0012) and adds nothing these arms
+use (its principal model is for the engine's human nodes; OT-0's arms run on the E8 host). If the four arms cannot all
+run before v2 merges, run all of them on v2 and re-freeze; never split them across versions (§6 lists the runtime files,
+so `preregCheck()` refuses a run on changed files).
+
 Order: W-C ×3, then A-HV, then A-F Sonnet; A-F Opus only if the total spent is under $50 and the owner agrees. A run
 stopped by an environment fault (rate limit, session limit) resumes from its last commit with the same command (the host
 journal lives in `/var/tmp/foundry-work/ot0-arms/<label>/`); a run hit by a fault is reported as contaminated from that
@@ -84,7 +91,7 @@ f6cd4fbd61809373f43db084176d93efd71896fb2750a87dfca809569705302c  experiments/co
 e8c9164420189c4cbe0c6951bedd7cdc52a6d55917bbe029c705e38e9bfe4b54  experiments/constitution/shield.mjs
 16d5d097bbf6ebe2415f7898b4a82a76ba618fa9ecac155e2b248221b263165e  experiments/constitution/guard.mjs
 b76f1bbbf660d37212de30cfcebceebc07a74b2ba892a5876ff6541c09b997d2  experiments/constitution/observer.mjs
-e220db40630aacc95d9d5e7612cf66484159d8787b9ced2efb237a9d40d8e6d8  experiments/constitution/auditor.mjs
+c6910cc2af6185eb0f579b3a234fb2bc71c50244b8bec06102f5eeceaf7dc32d  experiments/constitution/auditor.mjs
 9948fe7e83342907f028a48ad6b5cf475027f9e2a2e8738f9b865fee994ddc72  experiments/constitution/arms.mjs
 78f703e40377866beb11e170ed0bf93f9466f55e298eac2de2749bcc82adf04a  experiments/constitution/run.mjs
 99355734280a79591e7f6d01af3867c5fbf601e40abfd1902590d54a4c9d7904  experiments/constitution/build-wc.mjs
@@ -107,4 +114,8 @@ bf4a68d6443e4380690911807c11c3b68c9c38f8c6f96c6b31eb3fbac0f78941  experiments/eb
 af47dc5e4596d0e7ee69d31c4b8d9f123d3f2761b7b2f2f4e11639aa3774fb23  research/enterprise-20261014/runs/b1nh-e8-2/solver.mjs
 3858273092b7c3f0ecd05190d38b9c83e1bb2d97841e3da0cd5acc7a72e55bbf  research/enterprise-20261014/runs/b1nh-e8-3/solver.mjs
 cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69  policy/models.json
+f363c80418bf9bb91e6e8d42adc1345eba24274a56f6d870759ea2eebbe35afc  src/executors/claude-code.mjs
+327aed2a5e4dbcff5a1bac90628360de9c15e85acd052c5975b242a5d89e8c2b  src/executors/openai-chat.mjs
+95390dec17adbfa0c68dc0e05314e7a95192e79e303b006412a1bedb4500b572  src/models/policy.mjs
+a934bb2e261f7eeeba7c5ae507c9d0ed89d5bd40d5d414a25030d30664e1d247  src/models/providers/claude-cli.mjs
 ```
