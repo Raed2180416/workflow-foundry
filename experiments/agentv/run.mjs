@@ -35,6 +35,7 @@ import { StageBudget, loadSpend, meterOf } from '../need-router/label-run.mjs';
 import { messageUsageOf } from '../c0/construct.mjs';
 import { sandboxAvailable } from '../../src/executors/claude-code.mjs';
 import { agentVArm, ENV_FAULT_CODES, problemClass } from './arm.mjs';
+import { buildMde, MIN_CASES_PER_BUILD } from '../lib/stats-builds.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(here, '..', '..');
@@ -45,14 +46,40 @@ export const AGENTH_JOURNAL = '/var/tmp/foundry-work/ebed-arms/agenth-e8-s12/jou
 export const EXPECTED_WORLDS = Object.freeze({ '1232/2/12': '56971c9b3aaa4886229ac81fd55dcc4f9d41640a7be06fae2651ba0b087f1bff' });
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
 
-/** The banner block of the preregistration (```prereg-banner … ```) and the file's sha256; throws when either is missing. */
+/**
+ * The banner block of the preregistration (```prereg-banner … ```) and the file's sha256; throws when either is missing.
+ * Build-level inference (register B7; research/PREREGISTRATION-TEMPLATE.md §4): a banner whose `UNIT` line says `build`
+ * must also give `K` (builds per arm), `CASES` (graded cases per build), `SD_RATES` (measured SD of build pass rates at
+ * that case count) or `SIGMA_B` (between-build SD), and `STOP` (the K schedule and stop rule); the returned `buildLevel`
+ * carries the MDE computed from them by experiments/lib/stats-builds.mjs, which the runner prints under the banner in
+ * place of trusting a case-level McNemar MDE. A banner without a UNIT line is a legacy case-unit banner (AGENTV-E8):
+ * accepted, and labelled so.
+ */
 export function preregBanner(file = PREREG_FILE) {
   if (!existsSync(file)) throw new Error(`no preregistration at ${file}: write it before any paid row (FIRST-CLASS-PROGRAMS §0.3)`);
   const text = readFileSync(file, 'utf8');
   const m = text.match(/```prereg-banner\n([\s\S]*?)\n```/);
   if (!m) throw new Error(`${file} has no prereg-banner block (MDE, prediction, refutation)`);
   for (const k of ['MDE', 'PREDICTION', 'REFUTED']) if (!m[1].includes(k)) throw new Error(`the prereg banner lacks ${k}`);
-  return { text: m[1], sha256: sha256(text) };
+  return { text: m[1], sha256: sha256(text), ...bannerUnit(m[1]) };
+}
+
+/** The unit fields of a prereg banner (see preregBanner). */
+export function bannerUnit(text) {
+  const field = k => text.match(new RegExp(`^${k}[ \\t]+(.+)$`, 'm'))?.[1]?.trim() ?? null;
+  const unit = field('UNIT');
+  if (!unit) return { unit: 'case (legacy banner: no UNIT line; no build-level inference declared)', buildLevel: null };
+  if (!/^build\b/i.test(unit)) return { unit, buildLevel: null };
+  const K = parseInt(field('K') ?? '', 10), cases = parseInt(field('CASES') ?? '', 10), stop = field('STOP');
+  const sdRates = parseFloat(field('SD_RATES') ?? ''), sigmaB = parseFloat(field('SIGMA_B') ?? '');
+  const missing = [!(K >= 2) && 'K (an integer >= 2)', !(cases > 0) && 'CASES', !(Number.isFinite(sdRates) || Number.isFinite(sigmaB)) && 'SD_RATES or SIGMA_B', !stop && 'STOP'].filter(Boolean);
+  if (missing.length) throw new Error(`the prereg banner declares UNIT build but lacks ${missing.join(', ')}`);
+  const r = buildMde({ K, m: cases, ...(Number.isFinite(sdRates) ? { sdRates } : { sigmaB }) });
+  const spread = Number.isFinite(sdRates) ? `sd of build rates ${sdRates}` : `between-build SD ${sigmaB} + binomial`;
+  const line = r.resolvable
+    ? `BUILD-LEVEL MDE (computed by experiments/lib/stats-builds.mjs): ${(100 * r.mde).toFixed(1)} points at K = ${K} per arm, ${cases} cases per build, ${spread}, alpha 0.05, power 0.8${r.casesBelowMinimum ? ` (below the template's ${MIN_CASES_PER_BUILD} cases per build)` : ''}`
+    : `BUILD-LEVEL: cannot resolve at K = ${K} per arm (the exact build-level permutation test never reaches p < 0.05); only intervals can be reported`;
+  return { unit: 'build', buildLevel: { K, cases, ...(Number.isFinite(sdRates) ? { sdRates } : { sigmaB }), stop, mde: r.mde, resolvable: r.resolvable, line } };
 }
 
 /**
@@ -247,7 +274,7 @@ async function main() {
   if (!dry && !sandboxAvailable()) throw new Error('no executor sandbox (user/mount/pid namespaces): refusing to start a paid run');
   const preregFile = arg('--prereg', PREREG_FILE);
   const banner = preregBanner(preregFile);
-  console.log(`AGENTV-E8 preregistration (sha256 ${banner.sha256.slice(0, 16)}…):\n${banner.text}\n`);
+  console.log(`AGENTV-E8 preregistration (sha256 ${banner.sha256.slice(0, 16)}…):\n${banner.text}\n${banner.buildLevel ? banner.buildLevel.line : `UNIT: ${banner.unit}`}\n`);
   const liveDir = path.join(LIVE_ROOT, label);
   const out = dry ? path.join(liveDir, 'result') : path.join(ROOT, 'research/enterprise-20261014/runs', label);
   if (existsSync(path.join(out, 'result.json'))) throw new Error(`${out}/result.json exists`);
