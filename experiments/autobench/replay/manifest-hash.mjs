@@ -19,6 +19,11 @@ const co = await import(pathToFileURL(path.join(root, 'experiments/autobench', r
 const { cliVersion } = await import(pathToFileURL(path.join(root, 'experiments/autobench/harness/foundry.mjs')).href);
 const nodeModels = a['node-models'] ? Object.fromEntries(a['node-models'].split(',').filter(Boolean).map(x => x.split('=').map(y => y.trim()))) : undefined;
 const remoteRoles = [...new Set(Object.values(nodeModels ?? {}).filter(m => /^mercury/.test(m)))].sort();
+// run.mjs's launch guard, mirrored (re-review 2026-10-21, B-1: this tool once printed a hash for an arm run.mjs refused
+// to launch): executor-model roles run only in the pipelines that checkout's run.mjs wires them into (EXECUTOR_PIPELINES;
+// a checkout that predates it, such as the a1c-v1 pin, wires the codeowned pipeline only).
+const wired = run.EXECUTOR_PIPELINES ?? [run.CODEOWNED];
+if (remoteRoles.length && !wired.includes(a.harness)) throw new Error(`${remoteRoles.join(', ')}: executor models are wired into ${wired.join(' and ')} only in ${root}; run.mjs would refuse this launch`);
 const opt = { model: 'claude-haiku-5-5', effort: null, budgetUsd: 0.75, timeoutMin: 20, maxSteps: 50, tools: ['Bash'], det: 'record', k: 1, concurrency: Number(a.concurrency ?? 3), dateNote: true, nodeModels };
 const sessionTokens = Number(a['session-tokens'] ?? 300000), callTokens = Number(a['call-tokens'] ?? 100000);
 const cfg = { ...opt, cli: cliVersion(), ...(remoteRoles.length ? { executor: `src/executors/claude-code.mjs runClaudeCode for claude-cli roles; src/executors/openai-chat.mjs runOpenAIChat for ${remoteRoles.join(', ')} roles (model nodes: one request, no tools, at most ${callTokens} tokens; per-task token pool ${sessionTokens})` } : {}) };

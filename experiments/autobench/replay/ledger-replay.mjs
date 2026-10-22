@@ -14,7 +14,12 @@
 //   - an environment fault (experiments/lib/runner.mjs ENV_FAULTS) is never scored: the task is recorded as a fault, no new
 //     task starts, the run exits 3, and `--resume` re-runs faulted and missing tasks (finished tasks and their spend are
 //     kept); a timeout counts as a reader that did not parse and is reported separately;
-//   - every call's served model is read back from its transcript and must be the requested model (L5).
+//   - every call's served model is read back from its transcript and must be the requested model (L5);
+//   - every row, a fault's and a capped task's included, records the spend its calls settled on the ledger (`settledUsd`,
+//     summed over attempts): a resumed run starts its ledger at the total settled by every earlier attempt, so `--cap`
+//     is a hard total across resumes (re-review 2026-10-21, minor 4).
+// The summary names its task count `taskCount` (never `tasks`: run directories' `tasks` lists are task names, which the
+// exposure scans read; re-review 2026-10-21, M-1).
 // Node working directories are named by task index, never by task name. The pre-send lint rule is evaluated on these
 // outputs by replay-gate.mjs --lint --from DIR. Model ids come only from the policy file.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -43,17 +48,21 @@ export function makeLedger(cap, { spent = 0, pollMs = 50 } = {}) {
   return l;
 }
 
-/** Wrap a raw call (name, system, prompt) -> {text, costUsd, error, models?} with the ledger: a call that cannot be
- * reserved returns {error: CAP} without running. */
+/** What the ledger books for a call: its reported cost, or its reservation when it reported none. */
+export const settledOf = (budgetUsd, cost) => (typeof cost === 'number' && Number.isFinite(cost) ? cost : budgetUsd);
+/** Wrap a raw call (name, system, prompt) -> {text, costUsd, error, models?, settledUsd} with the ledger: a call that
+ * cannot be reserved returns {error: CAP} without running; `settledUsd` is what the ledger booked for it. */
 export function metered(ledger, budgetUsd, raw) {
   return async (name, system, prompt) => {
-    if (!(await ledger.reserve(budgetUsd))) return { text: null, costUsd: 0, error: CAP };
+    if (!(await ledger.reserve(budgetUsd))) return { text: null, costUsd: 0, error: CAP, settledUsd: 0 };
     let r = null;
     try { r = await raw(name, system, prompt); } catch (e) { r = { text: null, costUsd: null, error: ENV_FAULTS.has(e?.code) ? e.code : 'NODE_ERROR', message: String(e?.message ?? e).slice(0, 300) }; }
     finally { ledger.settle(budgetUsd, r?.costUsd); }
-    return r;
+    return { ...r, settledUsd: settledOf(budgetUsd, r?.costUsd) };
   };
 }
+/** The spend a row.json records (older rows: their reported cost). */
+export const rowSpend = r => r?.settledUsd ?? r?.costUsd ?? 0;
 
 /** A one-turn, no-tool model call (the pipeline's model node) through the ledger, or the scripted stand-in. */
 async function nodeCaller({ model, scripted, work, budgetUsd, ledger }) {
@@ -157,7 +166,7 @@ export function summarize({ tasks, rows, K, model = null, scripted = false, ledg
   const complete = !faults.length && !missing.length;
   const of = tasks.length * K;
   return {
-    evidence: 'development/diagnostic, in-sample (devTrain dev60 recorded inventories; v2 nodes; no world, no act)', scripted, model: scripted ? null : model, tasks: tasks.length, complete,
+    evidence: 'development/diagnostic, in-sample (devTrain dev60 recorded inventories; v2 nodes; no world, no act)', scripted, model: scripted ? null : model, taskCount: tasks.length, complete,
     readers: { of, parsedFirstPass: sum('parsedFirstPass'), parsedAfterReask: sum('parsedAfterReask'), unparsedCompleted: sum('unparsedCompleted'), timeouts: sum('timeouts'), otherErrors: sum('otherErrors'),
       failedTasks: scored.filter(r => r.error).map(r => ({ task: r.task, error: String(r.error).split('\n')[0].slice(0, 200), capped: Boolean(r.capped) })), reasks: ok.filter(r => r.reasked?.reader).length,
       rule: `>= 177 of ${of} on parsedAfterReask (the pipeline's ledgers); timeouts and failed or capped tasks count as not parsed; environment faults are not scored: resume until none remain`,
@@ -165,16 +174,21 @@ export function summarize({ tasks, rows, K, model = null, scripted = false, ledg
     faults, missing, models: { seen: [...new Set(ok.flatMap(r => r.models ?? []))].sort(), violations: ok.reduce((s, r) => s + (r.modelViolations?.length ?? 0), 0), expected: scripted ? null : model },
     coverage: { v1: cov('coveredV1'), v2: cov('coveredV2') }, proxies: { v1: prox('proxiesV1'), v2: prox('proxiesV2'), rule: 'wrong-entity and wrong-value must not increase (proxies; review by hand)' },
     contentLimits: sum('contentLimits'), bodyNot: sum('bodyNot'), satisfiabilityDrops: sum('satisfiabilityDrops'),
-    costUsd: rows.reduce((s, r) => s + (r.costUsd ?? 0), 0), ledger: ledger ? { cap: ledger.cap, spent: ledger.spent, unknownCostCalls: ledger.unknown, calls: ledger.calls, waits: ledger.waits } : null, rows: tasks.map(t => byTask.get(t)).filter(Boolean),
+    costUsd: rows.reduce((s, r) => s + (r.costUsd ?? 0), 0), settledUsd: rows.reduce((s, r) => s + rowSpend(r), 0), ledger: ledger ? { cap: ledger.cap, spent: ledger.spent, unknownCostCalls: ledger.unknown, calls: ledger.calls, waits: ledger.waits } : null, rows: tasks.map(t => byTask.get(t)).filter(Boolean),
   };
 }
 
 async function pool(items, n, fn) { let i = 0; await Promise.all(Array.from({ length: Math.max(1, Math.min(n, items.length)) }, async () => { while (i < items.length) { const k = i++; await fn(items[k], k); } })); }
 
+/** The spend every earlier attempt settled (row.json files under `out`, finished or not): a resumed ledger starts here. */
+export function priorSpend(out, tasks) {
+  return tasks.map(t => path.join(out, t, 'row.json')).filter(existsSync).map(f => JSON.parse(readFileSync(f, 'utf8'))).reduce((s, r) => s + rowSpend(r), 0);
+}
+
 /**
  * Run the replay over `tasks` with `call` (metered). `load(task)` -> {rec, inv}. With `resume`, a task whose row.json
- * holds a finished (non-fault, non-capped) row is kept. Stops starting tasks after the first environment fault or a cap
- * refusal. -> { rows, stop: null | 'fault' | 'cap' }
+ * holds a finished (non-fault, non-capped) row is kept; a re-run task's row carries the spend of its earlier attempts.
+ * Stops starting tasks after the first environment fault or a cap refusal. -> { rows, stop: null | 'fault' | 'cap' }
  */
 export async function runReplay({ tasks, load, call, out, concurrency = 3, P = PIPELINE_DEFAULTS, resume = false, log = () => {} }) {
   const rows = [];
@@ -182,18 +196,23 @@ export async function runReplay({ tasks, load, call, out, concurrency = 3, P = P
   const todo = [];
   tasks.forEach((task, idx) => {
     const f = path.join(out, task, 'row.json');
-    if (resume && existsSync(f)) { const r = JSON.parse(readFileSync(f, 'utf8')); if (!r.fault && !r.capped) { rows.push({ ...r, resumed: true }); return; } }
-    todo.push({ task, idx });
+    const old = resume && existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null;
+    if (old && !old.fault && !old.capped) { rows.push({ ...old, resumed: true }); return; }
+    todo.push({ task, idx, earlier: old ? { usd: rowSpend(old), attempts: old.attempts ?? 1 } : { usd: 0, attempts: 0 } });
   });
-  await pool(todo, concurrency, async ({ task, idx }) => {
+  await pool(todo, concurrency, async ({ task, idx, earlier }) => {
     if (stop) return;
     const dir = path.join(out, task);
     mkdirSync(dir, { recursive: true });
     const node = n => `t${String(idx).padStart(3, '0')}/${n}`;
+    // This attempt's settled spend, counted call by call (a fault or a cap still keeps what was spent before it). A fault
+    // in one reader rejects the readers' Promise.all while its siblings are still in flight: the row waits for them.
+    const spend = { usd: 0 }, pending = new Set();
+    const taskCall = (...x) => { const p = call(...x).then(r => { spend.usd += r?.settledUsd ?? r?.costUsd ?? 0; return r; }); pending.add(p); p.finally(() => pending.delete(p)).catch(() => {}); return p; };
     let row;
     try {
       const { rec, inv } = await load(task);
-      const r = await replayTask({ rec, inv, call, P, out: dir, node });
+      const r = await replayTask({ rec, inv, call: taskCall, P, out: dir, node });
       writeFileSync(path.join(dir, 'compiled.json'), JSON.stringify({ merged: r.merged, pcs: r.pcs, satisfiability: r.pcs.satisfiability, stats: r.pcs.stats, typing: r.typing }, null, 1));
       writeFileSync(path.join(dir, 'brief.txt'), `${renderLedger(r.merged)}\n\n${renderChecks(r.pcs)}\n`);
       const all = (rec.grade?.assertion_results ?? []).filter(x => !x.excluded);
@@ -209,6 +228,9 @@ export async function runReplay({ tasks, load, call, out, concurrency = 3, P = P
       else if (e?.code === CAP) { row = { task, error: 'cap reached', capped: true }; stop ??= 'cap'; log(`[ledger-replay] ${task}: cap reached`); }
       else { row = { task, error: String(e?.stack ?? e).slice(0, 1500) }; log(`[ledger-replay] ${task}: ERROR ${String(e?.message ?? e).slice(0, 300)}`); }
     }
+    await Promise.allSettled([...pending]);
+    row.settledUsd = earlier.usd + spend.usd;
+    row.attempts = earlier.attempts + 1;
     writeFileSync(path.join(dir, 'row.json'), JSON.stringify(row, null, 1));
     rows.push(row);
   });
@@ -225,8 +247,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (!a.scripted && !(Number(a.cap) > 0 && a.model)) throw new Error('a paid replay needs --model (a policy id) and --cap (USD); --scripted runs at $0');
   const P = PIPELINE_DEFAULTS;
   mkdirSync(a.out, { recursive: true });
-  // A resumed run counts the spend of the rows it keeps against the cap.
-  const prior = a.resume ? tasks.map(t => path.join(a.out, t, 'row.json')).filter(existsSync).map(f => JSON.parse(readFileSync(f, 'utf8'))).filter(r => !r.fault && !r.capped).reduce((s, r) => s + (r.costUsd ?? 0), 0) : 0;
+  // A resumed run counts every earlier attempt's settled spend against the cap (faulted and capped attempts included).
+  const prior = a.resume ? priorSpend(a.out, tasks) : 0;
   const ledger = makeLedger(a.scripted ? Infinity : Number(a.cap), { spent: prior });
   const work = path.join(os.tmpdir(), `a1c-v2-ledger-replay-${Date.now()}`);
   const call = await nodeCaller({ model: a.model, scripted: Boolean(a.scripted), work, budgetUsd: P.nodeBudgetShare * 0.75, ledger });
