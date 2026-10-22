@@ -1,0 +1,51 @@
+{
+ "id": "foundry/game-qa-explore-repro-minimize",
+ "version": "1.0.0",
+ "author": "frontier (Claude Opus 5.5, the orchestrating session), 2026-10-22",
+ "authorNote": "Written by the same session that wrote the gameqa-web build and its injected bugs, after the bugs. It is meant to be game-agnostic (derived from research/landscape-20261006/08-worked-example-ai-game-qa.md section 4-5: check ladder, personas, repro and minimize), but its author knew the bugs: a leakage path. The same QA heuristics text is given to the solo-agent arm, so the agent-vs-workflow comparison varies structure, not knowledge.",
+ "purpose": "Exploratory QA of a game build exposed through a deterministic test API: a cheap model instantiates personas and executable checks from the design document, code plays the personas' plans and evaluates every check on every tick, code reproduces and delta-debugs each violation to a 1-minimal repro, and a cheap model judges each minimized candidate against the document before it becomes a report.",
+ "inputs": { "spec": "the design document (text)", "env": "a session with reset(seed), run(tokens) -> per-tick observations", "budgets": "see budgets" },
+ "outputs": { "reports": "[{bug_class, title, observed, expected, seed, steps}]" },
+ "nodes": [
+  { "id": "construct", "kind": "agent", "model": "class M (claude-haiku-5-5)", "reads": ["spec", "heuristics", "checkLanguage", "personaArchetypes"],
+    "returns": "{personas[3..6], checks[4..30]}", "verify": "code: every check parses in the check language; rejected checks go back once with the parser errors (node construct-repair)" },
+  { "id": "explore", "kind": "map", "over": "personas x rounds", "body": [
+    { "id": "plan", "kind": "agent", "model": "class M", "reads": ["spec", "heuristics", "persona card", "shared coverage", "known violations (check ids and rules only)", "this persona's last traces"],
+      "returns": "{notes, plans[1..3] of {seed, steps, purpose}}" },
+    { "id": "playback", "kind": "code", "does": "run each plan from a fresh game; evaluate the generic detectors and every check on every tick; record the first violation per check with its seed and token prefix" } ] },
+  { "id": "triage", "kind": "code", "does": "one candidate per violated check (the shortest prefix seen); drop checks that error" },
+  { "id": "repro", "kind": "code", "does": "replay each candidate twice from a fresh game; keep it only if the same check is violated both times (determinism class D0)" },
+  { "id": "minimize", "kind": "code", "does": "ddmin over the token list with the predicate 'the same check is violated' (plus a single-token removal pass), so every kept repro is 1-minimal" },
+  { "id": "judge", "kind": "agent", "model": "class M", "reads": ["spec", "candidate: check rule and expressions, minimized tokens, the full trace of the minimized replay"],
+    "returns": "{verdicts[] of {candidate, is_bug, bug_class, title, observed, expected}}", "note": "the false-alarm filter: a violated check can be a wrong check (e.g. behaviour the document marks by design)" },
+  { "id": "report", "kind": "code", "does": "emit one report per candidate judged a bug, with the minimized tokens and seed" }
+ ],
+ "genericDetectors": [
+  { "id": "generic:page-error", "class": "softlock", "rule": "a script error is shown by the page" },
+  { "id": "generic:frozen", "class": "softlock", "rule": "the observable state does not change for 30 ticks and no dialog or button is visible" }
+ ],
+ "budgets": { "rounds": 3, "plansPerRound": 3, "tokensPerPlan": 120, "exploreTicks": 8000, "minimizeTestsPerCandidate": 400, "maxCandidates": 30, "judgeBatch": 6, "usdPerRun": 0.5 },
+ "personaArchetypes": [
+  "completionist mapper: visits every area and collects everything, finishes the level",
+  "sequence-breaker: tries to reach places or outcomes early or by unintended routes",
+  "chaos tester: pauses, restarts, quits and presses several keys during transitions (collecting, getting hurt, finishing), spams input",
+  "literal newcomer: follows the document step by step and checks each sentence literally",
+  "economy auditor: drives counters (score, lives, items, timers) to their limits and checks every amount",
+  "photographer: opens every dialog and menu and checks what is shown and what can be clicked"
+ ],
+ "heuristics": [
+  "Turn every rule in the design document into something you can observe: amounts, limits, caps and counts; 'never', 'always', 'only' and 'at most' statements; what may change in each mode (playing, paused, a dialog open); and what the display must show.",
+  "Compare what is displayed (HUD text, dialogs, buttons) with the underlying state on every step: a display that disagrees with the state is a bug.",
+  "Probe boundaries and transitions: values near zero and near limits; acting at the moment something happens (pausing, collecting, getting hurt, finishing); several inputs in the same tick; repeating an action; actions in unusual modes.",
+  "Exercise every control in every mode, including dialog buttons, and check that each visible button can be clicked.",
+  "Go deep as well as wide: finish the level, use every mechanic, reach every area; some bugs need large values or only appear late.",
+  "Behaviour the document marks 'by design' is not a bug.",
+  "Before reporting, confirm the bug by replaying from a fresh game, then cut the token list down until removing any single token makes the bug disappear."
+ ],
+ "checkLanguage": "Checks are written in a small expression language (a JavaScript subset), evaluated after every tick with: cur = the observation after this tick {token, click, state, hud, ui, errors}; prev = the observation before this tick (for the first tick: the fresh game); step = the tick index. state is the game's test API state (field names as in the design document); hud.<field> is the displayed text of a HUD field (for this test API: score, lives, keys, coins, time, dash, e.g. hud.score is the text shown for the score); ui is a list of {id, kind ('dialog'|'button'|'toast'|'text'), visible, text, rect, top (buttons only: whether a click at its centre reaches it)}. Operators: . [] ! - * / % + < <= > >= == != && || ?: (== compares values deeply, so objects and lists can be compared). Functions: abs min max floor round sign len includes(listOrText, value) num(text) (the first integer in a text, NaN if none) str(value) tile(obs, x, y) (the map character at x,y in that observation) any(list, x => expr) all(list, x => expr) count(list, x => expr) find(list, x => expr). Reading a missing field gives undefined (no error). A check is {id, rule (quote or paraphrase the design sentence it enforces), bug_class, when (optional: check only ticks where this is true), expect (must be true on every such tick)}. Write checks that are true on every tick of a correct game, including respawns, restarts, dialogs and pauses: guard with when where the rule applies only sometimes.",
+ "checkExamples": [
+  { "id": "fuel-cap", "rule": "Fuel never exceeds the tank size.", "bug_class": "state_desync", "expect": "cur.state.fuel <= cur.state.tank" },
+  { "id": "docked-still", "rule": "While docked the ship does not move.", "bug_class": "collision", "when": "prev.state.mode == 'docked' && cur.state.mode == 'docked'", "expect": "cur.state.ship == prev.state.ship" },
+  { "id": "hud-fuel", "rule": "The gauge shows the current fuel.", "bug_class": "state_desync", "expect": "num(cur.hud.fuel) == cur.state.fuel" }
+ ]
+}
