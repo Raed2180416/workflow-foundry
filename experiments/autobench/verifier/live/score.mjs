@@ -45,15 +45,15 @@ export function bootstrap(diffs, B = BOOT_B, seed = BOOT_SEED) {
   out.sort((u, v) => u - v);
   return [out[Math.floor(0.025 * B)], out[Math.floor(0.975 * B)]];
 }
-function logChoose(n, k) { let s = 0; for (let i = 1; i <= k; i++) s += Math.log(n - k + i) - Math.log(i); return s; }
-/** Exact two-sided McNemar: binomial(b + c, 1/2) on the discordant pairs. */
+/** Exact two-sided McNemar: binomial(b + c, 1/2) on the discordant pairs (exact integer arithmetic). */
 export function mcnemarExact(b, c) {
   const n = b + c;
   if (!n) return 1;
   const k = Math.min(b, c);
-  let tail = 0;
-  for (let i = 0; i <= k; i++) tail += Math.exp(logChoose(n, i) - n * Math.LN2);
-  return Math.min(1, 2 * tail);
+  let term = 1n, sum = 0n;
+  for (let i = 0; i <= k; i++) { if (i > 0) term = (term * BigInt(n - i + 1)) / BigInt(i); sum += term; }
+  const den = 1n << BigInt(n);
+  return Math.min(1, Number(2n * sum) / Number(den));
 }
 /** Paired comparison of two pass vectors over the same task order. */
 export function paired(a, b, tasks) {
@@ -99,7 +99,6 @@ export function scoreSelection({ selection, liveRoot, defaultArm, ref, compare =
   const djUsd = djDir ? sumBy(jsonl(path.join(djDir, 'judgments-haiku-world.jsonl'))) : 0;
   const allCand = candRows.length || 1;
 
-  const defaultPass = passOf(H[defaultArm]);
   const forks = Object.fromEntries(Object.entries(H).map(([arm, m]) => [arm, { runs: armRuns[arm], pass: tasks.reduce((s, t) => s + (m.get(t)?.pass ?? 0), 0), recorded: tasks.filter(t => m.has(t)).length,
     costUsdPerTask: tasks.reduce((s, t) => s + (m.get(t)?.costUsd ?? 0), 0) / tasks.length, mercuryTokens: tasks.reduce((s, t) => s + (m.get(t)?.mercuryTokens ?? 0), 0),
     overrides: tasks.filter(t => m.get(t)?.override).length }]));
@@ -157,7 +156,19 @@ export function scoreSelection({ selection, liveRoot, defaultArm, ref, compare =
   }
 
   return { schema: 'foundry.vl1.result/v1', version: SCORE_VERSION, primary, defaultArm, tasks: tasks.length, forks, comparators: refs,
-    verifierSpend: { rl2ExtractUsd, rl2JudgeUsd, djUsd }, selections: results, repair: repairOut };
+    verifierSpend: { rl2ExtractUsd, rl2JudgeUsd, djUsd }, selections: results, repair: repairOut, decisions: decide(results.find(r => r.primary), refs.ref ?? null, repairOut) };
+}
+
+/** The decision rules of PREREG-VL1 §7, fixed before any look-2 grade was read, applied mechanically. */
+export function decide(p, ref, repair) {
+  if (!p) return null;
+  const d = p.vsDefault.diff, losses = p.vsDefault.losses;
+  const selection = d >= 3 && losses <= 2 ? 'selection works on fresh tasks' : d <= 1 ? 'selection is not the lever' : 'inconclusive (neither rule fires)';
+  const opus = ref ? { refPass: ref.pass, refUsdPerTask: ref.costUsdPerTask, vl1Pass: p.pass, vl1UsdPerTask: p.cost.usdPerTask,
+    parity: p.pass >= ref.pass - 2 && p.cost.usdPerTask <= 0.2 * ref.costUsdPerTask } : null;
+  const rep = repair ? { fixedVsControl: repair.vsControl.fixed, brokeVsControl: repair.vsControl.broke, hpPrecisionOnPicks: p.hpOnPicks.precision,
+    carry: repair.vsControl.fixed > repair.vsControl.broke && (p.hpOnPicks.precision ?? 0) >= 0.7 } : null;
+  return { primary: p.id, vsDefault: { diff: d, gains: p.vsDefault.gains, losses, mcnemarP: p.vsDefault.mcnemarP, bootstrap95: p.vsDefault.bootstrap95 }, selection, opus, repair: rep };
 }
 
 function args(argv) {

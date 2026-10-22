@@ -1,0 +1,3406 @@
+{
+ "schema": "foundry.vl1.result/v1",
+ "version": "vl1-score-v1",
+ "primary": "P2/R3",
+ "defaultArm": "m3-a1c",
+ "tasks": 24,
+ "forks": {
+  "m3-a1c": {
+   "runs": [
+    "m3-a1c-dev60-dn",
+    "m3-a1c-dev60-dn-fill"
+   ],
+   "pass": 13,
+   "recorded": 24,
+   "costUsdPerTask": 0.01533535375,
+   "mercuryTokens": 1510559,
+   "overrides": 0,
+   "costUsdPerSuccess": 0.02831142230769231
+  },
+  "sonnet-a1": {
+   "runs": [
+    "a1s-dev60-dn",
+    "a1s-dev60-dn-fill"
+   ],
+   "pass": 10,
+   "recorded": 24,
+   "costUsdPerTask": 0.11500621666666666,
+   "mercuryTokens": 0,
+   "overrides": 0,
+   "costUsdPerSuccess": 0.27601492
+  },
+  "haiku-a1c": {
+   "runs": [
+    "a1c-dev60-dn"
+   ],
+   "pass": 8,
+   "recorded": 24,
+   "costUsdPerTask": 0.037019326250000005,
+   "mercuryTokens": 0,
+   "overrides": 0,
+   "costUsdPerSuccess": 0.11105797875000001
+  },
+  "sonnet-a0": {
+   "runs": [
+    "a0s-dev60-dn"
+   ],
+   "pass": 9,
+   "recorded": 24,
+   "costUsdPerTask": 0.09744914583333332,
+   "mercuryTokens": 0,
+   "overrides": 0,
+   "costUsdPerSuccess": 0.25986438888888885
+  },
+  "haiku-a1": {
+   "runs": [
+    "a1-dev60-dn",
+    "a1-dev60-dn-fill"
+   ],
+   "pass": 8,
+   "recorded": 24,
+   "costUsdPerTask": 0.015901353750000003,
+   "mercuryTokens": 0,
+   "overrides": 0,
+   "costUsdPerSuccess": 0.04770406125000001
+  },
+  "haiku-a0": {
+   "runs": [
+    "a0-dev60-dn"
+   ],
+   "pass": 4,
+   "recorded": 24,
+   "costUsdPerTask": 0.013121882500000001,
+   "mercuryTokens": 0,
+   "overrides": 0,
+   "costUsdPerSuccess": 0.078731295
+  }
+ },
+ "comparators": {
+  "A0": {
+   "run": "a0-dev60-dn",
+   "pass": 4,
+   "recorded": 24,
+   "costUsdPerTask": 0.013121882500000001,
+   "costUsdPerSuccess": 0.078731295
+  }
+ },
+ "verifierSpend": {
+  "rl2ExtractUsd": 0.314812155,
+  "rl2JudgeUsd": 0.04584128999999999,
+  "djUsd": 0.3228760449999999
+ },
+ "selections": [
+  {
+   "id": "P2/R0",
+   "pool": "P2",
+   "rule": "R0",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 11,
+     "losses": 2,
+     "mcnemarP": 0.0224609,
+     "bootstrap95": [
+      3,
+      15
+     ]
+    }
+   },
+   "oracle": 16,
+   "switchedFromDefault": 0,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 1
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.1303415704166667,
+    "verifierUsdPerTask": 0.01823824722222222,
+    "usdPerTask": 0.14857981763888892,
+    "usdPerSuccess": 0.27430120179487183,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P2/R1",
+   "pool": "P2",
+   "rule": "R1",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 15,
+   "n": 24,
+   "passRate": 0.625,
+   "vsDefault": {
+    "n": 24,
+    "passA": 15,
+    "passB": 13,
+    "diff": 2,
+    "gains": 2,
+    "losses": 0,
+    "mcnemarP": 0.5,
+    "bootstrap95": [
+     0,
+     5
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 15,
+     "passB": 4,
+     "diff": 11,
+     "gains": 13,
+     "losses": 2,
+     "mcnemarP": 0.00738525,
+     "bootstrap95": [
+      5,
+      17
+     ]
+    }
+   },
+   "oracle": 16,
+   "switchedFromDefault": 2,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 2
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 2
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.1303415704166667,
+    "verifierUsdPerTask": 0.01823824722222222,
+    "usdPerTask": 0.14857981763888892,
+    "usdPerSuccess": 0.23772770822222225,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P2/R2",
+   "pool": "P2",
+   "rule": "R2",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 14,
+   "n": 24,
+   "passRate": 0.5833333333333334,
+   "vsDefault": {
+    "n": 24,
+    "passA": 14,
+    "passB": 13,
+    "diff": 1,
+    "gains": 2,
+    "losses": 1,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -2,
+     4
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 14,
+     "passB": 4,
+     "diff": 10,
+     "gains": 11,
+     "losses": 1,
+     "mcnemarP": 0.00634766,
+     "bootstrap95": [
+      4,
+      15
+     ]
+    }
+   },
+   "oracle": 16,
+   "switchedFromDefault": 12,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 2
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.1303415704166667,
+    "verifierUsdPerTask": 0.01823824722222222,
+    "usdPerTask": 0.14857981763888892,
+    "usdPerSuccess": 0.25470825880952386,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 4,
+    "flaggedFailing": 1,
+    "precision": 0.25
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 0,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P2/R3",
+   "pool": "P2",
+   "rule": "R3",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": true,
+   "pass": 15,
+   "n": 24,
+   "passRate": 0.625,
+   "vsDefault": {
+    "n": 24,
+    "passA": 15,
+    "passB": 13,
+    "diff": 2,
+    "gains": 3,
+    "losses": 1,
+    "mcnemarP": 0.625,
+    "bootstrap95": [
+     -2,
+     6
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 15,
+     "passB": 4,
+     "diff": 11,
+     "gains": 12,
+     "losses": 1,
+     "mcnemarP": 0.00341797,
+     "bootstrap95": [
+      5,
+      16
+     ]
+    }
+   },
+   "oracle": 16,
+   "switchedFromDefault": 13,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 2
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 2
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.1303415704166667,
+    "verifierUsdPerTask": 0.01823824722222222,
+    "usdPerTask": 0.14857981763888892,
+    "usdPerSuccess": 0.23772770822222225,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 4,
+    "flaggedFailing": 1,
+    "precision": 0.25
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 0,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3/R0",
+   "pool": "P3",
+   "rule": "R0",
+   "arms": [
+    "m3-a1c",
+    "haiku-a1c",
+    "haiku-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 11,
+     "losses": 2,
+     "mcnemarP": 0.0224609,
+     "bootstrap95": [
+      3,
+      15
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 0,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 1
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.06825603375,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.08905481802083333,
+    "usdPerSuccess": 0.1644088948076923,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3/R1",
+   "pool": "P3",
+   "rule": "R1",
+   "arms": [
+    "m3-a1c",
+    "haiku-a1c",
+    "haiku-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 15,
+   "n": 24,
+   "passRate": 0.625,
+   "vsDefault": {
+    "n": 24,
+    "passA": 15,
+    "passB": 13,
+    "diff": 2,
+    "gains": 3,
+    "losses": 1,
+    "mcnemarP": 0.625,
+    "bootstrap95": [
+     -2,
+     6
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 15,
+     "passB": 4,
+     "diff": 11,
+     "gains": 13,
+     "losses": 2,
+     "mcnemarP": 0.00738525,
+     "bootstrap95": [
+      5,
+      17
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 10,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 3
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 1
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 2
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.06825603375,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.08905481802083333,
+    "usdPerSuccess": 0.14248770883333334,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 2,
+    "flaggedFailing": 1,
+    "precision": 0.5
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 1,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 0,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3/R2",
+   "pool": "P3",
+   "rule": "R2",
+   "arms": [
+    "m3-a1c",
+    "haiku-a1c",
+    "haiku-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 3,
+    "losses": 3,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -5,
+     5
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 11,
+     "losses": 2,
+     "mcnemarP": 0.0224609,
+     "bootstrap95": [
+      3,
+      15
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 15,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 3
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 0
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.06825603375,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.08905481802083333,
+    "usdPerSuccess": 0.1644088948076923,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 3,
+    "flaggedFailing": 2,
+    "precision": 0.6666666666666666
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 1,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 0,
+     "marketing.customer_feedback_aggregation": 0,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 0,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3/R3",
+   "pool": "P3",
+   "rule": "R3",
+   "arms": [
+    "m3-a1c",
+    "haiku-a1c",
+    "haiku-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 3,
+    "losses": 3,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -5,
+     5
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 11,
+     "losses": 2,
+     "mcnemarP": 0.0224609,
+     "bootstrap95": [
+      3,
+      15
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 17,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 3
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 0
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.06825603375,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.08905481802083333,
+    "usdPerSuccess": 0.1644088948076923,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 2,
+    "flaggedFailing": 2,
+    "precision": 1
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 1,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 0,
+     "marketing.customer_feedback_aggregation": 0,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 0,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3s/R0",
+   "pool": "P3s",
+   "rule": "R0",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 11,
+     "losses": 2,
+     "mcnemarP": 0.0224609,
+     "bootstrap95": [
+      3,
+      15
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 0,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 1
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.14624292416666665,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.1670417084375,
+    "usdPerSuccess": 0.3083846925,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3s/R1",
+   "pool": "P3s",
+   "rule": "R1",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 15,
+   "n": 24,
+   "passRate": 0.625,
+   "vsDefault": {
+    "n": 24,
+    "passA": 15,
+    "passB": 13,
+    "diff": 2,
+    "gains": 3,
+    "losses": 1,
+    "mcnemarP": 0.625,
+    "bootstrap95": [
+     -2,
+     6
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 15,
+     "passB": 4,
+     "diff": 11,
+     "gains": 13,
+     "losses": 2,
+     "mcnemarP": 0.00738525,
+     "bootstrap95": [
+      5,
+      17
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 5,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 3
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 1
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 2
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.14624292416666665,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.1670417084375,
+    "usdPerSuccess": 0.26726673349999996,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 3,
+    "flaggedFailing": 1,
+    "precision": 0.3333333333333333
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 1,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 0,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3s/R2",
+   "pool": "P3s",
+   "rule": "R2",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 14,
+   "n": 24,
+   "passRate": 0.5833333333333334,
+   "vsDefault": {
+    "n": 24,
+    "passA": 14,
+    "passB": 13,
+    "diff": 1,
+    "gains": 4,
+    "losses": 3,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -4,
+     6
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 14,
+     "passB": 4,
+     "diff": 10,
+     "gains": 11,
+     "losses": 1,
+     "mcnemarP": 0.00634766,
+     "bootstrap95": [
+      4,
+      15
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 16,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 3
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 0
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 2
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.14624292416666665,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.1670417084375,
+    "usdPerSuccess": 0.2863572144642857,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 3,
+    "precision": 0.6
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 1,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 0,
+     "marketing.customer_feedback_aggregation": 0,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 0,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3s/R3",
+   "pool": "P3s",
+   "rule": "R3",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a1"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 15,
+   "n": 24,
+   "passRate": 0.625,
+   "vsDefault": {
+    "n": 24,
+    "passA": 15,
+    "passB": 13,
+    "diff": 2,
+    "gains": 4,
+    "losses": 2,
+    "mcnemarP": 0.6875,
+    "bootstrap95": [
+     -3,
+     7
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 15,
+     "passB": 4,
+     "diff": 11,
+     "gains": 12,
+     "losses": 1,
+     "mcnemarP": 0.00341797,
+     "bootstrap95": [
+      5,
+      16
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 13,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 3
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 1
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 2
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.14624292416666665,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.1670417084375,
+    "usdPerSuccess": 0.26726673349999996,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 3,
+    "flaggedFailing": 1,
+    "precision": 0.3333333333333333
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 1,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 0,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 0,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P6/R0",
+   "pool": "P6",
+   "rule": "R0",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a1c",
+    "sonnet-a0",
+    "haiku-a1",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 11,
+     "losses": 2,
+     "mcnemarP": 0.0224609,
+     "bootstrap95": [
+      3,
+      15
+     ]
+    }
+   },
+   "oracle": 19,
+   "switchedFromDefault": 0,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 1
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.29383327875,
+    "verifierUsdPerTask": 0.02848039541666666,
+    "usdPerTask": 0.3223136741666666,
+    "usdPerSuccess": 0.5950406292307692,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P6/R1",
+   "pool": "P6",
+   "rule": "R1",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a1c",
+    "sonnet-a0",
+    "haiku-a1",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 15,
+   "n": 24,
+   "passRate": 0.625,
+   "vsDefault": {
+    "n": 24,
+    "passA": 15,
+    "passB": 13,
+    "diff": 2,
+    "gains": 3,
+    "losses": 1,
+    "mcnemarP": 0.625,
+    "bootstrap95": [
+     -2,
+     6
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 15,
+     "passB": 4,
+     "diff": 11,
+     "gains": 13,
+     "losses": 2,
+     "mcnemarP": 0.00738525,
+     "bootstrap95": [
+      5,
+      17
+     ]
+    }
+   },
+   "oracle": 19,
+   "switchedFromDefault": 12,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 3
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 1
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 2
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.29383327875,
+    "verifierUsdPerTask": 0.02848039541666666,
+    "usdPerTask": 0.3223136741666666,
+    "usdPerSuccess": 0.5157018786666666,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 2,
+    "flaggedFailing": 1,
+    "precision": 0.5
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 1,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 0,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P6/R2",
+   "pool": "P6",
+   "rule": "R2",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a1c",
+    "sonnet-a0",
+    "haiku-a1",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 3,
+    "losses": 3,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -5,
+     5
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 10,
+     "losses": 1,
+     "mcnemarP": 0.0117188,
+     "bootstrap95": [
+      3,
+      14
+     ]
+    }
+   },
+   "oracle": 19,
+   "switchedFromDefault": 20,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 3
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 0
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.29383327875,
+    "verifierUsdPerTask": 0.02848039541666666,
+    "usdPerTask": 0.3223136741666666,
+    "usdPerSuccess": 0.5950406292307692,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 3,
+    "flaggedFailing": 1,
+    "precision": 0.3333333333333333
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 1,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 0,
+     "marketing.customer_feedback_aggregation": 0,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 0,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P6/R3",
+   "pool": "P6",
+   "rule": "R3",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a1c",
+    "sonnet-a0",
+    "haiku-a1",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 14,
+   "n": 24,
+   "passRate": 0.5833333333333334,
+   "vsDefault": {
+    "n": 24,
+    "passA": 14,
+    "passB": 13,
+    "diff": 1,
+    "gains": 3,
+    "losses": 2,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -3,
+     5
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 14,
+     "passB": 4,
+     "diff": 10,
+     "gains": 11,
+     "losses": 1,
+     "mcnemarP": 0.00634766,
+     "bootstrap95": [
+      4,
+      15
+     ]
+    }
+   },
+   "oracle": 19,
+   "switchedFromDefault": 20,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 3
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 0
+    },
+    "operations": {
+     "n": 4,
+     "pass": 4
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.29383327875,
+    "verifierUsdPerTask": 0.02848039541666666,
+    "usdPerTask": 0.3223136741666666,
+    "usdPerSuccess": 0.5525377271428571,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 2,
+    "flaggedFailing": 1,
+    "precision": 0.5
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 1,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 0,
+     "marketing.customer_feedback_aggregation": 0,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P2h/R0",
+   "pool": "P2h",
+   "rule": "R0",
+   "arms": [
+    "m3-a1c",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 11,
+     "losses": 2,
+     "mcnemarP": 0.0224609,
+     "bootstrap95": [
+      3,
+      15
+     ]
+    }
+   },
+   "oracle": 15,
+   "switchedFromDefault": 0,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 1
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.028457236250000004,
+    "verifierUsdPerTask": 0.01823824722222222,
+    "usdPerTask": 0.04669548347222222,
+    "usdPerSuccess": 0.08620704641025642,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P2h/R1",
+   "pool": "P2h",
+   "rule": "R1",
+   "arms": [
+    "m3-a1c",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 1,
+    "losses": 1,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -3,
+     3
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 10,
+     "losses": 1,
+     "mcnemarP": 0.0117188,
+     "bootstrap95": [
+      4,
+      14
+     ]
+    }
+   },
+   "oracle": 15,
+   "switchedFromDefault": 4,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 1
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.028457236250000004,
+    "verifierUsdPerTask": 0.01823824722222222,
+    "usdPerTask": 0.04669548347222222,
+    "usdPerSuccess": 0.08620704641025642,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 1,
+     "support.intercom_reactivation_campaign": 0,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P2h/R2",
+   "pool": "P2h",
+   "rule": "R2",
+   "arms": [
+    "m3-a1c",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 15,
+   "n": 24,
+   "passRate": 0.625,
+   "vsDefault": {
+    "n": 24,
+    "passA": 15,
+    "passB": 13,
+    "diff": 2,
+    "gains": 2,
+    "losses": 0,
+    "mcnemarP": 0.5,
+    "bootstrap95": [
+     0,
+     5
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 15,
+     "passB": 4,
+     "diff": 11,
+     "gains": 11,
+     "losses": 0,
+     "mcnemarP": 0.000976563,
+     "bootstrap95": [
+      6,
+      16
+     ]
+    }
+   },
+   "oracle": 15,
+   "switchedFromDefault": 8,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 1
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 4
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 3
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.028457236250000004,
+    "verifierUsdPerTask": 0.01823824722222222,
+    "usdPerTask": 0.04669548347222222,
+    "usdPerSuccess": 0.07471277355555556,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 6,
+    "flaggedFailing": 3,
+    "precision": 0.5
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 1,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P2h/R3",
+   "pool": "P2h",
+   "rule": "R3",
+   "arms": [
+    "m3-a1c",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 15,
+   "n": 24,
+   "passRate": 0.625,
+   "vsDefault": {
+    "n": 24,
+    "passA": 15,
+    "passB": 13,
+    "diff": 2,
+    "gains": 2,
+    "losses": 0,
+    "mcnemarP": 0.5,
+    "bootstrap95": [
+     0,
+     5
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 15,
+     "passB": 4,
+     "diff": 11,
+     "gains": 11,
+     "losses": 0,
+     "mcnemarP": 0.000976563,
+     "bootstrap95": [
+      6,
+      16
+     ]
+    }
+   },
+   "oracle": 15,
+   "switchedFromDefault": 7,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 1
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 4
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 3
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.028457236250000004,
+    "verifierUsdPerTask": 0.01823824722222222,
+    "usdPerTask": 0.04669548347222222,
+    "usdPerSuccess": 0.07471277355555556,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 1,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3h/R0",
+   "pool": "P3h",
+   "rule": "R0",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 13,
+   "n": 24,
+   "passRate": 0.5416666666666666,
+   "vsDefault": {
+    "n": 24,
+    "passA": 13,
+    "passB": 13,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 13,
+     "passB": 4,
+     "diff": 9,
+     "gains": 11,
+     "losses": 2,
+     "mcnemarP": 0.0224609,
+     "bootstrap95": [
+      3,
+      15
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 0,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 1
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.1434634529166667,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.16426223718750005,
+    "usdPerSuccess": 0.30325336096153854,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3h/R1",
+   "pool": "P3h",
+   "rule": "R1",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 15,
+   "n": 24,
+   "passRate": 0.625,
+   "vsDefault": {
+    "n": 24,
+    "passA": 15,
+    "passB": 13,
+    "diff": 2,
+    "gains": 3,
+    "losses": 1,
+    "mcnemarP": 0.625,
+    "bootstrap95": [
+     -2,
+     6
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 15,
+     "passB": 4,
+     "diff": 11,
+     "gains": 12,
+     "losses": 1,
+     "mcnemarP": 0.00341797,
+     "bootstrap95": [
+      5,
+      16
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 5,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 2
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 2
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.1434634529166667,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.16426223718750005,
+    "usdPerSuccess": 0.26281957950000007,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 1,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 1,
+     "support.intercom_reactivation_campaign": 0,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3h/R2",
+   "pool": "P3h",
+   "rule": "R2",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 14,
+   "n": 24,
+   "passRate": 0.5833333333333334,
+   "vsDefault": {
+    "n": 24,
+    "passA": 14,
+    "passB": 13,
+    "diff": 1,
+    "gains": 2,
+    "losses": 1,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -2,
+     4
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 14,
+     "passB": 4,
+     "diff": 10,
+     "gains": 11,
+     "losses": 1,
+     "mcnemarP": 0.00634766,
+     "bootstrap95": [
+      4,
+      15
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 15,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 2
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.1434634529166667,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.16426223718750005,
+    "usdPerSuccess": 0.28159240660714296,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 5,
+    "flaggedFailing": 2,
+    "precision": 0.4
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 0,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  },
+  {
+   "id": "P3h/R3",
+   "pool": "P3h",
+   "rule": "R3",
+   "arms": [
+    "m3-a1c",
+    "sonnet-a1",
+    "haiku-a0"
+   ],
+   "default": "m3-a1c",
+   "primary": false,
+   "pass": 14,
+   "n": 24,
+   "passRate": 0.5833333333333334,
+   "vsDefault": {
+    "n": 24,
+    "passA": 14,
+    "passB": 13,
+    "diff": 1,
+    "gains": 2,
+    "losses": 1,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -2,
+     4
+    ]
+   },
+   "vsComparators": {
+    "A0": {
+     "n": 24,
+     "passA": 14,
+     "passB": 4,
+     "diff": 10,
+     "gains": 11,
+     "losses": 1,
+     "mcnemarP": 0.00634766,
+     "bootstrap95": [
+      4,
+      15
+     ]
+    }
+   },
+   "oracle": 17,
+   "switchedFromDefault": 14,
+   "byDomain": {
+    "finance": {
+     "n": 4,
+     "pass": 2
+    },
+    "hr": {
+     "n": 4,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 4,
+     "pass": 2
+    },
+    "operations": {
+     "n": 4,
+     "pass": 3
+    },
+    "sales": {
+     "n": 4,
+     "pass": 1
+    },
+    "support": {
+     "n": 4,
+     "pass": 2
+    }
+   },
+   "cost": {
+    "actingUsdPerTask": 0.1434634529166667,
+    "verifierUsdPerTask": 0.02079878427083333,
+    "usdPerTask": 0.16426223718750005,
+    "usdPerSuccess": 0.28159240660714296,
+    "mercuryTokens": 1510559
+   },
+   "hpOnPicks": {
+    "flagged": 4,
+    "flaggedFailing": 1,
+    "precision": 0.25
+   },
+   "perTask": {
+    "selected": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 1,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 1,
+     "operations.cross_training_assignment": 0,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    },
+    "default": {
+     "finance.capex_approval": 0,
+     "finance.project_profitability": 1,
+     "finance.travel_advance_settlement": 0,
+     "finance.vendor_1099_prep": 0,
+     "hr.anniversary_recognition": 1,
+     "hr.candidate_rejection_followup": 1,
+     "hr.disciplinary_action_tracking": 1,
+     "hr.equipment_provisioning": 1,
+     "marketing.community_engagement": 1,
+     "marketing.customer_feedback_aggregation": 1,
+     "marketing.engagement_optimization": 0,
+     "marketing.featured_snippet": 0,
+     "operations.asana_safety_walk_log": 0,
+     "operations.cross_training_assignment": 1,
+     "operations.overtime_threshold_monitoring": 1,
+     "operations.zoom_training_setup": 1,
+     "sales.chatgpt_proposal_customization": 0,
+     "sales.competitive_displacement_outreach": 0,
+     "sales.partnership_contract": 0,
+     "sales.zoom_meeting_followup": 1,
+     "support.helpcrunch_zoho_desk_bridge": 1,
+     "support.intercom_multi_product_routing": 0,
+     "support.intercom_reactivation_campaign": 1,
+     "support.intercom_sentiment_escalation": 0
+    }
+   }
+  }
+ ],
+ "repair": null,
+ "decisions": {
+  "primary": "P2/R3",
+  "vsDefault": {
+   "diff": 2,
+   "gains": 3,
+   "losses": 1,
+   "mcnemarP": 0.625,
+   "bootstrap95": [
+    -2,
+    6
+   ]
+  },
+  "selection": "inconclusive (neither rule fires)",
+  "opus": null,
+  "repair": null
+ },
+ "selectionFile": "/var/tmp/foundry-work/vl1-dev60-repro/selection.json",
+ "scoredAt": "2026-10-22T03:02:11.853Z",
+ "committedSelection": false
+}

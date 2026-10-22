@@ -104,7 +104,8 @@ export function selectAll({ labDir, rl2Dir, rl2Tag, rl2JudgeTag = rl2Tag, djDir,
   const rl2Judge = new Map(existsSync(judgeFile) ? jsonl(take(judgeFile)).filter(j => j.ok).map(j => [j.rowId, j]) : []);
   const dj = new Map(jsonl(take(djFile)).filter(j => j.ok && j.variant === 'world' && j.version === DJ_VERSION).map(j => [j.rowId, j.verdict]));
   const sig = signals(rows, { checks, rl2Judge, dj });
-  const tasks = [...new Set(rowsAll.map(r => r.task))].sort();
+  // every listed task: those with candidate rows, and those where no fork left a world (no pick: a fail)
+  const tasks = [...new Set([...rowsAll.map(r => r.task), ...(manifest.tasksWithoutCandidate ?? [])])].sort();
   const byTask = new Map(tasks.map(t => [t, rows.filter(r => r.task === t)]));
   const selections = [];
   for (const [pool, arms] of Object.entries(pools)) {
