@@ -14,8 +14,10 @@ Two re-reviews of the second build (`0a5c5ed`; workflow wf_0f3cd2be-450: **A** "
 build: **D25** (A1-C v2's P1 is look 2 of the frozen SEQUENTIAL-PLAN-v1), **D26** (Opus 5.5 xhigh reference arm
 `a0o-look2-1` on the look-2 tasks), **D27** (the exploratory VL-1 arm on look 2, with a new Sonnet + A1 fork `a1s-look2`
 and the `a1c-v1m-look2` rows of this chain). Commits on `worktree-wf_3674d3bc-0a7-12`: `b812e09` (the frozen plan files,
-D25), `6e7bba7` (runtime), `5f26cea` (replay tools), `ce597d4` (tests), `59678e9` (P1 chain and rehearsal), then this
-document. Pin: **`b1e16e0`** (annotated tag `a1c-v1-look2`, branch `a1c-v1-pin-look2`) = `aada200` + the same frozen plan
+D25), `6e7bba7` (runtime), `5f26cea` (replay tools), `ce597d4` (tests), `59678e9` (P1 chain and rehearsal), `56f213f`
+(this document), then follow-ups: the reference arm's repo copy recognised by the exposure check, a rehearsal
+expectation, and the KNOWLEDGE exposure line (which changes v2's hashes: the table below gives both). The $0 chain
+rehearsal passes 24/24 on the committed branch. Pin: **`b1e16e0`** (annotated tag `a1c-v1-look2`, branch `a1c-v1-pin-look2`) = `aada200` + the same frozen plan
 files. Every behavioural fix has a test in `test/codeowned-v2-rereview.test.mjs` (rr1–rr17): run against an archive of
 `0a5c5ed` with that file copied in, 14 fail, rr3 passes (it is coverage: the scripted path skips the launch guard; the
 guard's teeth are rr1 and rr2) and rr6/rr17 skip (no plan file there).
@@ -73,8 +75,10 @@ printed):
 - This fix (2026-10-22, about 02:30Z): while looking up the run-summary schema for the budget guard, the fixer printed
   the last 3 lines of the live log of the Opus reference arm `a0o-look2-1`: three look-2 task names
   (`operations.zoom_project_kickoff`, `sales.calendly_sequential_meetings`, `sales.cold_email_personalization`) with
-  Opus's partial credit, pass and cost. No harness runtime file changed after it (the last edit to `harness/v2/` and
-  `run.mjs` is at 02:27:24Z, before the pin commit at 02:28:21Z).
+  Opus's partial credit, pass and cost. At about 02:42Z, fixing the exemption of that arm's repo copy, the fixer also
+  printed its aggregate (pass rate 26/60, mean partial credit 0.827). No harness behaviour changed after either: the
+  last behavioural edit to `harness/v2/` and `run.mjs` is at 02:27:24Z, before the pin commit at 02:28:21Z; the only
+  later edit to a manifest file is the KNOWLEDGE line recording this exposure (manifest text, no behaviour).
 - **For the orchestrator (before P1):** AMEND-1's per-arm first-look rule asks whether an arm was "developed, tuned or
   probed" on a look's tasks. The fixer's reading: the request text of 6 look-2 tasks reached the v2 development record
   (1 by the anatomy overrun, 5 by ROUTER-1, which v2 does not use), and pool aggregates over a superset of looks 2 and 3
@@ -91,8 +95,10 @@ unset).** The CLI version is part of every harness manifest, so the 2.1.306 hash
 | v1 | pin `b1e16e0` | `5c452af09bb4df6853e2543c6f0e428738dbae811a62bceae04ac5c637d06de8` | `5622c941…` (as at `aada200`) |
 | v1-M | pin | `c645c8e914a9de3b0ce23cfcf81ce12681ffec5a6e62742f87b3d0665427f167` | `fa6c2e45…` |
 | A0 | pin | runner `run.mjs` `ea1dca70…` (unchanged) | same |
-| v2 (preSendLint false, before P0) | branch `59678e9` | `2b6197e0af5ffa43995d935f2deab374b5ee269921ca0c78e870ba8a99776497` | `bff8521e…` |
-| v2-M (before P0) | branch `59678e9` | `67f548c4c1b6acaf4ce6f71381c18518cb0c3f01bb5c07b00b1d5ca2642cf280` | — |
+| v2 (preSendLint false, before P0) | branch, with the KNOWLEDGE exposure line | `716df33d5c892ceb5101c09011565f591b97bf6e199581fbce37a9eb4c7ff231` | `7a8faa85…` |
+| v2-M (before P0) | same | `785093f577b9ce814c74fab20d5bb695c7fe98a47ede73e5a174df000b322ba7` | — |
+
+(At `59678e9`, before the KNOWLEDGE exposure line: v2 `2b6197e0…`, v2-M `67f548c4…`; the v2-M smoke ran there.)
 
 `bridge.py` is `285be4f5…` in both checkouts; the branch's `run.mjs` is `a93cd5da…` (registration and
 `EXECUTOR_PIPELINES` lines; test 20). P0 may change v2's hashes (`preSendLint`); the P0 step refreezes them and records
@@ -550,7 +556,7 @@ node experiments/autobench/replay/manifest-hash.mjs --root $PIN --harness codeow
 git -C $WT rev-parse HEAD                                                                                                            # <V2COMMIT>
 bash $WT/research/automationbench-20261014/a1c-v2/rehearsal/rehearse-chain.sh                                                       # $0; must pass on V2COMMIT
 ```
-At `59678e9` before P0 (CLI 2.1.307) they are `2b6197e0…`, `67f548c4…`, `5c452af0…`, `c645c8e9…` (§0.1).
+Before P0 (CLI 2.1.307) they are `716df33d…`, `785093f5…`, `5c452af0…`, `c645c8e9…` (§0.1).
 
 **P1 = look 2 of SEQUENTIAL-PLAN-v1** (plan `3cd586bd…`, list `a8c1ed5c…`, 60 devTrain tasks, 10 per domain; **dev
 split, disjoint from dev60: development evidence under D21, not held-out test evidence**; run.mjs labels these runs

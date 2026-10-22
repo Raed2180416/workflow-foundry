@@ -690,7 +690,8 @@ test('19 manifest: v2 id and version, the v2 files, the gated client and the eff
   assert.deepEqual(c2.gate, { envVar: 'AB_GATE_DIR', client: 'harness/v2/tool-gated.mjs' });
   assert.equal(c2.pipeline.maxRounds, 0);
   assert.equal(c2.pipeline.preSendLint, false);
-  assert.equal(c2.knowledge.length, 17);
+  assert.equal(c2.knowledge.length, 18);
+  assert.match(c2.knowledge[17], /^Exposure .*one look-2 finance request .*91-task superset of looks 2 and 3/);   // the development record's look-2 exposure (§0.1)
   assert.equal(c2.knowledge.filter(k => k.startsWith('D21')).length, 9);        // every grader-tuned rule and threshold (D21), the review and re-review rules, the P0 lint decision
   assert.deepEqual(c2.knowledge.slice(0, 4), [...V1.KNOWLEDGE]);
   assert.match(c2.knowledge[5], new RegExp(EFFECTS.source.indexTxtSha256));
