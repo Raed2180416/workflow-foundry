@@ -1,0 +1,1066 @@
+{
+ "version": 1,
+ "parent": {
+  "file": "parent.mjs",
+  "calls": [
+   "order-id",
+   "intake",
+   "fraud",
+   "customer-action",
+   "order-progress",
+   "fulfilment",
+   "cancellation",
+   "statuses",
+   "notices"
+  ],
+  "effects": [],
+  "humanTasks": []
+ },
+ "modules": {
+  "order-id": {
+   "file": "modules/order-id.mjs",
+   "purpose": "normalise an order id read anywhere (SPEC-E 3.1); pure, stateless",
+   "rules": [
+    "3.1"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "raw"
+    ],
+    "properties": {
+     "raw": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 400
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "orderId"
+    ],
+    "properties": {
+     "orderId": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 80
+     }
+    }
+   },
+   "effects": [],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  },
+  "intake": {
+   "file": "modules/intake.mjs",
+   "purpose": "one order: duplicate check, allocation, edition in force at p, amounts, orders.create (R1)",
+   "rules": [
+    "R1.1",
+    "R1.2",
+    "R1.3",
+    "R1.4",
+    "3.1"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "placed",
+       "resume"
+      ]
+     },
+     "order": {
+      "type": "object",
+      "required": [
+       "orderId",
+       "customerId",
+       "placedAt",
+       "items"
+      ],
+      "properties": {
+       "orderId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+       },
+       "customerId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+       },
+       "placedAt": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+       },
+       "currency": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 3
+       },
+       "items": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 50,
+        "items": {
+         "type": "object",
+         "required": [
+          "sku",
+          "qty"
+         ],
+         "properties": {
+          "sku": {
+           "type": "string",
+           "minLength": 1,
+           "maxLength": 80
+          },
+          "qty": {
+           "type": "integer",
+           "minimum": 1
+          }
+         }
+        }
+       }
+      }
+     },
+     "records": {
+      "type": "object"
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "status",
+     "duplicate",
+     "busy"
+    ],
+    "properties": {
+     "status": {
+      "enum": [
+       "new",
+       "allocating",
+       "recording",
+       "recorded"
+      ]
+     },
+     "duplicate": {
+      "type": "boolean"
+     },
+     "busy": {
+      "type": "boolean"
+     },
+     "orderId": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 80
+     },
+     "customerId": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 80
+     },
+     "placedAt": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40
+     },
+     "currency": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 3
+     },
+     "edition": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 80
+     },
+     "totalMinor": {
+      "type": [
+       "integer",
+       "null"
+      ]
+     },
+     "fulfilments": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "location",
+        "available",
+        "items",
+        "amountMinor"
+       ],
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "location": {
+         "type": [
+          "string",
+          "null"
+         ],
+         "maxLength": 40
+        },
+        "available": {
+         "type": "boolean"
+        },
+        "items": {
+         "type": "array",
+         "maxItems": 50
+        },
+        "amountMinor": {
+         "type": "integer"
+        }
+       }
+      }
+     }
+    }
+   },
+   "effects": [
+    "inventory.allocate",
+    "orders.create"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [
+    "order-id"
+   ],
+   "reads": []
+  },
+  "fraud": {
+   "file": "modules/fraud.mjs",
+   "purpose": "one order: fraud.check, the review task and its deadline, the clearing (R2)",
+   "rules": [
+    "R2.1",
+    "R2.2",
+    "S3",
+    "3.4"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "start",
+       "stop"
+      ]
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "placedAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+     },
+     "edition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "state",
+     "busy"
+    ],
+    "properties": {
+     "state": {
+      "enum": [
+       "idle",
+       "checking",
+       "review",
+       "cleared",
+       "cancel",
+       "stopped"
+      ]
+     },
+     "at": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40
+     },
+     "reason": {
+      "enum": [
+       "fraud",
+       "fraud-review-timeout",
+       null
+      ]
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [
+    "fraud.check"
+   ],
+   "humanTasks": [
+    "fraudReview"
+   ],
+   "timers": true,
+   "calls": [],
+   "reads": []
+  },
+  "customer-action": {
+   "file": "modules/customer-action.mjs",
+   "purpose": "one order with unavailable items: action-required, the customer deadline D, amend / cancel / timeout (R3)",
+   "rules": [
+    "R3.1",
+    "R3.2",
+    "S1"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "start",
+       "cleared",
+       "advance",
+       "action",
+       "stop"
+      ]
+     },
+     "placedAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+     },
+     "edition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "fulfilments": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "available"
+       ],
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "available": {
+         "type": "boolean"
+        }
+       }
+      }
+     },
+     "at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+     },
+     "action": {
+      "enum": [
+       "amend",
+       "cancel"
+      ]
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "state",
+     "busy"
+    ],
+    "properties": {
+     "state": {
+      "enum": [
+       "idle",
+       "pending",
+       "overdue",
+       "waiting",
+       "ready",
+       "cancel",
+       "timedOut",
+       "stopped"
+      ]
+     },
+     "at": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40
+     },
+     "reason": {
+      "enum": [
+       "customer",
+       "nothing-available",
+       null
+      ]
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [],
+   "humanTasks": [],
+   "timers": true,
+   "calls": [
+    "statuses",
+    "notices"
+   ],
+   "reads": []
+  },
+  "order-progress": {
+   "file": "modules/order-progress.mjs",
+   "purpose": "one order: processing statuses when ready (R4.1) and the order outcome (R4.5)",
+   "rules": [
+    "R4.1",
+    "R4.5"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "ready",
+       "ended",
+       "stop"
+      ]
+     },
+     "at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+     },
+     "fulfilments": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "available"
+       ],
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "available": {
+         "type": "boolean"
+        }
+       }
+      }
+     },
+     "fulfilmentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "end": {
+      "enum": [
+       "completed",
+       "failed"
+      ]
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "state",
+     "busy"
+    ],
+    "properties": {
+     "state": {
+      "enum": [
+       "idle",
+       "processing",
+       "ended",
+       "stopped"
+      ]
+     },
+     "outcome": {
+      "enum": [
+       "completed",
+       "failed",
+       "cancelled",
+       null
+      ]
+     },
+     "at": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [
+    "statuses"
+   ],
+   "reads": []
+  },
+  "fulfilment": {
+   "file": "modules/fulfilment.mjs",
+   "purpose": "one fulfilment saga: reserve, charge, ship, carrier reports, failure and compensation (R4.2-R4.4, R5)",
+   "rules": [
+    "R4.2",
+    "R4.3",
+    "R4.4",
+    "R5.1",
+    "R5.2",
+    "S2",
+    "S14"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "start",
+       "resume",
+       "advance",
+       "carrier",
+       "stop",
+       "get"
+      ]
+     },
+     "status": {
+      "type": "string",
+      "maxLength": 40
+     },
+     "records": {
+      "type": "object"
+     },
+     "orderId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "customerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "currency": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 3
+     },
+     "edition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "readyAt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+     },
+     "fulfilment": {
+      "type": "object",
+      "required": [
+       "fulfilmentId",
+       "location",
+       "items",
+       "amountMinor"
+      ],
+      "properties": {
+       "fulfilmentId": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+       },
+       "location": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+       },
+       "items": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 50,
+        "items": {
+         "type": "object",
+         "required": [
+          "sku",
+          "qty"
+         ],
+         "properties": {
+          "sku": {
+           "type": "string",
+           "minLength": 1,
+           "maxLength": 80
+          },
+          "qty": {
+           "type": "integer",
+           "minimum": 1
+          }
+         }
+        }
+       },
+       "amountMinor": {
+        "type": "integer",
+        "minimum": 1
+       }
+      }
+     },
+     "message": {
+      "type": "object",
+      "required": [
+       "code",
+       "reportedAt"
+      ],
+      "properties": {
+       "code": {
+        "type": "string",
+        "maxLength": 80
+       },
+       "reportedAt": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+       },
+       "carrier": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "maxLength": 80
+       },
+       "shipmentId": {
+        "type": [
+         "string",
+         "null"
+        ],
+        "maxLength": 80
+       }
+      }
+     },
+     "at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "state",
+     "end",
+     "failing",
+     "reports",
+     "busy"
+    ],
+    "properties": {
+     "state": {
+      "enum": [
+       "idle",
+       "active",
+       "booked",
+       "dispatched",
+       "failing",
+       "completed",
+       "failed",
+       "stopped"
+      ]
+     },
+     "end": {
+      "enum": [
+       "completed",
+       "failed",
+       "stopped",
+       null
+      ]
+     },
+     "endedAt": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40
+     },
+     "failing": {
+      "type": "boolean"
+     },
+     "reports": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+       "type": "object",
+       "required": [
+        "meaning",
+        "reportedAt"
+       ],
+       "properties": {
+        "meaning": {
+         "enum": [
+          "collected",
+          "inTransit",
+          "delivered",
+          "collectionFailed",
+          "info"
+         ]
+        },
+        "reportedAt": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 40
+        }
+       }
+      }
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [
+    "inventory.reserve",
+    "inventory.release",
+    "billing.charge",
+    "billing.refund",
+    "carrier.create",
+    "carrier.cancel"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [
+    "statuses",
+    "notices"
+   ],
+   "reads": []
+  },
+  "cancellation": {
+   "file": "modules/cancellation.mjs",
+   "purpose": "one order: judge a customer cancel and cancel the order (R6)",
+   "rules": [
+    "R6.1",
+    "R6.2",
+    "R6.3",
+    "R6.4",
+    "S4",
+    "S6",
+    "S7"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "customer-cancel",
+       "cancel-order"
+      ]
+     },
+     "at": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 40
+     },
+     "eventId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "phase": {
+      "enum": [
+       "not-cleared",
+       "processing",
+       "ended"
+      ]
+     },
+     "reason": {
+      "enum": [
+       "fraud",
+       "fraud-review-timeout",
+       "customer",
+       "nothing-available"
+      ]
+     },
+     "customerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "verdict",
+     "busy"
+    ],
+    "properties": {
+     "verdict": {
+      "enum": [
+       "counts",
+       "refused",
+       "nothing",
+       "done"
+      ]
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [
+    "fraud",
+    "order-progress",
+    "fulfilment",
+    "statuses",
+    "notices"
+   ],
+   "reads": []
+  },
+  "statuses": {
+   "file": "modules/statuses.mjs",
+   "purpose": "one order: the only writer of orders.setStatus; forward-only, each status at most once (R7.2)",
+   "rules": [
+    "R7.2"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "init",
+       "set",
+       "get"
+      ]
+     },
+     "fulfilments": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "location"
+       ],
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "location": {
+         "type": [
+          "string",
+          "null"
+         ],
+         "maxLength": 40
+        }
+       }
+      }
+     },
+     "fulfilmentId": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 80
+     },
+     "status": {
+      "type": "string",
+      "maxLength": 40
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "applied",
+     "order",
+     "fulfilments",
+     "busy"
+    ],
+    "properties": {
+     "applied": {
+      "type": "boolean"
+     },
+     "order": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "maxLength": 40
+     },
+     "fulfilments": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+       "type": "object",
+       "required": [
+        "fulfilmentId",
+        "status"
+       ],
+       "properties": {
+        "fulfilmentId": {
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 80
+        },
+        "status": {
+         "type": "string",
+         "maxLength": 40
+        }
+       }
+      }
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [
+    "orders.setStatus"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  },
+  "notices": {
+   "file": "modules/notices.mjs",
+   "purpose": "one order: the only sender of notify.send; each required notification exactly once (4.8)",
+   "rules": [
+    "4.8"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "init",
+       "send"
+      ]
+     },
+     "customerId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "template": {
+      "enum": [
+       "action-required",
+       "order-cancelled",
+       "order-timed-out",
+       "fulfilment-failed",
+       "cancel-refused"
+      ]
+     },
+     "about": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "occurrence": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     }
+    }
+   },
+   "output": {
+    "type": "object",
+    "required": [
+     "sent",
+     "busy"
+    ],
+    "properties": {
+     "sent": {
+      "type": "boolean"
+     },
+     "busy": {
+      "type": "boolean"
+     }
+    }
+   },
+   "effects": [
+    "notify.send:action-required",
+    "notify.send:order-cancelled",
+    "notify.send:order-timed-out",
+    "notify.send:fulfilment-failed",
+    "notify.send:cancel-refused"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  }
+ }
+}

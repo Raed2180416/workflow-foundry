@@ -1,0 +1,174 @@
+{
+ "label": "b1lh-e8-3.H-C.k1",
+ "incident": "b1lh-e8-3",
+ "arm": "H-C",
+ "k": 1,
+ "dryRun": false,
+ "kind": "monolith",
+ "at": "2026-10-21T23:24:16.003Z",
+ "wallMs": 331951,
+ "bedDigest": "b9e5a67138d42a7f",
+ "intervene": "patch (workflow defect: every failure reproduces exactly)",
+ "baseDigest": "1056e57ed7bf9aaf",
+ "patchedDigest": "1de6418ec11cd0d8",
+ "changed": true,
+ "loads": true,
+ "problems": [],
+ "session": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "capUsd": 0.5,
+  "costUsd": 0.04255866999999999,
+  "costUpperUsd": 0.04255866999999999,
+  "costUnknown": false,
+  "turns": 13,
+  "error": null,
+  "durationMs": 253817,
+  "smokeRuns": 2
+ },
+ "report": {
+  "file": "FAILURES.md",
+  "sha256": "03d9eb7526c034eea786cae04dd077a9e6069f9b6155854e6f8a3716976c15b0",
+  "classes": [
+   {
+    "key": "compensation|R5.1|ORD-…: compensation [\"release:SKU-<n>\"], committed steps need []",
+    "contract": "compensation",
+    "rule": "R5.1",
+    "finding": "ORD-…: compensation [\"release:SKU-<n>\"], committed steps need []",
+    "n": 4,
+    "contractRules": [
+     "R5.1",
+     "R5.2",
+     "R6.2",
+     "S2",
+     "S14"
+    ],
+    "owners": null,
+    "orders": [
+     "1237:d5/ORD-1237-0062",
+     "1237:d5/ORD-1237-0100",
+     "1237:d5/ORD-1237-0158",
+     "1237:d5/ORD-1237-0190"
+    ]
+   },
+   {
+    "key": "failure|R5.2|ORD-…: set failed without a failure",
+    "contract": "failure",
+    "rule": "R5.2",
+    "finding": "ORD-…: set failed without a failure",
+    "n": 4,
+    "contractRules": [
+     "R5.2",
+     "S13",
+     "S14"
+    ],
+    "owners": null,
+    "orders": [
+     "1237:d5/ORD-1237-0062",
+     "1237:d5/ORD-1237-0100",
+     "1237:d5/ORD-1237-0158",
+     "1237:d5/ORD-1237-0190"
+    ]
+   },
+   {
+    "key": "reservation|R4.2|ORD-…: not every item reserved within <n> min of ready",
+    "contract": "reservation",
+    "rule": "R4.2",
+    "finding": "ORD-…: not every item reserved within <n> min of ready",
+    "n": 4,
+    "contractRules": [
+     "R4.2.1",
+     "R5.1",
+     "R6.2",
+     "R7.1"
+    ],
+    "owners": null,
+    "orders": [
+     "1237:d5/ORD-1237-0062",
+     "1237:d5/ORD-1237-0100",
+     "1237:d5/ORD-1237-0158",
+     "1237:d5/ORD-1237-0190"
+    ]
+   }
+  ]
+ },
+ "gate": {
+  "accept": true,
+  "reason": "4 practice orders recovered, 0 regressed"
+ },
+ "gates": {
+  "H-C": {
+   "accept": true,
+   "reason": "4 practice orders recovered, 0 regressed"
+  },
+  "H-N": {
+   "accept": true,
+   "reason": "4 disagreements resolved, 0 new"
+  },
+  "H-0": {
+   "accept": true,
+   "reason": "loads; no new arm error (no correctness signal)"
+  }
+ },
+ "moduleTests": null,
+ "practice": {
+  "before": {
+   "completed": 331,
+   "oraclePassed": 327,
+   "oracleN": 331,
+   "contractsPassed": 320,
+   "contractsN": 324,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "after": {
+   "completed": 331,
+   "oraclePassed": 331,
+   "oracleN": 331,
+   "contractsPassed": 324,
+   "contractsN": 324,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "nvBefore": 20,
+  "nvAfter": 16
+ },
+ "grading": {
+  "before": {
+   "completed": 1022,
+   "oraclePassed": 1015,
+   "oracleN": 1022,
+   "contractsPassed": 994,
+   "contractsN": 1001,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "rawAfter": {
+   "completed": 1022,
+   "oraclePassed": 1022,
+   "oracleN": 1022,
+   "contractsPassed": 1001,
+   "contractsN": 1001,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "raw": {
+   "nRecovered": 7,
+   "nRegressed": 0,
+   "net": 7,
+   "recoveredByClass": {
+    "f4-reserve": 7
+   },
+   "regressedByClass": {}
+  },
+  "kept": {
+   "nRecovered": 7,
+   "nRegressed": 0,
+   "net": 7,
+   "recoveredByClass": {
+    "f4-reserve": 7
+   },
+   "regressedByClass": {}
+  }
+ }
+}
