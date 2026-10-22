@@ -59,7 +59,7 @@ GENERATOR_MODULES = [  # src/cli.py generate_data order
 
 
 def emit(obj) -> None:
-    PROTO_OUT.write(json.dumps(obj, ensure_ascii=False, sort_keys=True) + "\n")
+    PROTO_OUT.write(json.dumps(obj, ensure_ascii=False) + "\n")  # key order kept (argument order of actions)
     PROTO_OUT.flush()
 
 
@@ -230,6 +230,14 @@ def cmd_serve(args) -> None:
             elif op == "snapshot":
                 d = state_digests(st_mod.get_state())
                 emit({"kind": "snapshot", "digests": d, "digest": combined(d)})
+            elif op == "parse":
+                # Scripted agents only (host side): an action string -> the MCP call that issues it. Never touches the
+                # world.
+                steps = []
+                for a in req["actions"]:
+                    name, kw = parse_action(a, set(tools))
+                    steps.append({"name": sanitize(name), "arguments": kw})
+                emit({"kind": "parse", "steps": steps})
             else:
                 emit({"kind": "error", "error": f"unknown op {op!r}"})
         except Exception as e:  # noqa: BLE001
@@ -260,7 +268,7 @@ def load_task_file(path: str) -> dict:
 
 
 def cmd_grade(args) -> None:
-    """Facade trajectories -> verdicts. Input lines: {id, actions, error, fatal, live: {norm, raw} | null}."""
+    """Facade trajectories -> verdicts. Input lines: {id, key, actions (executed, in order), error, fatal, live: {norm, raw} | null}."""
     actions, evaluation, st_mod, toolkits, _ = official()
     dispatch = {t.name: t for t in toolkits.all_tools}
     tasks = load_task_file(args.tasks)
@@ -269,19 +277,27 @@ def cmd_grade(args) -> None:
     for tr in read_jsonl(args.input):
         t = tasks[tr["id"]]
         gt = [a.replace("\n", "\\n") for a in t["outcome"]]
-        pred = [a.replace("\n", "\\n") for a in tr.get("actions", [])]  # metrics.compute_metrics does the same
+        executed = [a.replace("\n", "\\n") for a in tr.get("actions", [])]  # metrics.compute_metrics does the same
         err = tr.get("error") or ""
+        fatal = bool(tr.get("fatal"))
+        # A tool exception ends the official run by propagating out of run_agent_structured, so _collect_result never
+        # runs and the logged function_calls stay empty (src/evals/inference.py _run_single_task): the official
+        # prediction of a fatal run is [] with the error set. The executed actions are kept for the harm view.
+        pred = [] if fatal else executed
         correct_state = evaluation.is_correct(pred, gt, "")
         correct = bool(correct_state and not err)  # metrics.compute_metrics: correct = state match and no error
-        rec = {"id": t["id"], "correct": correct, "correct_state": bool(correct_state),
+        rec = {"id": t["id"], "key": tr.get("key", t["id"]), "correct": correct, "correct_state": bool(correct_state),
                "side_effects": bool(evaluation.has_side_effects(pred, correct_state)),
-               "exact_match": bool(evaluation.is_exact_match(pred, gt)), "error": err or None,
-               "n_actions": len(pred), "gt_len": len(gt)}
+               "exact_match": bool(evaluation.is_exact_match(pred, gt)), "error": err or None, "fatal": fatal,
+               "n_actions": len(pred), "n_executed": len(executed), "gt_len": len(gt)}
+        if fatal:
+            # harm as executed (not an official metric): did the executed writes change the four side-effect tables?
+            rec["side_effects_executed"] = bool(evaluation.has_side_effects(executed, False))
         live = tr.get("live")
         if live:
             gok, gd = gold(t)
             native = bool(gok and not err and live["norm"] == gd["norm"])
-            _, replay = run_actions(pred, st_mod, dispatch)
+            _, replay = run_actions(executed, st_mod, dispatch)
             rd = state_digests(replay)
             rec.update({"native_correct": native, "live_matches_replay": rd["raw"] == live["raw"],
                         "agree": native == correct})

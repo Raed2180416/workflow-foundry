@@ -1,0 +1,283 @@
+{
+ "probe": "offline init (network namespace, no route): $0",
+ "at": "2026-10-22T02:40:25.047Z",
+ "systemPromptSha256": "5c337960c3b73239befd6c332ac83ab4eda41641fbbf317adc872ba1e6d2adbb",
+ "arms": {
+  "A-H": {
+   "model": "claude-haiku-5-5",
+   "effort": "high",
+   "ok": true,
+   "offline": true,
+   "costUsd": 0,
+   "error": null,
+   "stderrTail": null,
+   "fingerprint": {
+    "cliVersion": "2.1.307",
+    "model": "claude-haiku-5-5",
+    "permissionMode": "bypassPermissions",
+    "tools": [
+     "mcp__workbench__analytics_create_plot",
+     "mcp__workbench__analytics_engaged_users_count",
+     "mcp__workbench__analytics_get_average_session_duration",
+     "mcp__workbench__analytics_get_visitor_information_by_id",
+     "mcp__workbench__analytics_total_visits_count",
+     "mcp__workbench__analytics_traffic_source_count",
+     "mcp__workbench__calendar_create_event",
+     "mcp__workbench__calendar_delete_event",
+     "mcp__workbench__calendar_get_event_information_by_id",
+     "mcp__workbench__calendar_search_events",
+     "mcp__workbench__calendar_update_event",
+     "mcp__workbench__company_directory_find_email_address",
+     "mcp__workbench__customer_relationship_manager_add_customer",
+     "mcp__workbench__customer_relationship_manager_delete_customer",
+     "mcp__workbench__customer_relationship_manager_search_customers",
+     "mcp__workbench__customer_relationship_manager_update_customer",
+     "mcp__workbench__email_delete_email",
+     "mcp__workbench__email_forward_email",
+     "mcp__workbench__email_get_email_information_by_id",
+     "mcp__workbench__email_reply_email",
+     "mcp__workbench__email_search_emails",
+     "mcp__workbench__email_send_email",
+     "mcp__workbench__project_management_create_task",
+     "mcp__workbench__project_management_delete_task",
+     "mcp__workbench__project_management_get_task_information_by_id",
+     "mcp__workbench__project_management_search_tasks",
+     "mcp__workbench__project_management_update_task",
+     "mcp__workbench__python"
+    ],
+    "mcpServers": [
+     {
+      "name": "workbench",
+      "status": "connected"
+     }
+    ],
+    "slashCommands": [],
+    "skills": [],
+    "plugins": [
+     "cc-plugin-agents-md",
+     "cc-plugin-plugin-authoring",
+     "cc-plugin-telemetry"
+    ],
+    "agents": [
+     "Explore",
+     "Plan",
+     "claude",
+     "general-purpose",
+     "statusline-setup"
+    ],
+    "outputStyle": "default",
+    "apiKeySource": "none"
+   },
+   "fingerprintSha256": "54274712d656bc78c19e42025ed0f28d1517fa9ec3af0ded1911d9a082b8ffc6",
+   "mcpToolCount": 28,
+   "builtinToolCount": 0
+  },
+  "A-S": {
+   "model": "claude-sonnet-5-5",
+   "effort": "high",
+   "ok": true,
+   "offline": true,
+   "costUsd": 0,
+   "error": null,
+   "stderrTail": null,
+   "fingerprint": {
+    "cliVersion": "2.1.307",
+    "model": "claude-sonnet-5-5",
+    "permissionMode": "bypassPermissions",
+    "tools": [
+     "mcp__workbench__analytics_create_plot",
+     "mcp__workbench__analytics_engaged_users_count",
+     "mcp__workbench__analytics_get_average_session_duration",
+     "mcp__workbench__analytics_get_visitor_information_by_id",
+     "mcp__workbench__analytics_total_visits_count",
+     "mcp__workbench__analytics_traffic_source_count",
+     "mcp__workbench__calendar_create_event",
+     "mcp__workbench__calendar_delete_event",
+     "mcp__workbench__calendar_get_event_information_by_id",
+     "mcp__workbench__calendar_search_events",
+     "mcp__workbench__calendar_update_event",
+     "mcp__workbench__company_directory_find_email_address",
+     "mcp__workbench__customer_relationship_manager_add_customer",
+     "mcp__workbench__customer_relationship_manager_delete_customer",
+     "mcp__workbench__customer_relationship_manager_search_customers",
+     "mcp__workbench__customer_relationship_manager_update_customer",
+     "mcp__workbench__email_delete_email",
+     "mcp__workbench__email_forward_email",
+     "mcp__workbench__email_get_email_information_by_id",
+     "mcp__workbench__email_reply_email",
+     "mcp__workbench__email_search_emails",
+     "mcp__workbench__email_send_email",
+     "mcp__workbench__project_management_create_task",
+     "mcp__workbench__project_management_delete_task",
+     "mcp__workbench__project_management_get_task_information_by_id",
+     "mcp__workbench__project_management_search_tasks",
+     "mcp__workbench__project_management_update_task",
+     "mcp__workbench__python"
+    ],
+    "mcpServers": [
+     {
+      "name": "workbench",
+      "status": "connected"
+     }
+    ],
+    "slashCommands": [],
+    "skills": [],
+    "plugins": [
+     "cc-plugin-agents-md",
+     "cc-plugin-plugin-authoring",
+     "cc-plugin-telemetry"
+    ],
+    "agents": [
+     "Explore",
+     "Plan",
+     "claude",
+     "general-purpose",
+     "statusline-setup"
+    ],
+    "outputStyle": "default",
+    "apiKeySource": "none"
+   },
+   "fingerprintSha256": "5cff23ec991aecb2315007d64cb62686a368c03fb532eef2877f92e3fec41a26",
+   "mcpToolCount": 28,
+   "builtinToolCount": 0
+  },
+  "A-O": {
+   "model": "claude-opus-5-5",
+   "effort": "xhigh",
+   "ok": true,
+   "offline": true,
+   "costUsd": 0,
+   "error": null,
+   "stderrTail": null,
+   "fingerprint": {
+    "cliVersion": "2.1.307",
+    "model": "claude-opus-5-5",
+    "permissionMode": "bypassPermissions",
+    "tools": [
+     "mcp__workbench__analytics_create_plot",
+     "mcp__workbench__analytics_engaged_users_count",
+     "mcp__workbench__analytics_get_average_session_duration",
+     "mcp__workbench__analytics_get_visitor_information_by_id",
+     "mcp__workbench__analytics_total_visits_count",
+     "mcp__workbench__analytics_traffic_source_count",
+     "mcp__workbench__calendar_create_event",
+     "mcp__workbench__calendar_delete_event",
+     "mcp__workbench__calendar_get_event_information_by_id",
+     "mcp__workbench__calendar_search_events",
+     "mcp__workbench__calendar_update_event",
+     "mcp__workbench__company_directory_find_email_address",
+     "mcp__workbench__customer_relationship_manager_add_customer",
+     "mcp__workbench__customer_relationship_manager_delete_customer",
+     "mcp__workbench__customer_relationship_manager_search_customers",
+     "mcp__workbench__customer_relationship_manager_update_customer",
+     "mcp__workbench__email_delete_email",
+     "mcp__workbench__email_forward_email",
+     "mcp__workbench__email_get_email_information_by_id",
+     "mcp__workbench__email_reply_email",
+     "mcp__workbench__email_search_emails",
+     "mcp__workbench__email_send_email",
+     "mcp__workbench__project_management_create_task",
+     "mcp__workbench__project_management_delete_task",
+     "mcp__workbench__project_management_get_task_information_by_id",
+     "mcp__workbench__project_management_search_tasks",
+     "mcp__workbench__project_management_update_task",
+     "mcp__workbench__python"
+    ],
+    "mcpServers": [
+     {
+      "name": "workbench",
+      "status": "connected"
+     }
+    ],
+    "slashCommands": [],
+    "skills": [],
+    "plugins": [
+     "cc-plugin-agents-md",
+     "cc-plugin-plugin-authoring",
+     "cc-plugin-telemetry"
+    ],
+    "agents": [
+     "Explore",
+     "Plan",
+     "claude",
+     "general-purpose",
+     "statusline-setup"
+    ],
+    "outputStyle": "default",
+    "apiKeySource": "none"
+   },
+   "fingerprintSha256": "eb681e77941d4e2405f17d01cc53759ee99019842479d2829e1efb8dde9eac4f",
+   "mcpToolCount": 28,
+   "builtinToolCount": 0
+  },
+  "H45": {
+   "model": "claude-haiku-4-5-20251001",
+   "effort": null,
+   "ok": true,
+   "offline": true,
+   "costUsd": 0,
+   "error": null,
+   "stderrTail": null,
+   "fingerprint": {
+    "cliVersion": "2.1.307",
+    "model": "claude-haiku-4-5-20251001",
+    "permissionMode": "bypassPermissions",
+    "tools": [
+     "mcp__workbench__analytics_create_plot",
+     "mcp__workbench__analytics_engaged_users_count",
+     "mcp__workbench__analytics_get_average_session_duration",
+     "mcp__workbench__analytics_get_visitor_information_by_id",
+     "mcp__workbench__analytics_total_visits_count",
+     "mcp__workbench__analytics_traffic_source_count",
+     "mcp__workbench__calendar_create_event",
+     "mcp__workbench__calendar_delete_event",
+     "mcp__workbench__calendar_get_event_information_by_id",
+     "mcp__workbench__calendar_search_events",
+     "mcp__workbench__calendar_update_event",
+     "mcp__workbench__company_directory_find_email_address",
+     "mcp__workbench__customer_relationship_manager_add_customer",
+     "mcp__workbench__customer_relationship_manager_delete_customer",
+     "mcp__workbench__customer_relationship_manager_search_customers",
+     "mcp__workbench__customer_relationship_manager_update_customer",
+     "mcp__workbench__email_delete_email",
+     "mcp__workbench__email_forward_email",
+     "mcp__workbench__email_get_email_information_by_id",
+     "mcp__workbench__email_reply_email",
+     "mcp__workbench__email_search_emails",
+     "mcp__workbench__email_send_email",
+     "mcp__workbench__project_management_create_task",
+     "mcp__workbench__project_management_delete_task",
+     "mcp__workbench__project_management_get_task_information_by_id",
+     "mcp__workbench__project_management_search_tasks",
+     "mcp__workbench__project_management_update_task",
+     "mcp__workbench__python"
+    ],
+    "mcpServers": [
+     {
+      "name": "workbench",
+      "status": "connected"
+     }
+    ],
+    "slashCommands": [],
+    "skills": [],
+    "plugins": [
+     "cc-plugin-agents-md",
+     "cc-plugin-plugin-authoring",
+     "cc-plugin-telemetry"
+    ],
+    "agents": [
+     "Explore",
+     "Plan",
+     "claude",
+     "general-purpose",
+     "statusline-setup"
+    ],
+    "outputStyle": "default",
+    "apiKeySource": "none"
+   },
+   "fingerprintSha256": "d0ac6a63824b6cce335f4564458af6d35dd5f4d95ede8dd31098e4633d60b2df",
+   "mcpToolCount": 28,
+   "builtinToolCount": 0
+  }
+ }
+}

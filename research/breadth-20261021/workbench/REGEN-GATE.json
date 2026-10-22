@@ -1,0 +1,66 @@
+{
+ "gate": "WorkBench generator seed control (wb-split-v1 H2-ext precondition)",
+ "at": "2026-10-22T02:20:52.626Z",
+ "ms": 10047,
+ "command": "bed.py regen: the six scripts/data_generation/task_outcome_generation modules in src/cli.py generate_data order, np.random.seed(seed) and random.seed(seed) per module, 10 per template, shipped sandbox databases unchanged",
+ "seed42": {
+  "reproducesShippedCsvs": true,
+  "perDomain": {
+   "analytics": true,
+   "calendar": true,
+   "customer_relationship_manager": true,
+   "email": true,
+   "multi_domain": true,
+   "project_management": true
+  },
+  "twiceIdentical": true,
+  "csvSha256": {
+   "analytics": "d99dd61758a7ab6cd7c81cbc892701c8e54e0fe6711ea86395686a8ac5006290",
+   "calendar": "0a2e31639292bc341ad17d1c4917a5becb2f1ae5b3a7109639baa2de38db2758",
+   "customer_relationship_manager": "d10dedb1197c55202a551c337cd2a39cef619164fb1f9a8cdf66bbbb376173d8",
+   "email": "be57642f3eb74bce2aba8586088e12781aa71eb6b628ba5091db20c0f86c084d",
+   "multi_domain": "631491d266a03b71232629ce525c3718d7696c9d3243e1e1a7e00b36f0ac7b91",
+   "project_management": "c73d34bdf50cfe2310eb4c8300bca70832bcc909824af2a6a33b835f3b18fd4d"
+  }
+ },
+ "breadthSeed": {
+  "seed": 8850,
+  "twiceIdentical": true,
+  "csvSha256": {
+   "analytics": "beebb0d7e0fec649c6ad12c8b968ccbdfd75d6a55b8db571494287b1c6820a77",
+   "calendar": "41634c8892113c5f33ee73f93a2c2bbeedd1c4dcf925ea01a664c362e5a4ebe7",
+   "customer_relationship_manager": "a7dfc1cf6762fd39aaee6e32c762752c9db322a20da57643a5a7613971b9b49a",
+   "email": "17f61eb83f71941f744cf7754dd3afc98b790e1a2bd0305e2491329ca12076af",
+   "multi_domain": "acad7cbeff9b36dfabbbbaebcd5b06fad1d3613764caf0e51b47b09732d95fc0",
+   "project_management": "83cbdc4c42226a203b6aa125f1ee5a259281cd32c43bdd815947be045473382a"
+  },
+  "rowsSha256": "99a252ea3b7d0c2bd1a96217c4d3085f37a3a6536dc54a0bc5f69917a7cae6e9",
+  "identicalToShipped": {
+   "analytics": false,
+   "calendar": false,
+   "customer_relationship_manager": false,
+   "email": false,
+   "multi_domain": false,
+   "project_management": false
+  },
+  "n": 690,
+  "answerChanged": 460,
+  "textNew": 658,
+  "answerChangedShare": 0.667,
+  "unknownTemplate": 0,
+  "templatesWithNoChangedAnswer": [
+   "multi_domain/2f5df48edb",
+   "multi_domain/41d04b56d0"
+  ],
+  "templatesWithFewerThan3Changed": [
+   "analytics/07fc877207:2",
+   "analytics/3104b70387:1",
+   "multi_domain/1df19602b0:1",
+   "multi_domain/2f5df48edb:0",
+   "multi_domain/41d04b56d0:0",
+   "multi_domain/b22a021851:2",
+   "project_management/1632c68baa:1"
+  ]
+ },
+ "seedControlVerified": true
+}

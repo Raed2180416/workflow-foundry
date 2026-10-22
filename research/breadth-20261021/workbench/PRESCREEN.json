@@ -1,0 +1,482 @@
+{
+ "source": {
+  "file": "data/results/item_level_results.csv.gz @49c7dfd0",
+  "sha256": "6035fb112bbb4fb48cd56d643898cac43c42c2d11bc6d2bb0e595d8d31ea2216",
+  "bytes": 1405327,
+  "rows": "run_group revisited_2026, tool_selection all",
+  "read": "2026-10-22"
+ },
+ "scope": "dev templates only (SPLIT.json); the overall columns are the published 690-task numbers (README, retro/main.pdf), shown for reference",
+ "devTemplatesMatched": 29,
+ "models": {
+  "claude-fable-5": {
+   "n": 690,
+   "correct": 674,
+   "rate": 97.7,
+   "sideEffects": 1.9,
+   "dev": {
+    "n": 290,
+    "correct": 279,
+    "rate": 96.2,
+    "sideEffects": 2.8,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 98.7
+    }
+   },
+   "timestamps": 6
+  },
+  "claude-haiku-4.5": {
+   "n": 690,
+   "correct": 516,
+   "rate": 74.8,
+   "sideEffects": 16.7,
+   "dev": {
+    "n": 290,
+    "correct": 217,
+    "rate": 74.8,
+    "sideEffects": 18.6,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 73.5
+    }
+   },
+   "timestamps": 6
+  },
+  "claude-opus-4.8": {
+   "n": 690,
+   "correct": 664,
+   "rate": 96.2,
+   "sideEffects": 2.5,
+   "dev": {
+    "n": 290,
+    "correct": 274,
+    "rate": 94.5,
+    "sideEffects": 4.1,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 96
+    }
+   },
+   "timestamps": 6
+  },
+  "claude-sonnet-4.6": {
+   "n": 690,
+   "correct": 609,
+   "rate": 88.3,
+   "sideEffects": 8.8,
+   "dev": {
+    "n": 290,
+    "correct": 251,
+    "rate": 86.6,
+    "sideEffects": 9.3,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 88.9
+    }
+   },
+   "timestamps": 6
+  },
+  "deepseek-v4-pro": {
+   "n": 690,
+   "correct": 581,
+   "rate": 84.2,
+   "sideEffects": 12.8,
+   "dev": {
+    "n": 290,
+    "correct": 239,
+    "rate": 82.4,
+    "sideEffects": 14.5,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 84.1
+    }
+   },
+   "timestamps": 6
+  },
+  "gemini-3.1-pro": {
+   "n": 690,
+   "correct": 659,
+   "rate": 95.5,
+   "sideEffects": 2.9,
+   "dev": {
+    "n": 290,
+    "correct": 276,
+    "rate": 95.2,
+    "sideEffects": 3.8,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 96
+    }
+   },
+   "timestamps": 6
+  },
+  "gemini-3.5-flash": {
+   "n": 690,
+   "correct": 635,
+   "rate": 92,
+   "sideEffects": 3,
+   "dev": {
+    "n": 290,
+    "correct": 255,
+    "rate": 87.9,
+    "sideEffects": 3.4,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 91.2
+    }
+   },
+   "timestamps": 6
+  },
+  "glm-4.6": {
+   "n": 690,
+   "correct": 534,
+   "rate": 77.4,
+   "sideEffects": 17,
+   "dev": {
+    "n": 290,
+    "correct": 209,
+    "rate": 72.1,
+    "sideEffects": 21.7,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 73.5
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-3.5": {
+   "n": 690,
+   "correct": 216,
+   "rate": 31.3,
+   "sideEffects": 38.7,
+   "dev": {
+    "n": 290,
+    "correct": 62,
+    "rate": 21.4,
+    "sideEffects": 43.8,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 18.6
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-4-turbo": {
+   "n": 690,
+   "correct": 423,
+   "rate": 61.3,
+   "sideEffects": 22.3,
+   "dev": {
+    "n": 290,
+    "correct": 159,
+    "rate": 54.8,
+    "sideEffects": 24.5,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 52.7
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-4.1": {
+   "n": 690,
+   "correct": 507,
+   "rate": 73.5,
+   "sideEffects": 19.4,
+   "dev": {
+    "n": 290,
+    "correct": 198,
+    "rate": 68.3,
+    "sideEffects": 24.1,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 65.9
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-4o": {
+   "n": 690,
+   "correct": 476,
+   "rate": 69,
+   "sideEffects": 15.1,
+   "dev": {
+    "n": 290,
+    "correct": 181,
+    "rate": 62.4,
+    "sideEffects": 18.3,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 59.7
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-5": {
+   "n": 690,
+   "correct": 582,
+   "rate": 84.3,
+   "sideEffects": 13,
+   "dev": {
+    "n": 290,
+    "correct": 234,
+    "rate": 80.7,
+    "sideEffects": 15.9,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 77
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-5.1": {
+   "n": 690,
+   "correct": 414,
+   "rate": 60,
+   "sideEffects": 18.1,
+   "dev": {
+    "n": 290,
+    "correct": 148,
+    "rate": 51,
+    "sideEffects": 24.8,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 54.9
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-5.2": {
+   "n": 690,
+   "correct": 486,
+   "rate": 70.4,
+   "sideEffects": 18.8,
+   "dev": {
+    "n": 290,
+    "correct": 183,
+    "rate": 63.1,
+    "sideEffects": 24.5,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 67.3
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-5.4": {
+   "n": 690,
+   "correct": 542,
+   "rate": 78.6,
+   "sideEffects": 16.8,
+   "dev": {
+    "n": 290,
+    "correct": 210,
+    "rate": 72.4,
+    "sideEffects": 23.4,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 75.2
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-5.4-mini": {
+   "n": 690,
+   "correct": 406,
+   "rate": 58.8,
+   "sideEffects": 30.3,
+   "dev": {
+    "n": 290,
+    "correct": 137,
+    "rate": 47.2,
+    "sideEffects": 39.7,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 55.3
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-5.4-nano": {
+   "n": 690,
+   "correct": 335,
+   "rate": 48.6,
+   "sideEffects": 28.6,
+   "dev": {
+    "n": 290,
+    "correct": 117,
+    "rate": 40.3,
+    "sideEffects": 36.2,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 42
+    }
+   },
+   "timestamps": 6
+  },
+  "gpt-5.5": {
+   "n": 690,
+   "correct": 655,
+   "rate": 94.9,
+   "sideEffects": 3.9,
+   "dev": {
+    "n": 290,
+    "correct": 272,
+    "rate": 93.8,
+    "sideEffects": 4.5,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 95.6
+    }
+   },
+   "timestamps": 6
+  },
+  "kimi-k2.6": {
+   "n": 690,
+   "correct": 607,
+   "rate": 88,
+   "sideEffects": 6.8,
+   "dev": {
+    "n": 290,
+    "correct": 252,
+    "rate": 86.9,
+    "sideEffects": 4.8,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 85
+    }
+   },
+   "timestamps": 6
+  },
+  "mistral-medium-3-5": {
+   "n": 690,
+   "correct": 424,
+   "rate": 61.4,
+   "sideEffects": 30.4,
+   "dev": {
+    "n": 290,
+    "correct": 147,
+    "rate": 50.7,
+    "sideEffects": 39.3,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 61.5
+    }
+   },
+   "timestamps": 6
+  },
+  "mistral-small-2603": {
+   "n": 690,
+   "correct": 264,
+   "rate": 38.3,
+   "sideEffects": 44.3,
+   "dev": {
+    "n": 290,
+    "correct": 100,
+    "rate": 34.5,
+    "sideEffects": 45.9,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 39.8
+    }
+   },
+   "timestamps": 6
+  },
+  "o3": {
+   "n": 690,
+   "correct": 534,
+   "rate": 77.4,
+   "sideEffects": 17.5,
+   "dev": {
+    "n": 290,
+    "correct": 226,
+    "rate": 77.9,
+    "sideEffects": 17.2,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 76.1
+    }
+   },
+   "timestamps": 6
+  },
+  "qwen-3.5-flash": {
+   "n": 690,
+   "correct": 488,
+   "rate": 70.7,
+   "sideEffects": 21.4,
+   "dev": {
+    "n": 290,
+    "correct": 185,
+    "rate": 63.8,
+    "sideEffects": 26.9,
+    "nonEmptyGold": {
+     "n": 226,
+     "rate": 67.3
+    }
+   },
+   "timestamps": 6
+  }
+ },
+ "screen": {
+  "haiku45Dev": 74.8,
+  "sonnet46Dev": 86.6,
+  "opus48Dev": 94.5,
+  "fable5Dev": 96.2,
+  "premiumSonnet46OverHaiku45": 11.8,
+  "premiumOpus48OverHaiku45": 19.7,
+  "premiumFable5OverHaiku45": 21.4,
+  "headroomRule": "skip if both >= 0.90 or the larger model < 0.10 (PLAN §8.4); assay: enter if the premium is informative",
+  "note": "Published runs are other model versions (Haiku 4.5, Sonnet 4.6, Opus 4.8) under the official OpenAI-style harness at temperature 0. Our arms are Haiku 5.5, Sonnet 5.5 and Opus 5.5 through Claude Code. This screen prices the premium; it does not predict our arms."
+ },
+ "anchor": {
+  "rule": "40 dev instances: dev templates in ascending sha256(salt + ':h45:' + template id); per template its instances in ascending sha256(salt + ':h45:' + id); round 1 takes one per template (29), round 2 one more from the first 11 templates",
+  "salt": "f0b7281b4e0e3e277abd49ad96a0cfabec1cd22a",
+  "ids": [
+   "project_management-004",
+   "multi_domain-075",
+   "calendar-106",
+   "email-084",
+   "analytics-034",
+   "multi_domain-100",
+   "project_management-051",
+   "multi_domain-016",
+   "email-053",
+   "analytics-091",
+   "multi_domain-176",
+   "multi_domain-088",
+   "multi_domain-132",
+   "email-006",
+   "calendar-058",
+   "analytics-059",
+   "multi_domain-152",
+   "calendar-005",
+   "calendar-020",
+   "project_management-069",
+   "multi_domain-160",
+   "customer_relationship_manager-075",
+   "customer_relationship_manager-057",
+   "analytics-113",
+   "multi_domain-190",
+   "analytics-086",
+   "calendar-076",
+   "email-017",
+   "customer_relationship_manager-049",
+   "project_management-002",
+   "multi_domain-073",
+   "calendar-105",
+   "email-086",
+   "analytics-033",
+   "multi_domain-103",
+   "project_management-058",
+   "multi_domain-012",
+   "email-054",
+   "analytics-098",
+   "multi_domain-177"
+  ],
+  "idsSha256": "9fd045c5ed02fa8decbb28bb4b2ae9f49b12c76639b168b1431b2136e5158bdb",
+  "publishedHaiku45Correct": 29,
+  "publishedHaiku45Rate": 72.5,
+  "comparison": "H45 arm (claude-haiku-4-5-20251001 through the A-H harness) on these 40 vs the published verdicts; a gap above 10 points is reported as a harness difference"
+ }
+}
