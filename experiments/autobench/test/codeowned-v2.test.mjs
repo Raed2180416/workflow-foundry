@@ -274,7 +274,11 @@ test('5 unobservable: a check on an app the re-read cannot list is null with no 
   assert.equal(evaluate(post, before, before).unobservable, true);
   const fb = { ...post, params: { ...post.params, app: 'facebook_pages' } };
   const feed = { records: [rec('facebook_pages:feed:f1', { id: 'f1', message: 'old news', page: 'pg1' })] };
-  assert.equal(evaluate(fb, feed, feed).pass, false);
+  // A Facebook post may be a feed post or a photo (the kinds its post operations create; re-review 2026-10-21 minor 5):
+  // with only the feed listed, a missing post is undecided; with both listed, it fails; a new feed post decides.
+  assert.equal(evaluate(fb, feed, feed).unobservable, true);
+  const both = { records: [...feed.records, rec('facebook_pages:photos:p1', { id: 'p1', name: 'old photo', page: 'pg1' })] };
+  assert.equal(evaluate(fb, both, both).pass, false);
   assert.equal(evaluate(fb, feed, { records: [...feed.records, rec('facebook_pages:feed:f2', { id: 'f2', message: 'Quillfeather joins', page: 'pg1' })] }).pass, true);
   // A direct message posted in an im channel the work opened is found through the member.
   const dm = { id: 'P4', type: 'slack_posted', hard: true, params: { channel: { id: null, name: '@ivo', dm: true, user: 'U9' }, text: ['Quillfeather'], bodyNot: [] } };
@@ -686,8 +690,8 @@ test('19 manifest: v2 id and version, the v2 files, the gated client and the eff
   assert.deepEqual(c2.gate, { envVar: 'AB_GATE_DIR', client: 'harness/v2/tool-gated.mjs' });
   assert.equal(c2.pipeline.maxRounds, 0);
   assert.equal(c2.pipeline.preSendLint, false);
-  assert.equal(c2.knowledge.length, 13);
-  assert.equal(c2.knowledge.filter(k => k.startsWith('D21 ')).length, 5);       // every grader-tuned rule and threshold (D21)
+  assert.equal(c2.knowledge.length, 17);
+  assert.equal(c2.knowledge.filter(k => k.startsWith('D21')).length, 9);        // every grader-tuned rule and threshold (D21), the review and re-review rules, the P0 lint decision
   assert.deepEqual(c2.knowledge.slice(0, 4), [...V1.KNOWLEDGE]);
   assert.match(c2.knowledge[5], new RegExp(EFFECTS.source.indexTxtSha256));
   const files = V2.manifestFiles();
@@ -708,11 +712,15 @@ test(`20 v1 untouched: the non-runner v1 manifest files equal ${V1_REF ?? 'the a
     assert.ok(then.equals(readFileSync(path.join(REPO, f))), f);
   }
   for (const f of ['experiments/autobench/harness/codeowned-stubs.mjs', 'experiments/autobench/test/codeowned.test.mjs']) assert.ok(execFileSync('git', ['-C', REPO, 'show', `${V1_REF}:${f}`]).equals(readFileSync(path.join(REPO, f))), f);
+  // run.mjs: the registration lines, and (re-review 2026-10-21, B-1) the executor-model wiring extended from the codeowned
+  // pipeline to codeowned-v2 (EXECUTOR_PIPELINES). For --harness codeowned both guards decide exactly as before.
   const diff = execFileSync('git', ['-C', REPO, 'diff', '--unified=0', V1_REF, '--', 'experiments/autobench/run.mjs'], { encoding: 'utf8' });
   const changed = diff.split('\n').filter(l => /^[+-](?![+-])/.test(l));
-  assert.ok(changed.length > 0 && changed.length <= 6, diff);
-  for (const l of changed.filter(x => x.startsWith('+'))) assert.match(l, /codeowned-v2/);
-  for (const l of changed.filter(x => x.startsWith('-'))) assert.match(l, /PIPELINE_(HARNESSES|STUBS)/);
+  assert.ok(changed.length > 0 && changed.length <= 13, diff);
+  for (const l of changed.filter(x => x.startsWith('+'))) assert.match(l, /codeowned-v2|EXECUTOR_PIPELINES/);
+  for (const l of changed.filter(x => x.startsWith('-'))) assert.match(l, /PIPELINE_(HARNESSES|STUBS)|harness !== CODEOWNED|the codeowned pipeline \(A1-C\)/);
+  const { EXECUTOR_PIPELINES, CODEOWNED } = await import('../run.mjs');
+  assert.deepEqual([...EXECUTOR_PIPELINES], [CODEOWNED, 'codeowned-v2']);
   assert.equal(PIPELINE_HARNESSES.codeowned, './harness/codeowned.mjs');
   const loaded = await import(new URL(PIPELINE_HARNESSES.codeowned, pathToUrl(path.join(REPO, 'experiments/autobench/run.mjs'))).href);
   assert.equal(loaded.HARNESS_VERSION, 'a1c-v1');

@@ -33,7 +33,8 @@ const read = (apps, records = []) => ({ apps: Object.fromEntries(Object.entries(
 
 test('d1 a kind that was listed but empty is observable: a missing post, record or child FAILS (not null)', () => {
   const post = { id: 'P1', type: 'channel_posted', hard: true, params: { app: 'facebook_pages', channel: null, text: ['Quillfeather'], bodyNot: [] } };
-  const feedListed = read({ facebook_pages: { accounts: 1, feed: 1 } }, [rec('facebook_pages:accounts:pg1', { id: 'pg1', name: 'Orchid' })]);
+  // Every kind the app's post operations create is listed (feed and photos; re-review 2026-10-21 minor 5, test rr11).
+  const feedListed = read({ facebook_pages: { accounts: 1, feed: 1, photos: 1 } }, [rec('facebook_pages:accounts:pg1', { id: 'pg1', name: 'Orchid' })]);
   const e1 = PC.evaluate(post, feedListed, feedListed);
   assert.equal(e1.pass, false, JSON.stringify(e1));
   const card = { id: 'P2', type: 'record_created', hard: true, params: { app: 'trello', kind: 'cards', values: ['Dock repair'] } };
@@ -136,7 +137,7 @@ test('e1 decide: a batch with a refused call is held whole; its identical resend
   assert.deepEqual(TG.decide([bad, bad], CFG, []).map(x => x.action), ['refuse', 'held']);
   const l2 = [{ kind: 'refused', rule: 'P1', recipient: 'finance-lead@orchid.example', hash: TG.callHash(bad) }];
   assert.deepEqual(TG.decide([bad, bad], CFG, l2).map(x => x.action), ['resend', 'resend']);
-  assert.match(TG.refusalText(TG.decide([getList, bad], CFG, [])[1], bad, { batch: true }), /No call of this batch was sent\. .*run the identical command again: every call will be sent once/);
+  assert.match(TG.refusalText(TG.decide([getList, bad], CFG, [])[1], bad, { batch: true }), /No call of this batch was sent\. .*run the identical command again \(do not send its other calls on their own first\): every call will be sent once/);
 });
 
 /** The bridge's role for the real client: answers req-N.json files; counts every call it served. */
@@ -189,8 +190,9 @@ test('e2 the gated client: a mixed batch is refused whole (exit 1, no request); 
     await new Promise(r => setTimeout(r, 100));
     assert.equal(resp.served.length, 3);                                         // no call went out twice
     const lines = GT.readGateLog(path.join(wd, '.tools', GT.GATE_LOG)).lines;
-    assert.deepEqual(lines.map(l => l.kind), ['loaded', 'held', 'refused', 'held', 'loaded', 'resent']);
-    assert.deepEqual(GT.gateSummary(lines), { loaded: 2, refused: 1, held: 2, resentIdentical: 1, capped: 0 });
+    // The two held calls the resend sent are logged as sent (re-review B minor 8): an identical third batch would be refused.
+    assert.deepEqual(lines.map(l => l.kind), ['loaded', 'held', 'refused', 'held', 'loaded', 'resent', 'sent', 'sent']);
+    assert.deepEqual(GT.gateSummary(lines), { loaded: 2, refused: 1, held: 2, resentIdentical: 1, capped: 0, duplicatesRefused: 0, heldThenSent: 2 });
   } finally { resp.stop(); }
 });
 
@@ -400,12 +402,21 @@ const TASKS = Array.from({ length: 60 }, (_, i) => `${['sales', 'marketing', 'op
 
 test('g1 simulated cost: 60 tasks at $0.075 reserved per call under a $1.5 cap all complete (calls wait instead of failing); the denominator is 180', { timeout: 120_000 }, async () => {
   const LR = await import('../replay/ledger-replay.mjs');
+  const reply = system => (system === LG.LEDGER_SYSTEM ? `\`\`\`json\n${JSON.stringify(ledgerReply())}\n\`\`\`` : '{"checks": [], "decisions": []}');
+  // Deterministic waits (re-review 2026-10-21, minor 2: the first version's waits depended on timing): count the calls a
+  // replay makes, then price each so the run spends $1.38 in all. When the last task starts, at least 57 tasks are done
+  // (spent >= $1.31), so its three parallel readers cannot all reserve $0.075 under $1.5: one must wait; and no single
+  // call is ever refused (spent before any call + $0.075 <= $1.455).
+  let n = 0;
+  await LR.runReplay({ tasks: TASKS, load: async t => ({ rec: replayRec(t), inv: replayInv() }), call: LR.metered(LR.makeLedger(Infinity), 0, async (nm, system) => { n += 1; return { text: reply(system), costUsd: 0, error: null }; }), out: tmp('p0n'), concurrency: 3 });
+  const unit = 1.38 / n;
   const ledger = LR.makeLedger(1.5, { pollMs: 1 });
   let i = 0;
   const names = [];
-  const raw = async (name, system) => { names.push(name); i += 1; await new Promise(r => setTimeout(r, 1 + (i % 4))); return { text: system === LG.LEDGER_SYSTEM ? `\`\`\`json\n${JSON.stringify(ledgerReply())}\n\`\`\`` : '{"checks": [], "decisions": []}', costUsd: 0.002 + (i % 9) * 0.0012, error: null, models: ['claude-haiku-5-5'] }; };
+  const raw = async (name, system) => { names.push(name); i += 1; await new Promise(r => setTimeout(r, 1 + (i % 4))); return { text: reply(system), costUsd: unit, error: null, models: ['claude-haiku-5-5'] }; };
   const out = tmp('p0');
   const { rows, stop } = await LR.runReplay({ tasks: TASKS, load: async t => ({ rec: replayRec(t), inv: replayInv() }), call: LR.metered(ledger, 0.075, raw), out, concurrency: 3 });
+  assert.equal(names.length, n);
   assert.equal(stop, null);
   const s = LR.summarize({ tasks: TASKS, rows, K: 3, model: 'claude-haiku-5-5', ledger });
   assert.equal(s.complete, true);
@@ -413,8 +424,9 @@ test('g1 simulated cost: 60 tasks at $0.075 reserved per call under a $1.5 cap a
   assert.equal(s.readers.parsedAfterReask, 180);
   assert.deepEqual(s.readers.failedTasks, []);
   assert.equal(s.readers.met, true);
-  assert.ok(ledger.spent < 1.5 && ledger.spent > 0.2, String(ledger.spent));
+  assert.ok(Math.abs(ledger.spent - 1.38) < 1e-6, String(ledger.spent));
   assert.ok(ledger.waits > 0, 'the cap was reached in flight and calls waited');
+  assert.ok(Math.abs(s.settledUsd - 1.38) < 1e-6, String(s.settledUsd));            // every row records its settled spend
   // Node folders are named by task index, never by task name.
   assert.ok(names.every(n => /^t\d{3}\//.test(n) && !TASKS.some(t => n.includes(t))), names.slice(0, 3).join(' '));
 });
@@ -520,7 +532,7 @@ test('n3 the single-pass act session keeps back 4 responses (checker 1 + drift 3
   assert.equal(act.cap, 50 - before - 4);
 });
 
-test('k1 held-out rule: look 2 is re-derived by the committed seeded rule and matches the DRAFT plan', { timeout: 60_000 }, async () => {
+test('k1 held-out rule: look 2 is re-derived by the committed seeded rule and matches the FROZEN plan (D23, D25)', { timeout: 60_000 }, async () => {
   const H = await import('../replay/heldout-look2.mjs');
   const split = { devCheck: ['sales.dc'], dev: ['sales.dc', ...Array.from({ length: 30 }, (_, i) => `sales.t${i}`), ...Array.from({ length: 12 }, (_, i) => `hr.t${i}`)], forcedSources: [{ tasks: ['sales.t0'] }], test: [], sha256: {} };
   const seen = new Map([['sales.t1', new Set(['x'])]]);
@@ -528,9 +540,9 @@ test('k1 held-out rule: look 2 is re-derived by the committed seeded rule and ma
   assert.equal(L.tasks.length, 20);
   for (const t of ['sales.dc', 'sales.t0', 'sales.t1', 'sales.t2', 'sales.t3']) assert.ok(!L.tasks.includes(t), t);
   assert.deepEqual(H.look2({ split: { ...split }, look1: ['sales.t2'], briefed: ['sales.t3'], seen, domains: ['sales', 'hr'] }).tasks, L.tasks);   // deterministic
-  if (existsSync(H.DRAFT)) {
+  if (existsSync(H.PLAN)) {
     const r = spawnSync(process.execPath, [path.join(REPO, 'experiments/autobench/replay/heldout-look2.mjs')], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stdout.slice(-2000));
-    assert.match(r.stdout, /"matchesDraftLook2": true/);
+    assert.equal(JSON.parse(r.stdout).rederived.matches, true);
   }
 });
