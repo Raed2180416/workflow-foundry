@@ -2,7 +2,7 @@
 # A1-C v2 held-out evaluation (P1) = look 2 of the FROZEN SEQUENTIAL-PLAN-v1 (PREREG-AB-v1-AMEND-1 §6; decisions D23,
 # D25). PAID. Not run by the build; launched after the P0 decision commit, the hash freeze and the P1 preregistration,
 # detached from this file:
-#   V1HASH=… V1MHASH=… V2HASH=… V2MHASH=… V2COMMIT=… CLI='2.1.307 (Claude Code)' MERCURY_OTHER=… D22_LEFT=… [T3=1] \
+#   V1HASH=… V1MHASH=… V2HASH=… V2MHASH=… V2COMMIT=… CLI='2.1.307 (Claude Code)' MERCURY_OTHER=… D22_LEFT=… M_ARMS=0|1 [T3=1] \
 #     setsid nohup bash look2-chain.sh > /var/tmp/foundry-work/a1c-v2-look2-chain.log 2>&1 &
 # Every arm starts through `sequential.mjs look 2 --exec` of the checkout it runs from, so it carries the
 # sequential-look.json sidecar (live directory and repo copy) and its repo copy lands in that checkout's runs/ (a look
@@ -27,6 +27,10 @@ set -u
 : "${V1HASH:?frozen v1 hash (pin, at the CLI below)}"; : "${V1MHASH:?frozen v1-M hash}"; : "${V2HASH:?frozen v2 hash}"; : "${V2MHASH:?frozen v2-M hash}"
 : "${V2COMMIT:?the frozen v2 branch commit (full sha)}"; : "${CLI:?the CLI version the hashes were frozen at, e.g. 2.1.307 (Claude Code)}"
 : "${MERCURY_OTHER:?Mercury tokens used outside the live run records (D18 ledger)}"; : "${D22_LEFT:?USD of D22 left for this chain}"
+# M_ARMS (no default; PREREG-A1CV2-P1 §8): 1 runs v1-M and v2-M, 0 skips both. Decision D28 (7) admits no Mercury pilot
+# beyond the running arms until the allowance is read, and asks for explicit reasoning effort, a completion cap and a
+# strict JSON schema on every Mercury call, which the frozen v1-M and v2-M manifests do not set: the launcher states it.
+case "${M_ARMS:-}" in 0|1) ;; *) echo "M_ARMS must be 0 or 1 (a ruling under D28 (7) is needed for the Mercury arms)"; exit 7 ;; esac
 export DISABLE_AUTOUPDATER=1
 unset FORCE_PROMPT_CACHING_5M
 WT=/home/user/workflow-foundry/.claude/worktrees/wf_3674d3bc-0a7-12
@@ -107,12 +111,13 @@ arm v1    "$PIN" 0 a1c-v1-look2  treatment 'A1-C'    2 "${CAP_V1:-6}" 4.5 --harn
 arm v2    "$WT"  0 a1c-v2-look2  treatment 'A1-C v2' 2 "${CAP_V2:-6}" 4.5 --harness codeowned-v2 --harness-hash "$V2HASH"
 arm A0    "$PIN" 0 a0-look2      control   'A0'      - "${CAP_A0:-4}" 3.2
 [ "${T3:-0}" = 1 ] && arm A0-AA "$PIN" 0 a0-look2-aa treatment 'A0 (T3 A/A)' 2 "${CAP_A0:-4}" 3.2
-arm v1-M  "$PIN" 1 a1c-v1m-look2 treatment 'A1-C (Mercury ledger and checker)'    2 "${CAP_M:-4}" 3.2 --harness codeowned    --node-models ledger=mercury-3,checker=mercury-3 --harness-hash "$V1MHASH"
-arm v2-M  "$WT"  1 a1c-v2m-look2 treatment 'A1-C v2 (Mercury ledger and checker)' 2 "${CAP_M:-4}" 3.2 --harness codeowned-v2 --node-models ledger=mercury-3,checker=mercury-3 --harness-hash "$V2MHASH"
+[ "$M_ARMS" = 1 ] || say "M_ARMS=0: v1-M and v2-M not run (D28 (7))"
+[ "$M_ARMS" = 1 ] && arm v1-M  "$PIN" 1 a1c-v1m-look2 treatment 'A1-C (Mercury ledger and checker)'    2 "${CAP_M:-4}" 3.2 --harness codeowned    --node-models ledger=mercury-3,checker=mercury-3 --harness-hash "$V1MHASH"
+[ "$M_ARMS" = 1 ] && arm v2-M  "$WT"  1 a1c-v2m-look2 treatment 'A1-C v2 (Mercury ledger and checker)' 2 "${CAP_M:-4}" 3.2 --harness codeowned-v2 --node-models ledger=mercury-3,checker=mercury-3 --harness-hash "$V2MHASH"
 say "every arm finished; harm (paired) and the fixed analysis"
 [ -z "${A1CV2_SEQ_JS:-}" ] || { say "rehearsal: harm and analysis skipped"; exit 0; }
 R=$WT/research/automationbench-20261014/runs
 (cd "$WT" && node experiments/autobench/replay/harm.mjs --run "$LIVE/a1c-v1-look2" --run2 "$LIVE/a1c-v2-look2" --out "$R/a1c-v2-look2/harm-v1-v2.json" > /dev/null) || say "harm v1 vs v2: not comparable (see the file)"
-(cd "$WT" && node experiments/autobench/replay/harm.mjs --run "$LIVE/a1c-v1m-look2" --run2 "$LIVE/a1c-v2m-look2" --out "$R/a1c-v2m-look2/harm-v1m-v2m.json" > /dev/null) || say "harm v1-M vs v2-M: not comparable (see the file)"
+[ "$M_ARMS" = 1 ] && { (cd "$WT" && node experiments/autobench/replay/harm.mjs --run "$LIVE/a1c-v1m-look2" --run2 "$LIVE/a1c-v2m-look2" --out "$R/a1c-v2m-look2/harm-v1m-v2m.json" > /dev/null) || say "harm v1-M vs v2-M: not comparable (see the file)"; }
 (cd "$WT" && node experiments/autobench/replay/look2-analysis.mjs --pin "$PIN" --branch "$WT" --harm "$R/a1c-v2-look2/harm-v1-v2.json" --write "$R/a1c-v2-look2/analysis.json")
 say "done"

@@ -9,7 +9,7 @@ set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 WT=/home/user/workflow-foundry/.claude/worktrees/wf_3674d3bc-0a7-12
 CHAIN=$HERE/../look2-chain.sh
-base() { export V1HASH=h1 V1MHASH=h1m V2HASH=h2 V2MHASH=h2m V2COMMIT=$(git -C "$WT" rev-parse HEAD) CLI="$(claude --version 2>/dev/null | head -1)" MERCURY_OTHER=0 \
+base() { export V1HASH=h1 V1MHASH=h1m V2HASH=h2 V2MHASH=h2m V2COMMIT=$(git -C "$WT" rev-parse HEAD) CLI="$(claude --version 2>/dev/null | head -1)" MERCURY_OTHER=0 M_ARMS=1 \
   A1CV2_SEQ_JS=$HERE/fake-sequential.mjs A1CV2_FAULT_WAIT=0; export A1CV2_LIVE=$(mktemp -d /tmp/a1cv2-rehearse-XXXX)/autobench; mkdir -p "$A1CV2_LIVE"; }
 inv() { node -e 'const L=require("fs").readFileSync(process.argv[1],"utf8").split("\n").filter(Boolean).map(JSON.parse);process.stdout.write(JSON.stringify(eval(process.argv[2])))' "$A1CV2_LIVE/invocations.jsonl" "$1"; }
 ok=0; bad=0
@@ -51,5 +51,12 @@ check "4 A0 resumed at its cap" "$(inv 'L.filter(x=>x.id==="a0-look2").map(x=>`$
 # 5. the D18 ceiling: other use leaves too little for a Mercury arm
 base; export D22_LEFT=40 FAKE_RC='{}' MERCURY_OTHER=15000000
 bash "$CHAIN" > "$A1CV2_LIVE/../chain.log" 2>&1; check "5 D18 stop" $? 6
+# 6. the Mercury arms need a stated M_ARMS (D28 (7)): 0 skips v1-M and v2-M; unset refuses before any arm
+base; export D22_LEFT=40 T3=0 FAKE_RC='{}' FAKE_SPEND='{}' MERCURY_OTHER=0 M_ARMS=0
+bash "$CHAIN" > "$A1CV2_LIVE/../chain.log" 2>&1; check "6 M_ARMS=0 exit" $? 0
+check "6 M_ARMS=0 arms" "$(inv 'L.map(x=>x.id).join()')" '"a1c-v1-look2,a1c-v2-look2,a0-look2"'
+base; unset M_ARMS; export D22_LEFT=40 T3=0 FAKE_RC='{}' FAKE_SPEND='{}'
+bash "$CHAIN" > "$A1CV2_LIVE/../chain.log" 2>&1; check "6 M_ARMS unset refused" $? 7
+check "6 M_ARMS unset launches nothing" "$([ -f "$A1CV2_LIVE/invocations.jsonl" ] && echo some || echo none)" none
 echo "rehearsal: $ok passed, $bad failed"
 [ $bad -eq 0 ]
