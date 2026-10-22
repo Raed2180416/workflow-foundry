@@ -4,7 +4,107 @@
 called. The numbers in §4 are in-sample development evidence (the recorded a1c-dev60-dn run, devTrain dev60, seed 21,
 k = 1), not held-out evidence. Source of the spec: the orchestrator's "A1-C v2 implementation spec (final)", which
 settles the design review and the two critiques; this file records what was built against it. **Revised the same
-evening (second build, §0) after three adversarial reviews; §0 supersedes the first build wherever they differ.***
+evening (second build, §0) after three adversarial reviews; §0 supersedes the first build wherever they differ. Revised
+again on 2026-10-22 (third build, §0.1) after two re-reviews; §0.1 supersedes §0 wherever they differ.***
+
+## 0.1 Third build: the re-review fixes (2026-10-22)
+
+Two re-reviews of the second build (`0a5c5ed`; workflow wf_0f3cd2be-450: **A** "correctness and tests", **B**
+"generic-only, safety and statistics") found 2 blockers, 6 majors and 18 minors. Decisions taken since the second
+build: **D25** (A1-C v2's P1 is look 2 of the frozen SEQUENTIAL-PLAN-v1), **D26** (Opus 5.5 xhigh reference arm
+`a0o-look2-1` on the look-2 tasks), **D27** (the exploratory VL-1 arm on look 2, with a new Sonnet + A1 fork `a1s-look2`
+and the `a1c-v1m-look2` rows of this chain). Commits on `worktree-wf_3674d3bc-0a7-12`: `b812e09` (the frozen plan files,
+D25), `6e7bba7` (runtime), `5f26cea` (replay tools), `ce597d4` (tests), `59678e9` (P1 chain and rehearsal), then this
+document. Pin: **`b1e16e0`** (annotated tag `a1c-v1-look2`, branch `a1c-v1-pin-look2`) = `aada200` + the same frozen plan
+files. Every behavioural fix has a test in `test/codeowned-v2-rereview.test.mjs` (rr1–rr17): run against an archive of
+`0a5c5ed` with that file copied in, 14 fail, rr3 passes (it is coverage: the scripted path skips the launch guard; the
+guard's teeth are rr1 and rr2) and rr6/rr17 skip (no plan file there).
+
+| Finding | Fix | Test |
+|---|---|---|
+| **A B-1** v2-M could not launch (`run.mjs:258` wired executor roles into `codeowned` only) | `EXECUTOR_PIPELINES = [codeowned, codeowned-v2]` at both guards (for `--harness codeowned` they decide as before); `manifest-hash.mjs` now refuses an arm run.mjs would refuse; a 1-task paid v2-M smoke (below) | rr1 (a v2 launch with Mercury roles reaches the `--cap` and `--token-cap` checks, which name mercury-3), rr2, rr3 |
+| **B B1 / A M-2** the P1 chain bypassed the frozen AMEND-1 (D23) | `look2-chain.sh` starts every arm through `sequential.mjs look 2 --exec` (sidecar, repo copy, no `--no-copy`); A0 once, as the control; v2 vs A0 is the confirmatory test, v2 vs v1 descriptive (§5); the frozen plan files are in both checkouts (outside every manifest: v1 still recomputes to `5622c941…`/`fa6c2e45…` at CLI 2.1.306 on the new pin commit) | the $0 rehearsal (`a1c-v2/rehearsal/rehearse-chain.sh`), rr17 |
+| **A M-1** a P0 summary with a numeric `tasks` broke the exposure check | `ledger-replay.mjs` writes `taskCount`; the check reads only list-valued `tasks` | rr4 |
+| **A M-3 / B M2** the look-2 exposure statement of §0 b was wrong | corrected below; a pre-registered sensitivity analysis without the six look-2 tasks whose request text was read (§5); the first-look ruling is the orchestrator's | (record) |
+| **B M1** the P1 analysis was under-specified | `replay/look2-analysis.mjs` fixes it in code before any P1 call (§5); the repo copies hold `results.jsonl`, so the pairs are recomputable from git | rr17 |
+| **B M3** completeness values from records owned by another person (by id or name) | a value only for a record that links to no person outside the item's recipients: its own address, or a record of the same app it references by id or by name (`ledger.mjs linkedAddresses`) | rr7 |
+| A minor 1: a re-read cut by its step budget gave FAIL | the inventory records `notIssued` (listings the step budget or depth left unissued) and `paged` (a response naming a later page); `evaluate` returns "not re-read" for an absence on a cut kind; what was read still decides | rr8, rr9 |
+| A minor 2: g1 flaky | costs priced from a counted dry pass so the last task's readers must wait | g1 (4/4 here) |
+| A minor 3: pinned mapped checks made advisory | advisory only when nothing pins the check (no value, recipient, channel, parent, kind or spreadsheet) | rr10 |
+| A minor 4: P0 resume lost faulted spend | every row records its settled spend over attempts (waiting for sibling calls still in flight at a fault); a resumed ledger starts at the total | rr16 |
+| A minor 5: regression, Buffer and Facebook posts | a post is observable per kind its post operations create (`postKindsOf`); Buffer queues `update` records the read never lists; a Facebook post may be a photo | rr11; d1 and test 5 updated |
+| A minor 6 / B minor 2: `RELAUNCH=1` did not resume | the chain is idempotent: a finished arm (live `summary.json`) is skipped, a started one resumed at its launch caps | rehearsal |
+| A minor 7 / B minor 1: exposure check scope and file hash | `heldout-look2.mjs`: the frozen plan (`readPlan`, pinned hash), both list files, every root `sequential.mjs` scans, exemptions only for this plan's look-2 sidecar runs and the runs D26/D27 name as launched; the chain checks plan and list file shas in both checkouts before every arm | rr5, rr6 |
+| A minor 8 | DRAFT hash corrected (§0 b); Zendesk public-comment disclosure (§7); v1-M cap note (§5) | — |
+| B minor 3: A0, pin unverified | the chain asserts the pin commit, the pin's `run.mjs` `ea1dca70…`, `bridge.py` `285be4f5…` in both checkouts, the branch commit and the CLI before every arm; the new pin commit has an annotated tag | rehearsal |
+| B minor 4: budget ceilings | `replay/look2-guard.mjs`: the chain's settled dollars against `D22_LEFT`, the D18 token ceiling per Mercury arm | rehearsal |
+| B minor 5, 6: P1 label; L1–L5 | §5 | — |
+| B minor 7: KNOWLEDGE incomplete | four KNOWLEDGE lines (17 in all, 9 citing D21) | rr15 |
+| B minor 8: a held call sent on its own was resent with its batch | the gated client logs held calls sent since (`sent`); a batch that would send one again is refused whole and says which | rr12, rr13; e1, e2 updated |
+| B minor 9: app-less routing | an app-less e-mail goes to Gmail only when Gmail is connected (an empty connected list is not "any"); an app-less post goes to Slack only when Slack is the one connected app that posts | rr14 |
+
+**Disputed, with reasons.**
+- *B minor 3, "make `a1c-v1` annotated":* an annotated tag can be moved as easily as a lightweight one (`git tag -f`);
+  what protects the pairing is the chain's assertion of full commit SHAs and file hashes, now in place. `a1c-v1` is
+  left as it is (other records cite it); the new pin commit carries an annotated tag.
+- *B minor 10, "require two readers for a hard send item":* kept per ruling (h) and disclosed (§7). With repairs off a
+  hard check labels the termination and feeds the optional lint; the actor sees the items either way, marked "found by
+  1/1 readers". Demoting one-reader sends to advisory would leave every one-reader task without a send check.
+
+**Exposure, corrected (A M-3, B M2).** §0 b said the only look-2 task named in the earlier workflow was
+`finance.cash_sweep`. That was wrong. Verified by script over the transcripts (counts and booleans only; no task content
+printed):
+- The anatomy:finance agent ran `sed -n 16900,16925p domains/finance/tasks.py` (`agent-a93c5aca2fc488272.jsonl`,
+  line 174). Its output (line 175) holds the definition header and the opening sentences of the request of look-2 task
+  **`finance.intercompany_balance_recon`** (no assertion). That anatomy fed the v2 design. Re-review A reports that
+  workflow `wf_3074014a-15b` read it too: a tool result in its `agent-ac010c67c029a1dab.jsonl` (line 387) names the task
+  (its content not checked here). That workflow is the verifier lab (D27), not A1-C v2's development.
+- The critic:overfit agent (`agent-a5bb498e6d19efd70.jsonl`) pickled every corpus task, assertions included (line 93),
+  computed features from `initial_state` and the request texts over a 91-task "clean" pool that holds all 60 look-2 and
+  all 23 look-3 tasks (line 166), and printed a 60-task list naming 38 look-2 and 18 look-3 tasks (line 167). Its
+  aggregates (20 tasks with unread Gmail, 11 using apps the inventory cannot list, 6 apps never seen in dev60: buffer,
+  canva, helpscout, jira, quickbooks, zendesk) went verbatim into the spec agent's prompt
+  (`agent-ab38bfc39492f60a5.jsonl`, first event; it names no look-2 task). The spec's attention to those apps may stem
+  from these aggregates; no per-task value or threshold from them is in the code (test 18: no devTrain task name, world
+  string of ≥ 16 characters or 8-word prompt shingle in any v2 file).
+- The need-router study ROUTER-1 used the request texts of 5 look-2 tasks (D25): `finance.qb_estimate_conversion`,
+  `hr.recognition_nominations`, `sales.calendly_sequential_meetings`, `sales.dependency_chain`,
+  `support.helpscout_customer_merge`. v2 does not use the need router.
+- This fix (2026-10-22, about 02:30Z): while looking up the run-summary schema for the budget guard, the fixer printed
+  the last 3 lines of the live log of the Opus reference arm `a0o-look2-1`: three look-2 task names
+  (`operations.zoom_project_kickoff`, `sales.calendly_sequential_meetings`, `sales.cold_email_personalization`) with
+  Opus's partial credit, pass and cost. No harness runtime file changed after it (the last edit to `harness/v2/` and
+  `run.mjs` is at 02:27:24Z, before the pin commit at 02:28:21Z).
+- **For the orchestrator (before P1):** AMEND-1's per-arm first-look rule asks whether an arm was "developed, tuned or
+  probed" on a look's tasks. The fixer's reading: the request text of 6 look-2 tasks reached the v2 development record
+  (1 by the anatomy overrun, 5 by ROUTER-1, which v2 does not use), and pool aggregates over a superset of looks 2 and 3
+  reached the spec; no per-task value went into the code. Proposed: keep first look 2 for every A1-C arm, disclose all
+  of the above in the P1 preregistration and AMEND-1 §2.2 disclosure 2 (which repeats §0 b's error), and read the
+  pre-registered sensitivity analysis without the 6 tasks (§5) beside the confirmatory result. The ruling must be
+  recorded before the first P1 call.
+
+**Hashes (CLI 2.1.307 since the container restart at 02:06Z; `DISABLE_AUTOUPDATER=1`, `FORCE_PROMPT_CACHING_5M`
+unset).** The CLI version is part of every harness manifest, so the 2.1.306 hashes of §0 a no longer launch:
+
+| Arm | Checkout | Manifest at CLI 2.1.307 | At CLI 2.1.306 |
+|---|---|---|---|
+| v1 | pin `b1e16e0` | `5c452af09bb4df6853e2543c6f0e428738dbae811a62bceae04ac5c637d06de8` | `5622c941…` (as at `aada200`) |
+| v1-M | pin | `c645c8e914a9de3b0ce23cfcf81ce12681ffec5a6e62742f87b3d0665427f167` | `fa6c2e45…` |
+| A0 | pin | runner `run.mjs` `ea1dca70…` (unchanged) | same |
+| v2 (preSendLint false, before P0) | branch `59678e9` | `2b6197e0af5ffa43995d935f2deab374b5ee269921ca0c78e870ba8a99776497` | `bff8521e…` |
+| v2-M (before P0) | branch `59678e9` | `67f548c4c1b6acaf4ce6f71381c18518cb0c3f01bb5c07b00b1d5ca2642cf280` | — |
+
+`bridge.py` is `285be4f5…` in both checkouts; the branch's `run.mjs` is `a93cd5da…` (registration and
+`EXECUTOR_PIPELINES` lines; test 20). P0 may change v2's hashes (`preSendLint`); the P0 step refreezes them and records
+`V2COMMIT`.
+
+**v2-M smoke (paid, 1 dev60 task, in-sample; run id `a1c-v2m-smoke-1`, `--no-copy`, cap $1, token cap 400K,
+02:3xZ).** From this branch at `59678e9` with `--harness codeowned-v2 --node-models ledger=mercury-3,checker=mercury-3`
+and the §5 flags at concurrency 1: the launch passed both guards; the three ledger readers ran on mercury-3 (62,812
+Mercury tokens in all), adjudication, mapping and the act session on claude-haiku-5-5; 9 model responses, no audit
+violation, no session or harness error, no environment fault; $0.0128. The task was graded (in-sample: not evidence). The
+check round decided every hard check in code, so the **checker role on mercury-3 was not exercised** by this smoke (no
+judged check needed it); v1-M's dev60 runs exercised it through the same dispatch.
 
 ## 0. Second build: the review fixes (2026-10-21 evening)
 
@@ -30,6 +130,8 @@ recorded manifest **`ef5c3382…`** exactly (concurrency 2, its launch settings)
 from the pin is the configuration of the Mercury dev60 result. Hashes (`replay/manifest-hash.mjs`, which mirrors
 run.mjs's remote-executor manifest line; `run.mjs --dry-run` cannot give a Mercury variant's hash):
 
+*(Superseded by §0.1: the pin is now `b1e16e0` = `aada200` + the frozen plan files, and the CLI is 2.1.307.)*
+
 | Arm | Checkout | Manifest (concurrency 3, CLI 2.1.306, `DISABLE_AUTOUPDATER=1`) |
 |---|---|---|
 | v1 | pin `aada200` | `5622c9418c7467b79e234dae5fb48b38f41d4ea8fe044fa5ef0c68f9a109c74f` |
@@ -51,11 +153,11 @@ computePlan`, commits `3562d3ed`/`dac4ecdf`): devTrain minus the forced set (103
 first 10 per domain. `replay/heldout-look2.mjs` re-implements the rule on this branch, re-derives the pool from the
 main tree's runs, this branch's runs and the live root, and checks the result against the DRAFT plan: **identical**
 (pool 83; list sha256 **`a8c1ed5c8b18606c97feb7fcdd83115eab8cbdffa6e7956d9ee6d9d0974e916f`** = the DRAFT's look-2 hash;
-DRAFT plan `97cc2f8c…`). Adopted per AMEND-1 §6 (A1-C v2's held-out eval is look 2): `a1c-v2/HELDOUT-LOOK2.json`
-(file sha256 `d007f99e…`). Look 3 (23 tasks) stays intact. Exposure check: in the earlier workflow's agent transcripts
-the only look-2 task named in a tool call is `finance.cash_sweep`, in the first build's hash-freeze dry run, which
-failed on the hash before preparing anything (no task content shown); the leakage scan (test 18) reads devTrain worlds
-in code and prints counts only. **For the orchestrator:** AMEND-1 is still DRAFT; adopting its look 2 before the freeze
+DRAFT plan `756d7d3a…`, as `HELDOUT-LOOK2.json` records; `97cc2f8c…` was the `dac4ecdf` DRAFT). Adopted per AMEND-1 §6 (A1-C v2's held-out eval is look 2): `a1c-v2/HELDOUT-LOOK2.json`
+(file sha256 `d007f99e…`). Look 3 (23 tasks) stays intact. *Exposure check (WRONG, corrected in §0.1):* "in the earlier
+workflow's agent transcripts the only look-2 task named in a tool call is `finance.cash_sweep`, in the first build's
+hash-freeze dry run, which failed on the hash before preparing anything (no task content shown)". The leakage scan
+(test 18) reads devTrain worlds in code and prints counts only. **For the orchestrator:** AMEND-1 was still DRAFT then (FROZEN since, D23; D25 makes P1 its look 2); adopting its look 2 before the freeze
 is what its §6 asks, and the plan must not be recomputed between now and P1 by a run on other unexposed tasks.
 
 **(c) D21 KNOWLEDGE.** Five new KNOWLEDGE lines (13 in all) name every grader-tuned rule and threshold and cite D21:
@@ -136,8 +238,9 @@ pass (checker 1 + AM-1 drift 3; H3 still holds: about 6 + 40 + 1 + 3 ≤ 50). **
 
 - **Selection.** A separate harness id: `node experiments/autobench/run.mjs --harness codeowned-v2 ...` (harness version
   `a1c-v2`, arm label `A1-C v2 (code-owned harness)`; `--scripted stub` runs the $0 stand-ins). The only shared file that
-  changed is `experiments/autobench/run.mjs`, and only by its registration lines (one usage comment line and the
-  `codeowned-v2` entries of `PIPELINE_HARNESSES` and `PIPELINE_STUBS`).
+  changed is `experiments/autobench/run.mjs`: its registration lines (one usage comment line and the `codeowned-v2`
+  entries of `PIPELINE_HARNESSES` and `PIPELINE_STUBS`) and, since the third build, `EXECUTOR_PIPELINES` (executor-model
+  roles are wired into `codeowned` and `codeowned-v2`; for `--harness codeowned` the guards decide as before; test 20).
 - **v1 is untouched.** The 23 non-runner files of the v1 manifest, `harness/codeowned-stubs.mjs` and
   `test/codeowned.test.mjs` are byte-identical to tag `a1c-v1` (= `aada200`; test 20). On this branch v1's hash is
   `b37c2626…`, because `run.mjs` is in the v1 manifest. **Run v1 (and A0, v1-M, A1) from the pin worktree at
@@ -162,7 +265,9 @@ pass (checker 1 + AM-1 drift 3; H3 still holds: about 6 + 40 + 1 + 3 ≤ 50). **
 Developer tools (never imported by a harness module; test 17): `experiments/autobench/replay/` — `playback.py` (moved
 from the check-precision study), `lib.mjs`, `replay-gate.mjs` (B4, and `--lint` for P0), `ledger-replay.mjs` (P0,
 paid unless `--scripted`), `harm.mjs`, `devtrain-literals.py` (test 18), `heldout-look2.mjs` (the held-out rule, §0 b),
-`manifest-hash.mjs` (any checkout's manifest hash, Mercury variants included, §0 a).
+`manifest-hash.mjs` (any checkout's manifest hash, Mercury variants included, §0 a; it refuses an arm run.mjs would
+refuse), and since the third build `look2-analysis.mjs` (the P1 analysis, §5) and `look2-guard.mjs` (the chain's D22 and
+D18 guards).
 
 ## 2. Mechanisms as built
 
@@ -381,32 +486,39 @@ audit violations, 0 errors, 4–5 model responses and 3–6 world steps per task
 readers only extract e-mail items from the request, so the stub scores 0.333 / 0 / 0 partial credit: no capability
 reading).
 
-## 5. Paid commands (for the orchestrator; none was run here)
+## 5. Paid commands (for the orchestrator; none was run here but the 1-task v2-M smoke of §0.1)
 
-*Second build: replaces the first build's §5 (v1 "from main", `HELDOUT60-A1CV2.json`, caps that stop P2 and A1 early,
-a held-out task in the freeze command).* Each paid run is launched detached from a script file (`setsid nohup bash
-<file> > log 2>&1 &`); an environment fault (exit 3) waits 30 minutes and resumes with `--resume`, at most 6 times, and
-is never scored; exit 4 (a cap) stops: a higher cap needs a decision. Mercury keys only inside the command that needs
-them (`set -a; . /root/.config/foundry/inception.env; set +a`). Model ids from `policy/models.json` only.
+*Third build: replaces the second build's §5 (re-review B B1: its chain bypassed the frozen AMEND-1; D25 makes P1
+look 2 of the frozen plan).* Each paid run is launched detached from a script file (`setsid nohup bash <file> > log 2>&1
+&`); an environment fault (exit 3) waits 30 minutes and resumes with `--resume`, at most 6 times, and is never scored;
+exit 4 (a cap) stops: a higher cap needs a decision. Mercury keys only inside the command that needs them (`set -a; .
+/root/.config/foundry/inception.env; set +a`). Model ids from `policy/models.json` only.
 
 ```
 WT=/home/user/workflow-foundry/.claude/worktrees/wf_3674d3bc-0a7-12          # v2 branch (base c6a0bb0, old bridge 285be4f5…)
-PIN=/home/user/workflow-foundry/.claude/worktrees/a1c-v1-pin                 # detached at tag a1c-v1 = aada200
-RUNS=$WT/research/automationbench-20261014/runs                              # repo copies land on the v2 branch, never in main
+PIN=/home/user/workflow-foundry/.claude/worktrees/a1c-v1-pin                 # b1e16e0 (tag a1c-v1-look2) = aada200 + the frozen plan files
+RUNS=$WT/research/automationbench-20261014/runs                              # v2 and v2-M repo copies; v1, v1-M and A0 land in $PIN's runs/
 LIVE=/var/tmp/foundry-work/autobench
 COMMON="--model claude-haiku-5-5 --date-note --concurrency 3 --budget 0.75 --timeout-min 20 --max-steps 50 --det record --k 1"
-HELD=$(node -e 'process.stdout.write(require(process.argv[1]).tasks.join(","))' $WT/research/automationbench-20261014/a1c-v2/HELDOUT-LOOK2.json)
 ```
-CLI 2.1.306, `DISABLE_AUTOUPDATER=1`, `FORCE_PROMPT_CACHING_5M` unset (the hashes in §0 a assume these).
+`DISABLE_AUTOUPDATER=1`, `FORCE_PROMPT_CACHING_5M` unset. **The CLI version is part of every harness manifest:** 2.1.307
+since the 02:06Z restart (the §0.1 hashes); every arm records it, and the chain refuses to start an arm under a CLI other
+than the one the hashes were frozen at (A0 has no harness hash, so this check is what keeps it on the same CLI).
 
-**Caps (D22, +$40 for non-frontier dev arms; D18, Mercury ≤ 20M tokens).** run.mjs starts a task only if spent +
-reserved + $0.75 ≤ cap, so with 3 in flight the last task needs about expected spend + $2.25. Expected spend from the
-recorded dev60 runs (per 60 tasks): v1 $2.23 (with repairs; $1.70 without), A1 $2.37, A0 about $0.90, Haiku part of the
-Mercury-planner arm $0.93 (+ about 61-71K Mercury tokens per task). Caps: **v1 $6, v2 $6, A0 $4, v1-M $4 + 5.5M tokens,
-v2-M $4 + 5.5M tokens, P0 $2.5, P2 $6, A1 (optional) $6, lint smoke $1**: $33.5 of caps for P0 + the five arms + P2 (expected about
-$9-10). Mercury tally (re-counted from run records): `PORT-PROBE.md` ledger 4.22M (smokes, probe, BUILDER-1,
-`m3-a1c-dev60-dn` 2,709,413) + `m3-a1c-dev60-dn-fill` 970,606 + `effort-dose` ≤ 240K ≈ 5.4M (the orchestrator's 5.8M
-includes runs not in these records); v1-M + v2-M expect about 8.6M and are capped at 11M: at most about 16.8M of 20M.
+**Caps (D22, D18).** run.mjs starts a task only if spent + reserved + $0.75 ≤ cap, so with 3 in flight the last task
+needs about expected spend + $2.25. Expected per 60 tasks from the recorded dev60 runs: v1 $2.23 (with repairs; $1.70
+without), A0 about $0.90, the Haiku part of a Mercury-ledger arm $0.93 (+ 61–71K Mercury tokens per task; the v2-M smoke
+used 63K). Default caps: **v1 $6, v2 $6, A0 $4, T3 $4, v1-M $4, v2-M $4**; minimum caps (expected + $2.25): $4.5, $4.5,
+$3.2, $3.2, $3.2, $3.2. **D22's +$40 is shared** with the Sonnet-planner control (`a1csp-dev60-38`, $7.47 settled), D27's
+VL-1 (`a1s-look2`, cap $10, and its judge, about $1), P0, P2 and the smokes. The P0 step tallies what is left for the
+chain and passes it as `D22_LEFT`; before every new arm the chain lowers the arm's cap to `D22_LEFT` minus what the chain
+has settled, and stops (exit 5) below the arm's minimum. **Mercury (D18, 20M):** before every Mercury arm the chain
+tallies the Mercury tokens of every run under `$LIVE` (`replay/look2-guard.mjs mercury`: 4.97M on 2026-10-22 with the
+smoke) plus `MERCURY_OTHER` (the D18 ledger's use outside these run records, from the P0 step's re-tally: the
+PORT-PROBE probes and BUILDER-1, the official-protocol `m3-official-dev60`, effort-dose, ROUTER-1's 319 calls with no
+usage recorded at an upper bound), and gives the arm min(5.5M, 20M − tally − other − 1M reserve), stopping (exit 6)
+below 4.5M. v1-M expects about 4.3M (71K per task on the heavier part) plus 0.6–0.9M held by tasks in flight: 5.5M is
+tight but adequate (re-review A minor 8). A resumed arm keeps its launch caps (run.mjs only lets a resume raise them).
 
 **P0 (in-sample, about $1.2).** From `$WT`:
 ```
@@ -415,40 +527,91 @@ node experiments/autobench/replay/ledger-replay.mjs --model claude-haiku-5-5 --c
 node experiments/autobench/replay/replay-gate.mjs --lint --from $P0 --out $P0/lint.json                              # exit 1 if any task lacks compiled.json
 mkdir -p $RUNS/a1c-v2-p0 && cp $P0/summary.json $RUNS/a1c-v2-p0/summary.json
 ```
-(`compiled.json`, `brief.txt`, replies and `lint.json` hold world content: they stay live; `summary.json` holds counts.)
-**Rules (frozen):** `summary.complete` true (no fault left, no task missing); `readers.parsedAfterReask` ≥ 177 of
-`readers.of` = 180 (timeouts and failed or capped tasks count as not parsed; `parsedFirstPass` is reported too);
+(`compiled.json`, `brief.txt`, replies and `lint.json` hold world content: they stay live; `summary.json` holds counts
+and writes `taskCount`, never a numeric `tasks`; every row records its settled spend, and `--cap` is a hard total across
+resumes.) **Rules (frozen):** `summary.complete` true (no fault left, no task missing); `readers.parsedAfterReask` ≥ 177
+of `readers.of` = 180 (timeouts and failed or capped tasks count as not parsed; `parsedFirstPass` is reported too);
 `models.violations` = 0 (every call served by claude-haiku-5-5); set `preSendLint: true` in `harness/v2/codeowned.mjs
 PIPELINE_DEFAULTS` only if the lint replay over all 60 tasks yields ≥ 2 true refusals and ≤ 1 false refusal (every
-refusal reviewed by hand); report `coverage` (v2 vs v1) and the proxies (`wrongEntity`, `wrongValue` must not
-increase). Commit the P0 decision (turning the lint on also updates test 19's `preSendLint` assertion). **If the lint
-is turned on:** a 1-task paid smoke with it on, on a dev60 task whose P0 compile has a lint rule (the first task listed
-in `lint.json` refusals), from `$WT`: `node experiments/autobench/run.mjs --harness codeowned-v2 $COMMON --cap 1
---no-copy --tasks <that task> --run-id a1c-v2-lint-smoke`, and check the record's `pipeline.gate.active === true`
-(`false` means the configuration never reached the client inside the sandbox: stop and fix before P1).
+refusal reviewed by hand against the recorded dev60 grades: KNOWLEDGE names this decision); report `coverage` (v2 vs
+v1) and the proxies (`wrongEntity`, `wrongValue` must not increase). Commit the P0 decision (turning the lint on also
+updates test 19's `preSendLint` assertion). **If the lint is turned on:** a 1-task paid smoke with it on, on a dev60 task
+whose P0 compile has a lint rule (the first task listed in `lint.json` refusals), from `$WT`: `node
+experiments/autobench/run.mjs --harness codeowned-v2 $COMMON --cap 1 --no-copy --tasks <that task> --run-id
+a1c-v2-lint-smoke`, and check the record's `pipeline.gate.active === true` (`false` means the configuration never reached
+the client inside the sandbox: stop and fix before P1).
 
-**Freeze the hashes** (after the P0 commit; the hash does not depend on the task):
+**Freeze** (after the P0 commit; the hash does not depend on the task):
 ```
 cd $WT && node experiments/autobench/run.mjs --harness codeowned-v2 $COMMON --tasks simple.email_sf_contact_phone_update --dry-run --harness-hash 0   # "recomputed <V2HASH>"
-node experiments/autobench/replay/manifest-hash.mjs --root $WT --harness codeowned-v2 --node-models ledger=mercury-3,checker=mercury-3                # <V2MHASH>
+node experiments/autobench/replay/manifest-hash.mjs --root $WT  --harness codeowned-v2 --node-models ledger=mercury-3,checker=mercury-3   # <V2MHASH>
+node experiments/autobench/replay/manifest-hash.mjs --root $PIN --harness codeowned                                                     # <V1HASH>
+node experiments/autobench/replay/manifest-hash.mjs --root $PIN --harness codeowned --node-models ledger=mercury-3,checker=mercury-3     # <V1MHASH>
+git -C $WT rev-parse HEAD                                                                                                            # <V2COMMIT>
+bash $WT/research/automationbench-20261014/a1c-v2/rehearsal/rehearse-chain.sh                                                       # $0; must pass on V2COMMIT
 ```
-At the review-fix commits with `preSendLint: false` they are `c8c4f418dd4e82b53a8b34a1df430c7b72aa9d00cf5b9952fd7abab9d77b0384` and `78d4940b2b8b0da02b75398cc262e4a8c5b6bd17c9ad51052ef2e40259529527`.
+At `59678e9` before P0 (CLI 2.1.307) they are `2b6197e0…`, `67f548c4…`, `5c452af0…`, `c645c8e9…` (§0.1).
 
-**P1 (primary, held-out, look 2).** Launch `research/automationbench-20261014/a1c-v2/look2-chain.sh` (detached;
-`V2HASH=… V2MHASH=…` in its environment). It checks that look 2 is still unexposed (`heldout-look2.mjs`, exit 1
-otherwise; set `RELAUNCH=1` when restarting an interrupted chain), then runs, each with `$COMMON --no-copy --tasks
-$HELD`: v1 (pin, `--harness codeowned --harness-hash 5622c941… --cap 6`), v2 (branch, `--harness codeowned-v2
---harness-hash $V2HASH --cap 6`), A0 (pin, `--cap 4`), v1-M (pin, `--node-models ledger=mercury-3,checker=mercury-3
---harness-hash fa6c2e45… --cap 4 --token-cap 5500000 --session-tokens 300000`), v2-M (branch, the same with
-`$V2MHASH`). The optional A1 runs from the pin: `--harness foundry --cap 6` (manifest `2db80fd1…`). Membership: every
-look-2 task is a devTrain task outside devCheck, test and dev60 (`heldout-look2.mjs` asserts it; v2 also refuses
-non-dev tasks itself, `DEV_ONLY`; v1 given `--harness-hash` does not, which is why the chain checks first).
-`--no-copy` keeps every per-task grade in the live directory; read only the aggregates (`summary.json` headline) until
-every arm is graded, and do not read the chain log's per-task lines before then. **After:** copy each
-`$LIVE/<run-id>/summary.json` to `$RUNS/<run-id>/`, then harm, paired (exit 1 when the runs do not hold the same
-tasks):
-`node experiments/autobench/replay/harm.mjs --run $LIVE/a1c-v1-look2 --run2 $LIVE/a1c-v2-look2 --out $RUNS/a1c-v2-look2/harm.json`
-(and v1-M vs v2-M the same way).
+**P1 = look 2 of SEQUENTIAL-PLAN-v1** (plan `3cd586bd…`, list `a8c1ed5c…`, 60 devTrain tasks, 10 per domain; **dev
+split, disjoint from dev60: development evidence under D21, not held-out test evidence**; run.mjs labels these runs
+"development/diagnostic"). After the P1 preregistration commit and the orchestrator's first-look ruling (§0.1), launch
+`research/automationbench-20261014/a1c-v2/look2-chain.sh` detached with `V1HASH V1MHASH V2HASH V2MHASH V2COMMIT CLI
+MERCURY_OTHER D22_LEFT` (and `T3=1` to run the A/A check) in its environment. Every arm starts through `sequential.mjs
+look 2 --plan SEQUENTIAL-PLAN-v1.json --role … --arm … [--first-look 2] --exec -- --run-id … <the arm's run.mjs
+options>` of the checkout it runs from, so it carries the `sequential-look.json` sidecar and its repo copy
+(`results.jsonl`, `summary.json`) lands in that checkout's `runs/` (a look run may not pass `--no-copy`):
+
+| Order | Arm | Checkout | Role, `--arm` | First look | Run id | Options |
+|---|---|---|---|---|---|---|
+| 1 | v1 | pin | treatment, `A1-C` | 2 | `a1c-v1-look2` | `--harness codeowned --harness-hash $V1HASH` |
+| 2 | v2 | branch | treatment, `A1-C v2` | 2 | `a1c-v2-look2` | `--harness codeowned-v2 --harness-hash $V2HASH` |
+| 3 | A0 | pin | **control**, `A0` (the only control run) | — | `a0-look2` | — |
+| 3a | T3 (optional) | pin | treatment, `A0 (T3 A/A)` | 2 | `a0-look2-aa` | — |
+| 4 | v1-M | pin | treatment, `A1-C (Mercury ledger and checker)` | 2 | `a1c-v1m-look2` | `--harness codeowned --node-models ledger=mercury-3,checker=mercury-3 --harness-hash $V1MHASH --session-tokens 300000` |
+| 5 | v2-M | branch | treatment, `A1-C v2 (Mercury ledger and checker)` | 2 | `a1c-v2m-look2` | `--harness codeowned-v2 --node-models … --harness-hash $V2MHASH --session-tokens 300000` |
+
+Before every arm the chain checks: the pin is at `b1e16e0` with no tracked change, its `run.mjs` is `ea1dca70…`,
+`bridge.py` is `285be4f5…` in both checkouts, the branch is at `V2COMMIT` with no tracked change, both checkouts hold the
+same plan and list files (file sha256 `56e8d3cf…`, `85099131…`), the CLI is `$CLI`, at least 1 GB is free, and
+`replay/heldout-look2.mjs` passes: no look-2 task appears in any run outside this plan's look-2 sidecar runs and the runs
+D26 (`a0o-look2-1`) and D27 (`a1s-look2`) name, as launched. It is idempotent: an arm with a live `summary.json` is
+skipped, an arm with a `launch.json` is resumed at its launch caps. After the last arm it writes harm (paired, v1 vs v2
+and v1-M vs v2-M) and the analysis to `$RUNS/a1c-v2-look2/`. Membership: every look-2 task is a devTrain task outside
+devCheck, test and dev60 (`sequential.mjs` asserts it for every look run; v2 also refuses non-dev tasks itself,
+`DEV_ONLY`). The optional A1 (pin, `--harness foundry`) is not part of this chain.
+
+**Analysis (fixed before any P1 call: `replay/look2-analysis.mjs`; test rr17).**
+1. *Inputs:* the repo copies only (`results.jsonl`, `summary.json`, `sequential-look.json` of each run, read through
+   `sequential.mjs verifyLookRuns`: a run without a matching sidecar, or with another arm name, is refused). No live
+   directory or log line is read for the analysis.
+2. *Outcome rules, the same for every arm* (`sequential.mjs loadOutcomes`, PREREG-AB-v1 §6.3): a task row with a fault
+   flag is not an outcome (the arm is resumed until none remains; a fault is never scored); a row without a final grade
+   and without a fault scores 0 and is listed; the grade is the row's final grade. A comparison with an arm that lacks an
+   outcome for any look-2 task is reported as incomplete, not computed.
+3. *T3* (AMEND-1 §4), read first when `a0-look2-aa` exists: A0 against A0, exact two-sided McNemar, descriptive.
+4. **Confirmatory (the only test that spends α):** A1-C v2 (treatment, first look 2) against A0 (control) at look 2 of the
+   plan, `sequential.mjs analyzeLooks`: strict pass by exact McNemar at the look-2 nominal level **0.0180** with the
+   3-point floor; partial credit at 0.0180 only after strict pass is rejected (D23); the comparison stops only on strict
+   pass. If nothing is rejected, look 3 (23 tasks, cumulative 83, nominal 0.0443) follows under the plan.
+5. *Descriptive (no α of the plan; exact two-sided McNemar with the discordant pairs and p, partial credit by paired
+   sign-flip, never a claim):* **v2 vs v1** first (the work item's development question), then v2-M vs v1-M, v2-M vs v2,
+   v1-M vs v1, and each harness arm vs A0; per domain; termination categories (`hard-undecided` apart from `all-pass`);
+   gate refusals, holds, resends and duplicates; cost per task and tokens per model.
+6. *Sensitivity, pre-registered:* every comparison again without the 6 look-2 tasks whose request text reached the
+   development record (§0.1: `finance.intercompany_balance_recon` and the 5 ROUTER-1 tasks).
+7. *Reference arms, reported beside and never compared under the plan:* Opus 5.5 xhigh `a0o-look2-1` (D26) and VL-1
+   (D27).
+8. *Time of run:* the arms run back to back (v1, v2, A0, [T3], v1-M, v2-M), not interleaved; v2 sits next to both v1 and
+   A0; other paid runs (the Opus reference arm, the OT-0 re-run, the SOP-Bench sealed run) share the account at the same
+   time. The time-of-run confound (load, rate limits, model serving) is disclosed and not modelled.
+
+**Development gate for devCheck look 3 (frozen before P1; spec §8; never a claim).** devCheck look 3 for v2 only if, on
+look 2: strict pass v2 − v1 ≥ +3 (paired), partial credit v2 − v1 ≥ −0.01, harm totals ≤ v1's (paired), mean cost per
+task and mean responses ≤ v1's, H3 clean, L1 (task names), L4 (sandbox) and L5 (transcripts) clean, and, if Δdev60 (P2 −
+20/60) > 0, Δlook2 ≥ Δdev60 / 3. L2/L3 (test-split shingle and world-literal scans) are PREREG-AB-v1 §8 gates before a
+test-split run, not before a dev look, so they are not part of this gate (re-review B minor 6). Under no effect "+3"
+alone passes with probability 0.17–0.30 at 10–20 discordant pairs: it decides whether devCheck is worth spending, nothing
+more. Otherwise a negative result is recorded and v1 stays the candidate at devCheck 20/60.
 
 **P2 (in-sample, dev60, about $1.8).** From `$WT`:
 ```
@@ -456,17 +619,9 @@ DEV60=$(node -e 'process.stdout.write(require("/var/tmp/foundry-work/autobench/a
 node experiments/autobench/run.mjs --harness codeowned-v2 --harness-hash $V2HASH $COMMON --cap 6 --no-copy --tasks $DEV60 --run-id a1c-v2-dev60-dn
 ```
 
-**Decision rule (frozen before P1; spec §8).** devCheck look 3 for v2 only if: strict pass v2 − v1 ≥ +3 on held-out
-look 2 (paired; discordant pairs and exact McNemar), partial credit v2 − v1 ≥ −0.01, harm totals ≤ v1's (paired), mean
-cost per task and mean responses ≤ v1's, H3 and L1–L5 clean, and, if Δdev60 (P2 − 20/60) > 0, Δheld-out ≥ Δdev60 / 3.
-Otherwise record a negative result; v1 stays the candidate at devCheck 20/60. Also report v2 vs A0, v1-M vs v2-M (the
-same rule, as a second comparison), per domain, the termination categories (`hard-undecided` acceptances apart from
-`all-pass`), gate refusals, holds and resends. Under AMEND-1 (if frozen first) look 2's nominal levels apply as
-co-primary tests beside this rule; this rule decides devCheck look 3.
-
 **Merge order (spec §9).** Do not merge the `run.mjs` registration until every queued devCheck look and A0 run has
-finished (it re-hashes the A1 manifest and A0's runner provenance). After a merge, v1 runs from the pin (`a1c-v1`), and
-v2 from its frozen branch commit (a merge changes v2's hash: bridge.py and run.mjs are in its manifest). `src/executors/*`
+finished (it re-hashes the A1 manifest and A0's runner provenance). After a merge, v1 runs from the pin (`a1c-v1-look2`),
+and v2 from its frozen branch commit (a merge changes v2's hash: bridge.py and run.mjs are in its manifest). `src/executors/*`
 and `src/models/*` are in the v1 manifest: an engine-bump edit there breaks v1 verification on main.
 
 ## 6. Errata (documentation only)
@@ -493,8 +648,10 @@ and `src/models/*` are in the v1 manifest: an engine-bump edit there breaks v1 v
   checks on failing assertions.
 - **Open (second build), with reasons:**
   - *L2/L3 scans over test-task strings* (review:correctness 13): not run. They need test-split task contents read by
-    code; this build may not open them. An authorized host-side count-only scan (strings and 8-word shingles of the test
-    split against the 33 v2 manifest files, `effects.json` included) should run before devCheck look 3.
+    code; this build may not open them. They are PREREG-AB-v1 §8 gates before a test-split run; an authorized host-side
+    count-only scan (strings and 8-word shingles of the test split against the 33 v2 manifest files, `effects.json`
+    included) must run before any test-split run of v2. The devCheck gate of §5 no longer requires them (re-review B
+    minor 6).
   - *The lint's state is agent-writable* (review:generic-only 11): refusal state and the host's counts come from
     `.tools/gate-log.jsonl` in the session's working directory. A host-side decision log needs the host to see calls
     before they reach the bridge (a bridge-side lint), a larger change; the `loaded`/`active` check (§0 i) makes a
@@ -502,15 +659,28 @@ and `src/models/*` are in the v1 manifest: an engine-bump edit there breaks v1 v
   - *The 12 h load-stamp window* (review:generic-only 10): kept (disclosed under D21). Narrowing it to "load time plus a
     margin" needs the world's load time, which the pipeline does not see (the bridge loads the world before the
     pipeline starts; prep and start are far apart at concurrency 3). It is active only with `--date-note`.
-  - *P1 sealing* (review:generic-only 16): the pinned runner has no `--sealed` flag for dev tasks and adding one would
-    change v1's runner hash; P1 uses `--no-copy` (no repo copy until every arm is graded) and the discipline of reading
-    aggregates only; run.mjs still logs per-task grades to the chain log.
-  - *App-less posts* (review:generic-only 17, partly fixed): an unresolved channel is no channel and an app-less e-mail
-    goes to Gmail only when Gmail is connected; an app-less post still goes to Slack when Slack is connected, and the B4
-    wrong-app metric still cannot see app-less items.
-  - *Untested branches* (review:tests minor 11): `fit()` cutting a v2 brief and `maxRounds > 0` through the v2 pipeline
-    (not part of the evaluation) still have no test; the lint inside the real CLI sandbox is covered only by the paid
-    smoke (§5).
+  - *P1 sealing* (review:generic-only 16): superseded by D25. Look runs must keep their repo copies (AMEND-1: `analyze`
+    reads them), so P1 is not sealed; the analysis is fixed in code before the first call (§5) and every arm's rows are
+    committed. *(The second build said a seal was impossible without changing v1's runner hash: wrong. run.mjs exports
+    `runTasks` and honours `opt.sealed` (`run.mjs:336` on the pin), so a wrapper outside every manifest could seal a run;
+    moot under AMEND-1. Re-review B.)* run.mjs logs per-task grades to the chain log; nobody working on an A1-C arm reads
+    those lines before every arm is graded (§0.1 records one slip, on the Opus reference arm's log).
+  - *App-less posts* (review:generic-only 17; re-review B minor 9): fixed in the third build: an app-less post goes to
+    Slack only when Slack is the one connected app that posts, an app-less e-mail to Gmail only when Gmail is connected.
+    The B4 wrong-app metric still cannot see app-less items.
+  - *Zendesk replies* (re-review A minor 8): `zendesk.tickets.update` with a public comment is Zendesk's reply path, but
+    its index description does not say it sends a message, so under the stated messaging rule (§2 M2) it has no channel:
+    a public reply made that way is not linted as a reply, and a check on it is judged, not checked as a message.
+  - *A single answering reader is trusted* (re-review B minor 10; ruling h): with one of three readers answering, every
+    item it writes becomes required (majority floor(1/2)+1 = 1), recipients included; the brief says "found by 1/1
+    readers". Kept and disclosed (§0.1 gives the reason).
+  - *Cut re-reads* (third build): "not re-read" now also covers a kind whose listing the re-read's step budget or depth
+    left unissued, a listing cut at its cap and a response naming a later page; a pagination marker outside the generic
+    list in `inventory.mjs morePages` is not recognised (the check then decides from what was read, as before).
+  - *Untested branches* (review:tests minor 11; re-review A rows 20 and 26): `fit()` cutting a v2 brief, `maxRounds > 0`
+    through the v2 pipeline (not part of the evaluation) and the re-ask node under `auditPipeline` still have no test; the
+    lint inside the real CLI sandbox is covered only by the paid smoke (§5); the checker role on mercury-3 inside v2 was
+    not reached by the v2-M smoke (§0.1).
   - *H8 wording*: D21 reads H8 as "generic rules tuned on dev60 grades are allowed when disclosed"; the PREREG-AB-v1
     amendment text recording that reading is the orchestrator's to commit (not done here: main is read-only).
 - The harm metrics are automatic definitions (§ replay/harm.mjs); "unrequested" read flips are listed for review, not
