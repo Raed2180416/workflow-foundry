@@ -4,7 +4,7 @@
  "freeze": "research/sopbench-20261021/FREEZE-p2.json",
  "freezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
  "evidence": "SEALED rows (frozen split, frozen workflows and code)",
- "stopped": "environment fault at A-customer_service-135-2: MODEL_RATE_LIMIT",
+ "stopped": null,
  "k": 3,
  "arms": [
   "W",
@@ -24,9 +24,421 @@
   "video_classification",
   "warehouse_package_inspection"
  ],
- "runs": 7362,
- "spentUsd": 6.647820274999982,
+ "runs": 10158,
+ "spentUsd": 8.729353599999966,
  "capUsd": 40,
- "finishedAt": "2026-10-21T23:29:29.971Z",
- "dependencyDrift": []
+ "finishedAt": "2026-10-22T03:59:16.675Z",
+ "dependencyDrift": [],
+ "analysis": {
+  "k": 3,
+  "arms": {
+   "W": {
+    "macroPassK": 0.8763995091160804,
+    "macroPassAt1": 0.8765564457136948,
+    "macroUpstreamAt1": 0.8765564457136948,
+    "costUsd": 0.10192400999999995,
+    "runs": 5079,
+    "ci95": [
+     0.8559623648279348,
+     0.8953764504585339
+    ]
+   },
+   "A": {
+    "macroPassK": 0.671455531683144,
+    "macroPassAt1": 0.7248934072018453,
+    "macroUpstreamAt1": 0.7259516082600462,
+    "costUsd": 8.622585220000003,
+    "runs": 5079,
+    "ci95": [
+     0.6475342782525324,
+     0.6942833034460706
+    ]
+   }
+  },
+  "perSop": {
+   "aircraft_inspection": {
+    "W": {
+     "rows": 92,
+     "passK": 0.8369565217391305,
+     "passAt1": 0.8369565217391305,
+     "upstreamAt1": 0.8369565217391305
+    },
+    "A": {
+     "rows": 92,
+     "passK": 0.45652173913043476,
+     "passAt1": 0.463768115942029,
+     "upstreamAt1": 0.463768115942029
+    }
+   },
+   "customer_service": {
+    "W": {
+     "rows": 136,
+     "passK": 0.9411764705882353,
+     "passAt1": 0.9411764705882353,
+     "upstreamAt1": 0.9411764705882353
+    },
+    "A": {
+     "rows": 136,
+     "passK": 0.6029411764705882,
+     "passAt1": 0.7892156862745098,
+     "upstreamAt1": 0.7892156862745098
+    }
+   },
+   "dangerous_goods": {
+    "W": {
+     "rows": 254,
+     "passK": 0.9763779527559056,
+     "passAt1": 0.9763779527559056,
+     "upstreamAt1": 0.9763779527559056
+    },
+    "A": {
+     "rows": 254,
+     "passK": 0.8937007874015748,
+     "passAt1": 0.9501312335958005,
+     "upstreamAt1": 0.9501312335958005
+    }
+   },
+   "email_intent": {
+    "W": {
+     "rows": 166,
+     "passK": 1,
+     "passAt1": 1,
+     "upstreamAt1": 1
+    },
+    "A": {
+     "rows": 166,
+     "passK": 0.8132530120481928,
+     "passAt1": 0.8795180722891566,
+     "upstreamAt1": 0.8795180722891566
+    }
+   },
+   "know_your_business": {
+    "W": {
+     "rows": 70,
+     "passK": 0.8857142857142857,
+     "passAt1": 0.8857142857142857,
+     "upstreamAt1": 0.8857142857142857
+    },
+    "A": {
+     "rows": 70,
+     "passK": 0.2571428571428571,
+     "passAt1": 0.3142857142857143,
+     "upstreamAt1": 0.3142857142857143
+    }
+   },
+   "order_fulfillment": {
+    "W": {
+     "rows": 23,
+     "passK": 0.782608695652174,
+     "passAt1": 0.782608695652174,
+     "upstreamAt1": 0.782608695652174
+    },
+    "A": {
+     "rows": 23,
+     "passK": 0.8695652173913043,
+     "passAt1": 0.8695652173913043,
+     "upstreamAt1": 0.8695652173913043
+    }
+   },
+   "referral_abuse_detection_v1": {
+    "W": {
+     "rows": 180,
+     "passK": 1,
+     "passAt1": 1,
+     "upstreamAt1": 1
+    },
+    "A": {
+     "rows": 180,
+     "passK": 0.9944444444444445,
+     "passAt1": 0.9981481481481481,
+     "upstreamAt1": 0.9981481481481481
+    }
+   },
+   "referral_abuse_detection_v2": {
+    "W": {
+     "rows": 180,
+     "passK": 1,
+     "passAt1": 1,
+     "upstreamAt1": 1
+    },
+    "A": {
+     "rows": 180,
+     "passK": 0.8777777777777778,
+     "passAt1": 0.9407407407407408,
+     "upstreamAt1": 0.9407407407407408
+    }
+   },
+   "traffic_spoofing_detection": {
+    "W": {
+     "rows": 180,
+     "passK": 0.7277777777777777,
+     "passAt1": 0.7277777777777777,
+     "upstreamAt1": 0.7277777777777777
+    },
+    "A": {
+     "rows": 180,
+     "passK": 0.8111111111111111,
+     "passAt1": 0.8148148148148148,
+     "upstreamAt1": 0.8148148148148148
+    }
+   },
+   "video_annotation": {
+    "W": {
+     "rows": 105,
+     "passK": 0.9904761904761905,
+     "passAt1": 0.9904761904761905,
+     "upstreamAt1": 0.9904761904761905
+    },
+    "A": {
+     "rows": 105,
+     "passK": 0.3333333333333333,
+     "passAt1": 0.4253968253968254,
+     "upstreamAt1": 0.4380952380952381
+    }
+   },
+   "video_classification": {
+    "W": {
+     "rows": 177,
+     "passK": 0.8757062146892656,
+     "passAt1": 0.8775894538606404,
+     "upstreamAt1": 0.8775894538606404
+    },
+    "A": {
+     "rows": 177,
+     "passK": 0.655367231638418,
+     "passAt1": 0.7608286252354048,
+     "upstreamAt1": 0.7608286252354048
+    }
+   },
+   "warehouse_package_inspection": {
+    "W": {
+     "rows": 130,
+     "passK": 0.5,
+     "passAt1": 0.5,
+     "upstreamAt1": 0.5
+    },
+    "A": {
+     "rows": 130,
+     "passK": 0.49230769230769234,
+     "passAt1": 0.49230769230769234,
+     "upstreamAt1": 0.49230769230769234
+    }
+   }
+  },
+  "wMinusA": {
+   "macro": 0.20494397743293646,
+   "ci95": [
+    0.18052532174056624,
+    0.22971611107227852
+   ]
+  }
+ },
+ "analysisWithoutOrchestrationOnly": {
+  "k": 3,
+  "arms": {
+   "W": {
+    "macroPassK": 0.8799852352412578,
+    "macroPassAt1": 0.8801564388022918,
+    "macroUpstreamAt1": 0.8801564388022918,
+    "costUsd": 0.10192400999999995,
+    "runs": 5079,
+    "ci95": [
+     0.8583586295657629,
+     0.8995409265219827
+    ]
+   },
+   "A": {
+    "macroPassK": 0.6909949673697539,
+    "macroPassAt1": 0.7486320700436465,
+    "macroUpstreamAt1": 0.7497864711980476,
+    "costUsd": 8.021373930000003,
+    "runs": 5079,
+    "ci95": [
+     0.6667867960180814,
+     0.7145786025721047
+    ]
+   }
+  },
+  "perSop": {
+   "customer_service": {
+    "W": {
+     "rows": 136,
+     "passK": 0.9411764705882353,
+     "passAt1": 0.9411764705882353,
+     "upstreamAt1": 0.9411764705882353
+    },
+    "A": {
+     "rows": 136,
+     "passK": 0.6029411764705882,
+     "passAt1": 0.7892156862745098,
+     "upstreamAt1": 0.7892156862745098
+    }
+   },
+   "dangerous_goods": {
+    "W": {
+     "rows": 254,
+     "passK": 0.9763779527559056,
+     "passAt1": 0.9763779527559056,
+     "upstreamAt1": 0.9763779527559056
+    },
+    "A": {
+     "rows": 254,
+     "passK": 0.8937007874015748,
+     "passAt1": 0.9501312335958005,
+     "upstreamAt1": 0.9501312335958005
+    }
+   },
+   "email_intent": {
+    "W": {
+     "rows": 166,
+     "passK": 1,
+     "passAt1": 1,
+     "upstreamAt1": 1
+    },
+    "A": {
+     "rows": 166,
+     "passK": 0.8132530120481928,
+     "passAt1": 0.8795180722891566,
+     "upstreamAt1": 0.8795180722891566
+    }
+   },
+   "know_your_business": {
+    "W": {
+     "rows": 70,
+     "passK": 0.8857142857142857,
+     "passAt1": 0.8857142857142857,
+     "upstreamAt1": 0.8857142857142857
+    },
+    "A": {
+     "rows": 70,
+     "passK": 0.2571428571428571,
+     "passAt1": 0.3142857142857143,
+     "upstreamAt1": 0.3142857142857143
+    }
+   },
+   "order_fulfillment": {
+    "W": {
+     "rows": 23,
+     "passK": 0.782608695652174,
+     "passAt1": 0.782608695652174,
+     "upstreamAt1": 0.782608695652174
+    },
+    "A": {
+     "rows": 23,
+     "passK": 0.8695652173913043,
+     "passAt1": 0.8695652173913043,
+     "upstreamAt1": 0.8695652173913043
+    }
+   },
+   "referral_abuse_detection_v1": {
+    "W": {
+     "rows": 180,
+     "passK": 1,
+     "passAt1": 1,
+     "upstreamAt1": 1
+    },
+    "A": {
+     "rows": 180,
+     "passK": 0.9944444444444445,
+     "passAt1": 0.9981481481481481,
+     "upstreamAt1": 0.9981481481481481
+    }
+   },
+   "referral_abuse_detection_v2": {
+    "W": {
+     "rows": 180,
+     "passK": 1,
+     "passAt1": 1,
+     "upstreamAt1": 1
+    },
+    "A": {
+     "rows": 180,
+     "passK": 0.8777777777777778,
+     "passAt1": 0.9407407407407408,
+     "upstreamAt1": 0.9407407407407408
+    }
+   },
+   "traffic_spoofing_detection": {
+    "W": {
+     "rows": 180,
+     "passK": 0.7277777777777777,
+     "passAt1": 0.7277777777777777,
+     "upstreamAt1": 0.7277777777777777
+    },
+    "A": {
+     "rows": 180,
+     "passK": 0.8111111111111111,
+     "passAt1": 0.8148148148148148,
+     "upstreamAt1": 0.8148148148148148
+    }
+   },
+   "video_annotation": {
+    "W": {
+     "rows": 105,
+     "passK": 0.9904761904761905,
+     "passAt1": 0.9904761904761905,
+     "upstreamAt1": 0.9904761904761905
+    },
+    "A": {
+     "rows": 105,
+     "passK": 0.3333333333333333,
+     "passAt1": 0.4253968253968254,
+     "upstreamAt1": 0.4380952380952381
+    }
+   },
+   "video_classification": {
+    "W": {
+     "rows": 177,
+     "passK": 0.8757062146892656,
+     "passAt1": 0.8775894538606404,
+     "upstreamAt1": 0.8775894538606404
+    },
+    "A": {
+     "rows": 177,
+     "passK": 0.655367231638418,
+     "passAt1": 0.7608286252354048,
+     "upstreamAt1": 0.7608286252354048
+    }
+   },
+   "warehouse_package_inspection": {
+    "W": {
+     "rows": 130,
+     "passK": 0.5,
+     "passAt1": 0.5,
+     "upstreamAt1": 0.5
+    },
+    "A": {
+     "rows": 130,
+     "passK": 0.49230769230769234,
+     "passAt1": 0.49230769230769234,
+     "upstreamAt1": 0.49230769230769234
+    }
+   }
+  },
+  "wMinusA": {
+   "macro": 0.18899026787150397,
+   "ci95": [
+    0.16533705638589624,
+    0.21258875748701922
+   ]
+  }
+ },
+ "wCost": {
+  "amortisedPerRunUsd": 0.0005450931393975191
+ },
+ "decision": {
+  "reliabilityClaim": false,
+  "beatsAgent": true,
+  "cheaperThanAgent": true
+ },
+ "statuses": {
+  "W": {
+   "done": 5079
+  },
+  "A": {
+   "session": 5029,
+   "violation": 50
+  }
+ },
+ "graderDisagreements": 0
 }
