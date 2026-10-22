@@ -26,7 +26,8 @@ check "1 exec, no --no-copy" "$(inv 'L.every(x=>x.exec&&!x.pass.includes("--no-c
 check "1 checkouts" "$(inv 'L.map(x=>x.cwd.endsWith("a1c-v1-pin")?"pin":"wt").join()')" '"pin,wt,pin,pin,pin,wt"'
 check "1 caps" "$(inv 'L.map(x=>x.cap).join()')" '"6,6,4,4,4,4"'
 check "1 token caps" "$(inv 'L.map(x=>x.tokenCap).join()')" '",,,,5500000,5500000"'
-check "1 hashes" "$(inv 'L.map(x=>x.pass[x.pass.indexOf("--harness-hash")+1]??"-").join()')" '"h1,h2,--date-note,--date-note,h1m,h2m"'
+check "1 hashes" "$(inv 'L.map(x=>{const i=x.pass.indexOf("--harness-hash");return i<0?"-":x.pass[i+1]}).join()')" '"h1,h2,-,-,h1m,h2m"'
+check "1 Mercury session tokens" "$(inv 'L.map(x=>x.pass.includes("--session-tokens")).join()')" '"false,false,false,false,true,true"'
 # 2. D22 lowers a cap: $8 left, $1 spent per arm
 base; export D22_LEFT=8 T3=0 FAKE_RC='{}' FAKE_SPEND='{}'
 bash "$CHAIN" > "$A1CV2_LIVE/../chain.log" 2>&1; check "2 exit" $? 0
