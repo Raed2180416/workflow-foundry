@@ -35,6 +35,12 @@ export const channelsOf = app => new Set(rowsOf(app).map(r => r.channel).filter(
 /** Kinds an app's create operations make (a send that also creates a record, such as a comment on a ticket, included),
  * with their parent kind. */
 export const createKindsOf = app => rowsOf(app).filter(r => r.effect === 'create' || r.creates).map(r => ({ kind: r.kind, parent: r.parent }));
+/** The outgoing post channels (a check of a post in the app's own listing). */
+export const POST_CHANNELS = Object.freeze(['social', 'chat', 'sms', 'dm']);
+/** The record kinds an app's post operations make (effect table: an operation with a post channel and a created kind),
+ * e.g. facebook_pages feed and photo, buffer update (re-review 2026-10-21, minor 5: a post is observable per created
+ * kind, never because some other post-like listing answered). */
+export const postKindsOf = app => [...new Set(rowsOf(app).filter(r => POST_CHANNELS.includes(r.channel) && r.kind).map(r => r.kind))];
 const singular = w => { const s = String(w ?? '').toLowerCase().replace(/[^a-z0-9_]/g, ''); return s.length > 3 && /ies$/.test(s) ? `${s.slice(0, -3)}y` : s.length > 3 && /(ches|shes|xes|zes|sses)$/.test(s) ? s.slice(0, -2) : s.length > 3 && /s$/.test(s) && !/(ss|us|is)$/.test(s) ? s.slice(0, -1) : s; };
 /** Kind names match case-insensitively, singular or plural (ride-along 7). */
 /** A record kind's key: singular, case-insensitive, and a listing named '<kind>_list' holds records of <kind>. */
@@ -57,6 +63,23 @@ export function listedKinds(read, app) {
   return [...new Set([...(read?.records ?? []).filter(r => r.app === app).map(r => r.kind), ...l0Kinds(app)])];
 }
 const lists = (read, app, pred) => listedKinds(read, app).some(pred);
+/**
+ * Kinds a read saw only in part (re-review 2026-10-21, minor 1): listing calls its step budget or expansion depth left
+ * unissued (`notIssued`, e.g. gmail messages whose GETs were cut, a Slack channel whose history was cut), listings cut
+ * at their cap (`truncated`) and listings whose response names a later page (`paged`). A read without the `notIssued` record (older reads) that logged a step-budget stop counts as
+ * cut for every kind.
+ */
+export function cutKinds(read, app) {
+  const out = new Set();
+  for (const k of [...Object.keys(read?.notIssued ?? {}), ...(read?.truncated ?? []), ...(read?.paged ?? [])]) {
+    const [a, ...rest] = String(k).split(':'); const kind = rest.join(':');
+    if (a === app && kind) out.add(kindKey(RECORD_KIND[kind] ?? kind));
+  }
+  return out;
+}
+const legacyCut = read => !read?.notIssued && (read?.errors ?? []).some(e => /step budget \d+ reached|step refused/.test(String(e)));
+/** Was the read of this app's kind (any kind when null) cut? */
+export const readCut = (read, app, kind = null) => legacyCut(read) || (kind ? cutKinds(read, app).has(kindKey(RECORD_KIND[kind] ?? kind)) : cutKinds(read, app).size > 0);
 
 // ---------------------------------------------------------------------------------------------------------------
 // Channels
@@ -104,17 +127,22 @@ const softWhy = f => (f.completeness ? 'completeness value (no source asks for i
 /** How a message item compiles (M2): 'gmail' | 'slack' | 'channel' | null (judged). */
 export function messageRoute(item, inv) {
   const app = item.app;
+  const connected = inv?.connected ?? null;   // null: a hand-built inventory without the connected list
   if (item.action === 'post_message' || (app === 'slack' && item.action === 'other')) {
-    if (app === 'slack' || (!app && (inv?.connected ?? []).includes('slack'))) return 'slack';
-    if (app && [...channelsOf(app)].some(c => ['social', 'chat', 'sms', 'dm'].includes(c))) return 'channel';
+    if (app === 'slack') return 'slack';
+    // A post without an app goes to Slack only when Slack is the one connected app that posts (re-review 2026-10-21,
+    // minor 9); with another posting app connected (a page, a feed, SMS) the target is ambiguous: judged.
+    if (!app) return connected?.includes('slack') && !connected.some(a => a !== 'slack' && [...channelsOf(a)].some(c => POST_CHANNELS.includes(c))) ? 'slack' : null;
+    if ([...channelsOf(app)].some(c => POST_CHANNELS.includes(c))) return 'channel';
     return null;
   }
-  // An e-mail item without an app goes to Gmail only when Gmail is connected (else no app can be read for it).
-  if (app === 'gmail' || (!app && (!(inv?.connected?.length) || inv.connected.includes('gmail')))) return 'gmail';
+  // An e-mail item without an app goes to Gmail only when Gmail is connected (else no app can be read for it); an
+  // inventory without a connected list (hand-built fixtures) keeps Gmail.
+  if (app === 'gmail' || (!app && (connected === null || connected.includes('gmail')))) return 'gmail';
   if (!app) return null;
   // Another app: its own posts (social, chat, sms, direct messages) are checked there; anything else (an e-mail or reply
   // the app sends itself, or an app with no messaging operation) is judged, never re-routed to Gmail or Slack.
-  return [...channelsOf(app)].some(c => ['social', 'chat', 'sms', 'dm'].includes(c)) ? 'channel' : null;
+  return [...channelsOf(app)].some(c => POST_CHANNELS.includes(c)) ? 'channel' : null;
 }
 /** Apps that are one app for checks (sheets are listed through Drive). */
 export const sameApp = (a, b) => !a || !b || a === b || (['google_sheets', 'google_drive'].includes(a) && ['google_sheets', 'google_drive'].includes(b));
@@ -325,20 +353,23 @@ export function validateMapped(p, sources, inv, { item = null, majority = 2, P =
   const checkApp = appOfType ?? (p.type === 'record_field' || p.type === 'record_deleted' || p.type === 'record_unchanged' ? String(Pm.ptr ?? '').split(':')[0] : p.type === 'child_created' ? String(Pm.parent ?? '').split(':')[0] : p.type === 'sheet_row' || p.type === 'row_not_exists' ? 'google_sheets' : Pm.app ? String(Pm.app) : null);
   if (want && checkApp && want !== checkApp && !(want === 'google_drive' && checkApp === 'google_sheets')) return null;
   let r = null;
-  // A positive check whose value list is empty once minority values are split off is not hard (hardValue false): it would
-  // pass on any message, post, row or record of its kind (review of 2026-10-21, M4).
+  // A positive check that nothing pins once minority values are split off is not hard (hardValue false): it would pass on
+  // any message, post, row or record of its kind (review of 2026-10-21, M4). A recipient, a resolved channel, a parent
+  // record, a record kind or a spreadsheet id pins a check (re-review 2026-10-21, minor 3: the code compile path keeps a
+  // recipient-only send hard); only a check pinned by nothing (no value, no recipient, channel, parent, kind or sheet) is
+  // advisory.
   switch (p.type) {
-    case 'gmail_sent': { const to = (Pm.to ?? []).flatMap(emails); if (!to.length) return null; const s = split(Pm.subject), b = split(Pm.body); r = { params: { to, cc: (Pm.cc ?? []).flatMap(emails), subject: s.hard, body: b.hard, bodyNot: [] }, soft: [...s.soft, ...b.soft], hardValue: s.hard.length + b.hard.length > 0 }; break; }
+    case 'gmail_sent': { const to = (Pm.to ?? []).flatMap(emails); if (!to.length) return null; const s = split(Pm.subject), b = split(Pm.body); r = { params: { to, cc: (Pm.cc ?? []).flatMap(emails), subject: s.hard, body: b.hard, bodyNot: [] }, soft: [...s.soft, ...b.soft], hardValue: true }; break; }
     case 'gmail_not_sent': { const to = (Pm.to ?? []).flatMap(emails); r = to.length ? { params: { to }, soft: [] } : null; break; }
-    case 'slack_posted': { const ch = resolveChannel(Pm.channel, inv); const t = split(Pm.text); r = ch ? { params: { channel: ch, text: t.hard, bodyNot: [] }, soft: t.soft, hardValue: t.hard.length > 0 } : null; break; }
+    case 'slack_posted': { const ch = resolveChannel(Pm.channel, inv); const t = split(Pm.text); r = ch ? { params: { channel: ch, text: t.hard, bodyNot: [] }, soft: t.soft, hardValue: true } : null; break; }
     case 'slack_not_posted': { const ch = resolveChannel(Pm.channel, inv); r = ch ? { params: { channel: ch }, soft: [] } : null; break; }
-    case 'channel_posted': { if (!Pm.app) return null; const t = split(Pm.text); r = { params: { app: String(Pm.app), channel: Pm.channel ? String(Pm.channel) : null, text: t.hard, bodyNot: [] }, soft: t.soft, hardValue: t.hard.length > 0 }; break; }
+    case 'channel_posted': { if (!Pm.app) return null; const t = split(Pm.text); r = { params: { app: String(Pm.app), channel: Pm.channel ? String(Pm.channel) : null, text: t.hard, bodyNot: [] }, soft: t.soft, hardValue: t.hard.length > 0 || Boolean(Pm.channel) }; break; }
     case 'record_field': r = inv.records.some(x => x.ptr === Pm.ptr) && Pm.field && ok(String(Pm.value ?? '')) ? { params: { ptr: Pm.ptr, field: String(Pm.field), value: String(Pm.value) }, soft: [], hardValue: majorityValue(String(Pm.value)) } : null; break;
-    case 'record_created': { const v = split(Pm.values); r = Pm.app && (v.hard.length || v.soft.length) ? { params: { app: String(Pm.app), kind: Pm.kind ? String(Pm.kind) : null, values: v.hard }, soft: v.soft, hardValue: v.hard.length > 0 } : null; break; }
-    case 'child_created': { const v = split(Pm.values); r = inv.records.some(x => x.ptr === Pm.parent) && Pm.kind ? { params: { parent: Pm.parent, kind: String(Pm.kind), values: v.hard }, soft: v.soft, hardValue: v.hard.length > 0 } : null; break; }
+    case 'record_created': { const v = split(Pm.values); r = Pm.app && (v.hard.length || v.soft.length) ? { params: { app: String(Pm.app), kind: Pm.kind ? String(Pm.kind) : null, values: v.hard }, soft: v.soft, hardValue: v.hard.length > 0 || Boolean(Pm.kind) } : null; break; }
+    case 'child_created': { const v = split(Pm.values); r = inv.records.some(x => x.ptr === Pm.parent) && Pm.kind ? { params: { parent: Pm.parent, kind: String(Pm.kind), values: v.hard }, soft: v.soft, hardValue: true } : null; break; }
     case 'record_deleted': r = inv.records.some(x => x.ptr === Pm.ptr) ? { params: { ptr: Pm.ptr }, soft: [] } : null; break;
     case 'record_unchanged': r = inv.records.some(x => x.ptr === Pm.ptr) ? { params: { ptr: Pm.ptr }, soft: [] } : null; break;
-    case 'sheet_row': { const v = split(Pm.values); r = v.hard.length || v.soft.length ? { params: { spreadsheetId: Pm.spreadsheetId ?? null, values: v.hard }, soft: v.soft, hardValue: v.hard.length > 0 } : null; break; }
+    case 'sheet_row': { const v = split(Pm.values); r = v.hard.length || v.soft.length ? { params: { spreadsheetId: Pm.spreadsheetId ?? null, values: v.hard }, soft: v.soft, hardValue: v.hard.length > 0 || Boolean(Pm.spreadsheetId) } : null; break; }
     case 'row_not_exists': { const v = (Pm.values ?? []).map(String).filter(ok); r = v.length ? { params: { spreadsheetId: Pm.spreadsheetId ?? null, values: v }, soft: [] } : null; break; }
     default: return null;
   }
@@ -458,8 +489,30 @@ const banned = (text, list) => (list ?? []).filter(s => hasValue(text, s));
 const FIXED_KIND = Object.freeze({ gmail_sent: ['gmail', 'message'], gmail_not_sent: ['gmail', 'message'], slack_posted: ['slack', 'message'], slack_not_posted: ['slack', 'message'], sheet_row: ['google_sheets', 'row'], row_not_exists: ['google_sheets', 'row'] });
 const unobs = why => ({ pass: null, evidence: `unobservable: ${why}`, unobservable: true });
 const notReread = why => ({ pass: null, evidence: `not re-read: ${why}`, notReread: true });
+// A cut re-read (minor 1) is no evidence of absence: a positive check that found nothing, a negative check that found
+// nothing against it, and a record not found are "not re-read" when the re-read of that kind was cut. What WAS read
+// still decides: a matching record passes, a violating one fails, a found record's wrong value fails.
+const EXISTS = new Set(['gmail_sent', 'slack_posted', 'channel_posted', 'record_created', 'child_created', 'sheet_row']);
+const ABSENT = new Set(['gmail_not_sent', 'slack_not_posted', 'row_not_exists']);
+function checkKinds(pc) {
+  const P = pc.params ?? {};
+  if (FIXED_KIND[pc.type]) return [FIXED_KIND[pc.type][1]];
+  if (pc.type === 'channel_posted') return postKindsOf(P.app).length ? postKindsOf(P.app) : null;
+  if (pc.type === 'record_created') return P.kind ? [P.kind] : null;
+  if (pc.type === 'child_created') return [P.kind];
+  if (pc.type === 'record_field') return [String(P.ptr ?? '').split(':')[1]];
+  return null;
+}
 /** Evaluate one check on (initial inventory, fresh read). -> {pass: true|false|null, evidence, unobservable?, notReread?} */
 export function evaluate(pc, before, after) {
+  const e = evaluateRead(pc, before, after);
+  if (e.pass === null || !(EXISTS.has(pc.type) || ABSENT.has(pc.type) || pc.type === 'record_field')) return e;
+  const app = checkApp(pc), kinds = checkKinds(pc);
+  if (!app || !(kinds ? kinds.some(k => readCut(after, app, k)) : readCut(after, app))) return e;
+  const absence = (EXISTS.has(pc.type) && e.pass === false) || (ABSENT.has(pc.type) && e.pass === true) || (pc.type === 'record_field' && e.missing);
+  return absence ? notReread(`the re-read of ${app}${kinds ? ` ${kinds.join('/')}` : ''} was cut (step budget or listing cap): ${e.evidence}`) : e;
+}
+function evaluateRead(pc, before, after) {
   if (!isObservable(pc)) return { pass: null, evidence: 'unobservable', unobservable: true };
   const P = pc.params;
   const fixed = FIXED_KIND[pc.type];
@@ -488,11 +541,16 @@ export function evaluate(pc, before, after) {
       return scored[0].miss.length ? { pass: false, evidence: `message ${scored[0].r.ptr}: ${scored[0].miss.join(', ')}` } : { pass: true, evidence: `message ${scored[0].r.ptr}` };
     }
     case 'channel_posted': {
-      // Capability from the first read: an app whose listings hold no post-like kind (only the account) cannot show a post.
-      const postKind = k => POST_KINDS.test(String(k));
-      if (!lists(before, P.app, postKind)) return unobs(`the ${P.app} listings hold no posts`);
+      // Capability from the first read, per created kind (re-review 2026-10-21, minor 5): the kinds the app's post
+      // operations make (effect table; a post-like name only when the table names none). A post is seen only in a listing
+      // of its own kind (Buffer's sent_updates never shows a queued update; Facebook's feed never shows a photo post).
+      const made = postKindsOf(P.app);
+      const postKind = made.length ? k => made.some(m => sameKind(k, m)) : k => POST_KINDS.test(String(k));
+      if (!lists(before, P.app, postKind)) return unobs(`no ${P.app} listing holds the kinds its posts make${made.length ? ` (${made.join(', ')})` : ''}`);
       if (!lists(after, P.app, postKind)) return notReread(`the ${P.app} posts were not listed again`);
       const fresh = d.added.filter(r => r.app === P.app && postKind(r.kind) && (!P.channel || hasValue(recordText(r.data), P.channel) || String(r.ptr).includes(P.channel)));
+      const unlisted = made.filter(m => !lists(before, P.app, k => sameKind(k, m)));
+      if (!fresh.length && unlisted.length) return unobs(`no new ${P.app} post in the listed kinds, and a post may be a ${unlisted.join(' or ')} record, which the read does not list`);
       if (!fresh.length) return { pass: false, evidence: `no new ${P.app} post${P.channel ? ` in ${P.channel}` : ''}` };
       const scored = fresh.map(r => { const text = recordText(r.data); return { r, miss: [...(P.text ?? []).filter(s => !hasValue(text, s)).map(s => `"${s}"`), ...banned(text, P.bodyNot).map(s => `left-out "${s}" present`)] }; }).sort((x, y) => x.miss.length - y.miss.length);
       return scored[0].miss.length ? { pass: false, evidence: `post ${scored[0].r.ptr}: ${scored[0].miss.join(', ')}` } : { pass: true, evidence: `post ${scored[0].r.ptr}` };
@@ -501,7 +559,7 @@ export function evaluate(pc, before, after) {
       const r = after.records.find(x => x.ptr === P.ptr);
       const [rApp, rKind] = String(P.ptr).split(':');
       if (!r && !lists(after, rApp, k => k === rKind || sameKind(k, rKind))) return notReread(`${rApp} ${rKind} records were not listed again`);
-      if (!r) return { pass: false, evidence: `record ${P.ptr} not found on re-read` };
+      if (!r) return { pass: false, evidence: `record ${P.ptr} not found on re-read`, missing: true };
       const v = fieldValue(r.data, P.field);
       return fieldMatches(v, P.value) ? { pass: true, evidence: `${P.field} = ${JSON.stringify(v).slice(0, 200)}` } : { pass: false, evidence: `${P.ptr} ${P.field} = ${JSON.stringify(v ?? null).slice(0, 200)}, expected ${JSON.stringify(P.value)}` };
     }

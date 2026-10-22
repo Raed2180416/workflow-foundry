@@ -73,6 +73,8 @@ export const CODEOWNED = 'codeowned';
 /** Host-run pipeline harnesses (every model call is a node; loaded only when selected) and their $0 stand-ins. */
 export const PIPELINE_HARNESSES = Object.freeze({ [CODEOWNED]: './harness/codeowned.mjs', 'codeowned-v2': './harness/v2/codeowned.mjs', secondreader: './harness/secondreader.mjs' });
 export const PIPELINE_STUBS = Object.freeze({ [CODEOWNED]: './harness/codeowned-stubs.mjs', 'codeowned-v2': './harness/v2/codeowned-stubs.mjs', secondreader: './harness/secondreader-stubs.mjs' });
+/** The pipeline arms whose roles may map to an executor model (--node-models role=mercury-3, pipelineDispatch): codeowned (A1-C) and codeowned-v2 (A1-C v2). */
+export const EXECUTOR_PIPELINES = Object.freeze([CODEOWNED, 'codeowned-v2']);
 
 /** The cost- and prompt-relevant variables the CLI child inherits (the policy's closed childEnv list): name -> value or
  * null. The executor passes these through from the host shell, so they are recorded per run. */
@@ -91,7 +93,7 @@ function provenance(policy, { cli = null } = {}) {
 // A model listed under the policy's executorModels (provider kind openai-chat-https, e.g. mercury-3) runs its session through
 // src/executors/openai-chat.mjs: the same arguments, result and transcript shape as runClaudeCode, tools in the same sandbox.
 // Every claude-cli model keeps runClaudeCode, byte for byte as before. The plain session arms (A0, A1) take it as --model;
-// the codeowned pipeline (A1-C) also per role (--node-models role=mercury-3,...: pipelineDispatch below); other pipeline arms
+// the codeowned pipelines (A1-C v1 and v2, EXECUTOR_PIPELINES) also per role (--node-models role=mercury-3,...: pipelineDispatch below); other pipeline arms
 // stay claude-cli only. Returns null for a claude-cli model, else the executor and the policy entries the A1 manifest pins in
 // place of the claude-cli ones.
 export function remoteSessionExecutor(policy, model, { pipeline = false } = {}) {
@@ -251,11 +253,11 @@ export async function runTasks(o) {
   let policy = null;
   if (!scripted && !opt.dryRun) {
     policy = loadPolicy();
-    remote = remoteSessionExecutor(policy.policy, opt.model, { pipeline: Boolean(co) && harness !== CODEOWNED }); // refuses ids the policy does not list
+    remote = remoteSessionExecutor(policy.policy, opt.model, { pipeline: Boolean(co) && !EXECUTOR_PIPELINES.includes(harness) }); // refuses ids the policy does not list
     if (remote) runner = args => remote.run({ ...args, policy: policy.policy }); // the policy loaded (and hashed) at launch
     else if (modelById(policy.policy, opt.model).provider !== 'claude-cli') throw new Error(`model ${opt.model} is not served by the claude-cli provider`);
     remoteRoles = co ? [...new Set(Object.values(models).filter(m => m && executorForModel(policy.policy, m).kind !== 'claude-code'))].sort() : [];
-    if (remoteRoles.length && harness !== CODEOWNED) throw new Error(`${remoteRoles.join(', ')}: executor models are wired into the ${CODEOWNED} pipeline only`);
+    if (remoteRoles.length && !EXECUTOR_PIPELINES.includes(harness)) throw new Error(`${remoteRoles.join(', ')}: executor models are wired into the ${EXECUTOR_PIPELINES.join(' and ')} pipelines only`);
     for (const m of new Set(Object.values(models ?? {}))) if (!remoteRoles.includes(m) && modelById(policy.policy, m).provider !== 'claude-cli') throw new Error(`model ${m} is not served by the claude-cli provider`);
     if (!(opt.capUsd > 0)) throw new Error('--cap (hard USD cap for the run) is required for model runs');
     if ((remote || remoteRoles.length) && !(opt.tokenCap > 0)) throw new Error(`--token-cap (hard cap on the run's input + output tokens) is required for ${remote ? opt.model : remoteRoles.join(', ')}: a model listed at $0 never meets the dollar cap`);

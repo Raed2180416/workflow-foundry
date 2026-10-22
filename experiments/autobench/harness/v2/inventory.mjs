@@ -117,13 +117,25 @@ export function entityTerms(text, max = DEFAULT_CAPS.terms) {
 // ---------------------------------------------------------------------------------------------------------------
 // The inventory node (v1's, with the clock, the v2 plan, records and terms, and business dates)
 
+/** A list response that says a later page exists (generic pagination markers; recorded in `paged`, never shown to a
+ * model): the listing is partial, so a record missing from it is not evidence (postconditions.mjs cutKinds). */
+export function morePages(j) {
+  if (!j || typeof j !== 'object' || Array.isArray(j)) return false;
+  const s = v => typeof v === 'string' && v.trim() !== '';
+  return j.has_more === true || j.hasMore === true || j.more === true || s(j.nextPageToken) || s(j.next_page_token) || s(j.next_page) || s(j.next_cursor) || s(j.next)
+    || s(j.paging?.next?.after) || s(j.paging?.next?.link) || s(j.response_metadata?.next_cursor) || s(j.meta?.next_page) || s(j.links?.next) || s(j.pagination?.next);
+}
+
 /**
  * buildInventory({ request, client, maxSteps, caps, node, only, dateNote, windowMs }) -> v1's inventory plus
  * clock {t0, t1}. With dateNote, record dates skip load stamps (after the node, once t1 is known).
  */
 export async function buildInventory({ request, client, maxSteps = 16, caps = DEFAULT_CAPS, node = 'inventory', log = () => {}, only = null, dateNote = false, windowMs = 43_200_000, now = Date.now } = {}) {
-  const inv = { apps: {}, records: [], outOfScope: [], connected: [], truncated: [], entities: [], entityIndex: {}, precedents: [], steps: 0, calls: 0, errors: [], titleProbes: [], clock: { t0: now(), t1: null } };
+  // notIssued: 'app:kind' -> listing calls the step budget (or the expansion depth) left unissued, so a later reader knows
+  // which kinds this read saw only in part (re-review 2026-10-21, minor 1: a cut re-read is never evidence of absence).
+  const inv = { apps: {}, records: [], outOfScope: [], connected: [], truncated: [], notIssued: {}, paged: [], entities: [], entityIndex: {}, precedents: [], steps: 0, calls: 0, errors: [], titleProbes: [], clock: { t0: now(), t1: null } };
   const plan = new Map(ENUM_PLAN.map(p => [p.app, p]));
+  const skipped = items => { for (const c of items) if (!c.probe) { const k = `${c.app}:${c.kind}`; inv.notIssued[k] = (inv.notIssued[k] ?? 0) + 1; } };
   const appState = app => (inv.apps[app] ??= { status: 'unknown', kinds: {}, records: 0 });
   const INDEX_KINDS = new Set(['gmail:message_list', 'gmail:draft_list']);
   const addRecords = (app, kind, j, url, meta) => {
@@ -140,10 +152,10 @@ export async function buildInventory({ request, client, maxSteps = 16, caps = DE
   const run = async items => {
     const out = [];
     for (let i = 0; i < items.length; i += caps.callsPerStep) {
-      if (inv.steps >= maxSteps) { inv.errors.push(`step budget ${maxSteps} reached: ${items.length - i} call(s) not issued`); break; }
+      if (inv.steps >= maxSteps) { inv.errors.push(`step budget ${maxSteps} reached: ${items.length - i} call(s) not issued`); skipped(items.slice(i)); break; }
       const chunk = items.slice(i, i + caps.callsPerStep);
       const r = await client.batch(chunk.map(c => c.call), { node });
-      if (r.error) { inv.errors.push(`step refused: ${String(r.error).slice(0, 200)}`); break; }
+      if (r.error) { inv.errors.push(`step refused: ${String(r.error).slice(0, 200)}`); skipped(items.slice(i)); break; }
       inv.steps += 1;
       inv.calls += chunk.length;
       r.results.forEach((res, k) => { const it = chunk[k]; out.push({ ...it, status: resultStatus(res.content), json: parseResult(res.content), raw: res.content }); });
@@ -165,6 +177,7 @@ export async function buildInventory({ request, client, maxSteps = 16, caps = DE
       if (!x.probe) addRecords(x.app, x.kind, json, urlOf(x.call), x.meta);
       const p = plan.get(x.app);
       if (p?.truncated?.(x.kind, json, caps)) inv.truncated.push(`${x.app}:${x.kind}`);
+      else if (morePages(json)) inv.paged.push(`${x.app}:${x.kind}`);   // a later page exists: the listing is partial
       for (const c of p?.expand?.(x.kind, json, caps, x.meta) ?? []) next.push({ ...c, app: c.app ?? x.app });
       delete json.__channel;
     }
@@ -188,6 +201,7 @@ export async function buildInventory({ request, client, maxSteps = 16, caps = DE
     level += 1;
     log(`[inventory] level ${level - 1}: ${res.length} calls, ${inv.records.length} records`);
   }
+  if (items.length) skipped(items);   // expansions past the depth or the step budget were never issued
   for (const [app, st] of Object.entries(inv.apps)) {
     if (st.status === 'not_connected') inv.outOfScope.push(app); else if (st.status === 'connected') inv.connected.push(app);
   }

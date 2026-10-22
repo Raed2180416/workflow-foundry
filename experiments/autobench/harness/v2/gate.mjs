@@ -7,7 +7,7 @@ import { chmodSync, closeSync, constants as fsc, fstatSync, mkdirSync, openSync,
 import path from 'node:path';
 import { EFFECTS } from './postconditions.mjs';
 
-export { GATE_ENV, GATE_LOG, decide, callFacts, violationsOf, decodeRaw, routeOf, refusalText, cappedText, names } from './tool-gated.mjs';
+export { GATE_ENV, GATE_LOG, decide, callFacts, violationsOf, decodeRaw, routeOf, refusalText, cappedText, duplicateText, names } from './tool-gated.mjs';
 export const GATE_FILE = 'gate.json';
 export const LOG_MAX_BYTES = 1024 * 1024;
 
@@ -88,4 +88,5 @@ export function readGateLog(file, maxBytes = LOG_MAX_BYTES) {
 /** Counts for the node row: client invocations that loaded the configuration, refusals, calls held with a refused
  * batch, identical resends, sends past a cap. */
 export const gateSummary = lines => ({ loaded: lines.filter(e => e.kind === 'loaded').length, refused: lines.filter(e => e.kind === 'refused').length, held: lines.filter(e => e.kind === 'held').length,
-  resentIdentical: lines.filter(e => e.kind === 'resent').length, capped: lines.filter(e => e.kind === 'capped').length });
+  resentIdentical: lines.filter(e => e.kind === 'resent').length, capped: lines.filter(e => e.kind === 'capped').length,
+  duplicatesRefused: lines.filter(e => e.kind === 'duplicate').length, heldThenSent: lines.filter(e => e.kind === 'sent').length });

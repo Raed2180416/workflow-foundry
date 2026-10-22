@@ -387,6 +387,28 @@ const MESSAGE_ACTIONS = new Set(['send_email', 'post_message']);
 /** A message item (v1's routing condition): send_email, post_message, a gmail item with recipients, or another Slack item. */
 export const isMessageItem = i => MESSAGE_ACTIONS.has(i.action) || (i.app === 'gmail' && ['other', 'create_record'].includes(i.action) && (i.fields ?? []).some(f => f.name === 'to')) || (i.app === 'slack' && i.action === 'other');
 const recOf = (inv, ptr) => (inv?.records ?? []).find(r => r.ptr === ptr) ?? null;
+/**
+ * The addresses a record links to (re-review 2026-10-21, M3): its own, and those of the records of the same app it names
+ * in a reference field (a field named for a person or party, such as OwnerId, owner, customer_id, contact, assignee,
+ * requester_id, or any field ending in "id"), matched by the record's id, or by its name for a field that is not an id.
+ * Exact matches only.
+ */
+const REF_FIELD = /owner|customer|contact|user|assign|requester|member|manager|employee|person|client|lead|vendor|recipient|(_id|Id|ID|_ids|Ids)$/i;
+export function linkedAddresses(r, inv) {
+  const out = new Set(emailsIn(recordText(r?.data)));
+  const others = (inv?.records ?? []).filter(x => x !== r && x.app === r?.app);
+  const scalars = (d, depth = 0, acc = []) => { for (const [k, v] of Object.entries(d ?? {})) { if (typeof v === 'string' || typeof v === 'number') acc.push([k, String(v).trim()]); else if (Array.isArray(v)) v.forEach(x => (typeof x === 'string' || typeof x === 'number') && acc.push([k, String(x).trim()])); else if (v && typeof v === 'object' && depth < 1) scalars(v, depth + 1, acc); } return acc; };
+  for (const [k, v] of scalars(r?.data)) {
+    if (!v || /^id$/i.test(k) || !REF_FIELD.test(k)) continue;
+    const idField = /(_id|Id|ID|_ids|Ids)$/.test(k);
+    for (const x of others) {
+      const ids = [x.id, x.data?.id, x.data?.Id, x.data?.ID].filter(y => y !== undefined && y !== null).map(y => String(y));
+      const named = !idField && v.length >= 3 && [identifyingValue(x.data), x.data?.name, x.data?.Name, x.data?.real_name, x.data?.full_name].some(n => n && norm(n) === norm(v));
+      if (ids.includes(v) || named) for (const e of emailsIn(recordText(x.data))) out.add(e);
+    }
+  }
+  return out;
+}
 const columnValues = (inv, app, field) => {
   const want = String(field).toLowerCase().replace(/[^a-z0-9]/g, '');
   const out = [];
@@ -437,8 +459,10 @@ export function typeLedger(merged, sources, inv, P = {}) {
     }
     // Completeness literals (privacy over grader fit, review of 2026-10-21): the identifying value of a majority-eligible
     // candidate of a message item is added ONLY when the item's own cited source asks for values to appear (asked_by
-    // verified there), only as a hard value (never as "may mention"), and never for a candidate whose record carries a
-    // different recipient's address (another person's record does not go into this recipient's message).
+    // verified there), only as a hard value (never as "may mention"), and never for a candidate whose record links to a
+    // person who is not one of the item's recipients: by its own address or through a record it references by id or name
+    // (re-review 2026-10-21, M3: an account owned by another user goes into that user's message, not this one). A record
+    // that links to nobody (a list sent to one audience) still qualifies.
     if (message && P.completeness !== 'off' && itemMajority && item.fields.some(askedOwn)) {
       const have = new Set(item.fields.map(f => valueKey(f.value)));
       const to = new Set(item.fields.filter(f => EMAIL_FIELDS.has(f.name)).flatMap(f => emailsIn(f.value)).concat(emailsIn(item.target)));
@@ -446,8 +470,8 @@ export function typeLedger(merged, sources, inv, P = {}) {
         const r = recOf(inv, c.record);
         const idv = r ? identifyingValue(r.data) : null;
         if (!idv || have.has(valueKey(idv))) continue;
-        const own = emailsIn(recordText(r.data));
-        if (own.length && !own.some(e => to.has(e))) continue;   // another recipient's record
+        const linked = linkedAddresses(r, inv);
+        if (linked.size && ![...linked].some(e => to.has(e))) continue;   // another person's record
         const vt = valueType(idv, { ...o, sourceText: sources.get(r.ptr)?.text ?? '', statement: item.statement });
         if (!(vt.accepted && (c.yes ?? 1) >= majority)) continue;
         have.add(valueKey(idv));

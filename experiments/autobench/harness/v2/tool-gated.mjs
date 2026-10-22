@@ -185,10 +185,15 @@ export function violationsOf(facts, rules = []) {
   return out;
 }
 export const callHash = c => createHash('sha256').update(`${c.name}\n${typeof c.arguments === 'string' ? c.arguments : JSON.stringify(c.arguments ?? {})}`).digest('hex');
-/** Gate state from the log lines: refusals per (rule, recipient), per session, and the refused calls. */
+/** Gate state from the log lines: refusals per (rule, recipient), per session, the refused calls, the held calls and the
+ * held calls sent since. */
 export function gateState(lines = []) {
-  const s = { pairs: new Map(), total: 0, hashes: new Set() };
-  for (const e of lines) if (e?.kind === 'refused') { s.total += 1; s.pairs.set(`${e.rule}|${e.recipient}`, (s.pairs.get(`${e.rule}|${e.recipient}`) ?? 0) + 1); if (e.hash) s.hashes.add(e.hash); }
+  const s = { pairs: new Map(), total: 0, hashes: new Set(), held: new Set(), sentAfterHold: new Set() };
+  for (const e of lines) {
+    if (e?.kind === 'refused') { s.total += 1; s.pairs.set(`${e.rule}|${e.recipient}`, (s.pairs.get(`${e.rule}|${e.recipient}`) ?? 0) + 1); if (e.hash) s.hashes.add(e.hash); }
+    else if (e?.kind === 'held' && e.hash) s.held.add(e.hash);
+    else if (e?.kind === 'sent' && e.hash) s.sentAfterHold.add(e.hash);
+  }
   return s;
 }
 /**
@@ -196,7 +201,9 @@ export function gateState(lines = []) {
  * A refusal needs: a violation, the call not refused before (else an identical resend: sent), fewer than perSession
  * refusals so far and fewer than perPair for that (rule, recipient). Resends are recognised against EARLIER log lines only
  * (a call repeated inside one batch is not its own resend). When any call of a batch is refused, every other call of the
- * batch is held (not sent): the batch is refused whole.
+ * batch is held (not sent): the batch is refused whole. A call that was held and has been sent since (on its own, between
+ * the refusal and the resend) is a duplicate: the batch is refused whole again, naming it, so the resend never sends it a
+ * second time (re-review 2026-10-21, minor 8).
  */
 export function decide(calls, cfg, logLines = []) {
   const st = gateState(logLines);
@@ -205,6 +212,7 @@ export function decide(calls, cfg, logLines = []) {
   let total = st.total;
   const ds = calls.map((c, i) => {
     const hash = callHash(c);
+    if (st.held.has(hash) && st.sentAfterHold.has(hash)) return { i, action: 'duplicate', hash };
     let vs;
     try { vs = violationsOf(callFacts(c, cfg?.routes ?? []), cfg?.rules ?? []); } catch { vs = []; }
     if (!vs.length) return { i, action: 'send', hash };
@@ -214,8 +222,16 @@ export function decide(calls, cfg, logLines = []) {
     total += 1; pairs.set(`${v.rule.pid}|${v.recipient}`, (pairs.get(`${v.rule.pid}|${v.recipient}`) ?? 0) + 1);
     return { i, action: 'refuse', violation: v, hash };
   });
-  if (ds.some(d => d.action === 'refuse')) for (const d of ds) if (d.action !== 'refuse') d.action = 'held';
+  if (ds.some(d => d.action === 'refuse' || d.action === 'duplicate')) for (const d of ds) if (d.action !== 'refuse' && d.action !== 'duplicate') d.action = 'held';
   return ds;
+}
+/** The note on a call held earlier and sent on its own since (stderr; nothing of the batch was sent). */
+export function duplicateText(d, call) {
+  let a = {};
+  try { a = typeof call.arguments === 'string' ? JSON.parse(call.arguments) : call.arguments ?? {}; } catch { /* shown as ? */ }
+  let p = '?';
+  try { p = new URL(String(a.url)).pathname; } catch { /* keep ? */ }
+  return `HARNESS GATE: not sent (no world step used). Call ${d.i + 1} (${String(a.method ?? '?').toUpperCase()} ${p}) was already sent on its own after this batch was held; sending the batch would send it twice. Remove it and send the rest of the batch.`;
 }
 /** The refusal note (stderr). */
 export function refusalText(d, call, { batch = false } = {}) {
@@ -226,7 +242,7 @@ export function refusalText(d, call, { batch = false } = {}) {
   const v = d.violation;
   const quote = String(v.literal.rule?.quote ?? v.rule.rule?.quote ?? '').replace(/\s+/g, ' ').slice(0, 200);
   const src = v.literal.rule?.source ?? v.rule.rule?.source ?? '?';
-  return `HARNESS GATE: not sent (no world step used). Call ${d.i + 1} (${String(a.method ?? '?').toUpperCase()} ${p}) to ${v.recipient} contains "${v.literal.text}", which ${v.rule.pid} leaves out of this message (rule ${src}: "${quote}"). ${batch ? 'No call of this batch was sent. Remove it and send the batch again; if the message must contain it, run the identical command again: every call will be sent once.' : 'Remove it and send again. If the message must contain it, run the identical command again: it will be sent.'}`;
+  return `HARNESS GATE: not sent (no world step used). Call ${d.i + 1} (${String(a.method ?? '?').toUpperCase()} ${p}) to ${v.recipient} contains "${v.literal.text}", which ${v.rule.pid} leaves out of this message (rule ${src}: "${quote}"). ${batch ? 'No call of this batch was sent. Remove it and send the batch again; if the message must contain it, run the identical command again (do not send its other calls on their own first): every call will be sent once.' : 'Remove it and send again. If the message must contain it, run the identical command again: it will be sent.'}`;
 }
 /** The note on a send past the refusal limit (stderr; the call was sent). */
 export const cappedText = d => `HARNESS GATE: call ${d.i + 1} was sent unchecked (the limit on refusals for this session is reached).`;
@@ -270,20 +286,23 @@ async function main() {
   } else usage();
 
   const cfg = loadGate();
-  const ds = cfg ? decide(calls, cfg, readLog()) : calls.map((c, i) => ({ i, action: 'send' }));
-  const refused = ds.filter(d => d.action === 'refuse');
+  const lines = cfg ? readLog() : [];
+  const ds = cfg ? decide(calls, cfg, lines) : calls.map((c, i) => ({ i, action: 'send' }));
+  const refused = ds.filter(d => d.action === 'refuse' || d.action === 'duplicate');
   if (cfg) {
     const t = Date.now() / 1000;
-    const KIND = { refuse: 'refused', resend: 'resent', cap: 'capped', held: 'held' };
+    const KIND = { refuse: 'refused', resend: 'resent', cap: 'capped', held: 'held', duplicate: 'duplicate' };
     log([{ t, kind: 'loaded', rules: cfg.rules.length, calls: calls.length },
       ...ds.filter(d => d.action !== 'send').map(d => ({ t, kind: KIND[d.action], call: d.i + 1, of: calls.length, ...(d.violation ? { rule: d.violation.rule.pid, recipient: d.violation.recipient, literal: d.violation.literal.text } : {}), hash: d.hash }))]);
   }
   if (refused.length) {
-    for (const d of refused) console.error(refusalText(d, calls[d.i], { batch: cmd === 'batch' && calls.length > 1 }));
+    for (const d of refused) console.error(d.action === 'duplicate' ? duplicateText(d, calls[d.i]) : refusalText(d, calls[d.i], { batch: cmd === 'batch' && calls.length > 1 }));
     process.exit(1);
   }
   const r = await send(calls);
   if (r.error) { console.error(r.error); process.exit(1); }
+  // A held call sent now is remembered, so a later resend of its batch does not send it again.
+  if (cfg) { const st = gateState(lines); const sent = ds.filter(d => d.hash && st.held.has(d.hash)); if (sent.length) log(sent.map(d => ({ t: Date.now() / 1000, kind: 'sent', call: d.i + 1, hash: d.hash }))); }
   for (const d of ds.filter(x => x.action === 'cap')) console.error(cappedText(d));
   if (cmd === 'call') process.stdout.write(String(r.results[0].content) + '\n');
   else for (const [k, x] of r.results.entries()) process.stdout.write(`### result ${k + 1}: ${x.name}\n${x.content}\n`);
