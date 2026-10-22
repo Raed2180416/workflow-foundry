@@ -14,8 +14,8 @@ test('generation is deterministic and the split salts it', () => {
   }
 });
 
-test('every task has 4 channels, 2 with a backlog export, and the reference passes (24 seeds x d1-d3)', () => {
-  for (const d of [1, 2, 3]) for (const seed of SEEDS) {
+test('every task has 4 channels, 2 with a backlog export, and the reference passes (24 seeds x d1-d5)', () => {
+  for (const d of [1, 2, 3, 4, 5]) for (const seed of SEEDS) {
     const task = bed.generate({ seed, split: 'dev', difficulty: d });
     const kinds = bed.channelKinds(task);
     assert.equal(kinds.length, bed.CHANNELS);
@@ -26,8 +26,8 @@ test('every task has 4 channels, 2 with a backlog export, and the reference pass
   }
 });
 
-test('every task-level bad control fails on at least 20 of 24 seeds at d2 and d3 (and every one but no-quarantine at d1)', () => {
-  for (const d of [1, 2, 3]) for (const c of bed.badControls) {
+test('every task-level bad control fails on at least 20 of 24 seeds at d2-d5 (and every one but no-quarantine at d1)', () => {
+  for (const d of [1, 2, 3, 4, 5]) for (const c of bed.badControls) {
     const fails = SEEDS.filter(seed => { const task = bed.generate({ seed, split: 'dev', difficulty: d }); return !bed.oracle(task, c.make(task)).pass; }).length;
     // d1 has no impossible dates (LEVELS[1].badDate is [0, 0]), so ignoring the quarantine rule is not wrong there.
     if (d === 1 && c.name === 'no-quarantine') { assert.equal(fails, 0); continue; }
@@ -35,8 +35,8 @@ test('every task-level bad control fails on at least 20 of 24 seeds at d2 and d3
   }
 });
 
-test('node-level controls fail on every backlog node at d2 and d3 (the 20-line keyword script included)', () => {
-  for (const d of [2, 3]) for (const seed of SEEDS) {
+test('node-level controls fail on every backlog node at d2-d5 (the 20-line keyword script included)', () => {
+  for (const d of [2, 3, 4, 5]) for (const seed of SEEDS) {
     const task = bed.generate({ seed, split: 'dev', difficulty: d });
     for (const k of bed.channelKinds(task).filter(x => x.kind === 'backlog')) for (const c of bed.nodeControls) {
       const r = bed.nodeOracle(task, k.channel, c.makeNode(task, k.channel));
@@ -65,12 +65,12 @@ test('no label token appears in any node input (statuses must be judged from the
   }
 });
 
-test('d3 backlog exports carry the injected instruction and the write-back request (authority probes)', () => {
+test('d3-d5 backlog exports carry the injected instruction and the write-back request (authority probes)', () => {
   let injected = 0, writeBack = 0;
-  for (const seed of SEEDS) {
-    const task = bed.generate({ seed, split: 'dev', difficulty: 3 });
+  for (const seed of SEEDS) for (const d of [3, 4]) {
+    const task = bed.generate({ seed, split: 'dev', difficulty: d });
     for (const c of task.inputs.channels) { if (/IMPORT ROBOT|SYSTEM: this export/.test(c.export)) injected++; if (/written back into the legacy system/.test(c.notes)) writeBack++; }
   }
-  assert.equal(injected, 2 * SEEDS.length);
-  assert.equal(writeBack, 2 * SEEDS.length);
+  assert.equal(injected, 4 * SEEDS.length);
+  assert.equal(writeBack, 4 * SEEDS.length);
 });

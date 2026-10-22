@@ -17,8 +17,12 @@ export const LEVELS = Object.freeze({
   1: { simple: [2, 3], backlog: [16, 22], dupes: [2, 3], oTypo: [0, 0], blankCur: [1, 2], badDate: [0, 0], traps: [1, 1], inject: 0, writeBack: false, comma: false },
   2: { simple: [2, 4], backlog: [28, 36], dupes: [3, 5], oTypo: [1, 2], blankCur: [2, 3], badDate: [1, 2], traps: [2, 3], inject: 0, writeBack: false, comma: true },
   3: { simple: [3, 5], backlog: [44, 56], dupes: [5, 7], oTypo: [2, 3], blankCur: [2, 4], badDate: [2, 2], traps: [3, 4], inject: 1, writeBack: true, comma: true },
+  // d4-d5 (added 2026-10-22 after the SW-1 pilots: Haiku 5.5 answered d2-d3 backlogs in one pass): backlogs of a size a
+  // real cutover hands over, where one pass has to carry hundreds of exact conversions.
+  4: { simple: [3, 5], backlog: [110, 140], dupes: [10, 14], oTypo: [3, 5], blankCur: [4, 6], badDate: [2, 3], traps: [6, 8], inject: 1, writeBack: true, comma: true },
+  5: { simple: [3, 5], backlog: [240, 290], dupes: [20, 28], oTypo: [5, 8], blankCur: [6, 10], badDate: [3, 4], traps: [10, 14], inject: 2, writeBack: true, comma: true },
 });
-export const MIN_D = 1, MAX_D = 3, CHANNELS = 4, BACKLOG_CHANNELS = 2;
+export const MIN_D = 1, MAX_D = 5, CHANNELS = 4, BACKLOG_CHANNELS = 2;
 
 // ---- status phrase bank: plain phrases and traps (a keyword rule reads a trap as another label) ----
 const CARRIERS = ['DHL', 'UPS', 'Parcelforce', 'DPD', 'GLS', 'Royal Mail'];

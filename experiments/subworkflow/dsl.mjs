@@ -16,7 +16,7 @@ export const PURE_OPS = Object.freeze(['parse_table', 'code', 'judge_rows', 'ver
 export const EFFECT_OPS = Object.freeze(['send_message', 'write_back', 'http_get']);
 export const OPS = Object.freeze([...PURE_OPS, ...EFFECT_OPS]);
 export const DELIMITERS = Object.freeze({ ';': ';', '|': '|', tab: '\t', ',': ',' });
-export const LIMITS = Object.freeze({ maxSteps: 14, maxBatch: 25, maxJudgeRows: 240, codeTimeoutMs: 15000, maxSpecBytes: 60000 });
+export const LIMITS = Object.freeze({ maxSteps: 14, maxBatch: 25, maxJudgeRows: 400, codeTimeoutMs: 15000, maxSpecBytes: 60000 });
 
 // ---- the model-facing spec schema (portable subset: no unions; a nested spec travels as a JSON string) ----
 const ARG = { type: 'object', additionalProperties: false, required: ['name', 'ref'], properties: {
