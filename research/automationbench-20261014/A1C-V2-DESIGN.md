@@ -5,7 +5,7 @@ called. The numbers in §4 are in-sample development evidence (the recorded a1c-
 k = 1), not held-out evidence. Source of the spec: the orchestrator's "A1-C v2 implementation spec (final)", which
 settles the design review and the two critiques; this file records what was built against it. **Revised the same
 evening (second build, §0) after three adversarial reviews; §0 supersedes the first build wherever they differ. Revised
-again on 2026-10-22 (third build, §0.1) after two re-reviews; §0.1 supersedes §0 wherever they differ.***
+again on 2026-10-22 (third build, §0.1) after two re-reviews; §0.1 supersedes §0 wherever they differ. P0 ran on 2026-10-22: §0.2.***
 
 ## 0.1 Third build: the re-review fixes (2026-10-22)
 
@@ -111,6 +111,36 @@ Mercury tokens in all), adjudication, mapping and the act session on claude-haik
 violation, no session or harness error, no environment fault; $0.0128. The task was graded (in-sample: not evidence). The
 check round decided every hard check in code, so the **checker role on mercury-3 was not exercised** by this smoke (no
 judged check needed it); v1-M's dev60 runs exercised it through the same dispatch.
+
+## 0.2 P0 result and decision (2026-10-22; in-sample, dev60, D21)
+
+P0 ran the §5 commands from this branch at `69e6a92` (CLI 2.1.307, claude-haiku-5-5). Attempt 1 started 03:08:16Z
+and was killed by the container restart at about 03:11Z after 13 tasks; the 3 tasks in flight had no `row.json`. Their
+spend was booked by the ledger's own rule (reported cost for the 2 calls whose transcripts hold a result, the $0.075
+reservation for each of the 7 calls with none: an upper bound of $0.5325) into fault rows (`CONTAINER_RESTART`), so
+`--resume` (03:19:37Z–03:31:43Z, exit 0) re-ran them and `--cap 2.5` stayed a hard total. Records:
+`runs/a1c-v2-p0/summary.json` (counts only), `P0-DECISION.json` (the rules and the hand review), `killed-attempt1.json`.
+
+| Frozen rule (§5) | Value | Met |
+|---|---|---|
+| `summary.complete` | true (60 tasks, no fault left, none missing) | yes |
+| `readers.parsedAfterReask` ≥ 177 of 180 | 179 (first pass 179; 1 reply completed unparsed; 0 timeouts; 0 re-asks) | yes |
+| `models.violations` = 0 | 0 (every call served by claude-haiku-5-5) | yes |
+| proxies must not increase | wrong-entity 158 → 107, wrong-value 33 → 16 (v1 → v2) | yes |
+| coverage (reported) | of 121 failing scored assertions, v1 covers 87 (7 full, 61 entity, 19 literal), v2 84 (7, 62, 15) | — |
+| `preSendLint` on only if ≥ 2 true and ≤ 1 false refusals | 4 refusals over 145 sends (17 rules in 16 tasks): **2 true, 2 false** | **off** |
+
+The hand review (each refusal against the recorded dev60 grade; no repair ran in any of the four tasks, so the final
+grade is the round-0 state): `finance.budget_variance_analysis` ("Legal") and `finance.project_profitability`
+("Delta Integration") are true: each send fails the grader's `body_not_contains`, the task's only failing assertion
+(the automatic label missed the second because the assertion's literal "Delta" is a substring of the refused one).
+`finance.quarterly_tax_estimate` ("$95,000") and `marketing.customer_feedback_aggregation` ("gdpr_consent=False") are
+false: the source rules say "do not deduct" and "exclude records where", the sends obey them while naming the value, no
+assertion names either literal, and each task fails on another value a resend would not fix. Both false refusals come
+from one pattern, an exclusion rule about records or arithmetic compiled into a do-not-mention literal: recorded for
+v2.1, nothing changed here. **Decision: `preSendLint` stays false**, so v2's and v2-M's hashes are unchanged (`716df33d…`,
+`785093f5…` at CLI 2.1.307) and the lint smoke does not run. Spend: $1.7670 settled ($1.2345 reported, $0.5325 the
+killed attempt's upper bound), 181 calls, no Mercury.
 
 ## 0. Second build: the review fixes (2026-10-21 evening)
 

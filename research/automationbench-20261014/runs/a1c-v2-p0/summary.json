@@ -1,0 +1,2447 @@
+{
+ "evidence": "development/diagnostic, in-sample (devTrain dev60 recorded inventories; v2 nodes; no world, no act)",
+ "scripted": false,
+ "model": "claude-haiku-5-5",
+ "taskCount": 60,
+ "complete": true,
+ "readers": {
+  "of": 180,
+  "parsedFirstPass": 179,
+  "parsedAfterReask": 179,
+  "unparsedCompleted": 1,
+  "timeouts": 0,
+  "otherErrors": 0,
+  "failedTasks": [],
+  "reasks": 0,
+  "rule": ">= 177 of 180 on parsedAfterReask (the pipeline's ledgers); timeouts and failed or capped tasks count as not parsed; environment faults are not scored: resume until none remain",
+  "ruleApplicable": true,
+  "met": true
+ },
+ "faults": [],
+ "missing": [],
+ "models": {
+  "seen": [
+   "claude-haiku-5-5"
+  ],
+  "violations": 0,
+  "expected": "claude-haiku-5-5"
+ },
+ "coverage": {
+  "v1": {
+   "failingScored": 121,
+   "full": 7,
+   "entity": 61,
+   "literal": 19,
+   "none": 34
+  },
+  "v2": {
+   "failingScored": 121,
+   "full": 7,
+   "entity": 62,
+   "literal": 15,
+   "none": 37
+  }
+ },
+ "proxies": {
+  "v1": {
+   "wrongEntity": 158,
+   "wrongValue": 33
+  },
+  "v2": {
+   "wrongEntity": 107,
+   "wrongValue": 16
+  },
+  "rule": "wrong-entity and wrong-value must not increase (proxies; review by hand)"
+ },
+ "contentLimits": 193,
+ "bodyNot": 53,
+ "satisfiabilityDrops": 3,
+ "costUsd": 1.23448758,
+ "settledUsd": 1.7670065799999994,
+ "ledger": {
+  "cap": 2.5,
+  "spent": 1.7670065799999997,
+  "unknownCostCalls": 0,
+  "calls": 181,
+  "waits": 0
+ },
+ "rows": [
+  {
+   "task": "sales.chatgpt_lead_summary_generator",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.022664499999999997,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 3,
+   "hard": 1,
+   "bodyNot": 0,
+   "contentLimits": 2,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.022664499999999997,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "sales.qualify_lead",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0184861,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 5,
+   "hard": 5,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "entity"
+   ],
+   "coveredV1": [
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0184861,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "sales.soft_matching",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0303964,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 6,
+   "hard": 2,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0303964,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "sales.docusign_sequential_signing",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0384423,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 5,
+   "hard": 1,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0384423,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "sales.advance_opportunity_stage",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.026782,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 6,
+   "hard": 4,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "entity"
+   ],
+   "coveredV1": [
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.026782,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "sales.vendor_review_prep",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0211028,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 1,
+   "hard": 1,
+   "bodyNot": 4,
+   "contentLimits": 6,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "entity"
+   ],
+   "coveredV1": [
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0211028,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "sales.competitive_displacement_outreach",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.040389900000000006,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 16,
+   "hard": 2,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 8,
+   "coveredV2": [
+    null,
+    "literal",
+    "literal",
+    "literal",
+    "literal",
+    "literal",
+    "literal",
+    "literal"
+   ],
+   "coveredV1": [
+    null,
+    "literal",
+    "literal",
+    null,
+    "literal",
+    null,
+    "literal",
+    "literal"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.040389900000000006,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "sales.zoom_meeting_followup",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0323601,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 9,
+   "hard": 7,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 2,
+   "coveredV2": [
+    "entity",
+    "entity"
+   ],
+   "coveredV1": [
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 4,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 4,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0323601,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "sales.partnership_contract",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.050028500000000004,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 3,
+   "hard": 2,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 6,
+   "coveredV2": [
+    null,
+    null,
+    null,
+    null,
+    "entity",
+    "entity"
+   ],
+   "coveredV1": [
+    "literal",
+    null,
+    null,
+    null,
+    "entity",
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.050028500000000004,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "sales.chatgpt_proposal_customization",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0354219,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 3,
+   "hard": 0,
+   "bodyNot": 0,
+   "contentLimits": 1,
+   "satisfiabilityDrops": 0,
+   "failingScored": 16,
+   "coveredV2": [
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "full",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    null
+   ],
+   "coveredV1": [
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "full",
+    "entity",
+    "full",
+    "full",
+    "full",
+    "entity",
+    "entity",
+    "entity",
+    "full",
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0354219,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "marketing.linkedin_company_update",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.009825799999999999,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 4,
+   "hard": 1,
+   "bodyNot": 2,
+   "contentLimits": 4,
+   "satisfiabilityDrops": 0,
+   "failingScored": 2,
+   "coveredV2": [
+    null,
+    "entity"
+   ],
+   "coveredV1": [
+    null,
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.009825799999999999,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "marketing.win_loss_analysis",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0196403,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 1,
+   "hard": 1,
+   "bodyNot": 6,
+   "contentLimits": 15,
+   "satisfiabilityDrops": 0,
+   "failingScored": 5,
+   "coveredV2": [
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "coveredV1": [
+    "entity",
+    "entity",
+    "full",
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0196403,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "marketing.customer_story_intake",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.010566800000000001,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 4,
+   "hard": 1,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    null
+   ],
+   "coveredV1": [
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.010566800000000001,
+   "attempts": 1,
+   "resumed": true
+  },
+  {
+   "task": "marketing.customer_feedback_aggregation",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.03246068,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 3,
+   "hard": 2,
+   "bodyNot": 11,
+   "contentLimits": 33,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    null
+   ],
+   "coveredV1": [
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.25746068,
+   "attempts": 2
+  },
+  {
+   "task": "marketing.engagement_optimization",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.013458910000000001,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 12,
+   "hard": 1,
+   "bodyNot": 0,
+   "contentLimits": 4,
+   "satisfiabilityDrops": 0,
+   "failingScored": 6,
+   "coveredV2": [
+    "entity",
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "coveredV1": [
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.09597791,
+   "attempts": 2
+  },
+  {
+   "task": "marketing.social_contest",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.014320989999999999,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 16,
+   "hard": 5,
+   "bodyNot": 0,
+   "contentLimits": 7,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    null
+   ],
+   "coveredV1": [
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 5,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 5,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.23932098999999998,
+   "attempts": 2
+  },
+  {
+   "task": "marketing.community_engagement",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.022092300000000002,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 2,
+   "hard": 2,
+   "bodyNot": 6,
+   "contentLimits": 9,
+   "satisfiabilityDrops": 0,
+   "failingScored": 3,
+   "coveredV2": [
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "coveredV1": [
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.022092300000000002,
+   "attempts": 1
+  },
+  {
+   "task": "marketing.featured_snippet",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0139462,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 5,
+   "hard": 5,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 2,
+   "coveredV2": [
+    "literal",
+    "literal"
+   ],
+   "coveredV1": [
+    "literal",
+    "literal"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 5,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 5,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0139462,
+   "attempts": 1
+  },
+  {
+   "task": "marketing.customer_milestone",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0231892,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 14,
+   "hard": 10,
+   "bodyNot": 1,
+   "contentLimits": 1,
+   "satisfiabilityDrops": 1,
+   "failingScored": 2,
+   "coveredV2": [
+    "entity",
+    "entity"
+   ],
+   "coveredV1": [
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 7,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 5,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0231892,
+   "attempts": 1
+  },
+  {
+   "task": "marketing.social_content_calendar",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.024342899999999997,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 11,
+   "hard": 4,
+   "bodyNot": 0,
+   "contentLimits": 1,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 4,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 4,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.024342899999999997,
+   "attempts": 1
+  },
+  {
+   "task": "operations.parking_allocation_management",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0327444,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 22,
+   "hard": 10,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 3,
+   "coveredV2": [
+    "entity",
+    "full",
+    "entity"
+   ],
+   "coveredV1": [
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 5,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 4,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0327444,
+   "attempts": 1
+  },
+  {
+   "task": "operations.zoom_dr_drill",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0191128,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 11,
+   "hard": 7,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    null
+   ],
+   "coveredV1": [
+    "literal"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 2,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0191128,
+   "attempts": 1
+  },
+  {
+   "task": "operations.cross_training_assignment",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.018172499999999998,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 12,
+   "hard": 7,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "entity"
+   ],
+   "coveredV1": [
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 5,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 7,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.018172499999999998,
+   "attempts": 1
+  },
+  {
+   "task": "operations.loading_dock_scheduling",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0254499,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 12,
+   "hard": 8,
+   "bodyNot": 5,
+   "contentLimits": 11,
+   "satisfiabilityDrops": 0,
+   "failingScored": 3,
+   "coveredV2": [
+    null,
+    null,
+    null
+   ],
+   "coveredV1": [
+    null,
+    "literal",
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 5
+   },
+   "settledUsd": 0.0254499,
+   "attempts": 1
+  },
+  {
+   "task": "operations.docusign_contractor_offboard",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0158763,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 17,
+   "hard": 5,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "literal"
+   ],
+   "coveredV1": [
+    "literal"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 2,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0158763,
+   "attempts": 1
+  },
+  {
+   "task": "operations.zoom_training_setup",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0146028,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 11,
+   "hard": 4,
+   "bodyNot": 0,
+   "contentLimits": 2,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 2,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 2,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0146028,
+   "attempts": 1
+  },
+  {
+   "task": "operations.overtime_threshold_monitoring",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.029543200000000002,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 11,
+   "hard": 5,
+   "bodyNot": 1,
+   "contentLimits": 1,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 4,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 5,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.029543200000000002,
+   "attempts": 1
+  },
+  {
+   "task": "operations.calendar_airtable_maintenance",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.028309699999999997,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 2,
+   "hard": 1,
+   "bodyNot": 0,
+   "contentLimits": 1,
+   "satisfiabilityDrops": 0,
+   "failingScored": 2,
+   "coveredV2": [
+    null,
+    "literal"
+   ],
+   "coveredV1": [
+    "literal",
+    "literal"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.028309699999999997,
+   "attempts": 1
+  },
+  {
+   "task": "operations.invoice_shipping_trigger",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.014916,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 2,
+   "hard": 2,
+   "bodyNot": 1,
+   "contentLimits": 4,
+   "satisfiabilityDrops": 0,
+   "failingScored": 2,
+   "coveredV2": [
+    "literal",
+    "literal"
+   ],
+   "coveredV1": [
+    "literal",
+    "literal"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.014916,
+   "attempts": 1
+  },
+  {
+   "task": "operations.asana_safety_walk_log",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.008848100000000001,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 2,
+   "hard": 2,
+   "bodyNot": 0,
+   "contentLimits": 4,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.008848100000000001,
+   "attempts": 1
+  },
+  {
+   "task": "support.intercom_reactivation_campaign",
+   "parsedFirstPass": 2,
+   "parsedAfterReask": 2,
+   "unparsedCompleted": 1,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.025591300000000004,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 26,
+   "hard": 6,
+   "bodyNot": 0,
+   "contentLimits": 8,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 8,
+    "wrongValue": 4
+   },
+   "settledUsd": 0.025591300000000004,
+   "attempts": 1
+  },
+  {
+   "task": "support.intercom_zoho_customer_360",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0473977,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 16,
+   "hard": 16,
+   "bodyNot": 3,
+   "contentLimits": 6,
+   "satisfiabilityDrops": 0,
+   "failingScored": 9,
+   "coveredV2": [
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "full",
+    "full"
+   ],
+   "coveredV1": [
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    "entity",
+    null,
+    "literal"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 4,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 4,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0473977,
+   "attempts": 1
+  },
+  {
+   "task": "support.intercom_demo_scheduling",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0369848,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 59,
+   "hard": 7,
+   "bodyNot": 0,
+   "contentLimits": 24,
+   "satisfiabilityDrops": 0,
+   "failingScored": 8,
+   "coveredV2": [
+    null,
+    null,
+    null,
+    null,
+    "entity",
+    null,
+    "full",
+    null
+   ],
+   "coveredV1": [
+    null,
+    null,
+    null,
+    null,
+    "entity",
+    null,
+    null,
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 18,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0369848,
+   "attempts": 1
+  },
+  {
+   "task": "support.intercom_sentiment_escalation",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.018182200000000003,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 18,
+   "hard": 8,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 7,
+   "coveredV2": [
+    null,
+    null,
+    null,
+    "entity",
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "coveredV1": [
+    null,
+    null,
+    null,
+    "entity",
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 6,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.018182200000000003,
+   "attempts": 1
+  },
+  {
+   "task": "support.gorgias_quality_audit",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.024238299999999997,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 14,
+   "hard": 12,
+   "bodyNot": 5,
+   "contentLimits": 10,
+   "satisfiabilityDrops": 0,
+   "failingScored": 2,
+   "coveredV2": [
+    "literal",
+    "entity"
+   ],
+   "coveredV1": [
+    null,
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.024238299999999997,
+   "attempts": 1
+  },
+  {
+   "task": "support.reamaze_cross_platform_dedup",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.018856400000000002,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 20,
+   "hard": 12,
+   "bodyNot": 0,
+   "contentLimits": 4,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 4,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 4,
+    "wrongValue": 4
+   },
+   "settledUsd": 0.018856400000000002,
+   "attempts": 1
+  },
+  {
+   "task": "support.helpcrunch_usage_alerts",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.03516010000000001,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 34,
+   "hard": 22,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 12,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 18,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.03516010000000001,
+   "attempts": 1
+  },
+  {
+   "task": "support.intercom_multi_product_routing",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0333152,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 44,
+   "hard": 19,
+   "bodyNot": 0,
+   "contentLimits": 15,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "literal"
+   ],
+   "coveredV1": [
+    "full"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 10,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0333152,
+   "attempts": 1
+  },
+  {
+   "task": "support.helpcrunch_zoho_desk_bridge",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0184936,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 26,
+   "hard": 15,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 3,
+   "coveredV2": [
+    null,
+    null,
+    null
+   ],
+   "coveredV1": [
+    null,
+    null,
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 8,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 7,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0184936,
+   "attempts": 1
+  },
+  {
+   "task": "support.hiver_mailbox_audit",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0194965,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 9,
+   "hard": 9,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "entity"
+   ],
+   "coveredV1": [
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 11,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0194965,
+   "attempts": 1
+  },
+  {
+   "task": "finance.vendor_payment_approval",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0152325,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 15,
+   "hard": 11,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 5,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 3,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0152325,
+   "attempts": 1
+  },
+  {
+   "task": "finance.bad_debt_writeoff",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.014238,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 12,
+   "hard": 4,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 2,
+   "coveredV2": [
+    null,
+    null
+   ],
+   "coveredV1": [
+    null,
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 2,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.014238,
+   "attempts": 1
+  },
+  {
+   "task": "finance.vendor_1099_prep",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0098575,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 3,
+   "hard": 3,
+   "bodyNot": 0,
+   "contentLimits": 3,
+   "satisfiabilityDrops": 0,
+   "failingScored": 3,
+   "coveredV2": [
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "coveredV1": [
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0098575,
+   "attempts": 1
+  },
+  {
+   "task": "finance.forex_gain_loss",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0073727,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 1,
+   "hard": 1,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0073727,
+   "attempts": 1
+  },
+  {
+   "task": "finance.project_profitability",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0084007,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 1,
+   "hard": 1,
+   "bodyNot": 1,
+   "contentLimits": 2,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "full"
+   ],
+   "coveredV1": [
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0084007,
+   "attempts": 1
+  },
+  {
+   "task": "finance.budget_variance_analysis",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0093765,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 2,
+   "hard": 2,
+   "bodyNot": 2,
+   "contentLimits": 4,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "full"
+   ],
+   "coveredV1": [
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0093765,
+   "attempts": 1
+  },
+  {
+   "task": "finance.travel_advance_settlement",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0088208,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 7,
+   "hard": 7,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 4,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0088208,
+   "attempts": 1
+  },
+  {
+   "task": "finance.ap_aging_report",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0066445,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 2,
+   "hard": 2,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 3,
+   "coveredV2": [
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "coveredV1": [
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0066445,
+   "attempts": 1
+  },
+  {
+   "task": "finance.capex_approval",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.009918100000000001,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 11,
+   "hard": 4,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "entity"
+   ],
+   "coveredV1": [
+    null
+   ],
+   "proxiesV2": {
+    "wrongEntity": 3,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.009918100000000001,
+   "attempts": 1
+  },
+  {
+   "task": "finance.quarterly_tax_estimate",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0099153,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 1,
+   "hard": 1,
+   "bodyNot": 1,
+   "contentLimits": 1,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    "entity"
+   ],
+   "coveredV1": [
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0099153,
+   "attempts": 1
+  },
+  {
+   "task": "hr.anniversary_recognition",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0107305,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 2,
+   "hard": 2,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 1
+   },
+   "settledUsd": 0.0107305,
+   "attempts": 1
+  },
+  {
+   "task": "hr.visa_expiry_tracking",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0178646,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 10,
+   "hard": 5,
+   "bodyNot": 2,
+   "contentLimits": 3,
+   "satisfiabilityDrops": 0,
+   "failingScored": 4,
+   "coveredV2": [
+    "entity",
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "coveredV1": [
+    "entity",
+    "entity",
+    "entity",
+    "entity"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 3,
+    "wrongValue": 2
+   },
+   "settledUsd": 0.0178646,
+   "attempts": 1
+  },
+  {
+   "task": "hr.monday_onboarding_pipeline",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0082232,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 8,
+   "hard": 0,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 2,
+   "coveredV2": [
+    null,
+    null
+   ],
+   "coveredV1": [
+    "literal",
+    "literal"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0082232,
+   "attempts": 1
+  },
+  {
+   "task": "hr.candidate_rejection_followup",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0121242,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 7,
+   "hard": 6,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 1,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 4,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 3,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0121242,
+   "attempts": 1
+  },
+  {
+   "task": "hr.employee_request_routing",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0160159,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 14,
+   "hard": 7,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 2,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0160159,
+   "attempts": 1
+  },
+  {
+   "task": "hr.referral_bonus_tracking",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.015973099999999997,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 6,
+   "hard": 4,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 2,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.015973099999999997,
+   "attempts": 1
+  },
+  {
+   "task": "hr.recruitment_channel_roi",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.012645200000000002,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 6,
+   "hard": 1,
+   "bodyNot": 0,
+   "contentLimits": 3,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 0,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.012645200000000002,
+   "attempts": 1
+  },
+  {
+   "task": "hr.equipment_provisioning",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0215525,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 9,
+   "hard": 7,
+   "bodyNot": 2,
+   "contentLimits": 4,
+   "satisfiabilityDrops": 0,
+   "failingScored": 1,
+   "coveredV2": [
+    null
+   ],
+   "coveredV1": [
+    "literal"
+   ],
+   "proxiesV2": {
+    "wrongEntity": 6,
+    "wrongValue": 1
+   },
+   "proxiesV1": {
+    "wrongEntity": 2,
+    "wrongValue": 0
+   },
+   "settledUsd": 0.0215525,
+   "attempts": 1
+  },
+  {
+   "task": "hr.salary_adjustment_processing",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.0234891,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 23,
+   "hard": 14,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 0,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 2,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 3,
+    "wrongValue": 2
+   },
+   "settledUsd": 0.0234891,
+   "attempts": 1
+  },
+  {
+   "task": "hr.disciplinary_action_tracking",
+   "parsedFirstPass": 3,
+   "parsedAfterReask": 3,
+   "unparsedCompleted": 0,
+   "timeouts": 0,
+   "otherErrors": 0,
+   "readerCalls": 3,
+   "reasked": null,
+   "costUsd": 0.010882300000000001,
+   "unknownCost": 0,
+   "models": [
+    "claude-haiku-5-5"
+   ],
+   "modelViolations": [],
+   "checks": 12,
+   "hard": 7,
+   "bodyNot": 0,
+   "contentLimits": 0,
+   "satisfiabilityDrops": 1,
+   "failingScored": 0,
+   "coveredV2": [],
+   "coveredV1": [],
+   "proxiesV2": {
+    "wrongEntity": 1,
+    "wrongValue": 0
+   },
+   "proxiesV1": {
+    "wrongEntity": 1,
+    "wrongValue": 3
+   },
+   "settledUsd": 0.010882300000000001,
+   "attempts": 1
+  }
+ ],
+ "stop": null,
+ "priorSpendUsd": 0.8886264
+}
