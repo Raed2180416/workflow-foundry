@@ -1,0 +1,149 @@
+{
+ "arm": "EMPTY",
+ "label": "freeze-EMPTY-dev",
+ "split": "dev",
+ "model": null,
+ "K": 1,
+ "items": [
+  "18832",
+  "17118",
+  "17618",
+  "17719",
+  "20173"
+ ],
+ "manifestSha256": "39bf40bd420be14b4b666f5d5e9c0ceb4cb03a85d9c87774a2b0578ebb19def6",
+ "started": "2026-10-22T02:53:54.409Z",
+ "finished": "2026-10-22T02:54:01.551Z",
+ "capUsd": 3,
+ "spentUsd": 0,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c13",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17118",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c19",
+    "reasons": [
+     "e-mail to elif.whitlock@mailbox.example: 0 sent, expected 1",
+     "e-mail to mateo.castellan@inbox.example: 0 sent, expected 1",
+     "e-mail to calla.silvana@post.example: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17618",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c04",
+    "reasons": [
+     "chat to #leads: 0 sent, expected 1",
+     "responses: 0, expected 1",
+     "sheet leads: 2 rows, expected 3"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17719",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c03",
+    "reasons": [
+     "sheet records: 2 rows, expected 3"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "20173",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c03",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 4",
+     "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-88210\",\"customer_name\":\"Elif Pemberton\",\"customer_email\":\"elif.pemberton@mailbox.example\",\"amount\":2534.05,\"currency\":\"USD\",\"due_date\":\"2026-05-07\"} (first differing columns: l"
+    ],
+    "status": "succeeded"
+   }
+  }
+ ]
+}
