@@ -49,7 +49,8 @@ async function judge(wf, w = world) {
 test('facts are the world values in a message, not the wording; dates and numbers are normalised', () => {
   const vocab = staticVocabulary(ref);
   assert.ok(vocab.has('stale') && vocab.has('tickets') && vocab.has('opened'), 'words written in the definition are static');
-  assert.deepEqual(factsOf('2 stale tickets\nStale tickets:\n- T-1 Brightwater (opened 2026-03-10)', vocab).sort(), ['t-1', 'D:2026-03-10', 'brightwater'].sort());
+  assert.deepEqual(factsOf('2 stale tickets\nStale tickets:\n- T-1 Brightwater (opened 2026-03-10)', vocab).sort(), ['2', 't-1', 'D:2026-03-10', 'brightwater'].sort(), 'a count computed at run time is a fact even though 2 is a constant of the logic');
+  assert.ok(!vocab.has('2') && vocab.has('stale'), 'numbers in code logic are not wording; words are');
   assert.deepEqual(tokens('INV-1002 and SKU_42a cost -3'), ['inv-1002', 'sku_42a', '-3', 'and', 'cost']);
   assert.deepEqual(tokens('Due March 10, 2026: $1,200.50'), ['D:2026-03-10', '1200.5', 'due']);
   assert.equal(normCell('2026-03-15T10:00:30.000Z'), normCell('2026-03-15T10:00:00Z'));

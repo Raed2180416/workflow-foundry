@@ -1,0 +1,57 @@
+{
+ "arm": "REF",
+ "label": "dev-ref-0",
+ "split": "dev",
+ "model": null,
+ "K": 1,
+ "items": [
+  "18832",
+  "17118"
+ ],
+ "manifestSha256": null,
+ "started": "2026-10-22T02:34:51.657Z",
+ "finished": "2026-10-22T02:34:59.972Z",
+ "capUsd": 3,
+ "spentUsd": 0,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17118",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  }
+ ]
+}

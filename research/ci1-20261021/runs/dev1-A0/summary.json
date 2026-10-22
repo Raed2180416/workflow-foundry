@@ -1,0 +1,127 @@
+{
+ "arm": "A0",
+ "label": "dev1-A0",
+ "split": "dev",
+ "model": "claude-haiku-5-5",
+ "K": 1,
+ "items": [
+  "18832",
+  "17118",
+  "17618",
+  "17719",
+  "20173"
+ ],
+ "manifestSha256": null,
+ "started": "2026-10-22T02:39:35.895Z",
+ "finished": "2026-10-22T02:41:30.723Z",
+ "capUsd": 0.5,
+ "spentUsd": 0.031335,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0.004689,
+   "tokens": 25419,
+   "calls": 1,
+   "wallMs": 37922,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c13",
+    "reasons": [
+     "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …return '- ' + r.item + holder(r) + ' - expired ' + (-r.days) + ' day(s) ago (' + r.expires + ')' + contact(r); }\\n  function section(title, lines) { return lines.l",
+     "e-mail to user@example.com: 0 sent, expected 1"
+    ],
+    "status": "failed"
+   }
+  },
+  {
+   "item": "17118",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.005544,
+   "tokens": 23607,
+   "calls": 1,
+   "wallMs": 30574,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17618",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.006901,
+   "tokens": 26385,
+   "calls": 1,
+   "wallMs": 41012,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c04",
+    "reasons": [
+     "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.update.updated"
+    ],
+    "status": "failed"
+   }
+  },
+  {
+   "item": "17719",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.004246,
+   "tokens": 20951,
+   "calls": 1,
+   "wallMs": 20773,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "20173",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.009955,
+   "tokens": 32703,
+   "calls": 1,
+   "wallMs": 64359,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  }
+ ]
+}

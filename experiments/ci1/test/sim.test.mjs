@@ -104,3 +104,13 @@ test('corpus-style runs happen in the sandbox and match the in-process result', 
   assert.equal(boxed.effects[0].text, '2026-03-15T10:00:00.000Z undefined', 'frozen clock; no process object in the Code realm');
   assert.ok(bundle().bytes < 256 * 1024, 'the bundle fits the sandbox source limit');
 });
+
+test('an HTML e-mail reads as text with its link targets kept (a link the request asks for is content); images and styles dropped', async () => {
+  const wf = { nodes: [
+    N('Go', 'manualTrigger'),
+    N('Mail', 'gmail', { sendTo: 'a@x.example', subject: 'News', message: '<style>p{color:red}</style><p>Lamp</p><img src="https://cdn.x.example/i.jpg"><a href="https://shop.x.example/p/42" style="x">Learn more</a>', options: {} }, { v: 2.1 }),
+  ], connections: C(['Go', 'Mail']) };
+  const r = await runInProcess(wf, world());
+  assert.equal(r.ok, true, JSON.stringify(r.error));
+  assert.equal(r.effects[0].body, 'Lamp\nLearn more (https://shop.x.example/p/42)');
+});

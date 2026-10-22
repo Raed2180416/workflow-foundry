@@ -1,0 +1,71 @@
+{
+ "arm": "EMPTY",
+ "label": "dev-empty-0",
+ "split": "dev",
+ "model": null,
+ "K": 1,
+ "items": [
+  "18832",
+  "17118"
+ ],
+ "manifestSha256": null,
+ "started": "2026-10-22T02:35:00.605Z",
+ "finished": "2026-10-22T02:35:11.445Z",
+ "capUsd": 3,
+ "spentUsd": 0,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c13",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17118",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c14",
+    "reasons": [
+     "e-mail to ulric.yarrow@post.example: 0 sent, expected 1",
+     "e-mail to kiran.fairhurst@post.example: 0 sent, expected 1",
+     "e-mail to galina.castellan@inbox.example: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  }
+ ]
+}

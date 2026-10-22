@@ -30,6 +30,7 @@ export function applyPatches(workflow, patches) {
   for (const p of patches) {
     const n = w.nodes.find(x => x.name === p.node);
     if (!n) throw new Error(`patch: no node ${p.node}`);
+    if (p.swapOutputs) { const m = (w.connections[p.node] ??= { main: [] }).main; while (m.length < 2) m.push([]); [m[0], m[1]] = [m[1], m[0]]; }
     for (const [dotted, value] of Object.entries(p.set ?? {})) {
       const parts = dotted.split('.'); let t = n;
       for (const k of parts.slice(0, -1)) { t[k] ??= {}; t = t[k]; }
@@ -100,7 +101,7 @@ export async function check(id, { n = 40, quiet = false } = {}) {
   }
   // at least one hidden world must carry outside effects, and at least 3 worlds overall (variety beyond the cover)
   if (!chosen.some(wi => hasEffects(usable[wi]))) { const wi = usable.findIndex(w => hasEffects(w)); if (wi >= 0) chosen.push(wi); }
-  for (let wi = 0; chosen.length < Math.min(item.spec.hiddenMin ?? 4, usable.length - 1) && wi < usable.length; wi++) if (!chosen.includes(wi)) chosen.push(wi);
+  for (let wi = 0; chosen.length < Math.min(item.spec.hiddenMin ?? 6, usable.length - 1) && wi < usable.length; wi++) if (!chosen.includes(wi)) chosen.push(wi);
   const rest = usable.map((w, wi) => wi).filter(wi => !chosen.includes(wi));
   const publicIdx = rest.sort((a, b) => Number(hasEffects(usable[b])) - Number(hasEffects(usable[a])))[0];
   const report = {
@@ -116,10 +117,12 @@ export async function check(id, { n = 40, quiet = false } = {}) {
   return { item, report, cands, refBy, usable, chosen, publicIdx, vocab };
 }
 
-export async function freeze(id) {
-  const { item, report, usable, chosen, publicIdx, refBy, vocab } = await check(id, { quiet: true });
-  if (!report.deterministic) throw new Error(`${id}: reference is not deterministic`);
-  if (report.agreement === 'no transliteration' || report.agreement.pass !== report.agreement.of) throw new Error(`${id}: transliteration does not agree (${JSON.stringify(report.agreement).slice(0, 300)})`);
+export async function freeze(id, { n = 40 } = {}) {
+  const { item, report, usable, chosen, publicIdx, refBy, vocab } = await check(id, { quiet: true, n });
+  const refuse = why => ({ id: String(id), admitted: false, why, report });
+  if (!report.deterministic) return refuse('reference is not deterministic');
+  if (report.agreement === 'no transliteration' || report.agreement.pass !== report.agreement.of) return refuse(`transliteration does not agree (${JSON.stringify(report.agreement).slice(0, 600)})`);
+  if (publicIdx === undefined) return refuse('no world left for the public world');
   const hidden = chosen.map(wi => usable[wi]), pub = usable[publicIdx];
   const oracle = { id: item.id, corpusSha256: item.rawSha256, simBundleSha256: bundle().sha256, trigger: item.spec.trigger,
     workspace: item.spec.workspace, decl: { vocab: [...vocab].sort(), mask: item.spec.decl?.mask ?? {}, freeText: item.spec.decl?.freeText ?? {}, respondCode: !!item.spec.decl?.respondCode },
@@ -127,7 +130,7 @@ export async function freeze(id) {
   mkdirSync(path.join(BED, 'oracle'), { recursive: true });
   const text = JSON.stringify(oracle, null, 1);
   writeFileSync(path.join(BED, 'oracle', `${item.id}.json`), text);
-  return { id: item.id, sha256: sha(text), hidden: hidden.length, mutation: report.mutation.score };
+  return { id: item.id, admitted: true, sha256: sha(text), hidden: hidden.length, mutation: report.mutation, report };
 }
 
 /** Score one built workflow against a frozen oracle: { pass (every hidden world), worlds: [{id, pass, reasons}] }. */
@@ -147,6 +150,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const ids = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--n');
   const n = args.includes('--n') ? Number(args[args.indexOf('--n') + 1]) : 40;
   if (cmd === 'check') for (const id of ids) await check(id, { n });
-  else if (cmd === 'freeze') for (const id of ids) console.log(JSON.stringify(await freeze(id)));
+  else if (cmd === 'freeze') for (const id of ids) {
+    const r = await freeze(id, { n });
+    console.log(JSON.stringify({ id: r.id, admitted: r.admitted, why: r.why ?? null, sha256: r.sha256 ?? null, hidden: r.hidden ?? null, report: r.report }));
+  }
   else console.log('usage: bed.mjs check|freeze <id...>');
 }

@@ -44,12 +44,24 @@ export function tokens(text) {
   return out;
 }
 /** The item's static vocabulary: every token written anywhere in the reference workflow definition (parameters and code). */
+// Words are static wherever the definition writes them. Numbers are static only where the definition writes them as TEXT (a plain
+// parameter, the literal part of an expression, or a string literal inside code): a number in code logic ("days > 30", "count + 1")
+// is not wording, so counts and amounts computed at run time stay facts even when they happen to equal a constant of the logic.
+const isNum = t => /^-?\d+(\.\d+)?$/.test(t);
+const stringLiterals = code => [...code.matchAll(/'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\]|\\.)*)`/g)].map(m => (m[1] ?? m[2] ?? m[3] ?? '').replace(/\$\{[^}]*\}/g, ' '));
 export function staticVocabulary(workflow) {
   const vocab = new Set();
   // Escapes inside code and expression strings ("\n\nBest regards") would glue words to the escape letter: unescape first.
   const unescape = s => s.replace(/\\[nrtbfv0]/g, ' ').replace(/\\u[0-9a-fA-F]{4}/g, ' ').replace(/\\(["'`\\])/g, ' $1 ');
-  const walk = v => { if (typeof v === 'string') for (const t of [...tokens(v), ...tokens(unescape(v))]) vocab.add(t); else if (Array.isArray(v)) v.forEach(walk); else if (isObj(v)) for (const [k, x] of Object.entries(v)) { for (const t of tokens(k)) vocab.add(t); walk(x); } };
-  for (const n of workflow.nodes ?? []) { if (String(n.type).endsWith('stickyNote')) continue; walk(n.parameters ?? {}); for (const t of tokens(n.name)) vocab.add(t); }
+  const addText = s => { for (const t of [...tokens(s), ...tokens(unescape(s))]) vocab.add(t); };
+  const addCode = s => { for (const t of [...tokens(s), ...tokens(unescape(s))]) if (!isNum(t)) vocab.add(t); for (const lit of stringLiterals(s)) addText(lit); };
+  const walkString = (s, key) => {
+    if (['jsCode', 'functionCode', 'code'].includes(key)) return addCode(s);
+    if (s.startsWith('=')) { const body = s.slice(1); addText(body.replace(/\{\{[\s\S]*?\}\}/g, ' ')); for (const m of body.matchAll(/\{\{([\s\S]*?)\}\}/g)) addCode(m[1]); return; }
+    addText(s);
+  };
+  const walk = (v, key = '') => { if (typeof v === 'string') walkString(v, key); else if (Array.isArray(v)) v.forEach(x => walk(x, key)); else if (isObj(v)) for (const [k, x] of Object.entries(v)) { for (const t of tokens(k)) if (!isNum(t)) vocab.add(t); walk(x, k); } };
+  for (const n of workflow.nodes ?? []) { if (String(n.type).endsWith('stickyNote')) continue; walk(n.parameters ?? {}); for (const t of tokens(n.name)) if (!isNum(t)) vocab.add(t); }
   return vocab;
 }
 /** Facts: tokens not written in the definition, plus every e-mail address and URL (a literal address in a message still matters). */

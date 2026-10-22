@@ -1,0 +1,32 @@
+{
+ "schema": "foundry.ci1.split/1",
+ "rule": "The 20 items drafted before any builder call were ordered by sha256('ci1-split-v1:' + id); the first 5 are dev (builder development: prompts, loop, retrieval), the rest are test. Items admitted later go to test. Dev and test have the same author (the describer is the bed author): the test split is held out from builder development, not sealed. Added before the freeze (2026-10-22, all to test): 17811, 17815, 17807, 17059.",
+ "dev": [
+  "18832",
+  "17118",
+  "17618",
+  "17719",
+  "20173"
+ ],
+ "test": [
+  "14177",
+  "17545",
+  "16364",
+  "17342",
+  "17878",
+  "19103",
+  "19445",
+  "19446",
+  "17816",
+  "16904",
+  "15238",
+  "11679",
+  "17749",
+  "17624",
+  "16312",
+  "17811",
+  "17815",
+  "17807",
+  "17059"
+ ]
+}

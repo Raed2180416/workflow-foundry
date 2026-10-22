@@ -46,7 +46,9 @@ const set = (o, path, value, dot = true) => {
 };
 const unset = (o, path) => { const parts = String(path).split('.'); let t = o; for (const p of parts.slice(0, -1)) { if (!isObj(t?.[p])) return; t = t[p]; } if (t) delete t[parts.at(-1)]; };
 const splitList = s => Array.isArray(s) ? s : String(s ?? '').split(',').map(x => x.trim()).filter(Boolean);
-const stripHtml = s => String(s ?? '').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|tr|li|h\d)>/gi, '\n').replace(/<[^>]+>/g, ' ')
+// HTML mail as the text a reader gets: link targets are kept ("Learn more (https://...)": the link is content the person asked for),
+// images and styles are dropped.
+const stripHtml = s => String(s ?? '').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<a\s[^>]*?href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, ' $2 ($1) ').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|tr|li|h\d)>/gi, '\n').replace(/<[^>]+>/g, ' ')
   .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/[ \t]+/g, ' ').replace(/\n\s+/g, '\n').trim();
 const addrList = v => (Array.isArray(v) ? v : String(v ?? '').split(/[,;]/)).map(x => String(x).trim()).filter(Boolean).map(x => (/<([^>]+)>/.exec(x)?.[1] ?? x).trim().toLowerCase());
 const slug = v => String(v ?? '').toLowerCase().replace(/^#/, '').replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
@@ -879,7 +881,8 @@ export function createSim({ vm, crypto }) {
           if (settings.onError === 'continueErrorOutput') { const n = (outEdges.get(job.name) ?? []).length; outputs = Array.from({ length: Math.max(n, 2) }, (_, k) => (k === n - 1 ? [errItem] : [])); }
         }
         outputs = outputs.map(list => list ?? []);
-        if (node.alwaysOutputData && outputs.every(l => !l.length)) outputs[0] = [{ json: {}, lin: {} }];
+        // alwaysOutputData: one empty item, paired with the first input item (n8n keeps pairedItem on it)
+        if (node.alwaysOutputData && outputs.every(l => !l.length)) outputs[0] = [{ json: {}, lin: { ...(job.inputs[0]?.[0]?.lin ?? {}) } }];
         // lineage: every output item records itself under this node's name
         for (const list of outputs) for (const it of list) it.lin = { ...(it.lin ?? {}), [job.name]: it };
         (runs.get(job.name) ?? runs.set(job.name, []).get(job.name)).push({ output: outputs });
