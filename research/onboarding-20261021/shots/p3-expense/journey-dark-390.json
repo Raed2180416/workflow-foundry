@@ -13,7 +13,7 @@
       "target": "Start",
       "steps": 1,
       "asks": 0,
-      "ms": 622
+      "ms": 803
     },
     {
       "n": 1,
@@ -22,7 +22,7 @@
       "note": "two questions; \"who decides\" sits right below the second",
       "steps": 1,
       "asks": 0,
-      "ms": 964,
+      "ms": 1180,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
@@ -35,7 +35,7 @@
       "target": "Up to what amount should it approve on its own?",
       "steps": 2,
       "asks": 1,
-      "ms": 1113
+      "ms": 1279
     },
     {
       "action": "fill",
@@ -43,7 +43,7 @@
       "target": "Who decides claims over your limit? (their e-mail)",
       "steps": 3,
       "asks": 2,
-      "ms": 1203
+      "ms": 1417
     },
     {
       "n": 2,
@@ -52,7 +52,7 @@
       "note": null,
       "steps": 3,
       "asks": 2,
-      "ms": 1455,
+      "ms": 1805,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "input#ask-approver-8 ",
@@ -65,7 +65,7 @@
       "target": "Test it with pretend claims",
       "steps": 4,
       "asks": 2,
-      "ms": 1685
+      "ms": 1916
     },
     {
       "n": 3,
@@ -74,8 +74,8 @@
       "note": "first verified; \"Who decides: maria, by replying to an e-mail; you record their answer here\"",
       "steps": 4,
       "asks": 2,
-      "ms": 2832,
-      "route": "#/checked/5638d735-6ab1-4742-b8fa-5e768fba93aa",
+      "ms": 3100,
+      "route": "#/checked/3fd32fb5-2b92-4f52-897d-922f1fd8e204",
       "h1": "Test passed. Nothing real was made or sent.",
       "focus": "h1 Test passed. Nothing real was made or sent.",
       "a11y": [],
@@ -87,7 +87,7 @@
       "target": "Change who decides",
       "steps": 5,
       "asks": 2,
-      "ms": 2889
+      "ms": 3219
     },
     {
       "action": "choose",
@@ -95,7 +95,7 @@
       "target": "maria@example.com signs in and decides, and their yes is recorded as theirs",
       "steps": 6,
       "asks": 3,
-      "ms": 2986
+      "ms": 3369
     },
     {
       "action": "click",
@@ -103,7 +103,7 @@
       "target": "Team plan",
       "steps": 7,
       "asks": 3,
-      "ms": 3070
+      "ms": 3450
     },
     {
       "n": 4,
@@ -112,8 +112,8 @@
       "note": null,
       "steps": 7,
       "asks": 3,
-      "ms": 3367,
-      "route": "#/checked/5638d735-6ab1-4742-b8fa-5e768fba93aa",
+      "ms": 3712,
+      "route": "#/checked/3fd32fb5-2b92-4f52-897d-922f1fd8e204",
       "h1": "Test passed. Nothing real was made or sent.",
       "focus": "button Team plan",
       "a11y": [],
@@ -125,7 +125,7 @@
       "target": "maria@example.com gets an e-mail. They reply, and you record their answer here. ",
       "steps": 8,
       "asks": 4,
-      "ms": 3431
+      "ms": 3764
     },
     {
       "n": 5,
@@ -134,8 +134,8 @@
       "note": null,
       "steps": 8,
       "asks": 4,
-      "ms": 3681,
-      "route": "#/checked/5638d735-6ab1-4742-b8fa-5e768fba93aa",
+      "ms": 3960,
+      "route": "#/checked/3fd32fb5-2b92-4f52-897d-922f1fd8e204",
       "h1": "Test passed. Nothing real was made or sent.",
       "focus": "input ",
       "a11y": [],
@@ -147,7 +147,7 @@
       "target": "Turn it on",
       "steps": 9,
       "asks": 4,
-      "ms": 3751
+      "ms": 4012
     },
     {
       "n": 6,
@@ -156,7 +156,7 @@
       "note": null,
       "steps": 9,
       "asks": 4,
-      "ms": 4136,
+      "ms": 4527,
       "route": "#/go-live/expense-approval?on=1",
       "h1": "Add your expense claims",
       "focus": "h1 Add your expense claims",
@@ -171,12 +171,12 @@
     "firstVerified": {
       "steps": 4,
       "asks": 2,
-      "ms": 2478
+      "ms": 2741
     },
     "turnedOn": {
       "steps": 9,
       "asks": 4,
-      "ms": 3878
+      "ms": 4273
     }
   },
   "a11y": [],
@@ -197,7 +197,7 @@
   },
   "totalSteps": 9,
   "totalAsks": 4,
-  "ms": 4138,
+  "ms": 4529,
   "shots": [
     "01-make-dark-390.jpg",
     "02-answered-dark-390.jpg",

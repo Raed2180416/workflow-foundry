@@ -14,7 +14,7 @@
       "note": null,
       "steps": 0,
       "asks": 0,
-      "ms": 5080,
+      "ms": 2967,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h1 Who decides what",
@@ -28,7 +28,7 @@
       "note": null,
       "steps": 0,
       "asks": 0,
-      "ms": 5681,
+      "ms": 3312,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
@@ -51,7 +51,7 @@
   },
   "totalSteps": 0,
   "totalAsks": 0,
-  "ms": 7125,
+  "ms": 4405,
   "shots": [
     "01-org-v1-org.jpg",
     "02-org-v1-make-expense-approval.jpg"

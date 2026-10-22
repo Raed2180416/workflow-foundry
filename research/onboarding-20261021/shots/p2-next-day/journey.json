@@ -12,54 +12,62 @@
       "target": "yesterday they turned on \"Chase unpaid invoices\", dropped their list and made 4 drafts (as in P2), in this browser",
       "steps": 0,
       "asks": 0,
-      "ms": 628
+      "ms": 463
     },
     {
       "n": 1,
-      "shot": "01-bookmark-opens.jpg",
-      "slug": "bookmark-opens",
-      "note": "the bookmark without a key opens: this browser kept the key for this computer's Foundry",
+      "shot": "01-bookmark-says-command.jpg",
+      "slug": "bookmark-says-command",
+      "note": "the bookmark: no key kept for this port, so the page says the one command that opens Foundry",
       "steps": 0,
       "asks": 0,
-      "ms": 1431,
+      "ms": 938,
       "route": "",
-      "h1": "Let Foundry prepare the jobs you do every week.",
+      "h1": "Open Foundry from its link",
       "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Let Foundry prepare the jobs you do every week.\" [level=1]\n  - paragraph: Pick one below. Foundry tests it with pretend data first, then shows you everything it would make, in full. You check it, and you send it yourself. Nothing real happens until you say yes.\n  - paragraph:\n    - link \"Your automations (1)\":\n      - /url: \"#/automations\"\n  - heading \"Foundry can make these today\" [level=2]\n  - paragraph: These cards follow fixed steps, written and checked in advance. No AI reads your data.\n  - list \"Foundry can make these today\":\n    - listitem \"Chase unpaid invoices\":\n      - heading \"Chase unpaid invoices\" [level=3]\n      - paragraph: Polite reminders to customers who are late, firmer later. You see every e-mail first.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your invoice list (a CSV file; Excel can save one)\"\n      - link \"Start\":\n        - /url: \"#/make/invoice-chase\"\n    - listitem \"Approve small expenses\":\n      - heading \"Approve small expenses\" [level=3]\n      - paragraph: Approves claims under your limit. Sends the rest to the person who decides.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your expense claims (a CSV file; Excel can save one)\"\n      - link \"Start\":\n        - /url: \"#/make/expense-approval\"\n    - listitem \"Weekly progress report\":\n      - heading \"Weekly progress report\" [level=3]\n      - paragraph: Counts what's done, open and blocked, and e-mails one person.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your tracker export (a CSV file; Excel can save one)\"\n      - link \"Start\":\n        - /url: \"#/make/weekly-report\"\n    - listitem \"Route new leads\":\n      - heading \"Route new leads\" [level=3]\n      - paragraph: Sends each new lead to the right salesperson.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your leads list (a CSV file; Excel can save one)\"\n      - link \"Start\":\n        - /url: \"#/make/lead-triage\"\n    - listitem \"Answer common support questions\":\n      - heading \"Answer common support questions\" [level=3]\n      - paragraph: Replies with your own answers. Sends the rest to a person.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your ticket export (a CSV file; Excel can save one)\"\n      - link \"Start\":\n        - /url: \"#/make/support-deflection\"\n    - listitem \"On-call alert digest\":\n      - heading \"On-call alert digest\" [level=3]\n      - paragraph: One summary of unresolved alerts to a chat channel.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your alerts export (a CSV file; Excel can save one)\"\n      - link \"Start\":\n        - /url: \"#/make/oncall-digest\"\n    - listitem \"Keep the newsletter list in step\":\n      - heading \"Keep the newsletter list in step\" [level=3]\n      - paragraph: Finds contacts missing from your list and tells you.\n      - list \"About this automation\":\n        - listitem: \"Uses AI: no\"\n        - listitem: \"Needs: your customer list (CRM export) and newsletter list (a CSV file; Excel can save one)\"\n      - link \"Start\":\n        - /url: \"#/make/contact-sync\"\n  - search \"Or describe it in your own words\":\n    - text: Or describe it in your own words\n    - textbox \"Or describe it in your own words\":\n      - /placeholder: e.g. remind customers who haven't paid after a week\n    - button \"Find a match\"\n    - paragraph: Without an AI key, Foundry matches your words to the list above. Nothing leaves this computer.\n  - paragraph:\n    - text: \"Runs on this computer. No account. One limit: if you also use an AI coding tool on this computer, it could press yes for you. If you don't use one, this doesn't affect you.\"\n    - link \"How this is kept safe\":\n      - /url: \"#/trust\"\n  - paragraph:\n    - text: Not ready to install on your own yet. Today someone technical has to install Foundry and start it again each time this computer restarts. It has been tested on Linux only; Windows and Mac are untested.\n    - link \"What that involves\":\n      - /url: \"#/docs\"\n  - paragraph:\n    - text: Setting this up for a team?\n    - link \"Write down who approves what\":\n      - /url: \"#/org\"\n  - paragraph:\n    - text: Use Claude Code, Cursor or Codex?\n    - link \"Connect it with one line\":\n      - /url: \"#/connect-agent\"\n  - paragraph: \"Already use n8n? Drop an exported workflow to see what it does and what could come over. Zapier and Make: later.\"\n  - text: Preview\n  - link \"Bring in an n8n workflow\":\n    - /url: \"#/import\""
+      "aria": "- main:\n  - heading \"Open Foundry from its link\" [level=1]\n  - paragraph: \"This tab doesn't have Foundry's key. Foundry gives each tab its own key, and only through a link it opens for you. To open Foundry, run this in a terminal on this computer:\"\n  - text: node \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" open --workspace \"/tmp/journey-p2-next-day-wGfrnI\"\n  - paragraph: \"Run it in your own terminal, not through a coding agent: the link it opens works once, within a minute, and Foundry shows it only to a person's terminal.\"\n  - paragraph: If nothing opens, Foundry isn't running. Today someone technical has to start it again after the computer restarts.\n  - paragraph:\n    - link \"Help\":\n      - /url: \"#/help\""
+    },
+    {
+      "action": "external",
+      "target": "runs the command in their own terminal (node app/cli.mjs open); Foundry opens the page",
+      "ask": false,
+      "steps": 1,
+      "asks": 0,
+      "ms": 938
     },
     {
       "action": "click",
       "ask": false,
       "target": "Your automations",
-      "steps": 1,
+      "steps": 2,
       "asks": 0,
-      "ms": 1598
+      "ms": 1365
     },
     {
       "action": "click",
       "ask": false,
       "target": "Open",
-      "steps": 2,
+      "steps": 3,
       "asks": 0,
-      "ms": 1812
+      "ms": 1489
     },
     {
       "action": "click",
       "ask": false,
-      "target": "Make a list (shows you everything first)",
-      "steps": 3,
+      "target": "Open",
+      "steps": 4,
       "asks": 0,
-      "ms": 1868
+      "ms": 1649
     },
     {
       "n": 2,
       "shot": "02-stale-list.jpg",
       "slug": "stale-list",
       "note": "yesterday's list no longer says who paid: replacing it comes first",
-      "steps": 3,
+      "steps": 4,
       "asks": 0,
-      "ms": 2228,
+      "ms": 1950,
       "route": "#/go-live/invoice-chase",
       "h1": "Add your invoice list",
       "focus": "h1 Add your invoice list",
@@ -70,42 +78,42 @@
       "action": "click",
       "ask": false,
       "target": "Replace it",
-      "steps": 4,
+      "steps": 5,
       "asks": 0,
-      "ms": 2395
+      "ms": 2017
     },
     {
       "action": "upload",
       "ask": true,
       "target": "Choose your invoice list (a CSV file)",
-      "steps": 5,
+      "steps": 6,
       "asks": 1,
-      "ms": 2464
+      "ms": 2089
     },
     {
       "action": "choose",
       "ask": true,
       "target": "The 3rd of October 2026 (day first)",
-      "steps": 6,
+      "steps": 7,
       "asks": 2,
-      "ms": 2565
+      "ms": 2264
     },
     {
       "action": "click",
       "ask": false,
       "target": "Use these columns and test",
-      "steps": 7,
+      "steps": 8,
       "asks": 2,
-      "ms": 2623
+      "ms": 2380
     },
     {
       "n": 3,
       "shot": "03-no-repeats.jpg",
       "slug": "no-repeats",
       "note": "the reminders made yesterday are remembered; today's list has only the summary",
-      "steps": 7,
+      "steps": 8,
       "asks": 2,
-      "ms": 3899,
+      "ms": 3294,
       "route": "#/go-live/invoice-chase",
       "h1": "Add your invoice list",
       "focus": "h2#batch-9 Make this draft?",
@@ -117,9 +125,9 @@
       "shot": "04-other-browser.jpg",
       "slug": "other-browser",
       "note": "no key in this browser: the exact command to open Foundry (no key shown)",
-      "steps": 7,
+      "steps": 8,
       "asks": 2,
-      "ms": 4413,
+      "ms": 3647,
       "route": null,
       "h1": null,
       "focus": null,
@@ -134,7 +142,11 @@
   "a11y": [],
   "refusals": [],
   "checks": {
-    "openedWithoutLink": "Let Foundry prepare the jobs you do every week.",
+    "bookmark": {
+      "title": "Open Foundry from its link",
+      "command": "node \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" open --workspace \"<ws>\""
+    },
+    "openedWithCommand": "Let Foundry prepare the jobs you do every week.",
     "stale": "Your list is from 21 Oct 2026. Anything that changed since then (a customer who paid, say) is not in it. Drop a fresh export first.Replace itUse the 21 Oct 2026 list anyway",
     "secondList": [
       "To: me@example.comSubject: Invoice reminders: summary"
@@ -148,11 +160,11 @@
   "preconditions": [
     "yesterday they turned on \"Chase unpaid invoices\", dropped their list and made 4 drafts (as in P2), in this browser"
   ],
-  "totalSteps": 7,
+  "totalSteps": 8,
   "totalAsks": 2,
-  "ms": 4440,
+  "ms": 3727,
   "shots": [
-    "01-bookmark-opens.jpg",
+    "01-bookmark-says-command.jpg",
     "02-stale-list.jpg",
     "03-no-repeats.jpg",
     "04-other-browser.jpg"

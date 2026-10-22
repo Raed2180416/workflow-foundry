@@ -8,12 +8,12 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 11938,
+      "ms": 10333,
       "milestones": {
         "firstVerified": {
           "steps": 3,
           "asks": 1,
-          "ms": 4982,
+          "ms": 4440,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -21,7 +21,7 @@
         "firstLive": {
           "steps": 8,
           "asks": 4,
-          "ms": 11014,
+          "ms": 9521,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -65,7 +65,7 @@
         ],
         "drafts": "4 drafts ready. Foundry didn't send anything.",
         "eml": {
-          "file": "draft-88822829.eml",
+          "file": "draft-747b7e77.eml",
           "xUnsent": true,
           "to": "me@example.com",
           "subject": "Invoice reminders: summary"
@@ -79,12 +79,12 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 7870,
+      "ms": 7390,
       "milestones": {
         "firstVerified": {
           "steps": 3,
           "asks": 1,
-          "ms": 3109,
+          "ms": 2456,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -92,7 +92,7 @@
         "firstLive": {
           "steps": 8,
           "asks": 4,
-          "ms": 7147,
+          "ms": 6577,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -136,7 +136,7 @@
         ],
         "drafts": "4 drafts ready. Foundry didn't send anything.",
         "eml": {
-          "file": "draft-7304944f.eml",
+          "file": "draft-677f7579.eml",
           "xUnsent": true,
           "to": "me@example.com",
           "subject": "Invoice reminders: summary"
@@ -150,12 +150,12 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 7388,
+      "ms": 7072,
       "milestones": {
         "firstVerified": {
           "steps": 3,
           "asks": 1,
-          "ms": 2626,
+          "ms": 2606,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -163,7 +163,7 @@
         "firstLive": {
           "steps": 8,
           "asks": 4,
-          "ms": 6823,
+          "ms": 6220,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -207,7 +207,7 @@
         ],
         "drafts": "4 drafts ready. Foundry didn't send anything.",
         "eml": {
-          "file": "draft-c186fbb7.eml",
+          "file": "draft-3ed64e5c.eml",
           "xUnsent": true,
           "to": "me@example.com",
           "subject": "Invoice reminders: summary"
@@ -221,12 +221,12 @@
       "passed": true,
       "steps": 7,
       "asks": 3,
-      "ms": 5810,
+      "ms": 4738,
       "milestones": {
         "ownTested": {
           "steps": 7,
           "asks": 3,
-          "ms": 5287
+          "ms": 4287
         }
       },
       "budgets": {
@@ -251,7 +251,7 @@
       "passed": true,
       "steps": 16,
       "asks": 5,
-      "ms": 6597,
+      "ms": 5180,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -275,9 +275,9 @@
       "persona": "p2-next-day",
       "variant": "light-1280",
       "passed": true,
-      "steps": 7,
+      "steps": 8,
       "asks": 2,
-      "ms": 4440,
+      "ms": 3727,
       "milestones": {},
       "budgets": null,
       "preconditions": [
@@ -291,7 +291,11 @@
       "shots": 4,
       "failure": null,
       "checks": {
-        "openedWithoutLink": "Let Foundry prepare the jobs you do every week.",
+        "bookmark": {
+          "title": "Open Foundry from its link",
+          "command": "node \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" open --workspace \"<ws>\""
+        },
+        "openedWithCommand": "Let Foundry prepare the jobs you do every week.",
         "stale": "Your list is from 21 Oct 2026. Anything that changed since then (a customer who paid, say) is not in it. Drop a fresh export first.Replace itUse the 21 Oct 2026 list anyway",
         "secondList": [
           "To: me@example.comSubject: Invoice reminders: summary"
@@ -309,17 +313,17 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 6878,
+      "ms": 4923,
       "milestones": {
         "firstVerified": {
           "steps": 4,
           "asks": 2,
-          "ms": 4438
+          "ms": 2796
         },
         "turnedOn": {
           "steps": 9,
           "asks": 4,
-          "ms": 6468
+          "ms": 4617
         }
       },
       "budgets": {
@@ -357,17 +361,17 @@
       "passed": true,
       "steps": 9,
       "asks": 4,
-      "ms": 4138,
+      "ms": 4529,
       "milestones": {
         "firstVerified": {
           "steps": 4,
           "asks": 2,
-          "ms": 2478
+          "ms": 2741
         },
         "turnedOn": {
           "steps": 9,
           "asks": 4,
-          "ms": 3878
+          "ms": 4273
         }
       },
       "budgets": {
@@ -405,12 +409,12 @@
       "passed": true,
       "steps": 16,
       "asks": 4,
-      "ms": 7094,
+      "ms": 6771,
       "milestones": {
         "firstLive": {
           "steps": 12,
           "asks": 4,
-          "ms": 5220
+          "ms": 4863
         }
       },
       "budgets": {
@@ -448,22 +452,22 @@
       "passed": true,
       "steps": 5,
       "asks": 1,
-      "ms": 18354,
+      "ms": 16254,
       "milestones": {
         "setup": {
           "steps": 2,
           "asks": 0,
-          "ms": 4288
+          "ms": 4653
         },
         "firstVerified": {
           "steps": 3,
           "asks": 0,
-          "ms": 6446
+          "ms": 6044
         },
         "firstLive": {
           "steps": 5,
           "asks": 1,
-          "ms": 14170,
+          "ms": 12449,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -501,7 +505,7 @@
           "--workspace",
           "<ws>"
         ],
-        "dryRunSay": "Practice run passed all 4 checks. On pretend data it would have drafted “Payment reminder: invoice PR-101” to practice-cafe@example.org; drafted “Payment overdue: invoice PR-102” to practice-gym@example.org; drafted “Payment overdue, action needed: invoice PR-103” to practice-florist@example.org; drafted “Invoice reminders: summary” to me@example.com. Nothing real was sent: a real run makes drafts the person sends themselves.",
+        "dryRunSay": "Practice run passed all 4 checks. On pretend data it would have drafted “Payment overdue, action needed: invoice PR-103” to practice-florist@example.org; drafted “Payment overdue: invoice PR-102” to practice-gym@example.org; drafted “Invoice reminders: summary” to me@example.com; drafted “Payment reminder: invoice PR-101” to practice-cafe@example.org. Nothing real was sent: a real run makes drafts the person sends themselves.",
         "elicitation": "Turn on “Chase unpaid invoices”, version 1?",
         "notCounted": [
           "Claude Code trust prompt for a new stdio server (setup)",
@@ -515,17 +519,17 @@
       "passed": true,
       "steps": 4,
       "asks": 1,
-      "ms": 5993,
+      "ms": 4848,
       "milestones": {
         "setup": {
           "steps": 2,
           "asks": 0,
-          "ms": 4014
+          "ms": 3070
         },
         "firstVerified": {
           "steps": 4,
           "asks": 1,
-          "ms": 5778
+          "ms": 4580
         }
       },
       "budgets": null,
@@ -557,22 +561,22 @@
       "passed": true,
       "steps": 7,
       "asks": 1,
-      "ms": 17552,
+      "ms": 16902,
       "milestones": {
         "setup": {
           "steps": 2,
           "asks": 0,
-          "ms": 2939
+          "ms": 2811
         },
         "firstVerified": {
           "steps": 3,
           "asks": 0,
-          "ms": 3769
+          "ms": 4131
         },
         "firstLive": {
           "steps": 7,
           "asks": 1,
-          "ms": 13519,
+          "ms": 12883,
           "accounts": 0,
           "keys": 0,
           "connections": 0
@@ -605,22 +609,22 @@
       "passed": true,
       "steps": 9,
       "asks": 0,
-      "ms": 9942,
+      "ms": 4991,
       "milestones": {
         "brief": {
           "steps": 2,
           "asks": 0,
-          "ms": 3141
+          "ms": 1448
         },
         "beforePracticeOnly": {
           "steps": 3,
           "asks": 0,
-          "ms": 4522
+          "ms": 2129
         },
         "practiceOnly": {
           "steps": 4,
           "asks": 0,
-          "ms": 4829
+          "ms": 2331
         }
       },
       "budgets": {
@@ -657,7 +661,7 @@
       "passed": true,
       "steps": 1,
       "asks": 0,
-      "ms": 2381,
+      "ms": 1893,
       "milestones": {},
       "budgets": null,
       "preconditions": [
@@ -686,12 +690,12 @@
       "passed": true,
       "steps": 4,
       "asks": 0,
-      "ms": 4586,
+      "ms": 4107,
       "milestones": {
         "evidence": {
           "steps": 3,
           "asks": 0,
-          "ms": 2784
+          "ms": 2367
         }
       },
       "budgets": {
@@ -710,24 +714,24 @@
       "shots": 4,
       "failure": null,
       "checks": {
-        "record": "✓Decided Record consistent: 94 entries, each linked to the one before.This shows nothing changed later only if the latest link was saved somewhere else at the time.Show detailsLatest link of the chain: 6552025220792145e7c0b2a11f2b77ee195b0817e8afe8f48bdde280f88719c4Copy the latest link",
+        "record": "✓Decided Record consistent: 94 entries, each linked to the one before.This shows nothing changed later only if the latest link was saved somewhere else at the time.Show detailsLatest link of the chain: 63b95de7e31772508de00d8e5d88b6411a08602d30676971329da283862f4d9cCopy the latest link",
         "decisionEvents": [
           "approval.requested",
           "run.awaiting_approval",
           "approval.decided"
         ],
-        "cliCheck": "Consistent: 94 run events and 2 decisions hash as recorded, each linked to the one before; the last event is the chain head the file states (6552025220792145e7c0b2a11f2b77ee195b0817e8afe8f48bdde280f88719c4). This shows nothing changed after the file was made only if you compare that head with a copy",
+        "cliCheck": "Consistent: 94 run events hash as recorded, each naming the one before, and the last is the chain head the file states (63b95de7e31772508de00d8e5d88b6411a08602d30676971329da283862f4d9c); the workflow body hashes to its version's hash; 2 decisions of this automation hash as recorded and sit at their ",
         "evidence": {
-          "file": "foundry-evidence-07313ac7.json",
+          "file": "foundry-evidence-f4975e47.json",
           "events": 94,
-          "head": "655202522079",
+          "head": "63b95de7e317",
           "ledger": [
             "approved via dashboard"
           ],
           "actionDecisions": 4,
           "listDecidedBy": "root@vm",
           "personDecisions": 2,
-          "gaps": 4
+          "gaps": 5
         }
       }
     },
@@ -737,17 +741,17 @@
       "passed": true,
       "steps": 21,
       "asks": 4,
-      "ms": 8604,
+      "ms": 5329,
       "milestones": {
         "v1": {
           "steps": 12,
           "asks": 1,
-          "ms": 5344
+          "ms": 2920
         },
         "v2": {
           "steps": 21,
           "asks": 4,
-          "ms": 8265
+          "ms": 5052
         }
       },
       "budgets": {
@@ -787,17 +791,17 @@
       "passed": true,
       "steps": 21,
       "asks": 4,
-      "ms": 5259,
+      "ms": 4609,
       "milestones": {
         "v1": {
           "steps": 12,
           "asks": 1,
-          "ms": 2940
+          "ms": 2523
         },
         "v2": {
           "steps": 21,
           "asks": 4,
-          "ms": 5010
+          "ms": 4354
         }
       },
       "budgets": {
@@ -837,7 +841,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 1259,
+      "ms": 820,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -858,7 +862,7 @@
       "passed": true,
       "steps": 2,
       "asks": 1,
-      "ms": 2799,
+      "ms": 1922,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -885,7 +889,7 @@
       "passed": true,
       "steps": 2,
       "asks": 0,
-      "ms": 2149,
+      "ms": 1170,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -906,7 +910,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 7585,
+      "ms": 6882,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -931,7 +935,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6596,
+      "ms": 6678,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -956,7 +960,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5889,
+      "ms": 4851,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -981,7 +985,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6313,
+      "ms": 5505,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1006,7 +1010,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5192,
+      "ms": 4981,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1031,7 +1035,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6024,
+      "ms": 4801,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1056,7 +1060,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5724,
+      "ms": 4773,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1081,7 +1085,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 11344,
+      "ms": 10667,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1106,7 +1110,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6829,
+      "ms": 5569,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1131,7 +1135,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 7688,
+      "ms": 6338,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1156,7 +1160,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 7638,
+      "ms": 5445,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1181,7 +1185,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 7887,
+      "ms": 6303,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1206,7 +1210,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 8039,
+      "ms": 6996,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1231,7 +1235,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 8319,
+      "ms": 5613,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1256,7 +1260,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6380,
+      "ms": 4633,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1281,7 +1285,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6634,
+      "ms": 5723,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1306,7 +1310,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 5916,
+      "ms": 5350,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1331,7 +1335,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 7277,
+      "ms": 5509,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1356,7 +1360,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 7125,
+      "ms": 4405,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1381,7 +1385,7 @@
       "passed": true,
       "steps": 0,
       "asks": 0,
-      "ms": 6504,
+      "ms": 4837,
       "milestones": {},
       "budgets": null,
       "preconditions": [],
@@ -1402,75 +1406,82 @@
     }
   },
   "run": {
-    "at": "2026-10-21T22:37:48.638Z",
+    "at": "2026-10-22T02:45:17.663Z",
     "files": [
       {
         "file": "p2-operator.mjs",
         "pass": 6,
         "fail": 0,
-        "ms": 54936,
-        "failures": []
+        "ms": 46000,
+        "failures": [],
+        "msRounded": true
       },
       {
         "file": "p3-team-lead.mjs",
         "pass": 3,
         "fail": 0,
-        "ms": 25471,
+        "ms": 21197,
         "failures": []
       },
       {
         "file": "p1-agents.mjs",
         "pass": 3,
         "fail": 0,
-        "ms": 48163,
-        "failures": []
+        "ms": 42000,
+        "failures": [],
+        "msRounded": true
       },
       {
         "file": "p4-it.mjs",
         "pass": 2,
         "fail": 0,
-        "ms": 20597,
-        "failures": []
+        "ms": 10000,
+        "failures": [],
+        "msRounded": true
       },
       {
         "file": "p5-auditor.mjs",
         "pass": 1,
         "fail": 0,
-        "ms": 13487,
+        "ms": 11288,
         "failures": []
       },
       {
         "file": "org-map.mjs",
         "pass": 2,
         "fail": 0,
-        "ms": 18739,
-        "failures": []
+        "ms": 12000,
+        "failures": [],
+        "msRounded": true
       },
       {
         "file": "keys.mjs",
         "pass": 2,
         "fail": 0,
-        "ms": 9344,
-        "failures": []
+        "ms": 6000,
+        "failures": [],
+        "msRounded": true
       },
       {
         "file": "import.mjs",
         "pass": 1,
         "fail": 0,
-        "ms": 6480,
-        "failures": []
+        "ms": 4000,
+        "failures": [],
+        "msRounded": true
       },
       {
         "file": "crawl.mjs",
         "pass": 10,
         "fail": 0,
-        "ms": 174721,
+        "ms": 137552,
         "failures": []
       }
     ],
     "screenshots": 171,
-    "screenshotBytes": 23678469,
-    "folderBytes": 24245858,
-    "budgetBytes": 26214400
+    "screenshotBytes": 23796353,
+    "folderBytes": 24362250,
+    "budgetBytes": 26214400,
+    "note": "One full run of all nine files on 2026-10-22, all passing; p3-team-lead, p5-auditor and crawl were then re-run after a wording change on the run and automation pages (their entries and screenshots are from the re-run). msRounded: time from the full run console log, rounded to the second."
   }
 }

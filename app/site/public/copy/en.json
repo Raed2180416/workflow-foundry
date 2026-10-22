@@ -416,7 +416,7 @@
     "run": "Make a list (shows you everything first)",
     "change": "Change settings",
     "brief": "Get a one-page brief for IT",
-    "decided": "Turned on by {who} through {channel} on {when}. The name is the one in Settings, not a checked identity.",
+    "decided": "Turned on by {who} through {channel} on {when}. That is the name in Settings and this computer's account, not a checked identity.",
     "notDecided": "This version isn't on yet.",
     "note": "Noted: {note}",
     "singlePerson": "You're the only person here, so you turn on your own automations. The record says so.",
@@ -510,7 +510,7 @@
     "decisionsOnly": "Show decisions only",
     "everything": "Show every event",
     "who": "Who",
-    "byList": "{who} (the name in Settings), through {channel}, from the yes to the list",
+    "byList": "{who} (not a checked identity), through {channel}, from the yes to the list",
     "events": {
       "run.created": "Run created",
       "runner.acquired": "Started",

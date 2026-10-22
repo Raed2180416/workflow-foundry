@@ -14,7 +14,7 @@
       "note": "you do not need a key; the cards work without AI",
       "steps": 0,
       "asks": 0,
-      "ms": 1156,
+      "ms": 604,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -27,7 +27,7 @@
       "target": "Paste your Inception (Mercury 3) key",
       "steps": 1,
       "asks": 1,
-      "ms": 1235
+      "ms": 647
     },
     {
       "action": "click",
@@ -35,7 +35,7 @@
       "target": "Check and save",
       "steps": 2,
       "asks": 1,
-      "ms": 1410
+      "ms": 872
     },
     {
       "n": 2,
@@ -44,7 +44,7 @@
       "note": null,
       "steps": 2,
       "asks": 1,
-      "ms": 1904,
+      "ms": 1316,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "button Check and save",
@@ -58,7 +58,7 @@
       "note": null,
       "steps": 2,
       "asks": 1,
-      "ms": 2795,
+      "ms": 1910,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -83,7 +83,7 @@
   },
   "totalSteps": 2,
   "totalAsks": 1,
-  "ms": 2799,
+  "ms": 1922,
   "shots": [
     "01-keys-page.jpg",
     "02-saved-last-four.jpg",

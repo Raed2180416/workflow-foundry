@@ -12,7 +12,7 @@
       "target": "opened \"Who decides what\" (Settings, then the link; or #/org)",
       "steps": 0,
       "asks": 0,
-      "ms": 828
+      "ms": 513
     },
     {
       "n": 1,
@@ -21,7 +21,7 @@
       "note": "four starters; the banner says the map is checked when an automation is made, not while it runs",
       "steps": 0,
       "asks": 0,
-      "ms": 1345,
+      "ms": 826,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h1 Who decides what",
@@ -34,7 +34,7 @@
       "target": "Start from this",
       "steps": 1,
       "asks": 0,
-      "ms": 1608
+      "ms": 880
     },
     {
       "action": "fill",
@@ -42,7 +42,7 @@
       "target": "Add a person: name",
       "steps": 2,
       "asks": 0,
-      "ms": 1711
+      "ms": 945
     },
     {
       "action": "click",
@@ -50,7 +50,7 @@
       "target": "Add",
       "steps": 3,
       "asks": 0,
-      "ms": 1839
+      "ms": 1003
     },
     {
       "action": "fill",
@@ -58,7 +58,7 @@
       "target": "Add a person: name",
       "steps": 4,
       "asks": 0,
-      "ms": 1945
+      "ms": 1028
     },
     {
       "action": "choose",
@@ -66,7 +66,7 @@
       "target": "Their role",
       "steps": 5,
       "asks": 0,
-      "ms": 2068
+      "ms": 1066
     },
     {
       "action": "click",
@@ -74,7 +74,7 @@
       "target": "Add",
       "steps": 6,
       "asks": 0,
-      "ms": 2227
+      "ms": 1133
     },
     {
       "n": 2,
@@ -83,7 +83,7 @@
       "note": null,
       "steps": 6,
       "asks": 0,
-      "ms": 2623,
+      "ms": 1454,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "input#person-name ",
@@ -96,7 +96,7 @@
       "target": "Needs a yes above this amount",
       "steps": 7,
       "asks": 1,
-      "ms": 2807
+      "ms": 1488
     },
     {
       "action": "choose",
@@ -104,7 +104,7 @@
       "target": "Currency",
       "steps": 8,
       "asks": 1,
-      "ms": 2999
+      "ms": 1563
     },
     {
       "action": "choose",
@@ -112,7 +112,7 @@
       "target": "Who approves",
       "steps": 9,
       "asks": 1,
-      "ms": 3157
+      "ms": 1629
     },
     {
       "n": 3,
@@ -121,7 +121,7 @@
       "note": "money out above €250 needs Dana: the Team plan badge sits here, at the one field it applies to",
       "steps": 9,
       "asks": 1,
-      "ms": 3657,
+      "ms": 1954,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "input#amt-money-out-28 ",
@@ -134,7 +134,7 @@
       "target": "Make this a rule Foundry checks",
       "steps": 10,
       "asks": 1,
-      "ms": 3996
+      "ms": 2104
     },
     {
       "n": 4,
@@ -143,7 +143,7 @@
       "note": "the rule, its six examples (they become its tests), force and mode (Preview)",
       "steps": 10,
       "asks": 1,
-      "ms": 4599,
+      "ms": 2529,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h3 Money out above €250 needs Dana's yes; whoever asked for it ",
@@ -156,7 +156,7 @@
       "target": "These are right",
       "steps": 11,
       "asks": 1,
-      "ms": 4779
+      "ms": 2654
     },
     {
       "action": "click",
@@ -164,7 +164,7 @@
       "target": "Save version 1",
       "steps": 12,
       "asks": 1,
-      "ms": 5239
+      "ms": 2852
     },
     {
       "n": 5,
@@ -173,7 +173,7 @@
       "note": "version 1, with the bootstrap warning: one person signed it",
       "steps": 12,
       "asks": 1,
-      "ms": 5687,
+      "ms": 3202,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
@@ -186,7 +186,7 @@
       "target": "Try it on a card",
       "steps": 13,
       "asks": 1,
-      "ms": 5833
+      "ms": 3272
     },
     {
       "n": 6,
@@ -195,7 +195,7 @@
       "note": null,
       "steps": 13,
       "asks": 1,
-      "ms": 6406,
+      "ms": 3668,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
@@ -208,7 +208,7 @@
       "target": "Up to what amount should it approve on its own?",
       "steps": 14,
       "asks": 2,
-      "ms": 6468
+      "ms": 3716
     },
     {
       "action": "fill",
@@ -216,7 +216,7 @@
       "target": "Who decides claims over your limit? (their e-mail)",
       "steps": 15,
       "asks": 3,
-      "ms": 6547
+      "ms": 3754
     },
     {
       "action": "click",
@@ -224,7 +224,7 @@
       "target": "Test it with pretend claims",
       "steps": 16,
       "asks": 3,
-      "ms": 6667
+      "ms": 3789
     },
     {
       "n": 7,
@@ -233,7 +233,7 @@
       "note": null,
       "steps": 16,
       "asks": 3,
-      "ms": 7035,
+      "ms": 4118,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
@@ -246,7 +246,7 @@
       "target": "Change it",
       "steps": 17,
       "asks": 3,
-      "ms": 7180
+      "ms": 4227
     },
     {
       "action": "fill",
@@ -254,7 +254,7 @@
       "target": "Needs a yes above this amount",
       "steps": 18,
       "asks": 4,
-      "ms": 7209
+      "ms": 4285
     },
     {
       "action": "click",
@@ -262,7 +262,7 @@
       "target": "Save version 2",
       "steps": 19,
       "asks": 4,
-      "ms": 7284
+      "ms": 4340
     },
     {
       "n": 8,
@@ -271,7 +271,7 @@
       "note": "one example now answers differently: the save stops and shows it",
       "steps": 19,
       "asks": 4,
-      "ms": 7985,
+      "ms": 4764,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "button Save version 2",
@@ -284,7 +284,7 @@
       "target": "Confirm the new answer for case 4 (allowed)",
       "steps": 20,
       "asks": 4,
-      "ms": 8065
+      "ms": 4901
     },
     {
       "action": "click",
@@ -292,7 +292,7 @@
       "target": "Save version 2",
       "steps": 21,
       "asks": 4,
-      "ms": 8157
+      "ms": 5003
     },
     {
       "n": 9,
@@ -301,7 +301,7 @@
       "note": null,
       "steps": 21,
       "asks": 4,
-      "ms": 8604,
+      "ms": 5329,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
@@ -316,12 +316,12 @@
     "v1": {
       "steps": 12,
       "asks": 1,
-      "ms": 5344
+      "ms": 2920
     },
     "v2": {
       "steps": 21,
       "asks": 4,
-      "ms": 8265
+      "ms": 5052
     }
   },
   "a11y": [],
@@ -348,7 +348,7 @@
   ],
   "totalSteps": 21,
   "totalAsks": 4,
-  "ms": 8604,
+  "ms": 5329,
   "shots": [
     "01-start.jpg",
     "02-people.jpg",
