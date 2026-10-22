@@ -36,7 +36,10 @@ import { wilson } from '../lib/stats.mjs';
 import { rng } from '../../beds/lib/rng.mjs';
 
 export { wilson };
-export const FLOOR_POINTS = 3;          // owner floor: gaps under 3 points are noise (HANDOFF §0; ROADMAP:889)
+// The group-sequential core (register A4/B7; FIXES §2 actions 6-7) lives in experiments/lib/stats.mjs and is shared with
+// experiments/lib/stats-builds.mjs and experiments/autobench/sequential.mjs; re-exported so stream analyses reach it here.
+export { obrienFlemingBoundary, pocockBoundary, mixtureEvalue, pairedPermutation, pairedBayesInterval } from '../lib/stats.mjs';
+export const FLOOR_POINTS = 3;         // owner floor: gaps under 3 points are noise (HANDOFF §0; ROADMAP:889)
 export const ALPHA = 0.05;
 export const RHO_PREREG = 0.1;          // assumed within-lineage ICC of the paired difference (dossier 1 §B9.1); unmeasured
 export const ENV_FAULT_LIMIT = 0.25;    // PREREG §6: an arm whose env-impaired tasks exceed 25% of planned tasks is invalid
