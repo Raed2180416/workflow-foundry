@@ -6,7 +6,8 @@
 // Spend cap: --cap-usd over every journal under the runs root (pilot and eval together), checked before each unit.
 //
 //   node experiments/subworkflow/run.mjs --run-dir research/subworkflow-20261021/runs/<id> --tasks <manifest.json>
-//        [--arms A0,A1,A1T,A2] [--concurrency 3] [--cap-usd 5] [--runs-root research/subworkflow-20261021/runs]
+//        [--arms A0,A1,A1T,A2] [--concurrency 3 (units)] [--model-concurrency N (model calls; default = concurrency)] [--cap-usd 5]
+//        [--runs-root research/subworkflow-20261021/runs]
 //   node experiments/subworkflow/run.mjs --run-dir ... --split dev --seeds 11,12 --difficulties 2,3   (pilot)
 import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -22,7 +23,7 @@ if (!args['run-dir']) { console.error('--run-dir is required'); process.exit(2);
 const runsRoot = path.resolve(args['runs-root'] ?? path.dirname(runDir));
 const arms = (args.arms ?? ARMS.join(',')).split(',');
 for (const a of arms) if (!ARMS.includes(a)) { console.error(`unknown arm ${a}`); process.exit(2); }
-const concurrency = Number(args.concurrency ?? 3), capUsd = Number(args['cap-usd'] ?? 5);
+const concurrency = Number(args.concurrency ?? 3), capUsd = Number(args['cap-usd'] ?? 5), modelConcurrency = Number(args['model-concurrency'] ?? concurrency);
 const tag = args.tag ?? path.basename(runDir);
 mkdirSync(runDir, { recursive: true });
 
@@ -34,8 +35,8 @@ if (!tasks.length) { console.error('no tasks'); process.exit(2); }
 const resultsFile = path.join(runDir, 'results.jsonl');
 const done = new Set(existsSync(resultsFile) ? readFileSync(resultsFile, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).filter(r => r.status === 'complete').map(r => r.unit) : []);
 const { port, policyHash, db } = createModelPort({ journalFile: path.join(runDir, 'journal.sqlite'), allowedModels: [NODE_MODEL], maxBudgetUsdPerCall: 0.25, timeoutMs: 300000,
-  concurrency: { [NODE_MODEL]: concurrency } });
-writeFileSync(path.join(runDir, 'launch.json'), JSON.stringify({ at: new Date().toISOString(), argv: process.argv.slice(2), arms, tasks: tasks.length, capUsd, concurrency, policyHash, pid: process.pid }, null, 1));
+  concurrency: { [NODE_MODEL]: modelConcurrency } });
+writeFileSync(path.join(runDir, 'launch.json'), JSON.stringify({ at: new Date().toISOString(), argv: process.argv.slice(2), arms, tasks: tasks.length, capUsd, concurrency, modelConcurrency, policyHash, pid: process.pid }, null, 1));
 
 // Spend over every journal under the runs root (each run dir's journal.sqlite).
 function spendAll() {
@@ -96,7 +97,7 @@ async function execute(arm, task) {
     const d = o.details ?? {};
     return { channel: c.channel, kind: kinds.get(c.channel), directive, pass: o.pass, score: o.score, path: r.path, decision: r.decision, reason: r.reason, error: r.error,
       costUsd: r.costUsd, calls: r.calls.length, callLog: r.calls, rounds: r.rounds, fallback: r.fallback, sub: r.sub ? { ...r.sub, spec: undefined } : null, spec: r.sub?.spec ?? null,
-      proposals: r.proposals, authority: r.authority, maxDepthSeen: r.maxDepthSeen, ranSpecs: r.ranSpecs, events: r.events, traces: r.traces, answer: r.output,
+      proposals: r.proposals, authority: r.authority, maxDepthSeen: r.maxDepthSeen, ranSpecs: r.ranSpecs, specsRun: r.specsRun, events: r.events, traces: r.traces, answer: r.output,
       oracle: { missing: d.missing ?? null, extra: d.extra ?? null, wrong: d.wrong ?? null, fieldErr: d.fieldErr ?? null, qMissing: d.qMissing ?? null,
         qExtra: d.qExtra ?? null, dupRefs: d.dupRefs ?? null, totalsOk: d.totalsOk ?? null, shape: d.shape ?? null, want: d.want ?? null } };
   }));

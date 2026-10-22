@@ -40,7 +40,8 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
   const { route } = ARM_CONFIG[arm];
   const ch = input.channel;
   const binding = createNodeBinding({ port, budgetUsd, maxDepth, arm, taskKey: ch, runId, outputSchema: answerSchema });
-  const rec = { arm, route, directive, channel: ch, path: null, decision: null, reason: null, calls: [], proposals: [], rounds: [], fallback: null, sub: null, error: null };
+  const rec = { arm, route, directive, channel: ch, path: null, decision: null, reason: null, calls: [], proposals: [], rounds: [], fallback: null, sub: null, error: null,
+    specsRun: [] };   // every spec that reached the call host, with the envelope it was checked against (post-hoc audit)
   // The answer-contract check, with feedback a builder can act on: an enum error names the allowed values and the value
   // given (pilot-3: "must be equal to one of the allowed values" alone left a builder repeating wrong labels 4 rounds).
   const validate = compileDataSchema(answerSchema, { trustedSchema: true });
@@ -104,6 +105,7 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
       const pg = gateProblems(practice.output, { channel: ch, exportText: input.export, validate: shape });
       if (pg.length) { row.kind = 'practice-gate'; row.detail = pg.slice(0, 6); feedback = `- the practice run's answer (judgments stubbed) failed the answer contract:\n${pg.map(x => `  - ${x}`).join('\n')}`; continue; }
       // Bound by content hash and run for real under the carved budget.
+      rec.specsRun.push({ round, envelope: { ...env }, spec });
       const run = await binding.call(spec, subset, { name: 'intake' });
       const v = run.value;
       row.hash = run.hash; row.status = v.status; row.spentUsd = v.spentUsd ?? 0; row.depth = v.depth ?? null;

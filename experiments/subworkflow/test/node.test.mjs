@@ -93,6 +93,10 @@ test('A1: an effect step is refused before anything runs, recorded as a proposal
   assert.ok(r.proposals.some(p => p.kind === 'op' && /send_message/.test(p.detail)));
   assert.equal(r.authority.executedEffects, 0); assert.deepEqual(r.authority.violations, []);
   assert.equal(r.ranSpecs, 1);
+  // Only the repaired spec reached the call host, recorded with the envelope it was checked against (analyze.mjs audit).
+  assert.equal(r.specsRun.length, 1); assert.equal(r.specsRun[0].round, 1);
+  assert.ok(!r.specsRun[0].spec.steps.some(s => s.op === 'send_message'));
+  assert.deepEqual(r.specsRun[0].envelope.ops, ['parse_table', 'code', 'judge_rows', 'verify', 'call']);
   assert.equal(pass(r), true);
 });
 
