@@ -11,8 +11,9 @@ Plan (attempt 4, resumed 2026-10-22 04:21Z; attempts 1-3 died at container resta
 4. [done] arms A0, A1, A1T, A2 (node decides) and A1F, A1TF, A2F (parent directs a sub-workflow on legacy-export nodes).
 5. [done] $0 node tests (authority, depth, budget carving, repair, fallback, pilot-3 root cause).
 6. [done] pilots 1-4 on dev seeds 11-14 (d2-d5), $0.51 Haiku. pilot-4 (d5) finished before the 04:17Z restart.
-7. [ ] DESIGN.md + PREREG-SW-1.md frozen (sha256 of code + task list) BEFORE the eval run.
-8. [ ] eval run on split 'test' seeds (held-out seeds of this dev bed; not sealed), cap Haiku $5 total incl. pilots.
+7. [done] DESIGN.md + PREREG-SW-1.md frozen (commit 7b1d45d8) BEFORE the eval run.
+8. [running, launched ~04:50Z] eval-1: the exact command is in PREREG-SW-1.md §Protocol. To resume after a restart, re-run
+   that same command (completed units are skipped; finished calls replay from the journal at $0). Then run analyze.mjs.
 9. [ ] RESULT-SW-1.md.
 
 Run data: research/subworkflow-20261021/runs/<run-id>/ (journal.sqlite is resumable: same runId/nodeKey replays at $0;
