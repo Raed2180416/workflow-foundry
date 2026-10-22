@@ -101,6 +101,8 @@ test('rr5 B minor 1: exempt only this frozen plan\'s look-2 sidecar runs and the
   assert.equal(ex('ref-1', launch({ harness: 'abc' }), ['sales.a']), null);       // a harness arm is not the reference arm
   assert.equal(ex('ref-1', launch({ model: 'claude-haiku-5-5' }), ['sales.a']), null);
   assert.equal(ex('ref-2', launch(), ['sales.a']), null);                          // a run no decision names
+  assert.match(ex('ref-1', { 'summary.json': { model: 'claude-opus-5-5', harness: null } }, ['sales.a', 'sales.b']), /reference run: D/);   // its repo copy
+  assert.equal(ex('ref-1', { 'summary.json': { model: 'claude-opus-5-5', harness: { id: 'foundry' } } }, ['sales.a']), null);
   assert.match(ex('ref-a1', launch({ model: 'claude-sonnet-5-5', harness: 'a9fd' }), ['sales.a']), /reference run: E/);   // D27's A1 fork
   assert.deepEqual(Object.keys(H.REFERENCE_RUNS).sort(), ['a0o-look2-1', 'a1s-look2']);
   // A non-exempt run on a look-2 task is exposure; the exempt ones are listed with their reason.

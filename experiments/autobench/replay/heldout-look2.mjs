@@ -14,7 +14,8 @@
 //      and sequential-look.json `tasks` lists, and the task-named directories under prep/, w/ and host/. Exempt are
 //      (a) runs whose sequential-look.json names this frozen plan, look 2 and look 2's list hash (the look runs
 //      themselves), and (b) the runs a decision names (REFERENCE_RUNS: D26's Opus 5.5 xhigh arm, D27's Sonnet + A1 fork
-//      of VL-1), each only when its launch.json matches the decision (model, harness or none, tasks inside look 2);
+//      of VL-1), each only when its launch.json (live) or summary.json (repo copy) matches the decision (model, harness
+//      or none, tasks inside look 2);
 //   4. the rule re-implemented here (AMEND-1 §2.2) re-derives look 2 from the same inputs, with the exempt runs set
 //      aside: devTrain (SPLIT-v1 dev minus devCheck) minus the forced set, the AM-2 briefed tasks, look 1 (runs/a0-dev60:
 //      dev60, subset 60, seed 21) and every task another recorded run names; per domain ascending
@@ -99,7 +100,8 @@ export function look2Exemption({ planSha256, look2Sha256, look2Tasks, reference 
       if (sc.plan === planSha256 && sc.look === LOOK && sc.tasksSha256 === look2Sha256 && inLook(names)) return `look-2 run of the frozen plan (sidecar: ${sc.role} ${sc.arm})`;
       return null;
     }
-    const ref = reference[run], l = files['launch.json'];
+    // A reference run's live directory has launch.json; its repo copy has summary.json (model and harness in both).
+    const ref = reference[run], l = files['launch.json'] ?? files['summary.json'];
     if (ref && l && l.model === ref.model && (ref.harness === 'any' || !l.harness) && inLook(names)) return `reference run: ${ref.decision}`;
     return null;
   };
