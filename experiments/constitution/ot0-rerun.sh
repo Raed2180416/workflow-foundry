@@ -14,6 +14,8 @@ WAIT=${OT0_RESUME_WAIT_S:-1800}; MAX_RESUMES=6; MIN_FREE_KB=1048576
 log() { echo "[ot0-rerun $(date -u +%FT%TZ)] $*" >> "$L"; }
 run() {
   local label=$1; shift; local resumes=0 rc free
+  # A finished row is never re-run (run-agents.mjs would refuse it with exit 1 and stop the chain).
+  if [ -f "research/org-20261021/runs/$label/result.json" ]; then log "$label already has result.json; skipped"; return 0; fi
   while :; do
     free=$(df --output=avail -k / | tail -1)
     if [ "$free" -lt "$MIN_FREE_KB" ]; then log "$label NOT STARTED: ${free} KB free (< 1 GB)"; return 9; fi
