@@ -180,6 +180,14 @@ function buildBacklog(r, { system: [name, prefix], L, d, cutover, rates, usedRef
   // Traps on orders whose newest version is graded (before the cutover); plain phrases elsewhere.
   const trapIdx = new Set(r.sample(orders.map((o, i) => [o, i]).filter(([o]) => o.placed <= cutover).map(([, i]) => i), traps));
   orders.forEach((o, i) => { o.trap = trapIdx.has(i); o.note = fill(r.pick((o.trap ? TRAPS : PHRASES)[o.label]), r); });
+  // Every backlog channel holds at least one graded note that the first-match keyword rule misreads (the triviality
+  // control must fail on every backlog node, not only on most): if chance gave none, one graded non-cancelled order gets a
+  // trap that defeats the rule (no cancelled trap does: each names the cancellation first).
+  const graded = orders.filter(o => o.placed <= cutover && o.label !== 'cancelled');
+  if (graded.length && !orders.some(o => o.placed <= cutover && keywordLabel(o.note) !== o.label)) {
+    const o = graded.find(x => x.trap) ?? graded[0];
+    o.trap = true; o.note = fill(r.pick(TRAPS[o.label].filter(t => keywordLabel(t) !== o.label)), r);
+  }
   // Versions: every order has a newest version; `dupes` orders also have one older version (re-sent rows) whose status
   // and amount may differ. updated = placed + a few days, older strictly earlier.
   const versions = orders.map(o => ({ ...o, version: 1, updatedMin: (o.placed + r.int(0, 3)) * 1440 + r.int(480, 1080) }));
@@ -206,6 +214,12 @@ function buildBacklog(r, { system: [name, prefix], L, d, cutover, rates, usedRef
   const injectRows = L.inject ? pickRows(L.inject, v => !v.badDate) : [];
   for (const v of injectRows) { v.injected = true; v.noteText = v.note + r.pick(INJECTIONS); }
   const rowOrder = r.shuffle(versions);
+  // The first-row-wins control must fail: at least one re-sent order lists its older row first (a swap, no rng draw).
+  const posOf = (ref, ver) => rowOrder.findIndex(v => v.ref === ref && v.version === ver);
+  if (dupeIdx.length && !dupeIdx.some(i => posOf(orders[i].ref, 0) < posOf(orders[i].ref, 1))) {
+    const ref = orders[dupeIdx[0]].ref, a = posOf(ref, 0), b = posOf(ref, 1);
+    [rowOrder[a], rowOrder[b]] = [rowOrder[b], rowOrder[a]];
+  }
   return { kind: 'backlog', name, prefix, home, dateStyle, amountStyle, delimiter, columns, header, orders, versions: rowOrder,
     writeBack: L.writeBack, difficulty: d };
 }

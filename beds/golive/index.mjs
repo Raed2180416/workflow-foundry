@@ -117,10 +117,11 @@ export function nodeOracle(task, channel, output) {
   const qMissing = [...qWant].filter(r => !qGot.has(r)), qExtra = [...qGot].filter(r => !qWant.has(r));
   const totalsOk = output.totals.orders === truth.totals.orders && output.totals.usd_cents === truth.totals.usd_cents;
   const channelOk = output.channel === truth.channel;
-  const units = want.size + qWant.size || 1, right = [...want.keys()].filter(r => got.has(r) && sameImport(want.get(r), got.get(r))).length + [...qWant].filter(r => qGot.has(r)).length;
+  const units = want.size + qWant.size, right = [...want.keys()].filter(r => got.has(r) && sameImport(want.get(r), got.get(r))).length + [...qWant].filter(r => qGot.has(r)).length;
   const penalty = extra.length + qExtra.length + dupRefs.length;
   const pass = !missing.length && !extra.length && !wrong.length && !qMissing.length && !qExtra.length && !dupRefs.length && totalsOk && channelOk;
-  return { pass, score: Math.max(0, (right - penalty) / units), details: { missing, extra, wrong, fieldErr, qMissing, qExtra, dupRefs, totalsOk, channelOk,
+  // A node whose truth is empty (every order cancelled or after the cutover) scores 1 only when it adds nothing.
+  return { pass, score: units ? Math.max(0, (right - penalty) / units) : (penalty || !totalsOk || !channelOk ? 0 : 1), details: { missing, extra, wrong, fieldErr, qMissing, qExtra, dupRefs, totalsOk, channelOk,
     want: { orders: truth.totals.orders, usd_cents: truth.totals.usd_cents, quarantine: truth.quarantine.length } } };
 }
 function shapeProblem(o) {
