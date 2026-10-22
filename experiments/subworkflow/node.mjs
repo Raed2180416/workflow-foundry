@@ -12,7 +12,7 @@
 import { checkSpec, PURE_OPS, EFFECT_OPS, SubworkflowError } from './dsl.mjs';
 import { TEMPLATES, templateById, fillSchema, slotProblems, instantiate } from './templates.mjs';
 import { createNodeBinding, practiceRun, gateProblems } from './bind.mjs';
-import { validateOutput } from '../jit/interpret.mjs';
+import { compileDataSchema } from '../../src/validate.mjs';
 import * as P from './prompts.mjs';
 
 // route: who builds a sub-workflow (null: nobody); directive: 'decide' (the node chooses: answer or sub-workflow) or
@@ -41,7 +41,21 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
   const ch = input.channel;
   const binding = createNodeBinding({ port, budgetUsd, maxDepth, arm, taskKey: ch, runId, outputSchema: answerSchema });
   const rec = { arm, route, directive, channel: ch, path: null, decision: null, reason: null, calls: [], proposals: [], rounds: [], fallback: null, sub: null, error: null };
-  const shape = o => { const v = validateOutput(answerSchema, o); return v.valid ? null : v.errors.join('; '); };
+  // The answer-contract check, with feedback a builder can act on: an enum error names the allowed values and the value
+  // given (pilot-3: "must be equal to one of the allowed values" alone left a builder repeating wrong labels 4 rounds).
+  const validate = compileDataSchema(answerSchema, { trustedSchema: true });
+  const shape = o => {
+    if (validate(o) === true) return null;
+    const errs = validate.errors ?? [], seen = new Set(), out = [];
+    for (const e of errs) {
+      const key = `${e.instancePath.replace(/\/\d+\//g, '/*/')}:${e.keyword}`;
+      if (seen.has(key)) continue; seen.add(key);
+      const at = e.instancePath || '(answer)', got = e.instancePath.split('/').slice(1).reduce((v, k) => v?.[k], o);
+      out.push(e.keyword === 'enum' ? `${at} is ${JSON.stringify(got)}; allowed: ${e.params.allowedValues.join(', ')}` : `${at} ${e.message}${e.params?.additionalProperty ? ` (${e.params.additionalProperty})` : ''}`);
+      if (out.length >= 6) break;
+    }
+    return `${out.join('; ')}${errs.length > out.length ? ` (${errs.length} errors in all)` : ''}`;
+  };
   const spent = () => { const r = binding.host.spans().find(s => s.path === 'root'); return usd(r.spentUsd); };
 
   // One typed call from the node's root scope (booked on the node's budget), with schema retries.
@@ -175,7 +189,7 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
         const granted = usd(Math.min(Number.isFinite(asked) && asked > 0 ? asked : SUB_DEFAULT_USD, cap));
         if (Number.isFinite(asked) && asked > cap) rec.proposals.push({ source: 'request', kind: 'budget', detail: `asked $${asked}, the node can carve $${cap}`, executed: false });
         rec.sub.request = { goal: req.goal.slice(0, 300), inputs, returns: String(req.returns ?? '').slice(0, 200), askedUsd: Number.isFinite(asked) ? asked : null, grantedUsd: granted };
-        const context = P.requestContext({ ...req, inputs }, input, granted);
+        const context = P.requestContext({ ...req, inputs }, input, granted, answerSchema);
         loop = await constructLoop(templatePropose({ context, selectSystem: P.BUILDER_SELECT_SYSTEM, fillSystem: P.BUILDER_FILL_SYSTEM, keyPrefix: 'builder', budget: () => Math.min(granted, carvable()) }),
           envelopeOf(inputs));
       }

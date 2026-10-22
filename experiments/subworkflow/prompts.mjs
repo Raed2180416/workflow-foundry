@@ -23,7 +23,7 @@ export const directPrompt = (input, { fallbackReason = null } = {}) => [nodeCont
 const OPTION_B = {
   self: (maxUsd) => `(b) build a sub-workflow for yourself: a small typed program of steps (parse the data, code steps that compute exactly, a model step that judges many rows in small batches, verify steps that check your own invariants) that runs under your authority and returns your answer. It may spend at most $${maxUsd}. If you choose (b), you write it in the next step; leave "answer" out.`,
   template: (maxUsd) => `(b) run a sub-workflow from the harness's template library: you pick a template and fill its settings yourself in the next steps; it runs under your authority (at most $${maxUsd}) and returns your answer. If you choose (b), leave "answer" out. The library:\n${catalogText()}`,
-  governing: (maxUsd) => `(b) ask the governing builder of the harness for a sub-workflow: give a typed request (the goal, which of your inputs it reads, what it must return, and the budget it may spend, at most $${maxUsd}). A fresh builder constructs it from a template library, checks it on your data, and it runs under your authority and returns your answer. If you choose (b), fill "request" and leave "answer" out. The library the builder uses:\n${catalogText()}`,
+  governing: (maxUsd) => `(b) ask the governing builder of the harness for a sub-workflow: give a typed request (the goal, which of your inputs it reads, what it must return, and the budget it may spend, at most $${maxUsd}). The builder sees only the inputs you pass, your request and your answer contract. A fresh builder constructs it from a template library, checks it on your data, and it runs under your authority and returns your answer. If you choose (b), fill "request" and leave "answer" out. The library the builder uses:\n${catalogText()}`,
 };
 export const decidePrompt = (route, input, maxUsd) => [nodeContext(input),
   `You have two ways to do this job:\n(a) answer directly now: fill "answer";\n${OPTION_B[route](maxUsd)}`,
@@ -42,7 +42,7 @@ export function decideSchema(route, answerSchema) {
 
 // ---- parent-directed (forced) governing route: the node only writes its typed request ----
 export const requestPrompt = (input, maxUsd) => [nodeContext(input), PARENT_DIRECTIVE,
-  `The governing builder of the harness constructs it from a template library, checks it on your data, and it runs under your authority and returns your answer. Write your typed request: the goal, which of your inputs it reads, what it must return, and the budget it may spend (at most $${maxUsd}). The library the builder uses:\n${catalogText()}`].join('\n\n');
+  `The governing builder of the harness constructs it from a template library, checks it on your data, and it runs under your authority and returns your answer. Write your typed request: the goal, which of your inputs it reads, what it must return, and the budget it may spend (at most $${maxUsd}). The builder sees only the inputs you pass, your request and your answer contract. The library the builder uses:\n${catalogText()}`].join('\n\n');
 export const requestSchema = () => { const d = decideSchema('governing', { type: 'object' }); return { type: 'object', additionalProperties: false, required: ['reason', 'request'], properties: { reason: d.properties.reason, request: d.properties.request } }; };
 
 // ---- A1: the node writes the sub-workflow itself (free-form subworkflow/1) ----
@@ -81,10 +81,12 @@ const NODE_TEMPLATE_NOTE = 'You chose to run a sub-workflow from the harness\'s 
 export const nodeSelectSystem = () => `${NODE_SYSTEM}\n\n${NODE_TEMPLATE_NOTE} Pick ONE template that does the main job, or "none". Anything the data asks for that the template does not do goes in notCovered: it is passed to the owner as a proposal, never done.`;
 export const nodeFillSystem = () => `${NODE_SYSTEM}\n\n${NODE_TEMPLATE_NOTE} Fill every slot of the template. Copy names (column headers, channel names, labels) exactly as they appear.`;
 
-/** The builder's view of a typed request (A2): the request and only the inputs it names. */
-export function requestContext(request, input, budgetUsd) {
+/** The builder's view of a typed request (A2): the request, the node's declared answer contract (attached by code: the
+ *  parent binds it, the node cannot change it) and only the inputs the request names. */
+export function requestContext(request, input, budgetUsd, contract) {
   return [`A node asked for a sub-workflow.\nNode: the intake node for sales channel "${input.channel}".`, `Goal: ${request.goal}`, `It must return: ${request.returns}`,
-    `Budget: $${budgetUsd}`, `Inputs the node passes (the sub-workflow reads them as $in.<name>):`,
+    `The node's answer contract (JSON schema; the sub-workflow's output must match it): ${JSON.stringify(contract)}`,
+    `Budget: $${budgetUsd}`, `Inputs the node passes (the sub-workflow reads them as $in.<name>; you see nothing else):`,
     ...request.inputs.map(k => `- ${k}:\n<<<${k.toUpperCase()}\n${input[k]}\n${k.toUpperCase()}>>>`)].join('\n');
 }
 /** The node's own view (A1T): its whole context. */

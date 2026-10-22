@@ -148,6 +148,20 @@ test('parent-directed arms: no decision call; the governing route still writes i
   assert.equal(simple.path, 'direct'); assert.equal(simple.calls.length, 1);
 });
 
+test('pilot-3 root cause: invented labels fail the practice gate with the allowed values named, and the builder can repair', async () => {
+  let feedbackSeen = null;
+  const r = await run('A2', {
+    '.decide': { decision: 'subworkflow', reason: 'many rows', request: { goal: 'intake', inputs: ['export', 'notes', 'channel'], returns: 'answer', budgetUsd: 0.03 } },
+    '.builder.select': { template: 'legacy-export-intake', reason: 'fits', notCovered: [] },
+    '.builder.fill.r0': { slots: { ...trueSlots(task, ch), labels: ['open', 'shipped', 'delivered', 'cancelled'] }, assumptions: [] },
+    '.builder.fill.r1': req => { feedbackSeen = req.prompt; return { slots: trueSlots(task, ch), assumptions: [] }; },
+  });
+  assert.equal(r.rounds[0].kind, 'practice-gate');
+  assert.match(feedbackSeen, /is "open"; allowed: awaiting_intake, awaiting_customer, dispatched/);
+  assert.match(feedbackSeen, /answer contract \(JSON schema/);
+  assert.equal(r.path, 'subworkflow'); assert.equal(pass(r), true);
+});
+
 test('defense in depth: without checkSpec, the call host refuses an effectful callee and the runtime refuses an effect op', async () => {
   const { createNodeBinding } = await import('../bind.mjs');
   const { runSpec } = await import('../dsl.mjs');
