@@ -44,7 +44,8 @@ export class Keys {
   async check(provider, key) {
     const base = providerBaseUrl(provider, { override: this.checkBaseUrl });
     let res;
-    try { res = await this.fetchImpl(`${base}/models`, { headers: { authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(10000) }); }
+    // redirect: 'error' (security review 2026-10-21, L18): the key goes to the policy's address only, never on to wherever it points.
+    try { res = await this.fetchImpl(`${base}/models`, { headers: { authorization: `Bearer ${key}` }, redirect: 'error', signal: AbortSignal.timeout(10000) }); }
     catch { throw new FoundryError('KEY_CHECK_NETWORK', 'Foundry could not reach the provider to check the key. Nothing was saved.'); }
     if (res.status === 401 || res.status === 403) throw new FoundryError('KEY_REJECTED', 'The provider did not accept this key. Nothing was saved.');
     if (!res.ok) throw new FoundryError('KEY_CHECK_FAILED', `The provider answered ${res.status}. Nothing was saved.`);

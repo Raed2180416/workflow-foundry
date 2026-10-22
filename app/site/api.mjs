@@ -36,7 +36,8 @@ import { orgPolicy } from '../onboarding/proposal-check.mjs';
 export function reminderIcs(title, flowId, date, { day = 'MO', hour = 8 } = {}) {
   const start = new Date(date); start.setUTCDate(start.getUTCDate() + ((8 - start.getUTCDay()) % 7 || 7)); start.setUTCHours(hour, 0, 0, 0);
   const stamp = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-  const clean = s => String(s).replace(/[\\;,]/g, m => `\\${m}`).replace(/\r?\n/g, ' ');
+  // Any line break, a lone carriage return included, becomes a space: no value can start a property of its own (L13).
+  const clean = s => String(s).replace(/[\\;,]/g, m => `\\${m}`).replace(/\r\n|\r|\n/g, ' ');
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Foundry (local)//Reminder//EN', 'BEGIN:VEVENT', `UID:${flowId}-${stamp(date)}@foundry.local`, `DTSTAMP:${stamp(date)}`,
     `DTSTART:${stamp(start)}`, 'DURATION:PT15M', `RRULE:FREQ=WEEKLY;BYDAY=${day}`, `SUMMARY:${clean(`Run "${title}" in Foundry`)}`,
     `DESCRIPTION:${clean('This is a reminder, not automation: nothing runs by itself. Open Foundry, look at the list it would make, and say yes or no.')}`,
@@ -237,7 +238,8 @@ export function createSiteApi(app, options = {}) {
       return ok(r);
     }
     if (method === 'POST' && p === '/api/batch/approve') {
-      const r = await batches.approve(str(body.batchId, 'batchId', 64), { channel: 'dashboard' });
+      // The yes is bound to the list as the page showed it: its fingerprint, computed in the page from that card (M7).
+      const r = await batches.approve(str(body.batchId, 'batchId', 64), { channel: 'dashboard', listDigest: str(body.listDigest, 'listDigest', 64) });
       if (r.ok && r.made.length) milestone('firstLive');
       return ok(r);
     }
@@ -276,7 +278,13 @@ export function createSiteApi(app, options = {}) {
     if (method === 'GET' && (m = p.match(/^\/api\/drafts\/([a-f0-9]{16,64})\.eml$/))) { const d = oneDraft(app, m[1]); return { download: { name: `draft-${m[1].slice(0, 8)}.eml`, type: 'message/rfc822', body: d.eml } }; }
     // ------------------------------------------------------------------ settings and keys
     if (method === 'GET' && p === '/api/settings') return ok(loadSettings(app.root));
-    if (method === 'POST' && p === '/api/settings') return ok(saveSettings(app.root, body));
+    if (method === 'POST' && p === '/api/settings') {
+      // The name in records can be changed by anyone with the page, so a change of name is itself a line in the decision log (M4).
+      const before = loadSettings(app.root).yourName ?? '';
+      const saved = saveSettings(app.root, body);
+      if ((saved.yourName ?? '') !== before) decisionLog.append({ kind: 'name-changed', decision: 'changed', from: before || null, to: saved.yourName || null, channel: 'dashboard' });
+      return ok(saved);
+    }
     // Delete the lists the person gave (and their earlier versions); runs, drafts and records stay (P4 walkthrough M10).
     if (method === 'POST' && p === '/api/data/forget') {
       if (body.confirm !== 'delete my lists') bad('BAD_REQUEST', 'Say "delete my lists" to confirm');

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { journey, closeBrowser, assertBudget, NOW } from './harness.mjs';
 import { invoiceFlowOn, liveInvoices } from '../../../onboarding/test/helpers.mjs';
-import { Batches } from '../../../onboarding/batch.mjs';
+import { Batches, listDigest } from '../../../onboarding/batch.mjs';
 import { recordDecisions } from '../../../onboarding/decisions.mjs';
 import { spawnSync } from 'node:child_process';
 import { CLI } from '../../../cli.mjs';
@@ -20,7 +20,7 @@ test('P5 auditor: runs -> a run -> "Record consistent" -> evidence download, in 
     const p = await invoiceFlowOn(app); liveInvoices(app);
     const batches = new Batches(app, { now: () => NOW });
     const b = await batches.preview(p.flowId);
-    await batches.approve(b.batchId, { channel: 'dashboard' });
+    await batches.approve(b.batchId, { channel: 'dashboard', listDigest: listDigest(b) });
   } }, async ({ page, person, shot, mark, app, log }) => {
     const checks = log.checks = {};
     person.precondition('the operator ran "Chase unpaid invoices" once and approved its exact list of 4 drafts in the page (as in P2)');

@@ -3,11 +3,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { Batches, BATCH_TTL_MS } from '../batch.mjs';
+import { Batches, BATCH_TTL_MS, listDigest, itemDigest } from '../batch.mjs';
 import { listDrafts } from '../drafts.mjs';
 import { withApp, invoiceFlowOn, liveInvoices, NOW } from './helpers.mjs';
 
 const batchFile = dir => path.join(dir, 'batches.json');
+// The person's yes carries the fingerprint of the list as the page showed it (security review M7).
+const yes = (batches, b, opts = {}) => batches.approve(b.batchId, { listDigest: listDigest(b), ...opts });
 
 test('an exact match is made, one click for the whole list; the batch file and the run record show the person as the source', async () => withApp(async (app, dir) => {
   const p = await invoiceFlowOn(app); liveInvoices(app);
@@ -22,7 +24,7 @@ test('an exact match is made, one click for the whole list; the batch file and t
   assert.deepEqual(b.notes.find(n => n.kind === 'firm-first')?.invoices.map(x => x.invoice).sort(), ['INV-2041', 'INV-2043']);
   assert.ok(b.items.every(i => i.body.length > 50 && /^[a-f0-9]{64}$/.test(i.digest)), 'every item carries its full text and a digest');
   assert.equal(listDrafts(app).length, 0, 'preview makes nothing');
-  const r = await batches.approve(b.batchId, { channel: 'dashboard' });
+  const r = await yes(batches, b, { channel: 'dashboard' });
   assert.equal(r.status, 'succeeded'); assert.equal(r.made.length, 4); assert.equal(r.stoppedAt, null);
   assert.equal(listDrafts(app).length, 4);
   const saved = JSON.parse(readFileSync(batchFile(dir), 'utf8'))[0];
@@ -38,9 +40,9 @@ test('a one-character change in a body is not on the list: the run stops and ask
   const b = await batches.preview(p.flowId);
   const list = JSON.parse(readFileSync(batchFile(dir), 'utf8'));
   list[0].items[0].body = list[0].items[0].body.replace('Hello', 'Hullo'); // the person saw (and approved) a different text
-  list[0].items[0].digest = 'x'.repeat(64);
+  list[0].items[0].digest = itemDigest(list[0].items[0]);
   writeFileSync(batchFile(dir), JSON.stringify(list));
-  const r = await batches.approve(b.batchId);
+  const r = await batches.approve(b.batchId, { listDigest: listDigest(list[0]) });
   assert.ok(r.stoppedAt, 'stopped'); assert.ok(r.made.length < 4);
   assert.equal(app.status({ runId: r.runId }).status, 'awaiting_approval', 'the unmatched send still waits for a normal single decision');
   assert.equal(app.inbox().actions.length, 1);
@@ -51,17 +53,17 @@ test('an item is never used twice, an expired list is refused, a decline makes n
   let clock = NOW;
   const batches = new Batches(app, { now: () => clock });
   const b = await batches.preview(p.flowId);
-  await batches.approve(b.batchId);
-  await assert.rejects(batches.approve(b.batchId), { code: 'BATCH_CLOSED' });
+  await yes(batches, b);
+  await assert.rejects(yes(batches, b), { code: 'BATCH_CLOSED' });
   const b2 = await batches.preview(p.flowId);
   clock = NOW + BATCH_TTL_MS + 1000;
-  await assert.rejects(batches.approve(b2.batchId), { code: 'BATCH_EXPIRED' });
+  await assert.rejects(yes(batches, b2), { code: 'BATCH_EXPIRED' });
   clock = NOW;
   const b3 = await batches.preview(p.flowId);
   const before = listDrafts(app).length;
   assert.equal(batches.decline(b3.batchId).status, 'declined');
   assert.equal(listDrafts(app).length, before, 'a decline makes nothing');
-  await assert.rejects(batches.approve(b3.batchId), { code: 'BATCH_CLOSED' });
+  await assert.rejects(yes(batches, b3), { code: 'BATCH_CLOSED' });
 }));
 
 // Fixed (P2 walkthrough B3; was a known limit): the preview starts from the live store's state, so the second run of the same list lists
@@ -69,14 +71,14 @@ test('an item is never used twice, an expired list is refused, a decline makes n
 test('the second run of the same list lists only what is new; the yes makes exactly that, and nothing waits', async () => withApp(async app => {
   const p = await invoiceFlowOn(app); liveInvoices(app);
   const batches = new Batches(app, { now: () => NOW });
-  await batches.approve((await batches.preview(p.flowId)).batchId);
+  await yes(batches, await batches.preview(p.flowId));
   const drafts = listDrafts(app).length;
   const second = await batches.preview(p.flowId);
   assert.deepEqual(second.items.map(i => i.subject), ['Invoice reminders: summary'], 'no reminder is listed twice');
   assert.match(second.items[0].body, /Reminder drafts made this run: 0/);
   assert.equal(second.remembered, 3, 'the preview saw the three reminders made before');
   assert.equal(second.notes.some(n => n.kind === 'firm-first'), false, 'no first-contact warning once Foundry has reminded them');
-  const again = await batches.approve(second.batchId);
+  const again = await yes(batches, second);
   assert.equal(again.stoppedAt, null); assert.equal(again.made.length, 1);
   assert.equal(listDrafts(app).length, drafts + 1);
   assert.equal(app.inbox().actions.length, 0, 'nothing waits as a single card');
@@ -88,7 +90,7 @@ test('a new list replaces the open one; a yes closes every other open list of th
   const a = await batches.preview(p.flowId), b = await batches.preview(p.flowId);
   assert.equal(batches.get(a.batchId).status, 'replaced');
   assert.deepEqual(batches.open().map(x => x.batchId), [b.batchId]);
-  await batches.approve(b.batchId);
+  await yes(batches, b);
   assert.equal(batches.open().length, 0);
 }));
 
@@ -100,7 +102,7 @@ test('a changed head (a new version turned on after the list was made) is refuse
   assert.equal(p2.version, 2);
   await app.dryRun({ proposalId: p2.proposalId });
   app.decideActivation(app.requestApproval({ proposalId: p2.proposalId }).approvalId, true, { channel: 'dashboard' });
-  await assert.rejects(batches.approve(b.batchId), { code: 'STALE_APPROVAL' });
+  await assert.rejects(yes(batches, b), { code: 'STALE_APPROVAL' });
 }));
 
 test('no list without a turned-on version, the live sheet, and normal mode', async () => withApp(async app => {

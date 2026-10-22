@@ -22,6 +22,15 @@
 //
 // What the agent sees of a live run (P4 walkthrough B3): counts and step names, never the recipients or the text of a live list (the
 // person reads those in the page). The run date of a card automation is the server's clock, not a date the agent chose (P1 M11).
+//
+// Since the security review of 2026-10-21:
+//   H3  the person decides in Foundry's page unless the dialog is safe to use right now: `dialog` is false by default, and the CLI passes a
+//       check (app/onboarding/detect.mjs dialogAllowed) that runs on every ask_person_to_turn_on: a client Foundry knows how to check
+//       (Claude Code), no organisation-managed Claude Code, no Elicitation or ElicitationResult hook anywhere Foundry looks, and no launch
+//       flag that can carry hooks no file shows. A "no" in the dialog is still recorded; a hook that says no only refuses.
+//   M5  every run_flow result goes through strip(), with or without the site: the agent never gets a live action's arguments.
+//   L8  the dialog states the practice result and that nothing is sent BEFORE anything built from settings, and each line built from
+//       settings is flattened to one line and shortened, so a setting cannot draw a second "Practice run ... passed" line.
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -82,8 +91,10 @@ export function templateCatalog(library = loadLibrary()) {
       ...(s.fields ? { rowFields: s.fields.map(f => ({ name: f.name, type: f.type, ...(f.values ? { values: f.values } : {}) })) } : {}) })) }));
 }
 
-// dialog: false when a local hook could answer the client's dialog for the person (Claude Code Elicitation hooks; SPEC K12): the person
-// then decides in the browser, as with a client that has no dialog.
+// dialog: may the client's own dialog decide? false (the default: the person decides in the page), true (a caller that vouches for the
+// client, tests), or a function ({ server }) => { ok } asked on every ask_person_to_turn_on (the CLI: app/onboarding/detect.mjs).
+// A line for the dialog from text Foundry did not write itself (settings, titles): one line, no control characters, at most 160 characters.
+const oneLine = (text, max = 160) => { const t = String(text ?? '').replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]+/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > max ? `${t.slice(0, max - 1)}…` : t; };
 // The cards in one sentence, for an honest "cannot build that" (P1 walkthrough M10: the stub's refusal named one old card).
 function cardsReply(request) {
   const titles = FORMS.order.map(id => FORMS.templates[id]?.card).filter(Boolean);
@@ -93,23 +104,28 @@ function cardsReply(request) {
     cards: FORMS.order.map(id => ({ id, title: FORMS.templates[id]?.card })) };
 }
 
-export function toolDefinitions(app, { dashboardUrl = () => null, batches = null, dialog = true, openCommand = 'node app/cli.mjs open' } = {}) {
+export function toolDefinitions(app, { dashboardUrl = () => null, batches = null, dialog = false, openCommand = 'node app/cli.mjs open' } = {}) {
   const where = () => dashboardUrl() ? `The person decides in ${dashboardUrl()}; you cannot decide for them.`
     : `Ask the person to run ${openCommand} in their own terminal and decide in the page it opens. You cannot decide for them.`;
   async function approve({ proposalId }, context) {
     const request = app.requestApproval({ proposalId });
     if (!request.ok || request.status === 'approved') return request;
     const server = context?.server, caps = server?.getClientCapabilities?.()?.elicitation;
-    if (dialog && caps && (caps.form || Object.keys(caps).length === 0)) {
+    const formDialog = !!caps && (!!caps.form || Object.keys(caps).length === 0);
+    // Asked again on every call (H3): a hook can be added in the middle of a session.
+    let useDialog = false;
+    if (formDialog) { try { useDialog = typeof dialog === 'function' ? (await dialog({ server }))?.ok === true : dialog === true; } catch { useDialog = false; } }
+    if (useDialog) {
       // The client shows this dialog to the PERSON (MCP elicitation, form mode). The model sees only the outcome. Short and in plain
-      // words: what it will do, who sees what first, and the test result; a check without a plain sentence is left out (P1 M6).
+      // words: the test result and that turning it on sends nothing, then what it will do; a check without a plain sentence is left out
+      // (P1 M6). Lines built from settings come last, one line each (L8).
       const s = request.summary, proposal = app.foundry.store.proposal(proposalId), t = templateOf(proposal.workflow);
-      const will = t ? cardPromises(t, slotsOf(proposal.workflow)).willDo : s.steps.map(x => x.text);
+      const will = (t ? cardPromises(t, slotsOf(proposal.workflow)).willDo : s.steps.map(x => x.text)).slice(0, 12).map(w => oneLine(w));
       const passed = (request.practice?.checks ?? []).filter(c => c.passed === true).length, total = (request.practice?.checks ?? []).length;
       let result;
       try {
-        result = await server.elicitInput({ message: `Turn on “${t ? FORMS.templates[t.id]?.card ?? s.title : s.title}”, version ${request.version}?\n\nEach time you run it, it will:\n- ${will.join('\n- ')}\n\n` +
-          `Turning it on makes and sends nothing. Practice run on pretend data: passed ${passed} of ${total} checks.`,
+        result = await server.elicitInput({ message: `Turn on “${oneLine(t ? FORMS.templates[t.id]?.card ?? s.title : s.title, 80)}”, version ${request.version}?\n\n` +
+          `Practice run on pretend data: passed ${passed} of ${total} checks. Turning it on makes and sends nothing.\n\nEach time you run it, it will:\n- ${will.join('\n- ')}`,
           requestedSchema: { type: 'object', required: ['decision'], properties: { decision: { type: 'string', title: 'Your decision', enum: ['approve', 'reject'] }, note: { type: 'string', title: 'Note (optional)', maxLength: 500 } } } });
       } catch { result = null; }
       if (result?.action === 'accept' && ['approve', 'reject'].includes(result.content?.decision)) {
@@ -123,7 +139,8 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
     return { ...request, how: where() };
   }
   // With batches (the site), a run of a card automation starts with the exact list the person approves in their browser.
-  async function runFlow(a) {
+  async function runFlow(a) { return strip(await runFlowInner(a)); }
+  async function runFlowInner(a) {
     if (!batches) return app.run(a);
     let head = null; try { head = app.foundry.store.workflow(a.flowId); } catch { head = null; }
     if (!head || !templateOf(head.workflow) || !app.ledger.approvedFor(a.flowId, head.hash) || app.practiceOnly()) return app.run(a);
@@ -135,7 +152,7 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
       throw error;
     }
     if (!b.ok) return { ok: false, problem: { what: `A test of this version on the person's own list did not pass: ${b.headline}`, next: 'Nothing was made. Look at the run in Foundry, or change a setting.', code: 'BATCH_TEST_FAILED' }, checks: b.checks };
-    if (!b.items.length) return strip(await app.run({ flowId: a.flowId, input: b.input }));
+    if (!b.items.length) return app.run({ flowId: a.flowId, input: b.input });
     const agentDate = typeof a.input?.now === 'string' ? a.input.now.slice(0, 10) : null;
     return { ok: true, status: 'awaiting_human', batchId: b.batchId, count: b.items.length, made: kinds(b.items), flowId: a.flowId, asOf: b.input.now,
       ...(agentDate && agentDate !== b.input.now.slice(0, 10) ? { dateNote: `Foundry used today's date (${b.input.now.slice(0, 10)}), not ${agentDate}.` } : {}),
@@ -173,7 +190,7 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
   }));
 }
 
-export async function serveAppMcp(app, { transport = new StdioServerTransport(), dashboardUrl, batches = null, dialog = true, openCommand } = {}) {
+export async function serveAppMcp(app, { transport = new StdioServerTransport(), dashboardUrl, batches = null, dialog = false, openCommand } = {}) {
   const server = new Server({ name: 'workflow-foundry-surface', version: '0.0.1' }, { capabilities: { tools: {} },
     instructions: 'Workflow Foundry builds small automations that are checked before they run. Call list_templates first, then propose_flow with a template and settings from the person\'s words, dry_run before ask_person_to_turn_on, and relay `say` to the person. Only the person can turn things on or approve what a run makes.' });
   const defs = toolDefinitions(app, { dashboardUrl, batches, dialog, ...(openCommand ? { openCommand } : {}) });

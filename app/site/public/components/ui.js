@@ -172,6 +172,16 @@ export function dataQuestions(questions, { onColumn = null } = {}) {
 
 // ------------------------------------------------------------------------------------------------ the exact list (batch)
 const isMail = item => item.action === 'send';
+// The fingerprint of the list exactly as this card shows it (security review 2026-10-21, M7). It is the same sha256 the server computes
+// in app/onboarding/batch.mjs (listDigest): canonical JSON (keys sorted, no spaces) of each item's tool and the to, subject and full text
+// shown, then of the batch id, the version's hash and those item fingerprints. The yes carries it; a list that changed is refused.
+const canon = v => Array.isArray(v) ? `[${v.map(canon).join(',')}]`
+  : v && typeof v === 'object' ? `{${Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => `${JSON.stringify(k)}:${canon(v[k])}`).join(',')}}` : JSON.stringify(v);
+const sha256hex = async text => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))].map(b => b.toString(16).padStart(2, '0')).join('');
+export async function shownListDigest(batch) {
+  const items = await Promise.all(batch.items.map(i => sha256hex(canon(i.action === 'post' ? { tool: 'chat.post', args: { channel: i.to, text: i.body } } : { tool: 'outbox.send', args: { to: i.to, subject: i.subject, body: i.body } }))));
+  return sha256hex(canon({ batchId: batch.batchId, workflowHash: batch.workflowHash, items }));
+}
 /** Every item in full: who, subject, the exact text. */
 export function itemsList(items) {
   return el('ol', { class: 'items' }, items.map(i => el('li', { dataset: { item: String(i.n ?? '') } },
@@ -203,7 +213,7 @@ export function batchCard(batch, { onDone } = {}) {
     if (!e.isTrusted) return;
     yes.setAttribute('aria-busy', 'true'); yes.disabled = true; no.disabled = true; say(t('batch.making'));
     try {
-      const r = await api('/api/batch/approve', { batchId: batch.batchId });
+      const r = await api('/api/batch/approve', { batchId: batch.batchId, listDigest: await shownListDigest(batch) });
       say(r.stoppedAt ? t('batch.stopped') : r.made.length === 1 ? t('batch.madeOne') : t('batch.madeMany', { n: r.made.length }));
       refreshBadge(); onDone?.(r);
     } catch (error) { status.replaceChildren(errorPanel(error, { notDone: t('batch.notMade') })); yes.disabled = false; no.disabled = false; }

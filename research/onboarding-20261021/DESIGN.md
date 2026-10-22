@@ -126,7 +126,7 @@ in [WALKTHROUGH.md](WALKTHROUGH.md).
    - **An address turns on the part it belongs to.** "Summary to me@..." turns the summary on (`form-builder.mjs`). Without this, an agent's guessed address was dropped silently with the summary, and the person's own "summary to me" lost the summary.
    - **A test on the person's own list runs as of today.** It used to run as of the card's pretend date and showed 2 reminders where the live list makes 3.
    - **A Settings link in the footer.**
-   - **With `--consent`, the MCP server skips the client's dialog** when a local hook could answer it (spec K12 said the doctor detects the hook, but nothing acted on it).
+   - **With `--consent`, the MCP server skips the client's dialog** when a local hook could answer it (spec K12 said the doctor detects the hook, but nothing acted on it). Since the security review (H3, 2026-10-21): without `--consent` the dialog is not used at all, and with it the check covers every hook location and runs on every ask (WALKTHROUGH M7).
 
 ## 5. Real vs designed
 

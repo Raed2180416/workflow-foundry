@@ -11,7 +11,7 @@ import { eml, mailto, listDrafts, draft } from '../drafts.mjs';
 import { detect, admission, managedDirs } from '../detect.mjs';
 import { briefData, briefMarkdown, briefHtml, SAME_USER_LIMIT } from '../brief.mjs';
 import { evidenceBundle } from '../evidence.mjs';
-import { Batches } from '../batch.mjs';
+import { Batches, listDigest } from '../batch.mjs';
 import { importReport } from '../importers.mjs';
 import { connectInstructions } from '../../cli.mjs';
 import { withApp, invoiceFlowOn, liveInvoices, fixture, FIXTURES, NOW } from './helpers.mjs';
@@ -56,7 +56,7 @@ test('ephemeral keychain: check against the provider, store, report last four on
 test('drafts: an unsent .eml (X-Unsent: 1) and a mailto link; long drafts are offered as a download', async () => withApp(async app => {
   const p = await invoiceFlowOn(app); liveInvoices(app);
   const b = new Batches(app, { now: () => NOW });
-  await b.approve((await b.preview(p.flowId)).batchId);
+  { const list = await b.preview(p.flowId); await b.approve(list.batchId, { listDigest: listDigest(list) }); }
   const list = listDrafts(app);
   assert.equal(list.length, 4);
   const d = draft(app, list[0].id);
@@ -101,7 +101,8 @@ test('the IT brief names the exact version, the actions, the same-user limit, pi
 test('evidence: the chain head, the turn-on decision with its channel, each action decision, the batch, the gaps', async () => withApp(async app => {
   const p = await invoiceFlowOn(app); liveInvoices(app);
   const batches = new Batches(app, { now: () => NOW });
-  const r = await batches.approve((await batches.preview(p.flowId)).batchId);
+  const list = await batches.preview(p.flowId);
+  const r = await batches.approve(list.batchId, { listDigest: listDigest(list) });
   const e = evidenceBundle(app, r.runId, { batches, date: new Date(NOW) });
   assert.equal(e.chain.verified, true); assert.match(e.chain.head, /^[a-f0-9]{64}$/);
   assert.equal(e.turnedOn.channel, 'dashboard'); assert.equal(e.workflow.hash, p.workflowHash);

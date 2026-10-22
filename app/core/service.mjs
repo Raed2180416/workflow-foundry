@@ -8,7 +8,7 @@
 //
 // The builder is pluggable (BUILDER-1): the stub (default, $0, no model) or the model builder over the template library
 // (./builder-model.mjs). Both return the same shape; every proposal names the builder that made it.
-import { mkdirSync, readdirSync, readFileSync, existsSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Foundry } from '../../src/foundry.mjs';
@@ -23,6 +23,8 @@ import { machinePolicy } from './machine-policy.mjs';
 
 // The digest that binds a planned outside action to its full content: sha256 of the canonical {tool, args} (batch approval matches on it).
 export const effectDigest = (tool, args) => digest({ tool, args });
+/** Security review 2026-10-21 (L16): the workspace keeps itself out of any git repository it sits in (a .gitignore that ignores all). */
+export function ignoreWorkspace(root) { try { writeFileSync(path.join(root, '.gitignore'), '# Foundry: your lists, drafts, records and decisions. Never commit them.\n*\n', { flag: 'wx', mode: 0o600 }); } catch { /* already there, or not writable */ } }
 const problem = (error, extra = {}) => ({ ok: false, problem: { ...(failureText(errorData(error)) ?? {}), code: error.code ?? 'ERROR', details: errorData(error).message }, ...extra });
 
 export class FoundryApp {
@@ -31,6 +33,7 @@ export class FoundryApp {
     if (!builder || typeof builder.build !== 'function' || typeof builder.id !== 'string') throw new FoundryError('APP_BUILDER', 'A builder with an id and build() is required');
     this.root = path.resolve(workspace); this.builder = builder;
     mkdirSync(this.root, { recursive: true, mode: 0o700 });
+    ignoreWorkspace(this.root);
     this.liveDir = path.join(this.root, 'live'); this.outboxDir = path.join(this.root, 'outbox'); this.practiceRoot = path.join(this.root, 'practice');
     // Local stand-ins (sheets, chat) live in the workspace's world directory: <workspace>/world/sheets/<name>.json.
     this.worldDir = path.join(this.root, 'world');

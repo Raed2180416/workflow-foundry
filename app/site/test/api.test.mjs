@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startSite } from './helpers.mjs';
+import { listDigest } from '../../onboarding/batch.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixture = n => readFileSync(path.join(here, 'fixtures', n), 'utf8');
@@ -31,7 +32,7 @@ test('P2 reference path through the API: card -> test -> turn on -> own list -> 
     const b = await s.post('/api/batch/preview', { flowId: p.flowId });
     assert.equal(b.items.length, 4);
     assert.equal((await s.get('/api/batches')).open.length, 1);
-    const made = await s.post('/api/batch/approve', { batchId: b.batchId });
+    const made = await s.post('/api/batch/approve', { batchId: b.batchId, listDigest: listDigest(b) });
     assert.equal(made.made.length, 4); assert.equal(made.status, 'succeeded');
     const drafts = await s.get('/api/drafts');
     assert.equal(drafts.drafts.length, 4);

@@ -47,8 +47,8 @@ export async function render({ params }) {
       el('p', {}, d.chain.verified ? statusChip('decided') : statusChip('limit'), ' ', d.chain.verified ? t('run.recordOk', { n: d.chain.events }) : t('run.recordBad', { reason: d.chain.reason ?? '' })),
       d.chain.verified ? el('p', { class: 'small' }, t('run.recordMeaning')) : null,
       el('details', {}, el('summary', {}, t('common.showDetails')), el('p', { class: 'small' }, t('run.chainHead', { hash: d.chain.head ?? '' })), el('div', { class: 'actions' }, copyHead))),
-    el('div', { class: 'actions' }, ev1), fileNote, status,
-    el('section', {}, el('h2', {}, t('run.gapsTitle')), el('ul', {}, ['decisions', 'transcripts', 'anchor', 'secondPerson'].map(k => el('li', {}, t(`run.gaps.${k}`))))),
+    el('div', { class: 'actions' }, ev1), el('p', { class: 'small muted', dataset: { evidenceContains: '' } }, t('run.evidenceContains')), fileNote, status,
+    el('section', {}, el('h2', {}, t('run.gapsTitle')), el('ul', {}, ['decisions', 'transcripts', 'anchor', 'secondPerson', 'identity'].map(k => el('li', {}, t(`run.gaps.${k}`))))),
     el('section', {}, el('h2', {}, t('run.timeline', { n: d.timeline.length })), el('div', { class: 'actions' }, toggle),
       el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('run.seq'), t('runs.when'), t('run.event'), t('run.step'), t('run.who')].map(h => el('th', { scope: 'col' }, h)))), tbody))),
     el('p', { class: 'muted' }, t('run.honesty')));

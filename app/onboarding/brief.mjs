@@ -26,8 +26,12 @@ export const PILOT_CHECKS = ['Check a machine at any time: node <install>/app/cl
   'At day 30: live runs 0 (practice-only held), automations made and tested, AI used none. Each run and each decision is in the workspace records'];
 export const GAPS = ['Your decisions (turn-on and the list you approved) are kept in their own chained log beside the run record, not inside the run\'s chain; anyone using this account could rewrite both',
   'AI transcripts, when an AI builder is used, are not part of the chain', 'The chain\'s latest link is not stored outside this computer unless you copy it somewhere else',
-  'Approvals come from the person at this computer; a second person\'s own sign-in is planned (Team plan)'];
-export const CHANNEL_WORDS = { dashboard: 'the Foundry page', cli: 'a typed yes in the terminal', 'mcp-elicitation': 'the coding agent\'s dialog (weaker: a hook on this computer could answer it)' };
+  'Approvals come from the person at this computer; a second person\'s own sign-in is planned (Team plan)',
+  // Security review 2026-10-21, M4: the record names who decided as Foundry knows them, which is not a verified identity.
+  'A decision names the person by the name in Settings and this computer\'s account. A yes through the page shows that a browser tab this Foundry start let in sent it, not which person clicked; approving with a passkey on each yes is planned'];
+// M4: the channel as it is, not as a person.
+export const CHANNEL_WORDS = { dashboard: 'the Foundry page (a browser tab this start of Foundry let in; not tied to a particular person)', cli: 'a typed yes in a terminal of this account',
+  'mcp-elicitation': 'the coding agent\'s dialog (weaker: Foundry looked for hooks that could answer it, but a hook it cannot see could still answer)' };
 /** Did a model build this? From the builder record: the form builder and the stub call none. */
 export const usesModel = builderId => !!builderId && !/^template-form\/|^stub-template-matcher\//.test(builderId);
 
@@ -97,7 +101,7 @@ export function briefData(app, { flowId = null, connect, date = new Date() }) {
     sections.push({ title: 'Data', lines: [...Object.entries(data).map(([k, v]) => `Reads or writes the "${k}" list on this computer: ${v}`),
       'Writes e-mail drafts to the workspace outbox after the person approves the exact list; the person sends them. Foundry sends nothing over the network.'] });
     const decided = facts.approvals.find(a => a.status === 'approved');
-    sections.push({ title: 'Who decides', lines: [decided ? `Turned on by ${decided.principal} through ${CHANNEL_WORDS[decided.channel] ?? decided.channel} on ${new Date(decided.decidedAt).toISOString()}${decided.note ? ` (note: ${decided.note})` : ''}.` : 'Not turned on yet.',
+    sections.push({ title: 'Who decides', lines: [decided ? `Turned on by ${decided.principal} (the name in Settings and this computer's account; not a verified identity) through ${CHANNEL_WORDS[decided.channel] ?? decided.channel} on ${new Date(decided.decidedAt).toISOString()}${decided.note ? ` (note: ${decided.note})` : ''}.` : 'Not turned on yet.',
       'Before each run makes anything, the person sees the full list and approves it once; anything not on that list stops and asks. A second person\'s own sign-in is planned (Team plan), not available.'] });
     sections.push({ title: 'Test evidence', lines: facts.dry ? [`Practice run ${facts.dry.passed ? 'passed' : 'did not pass'} on ${facts.dry.body.dataSource === 'your-data' ? 'the person\'s own list' : 'the template\'s pretend data'} (${new Date(facts.dry.at).toISOString()}), bound to this hash.`,
       ...facts.dry.body.checks.map(c => `${c.passed ? 'PASS' : c.passed === false ? 'FAIL' : 'not run'}: ${c.plain ?? c.exact}`)] : ['No practice run of this version yet.'] });
@@ -136,15 +140,20 @@ export function briefData(app, { flowId = null, connect, date = new Date() }) {
     flowId: facts ? flowId : null, workflowHash: facts?.hash ?? null, serverCommand: argv, build, sections };
 }
 
-const mdCell = s => String(s).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+// Markdown (security review 2026-10-21, L13): every value is text. Characters that start HTML, a link, an autolink or a code span are
+// backslash-escaped (CommonMark renders `\<` as `<`), a line break inside a value becomes a space (no value starts a new block), and the
+// code block's fence is longer than any run of backticks inside it.
+const mdText = s => String(s).replace(/\r\n|\r|\n/g, ' ').replace(/[\\`<>[\]]/g, c => `\\${c}`);
+const mdCell = s => mdText(s).replace(/\|/g, '\\|');
+const fence = code => '`'.repeat(Math.max(3, ...[...String(code).matchAll(/`+/g)].map(m => m[0].length + 1)));
 export function briefMarkdown(b) {
-  const out = [`# ${b.title}`, '', `_${b.header}_`, ''];
+  const out = [`# ${mdText(b.title)}`, '', `_${mdText(b.header)}_`, ''];
   for (const s of b.sections) {
-    out.push(`## ${s.title}`, '');
+    out.push(`## ${mdText(s.title)}`, '');
     if (s.table) { const [head, ...rows] = s.header ? s.table : [['Item', 'Value'], ...s.table]; out.push(`| ${head.map(mdCell).join(' | ')} |`, `| ${head.map(() => '---').join(' | ')} |`, ...rows.map(r => `| ${r.map(mdCell).join(' | ')} |`), ''); }
-    if (s.code) out.push('```json', s.code, '```', '');
-    for (const l of s.lines ?? []) out.push(`- ${l}`);
-    if (s.note) out.push('', s.note);
+    if (s.code) { const f = fence(s.code); out.push(`${f}json`, s.code, f, ''); }
+    for (const l of s.lines ?? []) out.push(`- ${mdText(l)}`);
+    if (s.note) out.push('', mdText(s.note));
     out.push('');
   }
   return out.join('\n');

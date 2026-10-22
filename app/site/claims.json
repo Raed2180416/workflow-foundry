@@ -13,8 +13,8 @@
     "C02": {
       "text": "In our tests, 10 of 10 attempts to get around your yes were refused.",
       "short": "Ways around your yes are refused",
-      "qualifier": "Tested on the earlier prototype's tools and page, before the exact-list approval was added; not yet re-run against it. Not covered: an agent using your terminal, or a hook that answers dialogs for you.",
-      "status": "Works now",
+      "qualifier": "Tested on the earlier prototype's tools and page, before the exact-list approval and the one-time links were added; that set of attempts has not been re-run against them, so this is Preview until it is. The ways around your yes found in the security review of 2026-10-21 (a printed link read by an agent, a hook answering the dialog, a list changed after you saw it) have their own tests now. Not covered: an agent using your terminal, or a hook Foundry can't see.",
+      "status": "Preview",
       "evidence": "development",
       "date": "2026-10-21",
       "source": { "path": "research/surface-20261021/DESIGN.md", "anchor": "§8.3 Bypass attempts refused" }
@@ -82,6 +82,7 @@
     "C10": {
       "text": "Bringing your own AI key is free, and the key goes into your computer's keychain, never into files or logs.",
       "short": "Your key, your keychain",
+      "qualifier": "A keychain keeps the key from other users of this computer, not from programs running as you. On a Mac, Foundry saves the key without naming which programs may read it, so any program running as you can read it back through the security command without a prompt (from Apple's documentation of that command; not tried on a Mac). On Linux, any program running as you can read it while the keyring is unlocked.",
       "status": "Preview",
       "evidence": "decided",
       "date": "2026-10-21",

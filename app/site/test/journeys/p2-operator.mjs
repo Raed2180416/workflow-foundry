@@ -8,7 +8,7 @@ import { readFileSync, utimesSync } from 'node:fs';
 import path from 'node:path';
 import { journey, closeBrowser, assertBudget, fixturePath, browser, NOW } from './harness.mjs';
 import { invoiceFlowOn, liveInvoices } from '../../../onboarding/test/helpers.mjs';
-import { Batches } from '../../../onboarding/batch.mjs';
+import { Batches, listDigest } from '../../../onboarding/batch.mjs';
 
 after(closeBrowser);
 
@@ -187,7 +187,7 @@ test('P2 the next day: the bookmark says the one command, which opens Foundry; y
       const yesterday = new Date(NOW); utimesSync(path.join(app.worldDir, 'sheets', 'invoices.json'), yesterday, yesterday);
       const batches = new Batches(app, { now: () => NOW });
       const b = await batches.preview('invoice-chase');
-      await batches.approve(b.batchId, { channel: 'dashboard' });
+      await batches.approve(b.batchId, { channel: 'dashboard', listDigest: listDigest(b) });
     } }, async ({ page, person, shot, base, site, log }) => {
     const checks = log.checks = {};
     person.precondition('yesterday they turned on "Chase unpaid invoices", dropped their list and made 4 drafts (as in P2), in this browser');

@@ -83,7 +83,9 @@ export function rich(key, vars = {}) {
 export function claimRef(id) {
   const c = state.claims?.[id];
   if (!c) return document.createTextNode(id);
-  return el('span', { class: 'claim', dataset: { claim: id } }, c.text, ' ', el('a', { href: `#/claims?c=${id}`, class: 'small', 'aria-label': t('claims.sourceFor', { short: c.short }) }, t('claims.source')));
+  // A claim that is not "Works now" says so where it is used, not only on the claims page (security review 2026-10-21, L17).
+  return el('span', { class: 'claim', dataset: { claim: id } }, c.text, ' ', c.status && c.status !== 'Works now' ? [el('span', { class: 'chip', dataset: { claimStatus: c.status } }, c.status), ' '] : null,
+    el('a', { href: `#/claims?c=${id}`, class: 'small', 'aria-label': t('claims.sourceFor', { short: c.short }) }, t('claims.source')));
 }
 export const claims = () => state.claims ?? {};
 

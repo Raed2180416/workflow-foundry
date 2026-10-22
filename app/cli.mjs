@@ -26,9 +26,9 @@ import { homedir, platform } from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
-import { accessSync, constants, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { accessSync, constants, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { FoundryApp } from './core/service.mjs';
+import { FoundryApp, ignoreWorkspace } from './core/service.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const CLI = path.join(here, 'cli.mjs');
@@ -69,8 +69,10 @@ export function doctor({ workspace, env = process.env, os = platform() } = {}) {
   items.push({ check: 'Node.js', ok: major >= 24, say: major >= 24 ? `Node ${process.versions.node}: fine.` : `Node ${process.versions.node} is too old; install Node 24 or newer.` });
   let sqlite = true; try { spawnSync(process.execPath, ['-e', 'require("node:sqlite")'], { stdio: 'ignore' }); } catch { sqlite = false; }
   items.push({ check: 'Built-in database', ok: sqlite, say: sqlite ? 'Runs are recorded in a local database file.' : 'node:sqlite is missing; runs cannot be recorded.' });
-  let writable = true; try { mkdirSync(workspace, { recursive: true, mode: 0o700 }); accessSync(workspace, constants.W_OK); } catch { writable = false; }
+  let writable = true; try { mkdirSync(workspace, { recursive: true, mode: 0o700 }); accessSync(workspace, constants.W_OK); ignoreWorkspace(workspace); } catch { writable = false; }
   items.push({ check: 'Workspace', ok: writable, say: writable ? `Your flows and run records live in ${workspace}.` : `Cannot write ${workspace}; set FOUNDRY_HOME to a folder you own.` });
+  const where = workspaceLocation(workspace);
+  if (where.say) items.push({ check: 'Workspace location', ok: true, optional: true, warn: true, say: where.say });
   // A fresh copy without `npm ci` cannot start the agent connection (P1 walkthrough B4): say so here, not as "failed" in the agent.
   let mcpLibrary = true; try { import.meta.resolve('@modelcontextprotocol/sdk/server/index.js'); } catch { mcpLibrary = false; }
   items.push({ check: 'Agent connection library', ok: true, optional: true, mcp: mcpLibrary, say: mcpLibrary ? 'Coding agents can connect (the MCP library is installed).'
@@ -87,6 +89,22 @@ export function doctor({ workspace, env = process.env, os = platform() } = {}) {
   return { workspace, ok: items.filter(i => !i.optional).every(i => i.ok), items };
 }
 
+/**
+ * Is the workspace somewhere a coding agent or a commit would reach it (security review 2026-10-21, L16)? Inside a git repository, or
+ * inside the folder this command runs in (the project a coding agent works in). Foundry still starts; it says so and keeps the folder out
+ * of git with its own .gitignore. Returns { repo, inProject, say }.
+ */
+export function workspaceLocation(workspace, { cwd = process.cwd(), home = homedir() } = {}) {
+  const ws = path.resolve(workspace);
+  let repo = null;
+  for (let dir = ws, i = 0; i < 64; i++) { if (existsSync(path.join(dir, '.git'))) { repo = dir; break; } const up = path.dirname(dir); if (up === dir) break; dir = up; }
+  const here = path.resolve(cwd), rel = path.relative(here, ws);
+  const inProject = here !== path.resolve(home) && here !== path.parse(here).root && !rel.startsWith('..') && !path.isAbsolute(rel);
+  const say = repo ? `Your Foundry folder (${ws}) is inside a git repository (${repo}). Foundry put a .gitignore in it so git leaves it out of commits, but anything working in that repository, a coding agent included, can read your lists and records with its file tools. Move it to a folder outside any project (--workspace or FOUNDRY_HOME).`
+    : inProject ? `Your Foundry folder (${ws}) is inside the folder you are working in (${here}): a coding agent working there can read your lists and records with its file tools. Move it to a folder outside any project (--workspace or FOUNDRY_HOME).` : null;
+  return { repo, inProject, say };
+}
+
 /** The doctor plus the onboarding extras (agents, managed policy, keychain, key NAMES, port, hooks): stat and PATH lookups only. */
 export async function doctorFull({ workspace, env = process.env, os = platform(), consent = false } = {}) {
   const { detect, detectLines } = await import('./onboarding/detect.mjs');
@@ -96,9 +114,10 @@ export async function doctorFull({ workspace, env = process.env, os = platform()
 }
 
 // The lines a person pastes. With the default workspace the command leaves --workspace out, so IT can allowlist one command for every
-// machine with the same install path (P4 walkthrough M2). --consent lets the server read the agent's own settings files (only their
-// hooks and the managed MCP keys; app/onboarding/detect.mjs) to see whether a hook could answer Foundry's dialog for the person; if so,
-// the person decides in the browser instead (P1 M14, P4 M7).
+// machine with the same install path (P4 walkthrough M2). --consent lets the server read Claude Code's settings, plugins, skills and
+// subagents (only to test for Elicitation hooks) and the managed MCP keys (app/onboarding/detect.mjs), on every ask, to see whether a
+// hook could answer Foundry's dialog for the person; without --consent, or if one could, the person decides in the browser (P1 M14,
+// P4 M7, security review H3).
 const q = s => `"${String(s).replace(/(["\\$`])/g, '\\$1')}"`;
 export function connectInstructions(workspace) {
   const cli = CLI, node = process.execPath;
@@ -243,7 +262,8 @@ async function main() {
     const { checkEvidence } = await import('./onboarding/evidence.mjs');
     let bundle; try { bundle = JSON.parse(readFileSync(item, 'utf8')); } catch (error) { process.stderr.write(`Cannot read ${item}: ${error.message}\n`); process.exitCode = 2; return; }
     const r = checkEvidence(bundle);
-    print(r.ok ? `Consistent: ${r.checked.events} run events and ${r.checked.decisions} decisions hash as recorded, each linked to the one before; the last event is the chain head the file states (${bundle.chain?.head}). This shows nothing changed after the file was made only if you compare that head with a copy kept somewhere else.`
+    // L9: say only what checkEvidence() checked.
+    print(r.ok ? `Consistent: ${r.checked.events} run events hash as recorded, each naming the one before, and the last is the chain head the file states (${bundle.chain?.head}); the workflow body hashes to its version's hash; ${r.checked.decisions} decisions of this automation hash as recorded and sit at their place in the decision log, whose ${r.checked.links} lines each name the one before and end at the head the file states (${bundle.personDecisions?.check?.head ?? 'none'}). This shows nothing changed after the file was made only if you compare those heads with copies kept somewhere else.`
       : `Not consistent:\n- ${r.problems.join('\n- ')}`);
     process.exitCode = r.ok ? 0 : 1; return;
   }
@@ -267,6 +287,8 @@ async function main() {
   }
   if (command === 'mcp') {
     // stdout is the MCP channel: nothing else may be printed there, and no code or key goes to stdout or stderr.
+    const where = workspaceLocation(workspace);
+    if (where.say) process.stderr.write(`${where.say}\n`);
     const builderRefusal = await builderAllowed(args.builder, workspace);
     if (builderRefusal) { process.stderr.write(`${builderRefusal}\n`); process.exitCode = 2; return; }
     const [{ serveAppMcp }, { createDashboard }, { SiteBuilder }, { recordDecisions }] = await Promise.all([import('./mcp/server.mjs'), import('./dashboard/server.mjs'),
@@ -307,10 +329,12 @@ async function main() {
     // FOUNDRY_TEST_AS_OF fixes the date a list is "as of" for the scripted journeys only; every list shows its date to the person.
     const asOf = process.env.FOUNDRY_TEST_AS_OF ? () => Date.parse(process.env.FOUNDRY_TEST_AS_OF) : undefined;
     const batches = useSite && args.dashboard ? new (await import('./onboarding/batch.mjs')).Batches(app, asOf ? { asOf } : {}) : null;
-    // With --consent, look for a hook that could answer Foundry's dialog for the person, and for an organisation's managed Claude Code
-    // policy; if either exists, the person decides in the browser (P4 walkthrough M7).
-    let dialog = true;
-    if (args.consent) { const d = await (await import('./onboarding/detect.mjs')).detect({ consent: true }); dialog = !d.hook.answeringHook && !d.managed.present; }
+    // The client's own dialog decides only when it is safe right now (security review 2026-10-21, H3; P4 walkthrough M7). Without --consent
+    // Foundry may not read Claude Code's settings, so the person decides in the browser. With it, every ask_person_to_turn_on checks again
+    // (app/onboarding/detect.mjs dialogAllowed): a client Foundry knows how to check, no managed policy, no answering hook anywhere
+    // Foundry looks, no launch flag that can carry hooks no file shows.
+    const { dialogAllowed } = await import('./onboarding/detect.mjs');
+    const dialog = args.consent ? ({ server }) => dialogAllowed({ client: server?.getClientVersion?.() ?? null }) : false;
     await serveAppMcp(app, { dashboardUrl, batches, dialog, openCommand: openCmd });
     process.once('exit', () => siteLock?.release?.());
     return;

@@ -8,11 +8,19 @@
 //
 // What it proves: a line edited or removed after it was written breaks every later link. What it does not: anyone using this account
 // can rewrite the whole file and recompute every link. Only an outside copy of the latest link (the page offers it) shows that.
+//
+// Since the security review of 2026-10-21:
+//   M4   a line says how Foundry knew who decided, and that it is not verified: the name is the one in Settings (anyone with the page can
+//        change it, and a change of name is logged too), and "through the page" means a request carried a key this Foundry start gave a
+//        browser tab, not that a particular person clicked. Approval by an identity a program cannot hold (a passkey) is planned.
+//   L14  the site and the MCP server both append; each append (read the last line, write the next) runs under one file lock
+//        (./file-lock.mjs), so two processes cannot both link to the same line and fork the chain.
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { hostname, userInfo } from 'node:os';
 import path from 'node:path';
 import { canonical, digest } from '../../src/data.mjs';
 import { loadSettings } from './settings.mjs';
+import { withFileLock } from './file-lock.mjs';
 
 /** The person at this computer, as Foundry can know them: { name, osUser, host }. */
 export function whoIsHere(root) {
@@ -20,6 +28,12 @@ export function whoIsHere(root) {
   return { name: loadSettings(root).yourName || null, osUser, host: hostname() };
 }
 export const whoLabel = w => w ? `${w.name ? `${w.name} (` : ''}${w.osUser}@${w.host}${w.name ? ')' : ''}` : 'unknown';
+/** How Foundry knows who decided, per channel, in words an auditor can check (M4). None of them is a verified identity. */
+export const HOW_KNOWN = Object.freeze({
+  dashboard: 'A request to the Foundry page carrying a key that this start of Foundry gave a browser tab opened with a one-time link. It shows the request came through such a tab on this computer, not which person clicked. The name is the one in Settings.',
+  cli: 'A yes typed in a terminal of this computer account (Foundry asks only when input and output are a terminal). It shows a terminal session answered, not which person typed. The name is the one in Settings.',
+  'mcp-elicitation': 'The coding agent\'s dialog. Before asking, Foundry looked for hooks that could answer the dialog without showing it; a hook it cannot see could still answer. The name is the one in Settings.'
+});
 
 export class DecisionLog {
   constructor(root) { this.root = root; this.file = path.join(root, 'site', 'decisions.jsonl'); }
@@ -30,12 +44,15 @@ export class DecisionLog {
   /** Append one decision; who and when are filled here. Returns the line. */
   append(entry) {
     mkdirSync(path.dirname(this.file), { recursive: true, mode: 0o700 });
-    const all = this.lines(), last = all.at(-1);
     const who = whoIsHere(this.root);
-    const line = JSON.parse(JSON.stringify({ seq: all.length + 1, at: new Date().toISOString(), by: whoLabel(who), who, ...entry, prev: last?.hash ?? null }));
-    line.hash = digest(line);
-    appendFileSync(this.file, `${canonical(line)}\n`, { mode: 0o600 });
-    return line;
+    return withFileLock(this.file, () => {
+      const all = this.lines(), last = all.at(-1);
+      const line = JSON.parse(JSON.stringify({ seq: all.length + 1, at: new Date().toISOString(), by: whoLabel(who), who, verified: false,
+        howKnown: HOW_KNOWN[entry.channel] ?? null, ...entry, prev: last?.hash ?? null }));
+      line.hash = digest(line);
+      appendFileSync(this.file, `${canonical(line)}\n`, { mode: 0o600 });
+      return line;
+    });
   }
   /** Re-check every link: { ok, lines, head, reason? }. */
   verify() {
@@ -51,6 +68,8 @@ export class DecisionLog {
     return { ok: true, lines: all.length, head: prev };
   }
   forFlow(flowId) { return this.lines().filter(l => l.flowId === flowId); }
+  /** Every line's place in the chain, without its content: { seq, prev, hash } (an evidence file carries these for the other lines, L9). */
+  links() { return this.lines().map((l, i) => l.broken ? { seq: i + 1, prev: null, hash: null, broken: true } : { seq: l.seq, prev: l.prev ?? null, hash: l.hash ?? null }); }
 }
 
 /** Wire a FoundryApp so every decision it makes is logged and named (the site, the MCP server and the CLI all call this). */

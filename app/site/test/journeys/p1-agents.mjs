@@ -63,7 +63,9 @@ pre{white-space:pre-wrap;margin:6px 0 0;font:13px/1.4 ui-monospace,monospace;col
 /** Spawn the server from the parsed line and wrap the scripted agent's tool calls. */
 async function agent(argv, { elicitation, urlFile, transcript, onElicit }) {
   const transport = new StdioClientTransport({ command: argv[0], args: argv.slice(1), env: { ...getDefaultEnvironment(), FOUNDRY_URL_FILE: urlFile, FOUNDRY_KEYCHAIN: 'ephemeral', FOUNDRY_TEST_AS_OF: NOW }, stderr: 'pipe' });
-  const client = new Client({ name: elicitation ? 'journey-claude-code-stand-in' : 'journey-cursor-codex-stand-in', version: '1' }, { capabilities: elicitation ? { elicitation: { form: {} } } : {} });
+  // The Claude Code stand-in gives the name Claude Code's own MCP client gives ("claude-code", observed in its build): since the security
+  // review (H3) Foundry uses a client's dialog only for a client whose hook locations it knows how to check, and only when it finds none.
+  const client = new Client({ name: elicitation ? 'claude-code' : 'journey-cursor-codex-stand-in', version: '1' }, { capabilities: elicitation ? { elicitation: { form: {} } } : {} });
   if (elicitation) client.setRequestHandler(ElicitRequestSchema, async req => onElicit(req.params));
   await client.connect(transport);
   const call = async (name, args = {}) => {

@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startSite, NOW } from './helpers.mjs';
+import { listDigest } from '../../onboarding/batch.mjs';
 import { siteSession, readSession } from '../session.mjs';
 import { connectInstructions, connectText, browserOpener, builderAllowed, doctor } from '../../cli.mjs';
 import { CARD_TEXT, applyCardText, revisionsFor } from '../../onboarding/card-text.mjs';
@@ -172,7 +173,7 @@ test('P3 B3-B4, P1 M9, P5 B1-B3: who decides is kept; approver answers are recor
     const pv = await s.post('/api/data/preview', { template: 'expense-approval', sheet: 'expenses', csv });
     await s.post('/api/data/commit', { template: 'expense-approval', sheet: 'expenses', csv, mapping: pv.mapping, answers: {}, target: 'live' });
     const b = await s.post('/api/batch/preview', { flowId: p.flowId });
-    const made = await s.post('/api/batch/approve', { batchId: b.batchId });
+    const made = await s.post('/api/batch/approve', { batchId: b.batchId, listDigest: listDigest(b) });
     assert.equal(made.stoppedAt, null);
     const answers = await s.get(`/api/answers/${p.flowId}`);
     assert.deepEqual(answers.waiting.map(w => w.id), ['R1']);
@@ -210,10 +211,10 @@ test('P2 B3 in the site: the second list of the day shows only what is new, and 
     await s.post('/api/data/commit', { template: 'invoice-chase', sheet: 'invoices', csv, mapping: pv.mapping, answers: { 'dateOrder:due': 'dmy' }, target: 'live' });
     const first = await s.post('/api/batch/preview', { flowId: p.flowId });
     assert.equal(first.items.length, 4); assert.equal(first.notes[0].kind, 'firm-first');
-    await s.post('/api/batch/approve', { batchId: first.batchId });
+    await s.post('/api/batch/approve', { batchId: first.batchId, listDigest: listDigest(first) });
     const second = await s.post('/api/batch/preview', { flowId: p.flowId });
     assert.deepEqual(second.items.map(i => i.subject), ['Invoice reminders: summary']);
-    const r = await s.post('/api/batch/approve', { batchId: second.batchId });
+    const r = await s.post('/api/batch/approve', { batchId: second.batchId, listDigest: listDigest(second) });
     assert.equal(r.stoppedAt, null); assert.equal((await s.get('/api/batches')).open.length, 0);
   } finally { await s.close(); }
 });

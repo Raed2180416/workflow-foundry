@@ -416,7 +416,7 @@
     "run": "Make a list (shows you everything first)",
     "change": "Change settings",
     "brief": "Get a one-page brief for IT",
-    "decided": "Turned on by {who} through {channel} on {when}.",
+    "decided": "Turned on by {who} through {channel} on {when}. The name is the one in Settings, not a checked identity.",
     "notDecided": "This version isn't on yet.",
     "note": "Noted: {note}",
     "singlePerson": "You're the only person here, so you turn on your own automations. The record says so.",
@@ -482,7 +482,8 @@
       "decisions": "Your decisions (turning it on, the list you approved) are kept in their own chained log beside the run record, not inside the run's chain. Anyone using this computer account could rewrite both.",
       "transcripts": "If an AI helped build it, its transcript is not part of the chain.",
       "anchor": "The record's latest link isn't stored outside this computer unless you copy it somewhere else.",
-      "secondPerson": "Approvals come from the person at this computer; a second person's own sign-in is planned."
+      "secondPerson": "Approvals come from the person at this computer; a second person's own sign-in is planned.",
+      "identity": "A yes through this page shows that a browser tab Foundry let in sent it, not which person clicked, and the name on it is the one in Settings. Approving with a passkey is planned."
     },
     "timeline": "Timeline ({n} events)",
     "seq": "#",
@@ -503,12 +504,13 @@
     "recordMeaning": "This shows nothing changed later only if the latest link was saved somewhere else at the time.",
     "copyHead": "Copy the latest link",
     "evidenceFingerprint": "File fingerprint: {hash}",
-    "startedBy": "Started by {who} through {channel}, when they approved its list.",
+    "evidenceContains": "The file holds every step of the run in full, so each one can be re-checked. That includes your list (every customer, address and amount) and the full text of every e-mail. Share it only with someone who may see that list.",
+    "startedBy": "Started through {channel} when its list was approved there. Recorded as {who}: the name in Settings and this computer's account, not a checked identity.",
     "startedUnknown": "Who started this run was not recorded.",
     "decisionsOnly": "Show decisions only",
     "everything": "Show every event",
     "who": "Who",
-    "byList": "{who}, through {channel}, from their yes to the list",
+    "byList": "{who} (the name in Settings), through {channel}, from the yes to the list",
     "events": {
       "run.created": "Run created",
       "runner.acquired": "Started",
@@ -780,7 +782,7 @@
     "managed": "Set by your organisation for this computer. It can't be changed here.",
     "nameTitle": "Your name in records",
     "nameLabel": "Your name",
-    "nameHelp": "Shown next to this computer's account in every decision you make (for example: Ravi Patel). Leave it empty to show the account only.",
+    "nameHelp": "Shown next to this computer's account in every decision you make (for example: Ravi Patel). Leave it empty to show the account only. Foundry doesn't check it, and a change of name is kept in your decision record.",
     "nameSave": "Save my name",
     "nameSaved": "Saved. Records now show: {label}.",
     "recordsAs": "Records show you as: {label}",
@@ -812,7 +814,7 @@
       "how": "Add this to .cursor/mcp.json in your project, or to your user settings:",
       "linkLead": "Or use a one-click link (built from Cursor's documented format; not yet tried in Cursor):",
       "linkLabel": "Cursor install link",
-      "note": "Cursor shows you the server before it adds it. Tested with a scripted client, not yet in Cursor."
+      "note": "Cursor shows you the server before it adds it. Foundry asks for your decisions in your browser, not in Cursor's own dialog: it can't look for hooks in Cursor that could answer that dialog for you. Tested with a scripted client, not yet in Cursor."
     },
     "codex": {
       "name": "Codex",
@@ -877,11 +879,11 @@
     },
     "keys": {
       "title": "Keys",
-      "body": "AI keys go into your computer's keychain. Foundry never writes them to a file, a log or the AI's view. If your computer has no keychain Foundry can use, it doesn't save the key. {claim:C10}"
+      "body": "AI keys go into your computer's keychain. Foundry never writes them to a file, a log or the AI's view. If your computer has no keychain Foundry can use, it doesn't save the key. A keychain keeps the key from other users of this computer, not from programs running as you: on a Mac, Foundry saves it in a way that lets any program running as you read it back through the security command without asking you (from Apple's documentation; not tried on a Mac), and on Linux any program running as you can read it while your keyring is unlocked. {claim:C10}"
     },
     "approve": {
       "title": "Who can approve",
-      "body": "You decide: with a click on this page, a typed yes in your own terminal, or the dialog your coding agent shows you. Foundry gives your agent no tool that approves. {claim:C02} Not covered: an agent using your terminal, or a hook that answers dialogs for you (below).",
+      "body": "You decide: with a click on this page, a typed yes in your own terminal, or, when Foundry finds nothing that could answer it for you, the dialog Claude Code shows you. Foundry gives your agent no tool that approves. {claim:C02} Not covered: an agent using your terminal, or a hook Foundry can't see (below).",
       "whyOnce": "Why Foundry asks once, about the whole list, rather than about each e-mail: {claim:C11}"
     },
     "limit": {
@@ -932,7 +934,7 @@
     },
     "hooks": {
       "title": "Dialogs a hook can answer",
-      "body": "A hook in Claude Code's settings can answer Foundry's dialog without showing it to you. The line from the Connect page includes --consent, which lets Foundry read your Claude Code settings files (only their hooks) to look for such a hook; if it finds one, or your organisation manages Claude Code, it asks you in this page instead. IT can block such hooks for everyone with allowManagedHooksOnly in Claude Code's managed settings."
+      "body": "A hook in Claude Code's settings, or in a plugin, skill or subagent, can answer Foundry's dialog without showing it to you, or change your answer. So Foundry uses that dialog only when it can look for such hooks and finds none. The line from the Connect page includes --consent, which lets Foundry read Claude Code's settings, plugins, skills and subagents on this computer, only to look for those hooks, and it looks again each time it asks. It asks you in this page instead if it finds one, if your organisation manages Claude Code, if Claude Code was started in a way that can bring hooks Foundry can't see, or if your agent isn't Claude Code. A hook Foundry can't see could still answer, so a yes in the dialog is recorded as the weaker way. IT can block such hooks for everyone with allowManagedHooksOnly in Claude Code's managed settings."
     },
     "data": {
       "title": "What Foundry keeps, and how to delete it",
