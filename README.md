@@ -144,12 +144,12 @@ Every phase still ends with a capability number against a simple baseline and a
 | UI | **Prototype** read-only run viewer (`tools/run-view/`) | 19 unit tests and 74 browser checks pass. The owner has not reviewed it yet; the game-QA screenshots are a scripted fixture |
 | Security | Labels, quarantine and sandbox exist; control-flow taint landed 2026-10-08; **gaps** | Landed: an ungated effect whose firing depends on untrusted data (`when`, loop `until`, map items, a skip chain, `onError` continuation) is rejected `LABEL_POLICY` / `UNTRUSTED_CONTROL` by the validator and again at dispatch (`tests/control-taint.test.mjs`; lane-7 probe B now fails; 0 of 393 test-suite workflows newly rejected [M]). Still open: the sink-field policy (untrusted data cannot fill even a data field of an ungated effect), the declassification budget, builder provenance taint, executor isolation. Each fix gates the first run that needs it ([synthesis §7](research/review-20261007/00-SYNTHESIS.md)) |
 | Evaluation validity | **Weakest link** | Every bed is synthetic and Claude-written; the sealed families are unused; nothing external has run. Next is the wild ladder (ROADMAP §4.2) |
-| Reuse library | Not started | Phase 5 |
+| Reuse library | **Experimental** registry keyed by contract hash, with producer-profile and consumer-conformance gates (`experiments/reuse/`) | Development evidence only: [RESULT-C2-1](research/reuse-20261021/RESULT-C2-1.md) (the producer-profile gate let 32 of 112 accepted items through wrong) and [RESULT-C2-2](research/reuse-20261021/RESULT-C2-2.md) (consumer conformance: 0 wrong in 98 accepted on fresh suppliers, blind to drift after the history). Not in `src/`; no monitoring of admitted reuse yet |
 
 Counts over these 14 layers:
 - built and tested, with known gaps: 6;
-- partly built: 3;
-- not built: 5;
+- partly built: 4 (reuse library added 2026-10-22, experimental);
+- not built: 4;
 - measured on held-out tasks of development families: 2 (P1 and C0 dev);
 - measured on sealed or wild tasks: 0.
 
