@@ -21,24 +21,29 @@ export const directPrompt = (input, { fallbackReason = null } = {}) => [nodeCont
 
 // ---- the decision (A1, A1T, A2): answer now, or a sub-workflow ----
 const OPTION_B = {
-  A1: (maxUsd) => `(b) build a sub-workflow for yourself: a small typed program of steps (parse the data, code steps that compute exactly, a model step that judges many rows in small batches, verify steps that check your own invariants) that runs under your authority and returns your answer. It may spend at most $${maxUsd}. If you choose (b), you write it in the next step; leave "answer" out.`,
-  A1T: (maxUsd) => `(b) run a sub-workflow from the harness's template library: you pick a template and fill its settings yourself in the next steps; it runs under your authority (at most $${maxUsd}) and returns your answer. If you choose (b), leave "answer" out. The library:\n${catalogText()}`,
-  A2: (maxUsd) => `(b) ask the governing builder of the harness for a sub-workflow: give a typed request (the goal, which of your inputs it reads, what it must return, and the budget it may spend, at most $${maxUsd}). A fresh builder constructs it from a template library, checks it on your data, and it runs under your authority and returns your answer. If you choose (b), fill "request" and leave "answer" out. The library the builder uses:\n${catalogText()}`,
+  self: (maxUsd) => `(b) build a sub-workflow for yourself: a small typed program of steps (parse the data, code steps that compute exactly, a model step that judges many rows in small batches, verify steps that check your own invariants) that runs under your authority and returns your answer. It may spend at most $${maxUsd}. If you choose (b), you write it in the next step; leave "answer" out.`,
+  template: (maxUsd) => `(b) run a sub-workflow from the harness's template library: you pick a template and fill its settings yourself in the next steps; it runs under your authority (at most $${maxUsd}) and returns your answer. If you choose (b), leave "answer" out. The library:\n${catalogText()}`,
+  governing: (maxUsd) => `(b) ask the governing builder of the harness for a sub-workflow: give a typed request (the goal, which of your inputs it reads, what it must return, and the budget it may spend, at most $${maxUsd}). A fresh builder constructs it from a template library, checks it on your data, and it runs under your authority and returns your answer. If you choose (b), fill "request" and leave "answer" out. The library the builder uses:\n${catalogText()}`,
 };
-export const decidePrompt = (arm, input, maxUsd) => [nodeContext(input),
-  `You have two ways to do this job:\n(a) answer directly now: fill "answer";\n${OPTION_B[arm](maxUsd)}`,
+export const decidePrompt = (route, input, maxUsd) => [nodeContext(input),
+  `You have two ways to do this job:\n(a) answer directly now: fill "answer";\n${OPTION_B[route](maxUsd)}`,
   'Choose (b) when the job needs a multi-step procedure that is error-prone in one pass (for example many rows to parse, de-duplicate, convert and total exactly). Choose (a) when you can answer reliably in one pass; it is cheaper.',
   'Set "decision" to "answer" or "subworkflow" and give a one-sentence reason.'].join('\n\n');
 
-export function decideSchema(arm, answerSchema) {
+export function decideSchema(route, answerSchema) {
   const props = { decision: { type: 'string', enum: ['answer', 'subworkflow'] }, reason: { type: 'string' }, answer: answerSchema };
-  if (arm === 'A2') props.request = { type: 'object', additionalProperties: false, required: ['goal', 'inputs', 'returns', 'budgetUsd'], properties: {
+  if (route === 'governing') props.request = { type: 'object', additionalProperties: false, required: ['goal', 'inputs', 'returns', 'budgetUsd'], properties: {
     goal: { type: 'string', description: 'what the sub-workflow must do, in plain words' },
     inputs: { type: 'array', items: { type: 'string', enum: [...NODE_INPUTS] }, description: 'which of your inputs it reads' },
     returns: { type: 'string', description: 'what it must return' },
     budgetUsd: { type: 'number', description: 'what it may spend' } } };
   return { type: 'object', additionalProperties: false, required: ['decision', 'reason'], properties: props };
 }
+
+// ---- parent-directed (forced) governing route: the node only writes its typed request ----
+export const requestPrompt = (input, maxUsd) => [nodeContext(input), PARENT_DIRECTIVE,
+  `The governing builder of the harness constructs it from a template library, checks it on your data, and it runs under your authority and returns your answer. Write your typed request: the goal, which of your inputs it reads, what it must return, and the budget it may spend (at most $${maxUsd}). The library the builder uses:\n${catalogText()}`].join('\n\n');
+export const requestSchema = () => { const d = decideSchema('governing', { type: 'object' }); return { type: 'object', additionalProperties: false, required: ['reason', 'request'], properties: { reason: d.properties.reason, request: d.properties.request } }; };
 
 // ---- A1: the node writes the sub-workflow itself (free-form subworkflow/1) ----
 export const DSL_GUIDE = `A sub-workflow is JSON: {"name", "purpose", "steps": [...], "output", "models", "budgetUsd"}.
@@ -53,8 +58,11 @@ Ops:
 "output" is the ref of the value the sub-workflow returns: it must be your intake answer. "models" lists the model ids judge_rows uses; "budgetUsd" is what it may spend.
 A small example (not your job): {"name": "ticket-triage", "steps": [{"id": "items", "op": "code", "args": [{"name": "text", "ref": "$in.export"}], "fn": "export default ({ text }) => JSON.parse(text).map(t => ({ id: t.id, text: t.body }))"}, {"id": "labelled", "op": "judge_rows", "args": [{"name": "rows", "ref": "$items"}], "show": ["id", "text"], "instructions": "Is the ticket about billing?", "labels": ["billing", "other"], "field": "kind", "batch": 20, "model": "claude-haiku-5-5"}, {"id": "out", "op": "code", "args": [{"name": "rows", "ref": "$labelled"}], "fn": "export default ({ rows }) => ({ billing: rows.filter(r => r.kind === 'billing').map(r => r.id) })"}], "output": "$out", "models": ["claude-haiku-5-5"], "budgetUsd": 0.01}`;
 
-export const selfBuildPrompt = (input, { envelope, reason, feedback, previous }) => [nodeContext(input),
-  `You decided to build a sub-workflow for this job (${reason}).`, DSL_GUIDE,
+// why: the node's own reason (it decided), or null when the parent workflow directs the sub-workflow (forced arms).
+export const PARENT_DIRECTIVE = 'The parent workflow routes every legacy export through a sub-workflow: this channel\'s data must be handled by one.';
+const whySentence = why => (why ? `You decided to build a sub-workflow for this job (${why}).` : PARENT_DIRECTIVE);
+export const selfBuildPrompt = (input, { envelope, why, feedback, previous }) => [nodeContext(input),
+  `${whySentence(why)} You write it yourself.`, DSL_GUIDE,
   `Your authority for it: inputs ${envelope.inputs.join(', ')}; ops ${envelope.ops.join(', ')}; models ${envelope.models.join(', ')}; budget at most $${envelope.budgetUsd}; depth at most ${envelope.maxDepth}.`,
   'The sub-workflow is checked before it runs, then run once on your data with every model judgment replaced by the first label (a practice run at no cost), then run for real. Its answer must match your intake answer exactly in shape; code checks that the totals equal the imports and that every reference is in your data.',
   ...(feedback ? [`Your previous sub-workflow did not pass. Fix it.\nPrevious spec: ${JSON.stringify(previous).slice(0, 12000)}\nWhat failed:\n${feedback}`] : []),
@@ -80,7 +88,7 @@ export function requestContext(request, input, budgetUsd) {
     ...request.inputs.map(k => `- ${k}:\n<<<${k.toUpperCase()}\n${input[k]}\n${k.toUpperCase()}>>>`)].join('\n');
 }
 /** The node's own view (A1T): its whole context. */
-export const nodeTemplateContext = (input, reason) => `${nodeContext(input)}\n\nYour reason for a sub-workflow: ${reason}`;
+export const nodeTemplateContext = (input, why) => `${nodeContext(input)}\n\n${why ? `Your reason for a sub-workflow: ${why}` : PARENT_DIRECTIVE}`;
 
 export const selectSchema = ids => ({ type: 'object', additionalProperties: false, required: ['template', 'reason', 'notCovered'], properties: {
   template: { type: 'string', enum: [...ids, 'none'] }, reason: { type: 'string' }, notCovered: { type: 'array', items: { type: 'string' } } } });

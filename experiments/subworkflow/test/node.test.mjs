@@ -135,6 +135,19 @@ test('decision "answer" skips the sub-workflow in every deciding arm', async () 
 
 test('the labels the template judges with are the bed labels', () => { assert.deepEqual(trueSlots(task, ch).labels, [...LABELS]); });
 
+test('parent-directed arms: no decision call; the governing route still writes its own typed request', async () => {
+  const self = await run('A1F', { '.build.r0': goodSpec(0.04) });
+  assert.equal(self.decision, 'directed'); assert.equal(self.path, 'subworkflow'); assert.equal(pass(self), true);
+  assert.ok(!self.calls.some(c => c.key === 'decide'));
+  const tpl = await run('A1TF', { '.tpl.select': { template: 'legacy-export-intake', reason: 'fits', notCovered: [] }, '.tpl.fill.r0': { slots: trueSlots(task, ch), assumptions: [] } });
+  assert.equal(tpl.path, 'subworkflow'); assert.equal(pass(tpl), true);
+  const gov = await run('A2F', { '.request': { reason: 'directed', request: { goal: 'intake', inputs: ['export', 'channel'], returns: 'answer', budgetUsd: 0.03 } },
+    '.builder.select': { template: 'legacy-export-intake', reason: 'fits', notCovered: [] }, '.builder.fill.r0': { slots: trueSlots(task, ch), assumptions: [] } });
+  assert.equal(gov.path, 'subworkflow'); assert.equal(pass(gov), true); assert.deepEqual(gov.sub.request.inputs, ['export', 'channel']);
+  const simple = await runNode({ port: port({ '.answer': truth }), arm: 'A2F', directive: 'answer', input, runId: 't', answerSchema: bed.nodeOutputSchema });
+  assert.equal(simple.path, 'direct'); assert.equal(simple.calls.length, 1);
+});
+
 test('defense in depth: without checkSpec, the call host refuses an effectful callee and the runtime refuses an effect op', async () => {
   const { createNodeBinding } = await import('../bind.mjs');
   const { runSpec } = await import('../dsl.mjs');

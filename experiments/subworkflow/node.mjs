@@ -15,7 +15,14 @@ import { createNodeBinding, practiceRun, gateProblems } from './bind.mjs';
 import { validateOutput } from '../jit/interpret.mjs';
 import * as P from './prompts.mjs';
 
-export const ARMS = Object.freeze(['A0', 'A1', 'A1T', 'A2']);
+// route: who builds a sub-workflow (null: nobody); directive: 'decide' (the node chooses: answer or sub-workflow) or
+// 'subworkflow' (the parent directs a sub-workflow for this node; the runner applies it to legacy-export nodes only).
+export const ARM_CONFIG = Object.freeze({
+  A0: { route: null, directive: 'answer' },
+  A1: { route: 'self', directive: 'decide' }, A1T: { route: 'template', directive: 'decide' }, A2: { route: 'governing', directive: 'decide' },
+  A1F: { route: 'self', directive: 'subworkflow' }, A1TF: { route: 'template', directive: 'subworkflow' }, A2F: { route: 'governing', directive: 'subworkflow' },
+});
+export const ARMS = Object.freeze(Object.keys(ARM_CONFIG));
 export const NODE_MODEL = 'claude-haiku-5-5';
 export const NODE_DECODING = Object.freeze({ reasoning: 'medium' });
 export const BUILDER_DECODING = Object.freeze({ reasoning: 'medium' });
@@ -28,11 +35,12 @@ const usd = x => Math.round(x * 1e6) / 1e6;
  * task spec; runId: the (arm, task) run id; answerSchema: the node's declared answer schema (the parent binds it).
  * Returns { output, path, decision, calls, costUsd, sub: {...}, authority: {...}, events, error }.
  */
-export async function runNode({ port, arm, input, runId, answerSchema, budgetUsd = NODE_BUDGET_USD, maxRepairs = MAX_REPAIRS, maxDepth = MAX_DEPTH, log = () => {} }) {
+export async function runNode({ port, arm, input, runId, answerSchema, directive = ARM_CONFIG[arm]?.directive, budgetUsd = NODE_BUDGET_USD, maxRepairs = MAX_REPAIRS, maxDepth = MAX_DEPTH }) {
   if (!ARMS.includes(arm)) throw new Error(`unknown arm ${arm}`);
+  const { route } = ARM_CONFIG[arm];
   const ch = input.channel;
   const binding = createNodeBinding({ port, budgetUsd, maxDepth, arm, taskKey: ch, runId, outputSchema: answerSchema });
-  const rec = { arm, channel: ch, path: null, decision: null, reason: null, calls: [], proposals: [], rounds: [], fallback: null, sub: null, error: null };
+  const rec = { arm, route, directive, channel: ch, path: null, decision: null, reason: null, calls: [], proposals: [], rounds: [], fallback: null, sub: null, error: null };
   const shape = o => { const v = validateOutput(answerSchema, o); return v.valid ? null : v.errors.join('; '); };
   const spent = () => { const r = binding.host.spans().find(s => s.path === 'root'); return usd(r.spentUsd); };
 
@@ -118,31 +126,40 @@ export async function runNode({ port, arm, input, runId, answerSchema, budgetUsd
   }
 
   try {
-    if (arm === 'A0') {
+    if (!route || directive === 'answer') {
       rec.path = 'direct'; rec.decision = 'answer';
       const answer = await direct('answer');
       return finish(answer);
     }
     const maxUsd = carvable();
-    const d = await typed('decide', P.NODE_SYSTEM, P.decidePrompt(arm, input, maxUsd), P.decideSchema(arm, answerSchema), NODE_DECODING);
-    rec.decision = d.decision; rec.reason = String(d.reason ?? '').slice(0, 300);
-    if (d.decision === 'answer') {
-      rec.path = 'direct';
-      if (d.answer) return finish(d.answer);
-      return finish(await direct('answer'));   // chose to answer but left the answer out
+    let d;
+    if (directive === 'decide') {
+      d = await typed('decide', P.NODE_SYSTEM, P.decidePrompt(route, input, maxUsd), P.decideSchema(route, answerSchema), NODE_DECODING);
+      rec.decision = d.decision; rec.reason = String(d.reason ?? '').slice(0, 300);
+      if (d.decision === 'answer') {
+        rec.path = 'direct';
+        if (d.answer) return finish(d.answer);
+        return finish(await direct('answer'));   // chose to answer but left the answer out
+      }
+    } else {
+      // Parent-directed: the node does not choose. On the governing route it still writes its own typed request.
+      rec.decision = 'directed';
+      d = route === 'governing' ? await typed('request', P.NODE_SYSTEM, P.requestPrompt(input, maxUsd), P.requestSchema(), NODE_DECODING) : {};
+      rec.reason = d.reason ? String(d.reason).slice(0, 300) : null;
     }
-    rec.sub = { builder: arm === 'A2' ? 'governing' : 'self' };
+    const why = directive === 'decide' ? rec.reason : null;
+    rec.sub = { builder: route === 'governing' ? 'governing' : 'self', route };
     let loop;
-    if (arm === 'A1') {
+    if (route === 'self') {
       const envelope = envelopeOf();
       let previous = null;
       loop = await constructLoop(async (round, feedback) => {
-        const spec = await typed(`build.r${round}`, P.NODE_SYSTEM, P.selfBuildPrompt(input, { envelope: { ...envelope, budgetUsd: carvable() }, reason: rec.reason, feedback, previous }), P.SELF_BUILD_SCHEMA, NODE_DECODING);
+        const spec = await typed(`build.r${round}`, P.NODE_SYSTEM, P.selfBuildPrompt(input, { envelope: { ...envelope, budgetUsd: carvable() }, why, feedback, previous }), P.SELF_BUILD_SCHEMA, NODE_DECODING);
         previous = spec;
         return { spec };
       }, envelope);
-    } else if (arm === 'A1T') {
-      loop = await constructLoop(templatePropose({ context: P.nodeTemplateContext(input, rec.reason), selectSystem: P.nodeSelectSystem(), fillSystem: P.nodeFillSystem(),
+    } else if (route === 'template') {
+      loop = await constructLoop(templatePropose({ context: P.nodeTemplateContext(input, why), selectSystem: P.nodeSelectSystem(), fillSystem: P.nodeFillSystem(),
         keyPrefix: 'tpl', budget: () => Math.min(SUB_DEFAULT_USD, carvable()) }), envelopeOf());
     } else {
       // A2: the typed request crosses to the governing harness. Code checks it against the node's envelope: an input the
