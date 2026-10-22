@@ -1,0 +1,105 @@
+{
+ "label": "b1lh-e8-2.H-0.k1",
+ "incident": "b1lh-e8-2",
+ "arm": "H-0",
+ "k": 1,
+ "dryRun": false,
+ "kind": "monolith",
+ "at": "2026-10-22T02:37:03.434Z",
+ "wallMs": 504979,
+ "bedDigest": "b9e5a67138d42a7f",
+ "intervene": "patch (workflow defect: every failure reproduces exactly)",
+ "baseDigest": "f3602ae5612386b3",
+ "patchedDigest": "83db2f5c29a625c4",
+ "changed": true,
+ "loads": true,
+ "problems": [],
+ "session": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "capUsd": 0.5,
+  "costUsd": 0.17800476,
+  "costUpperUsd": 0.17800476,
+  "costUnknown": false,
+  "turns": 11,
+  "error": null,
+  "durationMs": 425903,
+  "smokeRuns": 1
+ },
+ "report": null,
+ "gate": {
+  "accept": true,
+  "reason": "loads; no new arm error (no correctness signal)"
+ },
+ "gates": {
+  "H-C": {
+   "accept": false,
+   "reason": "no failing practice order recovered"
+  },
+  "H-N": {
+   "accept": false,
+   "reason": "no disagreement resolved"
+  },
+  "H-0": {
+   "accept": true,
+   "reason": "loads; no new arm error (no correctness signal)"
+  }
+ },
+ "moduleTests": null,
+ "practice": {
+  "before": {
+   "completed": 331,
+   "oraclePassed": 315,
+   "oracleN": 331,
+   "contractsPassed": 308,
+   "contractsN": 324,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "after": {
+   "completed": 331,
+   "oraclePassed": 315,
+   "oracleN": 331,
+   "contractsPassed": 308,
+   "contractsN": 324,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "nvBefore": 0,
+  "nvAfter": 0
+ },
+ "grading": {
+  "before": {
+   "completed": 1022,
+   "oraclePassed": 974,
+   "oracleN": 1022,
+   "contractsPassed": 953,
+   "contractsN": 1001,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "rawAfter": {
+   "completed": 1022,
+   "oraclePassed": 974,
+   "oracleN": 1022,
+   "contractsPassed": 953,
+   "contractsN": 1001,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "raw": {
+   "nRecovered": 0,
+   "nRegressed": 0,
+   "net": 0,
+   "recoveredByClass": {},
+   "regressedByClass": {}
+  },
+  "kept": {
+   "nRecovered": 0,
+   "nRegressed": 0,
+   "net": 0,
+   "recoveredByClass": {},
+   "regressedByClass": {}
+  }
+ }
+}

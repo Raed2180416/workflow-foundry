@@ -62,3 +62,13 @@
 {"id":"b1lh-e8-2.H-C.k2@2026-10-21T23:32:09.197Z","phase":"end","label":"b1lh-e8-2.H-C.k2","capUsd":0.5,"costUsd":0,"costUpperUsd":0,"costUnknown":false,"turns":1,"error":"MODEL_RATE_LIMIT","at":"2026-10-21T23:32:10.667Z"}
 {"id":"b1lh-e8-3.H-C.k2@2026-10-21T23:32:11.563Z","phase":"start","label":"b1lh-e8-3.H-C.k2","capUsd":0.5,"at":"2026-10-21T23:32:11.563Z"}
 {"id":"b1lh-e8-3.H-C.k2@2026-10-21T23:32:11.563Z","phase":"end","label":"b1lh-e8-3.H-C.k2","capUsd":0.5,"costUsd":0,"costUpperUsd":0,"costUnknown":false,"turns":1,"error":"MODEL_RATE_LIMIT","at":"2026-10-21T23:32:13.097Z"}
+{"id":"ch-e8-3.H-C.k2@2026-10-22T02:17:08.752Z","phase":"start","label":"ch-e8-3.H-C.k2","capUsd":0.5,"at":"2026-10-22T02:17:08.752Z"}
+{"id":"ch-e8-3.H-C.k2@2026-10-22T02:17:08.752Z","phase":"end","label":"ch-e8-3.H-C.k2","capUsd":0.5,"costUsd":0.30968261,"costUpperUsd":0.30968261,"costUnknown":false,"turns":42,"error":null,"at":"2026-10-22T02:26:45.192Z"}
+{"id":"b1lh-e8-2.H-0.k1@2026-10-22T02:28:38.457Z","phase":"start","label":"b1lh-e8-2.H-0.k1","capUsd":0.5,"at":"2026-10-22T02:28:38.458Z"}
+{"id":"b1lh-e8-2.H-0.k1@2026-10-22T02:28:38.457Z","phase":"end","label":"b1lh-e8-2.H-0.k1","capUsd":0.5,"costUsd":0.17800476,"costUpperUsd":0.17800476,"costUnknown":false,"turns":11,"error":null,"at":"2026-10-22T02:35:44.362Z"}
+{"id":"b1lh-e8-3.H-0.k1@2026-10-22T02:37:03.490Z","phase":"start","label":"b1lh-e8-3.H-0.k1","capUsd":0.5,"at":"2026-10-22T02:37:03.490Z"}
+{"id":"b1lh-e8-3.H-0.k1@2026-10-22T02:37:03.490Z","phase":"end","label":"b1lh-e8-3.H-0.k1","capUsd":0.5,"costUsd":0.25607223999999995,"costUpperUsd":0.25607223999999995,"costUnknown":false,"turns":21,"error":null,"at":"2026-10-22T02:46:12.195Z"}
+{"id":"ch-e8-2.H-C.k2@2026-10-22T02:47:15.566Z","phase":"start","label":"ch-e8-2.H-C.k2","capUsd":0.5,"at":"2026-10-22T02:47:15.566Z"}
+{"id":"ch-e8-2.H-C.k2@2026-10-22T02:47:15.566Z","phase":"end","label":"ch-e8-2.H-C.k2","capUsd":0.5,"costUsd":0.13763591000000003,"costUpperUsd":0.13763591000000003,"costUnknown":false,"turns":27,"error":null,"at":"2026-10-22T02:51:58.919Z"}
+{"id":"cht-e8-2.H-C.k2@2026-10-22T02:54:14.794Z","phase":"start","label":"cht-e8-2.H-C.k2","capUsd":0.5,"at":"2026-10-22T02:54:14.794Z"}
+{"id":"cht-e8-2.H-C.k2@2026-10-22T02:54:14.794Z","phase":"end","label":"cht-e8-2.H-C.k2","capUsd":0.5,"costUsd":0.13663367,"costUpperUsd":0.13663367,"costUnknown":false,"turns":26,"error":null,"at":"2026-10-22T02:59:00.584Z"}

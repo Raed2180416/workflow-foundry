@@ -63,6 +63,12 @@ sealed or claim-bearing result.*
     - Mercury 3 as a second cheap model ([PROVISIONING](research/mercury-20261021/PROVISIONING.md));
     - the org layer and the open-core line ([v0](research/business-20261021/OPEN-CORE-AND-INVARIANTS.md)).
   - **Benchmark landscape:** `research/benchmarks-20261015/`.
+  - **Failure handling (C3), FH-1, 2026-10-22** ([RESULT](research/heal-20261021/RESULT-FH1.md), preregistered, dev, Haiku
+    $4.62). The setup is classify → intervene → patch → replay on 475 real recurring failing cases of eight Haiku-built E8
+    programs. With the capability contracts as verifier, one Haiku session per program removed **75.2%** net (357), with 0
+    regressions and 7 of 8 programs at 1,022/1,022, for $1.14. The baselines: retry 0 and regenerate +5.8% (expected, $8.07).
+    With an N-version verifier the loop removed 11.4%; with no verifier, 24.8%. H1, H1b and H2 are all supported (dev).
+    The heal unblock is D20.
 - **2026-10-09: the cloud session ended** (usage limit); work continues on the owner's laptop. Stream run data, journals and
   the Kev held-out material were lost with the container (`research/jit-20261008/HANDOFF.md`). The two in-flight workflows
   were finished by hand:

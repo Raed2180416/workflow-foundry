@@ -1,0 +1,290 @@
+{
+ "label": "cht-e8-2.H-C.k2",
+ "incident": "cht-e8-2",
+ "arm": "H-C",
+ "k": 2,
+ "dryRun": false,
+ "kind": "composed",
+ "at": "2026-10-22T03:00:53.790Z",
+ "wallMs": 401091,
+ "bedDigest": "b9e5a67138d42a7f",
+ "intervene": "patch (workflow defect: every failure reproduces exactly)",
+ "baseDigest": "7231d7bccba5a2e8",
+ "patchedDigest": "27f03619a50c7b9d",
+ "changed": true,
+ "loads": true,
+ "problems": [],
+ "session": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "capUsd": 0.5,
+  "costUsd": 0.13663367,
+  "costUpperUsd": 0.13663367,
+  "costUnknown": false,
+  "turns": 26,
+  "error": null,
+  "durationMs": 285784,
+  "smokeRuns": 2
+ },
+ "report": {
+  "file": "FAILURES.md",
+  "sha256": "c70ed703d544430bdf9497bcc27be86345c31b9133c06c1a14d8d766503b0a1e",
+  "classes": [
+   {
+    "key": "reservation|R4.2|ORD-…: not every item reserved within <n> min of ready",
+    "contract": "reservation",
+    "rule": "R4.2",
+    "finding": "ORD-…: not every item reserved within <n> min of ready",
+    "n": 8,
+    "contractRules": [
+     "R4.2.1",
+     "R5.1",
+     "R6.2",
+     "R7.1"
+    ],
+    "owners": [
+     "fulfilment"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0001",
+     "1236:d3/ORD-1236-0001",
+     "1236:d3/ORD-1236-0002",
+     "1236:d3/ORD-1236-0004",
+     "1237:d5/ORD-1237-0001",
+     "1237:d5/ORD-1237-0002",
+     "1237:d5/ORD-1237-0004",
+     "1237:d5/ORD-1237-0007"
+    ]
+   },
+   {
+    "key": "intake|R1.1|order never recorded",
+    "contract": "intake",
+    "rule": "R1.1",
+    "finding": "order never recorded",
+    "n": 6,
+    "contractRules": [
+     "R1.1",
+     "R1.2",
+     "R1.3",
+     "R1.4",
+     "§3.1",
+     "§3.5"
+    ],
+    "owners": [
+     "intake"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0001",
+     "1236:d3/ORD-1236-0001",
+     "1236:d3/ORD-1236-0004",
+     "1237:d5/ORD-1237-0001",
+     "1237:d5/ORD-1237-0004",
+     "1237:d5/ORD-1237-0007"
+    ]
+   },
+   {
+    "key": "tracking|R4.1|order never set processing",
+    "contract": "tracking",
+    "rule": "R4.1",
+    "finding": "order never set processing",
+    "n": 6,
+    "contractRules": [
+     "R4.1",
+     "R4.4",
+     "R4.5",
+     "R7.2"
+    ],
+    "owners": [
+     "order-progress"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0001",
+     "1236:d3/ORD-1236-0001",
+     "1236:d3/ORD-1236-0004",
+     "1237:d5/ORD-1237-0001",
+     "1237:d5/ORD-1237-0004",
+     "1237:d5/ORD-1237-0007"
+    ]
+   },
+   {
+    "key": "tracking|R4.4|ORD-…: never completed after delivery",
+    "contract": "tracking",
+    "rule": "R4.4",
+    "finding": "ORD-…: never completed after delivery",
+    "n": 4,
+    "contractRules": [
+     "R4.1",
+     "R4.4",
+     "R4.5",
+     "R7.2"
+    ],
+    "owners": [
+     "fulfilment"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0003",
+     "1236:d3/ORD-1236-0003",
+     "1237:d5/ORD-1237-0003",
+     "1237:d5/ORD-1237-0006"
+    ]
+   },
+   {
+    "key": "customer-action|R3.2|ORD-…: unavailable fulfilment not cancelled after the amend",
+    "contract": "customer-action",
+    "rule": "R3.2",
+    "finding": "ORD-…: unavailable fulfilment not cancelled after the amend",
+    "n": 2,
+    "contractRules": [
+     "R3.1",
+     "R3.2",
+     "S1",
+     "S5",
+     "S9",
+     "S11"
+    ],
+    "owners": [
+     "customer-action"
+    ],
+    "orders": [
+     "1236:d3/ORD-1236-0002",
+     "1237:d5/ORD-1237-0002"
+    ]
+   },
+   {
+    "key": "customer-action|R3.2|order never timed out",
+    "contract": "customer-action",
+    "rule": "R3.2",
+    "finding": "order never timed out",
+    "n": 2,
+    "contractRules": [
+     "R3.1",
+     "R3.2",
+     "S1",
+     "S5",
+     "S9",
+     "S11"
+    ],
+    "owners": [
+     "customer-action"
+    ],
+    "orders": [
+     "1237:d5/ORD-1237-0005",
+     "1237:d5/ORD-1237-0008"
+    ]
+   },
+   {
+    "key": "customer-action|R3.2|order not cancelled after the counted action",
+    "contract": "customer-action",
+    "rule": "R3.2",
+    "finding": "order not cancelled after the counted action",
+    "n": 2,
+    "contractRules": [
+     "R3.1",
+     "R3.2",
+     "S1",
+     "S5",
+     "S9",
+     "S11"
+    ],
+    "owners": [
+     "customer-action"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0002",
+     "1236:d3/ORD-1236-0005"
+    ]
+   }
+  ]
+ },
+ "gate": {
+  "accept": true,
+  "reason": "16 practice orders recovered, 0 regressed"
+ },
+ "gates": {
+  "H-C": {
+   "accept": true,
+   "reason": "16 practice orders recovered, 0 regressed"
+  },
+  "H-N": {
+   "accept": false,
+   "reason": "6 orders newly disagree with the majority"
+  },
+  "H-0": {
+   "accept": true,
+   "reason": "loads; no new arm error (no correctness signal)"
+  }
+ },
+ "moduleTests": {
+  "files": 9,
+  "modules": 9,
+  "modulesWithTests": 9,
+  "pass": 37,
+  "fail": 0,
+  "ok": true,
+  "ran": true
+ },
+ "practice": {
+  "before": {
+   "completed": 331,
+   "oraclePassed": 315,
+   "oracleN": 331,
+   "contractsPassed": 308,
+   "contractsN": 324,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "after": {
+   "completed": 331,
+   "oraclePassed": 331,
+   "oracleN": 331,
+   "contractsPassed": 324,
+   "contractsN": 324,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "nvBefore": 0,
+  "nvAfter": 6
+ },
+ "grading": {
+  "before": {
+   "completed": 1022,
+   "oraclePassed": 974,
+   "oracleN": 1022,
+   "contractsPassed": 953,
+   "contractsN": 1001,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "rawAfter": {
+   "completed": 1022,
+   "oraclePassed": 1022,
+   "oracleN": 1022,
+   "contractsPassed": 1001,
+   "contractsN": 1001,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "raw": {
+   "nRecovered": 48,
+   "nRegressed": 0,
+   "net": 48,
+   "recoveredByClass": {
+    "gl-intake": 18,
+    "gl-awaiting": 18,
+    "gl-dispatched": 12
+   },
+   "regressedByClass": {}
+  },
+  "kept": {
+   "nRecovered": 48,
+   "nRegressed": 0,
+   "net": 48,
+   "recoveredByClass": {
+    "gl-intake": 18,
+    "gl-awaiting": 18,
+    "gl-dispatched": 12
+   },
+   "regressedByClass": {}
+  }
+ }
+}
