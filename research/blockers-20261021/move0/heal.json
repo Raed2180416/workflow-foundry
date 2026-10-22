@@ -1,0 +1,874 @@
+{
+ "generatedBy": "experiments/certify/rescore.mjs",
+ "part": "heal",
+ "evidence": "development/diagnostic: stored heal records (10-08 incidents on inspected test seeds; FH-1 on dev worlds)",
+ "2026-10-08": {
+  "H-p1": {
+   "recorded": {
+    "retryControl": "base 8/8 pass, healed 8/8 pass",
+    "mechanism": "parent wrong 88/88, healed right 88/88 over 35 trials",
+    "promoted": "v3 (the 10-08 decision)"
+   },
+   "stochastic": {
+    "verdict": "inconclusive",
+    "label": "non-evidential",
+    "reasons": [
+     "the base never failed in 8 control runs: the control is at ceiling and cannot show a patch effect"
+    ],
+    "baseFailureUpper": 0.3244156195108769
+   },
+   "mechanism": {
+    "verdict": "accept",
+    "label": "mechanism",
+    "reasons": [
+     "88/88 injected faults corrected; the parent was wrong on all of them"
+    ],
+    "correctionLower": 0.9608441125278288,
+    "nEff": 75.7729941291585,
+    "note": "certifies the mechanism on the injected class only; the natural-rate effect needs the stochastic mode or post-promotion monitoring"
+   },
+   "samplingPlan": {
+    "test": "exact truncated SPRT, H0 healed 0.5% vs H1 unhealed 1/36, alpha = beta = 0.05",
+    "expectedRunsIfUnhealed": 129.9,
+    "expectedRunsIfHealed": 192.2,
+    "errorAtH1": 0.0502,
+    "errorAtH0": 0.0286
+   },
+   "verdict": "heal claim: inconclusive (non-evidential control); mechanism certified on the injected class only"
+  },
+  "H-cfx": {
+   "candidates": [
+    {
+     "run": "live-20261008-r2",
+     "proposal": "p-4e3456da-r3",
+     "proposer": "claude-sonnet-5-5",
+     "evidence": {
+      "mode": "deterministic",
+      "determinism": {
+       "replays": 11,
+       "identical": 11
+      },
+      "failing": {
+       "n": 3,
+       "fixed": 3
+      },
+      "regressions": {
+       "n": 8,
+       "broken": 0
+      },
+      "mutants": {
+       "n": 16,
+       "violations": 3
+      },
+      "fresh": [
+       {
+        "stratum": "unstratified",
+        "failing": false,
+        "base": {
+         "n": 4,
+         "pass": 4
+        },
+        "cand": {
+         "n": 4,
+         "pass": 4
+        }
+       }
+      ]
+     },
+     "deterministic": {
+      "verdict": "reject",
+      "label": "mutant-violation",
+      "reasons": [
+       "3 of 16 mutants violated"
+      ]
+     },
+     "asStochastic": {
+      "verdict": "inconclusive",
+      "label": "base-unconfirmed"
+     }
+    },
+    {
+     "run": "live-20261008-r3",
+     "proposal": "p-dfd855f4-r2",
+     "proposer": "claude-haiku-5-5",
+     "evidence": {
+      "mode": "deterministic",
+      "determinism": {
+       "replays": 11,
+       "identical": 11
+      },
+      "failing": {
+       "n": 3,
+       "fixed": 3
+      },
+      "regressions": {
+       "n": 8,
+       "broken": 0
+      },
+      "mutants": {
+       "n": 16,
+       "violations": 0
+      },
+      "fresh": [
+       {
+        "stratum": "unstratified",
+        "failing": false,
+        "base": {
+         "n": 4,
+         "pass": 4
+        },
+        "cand": {
+         "n": 4,
+         "pass": 4
+        }
+       }
+      ]
+     },
+     "deterministic": {
+      "verdict": "inconclusive",
+      "label": "no-fresh-discrimination",
+      "reasons": [
+       "no fresh case in a failing stratum where the base fails and the candidate passes"
+      ]
+     },
+     "asStochastic": {
+      "verdict": "inconclusive",
+      "label": "base-unconfirmed"
+     }
+    },
+    {
+     "run": "live-20261008-r4",
+     "proposal": "p-a3336190-r4",
+     "proposer": "claude-opus-5-5",
+     "evidence": {
+      "mode": "deterministic",
+      "determinism": {
+       "replays": 11,
+       "identical": 11
+      },
+      "failing": {
+       "n": 3,
+       "fixed": 3
+      },
+      "regressions": {
+       "n": 8,
+       "broken": 0
+      },
+      "mutants": {
+       "n": 16,
+       "violations": 0
+      },
+      "fresh": [
+       {
+        "stratum": "no-wrong-default",
+        "failing": false,
+        "base": {
+         "n": 2,
+         "pass": 2
+        },
+        "cand": {
+         "n": 2,
+         "pass": 2
+        }
+       },
+       {
+        "stratum": "has-wrong-default",
+        "failing": true,
+        "base": {
+         "n": 2,
+         "pass": 0
+        },
+        "cand": {
+         "n": 2,
+         "pass": 2
+        }
+       }
+      ]
+     },
+     "deterministic": {
+      "verdict": "accept",
+      "label": "deterministic",
+      "reasons": [
+       "3/3 failing replays fixed, 0 regressions, 2 fresh failing-stratum cases fixed"
+      ],
+      "freshFixRate": {
+       "x": 2,
+       "n": 2,
+       "p": 1,
+       "lo": 0.15811388300841894,
+       "hi": 1,
+       "level": 0.95,
+       "sides": 2,
+       "method": "clopper-pearson"
+      },
+      "note": "deterministic mode: each replay is a verdict; the fresh-stratum interval is wide and stated, not a rate claim"
+     },
+     "asStochastic": {
+      "verdict": "inconclusive",
+      "label": "base-unconfirmed"
+     }
+    }
+   ],
+   "verdict": "accepted only in deterministic mode, for the one candidate with a stratified fresh discrimination; the others are rejected (mutant) or inconclusive (no fresh discrimination)"
+  },
+  "H-rec": {
+   "recorded": {
+    "retry": "base oracle 0/4, own verdict pass 4/4",
+    "escalate": "escalate-conf:L: oracle 0/4, verdict pass 4/4",
+    "proposerRounds": {
+     "HEAL_OP_INVALID": 3,
+     "HEAL_LITERAL_LEAK": 3,
+     "HEAL_FAILING_CASE_STILL_FAILS": 8,
+     "pending": 1,
+     "HEAL_LINT_NOT_CLEARED": 1
+    }
+   },
+   "verifier": {
+    "n": 8,
+    "verdictPass": 8,
+    "oraclePass": 0,
+    "falseAcceptsAtLeast": 8,
+    "falseAcceptLower": 0.6876560219336323,
+    "invalid": true,
+    "maxFalseAccept": 0.2
+   },
+   "determinism": {
+    "replays": 4,
+    "identical": 4
+   },
+   "candidatesThatReachedReplay": {
+    "n": 8,
+    "each": {
+     "verdict": "reject",
+     "label": "failing-case-still-fails",
+     "reasons": [
+      "1 of 1 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+     ],
+     "failing": {
+      "n": 1,
+      "fixed": 0
+     }
+    }
+   },
+   "escalationAsCandidate": {
+    "verdict": "reject",
+    "label": "still-reproduces",
+    "reasons": [
+     "the candidate reproduces the failure (4/4; lower bound 0.510 ≥ threshold 0.408)"
+    ]
+   },
+   "verdict": "reject: no candidate fixed the failing case; the workflow verdict is an invalid evaluator for this incident"
+  }
+ },
+ "fh1": {
+  "source": "git worktree-wf_0f86d12b-ab5-2 @ 9e2a2b61dbef36e904ce96a5f0954f981a3105a2",
+  "attempts": [
+   {
+    "attempt": "b1lh-e8-2.H-0.k1",
+    "incident": "b1lh-e8-2",
+    "arm": "H-0",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "16 of 16 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/16",
+    "grading": "0/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "b1lh-e8-2.H-C.k1",
+    "incident": "b1lh-e8-2",
+    "arm": "H-C",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "16/16 failing replays fixed, 0 regressions, 48 fresh failing-stratum cases fixed"
+    ],
+    "practice": "16/16",
+    "grading": "48/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "b1lh-e8-2.H-C.k2",
+    "verdict": "no record",
+    "label": "environment-fault"
+   },
+   {
+    "attempt": "b1lh-e8-2.H-N.k1",
+    "incident": "b1lh-e8-2",
+    "arm": "H-N",
+    "k": 1,
+    "ownGate": false,
+    "verdict": "reject",
+    "label": "no-candidate",
+    "reasons": [
+     "no session: the arm's verifier raised no signal"
+    ],
+    "practice": "0/16",
+    "grading": "0/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0"
+   },
+   {
+    "attempt": "b1lh-e8-3.H-0.k1",
+    "incident": "b1lh-e8-3",
+    "arm": "H-0",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "4 of 4 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/4",
+    "grading": "0/7",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "b1lh-e8-3.H-C.k1",
+    "incident": "b1lh-e8-3",
+    "arm": "H-C",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "4/4 failing replays fixed, 0 regressions, 7 fresh failing-stratum cases fixed"
+    ],
+    "practice": "4/4",
+    "grading": "7/7",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "b1lh-e8-3.H-C.k2",
+    "verdict": "no record",
+    "label": "environment-fault"
+   },
+   {
+    "attempt": "b1lh-e8-3.H-N.k1",
+    "incident": "b1lh-e8-3",
+    "arm": "H-N",
+    "k": 1,
+    "ownGate": false,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "4 of 4 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/4",
+    "grading": "0/7",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-1.H-0.k1",
+    "incident": "ch-e8-1",
+    "arm": "H-0",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "16 of 16 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/16",
+    "grading": "0/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-1.H-C.k1",
+    "incident": "ch-e8-1",
+    "arm": "H-C",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "16/16 failing replays fixed, 0 regressions, 48 fresh failing-stratum cases fixed"
+    ],
+    "practice": "16/16",
+    "grading": "48/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-1.H-C.k2",
+    "incident": "ch-e8-1",
+    "arm": "H-C",
+    "k": 2,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "16/16 failing replays fixed, 0 regressions, 48 fresh failing-stratum cases fixed"
+    ],
+    "practice": "16/16",
+    "grading": "48/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-1.H-N.k1",
+    "incident": "ch-e8-1",
+    "arm": "H-N",
+    "k": 1,
+    "ownGate": false,
+    "verdict": "reject",
+    "label": "no-candidate",
+    "reasons": [
+     "no session: the arm's verifier raised no signal"
+    ],
+    "practice": "0/16",
+    "grading": "0/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0"
+   },
+   {
+    "attempt": "ch-e8-2.H-0.k1",
+    "incident": "ch-e8-2",
+    "arm": "H-0",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "23 of 23 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/23",
+    "grading": "0/67",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-2.H-C.k1",
+    "incident": "ch-e8-2",
+    "arm": "H-C",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "23/23 failing replays fixed, 0 regressions, 67 fresh failing-stratum cases fixed"
+    ],
+    "practice": "23/23",
+    "grading": "67/67",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-2.H-C.k2",
+    "incident": "ch-e8-2",
+    "arm": "H-C",
+    "k": 2,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "23/23 failing replays fixed, 0 regressions, 67 fresh failing-stratum cases fixed"
+    ],
+    "practice": "23/23",
+    "grading": "67/67",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-2.H-N.k1",
+    "incident": "ch-e8-2",
+    "arm": "H-N",
+    "k": 1,
+    "ownGate": false,
+    "verdict": "reject",
+    "label": "no-candidate",
+    "reasons": [
+     "no session: the arm's verifier raised no signal"
+    ],
+    "practice": "0/23",
+    "grading": "0/67",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0"
+   },
+   {
+    "attempt": "ch-e8-3.H-0.k1",
+    "incident": "ch-e8-3",
+    "arm": "H-0",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "6 of 42 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "36/42",
+    "grading": "118/136",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-3.H-C.k1",
+    "incident": "ch-e8-3",
+    "arm": "H-C",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "36 of 42 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "6/42",
+    "grading": "18/136",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-3.H-C.k2",
+    "incident": "ch-e8-3",
+    "arm": "H-C",
+    "k": 2,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "42/42 failing replays fixed, 0 regressions, 136 fresh failing-stratum cases fixed"
+    ],
+    "practice": "42/42",
+    "grading": "136/136",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "ch-e8-3.H-N.k1",
+    "incident": "ch-e8-3",
+    "arm": "H-N",
+    "k": 1,
+    "ownGate": false,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "42 of 42 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/42",
+    "grading": "0/136",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-1.H-0.k1",
+    "incident": "cht-e8-1",
+    "arm": "H-0",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "7 of 7 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/7",
+    "grading": "0/19",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-1.H-C.k1",
+    "incident": "cht-e8-1",
+    "arm": "H-C",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "7/7 failing replays fixed, 0 regressions, 19 fresh failing-stratum cases fixed"
+    ],
+    "practice": "7/7",
+    "grading": "19/19",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-1.H-C.k2",
+    "incident": "cht-e8-1",
+    "arm": "H-C",
+    "k": 2,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "7/7 failing replays fixed, 0 regressions, 19 fresh failing-stratum cases fixed"
+    ],
+    "practice": "7/7",
+    "grading": "19/19",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-1.H-N.k1",
+    "incident": "cht-e8-1",
+    "arm": "H-N",
+    "k": 1,
+    "ownGate": false,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "7 of 7 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/7",
+    "grading": "0/19",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-2.H-0.k1",
+    "incident": "cht-e8-2",
+    "arm": "H-0",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "16 of 16 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/16",
+    "grading": "0/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-2.H-C.k1",
+    "incident": "cht-e8-2",
+    "arm": "H-C",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "16/16 failing replays fixed, 0 regressions, 48 fresh failing-stratum cases fixed"
+    ],
+    "practice": "16/16",
+    "grading": "48/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-2.H-C.k2",
+    "incident": "cht-e8-2",
+    "arm": "H-C",
+    "k": 2,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "16/16 failing replays fixed, 0 regressions, 48 fresh failing-stratum cases fixed"
+    ],
+    "practice": "16/16",
+    "grading": "48/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-2.H-N.k1",
+    "incident": "cht-e8-2",
+    "arm": "H-N",
+    "k": 1,
+    "ownGate": false,
+    "verdict": "reject",
+    "label": "no-candidate",
+    "reasons": [
+     "no session: the arm's verifier raised no signal"
+    ],
+    "practice": "0/16",
+    "grading": "0/48",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0"
+   },
+   {
+    "attempt": "cht-e8-3.H-0.k1",
+    "incident": "cht-e8-3",
+    "arm": "H-0",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "34 of 34 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "0/34",
+    "grading": "0/102",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-3.H-C.k1",
+    "incident": "cht-e8-3",
+    "arm": "H-C",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "accept",
+    "label": "deterministic",
+    "reasons": [
+     "34/34 failing replays fixed, 0 regressions, 102 fresh failing-stratum cases fixed"
+    ],
+    "practice": "34/34",
+    "grading": "102/102",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   },
+   {
+    "attempt": "cht-e8-3.H-N.k1",
+    "incident": "cht-e8-3",
+    "arm": "H-N",
+    "k": 1,
+    "ownGate": true,
+    "verdict": "reject",
+    "label": "failing-case-still-fails",
+    "reasons": [
+     "16 of 34 failing cases still fail on exact replay (deterministic: one replay is a verdict)"
+    ],
+    "practice": "18/34",
+    "grading": "54/102",
+    "regressed": 0,
+    "manifest": "session:claude-haiku-5-5@high/T?/cap0.5"
+   }
+  ],
+  "byArm": {
+   "H-0 k1": {
+    "attempts": 8,
+    "accept": 0,
+    "reject": 8,
+    "inconclusive": 0,
+    "ownGateAccept": 8,
+    "acceptCI": {
+     "x": 0,
+     "n": 8,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.3694
+    }
+   },
+   "H-C k1": {
+    "attempts": 8,
+    "accept": 7,
+    "reject": 1,
+    "inconclusive": 0,
+    "ownGateAccept": 8,
+    "acceptCI": {
+     "x": 7,
+     "n": 8,
+     "p": 0.875,
+     "lo": 0.4735,
+     "hi": 0.9968
+    }
+   },
+   "H-N k1": {
+    "attempts": 8,
+    "accept": 0,
+    "reject": 8,
+    "inconclusive": 0,
+    "ownGateAccept": 1,
+    "acceptCI": {
+     "x": 0,
+     "n": 8,
+     "p": 0,
+     "lo": 0,
+     "hi": 0.3694
+    }
+   },
+   "H-C k2": {
+    "attempts": 5,
+    "accept": 5,
+    "reject": 0,
+    "inconclusive": 0,
+    "ownGateAccept": 5,
+    "acceptCI": {
+     "x": 5,
+     "n": 5,
+     "p": 1,
+     "lo": 0.4782,
+     "hi": 1
+    }
+   }
+  },
+  "hcK1Cases": {
+   "failing": 475,
+   "recovered": 357,
+   "cells": 39,
+   "cellsRecovered": 24,
+   "rhoHat": 1,
+   "nEff": 21.6
+  }
+ },
+ "inputs": {
+  "research/need-router-20261014/tracker-e8/gold.json": "77034dd7e5ad4815feb9d4864699ae3ec0d8e91f2bc39ca8ad5c1d4355059a43",
+  "research/need-router-20261014/tracker-e8/extraction/haiku.s0.json": "3f3a8772e9e82e5c82013dc2119cfaab4192aa0d3569366140bce62913182f0d",
+  "research/need-router-20261014/tracker-e8/extraction/haiku.s1.json": "47869fcdcc9cd6da3ef6c352551aa80bbeb83ef69f251eb3a1fb4adcc7738832",
+  "research/need-router-20261014/tracker-e8/extraction/haiku.s2.json": "dd228080c6dbba4cafeeb140acf2d682791299511d7bace10724bd9421c5dad6",
+  "research/need-router-20261014/tracker-e8/extraction/sonnet.s0.json": "9de27334c90775bd53ed6de842bf001826a7f95d98df833229687722247bc66a",
+  "research/need-router-20261014/tracker-e8/extraction/sonnet.s1.json": "474bef0afb04bf491b48c37356011a78999fb7f14255d4c71af60de40089dd83",
+  "research/need-router-20261014/tracker-e8/extraction/sonnet.s2.json": "d3ed1edcf7659b3293c60bfc99671ad67d2d3d8508d3297809861de93af86672",
+  "research/need-router-20261014/tracker-e8/glean/s0.g0.json": "31a6be1d7580e562fa8f3718eb0b762dc21dd589b24058f21ee7b227c2da392a",
+  "research/need-router-20261014/tracker-e8/glean/s0.g1.json": "a6183f54d3f1a63143ed7ad99e25cca6eb4cd2bc7e0f8d863d51791a89533097",
+  "research/need-router-20261014/tracker-e8/glean/s0.g2.json": "2f7c48adbdea455eadb287f0c90b46590d2cd1275e0103324403bbb18e11a893",
+  "research/need-router-20261014/tracker-e8/glean/s1.g0.json": "919332c23b7b5b1cb80868f63927fb98058b29ecea6f5fadbec77bbd0fd6c49a",
+  "research/need-router-20261014/tracker-e8/glean/s2.g0.json": "e90b26c7204d8e8139af6c66814490558f61682e43d9720029097a2835569311",
+  "research/need-router-20261014/tracker-e8/glean/s0.baseline.json": "a1853b9e2491b7f04bb1b07865a1246d63192df02cfce95e7fbba6fb4a4d5d3d",
+  "research/need-router-20261014/tracker-e8/glean/s1.baseline.json": "67795f90d4fd17872e6350fa16c6ac534f1919bed81eb1443f2c306d16e778fe",
+  "research/need-router-20261014/tracker-e8/glean/s2.baseline.json": "906990925f6398cd22241b7820dc871f7f540251c35eb4f2db70085d0130b76d",
+  "experiments/heal/runs/live-20261008-r4/p1-retry.json": "512b6c8739e7ae3e6fc761c0594bc7a3c366a5bf69208b1761a305a44e971f90",
+  "experiments/heal/runs/review-20261008/p1-mechanism.json": "ea668b86349b1f9388671f2adad401c008efc972ae3e81bfc73f04fb90c069f2",
+  "experiments/heal/runs/review-20261008/audit.json": "a6811ba8488a03c3a569384ecf7d178876ffde21b352762c321efaead5bb0d83",
+  "experiments/heal/runs/review-20261008/audit-relax.json": "2a0d01e06d1291ade7060981457fac246dca447e427b0f690db77ff9618bc480",
+  "experiments/heal/runs/live-20261008/archive/state/live2-cfx/p-4e3456da-r3.json": "b6c04d39caa6b7194d434b745c76becdc75046a08bd99485d6dbf4fa35a06357",
+  "experiments/heal/runs/live-20261008/archive/state/live3-cfx/p-dfd855f4-r2.json": "bf36076e28b3664e057c3f6c910571d19fff652b943aa5b204670f7542098851",
+  "experiments/heal/runs/live-20261008/archive/state/live4-cfx/p-a3336190-r4.json": "1ba536919baaed732f292a4cea279a14c3af526ae9bbc3f89af8491909c3f3c8",
+  "experiments/heal/runs/live-20261008-r4/rec-escalate.json": "2fc151b0ab019e940ef7a9fffd80da82a40b5e7f9ceb2546205865e896cd28f1",
+  "experiments/heal/runs/live-20261008/rec.json": "b6eda9718926f4a227505b6e3140bbe71c5d40e5b76455931e8bbf0588d98bef",
+  "experiments/heal/runs/live-20261008-r2/rec.json": "a815171efcadab0e759df8761735ad6a551472126200bf617f981f2523cb038f",
+  "experiments/heal/runs/live-20261008-r3/rec.json": "4b00d39322c585e871405996028cc34d0d0f7224747910d2508700806c8f03be",
+  "experiments/heal/runs/live-20261008-r4/rec.json": "b00204e87433e7cff0867c582f469f1edfdcf877a97469e9014ae1d18014a80e",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-2.H-0.k1/record.json": "52bbf72435007175d37dba2031a150cf3205d2ea22500fcf3a34b067c54acb9e",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/b1lh-e8-2.json": "1431c1fef87e10ad950f6b0894831b01b9a32ecf609898e6e074d05bda4d21a4",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-2.H-C.k1/record.json": "207b050c56e475f7c8dcb6952ff6a1d047da97b10b2bb57d33804737526885f0",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-2.H-N.k1/record.json": "7c69c0cc8fa7cb071dea579b3ea67ba3fb1d10b9db93c67677cad93f7c07443a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-3.H-0.k1/record.json": "9c00492f9f2bf41edac82de62eecb9c1ad37ce826d62315b19b0f31ff362650c",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/b1lh-e8-3.json": "49ad4fb2e536fe591faa30c523f3f7fe954ce9e929560c784c7ee3d4652710a5",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-3.H-C.k1/record.json": "a28c0e6b33f45c0abe97ad2ca79dd6b7057f2b3dce90a41d298acbe713014634",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-3.H-N.k1/record.json": "2ee1a8cc65db229ce0ec44917c14f3cd06ff769839aea4a67c3bbe02c445cd68",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-1.H-0.k1/record.json": "03125054b29c04746557fb82fba265ef9f5dc9555bbd29a1f0b33f27428913d1",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/ch-e8-1.json": "1d19e72b3024cb1a8b4d699747e412be25297319484693356240a923896eec5a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-1.H-C.k1/record.json": "0c60bacfef5efb7523a16fcebfc664bb57ae874e19b2508359f4125fec02b2de",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-1.H-C.k2/record.json": "cdb5f8190a4d127befb44be8476acfd69c9654e27c829f3e5d5dc2ba215f9381",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-1.H-N.k1/record.json": "34a4b10f2a1c496cc63c9b2f875056fc5c30b673da2bdbfb3a742b6f5617244f",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-2.H-0.k1/record.json": "cc1b22fb1512b6f17def59612f4ffebca8f4cada9a3bfa217fbc87c911a2685a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/ch-e8-2.json": "a9f09b54beea18768bee2c2f1229f4b3d7f53da5102bc4da94c3dacd8835985c",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-2.H-C.k1/record.json": "9dc8110371af5fa2626cd22637817c17cef4759742d1eb6623b8359042d0d241",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-2.H-C.k2/record.json": "658b1e8ef795a2e4ca96bfbdcf269d2eec05a88fb82f1097b5a4aa0877a903e1",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-2.H-N.k1/record.json": "9582e9714aeb530cac504b6600237e709413f23d1f66ea4305e32de5579ba78c",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-3.H-0.k1/record.json": "72f1d39448f4978818a3f713f2408f378f2a14a93494dae74ac3130fbe039958",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/ch-e8-3.json": "892f669f0d657f6431ff838deb2b9372b8a1fa052626b34374f536d7aae91709",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-3.H-C.k1/record.json": "13465833d74c36e42e0775ae83f4e2e127511740c4b5de8419720c5bef922e15",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-3.H-C.k2/record.json": "e87e335e9a720ac5cc74b699e7d25900f361f00e62f536abad84bf051e1f628a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-3.H-N.k1/record.json": "45ce22656cad7a54931a27afe1eb66b4066f20043681909d97b0a59988bc38fe",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-1.H-0.k1/record.json": "80333af038303c8e36a482867f8fd7ff5b313217d769316b8a14a3c9699863e2",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/cht-e8-1.json": "65a3bc9b5068486ccdfb5695d932f43fb03f2021e6cfea673524bbfa821a1dfb",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-1.H-C.k1/record.json": "5cfbfea084d463fa2b5269890fad296c1e484511bb1324a4e16abe986bbbca33",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-1.H-C.k2/record.json": "1ba7aa35b567a3bedbb0079ce69711a81e9c1bc3051c9a9756add9d53ec5f505",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-1.H-N.k1/record.json": "1d2878b6607e90e321d55ad37867718492ef32f2655528f5714572208c70b184",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-2.H-0.k1/record.json": "cf3a9effeb82c4282a624c1e5275ed9a72477b9250823187ab3374fedb2b1994",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/cht-e8-2.json": "f2b1b64b0106631a8c3c04efb9774441bf22ee7ea9dfc26563c697bca750ab39",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-2.H-C.k1/record.json": "02b3f509147ace9191ee63e6d87b95e8cec2d6896ba84f4b39067f9c0e1a335a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-2.H-C.k2/record.json": "0052bb4de1e7694447537276650b2da621a5afec6033f9e3e04bf45388023538",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-2.H-N.k1/record.json": "4d941ad457d159daaefc09aa3851bf8e9414e13daf964a1150c2e1fd32943b1f",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-3.H-0.k1/record.json": "0be597b57a6e8d3839e7e011de2c1782a60cddb74089f7e45f35e645c250d2a1",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/cht-e8-3.json": "26eb15238bcb562ef39036442525e1999300f5be081f4241c5036448eb0c7e9a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-3.H-C.k1/record.json": "4ae60c0851adea4e3455833da41cdc9bb3667eeef65c2502ac2bee56e1c57900",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-3.H-N.k1/record.json": "689a63ca67ce8ec714f64f28ecd61c993f2b0183caf017d9a1d2ff7ba8016fff"
+ }
+}
