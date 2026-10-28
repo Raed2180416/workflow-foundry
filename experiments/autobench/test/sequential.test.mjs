@@ -1,6 +1,9 @@
 // Tests for experiments/autobench/sequential.mjs (register A4; FIXES §2 action 7; the 2026-10-21 review fixes; the
 // orchestrator's decision D23 on PREREG-AB-v1-AMEND-1 §7). $0: no model is called and run.mjs is never started (the look
 // guard is tested with an injected spawn); stored dev60 rows only; temporary directories are removed.
+// Hermetic since 2026-10-22: every plan here is the frozen SEQUENTIAL-PLAN-v1.json or is recomputed from the committed
+// snapshot of the exposure record at the freeze (fixtures/exposure-at-freeze-3cd586bd.json), never from the live run
+// record, which later runs change (the look-2 reference arms a0o-look2-1 and a1s-look2 pushed look 3 into look 2).
 //   nice -n 15 node --test --test-concurrency=1 experiments/autobench/test/sequential.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,10 +12,11 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   ALPHA, DRAFT_BONFERRONI_ALPHA, PROCEDURE, STOP_ON, analyzeLooks, assertNoDevCheck, boundariesFor, checkedSplit, computePlan, execLook, exportLook, exposureRoots,
-  look1Tasks, loadOutcomes, lookRule, readPlan, scheduleOf, seenTasks, signFlipPSequential, simulateSchedule, verifyLookRuns, RUNS, EXPOSURE, SIDECAR,
-  SIDECAR_SCHEMA, FROZEN_PLAN_SHA256,
+  look1Tasks, loadOutcomes, lookRule, mainTree, readPlan, recordReferenceRun, scheduleOf, seenTasks, signFlipPSequential, simulateSchedule, verifyLookRuns, RUNS, EXPOSURE, SIDECAR,
+  SIDECAR_ROLES, SIDECAR_SCHEMA, FROZEN_PLAN_FILE, FROZEN_PLAN_SHA256,
 } from '../sequential.mjs';
 import { listSha256, loadSplit } from '../split.mjs';
 import { REPO, sha256 } from '../lib.mjs';
@@ -21,7 +25,12 @@ import { rng } from '../../../beds/lib/rng.mjs';
 
 const split = checkedSplit();
 const exposureFile = JSON.parse(readFileSync(EXPOSURE, 'utf8'));
-const realPlan = (o = {}) => computePlan({ split, exposure: { briefed: exposureFile.dev.exposedNotForced, seen: seenTasks([RUNS]) }, ...o });
+// The exposure record as the freeze read it (task names only; see the fixture's `derivation`).
+const SNAPSHOT_FILE = path.join(REPO, 'experiments/autobench/test/fixtures/exposure-at-freeze-3cd586bd.json');
+const snapshot = JSON.parse(readFileSync(SNAPSHOT_FILE, 'utf8'));
+const freezeExposure = () => ({ briefed: snapshot.briefed.tasks, seen: new Map(snapshot.seenDevTrain.map(t => [t, new Set(['snapshot'])])), roots: snapshot.roots });
+/** The plan as `plan` computed it at the freeze: a DRAFT by default, the frozen plan itself with { freeze: true }. */
+const planAtFreeze = (o = {}) => computePlan({ split, exposure: freezeExposure(), ...o });
 const tmpDirs = [];
 const tmp = p => { const d = mkdtempSync(path.join(os.tmpdir(), `ab-seq-${p}-`)); tmpDirs.push(d); return d; };
 test.after(() => { for (const d of tmpDirs) rmSync(d, { recursive: true, force: true }); });
@@ -42,23 +51,83 @@ test('devCheck guard: the split\'s devCheck list carries PREREG-AB-v1\'s hash; a
   assert.equal(assertNoDevCheck(look1Tasks(), split), true);
 });
 
-test('run.mjs and every harness-manifest file are byte-identical to e6a23ca (the A1 and A1-C manifests stay frozen-able)', async t => {
+// Harness-manifest files (harness/codeowned.mjs and harness/foundry.mjs manifestFiles()) changed since e6a23ca by a
+// recorded, allowed change: the commit, the file's sha256 before (at e6a23ca) and after, why it is allowed, and where it
+// is recorded. Any other change, or any further change to one of these files, fails the manifest test.
+const MANIFEST_BASE = 'e6a23ca';
+const ALLOWED_MANIFEST_CHANGES = Object.freeze({
+  'experiments/autobench/bridge.py': Object.freeze({
+    commit: '2f02281b0bceb9c964a7347de763b8a341a10667',
+    before: '285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a',
+    after: 'caf3ddd6d1dc653b63d76a297225f762234b3cf050f2d40312cc6ef10e2c75f7',
+    reason: 'pin_timezone (the AutomationBench families workflow): the serve/replay process takes its time zone from the input row\'s info.tz before the shim is installed. Only abr-* family rows carry info.tz; no official task does, so official tasks are served as before. The A1-C arms (and a0-look2, a1s-look2) run from the pinned checkout (tag a1c-v1-look2 on a1c-v1, aada200), whose bridge.py is still e6a23ca\'s.',
+    recordedIn: Object.freeze(['research/automationbench-20261014/PREREG-VL1.md', 'research/mercury-20261021/A1C-MERCURY-PARTIAL.md']),
+  }),
+});
+// The pinned checkout of the frozen A1-C (and A1) candidates for look 2: tag a1c-v1-look2 (b1e16e03) on tag a1c-v1 (aada200).
+const PIN = Object.freeze({ tag: 'a1c-v1-look2', base: 'a1c-v1', worktree: path.join(mainTree(REPO), '.claude', 'worktrees', 'a1c-v1-pin') });
+const shaBuf = b => createHash('sha256').update(b).digest('hex');
+
+test('harness manifests (PREREG-AB-v1 §5, §6.1): run.mjs and every manifest file are e6a23ca\'s bytes except recorded changes (bridge.py at 2f02281); in the pinned checkout every manifest file is e6a23ca\'s', async t => {
   const git = (...a) => spawnSync('git', ['-C', REPO, ...a], { encoding: 'buffer', maxBuffer: 64 << 20 });
-  if (git('cat-file', '-e', 'e6a23ca^{commit}').status !== 0) { t.skip('e6a23ca is not in this checkout'); return; }
+  const blob = (rev, f) => { const r = git('cat-file', '-p', `${rev}:${f}`); return r.status === 0 ? shaBuf(r.stdout) : null; };
+  const hasRev = rev => git('rev-parse', '--verify', '-q', `${rev}^{commit}`).status === 0;
+  if (!hasRev(MANIFEST_BASE)) { t.skip(`${MANIFEST_BASE} is not in this checkout`); return; }
   const files = new Set();
   for (const h of ['codeowned', 'foundry']) for (const f of (await import(`../harness/${h}.mjs`)).manifestFiles()) files.add(f);
   assert.ok(files.has('experiments/autobench/run.mjs'), 'run.mjs is in the manifests (why it may not change)');
   assert.ok(!files.has('experiments/autobench/sequential.mjs'), 'the sequential design is outside both manifests');
-  const changed = [...files].filter(f => {
-    const base = git('cat-file', '-p', `e6a23ca:${f}`);
-    return base.status !== 0 || createHash('sha256').update(base.stdout).digest('hex') !== createHash('sha256').update(readFileSync(path.join(REPO, f))).digest('hex');
-  });
-  assert.deepEqual(changed, [], `harness-manifest files changed since e6a23ca: ${changed.join(', ')} (PREREG-AB-v1 §5, §6.1: a frozen candidate's hash would no longer recompute)`);
+  assert.ok(!('experiments/autobench/run.mjs' in ALLOWED_MANIFEST_CHANGES), 'run.mjs has no allowance: it stays e6a23ca\'s');
+  // (1) This tree: every manifest file is e6a23ca's, or carries exactly the bytes of a recorded change.
+  const changed = [...files].filter(f => blob(MANIFEST_BASE, f) !== shaBuf(readFileSync(path.join(REPO, f)))).sort();
+  const unrecorded = changed.filter(f => !Object.hasOwn(ALLOWED_MANIFEST_CHANGES, f));
+  assert.deepEqual(unrecorded, [], `harness-manifest files changed since ${MANIFEST_BASE} without a recorded allowance: ${unrecorded.join(', ')} (PREREG-AB-v1 §5, §6.1: a frozen candidate's hash would no longer recompute)`);
+  for (const f of changed) {
+    const c = ALLOWED_MANIFEST_CHANGES[f];
+    assert.equal(blob(MANIFEST_BASE, f), c.before, `${f} at ${MANIFEST_BASE}`);
+    assert.equal(shaBuf(readFileSync(path.join(REPO, f))), c.after, `${f} changed again after ${c.commit.slice(0, 7)}: that change is not recorded`);
+    if (hasRev(c.commit)) {
+      assert.equal(blob(`${c.commit}^`, f), c.before, `${c.commit.slice(0, 7)}'s parent holds e6a23ca's ${f}`);
+      assert.equal(blob(c.commit, f), c.after, `${c.commit.slice(0, 7)} made exactly the recorded change`);
+    }
+    assert.ok(c.reason.length > 40);
+    for (const r of c.recordedIn) assert.match(readFileSync(path.join(REPO, r), 'utf8'), /pin_timezone/, `${r} records the ${f} change`);
+  }
+  t.diagnostic(`manifest files: ${files.size}; changed since ${MANIFEST_BASE} under a recorded allowance: ${changed.join(', ') || 'none'}`);
+  // (2) The pin, where the frozen candidates run: no allowance; every manifest file is e6a23ca's.
+  if (!hasRev(PIN.tag)) { t.diagnostic(`tag ${PIN.tag} is not in this checkout: the pin is not checked`); return; }
+  const pin = git('rev-parse', `${PIN.tag}^{commit}`).stdout.toString().trim();
+  if (hasRev(PIN.base)) assert.equal(git('merge-base', '--is-ancestor', `${PIN.base}^{commit}`, pin).status, 0, `${PIN.tag} is built on ${PIN.base}`);
+  const atPin = [...files].filter(f => blob(pin, f) !== blob(MANIFEST_BASE, f));
+  assert.deepEqual(atPin, [], `at ${PIN.tag} (${pin.slice(0, 8)}) these manifest files are not e6a23ca's: ${atPin.join(', ')}`);
+  if (!existsSync(PIN.worktree)) { t.diagnostic(`the pinned checkout ${PIN.worktree} is not present: checked at the tag only`); return; }
+  // The checkout itself: its own manifests (its harness code lists its files), the bytes on disk.
+  const head = spawnSync('git', ['-C', PIN.worktree, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim();
+  assert.equal(head, pin, `the pinned checkout is at ${PIN.tag}`);
+  const list = spawnSync(process.execPath, ['--input-type=module', '-e',
+    `const s = new Set(); for (const h of ['codeowned', 'foundry']) for (const f of (await import(${JSON.stringify(pathToFileURL(path.join(PIN.worktree, 'experiments/autobench/harness')).href)} + '/' + h + '.mjs')).manifestFiles()) s.add(f); process.stdout.write(JSON.stringify([...s].sort()));`],
+  { cwd: PIN.worktree, encoding: 'utf8' });
+  assert.equal(list.status, 0, list.stderr);
+  const pinFiles = JSON.parse(list.stdout);
+  assert.ok(pinFiles.includes('experiments/autobench/run.mjs') && pinFiles.includes('experiments/autobench/bridge.py'));
+  const onDisk = pinFiles.filter(f => blob(MANIFEST_BASE, f) !== shaBuf(readFileSync(path.join(PIN.worktree, f))));
+  assert.deepEqual(onDisk, [], `in the pinned checkout these manifest files are not e6a23ca's: ${onDisk.join(', ')}`);
 });
 
 test('plan: look 1 is dev60; later looks are disjoint, unexposed devTrain batches; one O\'Brien-Fleming schedule per first look', () => {
-  const p = realPlan(), q = realPlan();
+  // The committed snapshot of the exposure record at the freeze recomputes the frozen plan, byte for byte (so every test
+  // here runs on the frozen looks, whatever runs have been added to the live record since).
+  assert.equal(snapshot.plan, FROZEN_PLAN_SHA256);
+  assert.deepEqual(snapshot.briefed.tasks, exposureFile.dev.exposedNotForced, 'the snapshot\'s briefings are EXPOSURE-20261015\'s');
+  assert.equal(snapshot.briefed.sourceSha256, sha256(readFileSync(EXPOSURE)), 'EXPOSURE-20261015.json is unchanged since the snapshot');
+  const dcSet = new Set(split.devCheck), devSet = new Set(split.dev);
+  assert.ok(snapshot.seenDevTrain.every(t => devSet.has(t) && !dcSet.has(t)), 'the snapshot holds devTrain names only');
+  const atFreeze = planAtFreeze({ freeze: true }), file = JSON.parse(readFileSync(FROZEN_PLAN_FILE, 'utf8'));
+  assert.equal(atFreeze.planSha256, FROZEN_PLAN_SHA256); assert.deepEqual(atFreeze, file);
+  assert.deepEqual(file.pool.roots, snapshot.roots);
+  const p = planAtFreeze(), q = planAtFreeze();
   assert.equal(p.planSha256, q.planSha256);
+  assert.deepEqual(p.looks, file.looks, 'the DRAFT form of the same plan has the frozen looks');
   assert.deepEqual(p.looks[0].tasks, [...look1Tasks()].sort());
   const dc = new Set(split.devCheck), forced = new Set(split.forcedSources.flatMap(f => f.tasks)), briefed = new Set(exposureFile.dev.exposedNotForced);
   const all = p.looks.flatMap(L => L.tasks);
@@ -90,6 +159,10 @@ test('plan: look 1 is dev60; later looks are disjoint, unexposed devTrain batche
   // Exposure matters: without the record of earlier runs the pool is larger (so the plan must read it).
   const naive = computePlan({ split, exposure: { briefed: [], seen: new Map() } });
   assert.ok(naive.pool.eligible > p.pool.eligible);
+  // And the snapshot is the record that matters: with look 2's names added as plain exposure (what the live record held
+  // on 2026-10-22, before the planned-run rule), look 2 becomes look 3's 23 tasks: the five failures this fixture ends.
+  const shrunk = computePlan({ split, exposure: { ...freezeExposure(), seen: new Map([...freezeExposure().seen, ...file.looks[1].tasks.map(t => [t, new Set(['a0o-look2-1'])])]) } });
+  assert.deepEqual(shrunk.counts, [60, 23]); assert.deepEqual(shrunk.looks[1].tasks, file.looks[2].tasks);
 });
 
 test('exposure: an unparsable run record stops the plan; task-named run directories count; every worktree (git-listed too) and the live root are scanned', () => {
@@ -120,8 +193,124 @@ test('exposure: an unparsable run record stops the plan; task-named run director
   assert.deepEqual(p.pool.roots, s.scanned);
 });
 
+test('exposure (2026-10-22): the frozen plan\'s own look runs (a matching sidecar: control, treatment or reference) and their copies are not exposure; any other run on a look task is', () => {
+  const frozen = readPlan(FROZEN_PLAN_FILE), L2 = frozen.looks[1].tasks, L3 = frozen.looks[2].tasks;
+  const live = tmp('planned-live'), copies = tmp('planned-copies');
+  const mkRun = (root, name, { sidecar = null, tasks = L2, taskDirs = [] } = {}) => {
+    const d = path.join(root, name); mkdirSync(d, { recursive: true });
+    if (tasks) writeFileSync(path.join(d, 'summary.json'), JSON.stringify({ tasks }));
+    if (sidecar) writeFileSync(path.join(d, SIDECAR), JSON.stringify(sidecar));
+    for (const t of taskDirs) mkdirSync(path.join(d, 'prep', t), { recursive: true });
+    return d;
+  };
+  const sc = (o = {}) => ({ schema: SIDECAR_SCHEMA, plan: frozen.planSha256, look: 2, tasks: L2, tasksSha256: frozen.looks[1].sha256, role: 'reference', arm: 'Opus 5.5 xhigh', firstLook: 2, runId: 'ref-l2', ...o });
+  mkRun(live, 'ref-l2', { sidecar: sc(), taskDirs: L2.slice(0, 3) });
+  mkRun(live, 'ctl-l2', { sidecar: sc({ role: 'control', arm: 'A0', firstLook: undefined, runId: 'ctl-l2' }) });
+  mkRun(live, 'trt-l2', { sidecar: sc({ role: 'treatment', arm: 'A1-C v2', runId: 'trt-l2' }), tasks: null });
+  mkRun(copies, 'ref-l2');                                  // a repo copy or a worktree's checkout of it: no sidecar
+  const roots = [{ label: 'live', dir: live }, { label: 'copies', dir: copies }];
+  const planWith = s => computePlan({ split, exposure: { ...freezeExposure(), seen: new Map([...freezeExposure().seen, ...s]) }, freeze: true });
+  const s1 = seenTasks(roots, { plan: frozen });
+  assert.equal(s1.size, 0, 'no planned look run is exposure');
+  assert.deepEqual(s1.planned.map(x => [x.run, x.role, x.look, x.copyOf ?? null]).sort(), [
+    ['copies/ref-l2', 'reference', 2, 'live/ref-l2'], ['live/ctl-l2', 'control', 2, null], ['live/ref-l2', 'reference', 2, null], ['live/trt-l2', 'treatment', 2, null]]);
+  assert.deepEqual(s1.scanned, [{ label: 'live', runs: 3, planned: 3 }, { label: 'copies', runs: 1, planned: 1 }]);
+  assert.equal(planWith(s1).planSha256, FROZEN_PLAN_SHA256, 're-deriving the plan after its look ran gives the frozen plan');
+  // Teeth: without the plan (the scan at the freeze), the same runs are exposure and look 2 becomes look 3's 23 tasks.
+  const s0 = seenTasks(roots);
+  assert.equal(s0.size, 60); assert.deepEqual(s0.planned, []); assert.deepEqual(s0.scanned, [{ label: 'live', runs: 3 }, { label: 'copies', runs: 1 }]);
+  const p0 = planWith(s0);
+  assert.deepEqual(p0.counts, [60, 23]); assert.deepEqual(p0.looks[1].tasks, L3);
+  // A run on look tasks without a sidecar, a sidecar of another plan, and a copy whose list is not the look's: exposure.
+  mkRun(live, 'stray', { tasks: [L2[0]] });
+  mkRun(live, 'draft-l2', { sidecar: sc({ plan: 'f'.repeat(64), runId: 'draft-l2' }), tasks: [L2[1]] });
+  const partial = tmp('planned-partial'); mkRun(partial, 'ref-l2', { tasks: L2.slice(0, 59) });
+  const s2 = seenTasks([...roots, { label: 'partial', dir: partial }], { plan: frozen });
+  assert.deepEqual([...s2.keys()].sort(), [...L2.slice(0, 59)].sort(), 'stray, draft-l2 and the partial copy count');
+  assert.deepEqual([...s2.get(L2[0])].sort(), ['live/draft-l2', 'live/stray', 'partial/ref-l2'].filter(x => x !== 'live/draft-l2'));
+  assert.deepEqual([...s2.get(L2[1])].sort(), ['live/draft-l2', 'partial/ref-l2']);
+  assert.notEqual(planWith(s2).planSha256, FROZEN_PLAN_SHA256);
+  // A sidecar that claims the frozen plan and does not hold stops the scan (a broken record is neither counted nor skipped).
+  for (const [name, o, tasks, re] of [
+    ['outside', {}, [...L2, L3[0]], /names 1 task\(s\) outside look 2/],
+    ['wronglist', { tasksSha256: frozen.looks[2].sha256 }, L2, /does not match it \(task list hash\)/],
+    ['wronglook', { look: 9 }, L2, /does not match it \(look 9/],
+    ['wrongrole', { role: 'observer' }, L2, /does not match it \(role observer\)/],
+    ['oldschema', { schema: 'foundry.autobench.sequential-look/v1' }, L2, /does not match it \(schema/],
+  ]) {
+    const r = tmp(`planned-${name}`); mkRun(r, name, { sidecar: sc({ runId: name, ...o }), tasks });
+    assert.throws(() => seenTasks([r], { plan: frozen }), re, name);
+    assert.doesNotThrow(() => seenTasks([r]), `${name}: without the plan the run is plain exposure`);
+  }
+});
+
+test('reference role (2026-10-22): a reference run is a look run with a declared first look, never a side of the test; record-reference writes the sidecar of a finished one', () => {
+  assert.deepEqual(SIDECAR_ROLES, ['control', 'treatment', 'reference']);
+  const dir = tmp('ref'), f = planAtFreeze({ freeze: true }), frozen = readPlan(writePlan(dir, f), { frozen: f.planSha256 }), draft = readPlan(writePlan(dir, planAtFreeze()), { frozen: null });
+  const L2 = frozen.looks[1].tasks;
+  const calls = [], spawn = (exe, args) => { calls.push(args); return { status: 0 }; };
+  const live = path.join(dir, 'live'), out = path.join(dir, 'out');
+  const pass = ['--run-id', 'ref-x', '--live', live, '--out', out, '--model', 'claude-opus-5-5', '--effort', 'xhigh'];
+  // look --exec --role reference: the first look is declared (as a treatment's), never after the look; no nominal levels.
+  assert.throws(() => execLook(frozen, 2, { role: 'reference', arm: 'Opus 5.5 xhigh', passthrough: pass, exec: true, spawn }), /firstLook must be declared/);
+  assert.throws(() => execLook(frozen, 2, { role: 'reference', arm: 'Opus 5.5 xhigh', firstLook: 3, passthrough: pass, exec: true, spawn }), /precedes the arm's declared first look/);
+  assert.throws(() => execLook(frozen, 2, { role: 'reference', firstLook: 2, passthrough: pass, exec: true, spawn }), /--arm/);
+  assert.throws(() => execLook(draft, 2, { role: 'reference', arm: 'Opus 5.5 xhigh', firstLook: 2, passthrough: pass, exec: true, spawn }), /DRAFT/);
+  assert.equal(calls.length, 0);
+  execLook(frozen, 2, { role: 'reference', arm: 'Opus 5.5 xhigh', firstLook: 2, passthrough: pass, exec: true, spawn });
+  assert.equal(calls.length, 1); assert.deepEqual(calls[0].slice(1, 3), ['--tasks', L2.join(',')]);
+  for (const d of [live, out]) {
+    const c = JSON.parse(readFileSync(path.join(d, SIDECAR), 'utf8'));
+    assert.deepEqual([c.schema, c.plan, c.look, c.tasksSha256, c.role, c.arm, c.firstLook, c.confirmatory, c.nominal], [SIDECAR_SCHEMA, FROZEN_PLAN_SHA256, 2, frozen.looks[1].sha256, 'reference', 'Opus 5.5 xhigh', 2, false, null]);
+  }
+  // It never enters the test: analyze refuses it as the control, as the treatment, and refuses a reference side at all.
+  writeFileSync(path.join(out, 'summary.json'), JSON.stringify({ tasks: L2 }));
+  writeFileSync(path.join(out, 'results.jsonl'), L2.map(t => JSON.stringify({ task: t, forks: [{}], final: { task_completed_correctly: 0, partial_credit: 0.5 } })).join('\n') + '\n');
+  assert.throws(() => verifyLookRuns(frozen, 2, [out], { role: 'control' }), /does not match \(role\)/);
+  assert.throws(() => verifyLookRuns(frozen, 2, [out], { role: 'treatment', firstLook: 2 }), /does not match \(role\)/);
+  assert.throws(() => verifyLookRuns(frozen, 2, [out], { role: 'reference', firstLook: 2 }), /a reference run never enters the test/);
+  // A control still takes no first look.
+  assert.throws(() => execLook(frozen, 2, { role: 'control', arm: 'A0', firstLook: 2, passthrough: ['--run-id', 'c'], spawn }), /belongs to a treatment or reference arm/);
+  // record-reference: a finished run launched with run.mjs directly (D26's a0o-look2-1, D27's a1s-look2). Names only.
+  const run = path.join(dir, 'a0o-look2-x');
+  mkdirSync(path.join(run, 'prep', L2[0]), { recursive: true });
+  writeFileSync(path.join(run, 'summary.json'), JSON.stringify({ tasks: L2 }));
+  writeFileSync(path.join(run, 'launch.json'), JSON.stringify({ tasks: L2, runnerSha256: 'a'.repeat(64) }));
+  const args = { dir: run, arm: 'Opus 5.5 xhigh (A0)', firstLook: 2, decision: 'D26', now: () => '2026-10-22T00:00:00Z' };
+  const dry = recordReferenceRun(frozen, 2, args);
+  assert.deepEqual([dry.written, existsSync(path.join(run, SIDECAR))], [false, false], 'without write nothing is written');
+  const w = recordReferenceRun(frozen, 2, { ...args, write: true });
+  assert.equal(w.written, true);
+  const c = JSON.parse(readFileSync(path.join(run, SIDECAR), 'utf8'));
+  assert.deepEqual([c.schema, c.plan, c.look, c.tasksSha256, c.role, c.arm, c.firstLook, c.runId, c.confirmatory, c.nominal, c.runnerSha256, c.retroactive.decision, c.writtenAt],
+    [SIDECAR_SCHEMA, FROZEN_PLAN_SHA256, 2, frozen.looks[1].sha256, 'reference', 'Opus 5.5 xhigh (A0)', 2, 'a0o-look2-x', false, null, 'a'.repeat(64), 'D26', '2026-10-22T00:00:00Z']);
+  assert.deepEqual(readdirNames(run), ['launch.json', 'prep', SIDECAR, 'summary.json'], 'no temporary file is left');
+  // Idempotent for the same run; another arm or first look is refused.
+  assert.deepEqual([recordReferenceRun(frozen, 2, { ...args, write: true }).written, recordReferenceRun(frozen, 2, { ...args, write: true }).existed], [false, true]);
+  assert.throws(() => recordReferenceRun(frozen, 2, { ...args, arm: 'Other', write: true }), /belongs to another look run \(arm differ/);
+  // The scan reads it as a planned look run of the frozen plan.
+  const scanRoot = tmp('ref-scan'); mkdirSync(path.join(scanRoot, 'a0o-look2-x'));
+  for (const fn of ['summary.json', 'launch.json', SIDECAR]) writeFileSync(path.join(scanRoot, 'a0o-look2-x', fn), readFileSync(path.join(run, fn)));
+  const s = seenTasks([scanRoot], { plan: frozen });
+  assert.equal(s.size, 0); assert.deepEqual(s.planned, [{ run: `${path.basename(scanRoot)}/a0o-look2-x`, look: 2, role: 'reference', arm: 'Opus 5.5 xhigh (A0)' }]);
+  // Refusals: a DRAFT plan, no decision, an unfinished run, a summary that is not the look's list, a task outside the look.
+  assert.throws(() => recordReferenceRun(draft, 2, { ...args, write: true }), /DRAFT/);
+  assert.throws(() => recordReferenceRun(frozen, 2, { ...args, decision: '' }), /--decision/);
+  const mk = (name, summary, extra) => { const d = path.join(dir, name); mkdirSync(d); if (summary) writeFileSync(path.join(d, 'summary.json'), JSON.stringify({ tasks: summary })); if (extra) mkdirSync(path.join(d, 'host', extra), { recursive: true }); return d; };
+  assert.throws(() => recordReferenceRun(frozen, 2, { ...args, dir: mk('unfinished', null) }), /no summary\.json/);
+  assert.throws(() => recordReferenceRun(frozen, 2, { ...args, dir: mk('short', L2.slice(1)) }), /summary's tasks are not look 2's/);
+  assert.throws(() => recordReferenceRun(frozen, 2, { ...args, dir: mk('extra', L2, frozen.looks[2].tasks[0]) }), /names 1 task\(s\) outside look 2/);
+  assert.throws(() => recordReferenceRun(frozen, 2, { ...args, firstLook: null }), /firstLook must be declared/);
+  // The command line: prints without --write, writes with it (the frozen plan file; a copy of the finished run).
+  const cliRun = path.join(dir, 'a1s-look2-x'); mkdirSync(cliRun); writeFileSync(path.join(cliRun, 'summary.json'), JSON.stringify({ tasks: L2 }));
+  const cli = w2 => spawnSync(process.execPath, [SEQ, 'record-reference', '2', '--plan', FROZEN_PLAN_FILE, '--arm', 'Sonnet 5.5 + A1', '--first-look', '2', '--decision', 'D27', '--run-dir', cliRun, ...(w2 ? ['--write'] : [])], { encoding: 'utf8' });
+  const c1 = cli(false); assert.equal(c1.status, 0, c1.stderr); assert.match(c1.stdout, /not written \(add --write\)/); assert.equal(existsSync(path.join(cliRun, SIDECAR)), false);
+  const c2 = cli(true); assert.equal(c2.status, 0, c2.stderr); assert.match(c2.stdout, /written; plan 3cd586bd…, look 2 \(60 tasks, a8c1ed5c…\), role reference, arm Sonnet 5\.5 \+ A1, first look 2, run a1s-look2-x/);
+  const c3 = cli(true); assert.match(c3.stdout, /already holds this run's sidecar/);
+});
+
 test('plan file: tampering is refused, including edits with every hash recomputed (devCheck look, nominal level, look 1, status)', () => {
-  const p = realPlan(), dir = tmp('plan');
+  const p = planAtFreeze(), dir = tmp('plan');
   assert.equal(readPlan(writePlan(dir, p), { frozen: null }).planSha256, p.planSha256);
   assert.equal(readPlan(writePlan(dir, p), { frozen: null }).draft, true);
   const t = JSON.parse(JSON.stringify(p)); t.looks[1].tasks[0] = t.looks[1].tasks[1];
@@ -133,7 +322,7 @@ test('plan file: tampering is refused, including edits with every hash recompute
   const w = JSON.parse(JSON.stringify(p)); [w.looks[0], w.looks[1]] = [{ ...w.looks[1], look: 1 }, { ...w.looks[0], look: 2 }];
   assert.throws(() => readPlan(writePlan(dir, rehash(w)), { frozen: null }), /look 1 is not the dev60 task list/);
   // A FROZEN plan must be the one pinned in FROZEN_PLAN_SHA256; a pinned hash refuses any other plan.
-  const f = realPlan({ freeze: true }), ff = writePlan(dir, f);
+  const f = planAtFreeze({ freeze: true }), ff = writePlan(dir, f);
   assert.throws(() => readPlan(ff, { frozen: null }), /hash is not pinned/);
   assert.equal(readPlan(ff, { frozen: f.planSha256 }).draft, false);
   assert.throws(() => readPlan(writePlan(dir, p), { frozen: f.planSha256 }), /is not the frozen plan/);
@@ -150,7 +339,7 @@ test('boundaries (D23): strict pass and partial credit each get an O\'Brien-Flem
       assert.deepEqual(sig3(b[k].nominal), want, `${k} nominal levels over ${cum.join('/')}`);
     }
   }
-  const p = realPlan(), s1 = scheduleOf(p, 1), s2 = scheduleOf(p, 2);
+  const p = planAtFreeze(), s1 = scheduleOf(p, 1), s2 = scheduleOf(p, 2);
   assert.deepEqual(s2.nominal.strict, boundariesFor(s2.cumulative).strict.nominal);
   assert.deepEqual(s2.nominal.partialCredit, boundariesFor(s2.cumulative).partialCredit.nominal);
   // The schedule from look 2 is recomputed, not the tail of the schedule from look 1.
@@ -172,7 +361,7 @@ test('boundaries (D23): strict pass and partial credit each get an O\'Brien-Flem
 });
 
 test('look guard (run.mjs untouched): task list from the plan, never devCheck, sidecar in live and repo copy, DRAFT refused', () => {
-  const dir = tmp('look'), f = realPlan({ freeze: true }), frozen = readPlan(writePlan(dir, f), { frozen: f.planSha256 }), draft = readPlan(writePlan(dir, realPlan()), { frozen: null });
+  const dir = tmp('look'), f = planAtFreeze({ freeze: true }), frozen = readPlan(writePlan(dir, f), { frozen: f.planSha256 }), draft = readPlan(writePlan(dir, planAtFreeze()), { frozen: null });
   const live = path.join(dir, 'live'), out = path.join(dir, 'out');
   const pass = ['--run-id', 'seq-l2-a1cv2', '--live', live, '--out', out, '--harness', 'codeowned', '--model', 'claude-haiku-5-5', '--cap', '2'];
   const calls = [];
@@ -220,7 +409,7 @@ const rowsFrom = (tasks, spec) => {
 };
 
 test('analyze from look 2 (an A1-C v2-style arm): its own 2-look schedule; look 1 rows are not needed and not read', () => {
-  const p = realPlan(), L2 = p.looks[1].tasks, L3 = p.looks[2]?.tasks;
+  const p = planAtFreeze(), L2 = p.looks[1].tasks, L3 = p.looks[2]?.tasks;
   const control = { 2: synth(L2, 'c2', 0.2, 0.5) }, treatment = { 2: synth(L2, 't2', 0.2, 0.5) };
   const r = analyzeLooks(p, control, treatment, { firstLook: 2, permIterations: 4000 });
   assert.equal(r.firstLook, 2); assert.deepEqual(r.schedule, scheduleOf(p, 2).cumulative);
@@ -238,7 +427,7 @@ test('analyze from look 2 (an A1-C v2-style arm): its own 2-look schedule; look 
 });
 
 test('gatekeeping order (D23): strict pass is tested first at its 0.05 boundary; partial credit is tested only at a look where strict pass is rejected', () => {
-  const p = realPlan(), L2 = p.looks[1].tasks, L3 = p.looks[2].tasks, s2 = scheduleOf(p, 2);
+  const p = planAtFreeze(), L2 = p.looks[1].tasks, L3 = p.looks[2].tasks, s2 = scheduleOf(p, 2);
   assert.deepEqual(s2.cumulative, [60, 83], 'the frozen shape: look 2 = 60, look 3 = 23');
   const draft = obrienFlemingBoundary(2, { alpha: DRAFT_BONFERRONI_ALPHA, fractions: s2.cumulative });
   // (a) Strict 12:2 (McNemar p 0.0129) lies between the DRAFT's look-2 level (0.0073) and D23's (0.0180): strict pass is
@@ -285,7 +474,7 @@ test('gatekeeping order (D23): strict pass is tested first at its 0.05 boundary;
 });
 
 test('stopping (D23): never on partial credit alone; --stop-on either is refused', () => {
-  const p = realPlan(), L2 = p.looks[1].tasks;
+  const p = planAtFreeze(), L2 = p.looks[1].tasks;
   // Partial credit crosses far beyond its boundary with the treatment ahead (and, swapped, with the control ahead):
   // under D23 neither ends the comparison while strict pass is not rejected (the DRAFT's default `either` stopped here).
   const B = rowsFrom(L2, [[3, [1, 1], [0, 0.5]], [1, [0, 0.5], [1, 1]], [50, [0, 0.7], [0, 0.5]]]);
@@ -309,7 +498,7 @@ test('stopping (D23): never on partial credit alone; --stop-on either is refused
 });
 
 test('analyze on stored dev60 rows: treatment look-1 rows are in-sample (refused unless an illustration); never-graded rows are listed', () => {
-  const p = realPlan();
+  const p = planAtFreeze();
   // The control on look 1 may be the stored dev60 A0 rows; a treatment's stored dev60 rows may not.
   assert.equal(verifyLookRuns(p, 1, ['a0-dev60-dn'], { role: 'control' }).sources[0].source, 'stored dev60 A0 rows (pre-plan control)');
   assert.throws(() => verifyLookRuns(p, 1, ['a1c-dev60-dn'], { role: 'control' }), /must be a stored A0 model run/);
@@ -355,7 +544,7 @@ test('analyze on stored dev60 rows: treatment look-1 rows are in-sample (refused
 });
 
 test('analyze checks each look run\'s sidecar: plan, look, task list, role, declared first look, one arm', () => {
-  const p = realPlan(), root = tmp('runs'), L2 = p.looks[1].tasks;
+  const p = planAtFreeze(), root = tmp('runs'), L2 = p.looks[1].tasks;
   const mk = (name, sidecar, tasks = L2) => {
     const d = path.join(root, name); mkdirSync(d);
     writeFileSync(path.join(d, 'summary.json'), JSON.stringify({ tasks }));
@@ -377,7 +566,7 @@ test('analyze checks each look run\'s sidecar: plan, look, task list, role, decl
 });
 
 test('T2 (D23): under H0 the fixed sequence keeps the family-wise type-I at most 0.05 on every schedule, with the analysis\' permutation test too', t => {
-  const p = realPlan(), bound = (a, reps) => a + 3 * Math.sqrt(a * (1 - a) / reps);
+  const p = planAtFreeze(), bound = (a, reps) => a + 3 * Math.sqrt(a * (1 - a) / reps);
   const check = (r, label) => {
     assert.ok(r.familyWise <= bound(0.05, r.reps), `${label}: family-wise type-I ${r.familyWise}`);
     // The gate: every rejection starts with strict pass, so the family-wise error is strict pass's own.
@@ -434,5 +623,5 @@ test('frozen artifacts: SEQUENTIAL-PLAN-v1.json is the pinned plan, and LOOK2-TA
   assert.deepEqual(exp, exportLook(plan, 2));
   assert.equal(listSha256(exp.tasks), exp.tasksSha256); assert.equal(exp.tasksSha256, plan.looks[1].sha256); assert.equal(exp.n, 60);
   assertNoDevCheck(exp.tasks, split);
-  assert.throws(() => exportLook(readPlan(writePlan(tmp('exp'), realPlan()), { frozen: null }), 2), /DRAFT/);
+  assert.throws(() => exportLook(readPlan(writePlan(tmp('exp'), planAtFreeze()), { frozen: null }), 2), /DRAFT/);
 });

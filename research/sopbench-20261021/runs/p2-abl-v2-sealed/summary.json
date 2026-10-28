@@ -1,0 +1,23 @@
+{
+ "runId": "p2-abl-v2-sealed",
+ "cell": "V2-bloated",
+ "freeze": "research/sopbench-20261021/FREEZE-p2.json",
+ "freezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
+ "evidence": "SEALED rows (frozen split, frozen workflows and code)",
+ "stopped": "environment fault at A-know_your_business-50-0: MODEL_RATE_LIMIT",
+ "k": 3,
+ "arms": [
+  "W",
+  "A"
+ ],
+ "sops": [
+  "dangerous_goods",
+  "customer_service",
+  "know_your_business"
+ ],
+ "runs": 410,
+ "spentUsd": 0.4398592500000001,
+ "capUsd": 5,
+ "finishedAt": "2026-10-22T07:45:55.091Z",
+ "dependencyDrift": []
+}

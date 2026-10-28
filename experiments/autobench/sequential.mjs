@@ -29,14 +29,16 @@
 //     look guard lives here. `look --exec` checks the task list before it spawns run.mjs and writes a sidecar,
 //     sequential-look.json, into the run's live directory and its repo copy; `analyze` refuses a look run without it.
 //
-//   node experiments/autobench/sequential.mjs plan [--batch 60] [--min-look 20] [--live-root DIR|none] [--freeze] [--write FILE] [--json]
-//   node experiments/autobench/sequential.mjs look N --plan FILE --role control|treatment --arm NAME [--first-look F] [--exec] \
+//   node experiments/autobench/sequential.mjs plan [--batch 60] [--min-look 20] [--live-root DIR|none] [--planned FILE|none] [--freeze] [--write FILE] [--json]
+//   node experiments/autobench/sequential.mjs look N --plan FILE --role control|treatment|reference --arm NAME [--first-look F] [--exec] \
 //        -- --run-id ID <run.mjs options other than the task selection…>
 //   node experiments/autobench/sequential.mjs analyze --plan FILE --first-look F --control 1:a0-dev60-dn [--control 2:RUN] \
 //        --treatment 2:RUN [--treatment 3:RUN] [--illustration] [--json]      (--stop-on accepts only strict: D23)
 //   node experiments/autobench/sequential.mjs simulate [--plan FILE --first-look F | --cumulative 60,120] [--reps 20000] \
 //        [--pc-test normal|permutation [--bc-h 20 --bc-max 20000]] [--h1 [--h1-scale s]] [--json]   (T2: type-I under H0; power under --h1)
 //   node experiments/autobench/sequential.mjs export-look N --plan FILE [--write FILE]   (a frozen look's task list + hash)
+//   node experiments/autobench/sequential.mjs record-reference N --plan FILE --arm NAME --first-look F --decision TEXT \
+//        --run-dir DIR [--write]   (the sidecar of a finished reference run launched with run.mjs directly; 2026-10-22)
 //
 // The unexposed pool, from data on disk (names only, never grades): devTrain minus the forced set (SPLIT-v1, 103), minus
 // the dev tasks briefed by the families agent (EXPOSURE-20261015.json, AM-2), minus every task named by any recorded run
@@ -44,7 +46,12 @@
 // under the main tree's runs, every git worktree's runs and the live root; an unparsable file stops the plan), minus
 // look 1. FIXES assumed 137 unexposed tasks; it did not subtract dev60's 37 non-forced tasks, so the feasible schedule is
 // smaller (see `plan`).
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+// Added 2026-10-22: a run of the frozen plan's own looks is not prior exposure. `plan` passes the frozen plan to the scan
+// (`--planned none` turns this off): a run whose sidecar names that plan, a look and its list hash, with every task it
+// names inside that look (a control, treatment or reference run), and a sidecar-less copy of it (same run id, the look's
+// list: a repo or worktree copy), are listed as planned look runs, not exposure. Re-deriving the plan after its looks ran
+// then gives the frozen looks; without it, look 2's runs pushed look 3's 23 tasks into look 2.
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -57,7 +64,14 @@ export const SCHEMA = 'foundry.autobench.sequential-plan/v3';            // v3: 
 export const SIDECAR_SCHEMA = 'foundry.autobench.sequential-look/v2';
 export const LOOK_TASKS_SCHEMA = 'foundry.autobench.sequential-look-tasks/v1';
 export const SIDECAR = 'sequential-look.json';
+/**
+ * Sidecar roles. A control or treatment run is a side of the plan's test. A reference run (added 2026-10-22: D26's Opus
+ * 5.5 xhigh and D27's Sonnet + A1 fork on look 2) runs on a look's task list and is reported beside the test, never in
+ * it: verifyLookRuns refuses it as either side, and its sidecar carries no nominal levels.
+ */
+export const SIDECAR_ROLES = Object.freeze(['control', 'treatment', 'reference']);
 export const RUNS_REL = 'research/automationbench-20261014/runs';
+export const FROZEN_PLAN_FILE = path.join(REPO, 'research/automationbench-20261014/SEQUENTIAL-PLAN-v1.json');
 export const RUNS = path.join(REPO, RUNS_REL);
 export const EXPOSURE = path.join(REPO, 'research/automationbench-20261014/EXPOSURE-20261015.json');
 export const LIVE_ROOT = '/var/tmp/foundry-work/autobench';
@@ -139,48 +153,90 @@ const TASK_DIRS = ['prep', 'w', 'host'];
 const readJsonStrict = f => {
   try { return JSON.parse(readFileSync(f, 'utf8')); } catch (e) { throw new Error(`sequential: ${f} is unreadable or not JSON (${e.message}); the exposure record cannot be trusted, so nothing is planned (re-run once the file is whole)`); }
 };
+/** The record of one run directory (names only): its record files' JSON and every task name it carries. null: no record. */
+function runRecord(runDir) {
+  const files = {}, names = [];
+  let any = false;
+  for (const f of ['summary.json', 'launch.json', SIDECAR]) {
+    const file = path.join(runDir, f);
+    if (!existsSync(file)) continue;
+    const j = readJsonStrict(file);
+    if (j?.tasks !== undefined && !Array.isArray(j.tasks)) throw new Error(`sequential: ${file}: tasks is not a list`);
+    for (const t of j?.tasks ?? []) { if (typeof t !== 'string') throw new Error(`sequential: ${file}: a task name is not a string`); names.push(t); }
+    files[f] = j; any = true;
+  }
+  for (const sub of TASK_DIRS) {
+    const sd = path.join(runDir, sub);
+    if (!existsSync(sd)) continue;
+    for (const e of readdirSync(sd, { withFileTypes: true })) if (e.isDirectory() && TASK_NAME.test(e.name)) { names.push(e.name); any = true; }
+  }
+  return any ? { files, names } : null;
+}
+/**
+ * Whether a run is a look run of `plan`: its sidecar names the plan. Then it must match it (schema, a look of the plan and
+ * that look's list hash, a known role, an arm) and every task the run names must be in that look, or the scan stops: a
+ * sidecar that claims the plan and does not hold is a broken record, not exposure to count or skip. A sidecar of another
+ * plan (a DRAFT, an older plan) is not this plan's: its run counts as exposure.
+ */
+function plannedLookRun(plan, where, rec) {
+  const sc = rec.files[SIDECAR];
+  if (!sc || sc.plan !== plan.planSha256) return null;
+  const L = plan.looks.find(x => x.look === sc.look);
+  const bad = [sc.schema !== SIDECAR_SCHEMA && `schema ${sc.schema}`, !L && `look ${sc.look}`, L && sc.tasksSha256 !== L.sha256 && 'task list hash',
+    !SIDECAR_ROLES.includes(sc.role) && `role ${sc.role}`, (typeof sc.arm !== 'string' || !sc.arm) && 'arm'].filter(Boolean);
+  if (bad.length) throw new Error(`sequential: ${where}/${SIDECAR} names plan ${plan.planSha256.slice(0, 8)}… but does not match it (${bad.join(', ')}); the exposure record cannot be trusted`);
+  const inLook = new Set(L.tasks), outside = [...new Set(rec.names)].filter(t => !inLook.has(t));
+  if (outside.length) throw new Error(`sequential: ${where} is a look-${sc.look} run of plan ${plan.planSha256.slice(0, 8)}… but names ${outside.length} task(s) outside look ${sc.look}`);
+  return { look: sc.look, role: sc.role, arm: sc.arm, runId: sc.runId ?? null };
+}
 /**
  * Task names of every recorded run under the given roots (summary.json, launch.json and sequential-look.json `tasks`, and
  * the task-named directories under a run's prep/, w/ and host/; names only). An unparsable file throws: a run silently
  * dropped would put its tasks back into the "unexposed" pool.
- * roots: directories, or { label, dir }. Returns Map(task -> Set of "label/run"), with .scanned = [{ label, runs }].
+ * plan (optional, added 2026-10-22): a plan's own look runs are not exposure. A run whose sidecar names `plan` (checked by
+ * plannedLookRun), and a run directory without a sidecar that is a copy of one (named as its run id or directory, every
+ * task inside that look, and its summary/launch list, if any, the look's list: a repo copy or a worktree's checkout of
+ * it), are listed in .planned and their tasks are not added. Without `plan`, every run counts (the behaviour at the
+ * freeze). Re-deriving a plan after its looks ran must pass that plan, or its looks' runs shrink its own pool.
+ * roots: directories, or { label, dir }. Returns Map(task -> Set of "label/run"), with .scanned = [{ label, runs, planned? }]
+ * (planned only when a root holds a planned look run) and .planned = [{ run, look, role, arm, copyOf? }].
  */
-export function seenTasks(roots) {
-  const seen = new Map(), scanned = [];
+export function seenTasks(roots, { plan = null } = {}) {
+  const seen = new Map(), scanned = [], runs = [];
   for (const r of roots) {
     const { label, dir } = typeof r === 'string' ? { label: path.basename(r ?? ''), dir: r } : r;
     if (!dir || !existsSync(dir)) { scanned.push({ label, runs: 0, missing: true }); continue; }
-    let runs = 0;
+    const entry = { label, runs: 0 };
+    scanned.push(entry);
     for (const d of readdirSync(dir, { withFileTypes: true })) {
       if (!d.isDirectory()) continue;
-      let any = false;
-      for (const f of ['summary.json', 'launch.json', SIDECAR]) {
-        const file = path.join(dir, d.name, f);
-        if (!existsSync(file)) continue;
-        const j = readJsonStrict(file);
-        if (j?.tasks !== undefined && !Array.isArray(j.tasks)) throw new Error(`sequential: ${file}: tasks is not a list`);
-        for (const t of j?.tasks ?? []) {
-          if (typeof t !== 'string') throw new Error(`sequential: ${file}: a task name is not a string`);
-          if (!seen.has(t)) seen.set(t, new Set());
-          seen.get(t).add(`${label}/${d.name}`);
-        }
-        any = true;
-      }
-      for (const sub of TASK_DIRS) {
-        const sd = path.join(dir, d.name, sub);
-        if (!existsSync(sd)) continue;
-        for (const e of readdirSync(sd, { withFileTypes: true })) {
-          if (!e.isDirectory() || !TASK_NAME.test(e.name)) continue;
-          if (!seen.has(e.name)) seen.set(e.name, new Set());
-          seen.get(e.name).add(`${label}/${d.name}`);
-          any = true;
-        }
-      }
-      runs += any;
+      const rec = runRecord(path.join(dir, d.name));
+      if (!rec) continue;
+      entry.runs++;
+      runs.push({ entry, name: d.name, where: `${label}/${d.name}`, ...rec });
     }
-    scanned.push({ label, runs });
+  }
+  const planned = [];
+  if (plan) {
+    const byName = new Map();
+    for (const x of runs) {
+      x.planned = plannedLookRun(plan, x.where, x);
+      if (x.planned) for (const k of new Set([x.planned.runId, x.name].filter(Boolean))) if (!byName.has(k)) byName.set(k, x);
+    }
+    for (const x of runs) {
+      const src = !x.planned && !x.files[SIDECAR] ? byName.get(x.name) : null;
+      if (!src) continue;
+      const L = plan.looks.find(l => l.look === src.planned.look), inLook = new Set(L.tasks);
+      const listed = [x.files['summary.json']?.tasks, x.files['launch.json']?.tasks].filter(Array.isArray);
+      if (x.names.length && x.names.every(t => inLook.has(t)) && listed.every(a => listSha256(a) === L.sha256)) x.planned = { ...src.planned, copyOf: src.where };
+    }
+  }
+  for (const x of runs) {
+    if (x.planned) { planned.push({ run: x.where, look: x.planned.look, role: x.planned.role, arm: x.planned.arm, ...(x.planned.copyOf ? { copyOf: x.planned.copyOf } : {}) }); x.entry.planned = (x.entry.planned ?? 0) + 1; continue; }
+    for (const t of x.names) { if (!seen.has(t)) seen.set(t, new Set()); seen.get(t).add(x.where); }
   }
   Object.defineProperty(seen, 'scanned', { value: scanned, enumerable: false });
+  Object.defineProperty(seen, 'planned', { value: planned, enumerable: false });
   return seen;
 }
 /** Look 1: the stored dev60 tasks, checked against the recorded selection. */
@@ -300,24 +356,30 @@ export function lookTasks(plan, n, split = checkedSplit()) {
 const flagValue = (argv, name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
 /**
  * The sidecar a look run carries (live directory and repo copy): which plan, look, task list, role and arm, and for a
- * treatment its declared first look (its exposure), fixed before the run starts.
+ * treatment its declared first look (its exposure), fixed before the run starts. A reference run (2026-10-22) declares
+ * its first look as a treatment does, carries no nominal levels and is marked confirmatory: false.
  */
 export function lookSidecar(plan, n, { role, arm, firstLook = null, runId, live, out, argv = [] }) {
-  if (role !== 'control' && role !== 'treatment') throw new Error('look: --role must be control or treatment');
+  if (!SIDECAR_ROLES.includes(role)) throw new Error(`look: --role must be ${SIDECAR_ROLES.join(', ').replace(/, (?=[^,]*$)/, ' or ')}`);
   if (!arm || typeof arm !== 'string') throw new Error('look: --arm NAME is required (the arm this run measures)');
-  if (role === 'treatment') {
+  if (role !== 'control') {
     const s = scheduleOf(plan, firstLook);
     if (n < s.firstLook) throw new Error(`look ${n} precedes the arm's declared first look ${firstLook}`);
-  } else if (firstLook !== null) throw new Error('look: --first-look belongs to a treatment arm (a control serves every schedule)');
+  } else if (firstLook !== null) throw new Error('look: --first-look belongs to a treatment or reference arm (a control serves every schedule)');
   const tasks = lookTasks(plan, n);
   return {
     schema: SIDECAR_SCHEMA, design: 'PREREG-AB-v1-AMEND-1 group-sequential (A4)', planStatus: plan.status, plan: plan.planSha256, look: n, looks: plan.looks.length,
-    tasks, tasksSha256: listSha256(tasks), role, arm, ...(role === 'treatment' ? { firstLook } : {}),
-    nominal: Object.fromEntries(plan.schedules.filter(s => s.looks.includes(n) && (role === 'control' || s.firstLook === firstLook)).map(s => [`from look ${s.firstLook}`, { strict: s.nominal.strict[s.looks.indexOf(n)], partialCredit: s.nominal.partialCredit[s.looks.indexOf(n)] }])),
+    tasks, tasksSha256: listSha256(tasks), role, arm, ...(role !== 'control' ? { firstLook } : {}),
+    ...(role === 'reference' ? { confirmatory: false, reference: 'reported beside the plan\'s test on the look\'s task list; never its control or treatment (analyze refuses it as either side)' } : {}),
+    nominal: role === 'reference' ? null : Object.fromEntries(plan.schedules.filter(s => s.looks.includes(n) && (role === 'control' || s.firstLook === firstLook)).map(s => [`from look ${s.firstLook}`, { strict: s.nominal.strict[s.looks.indexOf(n)], partialCredit: s.nominal.partialCredit[s.looks.indexOf(n)] }])),
     alpha: plan.alpha, procedure: plan.procedure.rule, stopOn: plan.procedure.stopOn, runId, live, out, runArgs: argv,
     runnerSha256: sha256(readFileSync(RUNNER)), sequentialSha256: sha256(readFileSync(fileURLToPath(import.meta.url))),
   };
 }
+/** A sidecar's identity: a resume or a re-record must match these keys. */
+const sidecarDiff = (prev, next) => SIDECAR_KEYS.filter(k => JSON.stringify(prev[k] ?? null) !== JSON.stringify(next[k] ?? null));
+/** Writes a sidecar whole (temp file, then rename): a scan never reads it half-written. */
+const writeSidecar = (file, value) => { const tmpFile = `${file}.tmp-${process.pid}`; writeFileSync(tmpFile, JSON.stringify(value, null, 1) + '\n'); renameSync(tmpFile, file); };
 const SIDECAR_KEYS = ['schema', 'plan', 'look', 'tasksSha256', 'role', 'arm', 'firstLook', 'runId'];
 /**
  * Plans one look run: checks the passthrough run.mjs options (no task selection, no --no-copy/--dry-run/--test-run; a
@@ -338,10 +400,9 @@ export function execLook(plan, n, { role, arm, firstLook = null, passthrough = [
   for (const dir of [live, out]) {
     const f = path.join(dir, SIDECAR);
     if (existsSync(f)) {
-      const prev = JSON.parse(readFileSync(f, 'utf8'));
-      const diff = SIDECAR_KEYS.filter(k => JSON.stringify(prev[k] ?? null) !== JSON.stringify(sidecar[k] ?? null));
+      const diff = sidecarDiff(JSON.parse(readFileSync(f, 'utf8')), sidecar);
       if (diff.length) throw new Error(`look: ${f} belongs to another look run (${diff.join(', ')} differ); use a new --run-id`);
-    } else { mkdirSync(dir, { recursive: true }); writeFileSync(f, JSON.stringify({ ...sidecar, writtenAt: now() }, null, 1) + '\n'); }
+    } else { mkdirSync(dir, { recursive: true }); writeSidecar(f, { ...sidecar, writtenAt: now() }); }
   }
   const r = spawn(process.execPath, args, { cwd: REPO, stdio: 'inherit' });
   const summary = path.join(out, 'summary.json');
@@ -350,6 +411,42 @@ export function execLook(plan, n, { role, arm, firstLook = null, passthrough = [
     if (listSha256(s.tasks ?? []) !== sidecar.tasksSha256) throw new Error(`look: ${summary} holds tasks other than look ${n}'s`);
   }
   return { sidecar, args, live, out, status: r?.status ?? 1 };
+}
+
+/**
+ * The sidecar of a FINISHED reference run that was launched with run.mjs directly, not through `look --exec` (added
+ * 2026-10-22 for D26's a0o-look2-1 and D27's a1s-look2, which ran on look 2's list before the role existed). Names only:
+ * it reads the run's summary.json and launch.json `tasks` (and launch.json's runnerSha256) and its task-named
+ * directories, never a result or a grade. The run's summary must list exactly look n's tasks and nothing it names may lie
+ * outside look n. The sidecar is lookSidecar's for role reference, with the run's own runner hash, no run options, and a
+ * `retroactive` record (the decision that ran it). A sidecar already there must be the same run's (SIDECAR_KEYS), else
+ * this throws; then nothing is written. With write, it is written whole into `dir`; without, only returned.
+ */
+export function recordReferenceRun(plan, n, { dir, arm, firstLook = null, decision, write = false, now = () => new Date().toISOString() }) {
+  if (plan.draft) throw new Error('record-reference: the plan is a DRAFT (not the plan pinned in FROZEN_PLAN_SHA256)');
+  if (!decision || typeof decision !== 'string') throw new Error('record-reference: --decision TEXT is required (the decision under which the arm ran on the look)');
+  if (!dir || !existsSync(path.join(dir, 'summary.json'))) throw new Error(`record-reference: ${dir}: no summary.json (only a finished run is recorded; a new reference run starts with \`look ${n} --role reference --exec\`)`);
+  const runId = path.basename(path.resolve(dir));
+  const sidecar = lookSidecar(plan, n, { role: 'reference', arm, firstLook, runId, live: path.resolve(dir), out: null, argv: null });
+  const rec = runRecord(dir), summaryTasks = rec.files['summary.json']?.tasks;
+  if (!Array.isArray(summaryTasks) || listSha256(summaryTasks) !== sidecar.tasksSha256) throw new Error(`record-reference: ${dir}: its summary's tasks are not look ${n}'s`);
+  const inLook = new Set(sidecar.tasks), outside = [...new Set(rec.names)].filter(t => !inLook.has(t));
+  if (outside.length) throw new Error(`record-reference: ${dir} names ${outside.length} task(s) outside look ${n}`);
+  const launch = rec.files['launch.json'] ?? null;
+  const out = {
+    ...sidecar, runnerSha256: launch?.runnerSha256 ?? null,
+    retroactive: { decision, launchedBy: 'run.mjs directly (not `sequential.mjs look --exec`); this sidecar was written after the run finished', recordedBy: 'sequential.mjs record-reference', runnerSha256From: launch?.runnerSha256 ? 'the run\'s launch.json' : 'none recorded' },
+  };
+  const f = path.join(dir, SIDECAR);
+  if (existsSync(f)) {
+    const diff = sidecarDiff(readJsonStrict(f), out);
+    if (diff.length) throw new Error(`record-reference: ${f} belongs to another look run (${diff.join(', ')} differ)`);
+    return { sidecar: readJsonStrict(f), file: f, written: false, existed: true };
+  }
+  if (!write) return { sidecar: out, file: f, written: false, existed: false };
+  const value = { ...out, writtenAt: now() };
+  writeSidecar(f, value);
+  return { sidecar: value, file: f, written: true, existed: false };
 }
 
 /**
@@ -398,6 +495,7 @@ export function loadOutcomes(dirs, { runsRoot = RUNS } = {}) {
  * name. With illustration, missing sidecars are allowed and the result is labelled. Returns { outcomes, sources, arm }.
  */
 export function verifyLookRuns(plan, n, dirs, { role, firstLook = null, illustration = false, runsRoot = RUNS }) {
+  if (role !== 'control' && role !== 'treatment') throw new Error(`analyze reads control and treatment runs only (role ${role}); a reference run never enters the test`);
   const tasks = new Set(lookTasks(plan, n)), sources = [];
   let arm = null;
   for (const d of dirs) {
@@ -608,13 +706,23 @@ async function main(argv) {
     const split = checkedSplit();
     const exposure = JSON.parse(readFileSync(EXPOSURE, 'utf8'));
     const roots = exposureRoots({ liveRoot: a['live-root'] === 'none' ? null : a['live-root'] ?? LIVE_ROOT });
-    const seen = seenTasks(roots);
+    // The frozen plan's own look runs are not exposure (2026-10-22); --planned none counts every run, --planned FILE names
+    // the plan (readPlan: only the pinned frozen plan reads).
+    const plannedFile = a.planned === 'none' ? null : (a.planned ?? (FROZEN_PLAN_SHA256 !== null && existsSync(FROZEN_PLAN_FILE) ? FROZEN_PLAN_FILE : null));
+    const frozen = plannedFile ? readPlan(plannedFile) : null;
+    const seen = seenTasks(roots, { plan: frozen });
     const plan = computePlan({ split, exposure: { briefed: exposure.dev.exposedNotForced, seen, roots: seen.scanned }, batch: Number(a.batch ?? 60), minLook: Number(a['min-look'] ?? 20), freeze: Boolean(a.freeze) });
     if (a.write) writeFileSync(a.write, JSON.stringify(plan, null, 1) + '\n');
     if (a.json) { console.log(JSON.stringify(plan, null, 1)); return; }
     console.log(`plan ${plan.planSha256} (${plan.status})${a.freeze ? ': pin this hash in FROZEN_PLAN_SHA256' : ''}`);
     console.log(`devTrain ${plan.pool.devTrain}; excluded ${JSON.stringify(plan.pool.excluded)}; eligible ${plan.pool.eligible}; unused remainder ${plan.pool.unused.length}`);
-    console.log(`exposure roots scanned: ${plan.pool.roots.map(r => `${r.label} (${r.missing ? 'missing' : `${r.runs} runs`})`).join('; ')}`);
+    console.log(`exposure roots scanned: ${plan.pool.roots.map(r => `${r.label} (${r.missing ? 'missing' : `${r.runs} runs${r.planned ? `, ${r.planned} planned look runs` : ''}`})`).join('; ')}`);
+    if (frozen) {
+      console.log(`planned look runs of the frozen plan ${frozen.planSha256.slice(0, 8)}… (not exposure): ${seen.planned.length ? seen.planned.map(x => `${x.run} (look ${x.look}, ${x.role} ${x.arm}${x.copyOf ? `, copy of ${x.copyOf}` : ''})`).join('; ') : 'none'}`);
+      const stray = frozen.looks.slice(1).flatMap(L => L.tasks.filter(t => seen.has(t)).map(t => `${t} (look ${L.look}: ${[...seen.get(t)].join(', ')})`));
+      if (stray.length) console.log(`WARNING: ${stray.length} task(s) of the frozen plan's looks 2.. are named by runs outside the plan: ${stray.join('; ')}`);
+      console.log(`looks ${JSON.stringify(plan.looks.map(L => L.sha256)) === JSON.stringify(frozen.looks.map(L => L.sha256)) ? 'identical to' : 'DIFFER from'} the frozen plan's (the plan hash differs whenever the roots record does)`);
+    } else console.log('every recorded run counts as exposure (--planned none, or no frozen plan pinned)');
     for (const L of plan.looks) console.log(`look ${L.look}: ${L.n} tasks (${Object.values(L.perDomain).join('/')} by domain)`);
     for (const s of plan.schedules) console.log(`from look ${s.firstLook}: cumulative ${s.cumulative.join('/')}, nominal per metric ${s.nominal.strict.map(v => v.toPrecision(3)).join(' / ')}`);
     if (a.write) console.log(`wrote ${a.write}`);
@@ -624,7 +732,7 @@ async function main(argv) {
     const n = intArg(a._[1], 'look N');
     const plan = readPlan(a.plan);
     const r = execLook(plan, n, { role: a.role, arm: a.arm, firstLook: a['first-look'] === undefined ? null : intArg(a['first-look'], '--first-look'), passthrough: a.passthrough, exec: Boolean(a.exec) });
-    const nom = Object.entries(r.sidecar.nominal).map(([k, v]) => `${k}: strict ${v.strict.toPrecision(3)}, partial credit ${v.partialCredit.toPrecision(3)}`).join('; ');
+    const nom = r.sidecar.nominal ? Object.entries(r.sidecar.nominal).map(([k, v]) => `${k}: strict ${v.strict.toPrecision(3)}, partial credit ${v.partialCredit.toPrecision(3)}`).join('; ') : 'none (a reference run is never tested)';
     console.log(`look ${n} (${plan.status}): ${r.sidecar.tasks.length} tasks, ${r.sidecar.role} ${r.sidecar.arm}; nominal ${nom}; sidecar ${path.join(r.live, SIDECAR)} and ${path.join(r.out, SIDECAR)}`);
     console.log(`node ${r.args.map(x => path.relative(REPO, x) === 'experiments/autobench/run.mjs' ? 'experiments/autobench/run.mjs' : x).join(' ')}`);
     if (a.exec) process.exitCode = r.status;
@@ -673,6 +781,15 @@ async function main(argv) {
     console.log(`look ${n}: ${out.n} tasks (${Object.entries(out.perDomain).map(([d, c]) => `${d} ${c}`).join(', ')}); list sha256 ${out.tasksSha256}; plan ${out.plan}${a.write ? `; wrote ${a.write} (file sha256 ${sha256(text)})` : ''}`);
     return;
   }
+  if (cmd === 'record-reference') {
+    const n = intArg(a._[1], 'look N');
+    if (typeof a['run-dir'] !== 'string') throw new Error('record-reference: --run-dir DIR is required (the finished run\'s directory, e.g. its live directory)');
+    const r = recordReferenceRun(readPlan(a.plan), n, { dir: a['run-dir'], arm: a.arm, firstLook: a['first-look'] === undefined ? null : intArg(a['first-look'], '--first-look'), decision: a.decision, write: Boolean(a.write) });
+    if (a.json) { console.log(JSON.stringify(r, null, 1)); return; }
+    const s = r.sidecar;
+    console.log(`${r.file}: ${r.existed ? 'already holds this run\'s sidecar (unchanged)' : r.written ? 'written' : 'not written (add --write)'}; plan ${s.plan.slice(0, 8)}…, look ${s.look} (${s.tasks.length} tasks, ${s.tasksSha256.slice(0, 8)}…), role ${s.role}, arm ${s.arm}, first look ${s.firstLook}, run ${s.runId}`);
+    return;
+  }
   if (cmd === 'simulate') {
     const cumulative = a.plan ? scheduleOf(readPlan(a.plan), intArg(a['first-look'], '--first-look')).cumulative : (a.cumulative ? String(a.cumulative).split(',').map(Number) : [60, 120, 180, 240]);
     // --h1: treatment outcomes from the stored A1 runs, control from the stored A0 runs (the in-sample dev60 effect, so the
@@ -692,7 +809,7 @@ async function main(argv) {
     console.log(`  partial credit alone at its own 0.05 boundary, ungated: ${f(r.partialCreditUngated)}; DRAFT Bonferroni (0.025 per metric): either metric ${f(r.draftEither)}, strict ${f(r.draftStrict)}`);
     return;
   }
-  throw new Error('usage: sequential.mjs plan|look|analyze|simulate|export-look …');
+  throw new Error('usage: sequential.mjs plan|look|analyze|simulate|export-look|record-reference …');
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

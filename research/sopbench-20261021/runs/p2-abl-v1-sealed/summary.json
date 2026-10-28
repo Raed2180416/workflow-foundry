@@ -1,0 +1,135 @@
+{
+ "runId": "p2-abl-v1-sealed",
+ "cell": "V1-minimal",
+ "freeze": "research/sopbench-20261021/FREEZE-p2.json",
+ "freezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
+ "evidence": "SEALED rows (frozen split, frozen workflows and code)",
+ "stopped": null,
+ "k": 3,
+ "arms": [
+  "W",
+  "A"
+ ],
+ "sops": [
+  "video_annotation"
+ ],
+ "runs": 630,
+ "spentUsd": 0.7420573300000003,
+ "capUsd": 5,
+ "finishedAt": "2026-10-22T07:41:54.088Z",
+ "dependencyDrift": [],
+ "analysis": {
+  "k": 3,
+  "arms": {
+   "W": {
+    "macroPassK": 0.9809523809523809,
+    "macroPassAt1": 0.9809523809523809,
+    "macroUpstreamAt1": 0.9809523809523809,
+    "costUsd": 0,
+    "runs": 315,
+    "ci95": [
+     0.9523809523809523,
+     1
+    ]
+   },
+   "A": {
+    "macroPassK": 0.38095238095238093,
+    "macroPassAt1": 0.4666666666666667,
+    "macroUpstreamAt1": 0.4793650793650794,
+    "costUsd": 0.7420573300000003,
+    "runs": 315,
+    "ci95": [
+     0.2857142857142857,
+     0.47619047619047616
+    ]
+   }
+  },
+  "perSop": {
+   "video_annotation": {
+    "W": {
+     "rows": 105,
+     "passK": 0.9809523809523809,
+     "passAt1": 0.9809523809523809,
+     "upstreamAt1": 0.9809523809523809
+    },
+    "A": {
+     "rows": 105,
+     "passK": 0.38095238095238093,
+     "passAt1": 0.4666666666666667,
+     "upstreamAt1": 0.4793650793650794
+    }
+   }
+  },
+  "wMinusA": {
+   "macro": 0.6,
+   "ci95": [
+    0.5047619047619047,
+    0.6952380952380952
+   ]
+  }
+ },
+ "analysisWithoutOrchestrationOnly": {
+  "k": 3,
+  "arms": {
+   "W": {
+    "macroPassK": 0.9809523809523809,
+    "macroPassAt1": 0.9809523809523809,
+    "macroUpstreamAt1": 0.9809523809523809,
+    "costUsd": 0,
+    "runs": 315,
+    "ci95": [
+     0.9523809523809523,
+     1
+    ]
+   },
+   "A": {
+    "macroPassK": 0.38095238095238093,
+    "macroPassAt1": 0.4666666666666667,
+    "macroUpstreamAt1": 0.4793650793650794,
+    "costUsd": 0.7420573300000003,
+    "runs": 315,
+    "ci95": [
+     0.29523809523809524,
+     0.47619047619047616
+    ]
+   }
+  },
+  "perSop": {
+   "video_annotation": {
+    "W": {
+     "rows": 105,
+     "passK": 0.9809523809523809,
+     "passAt1": 0.9809523809523809,
+     "upstreamAt1": 0.9809523809523809
+    },
+    "A": {
+     "rows": 105,
+     "passK": 0.38095238095238093,
+     "passAt1": 0.4666666666666667,
+     "upstreamAt1": 0.4793650793650794
+    }
+   }
+  },
+  "wMinusA": {
+   "macro": 0.6,
+   "ci95": [
+    0.49523809523809526,
+    0.6952380952380952
+   ]
+  }
+ },
+ "wCost": {
+  "amortisedPerRunUsd": 0.0006093985396825398
+ },
+ "decision": null,
+ "cellNote": "ablation cell: primary (the shipped catalog: 6 real + 20 stub tools)",
+ "statuses": {
+  "W": {
+   "done": 315
+  },
+  "A": {
+   "session": 315
+  }
+ },
+ "graderDisagreements": 0
+}
