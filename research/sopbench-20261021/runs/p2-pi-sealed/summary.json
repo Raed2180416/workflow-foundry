@@ -1,0 +1,135 @@
+{
+ "runId": "p2-pi-sealed",
+ "cell": "patient_intake",
+ "freeze": "research/sopbench-20261021/FREEZE-p2.json",
+ "freezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
+ "evidence": "SEALED rows (frozen split, frozen workflows and code)",
+ "stopped": null,
+ "k": 3,
+ "arms": [
+  "W",
+  "A"
+ ],
+ "sops": [
+  "patient_intake"
+ ],
+ "runs": 300,
+ "spentUsd": 0.26590813999999996,
+ "capUsd": 5,
+ "finishedAt": "2026-10-28T18:29:07.849Z",
+ "dependencyDrift": [],
+ "analysis": {
+  "k": 3,
+  "arms": {
+   "W": {
+    "macroPassK": 1,
+    "macroPassAt1": 1,
+    "macroUpstreamAt1": 1,
+    "costUsd": 0,
+    "runs": 150,
+    "ci95": [
+     1,
+     1
+    ]
+   },
+   "A": {
+    "macroPassK": 0.48,
+    "macroPassAt1": 0.6266666666666667,
+    "macroUpstreamAt1": 0.6266666666666667,
+    "costUsd": 0.26590813999999996,
+    "runs": 150,
+    "ci95": [
+     0.34,
+     0.62
+    ]
+   }
+  },
+  "perSop": {
+   "patient_intake": {
+    "W": {
+     "rows": 50,
+     "passK": 1,
+     "passAt1": 1,
+     "upstreamAt1": 1
+    },
+    "A": {
+     "rows": 50,
+     "passK": 0.48,
+     "passAt1": 0.6266666666666667,
+     "upstreamAt1": 0.6266666666666667
+    }
+   }
+  },
+  "wMinusA": {
+   "macro": 0.52,
+   "ci95": [
+    0.38,
+    0.6599999999999999
+   ]
+  }
+ },
+ "analysisWithoutOrchestrationOnly": {
+  "k": 3,
+  "arms": {
+   "W": {
+    "macroPassK": 1,
+    "macroPassAt1": 1,
+    "macroUpstreamAt1": 1,
+    "costUsd": 0,
+    "runs": 150,
+    "ci95": [
+     1,
+     1
+    ]
+   },
+   "A": {
+    "macroPassK": 0.48,
+    "macroPassAt1": 0.6266666666666667,
+    "macroUpstreamAt1": 0.6266666666666667,
+    "costUsd": 0.26590813999999996,
+    "runs": 150,
+    "ci95": [
+     0.34,
+     0.62
+    ]
+   }
+  },
+  "perSop": {
+   "patient_intake": {
+    "W": {
+     "rows": 50,
+     "passK": 1,
+     "passAt1": 1,
+     "upstreamAt1": 1
+    },
+    "A": {
+     "rows": 50,
+     "passK": 0.48,
+     "passAt1": 0.6266666666666667,
+     "upstreamAt1": 0.6266666666666667
+    }
+   }
+  },
+  "wMinusA": {
+   "macro": 0.52,
+   "ci95": [
+    0.38,
+    0.6599999999999999
+   ]
+  }
+ },
+ "wCost": {
+  "amortisedPerRunUsd": 0.001259412866666667
+ },
+ "decision": null,
+ "cellNote": "separately reported SOP (owner decision D3): not in the primary set or the decision rule",
+ "statuses": {
+  "W": {
+   "done": 150
+  },
+  "A": {
+   "session": 150
+  }
+ },
+ "graderDisagreements": 0
+}

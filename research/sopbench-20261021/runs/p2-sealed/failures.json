@@ -1,0 +1,367 @@
+{
+ "runId": "p2-sealed",
+ "evidence": "SEALED rows; aggregate counts only",
+ "runs": 10158,
+ "environmentFaults": 23,
+ "arms": {
+  "A": {
+   "runs": 5079,
+   "categories": {
+    "wrong-value": 1065,
+    "pass": 3955,
+    "violation": 50,
+    "invalid-json": 8,
+    "no-final-output": 1
+   },
+   "deopts": {},
+   "violations": {
+    "L5: benchmark reference in response 1": 19,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3": 4,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4; L5: benchmark reference in response 5": 8,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4; L5: benchmark reference in response 5; L5: benchmark reference in response 6; L5: benchmark reference in response 7; L5: benchmark reference in response 8; L5: benchmark reference in response 9; L5: benchmark reference in response 10": 3,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2": 4,
+    "L5: no host transcript": 1,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4": 5,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4; L5: benchmark reference in response 5; L5: benchmark reference in response 6; L5: benchmark reference in response 7; L5: benchmark reference in response 8": 4,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4; L5: benchmark reference in response 5; L5: benchmark reference in response 6; L5: benchmark reference in response 7": 1,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4; L5: benchmark reference in response 5; L5: benchmark reference in response 6; L5: benchmark reference in response 7; L5: benchmark reference in response 8; L5: benchmark reference in response 9": 1
+   },
+   "sessionErrors": {},
+   "upstreamOnlyPasses": 4,
+   "bySop": {
+    "aircraft_inspection": {
+     "runs": 276,
+     "categories": {
+      "wrong-value": 146,
+      "violation": 2,
+      "pass": 128
+     },
+     "wrongColumns": {
+      "component_incident_response": 135,
+      "component_mismatch_response": 135,
+      "cross_check_reporting_response": 115,
+      "aircraft_ready": 4
+     },
+     "flakyRows": 1,
+     "rowsAllFail": 49,
+     "rowsCount": 92
+    },
+    "customer_service": {
+     "runs": 408,
+     "categories": {
+      "pass": 322,
+      "wrong-value": 62,
+      "violation": 24
+     },
+     "wrongColumns": {
+      "final_resolution_status": 62
+     },
+     "flakyRows": 44,
+     "rowsAllFail": 10,
+     "rowsCount": 136
+    },
+    "dangerous_goods": {
+     "runs": 762,
+     "categories": {
+      "pass": 724,
+      "wrong-value": 28,
+      "violation": 10
+     },
+     "wrongColumns": {
+      "hazard_class": 28
+     },
+     "flakyRows": 22,
+     "rowsAllFail": 5,
+     "rowsCount": 254
+    },
+    "email_intent": {
+     "runs": 498,
+     "categories": {
+      "pass": 438,
+      "wrong-value": 58,
+      "violation": 2
+     },
+     "wrongColumns": {
+      "action": 55,
+      "seller_intent": 22
+     },
+     "flakyRows": 20,
+     "rowsAllFail": 11,
+     "rowsCount": 166
+    },
+    "know_your_business": {
+     "runs": 210,
+     "categories": {
+      "wrong-value": 141,
+      "pass": 66,
+      "violation": 3
+     },
+     "wrongColumns": {
+      "escalation_status": 141
+     },
+     "flakyRows": 9,
+     "rowsAllFail": 43,
+     "rowsCount": 70
+    },
+    "order_fulfillment": {
+     "runs": 69,
+     "categories": {
+      "pass": 60,
+      "wrong-value": 9
+     },
+     "wrongColumns": {
+      "expected_output": 9
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 3,
+     "rowsCount": 23
+    },
+    "referral_abuse_detection_v1": {
+     "runs": 540,
+     "categories": {
+      "pass": 539,
+      "violation": 1
+     },
+     "wrongColumns": {},
+     "flakyRows": 1,
+     "rowsAllFail": 0,
+     "rowsCount": 180
+    },
+    "referral_abuse_detection_v2": {
+     "runs": 540,
+     "categories": {
+      "pass": 508,
+      "wrong-value": 31,
+      "violation": 1
+     },
+     "wrongColumns": {
+      "final_decision": 31
+     },
+     "flakyRows": 19,
+     "rowsAllFail": 3,
+     "rowsCount": 180
+    },
+    "traffic_spoofing_detection": {
+     "runs": 540,
+     "categories": {
+      "pass": 440,
+      "wrong-value": 99,
+      "violation": 1
+     },
+     "wrongColumns": {
+      "enforcement_action": 99
+     },
+     "flakyRows": 1,
+     "rowsAllFail": 33,
+     "rowsCount": 180
+    },
+    "video_annotation": {
+     "runs": 315,
+     "categories": {
+      "wrong-value": 172,
+      "pass": 134,
+      "invalid-json": 8,
+      "no-final-output": 1
+     },
+     "wrongColumns": {
+      "final status": 172
+     },
+     "flakyRows": 18,
+     "rowsAllFail": 52,
+     "rowsCount": 105
+    },
+    "video_classification": {
+     "runs": 531,
+     "categories": {
+      "pass": 404,
+      "wrong-value": 121,
+      "violation": 6
+     },
+     "wrongColumns": {
+      "final_decision": 121
+     },
+     "flakyRows": 34,
+     "rowsAllFail": 27,
+     "rowsCount": 177
+    },
+    "warehouse_package_inspection": {
+     "runs": 390,
+     "categories": {
+      "wrong-value": 198,
+      "pass": 192
+     },
+     "wrongColumns": {
+      "resolution_status": 198
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 66,
+     "rowsCount": 130
+    }
+   }
+  },
+  "W": {
+   "runs": 5079,
+   "categories": {
+    "wrong-value": 536,
+    "pass": 4543
+   },
+   "deopts": {},
+   "violations": {},
+   "sessionErrors": {},
+   "upstreamOnlyPasses": 0,
+   "bySop": {
+    "aircraft_inspection": {
+     "runs": 276,
+     "categories": {
+      "wrong-value": 45,
+      "pass": 231
+     },
+     "wrongColumns": {
+      "aircraft_ready": 33,
+      "cross_check_response": 24,
+      "component_mismatch_response": 12,
+      "cross_check_reporting_response": 6,
+      "component_incident_response": 6
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 15,
+     "rowsCount": 92
+    },
+    "customer_service": {
+     "runs": 408,
+     "categories": {
+      "pass": 384,
+      "wrong-value": 24
+     },
+     "wrongColumns": {
+      "final_resolution_status": 24
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 8,
+     "rowsCount": 136
+    },
+    "dangerous_goods": {
+     "runs": 762,
+     "categories": {
+      "pass": 744,
+      "wrong-value": 18
+     },
+     "wrongColumns": {
+      "hazard_class": 18
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 6,
+     "rowsCount": 254
+    },
+    "email_intent": {
+     "runs": 498,
+     "categories": {
+      "pass": 498
+     },
+     "wrongColumns": {},
+     "flakyRows": 0,
+     "rowsAllFail": 0,
+     "rowsCount": 166
+    },
+    "know_your_business": {
+     "runs": 210,
+     "categories": {
+      "pass": 186,
+      "wrong-value": 24
+     },
+     "wrongColumns": {
+      "escalation_status": 24
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 8,
+     "rowsCount": 70
+    },
+    "order_fulfillment": {
+     "runs": 69,
+     "categories": {
+      "pass": 54,
+      "wrong-value": 15
+     },
+     "wrongColumns": {
+      "expected_output": 15
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 5,
+     "rowsCount": 23
+    },
+    "referral_abuse_detection_v1": {
+     "runs": 540,
+     "categories": {
+      "pass": 540
+     },
+     "wrongColumns": {},
+     "flakyRows": 0,
+     "rowsAllFail": 0,
+     "rowsCount": 180
+    },
+    "referral_abuse_detection_v2": {
+     "runs": 540,
+     "categories": {
+      "pass": 540
+     },
+     "wrongColumns": {},
+     "flakyRows": 0,
+     "rowsAllFail": 0,
+     "rowsCount": 180
+    },
+    "traffic_spoofing_detection": {
+     "runs": 540,
+     "categories": {
+      "wrong-value": 147,
+      "pass": 393
+     },
+     "wrongColumns": {
+      "enforcement_action": 147
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 49,
+     "rowsCount": 180
+    },
+    "video_annotation": {
+     "runs": 315,
+     "categories": {
+      "pass": 312,
+      "wrong-value": 3
+     },
+     "wrongColumns": {
+      "final status": 3
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 1,
+     "rowsCount": 105
+    },
+    "video_classification": {
+     "runs": 531,
+     "categories": {
+      "pass": 466,
+      "wrong-value": 65
+     },
+     "wrongColumns": {
+      "final_decision": 65
+     },
+     "flakyRows": 1,
+     "rowsAllFail": 21,
+     "rowsCount": 177
+    },
+    "warehouse_package_inspection": {
+     "runs": 390,
+     "categories": {
+      "wrong-value": 195,
+      "pass": 195
+     },
+     "wrongColumns": {
+      "resolution_status": 195
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 65,
+     "rowsCount": 130
+    }
+   }
+  }
+ }
+}

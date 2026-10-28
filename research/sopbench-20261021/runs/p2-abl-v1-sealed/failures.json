@@ -1,0 +1,64 @@
+{
+ "runId": "p2-abl-v1-sealed",
+ "evidence": "SEALED rows; aggregate counts only",
+ "runs": 630,
+ "environmentFaults": 0,
+ "arms": {
+  "A": {
+   "runs": 315,
+   "categories": {
+    "wrong-value": 158,
+    "pass": 147,
+    "invalid-json": 9,
+    "no-final-output": 1
+   },
+   "deopts": {},
+   "violations": {},
+   "sessionErrors": {},
+   "upstreamOnlyPasses": 4,
+   "bySop": {
+    "video_annotation": {
+     "runs": 315,
+     "categories": {
+      "wrong-value": 158,
+      "pass": 147,
+      "invalid-json": 9,
+      "no-final-output": 1
+     },
+     "wrongColumns": {
+      "final status": 158
+     },
+     "flakyRows": 20,
+     "rowsAllFail": 45,
+     "rowsCount": 105
+    }
+   }
+  },
+  "W": {
+   "runs": 315,
+   "categories": {
+    "pass": 309,
+    "wrong-value": 6
+   },
+   "deopts": {},
+   "violations": {},
+   "sessionErrors": {},
+   "upstreamOnlyPasses": 0,
+   "bySop": {
+    "video_annotation": {
+     "runs": 315,
+     "categories": {
+      "pass": 309,
+      "wrong-value": 6
+     },
+     "wrongColumns": {
+      "final status": 6
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 2,
+     "rowsCount": 105
+    }
+   }
+  }
+ }
+}

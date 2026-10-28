@@ -4,7 +4,7 @@
  "freeze": "research/sopbench-20261021/FREEZE-p2.json",
  "freezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
  "evidence": "SEALED rows (frozen split, frozen workflows and code)",
- "stopped": "environment fault at A-know_your_business-50-0: MODEL_RATE_LIMIT",
+ "stopped": null,
  "k": 3,
  "arms": [
   "W",
@@ -15,9 +15,180 @@
   "customer_service",
   "know_your_business"
  ],
- "runs": 410,
- "spentUsd": 0.4398592500000001,
+ "runs": 720,
+ "spentUsd": 0.7484395599999996,
  "capUsd": 5,
- "finishedAt": "2026-10-22T07:45:55.091Z",
- "dependencyDrift": []
+ "finishedAt": "2026-10-28T18:06:38.014Z",
+ "dependencyDrift": [],
+ "analysis": {
+  "k": 3,
+  "arms": {
+   "W": {
+    "macroPassK": 0.8916666666666666,
+    "macroPassAt1": 0.8916666666666666,
+    "macroUpstreamAt1": 0.8916666666666666,
+    "costUsd": 0,
+    "runs": 360,
+    "ci95": [
+     0.8333333333333334,
+     0.9416666666666668
+    ]
+   },
+   "A": {
+    "macroPassK": 0.65,
+    "macroPassAt1": 0.7138888888888889,
+    "macroUpstreamAt1": 0.7138888888888889,
+    "costUsd": 0.74609232,
+    "runs": 360,
+    "ci95": [
+     0.5833333333333333,
+     0.7166666666666668
+    ]
+   }
+  },
+  "perSop": {
+   "dangerous_goods": {
+    "W": {
+     "rows": 40,
+     "passK": 0.975,
+     "passAt1": 0.975,
+     "upstreamAt1": 0.975
+    },
+    "A": {
+     "rows": 40,
+     "passK": 0.9,
+     "passAt1": 0.95,
+     "upstreamAt1": 0.95
+    }
+   },
+   "customer_service": {
+    "W": {
+     "rows": 40,
+     "passK": 0.95,
+     "passAt1": 0.95,
+     "upstreamAt1": 0.95
+    },
+    "A": {
+     "rows": 40,
+     "passK": 0.775,
+     "passAt1": 0.875,
+     "upstreamAt1": 0.875
+    }
+   },
+   "know_your_business": {
+    "W": {
+     "rows": 40,
+     "passK": 0.75,
+     "passAt1": 0.75,
+     "upstreamAt1": 0.75
+    },
+    "A": {
+     "rows": 40,
+     "passK": 0.275,
+     "passAt1": 0.31666666666666665,
+     "upstreamAt1": 0.31666666666666665
+    }
+   }
+  },
+  "wMinusA": {
+   "macro": 0.24166666666666659,
+   "ci95": [
+    0.15833333333333321,
+    0.32500000000000007
+   ]
+  }
+ },
+ "analysisWithoutOrchestrationOnly": {
+  "k": 3,
+  "arms": {
+   "W": {
+    "macroPassK": 0.8916666666666666,
+    "macroPassAt1": 0.8916666666666666,
+    "macroUpstreamAt1": 0.8916666666666666,
+    "costUsd": 0,
+    "runs": 360,
+    "ci95": [
+     0.8333333333333334,
+     0.9416666666666668
+    ]
+   },
+   "A": {
+    "macroPassK": 0.65,
+    "macroPassAt1": 0.7138888888888889,
+    "macroUpstreamAt1": 0.7138888888888889,
+    "costUsd": 0.74609232,
+    "runs": 360,
+    "ci95": [
+     0.5833333333333334,
+     0.725
+    ]
+   }
+  },
+  "perSop": {
+   "dangerous_goods": {
+    "W": {
+     "rows": 40,
+     "passK": 0.975,
+     "passAt1": 0.975,
+     "upstreamAt1": 0.975
+    },
+    "A": {
+     "rows": 40,
+     "passK": 0.9,
+     "passAt1": 0.95,
+     "upstreamAt1": 0.95
+    }
+   },
+   "customer_service": {
+    "W": {
+     "rows": 40,
+     "passK": 0.95,
+     "passAt1": 0.95,
+     "upstreamAt1": 0.95
+    },
+    "A": {
+     "rows": 40,
+     "passK": 0.775,
+     "passAt1": 0.875,
+     "upstreamAt1": 0.875
+    }
+   },
+   "know_your_business": {
+    "W": {
+     "rows": 40,
+     "passK": 0.75,
+     "passAt1": 0.75,
+     "upstreamAt1": 0.75
+    },
+    "A": {
+     "rows": 40,
+     "passK": 0.275,
+     "passAt1": 0.31666666666666665,
+     "upstreamAt1": 0.31666666666666665
+    }
+   }
+  },
+  "wMinusA": {
+   "macro": 0.24166666666666659,
+   "ci95": [
+    0.15000000000000002,
+    0.32500000000000007
+   ]
+  }
+ },
+ "wCost": {
+  "amortisedPerRunUsd": 0.0013509603888888888
+ },
+ "decision": null,
+ "cellNote": "ablation cell: primary on the same rows (the original catalog)",
+ "statuses": {
+  "W": {
+   "done": 360
+  },
+  "A": {
+   "session": 354,
+   "violation": 6
+  }
+ },
+ "graderDisagreements": 0
 }
