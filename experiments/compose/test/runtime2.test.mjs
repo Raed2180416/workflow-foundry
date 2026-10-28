@@ -232,13 +232,14 @@ test('ctx.status of a caller key reads the identity key; unknown keys read as gi
 test('eviction: answered entries go first, unanswered ones stay; the carry stays under the host limit', () => {
   let carry = null;
   for (let i = 0; i < 60; i++) {
-    const t = tick({ carry, events: i ? [result(`=charge:F-${i - 1}`)] : [], out: out([charge(`k${i}`, `F-${i}`)], { pad: 'x'.repeat(100) }) });
+    // F-0, the oldest entry, is never answered; every later charge is answered on the next tick
+    const t = tick({ carry, events: i > 1 ? [result(`=charge:F-${i - 1}`)] : [], out: out([charge(`k${i}`, `F-${i}`)], { pad: 'x'.repeat(100) }) });
     carry = t.res.carry;
   }
   const small = envAfter(out([charge('last', 'F-last')], { pad: 'x'.repeat(100) }), envBefore({ carry, events: [] }, {}), REG, { maxEnvelopeBytes: 600 });
   const { x } = envUnwrap(small.carry);
   assert.ok(Buffer.byteLength(JSON.stringify(x)) <= 600 + 200);
-  assert.ok(x.o.includes('=charge:F-last') && x.o.includes('=charge:F-59'), 'unanswered entries kept');
+  assert.ok(x.o.includes('=charge:F-0') && x.o.includes('=charge:F-last') && x.o.includes('=charge:F-59'), 'unanswered entries kept, the oldest too');
   assert.ok(small.decisions.envelope.findings.some(f => f.code === 'evicted'));
   assert.ok(!small.decisions.envelope.findings.some(f => f.code === 'evicted-pending'));
   // a solver carry close to the host limit squeezes the envelope, never the solver
