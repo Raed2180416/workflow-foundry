@@ -1,0 +1,38 @@
+{
+ "bed": {
+  "at": "2026-10-28T18:47:01.293Z",
+  "gitHead": "b6ed0b1d",
+  "sha256": "ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95",
+  "truthSet": "106bead47185244b2e2b56aeee186067361c57f762f5bbed38f6ed881ddbb270",
+  "files": {
+   "game/index.html": "f4991a5caf8b3d0be70aaa107bc3cb3fb5ef137bac2d27fda199eb3438fa3613",
+   "game/game.js": "aa86bc4eb85c55e99961c8a3c87f6945bb25be5b9665c65ce7719c345ab8f828",
+   "spec/DESIGN.md": "a03c56ab28701df3e6b52eeb7ab8a236fe5b27bf8e644cd2454f332470defece",
+   "truth/bugs.json": "3d2a8b8122bf40ca0efa58548481d9e7c42a6d9e5fb5dfc9321b0450944ebc31",
+   "driver.mjs": "52061b627c52e949be3d93f76ab6023a05612dffdcf552cde5d5ee79dfef91ba",
+   "oracle.mjs": "d0792dc140100ca56d8d45485db79787f019fe19be280e73cbe564087afcd2f0"
+  },
+  "note": "Bed frozen before any model call of GQA-1: build B1 (12 injected faults), the public spec, the hidden truth, the driver and the oracle."
+ },
+ "arms": {
+  "at": "2026-10-28T18:47:01.499Z",
+  "gitHead": "b6ed0b1d",
+  "sha256": "09bc94ef6df1b878cf166d95e0cb654a867b9c14377d10e97fd38ce77385a2bf",
+  "files": {
+   "experiments/gameqa-web/arms.mjs": "2322efbda37f2f5d0986bf6e15b24649a0aba1c6cbdb21ad3423874ca4133b11",
+   "experiments/gameqa-web/qa-lib.mjs": "b62e1e1190497f2279e3505eb9d650225f600851a886c5a7788c8f007595afe0",
+   "experiments/gameqa-web/expr.mjs": "9c742e2f6d729f8ab823d1ecd9fc8eda8539b406557987463d2adcccbf82a12d",
+   "experiments/gameqa-web/prompts.mjs": "2f4990fcab95510b9d7866903f83a04d0afc5e0fd31a1cdbab62976332806ad2",
+   "experiments/gameqa-web/template.json": "2838c42033481c6343167909e648ae0185a2ab0aabbac93e4229fc95b12efd4f",
+   "experiments/gameqa-web/run.mjs": "a7039c01016002c99b022053350290fd216894912750c67cd33846172d078899",
+   "experiments/gameqa-web/reference-checks.json": "8584cd23e3270d8a58f6ae4b53743e13af68c92ba1f46d03be35a702c45ede59",
+   "experiments/gameqa-web/funnel.mjs": "05518a01e192873596743c0ae8c55b70a2a20f08d1fcd7eface71a2ab0e5e177",
+   "experiments/gameqa-web/analyze.mjs": "cf29e56ba7f5b124bc0b30f76d7a1a82d334e47930ba5eb68f3aa7184d30de9a",
+   "experiments/gameqa-web/chain.sh": "b63ce67f7db80e12a707522d8a7622b5acd3015f8bc4ac4a9ef4c6b5f5a9d5f8",
+   "experiments/gameqa-web/regress.mjs": "6216ce79e5d5428f18778fbc9524ad0198bb48f7fe62f861abdc67a74628d3a4",
+   "experiments/lib/models.mjs": "d868e7d95c442b35fca25fac5e6e81b548f7f02f85e714d3303a94317d23b4d9",
+   "policy/models.json": "cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69",
+   "research/gameqa-20261021/PREREG-GQA-1.md": "62ab24f02e758ea55479faa7faa492532dc45093cbe123acca0a557a9b135fae"
+  }
+ }
+}
