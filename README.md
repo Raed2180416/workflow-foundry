@@ -36,6 +36,9 @@ final numbers. Following ROADMAP §6.1, this section takes over the status table
 review synthesis. Everything below is development and diagnostic evidence: nothing is a
 sealed or claim-bearing result.*
 
+*Amended 2026-10-28: the SOP-Bench phase-2 primary (2026-10-22, under Results) is the first sealed result. Everything
+else below is still development and diagnostic evidence.*
+
 **Where we are.**
 - **Phase 0** finished 2026-10-06 (start HEAD `6e1c06c`).
 - **Phase 1's exit experiment (P1)** finished 2026-10-08 for model classes M and L; class S
@@ -49,6 +52,25 @@ sealed or claim-bearing result.*
   2026-10-08; `foundry cancel` and `foundry stop-all` landed on 2026-10-09 (see "Cancel and
   stop-all" in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)). It ends in a named engine
   freeze, E1, before any new comparative run.
+- **2026-10-22 to 10-28.** Rows with links are in [RESEARCH.md](docs/RESEARCH.md); owner rulings D21–D30 are in
+  [decisions-20261021.md](research/decisions-20261021.md):
+  - **Sealed: SOP-Bench phase 2** (k = 3, 10,158 runs). Build-once Haiku workflows reach strict pass^3 87.6% [85.6, 89.5]
+    against the per-row Haiku agent's 67.1%, at $0.10 against $8.62. By the frozen rule they beat the agent and are
+    cheaper, but **the 90% reliability claim is not met**. The ablation cells are not finished and RESULT-p2.md is not
+    written (see Results).
+  - **Against Opus 5.5 xhigh alone** (the owner's frontier bar) on AutomationBench: on dev60 Opus scores 28/60 at $0.41 per
+    task and the Mercury-planned A1-C arm 29/60 at about $0.035, but in-sample. On the 60 unseen look-2 tasks Opus scores
+    26/60 at $0.385, and no cheap-model arm has run there, so there is no unseen-task comparison yet. A1-C v2's look-2 run is
+    built and preregistered and waits on the owner's go.
+  - **OT-0** (dev worlds): Haiku + validator 14/14 for $2.28; Sonnet 5/14 ($13.11) and Opus 6/14 ($17.97) working freely.
+  - **Verification:** the requirement ledger RL2 reaches held-out AUROC 0.837, the judges share blind spots, and dev60's
+    ceiling is about 53/60. The cross-blocker synthesis ([ATTACK](research/blockers-20261021/ATTACK.md), D28) traces four
+    blockers to one missing object, an expected diff derived in code.
+  - **Unmerged, development** (on branches rescued 10-28): asking Haiku beats the preregistered code need router (F1 0.944
+    vs 0.739); FH-1 heal removes 75.2% of recurring failing cases with 0 regressions for $1.14; for reuse, the profile gate
+    is worse than rebuilding and a history-check gate had 0 wrong in 98 accepted. Durability over time (DUR-1) is designed
+    and drafted but not run; adaptive in-node sub-workflow creation is not built.
+  - Three container restarts on 10-22 killed in-flight runs; chains now resume from their last commit (register C9).
 - **2026-10-21, evening.** Development evidence only; rows with links are in [RESEARCH.md](docs/RESEARCH.md):
   - **Pass rate.** Haiku acting with Mercury 3 as planner and checker inside the code-owned harness passes 29/60
     on AutomationBench dev60, tying Sonnet + A1 (28/60) at about 30% of its cost. devCheck looks 1–2: A1-C and A1
@@ -143,7 +165,7 @@ Every phase still ends with a capability number against a simple baseline and a
 | Audit | Hash chain, model journal, receipts and opt-in anchors exist; **gaps** | Journal rows (request and response hashes), decision records and executor transcripts are bound into the chain, and each verdict seals a Merkle root of the journal (`src/audit.mjs`, checked by `foundry verify-run`); chain-head anchors can be appended to a file outside the database (`--append-anchor`). Still open: anchoring is opt-in, not on by default, and an anchor file whose last line was dropped still verifies. *Corrected 2026-10-21 (compromise register D3): this row used to say that responses, decisions and transcripts are not bound into the chain and that there is no external anchor [D lane 7]; that was stale* |
 | UI | **Prototype** read-only run viewer (`tools/run-view/`) | 19 unit tests and 74 browser checks pass. The owner has not reviewed it yet; the game-QA screenshots are a scripted fixture |
 | Security | Labels, quarantine and sandbox exist; control-flow taint landed 2026-10-08; **gaps** | Landed: an ungated effect whose firing depends on untrusted data (`when`, loop `until`, map items, a skip chain, `onError` continuation) is rejected `LABEL_POLICY` / `UNTRUSTED_CONTROL` by the validator and again at dispatch (`tests/control-taint.test.mjs`; lane-7 probe B now fails; 0 of 393 test-suite workflows newly rejected [M]). Still open: the sink-field policy (untrusted data cannot fill even a data field of an ungated effect), the declassification budget, builder provenance taint, executor isolation. Each fix gates the first run that needs it ([synthesis §7](research/review-20261007/00-SYNTHESIS.md)) |
-| Evaluation validity | **Weakest link** | Every bed is synthetic and Claude-written; the sealed families are unused; nothing external has run. Next is the wild ladder (ROADMAP §4.2) |
+| Evaluation validity | **Weakest link** | Every bed is synthetic and Claude-written; the sealed families are unused; nothing external has run. Next is the wild ladder (ROADMAP §4.2). *Corrected 2026-10-28: external benchmarks have run since 10-14 (AutomationBench, development) and SOP-Bench's sealed rows on 10-22; our own sealed families are still unused* |
 | Reuse library | Not started | Phase 5 |
 
 Counts over these 14 layers:
@@ -151,9 +173,28 @@ Counts over these 14 layers:
 - partly built: 3;
 - not built: 5;
 - measured on held-out tasks of development families: 2 (P1 and C0 dev);
-- measured on sealed or wild tasks: 0.
+- measured on sealed or wild tasks: 1 (Haiku construction, on SOP-Bench's sealed rows, 2026-10-22).
 
 ### Results
+
+**SOP-Bench phase 2, sealed primary (`p2-sealed`), 2026-10-22.** The first sealed run.
+- **What ran:** k = 3 on the 1,693 sealed rows of 12 SOPs, 10,158 runs. The split, both arms, the code and the decision
+  rule were frozen in [FREEZE-p2.json](research/sopbench-20261021/FREEZE-p2.json) before any sealed row was touched.
+  Summary: [runs/p2-sealed/summary.json](research/sopbench-20261021/runs/p2-sealed/summary.json); design:
+  [DESIGN.md](research/sopbench-20261021/DESIGN.md).
+
+| arm | strict pass^3 (macro) | 95% CI | strict pass@1 | sealed-run $ |
+|---|---|---|---|---|
+| W: one workflow per SOP, built once by Haiku 5.5 on dev rows, then frozen | **87.6%** | [85.6, 89.5] | 87.7% | 0.10 |
+| A: the Haiku 5.5 agent acting per row | 67.1% | [64.8, 69.4] | 72.5% | 8.62 |
+
+- **Frozen rule.** W − A = +20.5 points [18.1, 23.0], so W **beats the agent** and **is cheaper** (with builds and repairs
+  amortised, $0.00055 per W run). **The 90% reliability claim is not met:** it needs pass^3 ≥ 90% with a lower bound
+  ≥ 85%, with and without the orchestration-only SOP, and W is 87.6% (88.0% [85.8, 90.0] without that SOP).
+- **Caveats.** 11 of the 12 workflows make no model call at run time, so this measures how well code that a cheap model
+  fitted on about 20 dev rows per SOP generalises, against a per-row agent. W trails A on 2 of the 12 SOPs. These are rows
+  of a public benchmark, scored strictly; content_flagging is excluded. The ablation cells are not finished (V1-minimal has
+  run; V2-bloated stopped on a rate-limit fault and is partial), and RESULT-p2.md is not written yet.
 
 **P1, Phase 1 exit (`p1-records-v3`), final.**
 - **What ran:** 288 of 288 trials, ending 2026-10-08 09:18 UTC: 12 held-out `records` v3.0.0
@@ -338,6 +379,14 @@ reported separately. Orchestration by this session and its subagents is not item
 | 2026-10-07/08 | P1, 288 trials ([REPORT §7](research/core-20261006/REPORT.md)), including the $0.064 orphan run | Haiku 5.5, Haiku 4.5, Sonnet | 1,863 journaled + 36 CLI sessions | 26.09 |
 | | **Total recorded (experiment calls)** | | | **93.76** |
 | | Not recorded: 3 C0 B0 sessions killed at a restart (bound $4, estimate $0.3–1.0); 30 P1 single calls cut off by the timeout (bound $30, estimate ~$1.35); P1 work killed at the owner stop (bound ≥ $5) | | | about 2 (estimate); at least 39 more at the bounds |
+| | *Rows added 2026-10-28. They are not part of the total above, which stops at 2026-10-08; spend from 10-09 to 10-21 is recorded in each result file and is not itemised here* | | | |
+| 2026-10-21/22 | OT-0 paid arms: W-C builds 2.56, void runs 0.46, A-HV 2.28, A-F Sonnet 13.11, A-F Opus 17.97 recorded ([RESULT-OT0 §2.4](research/org-20261021/RESULT-OT0.md)) | Haiku 5.5, Sonnet, Opus | – | 36.39 |
+| 2026-10-21/22 | SOP-Bench phase 2: builds and repairs 3.53 (`FREEZE-p2.json` `spendBeforeSealedUsd`), sealed primary 8.73 (cap $40; [summary](research/sopbench-20261021/runs/p2-sealed/summary.json)) | Haiku 5.5 | 10,158 sealed runs | 12.26 |
+| 2026-10-22 | AutomationBench, Opus 5.5 xhigh alone on the look-2 tasks (`a0o-look2-1`, cap $60) | Opus | 60 sessions | 23.12 |
+| 2026-10-22 | AutomationBench, Opus 5.5 xhigh alone on dev60 (`a0o-dev60-dn`, cap $45) | Opus | 60 sessions | 24.43 |
+| | *Subtotal of the four rows above (main tree)* | | | *96.20* |
+| 2026-10-21/22 | Unmerged branches, rescued 10-28: ROUTER-1 0.15 (plus about 385K Mercury tokens), FH-1 4.62, C2-1 1.82, C2-2 0 | Haiku 5.5, Mercury 3 | – | 6.58 |
+| | Not recorded: OT-0 A-F Opus sessions killed by the 03:11Z container restart (bound $4) | | | at most 4 |
 
 Totals are recomputed from the named journals and results files (`cost_usd` per call; the B0
 and builder sessions are CLI-reported). List price as computed by the CLI. On this subscription
@@ -355,6 +404,9 @@ $560–825 at list price (synthesis §5).
 
 | # | Question | Recommendation | Blocking? |
 |---|---|---|---|
+| A1-C v2 P1, look 2 (paid; D25, D29; added 2026-10-28) | A1-C v2's evaluation on the 60 unseen look-2 tasks is built and preregistered (PREREG-A1CV2-P1, frozen on branch `worktree-wf_3674d3bc-0a7-12`), and its launch rulings are ratified (D29). The session's permission system refused the paid launch, so it waits on you. Spend counts under D22 and, for the two Mercury arms (5.5M tokens each), D18. | Give an explicit go to launch it. | Yes: the only unseen-task comparison of the cheap arms with Opus 5.5 xhigh (26/60 there), and VL-1's second fork |
+| Mercury allowance (D28 (7); added 2026-10-28) | No Mercury pilot beyond the running arms until the remaining allowance is read on the Inception dashboard; this session cannot read the account. | Read the remaining allowance on the dashboard and report it. | New Mercury pilots only |
+| Publishing (D13; restated 2026-10-28) | Publishing a package, plugin, `.mcpb` or marketplace entry stays gated: AGENTS.md forbids it and the general grant does not cover it. Before any publication, history is scrubbed once with a recorded mapping of old to new SHAs (D17). | Say "publish" explicitly if and when you want it. | Publication only |
 | D1-cap | The spend cap is blank. Current rule: pause before any single experiment estimated over $500; self-imposed session soft cap $1,500 (list price). | Confirm or set a cap. | No (work continues under the rule) |
 | D1-aws | `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` exist in the environment with no stated purpose. They are not used as a model route. | Say whether they are meant for Bedrock; otherwise leave unused. | No |
 | OpenCode | Verify OpenCode v2.0.23 locally and add its (version, sha256, evidence) to `OPENCODE_V2_ALLOWLIST`. | Do it when convenient; cloud runs skip those tests. | No |
@@ -495,6 +547,8 @@ Everything not kept in git is in two releases on this private repository:
 | | `conversations.tar.zst` | 117 MB: the Grok, ChatGPT and Codex conversation logs about this project. Detected credentials are replaced with `[REDACTED]`. |
 | | `SHA256SUMS` | Checksums for the assets above. |
 | `evidence-20261006` | `workflow-foundry-evidence-20261006.tar.gz` | 57 MB: a scrubbed, curated subset of the research evidence, with a per-file inclusion manifest in git history. |
+
+Rescued 2026-10-28: 16 branches (117 commits) that lived only in this container's worktrees, unreviewed and unmerged, are git bundles in [research/session-20261028-rescue/](research/session-20261028-rescue/README.md), whose README lists each branch and how to restore it.
 
 Restore from the repo root:
 
