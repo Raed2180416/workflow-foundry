@@ -325,4 +325,102 @@ setsid nohup bash <scratchpad>/a1cv2-p1/launch-p1.sh > /var/tmp/foundry-work/a1c
 
 ## 14. Amendments
 
-None.
+### A1 (2026-10-28): CLI 2.1.307 → 2.1.312; the four manifest hashes re-frozen before any P1 paid call
+
+**Reason.** The installed Claude Code CLI changed from `2.1.307 (Claude Code)` to `2.1.312 (Claude Code)` while the
+launch waited for the owner (D29). The CLI string is part of every A1-C manifest (§4), so the frozen hashes no longer
+match, and the chain refuses the new CLI (exit 7, §7). §7 asks for this amendment. **No P1 arm had started:**
+- none of the six chain run ids has a live directory under `/var/tmp/foundry-work/autobench/`;
+- `look2-guard.mjs spend` gives $0 for all six;
+- `/var/tmp/foundry-work/a1c-v2-look2-killed.json` does not exist.
+
+The cause is inferred, not observed. `/opt/claude-code` is a read-only image mount, so the version comes with the
+container image at a restart, which `DISABLE_AUTOUPDATER=1` does not control. `launches.log` already shows 2.1.308 at
+2026-10-22T07:45:58Z. A later container restart can change the CLI again. §7 then applies: the chain stops at exit 7,
+and the remaining arms need a further amendment.
+
+This amendment changes no file under `experiments/`, `src/`, `beds/` or `policy/`:
+`git diff --stat b43eda6b <this commit> -- experiments src beds policy` is empty.
+
+**Re-freeze (2026-10-28, $0), as §4 describes.** Settings: `DISABLE_AUTOUPDATER=1`, `FORCE_PROMPT_CACHING_5M` unset,
+Node v24.21.0, the §5 common flags. Hashes per arm:
+- **v1:** `run.mjs --harness codeowned … --dry-run --harness-hash 0` on the pin (`b1e16e03…`) stops with "recomputed
+  `e2f1f491…`".
+- **v2:** the same with `--harness codeowned-v2` on the branch stops with "recomputed `12bb43cf…`".
+- **All four:** `replay/manifest-hash.mjs` gives the four hashes in the table, and agrees with both dry runs.
+
+| Arm | Checkout | Frozen at CLI 2.1.307 | Re-frozen at CLI 2.1.312 |
+|---|---|---|---|
+| v1 | pin | `5c452af09bb4df6853e2543c6f0e428738dbae811a62bceae04ac5c637d06de8` | `e2f1f491bb66ca54726677b5726f9dbf7977c1aff639348d4aa0fd04da47c272` |
+| v1-M | pin | `c645c8e914a9de3b0ce23cfcf81ce12681ffec5a6e62742f87b3d0665427f167` | `fff2886f914259450c9683db38618faade02af2c427a9cdc108b9ca0597a2a79` |
+| v2 | branch | `716df33d5c892ceb5101c09011565f591b97bf6e199581fbce37a9eb4c7ff231` | `12bb43cf9b377f10d056fe064fc627e4744a67f06f5975b92c63052527df0f3f` |
+| v2-M | branch | `785093f577b9ce814c74fab20d5bb695c7fe98a47ede73e5a174df000b322ba7` | `cc16ed235a8e13b7a28d4a644cd4175b34e22598f6708d32972bd6f6263b84a7` |
+
+**Only the CLI field changed.** Each manifest was rebuilt by its checkout's own config and manifest functions, through
+a scratch copy of `manifest-hash.mjs` that also writes the manifest and accepts the CLI string as an argument.
+- With the CLI field set to `2.1.307 (Claude Code)`, today's files and settings reproduce all four frozen hashes
+  exactly.
+- The full manifests at 2.1.307 and 2.1.312 differ in one line per arm, `config.cli`. v1 and v1-M carry 24 files, v2
+  and v2-M 33. File shas, settings, child environment, policy entries, corpus pin and knowledge are identical.
+- A0 and A0-AA carry no manifest. The pin's runner stays `ea1dca70…`.
+
+**What changes for P1.**
+- **Every P1 arm runs at CLI `2.1.312 (Claude Code)`:** v1, v2, A0, A0-AA, v1-M and v2-M. The launcher sets
+  `CLI='2.1.312 (Claude Code)'`, and the chain's check (§7) is unchanged.
+- Where §4, §5, §7, §12.3 and §13 say 2.1.307 or give the old hashes, read 2.1.312 and the re-frozen hashes above.
+- The compared arms still share one CLI, so §12.3's "not a compared-arm difference in P1" still holds.
+- **V2COMMIT** is the commit that adds this amendment, or a later one that §4 allows.
+- **§13 launch template:**
+  - `V1HASH=e2f1f491…`, `V1MHASH=fff2886f…`, `V2HASH=12bb43cf…`, `V2MHASH=cc16ed23…` (full values in the table);
+  - `CLI='2.1.312 (Claude Code)'`;
+  - `MERCURY_OTHER`, `D22_LEFT`, `T3` and `M_ARMS` as before (see the budget check below).
+- **§13 steps:** step 0 now checks for `claude --version` = `2.1.312 (Claude Code)`. Step 1's $0 rehearsal runs on
+  this commit at 2.1.312 and must still print "28 passed, 0 failed".
+
+**Deviations, disclosed.**
+- **The Opus reference arm crosses the CLI change.** The Opus 5.5 xhigh reference arm `a0o-look2-1` (§9.6, D26) ran
+  at CLI 2.1.307: `launches.log` records `a0o-look2-1 exit 0 (CLI 2.1.307) 2026-10-22T02:38:36Z`. Every P1 arm runs at
+  2.1.312. Any comparison with the Opus arm crosses the CLI change and says so in the same sentence. This covers §9.6's
+  gap to Opus and the two arms' cost per task. The Opus arm stays a reference arm and is never compared under the plan.
+- **VL-1's forks also straddle the change.** Its fork `a1s-look2` (D27) ran at 2.1.307 (`launches.log`,
+  2026-10-22T03:34:46Z). Its fork `a1c-v1m-look2` runs here at 2.1.312. This is a disclosure for PREREG-VL1, not
+  amended here.
+- **The CLI history (§12.3) gains one step:**
+  - dev60 and devCheck ran at 2.1.300 and 2.1.306;
+  - P0 ran at 2.1.307;
+  - P1 runs at 2.1.312.
+
+  The development record of v1 and v2 and their look-2 runs therefore run under different CLIs. The harness code is
+  unchanged.
+- **The effect of the change is unknown.** Nobody examined what changed inside the CLI between 2.1.307 and 2.1.312.
+  Any effect on the arms is unmodelled, and every P1 arm shares it.
+
+**Budget inputs, re-checked 2026-10-28 about 17:55Z: unchanged.** `D22_LEFT = 17.74` and `MERCURY_OTHER = 812875`.
+
+**D22.**
+- **No new D22 spend.** Since the §6 tally, the only AutomationBench run records under `/var/tmp/foundry-work/autobench/`
+  that were created or grew are the Opus arms, which fall outside D22 (D19/D30):
+  - `a0o-dev60-dn`, finished 2026-10-22T04:10Z;
+  - `a0o-devcheck-1`.
+- **The chain itself:** its six run ids hold $0, and no killed spend is booked.
+- **VL-1's judge has not run.** §6 booked it at about $1. The last event in `runs/vl1-look2/EVENTS.jsonl` is "waiting"
+  for `a1c-v1m-look2`, at 2026-10-22T03:55:40Z.
+- **The `a1s-look2` booking stands.** §6 booked it at its $10 cap. It settled $6.732 (`summary.json` `cost.spentUsd`).
+  On top of that come at most $3.00 for the two sessions the 03:1xZ restart killed (2 × its $1.5 session budget,
+  `EVENTS.jsonl`). The total is at most $9.73, so the cap booking stands. The at most $0.27 of slack is not released.
+- **No other record of new spend.** `decisions-20261021.md` has no decision after D30. No commit on any branch after
+  2026-10-22T04:00Z names D22, D18 or Mercury.
+
+**D18.**
+- The run-record tally (`look2-guard.mjs mercury`) is 4,972,199, the same as in §6.
+- The ledger `research/mercury-20261021/PORT-PROBE.md` is unchanged since 2026-10-21 18:25Z.
+- The D18 total stays about 5.79M (5,785,074), and each Mercury arm's token cap stays 5.5M (`look2-guard.mjs cap`).
+
+**What the author of A1 saw.** Only aggregates:
+- the CLI version and exit time of each look-2 run, from `launches.log`;
+- `a1s-look2`'s `cost` block;
+- dollar figures and the restart and resume notes in `runs/vl1-look2/EVENTS.jsonl`, with task names and counts masked;
+- run-record token totals;
+- the manifests (code and settings, no task).
+
+No look-2 task, request, per-task outcome or grade was opened.
