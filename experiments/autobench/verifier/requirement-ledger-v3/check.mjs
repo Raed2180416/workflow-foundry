@@ -7,7 +7,7 @@
 // Generic by construction (PREREG-AB-v1 H7/H8): no task names, grader strings or hidden assertions.
 import { TOUCH_FIELD, containsLiteral, contentText, emailsIn, isObj, leaves, norm, numbersIn, numericLiteral, remapRecord } from './lib.mjs';
 
-export const CHECK_VERSION = 'rl2-check-v1';
+export const CHECK_VERSION = 'rl3-check-v1';   // v2's rl2-check-v1 plus the Δ* types msg_lacks_any, msg_has_any, created_has_any, created_none_any
 const RECIPIENT_KEY = /^(to|cc|bcc|recipient|recipients|to_email|to_emails|emails?|attendees|guests|signers|invitees|participants|assignee_email|contact_email|customer_email|requester_email)$/i;
 const SENDER_KEY = /^(from_?|sender|from_email|reply_to|author_email|organizer|creator|host_email|owner_email)$/i;
 const MSG_LIST = /(^|\.)(conversation_parts|messages|notes|replies|comments|parts|thread|responses|internal_notes|posts|activities|events)$/;
@@ -173,6 +173,29 @@ export function evaluateCheck(check, eff, ctx) {
     case 'created_none': {
       const m = createdMatching({ app: P.app, container: P.container }, eff).filter(c => containsLiteral(c.text, P.lit) === 'exact');
       return m.length ? { pass: false, evidence: `${m[0].app}.${m[0].coll}:${m[0].id} carries ${JSON.stringify(P.lit)}` } : { pass: true, evidence: 'none' };
+    }
+    // Δ* v1 (dstar.mjs): a member is named by any of its mention forms (whole words)
+    case 'msg_lacks_any': {
+      const m = messagesTo(P.target, eff, ctx);
+      for (const x of m) { const lit = (P.lits ?? []).find(l => containsLiteral(x.text, l) === 'exact'); if (lit) return { pass: false, evidence: `${x.where} names ${JSON.stringify(lit)}` }; }
+      return { pass: true, evidence: m.length ? `${m.length} message(s), none names it` : 'no message to the target' };
+    }
+    case 'msg_has_any': {
+      const m = messagesTo(P.target, eff, ctx);
+      if (!m.length) return { pass: false, evidence: `no message to ${tname(P.target)}` };
+      const hit = m.find(x => (P.lits ?? []).some(l => containsLiteral(x.text, l)));
+      return hit ? { pass: true, evidence: hit.where } : { pass: false, evidence: `${m.length} message(s) to ${tname(P.target)} name none of ${JSON.stringify(P.lits)}` };
+    }
+    case 'created_has_any': {
+      const m = createdMatching({ app: P.app, container: P.container }, eff);
+      if (!m.length) return { pass: false, evidence: `no new ${P.app || ''} record${P.container ? ` in ${P.container}` : ''}` };
+      const hit = m.find(c => (P.lits ?? []).some(l => containsLiteral(c.text, l)));
+      return hit ? { pass: true, evidence: `${hit.app}.${hit.coll}:${hit.id}` } : { pass: false, evidence: `${m.length} new record(s) name none of ${JSON.stringify(P.lits)}` };
+    }
+    case 'created_none_any': {
+      const m = createdMatching({ app: P.app, container: P.container }, eff);
+      for (const c of m) { const lit = (P.lits ?? []).find(l => containsLiteral(c.text, l) === 'exact'); if (lit) return { pass: false, evidence: `${c.app}.${c.coll}:${c.id} names ${JSON.stringify(lit)}` }; }
+      return { pass: true, evidence: 'none' };
     }
     default: return { pass: null, evidence: `unknown check type ${check.type}` };
   }
