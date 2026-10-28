@@ -29,6 +29,25 @@ test('blocks: same spec and simple channels, backlog exports re-rendered, id suf
   assert.deepEqual(LAYOUTS, ['delimited', 'blocks']);
 });
 
+test('the layout generator reproduces the frozen eval-1 inputs exactly (delimited) and the SW-1b manifest (blocks)', async () => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const { createHash } = await import('node:crypto');
+  const { canonicalJson } = await import('../../experiments/subworkflow/dsl.mjs');
+  const root = new URL('../../research/subworkflow-20261021/', import.meta.url);
+  let n = 0;
+  for (const name of ['tasks-eval.json', 'tasks-sw1b.json']) {
+    const f = new URL(name, root);
+    if (!existsSync(f)) continue;
+    for (const t of JSON.parse(readFileSync(f, 'utf8')).tasks) {
+      const g = generate({ seed: t.seed, split: t.split, difficulty: t.difficulty, layout: t.layout ?? 'delimited' });
+      assert.equal(g.id, t.id);
+      assert.equal(createHash('sha256').update(canonicalJson(g.inputs)).digest('hex'), t.inputsSha256, `${t.id} inputs changed`);
+      n++;
+    }
+  }
+  assert.ok(n >= 20, `checked ${n} manifest tasks`);
+});
+
 test('blocks: lossless (a reference reader recovers every field of every exported row, in order) and the trailer counts match', () => {
   for (const d of [2, 4, 5]) for (const seed of SEEDS) {
     const task = generate({ seed, split: 'test', difficulty: d, layout: 'blocks' }), w = buildWorld(seed, 'test', d);
