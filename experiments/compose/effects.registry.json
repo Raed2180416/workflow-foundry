@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "item": "ebed-e8",
+  "about": "Effect registry for compose-runtime/2 (research/blockers-20261021/ATTACK.md Move 2; MOVE2-COMP.md). One identity template per system.op: the logical effect a call makes (SPEC-E section 1, 'one key per logical effect'), built from entity arguments only, never from the caller's trigger, event or emission time. It mirrors experiments/compose/capabilities.mjs identityOf (the grader-side definition); runtime2.test.mjs checks the mirror, so identityOf is the test oracle, not the source. One deliberate difference: the grader scopes identities per case, host keys are world-wide, so a notice about no entity (about null) has no identity here and keeps its caller's key. Template syntax: {arg} needs a string or number; {arg|x} writes x when the argument is null or missing. batch: the template is filled per item over the batch arguments plus the item. read: a read-only op (no effect, never re-keyed, outside the single-writer gate). money: informational.",
+  "ops": {
+    "orders.create": { "identity": "create:{orderId}" },
+    "orders.setStatus": { "identity": "status:{orderId}:{fulfilmentId|-}:{status}" },
+    "inventory.reserve": { "identity": "reserve:{fulfilmentId}:{sku}", "batch": true },
+    "inventory.release": { "identity": "release:{fulfilmentId}:{sku}" },
+    "billing.charge": { "identity": "charge:{fulfilmentId}", "money": true },
+    "billing.refund": { "identity": "refund:{fulfilmentId}", "money": true },
+    "carrier.create": { "identity": "ship:{fulfilmentId}" },
+    "carrier.cancel": { "identity": "ship-cancel:{fulfilmentId}" },
+    "notify.send": { "identity": "notify:{about}:{template}" },
+    "orders.status": { "read": true },
+    "inventory.allocate": { "read": true },
+    "inventory.status": { "read": true },
+    "billing.status": { "read": true },
+    "carrier.status": { "read": true },
+    "fraud.check": { "read": true },
+    "notify.status": { "read": true }
+  }
+}
