@@ -12,7 +12,7 @@
       "target": "opened \"Who decides what\" (Settings, then the link; or #/org)",
       "steps": 0,
       "asks": 0,
-      "ms": 407
+      "ms": 771
     },
     {
       "n": 1,
@@ -21,12 +21,12 @@
       "note": "four starters; the banner says the map is checked when an automation is made, not while it runs",
       "steps": 0,
       "asks": 0,
-      "ms": 716,
+      "ms": 1368,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h1 Who decides what",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: \"Write down who may approve what, and the rules Foundry checks when you make an automation: it fills in limits you set and refuses settings that break them.\"\n  - heading \"Start from\" [level=2]\n  - heading \"Just me\" [level=3]\n  - paragraph: \"Personal guardrails: limits you set for your own automations.\"\n  - button \"Start from this\"\n  - heading \"Small team\" [level=3]\n  - paragraph: A few people, who approves money going out and messages leaving the company.\n  - button \"Start from this\"\n  - heading \"Refund authority example\" [level=3]\n  - paragraph: \"A worked example: refunds above a limit need finance's yes, from someone who didn't enter the case.\"\n  - button \"Start from this\"\n  - heading \"Blank\" [level=3]\n  - paragraph: Just you, every role, nothing else.\n  - button \"Start from this\"\n  - paragraph: You're the only person here, so you turn on your own automations. The record says so."
+      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: \"Write down who may approve what, and the rules Foundry checks when you make an automation: it fills in limits you set and refuses settings that break them.\"\n  - heading \"Start from\" [level=2]\n  - heading \"Just me\" [level=3]\n  - paragraph: \"Personal guardrails: limits you set for your own automations.\"\n  - button \"Start from this\"\n  - heading \"Small team\" [level=3]\n  - paragraph: A few people, who approves money going out and messages leaving the company.\n  - button \"Start from this\"\n  - heading \"Refund authority example\" [level=3]\n  - paragraph: \"A worked example: refunds above a limit need finance's yes. That the yes comes from someone who didn't enter the case is written down, not checked yet.\"\n  - button \"Start from this\"\n  - heading \"Blank\" [level=3]\n  - paragraph: Just you, every role, nothing else.\n  - button \"Start from this\"\n  - paragraph: You're the only person here, so you turn on your own automations. The record says so."
     },
     {
       "action": "click",
@@ -34,7 +34,7 @@
       "target": "Start from this",
       "steps": 1,
       "asks": 0,
-      "ms": 858
+      "ms": 1556
     },
     {
       "action": "fill",
@@ -42,7 +42,7 @@
       "target": "Add a person: name",
       "steps": 2,
       "asks": 0,
-      "ms": 945
+      "ms": 1759
     },
     {
       "action": "click",
@@ -50,7 +50,7 @@
       "target": "Add",
       "steps": 3,
       "asks": 0,
-      "ms": 1039
+      "ms": 2034
     },
     {
       "action": "fill",
@@ -58,7 +58,7 @@
       "target": "Add a person: name",
       "steps": 4,
       "asks": 0,
-      "ms": 1090
+      "ms": 2165
     },
     {
       "action": "choose",
@@ -66,7 +66,7 @@
       "target": "Their role",
       "steps": 5,
       "asks": 0,
-      "ms": 1136
+      "ms": 2270
     },
     {
       "action": "click",
@@ -74,7 +74,7 @@
       "target": "Add",
       "steps": 6,
       "asks": 0,
-      "ms": 1247
+      "ms": 2477
     },
     {
       "n": 2,
@@ -83,7 +83,7 @@
       "note": null,
       "steps": 6,
       "asks": 0,
-      "ms": 1528,
+      "ms": 2958,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "input#person-name ",
@@ -96,7 +96,7 @@
       "target": "Needs a yes above this amount",
       "steps": 7,
       "asks": 1,
-      "ms": 1557
+      "ms": 3080
     },
     {
       "action": "choose",
@@ -104,7 +104,7 @@
       "target": "Currency",
       "steps": 8,
       "asks": 1,
-      "ms": 1592
+      "ms": 3376
     },
     {
       "action": "choose",
@@ -112,7 +112,7 @@
       "target": "Who approves",
       "steps": 9,
       "asks": 1,
-      "ms": 1618
+      "ms": 3507
     },
     {
       "n": 3,
@@ -121,7 +121,7 @@
       "note": "money out above €250 needs Dana: the Team plan badge sits here, at the one field it applies to",
       "steps": 9,
       "asks": 1,
-      "ms": 1875,
+      "ms": 3901,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "input#amt-money-out-28 ",
@@ -134,7 +134,7 @@
       "target": "Make this a rule Foundry checks",
       "steps": 10,
       "asks": 1,
-      "ms": 1931
+      "ms": 4036
     },
     {
       "n": 4,
@@ -143,7 +143,7 @@
       "note": "the rule, its six examples (they become its tests), force and mode (Preview)",
       "steps": 10,
       "asks": 1,
-      "ms": 2240,
+      "ms": 4625,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h3 Money out above €250 needs Dana's yes; whoever asked for it ",
@@ -156,7 +156,7 @@
       "target": "These are right",
       "steps": 11,
       "asks": 1,
-      "ms": 2336
+      "ms": 4817
     },
     {
       "action": "click",
@@ -164,7 +164,7 @@
       "target": "Save version 1",
       "steps": 12,
       "asks": 1,
-      "ms": 2427
+      "ms": 4907
     },
     {
       "n": 5,
@@ -173,12 +173,12 @@
       "note": "version 1, with the bootstrap warning: one person signed it",
       "steps": 12,
       "asks": 1,
-      "ms": 2748,
+      "ms": 5269,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - status: Decided Version 1 saved by you (not signed).\n  - paragraph: \"Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.\"\n  - heading \"People and roles\" [level=2]\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem: \"Dana: Approver, Rule owner\"\n    - listitem: \"Sam: Auditor\"\n  - heading \"Who approves what\" [level=2]\n  - list:\n    - listitem: \"Money going out: above €250 needs Dana's yes\"\n    - listitem: \"A message leaving the company: always needs your yes\"\n  - paragraph:\n    - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n    - 'link \"What you can do today: check Waiting for you\"':\n      - /url: \"#/waiting\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - list:\n    - listitem: Money out above €250 needs Dana's yes; whoever asked for it can't approve it. Org policy Written down by you for Dana. Dana has not confirmed it.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - button \"Change it\"\n  - link \"Try it on a card\":\n    - /url: \"#/make/expense-approval\"\n  - group: ▸ Show details"
+      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - status: Version 1 saved by you (not signed).\n  - paragraph: \"Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.\"\n  - heading \"People and roles\" [level=2]\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem: \"Dana: Approver, Rule owner\"\n    - listitem: \"Sam: Auditor\"\n  - heading \"Who approves what\" [level=2]\n  - list:\n    - listitem: \"Money going out: above €250 needs Dana's yes\"\n    - listitem: \"A message leaving the company: always needs your yes\"\n  - paragraph:\n    - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n    - 'link \"What you can do today: check Waiting for you\"':\n      - /url: \"#/waiting\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - list:\n    - listitem: Money out above €250 needs Dana's yes; whoever asked for it can't approve it. Org policy Written down by you for Dana. Dana has not confirmed it.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - button \"Change it\"\n  - link \"Try it on a card\":\n    - /url: \"#/make/expense-approval\"\n  - group: ▸ Show details"
     },
     {
       "action": "click",
@@ -186,7 +186,7 @@
       "target": "Try it on a card",
       "steps": 13,
       "asks": 1,
-      "ms": 2807
+      "ms": 5430
     },
     {
       "n": 6,
@@ -195,7 +195,7 @@
       "note": null,
       "steps": 13,
       "asks": 1,
-      "ms": 3204,
+      "ms": 6015,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
@@ -208,7 +208,7 @@
       "target": "Up to what amount should it approve on its own?",
       "steps": 14,
       "asks": 2,
-      "ms": 3266
+      "ms": 6089
     },
     {
       "action": "fill",
@@ -216,7 +216,7 @@
       "target": "Who decides claims over your limit? (their e-mail)",
       "steps": 15,
       "asks": 3,
-      "ms": 3309
+      "ms": 6160
     },
     {
       "action": "click",
@@ -224,7 +224,7 @@
       "target": "Test it with pretend claims",
       "steps": 16,
       "asks": 3,
-      "ms": 3359
+      "ms": 6523
     },
     {
       "n": 7,
@@ -233,7 +233,7 @@
       "note": null,
       "steps": 16,
       "asks": 3,
-      "ms": 3661,
+      "ms": 7091,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
@@ -246,7 +246,7 @@
       "target": "Change it",
       "steps": 17,
       "asks": 3,
-      "ms": 3762
+      "ms": 7528
     },
     {
       "action": "fill",
@@ -254,7 +254,7 @@
       "target": "Needs a yes above this amount",
       "steps": 18,
       "asks": 4,
-      "ms": 3803
+      "ms": 7570
     },
     {
       "action": "click",
@@ -262,7 +262,7 @@
       "target": "Save version 2",
       "steps": 19,
       "asks": 4,
-      "ms": 3891
+      "ms": 7745
     },
     {
       "n": 8,
@@ -271,7 +271,7 @@
       "note": "one example now answers differently: the save stops and shows it",
       "steps": 19,
       "asks": 4,
-      "ms": 4218,
+      "ms": 8524,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "button Save version 2",
@@ -284,7 +284,7 @@
       "target": "Confirm the new answer for case 4 (allowed)",
       "steps": 20,
       "asks": 4,
-      "ms": 4257
+      "ms": 8572
     },
     {
       "action": "click",
@@ -292,7 +292,7 @@
       "target": "Save version 2",
       "steps": 21,
       "asks": 4,
-      "ms": 4318
+      "ms": 8677
     },
     {
       "n": 9,
@@ -301,12 +301,12 @@
       "note": null,
       "steps": 21,
       "asks": 4,
-      "ms": 4609,
+      "ms": 9320,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - status: Decided Version 2 saved by you (not signed).\n  - paragraph: \"Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.\"\n  - heading \"People and roles\" [level=2]\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem: \"Dana: Approver, Rule owner\"\n    - listitem: \"Sam: Auditor\"\n  - heading \"Who approves what\" [level=2]\n  - list:\n    - listitem: \"Money going out: above €300 needs Dana's yes\"\n    - listitem: \"A message leaving the company: always needs your yes\"\n  - paragraph:\n    - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n    - 'link \"What you can do today: check Waiting for you\"':\n      - /url: \"#/waiting\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - list:\n    - listitem: Money out above €300 needs Dana's yes; whoever asked for it can't approve it. Org policy Written down by you for Dana. Dana has not confirmed it.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - button \"Change it\"\n  - link \"Try it on a card\":\n    - /url: \"#/make/expense-approval\"\n  - group: ▸ Show details"
+      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - status: Version 2 saved by you (not signed).\n  - paragraph: \"Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.\"\n  - heading \"People and roles\" [level=2]\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem: \"Dana: Approver, Rule owner\"\n    - listitem: \"Sam: Auditor\"\n  - heading \"Who approves what\" [level=2]\n  - list:\n    - listitem: \"Money going out: above €300 needs Dana's yes\"\n    - listitem: \"A message leaving the company: always needs your yes\"\n  - paragraph:\n    - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n    - 'link \"What you can do today: check Waiting for you\"':\n      - /url: \"#/waiting\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - list:\n    - listitem: Money out above €300 needs Dana's yes; whoever asked for it can't approve it. Org policy Written down by you for Dana. Dana has not confirmed it.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - button \"Change it\"\n  - link \"Try it on a card\":\n    - /url: \"#/make/expense-approval\"\n  - group: ▸ Show details"
     }
   ],
   "errors": [],
@@ -316,12 +316,12 @@
     "v1": {
       "steps": 12,
       "asks": 1,
-      "ms": 2523
+      "ms": 5033
     },
     "v2": {
       "steps": 21,
       "asks": 4,
-      "ms": 4354
+      "ms": 8911
     }
   },
   "a11y": [],
@@ -348,7 +348,7 @@
   ],
   "totalSteps": 21,
   "totalAsks": 4,
-  "ms": 4609,
+  "ms": 9320,
   "shots": [
     "01-start-dark-390.jpg",
     "02-people-dark-390.jpg",

@@ -14,12 +14,12 @@
       "note": null,
       "steps": 0,
       "asks": 0,
-      "ms": 3163,
+      "ms": 5751,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h1 Who decides what",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - status: Decided Version 1 saved by you (not signed).\n  - paragraph: \"Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.\"\n  - heading \"People and roles\" [level=2]\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem: \"Dana: Approver, Rule owner\"\n  - heading \"Who approves what\" [level=2]\n  - list:\n    - listitem: \"Money going out: above €250 needs Dana's yes\"\n    - listitem: \"A message leaving the company: always needs your yes\"\n  - paragraph:\n    - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n    - 'link \"What you can do today: check Waiting for you\"':\n      - /url: \"#/waiting\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - list:\n    - listitem: Money out above €250 needs Dana's yes; whoever asked for it can't approve it. Org policy Written down by you for Dana. Dana has not confirmed it.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - button \"Change it\"\n  - link \"Try it on a card\":\n    - /url: \"#/make/expense-approval\"\n  - group: ▸ Show details"
+      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - status: Version 1 saved by you (not signed).\n  - paragraph: \"Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.\"\n  - heading \"People and roles\" [level=2]\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem: \"Dana: Approver, Rule owner\"\n  - heading \"Who approves what\" [level=2]\n  - list:\n    - listitem: \"Money going out: above €250 needs Dana's yes\"\n    - listitem: \"A message leaving the company: always needs your yes\"\n  - paragraph:\n    - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n    - 'link \"What you can do today: check Waiting for you\"':\n      - /url: \"#/waiting\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - list:\n    - listitem: Money out above €250 needs Dana's yes; whoever asked for it can't approve it. Org policy Written down by you for Dana. Dana has not confirmed it.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - button \"Change it\"\n  - link \"Try it on a card\":\n    - /url: \"#/make/expense-approval\"\n  - group: ▸ Show details"
     },
     {
       "n": 2,
@@ -28,7 +28,7 @@
       "note": null,
       "steps": 0,
       "asks": 0,
-      "ms": 3479,
+      "ms": 6180,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
@@ -51,7 +51,7 @@
   },
   "totalSteps": 0,
   "totalAsks": 0,
-  "ms": 4837,
+  "ms": 8861,
   "shots": [
     "01-org-v1-org-light-390.jpg",
     "02-org-v1-make-expense-approval-light-390.jpg"
