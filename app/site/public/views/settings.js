@@ -44,7 +44,10 @@ export async function render() {
       managedAI ? el('p', { class: 'banner', dataset: { managedSetting: 'allowedAI' } }, statusChip('decided'), ' ', t('settings.managed')) : null,
       el('p', { class: 'field-help' }, t('settings.aiHelp')), el('p', {}, el('a', { href: '#/keys' }, t('settings.keysLink')))),
     el('section', {}, el('h2', {}, t('settings.themeTitle')), el('fieldset', {}, el('legend', {}, t('settings.themeLegend')), themeRadios)),
-    el('section', {}, el('h2', {}, t('settings.whereTitle')), el('p', {}, t('settings.where')), el('pre', {}, doctor?.workspace ?? ''), el('p', { class: 'muted' }, t('settings.whereNote'))),
+    // "Readable only by your user" only when the doctor finds the folder private now (honesty review, minor 6): Foundry leaves the home
+    // folder and a folder of another account as they are.
+    el('section', {}, el('h2', {}, t('settings.whereTitle')), el('p', { dataset: { workspacePrivate: String(doctor?.workspacePrivate ?? null) } }, t(doctor?.workspacePrivate === true ? 'settings.where' : 'settings.whereOpen')),
+      el('pre', {}, doctor?.workspace ?? ''), el('p', { class: 'muted' }, t('settings.whereNote'))),
     el('section', { dataset: { forget: '' } }, el('h2', {}, t('settings.forgetTitle')), el('p', {}, t('settings.forgetBody')),
       el('div', { class: 'field' }, el('label', { for: 'forget-confirm' }, t('settings.forgetLabel')), confirm), el('div', { class: 'actions' }, forget), forgetStatus),
     el('section', {}, el('h2', {}, t('settings.orgTitle')), el('p', {}, el('a', { href: '#/org' }, t('settings.orgLink')))),

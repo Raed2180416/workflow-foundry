@@ -4,7 +4,7 @@
 // keep somewhere else), the evidence file's name and fingerprint stay on the page (minor 4), the run names its card and version
 // (minor 1), cost has two decimals (minor 3), and who started it and who approved its list are shown (B1, M8).
 import { el, t, api, download, toast, raw } from '../site.js';
-import { checkList, errorPanel, statusChip } from '../components/ui.js';
+import { checkList, errorPanel } from '../components/ui.js';
 import { whenUtc } from '../components/dom.js';
 
 const DECISION_EVENTS = new Set(['approval.requested', 'approval.decided']);
@@ -28,6 +28,9 @@ export async function render({ params }) {
     ev1.removeAttribute('aria-busy');
   });
   const copyHead = el('button', { type: 'button', class: 'small', dataset: { action: 'copy-head' }, on: { click: async () => { try { await navigator.clipboard.writeText(d.chain.head ?? ''); toast(t('snippet.copied')); } catch { toast(t('snippet.selected')); } } } }, t('run.copyHead'));
+  // The decision log's latest link (honesty review B1): who decided is checked against that log, so it needs an outside copy too.
+  const decisionsHead = ev?.personDecisions?.check?.head ?? null;
+  const copyDecisions = el('button', { type: 'button', class: 'small', dataset: { action: 'copy-decisions-head' }, on: { click: async () => { try { await navigator.clipboard.writeText(decisionsHead ?? ''); toast(t('snippet.copied')); } catch { toast(t('snippet.selected')); } } } }, t('run.copyDecisionsHead'));
   const names = raw('run.events') ?? {};
   const byList = ev?.batch?.decision ? t('run.byList', { who: ev.batch.decision.by, channel: t(`channel.${ev.batch.decision.channel}`) }) : '';
   const rows = d.timeline.map(e => ({ ...e, plain: names[e.type] ?? e.type, who: e.type === 'approval.decided' ? byList : '' }));
@@ -44,11 +47,13 @@ export async function render({ params }) {
     d.pendingApprovals?.length ? el('p', { class: 'banner wait' }, t('run.waiting'), ' ', el('a', { href: '#/waiting' }, t('nav.waiting'))) : null,
     el('h2', {}, t('turnon.done_means')), checkList(d.checks),
     el('section', { class: d.chain.verified ? 'banner ok' : 'banner bad', dataset: { record: d.chain.verified ? 'verified' : 'broken' } },
-      el('p', {}, d.chain.verified ? statusChip('decided') : statusChip('limit'), ' ', d.chain.verified ? t('run.recordOk', { n: d.chain.events }) : t('run.recordBad', { reason: d.chain.reason ?? '' })),
+      // No status chip here (honesty review, minor 11): a check result is not a decision, and a broken record is not a known limit.
+      el('p', {}, d.chain.verified ? t('run.recordOk', { n: d.chain.events }) : t('run.recordBad', { reason: d.chain.reason ?? '' })),
       d.chain.verified ? el('p', { class: 'small' }, t('run.recordMeaning')) : null,
-      el('details', {}, el('summary', {}, t('common.showDetails')), el('p', { class: 'small' }, t('run.chainHead', { hash: d.chain.head ?? '' })), el('div', { class: 'actions' }, copyHead))),
+      el('details', {}, el('summary', {}, t('common.showDetails')), el('p', { class: 'small' }, t('run.chainHead', { hash: d.chain.head ?? '' })), el('div', { class: 'actions' }, copyHead),
+        decisionsHead ? [el('p', { class: 'small' }, t('run.decisionsHead', { hash: decisionsHead })), el('div', { class: 'actions' }, copyDecisions)] : null)),
     el('div', { class: 'actions' }, ev1), el('p', { class: 'small muted', dataset: { evidenceContains: '' } }, t('run.evidenceContains')), fileNote, status,
-    el('section', {}, el('h2', {}, t('run.gapsTitle')), el('ul', {}, ['decisions', 'transcripts', 'anchor', 'secondPerson', 'identity'].map(k => el('li', {}, t(`run.gaps.${k}`))))),
+    el('section', {}, el('h2', {}, t('run.gapsTitle')), el('ul', {}, ['decisions', 'transcripts', 'anchor', 'delivered', 'secondPerson', 'identity'].map(k => el('li', {}, t(`run.gaps.${k}`))))),
     el('section', {}, el('h2', {}, t('run.timeline', { n: d.timeline.length })), el('div', { class: 'actions' }, toggle),
       el('div', { class: 'table-wrap' }, el('table', {}, el('thead', {}, el('tr', {}, [t('run.seq'), t('runs.when'), t('run.event'), t('run.step'), t('run.who')].map(h => el('th', { scope: 'col' }, h)))), tbody))),
     el('p', { class: 'muted' }, t('run.honesty')));

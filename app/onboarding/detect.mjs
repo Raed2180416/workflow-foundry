@@ -13,6 +13,9 @@
 //                                 managed-settings.json and managed-settings.d/*.json in the managed folder.
 //                               A Claude Code started with --settings, --plugin-dir or --agents, or driven by a program (print mode,
 //                               the Agent SDK's stream-json input), can carry hooks no file shows: then Foundry does not use the dialog.
+//                               Not read, so not seen (honesty review M9): settings an organisation sends Claude Code over the network
+//                               (server-managed settings) or through a device-management profile, and plugins or skills kept outside
+//                               these folders. For anyone who uses plugins, allowManagedHooksOnly in managed settings is the safe setting.
 import { existsSync, statSync, readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:net';
@@ -45,12 +48,16 @@ export function admission({ settings, mcp }, argv) {
     const listed = servers.some(s => sameArgv([s?.command, ...(Array.isArray(s?.args) ? s.args : [])], argv));
     return listed ? { admitted: 'yes', why: 'Your organisation lists this exact command.' } : { admitted: 'no', why: 'Your organisation decides every server on this computer, and Foundry is not one of them.' };
   }
-  if (settings?.allowManagedMcpServersOnly === true) return { admitted: 'no', why: 'Only servers your organisation set up are allowed.' };
+  // Honesty review M10: allowManagedMcpServersOnly makes the managed allowlist the only one (an "approved catalog"); without it, allowlists
+  // from every settings scope merge, so a user can add servers of their own (a "soft allowlist", code.claude.com/docs/en/managed-mcp, read
+  // 2026-10-21; research/onboarding-20261021/sweeps/org-enterprise.md). Foundry's exact command on the managed list is admitted either way.
+  const only = settings?.allowManagedMcpServersOnly === true;
   if (allowed) {
-    if (allowed.some(e => sameArgv(e.serverCommand, argv))) return { admitted: 'yes', why: 'Your organisation allows this exact command.' };
+    if (allowed.some(e => sameArgv(e.serverCommand, argv))) return { admitted: 'yes', why: only ? 'Your organisation allows this exact command, and only the servers it allows.' : 'Your organisation allows this exact command. Its list is a soft allowlist (allowManagedMcpServersOnly is not set), so users can add other servers too.' };
     if (allowed.some(e => e.serverName === 'foundry')) return { admitted: 'unknown', why: 'Allowed by name only, which Claude Code says is not a security control.' };
-    return { admitted: 'no', why: 'Your organisation allows a list of servers, and Foundry is not on it.' };
+    return { admitted: 'no', why: only ? 'Your organisation allows only the servers on its list, and Foundry is not on it.' : 'Your organisation allows a list of servers, and Foundry is not on it. (The list is a soft allowlist, without allowManagedMcpServersOnly, so a user\'s own settings could add Foundry; ask IT instead.)' };
   }
+  if (only) return { admitted: 'no', why: 'Only servers your organisation allows may start, and its managed settings list none.' };
   return { admitted: 'unknown', why: 'The policy does not mention Foundry.' };
 }
 

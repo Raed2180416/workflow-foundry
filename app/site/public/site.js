@@ -79,12 +79,14 @@ export function rich(key, vars = {}) {
   if (last < v.length) out.append(v.slice(last));
   return out;
 }
-/** A claim in the page: its text, then a small link to where it comes from. */
+/** A claim in the page: its text, its status, its qualifier (what it does not cover), then a small link to where it comes from. */
+// Security review 2026-10-21 (L17): the status shows where the claim is used. Honesty review (M6): every status, "Works now" included, and
+// the qualifier too, so a claim never reads wider in a page than on the claims page (app/site/test/journeys/crawl.mjs checks every page).
 export function claimRef(id) {
   const c = state.claims?.[id];
   if (!c) return document.createTextNode(id);
-  // A claim that is not "Works now" says so where it is used, not only on the claims page (security review 2026-10-21, L17).
-  return el('span', { class: 'claim', dataset: { claim: id } }, c.text, ' ', c.status && c.status !== 'Works now' ? [el('span', { class: 'chip', dataset: { claimStatus: c.status } }, c.status), ' '] : null,
+  return el('span', { class: 'claim', dataset: { claim: id } }, c.text, ' ', el('span', { class: 'chip', dataset: { claimStatus: c.status ?? '' } }, c.status ?? ''), ' ',
+    c.qualifier ? [el('span', { class: 'muted', dataset: { claimQualifier: '' } }, `(${c.qualifier})`), ' '] : null,
     el('a', { href: `#/claims?c=${id}`, class: 'small', 'aria-label': t('claims.sourceFor', { short: c.short }) }, t('claims.source')));
 }
 export const claims = () => state.claims ?? {};

@@ -4,10 +4,12 @@ import { el, frag, id, plural, clear, day } from './dom.js';
 import { t, rich, api, decide, say, toast, download, navigate, refreshBadge } from '../site.js';
 
 // ------------------------------------------------------------------------------------------------ status
-const MARK = { works: '✓', preview: '•', planned: '○', undecided: '?', decided: '✓', limit: '!' };
-/** Works now / Preview / Planned / Not decided / Decided / Limit, always a word and a mark. */
+const MARK = { works: '✓', preview: '•', planned: '○', undecided: '?', decided: '✓', limit: '!', notRetested: '!', research: '◇', literature: '◇' };
+/** Works now / Preview / Not re-tested / Planned / Not decided / Decided / Limit / Research result / Literature, always a word and a mark. */
 export function statusChip(kind) { return el('span', { class: 'status', dataset: { chip: kind } }, el('span', { 'aria-hidden': 'true' }, MARK[kind] ?? '•'), t(`status.${kind}`)); }
-export const statusOf = word => ({ 'Works now': 'works', Preview: 'preview', Planned: 'planned', 'Not decided': 'undecided', Decided: 'decided', Limit: 'limit' })[word] ?? 'planned';
+// Honesty review M5: a research result and the literature have their own words, so neither reads as "Works now".
+export const statusOf = word => ({ 'Works now': 'works', Preview: 'preview', 'Not re-tested': 'notRetested', Planned: 'planned', 'Not decided': 'undecided', Decided: 'decided', Limit: 'limit',
+  'Research result': 'research', Literature: 'literature' })[word] ?? 'planned';
 /** A Planned thing always comes with what the person can do today instead (SPEC R7). */
 export function plannedLine(label, insteadHref, insteadText) {
   return el('p', { dataset: { status: 'planned' } }, statusChip('planned'), ' ', label, ' ', el('a', { href: insteadHref, dataset: { instead: '' } }, insteadText ?? t('common.insteadToday')));

@@ -22,8 +22,9 @@ export async function render() {
     sec('records', p('trust.records.body')),
     sec('tested', p('trust.tested.body'), p('trust.tested.users')),
     sec('pilot', el('ul', {}, (raw('trust.pilot.items') ?? []).map(x => el('li', {}, x))), el('div', { class: 'actions' }, el('a', { class: 'button', href: '#/settings' }, t('trust.pilot.settings')), el('a', { class: 'button', href: '#/it-brief' }, t('trust.pilot.brief')))),
-    sec('before', el('ul', {}, (raw('trust.before.items') ?? []).map(x => el('li', {}, x, ' ', statusChip('planned')))), el('p', {}, el('b', {}, t('trust.before.none')))),
-    sec('allowlist', p('trust.allowlist.body'), snippet(JSON.stringify({ allowedMcpServers: [{ serverCommand: c.allowlist.serverCommand }] }, null, 2), { label: t('trust.allowlist.settingsLabel') }),
+    // Each with its own status (honesty review, minor 9): the IT brief says leaver removal and a stop switch are not decided.
+    sec('before', el('ul', {}, (raw('trust.before.items') ?? []).map((x, i) => el('li', {}, x, ' ', statusChip(raw('trust.before.status')?.[i] ?? 'planned')))), el('p', {}, el('b', {}, t('trust.before.none')))),
+    sec('allowlist', p('trust.allowlist.body'), snippet(JSON.stringify(c.allowlist.managedSettings, null, 2), { label: t('trust.allowlist.settingsLabel') }),
       el('p', {}, t('trust.allowlist.mcpLead')), snippet(JSON.stringify(managedExample, null, 2), { label: t('trust.allowlist.mcpLabel') }), el('p', { class: 'small muted' }, t('trust.allowlist.note'))),
     sec('remove', p('trust.remove.body')));
 }

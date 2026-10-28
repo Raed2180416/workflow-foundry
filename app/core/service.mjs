@@ -8,7 +8,8 @@
 //
 // The builder is pluggable (BUILDER-1): the stub (default, $0, no model) or the model builder over the template library
 // (./builder-model.mjs). Both return the same shape; every proposal names the builder that made it.
-import { mkdirSync, readdirSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, existsSync, writeFileSync, statSync, chmodSync } from 'node:fs';
+import { homedir } from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Foundry } from '../../src/foundry.mjs';
@@ -23,6 +24,32 @@ import { machinePolicy } from './machine-policy.mjs';
 
 // The digest that binds a planned outside action to its full content: sha256 of the canonical {tool, args} (batch approval matches on it).
 export const effectDigest = (tool, args) => digest({ tool, args });
+/**
+ * Honesty review 2026-10-21 (minor 6): mkdir's mode applies only to a folder it creates, so a workspace that already existed (a --workspace
+ * the person made) kept its mode, and folders and files inside get the default modes. Each start sets the workspace itself to 0700, which
+ * keeps other OS users out of everything inside it. Only a folder this account owns, and never the home folder or the filesystem root.
+ */
+export function privateWorkspace(root) {
+  try {
+    const st = statSync(root), uid = typeof process.getuid === 'function' ? process.getuid() : null;
+    if (uid === null || st.uid !== uid || path.resolve(root) === path.resolve(homedir()) || path.resolve(root) === path.parse(path.resolve(root)).root) return false;
+    if ((st.mode & 0o777) !== 0o700) chmodSync(root, 0o700);
+    return true;
+  } catch { return false; }
+}
+/**
+ * Whether other OS users are kept out of the workspace, as it is now: { private: true | false | null, mode: '0700' | null, mine }. null
+ * where modes say nothing (no POSIX user ids, as on Windows). The pages say "only your user" only when this is true (honesty review,
+ * minor 6): privateWorkspace() leaves the home folder and a folder of another account as they are.
+ */
+export function workspacePrivacy(root) {
+  try {
+    const st = statSync(root), uid = typeof process.getuid === 'function' ? process.getuid() : null;
+    const mode = (st.mode & 0o777).toString(8).padStart(4, '0');
+    if (uid === null) return { private: null, mode: null, mine: null };
+    return { private: st.uid === uid && (st.mode & 0o077) === 0, mode, mine: st.uid === uid };
+  } catch { return { private: false, mode: null, mine: null }; }
+}
 /** Security review 2026-10-21 (L16): the workspace keeps itself out of any git repository it sits in (a .gitignore that ignores all). */
 export function ignoreWorkspace(root) { try { writeFileSync(path.join(root, '.gitignore'), '# Foundry: your lists, drafts, records and decisions. Never commit them.\n*\n', { flag: 'wx', mode: 0o600 }); } catch { /* already there, or not writable */ } }
 const problem = (error, extra = {}) => ({ ok: false, problem: { ...(failureText(errorData(error)) ?? {}), code: error.code ?? 'ERROR', details: errorData(error).message }, ...extra });
@@ -33,6 +60,7 @@ export class FoundryApp {
     if (!builder || typeof builder.build !== 'function' || typeof builder.id !== 'string') throw new FoundryError('APP_BUILDER', 'A builder with an id and build() is required');
     this.root = path.resolve(workspace); this.builder = builder;
     mkdirSync(this.root, { recursive: true, mode: 0o700 });
+    privateWorkspace(this.root);
     ignoreWorkspace(this.root);
     this.liveDir = path.join(this.root, 'live'); this.outboxDir = path.join(this.root, 'outbox'); this.practiceRoot = path.join(this.root, 'practice');
     // Local stand-ins (sheets, chat) live in the workspace's world directory: <workspace>/world/sheets/<name>.json.
@@ -171,7 +199,8 @@ export class FoundryApp {
     const act = this.ledger.activation(id), proposal = this.foundry.store.proposal(act.proposalId);
     if (approved && proposal.workflowHash !== act.workflowHash) throw new FoundryError('STALE_APPROVAL', 'The proposal changed after the request was made');
     const decided = this.ledger.decide(id, approved, { channel, principal, note, expectRev: act.rev });
-    try { this.onDecision?.({ kind: 'turn-on', decision: approved ? 'approved' : 'rejected', channel, principal, flowId: act.flowId, version: proposal.workflow.version, workflowHash: act.workflowHash, approvalId: id, note }); } catch { /* the log is a record, never a gate */ }
+    // dryRunId (honesty review B1): the practice run this yes rests on, so an evidence file's practice section is tied to a logged line.
+    try { this.onDecision?.({ kind: 'turn-on', decision: approved ? 'approved' : 'rejected', channel, principal, flowId: act.flowId, version: proposal.workflow.version, workflowHash: act.workflowHash, approvalId: id, dryRunId: act.dryRunId ?? null, note }); } catch { /* the log is a record, never a gate */ }
     if (!approved) return { ok: true, status: 'rejected', approvalId: id };
     try { if (proposal.status === 'proposed') this.foundry.apply(act.proposalId); }
     catch (error) {
@@ -248,7 +277,9 @@ export class FoundryApp {
   async decideAction(runId, approvalId, approved, { channel, fromList = null } = {}) {
     if (!HUMAN_CHANNELS.includes(channel)) throw new FoundryError('APPROVAL_AUTHORITY', `Approvals come only from a person, not from ${channel}`);
     this.foundry.runtime.approve(runId, approvalId, approved, 'user');
-    try { this.onDecision?.({ kind: fromList ? 'list-item' : 'action', decision: approved ? 'approved' : 'rejected', channel, principal: this.principal?.() ?? 'local-user', runId, approvalId,
+    // flowId (honesty review B1): the line names its automation, so an evidence file can show that none of its lines was left out.
+    let flowId = null; try { flowId = this.foundry.store.rows.header(runId)?.workflowId ?? null; } catch { flowId = null; }
+    try { this.onDecision?.({ kind: fromList ? 'list-item' : 'action', decision: approved ? 'approved' : 'rejected', channel, principal: this.principal?.() ?? 'local-user', runId, flowId, approvalId,
       ...(fromList ? { batchId: fromList.batchId, item: fromList.n, digest: fromList.digest, appliedBy: 'Foundry, from your one approval of the list' } : {}) }); } catch { /* a record, never a gate */ }
     if (approved) await this.foundry.startRun(runId).catch(() => {});
     return this.status({ runId });

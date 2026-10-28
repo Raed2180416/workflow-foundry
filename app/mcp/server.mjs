@@ -65,6 +65,7 @@ function say(tool, r) {
     case 'ask_person_to_turn_on': return r.status === 'approved' ? `The person turned on version ${r.version ?? ''} (${r.workflowHash?.slice(0, 8)}). Before each run makes anything, they see the full list and approve it once.`
       : r.status === 'rejected' ? `The person said no${r.channel === 'mcp-elicitation' ? ' in the dialog' : ''}. Nothing was turned on.`
       : r.status === 'not_decided' ? 'The person closed the dialog without deciding. Nothing was turned on; ask again when they are ready.'
+      : r.status === 'declined_by_client' ? `Your client declined the dialog. That may have been automatic (a setting or a hook), so it is not recorded as the person's no. Nothing was turned on. ${r.how}`
       : `Waiting for the person to decide. ${r.how}`;
     case 'list_templates': return `${r.templates.length} automation cards. Pick the one that does the main thing the person asked for, fill its settings only from their words, and call propose_flow with template and settings. If none fits, say so.`;
     case 'run_flow': if (r.batchId) return `The person is checking the exact list of what this run would make (${r.made}) as of ${r.asOf?.slice(0, 10)}, in ${r.where}. Nothing is made until they approve it there. When they have, tell them the drafts are on the Drafts page and that they send them themselves.`;
@@ -132,8 +133,15 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
         const decided = app.decideActivation(request.approvalId, result.content.decision === 'approve', { channel: 'mcp-elicitation', note: result.content.note ?? null });
         return decided.ok === false ? decided : { ...decided, workflowHash: request.workflowHash, version: request.version };
       }
-      // "Decline" in the dialog is a no, recorded as one; closing it (cancel) decides nothing. Neither opens the browser (P1 M5).
-      if (result?.action === 'decline') return { ...app.decideActivation(request.approvalId, false, { channel: 'mcp-elicitation', note: 'declined in the coding agent\'s dialog' }), channel: 'mcp-elicitation' };
+      // "Decline" comes from the client, and need not be the person (honesty review M2): Codex rejects a dialog by itself when its
+      // approval_policy does not allow MCP elicitations, and a hook can decline one. So it is not recorded as the person's no: the
+      // request stays waiting in the page, and the decision log says the client declined (it may have been automatic). Closing the
+      // dialog (cancel) decides nothing either. Neither opens the browser (P1 M5).
+      if (result?.action === 'decline') {
+        try { app.onDecision?.({ kind: 'dialog-declined', decision: 'declined by the client (may be automatic; not recorded as the person\'s no)', channel: 'mcp-elicitation',
+          by: 'the coding agent\'s client', who: null, howKnown: 'The coding agent\'s client answered "decline". Foundry cannot tell whether a person, a setting or a hook chose it.', flowId: request.flowId, version: request.version, workflowHash: request.workflowHash, approvalId: request.approvalId }); } catch { /* a record, never a gate */ }
+        return { ok: true, status: 'declined_by_client', approvalId: request.approvalId, channel: 'mcp-elicitation', how: where() };
+      }
       if (result?.action === 'cancel') return { ok: true, status: 'not_decided', approvalId: request.approvalId };
     }
     return { ...request, how: where() };
@@ -172,7 +180,7 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
     ['explain_flow', 'Explain a proposal or flow in plain words: its steps, the checks that define done, the outside actions it can take and its limits.', object({ proposalId: id, flowId: id }), a => app.explain(a), true],
     ['dry_run', 'Try the exact proposed version on practice data, with outside actions replaced by a practice stand-in. Reports which checks passed and what it would have done. Required before approval.',
       object({ proposalId: id, practiceInput: flowInput }, ['proposalId']), a => app.dryRun({ proposalId: a.proposalId, input: a.practiceInput }), false],
-    ['ask_person_to_turn_on', 'Ask the PERSON to turn on a proposed version after a passing practice run. You cannot turn it on: the person decides in a dialog or in the Foundry page. Returns approved, rejected, not_decided (they closed the dialog), or awaiting_human with where they decide.',
+    ['ask_person_to_turn_on', 'Ask the PERSON to turn on a proposed version after a passing practice run. You cannot turn it on: the person decides in a dialog or in the Foundry page. Returns approved, rejected, not_decided (they closed the dialog), declined_by_client (the client declined the dialog, perhaps automatically; not the person\'s no), or awaiting_human with where they decide.',
       object({ proposalId: id }, ['proposalId']), approve, false],
     ['run_flow', 'Run the current, person-approved version of a flow with an input OBJECT. Unapproved or changed versions are refused. Outside actions (sending) pause until the person approves them; for an automation made from a card, the person first sees the exact list of what the run would make and approves that list.',
       object({ flowId: id, input: flowInput }, ['flowId', 'input']), runFlow, false],

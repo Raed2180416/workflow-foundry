@@ -1,7 +1,9 @@
 // P1, the developer with a coding agent (SPEC §7.2, §16). The harness plays both the person and a scripted agent (no model, $0):
 // it copies the exact line from #/connect-agent, parses it, and spawns that argv over stdio with the MCP SDK client, so the server
-// under test is the one the line starts. With form elicitation (Claude Code) the person approves in the client's dialog; without
-// it (Cursor, Codex) the browser opens on the yes card. Decisions on the exact list happen in the browser page Foundry opens
+// under test is the one the line starts. With form elicitation (Claude Code) the person approves in the client's dialog; for Cursor and
+// Codex the browser opens on the yes card (both document dialogs, but Foundry can look only in Claude Code's places for hooks that could
+// answer one, so it does not use theirs; honesty review M2). The stand-in client here offers no dialog. Decisions on the exact list
+// happen in the browser page Foundry opens
 // (FOUNDRY_URL_FILE, a file inside the workspace, stands in for the browser opener: it gets the one-time code link). The agent
 // transcript is rendered to transcript.html and screenshotted.
 // Not covered: a real Claude Code, Cursor or Codex client (their own trust and tool prompts are reported, not measured).
@@ -198,12 +200,12 @@ test('P1 ungrounded: the agent fills an address the person never wrote; Foundry 
   assertBudget(log, 'firstVerified', { steps: 3, asks: 1, since: 'setup' });
 });
 
-test('P1 Cursor or Codex: the install link and the line both decode to the same server; without a dialog the browser opens on the yes card', async () => {
+test('P1 Cursor or Codex: the install link and the line both decode to the same server; the browser opens on the yes card', async () => {
   const budgets = { firstLive: { steps: 5, asks: 2, since: 'setup' } };
   const log = await journey({ name: 'p1-cursor-codex', budgets, before: app => invoiceListInPlace(app) }, async ({ page, person, shot, mark, dir, log }) => {
     const checks = log.checks = {}, transcript = [];
     const transcriptPage = await page.context().newPage();
-    const showTranscript = async (slug, note) => { await transcriptPage.setContent(transcriptHtml('Codex (stand-in, no dialog support) — foundry connected', transcript)); await shot(slug, { of: transcriptPage, note }); };
+    const showTranscript = async (slug, note) => { await transcriptPage.setContent(transcriptHtml('Codex (scripted stand-in; Foundry asks in the browser) — foundry connected', transcript)); await shot(slug, { of: transcriptPage, note }); };
     person.precondition('their invoice list is already in Foundry (dropped once before, as in P2)');
     const connect = await page.evaluate(async () => (await fetch('/api/connect', { headers: { 'x-foundry-token': sessionStorage.getItem('foundry-token') } })).json());
     // Cursor: the install link's config is the server entry, base64 of its JSON (cursor.com/docs/context/mcp/install-links).
@@ -230,7 +232,7 @@ test('P1 Cursor or Codex: the install link and the line both decode to the same 
       const ok = await a.call('ask_person_to_turn_on', { proposalId: p.proposalId });
       assert.equal(ok.status, 'awaiting_human'); assert.match(ok.how, /opened in their browser/);
       transcript.push({ who: 'agent', text: `${ok.say} ${ok.how}` });
-      await showTranscript('approve-awaits-you', 'no dialog: the agent cannot approve; the browser opens');
+      await showTranscript('approve-awaits-you', 'the agent cannot approve; Foundry opens the browser');
       const url = await waitForFile(urlFile);
       await page.goto(url);
       await page.waitForSelector('[data-activation]');

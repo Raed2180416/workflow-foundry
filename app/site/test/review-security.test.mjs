@@ -472,7 +472,7 @@ test('L9: check-evidence is not "consistent" about what it did not check, and it
   const b = await batches.preview(p.flowId);
   const r = await batches.approve(b.batchId, { listDigest: listDigest(b) });
   const bundle = JSON.parse(JSON.stringify(evidenceBundle(app, r.runId, { batches })));
-  assert.equal(bundle.schema, 'foundry-evidence/3');
+  assert.equal(bundle.schema, 'foundry-evidence/4'); // /4 since the honesty review (B1); the checks below are unchanged
   const good = checkEvidence(bundle);
   assert.equal(good.ok, true, good.problems.join('; ')); assert.ok(good.checked.decisions >= 2 && good.checked.links >= good.checked.decisions);
   // Nothing to check is not consistent.

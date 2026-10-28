@@ -34,7 +34,7 @@ export function buildInfo() {
     name: pkg.name ?? 'workflow-foundry', version: pkg.version ?? null, commit, changedSinceCommit: dirty, tree: treeHash(),
     node: process.versions.node, dependencies: pkg.dependencies ?? {},
     licence: pkg.license ?? null,
-    licenceNote: pkg.license ? `Licensed ${pkg.license}.` : 'No licence file in this copy yet. Decided: Apache-2.0 for the engine when it is published (research/decisions-20261021.md, D1); until then, ask the person who gave you this copy.',
+    licenceNote: pkg.license ? `Licensed ${pkg.license}.` : 'No licence file in this copy yet. Decided: Apache-2.0 for the engine if it is published (research/decisions-20261021.md, D1); whether to publish is not decided (D13). Until then, ask the person who gave you this copy.',
     installedAt: ROOT
   });
   return cached;

@@ -1,8 +1,13 @@
 // "Already use n8n? Drop an exported workflow" (SPEC §9.14): the existing importer's honest verdict (app/importers/n8n.mjs; nothing is
 // executed) plus a risk card in plain words. Every line of the risk card says whether Foundry READ it from the file or INFERRED it.
 // The file is untrusted data: its names are shown as text and never given to a model.
+//
+// Honesty review 2026-10-21 (M1): a line is ✓ only for what Foundry did. "Translates into Foundry steps" is all a lowered workflow is: its
+// connector steps have no host adapter (n8n.mjs throws NOT_CONNECTED), nothing was run, and the importer itself says behaviour
+// equivalence with n8n is not shown. Calling the workflow in place, in n8n, is designed (wrap()) but nothing here can configure or call
+// it, so that line is Planned, never ✓. status: 'yes' (✓), 'no' (✗) or 'planned'.
 import { FoundryError } from '../../src/data.mjs';
-import { importN8n, normalise, BLOCKING } from '../importers/n8n.mjs';
+import { importN8n, normalise, BLOCKING, n8nConnector } from '../importers/n8n.mjs';
 
 const plainReason = code => BLOCKING[code] ?? `Uses something Foundry can't bring over yet (${code}).`;
 
@@ -25,12 +30,16 @@ export function importReport(text) {
   if (typeof text !== 'string' || text.length > 4 * 1024 * 1024) throw new FoundryError('IMPORT_SIZE', 'The file must be text, under 4 MB');
   let json; try { json = JSON.parse(text); } catch { throw new FoundryError('IMPORT_JSON', 'This is not a JSON file. In n8n, use Download on the workflow to get one.'); }
   const report = importN8n(json), norm = normalise(json);
-  const verdict = report.compileVerdict === 'lowered' ? 'exact' : 'cannot';
+  const translated = report.compileVerdict === 'lowered';
+  const connectors = [...new Set((report.needsCapabilities ?? []).map(c => (c.from ? n8nConnector(c.from) : null) ?? c.name).filter(Boolean))];
+  const line = (key, status, text) => ({ key, status, yes: status === 'yes', text });
   return { name: report.name || 'Untitled workflow', nodes: norm.nodes.length,
     lines: [
-      { key: 'exact', yes: verdict === 'exact', text: verdict === 'exact' ? 'Comes over exactly: Foundry can run this as its own automation (after a test and your yes).' : 'Does not come over exactly.' },
-      { key: 'wrap', yes: true, text: `Can be called as it is: it stays in n8n, and Foundry calls it through ${report.wrap.via === 'webhook' ? 'its webhook' : 'n8n'}${report.wrap.descriptor.requiresApproval ? ', asking you before each call' : ''}.` },
-      ...(verdict === 'cannot' ? [{ key: 'cannot', yes: false, text: 'Can\'t come over yet, because:' }] : [])],
+      translated ? line('translated', 'yes', 'Translates into Foundry steps without errors. Not run: Foundry ran none of it, and a translation does not show it would behave as it does in n8n.')
+        : line('translated', 'no', 'Does not translate into Foundry steps.'),
+      ...(translated ? [line('run', 'no', connectors.length ? `Foundry can't run it yet: it needs connectors Foundry doesn't have (${connectors.join(', ')}).` : 'Foundry can\'t run it yet: nothing here has been tested as a Foundry automation.')] : []),
+      line('wrap', 'planned', `Leave it in n8n and have Foundry call it through ${report.wrap.via === 'webhook' ? 'its webhook' : 'n8n'}${report.wrap.descriptor.requiresApproval ? ', asking you before each call' : ''}: designed, not built, so nothing here can set that up yet.`),
+      ...(!translated ? [line('cannot', 'no', 'Can\'t be translated yet, because:')] : [])],
     reasons: (report.reasons ?? []).map(r => ({ code: r.code, steps: r.steps ?? r.nodes ?? [], text: plainReason(r.code) })),
     risk: riskCard(norm),
     executed: false, note: 'Foundry ran nothing. n8n keeps running your workflow as before.' };

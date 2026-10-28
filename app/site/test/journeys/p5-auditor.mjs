@@ -1,9 +1,10 @@
 // P5, the auditor (SPEC §7.4, §16): from the runs list to a checked record and an evidence file in at most 3 actions. The file is
-// checked against the page (chain head), against the ledger (who turned it on, through which channel) and for its stated gaps.
+// checked against the page (chain head, decision-log head), against the ledger (who turned it on, through which channel) and for its
+// stated gaps; check-evidence names what it checked, and a copy with a rewritten approver is not consistent (honesty review B1).
 // Development evidence, scripted, no users. nice node --test --test-concurrency=1 app/site/test/journeys/p5-auditor.mjs
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { journey, closeBrowser, assertBudget, NOW } from './harness.mjs';
 import { invoiceFlowOn, liveInvoices } from '../../../onboarding/test/helpers.mjs';
 import { Batches, listDigest } from '../../../onboarding/batch.mjs';
@@ -32,7 +33,10 @@ test('P5 auditor: runs -> a run -> "Record consistent" -> evidence download, in 
     await page.waitForSelector('[data-record="verified"]');
     checks.record = (await page.locator('[data-record]').textContent()).replace(/\s+/g, ' ').trim();
     assert.match(checks.record, /Record consistent: \d+ entries, each linked to the one before\./);
-    const headOnPage = (await page.locator('[data-record] details p').textContent()).split(': ').pop().trim();
+    const headOnPage = (await page.locator('[data-record] details p').first().textContent()).split(': ').pop().trim();
+    // The decision log's latest link is on the page too, with its own copy button (honesty review B1: who decided is checked against it).
+    const decisionsHeadOnPage = (await page.locator('[data-record] details p').nth(1).textContent()).split(': ').pop().trim();
+    assert.equal(await page.locator('[data-action="copy-decisions-head"]').count(), 1);
     await shot('run-record-checked');
     const [download] = await Promise.all([page.waitForEvent('download'), person.click(page.locator('[data-action="evidence"]'))]);
     mark('evidence');
@@ -53,7 +57,19 @@ test('P5 auditor: runs -> a run -> "Record consistent" -> evidence download, in 
     person.external('runs: node app/cli.mjs check-evidence <file>');
     const cli = spawnSync(process.execPath, [CLI, 'check-evidence', file], { encoding: 'utf8' });
     checks.cliCheck = cli.stdout.trim().slice(0, 300);
-    assert.equal(cli.status, 0, cli.stderr); assert.match(cli.stdout, /^Consistent: /);
+    assert.equal(cli.status, 0, cli.stderr);
+    // Honesty review B1: the check names each section it checked, and what it could not check.
+    assert.match(cli.stdout, /^Consistent\. Checked:\n- run events/); assert.match(cli.stdout, /^- turned on: /m); assert.match(cli.stdout, /^- the list \(4 items\)/m);
+    assert.match(cli.stdout, /^Not checked:\n- /m);
+    assert.equal(ev.personDecisions.check.head, decisionsHeadOnPage, 'the file and the page name the same decision-log head');
+    // The review's reproduction: a file whose approver was rewritten is not consistent any more.
+    const forged = `${file}-forged.json`;
+    writeFileSync(forged, JSON.stringify({ ...ev, turnedOn: { ...ev.turnedOn, by: 'Someone else (someone@elsewhere)' } }));
+    person.external('re-runs the check on a copy whose approver was rewritten');
+    const no = spawnSync(process.execPath, [CLI, 'check-evidence', forged], { encoding: 'utf8' });
+    checks.forgedCheck = no.stdout.trim().slice(0, 200);
+    assert.equal(no.status, 1); assert.match(no.stdout, /^Not consistent:\n- turned on: /);
+    rmSync(forged, { force: true });
     assert.ok(Array.isArray(ev.gaps) && ev.gaps.length >= 3, 'the file states what it does not hold');
     checks.evidence = { file: download.suggestedFilename(), events: ev.chain.events, head: ev.chain.head.slice(0, 12), ledger: ev.ledger.map(r => `${r.status} via ${r.channel}`), actionDecisions: decided.length, listDecidedBy: ev.batch.decision.by, personDecisions: ev.personDecisions.lines.length, gaps: ev.gaps.length };
     await shot('evidence-downloaded');

@@ -152,6 +152,8 @@ details[open] > summary::before { transform: rotate(90deg); }
 .status[data-chip="undecided"] { color: var(--paid); }
 .status[data-chip="decided"] { color: var(--ok); }
 .status[data-chip="limit"] { color: var(--bad); }
+.status[data-chip="notRetested"] { color: var(--wait); }
+.status[data-chip="research"], .status[data-chip="literature"] { color: var(--muted); }
 .mark-ok { color: var(--ok); font-weight: 700; } .mark-bad { color: var(--bad); font-weight: 700; } .mark-wait { color: var(--wait); font-weight: 700; }
 .checks { list-style: none; padding: 0; margin: 8px 0 12px; }
 .checks li { display: grid; grid-template-columns: 28px 1fr; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--line); }

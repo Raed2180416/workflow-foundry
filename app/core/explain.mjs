@@ -17,7 +17,7 @@ const STATUS = {
 // What a failure code means to a person, and what they can do. Unknown codes fall back to a generic text, never to a guess.
 const FAILURES = {
   APPROVAL_REJECTED: ['You said no to an action, so the run stopped before doing it.', 'Nothing was sent. Run it again when you are ready.'],
-  VERIFY_FAILED: ['The final check failed: what was delivered is not exactly what was saved.', 'Open the run and compare the two. Do not resend until you know why.'],
+  VERIFY_FAILED: ['The final check failed: what was written to send is not exactly what was saved.', 'Open the run and compare the two. Do not resend until you know why.'],
   ACCEPTANCE_FAILED: ['All steps ran, but the definition of done did not hold.', 'Open the run: the checks list shows which one failed.'],
   INPUT_SCHEMA: ['The input does not have the expected shape.', 'Each item needs a title and a status of done, open or blocked; the week needs a label.'],
   SCHEMA_MISMATCH: ['The input does not have the expected shape.', 'Each item needs a title and a status of done, open or blocked; the week needs a label.'],

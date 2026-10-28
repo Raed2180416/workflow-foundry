@@ -46,7 +46,8 @@ export async function render() {
     const { map, version, hash } = state.current;
     const people = map.principals.filter(p => p.kind === 'human');
     return [
-      el('p', { class: 'banner ok', role: 'status', dataset: { savedVersion: String(version) } }, statusChip('decided'), ' ', t('org.savedTitle', { version })),
+      // No "Decided" chip (honesty review, minor 11): the version is saved by you, unsigned and self-approved, as the title says.
+      el('p', { class: 'banner ok', role: 'status', dataset: { savedVersion: String(version) } }, t('org.savedTitle', { version })),
       ...state.warnings.map(w => el('div', { class: 'banner wait', dataset: { bootstrap: '' } }, el('p', {}, el('b', {}, t('org.bootstrapTitle')), ' ', w))),
       el('h2', {}, t('org.peopleTitle')), el('ul', {}, people.map(p => el('li', {}, p.name, p.email ? ` (${p.email})` : '', ': ', p.roles.map(r => map.roles.find(x => x.id === r)?.name ?? r).join(', ')))),
       el('h2', {}, t('org.approvalsTitle')), el('ul', {}, map.approvals.map(a => el('li', {}, t(`org.actions.${a.actionClass}`), ': ',

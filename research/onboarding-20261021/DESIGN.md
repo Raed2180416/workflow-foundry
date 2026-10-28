@@ -71,7 +71,7 @@ answer harms or an irreversible yes. Times are the harness's wall-clock on a sha
 | P3 team lead | 390 dark | 4 / 2 / 2.2 s | turned on: 9 / 4 / 3.6 s | same | pass |
 | P1 Claude Code (stdio MCP, form elicitation) | 1280 | setup 2 / 0; then **1 / 0** (3.4 s from start) | then **3 / 1** (7.6 s) | ≤ 2 / 0; ≤ 4 / 2 after setup | pass |
 | P1 agent guessed an address | 1280 | setup 2 / 0; then **2 / 1** (4.4 s) | — | +1 ask; nothing made before the answer | pass |
-| P1 Cursor or Codex (no dialog) | 1280 | setup 2 / 0; then 1 / 0 (4.2 s) | then **5 / 1** (12.7 s) | ≤ 5 after setup | pass |
+| P1 Cursor or Codex path (a scripted client that offers no dialog; Cursor and Codex both document one) | 1280 | setup 2 / 0; then 1 / 0 (4.2 s) | then **5 / 1** (12.7 s) | ≤ 5 after setup | pass |
 | P4 IT | 1280 | brief: 2 actions; practice-only: 1 | a test on the real list, nothing made (was: a refused run) | ≤ 2; 1 | pass |
 | P4 policy file (added after the walkthroughs) | 1280 | Settings locked by the organisation; the API refuses | — | locked | pass |
 | P5 auditor | 1280 | evidence file: 3 actions | — | ≤ 3 | pass |
@@ -127,6 +127,17 @@ in [WALKTHROUGH.md](WALKTHROUGH.md).
    - **A test on the person's own list runs as of today.** It used to run as of the card's pretend date and showed 2 reminders where the live list makes 3.
    - **A Settings link in the footer.**
    - **With `--consent`, the MCP server skips the client's dialog** when a local hook could answer it (spec K12 said the doctor detects the hook, but nothing acted on it). Since the security review (H3, 2026-10-21): without `--consent` the dialog is not used at all, and with it the check covers every hook location and runs on every ask (WALKTHROUGH M7).
+8. **Where the honesty review of 2026-10-21 overrode the spec's wording** (the spec, `SPEC.md`, is kept as received):
+   - C06 and the import report: "2 of 10 came over exactly; 10 of 10 can be called as they are" became "2 translated into Foundry steps without errors, 8 refused with reasons, calling them in n8n designed but not built, 0 run". A lowered flow's connector steps have no host adapter, and nothing in the site can configure the n8n wrapper.
+   - Codex: "has no documented dialog" was wrong (see §6). The browser path stays, for the reason given there.
+   - Pricing: "Free, always" and "We never charge by size" overstated decision D2, which is reversible and sets no price; "We think the first two should be" was a research recommendation, not the owner's decision.
+   - Claims: research results (C04, C05, C07) and literature (C11) have their own statuses, not "Works now"; C02 is "Not re-tested"; a claim shows its status and qualifier wherever a page uses it.
+   - The evidence file (B1): `check-evidence` now checks who decided, the list and its fingerprint, and the turn-on history against the hashed decision log and run events, and names what it did not check. Each decision-log line's link commits to its automation, so a line left out of the file is found.
+   - What leaves the computer (M7): the AI-key check (one `GET <provider>/models` with the key) is listed on the Trust page and in the IT brief, and refused unless Allowed AI includes that provider. The token cap is per build and fixed at start; there is no daily limit (M8).
+   - The coding agent's dialog (M2, M3, M9): a client's decline is recorded as the client's, not the person's no; Claude Code is said to ask before `ask_person_to_turn_on` only; the hooks Foundry cannot see are named, with `allowManagedHooksOnly` recommended wherever plugins are used.
+   - Allowlist (M10): the managed-settings entry sets `allowManagedMcpServersOnly`; without it the list is a soft allowlist, and the copy says so.
+   - Folder privacy (minor 6): each start sets the workspace to 0700; the pages say "only your user" only when the doctor finds it so (not for the home folder or another account's folder).
+   - Checks on the wording itself (M11): the overclaim lint covers every module, data file and page script under `app/` and every card as the person reads it; every claim cites lines and a verbatim quote that `claims.test.mjs` finds there. `app/core/stand-ins.mjs` stays frozen (BUILDER-1 manifest), so its "delivered" is explained in the known gaps instead (minor 16).
 
 ## 5. Real vs designed
 
@@ -137,10 +148,10 @@ Nothing here has been used by a person other than the harness.
 |---|---|---|---|
 | Front door | 7 cards filled by the $0 form builder; the box suggests a card by keywords; restatement and asks with harm classes | Words without a card go to the Mercury builder only if a key is in the keychain and Settings allows it (never run here) | An AI "describe it" builder by default; launchers for non-technical installs (O-D) |
 | Test | Practice run on pretend data, bound to the version hash; "What I checked"; "What a test can't prove"; a test on the person's own list (CSV or JSON, column mapping, date, decimal and status questions) | — | A replay of past runs ("what would have happened last month") |
-| Turn on | Version-bound yes in the page (`dashboard` channel), in the agent's dialog (`mcp-elicitation`) or in the terminal (`cli`) | — | Second authority with its own sign-in (Team plan) |
+| Turn on | Version-bound yes in the page (`dashboard` channel) or in the terminal (`cli`) | The agent's dialog (`mcp-elicitation`): tested with a scripted client only, used only when Foundry finds no hook that could answer it, and a client's decline is recorded as the client's, not the person's no | Second authority with its own sign-in (Team plan) |
 | Going live | Own list → exact-list approval (sha256 per item, 60-minute expiry, each item used once) → drafts (mailto, `.eml` with `X-Unsent: 1`) | `.ics` weekly reminder (a reminder, not automation) | Sending from Gmail, an e-mail account or Slack; a scheduler; browser notifications (wave 2) |
 | Waiting and runs | "Waiting for you" (activations, lists, single actions); runs list; run record re-verified on open; evidence download | — | An MCP dialog for lists (wave 2) |
-| Developers | Connect page and `connect` print exact lines; `list_templates`; `propose_flow` with card and settings and the grounding check; elicitation approve; the exact list opens in the browser via `mcp --dashboard`; terminal `approve` for paused actions | Cursor install link: format checked against Cursor's page today, not clicked in Cursor | A plugin or marketplace entry (publishing, D13); an `inventory` tool |
+| Developers | Connect page and `connect` print exact lines; `list_templates`; `propose_flow` with card and settings and the grounding check; the exact list opens in the browser via `mcp --dashboard`; terminal `approve` for paused actions | Turning on in the agent's dialog (`ask_person_to_turn_on` with elicitation; see Turn on); Cursor install link: format checked against Cursor's page today, not clicked in Cursor | A plugin or marketplace entry (publishing, D13); an `inventory` tool |
 | IT and audit | Managed-policy notice (stat only; content only with `--consent`); IT brief (`.md`, `.html`, `.json`); practice-only mode enforced by the service; Trust page with the same-user limit; evidence file | — | A hosted control plane; SSO; SIEM export (O-C) |
 | Org | "Who decides what": authority map v1, versioned and hash-chained; Set-by prefill and refusal at proposal time; six examples per rule as tests; flip detection; export to constitution v0 for the refund starter | — | Enforcement on live runs (needs named approvers and an identity the agent cannot hold); every org page says so |
 | Keys | Keychain backends (macOS `security`, Linux `secret-tool`, ephemeral, none); canary tests; `keys.json` keeps the last 4 characters and the check time only | Windows PasswordVault backend (untested); the Mercury key check (one request on the person's click; tests use a loopback fake) | Anthropic and OpenRouter providers (Planned) |
@@ -151,7 +162,7 @@ Nothing here has been used by a person other than the harness.
 - **The same-user limit.** A coding agent that can run commands as the person can do what the person can do, including approve. This is on the Trust page and in every IT brief; it is claim C01's limit.
 - **No user has seen this.** Every count is scripted. Real Claude Code, Cursor and Codex behaviour was not exercised:
   - Claude Code's own trust prompt and its per-call prompt for `approve` (+1 click) are reported, not measured;
-  - Codex documents no elicitation, so Codex takes the browser path.
+  - Codex takes the browser path. Codex does document MCP elicitation dialogs: `approval_policy.granular.mcp_elicitations` lets them through, and with it off Codex rejects them by itself (Codex config reference, learn.chatgpt.com/docs/config-file/config-reference, read 2026-10-21 by the honesty review; documentation, not tried with a released Codex). Foundry does not use Codex's dialog because it cannot look for what could answer it; a client's "decline" is recorded as the client's, not as the person's no.
 - **Batch approval across runs: fixed after the walkthroughs.**
   - A list preview now copies the automation's live cross-run state into the practice store (`app/onboarding/preview-run.mjs`).
   - A second list leaves out what earlier runs made, and its summary matches the run.

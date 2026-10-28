@@ -114,7 +114,9 @@ test('evidence: the chain head, the turn-on decision with its channel, each acti
 test('n8n import report: an honest verdict, plain reasons, a risk card that says what it read and what it inferred, nothing run', () => {
   const r = importReport(fixture('n8n-synthetic.json'));
   assert.equal(r.executed, false);
-  assert.equal(r.lines.find(l => l.key === 'wrap').yes, true);
+  // Calling it in place, in n8n, is designed but not built: Planned, never ✓ (honesty review M1); nothing is marked done that was not done.
+  assert.equal(r.lines.find(l => l.key === 'wrap').status, 'planned'); assert.equal(r.lines.find(l => l.key === 'wrap').yes, false);
+  assert.ok(r.lines.every(l => l.yes === (l.status === 'yes')));
   assert.ok(r.risk.every(x => ['read', 'inferred'].includes(x.source)));
   assert.match(r.risk[0].answer, /Send thank-you/);
   assert.match(r.risk[1].answer, /^No: Send thank-you retries/);

@@ -11,7 +11,10 @@ export async function render() {
       say(t('import.done'));
       out.replaceChildren(el('section', { class: 'card', dataset: { importReport: '' } },
         el('h2', {}, r.name),
-        el('ul', { class: 'checks' }, r.lines.map(l => el('li', {}, el('span', { class: l.yes ? 'mark-ok' : 'mark-bad', 'aria-hidden': 'true' }, l.yes ? '✓' : '✗'), el('span', {}, l.text)))),
+        // Honesty review M1: ✓ only for what Foundry did; a designed, unbuilt way in says Planned, with what to do today.
+        el('ul', { class: 'checks' }, r.lines.map(l => l.status === 'planned'
+          ? el('li', { dataset: { line: l.key, status: 'planned' } }, statusChip('planned'), ' ', el('span', {}, l.text), ' ', el('a', { href: '#/', dataset: { instead: '' } }, t('import.othersInstead')))
+          : el('li', { dataset: { line: l.key } }, el('span', { class: l.status === 'yes' ? 'mark-ok' : 'mark-bad', 'aria-hidden': 'true' }, l.status === 'yes' ? '✓' : '✗'), el('span', {}, l.text)))),
         r.reasons.length ? el('ul', {}, r.reasons.map(x => el('li', {}, x.text, x.steps.length ? el('span', { class: 'muted' }, ` (${x.steps.join(', ')})`) : ''))) : null,
         el('h3', {}, t('import.riskTitle')),
         el('dl', { class: 'facts' }, r.risk.flatMap(x => [el('dt', {}, x.what), el('dd', {}, x.answer, ' ', el('span', { class: 'chip' }, x.source === 'read' ? t('import.read') : t('import.inferred')))])),

@@ -16,7 +16,7 @@ export const WORKER_ID = 'mercury-worker/1 (Preview: Mercury 3 with your key, in
 
 export class WorkerBuilder {
   constructor({ keychain, tokenCap, workspace, command = [process.execPath, here], env = process.env, timeoutMs = 300000 }) {
-    if (!(Number.isInteger(tokenCap) && tokenCap > 0)) throw new FoundryError('BUILDER_TOKEN_CAP', 'Mercury needs a daily token cap');
+    if (!(Number.isInteger(tokenCap) && tokenCap > 0)) throw new FoundryError('BUILDER_TOKEN_CAP', 'Mercury needs a token cap for each build');
     Object.assign(this, { keychain, tokenCap, workspace, command, env, timeoutMs });
     this.id = WORKER_ID; this.async = true;
   }

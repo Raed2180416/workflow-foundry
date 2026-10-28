@@ -75,14 +75,20 @@ test('with a client that shows the person a dialog (elicitation), the person dec
   assert.match(seen[0], /Turn on/); assert.match(seen[0], /makes and sends nothing/); assert.equal(/the delivered of|equals true/.test(seen[0]), false, 'no machine text in the dialog (P1 walkthrough M6)');
   const run = await call('run_flow', { flowId: p.flowId, input: WEEK });
   assert.equal(run.status, 'awaiting_approval');
-  // A declined dialog is a no, recorded as one; nothing is turned on and no browser opens (P1 walkthrough M5).
+  // A declined dialog turns nothing on and opens no browser (P1 walkthrough M5). It comes from the client and may be automatic (Codex
+  // rejects dialogs it is not set to allow; a hook can decline), so it is not recorded as the person's no: the request stays waiting for
+  // them in the page, and the decision log says the client declined (honesty review M2).
   const p2 = await call('propose_flow', { request: MESSY.replace('boss@example.com', 'cto@example.com'), flowId: p.flowId });
   assert.equal((await call('dry_run', { proposalId: p2.proposalId })).passed, true, 'a version-2 draft is practised as itself');
   await client.close();
+  const logged = [];
+  app.onDecision = entry => logged.push(entry);
   const { call: call2, client: client2 } = await connect(app, { elicit: async () => ({ action: 'decline' }) });
   const a2 = await call2('ask_person_to_turn_on', { proposalId: p2.proposalId });
-  assert.equal(a2.status, 'rejected', JSON.stringify(a2)); assert.match(a2.say, /said no/);
-  assert.equal(app.ledger.forFlow(p2.flowId).find(x => x.proposalId === p2.proposalId)?.status, 'rejected');
+  assert.equal(a2.status, 'declined_by_client', JSON.stringify(a2)); assert.match(a2.say, /may have been automatic/); assert.doesNotMatch(a2.say, /said no/);
+  assert.equal(app.ledger.forFlow(p2.flowId).find(x => x.proposalId === p2.proposalId)?.status, 'pending', 'not recorded as the person\'s no');
+  assert.deepEqual(logged.map(e => [e.kind, e.by]), [['dialog-declined', 'the coding agent\'s client']]);
+  delete app.onDecision;
   await client2.close();
   // A local hook could answer the dialog for the person (SPEC K12): with dialog off, nothing is shown to the client and the person decides elsewhere.
   let asked = 0;

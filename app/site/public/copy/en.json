@@ -26,7 +26,7 @@
     "help": "Help"
   },
   "footer": {
-    "free": "Free for one person, at any size.",
+    "free": "Free for one person, at any size (a reversible decision).",
     "pricing": "Pricing",
     "it": "For IT and security",
     "claims": "What we can show",
@@ -46,10 +46,13 @@
   "status": {
     "works": "Works now",
     "preview": "Preview",
+    "notRetested": "Not re-tested",
     "planned": "Planned",
     "undecided": "Not decided",
     "decided": "Decided",
-    "limit": "Known limit"
+    "limit": "Known limit",
+    "research": "Research result",
+    "literature": "Literature"
   },
   "steps": {
     "label": "Steps",
@@ -72,11 +75,11 @@
     "boxButton": "Find a match",
     "boxHelp": "Without an AI key, Foundry matches your words to the list above. Nothing leaves this computer.",
     "n8nTitle": "Already use n8n?",
-    "n8nBody": "Drop an exported workflow to see what it does and what could come over. Zapier and Make: later.",
+    "n8nBody": "Drop an exported workflow to see what it does and which of its steps Foundry could translate. Foundry can't run an imported workflow yet. Zapier and Make: later.",
     "n8nLink": "Bring in an n8n workflow",
     "devTitle": "Use Claude Code, Cursor or Codex?",
     "devLink": "Connect it with one line",
-    "trust": "Runs on this computer. No account. One limit: if you also use an AI coding tool on this computer, it could press yes for you. If you don't use one, this doesn't affect you. [How this is kept safe](#/trust)",
+    "trust": "Runs on this computer. No account. One limit: an AI coding tool on this computer could press yes for you, and so could any other program running as you. [How this is kept safe](#/trust)",
     "waiting": "Something is waiting for your yes or no ({n}).",
     "waitingOpen": "Open it",
     "yourAutomations": "Your automations ({n})",
@@ -162,7 +165,7 @@
     "inform": "{who} gets an e-mail. They reply, and you record their answer here.",
     "team": "{who} signs in and decides, and their yes is recorded as theirs",
     "free": "Free",
-    "teamExplain": "For {who}'s yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. You can test everything now, with you recording their answer."
+    "teamExplain": "For {who}'s yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan is planned to do that; it isn't available yet. You can test everything now, with you recording their answer."
   },
   "paid": {
     "badge": "Team plan",
@@ -216,8 +219,7 @@
     "rowsTitle": "Add {n} lines to {sheet} (on this computer)",
     "ownSectionTitle": "Try it on your real list first (optional)",
     "ownSectionTitleOn": "Test this version on a list (optional)",
-    "ownSectionBody": "Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.",
-    "howTitle": "How Foundry checks"
+    "ownSectionBody": "Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent."
   },
   "turnon": {
     "title": "Turn on '{title}' (version {version})?",
@@ -234,7 +236,6 @@
     "whoYou": "you",
     "whoInform": "{who}, by replying to an e-mail; you record their answer here",
     "whoTeam": "{who}, once the Team plan exists. Until then you record their answer here",
-    "change": "Change settings",
     "needs": "What it needs to go live:",
     "needsSheets": "your {sheets}",
     "yes": "Turn it on",
@@ -259,7 +260,6 @@
     "title": "Add your {plain}",
     "lead": "Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.",
     "practiceOnly": "Practice-only mode is on for this pilot. Foundry shows what a run would make, on your list, but won't make it. Ask whoever set up the pilot before turning it off.",
-    "toSettings": "Open Settings",
     "dropLabel": "Choose your {plain} (a CSV file)",
     "dropHelp": "Foundry reads the file on this computer and keeps only the columns it needs.",
     "reading": "Reading your file…",
@@ -310,21 +310,17 @@
   "items": {
     "to": "To:",
     "postTo": "Post to:",
-    "addTo": "Add to:",
     "subject": "Subject:"
   },
   "batch": {
-    "titleDrafts": "Make these {n} drafts?",
     "title": "Do these {n} things?",
     "lead": "This is everything the real run would make (version {version}, as of {date}), in full. Read it before you say yes.",
-    "make": "Make {n} drafts",
     "do": "Do these {n}",
     "makeNone": "Don't make any",
     "doNone": "Don't do any",
     "guard": "If the real run wants to make anything that isn't on this list, it stops and asks you.",
     "alsoAppends": "Also: adds {rows} lines to {sheet} on this computer.",
     "making": "Making exactly the list you approved…",
-    "made": "Done: {n} made.",
     "stopped": "The real run wanted something that wasn't on your list, so it stopped and is asking you.",
     "notMade": "Nothing more was made.",
     "declined": "Nothing was made.",
@@ -343,8 +339,7 @@
     "firmFirstNoAfter": "Nothing was made. To start everyone with a friendly reminder, set the firmer reminders to later days for now (Change settings), then make a new list.",
     "alreadySent": "{n} of these claims already went to {who} on {date}. This run would send them again and add them to the decisions list again. Drop an updated list first, or record the answers in Waiting for you.",
     "answered": "You recorded an answer for {n} of these.",
-    "remembered": "Foundry remembered what earlier runs made, so nothing on this list was made before.",
-    "madeSome": "Made {made} of the {total} on the list."
+    "remembered": "Foundry remembered what earlier runs made, so nothing on this list was made before."
   },
   "action": {
     "titleDraft": "Make this draft?",
@@ -464,7 +459,7 @@
     "notChecked": "could not be checked",
     "openLabel": "Open the run of {flow} from {when}",
     "auditorTitle": "For your auditor",
-    "auditorBody": "Open a run and download its evidence. Send the latest link of its record separately, by another route (a chat message, say), so your auditor can tell nothing changed later."
+    "auditorBody": "Open a run and download its evidence. Send the latest link of its record, and of your decision log, separately, by another route (a chat message, say), so your auditor can tell nothing changed later."
   },
   "run": {
     "back": "← All runs",
@@ -475,6 +470,7 @@
     "recordOk": "Record consistent: {n} entries, each linked to the one before.",
     "recordBad": "The record could not be checked: {reason}",
     "chainHead": "Latest link of the chain: {hash}",
+    "decisionsHead": "Latest link of your decision log: {hash}",
     "evidence": "Download evidence",
     "evidenceDone": "Saved {file} to your Downloads folder.",
     "gapsTitle": "What this record doesn't hold yet",
@@ -482,6 +478,7 @@
       "decisions": "Your decisions (turning it on, the list you approved) are kept in their own chained log beside the run record, not inside the run's chain. Anyone using this computer account could rewrite both.",
       "transcripts": "If an AI helped build it, its transcript is not part of the chain.",
       "anchor": "The record's latest link isn't stored outside this computer unless you copy it somewhere else.",
+      "delivered": "Where the record's own words say \"delivered\", they mean a draft was written on this computer for you to send. Foundry can't see whether you sent it.",
       "secondPerson": "Approvals come from the person at this computer; a second person's own sign-in is planned.",
       "identity": "A yes through this page shows that a browser tab Foundry let in sent it, not which person clicked, and the name on it is the one in Settings. Approving with a passkey is planned."
     },
@@ -503,6 +500,7 @@
     },
     "recordMeaning": "This shows nothing changed later only if the latest link was saved somewhere else at the time.",
     "copyHead": "Copy the latest link",
+    "copyDecisionsHead": "Copy the latest link of your decision log",
     "evidenceFingerprint": "File fingerprint: {hash}",
     "evidenceContains": "The file holds every step of the run in full, so each one can be re-checked. That includes your list (every customer, address and amount) and the full text of every e-mail. Share it only with someone who may see that list.",
     "startedBy": "Started through {channel} when its list was approved there. Recorded as {who}: the name in Settings and this computer's account, not a checked identity.",
@@ -569,7 +567,7 @@
       },
       "codex": {
         "name": "Codex",
-        "can": "The same. Codex has no documented dialog for your decisions, so Foundry opens your browser for them.",
+        "can": "The same. Foundry asks for your decisions in your browser, not in Codex's own dialog: it can't look for what in Codex could answer that dialog for you.",
         "stores": "Nothing.",
         "price": "Free",
         "until": "Use this page.",
@@ -607,7 +605,7 @@
       },
       "drafts": {
         "name": "Drafts you send yourself",
-        "can": "Makes e-mail drafts you open in your mail app and send. Foundry sends nothing.",
+        "can": "Makes e-mail drafts you open in your mail app and send. Foundry sends no e-mail.",
         "stores": "The draft text, on this computer.",
         "price": "Free",
         "until": "This is the default."
@@ -653,7 +651,7 @@
       },
       "n8n": {
         "name": "n8n export",
-        "can": "Reports what it does and what could come over. Runs nothing.",
+        "can": "Reports what it does and which steps Foundry could translate. Runs nothing, and can't run them yet.",
         "stores": "The report.",
         "price": "Free",
         "until": "Pick the matching card.",
@@ -736,7 +734,7 @@
     "planned": "Not available yet.",
     "instead": "What you can do today: use the list, or Mercury",
     "paste": "Paste your {label} key",
-    "help": "Checking sends one request to the provider with your key. The key then goes into your keychain, and this page never sees it again.",
+    "help": "Checking sends one request to the provider with your key, and only if Allowed AI in Settings includes that provider. The key then goes into your keychain, and this page never sees it again.",
     "checkAndSave": "Check and save",
     "checking": "Checking the key with the provider…",
     "saved": "Saved in your keychain: key ending {last4} ({backend}).",
@@ -746,7 +744,9 @@
     "remove": "Remove the key",
     "removed": "Key removed.",
     "notSaved": "The key was not saved.",
-    "limit": "Foundry stops using the key for the day once your daily limit is reached. You set the limit in Settings."
+    "notAllowed": "Allowed AI in Settings doesn't include this provider, so Foundry won't send it your key, not even to check it. Choose Mercury 3 under Allowed AI first.",
+    "notAllowedLink": "Open Settings",
+    "limit": "Each build from your words stops after {cap} tokens (the provider's unit of text), a limit set when Foundry starts. There is no daily limit."
   },
   "settings": {
     "title": "Settings",
@@ -776,7 +776,8 @@
     "themeSaved": "Colours changed.",
     "whereTitle": "Where your things are",
     "where": "Your automations, your lists and every record live in this folder, readable only by your user:",
-    "whereNote": "Foundry doesn't keep anything anywhere else.",
+    "whereOpen": "Your automations, your lists and every record live in this folder. Other users of this computer may be able to open it: Foundry makes its folder private only when the folder is yours and isn't your home folder. Ask whoever set up Foundry to give it a folder of its own:",
+    "whereNote": "Outside this folder Foundry keeps only: an AI key in your keychain, if you saved one; this tab's key in the browser tab, until you close it; and files you download (evidence, a brief, a draft), wherever your browser saves them.",
     "orgTitle": "Your organisation",
     "orgLink": "Who decides what",
     "managed": "Set by your organisation for this computer. It can't be changed here.",
@@ -805,7 +806,7 @@
     "claudeCode": {
       "name": "Claude Code",
       "how": "In a terminal, inside the project where you'll use Foundry:",
-      "note": "Then start claude there and type /mcp: foundry should show as connected. Claude Code asks you before each Foundry tool that is not read-only runs. Tested with a scripted client, not yet with a released Claude Code.",
+      "note": "Then start claude there and type /mcp: foundry should show as connected. Claude Code always asks you before ask_person_to_turn_on runs. Other Foundry tools may run without asking, depending on your permission mode (in auto mode, a classifier reviews tool calls instead of asking you). Tested with a scripted client, not yet with a released Claude Code.",
       "everyLead": "Or, for every project:",
       "allowLead": "Optional: let your agent draft and test without asking each time. Add these names to permissions, allow, in your Claude Code settings:"
     },
@@ -819,7 +820,7 @@
     "codex": {
       "name": "Codex",
       "how": "In a terminal:",
-      "note": "Codex has no documented dialog for your decisions, so Foundry opens your browser when it needs your yes. Tested with a scripted client, not yet with a released Codex."
+      "note": "Codex documents a setting that lets an MCP server's dialog reach you (approval_policy.granular.mcp_elicitations in its config reference, read 2026-10-21); with it off, Codex turns the dialog down by itself. Foundry doesn't use Codex's dialog, because it can't look for what could answer it for you: it opens your browser when it needs your yes. Tested with a scripted client, not yet with a released Codex."
     },
     "plugin": {
       "name": "Plugin from your own copy",
@@ -830,14 +831,14 @@
     "example": "use Foundry to chase my unpaid invoices, summary to me@example.com",
     "allowlistLead": "For IT: the exact command, argument by argument, for an allowlist.",
     "allowlistLabel": "Command for an allowlist",
-    "allowlistNote": "Claude Code matches every argument in order; a server name is not a control. This decides which command may start; it does not check Foundry's files.",
+    "allowlistNote": "Claude Code matches every argument in order; a server name is not a control. This decides which command may start; it does not check Foundry's files. Without allowManagedMcpServersOnly in managed settings, a user can add servers of their own (see How this is kept safe).",
     "cardsLead": "Foundry can make these today:",
     "openLead": "To open Foundry's page yourself, at any time:"
   },
   "pricing": {
     "h1": "Free for one person. Paid only when someone else's yes has to count as theirs.",
     "lead": "{claim:C08}",
-    "freeTitle": "Free, always",
+    "freeTitle": "Free for one person",
     "free": [
       "Any number of automations, any size",
       "Tests and checks",
@@ -848,6 +849,7 @@
       "A one-page brief for IT"
     ],
     "ssoNote": "Planned, and decided to be free: single sign-on, once accounts exist.",
+    "decidedNote": "A decision taken under the owner's general permission: reversible, and the owner may overturn it. No price is set.",
     "teamTitle": "Team plan",
     "teamLead": "Not available yet. No price is set.",
     "team": [
@@ -861,9 +863,9 @@
     "packs": "Ready-made automations for one outcome, with pass rates from sealed tests. Not available yet.",
     "packsInstead": "What you can do today: the cards on the home page",
     "undecidedTitle": "Not decided yet",
-    "undecided": "Whether removing people automatically when they leave, a stop-everything switch, and sending records to your security tools are free. We think the first two should be.",
+    "undecided": "Whether removing people automatically when they leave, a stop-everything switch, and sending records to your security tools are free. A research note recommends that the first two be free; that is a recommendation, not the owner's decision.",
     "whyTitle": "Why the line is here",
-    "why": "We never charge by size. Splitting an automation in two doesn't change anything. The line is a second person, because that's what a single computer can't prove.",
+    "why": "The decision is not to charge by size: splitting an automation in two changes nothing. The line is a second person, because that's what a single computer can't prove. It is a pricing idea that no buyer has been asked about yet.",
     "footer": "Nothing on this page takes payment. Foundry runs only on this computer."
   },
   "trust": {
@@ -875,7 +877,7 @@
     },
     "leaves": {
       "title": "What leaves this computer",
-      "body": "Foundry itself sends nothing: e-mails are drafts you send, chat messages are drafts you paste. If you use Foundry through a coding agent, what Foundry tells the agent (counts, step names, test results on pretend data) goes to that agent's AI provider under your agreement with them; the recipients and text of a real list are shown only in this page. AI builders: Mercury (Inception) only if Allowed AI says so and a key is saved; Claude Haiku (Anthropic) only if Foundry is started with it and Allowed AI says so. Neither is on by default."
+      "body": "Foundry itself sends one thing: when you press Check and save on an AI key, one request to that provider with the key, and only if Allowed AI includes that provider. Nothing else: e-mails are drafts you send, chat messages are drafts you paste. If you use Foundry through a coding agent, what Foundry tells the agent (counts, step names, test results on pretend data) goes to that agent's AI provider under your agreement with them; the recipients and text of a real list are shown only in this page. AI builders: Mercury (Inception) only if Allowed AI says so and a key is saved; Claude Haiku (Anthropic) only if Foundry is started with it and Allowed AI says so. Neither is on by default."
     },
     "keys": {
       "title": "Keys",
@@ -883,13 +885,13 @@
     },
     "approve": {
       "title": "Who can approve",
-      "body": "You decide: with a click on this page, a typed yes in your own terminal, or, when Foundry finds nothing that could answer it for you, the dialog Claude Code shows you. Foundry gives your agent no tool that approves. {claim:C02} Not covered: an agent using your terminal, or a hook Foundry can't see (below).",
+      "body": "You decide: with a click on this page, a typed yes in your own terminal, or, when Foundry finds nothing that could answer it for you, the dialog Claude Code shows you. Foundry gives your agent no tool that approves. {claim:C02}",
       "whyOnce": "Why Foundry asks once, about the whole list, rather than about each e-mail: {claim:C11}"
     },
     "limit": {
       "title": "The honest limit",
       "body": "A coding agent that can run commands as you on this computer could do what you can do, including approve. Foundry's link key and checks keep out other web pages and other users, not that agent.",
-      "closes": "What closes this gap: Foundry running as a separate user, approvals on a second device, or the hosted Team plan (all planned)."
+      "closes": "What could close this gap: Foundry running as a separate user, approvals on a second device, or the hosted Team plan. These are options we have written down; none of them is built or scheduled."
     },
     "records": {
       "title": "Records",
@@ -903,12 +905,12 @@
     "pilot": {
       "title": "For IT: the pilot we suggest",
       "items": [
-        "Practice-only mode for every Foundry folder on the pilot machines, set by IT in /etc/foundry/policy.json (owned by root): the page then shows it as set by your organisation, with no off switch",
+        "Practice-only mode for every Foundry folder on the pilot machines, set by IT in /etc/foundry/policy.json (owned by root): the page then shows it as set by your organisation, with no off switch in the page. A user who runs a modified copy of Foundry can still get around it: it is a control for honest machines, not a sandbox",
         "No AI, or only the provider you approve",
         "Linux developer machines (macOS and Windows are untested)",
         "30 days",
-        "Allowlist the exact command below, not the name, with Foundry installed where only root can change it",
-        "In Claude Code's managed settings, allowManagedHooksOnly on, so no hook can answer Foundry's dialog for the person",
+        "Allowlist the exact command below, not the name, with allowManagedMcpServersOnly on (otherwise a user can add servers of their own), and with Foundry installed where only root can change it",
+        "In Claude Code's managed settings, allowManagedHooksOnly on, so only hooks your organisation sets can answer Foundry's dialog (recommended wherever plugins are used)",
         "Check a machine at any time: node app/cli.mjs doctor --json"
       ],
       "settings": "Turn on practice-only mode",
@@ -922,23 +924,29 @@
         "Automatic removal of leavers and a stop-everything switch",
         "A signed, pinned build you can allowlist"
       ],
+      "status": [
+        "planned",
+        "planned",
+        "undecided",
+        "undecided"
+      ],
       "none": "None of these exists yet."
     },
     "allowlist": {
       "title": "Allowlist entry (exact)",
-      "body": "For Claude Code's managed settings: allow Foundry's exact command, every argument in order, generated on this computer.",
+      "body": "For Claude Code's managed settings: allow Foundry's exact command, every argument in order, generated on this computer, and turn on allowManagedMcpServersOnly so this list is the only one.",
       "settingsLabel": "managed-settings entry",
       "mcpLead": "Or, if your organisation sets every server itself, a managed-mcp entry:",
       "mcpLabel": "managed-mcp entry",
-      "note": "Claude Code matches every argument in order; a server name is not a security control (code.claude.com/docs/en/managed-mcp, read 2026-10-21). This entry decides which command may start. It does not check Foundry's files, which the user can edit, or variables such as NODE_OPTIONS that change what node loads: install Foundry in a folder only root can change, and allowlist that path. The paths are this computer's."
+      "note": "Claude Code matches every argument in order; a server name is not a security control (code.claude.com/docs/en/managed-mcp, read 2026-10-21). Without allowManagedMcpServersOnly, allowlists from every settings scope merge, so a user can add servers of their own, a copy of Foundry included: a soft allowlist (same page). This entry decides which command may start. It does not check Foundry's files, which the user can edit, or variables such as NODE_OPTIONS that change what node loads: install Foundry in a folder only root can change, and allowlist that path. The paths are this computer's."
     },
     "hooks": {
       "title": "Dialogs a hook can answer",
-      "body": "A hook in Claude Code's settings, or in a plugin, skill or subagent, can answer Foundry's dialog without showing it to you, or change your answer. So Foundry uses that dialog only when it can look for such hooks and finds none. The line from the Connect page includes --consent, which lets Foundry read Claude Code's settings, plugins, skills and subagents on this computer, only to look for those hooks, and it looks again each time it asks. It asks you in this page instead if it finds one, if your organisation manages Claude Code, if Claude Code was started in a way that can bring hooks Foundry can't see, or if your agent isn't Claude Code. A hook Foundry can't see could still answer, so a yes in the dialog is recorded as the weaker way. IT can block such hooks for everyone with allowManagedHooksOnly in Claude Code's managed settings."
+      "body": "A hook in Claude Code's settings, or in a plugin, skill or subagent, can answer Foundry's dialog without showing it to you, or change your answer. So Foundry uses that dialog only when it can look for such hooks and finds none. The line from the Connect page includes --consent, which lets Foundry read Claude Code's settings, plugins, skills and subagents on this computer, only to look for those hooks, and it looks again each time it asks. It asks you in this page instead if it finds one, if your organisation manages Claude Code, if Claude Code was started in a way that can bring hooks Foundry can't see, or if your agent isn't Claude Code. A hook Foundry can't see could still answer, so a yes in the dialog is recorded as the weaker way. Foundry can't see hooks that reach Claude Code from settings your organisation sends over the network or through a device-management profile, or from a plugin or skill kept outside the folders it reads. If you use plugins, ask IT to turn on allowManagedHooksOnly in Claude Code's managed settings: then only hooks your organisation sets can run."
     },
     "data": {
       "title": "What Foundry keeps, and how to delete it",
-      "body": "Only the columns a card needs from the lists you give, the drafts it made, run records and your decisions, all in your Foundry folder, readable by your user only. Replaced lists are kept until you delete them (Settings: Delete my lists). Foundry doesn't encrypt them; your computer's disk encryption does. To remove everything, delete the Foundry folder."
+      "body": "Only the columns a card needs from the lists you give, the drafts it made, run records and your decisions, all in your Foundry folder, which Foundry makes private to your user each time it starts (Settings says so if it can't, for example when the folder is your home folder). Replaced lists are kept until you delete them (Settings: Delete my lists). Outside that folder: an AI key in your keychain, if you saved one; this tab's key in the browser tab; and any file you download. Foundry doesn't encrypt anything itself: if your computer's disk is encrypted, that protects these files while it is off; if it isn't, nothing does. To remove everything, delete the Foundry folder."
     },
     "remove": {
       "title": "Removing Foundry",
@@ -973,7 +981,7 @@
     "dataBody": "Each card reads a list. Put it as a JSON list of rows here, with the column names the card's page shows:",
     "glossaryLink": "Words Foundry uses",
     "auditTitle": "I'm checking what happened",
-    "auditBody": "Runs lists every run. Open one to see its record and download its evidence file; check the file with: node app/cli.mjs check-evidence FILE",
+    "auditBody": "Runs lists every run. Open one to see its record and download its evidence file; check the file with: node app/cli.mjs check-evidence FILE (it lists the parts it checked and the parts it could not).",
     "auditLink": "Open Runs"
   },
   "glossary": {
@@ -1016,7 +1024,7 @@
       [
         "Team plan",
         "Control Plane",
-        "The paid part, for when someone else's yes has to count as theirs."
+        "The planned paid part, for when someone else's yes has to count as theirs. It isn't available yet."
       ],
       [
         "Uses AI",
@@ -1053,7 +1061,7 @@
       ],
       [
         "Will it send anything without asking me?",
-        "No. It never sends: it makes drafts you send yourself, and it shows you every one in full before it makes them.",
+        "No e-mail, ever: it makes drafts you send yourself, and it shows you every one in full before it makes them. The only thing it sends itself is a check of an AI key you choose to save.",
         "#/trust",
         "How this is kept safe"
       ],
@@ -1091,7 +1099,7 @@
   },
   "claims": {
     "h1": "What we can show",
-    "lead": "Every claim on this site, with where it comes from. Development tests are our own; nothing here is a sealed result.",
+    "lead": "The site's measured results, comparisons, limits and decisions, each with where it comes from. Development tests are our own; nothing here is a sealed result. A research result comes from our test beds, not from this product.",
     "source": "(source)",
     "sourceFor": "Where this comes from: {short}",
     "evidence": "Kind of evidence",
@@ -1119,7 +1127,7 @@
   },
   "import": {
     "h1": "Bring in an n8n workflow",
-    "lead": "Drop a workflow you exported from n8n. Foundry tells you what it does, what could come over, and what to watch for. It runs nothing.",
+    "lead": "Drop a workflow you exported from n8n. Foundry tells you what it does, which of its steps it could translate into its own, and what to watch for. It runs nothing, and it can't run an imported workflow yet.",
     "dropLabel": "Choose an exported n8n workflow (a JSON file)",
     "dropHelp": "In n8n, open the workflow and use Download. The file stays on this computer.",
     "reading": "Reading the workflow…",
@@ -1169,7 +1177,7 @@
       },
       "refund": {
         "name": "Refund authority example",
-        "body": "A worked example: refunds above a limit need finance's yes, from someone who didn't enter the case."
+        "body": "A worked example: refunds above a limit need finance's yes. That the yes comes from someone who didn't enter the case is written down, not checked yet."
       },
       "blank": {
         "name": "Blank",
@@ -1194,7 +1202,7 @@
     },
     "addPerson": "Add",
     "personAdded": "Added {name}.",
-    "teamFor": "For {name}'s yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan will do that; it isn't available yet. Until then you stand in for them, and the record says so.",
+    "teamFor": "For {name}'s yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan is planned to do that; it isn't available yet. Until then you stand in for them, and the record says so.",
     "approvalsTitle": "Who approves what",
     "approvalsLead": "For each kind of action: above what amount it needs a yes, and from whom.",
     "actions": {
@@ -1206,7 +1214,6 @@
     "aboveLabel": "Needs a yes above this amount",
     "whoApproves": "Who approves",
     "nobody": "Nobody needs to approve",
-    "rowFacts": "Reminder after a day; stops waiting after three days; the requester is excluded.",
     "makeRule": "Make this a rule Foundry checks",
     "aboveAmount": "above {amount}",
     "always": "always",
@@ -1226,17 +1233,6 @@
     },
     "theseAreRight": "These are right",
     "confirmed": "Confirmed. These cases are now the rule's tests.",
-    "force": "If an automation would break it",
-    "forces": {
-      "tell": "Tell me",
-      "stop-unless-override": "Stop unless {owner} overrides",
-      "stop": "Stop"
-    },
-    "modeLegend": "Mode",
-    "mode": {
-      "preview": "Preview (shows what it would stop)",
-      "on": "On"
-    },
     "doesNotCover": "What this rule does not cover",
     "examplesBecomeTests": "Saving a new version re-checks every confirmed case. If a change would flip one, Foundry asks you first.",
     "layers": {
@@ -1251,8 +1247,6 @@
     "recordsHere": "Records stay on this computer.",
     "changeTitle": "Changing these rules:",
     "changeBody": "Who can change these rules: you. Each change is a new version, saved by you and recorded as self-approved.",
-    "changeApprover": "Approved by",
-    "proposerCant": "The proposer can't approve their own change.",
     "editingLead": "Nothing changes until you save a new version.",
     "save": "Save version {version}",
     "discard": "Discard changes",

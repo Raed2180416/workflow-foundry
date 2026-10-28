@@ -12,11 +12,11 @@
 //   node app/cli.mjs connect [--workspace DIR] [--json]                 the exact line for each coding agent (prints only)
 //   node app/cli.mjs approve APPROVAL_ID [--workspace DIR]              approve in this terminal (asks you to type yes; needs a real terminal):
 //                                                                        turning a version on, or one paused action (shows To, Subject, full text)
-//   node app/cli.mjs check-evidence FILE                                re-check an evidence file's chains on its own
+//   node app/cli.mjs check-evidence FILE                                re-check an evidence file on its own; says what it checked and what not
 //
 // Safe defaults: the workspace is a private directory (0700) under the user's home; nothing listens beyond 127.0.0.1; no config file of any
 // coding agent is written (connect prints what to paste); no model is called unless --builder names one and Settings allow it; nothing is
-// sent beyond the local outbox.
+// sent beyond the local outbox, except the one key check a person asks for on the Keys page (only if Allowed AI includes that provider).
 // Getting into the page (security review 2026-10-21, H1 M6 L15): no key is kept on disk or printed. Each start makes its own keys in
 // memory; a browser tab gets one by trading a one-time code (app/site/gate.mjs) that works once, within a minute. The code goes to the
 // browser opener; it is printed only when stdin and stdout are both a terminal (a person reading), never when the output is piped or
@@ -28,7 +28,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { accessSync, constants, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { FoundryApp, ignoreWorkspace } from './core/service.mjs';
+import { FoundryApp, ignoreWorkspace, workspacePrivacy } from './core/service.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const CLI = path.join(here, 'cli.mjs');
@@ -73,6 +73,13 @@ export function doctor({ workspace, env = process.env, os = platform() } = {}) {
   items.push({ check: 'Workspace', ok: writable, say: writable ? `Your flows and run records live in ${workspace}.` : `Cannot write ${workspace}; set FOUNDRY_HOME to a folder you own.` });
   const where = workspaceLocation(workspace);
   if (where.say) items.push({ check: 'Workspace location', ok: true, optional: true, warn: true, say: where.say });
+  // Honesty review minor 6: the folder's own mode is what keeps everything inside it from other OS users (files inside keep default
+  // modes). Foundry sets it to 0700 when it starts, but not for the home folder or a folder of another account; say which it is.
+  const privacy = writable ? workspacePrivacy(workspace) : { private: false, mode: null };
+  items.push({ check: 'Workspace privacy', ok: true, optional: true, warn: privacy.private === false, private: privacy.private, mode: privacy.mode,
+    say: privacy.private === true ? `Only your user can open ${workspace} (mode ${privacy.mode}).`
+      : privacy.private === null ? `This system has no per-user folder modes Foundry can check; who can open ${workspace} depends on its settings.`
+        : `Other users of this computer may be able to open ${workspace}${privacy.mode ? ` (mode ${privacy.mode})` : ''}. Foundry makes its folder private (0700) when it starts, but not your home folder or a folder of another account: give Foundry a folder of its own with --workspace.` });
   // A fresh copy without `npm ci` cannot start the agent connection (P1 walkthrough B4): say so here, not as "failed" in the agent.
   let mcpLibrary = true; try { import.meta.resolve('@modelcontextprotocol/sdk/server/index.js'); } catch { mcpLibrary = false; }
   items.push({ check: 'Agent connection library', ok: true, optional: true, mcp: mcpLibrary, say: mcpLibrary ? 'Coding agents can connect (the MCP library is installed).'
@@ -86,7 +93,7 @@ export function doctor({ workspace, env = process.env, os = platform() } = {}) {
     : `No browser can be opened from here (an SSH session or a container?). Run "node ${CLI} open --workspace ${workspace}" on this machine to get your Foundry link, and open it in a browser that can reach this computer.` });
   items.push({ check: 'Models', ok: true, optional: true, say: 'No model key needed: cards are filled by code and call no model. An AI builder (Mercury, or Claude Haiku from the command line) works only if Allowed AI in Settings names it.' });
   items.push({ check: 'Network', ok: true, optional: true, say: 'Works offline. The page listens on 127.0.0.1 only.' });
-  return { workspace, ok: items.filter(i => !i.optional).every(i => i.ok), items };
+  return { workspace, workspacePrivate: privacy.private, ok: items.filter(i => !i.optional).every(i => i.ok), items };
 }
 
 /**
@@ -133,9 +140,12 @@ export function connectInstructions(workspace) {
     // Cursor's documented install link: the server config, JSON.stringify'd then base64 (cursor.com/docs/mcp/install-links; not tested in Cursor).
     cursorLink: `cursor://anysphere.cursor-deeplink/mcp/install?name=foundry&config=${Buffer.from(JSON.stringify(server)).toString('base64')}`,
     // Claude Code managed policy matches serverCommand exactly, every argument in order; a name is not a control (code.claude.com/docs/en/managed-mcp).
-    allowlist: { serverCommand: [node, ...args] },
+    // Honesty review M10: without allowManagedMcpServersOnly the managed list merges with every other scope's (a soft allowlist), so a user
+    // can add a copy of Foundry the list does not name; the managed-settings entry IT pastes sets it.
+    allowlist: { serverCommand: [node, ...args], managedSettings: { allowManagedMcpServersOnly: true, allowedMcpServers: [{ serverCommand: [node, ...args] }] } },
     openCommand: `node ${q(cli)} open${custom ? ` --workspace ${q(workspace)}` : ''}`,
-    note: 'Nothing was written to any config file. Paste one of these. The approve tool always asks you, never your agent.'
+    // M9: what ask_person_to_turn_on does, without promising more than detect.mjs can see.
+    note: 'Nothing was written to any config file. Paste one of these. Your agent cannot turn anything on through Foundry: ask_person_to_turn_on asks you, in Claude Code\'s dialog only when Foundry finds nothing that could answer that dialog for you, otherwise in Foundry\'s page. A hook Foundry cannot see could still answer the dialog.'
   };
 }
 /** connect, as a person reads it: one labelled line per agent. */
@@ -262,9 +272,10 @@ async function main() {
     const { checkEvidence } = await import('./onboarding/evidence.mjs');
     let bundle; try { bundle = JSON.parse(readFileSync(item, 'utf8')); } catch (error) { process.stderr.write(`Cannot read ${item}: ${error.message}\n`); process.exitCode = 2; return; }
     const r = checkEvidence(bundle);
-    // L9: say only what checkEvidence() checked.
-    print(r.ok ? `Consistent: ${r.checked.events} run events hash as recorded, each naming the one before, and the last is the chain head the file states (${bundle.chain?.head}); the workflow body hashes to its version's hash; ${r.checked.decisions} decisions of this automation hash as recorded and sit at their place in the decision log, whose ${r.checked.links} lines each name the one before and end at the head the file states (${bundle.personDecisions?.check?.head ?? 'none'}). This shows nothing changed after the file was made only if you compare those heads with copies kept somewhere else.`
-      : `Not consistent:\n- ${r.problems.join('\n- ')}`);
+    // L9, honesty review B1: say exactly which sections were checked, and which were not.
+    const list = xs => xs.map(x => `- ${x}`).join('\n');
+    print(r.ok ? `Consistent. Checked:\n${list(r.checked.sections)}\nNot checked:\n${list(r.checked.notChecked)}\nThis shows nothing changed after the file was made only if the run's chain head (${bundle.chain?.head}) and the decision log's head (${bundle.personDecisions?.check?.head ?? 'none'}) match copies kept somewhere else: anyone using this computer account could rewrite a whole file consistently.`
+      : `Not consistent:\n${list(r.problems)}${r.checked.sections.length ? `\nThese sections did check:\n${list(r.checked.sections)}` : ''}`);
     process.exitCode = r.ok ? 0 : 1; return;
   }
   if (command === 'start') {
@@ -276,6 +287,8 @@ async function main() {
     const { createDashboard } = await import('./dashboard/server.mjs');
     const builder = await makeBuilder(args.builder ?? 'stub', { workspace, tokenCap: args['token-cap'] ? Number(args['token-cap']) : undefined });
     const app = new FoundryApp({ workspace, builder }), dash = createDashboard(app, { workspace });
+    // Decisions made in the older dashboard are logged too (honesty review B1: check-evidence checks who decided against this log).
+    (await import('./onboarding/decisions.mjs')).recordDecisions(app);
     print(`Builder: ${builder.id}`);
     const { url } = await listenHome(dash, { wanted: args.port ? Number(args.port) : 4178, home: 4178, say: print });
     print(`\nYour dashboard: ${url}`);

@@ -18,9 +18,9 @@ import { commit as dataCommit, liveSheets } from '../onboarding/data.mjs';
 import { Batches } from '../onboarding/batch.mjs';
 import { readWorld } from '../core/stand-ins.mjs';
 import { listDrafts, listPosts, draft as oneDraft, markSent } from '../onboarding/drafts.mjs';
-import { loadSettings, saveSettings } from '../onboarding/settings.mjs';
+import { loadSettings, saveSettings, DEFAULTS } from '../onboarding/settings.mjs';
 import { Keychain, detectBackend } from '../onboarding/keychain.mjs';
-import { Keys } from '../onboarding/keys.mjs';
+import { Keys, PROVIDERS } from '../onboarding/keys.mjs';
 import { briefData, briefMarkdown, briefHtml, usesModel } from '../onboarding/brief.mjs';
 import { evidenceBundle } from '../onboarding/evidence.mjs';
 import { recordDecisions, whoIsHere, whoLabel } from '../onboarding/decisions.mjs';
@@ -87,7 +87,9 @@ export function createSiteApi(app, options = {}) {
   const decisionLog = app.decisions ?? recordDecisions(app);
   const batches = new Batches(app, { now, asOf });
   const keychain = options.keychain ?? new Keychain({ backend: detectBackend() });
-  const keys = new Keys({ root: app.root, keychain, checkBaseUrl: options.keyCheckBaseUrl ?? null, fetchImpl: options.fetchImpl ?? globalThis.fetch, now });
+  // Honesty review M7: checking a key sends it to the provider, so only when Allowed AI (Settings or the organisation's policy) permits it.
+  const keys = new Keys({ root: app.root, keychain, checkBaseUrl: options.keyCheckBaseUrl ?? null, fetchImpl: options.fetchImpl ?? globalThis.fetch, now,
+    allows: provider => !!PROVIDERS[provider]?.allowedAI && loadSettings(app.root).allowedAI === PROVIDERS[provider].allowedAI });
   const practiceData = new Map();
   const siteDir = path.join(app.root, 'site');
   const milestonesFile = path.join(siteDir, 'milestones.json');
@@ -249,7 +251,10 @@ export function createSiteApi(app, options = {}) {
     if (method === 'GET' && p === '/api/drafts') return ok({ drafts: [...listDrafts(app), ...listPosts(app)] });
     if (method === 'POST' && (m = p.match(/^\/api\/drafts\/([a-zA-Z0-9_-]{4,80})\/sent$/))) {
       const r = markSent(app, m[1], body.sent === true, { by: whoLabel(whoIsHere(app.root)), now });
-      decisionLog.append({ kind: 'draft-marked', decision: r.sent ? 'sent' : 'not sent', draft: m[1], channel: 'dashboard' });
+      // The line names the draft's run and automation (honesty review B1), so a run's evidence file carries it and can be checked against it.
+      const d = [...listDrafts(app), ...listPosts(app)].find(x => x.id === m[1]) ?? null;
+      let flowId = null; if (d?.runId) { try { flowId = app.foundry.store.rows.header(d.runId)?.workflowId ?? null; } catch { flowId = null; } }
+      decisionLog.append({ kind: 'draft-marked', decision: r.sent ? 'sent' : 'not sent', draft: m[1], runId: d?.runId ?? null, flowId, channel: 'dashboard' });
       return ok(r);
     }
     // ------------------------------------------------------------------ who decides, and the approver's answers (P3 walkthrough B3, B4)
@@ -298,7 +303,8 @@ export function createSiteApi(app, options = {}) {
     if (method === 'GET' && p === '/api/build') return ok(buildInfo());
     if (method === 'GET' && p === '/api/decisions') { const v = decisionLog.verify(); return ok({ ...v, lines: decisionLog.lines().slice(-200) }); }
     if (method === 'GET' && p === '/api/whoami') return ok({ ...whoIsHere(app.root), label: whoLabel(whoIsHere(app.root)) });
-    if (method === 'GET' && p === '/api/keys') return ok(keys.status());
+    // tokenCap: the per-build limit this start of Foundry uses (honesty review M8: there is no daily limit).
+    if (method === 'GET' && p === '/api/keys') return ok({ ...keys.status(), tokenCap: app.tokenCap ?? DEFAULTS.tokenCap });
     if (method === 'POST' && p === '/api/keys') { const r = await keys.save(str(body.provider, 'provider', 40), body.key); return ok(r); }
     if (method === 'DELETE' && (m = p.match(/^\/api\/keys\/([a-z]{2,40})$/))) return ok(keys.remove(m[1]));
     // ------------------------------------------------------------------ IT brief and evidence

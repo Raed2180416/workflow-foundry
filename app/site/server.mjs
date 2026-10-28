@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { errorData } from '../../src/data.mjs';
 import { failureText } from '../core/explain.mjs';
 import { FoundryApp } from '../core/service.mjs';
+import { DEFAULTS } from '../onboarding/settings.mjs';
 import { handleDashboardApi, SECURITY } from '../dashboard/server.mjs';
 import { createSiteApi } from './api.mjs';
 import { connectInstructions, displayCommand } from '../cli.mjs';
@@ -30,7 +31,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 const STATIC = /^\/(?:(site\.css|site\.js)|(copy\/en\.json)|((?:views|components)\/[a-z][a-z0-9-]{0,40}\.js))$/;
 export const SMALL_BODY = 16 * 1024, LARGE_BODY = 5 * 1024 * 1024;
 const LARGE = /^\/api\/(data|import|org)\//;
-const STATUS = { NOT_FOUND: 404, CSV_SIZE: 413, PRACTICE_ONLY: 409, NOT_APPROVED: 409, STALE_APPROVAL: 409, KEYCHAIN_NONE: 409 };
+const STATUS = { NOT_FOUND: 404, CSV_SIZE: 413, PRACTICE_ONLY: 409, NOT_APPROVED: 409, STALE_APPROVAL: 409, KEYCHAIN_NONE: 409, KEY_NOT_ALLOWED: 409 };
 
 /** A FoundryApp with the site builder (cards by form, $0; words to the stub unless an AI builder is configured). */
 export async function siteApp({ workspace, builder = 'templates', tokenCap } = {}) {
@@ -39,9 +40,12 @@ export async function siteApp({ workspace, builder = 'templates', tokenCap } = {
   // Mercury (Preview): a child process gets the key from the keychain in its environment; this process never keeps it.
   if (builder === 'mercury') {
     const [{ WorkerBuilder }, { Keychain, detectBackend }] = await Promise.all([import('../onboarding/builder-worker.mjs'), import('../onboarding/keychain.mjs')]);
-    text = new WorkerBuilder({ keychain: new Keychain({ backend: detectBackend() }), tokenCap: tokenCap ?? 200000, workspace });
+    text = new WorkerBuilder({ keychain: new Keychain({ backend: detectBackend() }), tokenCap: tokenCap ?? DEFAULTS.tokenCap, workspace });
   }
-  return new FoundryApp({ workspace, builder: new SiteBuilder(text ? { text } : {}) });
+  const app = new FoundryApp({ workspace, builder: new SiteBuilder(text ? { text } : {}) });
+  // The per-build limit for an AI builder, fixed for this start (honesty review M8: the Keys page says it; there is no daily limit).
+  app.tokenCap = tokenCap ?? DEFAULTS.tokenCap;
+  return app;
 }
 
 /** Create (not start) the site server. options: token (a key for in-process callers and tests; never printed or written), instance (this

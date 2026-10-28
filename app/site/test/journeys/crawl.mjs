@@ -74,6 +74,8 @@ async function crawl(state, { width }) {
       const r = await page.evaluate(async () => {
         const { ROUTE_PATTERNS } = await import('/site.js');
         const visible = e => !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length);
+        // Honesty review M6: a claim used in a page shows its status and its qualifier there, as on the claims page.
+        const registry = (await (await fetch('/api/claims', { headers: { 'x-foundry-token': sessionStorage.getItem('foundry-token') ?? '' } })).json()).claims ?? {};
         const hrefs = [...new Set([...document.querySelectorAll('a[href^="#/"]')].map(a => a.getAttribute('href')))];
         return {
           h1: document.querySelector('main h1')?.textContent.trim(),
@@ -85,7 +87,9 @@ async function crawl(state, { width }) {
           plannedWithout: [...document.querySelectorAll('[data-status="planned"]')].filter(e => !e.querySelector('[data-instead]')).map(e => e.textContent.trim().slice(0, 60)),
           insteadBroken: [...document.querySelectorAll('[data-instead]')].map(a => a.getAttribute('href')).filter(h => !h?.startsWith('#/') || !ROUTE_PATTERNS.some(re => re.test(h.slice(1).split('?')[0]))),
           panelsWithout: [...document.querySelectorAll('[data-error-panel]')].filter(e => !e.querySelector('[data-error-action] a, [data-error-action] button')).length,
-          scroll: document.documentElement.scrollWidth - document.documentElement.clientWidth
+          scroll: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          claimsBare: [...document.querySelectorAll('main [data-claim]')].filter(e => { const c = registry[e.dataset.claim];
+            return !c || e.querySelector('[data-claim-status]')?.textContent !== c.status || (c.qualifier && !e.querySelector('[data-claim-qualifier]')?.textContent.includes(c.qualifier)); }).map(e => e.dataset.claim)
         };
       });
       const where = `${state} ${width} ${route}`;
@@ -96,6 +100,7 @@ async function crawl(state, { width }) {
       if (r.insteadBroken.length) result.problems.push(`${where}: "instead" links that go nowhere: ${r.insteadBroken.join(', ')}`);
       if (r.panelsWithout) result.problems.push(`${where}: ${r.panelsWithout} error panel(s) without an action`);
       if (r.scroll > 1) result.problems.push(`${where}: scrolls sideways by ${r.scroll}px`);
+      if (r.claimsBare.length) result.problems.push(`${where}: claims shown without their status or qualifier: ${[...new Set(r.claimsBare)].join(', ')}`);
       if (width < 600) {
         await page.setViewportSize({ width: 320, height: 700 });
         const s320 = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

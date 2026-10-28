@@ -52,6 +52,8 @@ test('canary key: stored through the page, then absent from every response, the 
   await new Promise(r => provider.listen(0, '127.0.0.1', r));
   const s = await startSite({ keyCheckBaseUrl: `http://127.0.0.1:${provider.address().port}/v1` });
   try {
+    // A key is checked (sent to the provider) only once Allowed AI includes it (honesty review M7).
+    await s.post('/api/settings', { allowedAI: 'mercury' });
     const saved = await s.post('/api/keys', { provider: 'inception', key: CANARY });
     assert.equal(saved.last4, 'abcd');
     s.bodies.length = 0;

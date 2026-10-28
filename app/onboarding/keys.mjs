@@ -4,6 +4,10 @@
 //
 // Checking a key sends ONE request, only when the person clicks "Check and save": GET <provider base URL>/models with the key, to the
 // base URL in the owner policy (policy/models.json, the Inception provider entry). Tests may point it at http://127.0.0.1:* only.
+//
+// Honesty review 2026-10-21 (M7): that request leaves the computer, so it is made only when Allowed AI (Settings, or the organisation's
+// policy file) permits the provider: Inception needs Allowed AI "Mercury 3". Otherwise nothing is sent and the key is not saved. The
+// site passes `allows` (from the settings on every call); a caller that passes none is a test or a tool that decided for itself.
 import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import { FoundryError } from '../../src/data.mjs';
@@ -11,7 +15,7 @@ import { loadPolicy } from '../../src/models/policy.mjs';
 import { KEY_SHAPE } from './keychain.mjs';
 
 export const PROVIDERS = Object.freeze({
-  inception: { label: 'Inception (Mercury 3)', policyProvider: 'inception', model: 'mercury-3', status: 'Preview' },
+  inception: { label: 'Inception (Mercury 3)', policyProvider: 'inception', model: 'mercury-3', status: 'Preview', allowedAI: 'mercury' },
   anthropic: { label: 'Anthropic (Haiku 5.5)', status: 'Planned', decision: 'O-A' },
   openrouter: { label: 'OpenRouter', status: 'Planned', decision: 'O-A' }
 });
@@ -28,9 +32,11 @@ export function providerBaseUrl(provider, { override = null } = {}) {
   return entry.baseUrl.replace(/\/$/, '');
 }
 
+const notAllowed = () => new FoundryError('KEY_NOT_ALLOWED', 'Allowed AI in Settings does not include this provider, so Foundry sent nothing and did not save the key. Choose Mercury 3 under Allowed AI first (if your organisation set it, ask them).');
+
 export class Keys {
-  constructor({ root, keychain, checkBaseUrl = null, fetchImpl = globalThis.fetch, now = () => Date.now() }) {
-    Object.assign(this, { root, keychain, checkBaseUrl, fetchImpl, now });
+  constructor({ root, keychain, checkBaseUrl = null, fetchImpl = globalThis.fetch, now = () => Date.now(), allows = null }) {
+    Object.assign(this, { root, keychain, checkBaseUrl, fetchImpl, now, allows });
     this.file = path.join(root, 'keys.json');
   }
   #meta() { if (!existsSync(this.file)) return {}; try { return JSON.parse(readFileSync(this.file, 'utf8')) ?? {}; } catch { return {}; } }
@@ -39,9 +45,11 @@ export class Keys {
   status() {
     const meta = this.#meta();
     return { backend: this.keychain.backend, keychainAvailable: this.keychain.available,
-      providers: Object.entries(PROVIDERS).map(([id, p]) => ({ provider: id, label: p.label, status: p.status, saved: !!meta[id], last4: meta[id]?.last4 ?? null, checkedAt: meta[id]?.checkedAt ?? null })) };
+      providers: Object.entries(PROVIDERS).map(([id, p]) => ({ provider: id, label: p.label, status: p.status, saved: !!meta[id], last4: meta[id]?.last4 ?? null, checkedAt: meta[id]?.checkedAt ?? null,
+        allowed: p.status === 'Planned' ? false : this.allows ? !!this.allows(id) : true, needsAllowedAI: p.allowedAI ?? null })) };
   }
   async check(provider, key) {
+    if (this.allows && !this.allows(provider)) throw notAllowed();
     const base = providerBaseUrl(provider, { override: this.checkBaseUrl });
     let res;
     // redirect: 'error' (security review 2026-10-21, L18): the key goes to the policy's address only, never on to wherever it points.
@@ -57,6 +65,7 @@ export class Keys {
     if (PROVIDERS[provider].status === 'Planned') throw new FoundryError('KEY_PLANNED', `${PROVIDERS[provider].label} keys are planned, not available yet`);
     if (typeof key !== 'string' || !KEY_SHAPE.test(key.trim())) throw new FoundryError('KEY_SHAPE', 'That does not look like an API key (16 to 256 letters, digits, dashes, dots or underscores). Nothing was saved.');
     const k = key.trim();
+    if (this.allows && !this.allows(provider)) throw notAllowed();
     if (!this.keychain.available) throw new FoundryError('KEYCHAIN_NONE', 'This computer has no keychain Foundry can use, so your key was not saved.');
     await this.check(provider, k);
     this.keychain.set(provider, k);
