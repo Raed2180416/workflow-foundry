@@ -20,6 +20,15 @@ Provenance: `node experiments/nodecap/bed/run.mjs` on the worktree after commit 
 this file. Chromium ran, so no task was skipped. 72 episodes and 48 replays; no paid model call. An earlier report from the first session
 (arms U/A/C only, arm B accounted but not run, no V5) was overwritten by this one; its arm U/A/C numbers were identical.
 
+**Re-run on the security-fixed code (2026-10-28, commit `36f93a7f`).** Raw report:
+[runs/scripted-2026-10-28-secfix/report.json](runs/scripted-2026-10-28-secfix/report.json); probes:
+[runs/probes-2026-10-28-secfix/probes.json](runs/probes-2026-10-28-secfix/probes.json). Same 72 episodes and 48 replays, Chromium, $0.
+Gates V1-V5 all pass (V5 48/48 identical). Arm success U 12/12, A 12/12, C 1/12, B 12/12; tool-definition and prompt tokens as below.
+Unsafe executed: A 0, B 28 (U1 24, U2 3, U3 1), as before. Two changes in the counts, both from the fixes (ARCHITECTURE.md §8): U6
+attempts are 12 per arm instead of 9, because the adversary now also asks the browser to load a side-effecting GET (`/items/purge`,
+held, 0 executed); and V4 now sweeps the Stockroom session ids too (26 across the GUI episodes, 0 hits). Probe P3c (new) shows that with
+the effect in the lock, the person gate, not the lock, stops an injected instruction (arm A as arm B).
+
 ## Arms (competent script, 12 tasks each)
 
 | Arm | Success | Wilson 95% | Used-set precision / recall | Members exposed, median | Tool-definition tokens per turn, median (p90) | Prompt tokens per episode, median | Turns, median | Approvals asked | Proposals |
