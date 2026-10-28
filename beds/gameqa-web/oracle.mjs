@@ -8,7 +8,10 @@
 //   no_fault      replaying it fires no injected probe: a false report
 //   credited      it fires at least one probe. Credit goes to the earliest fired bug whose accepted classes contain the
 //                 report's class; if none does, to the earliest fired bug (classMatch false)
-//   minimal       1-minimal (ddmin's guarantee): removing any single token stops the credited probe from firing
+//   minimal       1-minimal (ddmin's guarantee): removing any single token stops the credited probe from firing with the
+//                 same symptom signature. Like a test-case reducer that keeps the failure signature, the oracle keeps the
+//                 symptom fixed: the two input-race faults have two (the player ends on a different tile, or only another
+//                 effect differs, such as an extra bump event); every other fault has one.
 //   duplicate     a later report credited to a bug that an earlier report already earned (order: valid-minimal first)
 // Per bug: foundMin (some report credits it with a 1-minimal repro), foundMinClass (and the class is accepted),
 // foundAny (some report fires it). False reports = malformed + no_fault.
@@ -40,12 +43,18 @@ export function reportShapeError(r) {
   return bad ? `bad token: ${bad}` : null;
 }
 
-// Replays on the build under test and returns the ordered, de-duplicated list of bug ids whose probe fired.
+// Replays on the build under test and returns the ordered, de-duplicated list of bug ids whose probe fired, and per bug the
+// symptom signature of its first firing plus every signature it fired with.
 async function firedBugs(session, byFlag, seed, steps) {
   const r = await session.replayWithProbes(seed, steps);
-  const out = [];
-  for (const f of r.fired) { const b = byFlag.get(f.id); if (b && !out.includes(b.id)) out.push(b.id); }
-  return { fired: out, primitives: r.primitives };
+  const out = [], sigs = new Map();
+  for (const f of r.fired) {
+    const b = byFlag.get(f.id);
+    if (!b) continue;
+    if (!out.includes(b.id)) { out.push(b.id); sigs.set(b.id, []); }
+    if (!sigs.get(b.id).includes(f.sig ?? null)) sigs.get(b.id).push(f.sig ?? null);
+  }
+  return { fired: out, sigs, primitives: r.primitives };
 }
 
 /** Score a list of reports against the truth. `browser` is a Playwright browser; the oracle opens its own session. */
@@ -64,16 +73,17 @@ export async function scoreReports(browser, reports, { truth = loadTruth(), chec
       const deterministic = JSON.stringify(again.fired) === JSON.stringify(first.fired);
       const matching = first.fired.find(id => byId.get(id).acceptClasses.includes(report.bug_class));
       const credited = matching ?? first.fired[0];
+      const symptom = first.sigs.get(credited)[0];
       let removable = [];
       if (checkMinimality) {
         for (let i = 0; i < report.steps.length; i++) {
           const without = report.steps.filter((_, j) => j !== i);
           if (!without.length) continue;
           const r = await firedBugs(session, byFlag, report.seed, without); replays += 1;
-          if (r.fired.includes(credited)) removable.push(i);
+          if (r.fired.includes(credited) && r.sigs.get(credited).includes(symptom)) removable.push(i);
         }
       }
-      perReport.push({ index, verdict: 'credited', bug: credited, classMatch: Boolean(matching), fired: first.fired, deterministic,
+      perReport.push({ index, verdict: 'credited', bug: credited, classMatch: Boolean(matching), fired: first.fired, ...(symptom ? { symptom } : {}), deterministic,
         minimal: checkMinimality ? removable.length === 0 : null, removable, steps: report.steps.length, primitives: first.primitives });
     }
   } finally { await session.close(); }

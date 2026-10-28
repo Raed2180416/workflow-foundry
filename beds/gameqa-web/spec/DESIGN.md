@@ -138,5 +138,5 @@ After each tick the harness reports:
 A run may hold at most 400 tokens. A bug report gives the bug class (`collision`, `state_desync`, `softlock`, `ui_overlap`, `score_overflow`,
 `input_race`), a title, what was observed and expected, the seed, and the **shortest** list of tokens that
 reproduces the bug from a fresh game with that seed. Reports are checked by replaying exactly those tokens from a
-fresh game with that seed: a report whose tokens do not show the bug, or that still show it with any one token
-removed, does not count as a minimal reproduction.
+fresh game with that seed: a report whose tokens do not show the bug, or that still show it the same way (the same
+symptom) with any one token removed, does not count as a minimal reproduction.

@@ -26,9 +26,9 @@
 
   const flags = new Set(Array.isArray(window.__BUILD_FLAGS) ? window.__BUILD_FLAGS : []);
   const bug = name => flags.has(name);
-  let faults = [], muted = false;
+  let faults = [], muted = false, quiet = false;
   let SEED = 1, S = null, queue = [];
-  const fault = (id, detail = {}) => { if (!muted) faults.push({ id, frame: S.frame, clock: S.clock, ...detail }); };
+  const fault = (id, detail = {}) => { if (!muted && !quiet) faults.push({ id, frame: S.frame, clock: S.clock, ...detail }); };
   const ev = name => { if (!muted) S.events.push(name); };
 
   function mulberry32(a) {
@@ -153,10 +153,13 @@
 
   function doMove(m) { if (m.dash && S.dashCooldown === 0) dash(m.dir); else walk(m.dir); }
 
-  // The correct outcome of a single move, computed on a throwaway copy of the state (no probes, no events).
+  // Everything a tester can observe that a move can change (state, this tick's events, the HUD caches, the toast).
+  const outcome = () => JSON.stringify({ p: S.player, sc: S.score, l: S.lives, k: S.keys, c: S.coins, g: S.gems, r: S.relics, t: S.tiles,
+    go: S.gateOpen, d: S.dashCooldown, m: S.mode, dl: S.dialog, i: S.invuln, ev: S.events, dc: S.disp.coins, to: S.toast, b: S.bonus });
+  // The correct outcome of a single move, computed on a throwaway copy of the state (events recorded there, no probes).
   function predict(m) {
-    const saved = S; S = structuredClone(saved); muted = true;
-    try { doMove(m); return { ...S.player }; } finally { S = saved; muted = false; }
+    const saved = S; S = structuredClone(saved); quiet = true;
+    try { doMove(m); return { player: { ...S.player }, outcome: outcome() }; } finally { S = saved; quiet = false; }
   }
 
   function useAction() {
@@ -247,9 +250,12 @@
       else if (k === ' ') use = true;
     }
     if (!restarted && S.mode === 'paused' && pausedHere && lateMove && bug('pause_move')) {
-      const before = { ...S.player };
+      // The probe fires on any observable effect of the late arrow (a step, a bump event, a pickup), not only a changed position.
+      const before = { ...S.player }, was = outcome();
       walk(lateMove.dir);
-      if (S.player.x !== before.x || S.player.y !== before.y) fault('pause_move', { from: before, to: { ...S.player } });
+      // sig: the symptom signature (a different player position, or only other observable effects such as a bump event), which
+      // the oracle keeps fixed when it tests minimality (a reducer keeps the failure signature, as test-case reducers do).
+      if (outcome() !== was) fault('pause_move', { from: before, to: { ...S.player }, sig: S.player.x !== before.x || S.player.y !== before.y ? 'position' : 'effect' });
     }
     if (!restarted && S.mode === 'playing') {
       S.clock += 1;
@@ -258,9 +264,11 @@
       if (use) useAction();
       if (move) {
         if (bug('multi_move') && allMoves.length > 1) {
+          // The probe compares the whole observable outcome with the correct one (only the last move), not only the position:
+          // a pickup on the way out and back, or an extra bump event, is the same fault manifesting.
           const correct = predict(move);
           for (const m of allMoves) { doMove(m); if (S.mode !== 'playing' || S.respawned) break; }
-          if (S.player.x !== correct.x || S.player.y !== correct.y) fault('multi_move', { correct, actual: { ...S.player } });
+          if (outcome() !== correct.outcome) fault('multi_move', { correct: correct.player, actual: { ...S.player }, sig: S.player.x !== correct.player.x || S.player.y !== correct.player.y ? 'position' : 'effect' });
         } else doMove(move);
       }
       if (S.mode === 'playing') { moveEnemies(); collide(S.respawned ? { ...S.player } : prev); }
@@ -321,7 +329,9 @@
     const t = $('toast');
     if (S.toast) {
       t.textContent = S.toast.text;
-      t.className = 'toast' + (S.toast.kind === 'key' && bug('toast_over_resume') ? ' toast-center' : '');
+      // toast_over_resume: while the pause menu is open the key toast is drawn centred, above the dialog. During play it is drawn
+      // normally, so the fault's only observable effect is the covered Resume button (found by the differential audit).
+      t.className = 'toast' + (S.toast.kind === 'key' && S.dialog === 'pause' && bug('toast_over_resume') ? ' toast-center' : '');
       t.removeAttribute('hidden');
     } else { t.setAttribute('hidden', ''); t.className = 'toast'; }
     show('pause', S.dialog === 'pause');

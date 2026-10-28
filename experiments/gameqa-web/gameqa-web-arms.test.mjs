@@ -12,7 +12,8 @@ import { subsetPolicy } from '../lib/models.mjs';
 import { launchBrowser, openSession } from '../../beds/gameqa-web/driver.mjs';
 import { loadTruth, scoreReports } from '../../beds/gameqa-web/oracle.mjs';
 import { parse, compile, evaluate, ExprError } from './expr.mjs';
-import { ddmin } from './qa-lib.mjs';
+import { ddmin, compileChecks } from './qa-lib.mjs';
+import { mannWhitney } from './analyze.mjs';
 import { runAgent, runWorkflow, runMonkey, makeCaller, mulberry32 } from './arms.mjs';
 import * as P from './prompts.mjs';
 
@@ -59,6 +60,15 @@ test('check language: evaluation, lambdas, deep equality, and what it refuses', 
   assert.throws(() => parse('abs(x => 1)'), /no lambda/);
   assert.throws(() => compile('nope.x')({}), /unknown name/);
   assert.throws(() => evaluate(parse('all(cur.l, a => all(cur.l, b => all(cur.l, c => true)))'), { cur: { l: Array(100).fill(0) } }, { steps: 1000 }), /budget/);
+});
+
+test('analysis: exact permutation Mann-Whitney', () => {
+  let t = mannWhitney([3, 4, 5], [0, 1, 2], 'greater'); assert.equal(t.U, 9); assert.equal(t.permutations, 20); assert.equal(t.p, 1 / 20);
+  t = mannWhitney([0, 1, 2], [3, 4, 5], 'greater'); assert.equal(t.p, 1);
+  t = mannWhitney([5, 6, 7, 8, 9], [0, 1, 2, 3, 4], 'two-sided'); assert.equal(t.permutations, 252); assert.equal(t.p, 2 / 252);
+  t = mannWhitney([2, 2, 2], [2, 2, 2], 'greater'); assert.equal(t.U, 4.5); assert.equal(t.p, 1, 'ties: no evidence');
+  t = mannWhitney([3, 3], [3, 2, 2], 'greater'); assert.equal(t.U, 5);
+  assert.equal(mannWhitney([], [1], 'greater').p, null);
 });
 
 test('ddmin returns a 1-minimal subsequence', async () => {
@@ -130,4 +140,21 @@ bt('monkey arm is deterministic for a given rng seed', async () => {
   const run = async () => { const s = await openSession(browser, { flags: truth.build.flags }); try { return await runMonkey({ session: s, rng: mulberry32(7), budgets: { exploreTicks: 1500 } }); } finally { await s.close(); } };
   const a = await run(), b = await run();
   assert.deepEqual(a.reports, b.reports); assert.equal(a.stats.exploreTicks, b.stats.exploreTicks);
+});
+
+bt('monkey with checks (the monkey-ref calibration path): reports carry the check class, repros are 1-minimal, played runs are recorded', async () => {
+  const { checks } = compileChecks([
+    { id: 'one-move', rule: 'At most one move per tick.', bug_class: 'input_race', when: "!includes(cur.state.events, 'respawn') && !includes(cur.state.events, 'restart')",
+      expect: "abs(cur.state.player.x - prev.state.player.x) + abs(cur.state.player.y - prev.state.player.y) <= (includes(cur.state.events, 'dash') ? 2 : 1)" },
+    { id: 'hud-coins', rule: 'The HUD shows the current coins.', bug_class: 'state_desync', expect: "cur.hud.coins == 'Coins ' + cur.state.coins + '/' + cur.state.coinsTotal" },
+  ]);
+  const s = await openSession(browser, { flags: truth.build.flags });
+  const r = await runMonkey({ session: s, rng: mulberry32(3), budgets: { exploreTicks: 2000 }, checks });
+  await s.close();
+  assert.ok(r.stats.played.length >= 1 && r.stats.played.every(p => Number.isInteger(p.seed) && p.steps.length === 200));
+  for (const m of r.minimized) if (m.confirmed) assert.equal(m.oneMinimal, true, m.checkId);
+  for (const rep of r.reports.filter(x => x.title.startsWith('Violates'))) assert.ok(checks.some(c => c.bug_class === rep.bug_class && rep.title.includes(c.rule)));
+  assert.ok(r.reports.some(x => x.bug_class === 'input_race') && r.reports.some(x => x.bug_class === 'state_desync'), JSON.stringify(r.reports.map(x => x.title)));
+  const sc = await scoreReports(browser, r.reports, { truth });
+  assert.equal(sc.summary.falseReports, 0, 'these two checks hold on the clean build, so every confirmed violation is an injected fault');
 });

@@ -124,7 +124,7 @@ function pageHelper({ flags, keyTokens }) {
       if (errors.length > errBefore) rec.errors = errors.slice(errBefore);
       if (withProbes) {
         const f = g.__faults();
-        for (const x of f.slice(faultCount)) fired.push({ id: x.id, step: primitives - 1 });
+        for (const x of f.slice(faultCount)) fired.push({ id: x.id, step: primitives - 1, ...(x.sig ? { sig: x.sig } : {}) });
         faultCount = f.length;
       }
       out.push(rec);

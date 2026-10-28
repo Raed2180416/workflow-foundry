@@ -17,11 +17,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 export const FREEZE_FILE = path.join(ROOT, 'research/gameqa-20261021/FREEZE.json');
 export const ARM_FILES = Object.freeze(['experiments/gameqa-web/arms.mjs', 'experiments/gameqa-web/qa-lib.mjs', 'experiments/gameqa-web/expr.mjs',
   'experiments/gameqa-web/prompts.mjs', 'experiments/gameqa-web/template.json', 'experiments/gameqa-web/run.mjs',
-  'experiments/gameqa-web/reference-checks.json', 'experiments/lib/models.mjs', 'policy/models.json']);
+  'experiments/gameqa-web/reference-checks.json', 'experiments/gameqa-web/funnel.mjs', 'experiments/gameqa-web/analyze.mjs', 'experiments/lib/models.mjs', 'policy/models.json',
+  'research/gameqa-20261021/PREREG-GQA-1.md']);
 const sha = buf => createHash('sha256').update(buf).digest('hex');
 
 export function armsManifest() {
-  const files = Object.fromEntries(ARM_FILES.map(f => [f, sha(readFileSync(path.join(ROOT, f)))]));
+  const files = Object.fromEntries(ARM_FILES.map(f => [f, existsSync(path.join(ROOT, f)) ? sha(readFileSync(path.join(ROOT, f))) : null]));
   return { files, sha256: sha(JSON.stringify(files)) };
 }
 export function truthSetHash() {
@@ -53,6 +54,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (!cur.bed) { console.error('freeze the bed first'); process.exit(2); }
     if (cur.arms) { console.error('arms section already frozen: refusing to overwrite'); process.exit(2); }
     const m = armsManifest();
+    const missing = Object.keys(m.files).filter(f => !m.files[f]);
+    if (missing.length) { console.error(`arm files missing: ${missing.join(', ')}`); process.exit(2); }
     cur.arms = { at: new Date().toISOString(), gitHead: head(), sha256: m.sha256, files: m.files };
     writeFileSync(FREEZE_FILE, `${JSON.stringify(cur, null, 1)}\n`);
   } else if (mode) { console.error('usage: freeze.mjs [--bed|--arms]'); process.exit(2); }

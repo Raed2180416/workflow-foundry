@@ -102,6 +102,40 @@ t('every injected fault fires on its own reference repro, alone and in build B1,
   assert.equal(s.summary.foundMin, 12); assert.equal(s.summary.foundMinClass, 12); assert.equal(s.summary.falseReports, 0);
 });
 
+t('input-race probes fire on any observable deviation, not only a changed position', async () => {
+  const fires = async (flag, seed, steps) => {
+    const s = await openSession(browser, { flags: [flag], oracle: true });
+    try { return (await s.replayWithProbes(seed, steps)).fired.some(f => f.id === flag); } finally { await s.close(); }
+  };
+  // down+up from the start: the faulty build steps down and back (two moves, same tile); the correct build bumps the wall above.
+  assert.equal(await fires('multi_move', 1, ['down+up']), true);
+  let r = prim(await play([], 1, ['down+up'])); assert.deepEqual(r[0].obs.state.player, { x: 1, y: 1 }); assert.deepEqual(r[0].obs.state.events, ['bump']);
+  r = prim(await play(['multi_move'], 1, ['down+up'])); assert.deepEqual(r[0].obs.state.events, ['move', 'move']);
+  // pause+up from the start: the late arrow only bumps the wall, which is still something happening in the pausing tick.
+  assert.equal(await fires('pause_move', 1, ['pause+up']), true);
+  r = prim(await play([], 1, ['pause+up'])); assert.deepEqual(r[0].obs.state.events, ['pause']);
+  // up+up into the wall: the correct build reports one bump; the faulty one processes both keys (two bumps), which is observable
+  assert.equal(await fires('multi_move', 1, ['up+up']), true);
+  r = prim(await play([], 1, ['up+up'])); assert.deepEqual(r[0].obs.state.events, ['bump']);
+  r = prim(await play(['multi_move'], 1, ['up+up'])); assert.deepEqual(r[0].obs.state.events, ['bump', 'bump']);
+  // and no probe fires on the clean outcome: a single arrow, or a pause alone
+  assert.equal(await fires('multi_move', 1, ['up']), false); assert.equal(await fires('pause_move', 1, ['pause']), false);
+});
+
+t('minimality keeps the symptom: a repro of the position symptom stays minimal although a shorter input shows another symptom', async () => {
+  const s = await scoreReports(browser, [
+    { bug_class: 'input_race', title: 'two moves', seed: 1, steps: ['dash-down', 'up+up'] },  // ends a tile off; 'up+up' alone only double-bumps
+    { bug_class: 'input_race', title: 'double bump', seed: 1, steps: ['up+up'] },             // the effect symptom, one token
+    { bug_class: 'input_race', title: 'padded', seed: 1, steps: ['wait', 'right+right'] },     // position symptom with a removable wait
+    { bug_class: 'input_race', title: 'pause then a step', seed: 1, steps: ['right', 'pause+right'] }, // position symptom; pause+right alone also moves
+  ], { truth, checkMinimality: true });
+  const v = s.perReport;
+  assert.equal(v[0].bug, 'GQ12'); assert.equal(v[0].symptom, 'position'); assert.equal(v[0].minimal, true);
+  assert.equal(v[1].bug, 'GQ12'); assert.equal(v[1].symptom, 'effect'); assert.equal(v[1].minimal, true);
+  assert.equal(v[2].minimal, false); assert.deepEqual(v[2].removable, [0]);
+  assert.equal(v[3].bug, 'GQ11'); assert.equal(v[3].symptom, 'position'); assert.equal(v[3].minimal, false); assert.deepEqual(v[3].removable, [0]);
+});
+
 t('oracle scoring: padding, wrong class, duplicates, junk and malformed reports', async () => {
   const ref = id => truth.bugs.find(b => b.id === id).reference;
   const reports = [

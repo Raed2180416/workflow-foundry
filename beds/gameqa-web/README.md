@@ -54,7 +54,10 @@ A report `{bug_class, title, observed, expected, seed, steps}` is replayed from 
 - **malformed** (bad class, seed or token) and **no_fault** (no probe fires) are **false reports**;
 - otherwise it is **credited** to the earliest fired bug whose accepted classes include the report's class (else to the
   earliest fired bug, `classMatch: false`);
-- **minimal** when removing any single token stops the credited probe from firing (ddmin's 1-minimality);
+- **minimal** when removing any single token stops the credited probe from firing with the same symptom (ddmin's
+  1-minimality, keeping the failure signature as test-case reducers do). Only the two input-race faults have two
+  symptoms: the player ends on another tile, or only another effect differs (an extra bump event, a pickup). So
+  `dash-down, up+up` (ends a tile off) is minimal although `up+up` alone also shows the fault, as a double bump;
 - a second report credited to an already-earned bug is a **duplicate**.
 
 Per run: `foundMin` (bugs with a credited, 1-minimal repro: the primary metric), `foundMinClass`, `foundAny`,
@@ -69,7 +72,7 @@ Per run: `foundMin` (bugs with a credited, 1-minimal repro: the primary metric),
 | `driver.mjs` | Playwright driver: lockstep sessions, token grammar, `goto` macro (BFS), tester vs oracle sessions |
 | `truth/bugs.json` | hidden ground truth with reference repros |
 | `oracle.mjs` | report scoring, 1-minimality, freeze manifest |
-| `gameqa-web.test.mjs` | 8 tests: leakage, determinism, clean build vs spec, every fault's reference, scoring rules |
+| `gameqa-web.test.mjs` | 10 tests: leakage, determinism, clean build vs spec, every fault's reference, input-race probes on any observable effect, symptom-keeping minimality, scoring rules |
 
 Run: `nice -n 15 node --test --test-concurrency=1 beds/gameqa-web/gameqa-web.test.mjs` (Chromium at
 `/opt/pw-browsers/chromium` or `FOUNDRY_CHROMIUM`; the tests skip with a reason if it cannot launch).
@@ -83,3 +86,13 @@ Run: `nice -n 15 node --test --test-concurrency=1 beds/gameqa-web/gameqa-web.tes
   the DOM (`elementFromPoint`), not rendering glitches.
 - The clean build was audited against its spec at $0 (21 oracle-informed reference checks, 40,000 random ticks, zero
   violations: `experiments/gameqa-web/audit-clean.mjs`); that is evidence, not proof, that it has no un-injected bugs.
+- **Oracle validity (differential audit, $0, `experiments/gameqa-web/differential.mjs`):** each episode is replayed on
+  the clean build and on the faulty build with the same seed and tokens. At the first tick where anything a tester can
+  observe differs (state, HUD text, UI visibility, text, rectangles, topmost), a probe must already have fired, and every
+  probe must coincide with an observable difference. The first audit found three defects, all fixed before the freeze:
+  the two input-race probes compared only the player position (a double bump or a pickup on the way out and back was an
+  observable deviation no report could be credited for), and the key toast was drawn centred during play too (an
+  observable UI change with no probe). After the fixes: B1 200 episodes (26,852 ticks) and each fault alone (60 episodes
+  each, with setup prefixes that reach the deep rooms; about 9,000 ticks per fault) show 0 un-probed divergences and 0
+  silent probes (`research/gameqa-20261021/audit/`). Sampling evidence, not proof; the deep faults (score overflow, toast,
+  banner) diverge in few episodes.

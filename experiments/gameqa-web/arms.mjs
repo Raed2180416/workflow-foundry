@@ -80,7 +80,7 @@ function noteViolations(cands, run, start, seed, tokens, checks, { generic = tru
 
 // ------------------------------------------------------------------------------------------------ monkey
 async function monkeyExplore({ session, rng, exploreTicks, episodeTokens = 200, checks = [], counter }) {
-  const cands = new Map(), runs = [];
+  const cands = new Map(), runs = [], played = [];
   let ticks = 0, episodes = 0;
   const evalErrors = new Map();
   while (ticks < exploreTicks) {
@@ -90,24 +90,31 @@ async function monkeyExplore({ session, rng, exploreTicks, episodeTokens = 200, 
     ticks += run.primitives; episodes++;
     for (const e of noteViolations(cands, run, start, seed, tokens, checks)) evalErrors.set(e.id, e.error);
     runs.push({ steps: run.steps.filter(s => s.obs).map(s => ({ obs: { state: s.obs.state } })) });
+    played.push({ seed, steps: tokens });
     if (counter) counter.exploreTicks = ticks;
   }
-  return { cands, ticks, episodes, coverage: coverageOf(runs), evalErrors: [...evalErrors].map(([id, error]) => ({ id, error })) };
+  return { cands, ticks, episodes, played, coverage: coverageOf(runs), evalErrors: [...evalErrors].map(([id, error]) => ({ id, error })) };
 }
 
-export async function runMonkey({ session, rng, budgets }) {
+// checks: [] for the baseline arm (generic detectors only). The oracle-informed calibration arm `monkey-ref` passes the bed
+// author's reference checks (reference-checks.json): an upper bound for "random exploration + perfect checks", never a
+// comparative arm. Every confirmed, minimized violation becomes a report (there is no judge).
+export async function runMonkey({ session, rng, budgets, checks = [] }) {
   const counter = { replays: 0 };
-  const ex = await monkeyExplore({ session, rng, exploreTicks: budgets.exploreTicks, counter });
+  const ex = await monkeyExplore({ session, rng, exploreTicks: budgets.exploreTicks, checks, counter });
   const reports = [], minimized = [];
-  for (const cand of ex.cands.values()) {
-    const m = await reproAndMinimize(session, cand, [], budgets, counter);
+  for (const cand of [...ex.cands.values()].filter(c => !ex.evalErrors.some(e => e.id === c.checkId))) {
+    const m = await reproAndMinimize(session, cand, checks, budgets, counter);
     minimized.push(m);
     if (!m.confirmed) continue;
-    reports.push({ bug_class: GENERIC_CLASS[m.checkId], title: `${m.checkId === 'generic:frozen' ? 'Game stops responding' : 'Script error'} after this input`,
+    const c = checks.find(x => x.id === m.checkId);
+    if (c) reports.push({ bug_class: c.bug_class, title: `Violates: ${c.rule}`.slice(0, 160), observed: `Check ${c.id} fails.`, expected: c.rule, seed: m.seed, steps: m.steps });
+    else reports.push({ bug_class: GENERIC_CLASS[m.checkId], title: `${m.checkId === 'generic:frozen' ? 'Game stops responding' : 'Script error'} after this input`,
       observed: m.checkId === 'generic:frozen' ? `After these tokens the state stops changing for ${FROZEN_WINDOW} ticks and no dialog or button is visible.` : 'The page reports a script error.',
       expected: GENERIC_RULE[m.checkId], seed: m.seed, steps: m.steps });
   }
-  return { reports, stats: { exploreTicks: ex.ticks, episodes: ex.episodes, verifyReplays: counter.replays, candidates: ex.cands.size, coverage: ex.coverage }, minimized };
+  return { reports, stats: { exploreTicks: ex.ticks, episodes: ex.episodes, verifyReplays: counter.replays, candidates: ex.cands.size, coverage: ex.coverage, evalErrors: ex.evalErrors, played: ex.played },
+    minimized: minimized.map(({ checkId, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength }) => ({ checkId, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength })) };
 }
 
 // ------------------------------------------------------------------------------------------------ agent alone
@@ -132,7 +139,8 @@ export async function runAgent({ session, caller, budgets }) {
     lastRun = { seed: v.seed, text: renderRun(run, { start, maxSteps: maxStepsShown }), map: renderMap(run.final) };
     history.push({ n: history.length + 1, seed: v.seed, steps: v.steps, tokens: v.steps.length, outcome: outcomeOf(run) });
   }
-  return { reports, stats: { exploreTicks: ticks, runs: history.length, finished, notes } };
+  // played: every run the agent made (for the $0 funnel analysis: which faults its exploration triggered)
+  return { reports, stats: { exploreTicks: ticks, runs: history.length, finished, notes, played: history.map(h => ({ seed: h.seed, steps: h.steps })) } };
 }
 
 // ------------------------------------------------------------------------------------------------ cheap-built workflow
@@ -171,12 +179,12 @@ export async function runWorkflow({ session, caller, rng, budgets, explore = 'pe
 
   // 2. explore + playback
   const cands = new Map(), evalErrors = new Map();
-  let ticks = 0, rounds = 0, plansPlayed = 0, coverage;
+  let ticks = 0, rounds = 0, plansPlayed = 0, coverage, played = [];
   if (explore === 'random') {
     const ex = await monkeyExplore({ session, rng, exploreTicks: B.exploreTicks, checks, counter });
     for (const [k, v] of ex.cands) cands.set(k, v);
     ex.evalErrors.forEach(e => evalErrors.set(e.id, e.error));
-    ticks = ex.ticks; coverage = ex.coverage;
+    ticks = ex.ticks; coverage = ex.coverage; played = ex.played;
   } else {
     const personas = built.personas, memory = personas.map(() => ({ notes: '', lastRuns: [], lastError: null })), allRuns = [];
     for (let round = 1; round <= B.rounds && ticks < B.exploreTicks; round++) {
@@ -198,6 +206,7 @@ export async function runWorkflow({ session, caller, rng, budgets, explore = 'pe
           ticks += run.primitives; plansPlayed++;
           for (const e of noteViolations(cands, run, start, plan.seed, plan.steps.slice(0, B.tokensPerPlan), checks)) evalErrors.set(e.id, e.error);
           allRuns.push(run);
+          played.push({ seed: plan.seed, steps: plan.steps.slice(0, B.tokensPerPlan), persona: i, round });
           mem.lastRuns.push({ purpose: plan.purpose, seed: plan.seed, text: renderRun(run, { start, maxSteps: 40 }), map: renderMap(run.final) });
         }
       }
@@ -241,7 +250,7 @@ export async function runWorkflow({ session, caller, rng, budgets, explore = 'pe
   return {
     reports: reports.map(({ _cand, ...r }) => r),
     stats: { exploreTicks: ticks, rounds, plansPlayed, verifyReplays: counter.replays, checks: checks.length, rejectedChecks: built.rejected?.length ?? 0, repairedChecks: built.repaired ?? 0,
-      smokeErrors: smokeErr.length, evalErrors: [...evalErrors].map(([id, error]) => ({ id, error })), candidates: cands.size, confirmed: confirmed.length, unique: unique.length, coverage },
+      smokeErrors: smokeErr.length, evalErrors: [...evalErrors].map(([id, error]) => ({ id, error })), candidates: cands.size, confirmed: confirmed.length, unique: unique.length, coverage, played },
     constructed: { personas: built.personas, specs: built.specs ?? checks.map(({ _expect, _when, needsUi, ...c }) => c) },
     minimized: minimized.map(({ checkId, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength }) => ({ checkId, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength })),
     verdicts,

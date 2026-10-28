@@ -1,0 +1,254 @@
+[
+ {
+  "label": "dash_tunnel",
+  "flags": [
+   "dash_tunnel"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9061,
+  "diverged": 34,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "dash_tunnel": 34
+  },
+  "probeCounts": {
+   "dash_tunnel": 44
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "enemy_swap",
+  "flags": [
+   "enemy_swap"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9098,
+  "diverged": 19,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "enemy_swap": 19
+  },
+  "probeCounts": {
+   "enemy_swap": 23
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "hud_coin_dash",
+  "flags": [
+   "hud_coin_dash"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9068,
+  "diverged": 26,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "hud_coin_dash": 26
+  },
+  "probeCounts": {
+   "hud_coin_dash": 30
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "timer_hud_freeze",
+  "flags": [
+   "timer_hud_freeze"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9068,
+  "diverged": 31,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "timer_hud_freeze": 31
+  },
+  "probeCounts": {
+   "timer_hud_freeze": 38
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "restart_pause_lock",
+  "flags": [
+   "restart_pause_lock"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9086,
+  "diverged": 30,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "restart_pause_lock": 30
+  },
+  "probeCounts": {
+   "restart_pause_lock": 30
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "key_lost_on_hit",
+  "flags": [
+   "key_lost_on_hit"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 8996,
+  "diverged": 14,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "key_lost_on_hit": 14
+  },
+  "probeCounts": {
+   "key_lost_on_hit": 15
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "toast_over_resume",
+  "flags": [
+   "toast_over_resume"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9070,
+  "diverged": 5,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "toast_over_resume": 5
+  },
+  "probeCounts": {
+   "toast_over_resume": 5
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "bonus_over_next",
+  "flags": [
+   "bonus_over_next"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9081,
+  "diverged": 7,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "bonus_over_next": 7
+  },
+  "probeCounts": {
+   "bonus_over_next": 7
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "score_int16",
+  "flags": [
+   "score_int16"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9068,
+  "diverged": 2,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "score_int16": 2
+  },
+  "probeCounts": {
+   "score_int16": 2
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "spike_wrap",
+  "flags": [
+   "spike_wrap"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9068,
+  "diverged": 23,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "spike_wrap": 23
+  },
+  "probeCounts": {
+   "spike_wrap": 24
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "pause_move",
+  "flags": [
+   "pause_move"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9069,
+  "diverged": 19,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "pause_move": 19
+  },
+  "probeCounts": {
+   "pause_move": 20
+  },
+  "unprobed": 0,
+  "silent": 0
+ },
+ {
+  "label": "multi_move",
+  "flags": [
+   "multi_move"
+  ],
+  "episodes": 60,
+  "rngSeed": 21,
+  "prefix": true,
+  "ticks": 9078,
+  "diverged": 53,
+  "unprobedDivergence": [],
+  "silentProbes": [],
+  "firstProbeCounts": {
+   "multi_move": 53
+  },
+  "probeCounts": {
+   "multi_move": 140
+  },
+  "unprobed": 0,
+  "silent": 0
+ }
+]
