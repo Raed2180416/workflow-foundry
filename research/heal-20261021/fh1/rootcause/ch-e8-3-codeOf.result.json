@@ -1,0 +1,64 @@
+{
+ "incident": "ch-e8-3",
+ "file": "modules/fulfilment.mjs",
+ "old": "const codeOf = err => (typeof err === 'string' ? err : err?.code);",
+ "new": "const codeOf = err => (typeof err === 'string' ? err : err?.reason ?? err?.code);",
+ "at": "2026-10-22T02:24:24.236Z",
+ "practiceBefore": {
+  "completed": 331,
+  "oraclePassed": 289,
+  "oracleN": 331,
+  "contractsPassed": 282,
+  "contractsN": 324,
+  "armErrors": 0,
+  "critical": 0
+ },
+ "practiceAfter": {
+  "completed": 331,
+  "oraclePassed": 325,
+  "oracleN": 331,
+  "contractsPassed": 318,
+  "contractsN": 324,
+  "armErrors": 0,
+  "critical": 0
+ },
+ "gradingBefore": {
+  "completed": 1022,
+  "oraclePassed": 886,
+  "oracleN": 1022,
+  "contractsPassed": 865,
+  "contractsN": 1001,
+  "armErrors": 0,
+  "critical": 0
+ },
+ "gradingAfter": {
+  "completed": 1022,
+  "oraclePassed": 1004,
+  "oracleN": 1022,
+  "contractsPassed": 983,
+  "contractsN": 1001,
+  "armErrors": 0,
+  "critical": 0
+ },
+ "recovered": 118,
+ "regressed": 0,
+ "net": 118,
+ "recoveredByClass": {
+  "f3-refund": 5,
+  "amend-then-cancel": 2,
+  "decline": 13,
+  "straight": 55,
+  "collection-failed": 4,
+  "cancel-after-collection": 7,
+  "f3-charge": 4,
+  "cancel-at-collection": 3,
+  "cancel-processing": 9,
+  "f6-carrier": 5,
+  "review-approve": 3,
+  "amend": 2,
+  "f1-charge": 2,
+  "action-at-deadline": 1,
+  "f4-reserve": 3
+ },
+ "regressedByClass": {}
+}

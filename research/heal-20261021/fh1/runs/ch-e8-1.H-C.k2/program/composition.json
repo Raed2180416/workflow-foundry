@@ -1,0 +1,311 @@
+{
+ "version": 1,
+ "parent": {
+  "file": "parent.mjs",
+  "calls": [
+   "intake",
+   "review",
+   "window",
+   "saga",
+   "notice"
+  ],
+  "effects": [
+   "orders.setStatus:order",
+   "orders.setStatus:fulfilment"
+  ]
+ },
+ "modules": {
+  "intake": {
+   "file": "modules/intake.mjs",
+   "purpose": "record a placed order: read its allocation and fraud verdict, price every fulfilment in the edition in force, and write the order with orders.create",
+   "rules": [
+    "R1.1",
+    "R1.2",
+    "R1.3",
+    "R2.1"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "place"
+      ]
+     },
+     "order": {
+      "type": "object"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "effects": [
+    "inventory.allocate",
+    "fraud.check",
+    "orders.create"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  },
+  "review": {
+   "file": "modules/review.mjs",
+   "purpose": "the fraud review of one order: one review task, its deadline from the first task, re-asks for unusable answers, and the decision the answers or the deadline make",
+   "rules": [
+    "R2.2"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "open",
+       "stop"
+      ]
+     },
+     "orderId": {
+      "type": "string"
+     },
+     "p": {
+      "type": "string"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "effects": [],
+   "humanTasks": [
+    "fraudReview"
+   ],
+   "timers": true,
+   "calls": [],
+   "reads": []
+  },
+  "window": {
+   "file": "modules/window.mjs",
+   "purpose": "the customer's window on unavailable items: action-required, the deadline D from placedAt, the first counted amend or cancel, and the timeout after D",
+   "rules": [
+    "R3.1",
+    "R3.2",
+    "S1",
+    "S5"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "open",
+       "act",
+       "stop"
+      ]
+     },
+     "orderId": {
+      "type": "string"
+     },
+     "p": {
+      "type": "string"
+     },
+     "customerId": {
+      "type": "string"
+     },
+     "unavailable": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "available": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "action": {
+      "enum": [
+       "amend",
+       "cancel"
+      ]
+     },
+     "at": {
+      "type": "string"
+     },
+     "announced": {
+      "type": "boolean"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "effects": [
+    "orders.setStatus:order",
+    "orders.setStatus:fulfilment"
+   ],
+   "humanTasks": [],
+   "timers": true,
+   "calls": [],
+   "reads": []
+  },
+  "saga": {
+   "file": "modules/saga.mjs",
+   "purpose": "one fulfilment's saga: reserve each item, charge, book the shipment, follow the carrier's messages to dispatched and completed, and on failure or cancel undo what committed in reverse order",
+   "rules": [
+    "R4.2",
+    "R4.4",
+    "R5.1",
+    "R5.2",
+    "R6.2",
+    "S2",
+    "S14"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "op"
+    ],
+    "properties": {
+     "op": {
+      "enum": [
+       "start",
+       "cancel",
+       "carrier",
+       "resume"
+      ]
+     },
+     "orderId": {
+      "type": "string"
+     },
+     "fid": {
+      "type": "string"
+     },
+     "location": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "items": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     },
+     "amountMinor": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "customerId": {
+      "type": "string"
+     },
+     "currency": {
+      "type": "string"
+     },
+     "meaning": {
+      "enum": [
+       "collected",
+       "inTransit",
+       "delivered",
+       "collectionFailed",
+       "info"
+      ]
+     },
+     "reportedAt": {
+      "type": "string"
+     },
+     "rows": {
+      "type": "object"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "effects": [
+    "orders.setStatus:fulfilment",
+    "inventory.reserve",
+    "inventory.release",
+    "billing.charge",
+    "billing.refund",
+    "carrier.create",
+    "carrier.cancel"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  },
+  "notice": {
+   "file": "modules/notice.mjs",
+   "purpose": "one customer notification (section 4.8) with a deterministic key, so each required notice is sent once",
+   "rules": [
+    "§4.8"
+   ],
+   "input": {
+    "type": "object",
+    "required": [
+     "template",
+     "about",
+     "customerId"
+    ],
+    "properties": {
+     "template": {
+      "enum": [
+       "action-required",
+       "order-cancelled",
+       "order-timed-out",
+       "fulfilment-failed",
+       "cancel-refused"
+      ]
+     },
+     "about": {
+      "type": "string"
+     },
+     "customerId": {
+      "type": "string"
+     },
+     "orderId": {
+      "type": "string"
+     }
+    }
+   },
+   "output": {
+    "type": [
+     "object",
+     "null"
+    ]
+   },
+   "effects": [
+    "notify.send"
+   ],
+   "humanTasks": [],
+   "timers": false,
+   "calls": [],
+   "reads": []
+  }
+ }
+}

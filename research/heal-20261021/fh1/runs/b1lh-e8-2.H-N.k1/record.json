@@ -1,0 +1,75 @@
+{
+ "label": "b1lh-e8-2.H-N.k1",
+ "incident": "b1lh-e8-2",
+ "arm": "H-N",
+ "k": 1,
+ "dryRun": false,
+ "kind": "monolith",
+ "at": "2026-10-21T22:44:08.949Z",
+ "wallMs": 17,
+ "bedDigest": "b9e5a67138d42a7f",
+ "intervene": "no action (the verifier reports no disagreement)",
+ "baseDigest": "f3602ae5612386b3",
+ "patchedDigest": null,
+ "changed": false,
+ "loads": true,
+ "problems": [],
+ "noSignal": true,
+ "session": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "capUsd": 0,
+  "costUsd": 0,
+  "costUpperUsd": 0,
+  "costUnknown": false,
+  "turns": 0,
+  "error": null,
+  "durationMs": 0,
+  "smokeRuns": 0
+ },
+ "report": {
+  "file": "DISAGREEMENTS.md",
+  "sha256": "639eeeef232f1fc3f4d6705c18a59980a6f6086806c579d9817c180b95f04496",
+  "disagreements": 0
+ },
+ "gate": {
+  "accept": false,
+  "reason": "no disagreement: no session"
+ },
+ "gates": null,
+ "moduleTests": null,
+ "practice": {
+  "before": {
+   "completed": 331,
+   "oraclePassed": 315,
+   "oracleN": 331,
+   "contractsPassed": 308,
+   "contractsN": 324,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "after": null,
+  "nvBefore": 0,
+  "nvAfter": null
+ },
+ "grading": {
+  "before": {
+   "completed": 1022,
+   "oraclePassed": 974,
+   "oracleN": 1022,
+   "contractsPassed": 953,
+   "contractsN": 1001,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "rawAfter": null,
+  "raw": null,
+  "kept": {
+   "nRecovered": 0,
+   "nRegressed": 0,
+   "net": 0,
+   "recoveredByClass": {},
+   "regressedByClass": {}
+  }
+ }
+}
