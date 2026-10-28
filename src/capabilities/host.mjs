@@ -12,7 +12,7 @@ import { McpPool } from './mcp-client.mjs';
 import { qualifyMcp, PinGuard, invokeMcp, runCanary, checkMemberSchema } from './import-mcp.mjs';
 import { loadSkill, skillMembers, invokeSkill } from './skills.mjs';
 import { uiMembers, invokeUi, UiSessions } from './cua.mjs';
-import { memberRecord } from './members.mjs';
+import { attestationHashOf, memberRecord } from './members.mjs';
 import { programMember, invokeProgram } from './program.mjs';
 import { lockMembers } from './resolve.mjs';
 
@@ -28,17 +28,23 @@ export class NodecapHost {
     Object.assign(this, { catalog, ledger, envelope, env, keychain, keychainStore, scrub, now, codeRunner });
     this.pool = new McpPool(catalog, { scrub, env, keychain, keychainStore, now });
     this.sessions = chromium ? new UiSessions({ chromium, scrub, env, keychain }) : null;
-    this.members = new Map(); this.guards = new Map(); this.skills = new Map(); this.failures = [];
+    this.members = new Map(); this.guards = new Map(); this.skills = new Map(); this.failures = []; this.qualified = new Set();
     this.builtins = createDefaultRegistry();
   }
   entry(id) { return this.catalog.entries.find(e => e.id === id) ?? null; }
   member(id) { return this.members.get(id) ?? null; }
-  /** Qualify every bindable entry. An entry that fails is recorded (and, for drift, quarantined by the ledger) and contributes no members. */
-  async qualify({ canaries = true } = {}) {
+  /**
+   * Qualify bindable entries. An entry that fails is recorded (and, for drift, quarantined by the ledger) and contributes no members.
+   * `only`: the entry ids to qualify (an MCP server outside it is never spawned); programs pull in the entries they use. Default: all.
+   */
+  async qualify({ canaries = true, only = null } = {}) {
+    let wanted = only ? new Set(only) : null;
+    if (wanted) for (const entry of this.catalog.entries) if (entry.kind === 'program' && wanted.has(entry.id)) for (const id of entry.uses) wanted.add(id.split('.')[1]);
     // Programs last: a program's members are built from the members it uses, which must have qualified first.
     const ordered = [...this.catalog.entries.filter(e => e.kind !== 'program'), ...this.catalog.entries.filter(e => e.kind === 'program')];
     for (const entry of ordered) {
-      if (!bindable(entry, this.ledger)) continue;
+      if (!bindable(entry, this.ledger) || (wanted && !wanted.has(entry.id)) || this.qualified.has(entry.id)) continue;
+      this.qualified.add(entry.id);
       try {
         let members = [];
         if (entry.kind === 'mcp-stdio' || entry.kind === 'mcp-http') {
@@ -63,18 +69,35 @@ export class NodecapHost {
         for (const member of members) this.members.set(member.id, member);
       } catch (error) {
         if (!(error instanceof FoundryError)) throw error;
+        // A server whose code no longer matches its owner-attested integrity pins is quarantined like a definition change (M3, I9).
+        if (error.code === 'SOURCE_INTEGRITY') this.ledger?.quarantine(entry.id, 'SOURCE_INTEGRITY', { files: error.details?.files ?? [] });
         this.failures.push({ entry: entry.id, code: error.code });
       }
     }
     return { members: [...this.members.values()], failures: clone(this.failures) };
   }
-  /** Names of catalog tools outside what qualified (T3, quarantined, revoked, imported): proposal candidates only, never callable. */
+  /**
+   * The entries a construction may need, decided from the owner's attestations BEFORE anything is spawned: MCP entries with an attested
+   * member whose type matches a requirement or whose system is in an acquire clause, and every non-MCP entry (no process to start).
+   */
+  candidateEntries(sidecar, { typeMatch }) {
+    const types = Object.values(sidecar.nodes ?? {}).flatMap(n => (n.requires ?? []).map(r => r.type)), systems = new Set(Object.values(sidecar.nodes ?? {}).flatMap(n => n.acquire?.systems ?? []));
+    return this.catalog.entries.filter(entry => !entry.kind.startsWith('mcp') || Object.values(entry.members ?? {}).some(a => systems.has(a.system) || types.some(t => typeMatch(a.type, t) > 0))).map(e => e.id);
+  }
+  /**
+   * Catalog tools outside what qualified in this process (T3, quarantined, revoked, imported, failed, or never spawned here): proposal
+   * candidates only, never callable, described by the owner's attestation (an unqualified candidate has no implementation yet: binding it
+   * qualifies it first, and the person approves its pins with lock N+1).
+   */
   outsideCandidates() {
     const out = [];
     for (const entry of this.catalog.entries) {
-      if (bindable(entry, this.ledger) && !this.failures.some(f => f.entry === entry.id)) continue;
-      for (const [name, a] of Object.entries(entry.members ?? {})) out.push({ id: `${entry.kind.startsWith('mcp') ? 'mcp' : entry.kind}.${entry.id}.${name}`, entry: entry.id, trust: entry.trust,
-        status: entryStatus(entry, this.ledger), type: a.type, system: a.system, objects: a.objects, verbs: a.verbs, effects: a.effects, egress: a.egress, summary: a.view.summary });
+      if (bindable(entry, this.ledger) && this.qualified.has(entry.id) && !this.failures.some(f => f.entry === entry.id)) continue;
+      // An MCP member's record carries the catalog attestation verbatim, so its attestation hash is known before it qualifies (a proposal
+      // records it, and lock N+1 binds the member only if it still matches); other kinds derive theirs at qualification (none recorded).
+      for (const [name, a] of Object.entries(entry.members ?? {})) out.push({ id: `${entry.kind.startsWith('mcp') ? 'mcp' : entry.kind}.${entry.id}.${name}`, entry: entry.id, tool: name, trust: entry.trust,
+        status: entryStatus(entry, this.ledger), type: a.type, system: a.system, objects: a.objects, verbs: a.verbs, effects: a.effects, egress: a.egress, summary: a.view.summary, view: { name: a.view.name, summary: a.view.summary },
+        attestationHash: entry.kind.startsWith('mcp') ? attestationHashOf(a) : null });
     }
     return out;
   }
@@ -128,7 +151,9 @@ export class NodecapHost {
       }
     }
     validateData(member.view.inputSchema, args, `${member.id} arguments`);
-    if (ctx.practice && member.effects !== 'none') return { practice: true, member: member.id, wouldCall: true };
+    // Practice never reaches the real world: effects are simulated, and a computer-use member (whose page loads are requests to the real
+    // origin, whatever its effect class) is not run at all.
+    if (ctx.practice && (member.effects !== 'none' || member.kind === 'cua')) return { practice: true, member: member.id, wouldCall: true };
     let out;
     if (member.kind === 'mcp-stdio' || member.kind === 'mcp-http') out = await invokeMcp(member, { connection: this.pool.get(entry.id), guard: this.guards.get(entry.id) }, args, ctx);
     else if (member.kind === 'skill') out = await invokeSkill(member, this.skills.get(entry.id), args, { signal: ctx.signal, ...(this.codeRunner ? { codeRunner: this.codeRunner } : {}) });
@@ -140,6 +165,11 @@ export class NodecapHost {
     else fail('MEMBER_KIND', `Unsupported member kind ${member.kind}`);
     validateData(member.outputSchema, out, `${member.id} output`);
     return out;
+  }
+  /** The host's rendering of a held UI request of an existing session (what a person approves for ui.commit); null when there is none. */
+  async heldRequest({ runId, node, entryId, id }) {
+    const entry = this.entry(entryId);
+    return this.sessions && entry && typeof id === 'string' ? this.sessions.held({ runId, node, entry, id }) : null;
   }
   async closeRun(runId) { await this.sessions?.closeRun(runId); }
   async close() { await this.sessions?.close(); await this.pool.close(); }

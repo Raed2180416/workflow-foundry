@@ -5,8 +5,8 @@
 import { Runtime } from '../runtime.mjs';
 import { digest, fail } from './common.mjs';
 import { envelopeDigest as envelopeDigestOf } from './envelope.mjs';
-import { typesDigest as typesDigestOf } from './types.mjs';
-import { resolve, lockMembers } from './resolve.mjs';
+import { typesDigest as typesDigestOf, typeMatch } from './types.mjs';
+import { resolve, lockMembers, walkNodes } from './resolve.mjs';
 import { lowerWorkflow } from './lower.mjs';
 import { lint } from './lint.mjs';
 import { compileRegistry, allowedCapabilities } from './registry.mjs';
@@ -16,7 +16,11 @@ import { renderBody } from './skills.mjs';
 export const workflowHashOf = workflow => digest(workflow);
 
 export async function construct({ workflow, sidecar, host, envelope, types = null, catalogDigest }) {
-  if (!host.members.size) await host.qualify();
+  // Only entries a requirement or an acquire clause could use are qualified (an MCP server nothing can bind is never spawned), plus the
+  // entries of Tier-0 members the workflow names directly.
+  const tier0 = [];
+  walkNodes(workflow.nodes, node => { if ((sidecar.tier0 ?? []).includes(node.id) && typeof node.tool === 'string') tier0.push(node.tool.split('.')[1]); });
+  await host.qualify({ only: [...host.candidateEntries(sidecar, { typeMatch }), ...tier0] });
   const envelopeDigest = envelopeDigestOf(envelope), typesDigest = types ? typesDigestOf(types) : null;
   const { lock, lockHash, gaps, ties } = resolve({ workflow, sidecar, members: [...host.members.values()], catalogDigest, envelope, envelopeDigest, types, typesDigest });
   const skillBodies = {};
@@ -42,6 +46,8 @@ export function runtimeFor({ store, host, ledger, construction, envelope, models
 
 export async function launch({ store, ledger, host, construction, envelope, models = null, modelPolicy = null, input = {}, runOptions = {}, dryRunId = null, mode = 'live', maxCost = null }) {
   if (construction.lint.errors.length) fail('NODECAP_LINT', `Lint refused the version: ${construction.lint.errors.map(f => f.code).join(', ')}`, { findings: construction.lint.errors });
+  // In a later process nothing has qualified yet: qualify exactly the lock's entries (no other server is spawned), then check the pins.
+  await host.qualify({ only: [...new Set(lockMembers(construction.lock).map(id => construction.lock.members[id].entryId))] });
   const preflight = await host.preflight(lockMembers(construction.lock), construction.lock);
   if (!preflight.ok) fail('PREFLIGHT_FAILED', `Preflight failed: ${preflight.problems.map(p => `${p.entry}:${p.code}`).join(', ')}`, { problems: preflight.problems });
   if (!ledger.lockApproval(subjectOf(construction, dryRunId))) fail('LOCK_UNAPPROVED', 'No person approved this exact version (workflow, lock, envelope, catalog, dry run)');

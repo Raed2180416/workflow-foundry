@@ -1,6 +1,11 @@
 // Shared fixtures of the nodecap tests: temp workspaces (removed in t.after), attested catalog entries for the fixture servers, and the
 // owner skills. Development fixtures only.
-import { mkdtempSync, rmSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, mkdirSync, readFileSync, existsSync, realpathSync } from 'node:fs';
+import { fileSha256 } from '../../src/capabilities/stdio-sandbox.mjs';
+import { scriptedPerson } from '../../src/capabilities/person.mjs';
+import { NodecapLedger } from '../../src/capabilities/ledger.mjs';
+import { subjectOf } from '../../src/capabilities/launcher.mjs';
+import { callSubject, describeApproval } from '../../src/capabilities/broker.mjs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -8,6 +13,40 @@ import { fileURLToPath } from 'node:url';
 
 export const FIXTURES = fileURLToPath(new URL('../../experiments/nodecap/fixtures/', import.meta.url));
 export const SERVERS = path.join(FIXTURES, 'servers');
+const NODE_MODULES = fileURLToPath(new URL('../../node_modules', import.meta.url));
+/** The scripted person of the tests (recorded as channel 'scripted'; ledgers accept it only when opened with that channel). */
+export const person = scriptedPerson('nodecap-tests');
+export const TEST_CHANNELS = ['cli', 'dashboard', 'scripted'];
+/**
+ * The source of a fixture stdio server as an owner attests it: an absolute command, integrity pins of the interpreter, the script and the
+ * shared fixture library (`integrity` overrides some, as a changed file would), and the sandbox binds it needs (the fixture directory and
+ * the SDK read-only; the ledger directory writable).
+ */
+export function stdioSource(file, args = [], { envAllow = [], write = [], integrity = {} } = {}) {
+  const script = path.join(SERVERS, file), lib = path.join(SERVERS, 'lib.mjs');
+  return { command: process.execPath, args: [script, ...args], envAllow,
+    integrity: { ...Object.fromEntries([process.execPath, script, lib].map(f => [f, fileSha256(f)])), ...integrity },
+    sandbox: { read: [...new Set([SERVERS, NODE_MODULES, realpathSync(NODE_MODULES)])], write } };
+}
+/** A nodecap ledger that accepts the tests' scripted person (production ledgers accept cli and dashboard only). */
+export const openLedger = (dir, { channels = TEST_CHANNELS } = {}) => new NodecapLedger(dir, { channels });
+/** The scripted person approves one constructed version (its exact subject). */
+export const approveVersion = (ledger, construction, dryRunId = null) => ledger.approveLock(subjectOf(construction, dryRunId), { person: person(NodecapLedger.subject(subjectOf(construction, dryRunId)), true) });
+/** The scripted person decides one proposal at its current revision. */
+export const decide = (ledger, proposal, approve) => ledger.decideProposal(proposal.id, { person: person(NodecapLedger.proposalSubject(proposal), approve), expectedRev: proposal.rev });
+/** The scripted person decides one pending effect approval: on the host's rendering of the call, recorded in the ledger, then the engine's approval. */
+export async function approveCall({ runtime, ledger, host, lock, run, approvalId, approve = true }) {
+  const rendering = await describeApproval({ host, lock, run, approvalId }), subject = callSubject(approvalId, rendering);
+  ledger.recordCallDecision(subject, person(subject, approve));
+  runtime.approve(run.id, approvalId, approve, 'user');
+  return rendering;
+}
+/** The owner connects one OAuth scope class with the scripted person's decision for exactly that connect (entry, class, scopes). */
+export async function connectAsPerson(entry, { scopeClass, ledger = null, stepUp = null, ...rest }) {
+  const { connectOAuth, connectSubject, connectScopes } = await import('../../src/capabilities/oauth.mjs');
+  return connectOAuth(entry, { scopeClass, ledger, stepUp, channels: TEST_CHANNELS, person: person(connectSubject(entry, scopeClass, connectScopes(entry, scopeClass, { ledger, stepUp })), true), ...rest });
+}
+const writeFor = (ledger, ledgerName) => ledgerName ? [{ env: 'NODECAP_LEDGER_DIR' }] : ledger ? [path.dirname(ledger)] : [];
 export function workspace(t, prefix = 'foundry-nodecap-') {
   const dir = mkdtempSync(path.join(tmpdir(), prefix));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
@@ -40,13 +79,13 @@ const ledgerArgs = (ledger, ledgerName) => ledgerName ? ['--ledger-name', ledger
 const ENV_ALLOW = ['NODECAP_LEDGER_DIR', 'NODECAP_FIXTURE_VARIANT'];
 export function crmEntry({ ledger, ledgerName = null, variant = 'a', members = CRM_MEMBERS, pin, canary, trust = 'T1', id = 'crm', extraArgs = [] } = {}) {
   return { id, kind: 'mcp-stdio', trust, status: 'active', trustAnnotations: true,
-    source: { command: process.execPath, args: [path.join(SERVERS, 'crm-stdio.mjs'), ...(variant ? ['--variant', variant] : []), ...ledgerArgs(ledger, ledgerName), ...extraArgs],
-      envAllow: ledgerName || !variant ? ENV_ALLOW : [] },
+    source: stdioSource('crm-stdio.mjs', [...(variant ? ['--variant', variant] : []), ...ledgerArgs(ledger, ledgerName), ...extraArgs],
+      { envAllow: ledgerName || !variant ? ENV_ALLOW : [], write: writeFor(ledger, ledgerName) }),
     members: structuredClone(members), ...(pin ? { pin } : {}), ...(canary ? { canary } : {}) };
 }
 export function rugpullEntry({ ledger, flip = true } = {}) {
   return { id: 'rugpull', kind: 'mcp-stdio', trust: 'T2', status: 'active', trustAnnotations: false,
-    source: { command: process.execPath, args: [path.join(SERVERS, 'rugpull-stdio.mjs'), ...(ledger ? ['--ledger', ledger] : []), ...(flip ? [] : ['--no-flip'])], envAllow: [] },
+    source: stdioSource('rugpull-stdio.mjs', [...(ledger ? ['--ledger', ledger] : []), ...(flip ? [] : ['--no-flip'])], { write: writeFor(ledger, null) }),
     members: { export_data: attest({ type: 'row.export', system: 'rugpull', verbs: ['transform'], objects: ['row'], effects: 'none', risk: 'low', outputLabel: 'untrusted:mcp.rugpull',
       outputSchema: { type: 'object' }, view: { name: 'rugpull_export_data', summary: 'Summarise rows for export.', inputSchema: { type: 'object', additionalProperties: false, properties: { rows: { type: 'array', maxItems: 100, items: S() } } } } }) } };
 }
@@ -65,7 +104,7 @@ export function ticketsEntry(url, { members = TICKET_MEMBERS, credential = { cus
 }
 export function sheetsEntry({ ledger, ledgerName = null, status = 'active' } = {}) {
   return { id: 'sheets', kind: 'mcp-stdio', trust: 'T1', status, trustAnnotations: true,
-    source: { command: process.execPath, args: [path.join(SERVERS, 'sheets-stdio.mjs'), ...ledgerArgs(ledger, ledgerName)], envAllow: ledgerName ? ENV_ALLOW : [] },
+    source: stdioSource('sheets-stdio.mjs', ledgerArgs(ledger, ledgerName), { envAllow: ledgerName ? ENV_ALLOW : [], write: writeFor(ledger, ledgerName) }),
     members: {
       read_range: attest({ type: 'row.read', system: 'sheets', verbs: ['read'], objects: ['row'], effects: 'none', risk: 'low', outputLabel: 'untrusted:mcp.sheets', dataClass: 'internal',
         outputSchema: { type: 'object' }, view: { name: 'sheets_read_range', summary: 'Read every row of the team sheet.', inputSchema: { type: 'object', additionalProperties: false, properties: {} } } }),
@@ -75,7 +114,7 @@ export function sheetsEntry({ ledger, ledgerName = null, status = 'active' } = {
 export function brokerEntry({ ledger } = {}) {
   const view = (name, summary) => ({ name, summary, inputSchema: { type: 'object', additionalProperties: false, properties: { app: S(100), server: S(200) } } });
   return { id: 'broker', kind: 'mcp-stdio', trust: 'T1', status: 'active', trustAnnotations: true,
-    source: { command: process.execPath, args: [path.join(SERVERS, 'broker-stdio.mjs'), ...(ledger ? ['--ledger', ledger] : [])], envAllow: [] },
+    source: stdioSource('broker-stdio.mjs', ledger ? ['--ledger', ledger] : [], { write: writeFor(ledger, null) }),
     members: {
       manage_connections: attest({ type: 'connection.manage', system: 'crm', verbs: ['update'], objects: ['contact', 'connection'], effects: 'none', risk: 'low', outputLabel: 'untrusted:mcp.broker',
         outputSchema: { type: 'object' }, view: view('broker_connect', 'Connect a SaaS account.') }),

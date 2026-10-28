@@ -9,9 +9,9 @@ export function toolDigest(tool) {
   try { checkData(tool, { maxBytes: 512 * 1024 }); } catch (error) { fail('PIN_UNSUPPORTED', `A tool definition is not plain JSON (${error.code}); it cannot be pinned`); }
   return pinOf(tool);
 }
-/** Source identity for the server pin: stdio command line, or the HTTP URL with a development port removed (dev worlds bind port 0). */
+/** Source identity for the server pin: stdio command line, code pins and sandbox binds, or the HTTP URL with a development port removed (dev worlds bind port 0). */
 export function sourceIdentity(entry) {
-  if (entry.kind === 'mcp-stdio') return { kind: entry.kind, command: entry.source.command, args: entry.source.args, cwd: entry.source.cwd ?? null };
+  if (entry.kind === 'mcp-stdio') return { kind: entry.kind, command: entry.source.command, args: entry.source.args, cwd: entry.source.cwd ?? null, integrity: entry.source.integrity ?? null, sandbox: entry.source.sandbox ?? null };
   const url = new URL(entry.source.url);
   if (entry.dev === true) url.port = '';
   return { kind: entry.kind, url: url.toString() };

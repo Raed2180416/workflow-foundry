@@ -22,7 +22,7 @@ import { chromiumPath } from '../src/capabilities/cua.mjs';
 import { construct, launch, subjectOf } from '../src/capabilities/launcher.mjs';
 import { startTicketsServer } from '../experiments/nodecap/fixtures/servers/tickets-http.mjs';
 import { startStockroom } from '../experiments/nodecap/fixtures/stockroom/app.mjs';
-import { FIXTURES, catalogOf, ticketsEntry, workspace } from './support/nodecap.mjs';
+import { FIXTURES, catalogOf, ticketsEntry, workspace, openLedger, approveVersion } from './support/nodecap.mjs';
 
 const loaded = loadPolicy(), M = loaded.policy.models.find(m => m.class === 'M').id;
 const envelope = checkEnvelope(DEFAULT_ENVELOPE), types = loadTypes(path.join(FIXTURES, 'types.json'));
@@ -55,12 +55,13 @@ async function harness(t, { script, withUi }) {
   if (withUi) {
     ({ chromium } = await import('playwright'));
     app = await startStockroom({ password }); t.after(() => app.close());
-    entries.push({ id: 'stockroom-ui', kind: 'cua', trust: 'T0', status: 'active', dev: true, source: { backend: 'playwright-local', origins: [app.origin], profile: 'S0' },
+    // safeGets: the owner's attestation that these pages have no side effect on GET, so ui.observe is a read the node may use here.
+    entries.push({ id: 'stockroom-ui', kind: 'cua', trust: 'T0', status: 'active', dev: true, source: { backend: 'playwright-local', origins: [app.origin], profile: 'S0', safeGets: ['/', '/vendors/*', '/invoices/*', '/settings'] },
       login: { path: '/login', user: { env: 'STOCKROOM_USER' }, password: { env: 'STOCKROOM_PASSWORD' } } });
   }
   const env = { NODECAP_TICKETS_READ_TOKEN: readToken, NODECAP_TICKETS_WRITE_TOKEN: writeToken, STOCKROOM_USER: 'ops@stockroom.test', STOCKROOM_PASSWORD: password };
   const catalog = checkCatalog(catalogOf(...entries), { allowDev: true });
-  const store = new Store(dir), ledger = new NodecapLedger(dir), host = new NodecapHost({ catalog, ledger, envelope, env, chromium });
+  const store = new Store(dir), ledger = openLedger(dir), host = new NodecapHost({ catalog, ledger, envelope, env, chromium });
   const provider = new ScriptedProvider({ [M]: script });
   const models = new ModelPort({ policy: loaded.policy, providers: { 'claude-cli': provider, 'llama-server': provider }, journal: new Journal(store) });
   t.after(async () => { await host.close(); try { store.close(); } catch {} try { ledger.close(); } catch {} });
@@ -70,9 +71,10 @@ async function harness(t, { script, withUi }) {
     acceptance: [{ op: 'exists', value: { $ref: 'nodes.work.title' } }] };
   const sidecar = { schema: 'foundry-nodecap-toolnodes/1', nodes: { work: { acquire: { systems: ['tickets', 'stockroom-ui'], objects: ['ticket', 'page'], effectsMax: 'none', max: 4 }, maxTurns: 5 } } };
   const construction = await construct({ workflow, sidecar, host, envelope, types, catalogDigest: catalogDigest(catalog) });
-  ledger.approveLock(subjectOf(construction), { channel: 'cli' });
+  approveVersion(ledger, construction);
   const launched = await launch({ store, ledger, host, construction, envelope, models, modelPolicy: loaded });
-  return { dir, store, ledger, host, provider, canaries: [readToken, writeToken, password], ...launched };
+  // The session ids the app issued are secrets too (a session cookie carries the user's authority): swept for once the run has ended.
+  return { dir, store, ledger, host, provider, canaries: [readToken, writeToken, password], sessionIds: () => app?.sessionIds() ?? [], ...launched };
 }
 
 test('secrets: canary credentials used by a real run appear nowhere in the workspace, the chain, the journal or any prompt', async t => {
@@ -83,10 +85,16 @@ test('secrets: canary credentials used by a real run appear nowhere in the works
   const run = await h.execute();
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
   assert.equal(h.host.scrub.size >= 1, true, 'the resolved values are held in the scrub set');
+  if (withUi) {
+    assert.ok(run.frames['root/work__loop:1'].outputs.do.ok, 'the UI read ran (the trace and its cookies exist to be swept)');
+    assert.equal(h.sessionIds().length, 1, 'the app issued one session');
+  }
+  const canaries = [...h.canaries, ...h.sessionIds()];
   const extra = [['events', JSON.stringify(h.store.events(run.id))], ['decisions', JSON.stringify(h.store.decisions(run.id))], ['journal', JSON.stringify(new Journal(h.store).forRun(run.id))],
     ...h.provider.calls.map((c, i) => [`prompt ${i}`, `${c.system}\n${c.prompt}`])];
   h.store.close(); h.ledger.close(); // flush to disk before reading the raw files
-  assert.deepEqual(sweep(h.dir, h.canaries, extra), []);
+  assert.deepEqual(sweep(h.dir, canaries, extra), []);
+  if (withUi) assert.equal(readdirSync(h.dir, { recursive: true }).filter(f => /ui-trace-[0-9a-f]{16}\.zip$/.test(f)).length, 1, 'the swept workspace holds the exported UI trace');
   // The sweep finds a planted copy (it is not vacuous).
   writeFileSync(path.join(h.dir, '.foundry', 'planted.txt'), `x ${h.canaries[0]} y`);
   assert.equal(sweep(h.dir, h.canaries).length, 1);

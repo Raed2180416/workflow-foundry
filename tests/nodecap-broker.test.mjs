@@ -18,7 +18,7 @@ import { construct, launch, subjectOf, executeRun, runtimeFor } from '../src/cap
 import { decideMember } from '../src/capabilities/broker.mjs';
 import { nodecapDecisions } from '../src/capabilities/journal.mjs';
 import { applyBind, continueRun, completedEffects } from '../src/capabilities/proposals.mjs';
-import { FIXTURES, catalogOf, crmEntry, sheetsEntry, brokerEntry, skillEntry, ledgerLines, workspace } from './support/nodecap.mjs';
+import { FIXTURES, catalogOf, crmEntry, sheetsEntry, brokerEntry, skillEntry, ledgerLines, workspace, openLedger, approveVersion, decide, approveCall } from './support/nodecap.mjs';
 
 const loaded = loadPolicy(), M = loaded.policy.models.find(m => m.class === 'M').id;
 const envelope = checkEnvelope(DEFAULT_ENVELOPE), types = loadTypes(path.join(FIXTURES, 'types.json'));
@@ -35,7 +35,7 @@ const sidecarFor = (acquire, extra = {}) => ({ schema: 'foundry-nodecap-toolnode
 const ACQUIRE = { systems: ['crm', 'sheets', 'policy'], objects: ['contact', 'row', 'refund'], effectsMax: 'non-idempotent', max: 3 };
 
 async function setup(t, { entries, workflow = flow([work()]), sidecar = sidecarFor(ACQUIRE), script, dir = workspace(t) }) {
-  const store = new Store(dir), ledger = new NodecapLedger(dir);
+  const store = new Store(dir), ledger = openLedger(dir);
   const catalog = checkCatalog(catalogOf(...entries));
   const host = new NodecapHost({ catalog, ledger, envelope });
   const provider = new ScriptedProvider({ [M]: script });
@@ -43,7 +43,7 @@ async function setup(t, { entries, workflow = flow([work()]), sidecar = sidecarF
   t.after(async () => { await host.close(); store.close(); ledger.close(); });
   const construction = await construct({ workflow, sidecar, host, envelope, types, catalogDigest: catalogDigest(catalog) });
   assert.deepEqual(construction.lint.errors, []);
-  ledger.approveLock(subjectOf(construction), { channel: 'cli' });
+  approveVersion(ledger, construction);
   const launched = await launch({ store, ledger, host, construction, envelope, models, modelPolicy: loaded });
   return { dir, store, ledger, host, provider, models, construction, ...launched, decisions: runId => nodecapDecisions(store, runId ?? launched.run.id) };
 }
@@ -99,7 +99,7 @@ test('broker L2: an effectful standby member runs only after runtime.approve by 
   assert.equal(run.approvals[approvalId].tool, 'nodecap.act');
   assert.match(run.approvals[approvalId].argsLabel, /^untrusted:/, 'the approver sees the request was shaped by untrusted data');
   assert.throws(() => h.runtime.approve(run.id, approvalId, true, 'model'), code('APPROVAL_AUTHORITY'));
-  h.runtime.approve(run.id, approvalId, true, 'user');
+  await approveCall({ runtime: h.runtime, ledger: h.ledger, host: h.host, lock: h.construction.lock, run, approvalId });
   run = await executeRun({ runtime: h.runtime, host: h.host, runId: run.id });
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
   assert.deepEqual(ledgerLines(sheetLedger).map(l => l.appended ?? l.tool), ['append_row', ['42', 'Refund for order 7731']]);
@@ -125,8 +125,8 @@ test('broker L3: a need outside the lock ends the run with CAPABILITY_GAP and a 
   assert.deepEqual(decision.untrustedSpans.map(s => s.path), ['action.need']);
   assert.match(decision.features.whyHash, /^sha256:/);
   assert.doesNotMatch(JSON.stringify(decision.features), /Salesforce/, 'the free-text why enters features only as a hash');
-  assert.throws(() => h.ledger.decideProposal(proposal.id, { approve: true, channel: 'mcp-elicitation', expectedRev: 1 }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
-  assert.equal(h.ledger.decideProposal(proposal.id, { approve: false, channel: 'cli', expectedRev: 1 }).status, 'declined');
+  assert.throws(() => h.ledger.decideProposal(proposal.id, { person: { channel: 'mcp-elicitation', approve: true, subject: NodecapLedger.proposalSubject(proposal) }, expectedRev: 1 }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
+  assert.equal(decide(h.ledger, proposal, false).status, 'declined');
   assert.equal(ledgerLines(brokerLedger).length, 0, 'no broker tool was ever called');
 });
 
@@ -164,28 +164,29 @@ test('broker L3 → lock N+1 → continuation (T04 shape): approve via CLI, rebi
   assert.equal(first.error?.code, 'CAPABILITY_GAP', JSON.stringify(first.error));
   const [proposal] = h.ledger.proposals({ status: 'open' });
   assert.deepEqual(proposal.diff.added.map(a => a.member), ['mcp.sheets.append_row']);
-  const approved = h.ledger.decideProposal(proposal.id, { approve: true, channel: 'cli', expectedRev: proposal.rev });
-  const next = applyBind({ proposal: approved, lock: h.construction.lock, members: h.host.members, envelope });
+  const approved = decide(h.ledger, proposal, true);
+  await h.host.qualify({ only: ['sheets'] });
+  const next = applyBind({ proposal: approved, lock: h.construction.lock, members: h.host.members, envelope, workflow: flow([work()]), types });
   assert.ok(next.lock.nodes.work.bound.includes('mcp.sheets.append_row'));
   // Version N+1: the same source, re-resolved under the new lock (construct re-lowers it), saved as version 2, approved by a person.
   const { lowerWorkflow } = await import('../src/capabilities/lower.mjs');
   const lowered = { ...lowerWorkflow(flow([work()], 2), next.lock), version: 2 };
   const { digest } = await import('../src/data.mjs');
   const construction = { ...h.construction, lock: next.lock, lockHash: next.lockHash, lowered, workflowHash: digest(lowered) };
-  h.ledger.approveLock(subjectOf(construction), { channel: 'cli' });
+  approveVersion(h.ledger, construction);
   assert.equal(h.ledger.setHead('NodecapBroker', { workflowHash: construction.workflowHash, lockHash: next.lockHash, expectedRev: 0 }).rev, 1);
   h.store.saveWorkflow(lowered, { expectedHash: h.store.workflow('NodecapBroker').hash });
   const { runtime } = runtimeFor({ store: h.store, host: h.host, ledger: h.ledger, construction, envelope, models: h.models, modelPolicy: loaded });
-  const cont = continueRun({ store: h.store, runtime, priorRunId: first.id, workflow: lowered });
+  const cont = await continueRun({ store: h.store, runtime, priorRunId: first.id, workflow: lowered, host: h.host, lock: next.lock });
   assert.equal(h.store.rows.header(cont.id).sampleSalt, h.store.rows.header(first.id).sampleSalt, 'the continuation reuses the sample salt');
   let run = await runtime.execute(cont.id);
   assert.equal(run.status, 'awaiting_approval', JSON.stringify(run.error));
-  runtime.approve(run.id, Object.keys(run.approvals)[0], true, 'user');
+  await approveCall({ runtime, ledger: h.ledger, host: h.host, lock: next.lock, run, approvalId: Object.keys(run.approvals)[0] });
   run = await executeRun({ runtime, host: h.host, runId: run.id });
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
   assert.deepEqual(ledgerLines(sheetLedger).filter(l => l.appended).map(l => l.appended), [['42', 'Refund for order 7731']], 'rows exact, no duplicates');
   // Refusals: a run that is not a gap, and a gap after a completed effect.
-  assert.throws(() => continueRun({ store: h.store, runtime, priorRunId: run.id, workflow: lowered }), code('CONTINUATION_NOT_GAP'));
+  await assert.rejects(continueRun({ store: h.store, runtime, priorRunId: run.id, workflow: lowered, host: h.host, lock: next.lock }), code('CONTINUATION_NOT_GAP'));
   assert.deepEqual(completedEffects(h.store.events(run.id)).length, 1);
   assert.deepEqual(completedEffects(h.store.events(first.id)), []);
 });

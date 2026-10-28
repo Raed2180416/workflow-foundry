@@ -22,9 +22,12 @@ import { construct, launch, subjectOf, executeRun } from '../src/capabilities/la
 import { McpConnection } from '../src/capabilities/mcp-client.mjs';
 import { qualifyMcp, PinGuard, invokeMcp } from '../src/capabilities/import-mcp.mjs';
 import { ScrubSet } from '../src/capabilities/credentials.mjs';
-import { connectOAuth, oauthBearer, canonicalResource, checkIss, connectScopes, stepUpProposal } from '../src/capabilities/oauth.mjs';
+import { connectOAuth as connectAs, connectSubject, oauthBearer, canonicalResource, checkIss, connectScopes, stepUpProposal } from '../src/capabilities/oauth.mjs';
 import { startOAuthWorld, userAgent, CLIENT_ID } from '../experiments/nodecap/fixtures/servers/oauth-world.mjs';
-import { FIXTURES, catalogOf, ticketsEntry, workspace } from './support/nodecap.mjs';
+import { FIXTURES, catalogOf, ticketsEntry, workspace, openLedger, approveVersion, approveCall, decide, person, TEST_CHANNELS } from './support/nodecap.mjs';
+// The person (the tests' scripted person) approves each connect: a decision bound to the entry, scope class and scopes being asked for.
+const connectOAuth = (entry, { scopeClass, ledger = null, stepUp = null, person: decision, ...rest }) => connectAs(entry, { scopeClass, ledger, stepUp, channels: TEST_CHANNELS,
+  person: decision ?? person(connectSubject(entry, scopeClass, connectScopes(entry, scopeClass, { ledger, stepUp })), true), ...rest });
 
 const code = expected => error => { assert.equal(error.code, expected, `${error.code}: ${error.message}`); return true; };
 const READ_REF = { keychain: { service: 'foundry-nodecap', account: 'tickets-read' } }, WRITE_REF = { keychain: { service: 'foundry-nodecap', account: 'tickets-write' } };
@@ -32,8 +35,8 @@ function memoryKeychain() {
   const map = new Map(), key = ({ service, account }) => `${service}/${account}`;
   return { map, get: async ref => map.get(key(ref)) ?? null, put: async (ref, value) => { map.set(key(ref), value); }, record: ref => JSON.parse(map.get(key(ref.keychain))) };
 }
-function oauthEntry(world, { issuer = world.issuer, scopes = { read: ['tickets:read'], write: ['tickets:read', 'tickets:write'] }, url = world.url } = {}) {
-  const entry = { ...ticketsEntry(url), credential: { custody: 'C1', read: READ_REF, write: WRITE_REF, oauth: { issuer, clientId: CLIENT_ID, scopes } } };
+function oauthEntry(world, { issuer = world.issuer, scopes = { read: ['tickets:read'], write: ['tickets:read', 'tickets:write'] }, url = world.url, stepUpScopes = null } = {}) {
+  const entry = { ...ticketsEntry(url), credential: { custody: 'C1', read: READ_REF, write: WRITE_REF, oauth: { issuer, clientId: CLIENT_ID, scopes, ...(stepUpScopes ? { stepUpScopes } : {}) } } };
   return checkCatalog(catalogOf(entry), { allowDev: true }).entries[0];
 }
 async function world(t, options) { const w = await startOAuthWorld(options); t.after(() => w.close()); return w; }
@@ -42,13 +45,13 @@ const at = (w, kind) => w.log.filter(l => l.at === kind);
 test('oauth connect: PKCE S256, resource in both requests, state and iss checked; separate read and write tokens drive the calls', async t => {
   const w = await world(t), kc = memoryKeychain(), entry = oauthEntry(w), opened = [];
   assert.equal(canonicalResource(`${w.url}#frag`), w.url);
-  const read = await connectOAuth(entry, { scopeClass: 'read', channel: 'cli', openUrl: userAgent({ log: opened }), keychainStore: kc.put });
+  const read = await connectOAuth(entry, { scopeClass: 'read', openUrl: userAgent({ log: opened }), keychainStore: kc.put });
   assert.deepEqual([read.scopes, read.resource, read.issuer, read.refreshable], [['tickets:read'], w.url, w.issuer, true]);
   const [authorize] = at(w, 'as.authorize'), [token] = at(w, 'as.token');
   assert.deepEqual([authorize.method, authorize.hasChallenge, authorize.resource, authorize.scope, authorize.state], ['S256', true, w.url, 'tickets:read', true]);
   assert.deepEqual([token.grant, token.resource, token.hasVerifier], ['authorization_code', w.url, true]);
   assert.equal(new URL(opened[0]).origin, w.asOrigin, 'the authorization URL is on the attested issuer');
-  await connectOAuth(entry, { scopeClass: 'write', channel: 'dashboard', openUrl: userAgent(), keychainStore: kc.put });
+  await connectOAuth(entry, { scopeClass: 'write', openUrl: userAgent(), keychainStore: kc.put });
   assert.equal(kc.record(READ_REF).scope, 'tickets:read');
   assert.equal(kc.record(WRITE_REF).scope, 'tickets:read tickets:write');
   // Calls: the read session carries the read token, the write session the write token.
@@ -66,7 +69,7 @@ test('oauth connect: PKCE S256, resource in both requests, state and iss checked
 });
 
 test('oauth refusals: iss mismatch or missing, no PKCE, unattested AS, wider grant, foreign endpoint, bad state, non-person channel', async t => {
-  const kc = memoryKeychain(), go = (entry, extra = {}) => connectOAuth(entry, { scopeClass: 'read', channel: 'cli', openUrl: userAgent(), keychainStore: kc.put, timeoutMs: 5000, ...extra });
+  const kc = memoryKeychain(), go = (entry, extra = {}) => connectOAuth(entry, { scopeClass: 'read', openUrl: userAgent(), keychainStore: kc.put, timeoutMs: 5000, ...extra });
   const wrong = await world(t, { iss: 'wrong' });
   await assert.rejects(go(oauthEntry(wrong)), code('OAUTH_ISS_MISMATCH'));
   assert.equal(at(wrong, 'as.token').length, 0, 'the code never reached a token endpoint');
@@ -89,9 +92,11 @@ test('oauth refusals: iss mismatch or missing, no PKCE, unattested AS, wider gra
   await assert.rejects(go(oauthEntry(foreign), { openUrl: userAgent({ log: opened }) }), code('OAUTH_ENDPOINT_REFUSED'));
   assert.equal(opened.length, 0, 'a foreign authorization URL is never opened');
   const csrf = await world(t);
-  await assert.rejects(go(oauthEntry(csrf), { openUrl: userAgent({ tamper: url => url.searchParams.set('state', 'forged') }) }), code('OAUTH_STATE_MISMATCH'));
+  // A response with another state is refused by the receiver and ignored (review m4: it cannot end the connect either way); no code is used.
+  await assert.rejects(go(oauthEntry(csrf), { openUrl: userAgent({ tamper: url => url.searchParams.set('state', 'forged') }), timeoutMs: 1500 }), code('OAUTH_TIMEOUT'));
   assert.equal(at(csrf, 'as.token').length, 0);
-  await assert.rejects(go(oauthEntry(csrf), { channel: 'mcp-elicitation' }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
+  await assert.rejects(go(oauthEntry(csrf), { person: { channel: 'cli', approve: true, subject: connectSubject(oauthEntry(csrf), 'read', ['tickets:read']) } }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
+  await assert.rejects(go(oauthEntry(csrf), { person: person(connectSubject(oauthEntry(csrf), 'write', ['tickets:read', 'tickets:write']), true) }), code('PERSON_SUBJECT_MISMATCH'), 'a decision for another scope class does not connect this one');
   // The iss table, directly.
   assert.throws(() => checkIss(new URLSearchParams('code=x&iss=https://a.example/'), { recordedIssuer: 'https://a.example', issSupported: true }), code('OAUTH_ISS_MISMATCH'), 'no trailing-slash normalization');
   assert.doesNotThrow(() => checkIss(new URLSearchParams('code=x'), { recordedIssuer: 'https://a.example', issSupported: undefined }));
@@ -103,7 +108,7 @@ test('oauth refusals: iss mismatch or missing, no PKCE, unattested AS, wider gra
 
 test('oauth bearer: a token for another server is never sent; refresh is host-side with resource and rotation, never wider', async t => {
   const a = await world(t), b = await world(t), kc = memoryKeychain();
-  await connectOAuth(oauthEntry(a), { scopeClass: 'read', channel: 'cli', openUrl: userAgent(), keychainStore: kc.put });
+  await connectOAuth(oauthEntry(a), { scopeClass: 'read', openUrl: userAgent(), keychainStore: kc.put });
   // Entry B shares the keychain refs and even the issuer attestation, but the stored token was issued for A's resource.
   const entryB = oauthEntry(b, { issuer: a.issuer }), connB = new McpConnection(entryB, { keychain: kc.get });
   t.after(() => connB.close());
@@ -127,12 +132,12 @@ test('oauth bearer: a token for another server is never sent; refresh is host-si
 });
 
 test('oauth step-up: a read-scoped write is refused (no automatic up-scope); only a person-approved proposal widens the next connect', async t => {
-  const w = await world(t), kc = memoryKeychain(), ledger = new NodecapLedger(workspace(t));
+  const w = await world(t), kc = memoryKeychain(), ledger = openLedger(workspace(t));
   t.after(() => ledger.close());
-  // The owner under-attested the write class (read scope only).
-  const entry = oauthEntry(w, { scopes: { read: ['tickets:read'], write: ['tickets:read'] } });
-  await connectOAuth(entry, { scopeClass: 'read', channel: 'cli', openUrl: userAgent(), keychainStore: kc.put });
-  await connectOAuth(entry, { scopeClass: 'write', channel: 'cli', openUrl: userAgent(), keychainStore: kc.put });
+  // The owner under-attested the write class (read scope only), and lists tickets:write as a scope a step-up may ask for.
+  const entry = oauthEntry(w, { scopes: { read: ['tickets:read'], write: ['tickets:read'] }, stepUpScopes: ['tickets:write'] });
+  await connectOAuth(entry, { scopeClass: 'read', openUrl: userAgent(), keychainStore: kc.put });
+  await connectOAuth(entry, { scopeClass: 'write', openUrl: userAgent(), keychainStore: kc.put });
   const connection = new McpConnection(entry, { keychain: kc.get, keychainStore: kc.put });
   t.after(() => connection.close());
   const q = await qualifyMcp(entry, connection), guard = new PinGuard(entry, connection, { pins: q.pins, tools: q.tools });
@@ -145,10 +150,10 @@ test('oauth step-up: a read-scoped write is refused (no automatic up-scope); onl
   const proposal = stepUpProposal(ledger, { entry, scopeClass: 'write', scopes: refusal.details.scopes, evidence: { test: true } });
   assert.deepEqual([proposal.kind, proposal.scopes, proposal.quoted[0].label], ['scope.step-up', ['tickets:write'], 'untrusted:mcp.tickets']);
   assert.throws(() => connectScopes(entry, 'write', { ledger, stepUp: proposal.id }), code('OAUTH_SCOPE_UNAPPROVED'), 'open is not approved');
-  assert.throws(() => ledger.decideProposal(proposal.id, { approve: true, channel: 'mcp-elicitation', expectedRev: proposal.rev }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
-  ledger.decideProposal(proposal.id, { approve: true, channel: 'cli', expectedRev: proposal.rev });
+  assert.throws(() => ledger.decideProposal(proposal.id, { person: { channel: 'cli', approve: true, subject: NodecapLedger.proposalSubject(proposal) }, expectedRev: proposal.rev }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
+  decide(ledger, proposal, true);
   assert.throws(() => connectScopes(entry, 'read', { ledger, stepUp: proposal.id }), code('OAUTH_SCOPE_UNAPPROVED'), 'the approval is for the write class only');
-  const again = await connectOAuth(entry, { scopeClass: 'write', channel: 'cli', openUrl: userAgent(), keychainStore: kc.put, ledger, stepUp: proposal.id });
+  const again = await connectOAuth(entry, { scopeClass: 'write', openUrl: userAgent(), keychainStore: kc.put, ledger, stepUp: proposal.id });
   assert.deepEqual(again.scopes, ['tickets:read', 'tickets:write']);
   const fresh = new McpConnection(entry, { keychain: kc.get, keychainStore: kc.put });
   t.after(() => fresh.close());
@@ -157,11 +162,11 @@ test('oauth step-up: a read-scoped write is refused (no automatic up-scope); onl
 
 test('oauth through the runtime: an approved effect with a read-scoped token is refused SCOPE_INSUFFICIENT and opens a step-up proposal; tokens never reach a model', async t => {
   const w = await world(t), kc = memoryKeychain(), dir = workspace(t);
-  const entry = oauthEntry(w, { scopes: { read: ['tickets:read'], write: ['tickets:read'] } });
-  await connectOAuth(entry, { scopeClass: 'read', channel: 'cli', openUrl: userAgent(), keychainStore: kc.put });
-  await connectOAuth(entry, { scopeClass: 'write', channel: 'cli', openUrl: userAgent(), keychainStore: kc.put });
+  const entry = oauthEntry(w, { scopes: { read: ['tickets:read'], write: ['tickets:read'] }, stepUpScopes: ['tickets:write'] });
+  await connectOAuth(entry, { scopeClass: 'read', openUrl: userAgent(), keychainStore: kc.put });
+  await connectOAuth(entry, { scopeClass: 'write', openUrl: userAgent(), keychainStore: kc.put });
   const loaded = loadPolicy(), M = loaded.policy.models.find(m => m.class === 'M').id, envelope = checkEnvelope(DEFAULT_ENVELOPE);
-  const store = new Store(dir), ledger = new NodecapLedger(dir), catalog = checkCatalog(catalogOf(entry), { allowDev: true });
+  const store = new Store(dir), ledger = openLedger(dir), catalog = checkCatalog(catalogOf(entry), { allowDev: true });
   const host = new NodecapHost({ catalog, ledger, envelope, keychain: kc.get, keychainStore: kc.put });
   const step = value => ({ value: { tool: 'none', args: {}, ...value } });
   const provider = new ScriptedProvider({ [M]: [step({ action: 'read', tool: 'tickets_get', args: { id: 42 } }), step({ action: 'act', tool: 'tickets_add_comment', args: { id: 42, body: 'Order 7731' } }), step({ action: 'stuck' })] });
@@ -175,11 +180,11 @@ test('oauth through the runtime: an approved effect with a read-scoped token is 
   const sidecar = { schema: 'foundry-nodecap-toolnodes/1', nodes: { work: { acquire: { systems: ['tickets'], objects: ['ticket'], effectsMax: 'non-idempotent', max: 3 }, maxTurns: 6 } } };
   const construction = await construct({ workflow, sidecar, host, envelope, types: loadTypes(path.join(FIXTURES, 'types.json')), catalogDigest: catalogDigest(catalog) });
   assert.deepEqual(construction.lint.errors, []);
-  ledger.approveLock(subjectOf(construction), { channel: 'cli' });
+  approveVersion(ledger, construction);
   const { runtime, run: created } = await launch({ store, ledger, host, construction, envelope, models, modelPolicy: loaded });
   let run = await executeRun({ runtime, host, runId: created.id });
   assert.equal(run.status, 'awaiting_approval', JSON.stringify(run.error));
-  for (const id of Object.keys(run.approvals)) runtime.approve(run.id, id, true, 'user');
+  for (const id of Object.keys(run.approvals)) await approveCall({ runtime, ledger, host, lock: construction.lock, run, approvalId: id });
   run = await executeRun({ runtime, host, runId: run.id });
   assert.equal(run.error?.code, 'NODE_STUCK');
   const turn1 = run.frames['root/work__loop:1'].outputs.act;

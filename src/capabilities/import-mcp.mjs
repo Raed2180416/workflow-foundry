@@ -44,23 +44,28 @@ export function pinsOf(entry, listing) {
 }
 
 /**
- * Qualify one MCP entry: list, pin, compare with the attested pin (if any), check each attested member exists, map annotations, refuse
- * schemas outside the subset, and build member records. A pin mismatch quarantines the entry (DEFINITION_CHANGED); a tighter hint than the
- * attestation quarantines it too (ATTESTATION_HINT_CONFLICT). Returns { pins, tools, members }.
+ * Qualify one MCP entry: list, pin, compare with the reference pins, check each attested member exists, map annotations, refuse schemas
+ * outside the subset, and build member records. The reference is the owner's attested pin, else the ledger's pin baseline: the first
+ * listing ever seen in this workspace (recorded as trust on first use) until a person accepts a new definition. So a definition that
+ * changes between processes is caught at the next qualification, not silently re-qualified (M2). A mismatch quarantines the entry
+ * (DEFINITION_CHANGED); a tighter hint than the attestation quarantines it too (ATTESTATION_HINT_CONFLICT). Returns { pins, tools, members }.
  */
 export async function qualifyMcp(entry, connection, { ledger = null } = {}) {
   // The notification count BEFORE listing: a list_changed that races the listing marks the pins stale (an extra re-list, never a miss).
   const changesBefore = connection.listChanges ?? 0, listedAt = Date.now();
   const listing = await connection.listAll();
   const pins = pinsOf(entry, listing), byName = new Map(listing.tools.map(t => [t.name, t]));
-  if (entry.pin) {
-    const compared = comparePins(entry.pin, pins);
+  const reference = entry.pin ?? ledger?.pinBaseline(entry.id)?.pins ?? null;
+  if (reference) {
+    const compared = comparePins(reference, pins);
     if (!compared.ok) {
-      ledger?.quarantine(entry.id, 'DEFINITION_CHANGED', { changed: compared.changed.map(c => c.tool), added: compared.added, removed: compared.removed });
-      fail('DEFINITION_CHANGED', `Server ${entry.id} no longer matches its attested pin`, { entry: entry.id, changed: compared.changed.map(c => c.tool), added: compared.added, removed: compared.removed, serverChanged: compared.serverChanged });
+      ledger?.recordPins(entry.id, pins);
+      ledger?.quarantine(entry.id, 'DEFINITION_CHANGED', { changed: compared.changed.map(c => c.tool), added: compared.added, removed: compared.removed, against: entry.pin ? 'attested' : 'baseline' });
+      fail('DEFINITION_CHANGED', `Server ${entry.id} no longer matches its ${entry.pin ? 'attested pin' : 'recorded pin baseline'}`, { entry: entry.id, changed: compared.changed.map(c => c.tool), added: compared.added, removed: compared.removed, serverChanged: compared.serverChanged });
     }
   }
   ledger?.recordPins(entry.id, pins);
+  if (!entry.pin) ledger?.firstPins(entry.id, pins);
   const members = [];
   for (const [name, attestation] of Object.entries(entry.members ?? {})) {
     const tool = byName.get(name);

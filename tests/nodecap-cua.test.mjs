@@ -20,15 +20,17 @@ const PASSWORD = `pw-${randomUUID()}`;
 const env = { STOCKROOM_USER: 'ops@stockroom.test', STOCKROOM_PASSWORD: PASSWORD };
 let chromium, sessions, scrub;
 
-function cuaEntry(origin) {
+// The owner's safe-GET allowlist for the Stockroom pages (GET has no side effect there); every other request is held.
+const SAFE = ['/', '/vendors/*', '/invoices/*', '/settings'];
+function cuaEntry(origin, { safeGets = SAFE } = {}) {
   return checkCatalog(catalogOf({ id: 'stockroom-ui', kind: 'cua', trust: 'T0', status: 'active', dev: true,
-    source: { backend: 'playwright-local', origins: [origin], profile: 'S0' },
+    source: { backend: 'playwright-local', origins: [origin], profile: 'S0', ...(safeGets ? { safeGets } : {}) },
     login: { path: '/login', user: { env: 'STOCKROOM_USER' }, password: { env: 'STOCKROOM_PASSWORD' } }, limits: { maxSteps: 60, observationTokens: 2500 } }), { allowDev: true }).entries[0];
 }
-async function world(t, options = {}) {
+async function world(t, { safeGets = SAFE, ...options } = {}) {
   const app = await startStockroom({ password: PASSWORD, ...options });
   t.after(() => app.close());
-  const entry = cuaEntry(app.origin), runId = `run-${randomUUID().slice(0, 8)}`;
+  const entry = cuaEntry(app.origin, { safeGets }), runId = `run-${randomUUID().slice(0, 8)}`;
   t.after(() => sessions.closeRun(runId));
   const session = await sessions.get({ runId, node: 'work', entry });
   return { app, entry, session, runId };
@@ -47,7 +49,8 @@ test('cua G3: Chromium launches headless from an explicit executablePath; login 
   const { app, session } = await world(t);
   assert.equal(app.ledger.logins, 1);
   const obs = await session.observe();
-  assert.equal(obs.title, 'Inventory');
+  assert.equal(obs.path, '/');
+  assert.equal(Object.hasOwn(obs, 'title'), false, 'the page title (site text) is not in the planner view');
   assert.ok(indexOf(obs, 'button', 'Save item'));
   assert.equal(scrub.contains(`x${PASSWORD}x`), true, 'the login secret is in the scrub set');
   assert.doesNotMatch(JSON.stringify(obs), new RegExp(PASSWORD));
@@ -107,26 +110,28 @@ test('cua: every non-GET is held (COMMIT_REQUIRED) and the server ledger is unch
   assert.equal(out.pending[0].method, 'GET');
   assert.deepEqual(app.ledger.writes, [], 'no write reached the server');
   assert.equal(app.ledger.logouts, 0);
-  // Commit replays exactly the held request, once; the descriptor must match; a second identical commit is refused.
-  const descriptor = ({ id, method, origin, path: p, bodyHash }) => ({ id, method, origin, path: p, bodyHash });
-  await assert.rejects(session.commit({ ...descriptor(addr.pending[0]), bodyHash: '0'.repeat(64) }), code('COMMIT_MISMATCH'));
-  const committed = await session.commit(descriptor(addr.pending[0]));
+  // The host's own record of the held request (what a person approves): method, path and the decoded body.
+  const shown = session.describeHeld(addr.pending[0].id);
+  assert.deepEqual([shown.method, shown.path, shown.body], ['POST', '/vendors/V-9/address', { kind: 'form', fields: [['street', '7 New Street'], ['city', 'Leeds']] }]);
+  // Commit replays exactly the held request, once, named by its id; a second commit of the same id is refused.
+  const committed = await session.commit({ id: addr.pending[0].id });
   assert.equal(committed.committed, true);
   assert.deepEqual(app.ledger.writes, [{ kind: 'vendor.address', vendor: 'V-9', street: '7 New Street', city: 'Leeds' }]);
-  await assert.rejects(session.commit(descriptor(addr.pending[0])), code('COMMIT_UNKNOWN'));
+  await assert.rejects(session.commit({ id: addr.pending[0].id }), code('COMMIT_UNKNOWN'));
   assert.equal(app.ledger.writes.length, 1);
   assert.equal((await session.assert({ textPresent: '7 New Street, Leeds' })).pass, true, 'verified on the DOM after reload');
 });
 
 test('cua: off-allowlist links and redirect hops are blocked (ORIGIN_VIOLATION) and the page is restored', { skip }, async t => {
-  const { session } = await world(t);
+  // /redir is attested safe here so that its redirect hop (to evil.test) is followed and must be caught by the resolver and origin check.
+  const { session } = await world(t, { safeGets: [...SAFE, '/redir'] });
   const obs = await session.observe();
   const partner = await session.act({ basis: obs.basis, index: indexOf(obs, 'link', 'Partner portal'), op: 'click' });
   assert.equal(partner.code, 'ORIGIN_VIOLATION');
-  assert.equal(partner.observation.title, 'Inventory');
+  assert.equal(partner.observation.path, '/');
   const hop = await session.act({ basis: partner.observation.basis, index: indexOf(partner.observation, 'link', 'Old reports'), op: 'click' });
   assert.equal(hop.code, 'ORIGIN_VIOLATION', 'the redirect to evil.test is caught by the resolver rule plus the post-action origin check');
-  assert.equal(hop.observation.title, 'Inventory');
+  assert.equal(hop.observation.path, '/');
   await assert.rejects(session.goto('https://evil.example/'), code('ORIGIN_VIOLATION'));
 });
 
@@ -137,7 +142,7 @@ test('cua: the toast lies; only a check on the reloaded DOM and the server oracl
   const held = await session.act({ basis: obs.basis, index: indexOf(obs, 'button', 'Save item'), op: 'click' });
   // The page's toast says "Saved" even though the write was held and never sent: a toast-level check passes and proves nothing.
   assert.equal((await session.assert({ textPresent: 'Saved Phantom', noReload: true })).pass, true);
-  await session.commit(held.pending[0]);
+  await session.commit({ id: held.pending[0].id });
   // The server acknowledged (toastLies drops the write); a toast-level check would pass, the reload check and the oracle fail.
   assert.equal(app.ledger.writes.length, 0);
   assert.equal((await session.assert({ rowContains: 'Phantom', table: 'Items' })).pass, false);

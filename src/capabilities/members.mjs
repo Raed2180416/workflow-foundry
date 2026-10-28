@@ -7,13 +7,20 @@ const ATTESTED = ['type', 'system', 'verbs', 'objects', 'intents', 'effects', 'r
   'outputMode', 'outputSchema', 'idempotencyArgument', 'modelViewTokens', 'scopes', 'capability'];
 export const custodyOf = (entry, catalog = null) => entry.credential?.custody ?? (entry.connection ? catalog?.entries.find(e => e.id === entry.connection)?.credential?.custody : null) ?? null;
 
+/** The attested fields a member record carries (and hashes), with their defaults. */
+function attestedFields(attestation) {
+  const attested = Object.fromEntries(ATTESTED.filter(k => attestation[k] !== undefined).map(k => [k, clone(attestation[k])]));
+  attested.requiresApproval ??= attested.risk === 'high';
+  attested.intents ??= [];
+  return attested;
+}
+/** The attestationHash a member built from this owner attestation gets (what a proposal for a not-yet-qualified MCP tool records). */
+export const attestationHashOf = attestation => `sha256:${digest(attestedFields(attestation))}`;
 /** Build a member record. `id` defaults to `<prefix>.<entry>.<name>` (mcp. for MCP kinds). */
 export function memberRecord({ entry, name, attestation, pins, adapter, id = null, custody = undefined, extra = {} }) {
   const view = clone(attestation.view);
   if (!new RegExp(LABEL).test(attestation.outputLabel)) fail('MEMBER_LABEL', `Member ${entry.id}/${name} has an invalid output label`);
-  const attested = Object.fromEntries(ATTESTED.filter(k => attestation[k] !== undefined).map(k => [k, clone(attestation[k])]));
-  attested.requiresApproval ??= attested.risk === 'high';
-  attested.intents ??= [];
+  const attested = attestedFields(attestation);
   const record = {
     id: id ?? `${entry.kind.startsWith('mcp') ? 'mcp' : entry.kind}.${entry.id}.${name}`, entryId: entry.id, kind: entry.kind, tool: name, trust: entry.trust,
     custody: custody === undefined ? custodyOf(entry) : custody, ...attested, view, argMap: attestation.argMap ? clone(attestation.argMap) : null,

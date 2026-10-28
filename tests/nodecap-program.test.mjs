@@ -23,7 +23,7 @@ import { loadTypes } from '../src/capabilities/types.mjs';
 import { construct, launch, subjectOf } from '../src/capabilities/launcher.mjs';
 import { runProgram, parseFrame } from '../src/capabilities/rpc-sandbox.mjs';
 import { EU_OPEN_SUM } from '../experiments/nodecap/bed/tasks.mjs';
-import { FIXTURES, catalogOf, crmEntry, ledgerLines, workspace } from './support/nodecap.mjs';
+import { FIXTURES, catalogOf, crmEntry, ledgerLines, workspace, openLedger, approveVersion } from './support/nodecap.mjs';
 
 const code = expected => error => { assert.equal(error.code, expected, `${error.code}: ${error.message}`); return true; };
 const sha = file => createHash('sha256').update(readFileSync(file)).digest('hex');
@@ -117,7 +117,7 @@ test('program: admission refuses effectful or absent uses and a wrong hash; a so
 test('program through the runtime: a T03-shaped tool node answers in two model turns with the program bound (six with the page tool)', async t => {
   if (!(await sandboxOr(t))) return;
   const dir = workspace(t), loaded = loadPolicy(), M = loaded.policy.models.find(m => m.class === 'M').id;
-  const store = new Store(dir), ledger = new NodecapLedger(dir), catalog = checkCatalog(catalogOf(crmEntry({ ledger: path.join(dir, 'crm.jsonl') }), programEntry()));
+  const store = new Store(dir), ledger = openLedger(dir), catalog = checkCatalog(catalogOf(crmEntry({ ledger: path.join(dir, 'crm.jsonl') }), programEntry()));
   const host = new NodecapHost({ catalog, ledger, envelope });
   const step = value => ({ value: { tool: 'none', args: {}, ...value } });
   const provider = new ScriptedProvider({ [M]: args => /"turn":1/.test(args.prompt)
@@ -133,7 +133,7 @@ test('program through the runtime: a T03-shaped tool node answers in two model t
   const sidecar = { schema: 'foundry-nodecap-toolnodes/1', nodes: { work: { requires: [{ as: 'sum', type: 'deal.sum' }], maxTurns: 4 } } };
   const construction = await construct({ workflow, sidecar, host, envelope, types, catalogDigest: catalogDigest(catalog) });
   assert.deepEqual([construction.lint.errors, construction.lock.nodes.work.bound], [[], ['program.deal-totals.eu_total']]);
-  ledger.approveLock(subjectOf(construction), { channel: 'cli' });
+  approveVersion(ledger, construction);
   const run = await (await launch({ store, ledger, host, construction, envelope, models, modelPolicy: loaded })).execute();
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
   assert.deepEqual(run.outputs.work, { total: EU_OPEN_SUM });

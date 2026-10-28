@@ -16,7 +16,7 @@ import { NodecapLedger } from '../src/capabilities/ledger.mjs';
 import { NodecapHost, memberDrift } from '../src/capabilities/host.mjs';
 import { loadTypes } from '../src/capabilities/types.mjs';
 import { construct, launch, subjectOf, executeRun, runtimeFor } from '../src/capabilities/launcher.mjs';
-import { FIXTURES, catalogOf, crmEntry, ledgerLines, workspace } from './support/nodecap.mjs';
+import { FIXTURES, catalogOf, crmEntry, ledgerLines, workspace, openLedger, approveVersion, person } from './support/nodecap.mjs';
 
 const loaded = loadPolicy(), M = loaded.policy.models.find(m => m.class === 'M').id;
 const envelope = checkEnvelope(DEFAULT_ENVELOPE), types = loadTypes(path.join(FIXTURES, 'types.json'));
@@ -35,12 +35,12 @@ const hostIn = (t, ledger, dir, variant) => { const host = new NodecapHost({ cat
 const modelsFor = (store, script) => { const provider = new ScriptedProvider({ [M]: script }); return { provider, models: new ModelPort({ policy: loaded.policy, providers: { 'claude-cli': provider, 'llama-server': provider }, journal: new Journal(store) }) }; };
 
 test('drift: a definition change after approval refuses the launch (DEFINITION_CHANGED, quarantined) and every call of a stored-lock registry', async t => {
-  const dir = workspace(t), store = new Store(dir), ledger = new NodecapLedger(dir);
+  const dir = workspace(t), store = new Store(dir), ledger = openLedger(dir);
   t.after(() => { store.close(); ledger.close(); });
   // Process 1: construct, approve, run. Definitions "a".
   const host1 = hostIn(t, ledger, dir, 'a'), first = modelsFor(store, SCRIPT);
   const construction = await construct({ workflow, sidecar, host: host1, envelope, types, catalogDigest: catalogDigest(catalog) });
-  ledger.approveLock(subjectOf(construction), { channel: 'cli' });
+  approveVersion(ledger, construction);
   const run1 = await (await launch({ store, ledger, host: host1, construction, envelope, models: first.models, modelPolicy: loaded })).execute();
   assert.equal(run1.status, 'succeeded', JSON.stringify(run1.error));
   assert.equal(ledgerLines(path.join(dir, 'crm.jsonl')).length, 1);
@@ -57,21 +57,25 @@ test('drift: a definition change after approval refuses the launch (DEFINITION_C
   assert.equal(run2.error?.code, 'NODE_STUCK');
   assert.deepEqual([run2.frames['root/work__loop:0'].outputs.do.ok, run2.frames['root/work__loop:0'].outputs.do.code], [false, 'DEFINITION_CHANGED']);
   assert.equal(ledgerLines(path.join(dir, 'crm.jsonl')).length, 1, 'the changed server received no call');
-  // Through launch (process 3, with the ledger): the preflight refuses and quarantines the entry.
+  // Process 3, with the ledger: qualification itself compares the listing with the workspace's pin baseline (recorded by process 1) and
+  // quarantines the entry (review M2: no trust-on-first-use per process); the launch preflight then refuses.
   const host3 = hostIn(t, ledger, dir, 'c');
   await host3.qualify();
+  assert.deepEqual(host3.failures, [{ entry: 'crm', code: 'DEFINITION_CHANGED' }]);
   await assert.rejects(launch({ store, ledger, host: host3, construction, envelope, models: second.models, modelPolicy: loaded }), error => {
     assert.equal(error.code, 'PREFLIGHT_FAILED');
-    assert.ok(error.details.problems.some(p => p.code === 'DEFINITION_CHANGED' && p.member === member), JSON.stringify(error.details.problems));
+    assert.ok(error.details.problems.some(p => ['TOOL_ABSENT', 'CAPABILITY_QUARANTINED'].includes(p.code)), JSON.stringify(error.details.problems));
     return true;
   });
   assert.equal(ledger.status('crm').status, 'quarantined');
-  assert.ok(ledger.quarantineLog('crm').some(q => q.code === 'DEFINITION_CHANGED' && q.since === 'lock'));
+  assert.ok(ledger.quarantineLog('crm').some(q => q.code === 'DEFINITION_CHANGED' && q.against === 'baseline'));
   // Back to "a" in a fresh process: no drift, but the entry stays quarantined until the owner reactivates it (status machine, CAS).
   const host4 = hostIn(t, ledger, dir, 'a');
   await host4.qualify();
   assert.equal(host4.member(member), null, 'a quarantined entry contributes no members');
-  ledger.setStatus('crm', { to: 'active', expectedRev: ledger.status('crm').rev, actor: 'owner', reason: 'reviewed' });
+  const rev = ledger.status('crm').rev;
+  assert.throws(() => ledger.setStatus('crm', { to: 'active', expectedRev: rev, actor: 'owner', reason: 'reviewed' }), code('APPROVAL_CHANNEL_INSUFFICIENT'), 'naming the owner is not a person decision');
+  ledger.setStatus('crm', { to: 'active', expectedRev: rev, reason: 'reviewed', person: person(NodecapLedger.statusSubject({ entryId: 'crm', status: 'quarantined', to: 'active', rev }), true) });
   const host5 = hostIn(t, ledger, dir, 'a');
   await host5.qualify();
   assert.equal(memberDrift(construction.lock.members[member], host5.member(member)), null);

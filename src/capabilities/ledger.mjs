@@ -1,8 +1,9 @@
 // The nodecap ledger (`.foundry/nodecap.sqlite`): mutable host records of the capability layer, ARCHITECTURE.md §2.1 and §3.2. Entry status
-// (quarantine, revocation), observed pins, receipts, proposals, lock approvals and flow heads. Every write is a compare-and-swap on a
-// revision; widening decisions (admit, bind into a lock, scope step-up) are accepted only from a person's channel (dashboard or CLI).
-// Run grants are NOT authoritative here: they are adaptation decisions in the run's hash chain (src/store.mjs recordDecision); the
-// grants_cache table is a lookup that is rebuilt from the chain.
+// (quarantine, revocation), observed pins and the pin baseline, receipts, proposals, lock approvals, per-call person decisions and flow
+// heads. Every write is a compare-and-swap on a revision; widening decisions (admit, bind into a lock, re-activate an entry, accept new pins,
+// a scope step-up) and per-call effect approvals are accepted only as a PersonDecision for the exact subject (./person.mjs), never as a
+// channel name. Run grants are NOT authoritative here: they are adaptation decisions in the run's hash chain (src/store.mjs
+// recordDecision); the grants_cache table is a lookup that is rebuilt from the chain.
 import { DatabaseSync } from 'node:sqlite';
 import { chmodSync, lstatSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
@@ -10,22 +11,20 @@ import { randomUUID } from 'node:crypto';
 import { canonical, checkData } from '../data.mjs';
 import { digest, fail } from './common.mjs';
 import { STATUSES } from './catalog.mjs';
+import { acceptPerson, DEFAULT_PERSON_CHANNELS, PERSON_CHANNELS, subjectOf } from './person.mjs';
 
-export const WIDEN_CHANNELS = Object.freeze(['dashboard', 'cli']);
-// Status machine (catalog entries): imported → qualified → active ⇄ quarantined → revoked.
+// Status machine (catalog entries): imported → qualified → active ⇄ quarantined → revoked. A move TO active widens (the entry becomes
+// bindable) and needs a person; quarantine and revocation narrow and are host actions.
 const TRANSITIONS = { imported: ['qualified', 'revoked'], qualified: ['active', 'quarantined', 'revoked'], active: ['quarantined', 'revoked'], quarantined: ['active', 'revoked'], revoked: [] };
 const PROPOSAL_KINDS = ['capability.bind', 'capability.admit', 'capability.definition-changed', 'scope.step-up'];
 const json = value => canonical(value);
 const parse = row => row ? JSON.parse(row.body) : null;
 
-/** A widening decision channel must be a person's (I3). An SDK client can answer an MCP elicitation itself, so elicitation never widens. */
-export function requireWidenChannel(channel, allowed = WIDEN_CHANNELS) {
-  if (!allowed.includes(channel)) fail('APPROVAL_CHANNEL_INSUFFICIENT', `Widening decisions are accepted only from ${allowed.join(' or ')}; ${String(channel).slice(0, 40)} cannot widen authority`, { channel });
-  return channel;
-}
-
 export class NodecapLedger {
-  constructor(workspace) {
+  /** `channels`: the person channels whose decisions this ledger accepts (default cli and dashboard; beds and tests add 'scripted'). */
+  constructor(workspace, { channels = DEFAULT_PERSON_CHANNELS } = {}) {
+    if (!Array.isArray(channels) || !channels.length || channels.some(c => !PERSON_CHANNELS.includes(c))) fail('LEDGER_CHANNELS', `Person channels are among ${PERSON_CHANNELS.join(', ')}`);
+    this.channels = Object.freeze([...channels]);
     const dir = path.join(workspace, '.foundry');
     mkdirSync(dir, { recursive: true, mode: 0o700 });
     if (lstatSync(dir).isSymbolicLink()) fail('LEDGER_PATH', '.foundry must not be a symlink');
@@ -44,7 +43,9 @@ export class NodecapLedger {
       CREATE TABLE IF NOT EXISTS locks(lock_hash TEXT PRIMARY KEY, body TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS lock_approvals(subject TEXT PRIMARY KEY, body TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS heads(flow_id TEXT PRIMARY KEY, rev INTEGER NOT NULL, body TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS grants_cache(run_id TEXT NOT NULL, node TEXT NOT NULL, member TEXT NOT NULL, decision_id TEXT NOT NULL, PRIMARY KEY(run_id, node, member));`);
+      CREATE TABLE IF NOT EXISTS grants_cache(run_id TEXT NOT NULL, node TEXT NOT NULL, member TEXT NOT NULL, decision_id TEXT NOT NULL, PRIMARY KEY(run_id, node, member));
+      CREATE TABLE IF NOT EXISTS pin_baseline(entry_id TEXT PRIMARY KEY, rev INTEGER NOT NULL, body TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS person_decisions(subject TEXT PRIMARY KEY, body TEXT NOT NULL);`);
   }
   close() { this.db.close(); }
   tx(fn) {
@@ -63,14 +64,24 @@ export class NodecapLedger {
   }
   // ---- entry status ----
   status(entryId) { const row = this.db.prepare('SELECT rev, body FROM entry_status WHERE entry_id=?').get(entryId); return row ? { rev: row.rev, ...JSON.parse(row.body) } : null; }
-  /** Move an entry along the status machine (CAS on its revision; 0 for an entry the ledger has not seen, whose status is `from`). */
-  setStatus(entryId, { from, to, expectedRev = null, reason = '', actor = 'host' }) {
+  /** The subject a person decides to move an entry to `to` from (status, rev). */
+  static statusSubject({ entryId, status, to, rev }) { return subjectOf({ kind: 'entry.status', entryId, status, to, rev }); }
+  /**
+   * Move an entry along the status machine (CAS on its revision; 0 for an entry the ledger has not seen, whose status is `from`). A move to
+   * active widens authority: it needs `person`, a PersonDecision (approve) for statusSubject({entryId, status, to, rev}).
+   */
+  setStatus(entryId, { from, to, expectedRev = null, reason = '', actor = 'host', person = null }) {
     if (!STATUSES.includes(to)) fail('LEDGER_STATUS', `Unknown status ${to}`);
     return this.tx(() => {
       const current = this.status(entryId), rev = current?.rev ?? 0, status = current?.status ?? from;
       if (expectedRev !== null && rev !== expectedRev) fail('CONFLICT', `Entry ${entryId} is at revision ${rev}, not ${expectedRev}`, { rev });
       if (!(TRANSITIONS[status] ?? []).includes(to)) fail('LEDGER_TRANSITION', `Entry ${entryId} cannot move from ${status} to ${to}`);
-      const body = json({ status: to, reason: String(reason).slice(0, 300), actor: String(actor).slice(0, 40), at: Date.now() });
+      let decided = null;
+      if (to === 'active') {
+        decided = acceptPerson(person, NodecapLedger.statusSubject({ entryId, status, to, rev }), { channels: this.channels });
+        if (!decided.approve) fail('PERSON_DECLINED', `The person declined to activate ${entryId}`);
+      }
+      const body = json({ status: to, reason: String(reason).slice(0, 300), actor: decided ? decided.channel : String(actor).slice(0, 40), ...(decided ? { principal: decided.principal } : {}), at: Date.now() });
       if (current) {
         if (this.db.prepare('UPDATE entry_status SET rev=?, body=? WHERE entry_id=? AND rev=?').run(rev + 1, body, entryId, rev).changes !== 1) fail('CONFLICT', `Entry ${entryId} changed concurrently`);
       } else this.db.prepare('INSERT INTO entry_status VALUES(?,?,?)').run(entryId, 1, body);
@@ -92,6 +103,37 @@ export class NodecapLedger {
     this.db.prepare('INSERT INTO pins_observed VALUES(?,?,?,?) ON CONFLICT(entry_id, server) DO NOTHING').run(entryId, pins.server, json(pins), Date.now());
   }
   observedPins(entryId) { return this.db.prepare('SELECT body FROM pins_observed WHERE entry_id=? ORDER BY at').all(entryId).map(parse); }
+  /**
+   * The reference pins of an entry without an attested pin: the first listing ever observed in this workspace (trust on first use, recorded
+   * as such), until a person accepts a new definition (acceptPins). Every later qualification, in any process, is compared with it.
+   */
+  pinBaseline(entryId) { const row = this.db.prepare('SELECT rev, body FROM pin_baseline WHERE entry_id=?').get(entryId); return row ? { rev: row.rev, ...JSON.parse(row.body) } : null; }
+  /** Record the first observed pins as the baseline (no-op when one exists). Returns the baseline in force. */
+  firstPins(entryId, pins) {
+    checkData(pins);
+    this.db.prepare('INSERT INTO pin_baseline VALUES(?,?,?) ON CONFLICT(entry_id) DO NOTHING').run(entryId, 1, json({ pins, by: 'first-use', at: Date.now() }));
+    return this.pinBaseline(entryId);
+  }
+  static pinsSubject({ entryId, pins, rev }) { return subjectOf({ kind: 'entry.pins', entryId, pins, rev }); }
+  /** A person accepts a changed definition: the baseline becomes `pins` (CAS on its revision) and a quarantined entry becomes active again. */
+  acceptPins(entryId, pins, { person, expectedRev }) {
+    checkData(pins);
+    return this.tx(() => {
+      const current = this.pinBaseline(entryId), rev = current?.rev ?? 0;
+      if (rev !== expectedRev) fail('CONFLICT', `The pin baseline of ${entryId} is at revision ${rev}, not ${expectedRev}`, { rev });
+      const decided = acceptPerson(person, NodecapLedger.pinsSubject({ entryId, pins, rev }), { channels: this.channels });
+      if (!decided.approve) fail('PERSON_DECLINED', `The person declined the new definition of ${entryId}`);
+      const body = json({ pins, by: decided.channel, principal: decided.principal, at: Date.now() });
+      if (rev === 0) this.db.prepare('INSERT INTO pin_baseline VALUES(?,?,?)').run(entryId, 1, body);
+      else if (this.db.prepare('UPDATE pin_baseline SET rev=?, body=? WHERE entry_id=? AND rev=?').run(rev + 1, body, entryId, rev).changes !== 1) fail('CONFLICT', `The pin baseline of ${entryId} changed concurrently`);
+      const status = this.status(entryId);
+      if (status?.status === 'quarantined') {
+        const body2 = json({ status: 'active', reason: 'definition accepted by a person', actor: decided.channel, principal: decided.principal, at: Date.now() });
+        if (this.db.prepare('UPDATE entry_status SET rev=?, body=? WHERE entry_id=? AND rev=?').run(status.rev + 1, body2, entryId, status.rev).changes !== 1) fail('CONFLICT', `Entry ${entryId} changed concurrently`);
+      }
+      return { rev: rev + 1 };
+    });
+  }
   receipt(kind, body) {
     checkData(body);
     const id = `${kind}:${digest(body)}`;
@@ -108,13 +150,19 @@ export class NodecapLedger {
   lock(lockHash) { return parse(this.db.prepare('SELECT body FROM locks WHERE lock_hash=?').get(lockHash)); }
   /** The approval subject of a version: what a person approves (the lowered workflow, its lock, the envelope and catalog it was resolved under, and the dry run shown). */
   static subject({ workflowHash, lockHash, envelopeDigest, catalogDigest, dryRunId = null }) { return `sha256:${digest({ workflowHash, lockHash, envelopeDigest, catalogDigest, dryRunId })}`; }
-  approveLock(parts, { channel, actor = 'owner' }) {
-    requireWidenChannel(channel);
-    const subject = NodecapLedger.subject(parts);
-    this.db.prepare('INSERT INTO lock_approvals VALUES(?,?) ON CONFLICT(subject) DO NOTHING').run(subject, json({ ...parts, channel, actor: String(actor).slice(0, 40), at: Date.now() }));
+  /** A person approves one version: `person` is a PersonDecision (approve) for NodecapLedger.subject(parts). */
+  approveLock(parts, { person }) {
+    const subject = NodecapLedger.subject(parts), decided = acceptPerson(person, subject, { channels: this.channels });
+    if (!decided.approve) fail('PERSON_DECLINED', 'The person declined this version');
+    this.db.prepare('INSERT INTO lock_approvals VALUES(?,?) ON CONFLICT(subject) DO NOTHING').run(subject, json({ ...parts, channel: decided.channel, principal: decided.principal, at: decided.at }));
     return subject;
   }
-  lockApproval(parts) { return parse(this.db.prepare('SELECT body FROM lock_approvals WHERE subject=?').get(NodecapLedger.subject(parts))); }
+  /** The approval of one version, if a person approved it on a channel THIS ledger accepts (a bed's scripted approval in the same file
+   *  does not count for a production ledger). */
+  lockApproval(parts) { return this.#accepted(parse(this.db.prepare('SELECT body FROM lock_approvals WHERE subject=?').get(NodecapLedger.subject(parts)))); }
+  #accepted(record) { return record && this.channels.includes(record.channel) ? record : null; }
+  /** Whether a proposal was approved by a person on a channel this ledger accepts. */
+  approvedProposal(id) { const p = this.proposal(id); return p?.status === 'approved' && this.channels.includes(p.decision?.channel) ? p : null; }
   // ---- proposals (foundry-capability-proposal/1) ----
   putProposal(proposal) {
     if (!PROPOSAL_KINDS.includes(proposal.kind)) fail('PROPOSAL_KIND', `Unknown proposal kind ${proposal.kind}`);
@@ -127,20 +175,32 @@ export class NodecapLedger {
   proposals({ status = null } = {}) {
     return (status ? this.db.prepare('SELECT id FROM proposals WHERE status=? ORDER BY rowid').all(status) : this.db.prepare('SELECT id FROM proposals ORDER BY rowid').all()).map(r => this.proposal(r.id));
   }
-  /** A person decides a proposal (CAS on its revision; one winner among concurrent deciders). Only a widening channel decides. */
-  decideProposal(id, { approve, channel, actor = 'owner', expectedRev }) {
-    requireWidenChannel(channel);
-    if (typeof approve !== 'boolean') fail('APPROVAL_AUTHORITY', 'An explicit approve true/false decision is required');
+  /** The subject a person decides for one proposal at one revision: its whole recorded body (what the dashboard or CLI renders). */
+  static proposalSubject(proposal) { const { status, decision, ...body } = proposal; return subjectOf({ kind: 'proposal', ...body }); }
+  /** A person decides a proposal (CAS on its revision; one winner among concurrent deciders): `person` is a PersonDecision for proposalSubject. */
+  decideProposal(id, { person, expectedRev }) {
     return this.tx(() => {
       const current = this.proposal(id);
       if (!current) fail('NOT_FOUND', `No proposal ${id}`);
       if (current.status !== 'open' || current.rev !== expectedRev) fail('CONFLICT', `Proposal ${id} is ${current.status} at revision ${current.rev}`, { rev: current.rev, status: current.status });
-      const status = approve ? 'approved' : 'declined', body = { ...current, status, decision: { approve, channel, actor: String(actor).slice(0, 40), at: Date.now() } };
+      const decided = acceptPerson(person, NodecapLedger.proposalSubject(current), { channels: this.channels }), approve = decided.approve;
+      const status = approve ? 'approved' : 'declined', body = { ...current, status, decision: { approve, channel: decided.channel, principal: decided.principal, at: decided.at } };
       delete body.rev;
       if (this.db.prepare('UPDATE proposals SET rev=?, status=?, body=? WHERE id=? AND rev=?').run(expectedRev + 1, status, json(body), id, expectedRev).changes !== 1) fail('CONFLICT', `Proposal ${id} changed concurrently`);
       return { ...body, rev: expectedRev + 1 };
     });
   }
+  /** Open proposals for the same thing (kind and dedup key): a hostile server cannot raise one per turn. */
+  openProposal(dedupKey) { return this.proposals({ status: 'open' }).find(p => p.dedupKey === dedupKey) ?? null; }
+  /** Proposals raised during one run (every kind counts against the run's proposal limit). */
+  proposalsOfRun(runId) { return this.proposals().filter(p => p.evidence?.runId === runId); }
+  // ---- per-call person decisions (L2): the decision for one effect call, bound to the host's rendering of that call ----
+  recordCallDecision(subject, person) {
+    const decided = acceptPerson(person, subject, { channels: this.channels });
+    this.db.prepare('INSERT INTO person_decisions VALUES(?,?) ON CONFLICT(subject) DO NOTHING').run(subject, json({ subject, ...decided }));
+    return this.callDecision(subject);
+  }
+  callDecision(subject) { return this.#accepted(parse(this.db.prepare('SELECT body FROM person_decisions WHERE subject=?').get(subject))); }
   // ---- flow heads: which (workflowHash, lockHash) a flow currently runs (CAS) ----
   head(flowId) { const row = this.db.prepare('SELECT rev, body FROM heads WHERE flow_id=?').get(flowId); return row ? { rev: row.rev, ...JSON.parse(row.body) } : null; }
   setHead(flowId, { workflowHash, lockHash, expectedRev = 0 }) {

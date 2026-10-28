@@ -12,10 +12,14 @@ export const DEFAULT_ENVELOPE = Object.freeze({
   standby: { maxPerNode: 20, trust: ['T0', 'T1', 'T2'] },
   limits: { boundPerNode: 5, skillsPerNode: 3, skillTokens: 1200, grantsPerRun: 10, proposalsPerRun: 2, relistTtlMs: 60000 },
   denyTools: ['*manage_connections*', 'auto_provision_mcp', 'enable_zapier_action', 'manage_zapier_connections', 'handle_auth_failure', 'COMPOSIO_MANAGE_CONNECTIONS'],
+  // Self-provisioning is refused by what the owner attested a member IS (its type, the objects it acts on), whatever the server calls it:
+  // a connection manager renamed `connect_app` is still type connection.manage (review M4). Names stay as a second net.
+  denyTypes: ['connection.*', 'credential.*', 'mcp-server.*', 'tool.provision*'],
+  denyObjects: ['connection', 'credential', 'mcp-server'],
   widenChannels: ['dashboard', 'cli']
 });
 const list = items => ({ type: 'array', uniqueItems: true, maxItems: 10, items: { enum: items } });
-export const envelopeSchema = { type: 'object', additionalProperties: false, required: ['schema', 'autoBind', 'standby', 'limits', 'denyTools', 'widenChannels'], properties: {
+export const envelopeSchema = { type: 'object', additionalProperties: false, required: ['schema', 'autoBind', 'standby', 'limits', 'denyTools', 'denyTypes', 'denyObjects', 'widenChannels'], properties: {
   schema: { const: 'foundry-nodecap-envelope/1' },
   autoBind: { type: 'object', additionalProperties: false, required: ['effects', 'risk', 'trust', 'custody', 'maxUsdPerCall', 'requireAuthoredView', 'underUntrustedControl', 'thirdPartyEgressWithPrivateData'], properties: {
     effects: list(EFFECTS), risk: list(['low', 'high']), trust: list(TRUST.filter(t => t !== 'T3')), custody: list(CUSTODY), maxUsdPerCall: { type: 'number', minimum: 0, maximum: 10 },
@@ -26,6 +30,8 @@ export const envelopeSchema = { type: 'object', additionalProperties: false, req
     boundPerNode: { type: 'integer', minimum: 0, maximum: 5 }, skillsPerNode: { type: 'integer', minimum: 0, maximum: 3 }, skillTokens: { type: 'integer', minimum: 16, maximum: 1200 },
     grantsPerRun: { type: 'integer', minimum: 0, maximum: 50 }, proposalsPerRun: { type: 'integer', minimum: 0, maximum: 10 }, relistTtlMs: { type: 'integer', minimum: 1000, maximum: 3600000 } } },
   denyTools: { type: 'array', maxItems: 100, items: { type: 'string', minLength: 1, maxLength: 128 } },
+  denyTypes: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'string', pattern: '^[a-z*][a-z0-9.*-]{0,120}$' } },
+  denyObjects: { type: 'array', maxItems: 50, items: { type: 'string', pattern: '^[a-z][a-z0-9-]{0,40}$' } },
   widenChannels: { type: 'array', minItems: 1, maxItems: 2, uniqueItems: true, items: { enum: ['dashboard', 'cli'] } } } };
 
 export function checkEnvelope(envelope = DEFAULT_ENVELOPE) {
@@ -38,17 +44,23 @@ export function checkEnvelope(envelope = DEFAULT_ENVELOPE) {
 export const envelopeDigest = envelope => `sha256:${digest(envelope)}`;
 
 const globRegex = pattern => new RegExp(`^${pattern.split('*').map(part => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('.*')}$`, 'i');
-/** Whether a member (by registry id or bare tool name) matches the deny list: credential brokers, connection managers, self-provisioning. */
+/**
+ * Whether a member is deny-listed (credential brokers, connection managers, self-provisioning): by its owner-attested type or the objects it
+ * acts on (the class), or by name (registry id, bare tool name, view name). A member record, an outside candidate or an attestation works.
+ */
 export function denyListed(envelope, member) {
+  if (member.type && (envelope.denyTypes ?? []).some(pattern => globRegex(pattern).test(member.type))) return true;
+  if ((member.objects ?? []).some(o => (envelope.denyObjects ?? []).includes(o))) return true;
   const names = [member.id, member.tool, member.view?.name].filter(Boolean);
   return envelope.denyTools.some(pattern => names.some(name => globRegex(pattern).test(name) || globRegex(pattern).test(name.split('.').pop())));
 }
 
 /**
  * The auto-bind predicate (L1): may the broker grant `member` to a node without a person? `controlLabel` is the label under which the need
- * was raised (I6), `holdsPrivate` whether the node already holds private data (egress-aware Rule of Two). Returns {ok} or {ok:false, code}.
+ * was raised (I6); `holdsPrivate` whether the node already holds private data (through a member or its inputs) and `holdsThirdParty`
+ * whether it already holds a third-party egress (egress-aware Rule of Two, in either order). Returns {ok} or {ok:false, code}.
  */
-export function autoBind(envelope, member, { controlLabel = 'trusted', holdsPrivate = false } = {}) {
+export function autoBind(envelope, member, { controlLabel = 'trusted', holdsPrivate = false, holdsThirdParty = false } = {}) {
   const a = envelope.autoBind;
   if (denyListed(envelope, member)) return { ok: false, code: 'NEED_DENYLISTED' };
   if (controlLabel !== 'trusted' && !a.underUntrustedControl.effects.includes(member.effects)) return { ok: false, code: 'NEED_UNTRUSTED_EFFECT' };
@@ -60,6 +72,7 @@ export function autoBind(envelope, member, { controlLabel = 'trusted', holdsPriv
   if (a.requireAuthoredView && !member.view?.summary) return { ok: false, code: 'NEED_VIEW' };
   // Egress-aware Rule of Two: private data and a third-party egress never meet under one grant without a person.
   if ((holdsPrivate || isPrivate(member.dataClass)) && member.egress === 'third-party') return { ok: false, code: 'NEED_RULE_OF_TWO' };
+  if (isPrivate(member.dataClass) && holdsThirdParty) return { ok: false, code: 'NEED_RULE_OF_TWO' };
   if (controlLabel !== 'trusted' && holdsPrivate && member.egress !== 'local' && effectRank(member.effects) > 0) return { ok: false, code: 'NEED_RULE_OF_TWO' };
   return { ok: true };
 }

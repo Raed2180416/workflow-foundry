@@ -2,9 +2,9 @@
 // members, envelope and types give the same lock and lockHash. The lock is the approval subject: per tool node its `bound` set (callable
 // now, at most 5 tools and 3 skills) and its `standby` set (acquirable in-run, at most 20, all listed for the approver), plus Tier-0
 // bindings of task and verify nodes that name a member directly. Requirements with no eligible member are gaps (proposals), never guesses.
-import { checkData, clone } from '../data.mjs';
+import { checkData, clone, references } from '../data.mjs';
 import { validateData } from '../validate.mjs';
-import { CUSTODY, digest, effectRank, EFFECTS, fail, joinLabels, TRUST } from './common.mjs';
+import { CUSTODY, DATA_CLASSES, digest, effectRank, EFFECTS, fail, isPrivate, joinLabels, TRUST } from './common.mjs';
 import { denyListed } from './envelope.mjs';
 import { typeInfo, typeMatch } from './types.mjs';
 import { indexMembers } from './rank.mjs';
@@ -21,7 +21,9 @@ export const sidecarSchema = { type: 'object', additionalProperties: false, requ
       objects: { type: 'array', minItems: 1, maxItems: 20, uniqueItems: true, items: { type: 'string', pattern: '^[a-z][a-z0-9-]{0,40}$' } },
       effectsMax: { enum: EFFECTS }, max: { type: 'integer', minimum: 0, maximum: 10 } } },
     maxTurns: { type: 'integer', minimum: 1, maximum: 30 }, budgetUsd: { type: 'number', minimum: 0, maximum: 10 },
-    maxCallsPerMember: { type: 'integer', minimum: 1, maximum: 100 } } } } } };
+    maxCallsPerMember: { type: 'integer', minimum: 1, maximum: 100 },
+    // The data class of the workflow input the node reads (owner declaration); unknown input counts as private (Rule of Two).
+    inputClass: { enum: DATA_CLASSES } } } } } };
 export function checkSidecar(sidecar) { checkData(sidecar); validateData(sidecarSchema, sidecar, 'nodecap tool-node sidecar', { trustedSchema: true }); return clone(sidecar); }
 
 /** Every node of a workflow with its frame path (top level and nested bodies). */
@@ -61,8 +63,10 @@ export function resolve({ workflow, sidecar, members, catalogDigest, envelope, e
     if (found.prefix) fail('SIDECAR_NODE', `Tool node ${id} is nested; the spike lowers top-level tool nodes only`);
     const bound = [], skills = [];
     for (const requirement of toolNode.requires ?? []) {
-      // A skill body is bound through `skills`; an admitted skill SCRIPT is a typed member and may satisfy a requirement.
-      const eligible = members.filter(m => typeMatch(m.type, requirement.type) > 0 && !(m.kind === 'skill' && !m.script) && !denyListed(envelope, m)
+      // A skill body is bound through `skills`; an admitted skill SCRIPT is a typed member and may satisfy a requirement. Code binds only
+      // members of trusted sources (the auto-bind trust tiers): an untrusted (T2) member reaches a lock only through a proposal a person
+      // decides, flagged T2 (review m2: a T2 server's own attestation of "effects none" is never what lets code bind it).
+      const eligible = members.filter(m => typeMatch(m.type, requirement.type) > 0 && !(m.kind === 'skill' && !m.script) && !denyListed(envelope, m) && envelope.autoBind.trust.includes(m.trust)
         && effectRank(m.effects) <= effectRank(typeInfo(types, m.type)?.effectCeiling ?? 'non-idempotent'));
       if (!eligible.length) { gaps.push({ node: id, as: requirement.as, type: requirement.type, code: 'UNBOUND_REQUIREMENT' }); continue; }
       const { sorted, tie } = orderCandidates(eligible, requirement.type);
@@ -95,6 +99,16 @@ export function resolve({ workflow, sidecar, members, catalogDigest, envelope, e
       maxCallsPerMember: toolNode.maxCallsPerMember ?? 20, returns: clone(found.node.returns), instructionsHash: `sha256:${digest({ i: found.node.instructions })}`,
       // The transcript of a tool node carries tool output, so its control is untrusted whatever it binds (interim taint rule (c)).
       controlLabel: joinLabels([`untrusted:nodecap.${id}`, ...all.map(m => m.outputLabel)]) };
+  }
+  // The class of the data each tool node reads through its inputs (review M6): a reference to an upstream node whose output can be private
+  // (a Tier-0 member, or a tool node that can reach a private member), or to the workflow input (its declared class; private when not
+  // declared). The broker's Rule of Two and lint both count it.
+  const privateNode = id => (lock.tier0[id] && isPrivate(lock.members[lock.tier0[id]].dataClass))
+    || (lock.nodes[id] && [...lock.nodes[id].bound, ...lock.nodes[id].skills, ...lock.nodes[id].standby].some(m => isPrivate(lock.members[m].dataClass)));
+  for (const [id, section] of Object.entries(lock.nodes)) {
+    const node = nodes.get(id).node, refs = references([node.context?.inputs?.map(i => i.ref ? { $ref: i.ref } : null) ?? null, node.input ?? null]);
+    const fromInput = refs.some(r => r.startsWith('input')), fromNodes = refs.filter(r => r.startsWith('nodes.')).map(r => r.split('.')[1]);
+    section.inputClass = fromNodes.some(privateNode) ? 'private' : fromInput ? (spec.nodes[id].inputClass ?? 'private') : null;
   }
   return { lock, lockHash: `sha256:${digest(lock)}`, gaps, ties };
 }

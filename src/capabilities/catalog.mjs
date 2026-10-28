@@ -22,9 +22,10 @@ const secretRef = { type: 'object', additionalProperties: false, minProperties: 
 const scopeList = { type: 'array', maxItems: 20, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z0-9_.:/-]{1,80}$' } };
 // OAuth (src/capabilities/oauth.mjs): an owner-attested issuer, a pre-registered public client id, and the scopes of each scope class.
 // The tokens live in the OS keychain under the credential's read and write refs (custody C1); the catalog never holds a token.
+// `stepUpScopes`: further scopes the owner allows a scope.step-up proposal to ask for (a server's challenge naming anything else raises none).
 const oauthSchema = { type: 'object', additionalProperties: false, required: ['issuer', 'clientId', 'scopes'], properties: {
   issuer: { type: 'string', minLength: 8, maxLength: 2048 }, clientId: { type: 'string', pattern: '^[A-Za-z0-9._:-]{1,200}$' },
-  scopes: { type: 'object', additionalProperties: false, required: ['read', 'write'], properties: { read: scopeList, write: scopeList } } } };
+  scopes: { type: 'object', additionalProperties: false, required: ['read', 'write'], properties: { read: scopeList, write: scopeList } }, stepUpScopes: scopeList } };
 const credential = { type: 'object', additionalProperties: false, required: ['custody'], properties: {
   custody: { enum: CUSTODY }, read: secretRef, write: secretRef, oauth: oauthSchema, scopes: { type: 'object', additionalProperties: false, properties: {
     read: { type: 'array', maxItems: 20, items: { type: 'string', maxLength: 120 } }, write: { type: 'array', maxItems: 20, items: { type: 'string', maxLength: 120 } } } } } };
@@ -80,16 +81,32 @@ const entrySchema = { type: 'object', additionalProperties: false, required: ['i
 export const catalogSchema = { type: 'object', additionalProperties: false, required: ['schema', 'entries'], properties: {
   schema: { const: 'foundry-catalog/1' }, entries: { type: 'array', maxItems: 500, items: entrySchema } } };
 
+// A path the stdio sandbox binds: absolute, plain characters (the sandbox setup is a shell program; nothing it binds needs quoting).
+const SANDBOX_PATH = '^/[A-Za-z0-9._@+/-]{0,1023}$';
+const sandboxPath = { type: 'string', pattern: SANDBOX_PATH, maxLength: 1024 };
+const sandboxSchema = { type: 'object', additionalProperties: false, properties: {
+  // read-only binds beyond the system directories and the integrity-pinned files (the server's code and its dependencies)
+  read: { type: 'array', maxItems: 20, uniqueItems: true, items: sandboxPath },
+  // read-write binds: an absolute directory, or one named by an owner env variable of the host (resolved at spawn)
+  write: { type: 'array', maxItems: 5, items: { anyOf: [sandboxPath, { type: 'object', additionalProperties: false, required: ['env'], properties: { env: { type: 'string', pattern: ENV, maxLength: 128 } } }] } } } };
 const sourceSchemas = {
-  'mcp-stdio': { type: 'object', additionalProperties: false, required: ['command', 'args'], properties: {
-    command: { type: 'string', minLength: 1, maxLength: 4096 }, args: { type: 'array', maxItems: 100, items: { type: 'string', maxLength: 4096 } },
-    cwd: { type: 'string', maxLength: 4096 }, envAllow: { type: 'array', maxItems: 30, items: { type: 'string', pattern: ENV } } } },
+  // stdio servers: an ABSOLUTE command (no PATH lookup), owner-attested sha256 pins of the files that make up the server (the command
+  // itself included), and the sandbox binds it needs. The server runs in the namespace sandbox (./stdio-sandbox.mjs): no network unless a
+  // member attests a non-local egress, no host files beyond the binds, its own session (no controlling terminal).
+  'mcp-stdio': { type: 'object', additionalProperties: false, required: ['command', 'args', 'integrity'], properties: {
+    command: { type: 'string', pattern: SANDBOX_PATH, maxLength: 1024 }, args: { type: 'array', maxItems: 100, items: { type: 'string', maxLength: 4096 } },
+    cwd: sandboxPath, envAllow: { type: 'array', maxItems: 30, items: { type: 'string', pattern: ENV } },
+    integrity: { type: 'object', minProperties: 1, maxProperties: 50, propertyNames: { pattern: SANDBOX_PATH, maxLength: 1024 }, additionalProperties: { type: 'string', pattern: '^[0-9a-f]{64}$' } },
+    sandbox: sandboxSchema } },
   'mcp-http': { type: 'object', additionalProperties: false, required: ['url', 'transport'], properties: {
     url: { type: 'string', minLength: 8, maxLength: 2048 }, transport: { const: 'streamable-http' } } },
   skill: { type: 'object', additionalProperties: false, required: ['root'], properties: { root: { type: 'string', minLength: 1, maxLength: 4096 } } },
   cua: { type: 'object', additionalProperties: false, required: ['backend', 'origins', 'profile'], properties: {
     backend: { const: 'playwright-local' }, executablePath: { type: 'string', maxLength: 4096 }, origins: { type: 'array', minItems: 1, maxItems: 10, items: { type: 'string', maxLength: 200 } },
-    profile: { enum: ['S0'] }, holdPaths: { type: 'array', maxItems: 20, items: { type: 'string', pattern: '^[a-z][a-z0-9-]{0,40}$' } } } },
+    profile: { enum: ['S0'] }, holdPaths: { type: 'array', maxItems: 20, items: { type: 'string', pattern: '^[a-z][a-z0-9-]{0,40}$' } },
+    // owner attestation: GET on these paths has no side effect (`*` one segment, a trailing `/**` any suffix). Without it every navigating
+    // ui.* member (observe, act, assert) is an approval-gated effect.
+    safeGets: { type: 'array', minItems: 1, maxItems: 50, uniqueItems: true, items: { type: 'string', pattern: '^/[A-Za-z0-9._~/*-]{0,200}$' } } } },
   connection: { type: 'object', additionalProperties: false, properties: {} },
   program: { type: 'object', additionalProperties: false, required: ['lang', 'file', 'sha256'], properties: {
     lang: { const: 'js' }, file: { type: 'string', minLength: 1, maxLength: 4096 }, sha256: { type: 'string', pattern: '^[0-9a-f]{64}$' } } },
@@ -137,6 +154,7 @@ export function checkCatalog(catalog, { allowDev = false } = {}) {
       if (!oauth.issuer.startsWith('https://') && !(entry.dev === true && loopback(oauth.issuer))) fail('CATALOG_TRANSPORT', `Entry ${entry.id}: the authorization server must use https (loopback http only for dev entries)`);
     }
     if (entry.kind === 'cua') for (const origin of entry.source.origins) if (!origin.startsWith('https://') && !(entry.dev === true && loopback(origin))) fail('CATALOG_TRANSPORT', `Entry ${entry.id}: UI origins must be https (loopback http only for dev entries)`);
+    if (entry.kind === 'mcp-stdio' && !Object.hasOwn(entry.source.integrity, entry.source.command)) fail('CATALOG_INTEGRITY', `Entry ${entry.id}: the integrity pins must cover the command itself`, { id: entry.id });
     if (['mcp-stdio', 'mcp-http', 'builtin', 'program'].includes(entry.kind) && !entry.members) fail('CATALOG_MEMBERS', `Entry ${entry.id} attests no members; an unattested tool is never bindable`, { id: entry.id });
     if (entry.kind === 'program' && (Object.keys(entry.members).length !== 1 || !entry.uses)) fail('CATALOG_PROGRAM', `Program entry ${entry.id} attests exactly one member and lists the members it uses`, { id: entry.id });
     if (entry.kind !== 'program' && entry.uses) fail('CATALOG_PROGRAM', `Only program entries list uses (${entry.id})`);

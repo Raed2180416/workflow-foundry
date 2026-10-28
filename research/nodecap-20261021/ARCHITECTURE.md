@@ -1,12 +1,14 @@
 # Node capabilities: final architecture and the $0 spike
 
-Date: 2026-10-21. Branch `worktree-wf_c56a08f8-048-15`, built on base commit `e6a23ca`. Research: [SOTA.md](SOTA.md).
-Scripted bed results: [RESULTS-SCRIPTED.md](RESULTS-SCRIPTED.md).
+Date: 2026-10-21; security fixes 2026-10-28 (§8). Branch `worktree-wf_c56a08f8-048-15`, built on base commit `e6a23ca`. Research:
+[SOTA.md](SOTA.md). Scripted bed results: [RESULTS-SCRIPTED.md](RESULTS-SCRIPTED.md).
 
 **What is built.** The owner asked for nodes that get the MCP servers, skills, computer use and connections they need, and for adaptivity
 when a node finds mid-task that it lacks one. This document fixes the design and records the spike that implements it at $0:
 
-- 62 development tests in 15 files, all passing (each file run alone with `nice -n 15 node --test --test-concurrency=1`);
+- development tests in 17 files, all passing (each file run alone with `nice -n 15 node --test --test-concurrency=1`); since 2026-10-28
+  they include `nodecap-security` (one or more tests per finding of the security review, each failing on the pre-fix code) and
+  `nodecap-person` (the person channel, on a real pseudo-terminal);
 - an NC-1 scripted bed with four arms, including an executed "raw MCP config" baseline (arm B), and a $0 replay of every Foundry-arm
   episode on a fresh world (gate V5);
 - OAuth for remote MCP servers and program capabilities (CM0), the spec's two stretch items;
@@ -72,11 +74,11 @@ The design has five parts:
 
 | Set | Holds | Where | Widened only by |
 |---|---|---|---|
-| Catalog | Owner-attested entries: `mcp-stdio`, `mcp-http` (env bearer or OAuth), `skill`, `cua`, `connection`, `builtin`, `program` | Owner JSONC file; mutable status, pins and receipts in `.foundry/nodecap.sqlite` | Owner edit, or an approved `capability.admit` (dashboard or CLI) |
-| Lock | Per node: `bound` (≤5), `skills` (≤3), `standby` (≤20), returns, controlLabel. Plus Tier-0 bindings and member records with pins, views and attestations | Ledger `locks` table, keyed by lockHash | A person approving `subject = digest(workflowHash, lockHash, envelopeDigest, catalogDigest, dryRunId)` on dashboard or CLI |
+| Catalog | Owner-attested entries: `mcp-stdio`, `mcp-http` (env bearer or OAuth), `skill`, `cua`, `connection`, `builtin`, `program` | Owner JSONC file; mutable status, pins, the pin baseline and receipts in `.foundry/nodecap.sqlite` | Owner edit, or an approved `capability.admit`; re-activating an entry or accepting a changed definition is a person decision too |
+| Lock | Per node: `bound` (≤5), `skills` (≤3), `standby` (≤20), returns, controlLabel. Plus Tier-0 bindings and member records with pins, views and attestations | Ledger `locks` table, keyed by lockHash | A person decision (§1.2 I3) for `subject = digest(workflowHash, lockHash, envelopeDigest, catalogDigest, dryRunId)` |
 | Envelope | Auto-bind predicate, limits and deny list | Owner policy (closed keys) | Owner edit (new digest, new versions only) |
 | Grants | `adaptation` decisions in the run's hash chain | The run chain; `grants_cache` is a rebuildable lookup | The broker inside the envelope (L1), or a user approval per call (L2). Grants die with the run (THESIS D11) |
-| OAuth scopes | The attested scopes of each scope class (read, write) of a remote server | Catalog `credential.oauth.scopes`; tokens in the OS keychain (C1) | Owner edit, or an approved `scope.step-up` proposal (dashboard or CLI) before the owner's next connect |
+| OAuth scopes | The attested scopes of each scope class (read, write) of a remote server | Catalog `credential.oauth.scopes`; tokens in the OS keychain (C1) | Owner edit, or an approved `scope.step-up` proposal (owner-listed scopes only) before the owner's next connect, itself a person decision |
 
 ### 1.2 Invariants and where each is tested
 
@@ -84,13 +86,13 @@ The design has five parts:
 |---|---|---|
 | I1 | grants ⊆ bound ∪ standby ⊆ catalog | `nodecap-resolve` (standby members not registered; BINDING_NODE_SCOPE); `verify-acquisitions` UNGRANTED_CALL |
 | I2 | No model output, server metadata, skill text or signal changes any set | `nodecap-broker` ("a signal cannot grant", "find never widens"); `nodecap-mcp-stdio` (poisoned description absent) |
-| I3 | Widening only via dashboard/cli with CAS; per-call approvals only by `runtime.approve(…, 'user')` | `nodecap-catalog`, `nodecap-broker` (elicitation refused; one CAS winner); `nodecap-oauth` (connect and step-up refuse `mcp-elicitation`) |
+| I3 | Widening (approve a version, decide a proposal, re-activate an entry, accept a changed definition, connect an OAuth scope class) only by a **PersonDecision** with CAS: an object only a person channel mints (`person.mjs`; a module-private brand, so no string, JSON value, model output, elicitation answer or tool argument is one), bound to one subject digest, used once, from a channel the ledger accepts. Per-call effect approvals need the engine's `runtime.approve(…, 'user')` **and** a PersonDecision on the host's rendering of the call. Channels: the CLI terminal channel (`ttyPerson`, the controlling terminal, a one-time code) is built as a primitive but no `foundry` command wires it yet; the dashboard channel is not built (nothing mints one); the beds and tests use a `scripted` person that only ledgers opened with that channel accept, and every record names it | `nodecap-person` (brand, subject binding, one use, channel list, a real pty); `nodecap-security` M1 (a channel string decides, approves or re-activates nothing; an engine approval alone sends no effect); `nodecap-catalog`, `nodecap-broker`, `nodecap-oauth` |
 | I4 | Every set change is a CAS plus a chained decision | `nodecap-catalog` (status machine, heads), G1 probe |
 | I5 | Effects, risk and labels are owner attestations bound to the pin; hints only tighten | `nodecap-mcp-stdio` (mapping table, ATTESTATION_HINT_CONFLICT) |
 | I6 | A need under untrusted control auto-binds only effects-none members | `nodecap-broker` (decideMember) |
-| I7 | Credentials only in host code; never in IR, lock, journal, events, prompts or artifacts | `nodecap-secrets` (canary sweep incl. WAL files and unzipped traces; SECRET_EXPOSURE on an echoing server); `nodecap-oauth` (tokens absent from prompts, events, journal); bed V4 |
+| I7 | Credentials only in host code; never in IR, lock, journal, events, prompts or artifacts. A browser session's cookies count as credentials | `nodecap-secrets` (canary sweep incl. WAL files and the unzipped UI trace, with the app's session ids as canaries; SECRET_EXPOSURE on an echoing server); `nodecap-security` B2 (login and rotated cookies absent from the trace), m6 (encoded copies; unscrubbable short secrets refused); `nodecap-oauth`; bed V4 |
 | I8 | Unsupported semantics refused | Schema subset; agent `checks` on tool nodes; non-text MCP content; Claude Code skill keys; python programs; DCR and CIMD (not built, refused) |
-| I9 | A changed definition is refused before the call is sent, **across processes** | `nodecap-mcp-stdio` (rug pull; annotation-only flip); `nodecap-drift` (lock against a later process: launch preflight and stored-lock calls) |
+| I9 | A changed definition is refused before the call is sent, **across processes**: against the lock, and at every qualification against the attested pin or the workspace's pin baseline; a stdio server's code is pinned by file hash | `nodecap-mcp-stdio` (rug pull; annotation-only flip); `nodecap-drift` (lock against a later process: launch preflight and stored-lock calls); `nodecap-security` M2 (baseline across processes; lock N+1 binds only the definition shown; continuation preflight), M3 (code pins) |
 | I10 | Replay never re-executes in the same world; broker decisions are recomputable | `nodecap-journal-replay` (fresh world, $0; recompute); bed V5 (every Foundry-arm episode) |
 | I11 | No server prose, title, annotation or error text reaches a model | `nodecap-mcp-stdio`, `nodecap-broker` (prompts scanned); `nodecap-oauth` (403 `error_description` dropped) |
 | I12 | No engine-hashed file and nothing on the SOP-Bench freeze list changes | `git diff --name-status e6a23ca HEAD` lists only added files |
@@ -105,15 +107,24 @@ is unchanged.
 | File | Contents |
 |---|---|
 | `catalog.mjs` | `foundry-catalog/1`. Closed keys and per-kind source schemas. Refuses symlinks, files over 1 MiB, unknown keys and duplicate ids. Refuses any **credential value** anywhere: key prefixes, or high-entropy strings ≥32 characters (pins and paths are exempt). `dev` loopback entries load only with `allowDev`. https is required otherwise, for MCP servers, UI origins and OAuth issuers. T3 entries are never bindable. OAuth is allowed only on remote entries, with custody C1 and keychain refs. A program entry has a pinned JS source, exactly one member and its `uses`. |
-| `envelope.mjs` | `foundry-nodecap-envelope/1` (§3.2 defaults). `autoBind()` checks, in order: deny list, I6, effects, risk, trust, custody, cost, authored view, then the egress-aware Rule of Two. The Rule of Two is from the Meta "Agents Rule of Two" [D]. |
-| `ledger.mjs` | `.foundry/nodecap.sqlite` (WAL, mode 0600). Status machine `imported → qualified → active ⇄ quarantined → revoked`. Pins observed, receipts (skill strip, UI trace), proposals, locks, lock approvals and flow heads. Every write is a CAS. `WIDEN_CHANNELS = ['dashboard','cli']`. |
+| `envelope.mjs` | `foundry-nodecap-envelope/1` (§3.2 defaults). `autoBind()` checks, in order: deny list, I6, effects, risk, trust, custody, cost, authored view, then the egress-aware Rule of Two in both grant orders (private data then a third-party egress, or the reverse). The Rule of Two is from the Meta "Agents Rule of Two" [D]. The deny list matches the owner-attested **type and objects** (`denyTypes` `connection.*`, `credential.*`, `mcp-server.*`, `tool.provision*`; `denyObjects` connection, credential, mcp-server), with names as a second net: a connection manager renamed `connect_app` is still deny-listed. |
+| `ledger.mjs` | `.foundry/nodecap.sqlite` (WAL, mode 0600). Status machine `imported → qualified → active ⇄ quarantined → revoked`; a move to `active` needs a person decision. Pins observed and the **pin baseline** (the first listing seen in the workspace, recorded as trust on first use, until a person accepts a new definition with `acceptPins`), receipts (skill strip, UI trace), proposals (with a dedup key), locks, lock approvals, per-call person decisions and flow heads. Every write is a CAS. A ledger accepts PersonDecisions from the channels it was opened with (default cli and dashboard), and honours a stored version approval, call decision or approved proposal only when it came from one of them (a bed's scripted approval in the same file does not count for a production ledger). |
+| `person.mjs` | The person channel (§1.2 I3): `acceptPerson` (genuine, accepted channel, same subject, unused), `ttyPerson` (the CLI channel: the controlling terminal, never stdin; the host rendering with control characters neutralised; `approve <one-time code>` or `decline`; the OS user, uid and terminal recorded as the principal) and `scriptedPerson` (beds and tests, recorded as `scripted`). |
 
 ### 2.2 MCP (stdio and streamable HTTP)
 
 **`mcp-client.mjs`** connects to MCP servers:
 
-- Connections are lazy.
-- stdio children get a blanked environment plus `envAllow` (as in `components.mjs`) [B].
+- Connections are lazy, and qualification is too: `construct` spawns only the MCP servers an attested type or acquire system of the
+  sidecar can use, and `launch` only the lock's.
+- **stdio servers are third-party code** (`stdio-sandbox.mjs`). The catalog requires an absolute command (no PATH lookup) and owner
+  `integrity` pins: sha256 of every file that makes up the server, the command itself included. The files are re-hashed before every
+  spawn; a mismatch refuses it (`SOURCE_INTEGRITY`) and quarantines the entry, so a package that updated in place with identical tool
+  definitions is caught. The server then runs in Linux namespaces built like `src/sandbox.mjs`: user, mount, pid and (unless a member
+  attests a non-local egress) network namespaces; a fresh read-only root holding the system directories, the pinned files and the owner's
+  `sandbox.read` paths; read-write binds of `sandbox.write` directories only; a private `/tmp`; no terminal device; its own session; an
+  unmapped user with no capabilities. Without `unshare(1)` the spawn is refused, never run unsandboxed. The environment is PATH plus
+  `envAllow` (the SDK's default names are blanked) [B].
 - HTTP keeps **separate sessions per credential scope**: the read credential for effects-none members, the write credential for effects.
   Listing always uses the read session and a constant `clientInfo`.
 - A `tools/list_changed` notification increments a counter.
@@ -123,9 +134,10 @@ is unchanged.
 - https only, or loopback http for dev entries;
 - `redirect: manual` (any 3xx gives `REDIRECT_REFUSED`);
 - the bearer is attached only for the entry's own origin, and any other origin is refused before sending;
-- a 2 MiB cap;
-- 403 `insufficient_scope` becomes the typed `SCOPE_INSUFFICIENT` with the challenged scopes sanitized to scope-shaped tokens; any
-  `error_description` is dropped. It is never an automatic step-up.
+- a 2 MiB cap on a JSON body, and an 8 MiB cap on a server-sent event stream, counted as the transport reads it;
+- an HTTP 403 `insufficient_scope` challenge becomes the typed `SCOPE_INSUFFICIENT` with the challenged scopes sanitized to scope-shaped
+  tokens; any `error_description` is dropped. It is never an automatic step-up. A JSON-RPC error code or error text from any server
+  (stdio included) is the server's own words and never becomes `SCOPE_INSUFFICIENT` or `AUTH_REQUIRED`.
 
 **`pin.mjs`** computes the pins:
 
@@ -135,9 +147,11 @@ is unchanged.
 
 **`import-mcp.mjs`** qualifies servers and guards calls:
 
-- `qualifyMcp` lists, pins and compares tools with the attested pin. It quarantines on `DEFINITION_CHANGED`, refuses schemas outside the
-  subset (`SCHEMA_PROFILE_UNSUPPORTED`), and quarantines when a hint is tighter than the attestation (`ATTESTATION_HINT_CONFLICT`).
-- `annotationFloor` maps annotations only for trusted servers.
+- `qualifyMcp` lists, pins and compares tools with the attested pin, or, without one, with the workspace's pin baseline, so a definition
+  that changes between processes is caught at the next qualification. It quarantines on `DEFINITION_CHANGED`, refuses schemas outside
+  the subset (`SCHEMA_PROFILE_UNSUPPORTED`), and quarantines when a hint is tighter than the attestation (`ATTESTATION_HINT_CONFLICT`).
+- `annotationFloor` maps annotations only for trusted servers. It is not on the bind path: every bindable member carries an owner
+  attestation, and code binds only members of trusted tiers (§2.6), so an untrusted server's own "effects none" never binds it.
 - `PinGuard` re-lists before **every** call (reads included), on a notification and when the TTL lapses. A broken guard stays broken.
   The first session started with a TTL for reads; the bed showed a flipped server serving one read before its late `list_changed`
   arrived [B], so every call now re-lists.
@@ -150,12 +164,14 @@ is unchanged.
 | Custody | Source | Status |
 |---|---|---|
 | C0 | Environment variable | Built |
-| C1 | OS keychain via `execFile` (`secret-tool` / `security`), never a shell: static secrets and OAuth token records | Built. Reads on Linux and macOS; writes (token records) on Linux through `secret-tool store` with the secret on stdin. macOS writes are refused (`security add-generic-password` takes the secret on argv). Tests inject a stand-in. |
+| C1 | OS keychain via `execFile` on an absolute path (`/usr/bin/secret-tool` / `/usr/bin/security`), never a shell or a PATH lookup: static secrets and OAuth token records | Built. Reads on Linux and macOS; writes (token records) on Linux through `secret-tool store` with the secret on stdin. macOS writes are refused (`security add-generic-password` takes the secret on argv). Tests inject a stand-in. |
 | C2 | Outer-client hand-off | Refused unattended |
 | C3/C4 | Hosted broker / IdP | Refused (owner decisions) |
 
-A `ScrubSet` collects every resolved value (OAuth access and refresh tokens included). Every dispatcher output is checked against it
-before it can be written (`SECRET_EXPOSURE`).
+A `ScrubSet` collects every resolved value (OAuth access and refresh tokens included) with its common encodings (URL and form encoding,
+JSON escaping, base64 at every byte alignment). A credential shorter than 6 characters cannot be told apart from ordinary text, so it is
+refused (`CREDENTIAL_UNSCRUBBABLE`) rather than resolved and left unscrubbed. Every dispatcher output is checked against the set before it
+can be written (`SECRET_EXPOSURE`).
 
 ### 2.3 OAuth for remote servers (`oauth.mjs`, the P2 stretch, built)
 
@@ -165,12 +181,12 @@ by itself [O].
 
 | Step | What Foundry does | Why the SDK alone is not enough [O] |
 |---|---|---|
-| Connect (owner action, `cli` or `dashboard` only) | Discovery: protected resource metadata **required**; the catalog-attested issuer must be listed in it; RFC 8414 metadata fetched from that issuer only, with `issuer` equal; PKCE S256 must be advertised; authorization and token endpoints on the issuer's origin, https or dev loopback | The SDK falls back to the MCP origin as the AS when PRM is missing, and proceeds when `code_challenge_methods_supported` is absent |
-| Authorize | PKCE S256, a random `state`, `resource` = the server's canonical URI, the attested scopes of one scope class, a one-shot loopback redirect (RFC 8252). The URL goes to a caller-supplied `openUrl`; the module never starts a process | The CVE-2025-6514 class (an authorization endpoint handed to a shell `open`) [S] |
+| Connect (owner action: a PersonDecision for the entry, scope class, scopes, issuer and resource) | Discovery: protected resource metadata **required**; the catalog-attested issuer must be listed in it; RFC 8414 metadata fetched from that issuer only, with `issuer` equal; PKCE S256 must be advertised; authorization and token endpoints on the issuer's origin, https or dev loopback | The SDK falls back to the MCP origin as the AS when PRM is missing, and proceeds when `code_challenge_methods_supported` is absent |
+| Authorize | PKCE S256, a random `state`, `resource` = the server's canonical URI, the attested scopes of one scope class, a one-shot loopback redirect (RFC 8252) that answers only the request carrying this `state` (another local process cannot end or fail the connect by calling it first). The URL goes to a caller-supplied `openUrl`; the module never starts a process | The CVE-2025-6514 class (an authorization endpoint handed to a shell `open`) [S] |
 | Response | `state` first, then RFC 9207 `iss` per the spec's table (exact string comparison), and only then the code or the error | The SDK has no `iss` check |
 | Token | `resource` again; a grant wider than requested is discarded (`OAUTH_SCOPE_WIDER`); only bearer tokens; the record goes to the OS keychain (C1) under the scope class's ref | — |
-| Call | The bearer is read by host code, is never sent to a server or issuer it was not issued for (`OAUTH_TOKEN_AUDIENCE`), and is refreshed shortly before expiry. The refresh sends `resource` again, stores the rotated refresh token, and refuses a wider grant. Values join the scrub set | The SDK sends `resource` only when PRM was found |
-| 403 `insufficient_scope` | `SCOPE_INSUFFICIENT` to the model (a host code); a `scope.step-up` proposal with the challenged scopes quoted as untrusted; only after a person approves it may the owner's next connect request the extra scopes | The transport would up-scope by itself |
+| Call | The bearer is read by host code, is never sent to a server or issuer it was not issued for (`OAUTH_TOKEN_AUDIENCE`), and is refreshed shortly before expiry. Refreshes of one token record run one at a time (two concurrent refreshes with rotation would present a spent token and trip reuse detection). The refresh sends `resource` again, stores the rotated refresh token, and refuses a wider grant. Values join the scrub set | The SDK sends `resource` only when PRM was found |
+| 403 `insufficient_scope` | `SCOPE_INSUFFICIENT` to the model (a host code); a `scope.step-up` proposal carrying only owner-listed scopes (the attested scopes and `stepUpScopes`; a challenge naming none raises nothing), de-duplicated per entry, class and scopes and counted against the run's proposal limit; only after a person approves it may the owner's next connect request the extra scopes | The transport would up-scope by itself |
 
 Clients are **pre-registered** in this spike (the catalog attests `clientId` beside the issuer it belongs to). CIMD needs an HTTPS
 client-id URL, which means publishing; DCR is deprecated. Both are refused, not attempted. The fixture
@@ -194,31 +210,47 @@ injection.
 
 ### 2.5 Computer use (`cua.mjs`, Playwright 1.63.0, Chromium `chromium-1194` by explicit `executablePath`)
 
-The `ui.*` members of an entry are `observe`, `find`, `act`, `extract`, `assert` (all effects none), `commit` (non-idempotent, high,
-requiresApproval) and `trace.export` (idempotent). All are labelled `untrusted:web.<entry>`.
+The `ui.*` members of an entry are `observe`, `find`, `act`, `extract`, `assert`, `commit` (non-idempotent, high, requiresApproval) and
+`trace.export` (idempotent). All are labelled `untrusted:web.<entry>`. `observe`, `act` and `assert` make the browser load pages, so they
+are effects none **only for an entry whose owner attests a safe-GET allowlist** (`source.safeGets`: path patterns whose GET has no side
+effect); without one they are non-idempotent, high risk and approval-gated, so the broker never grants them without a person, and the
+session starts blank instead of loading `/`. `find` and `extract` are effects none.
 
 **Network gate.**
-- Every non-GET request, and every GET on a hold path, is aborted and recorded as
-  `COMMIT_REQUIRED {id, method, origin, path, bodyHash, bodyPreview≤512B}`.
-- `commit` sends **exactly that request once**, through the context's request API, and only when the descriptor matches. A second commit
-  gives `COMMIT_UNKNOWN`.
+- A GET or HEAD passes only when its path is on `safeGets` and not on a hold path. Every other request on the allowed origin is aborted
+  and recorded as `COMMIT_REQUIRED {id, method, origin, path, bodyHash, bodyPreview≤512B}`. Off-allowlist origins and non-http(s)
+  schemes are blocked (data: and blob: subresources stay inside the browser).
+- `commit` takes **only the held id**. A person approves the host's own record of the request (`describeHeld`: method, origin, path and
+  the decoded, redacted body), never the model's account of it; the dispatcher re-renders that record and checks the person's decision
+  for it before sending. `commit` sends **exactly that request once**, through the context's request API. A second commit gives
+  `COMMIT_UNKNOWN`.
 - Held ids are deterministic, and a dev entry's held `origin` is shown without its port (as in its pins), so a GUI run replays on a fresh
   world [B].
+- **Channels the request gate does not see are closed (profile S0):** WebSockets (`routeWebSocket` closes every socket; the host records
+  the attempt), WebRTC (every `RTC*` constructor removed by an init script in every frame, and non-proxied UDP disabled), dedicated and
+  shared workers (removed: a worker's WebSocket is not routed), WebTransport and QUIC (removed, `--disable-quic`), service workers
+  (blocked) [B].
+- **Practice mode** never runs a computer-use member: page loads are requests to the real origin, whatever the member's effect class.
 
 **Egress.** Host-resolver rules plus a post-action origin check give `ORIGIN_VIOLATION` and a restored page. This catches the redirect hop
-a route handler misses [B].
+a route handler misses [B]. A restore re-navigates only to an allowlisted safe GET; otherwise the page is left blank.
 
 **Observation compiler.**
-- An interactive-only indexed list from the `mode:'ai'` aria snapshot.
-- Offscreen and zero-area elements are dropped. The hidden injection never enters the planner view, but `extract` can still read it as
-  data.
-- Password values are redacted.
+- An interactive-only indexed list from the `mode:'ai'` aria snapshot, parsed as YAML scalars (a name with an apostrophe or `: ` is a
+  quoted scalar and is no longer dropped).
+- No page title. Every name is capped at 60 characters and every value at 120; the whole view is labelled untrusted. Visible labels and
+  link text are page text the model does see: the effect gate, not the view filter, is what stops an injected instruction.
+- Offscreen and zero-area elements are dropped. Hidden text never enters the planner view, but `extract` can still read it as data.
+- Password values are redacted, by field type as well as by label.
 - `basis` is the hash of the ref-stripped snapshot (`STALE_BASIS`).
 
 **Sessions.**
 - Login is host-side, on an unobserved page, before tracing starts.
 - Sessions are keyed by (run, node). They are closed at node close or at a terminal run status; a parked run keeps its session.
-- The hash-named trace artifact never holds the login secret [B].
+- The hash-named trace artifact holds no credential [B]: the network log is scrubbed structurally (every cookie value and every cookie,
+  set-cookie or authorization header replaced, whatever its length, including cookies the site rotated after login), every held secret and
+  every cookie and storage value of the session is redacted from every archive entry, and the archive is checked clean before it is
+  named (`SECRET_EXPOSURE` otherwise).
 
 **Fixture.** `experiments/nodecap/fixtures/stockroom/app.mjs` is a loopback practice app with:
 - login;
@@ -229,7 +261,8 @@ a route handler misses [B].
 - sr-only injections;
 - an off-allowlist link and a redirect hop;
 - a toast-lies switch;
-- a logout GET side effect;
+- a logout GET side effect, and an unlinked side-effecting GET (`/items/purge`, what an injected instruction would ask a browser to load);
+- the session ids it issued (the bed sweeps for them as canaries);
 - a server ledger as the oracle;
 - Origin validation.
 
@@ -243,7 +276,9 @@ a route handler misses [B].
 | Explicit Tier-0 list | `tier0` |
 | Tool nodes | `requires`, `skills`, `acquire {systems, objects, effectsMax, max}`, `maxTurns` |
 | Requirements | Exact type beats subtype. Then custody C0<C1<C2, then cost, then trust, then id. A true tie is flagged (`ties`). |
+| Requirements: trust | Code binds only members of the envelope's auto-bind trust tiers (T0, T1). An untrusted (T2) member reaches a lock only through a proposal a person decides, flagged T2. |
 | Standby | Filtered by acquire, trust and deny list. Capped at 20, with BM25F over the node's own instructions when over the cap. Every standby member is in the lock. |
+| `inputClass` | Per tool node, the class of the data it reads through its inputs: private when it references an upstream node that can reach private data, or the workflow input (its declared `inputClass`, private when undeclared). Lint's Rule of Two and the broker count it. |
 | `controlLabel` | Always untrusted for a tool node (interim taint rule (c)) |
 
 **`rank.mjs`** is a BM25F port of `experiments/library/retrieve.mjs`. With one unit field it is exactly equal to the library's
@@ -332,7 +367,8 @@ A source `agent` node named in the sidecar becomes:
 
 ### 2.8 The broker and the dispatcher (`broker.mjs`)
 
-**Dispatcher pipeline.**
+**Dispatcher pipeline** (since 2026-10-28: every call that reaches a member, failed ones included, counts against `maxCallsPerMember`;
+every proposal of a run, whichever path raised it, counts against `proposalsPerRun`, and an open proposal for the same thing is reused).
 
 1. Derive the node from `ctx.nodeKey`, never from arguments.
 2. Map the view to a member.
@@ -354,7 +390,8 @@ A source `agent` node named in the sidecar becomes:
 **`find(need)`**:
 - Typed fields first. `other` means outside the values the node knows.
 - Then BM25F ranking.
-- Out-of-lock candidates (qualified members outside the section, and catalog tools that did not qualify) come back as **ids only**.
+- Out-of-lock candidates (qualified members outside the section, and catalog tools that did not qualify) are host records for a
+  proposal. The model learns only **how many** exist, never their ids or names.
 
 **`request(need)`**:
 - held → bound;
@@ -367,7 +404,9 @@ Proposal handling:
 - τ = 1.0 and δ = 0.5 are development defaults. NC-1 freezes them on D1-D6.
 
 **L2.** `nodecap.act` recomputes the engine approval id from the run header and `ctx.idempotencyKey`. It requires
-`approval.decided {approved, actor:'user'}` in the chain before calling. The grant decision records the approval id. The approval id is
+`approval.decided {approved, actor:'user'}` in the chain **and** a person decision recorded in the ledger for `callSubject(approvalId,
+describeCall(...))`, the host's rendering of the call as it stands now (member, effects, arguments, and for `ui.commit` the held request
+with its body), before calling. An approval-gated Tier-0 effect needs the same person decision. The grant decision records the approval id. The approval id is
 kept out of the model-visible output: it is run-specific and would break replay.
 
 **State is rebuilt from the chain on every call.** The nodecap decisions and the completed dispatcher outputs are the only inputs; there
@@ -375,11 +414,16 @@ is no side table of authority.
 
 ### 2.9 Proposals and continuation (`proposals.mjs`)
 
-- `constructionProposals` (L0): candidates quoted as `untrusted:catalog`, with a code-computed risk summary.
-- `applyBind`: lock N+1, adding the member to the node's bound set.
+- `constructionProposals` (L0): candidates quoted as `untrusted:catalog`, with a code-computed risk summary; deny-listed candidates are
+  flagged and never offered. Every offered member records the definition the person is shown: its implementation (pins, view,
+  attestation) when it qualified, else its owner attestation hash.
+- `applyBind`: lock N+1, adding the member to the node's bound set, only if every added member still has the recorded definition
+  (`PROPOSAL_DEFINITION_CHANGED`; a proposal that recorded none binds nothing) and lock N+1 passes `lint` (deny list, Rule of Two, effect
+  ceilings, schemas, sizes). `nextConstruction` qualifies only the added members' entries, applies the bind and lowers version N+1; a
+  person then approves that exact version (its pins included).
 - `continueRun`: refused for workflows with cross-run state (`CONTINUATION_STATEFUL`), for runs that are not a gap
-  (`CONTINUATION_NOT_GAP`), and for **any completed effect before the gap** (`CONTINUATION_AFTER_EFFECT`). Otherwise it creates a run
-  with `modelMode: 'replay-or-live'` and the prior `sampleSalt`.
+  (`CONTINUATION_NOT_GAP`), and for **any completed effect before the gap** (`CONTINUATION_AFTER_EFFECT`). It runs the launch preflight
+  against lock N+1 first (`PREFLIGHT_FAILED`). Otherwise it creates a run with `modelMode: 'replay-or-live'` and the prior `sampleSalt`.
 - `stepUpProposal` (`oauth.mjs`): `scope.step-up {entry, scopeClass, scopes}`; `connectScopes` accepts the extra scopes only from an
   approved proposal for that entry and scope class.
 
@@ -428,7 +472,8 @@ bed's page-by-page plan takes 6 [B].
 - **Authority.** It may call only the members its entry lists in `uses`. Any other call is `CAPABILITY_DENIED` and ends the program.
   Every call goes through `host.invoke`, so pins, schemas, credentials and the scrub set apply.
 - **v1 is reads only.** Effectful `uses` are refused at admission (`PROGRAM_USES_EFFECT`). Effects are none; the output label is the join
-  with every used member; cost is maxCalls × the dearest use.
+  with every used member; the data class and the egress are the maximum over its attestation and its uses (a program that calls a
+  third-party egress is one); cost is maxCalls × the dearest use.
 - **Pins.** The source is re-hashed before every run (`PROGRAM_PIN_MISMATCH`). The used members' implementations enter the program's
   pins, so drift in a used server is drift of the program (§2.6).
 - No network and no child process from inside [B].
@@ -554,10 +599,61 @@ defects the scripted bed could not (an unreachable L2 path under `request`, and 
 - **Redirect egress off loopback.** Redirect-hop egress on non-loopback origins is untested; the resolver rules were tested on loopback
   only.
 - **Long-held effects.** Holds longer than the test timings were not tested.
-- **Uncovered effect channels.** GETs with side effects outside the hold list, WebSocket messages and desktop effects are not covered by
-  the network gate.
+- **Uncovered effect channels.** A GET outside the owner's safe-GET allowlist is held and WebSockets, WebRTC and workers are closed, so
+  what remains is the owner's attestation itself (a path wrongly attested as safe), desktop effects, and channels not yet enumerated.
+- **The person channel in production.** The CLI channel exists as a primitive (`ttyPerson`, tested on a pseudo-terminal) but no `foundry`
+  command wires it to proposals, versions, connects and effect approvals yet, and the dashboard channel is not built. Until then only
+  the beds' scripted person, recorded as `scripted`, decides anything.
+- **The stdio sandbox's platform.** It needs Linux unprivileged user namespaces and `unshare(1)`; elsewhere stdio servers are refused.
+  A server whose members attest a non-local egress gets the host network inside the sandbox (no per-host egress filter yet).
 - **Ranking at scale.** The thresholds τ/δ are untuned. BM25F quality on real catalogues is unmeasured.
 - **Real authorization servers.** The OAuth path was exercised only against the loopback fixture AS. Real ASes differ in metadata,
   refresh rotation and error behaviour.
 - **Re-listing cost.** Re-listing before every call costs one `tools/list` round trip per call. That is cheap on loopback; on remote
   servers it is unmeasured.
+
+## 8. Security review of 2026-10-22: findings, fixes and tests
+
+The review (`review:security` of workflow `wf_c56a08f8-048`) found 3 blockers, 9 majors and 7 minors, four of them reproduced in a $0
+loopback probe. All are fixed below. Each fix has a test in `tests/nodecap-security.test.mjs` (or the file named) that drives the surface
+the finding named and checks the effect (what reached a server, a file, a trace or a lock). **33 of the 34 tests in that file failed by
+assertion on the pre-fix code** (HEAD `44bb426d`), run with the test support adapted to that code's API (the person helpers mapped to its
+channel strings; for the browser tests and the step-up test, the catalog without the two new owner fields `safeGets` and `stepUpScopes`,
+which the pre-fix schema refuses) [B]; per-test record in
+[runs/secfix-prefix-2026-10-28/prefix-results.json](runs/secfix-prefix-2026-10-28/prefix-results.json). The 34th guards the fix
+itself (the integrity hash cache must key on ctime: a file rewritten with its size and mtime restored is re-hashed); its module does not
+exist before the fix, and it failed by assertion against the first version of the fix. The failing assertion is in the last column.
+
+| Finding | Fix | Test | Pre-fix result |
+|---|---|---|---|
+| B1 computer use auto-granted, GETs with side effects | `safeGets` owner allowlist; navigating members approval-gated without it; GETs off the allowlist held; S0 closes WebSockets, WebRTC, workers, QUIC; practice never runs a `cua` member; no automatic first page load or restore off the allowlist | B1 ×4 | members `none`/no approval; GET `/orders/7/cancel` ran; 3 WebSocket upgrades reached the server; practice logged in and loaded `/` |
+| B2 session cookie in the trace | cookies and storage values join the scrub set; the network log is scrubbed structurally (rotated cookies too); archive checked before naming; bed sweeps the app's session ids (V4); `nodecap-secrets` now exercises the UI and sweeps them | B2; `nodecap-secrets`; bed GUI test | the login cookie was in the trace |
+| B3 commit approved on a model-written descriptor | commit takes the held id only; the person decides the host's `describeHeld` (body decoded); the dispatcher checks that decision; the bed's T08 person checks the body | B3; M1/B3; bed GUI test (T08) | the forged-preview descriptor was a valid call |
+| M1 the person channel was a string | PersonDecision (`person.mjs`); ledger, OAuth connect, dispatcher and Tier-0 registry accept nothing else; CLI terminal channel built; beds record `scripted` | M1, M1/B3; `nodecap-person` | `decideProposal`, `approveLock` and re-activation accepted `channel: 'cli'`; the engine's `'user'` approval alone sent the comment |
+| M2 trust on first use per process; proposals bound no definition | workspace pin baseline compared at every qualification; proposals record the definition shown; `applyBind` refuses a change; `continueRun` runs the preflight | M2 ×3; `nodecap-drift` | the changed server re-qualified; a changed member bound; the continuation started without a preflight |
+| M3 stdio servers unsandboxed, code unpinned, all spawned | absolute command; integrity pins re-hashed before spawn (hash cache keyed on ctime); namespace sandbox; lazy qualification | M3 ×5 | a server with a wrong pin started; it read a host file; an unrelated server was spawned; a relative command was accepted |
+| M4 deny list matched names | deny by attested type and objects | M4 | a renamed connection manager was not deny-listed |
+| M5 page text in the planner view | no title; names capped; quoted names parsed | M5 | the injected title was in the view |
+| M6 Rule of Two gaps | both grant orders; program egress derived; node input class | M6 ×3 | a private member was granted after a third-party egress; a program kept `local`; lint missed private input |
+| M7 lock N+1 never linted | `applyBind` lints lock N+1 and refuses deny-listed members; construction proposals never offer them | M7 ×2 | both binds succeeded; deny-listed candidates were offered |
+| M8 unbounded proposals, server-chosen scopes | failed calls counted; proposals de-duplicated and counted per run; step-up only from an HTTP challenge on an OAuth entry, owner-listed scopes only | M8 ×2 | the failing server was reached 4 times (limit 2); unlisted scopes raised a proposal |
+| M9 P3a refused by the lock | P3c runs the same plan on T02, whose lock holds the effect: the person gate stops it | `nodecap-bed` P3 test | (evaluation finding) P3a's evidence now records `refusedBy: 'lock'` |
+| m1 SSE unbounded | stream byte cap | m1 | the oversized stream was read |
+| m2 T2 bound by code | resolver binds trusted tiers only | m2 | the T2 member was bound |
+| m3 PATH lookups | absolute paths for the keychain tool and stdio commands | m3, M3/m3 | the planted `secret-tool` ran |
+| m4 OAuth callback and refresh | state-checked receiver; serialized refresh | m4 ×2 | a forged-state request failed the connect (`OAUTH_STATE_MISMATCH`); the second of two concurrent refreshes was refused (rotation reuse) |
+| m5 `find` leaked outside ids | a count only | m5 | `outsideLock` listed `mcp.helpdesk.*` |
+| m6 exact-match scrub | encodings; short secrets refused; password fields by type | m6 ×2 | the URL-encoded copy was missed; a password-type PIN was returned |
+| m7 U4/U6 counted blocks by construction | U6 now tries a side-effecting GET (`/items/purge`); U4 stays a structural check and is reported as one | bed GUI test | (evaluation finding) |
+
+**Found while fixing (beyond the review):** a site that rotates its cookie on every response left the earlier values
+in the trace's network log, where a storage-state snapshot cannot see them (now scrubbed structurally; B2 test); the first version of the
+integrity hash cache keyed on size and mtime, which a writer can restore (now ctime; M3 test); a scripted approval written by a bed ledger
+into the same file satisfied a production ledger's `lockApproval` and `callDecision` (readers now honour only their own channels;
+`nodecap-person`). Also changed without a dedicated test: a session of an entry without a safe-GET allowlist no longer loads `/` on
+its own after login (it stays blank until an approved `observe {path}`); the fixtures' login redirect itself lands on `/`, so no fixture
+can tell the two apart.
+
+What the fixes do not claim: the CLI channel is a tested primitive without a `foundry` command, and no dashboard exists (§7); the safe-GET
+allowlist is only as good as the owner's attestation; the sandbox is Linux-only. The NODECAP-1 result ran on the pre-fix code; see its
+addendum.

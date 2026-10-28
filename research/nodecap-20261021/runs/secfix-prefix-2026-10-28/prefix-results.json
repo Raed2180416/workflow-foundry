@@ -1,0 +1,187 @@
+{
+ "schema": "nodecap-secfix-prefix/1",
+ "date": "2026-10-28",
+ "what": "tests/nodecap-security.test.mjs (as committed) run against the pre-fix code (HEAD 44bb426d: src/, experiments/nodecap/, experiments/library/, tests/support/, policy/, schemas/ from git archive), with tests/support/nodecap.mjs extended by helpers that map the post-fix helper names onto the pre-fix API (person decisions become channel strings, stdio sources carry no integrity or sandbox, approveCall is the engine approval alone) and two catalog fields the pre-fix schema refuses removed from the test copy (safeGets on the hostile-site entry, stepUpScopes on the step-up entry). The probe-stdio fixture was copied in. Development evidence, /bin/bash, loopback only.",
+ "summary": {
+  "tests": 34,
+  "failedByAssertion": 33,
+  "failedOtherwise": [
+   {
+    "test": "M3: the integrity check re-hashes a file rewritten in place with its size and mtime restored (the hash cache keys on ctime)",
+    "why": "Error [ERR_MODULE_NOT_FOUND]: src/capabilities/stdio-sandbox.mjs does not exist before the fix"
+   }
+  ]
+ },
+ "rows": [
+  {
+   "test": "M1: naming a person channel is not a person decision: a channel string cannot decide a proposal, approve a version or re-activate an entry",
+   "failure": "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+   "detail": "actual: undefined,"
+  },
+  {
+   "test": "M1/B3: an engine approval answered with the string \"user\" sends no effect; only a person decision on the host rendering of the call does",
+   "failure": "AssertionError [ERR_ASSERTION]: the effect never reached the server",
+   "detail": "+ actual - expected + [ +   { +     args: { +       body: 'Order 7731', +       id: 42 +     }, +     scope: 'write', +     tool: 'add_comment' +   } + ]"
+  },
+  {
+   "test": "M1/B3 (positive): the same effect runs once a person approved the host rendering of exactly that call",
+   "failure": "AssertionError [ERR_ASSERTION]: the person saw the host rendering of the call",
+   "detail": "+ actual - expected +   null, -   'mcp.tickets.add_comment',"
+  },
+  {
+   "test": "M2: a definition that changes between processes is caught at the next qualification against the workspace pin baseline (no trust on first use per process)",
+   "failure": "AssertionError [ERR_ASSERTION]: the changed server did not re-qualify",
+   "detail": "+ actual - expected + [] - [ -   { -     code: 'DEFINITION_CHANGED', -     entry: 'crm' -   } - ] actual: [],"
+  },
+  {
+   "test": "M2: lock N+1 binds a proposal member only with the definition the person was shown",
+   "failure": "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+   "detail": "actual: undefined,"
+  },
+  {
+   "test": "M2: a continuation runs the launch preflight (a lock N+1 whose server drifted is refused, no run is created)",
+   "failure": "AssertionError [ERR_ASSERTION]: Missing expected rejection.",
+   "detail": "actual: undefined,"
+  },
+  {
+   "test": "M3: a stdio server whose pinned code changed since the owner attested it is never started (SOURCE_INTEGRITY, quarantined)",
+   "failure": "AssertionError [ERR_ASSERTION]: the server process never started",
+   "detail": "+ actual - expected + [ +   'started-19896' + ] - [] actual: [ 'started-19896' ], expected: [],"
+  },
+  {
+   "test": "M3: a stdio server runs sandboxed: no host files outside its binds, no network unless attested, no host environment",
+   "failure": "AssertionError [ERR_ASSERTION]: a host file outside the binds is not visible",
+   "detail": "actual: true, expected: false,"
+  },
+  {
+   "test": "M3: construction spawns only the servers a requirement or an acquire clause can use",
+   "failure": "AssertionError [ERR_ASSERTION]: the unrelated stdio server was never spawned",
+   "detail": "+ actual - expected + [ +   'started-20473' + ] - [] actual: [ 'started-20473' ], expected: [],"
+  },
+  {
+   "test": "M3: the integrity check re-hashes a file rewritten in place with its size and mtime restored (the hash cache keys on ctime)",
+   "failure": "Error [ERR_MODULE_NOT_FOUND]: src/capabilities/stdio-sandbox.mjs does not exist before the fix",
+   "detail": ""
+  },
+  {
+   "test": "M3/m3: a stdio command must be an absolute path with integrity pins (no PATH lookup, no unpinned server)",
+   "failure": "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+   "detail": "actual: undefined, expected: undefined,"
+  },
+  {
+   "test": "M4: a self-provisioning tool is deny-listed by its attested type and objects, whatever its name",
+   "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+   "detail": "actual: false, expected: true,"
+  },
+  {
+   "test": "M6: the Rule of Two holds in either grant order (private after third-party egress is refused too)",
+   "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:",
+   "detail": "+ actual - expected +   level: 'L1', +   result: 'granted' -   code: 'NEED_RULE_OF_TWO', -   result: 'refused' actual: { result: 'granted', level: 'L1' }, expected: { result: 'refused', code: 'NEED_RULE_OF_TWO' },"
+  },
+  {
+   "test": "M6: a program that calls a third-party egress member is itself a third-party egress",
+   "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+   "detail": "+ actual - expected + 'local' - 'third-party' actual: 'local', expected: 'third-party',"
+  },
+  {
+   "test": "M6: private data reaching a tool node through its inputs counts for the Rule of Two (lint refuses a third-party egress there)",
+   "failure": "AssertionError [ERR_ASSERTION]: []",
+   "detail": "actual: false, expected: true,"
+  },
+  {
+   "test": "M7: lock N+1 is held to lock N's rules: a bind that breaks the Rule of Two or adds a deny-listed member is refused",
+   "failure": "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+   "detail": "actual: undefined,"
+  },
+  {
+   "test": "M7: construction proposals flag deny-listed candidates and never offer them",
+   "failure": "AssertionError [ERR_ASSERTION]: nothing deny-listed is offered for binding",
+   "detail": "+ actual - expected + [ +   'mcp.broker.connect_app', +   'mcp.crm.update_contact' + ] - [] actual: [ 'mcp.broker.connect_app', 'mcp.crm.update_contact' ], expected: [],"
+  },
+  {
+   "test": "M8: failed calls count against maxCallsPerMember, and a stdio JSON-RPC 403 \"insufficient_scope\" is no step-up proposal",
+   "failure": "AssertionError [ERR_ASSERTION]: the server was reached 4 times",
+   "detail": "actual: 4, expected: 2,"
+  },
+  {
+   "test": "M8: a step-up proposal carries only owner-listed scopes and is raised once per entry, class and scopes",
+   "failure": "AssertionError [ERR_ASSERTION]: a challenge naming only unlisted scopes raises nothing",
+   "detail": "+ actual - expected + { +   createdAt: 1793212327954, +   diff: { +     added: [], +     scopes: { +       add: [ +         'admin:all' +       ] +     } +   },"
+  },
+  {
+   "test": "m1: a server-sent event stream is capped as it is read",
+   "failure": "AssertionError [ERR_ASSERTION]: Missing expected rejection.",
+   "detail": "actual: undefined,"
+  },
+  {
+   "test": "m2: code never binds an untrusted (T2) member at construction, whatever its own effects attestation says",
+   "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:",
+   "detail": "+ actual - expected + [ +   'mcp.thirdparty.lookup' + ] - [] actual: [ 'mcp.thirdparty.lookup' ], expected: [],"
+  },
+  {
+   "test": "m3: the keychain tool is never looked up through PATH",
+   "failure": "AssertionError [ERR_ASSERTION]: Expected \"actual\" to be strictly unequal to:",
+   "detail": "actual: 'planted-secret-value', expected: 'planted-secret-value',"
+  },
+  {
+   "test": "m4: a local request with another state cannot fail an OAuth connect",
+   "failure": "AssertionError [ERR_ASSERTION]: the connect survived the forged callback (OAUTH_STATE_MISMATCH)",
+   "detail": "+ actual - expected + undefined - [ -   'tickets:read' - ] actual: undefined, expected: [ 'tickets:read' ],"
+  },
+  {
+   "test": "m4: concurrent refreshes of one token record run once (rotation-safe)",
+   "failure": "AssertionError [ERR_ASSERTION]: [null,\"OAUTH_REFRESH_REFUSED\"]",
+   "detail": "+ actual - expected +   'rejected' -   'fulfilled' actual: [ 'fulfilled', 'rejected' ], expected: [ 'fulfilled', 'fulfilled' ],"
+  },
+  {
+   "test": "m5: find tells the model only that outside-lock tools exist, never their ids",
+   "failure": "AssertionError [ERR_ASSERTION]: no outside member id reaches the model",
+   "detail": "actual: '{\"action\":\"find\",\"matches\":[\"tickets_search(query: string (≤200)) — Search support tickets by text.\",\"tickets_get(id: integer) — Read one support ticket by number.\"],\"ok\":true,\"outsideLock\":[\"mcp.helpdesk.search_tickets\"]}', expected: /helpdesk/,"
+  },
+  {
+   "test": "m6: the scrub set catches encoded copies of a secret, and a credential too short to scrub is refused",
+   "failure": "AssertionError [ERR_ASSERTION]: missed tok-Zx9%2Fq%2Bw%3D%22%C3%9Cn%5C%C3%AF",
+   "detail": "actual: false, expected: true,"
+  },
+  {
+   "test": "B1: without an owner safe-GET allowlist, every navigating ui member is an approval-gated effect (never auto-granted)",
+   "failure": "AssertionError [ERR_ASSERTION]: observe",
+   "detail": "+ actual - expected +   'none', +   false -   'non-idempotent', -   true actual: [ 'none', false ], expected: [ 'non-idempotent', true ],"
+  },
+  {
+   "test": "B1: a GET outside the owner safe-GET allowlist is held, never sent (ui.observe {path} cannot cancel an order)",
+   "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+   "detail": "+ actual - expected + undefined - 'COMMIT_REQUIRED' actual: undefined, expected: 'COMMIT_REQUIRED',"
+  },
+  {
+   "test": "B1: WebSockets, WebRTC and workers are closed in the S0 profile",
+   "failure": "AssertionError [ERR_ASSERTION]: no WebSocket reached the server",
+   "detail": "actual: 3, expected: 0,"
+  },
+  {
+   "test": "B1: practice mode never sends a computer-use member to the real origin",
+   "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+   "detail": "+ actual - expected + undefined - true actual: undefined, expected: true,"
+  },
+  {
+   "test": "B2: the exported trace holds no session cookie (the login cookie and every rotated cookie are scrubbed, the archive is checked)",
+   "failure": "AssertionError [ERR_ASSERTION]: a cookie value is in the trace: sess-638c",
+   "detail": "actual: true, expected: false,"
+  },
+  {
+   "test": "B3: ui.commit takes the held request id only; what is sent (and shown to the person) is the host record, body included",
+   "failure": "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+   "detail": "actual: undefined, expected: undefined,"
+  },
+  {
+   "test": "M5: page text in the planner view: no page title, quoted names parsed, every name capped",
+   "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:",
+   "detail": "actual: true, expected: false,"
+  },
+  {
+   "test": "m6: a password-type field is redacted by type, whatever its label",
+   "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:",
+   "detail": "+ actual - expected +   value: '4711-9911-x' -   value: '[redacted]' actual: { field: 'Access PIN', value: '4711-9911-x' }, expected: { field: 'Access PIN', value: '[redacted]' },"
+  }
+ ]
+}

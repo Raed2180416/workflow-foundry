@@ -23,7 +23,7 @@ import { construct, launch, subjectOf, executeRun } from '../src/capabilities/la
 import { nodecapDecisions } from '../src/capabilities/journal.mjs';
 import { verifyAcquisitions } from '../experiments/nodecap/verify-acquisitions.mjs';
 import { startStockroom } from '../experiments/nodecap/fixtures/stockroom/app.mjs';
-import { FIXTURES, catalogOf, crmEntry, skillEntry, ledgerLines, workspace } from './support/nodecap.mjs';
+import { FIXTURES, catalogOf, crmEntry, skillEntry, ledgerLines, workspace, openLedger, approveVersion, approveCall } from './support/nodecap.mjs';
 
 const skip = chromiumPath() ? false : 'no Chromium executable installed';
 const loaded = loadPolicy(), M = loaded.policy.models.find(m => m.class === 'M').id;
@@ -44,7 +44,7 @@ function script(args, index) {
     case 4: return step({ action: 'read', tool: 'stockroom_ui_act', args: { basis: basis(), index: idx('button', 'Save address'), op: 'click' } });
     case 5: {
       const held = last(p, /"pending":\[\{"bodyHash":"([0-9a-f]{64})","bodyPreview":"[^"]*","id":"([^"]+)","method":"([A-Z]+)","origin":"([^"]+)","path":"([^"]+)"\}/g);
-      return step({ action: 'act', tool: 'stockroom_ui_commit', args: { id: held[2], method: held[3], origin: held[4], path: held[5], bodyHash: held[1] } });
+      return step({ action: 'act', tool: 'stockroom_ui_commit', args: { id: held[2] } });
     }
     case 6: return step({ action: 'read', tool: 'stockroom_ui_assert', args: { textPresent: '7 New Street, Leeds' } });
     case 7: {
@@ -61,9 +61,9 @@ test('e2e: one tool node acquires an MCP read (L1), a skill (L1) and computer us
   const app = await startStockroom({ password: PASSWORD });
   t.after(() => app.close());
   const catalog = checkCatalog(catalogOf(crmEntry({ ledger: crmLedger }), skillEntry('refund-policy'),
-    { id: 'stockroom-ui', kind: 'cua', trust: 'T0', status: 'active', dev: true, source: { backend: 'playwright-local', origins: [app.origin], profile: 'S0' },
+    { id: 'stockroom-ui', kind: 'cua', trust: 'T0', status: 'active', dev: true, source: { backend: 'playwright-local', origins: [app.origin], profile: 'S0', safeGets: ['/', '/vendors/*', '/invoices/*', '/settings'] },
       login: { path: '/login', user: { env: 'STOCKROOM_USER' }, password: { env: 'STOCKROOM_PASSWORD' } }, limits: { maxSteps: 40, observationTokens: 2500 } }), { allowDev: true });
-  const store = new Store(dir), ledger = new NodecapLedger(dir);
+  const store = new Store(dir), ledger = openLedger(dir);
   const host = new NodecapHost({ catalog, ledger, envelope, chromium, env: { STOCKROOM_USER: 'ops@stockroom.test', STOCKROOM_PASSWORD: PASSWORD } });
   const provider = new ScriptedProvider({ [M]: script });
   const models = new ModelPort({ policy: loaded.policy, providers: { 'claude-cli': provider, 'llama-server': provider }, journal: new Journal(store) });
@@ -76,14 +76,16 @@ test('e2e: one tool node acquires an MCP read (L1), a skill (L1) and computer us
   const construction = await construct({ workflow, sidecar, host, envelope, types, catalogDigest: catalogDigest(catalog) });
   assert.deepEqual(construction.lint.errors, []);
   assert.deepEqual(construction.lock.nodes.work.bound, [], 'nothing is pre-bound: every capability is acquired');
-  ledger.approveLock(subjectOf(construction), { channel: 'dashboard' });
+  approveVersion(ledger, construction);
   const { runtime, run: created, execute } = await launch({ store, ledger, host, construction, envelope, models, modelPolicy: loaded });
   let run = await execute();
   assert.equal(run.status, 'awaiting_approval', JSON.stringify(run.error));
   assert.equal(app.ledger.writes.length, 0, 'the held write did not reach the server before the approval');
   const [approvalId] = Object.keys(run.approvals);
   assert.match(JSON.stringify(run.approvals[approvalId].args), /stockroom_ui_commit/);
-  runtime.approve(run.id, approvalId, true, 'user');
+  // The person sees the HOST's record of the held request (method, path, decoded body), not the model's account of it.
+  const rendering = await approveCall({ runtime, ledger, host, lock: construction.lock, run, approvalId });
+  assert.deepEqual([rendering.held.method, rendering.held.path, rendering.held.body.fields], ['POST', '/vendors/V-9/address', [['street', '7 New Street'], ['city', 'Leeds']]]);
   run = await executeRun({ runtime, host, runId: created.id });
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
   assert.deepEqual(run.outputs.work, { email: 'ada@analytical.example', starterDailyRate: 0.9673, street: '7 New Street' });

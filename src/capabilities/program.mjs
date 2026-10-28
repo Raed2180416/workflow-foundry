@@ -3,7 +3,8 @@
 // typed call instead of many model turns. No model sees a tool while it runs (Tier 0 cost: zero tool-definition tokens).
 // Rules (v1):
 //   - reads only: every member in `uses` must be effects none, so the program's effects (the max over uses) are none;
-//   - its output label is the join of its attested label and every used member's label (untrusted data stays untrusted);
+//   - its output label is the join of its attested label and every used member's label (untrusted data stays untrusted); its data class
+//     and its egress are the maximum over its own attestation and the members it uses;
 //   - its cost is the sum of reservations: maxCalls x the dearest used member;
 //   - it can call ONLY the members it lists, each through the host's own gates (pins, schemas, credentials, scrub); anything else is
 //     CAPABILITY_DENIED and ends the program; the host counts the calls (maxCalls);
@@ -12,7 +13,7 @@
 import { readFileSync, lstatSync } from 'node:fs';
 import { checkMemberSchema } from './import-mcp.mjs';
 import { compileDataSchema } from '../validate.mjs';
-import { fail, FoundryError, joinLabels, sha256 } from './common.mjs';
+import { EGRESS, fail, FoundryError, joinLabels, sha256 } from './common.mjs';
 import { memberRecord } from './members.mjs';
 import { runProgram } from './rpc-sandbox.mjs';
 
@@ -36,7 +37,10 @@ export function programMember(entry, members) {
   checkMemberSchema(attestation.view.inputSchema, `${entry.id}/${name} view`);
   compileDataSchema(attestation.outputSchema);
   const maxCalls = entry.limits?.maxCalls ?? 20;
-  const derived = { ...attestation, effects: 'none', outputLabel: joinLabels([attestation.outputLabel, ...uses.map(m => m.outputLabel)]),
+  // Egress is derived like the data class (review M6): a program that calls a third-party egress member IS a third-party egress, whatever
+  // its own attestation says, so the Rule of Two sees it.
+  const egress = [attestation.egress, ...uses.map(m => m.egress)].reduce((a, b) => EGRESS.indexOf(b) > EGRESS.indexOf(a) ? b : a, 'local');
+  const derived = { ...attestation, effects: 'none', egress, outputLabel: joinLabels([attestation.outputLabel, ...uses.map(m => m.outputLabel)]),
     dataClass: uses.some(m => m.dataClass === 'secret') ? 'secret' : uses.some(m => m.dataClass === 'private') ? 'private' : attestation.dataClass,
     cost: Math.max(attestation.cost ?? 0, maxCalls * Math.max(0, ...uses.map(m => m.cost ?? 0))) };
   return memberRecord({ entry, name, id: `program.${entry.id}.${name}`, attestation: derived, adapter: 'nodecap-program/1',

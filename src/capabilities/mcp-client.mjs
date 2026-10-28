@@ -1,6 +1,7 @@
 // MCP client adapter for catalog entries (stdio and streamable HTTP), ARCHITECTURE.md §3.3, on the pinned @modelcontextprotocol/sdk 1.30.0.
-// A connection is lazy (spawned or opened on first use) and closed with its owner. stdio children get a blanked environment plus the
-// entry's envAllow names (as src/components.mjs), and their stderr is drained unread. HTTP connections use ./guarded-fetch.mjs and keep
+// A connection is lazy (spawned or opened on first use) and closed with its owner. stdio children are spawned only after their pinned files
+// re-hash to the owner's integrity pins, inside the namespace sandbox of ./stdio-sandbox.mjs, with a blanked environment plus the entry's
+// envAllow names (as src/components.mjs); their stderr is drained unread. HTTP connections use ./guarded-fetch.mjs and keep
 // SEPARATE sessions for the read and the write credential, chosen by member effects. Listing always uses the constant clientInfo and the
 // read (production) credential, so a server cannot serve the pinning client one definition and the calling client another.
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -11,6 +12,7 @@ import { fail, FoundryError } from './common.mjs';
 import { guardedFetch } from './guarded-fetch.mjs';
 import { osKeychain, osKeychainStore, resolveCredential } from './credentials.mjs';
 import { oauthBearer } from './oauth.mjs';
+import { sandboxedSpawn } from './stdio-sandbox.mjs';
 
 export const CLIENT_INFO = Object.freeze({ name: 'workflow-foundry-nodecap', version: '1' });
 const MAX_PAGES = 10;
@@ -42,10 +44,11 @@ export class McpConnection {
   async #open(scope, key) {
     let transport;
     if (this.entry.kind === 'mcp-stdio') {
+      // Integrity pins first (SOURCE_INTEGRITY refuses the spawn), then the sandboxed command line.
+      const spawn = sandboxedSpawn(this.entry, { env: this.env });
       // The SDK merges its default HOME/USER/... even when env is supplied: blank every inherited key before restoring the allowlist.
-      const env = { ...Object.fromEntries(DEFAULT_INHERITED_ENV_VARS.map(name => [name, ''])), PATH: process.env.PATH ?? '/usr/bin:/bin' };
-      for (const name of this.entry.source.envAllow ?? []) if (this.env[name] !== undefined) env[name] = this.env[name];
-      transport = new StdioClientTransport({ command: this.entry.source.command, args: this.entry.source.args, cwd: this.entry.source.cwd ?? this.cwd, env, stderr: 'pipe' });
+      const env = { ...Object.fromEntries(DEFAULT_INHERITED_ENV_VARS.map(name => [name, ''])), ...spawn.env };
+      transport = new StdioClientTransport({ command: spawn.command, args: spawn.args, cwd: spawn.cwd, env, stderr: 'pipe' });
       transport.stderr?.resume();
     } else {
       const found = this.credentialRef(scope);
@@ -96,8 +99,8 @@ function mapError(error, fallback) {
   const own = error instanceof FoundryError ? error : error?.cause instanceof FoundryError ? error.cause : null;
   if (own) return own;
   const text = String(error?.message ?? '');
-  if (/insufficient_scope/i.test(text) || error?.code === 403) return new FoundryError('SCOPE_INSUFFICIENT', 'The server refused the call for lack of scope');
-  if (error?.code === 401 || /unauthori[sz]ed/i.test(text)) return new FoundryError('AUTH_REQUIRED', 'The server requires authorization');
+  // Server text and JSON-RPC error codes are the server's own words: they never become SCOPE_INSUFFICIENT (a step-up proposal) or
+  // AUTH_REQUIRED. Only guarded-fetch's own refusals of an HTTP 401/403 challenge (returned above as `own`) are those codes.
   if (error?.name === 'AbortError' || /aborted/i.test(text)) return new FoundryError('CANCELLED', 'The MCP request was cancelled');
   if (/timed out|timeout/i.test(text)) return new FoundryError('TOOL_TIMEOUT', 'The MCP request timed out');
   return new FoundryError(fallback, `The MCP ${fallback === 'MCP_CALL' ? 'call' : fallback === 'MCP_LIST' ? 'listing' : 'connection'} failed`);

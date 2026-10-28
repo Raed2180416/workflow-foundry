@@ -18,7 +18,7 @@ import { loadTypes } from '../src/capabilities/types.mjs';
 import { construct, launch, subjectOf, executeRun, runtimeFor } from '../src/capabilities/launcher.mjs';
 import { nodecapDecisions } from '../src/capabilities/journal.mjs';
 import { verifyAcquisitions } from '../experiments/nodecap/verify-acquisitions.mjs';
-import { FIXTURES, catalogOf, crmEntry, sheetsEntry, skillEntry, ledgerLines, workspace } from './support/nodecap.mjs';
+import { FIXTURES, catalogOf, crmEntry, sheetsEntry, skillEntry, ledgerLines, workspace, openLedger, approveVersion, approveCall } from './support/nodecap.mjs';
 
 const loaded = loadPolicy(), M = loaded.policy.models.find(m => m.class === 'M').id;
 const envelope = checkEnvelope(DEFAULT_ENVELOPE), types = loadTypes(path.join(FIXTURES, 'types.json'));
@@ -39,15 +39,18 @@ const sidecar = { schema: 'foundry-nodecap-toolnodes/1', nodes: { work: { acquir
 // world: the approved lock must match the fresh world's servers, or the replay would rightly be refused (DEFINITION_CHANGED).
 const world = () => checkCatalog(catalogOf(crmEntry({ ledgerName: 'crm' }), sheetsEntry({ ledgerName: 'sheets' }), skillEntry('refund-policy')));
 const envOf = dir => ({ ...process.env, NODECAP_LEDGER_DIR: dir });
-async function approveAndFinish(runtime, host, run) {
-  while (run.status === 'awaiting_approval') { for (const id of Object.keys(run.approvals).filter(id => run.approvals[id].status === 'pending')) runtime.approve(run.id, id, true, 'user'); run = await executeRun({ runtime, host, runId: run.id }); }
+async function approveAndFinish(runtime, host, run, ledger, lock) {
+  while (run.status === 'awaiting_approval') {
+    for (const id of Object.keys(run.approvals).filter(id => run.approvals[id].status === 'pending')) await approveCall({ runtime, ledger, host, lock, run, approvalId: id });
+    run = await executeRun({ runtime, host, runId: run.id });
+  }
   return run;
 }
 // Approval ids bind the run (its idempotency key), so only their presence is compared.
 const comparable = decisions => decisions.map(({ kind, action, features }) => ({ kind, action, features: { ...features, approvalId: features.approvalId ? 'present' : null } }));
 
 test('replay: a fresh world replays the run at $0 with the same decisions, outcome and ledger; the verifier recomputes every decision', async t => {
-  const dir = workspace(t), store = new Store(dir), ledger = new NodecapLedger(dir);
+  const dir = workspace(t), store = new Store(dir), ledger = openLedger(dir);
   const firstWorld = path.join(dir, 'w1'), secondWorld = path.join(dir, 'w2');
   const { mkdirSync } = await import('node:fs'); mkdirSync(firstWorld); mkdirSync(secondWorld);
   const catalog = world(), host = new NodecapHost({ catalog, ledger, envelope, env: envOf(firstWorld) });
@@ -55,9 +58,9 @@ test('replay: a fresh world replays the run at $0 with the same decisions, outco
   const models = new ModelPort({ policy: loaded.policy, providers: { 'claude-cli': provider, 'llama-server': provider }, journal: new Journal(store) });
   t.after(async () => { await host.close(); store.close(); ledger.close(); });
   const construction = await construct({ workflow, sidecar, host, envelope, types, catalogDigest: catalogDigest(catalog) });
-  ledger.approveLock(subjectOf(construction), { channel: 'cli' });
+  approveVersion(ledger, construction);
   const { runtime, execute } = await launch({ store, ledger, host, construction, envelope, models, modelPolicy: loaded });
-  const first = await approveAndFinish(runtime, host, await execute());
+  const first = await approveAndFinish(runtime, host, await execute(), ledger, construction.lock);
   assert.equal(first.status, 'succeeded', JSON.stringify(first.error));
   assert.equal(provider.calls.length, 6);
   const report = verifyAcquisitions({ store, runId: first.id, lock: construction.lock, envelope });
@@ -72,7 +75,7 @@ test('replay: a fresh world replays the run at $0 with the same decisions, outco
   const replayRuntime = runtimeFor({ store, host: host2, ledger, construction, envelope, models: replayModels, modelPolicy: loaded }).runtime;
   const replayRun = replayRuntime.create(construction.lowered, {}, { modelMode: 'replay', sampleSalt: store.rows.header(first.id).sampleSalt });
   assert.equal(store.rows.header(replayRun.id).registryHash, store.rows.header(first.id).registryHash);
-  const replayed = await approveAndFinish(replayRuntime, host2, await replayRuntime.execute(replayRun.id));
+  const replayed = await approveAndFinish(replayRuntime, host2, await replayRuntime.execute(replayRun.id), ledger, construction.lock);
   assert.equal(replayed.status, 'succeeded', JSON.stringify(replayed.error));
   assert.equal(never.calls.length, 0);
   assert.equal(new Journal(store).forRun(replayRun.id).reduce((sum, row) => sum + (row.costUsd ?? 0), 0), 0, '$0 model cost');
@@ -85,13 +88,13 @@ test('replay: a fresh world replays the run at $0 with the same decisions, outco
 });
 
 test('replay: tampering a decision row is caught by verify-run and by the acquisition audit; an edited lock is caught too', async t => {
-  const dir = workspace(t), store = new Store(dir), ledger = new NodecapLedger(dir);
+  const dir = workspace(t), store = new Store(dir), ledger = openLedger(dir);
   const catalog = world(), host = new NodecapHost({ catalog, ledger, envelope, env: envOf(dir) });
   const provider = new ScriptedProvider({ [M]: [SCRIPT[1], SCRIPT[5]] });
   const models = new ModelPort({ policy: loaded.policy, providers: { 'claude-cli': provider, 'llama-server': provider }, journal: new Journal(store) });
   t.after(async () => { await host.close(); store.close(); ledger.close(); });
   const construction = await construct({ workflow, sidecar, host, envelope, types, catalogDigest: catalogDigest(catalog) });
-  ledger.approveLock(subjectOf(construction), { channel: 'cli' });
+  approveVersion(ledger, construction);
   const run = await (await launch({ store, ledger, host, construction, envelope, models, modelPolicy: loaded })).execute();
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
   assert.equal(verifyAcquisitions({ store, runId: run.id, lock: construction.lock, envelope }).ok, true);

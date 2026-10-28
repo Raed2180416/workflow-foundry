@@ -6,7 +6,7 @@
 import { createDefaultRegistry } from '../capabilities.mjs';
 import { digest, fail, joinLabels } from './common.mjs';
 import { walkNodes } from './resolve.mjs';
-import { Dispatcher } from './broker.mjs';
+import { Dispatcher, callSubject, describeTier0Call } from './broker.mjs';
 
 const DECISION_IN = { type: 'object', additionalProperties: false, required: ['decision'], properties: { decision: { type: 'object' } } };
 const OPEN = { type: 'object' };
@@ -18,12 +18,20 @@ export function compileRegistry({ lock, lockHash, host, envelope, envelopeDigest
   if (!['live', 'practice'].includes(mode)) fail('REGISTRY_MODE', 'mode is live or practice');
   const registry = createDefaultRegistry(), gateEffects = untrustedLock(lock);
   for (const memberId of [...new Set(Object.values(lock.tier0))]) {
-    const m = lock.members[memberId];
+    const m = lock.members[memberId], requiresApproval = m.requiresApproval === true || (gateEffects && m.effects !== 'none');
     registry.register({ name: m.id, description: m.view.summary, version: '1', implementation: `${m.implementation}${mode === 'practice' ? '+practice' : ''}`,
       inputSchema: m.view.inputSchema, outputSchema: m.outputSchema, effects: m.effects, risk: m.risk,
-      requiresApproval: m.requiresApproval === true || (gateEffects && m.effects !== 'none'), maxTimeoutMs: m.maxTimeoutMs, cost: m.cost,
+      requiresApproval, maxTimeoutMs: m.maxTimeoutMs, cost: m.cost,
       cancellation: 'protocol-request-only; external effect reconciliation may be required',
-      execute: async (args, ctx) => host.invoke(m.id, args, { runId: ctx.runId, node: ctx.nodeKey, signal: ctx.signal, idempotencyKey: ctx.idempotencyKey, artifactsDir: ctx.artifactsDir, practice: mode === 'practice', approved: m }) });
+      execute: async (args, ctx) => {
+        // An approval-gated Tier-0 effect runs only with a person's decision for the host rendering of this exact call (as nodecap.act).
+        if (requiresApproval || m.risk === 'high') {
+          const header = ctx.store.rows.header(ctx.runId);
+          const approvalId = digest({ workflowHash: header.workflowHash, registryHash: header.registryHash, nodeKey: ctx.nodeKey, tool: m.id, args, idempotencyKey: ctx.idempotencyKey });
+          if (ledger?.callDecision(callSubject(approvalId, describeTier0Call({ lock, memberId: m.id, args })))?.approve !== true) fail('APPROVAL_MISSING', `${m.id} runs only after a person approved the host's rendering of this exact call`);
+        }
+        return host.invoke(m.id, args, { runId: ctx.runId, node: ctx.nodeKey, signal: ctx.signal, idempotencyKey: ctx.idempotencyKey, artifactsDir: ctx.artifactsDir, practice: mode === 'practice', approved: m });
+      } });
   }
   if (Object.keys(lock.nodes).length) {
     const dispatcher = new Dispatcher({ host, lock, lockHash, envelope, envelopeDigest, ledger, mode });

@@ -41,8 +41,9 @@ export function lint({ workflow, lock, envelope, types = null, gaps = [], skills
     if (portableSchemaViolations(section.returns).length) add('SCHEMA_PROFILE_UNSUPPORTED', id, 'the answer schema is outside the portable subset');
     for (const m of reach) if (denyListed(envelope, m)) add('BROKER_SELF_PROVISIONING', id, `${m.id} manages connections or provisions tools`);
     // Rule of Two (egress-aware): untrusted input + private data + a third-party egress reachable without a person.
-    // (Untrusted input is always present: a tool node's transcript carries tool output.)
-    const privateData = reach.some(m => isPrivate(m.dataClass));
+    // (Untrusted input is always present: a tool node's transcript carries tool output.) Private data counts whether it comes from a
+    // member the node can reach or through the node's inputs (resolve records their class as inputClass).
+    const privateData = reach.some(m => isPrivate(m.dataClass)) || isPrivate(section.inputClass);
     const egress = reach.filter(m => m.egress === 'third-party' && m.effects === 'none' && !m.requiresApproval);
     if (privateData && egress.length) add('RULE_OF_TWO', id, `untrusted input, private data and third-party egress (${egress.map(m => m.id).join(', ')}) in one node`);
     for (const skillId of section.skills) {

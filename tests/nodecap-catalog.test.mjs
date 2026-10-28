@@ -5,8 +5,8 @@ import { writeFileSync, symlinkSync } from 'node:fs';
 import path from 'node:path';
 import { loadCatalog, checkCatalog, catalogDigest, entryStatus, bindable, secretLike } from '../src/capabilities/catalog.mjs';
 import { DEFAULT_ENVELOPE, checkEnvelope, envelopeDigest, autoBind, denyListed } from '../src/capabilities/envelope.mjs';
-import { NodecapLedger, requireWidenChannel } from '../src/capabilities/ledger.mjs';
-import { catalogOf, crmEntry, ticketsEntry, workspace } from './support/nodecap.mjs';
+import { NodecapLedger } from '../src/capabilities/ledger.mjs';
+import { catalogOf, crmEntry, ticketsEntry, workspace, openLedger, person } from './support/nodecap.mjs';
 
 const code = expected => error => { assert.equal(error.code, expected, `${error.code}: ${error.message}`); return true; };
 
@@ -69,32 +69,36 @@ test('catalog: T3 entries are never bindable; status comes from the ledger once 
   assert.equal(ledger.quarantineLog('crm')[0].code, 'DEFINITION_CHANGED');
 });
 
-test('ledger: the status machine allows only its transitions, with compare-and-swap', t => {
-  const ledger = new NodecapLedger(workspace(t)); t.after(() => ledger.close());
+test('ledger: the status machine allows only its transitions, with compare-and-swap; a move to active needs a person', t => {
+  const ledger = openLedger(workspace(t)); t.after(() => ledger.close());
+  const activate = (rev, status) => person(NodecapLedger.statusSubject({ entryId: 'x', status, to: 'active', rev }), true);
   assert.throws(() => ledger.setStatus('x', { from: 'imported', to: 'active' }), code('LEDGER_TRANSITION'));
   assert.equal(ledger.setStatus('x', { from: 'imported', to: 'qualified' }).rev, 1);
   assert.throws(() => ledger.setStatus('x', { from: 'imported', to: 'active', expectedRev: 0 }), code('CONFLICT'));
-  assert.equal(ledger.setStatus('x', { from: 'imported', to: 'active', expectedRev: 1 }).status, 'active');
-  ledger.setStatus('x', { to: 'quarantined' }); ledger.setStatus('x', { to: 'active' }); ledger.setStatus('x', { to: 'revoked' });
+  assert.throws(() => ledger.setStatus('x', { from: 'imported', to: 'active', expectedRev: 1, actor: 'owner' }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
+  assert.equal(ledger.setStatus('x', { from: 'imported', to: 'active', expectedRev: 1, person: activate(1, 'qualified') }).status, 'active');
+  ledger.setStatus('x', { to: 'quarantined' }); ledger.setStatus('x', { to: 'active', person: activate(3, 'quarantined') }); ledger.setStatus('x', { to: 'revoked' });
   assert.throws(() => ledger.setStatus('x', { to: 'active' }), code('LEDGER_TRANSITION'));
 });
 
 test('ledger: concurrent proposal decisions give one winner and one CONFLICT; elicitation never widens', t => {
-  const dir = workspace(t), a = new NodecapLedger(dir), b = new NodecapLedger(dir);
+  const dir = workspace(t), a = openLedger(dir), b = openLedger(dir);
   t.after(() => { a.close(); b.close(); });
   const proposal = a.putProposal({ kind: 'capability.bind', flowId: 'flow', diff: { added: [{ member: 'mcp.sheets.append_row' }] } });
-  assert.throws(() => a.decideProposal(proposal.id, { approve: true, channel: 'mcp-elicitation', expectedRev: 1 }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
-  assert.throws(() => requireWidenChannel('signal'), code('APPROVAL_CHANNEL_INSUFFICIENT'));
+  const subject = NodecapLedger.proposalSubject(proposal);
+  assert.throws(() => a.decideProposal(proposal.id, { person: { channel: 'mcp-elicitation', approve: true, subject }, expectedRev: 1 }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
   const outcomes = [];
   for (const [ledger, approve] of [[a, true], [b, false]]) {
-    try { outcomes.push(ledger.decideProposal(proposal.id, { approve, channel: 'cli', expectedRev: 1 }).status); } catch (error) { outcomes.push(error.code); }
+    try { outcomes.push(ledger.decideProposal(proposal.id, { person: person(subject, approve), expectedRev: 1 }).status); } catch (error) { outcomes.push(error.code); }
   }
   assert.deepEqual(outcomes, ['approved', 'CONFLICT']);
   assert.equal(b.proposal(proposal.id).status, 'approved');
+  assert.equal(b.proposal(proposal.id).decision.channel, 'scripted', 'the record says which channel decided');
   // Lock approvals are a person's too, and bind the whole subject.
   const parts = { workflowHash: 'a'.repeat(64), lockHash: 'sha256:' + 'b'.repeat(64), envelopeDigest: 'e', catalogDigest: 'c', dryRunId: null };
-  assert.throws(() => a.approveLock(parts, { channel: 'mcp-elicitation' }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
-  a.approveLock(parts, { channel: 'dashboard' });
+  assert.throws(() => a.approveLock(parts, { person: { channel: 'cli', approve: true, subject: NodecapLedger.subject(parts) } }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
+  assert.throws(() => a.approveLock(parts, { person: person(NodecapLedger.subject({ ...parts, dryRunId: 'other' }), true) }), code('PERSON_SUBJECT_MISMATCH'));
+  a.approveLock(parts, { person: person(NodecapLedger.subject(parts), true) });
   assert.ok(b.lockApproval(parts));
   assert.equal(b.lockApproval({ ...parts, lockHash: 'sha256:' + 'c'.repeat(64) }), null);
   // Flow heads move by compare-and-swap.

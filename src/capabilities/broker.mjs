@@ -4,13 +4,16 @@
 //   L1  auto-bind: a standby member inside the envelope (effects none, low risk, trusted source, no cost, authored view, I6, Rule of Two)
 //       is granted by code, with no model call and no person; the grant is an `adaptation` decision in the run's hash chain.
 //   L2  per-call approval: an effectful standby member is reachable only through nodecap.act, which the engine gates with a user approval
-//       bound to (workflow, registry, node, exact arguments); the dispatcher verifies that decision in the chain before calling.
+//       bound to (workflow, registry, node, exact arguments); the dispatcher verifies that decision in the chain AND a person's decision
+//       (./person.mjs) for the host's own rendering of the call (describeCall: the member, its arguments, and for ui.commit the held
+//       request as the host recorded it, body included) before calling. A person never approves a model's account of an effect.
 //   L3  out of lock: a need nothing in bound ∪ standby can meet ends the run with a typed CAPABILITY_GAP and a proposal a person decides
 //       on the dashboard or CLI (never a model, a signal, or an MCP elicitation); approval yields lock N+1 and a continuation run.
 // Nothing here widens the lock: find never widens, a signal cannot grant, grants die with the run (THESIS D11).
 import { clone } from '../data.mjs';
 import { validateData } from '../validate.mjs';
 import { approxTokens, digest, fail, FoundryError, isPrivate, refusal, toolNodeOf } from './common.mjs';
+import { subjectOf } from './person.mjs';
 import { autoBind, denyListed } from './envelope.mjs';
 import { entryStatus } from './catalog.mjs';
 import { indexMembers } from './rank.mjs';
@@ -25,7 +28,7 @@ const TRANSCRIPT_BYTES = 24 * 1024;
 
 /**
  * The pure broker rule for one member (I10: recomputable from the recorded features). `features`: { inBound, priorGrant, inStandby,
- * entryStatus, grantsSoFar, nodeGrantsSoFar, nodeGrantLimit, grantsPerRun, via, approvalId, controlLabel, holdsPrivate }.
+ * entryStatus, grantsSoFar, nodeGrantsSoFar, nodeGrantLimit, grantsPerRun, via, approvalId, controlLabel, holdsPrivate, holdsThirdParty }.
  */
 export function decideMember(features, member, envelope) {
   if (features.inBound) return { result: 'bound' };
@@ -39,7 +42,7 @@ export function decideMember(features, member, envelope) {
     if (features.via === 'act' && features.approvalId) return { result: 'granted', level: 'L2' };
     return { result: 'refused', code: features.controlLabel !== 'trusted' ? 'NEED_UNTRUSTED_EFFECT' : 'NEED_EFFECTFUL' };
   }
-  const verdict = autoBind(envelope, member, { controlLabel: features.controlLabel, holdsPrivate: features.holdsPrivate });
+  const verdict = autoBind(envelope, member, { controlLabel: features.controlLabel, holdsPrivate: features.holdsPrivate, holdsThirdParty: features.holdsThirdParty === true });
   return verdict.ok ? { result: 'granted', level: 'L1' } : { result: 'refused', code: verdict.code };
 }
 
@@ -73,9 +76,15 @@ export class Dispatcher {
       if (d.features.nodeKey === ctx.nodeKey) seq++;
     }
     const section = this.lock.nodes[node], reachable = [...section.bound, ...section.skills, ...nodeGrants].map(id => this.lock.members[id]);
+    // Every call that reached a member counts against maxCallsPerMember, failed ones included: a server that fails every call (and asks
+    // for a step-up each time) cannot buy itself unlimited turns.
     const calls = new Map();
-    for (const e of ctx.store.events(ctx.runId)) if (e.type === 'node.completed' && /__loop:\d+\/(do|act)$/.test(e.nodeKey ?? '') && e.output?.member && e.output.ok) calls.set(e.output.member, (calls.get(e.output.member) ?? 0) + 1);
-    return { grantsSoFar: grants.size, nodeGrants, proposals, seq, calls, holdsPrivate: reachable.some(m => isPrivate(m.dataClass)) };
+    for (const e of ctx.store.events(ctx.runId)) if (e.type === 'node.completed' && /__loop:\d+\/(do|act)$/.test(e.nodeKey ?? '') && e.output?.member) calls.set(e.output.member, (calls.get(e.output.member) ?? 0) + 1);
+    // Every proposal raised in the run counts against proposalsPerRun, whichever path raised it (L3 gap, definition change, step-up).
+    proposals = Math.max(proposals, this.ledger?.proposalsOfRun(ctx.runId).length ?? 0);
+    // The Rule of Two counts private data the node holds through its members AND through its inputs (resolve records the input class).
+    return { grantsSoFar: grants.size, nodeGrants, proposals, seq, calls, holdsPrivate: reachable.some(m => isPrivate(m.dataClass)) || isPrivate(section.inputClass),
+      holdsThirdParty: reachable.some(m => m.egress === 'third-party') };
   }
   features(ctx, node, memberId, state, { via, approvalId = null }) {
     const section = this.lock.nodes[node], member = this.lock.members[memberId], entry = this.host.entry(member.entryId);
@@ -83,7 +92,7 @@ export class Dispatcher {
       inBound: section.bound.includes(memberId) || section.skills.includes(memberId), priorGrant: state.nodeGrants.has(memberId), inStandby: section.standby.includes(memberId),
       entryStatus: entryStatus(entry, this.host.ledger), grantsSoFar: state.grantsSoFar, nodeGrantsSoFar: state.nodeGrants.size,
       nodeGrantLimit: section.acquire?.max ?? 0, grantsPerRun: this.envelope.limits.grantsPerRun, approvalId,
-      controlLabel: section.controlLabel, holdsPrivate: state.holdsPrivate };
+      controlLabel: section.controlLabel, holdsPrivate: state.holdsPrivate, holdsThirdParty: state.holdsThirdParty };
   }
   decide(ctx, kind, features, action, { need = null, rationale }) {
     const header = ctx.store.rows.header(ctx.runId), state = { seq: nodecapDecisions(ctx.store, ctx.runId).filter(d => d.features.nodeKey === ctx.nodeKey).length };
@@ -131,7 +140,8 @@ export class Dispatcher {
       const found = this.find(node, decision.need ?? {});
       this.decide(ctx, 'selection', { node, nodeKey: ctx.nodeKey, lockHash: this.lockHash, envelopeDigest: this.envelopeDigest, via: 'find', eligibleDigest: `sha256:${digest(found.ranked.map(r => r.id))}`, scores: found.ranked.map(r => Math.round(r.score * 1000) / 1000) },
         { result: 'options', options: found.ranked.map(r => r.id), outside: found.outside.map(c => c.id) }, { need: decision.need ?? null, rationale: 'find over the node lock section' });
-      return this.#out(ctx, { ok: true, action: 'find', matches: found.ranked.map(r => renderView(this.lock.members[r.id])), outsideLock: found.outside.map(c => c.id) });
+      // Outside-lock candidates are host records for a proposal; the model learns only that some exist (never their ids or names).
+      return this.#out(ctx, { ok: true, action: 'find', matches: found.ranked.map(r => renderView(this.lock.members[r.id])), outsideLock: found.outside.length });
     }
     if (decision.action === 'request') return this.#request(ctx, node, decision, state);
     if (decision.action !== 'read') return this.#out(ctx, refusal('ACTION_UNSUPPORTED'));
@@ -147,11 +157,15 @@ export class Dispatcher {
     const { node } = toolNodeOf(ctx.nodeKey), section = this.lock.nodes[node];
     if (!section) fail('NODECAP_NODE_UNKNOWN', `No lock section for tool node ${node}`);
     const decision = args.decision;
-    // The engine gated this task (requiresApproval): verify the user's decision for these exact arguments is in the chain.
+    // The engine gated this task (requiresApproval): verify the user's decision for these exact arguments is in the chain...
     const header = ctx.store.rows.header(ctx.runId);
     const approvalId = digest({ workflowHash: header.workflowHash, registryHash: header.registryHash, nodeKey: ctx.nodeKey, tool: 'nodecap.act', args, idempotencyKey: ctx.idempotencyKey });
     if (!ctx.store.events(ctx.runId).some(e => e.type === 'approval.decided' && e.approvalId === approvalId && e.approved === true && e.actor === 'user'))
       fail('APPROVAL_MISSING', 'nodecap.act runs only after a user approved this exact call');
+    // ...and that a person (an authenticated person channel, not the string 'user') approved the host's rendering of this call as it stands now.
+    const rendering = await describeCall({ host: this.host, lock: this.lock, runId: ctx.runId, nodeKey: ctx.nodeKey, decision });
+    if (this.ledger?.callDecision(callSubject(approvalId, rendering))?.approve !== true)
+      fail('APPROVAL_MISSING', 'nodecap.act runs only after a person approved the host\'s rendering of this exact call');
     const memberId = viewIndex(this.lock, node).get(decision.tool);
     if (!memberId) return this.#out(ctx, refusal('TOOL_ABSENT'));
     const member = this.lock.members[memberId];
@@ -196,17 +210,21 @@ export class Dispatcher {
   }
   #propose(ctx, node, need, outside) {
     if (!this.ledger) return null;
-    const flags = c => [...(denyListed(this.envelope, { id: c.id, tool: c.id.split('.').pop() }) ? ['deny-listed'] : []), ...(c.trust === 'T3' ? ['T3'] : []),
+    // Deny-listed candidates (by name, attested type or object class) are reported (flagged) but never offered for binding.
+    const flags = c => [...(denyListed(this.envelope, c) ? ['deny-listed'] : []), ...(c.trust === 'T3' ? ['T3'] : []),
       ...(c.status !== 'active' ? [`status:${c.status}`] : []), ...(c.effects !== 'none' ? ['effectful'] : []), ...(c.egress === 'third-party' ? ['third-party-egress'] : [])];
     const riskSummary = { candidates: outside.map(c => ({ member: c.id, trust: c.trust, effects: c.effects, egress: c.egress, status: c.status, flags: flags(c) })),
       flags: [...new Set(outside.flatMap(flags))], noCandidate: outside.length === 0 };
     const header = ctx.store.rows.header(ctx.runId);
-    // Deny-listed candidates are reported (flagged) but never offered for binding.
-    const offered = outside.filter(c => !denyListed(this.envelope, { id: c.id, tool: c.id.split('.').pop() }));
-    return this.ledger.putProposal({ kind: offered.some(c => c.status === 'active') ? 'capability.bind' : 'capability.admit', flowId: this.lock.flowId, fromWorkflowHash: header.workflowHash, fromLockHash: this.lockHash,
-      node, need: { ...need, label: this.lock.nodes[node].controlLabel },
+    const offered = outside.filter(c => !denyListed(this.envelope, c));
+    // The definition each offered member had when the person was asked: its implementation (pins, view, attestation) when it qualified in
+    // this process, else its attestation hash; binding refuses a member whose definition moved since (M2).
+    const definition = c => { const m = this.host.member(c.id); return m ? { implementation: m.implementation, pins: m.pins, attestationHash: m.attestationHash } : { implementation: null, attestationHash: c.attestationHash ?? null }; };
+    const dedupKey = `sha256:${digest({ kind: 'gap', flowId: this.lock.flowId, fromLockHash: this.lockHash, node, offered: offered.map(c => c.id) })}`;
+    return this.ledger.openProposal(dedupKey) ?? this.ledger.putProposal({ kind: offered.some(c => c.status === 'active') ? 'capability.bind' : 'capability.admit', flowId: this.lock.flowId, fromWorkflowHash: header.workflowHash, fromLockHash: this.lockHash,
+      node, need: { ...need, label: this.lock.nodes[node].controlLabel }, dedupKey,
       quoted: offered.map(c => ({ text: c.summary, label: 'untrusted:catalog', sourceHash: digest({ c: c.summary }) })),
-      diff: { added: offered.map(c => ({ member: c.id, effects: c.effects, trust: c.trust, egress: c.egress })) }, riskSummary,
+      diff: { added: offered.map(c => ({ member: c.id, effects: c.effects, trust: c.trust, egress: c.egress, ...definition(c) })) }, riskSummary,
       evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey } });
   }
   async #call(ctx, node, member, decision, state) {
@@ -218,10 +236,18 @@ export class Dispatcher {
         artifactsDir: ctx.artifactsDir, practice: this.mode === 'practice', approved: member });
     } catch (error) {
       if (!(error instanceof FoundryError)) throw error;
-      if (error.code === 'DEFINITION_CHANGED' && this.ledger) this.ledger.putProposal({ kind: 'capability.definition-changed', flowId: this.lock.flowId, node, fromLockHash: this.lockHash,
-        diff: { added: [] }, riskSummary: { entry: member.entryId, fieldDiff: error.details?.fieldDiff ?? [] }, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey } });
-      // A 403 insufficient_scope is never stepped up automatically: it becomes a scope.step-up proposal a person decides (dashboard or CLI).
-      if (error.code === 'SCOPE_INSUFFICIENT' && this.ledger) stepUpProposal(this.ledger, { entry: this.host.entry(member.entryId), scopeClass: member.effects === 'none' ? 'read' : 'write',
+      // Proposals raised by a failing call share the run's proposal limit and are de-duplicated: a hostile server cannot raise one per turn.
+      const room = this.ledger && this.state(ctx, node).proposals < this.envelope.limits.proposalsPerRun;
+      if (error.code === 'DEFINITION_CHANGED' && room) {
+        const dedupKey = `sha256:${digest({ kind: 'capability.definition-changed', entry: member.entryId })}`;
+        if (!this.ledger.openProposal(dedupKey)) this.ledger.putProposal({ kind: 'capability.definition-changed', flowId: this.lock.flowId, node, fromLockHash: this.lockHash, dedupKey,
+          diff: { added: [] }, riskSummary: { entry: member.entryId, fieldDiff: error.details?.fieldDiff ?? [] }, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey } });
+      }
+      // A 403 insufficient_scope is never stepped up automatically: it becomes a scope.step-up proposal a person decides. Only an HTTP
+      // challenge on an OAuth entry is one (guarded-fetch raises it; JSON-RPC error codes and error text never are), and only owner-listed
+      // scopes are carried (oauth.mjs stepUpProposal).
+      const entry = this.host.entry(member.entryId);
+      if (error.code === 'SCOPE_INSUFFICIENT' && room && entry?.kind === 'mcp-http' && entry.credential?.oauth) stepUpProposal(this.ledger, { entry, scopeClass: member.effects === 'none' ? 'read' : 'write',
         scopes: error.details?.scopes ?? [], flowId: this.lock.flowId, node, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey, member: member.id } });
       if (['CANCELLED', 'SECRET_EXPOSURE'].includes(error.code)) throw error;
       // Host-chosen code only: upstream text never reaches the model. Invalid arguments come back with the member's Foundry-authored
@@ -264,4 +290,43 @@ export class Dispatcher {
     validateData(section.returns, log.answer, `${node} answer`);
     return log.answer;
   }
+}
+
+/**
+ * The host's rendering of one effect call (L2): what a person approves, and what the dispatcher re-renders and checks before sending.
+ * Built only from host state: the lock's member record, the call's arguments, and for ui.commit the held request as the UI session
+ * recorded it (method, origin, path, body hash and decoded, redacted body), never the model's description of it.
+ */
+export async function describeCall({ host, lock, runId, nodeKey, decision }) {
+  const { node } = toolNodeOf(nodeKey), memberId = lock.nodes[node] ? viewIndex(lock, node).get(decision?.tool) : null;
+  if (!memberId) return { known: false, tool: String(decision?.tool ?? '').slice(0, 64) };
+  const member = lock.members[memberId];
+  const rendering = { known: true, member: member.id, entry: member.entryId, effects: member.effects, risk: member.risk, view: renderView(member), args: decision.args ?? {} };
+  if (member.kind === 'cua' && member.tool === 'commit') rendering.held = await host.heldRequest({ runId, node, entryId: member.entryId, id: decision.args?.id });
+  return rendering;
+}
+/** The host rendering of a Tier-0 effect call (a task node naming an effectful member directly). */
+export function describeTier0Call({ lock, memberId, args }) {
+  const member = lock.members[memberId];
+  if (!member || !Object.values(lock.tier0 ?? {}).includes(memberId)) return { known: false, tool: String(memberId ?? '').slice(0, 64) };
+  return { known: true, tier0: true, member: member.id, entry: member.entryId, effects: member.effects, risk: member.risk, view: renderView(member), args: args ?? {} };
+}
+/** The host rendering of a pending engine approval of a run under `lock` (what a person channel shows before asking for a decision). */
+export async function describeApproval({ host, lock, run, approvalId }) {
+  const approval = run.approvals?.[approvalId];
+  if (!approval) return { known: false, tool: null };
+  if (approval.tool === 'nodecap.act') return describeCall({ host, lock, runId: run.id, nodeKey: approval.nodeKey, decision: approval.args?.decision ?? {} });
+  return describeTier0Call({ lock, memberId: approval.tool, args: approval.args });
+}
+/** The subject a person decides for one effect call: the engine's approval id (workflow, registry, node, arguments) and the host rendering. */
+export const callSubject = (approvalId, rendering) => subjectOf({ kind: 'call', approvalId, rendering });
+/** Plain text of a rendering for a person channel (the CLI prints it; data in it is quoted as untrusted). */
+export function renderCall(rendering) {
+  if (!rendering.known) return `Unknown tool ${rendering.tool}: decline.`;
+  const lines = [`Effect: ${rendering.view}`, `Member: ${rendering.member} (${rendering.effects}, risk ${rendering.risk})`, `Arguments (untrusted, shaped by tool output): ${JSON.stringify(rendering.args)}`];
+  if (rendering.member.startsWith('ui.') && rendering.member.endsWith('.commit')) {
+    if (rendering.held) lines.push(`Request that will be sent: ${rendering.held.method} ${rendering.held.origin}${rendering.held.path}`, `Body (untrusted): ${JSON.stringify(rendering.held.body)}`);
+    else lines.push('No such held request: decline.');
+  }
+  return lines.join('\n');
 }

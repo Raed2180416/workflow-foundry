@@ -3,7 +3,8 @@
 // (discovery, startAuthorization, exchangeAuthorization, refreshAuthorization). Foundry does NOT hand the transport an authProvider: with
 // one, the SDK transport re-authorizes on 401 and "upscopes" on 403 insufficient_scope by itself (client/streamableHttp.js), which would
 // widen authority without a person. Instead:
-//   connect    an OWNER action on a person's channel (cli or dashboard), never a model or an elicitation: discover (RFC 9728 protected
+//   connect    an OWNER action decided on a person channel (a PersonDecision for the connect subject: entry, scope class, scopes,
+//              issuer, resource; ./person.mjs), never a model, a channel name or an elicitation: discover (RFC 9728 protected
 //              resource metadata, required; the AS must be the catalog-attested issuer; RFC 8414 metadata whose `issuer` matches; PKCE S256
 //              advertised, refused if absent), authorize (PKCE S256, `state`, RFC 8707 `resource` = the server's canonical URI, the attested
 //              scopes of one scope class), validate the response (state, then RFC 9207 `iss` per the spec's table, BEFORE the code goes to any
@@ -11,17 +12,21 @@
 //   bearer     at call time, host code reads the token record, checks it was issued for THIS server by THIS issuer (a token for anything
 //              else is never sent), refreshes when it is about to expire (same scope, resource again, rotated refresh token stored), and
 //              adds the values to the run scrub set.
-//   step-up    a 403 insufficient_scope is a typed SCOPE_INSUFFICIENT and a `scope.step-up` proposal; only a person's approval of it lets a
-//              later connect request the extra scope.
+//   step-up    an HTTP 403 insufficient_scope challenge on an OAuth entry is a typed SCOPE_INSUFFICIENT and a `scope.step-up` proposal
+//              carrying only owner-listed scopes (the attested scopes and `stepUpScopes`), de-duplicated; only a person's approval of it
+//              lets a later connect request the extra scope.
+// The loopback redirect receiver answers only the request that carries this connect's `state` (any other local request is refused and
+// ignored, so a local process cannot fail a connect by calling the port first), and refreshes of one token record run one at a time (two
+// concurrent refreshes with rotation would present a spent refresh token and trip the server's reuse detection).
 // The authorization URL is validated (https, or loopback http for dev entries, same origin as the attested issuer) and handed to a
 // caller-supplied `openUrl` function; this module never starts a process or a shell (the CVE-2025-6514 class: an authorization endpoint
 // passed to a shell `open`). Server and AS error text never travels: only host-chosen codes and the closed RFC 6749 error code.
 import http from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { discoverOAuthProtectedResourceMetadata, discoverAuthorizationServerMetadata, startAuthorization, exchangeAuthorization, refreshAuthorization } from '@modelcontextprotocol/sdk/client/auth.js';
-import { fail, FoundryError, sanitizeScopes } from './common.mjs';
+import { digest, fail, FoundryError, sanitizeScopes } from './common.mjs';
 import { guardedFetch } from './guarded-fetch.mjs';
-import { requireWidenChannel } from './ledger.mjs';
+import { acceptPerson, DEFAULT_PERSON_CHANNELS, subjectOf } from './person.mjs';
 
 export { sanitizeScopes };
 
@@ -77,13 +82,15 @@ export async function discover(entry, { baseFetch = fetch } = {}) {
   return { resource, issuer: oauth.issuer, metadata, scopesSupported: sanitizeScopes(prm.scopes_supported ?? []) };
 }
 
-/** A one-shot loopback redirect receiver (RFC 8252 §7.3): 127.0.0.1, an OS-chosen port, path /callback. It never echoes parameters. */
-async function callbackServer(timeoutMs) {
+/** A one-shot loopback redirect receiver (RFC 8252 §7.3): 127.0.0.1, an OS-chosen port, path /callback. It never echoes parameters, and it
+ *  accepts only the response that carries `state` (other requests get 400 and are ignored, so they cannot end or fail the connect). */
+async function callbackServer(timeoutMs, state) {
   let deliver;
   const received = new Promise(resolve => { deliver = resolve; });
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://127.0.0.1');
     if (req.method !== 'GET' || url.pathname !== '/callback') { res.writeHead(404).end(); return; }
+    if (url.searchParams.get('state') !== state) { res.writeHead(400, { 'content-type': 'text/plain', 'cache-control': 'no-store' }).end('Not this authorization.'); return; }
     res.writeHead(200, { 'content-type': 'text/plain', 'cache-control': 'no-store' }).end('Foundry received the authorization response. You can close this window.');
     deliver(url.searchParams);
   });
@@ -110,27 +117,35 @@ export function connectScopes(entry, scopeClass, { ledger = null, stepUp = null 
   const { oauth } = oauthOf(entry), attested = oauth.scopes[scopeClass];
   if (!attested) fail('OAUTH_SCOPE_CLASS', 'The scope class is read or write');
   if (!stepUp) return [...attested];
-  const proposal = ledger?.proposal(stepUp);
-  if (!proposal || proposal.kind !== 'scope.step-up' || proposal.status !== 'approved' || proposal.entry !== entry.id || proposal.scopeClass !== scopeClass)
+  const proposal = ledger?.approvedProposal(stepUp);
+  if (!proposal || proposal.kind !== 'scope.step-up' || proposal.entry !== entry.id || proposal.scopeClass !== scopeClass)
     fail('OAUTH_SCOPE_UNAPPROVED', 'Extra scopes need an approved scope.step-up proposal for this entry and scope class');
   return [...new Set([...attested, ...sanitizeScopes(proposal.scopes)])];
 }
 
+/** The subject a person decides to connect one scope class of an entry: what is asked for, from whom, for which server. */
+export function connectSubject(entry, scopeClass, scopes) {
+  const { oauth } = oauthOf(entry);
+  return subjectOf({ kind: 'oauth.connect', entry: entry.id, scopeClass, scopes: [...scopes].sort(), issuer: oauth.issuer, resource: canonicalResource(entry.source.url) });
+}
 /**
- * The owner's connect action for one entry and scope class. `openUrl(url)` shows the authorization URL to the person (a browser or a
- * printed line); it is never run through a shell. `keychainStore(ref, value)` stores the token record (C1). Returns non-secret facts only.
+ * The owner's connect action for one entry and scope class. `person` is a PersonDecision (approve) for connectSubject(entry, scopeClass,
+ * connectScopes(...)). `openUrl(url)` shows the authorization URL to the person (a browser or a printed line); it is never run through a
+ * shell. `keychainStore(ref, value)` stores the token record (C1). Returns non-secret facts only.
  */
-export async function connectOAuth(entry, { scopeClass, channel, openUrl, keychainStore, ledger = null, stepUp = null, baseFetch = fetch, timeoutMs = 30000, now = Date.now } = {}) {
-  requireWidenChannel(channel);
+export async function connectOAuth(entry, { scopeClass, person, channels = DEFAULT_PERSON_CHANNELS, openUrl, keychainStore, ledger = null, stepUp = null, baseFetch = fetch, timeoutMs = 30000, now = Date.now } = {}) {
   const { credential, oauth } = oauthOf(entry), ref = credential[scopeClass]?.keychain;
   if (credential.custody !== 'C1' || !ref) fail('OAUTH_CUSTODY', 'OAuth tokens are held in the OS keychain (custody C1) under the entry\'s read and write refs');
   if (typeof openUrl !== 'function' || typeof keychainStore !== 'function') fail('OAUTH_CONNECT_ARGS', 'connect needs openUrl and keychainStore');
   const scopes = connectScopes(entry, scopeClass, { ledger, stepUp });
+  const decided = acceptPerson(person, connectSubject(entry, scopeClass, scopes), { channels: ledger?.channels ?? channels });
+  if (!decided.approve) fail('PERSON_DECLINED', 'The person declined this connection');
   const found = await discover(entry, { baseFetch });
   const asFetch = guardedFetch({ origin: oauth.issuer, dev: entry.dev === true, baseFetch });
-  const receiver = await callbackServer(timeoutMs);
+  const state = randomBytes(24).toString('base64url');
+  const receiver = await callbackServer(timeoutMs, state);
   try {
-    const state = randomBytes(24).toString('base64url'), clientInformation = { client_id: oauth.clientId };
+    const clientInformation = { client_id: oauth.clientId };
     let started;
     try { started = await startAuthorization(oauth.issuer, { metadata: found.metadata, clientInformation, redirectUrl: receiver.redirectUri, scope: scopes.join(' '), state, resource: new URL(found.resource) }); }
     catch (error) { throw mapOAuthError(error, 'OAUTH_AUTHORIZE'); }
@@ -164,9 +179,20 @@ export async function connectOAuth(entry, { scopeClass, channel, openUrl, keycha
  * another resource or issuer (it is never sent), refreshes it shortly before expiry (same scope; `resource` again; the rotated refresh
  * token is stored), and adds every value to the scrub set. A missing record is CREDENTIAL_MISSING (a person connects; nothing falls back).
  */
+const REFRESHING = new Map();
+/** Run `work` for one token record at a time (keyed by its keychain reference), process-wide. */
+function serialized(key, work) {
+  const previous = REFRESHING.get(key) ?? Promise.resolve();
+  const next = previous.catch(() => {}).then(work);
+  const settled = next.catch(() => {});
+  REFRESHING.set(key, settled);
+  settled.then(() => { if (REFRESHING.get(key) === settled) REFRESHING.delete(key); });
+  return next;
+}
 export function oauthBearer(entry, { scopeClass, keychain, keychainStore = null, scrub = null, baseFetch = fetch, now = Date.now }) {
   const { credential, oauth } = oauthOf(entry), ref = credential[scopeClass]?.keychain, resource = canonicalResource(entry.source.url);
-  return async function bearer() {
+  return () => serialized(`${ref?.service}\u0000${ref?.account}`, bearer);
+  async function bearer() {
     if (!ref) fail('CREDENTIAL_REF', `Entry ${entry.id} has no ${scopeClass} token reference`);
     let text;
     try { text = await keychain(ref); } catch { text = null; }
@@ -191,13 +217,24 @@ export function oauthBearer(entry, { scopeClass, keychain, keychainStore = null,
     scrub?.add(next.access_token); scrub?.add(next.refresh_token);
     await keychainStore(ref, JSON.stringify(next));
     return next.access_token;
-  };
+  }
 }
 
-/** A scope.step-up proposal from a typed SCOPE_INSUFFICIENT (the challenged scopes are server text: sanitized and quoted as untrusted). */
+/**
+ * A scope.step-up proposal from a typed SCOPE_INSUFFICIENT on an OAuth entry. The challenged scopes are server text: sanitized, and only
+ * those the owner listed (the entry's attested read and write scopes and `stepUpScopes`) are carried; a challenge naming none of them raises
+ * no proposal (a receipt records it). An open proposal for the same entry, class and scopes is returned instead of a new one.
+ */
 export function stepUpProposal(ledger, { entry, scopeClass, scopes, flowId = null, node = null, evidence = {} }) {
-  const wanted = sanitizeScopes(scopes);
-  return ledger.putProposal({ kind: 'scope.step-up', flowId, node, entry: entry.id, scopeClass, scopes: wanted,
+  const oauth = entry.credential?.oauth;
+  if (!oauth) return null;
+  const listed = new Set([...oauth.scopes.read, ...oauth.scopes.write, ...(oauth.stepUpScopes ?? [])]), asked = sanitizeScopes(scopes);
+  const wanted = asked.filter(s => listed.has(s)).sort();
+  if (!wanted.length) { ledger.receipt('scope.step-up.refused', { entry: entry.id, scopeClass, unlisted: asked.length, evidence }); return null; }
+  const dedupKey = `sha256:${digest({ kind: 'scope.step-up', entry: entry.id, scopeClass, scopes: wanted })}`;
+  const open = ledger.openProposal(dedupKey);
+  if (open) return open;
+  return ledger.putProposal({ kind: 'scope.step-up', flowId, node, entry: entry.id, scopeClass, scopes: wanted, dedupKey, ...(asked.length > wanted.length ? { unlistedDropped: asked.length - wanted.length } : {}),
     quoted: wanted.length ? [{ text: wanted.join(' '), label: `untrusted:mcp.${entry.id}`, sourceHash: null }] : [],
     diff: { added: [], scopes: { add: wanted } },
     riskSummary: { entry: entry.id, scopeClass, attested: entry.credential?.oauth?.scopes?.[scopeClass] ?? [], requested: wanted, flags: ['scope-widening', ...(scopeClass === 'write' ? ['write-scope'] : [])] },
