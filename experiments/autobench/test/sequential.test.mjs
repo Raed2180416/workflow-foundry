@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -41,6 +41,7 @@ const SEQ = path.join(REPO, 'experiments/autobench/sequential.mjs');
 const FROZEN_FILE = path.join(REPO, 'research/automationbench-20261014/SEQUENTIAL-PLAN-v1.json');
 const LOOK2_FILE = path.join(REPO, 'research/automationbench-20261014/LOOK2-TASKS.json');
 const sig3 = a => a.map(v => +v.toPrecision(3));
+const readdirNames = d => readdirSync(d).sort();
 
 test('devCheck guard: the split\'s devCheck list carries PREREG-AB-v1\'s hash; a devCheck or test task is refused', () => {
   assert.equal(split.devCheck.length, 60);
@@ -223,12 +224,15 @@ test('exposure (2026-10-22): the frozen plan\'s own look runs (a matching sideca
   assert.deepEqual(p0.counts, [60, 23]); assert.deepEqual(p0.looks[1].tasks, L3);
   // A run on look tasks without a sidecar, a sidecar of another plan, and a copy whose list is not the look's: exposure.
   mkRun(live, 'stray', { tasks: [L2[0]] });
-  mkRun(live, 'draft-l2', { sidecar: sc({ plan: 'f'.repeat(64), runId: 'draft-l2' }), tasks: [L2[1]] });
+  mkRun(live, 'draft-l2', { sidecar: sc({ plan: 'f'.repeat(64), tasks: [L2[1]], runId: 'draft-l2' }), tasks: [L2[1]] });
   const partial = tmp('planned-partial'); mkRun(partial, 'ref-l2', { tasks: L2.slice(0, 59) });
   const s2 = seenTasks([...roots, { label: 'partial', dir: partial }], { plan: frozen });
   assert.deepEqual([...s2.keys()].sort(), [...L2.slice(0, 59)].sort(), 'stray, draft-l2 and the partial copy count');
-  assert.deepEqual([...s2.get(L2[0])].sort(), ['live/draft-l2', 'live/stray', 'partial/ref-l2'].filter(x => x !== 'live/draft-l2'));
+  assert.deepEqual([...s2.get(L2[0])].sort(), ['live/stray', 'partial/ref-l2']);
   assert.deepEqual([...s2.get(L2[1])].sort(), ['live/draft-l2', 'partial/ref-l2']);
+  // A sidecar of another plan counts every name it carries (here the whole look-2 list).
+  const other = tmp('planned-other'); mkRun(other, 'draft-all', { sidecar: sc({ plan: 'f'.repeat(64), runId: 'draft-all' }), tasks: null });
+  assert.equal(seenTasks([other], { plan: frozen }).size, 60);
   assert.notEqual(planWith(s2).planSha256, FROZEN_PLAN_SHA256);
   // A sidecar that claims the frozen plan and does not hold stops the scan (a broken record is neither counted nor skipped).
   for (const [name, o, tasks, re] of [
