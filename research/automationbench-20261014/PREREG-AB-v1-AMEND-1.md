@@ -92,6 +92,20 @@ lists:
      is now withdrawn. It overlapped look 2 (42 tasks) and look 3 (18 tasks).
      - A1-C v2's design records that no task content was shown in that build.
      - A1-C v2 adopted look 2 (identical list and hash) as its held-out evaluation.
+  3. *Correction of disclosure 2 (dated note, 2026-10-28, under D29 (1); the facts are PREREG-A1CV2-P1 §12.1 on branch
+     `worktree-wf_3674d3bc-0a7-12`).* The statement above that no task content was shown in A1-C v2's build is wrong.
+     Look-2 content reached A1-C v2's development record in three ways:
+     - an anatomy agent's `sed` overrun printed the definition header and opening request sentences of one look-2 task,
+       `finance.intercompany_balance_recon`;
+     - an overfit-critic agent's aggregates over a 91-task pool that holds all 60 look-2 and all 23 look-3 tasks reached
+       the spec's prompt (aggregates only; no per-task value is in the code);
+     - the need router's use of five look-2 request texts (disclosure 1): `finance.qb_estimate_conversion`,
+       `hr.recognition_nominations`, `sales.calendly_sequential_meetings`, `sales.dependency_chain` and
+       `support.helpscout_customer_merge` (D25).
+
+     That exposes 6 look-2 tasks by content (1 + 5); looks 2 and 3 are also exposed through the critic's aggregates.
+     D29 (1) keeps first look 2 for every A1-C arm, as frozen. PREREG-A1CV2-P1 §9.5 preregisters a sensitivity analysis
+     without those 6 tasks, read beside the confirmatory test. The plan, its hash and its look lists do not change.
 - **Per-arm exposure (first look).** An arm developed, tuned or probed on any task of a look starts its statistic at
   the first look after it, on its own O'Brien-Fleming schedule, recomputed for the looks it uses. The plan carries one
   schedule per possible first look. Each metric has its own boundary at two-sided α 0.05 (D23, §2.5), so both metrics
@@ -321,11 +335,52 @@ A1 vs A0, date note, dev60: strict 18 vs 9 (12:3, McNemar p 0.035, e-value 4.5),
   - Every look run must start through `sequential.mjs look 2 --exec`, using the code of this frozen plan, so that it
     carries the `sequential-look.json` sidecar. A run started with `run.mjs --tasks …` directly has no sidecar, and
     `analyze` reads it only as `--illustration`.
+  - **Reference arms on look 2 (dated note, 2026-10-28).** Two arms ran on look 2's 60 tasks after the freeze. Neither
+    is a control or a treatment of this plan, and neither enters the confirmatory test, which stays A1-C v2 against A0
+    at look 2's boundary (D23, D25):
+    - `a0o-look2-1`: Opus 5.5 at effort xhigh alone (A0, no harness), under D26. The orchestrator launched it from the
+      main tree; it finished on 2026-10-22 at 02:38Z.
+    - `a1s-look2`: Sonnet 5.5 + A1 (foundry a1-v1), the VL-1 fork, under D27 and PREREG-VL1 §3. It was launched from the
+      a1c-v1 pin and finished on 2026-10-22 at 03:34Z.
+
+    *Their sidecars.* Both were started with `run.mjs` directly, so neither had a sidecar.
+    - On 2026-10-28, `sequential.mjs record-reference` wrote a `sequential-look.json` into each live directory
+      (`/var/tmp/foundry-work/autobench/<id>/`). Each sidecar records role `reference`, plan `3cd586bd…`, look 2, list
+      hash `a8c1ed5c…` and first look 2. It is marked `confirmatory: false`, carries no nominal levels, and has a
+      `retroactive` record naming the decision. The repo copy `runs/a0o-look2-1` has no sidecar.
+    - `analyze` refuses a reference run as either side: the role does not match, and `verifyLookRuns` refuses a
+      reference side outright.
+
+    *Exposure.* A run of this plan's own looks is not prior exposure.
+    - The rule: the scan (`seenTasks` given the frozen plan) treats two kinds of run as planned look runs, not exposure:
+      a run whose sidecar matches the plan (control, treatment or reference), and a copy of one without a sidecar (same
+      run id, the look's list). `plan` applies this by default since 2026-10-28; `--planned none` restores the old count.
+    - The check: re-deriving the plan from the live record on 2026-10-28 gives the frozen looks (pool 83; 60 / 60 / 23).
+    - Without it, the two reference runs counted as exposure and moved look 3's 23 tasks into look 2. That failed five
+      tests of `sequential.test.mjs` after the merge.
+    - The tests no longer read the live record. They read the frozen plan file and a committed snapshot of the exposure
+      record at the freeze (`experiments/autobench/test/fixtures/exposure-at-freeze-3cd586bd.json`). The snapshot was
+      reconstructed from task names only, and it recomputes plan `3cd586bd…` byte for byte.
+
+    *The per-arm rule (§2.2) still applies.* An arm developed, tuned or probed with these runs' transcripts, worlds or
+    results counts as developed on look 2, so its first look is 3. PREREG-A1CV2-P1 §12.2 records two slips in A1-C v2's
+    build: three per-task results and the aggregate of `a0o-look2-1` were printed, after v2's last behavioural edit.
   - **Merge order:** this branch also changes `experiments/agentv/run.mjs` (the B7 banner), which PREREG-OT0-AMEND-1
     pins. Merge it after the OT-0 re-run.
 - **run.mjs is unchanged** (e6a23ca), so §5, §6.1 and §7 of PREREG-AB-v1 are untouched: the a1c-v1 and a1-v1 manifest
   hashes still recompute, and older runs resume without `--accept-runner-change`.
   `experiments/autobench/test/sequential.test.mjs` asserts that every harness-manifest file is byte-identical to e6a23ca.
+  *Dated note (2026-10-28):*
+  - `experiments/autobench/bridge.py`, a manifest file, changed at `2f02281`. The change is `pin_timezone`: the serve
+    time zone comes from a row's `info.tz`, which no official task carries. It is recorded in PREREG-VL1 (the arms table)
+    and `research/mercury-20261021/A1C-MERCURY-PARTIAL.md`.
+  - The A1 and A1-C arms run from the pinned checkout: tag `a1c-v1-look2` on `a1c-v1` (`aada200`). There, every manifest
+    file is still e6a23ca's.
+  - The test now asserts three things:
+    - `run.mjs` is e6a23ca's;
+    - every other manifest file is e6a23ca's or carries exactly the bytes of a recorded change (only `bridge.py` at
+      `2f02281`: `285be4f5…` before, `caf3ddd6…` after);
+    - every manifest file is e6a23ca's at the pin, and in its checkout when present.
 - Merge effects outside AutomationBench (from the shared stats core, `experiments/lib/stats.mjs`, and its re-export in
   `experiments/jit/stats.mjs`): the need-router label-engine stamp hashes `experiments/jit/stats.mjs` and the
   `experiments/lib` tree (`research/need-router-20261014/prereg/stages.json` `engineStamp.labelEngine`), so a need-router
