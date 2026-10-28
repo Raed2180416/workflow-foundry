@@ -75,6 +75,49 @@ export function scaffoldTerms(grade) {
   return out;
 }
 
+/**
+ * The closure-expressibility scaffold: for every negative assertion of a task, the member it protects (located in the
+ * code-enumerated universes by its literal or id) and the Δ* check closure would compile for that member if a reader had
+ * disposed it `exclude` (built from the member's mention forms, never from the assertion's own literal). A guardrail
+ * whose protected thing is no member of any universe is not closure-expressible. This measures the grammar and the
+ * mention forms, given perfect dispositions; it is an oracle-informed ceiling, not a capability.
+ */
+export function scaffoldNegatives(grade, universes) {
+  const out = [];
+  const members = universes.flatMap(u => u.members.map(m => ({ u, m })));
+  (grade.assertion_results ?? []).forEach((a, i) => {
+    if (!isNegative(a.type)) return;
+    const t = assertionTerms(a), P = a.params ?? {};
+    // a member is named by id, else by one of its mention forms; a bare attribute value names a member only when exactly
+    // one member carries it (a shared value such as a status names no single member)
+    let named = members.filter(x => t.ids.some(id => memberNamed(x.m, { id })));
+    if (!named.length) named = members.filter(x => t.lits.some(l => { const n = norm(l); return n.length >= 3 && (x.m.forms ?? []).some(f => f === n || (f.length >= 4 && n.includes(f)) || (n.length >= 4 && f.includes(n))); }));
+    if (!named.length) { const byAttr = members.filter(x => t.lits.some(l => memberNamed(x.m, { lit: l }))); if (byAttr.length === 1) named = byAttr; }
+    const app = String(a.type).split('_')[0];
+    const lits = x => x.m.forms;
+    // a channel named by the assertion is resolved through the enumerated channel list (id and name), as Δ* resolves targets
+    const chName = t.channel ? String(t.channel).replace(/^#/, '') : null;
+    const ch = chName ? universes.filter(u => u.app === 'slack' && /channel/.test(u.kind)).flatMap(u => u.members).find(m => norm(m.attrs?.name ?? m.label) === norm(chName) || String(m.attrs?.id ?? m.id) === chName) : null;
+    const target = t.to ? { email: String(t.to).toLowerCase() } : chName ? { channel: { id: P.channel_id ?? (ch ? String(ch.attrs?.id ?? ch.id) : null), name: chName } } : null;
+    const base = { i, type: a.type, excluded: Boolean(a.excluded), passed: a.passed };
+    if (/^(gmail_message_not_sent_to|gmail_email_not_sent_to)$/.test(a.type)) { out.push({ ...base, member: null, check: { type: 'msg_none', params: { target: { email: String(t.to).toLowerCase() } } } }); return; }
+    if (!named.length) { out.push({ ...base, member: null, check: null, why: 'no enumerated member carries the protected literal or id' }); return; }
+    for (const x of named.slice(0, 3)) {
+      let check = null;
+      if (/^(gmail_|slack_)/.test(a.type)) check = { type: 'msg_lacks_any', params: { target: target ?? {}, lits: lits(x) } };
+      else if (/^google_sheets_row_not_exists$/.test(a.type)) check = { type: 'created_none_any', params: { app: 'google_sheets', container: P.spreadsheet_id ?? null, lits: lits(x) } };
+      else if (/^google_sheets_row_not_updated$/.test(a.type)) check = { type: 'rec_unchanged', params: { ptr: x.m.key, scope: 'any' } };
+      else if (/(conversation|ticket)_not_has_(note|reply|message)/.test(a.type)) check = { type: 'rec_unchanged', params: { ptr: x.m.key, scope: 'reply' } };
+      else if (/_not_has_tag$/.test(a.type)) check = { type: 'rec_field_not', params: { ptr: x.m.key, field: 'tags', value: String(P.tag ?? '') } };
+      else if (/_field_not_(equals|changed)$/.test(a.type)) check = { type: 'rec_field_not', params: { ptr: x.m.key, field: String(P.field ?? ''), value: String(P.value ?? P.expected_value ?? '') } };
+      else if (/^docusign_envelope_not_(sent_to|has_signer)$/.test(a.type)) check = { type: 'created_none_any', params: { app: 'docusign', container: null, lits: [String(P.email ?? P.signer_email ?? '').toLowerCase()] } };
+      else check = { type: 'created_none_any', params: { app, container: null, lits: lits(x) } };
+      out.push({ ...base, member: { key: x.m.key, label: x.m.label, uid: x.u.uid }, check });
+    }
+  });
+  return out;
+}
+
 /** Is a member named by a scaffold term? (a term literal matches one of its forms or one of its attribute values; an id
  *  term matches its key or id) */
 export function memberNamed(member, term) {

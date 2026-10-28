@@ -57,7 +57,10 @@ export function adaptA1cLedger(ledger, { tag = 'a1c' } = {}) {
       continue;
     }
     const literals = fields.filter(f => MSG_FIELD.test(str(f.name)) && str(f.value).trim().length >= 2 && !f.derived).map(f => str(f.value));
-    const ob = { id: q.id, effect: q.action, app: q.app, target, literals, quote, source: q.source, selections: [], figures: [] };
+    const setField = fields.find(f => !MSG_FIELD.test(str(f.name)) && !/^(to|cc|bcc|recipient|recipients|email|channel|record|row|id)$/i.test(str(f.name)) && str(f.value).trim() && !f.derived);
+    const noteField = fields.find(f => /^(note|notes|comment|comments|reply|body|text|message)$/i.test(str(f.name)));
+    const set = /^(update_row|update_record)$/.test(q.action) ? (noteField && /note|comment|reply/i.test(str(noteField.name)) ? { field: noteField.name, value: '' } : setField ? { field: setField.name, value: setField.value } : null) : null;
+    const ob = { id: q.id, effect: q.action, app: q.app, target, literals, quote, source: q.source, set, selections: [], figures: [] };
     const cands = (q.candidates ?? []).filter(c => c && c.record);
     if (cands.length) ob.selections.push({ members: cands.map(c => ({ ptr: c.record, in: c.eligible === true, test: c.decidingField ? { field: c.decidingField, value: c.value } : null, quote: null })), perItem: null });
     R.obligations.push(ob);
@@ -93,7 +96,8 @@ export function adaptRl2Extraction(value, { tag = 'rl2', reader = 0, bridge = p 
       else R.prohibitions.push({ id: q.id, effect: q.effect, app: q.app, target, literals: (q.must_not_include ?? []).map(str), quote, statement: str(q.statement) });
       continue;
     }
-    const ob = { id: q.id, effect: q.effect, app: q.app, target, literals: (q.must_include ?? []).map(str), quote, source: q.source, selections: [], figures: [] };
+    const set = /^(update_record|update_row)$/.test(q.effect) && str(q.field).trim() ? { field: str(q.field), value: str(q.value) } : null;
+    const ob = { id: q.id, effect: q.effect, app: q.app, target, literals: (q.must_include ?? []).map(str), quote, source: q.source, set, selections: [], figures: [] };
     // a per-item requirement (an item and that item's own recipient) is about that item only; an aggregate one that names
     // at least one item enumerates the items' set, so the excluded items are its complement (all-and-only)
     if (q.item && (target.emails.length || target.ptr)) ob.selections.push({ members: [{ ptr: bridge(q.item), in: true, test: null, quote: null }], perItem: true, partial: true });

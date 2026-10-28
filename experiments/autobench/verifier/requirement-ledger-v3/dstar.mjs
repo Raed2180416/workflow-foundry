@@ -69,13 +69,21 @@ export function verifyQuote(quote, { requestText, records }) {
   for (const r of records) if (grounded(q, r.text)) return r.ptr;
   return false;
 }
-/** A reader's deciding test {field, value} executed on the member's own attributes: true | false | null (no field). */
+/** The attribute key of a member that a reader's field name means (case, spaces and punctuation ignored), or undefined. */
+export const fieldKey = (member, field) => { const want = norm(field).replace(/[^a-z0-9]/g, ''); return want ? Object.keys(member.attrs ?? {}).find(k => norm(k).replace(/[^a-z0-9]/g, '') === want) : undefined; };
+// A claimed value that states absence ("no note", "(none)", "empty", "n/a", "-"): it holds on an empty or missing field.
+export const ABSENT_CLAIM = /^\(?\s*(no\b.*|none|empty|blank|missing|n\/?a|not set|null|nil|[-–—]|)\s*\)?$/i;
+const isEmpty = v => v === null || v === undefined || String(v).trim() === '';
+
+/** A reader's deciding test {field, value} executed on the member's own attributes: true | false | null (no such field
+ *  and no absence claim). An absence claim holds on an empty or missing field and fails on a filled one. */
 export function holdsTest(test, member) {
   if (!test?.field) return null;
-  const want = norm(test.field).replace(/[^a-z0-9]/g, '');
-  const key = Object.keys(member.attrs).find(k => norm(k).replace(/[^a-z0-9]/g, '') === want);
-  if (key === undefined) return null;
+  const key = fieldKey(member, test.field);
+  const claimedAbsent = ABSENT_CLAIM.test(str(test.value).trim());
+  if (key === undefined) return claimedAbsent ? true : null;
   const a = member.attrs[key];
+  if (claimedAbsent) return isEmpty(a);
   const n1 = Number(str(a).replace(/[$,%\s]/g, '')), n2 = Number(str(test.value).replace(/[$,%\s]/g, ''));
   if (str(a).trim() !== '' && str(test.value).trim() !== '' && Number.isFinite(n1) && Number.isFinite(n2)) return Math.abs(n1 - n2) < 1e-9;
   return norm(a) === norm(test.value);
@@ -127,8 +135,7 @@ export function induceTest(claims, u) {
   for (const c of claims) { const f = norm(c.field); if (!byField.has(f)) byField.set(f, []); byField.get(f).push(c); }
   const [f, cs] = [...byField].sort((a, b) => b[1].length - a[1].length)[0];
   const field = cs[0].field;
-  const key = m => Object.keys(m.attrs).find(k => norm(k) === f);
-  const valOf = m => { const k = key(m); return k === undefined ? undefined : m.attrs[k]; };
+  const valOf = m => { const k = fieldKey(m, field); return k === undefined ? undefined : m.attrs[k]; };
   const map = new Map();
   for (const c of cs) { const v = norm(valOf(c.m)); if (!map.has(v)) map.set(v, new Set()); map.get(v).add(c.want); }
   if ([...map.values()].some(s => s.size > 1)) return null;   // not a function of the value
@@ -196,7 +203,7 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
     for (const o of R.obligations ?? []) {
       const effect = EFFECT_CLASS[o.effect] ? o.effect : 'other';
       const target = resolveTarget(o.target, pidx, chans);
-      const ob = { reader: R.reader, id: o.id, effect, eclass: EFFECT_CLASS[effect], app: str(o.app).toLowerCase(), target, literals: (o.literals ?? []).map(str).filter(Boolean), quote: o.quote ?? null, source: o.source ?? null, selections: [], figures: [] };
+      const ob = { reader: R.reader, id: o.id, effect, eclass: EFFECT_CLASS[effect], app: str(o.app).toLowerCase(), target, literals: (o.literals ?? []).map(str).filter(Boolean), quote: o.quote ?? null, source: o.source ?? null, set: o.set?.field ? { field: str(o.set.field), value: str(o.set.value) } : null, selections: [], figures: [] };
       for (const s of o.selections ?? []) {
         const u = resolveUniverse(s);
         if (!u) { unknowns.push({ id: `U-sel-${R.reader}-${o.id}`, kind: 'universe', about: o.id, why: 'the selection names no enumerated universe' }); continue; }
@@ -293,11 +300,12 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
   const groups = new Map();
   for (const ob of obls) for (const sel of ob.selections) {
     const k = sel.perItem ? `${ob.eclass}|per-item|${ob.app}|${sel.u.uid}` : `${ob.eclass}|${ob.app}|${targetKey(ob.target)}|${sel.u.uid}`;
-    if (!groups.has(k)) groups.set(k, { key: k, eclass: ob.eclass, app: ob.app, perItem: sel.perItem, u: sel.u, target: ob.target, sels: [], obligations: [] });
+    if (!groups.has(k)) groups.set(k, { key: k, eclass: ob.eclass, app: ob.app, perItem: sel.perItem, u: sel.u, target: ob.target, set: null, sels: [], obligations: [] });
     const g = groups.get(k);
     g.sels.push({ reader: ob.reader, sel, ob });
     g.obligations.push(`${ob.reader}:${ob.id}`);
     if (!g.target.emails.length && ob.target.emails.length) g.target = ob.target;
+    if (!g.set && ob.set) g.set = ob.set;
   }
   const nReaders = new Set(readers.map(r => r.reader)).size;
   const need = nReaders >= 3 ? 2 : 1;
@@ -334,6 +342,7 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
   // --- compile both directions; then the readers' direct prohibitions (hard with a verified quote and the consensus)
   const assertions = compileDstar({ groups: [...groups.values()], dispositions, figures });
   for (const a of assertions) a.origin = a.group.startsWith('figure|') ? 'figure' : 'closure';
+  assertions.push(...compileObligations(obls, { need }));
   assertions.push(...compileProhibitions(readers, { pidx, chans, requestText, records, need, assertions }));
   const dstar = {
     version: DSTAR_VERSION,
@@ -355,6 +364,9 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
 // Compilation: dispositions and figures -> Agent-Diff-shaped assertions, each with its executable check
 
 const ENTITY = { gmail: 'gmail.messages', slack: 'slack.messages' };
+const NOTE_FIELD = /(^|[^a-z])(notes?|comments?|repl(y|ies)|messages?|parts?|conversation_parts)([^a-z]|$)/i;
+// v2's conditional-prohibition rule: an ordered or conditional ban is not a plain absence
+const CONDITIONAL = /\b(before|until|after|unless|only if|except|prior to|without|instead)\b/i;
 function messageTarget(g) {
   if (g.target.emails.length) return g.target.emails.map(email => ({ email }));
   if (g.target.channel) return [{ channel: g.target.channel }];
@@ -399,8 +411,16 @@ export function compileDstar({ groups, dispositions, figures = [] }) {
         out.push(mk({ ...base, status: check.hard ? 'hard' : 'soft', diff_type: 'added', entity: `${g.app || '*'}.*`, where: { ...(container ? { container: { eq: container } } : {}), text: { contains_any: m.forms } }, expected_count: pol === 'must' ? { min: 1 } : 0, strict: check.hard, check }));
       } else if (g.eclass === 'update' || g.eclass === 'delete') {
         if (g.perItem) {
-          const check = { type: pol === 'must' ? 'rec_changed' : 'rec_unchanged', polarity: pol, cat: pol === 'must' ? 'positive' : 'scope', params: { ptr: m.key, scope: 'any' }, hard };
-          out.push(mk({ ...base, diff_type: 'changed', entity: `${m.app}.${m.kind}`, where: { id: { eq: m.id } }, expected_count: pol === 'must' ? { min: 1 } : 0, strict: hard, check }));
+          // an excluded member must not get THIS obligation's change: its value when the obligation sets one, a new entry
+          // when it appends a note or reply, its deletion when it deletes; "leave the record untouched" without a field is
+          // only a guess (the v2 rule) and stays soft
+          let check;
+          if (g.eclass === 'delete') check = { type: pol === 'must' ? 'rec_deleted' : 'rec_kept', params: { ptr: m.key }, hard };
+          else if (g.set && NOTE_FIELD.test(g.set.field)) check = { type: pol === 'must' ? 'rec_changed' : 'rec_unchanged', params: { ptr: m.key, scope: 'reply' }, hard };
+          else if (g.set && g.set.value) check = { type: pol === 'must' ? 'rec_field' : 'rec_field_not', params: { ptr: m.key, field: g.set.field, value: g.set.value }, hard };
+          else check = { type: pol === 'must' ? 'rec_changed' : 'rec_unchanged', params: { ptr: m.key, scope: 'any' }, hard: false };
+          check.polarity = pol; check.cat = pol === 'must' ? 'positive' : 'scope';
+          out.push(mk({ ...base, status: check.hard ? 'hard' : 'soft', diff_type: g.eclass === 'delete' ? 'removed' : 'changed', entity: `${m.app}.${m.kind}`, where: { id: { eq: m.id }, ...(check.params.field ? { [check.params.field]: { [pol === 'must' ? 'eq' : 'ne']: check.params.value } } : {}) }, expected_count: pol === 'must' ? { min: 1 } : 0, strict: check.hard, check }));
         } else if (g.target.ptr && pol === 'must_not') {
           const check = { type: 'msg_lacks_any', polarity: 'must_not', cat: 'scope', params: { target: { ptr: g.target.ptr }, lits: m.forms }, hard };
           out.push(mk({ ...base, diff_type: 'changed', entity: 'record', where: { id: { eq: g.target.ptr }, text: { contains_any: m.forms } }, expected_count: 0, strict: hard, check }));
@@ -437,6 +457,35 @@ export function formatFigure(rows, format) {
   }
 }
 
+/** O: each obligation's effect, keyed by (effect class, app, target) across readers; hard when its support reaches the
+ *  consensus. A message to an address or a channel, a record created in an app (and container), a record set to a value. */
+export function compileObligations(obls, { need }) {
+  const byKey = new Map();
+  for (const ob of obls) {
+    if (ob.exclusionOnly) continue;
+    const t = ob.target, checks = [];
+    if (ob.eclass === 'message') {
+      for (const email of t.emails) checks.push({ type: 'msg_to', params: { target: { email } } });
+      if (!t.emails.length && t.channel) checks.push({ type: 'post_in', params: { target: { channel: t.channel } } });
+      if (!t.emails.length && !t.channel && t.ptr) checks.push({ type: 'rec_changed', params: { ptr: t.ptr, scope: 'reply' } });
+    } else if (ob.eclass === 'create' && ob.app) checks.push({ type: 'created_in', params: { app: ob.app, container: t.container ?? null, label: null } });
+    else if (ob.eclass === 'update' && t.ptr) checks.push(ob.set?.value && !NOTE_FIELD.test(ob.set.field) ? { type: 'rec_field', params: { ptr: t.ptr, field: ob.set.field, value: ob.set.value } } : { type: 'rec_changed', params: { ptr: t.ptr, scope: ob.set && NOTE_FIELD.test(ob.set.field) ? 'reply' : 'any' } });
+    for (const c of checks) {
+      const check = { ...c, polarity: 'must', cat: 'positive' };
+      const k = checkKey(check);
+      if (!byKey.has(k)) byKey.set(k, { check, readers: new Set(), ids: [] });
+      byKey.get(k).readers.add(ob.reader); byKey.get(k).ids.push(`${ob.reader}:${ob.id}`);
+    }
+  }
+  return [...byKey].map(([k, e]) => {
+    const hard = e.readers.size >= need;
+    e.check.hard = hard; e.check.key = k;
+    return { id: `A-${sha(k).slice(0, 12)}`, group: 'obligation', member: null, label: e.ids.slice(0, 3).join(' '), polarity: 'must', origin: 'obligation', basis: { kind: 'consensus', support: e.readers.size }, status: hard ? 'hard' : 'soft',
+      diff_type: e.check.type === 'rec_field' || e.check.type === 'rec_changed' ? 'changed' : 'added', entity: e.check.params?.target?.channel ? 'slack.messages' : e.check.params?.target?.email ? 'gmail.messages' : e.check.params.app ? `${e.check.params.app}.*` : 'record',
+      where: e.check.params, expected_count: { min: 1 }, strict: hard, check: e.check };
+  });
+}
+
 /** Direct prohibitions a reader wrote (no universe): "do not message X", "the post must not contain Y", "leave record Z".
  *  Compiled per check key across readers; hard when the support reaches the consensus and at least one supporting reader's
  *  rule quote verifies verbatim, and no positive assertion of Δ* asks for the opposite on the same target. */
@@ -446,7 +495,7 @@ export function compileProhibitions(readers, { pidx, chans, requestText, records
     const eclass = EFFECT_CLASS[p.effect] ?? 'other';
     const t = resolveTarget(p.target ?? {}, pidx, chans);
     // a literal that is a member's label stands for the member: its mention forms are banned with it
-    const lits = uniq((p.literals ?? []).map(str).map(x => x.trim()).filter(x => x.length >= 2).flatMap(x => {
+    const lits = uniq((p.literals ?? []).map(str).map(x => x.trim()).filter(x => x.length >= 2 && x.length <= 80 && x.split(/\s+/).length <= 8).flatMap(x => {
       const m = records.find(r => r.label && norm(r.label) === norm(x));
       return m?.forms?.length ? [x, ...m.forms] : [x];
     }));
@@ -460,20 +509,25 @@ export function compileProhibitions(readers, { pidx, chans, requestText, records
     for (const c of checks) {
       const check = { ...c, polarity: 'must_not', cat: 'negative' };
       const k = checkKey(check);
-      if (!byKey.has(k)) byKey.set(k, { check, readers: new Set(), quoted: new Set(), statements: [] });
+      if (!byKey.has(k)) byKey.set(k, { check, readers: new Set(), quoted: new Set(), conditional: new Set(), statements: [] });
       const e = byKey.get(k);
       e.readers.add(R.reader); if (quoteOk) e.quoted.add(R.reader);
+      if (CONDITIONAL.test(str(p.statement))) e.conditional.add(R.reader);
       if (e.statements.length < 2) e.statements.push(str(p.statement).slice(0, 200));
     }
   }
-  const positiveTo = new Set(assertions.filter(a => a.polarity === 'must' && a.check.type === 'msg_to').map(a => a.check.params.target.email));
+  // a blanket ban on a target that an obligation of Δ* writes to is contradicted (the reader meant a narrower ban)
+  const tk = t => (t?.email ? `@${t.email}` : t?.channel ? `#${norm(t.channel.id ?? t.channel.name)}` : t?.ptr ? `>${t.ptr}` : null);
+  const positiveTargets = new Set(assertions.filter(a => a.polarity === 'must').map(a => tk(a.check.params.target)).filter(Boolean));
   const out = [];
   for (const [k, e] of byKey) {
-    const contradicted = e.check.type === 'msg_none' && positiveTo.has(e.check.params.target.email);
-    const hard = e.readers.size >= need && e.quoted.size > 0 && !contradicted;
+    const blanket = ['msg_none', 'post_none', 'rec_unchanged'].includes(e.check.type);
+    const contradicted = blanket && positiveTargets.has(tk(e.check.params.target ?? (e.check.params.ptr ? { ptr: e.check.params.ptr } : null)));
+    const conditional = e.conditional.size > 0 && e.conditional.size * 2 >= e.readers.size;
+    const hard = e.readers.size >= need && e.quoted.size > 0 && !contradicted && !conditional;
     e.check.hard = hard; e.check.key = k;
     out.push({ id: `A-${sha(k).slice(0, 12)}`, group: 'direct', member: null, label: e.statements[0] ?? '', polarity: 'must_not', origin: 'direct',
-      basis: { kind: e.quoted.size ? 'quote' : 'reader', support: e.readers.size, quoted: e.quoted.size, contradicted }, status: hard ? 'hard' : 'soft',
+      basis: { kind: e.quoted.size ? 'quote' : 'reader', support: e.readers.size, quoted: e.quoted.size, contradicted, conditional }, status: hard ? 'hard' : 'soft',
       diff_type: e.check.type === 'rec_unchanged' ? 'changed' : 'added', entity: e.check.params?.target?.channel ? 'slack.messages' : e.check.params?.target?.email ? 'gmail.messages' : 'record',
       where: e.check.params, expected_count: 0, strict: hard, check: e.check });
   }

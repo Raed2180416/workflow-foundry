@@ -133,6 +133,17 @@ function finishUniverse(u) {
 
 const uidOf = (app, kind, container) => `${app}.${kind}${container ? `[${container}]` : ''}`;
 
+/** A short form (a person's first name, an organisation's first word) names a member only if no other label of the
+ *  task, in any universe, carries it as a word; otherwise the form is dropped (the full label stays). */
+export function refineForms(universes) {
+  const labels = universes.flatMap(u => u.members.map(m => ({ m, l: norm(m.label) })));
+  for (const u of universes) for (const m of u.members) {
+    const full = norm(m.label);
+    m.forms = (m.forms ?? []).filter(f => f === full || !labels.some(x => x.l !== full && x.m !== m && new RegExp(`(?<![a-z0-9])${f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![a-z0-9])`).test(x.l)));
+  }
+  return universes;
+}
+
 /** Universes from an A1-C inventory (inventory.json): one per (app, kind, container). */
 export function universesFromInventory(inventory) {
   const by = new Map();
@@ -151,7 +162,7 @@ export function universesFromInventory(inventory) {
     if (r.app === 'google_sheets' && r.kind === 'row') attrs._row = Number(d.row);
     by.get(uid).members.push({ mid: by.get(uid).members.length + 1, ptr: r.ptr, app: r.app, kind: r.kind, id: str(r.id), key: r.ptr, attrs, text: Object.values(attrs).map(str).join('\n') });
   }
-  return [...by.values()].map(finishUniverse);
+  return refineForms([...by.values()].map(finishUniverse));
 }
 
 /** Universes from an initial world (meta skipped): one per (app, collection, container). Pointers are the world index's
@@ -178,7 +189,7 @@ export function universesFromWorld(world, idx = indexWorld(world)) {
     if (!by.has(uid)) by.set(uid, { uid, app: r.app, kind: r.coll, container, title: title ?? `${r.app} ${r.coll}`, source: 'world', members: [] });
     by.get(uid).members.push({ mid: by.get(uid).members.length + 1, ptr: r.ptr, alias: r.aliasPtr ?? null, app: r.app, kind: r.coll, id: r.id, key, attrs, text: Object.values(attrs).map(str).join('\n') });
   }
-  return [...by.values()].map(finishUniverse);
+  return refineForms([...by.values()].map(finishUniverse));
 }
 
 /** SQL tables of universes for sqlsafe: table u<i> per universe, with _mid, _label and every attribute column; a catalog

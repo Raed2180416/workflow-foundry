@@ -27,7 +27,9 @@ import { buildDstar } from '../verifier/requirement-ledger-v3/dstar.mjs';
 import { adaptA1cLedger, adaptRl2Extraction, worldBridge } from '../verifier/requirement-ledger-v3/adapters.mjs';
 import { evaluateDstar } from '../verifier/requirement-ledger-v3/evaluate.mjs';
 import { pointerIndex, normalizePointer } from '../verifier/requirement-ledger-v3/pointers.mjs';
-import { aligns, brokenGuardrails, memberNamed, readGrade, scaffoldTerms, MENTION_TYPES_PREREG } from './dstar-score.mjs';
+import { aligns, brokenGuardrails, memberNamed, readGrade, scaffoldNegatives, scaffoldTerms, MENTION_TYPES_PREREG } from './dstar-score.mjs';
+import { effectsOf, evaluateCheck } from '../verifier/requirement-ledger-v3/check.mjs';
+import { worldMapper } from '../verifier/requirement-ledger-v3/evaluate.mjs';
 import { norm } from '../verifier/requirement-ledger-v3/lib.mjs';
 
 export const ARMS = Object.freeze(['haiku-a0', 'haiku-a1', 'sonnet-a0', 'sonnet-a1', 'haiku-a1c', 'm3-a1c']);
@@ -112,6 +114,34 @@ export function scoreTask(D, { rows, L, universes }) {
   return out;
 }
 
+/** The closure-expressibility ceiling (oracle-implied dispositions; dstar-score.mjs scaffoldNegatives) for one task. */
+export function scoreScaffold({ rows, L, universes }) {
+  const a1c = rows.find(r => r.arm === 'haiku-a1c');
+  const grade = readGrade(a1c.source.host);
+  const S = scaffoldNegatives(grade, universes);
+  const out = { negatives: S.length, expressible: S.filter(x => x.check).length, arms: {} };
+  for (const r of rows) {
+    if (!ARMS.includes(r.arm)) continue;
+    const W = L.loadWorlds(r);
+    const eff = effectsOf(r.diff, W.initial);
+    const ctx = { mapPtr: worldMapper(W.initial), final: W.final };
+    const res = S.map(x => ({ ...x, pass: x.check ? (() => { try { return evaluateCheck(x.check, eff, ctx).pass; } catch { return null; } })() : null }));
+    const g = readGrade(r.source.host);
+    const broken = (g.assertion_results ?? []).map((a, i) => ({ a, i })).filter(({ a }) => !a.excluded && !a.passed && /_not_|not_exists$|_not$/.test(a.type));
+    const passed = r.label.task_completed_correctly === 1;
+    out.arms[r.arm] = {
+      passed, broken: broken.length,
+      expressible: broken.filter(b => S.some(x => x.i === b.i && x.check)).length,
+      caught: broken.filter(b => res.some(x => x.i === b.i && x.pass === false)).length,
+      mention: broken.filter(b => MENTION_TYPES_PREREG.has(b.a.type)).length,
+      mentionCaught: broken.filter(b => MENTION_TYPES_PREREG.has(b.a.type) && res.some(x => x.i === b.i && x.pass === false)).length,
+      flagged: passed && res.some(x => x.pass === false),
+      flags: passed ? res.filter(x => x.pass === false).map(x => ({ type: x.type, check: x.check.type, member: x.member?.label ?? null })) : [],
+    };
+  }
+  return out;
+}
+
 export function summarize(perTask, { primary = PRIMARY } = {}) {
   const S = {};
   for (const source of SOURCES) {
@@ -148,6 +178,22 @@ export function summarize(perTask, { primary = PRIMARY } = {}) {
       },
     };
   }
+  const sc = Object.entries(perTask).filter(([, v]) => v.scaffold).map(([task, v]) => ({ task, ...v.scaffold }));
+  const scFail = sc.filter(r => r.arms['haiku-a1c'] && !r.arms['haiku-a1c'].passed && r.arms['haiku-a1c'].broken > 0);
+  const scPass = sc.flatMap(r => ARMS.filter(a => r.arms[a]?.passed).map(a => ({ task: r.task, arm: a, ...r.arms[a] })));
+  S.scaffold = {
+    note: 'oracle-implied dispositions (scoring scaffold): what closure could reach with perfect dispositions, and how often its compiled checks fire on passing worlds (grammar and mention-form breadth). An expressibility ceiling, not a capability.',
+    brokenGuardrailTasks: scFail.length,
+    expressibleTasks: scFail.filter(r => r.arms['haiku-a1c'].expressible > 0).length,
+    caughtTasks: scFail.filter(r => r.arms['haiku-a1c'].caught > 0).length,
+    caughtTaskList: scFail.filter(r => r.arms['haiku-a1c'].caught > 0).map(r => r.task),
+    guardrails: scFail.reduce((s, r) => s + r.arms['haiku-a1c'].broken, 0),
+    expressibleGuardrails: scFail.reduce((s, r) => s + r.arms['haiku-a1c'].expressible, 0),
+    caughtGuardrails: scFail.reduce((s, r) => s + r.arms['haiku-a1c'].caught, 0),
+    mentionCaught: `${scFail.reduce((s, r) => s + r.arms['haiku-a1c'].mentionCaught, 0)}/${scFail.reduce((s, r) => s + r.arms['haiku-a1c'].mention, 0)}`,
+    passingWorlds: scPass.length, passingFlagged: scPass.filter(x => x.flagged).length, passingFlaggedFive: scPass.filter(x => x.flagged && FIVE_ARMS.includes(x.arm)).length,
+    flaggedList: scPass.filter(x => x.flagged).map(x => `${x.task}/${x.arm}: ${x.flags.slice(0, 2).map(f => `${f.type}->${f.check}`).join(', ')}`),
+  };
   S.primary = primary;
   return S;
 }
@@ -223,6 +269,10 @@ async function main() {
       perTask[task][source] = scoreTask(D, { rows, L, universes });
       timing[source] = (timing[source] ?? 0) + Date.now() - t0;
     }
+    try {
+      const a1cRow = rows.find(r => r.arm === 'haiku-a1c');
+      perTask[task].scaffold = scoreScaffold({ rows, L, universes: universesFromInventory(JSON.parse(readFileSync(`${a1cRow.source.host}/pipeline/inventory.json`, 'utf8'))) });
+    } catch (e) { process.stderr.write(`[dstar-replay] ${task}/scaffold: ${String(e?.message ?? e).slice(0, 200)}\n`); }
     process.stderr.write(`[dstar-replay] ${task}: ${SOURCES.map(s => `${s} ${perTask[task][s]?.stats?.hardChecks ?? '-'}h`).join(' ')}\n`);
   }
   const res = { evidence: 'development/diagnostic, $0, in-sample (devTrain dev60 stored runs; oracle-implied labels as scoring scaffold only)', version: 'dstar-replay-v1', tasks: tasks.length, timingMs: timing, summary: summarize(perTask), perTask };
