@@ -22,3 +22,7 @@ Restore one branch: `git fetch research-branches.bundle <branch>:<branch>` (or `
 | `worktree-wf_bba577b8-b58-3` | `d3bd7acf` | 2 |
 | `worktree-wf_c56a08f8-048-15` | `44bb426d` | 16 |
 | `worktree-wf_c7946468-203-16` | `cd0dc23d` | 14 |
+
+## Incremental bundles
+
+- `incr-20261028-1800.bundle`: `worktree-wf_3674d3bc-0a7-12` b43eda6b..a65a3aeb (PREREG-A1CV2-P1 §14 amendment A1, the P1 launch commit). Needs research-branches.bundle first.
