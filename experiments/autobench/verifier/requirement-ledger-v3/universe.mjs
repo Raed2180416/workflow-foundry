@@ -122,6 +122,23 @@ function finishUniverse(u) {
   }
   const labels = u.members.map(m => m.label);
   for (const m of u.members) m.forms = mentionForms(m.label, { person: m.person, others: labels });
+  // A member is also named by a distinctive value of its own: a short multi-word or CamelCase text that no other member
+  // of the universe carries in any column (a platform, a product, a campaign name in a row whose label column is not
+  // unique). Dates, numbers, addresses and common words never qualify.
+  const seen = new Map();
+  for (const m of u.members) for (const [k, v] of Object.entries(m.attrs)) {
+    if (typeof v !== 'string' || k.startsWith('_')) continue;
+    const t = v.trim();
+    if (t.length < 4 || t.length > 60 || t.split(/\s+/).length > 6 || /[.!?;:]\s/.test(t) || isNumText(t) || isDateText(t) || emailsIn(t).length) continue;
+    if (!(/\s/.test(t) || /[a-z][A-Z]/.test(t))) continue;
+    if (!/[A-Z]/.test(t)) continue;
+    const n = norm(t);
+    if (!seen.has(n)) seen.set(n, new Set());
+    seen.get(n).add(m.mid);
+  }
+  for (const m of u.members) {
+    for (const [n, owners] of seen) if (owners.size === 1 && owners.has(m.mid) && !COMMON.has(n) && !m.forms.includes(n)) m.forms.push(n);
+  }
   const types = new Map();
   for (const m of u.members) for (const [k, v] of Object.entries(m.attrs)) {
     const t = typeof v === 'number' ? 'num' : 'text';
