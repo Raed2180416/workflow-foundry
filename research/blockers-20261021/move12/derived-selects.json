@@ -1,0 +1,33 @@
+{
+ "about": "ATTACK Move 1 step B ($0): the derived figures of the derived-candidate tasks as one SELECT each over the code-enumerated universes plus :today. SCORING SCAFFOLD, ORACLE-INFORMED: the analyst wrote these SELECTs after reading the failed assertions (expressibility, not capability). Keep this file out of every harness, verifier and model context. Expected values are read from the stored grade at run time by assertion index; none is written here.",
+ "candidateRule": "haiku-a1c or m3-a1c dev60 failed tasks whose failed scored assertions are all positives with a literal in neither the prompt nor the initial world, or guardrails, with at least one such positive (9 tasks); the 7 that carry a computed figure are scored; operations.asana_safety_walk_log (an id the run creates) and support.intercom_multi_product_routing (reply wording) carry none.",
+ "inventoryArm": "haiku-a1c",
+ "notFigures": ["operations.asana_safety_walk_log", "support.intercom_multi_product_routing"],
+ "figures": [
+  { "task": "finance.ap_aging_report", "id": "current-bucket", "assertion": 1, "format": "grouped", "needsToday": true,
+    "select": "SELECT sum(\"Amount#num\") AS v FROM {{google_sheets.row[ss_bills_payable/ws_unpaid]}} WHERE \"Status\" = 'Unpaid' AND julianday(:today) - julianday(\"Due Date\") <= 30" },
+  { "task": "finance.ap_aging_report", "id": "over-90-bucket", "assertion": 2, "format": "grouped", "needsToday": true,
+    "select": "SELECT sum(\"Amount#num\") AS v FROM {{google_sheets.row[ss_bills_payable/ws_unpaid]}} WHERE \"Status\" = 'Unpaid' AND julianday(:today) - julianday(\"Due Date\") > 90" },
+  { "task": "finance.quarterly_tax_estimate", "id": "q1-estimate", "assertion": 2, "format": "grouped", "needsToday": false,
+    "select": "SELECT round(((SELECT sum(\"Revenue#num\") - sum(\"Deductible Expenses#num\") FROM {{google_sheets.row[ss_tax_est/ws_ytd_income]}}) * 4 * ((SELECT \"Rate#num\" FROM {{google_sheets.row[ss_tax_est/ws_tax_rates]}} WHERE \"Rate Type\" LIKE 'Federal%') + (2 * 5.0 + 1 * 4.5) / 3) / 100.0 - (SELECT sum(\"Annual Amount#num\") FROM {{google_sheets.row[ss_tax_est/ws_credits]}})) / 4.0) AS v",
+    "note": "the state rate blend (two months at the old rate, one at the new) comes from a Slack record; the reader would write those constants from it" },
+  { "task": "sales.vendor_review_prep", "id": "qualifying-total", "assertion": 2, "format": "grouped", "needsToday": false,
+    "select": "SELECT sum(a.\"AnnualRevenue\") AS v FROM {{salesforce.Account}} a WHERE a.\"Type\" = 'Vendor' AND a.\"Id\" NOT IN (SELECT \"ParentId\" FROM {{salesforce.Note}} WHERE \"Body\" LIKE '%exclude from review%' OR \"Body\" LIKE '%partnership discussions%')",
+    "note": "a soft-defect task (VERIFIER-LAB §2: an unrequested total); the figure is expressible, the requirement is a convention" },
+  { "task": "marketing.customer_feedback_aggregation", "id": "eligible-count", "assertion": 13, "format": "Eligible items: {v}", "needsToday": false,
+    "select": "SELECT count(*) AS v FROM {{google_sheets.row[ss_feedback/ws_items]}} WHERE \"date\" >= '2026-01-20' AND \"feedback_type\" IN ('Feature Request', 'Complaint') AND coalesce(\"notes\", '') NOT LIKE '%resolved%' AND coalesce(\"notes\", '') NOT LIKE '%duplicate%' AND coalesce(\"notes\", '') NOT LIKE '%beta program participant%' AND coalesce(\"notes\", '') NOT LIKE '%confidential%' AND NOT (\"country\" = 'EU' AND \"gdpr_consent\" <> 'True')",
+    "note": "the week's start date is stated in the policy record, so no clock is needed" },
+  { "task": "operations.zoom_dr_drill", "id": "plan-title", "assertion": 1, "format": "text", "needsToday": false,
+    "select": "SELECT 'DR Drill Plan: ' || \"System Name\" || ' - 2026-02-08' AS v FROM {{google_sheets.row[ss_dr_systems/ws_schedule]}} WHERE \"Priority\" = 'Critical' AND \"Environment\" = 'Production' AND \"Drill Status\" = 'Ready' AND coalesce(\"Notes\", '') NOT LIKE '%pending security clearance%' AND coalesce(\"Notes\", '') NOT LIKE '%SEC-%' ORDER BY \"Last Test\" ASC LIMIT 1" },
+  { "task": "operations.docusign_contractor_offboard", "id": "card-name", "assertion": 1, "format": "text", "needsToday": false,
+    "select": "SELECT 'Offboard: ' || \"Contractor Name\" AS v FROM {{google_sheets.row[ss_contractors/ws_active]}} WHERE \"Status\" = 'Active' AND \"NDA Signed\" = 'Yes' AND \"End Date\" BETWEEN '2026-01-27' AND '2026-02-02' ORDER BY \"End Date\" ASC, CASE \"Security Clearance\" WHEN 'High' THEN 0 WHEN 'Standard' THEN 1 ELSE 2 END ASC LIMIT 1",
+    "note": "a hard-defect task (VERIFIER-LAB §2: the list lookup returns a nameless placeholder); the name itself is expressible" },
+  { "task": "hr.visa_expiry_tracking", "id": "days-kevin", "assertion": 0, "format": "integer", "needsToday": true,
+    "select": "SELECT CAST(julianday(\"Expiration\") - julianday(:today) AS INTEGER) AS v FROM {{google_sheets.row[ss_visa/ws_visas]}} WHERE \"Email\" = 'kevin.s.chen@company.example.com'",
+    "note": "a hard-defect task (VERIFIER-LAB §2: day counts anchored to a date that exists only in hidden world metadata)" },
+  { "task": "hr.visa_expiry_tracking", "id": "days-raj", "assertion": 4, "format": "integer", "needsToday": true,
+    "select": "SELECT CAST(julianday(\"Expiration\") - julianday(:today) AS INTEGER) AS v FROM {{google_sheets.row[ss_visa/ws_visas]}} WHERE \"Email\" = 'raj.patel@company.example.com'" },
+  { "task": "hr.visa_expiry_tracking", "id": "days-yuki", "assertion": 6, "format": "integer", "needsToday": true,
+    "select": "SELECT CAST(julianday(\"Expiration\") - julianday(:today) AS INTEGER) AS v FROM {{google_sheets.row[ss_visa/ws_visas]}} WHERE \"Email\" = 'yuki.tanaka@company.example.com'" }
+ ]
+}

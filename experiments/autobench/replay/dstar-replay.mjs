@@ -22,8 +22,11 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { universesFromInventory } from '../verifier/requirement-ledger-v3/universe.mjs';
-import { buildDstar } from '../verifier/requirement-ledger-v3/dstar.mjs';
+import { createHash } from 'node:crypto';
+import { universesFromInventory, sqlTables } from '../verifier/requirement-ledger-v3/universe.mjs';
+import { runSelect } from '../verifier/requirement-ledger-v3/sqlsafe.mjs';
+import { deriveToday, domainDays } from '../verifier/requirement-ledger-v3/clock.mjs';
+import { buildDstar, formatFigure } from '../verifier/requirement-ledger-v3/dstar.mjs';
 import { adaptA1cLedger, adaptRl2Extraction, worldBridge } from '../verifier/requirement-ledger-v3/adapters.mjs';
 import { evaluateDstar } from '../verifier/requirement-ledger-v3/evaluate.mjs';
 import { pointerIndex, normalizePointer } from '../verifier/requirement-ledger-v3/pointers.mjs';
@@ -202,6 +205,50 @@ export function summarize(perTask, { primary = PRIMARY } = {}) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+// Step B: the derived figures as SELECTs over the universes plus :today (clock per D28: the request's own date, else
+// the business-date anchor; a figure that changes inside the clock domain is UNKNOWN, never a hard value)
+
+export function deriveReplay({ L, spec }) {
+  const out = [];
+  const arm = spec.inventoryArm ?? 'haiku-a1c';
+  for (const f of spec.figures) {
+    const [r] = L.loadRows({ canonicalOnly: true, arms: [arm], tasks: [f.task] });
+    const universes = universesFromInventory(JSON.parse(readFileSync(`${r.source.host}/pipeline/inventory.json`, 'utf8')));
+    const { tables, catalog } = sqlTables(universes);
+    const sql = f.select.replace(/\{\{([^}]+)\}\}/g, (_, uid) => { const c = catalog.find(x => x.uid === uid); if (!c) throw new Error(`${f.task}: no universe ${uid}`); return `"${c.table}"`; });
+    const clock = deriveToday({ request: `${r.prompt.user}\n${r.prompt.system}`, members: universes.flatMap(u => u.members), hostNow: hostNowOf(r.source.host) });
+    const readsToday = /:today\b/.test(sql);
+    const days = readsToday ? (clock.domain ? domainDays(clock.domain) : []) : [null];
+    const row = { task: f.task, id: f.id, needsToday: f.needsToday, readsToday, clock: { status: clock.status, value: clock.value, domain: clock.domain } };
+    if (!days.length) { out.push({ ...row, status: 'unknown', why: 'reads today, which is a labelled null' }); continue; }
+    const res = runSelect({ tables, queries: days.map(d => ({ sql, params: d ? { today: d } : {} })) });
+    const values = res.map((x, i) => ({ day: days[i], v: x.ok ? formatFigure(x.rows, f.format) : null, error: x.ok ? null : x.error }));
+    const grade = readGrade(r.source.host);
+    const P = grade.assertion_results[f.assertion]?.params ?? {};
+    const expected = [P.body_contains, P.params?.title, P.params?.name, P.title, P.name, P.text_contains].map(x => (Array.isArray(x) ? x[0] : x)).find(x => typeof x === 'string' && x.length) ?? null;
+    const same = v => v !== null && expected !== null && norm(v) === norm(expected);
+    const anchor = values.find(x => x.day === (readsToday ? clock.value : null)) ?? values[0];
+    const distinct = [...new Set(values.map(x => x.v))];
+    const certain = distinct.length === 1 && distinct[0] !== null;
+    const window = values.filter(x => same(x.v)).map(x => x.day).filter(Boolean);
+    out.push({ ...row, status: certain ? 'certain' : 'unknown', distinctOverDomain: distinct.length, errors: values.filter(x => x.error).length,
+      reproducesAtAnchor: same(anchor?.v), certainCorrect: certain && same(distinct[0]), confidentWrong: certain && !same(distinct[0]),
+      consistentWindow: readsToday ? (window.length ? [window[0], window.at(-1), window.length] : null) : null, expectedSha256: expected === null ? null : createHash('sha256').update(norm(expected)).digest('hex').slice(0, 16) });
+  }
+  const byTask = new Map();
+  for (const x of out) { if (!byTask.has(x.task)) byTask.set(x.task, []); byTask.get(x.task).push(x); }
+  const tasks = [...byTask].map(([task, xs]) => ({ task, figures: xs.length, reproducedAtAnchor: xs.every(x => x.reproducesAtAnchor), certainCorrect: xs.every(x => x.certainCorrect), anyConfidentWrong: xs.some(x => x.confidentWrong), anyUnknown: xs.some(x => x.status === 'unknown') }));
+  return {
+    figures: out, tasks,
+    summary: { tasks: tasks.length, figures: out.length,
+      tasksReproducedAtAnchor: tasks.filter(t => t.reproducedAtAnchor).length, tasksCertainCorrect: tasks.filter(t => t.certainCorrect).length,
+      figuresConfidentWrong: out.filter(x => x.confidentWrong).length, figuresUnknown: out.filter(x => x.status === 'unknown').length,
+      confidentWrongRate: out.length ? +(out.filter(x => x.confidentWrong).length / out.length).toFixed(3) : 0,
+      clock: out.reduce((a, x) => ((a[x.clock.status] = (a[x.clock.status] ?? 0) + 1), a), {}) },
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 // Move 5 $0 step (serving Move 1): pointer normalisation over the stored A1-C reader candidates
 
 export function pointerReplay({ L }) {
@@ -249,6 +296,13 @@ async function main() {
   const L = await import(pathToFileURL(path.join(path.resolve(a.vlab), 'load.mjs')).href);
   if (cmd === 'pointers') {
     const res = { evidence: 'development/diagnostic, $0, stored A1-C v1 ledgers (devTrain dev60)', ...pointerReplay({ L }) };
+    if (a.out) writeFileSync(a.out, JSON.stringify(res, null, 1));
+    process.stdout.write(`${JSON.stringify(res, null, 1)}\n`);
+    return;
+  }
+  if (cmd === 'derive') {
+    const spec = JSON.parse(readFileSync(a.selects, 'utf8'));
+    const res = { evidence: 'development/diagnostic, $0, expressibility (oracle-informed SELECTs written by the analyst), devTrain dev60', version: 'dstar-derive-v1', ...deriveReplay({ L, spec }) };
     if (a.out) writeFileSync(a.out, JSON.stringify(res, null, 1));
     process.stdout.write(`${JSON.stringify(res, null, 1)}\n`);
     return;
