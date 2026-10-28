@@ -63,19 +63,25 @@ export function compileChecks(specs) {
   return { checks, rejected };
 }
 
+/** The triage signature context of a violation: the screen the game is on (its open dialog, else its mode). */
+export const contextOf = obs => String(obs?.state?.dialog ?? obs?.state?.mode ?? '?');
+
 /**
- * Evaluate the generic detectors and the compiled checks over a run. Returns the first violation per detector/check:
- * [{ checkId, step (primitive index), tokenIndex (index of the token that produced that step), detail }], plus
+ * Evaluate the generic detectors and the compiled checks over a run. Returns the first violation per detector/check and
+ * context (contextOf: the dialog or mode at the violating tick), so one check that catches different faults on
+ * different screens yields one candidate per screen (R08 triage: dedup by signature, not by check):
+ * [{ checkId, ctx, step (primitive index), tokenIndex (index of the token that produced that step), detail }], plus
  * per-check evaluation errors.
  */
 export function scanRun(run, start, checks, { generic = true, frozenWindow = FROZEN_WINDOW } = {}) {
   const found = new Map(), errors = new Map();
-  let prev = start, prim = -1, frozenSince = null, lastSnap = snapshot(start);
-  const hit = (checkId, detail) => { if (!found.has(checkId)) found.set(checkId, { checkId, step: prim, detail }); };
+  let prev = start, prim = -1, frozenSince = null, lastSnap = snapshot(start), ctx = contextOf(start);
+  const hit = (checkId, detail) => { const k = `${checkId}|${ctx}`; if (!found.has(k)) found.set(k, { checkId, ctx, step: prim, detail }); };
   for (const st of run.steps) {
     if (st.macro) continue;
     prim++;
     const cur = { ...st.obs, token: st.token, click: st.click ?? null, errors: st.errors ?? [] };
+    ctx = contextOf(cur);
     if (generic) {
       if (cur.errors.length) hit('generic:page-error', cur.errors[0]);
       const snap = snapshot(cur);
@@ -84,7 +90,7 @@ export function scanRun(run, start, checks, { generic = true, frozenWindow = FRO
       lastSnap = snap;
     }
     for (const c of checks) {
-      if (found.has(c.id) || errors.has(c.id) || (c.needsUi && !cur.ui)) continue;
+      if (found.has(`${c.id}|${ctx}`) || errors.has(c.id) || (c.needsUi && !cur.ui)) continue;
       try {
         const env = { cur, prev, step: prim };
         if (c._when && !c._when(env)) continue;
@@ -113,10 +119,11 @@ export function tokenOwners(run) {
 
 // ------------------------------------------------------------------------------------------------ replay + ddmin
 /**
- * A deterministic predicate "check `checkId` is violated when `tokens` are replayed from a fresh game with `seed`".
+ * A deterministic predicate "check `checkId` is violated (on screen `ctx`, when given) when `tokens` are replayed from a
+ * fresh game with `seed`". Keeping the screen fixed keeps ddmin on the same symptom, as reducers keep a failure signature.
  * For the frozen detector the replay is followed by FROZEN_WINDOW waits (the watch window, not part of the repro).
  */
-export function violationPredicate(session, seed, checkId, checks, { counter } = {}) {
+export function violationPredicate(session, seed, checkId, checks, { counter, ctx } = {}) {
   const needUi = checkId === 'generic:frozen' || checks.find(c => c.id === checkId)?.needsUi;
   const only = checks.filter(c => c.id === checkId);
   const cache = new Map();
@@ -129,7 +136,7 @@ export function violationPredicate(session, seed, checkId, checks, { counter } =
     const start = await session.reset(seed);
     const r = await session.run(run, { detail: needUi ? 'each' : 'state' });
     if (counter) counter.replays++;
-    const v = scanRun(r, start, only, { generic: checkId.startsWith('generic:') }).violations.some(x => x.checkId === checkId);
+    const v = scanRun(r, start, only, { generic: checkId.startsWith('generic:') }).violations.some(x => x.checkId === checkId && (ctx === undefined || x.ctx === ctx));
     cache.set(key, v);
     return v;
   };

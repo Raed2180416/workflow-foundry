@@ -1,6 +1,6 @@
 {
  "id": "foundry/game-qa-explore-repro-minimize",
- "version": "1.0.0",
+ "version": "1.1.0",
  "author": "frontier (Claude Opus 5.5, the orchestrating session), 2026-10-22",
  "authorNote": "Written by the same session that wrote the gameqa-web build and its injected bugs, after the bugs. It is meant to be game-agnostic (derived from research/landscape-20261006/08-worked-example-ai-game-qa.md section 4-5: check ladder, personas, repro and minimize), but its author knew the bugs: a leakage path. The same QA heuristics text is given to the solo-agent arm, so the agent-vs-workflow comparison varies structure, not knowledge.",
  "purpose": "Exploratory QA of a game build exposed through a deterministic test API: a cheap model instantiates personas and executable checks from the design document, code plays the personas' plans and evaluates every check on every tick, code reproduces and delta-debugs each violation to a 1-minimal repro, and a cheap model judges each minimized candidate against the document before it becomes a report.",
@@ -13,9 +13,9 @@
     { "id": "plan", "kind": "agent", "model": "class M", "reads": ["spec", "heuristics", "persona card", "shared coverage", "known violations (check ids and rules only)", "this persona's last traces"],
       "returns": "{notes, plans[1..3] of {seed, steps, purpose}}" },
     { "id": "playback", "kind": "code", "does": "run each plan from a fresh game; evaluate the generic detectors and every check on every tick; record the first violation per check with its seed and token prefix" } ] },
-  { "id": "triage", "kind": "code", "does": "one candidate per violated check (the shortest prefix seen); drop checks that error" },
+  { "id": "triage", "kind": "code", "does": "one candidate per signature (the check and the screen it was violated on: the open dialog, else the mode), the shortest prefix seen; checks that error are dropped; at most maxCandidates, taken breadth first across checks (1.1.0: was one candidate per check, which capped the findings of a check that catches different faults on different screens)" },
   { "id": "repro", "kind": "code", "does": "replay each candidate twice from a fresh game; keep it only if the same check is violated both times (determinism class D0)" },
-  { "id": "minimize", "kind": "code", "does": "ddmin over the token list with the predicate 'the same check is violated' (plus a single-token removal pass), so every kept repro is 1-minimal" },
+  { "id": "minimize", "kind": "code", "does": "ddmin over the token list with the predicate 'the same check is violated on the same screen' (plus a single-token removal pass), so every kept repro is 1-minimal for its signature" },
   { "id": "judge", "kind": "agent", "model": "class M", "reads": ["spec", "candidate: check rule and expressions, minimized tokens, the full trace of the minimized replay"],
     "returns": "{verdicts[] of {candidate, is_bug, bug_class, title, observed, expected}}", "note": "the false-alarm filter: a violated check can be a wrong check (e.g. behaviour the document marks by design)" },
   { "id": "report", "kind": "code", "does": "emit one report per candidate judged a bug, with the minimized tokens and seed" }

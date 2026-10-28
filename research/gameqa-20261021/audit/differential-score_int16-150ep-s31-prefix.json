@@ -1,0 +1,21 @@
+{
+ "label": "score_int16",
+ "flags": [
+  "score_int16"
+ ],
+ "episodes": 150,
+ "rngSeed": 31,
+ "prefix": true,
+ "ticks": 23514,
+ "diverged": 1,
+ "unprobedDivergence": [],
+ "silentProbes": [],
+ "firstProbeCounts": {
+  "score_int16": 1
+ },
+ "probeCounts": {
+  "score_int16": 1
+ },
+ "unprobed": 0,
+ "silent": 0
+}

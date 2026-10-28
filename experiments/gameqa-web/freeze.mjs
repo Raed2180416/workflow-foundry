@@ -17,7 +17,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 export const FREEZE_FILE = path.join(ROOT, 'research/gameqa-20261021/FREEZE.json');
 export const ARM_FILES = Object.freeze(['experiments/gameqa-web/arms.mjs', 'experiments/gameqa-web/qa-lib.mjs', 'experiments/gameqa-web/expr.mjs',
   'experiments/gameqa-web/prompts.mjs', 'experiments/gameqa-web/template.json', 'experiments/gameqa-web/run.mjs',
-  'experiments/gameqa-web/reference-checks.json', 'experiments/gameqa-web/funnel.mjs', 'experiments/gameqa-web/analyze.mjs', 'experiments/lib/models.mjs', 'policy/models.json',
+  'experiments/gameqa-web/reference-checks.json', 'experiments/gameqa-web/funnel.mjs', 'experiments/gameqa-web/analyze.mjs', 'experiments/gameqa-web/chain.sh', 'experiments/gameqa-web/regress.mjs', 'experiments/lib/models.mjs', 'policy/models.json',
   'research/gameqa-20261021/PREREG-GQA-1.md']);
 const sha = buf => createHash('sha256').update(buf).digest('hex');
 

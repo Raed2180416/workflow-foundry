@@ -1,5 +1,5 @@
 {
- "note": "ORACLE-INFORMED reference checks, written by the bed author from spec/DESIGN.md with knowledge of the injected bugs. Used only to audit the clean build against the spec (audit-clean.mjs) and as an upper-bound calibration; never given to any arm.",
+ "note": "ORACLE-INFORMED reference checks (22; key-pickup added 2026-10-28 after the monkey-ref dev run showed keys-kept cannot see a key gained and lost in one tick), written by the bed author from spec/DESIGN.md with knowledge of the injected bugs. Used only to audit the clean build against the spec (audit-clean.mjs) and as an upper-bound calibration; never given to any arm.",
  "checks": [
   { "id": "hud-score", "rule": "HUD shows the current score", "bug_class": "state_desync", "expect": "cur.hud.score == 'Score ' + cur.state.score" },
   { "id": "hud-lives", "rule": "HUD shows the current lives", "bug_class": "state_desync", "expect": "cur.hud.lives == 'Lives ' + cur.state.lives" },
@@ -37,6 +37,9 @@
   { "id": "timer-runs", "rule": "The timer drops by 1 per running tick", "bug_class": "state_desync",
     "when": "prev.state.mode == 'playing' && cur.state.mode == 'playing' && !includes(cur.state.events, 'restart')",
     "expect": "cur.state.timeLeft == prev.state.timeLeft - 1 || (prev.state.timeLeft == 1 && cur.state.timeLeft == 300)" },
-  { "id": "respawn-invuln", "rule": "Reappearing gives 4 ticks of immunity", "bug_class": "collision", "when": "includes(cur.state.events, 'respawn')", "expect": "cur.state.invulnerable == 4" }
+  { "id": "respawn-invuln", "rule": "Reappearing gives 4 ticks of immunity", "bug_class": "collision", "when": "includes(cur.state.events, 'respawn')", "expect": "cur.state.invulnerable == 4" },
+  { "id": "key-pickup", "rule": "A key picked up is kept, even when you are hurt in the same tick", "bug_class": "softlock",
+    "when": "includes(cur.state.events, 'key') && !includes(cur.state.events, 'restart')",
+    "expect": "cur.state.keys == prev.state.keys + count(cur.state.events, e => e == 'key') - count(cur.state.events, e => e == 'door-open')" }
  ]
 }

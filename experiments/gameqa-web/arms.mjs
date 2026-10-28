@@ -46,7 +46,7 @@ export function makeCaller({ port, runId, modelId, usdCap, decoding = { reasonin
       let r;
       try { r = await port.call({ runId, nodeKey, attempt, modelId, system, prompt: prompt + feedback, schema, decoding }); }
       catch (e) { st.failed++; log({ nodeKey, attempt, ok: false, error: e.code ?? e.message }); return { ok: false, error: { code: e.code ?? 'ERROR', message: e.message } }; }
-      const cost = r.costUsd ?? 0, unknown = r.costUnknown ? (r.costCapUsd ?? 0) : 0;
+      const cost = r.costUsd ?? 0, unknown = r.costUnknown ? (r.costUpperUsd ?? r.costCapUsd ?? 0) : 0;   // the port reports an unobservable spend as costUpperUsd (its per-call cap)
       st.spent += cost + unknown; st.unknownSpend += unknown; st.calls++; st.inputTokens += r.usage?.inputTokens ?? 0; st.outputTokens += r.usage?.outputTokens ?? 0; st.latencyMs += r.latencyMs ?? 0;
       log({ nodeKey, attempt, ok: r.ok, costUsd: cost, latencyMs: r.latencyMs, usage: r.usage, error: r.error?.code, value: r.ok ? r.value : undefined });
       if (r.ok) return r;
@@ -61,21 +61,30 @@ export function makeCaller({ port, runId, modelId, usdCap, decoding = { reasonin
 
 // Repro + minimize one candidate (code-owned): replay twice, then ddmin with the same predicate.
 async function reproAndMinimize(session, cand, checks, budgets, counter) {
-  const pred = violationPredicate(session, cand.seed, cand.checkId, checks, { counter });
+  const pred = violationPredicate(session, cand.seed, cand.checkId, checks, { counter, ctx: cand.ctx });
   const prefix = cand.steps;
-  if (!(await pred([...prefix])) || !(await violationPredicate(session, cand.seed, cand.checkId, checks, { counter })([...prefix]))) return { ...cand, confirmed: false };
+  if (!(await pred([...prefix])) || !(await violationPredicate(session, cand.seed, cand.checkId, checks, { counter, ctx: cand.ctx })([...prefix]))) return { ...cand, confirmed: false };
   const m = await ddmin(prefix, pred, { maxTests: budgets.minimizeTestsPerCandidate ?? 400 });
   return { ...cand, confirmed: true, steps: m.tokens, oneMinimal: m.oneMinimal, ddminTests: m.tests, originalLength: prefix.length };
 }
 
+// Triage signature = (check, screen): one candidate per signature, the shortest prefix seen.
 function noteViolations(cands, run, start, seed, tokens, checks, { generic = true } = {}) {
   const { violations, errors } = scanRun(run, start, checks, { generic });
   for (const v of violations) {
-    const steps = tokens.slice(0, v.tokenIndex + 1);
-    const prev = cands.get(v.checkId);
-    if (!prev || steps.length < prev.steps.length) cands.set(v.checkId, { checkId: v.checkId, seed, steps, step: v.step });
+    const steps = tokens.slice(0, v.tokenIndex + 1), key = `${v.checkId}|${v.ctx}`;
+    const prev = cands.get(key);
+    if (!prev || steps.length < prev.steps.length) cands.set(key, { checkId: v.checkId, ctx: v.ctx, seed, steps, step: v.step });
   }
   return errors;
+}
+/** Candidates in triage order: every check's first signature, then every check's second, ... (so a cap keeps breadth). */
+export function triageOrder(cands) {
+  const byCheck = new Map();
+  for (const c of cands) { if (!byCheck.has(c.checkId)) byCheck.set(c.checkId, []); byCheck.get(c.checkId).push(c); }
+  const out = [];
+  for (let k = 0; out.length < cands.length; k++) for (const list of byCheck.values()) if (list[k]) out.push(list[k]);
+  return out;
 }
 
 // ------------------------------------------------------------------------------------------------ monkey
@@ -102,19 +111,20 @@ async function monkeyExplore({ session, rng, exploreTicks, episodeTokens = 200, 
 export async function runMonkey({ session, rng, budgets, checks = [] }) {
   const counter = { replays: 0 };
   const ex = await monkeyExplore({ session, rng, exploreTicks: budgets.exploreTicks, checks, counter });
-  const reports = [], minimized = [];
-  for (const cand of [...ex.cands.values()].filter(c => !ex.evalErrors.some(e => e.id === c.checkId))) {
+  const reports = [], minimized = [], reportChecks = [];
+  for (const cand of triageOrder([...ex.cands.values()].filter(c => !ex.evalErrors.some(e => e.id === c.checkId)))) {
     const m = await reproAndMinimize(session, cand, checks, budgets, counter);
     minimized.push(m);
     if (!m.confirmed) continue;
+    reportChecks.push([m.checkId]);
     const c = checks.find(x => x.id === m.checkId);
     if (c) reports.push({ bug_class: c.bug_class, title: `Violates: ${c.rule}`.slice(0, 160), observed: `Check ${c.id} fails.`, expected: c.rule, seed: m.seed, steps: m.steps });
     else reports.push({ bug_class: GENERIC_CLASS[m.checkId], title: `${m.checkId === 'generic:frozen' ? 'Game stops responding' : 'Script error'} after this input`,
       observed: m.checkId === 'generic:frozen' ? `After these tokens the state stops changing for ${FROZEN_WINDOW} ticks and no dialog or button is visible.` : 'The page reports a script error.',
       expected: GENERIC_RULE[m.checkId], seed: m.seed, steps: m.steps });
   }
-  return { reports, stats: { exploreTicks: ex.ticks, episodes: ex.episodes, verifyReplays: counter.replays, candidates: ex.cands.size, coverage: ex.coverage, evalErrors: ex.evalErrors, played: ex.played },
-    minimized: minimized.map(({ checkId, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength }) => ({ checkId, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength })) };
+  return { reports, reportChecks, stats: { exploreTicks: ex.ticks, episodes: ex.episodes, verifyReplays: counter.replays, candidates: ex.cands.size, coverage: ex.coverage, evalErrors: ex.evalErrors, played: ex.played },
+    minimized: minimized.map(({ checkId, ctx, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength }) => ({ checkId, ctx, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength })) };
 }
 
 // ------------------------------------------------------------------------------------------------ agent alone
@@ -190,7 +200,7 @@ export async function runWorkflow({ session, caller, rng, budgets, explore = 'pe
     for (let round = 1; round <= B.rounds && ticks < B.exploreTicks; round++) {
       rounds = round;
       const cov = coverageOf(allRuns);
-      const known = [...cands.keys()].map(id => `${id}${checks.find(c => c.id === id) ? ` (${checks.find(c => c.id === id).rule.slice(0, 80)})` : ''}`);
+      const known = [...new Set([...cands.values()].map(c => c.checkId))].map(id => `${id}${checks.find(c => c.id === id) ? ` (${checks.find(c => c.id === id).rule.slice(0, 80)})` : ''}`);
       const answers = await Promise.all(personas.map((p, i) => caller.call(`explore-r${round}-p${i}`, { system: P.exploreSystem(p),
         prompt: P.explorePrompt({ round, rounds: B.rounds, notes: memory[i].notes, coverage: cov, violations: known, lastRuns: memory[i].lastRuns, lastError: memory[i].lastError }), schema: P.EXPLORE_SCHEMA })));
       for (const [i, a] of answers.entries()) {
@@ -214,7 +224,7 @@ export async function runWorkflow({ session, caller, rng, budgets, explore = 'pe
     coverage = coverageOf(allRuns);
   }
   // 3. triage: one candidate per violated check (checks that errored during exploration are dropped)
-  const triaged = [...cands.values()].filter(c => !evalErrors.has(c.checkId)).slice(0, B.maxCandidates);
+  const triaged = triageOrder([...cands.values()].filter(c => !evalErrors.has(c.checkId))).slice(0, B.maxCandidates);
   // 4-5. repro + minimize (code)
   const minimized = [];
   for (const c of triaged) minimized.push(await reproAndMinimize(session, c, checks, B, counter));
@@ -223,7 +233,7 @@ export async function runWorkflow({ session, caller, rng, budgets, explore = 'pe
   const unique = [];
   for (const m of confirmed) {
     const u = unique.find(x => x.steps.join(' ') === m.steps.join(' '));
-    if (u) u.checkIds.push(m.checkId); else unique.push({ seed: m.seed, steps: m.steps, checkIds: [m.checkId] });
+    if (u) { if (!u.checkIds.includes(m.checkId)) u.checkIds.push(m.checkId); } else unique.push({ seed: m.seed, steps: m.steps, checkIds: [m.checkId] });
   }
   // 6. judge (Haiku), batched, with the full trace of each minimized replay
   const reports = [], verdicts = [];
@@ -249,10 +259,12 @@ export async function runWorkflow({ session, caller, rng, budgets, explore = 'pe
   }
   return {
     reports: reports.map(({ _cand, ...r }) => r),
+    // the checks behind each report (same order as reports), for the regression-pack analysis (regress.mjs)
+    reportChecks: reports.map(r => unique[r._cand].checkIds),
     stats: { exploreTicks: ticks, rounds, plansPlayed, verifyReplays: counter.replays, checks: checks.length, rejectedChecks: built.rejected?.length ?? 0, repairedChecks: built.repaired ?? 0,
       smokeErrors: smokeErr.length, evalErrors: [...evalErrors].map(([id, error]) => ({ id, error })), candidates: cands.size, confirmed: confirmed.length, unique: unique.length, coverage, played },
     constructed: { personas: built.personas, specs: built.specs ?? checks.map(({ _expect, _when, needsUi, ...c }) => c) },
-    minimized: minimized.map(({ checkId, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength }) => ({ checkId, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength })),
+    minimized: minimized.map(({ checkId, ctx, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength }) => ({ checkId, ctx, seed, steps, confirmed: ok, oneMinimal, ddminTests, originalLength })),
     verdicts,
   };
 }

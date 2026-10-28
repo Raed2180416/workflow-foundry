@@ -136,6 +136,21 @@ t('minimality keeps the symptom: a repro of the position symptom stays minimal a
   assert.equal(v[3].bug, 'GQ11'); assert.equal(v[3].symptom, 'position'); assert.equal(v[3].minimal, false); assert.deepEqual(v[3].removable, [0]);
 });
 
+t('credit goes to the fault the repro is minimal for, not to a fault it passes through on the way', async () => {
+  // Found by the $0 monkey-ref dev run: a spike wrap (GQ10) lifts the score above 32,767 and the next coin overflows the
+  // int16 score (GQ09); every token is needed for GQ09, while GQ10 needs only the first four.
+  const chain = { bug_class: 'score_overflow', title: 'negative score', seed: 75756, steps: ['down', 'down', 'right', 'right', 'right', 'dash-right'] };
+  // A 22-token enemy-swap repro that also fires a double move (GQ12, accepted as collision too) early on.
+  const swap = { bug_class: 'collision', title: 'swap costs no life', seed: 462795, steps: ['enter', 'left', 'click:btn-next', 'esc', 'pause', 'right', 'left', 'use+down',
+    'click:btn-again', 'click:btn-next', 'down', 'enter', 'down', 'dash-down', 'left+use', 'up+dash-up', 'pause+dash-up', 'esc', 'use', 'right', 'right', 'goto:6,8'] };
+  const s = await scoreReports(browser, [chain, swap, { ...chain, bug_class: 'softlock' }], { truth });
+  const [a, b, c] = s.perReport;
+  assert.deepEqual(a.fired.slice(0, 2), ['GQ10', 'GQ09']); assert.equal(a.bug, 'GQ09'); assert.equal(a.minimal, true); assert.equal(a.classMatch, true);
+  assert.ok(b.fired.indexOf('GQ12') < b.fired.indexOf('GQ02')); assert.equal(b.bug, 'GQ02'); assert.equal(b.minimal, true);
+  // no fired bug accepts softlock: still credited to the bug it is minimal for, with classMatch false
+  assert.equal(c.bug, 'GQ09'); assert.equal(c.classMatch, false); assert.equal(c.minimal, true);
+});
+
 t('oracle scoring: padding, wrong class, duplicates, junk and malformed reports', async () => {
   const ref = id => truth.bugs.find(b => b.id === id).reference;
   const reports = [

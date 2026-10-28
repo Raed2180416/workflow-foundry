@@ -6,8 +6,9 @@
 // Per report (all replays deterministic, D0):
 //   malformed     the report breaks the report schema (class, seed, 1..400 valid tokens): a false report
 //   no_fault      replaying it fires no injected probe: a false report
-//   credited      it fires at least one probe. Credit goes to the earliest fired bug whose accepted classes contain the
-//                 report's class; if none does, to the earliest fired bug (classMatch false)
+//   credited      it fires at least one probe. Credit goes to the first fired bug for which the repro is minimal, bugs whose
+//                 accepted classes contain the report's class first (else classMatch false); when it is minimal for none,
+//                 to the earliest fired bug of the report's class, else the earliest fired bug
 //   minimal       1-minimal (ddmin's guarantee): removing any single token stops the credited probe from firing with the
 //                 same symptom signature. Like a test-case reducer that keeps the failure signature, the oracle keeps the
 //                 symptom fixed: the two input-race faults have two (the player ends on a different tile, or only another
@@ -71,19 +72,25 @@ export async function scoreReports(browser, reports, { truth = loadTruth(), chec
       if (!first.fired.length) { perReport.push({ index, verdict: 'no_fault', steps: report.steps.length }); continue; }
       const again = await firedBugs(session, byFlag, report.seed, report.steps); replays += 1;
       const deterministic = JSON.stringify(again.fired) === JSON.stringify(first.fired);
-      const matching = first.fired.find(id => byId.get(id).acceptClasses.includes(report.bug_class));
-      const credited = matching ?? first.fired[0];
-      const symptom = first.sigs.get(credited)[0];
-      let removable = [];
+      // Credit: a repro often passes through other faults on its way (a spike wrap before an int16 overflow, a double move
+      // before an enemy swap). A repro that is 1-minimal for bug b needs every token to make b manifest: it is a repro of b.
+      // So the credited bug is, in this order: the first fired bug of the report's class for which the repro is minimal; the
+      // first fired bug of another class for which it is minimal (classMatch false); the first fired bug of the report's
+      // class; the first fired bug.
+      const matches = first.fired.filter(id => byId.get(id).acceptClasses.includes(report.bug_class));
+      const ordered = [...matches, ...first.fired.filter(id => !matches.includes(id))];
+      const removals = [];
       if (checkMinimality) {
         for (let i = 0; i < report.steps.length; i++) {
           const without = report.steps.filter((_, j) => j !== i);
-          if (!without.length) continue;
-          const r = await firedBugs(session, byFlag, report.seed, without); replays += 1;
-          if (r.fired.includes(credited) && r.sigs.get(credited).includes(symptom)) removable.push(i);
+          if (!without.length) { removals.push(null); continue; }
+          removals.push(await firedBugs(session, byFlag, report.seed, without)); replays += 1;
         }
       }
-      perReport.push({ index, verdict: 'credited', bug: credited, classMatch: Boolean(matching), fired: first.fired, ...(symptom ? { symptom } : {}), deterministic,
+      const removableFor = id => removals.flatMap((r, i) => (r && r.fired.includes(id) && r.sigs.get(id).includes(first.sigs.get(id)[0]) ? [i] : []));
+      const credited = (checkMinimality ? ordered.find(id => removableFor(id).length === 0) : undefined) ?? ordered[0];
+      const symptom = first.sigs.get(credited)[0], removable = checkMinimality ? removableFor(credited) : [];
+      perReport.push({ index, verdict: 'credited', bug: credited, classMatch: matches.includes(credited), fired: first.fired, ...(symptom ? { symptom } : {}), deterministic,
         minimal: checkMinimality ? removable.length === 0 : null, removable, steps: report.steps.length, primitives: first.primitives });
     }
   } finally { await session.close(); }

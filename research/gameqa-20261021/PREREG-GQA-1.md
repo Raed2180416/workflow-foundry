@@ -15,7 +15,7 @@
 - **Build under test:** B1 = the game with 12 injected faults, 6 classes × 2 (collision, state_desync, softlock,
   ui_overlap, score_overflow, input_race). Hidden truth: `beds/gameqa-web/truth/bugs.json`.
 - **Frozen before any model call:** the bed section of `research/gameqa-20261021/FREEZE.json` (sha256 of the build, the
-  public spec, the truth, the driver and the oracle; bed manifest `38e1ed798ea8bbe1d793bcebe72f0a51621247172651928f8a8b359dd6e6adf7`,
+  public spec, the truth, the driver and the oracle; bed manifest `ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95`,
   injected-bug set `106bead47185244b2e2b56aeee186067361c57f762f5bbed38f6ed881ddbb270`). `run.mjs` refuses to run when the
   bed differs from the freeze, and refuses a paid run unless the arms section is frozen and unchanged.
 - **Oracle** (`beds/gameqa-web/oracle.mjs`): a report `{bug_class, title, observed, expected, seed, steps}` is replayed
@@ -23,18 +23,18 @@
   computes the correct result next to the faulty one and records a probe only when they differ). **Minimal** = 1-minimal:
   removing any single token stops the credited probe from firing. Malformed or non-firing reports are false reports.
 - **Oracle controls, run before this pre-registration ($0):**
-  - known-good: every bug's reference repro is credited to that bug and is 1-minimal (bed tests 9/9 pass);
+  - known-good: every bug's reference repro is credited to that bug and is 1-minimal (bed tests 11/11 pass, including the symptom-keeping minimality and the credit rule);
   - known-bad: padded, wrong-class, junk and malformed reports are scored as not minimal / class mismatch / no fault /
     malformed (bed test);
   - clean build vs its spec: 21 oracle-informed reference checks over 40,181 random ticks, 0 violations
-    (`audit/audit-clean-40k-s1.json`);
+    (`audit/audit-clean-40k-s1.json`), and 22 checks over 20,161 ticks, 0 violations (`audit/audit-clean-20k-s7-22checks.json`);
   - oracle validity by differential replay, clean build vs faulty build, same seed and tokens: at the first tick where
     anything a tester can observe differs (state, HUD text, UI visibility/text/rectangles/topmost), a probe must already
     have fired (no un-probed deviation that a correct report could not be credited for), and every probe must coincide
     with an observable difference (no credit for an unobservable "bug"). B1: 200 episodes, 26,852 ticks, 200 diverged,
     0 un-probed divergences, 0 silent probes. Per flag (each fault alone, 60 episodes with setup prefixes that reach the
     key, lever, gate, far rooms and the exit, about 9,000 ticks each): 0 un-probed, 0 silent for all 12
-    (`audit/differential-*.json`).
+    (`audit/differential-*.json`). The deep faults diverge rarely under random input (score overflow in 2 of 60 episodes, and 1 of 150 in a targeted 23,514-tick run), so their audit is thin.
 
 ## 2. Arms
 
@@ -47,9 +47,9 @@ ui_overlap faults are layout faults observable through the DOM, not rendering gl
 
 | Arm | Definition | Model calls | Budget per run |
 |---|---|---|---|
-| `monkey` (baseline) | random harness tokens (fixed distribution: moves 40%, dashes 10%, wait 10%, use 4%, pause/esc/enter 12%, clicks 10%, 2-key combos 8%, goto 6%), 200-token episodes, random seeds; the template's two generic detectors (page error; observable state frozen 30 ticks with no visible dialog or button); code repro (2 replays) + ddmin to a 1-minimal repro; one report per confirmed detector | none ($0) | 8,000 ticks; ddmin ≤ 400 tests per candidate |
+| `monkey` (baseline) | random harness tokens (fixed distribution: moves 40%, dashes 10%, wait 10%, use 4%, pause/esc/enter 12%, clicks 10%, 2-key combos 8%, goto 6%), 200-token episodes, random seeds; the template's two generic detectors (page error; observable state frozen 30 ticks with no visible dialog or button); code repro (2 replays) + ddmin to a 1-minimal repro; one report per confirmed (detector, screen) signature | none ($0) | 8,000 ticks; ddmin ≤ 400 tests per candidate |
 | `agent` | Haiku alone. Each turn it sees its notes, its run history (last 12), the full trace of its last run (≤ 120 ticks shown) and the map; it answers notes, one run (seed + ≤ 120 tokens) or finish, and its complete current report list (the last list is final). It must replay and minimize by itself. | ≤ 40 | 8,000 ticks, 40 turns, $0.50 |
-| `workflow` | the cheap-built QA workflow, template `foundry/game-qa-explore-repro-minimize` 1.0.0 (`experiments/gameqa-web/template.json`): **construct** (Haiku writes 3-6 personas from the R08 archetypes and 8-30 executable checks in a closed expression language; unparseable checks get one repair call) → **explore** (3 rounds; each persona plans ≤ 3 runs per round from the shared coverage, the list of already-violated checks and its own last traces) → **playback** (code runs every plan, evaluates every check and the generic detectors on every tick) → **triage** (one candidate per violated check, shortest prefix) → **repro** (2 replays) → **minimize** (ddmin + single-token pass: 1-minimal for the check) → **judge** (Haiku, batches of 6, sees the check, the minimized tokens and the trace of the minimized replay; filters wrong checks) → **report** | ≈ 15-30 | 8,000 ticks, $0.50 |
+| `workflow` | the cheap-built QA workflow, template `foundry/game-qa-explore-repro-minimize` 1.1.0 (`experiments/gameqa-web/template.json`): **construct** (Haiku writes 3-6 personas from the R08 archetypes and 8-30 executable checks in a closed expression language; unparseable checks get one repair call) → **explore** (3 rounds; each persona plans ≤ 3 runs per round from the shared coverage, the list of already-violated checks and its own last traces) → **playback** (code runs every plan, evaluates every check and the generic detectors on every tick) → **triage** (one candidate per signature = check + screen (open dialog, else mode), shortest prefix, ≤ 30 breadth first across checks) → **repro** (2 replays) → **minimize** (ddmin + single-token pass: 1-minimal for the check on that screen) → **judge** (Haiku, batches of 6, sees the check, the minimized tokens and the trace of the minimized replay; filters wrong checks) → **report** | ≈ 15-30 | 8,000 ticks, $0.50 |
 | `workflow-random` (ablation) | the paired `workflow` rep's construction (same personas and checks, no new construct call), monkey exploration instead of personas, then the same triage, repro, minimize, judge, report | judge only | 8,000 ticks, $0.50 |
 | `monkey-ref` (calibration, not comparative) | the monkey's exploration with the bed author's 21 **oracle-informed** reference checks (`reference-checks.json`), repro + ddmin, no judge: the ceiling of "random exploration + perfect checks" | none ($0) | 8,000 ticks |
 
@@ -128,9 +128,27 @@ per run. Monkey arms $0.
 - **Oracle:** the probes define the bugs. The differential audit bounds the risk that a correct report of a real
   deviation goes uncredited (0 un-probed divergences found) but is sampling evidence, not proof. A real deviation outside
   the 12 faults in the clean build would make a correct report a "false report": the clean audit (40k ticks, 21 checks)
-  found none.
-- **Minimality** is judged by the oracle's probe, not by the arm's own check: a workflow repro that is 1-minimal for its
-  check can still be non-minimal for the fault (counted as not found under foundMin, kept under foundAny).
+  found none; the 22-check re-audit (20k ticks) found none.
+- **Minimality** is judged by the oracle's probe (keeping the symptom), not by the arm's own check: a workflow repro that
+  is 1-minimal for its check can still be non-minimal for the fault (counted as not found under foundMin, kept under
+  foundAny).
+- **Credit** goes to the fault the repro is 1-minimal for (report class first), not merely to the first fault it fires:
+  without this, a repro that passes through another fault on the way (a spike wrap before an int16 overflow) was
+  credited to the wrong fault and scored non-minimal.
+
+## Pre-freeze changes from $0 development runs (before any model call)
+
+Recorded for transparency; none is an amendment because no model call had been made. All came from $0 runs of the
+monkey and of the oracle-informed `monkey-ref` calibration path (`--dev`, scratch output, not part of the results):
+1. Oracle credit rule (above), with a bed test built from the two dev reports that exposed it.
+2. Symptom-keeping minimality for the two input-race faults (bed test).
+3. Triage by signature (check + screen) instead of one candidate per check, in the shared machinery used by `monkey`,
+   `monkey-ref`, `workflow` and `workflow-random` (template 1.1.0): one check (every visible button is clickable)
+   catches two different faults on two screens, and one candidate per check could report only one of them. This is the
+   R08 triage rule (dedup by signature), not a bed-specific hint, but it was found on this bed: development evidence.
+4. A 22nd oracle-informed reference check (`key-pickup`) for the calibration arm only (never shown to an arm).
+5. Cost accounting: an unobservable CLI spend is now charged at the port's `costUpperUsd` (was read from a field the
+   port does not set, so it would have been counted as $0).
 - **Spec ambiguity:** reports of behaviour the spec marks "by design" are false reports by construction (four decoys).
 - **Infrastructure:** the host runs other experiments; wall time is noisy and reported, not tested. The game runs in
   lockstep, so host load cannot change any outcome.
