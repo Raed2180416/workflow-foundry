@@ -52,7 +52,8 @@ function resolveTarget(t, pidx, channels) {
     const c = channels.find(x => norm(x.id) === norm(ch) || norm(x.name) === norm(ch));
     out.channel = c ? { id: c.id, name: c.name } : { id: null, name: ch };
   }
-  if (t?.container) out.container = str(t.container).trim();
+  // the most specific id of a container: the last segment of a pointer or path (a worksheet, not its spreadsheet)
+  if (t?.container) out.container = str(t.container).trim().replace(/^\[|\]$/g, '').split(/[:/]/).filter(Boolean).pop() ?? null;
   if (t?.ptr) { const h = normalizePointer(t.ptr, pidx); out.ptr = h.m ? h.m.key : null; out.ptrMember = h.m ?? null; }
   return out;
 }

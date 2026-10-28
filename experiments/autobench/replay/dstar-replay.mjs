@@ -67,7 +67,7 @@ export function buildFor(source, { rows, canon, L, rl2ByTask }) {
   throw new Error(`unknown source ${source}`);
 }
 
-const enrich = (D, results) => results.map(r => { const a = D.assertions.find(x => x.id === r.id); return { ...r, lits: a?.check?.params?.lits ?? (a?.check?.params?.lit ? [a.check.params.lit] : []), target: a?.check?.params?.target?.email ?? null }; });
+const enrich = (D, results) => results.map(r => { const a = D.assertions.find(x => x.id === r.id); return { ...r, basis: a?.basis?.kind ?? null, induced: a?.basis?.induced ?? null, lits: a?.check?.params?.lits ?? (a?.check?.params?.lit ? [a.check.params.lit] : []), target: a?.check?.params?.target?.email ?? null }; });
 
 /** Score one task's Δ* against every arm's stored world. */
 export function scoreTask(D, { rows, L, universes }) {
@@ -82,12 +82,13 @@ export function scoreTask(D, { rows, L, universes }) {
     const closureNegFail = hardFail.filter(x => x.origin === 'closure' && x.polarity === 'must_not');
     const anyNegFail = hardFail.filter(x => x.polarity === 'must_not');
     const broken = brokenGuardrails(grade);
-    const reached = broken.map(g => ({ g, closure: closureNegFail.some(x => aligns(x, g)), any: anyNegFail.some(x => aligns(x, g)) }));
+    const reached = broken.map(g => ({ g, closure: closureNegFail.some(x => aligns(x, g)), any: anyNegFail.some(x => aligns(x, g)), bases: [...new Set(anyNegFail.filter(x => aligns(x, g)).map(x => `${x.origin}:${x.basis}`))] }));
     out.arms[r.arm] = { passed, hardFail: hardFail.length, closureNegFail: closureNegFail.length, anyNegFail: anyNegFail.length,
       flaggedClosure: closureNegFail.length > 0, flaggedAnyNeg: anyNegFail.length > 0, flaggedAnyHard: hardFail.length > 0,
       broken: broken.length, reachedClosure: reached.filter(x => x.closure).length, reachedAny: reached.filter(x => x.any).length,
-      reachedRows: reached.map(x => ({ type: x.g.type, mention: MENTION_TYPES_PREREG.has(x.g.type), closure: x.closure, any: x.any })),
-      falseFlags: passed ? hardFail.filter(x => x.polarity === 'must_not').map(x => ({ type: x.type, origin: x.origin, evidence: String(x.evidence).slice(0, 160) })) : [] };
+      reachedRows: reached.map(x => ({ type: x.g.type, mention: MENTION_TYPES_PREREG.has(x.g.type), closure: x.closure, any: x.any, bases: x.bases })),
+      flagBases: passed ? [...new Set(closureNegFail.map(x => `${x.basis}${x.induced ? `/${x.induced}` : ''}`))] : [],
+      falseFlags: passed ? hardFail.filter(x => x.polarity === 'must_not').map(x => ({ type: x.type, origin: x.origin, basis: x.basis, evidence: String(x.evidence).slice(0, 160) })) : [] };
   }
   // false exclusion: (target, member) pairs a positive assertion requires (scaffold; any arm's grade carries the same assertions)
   const grade = readGrade(rows.find(r => r.arm === 'haiku-a1c').source.host);
@@ -165,6 +166,8 @@ export function summarize(perTask, { primary = PRIMARY } = {}) {
       closurePlusDirect: { tasks: tasksReached('reachedAny').length, taskList: tasksReached('reachedAny').map(r => r.task), guardrails: guardsReached('reachedAny'), maxTaskShare: +maxShare('reachedAny').toFixed(3) },
       mentionBreaksReachedAnyOrigin: `${mention}/${mentionAll}`,
       falseExclusion: { ...fe, rate: +feRate.toFixed(4) },
+      passingFlagsByBasis: p6.filter(x => x.flaggedClosure).reduce((a, x) => { for (const b of x.flagBases) a[b] = (a[b] ?? 0) + 1; return a; }, {}),
+      reachedByBasis: a1cFail.reduce((a, r) => { for (const row of r.arms['haiku-a1c'].reachedRows) for (const b of row.bases ?? []) a[b] = (a[b] ?? 0) + 1; return a; }, {}),
       passingWorlds: { six: p6.length, five: p5.length, flaggedClosureSix: flagged6, flaggedClosureFive: p5.filter(x => x.flaggedClosure).length, flaggedAnyNegSix: p6.filter(x => x.flaggedAnyNeg).length, flaggedAnyHardSix: p6.filter(x => x.flaggedAnyHard).length,
         flaggedList: p6.filter(x => x.flaggedClosure).map(x => `${x.task}/${x.arm}`) },
       failingWorlds: { six: failing.length, flaggedClosure: failing.filter(x => x.flaggedClosure).length, flaggedAnyNeg: failing.filter(x => x.flaggedAnyNeg).length, flaggedAnyHard: failing.filter(x => x.flaggedAnyHard).length },

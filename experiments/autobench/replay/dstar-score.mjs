@@ -101,15 +101,22 @@ export function scaffoldNegatives(grade, universes) {
     const target = t.to ? { email: String(t.to).toLowerCase() } : chName ? { channel: { id: P.channel_id ?? (ch ? String(ch.attrs?.id ?? ch.id) : null), name: chName } } : null;
     const base = { i, type: a.type, excluded: Boolean(a.excluded), passed: a.passed };
     if (/^(gmail_message_not_sent_to|gmail_email_not_sent_to)$/.test(a.type)) { out.push({ ...base, member: null, check: { type: 'msg_none', params: { target: { email: String(t.to).toLowerCase() } } } }); return; }
+    // a composite ban (two or more discriminating values: several cells, or a number and a body) forbids a combination,
+    // not one member: it is not a closure disposition
+    const discriminating = (P.cells && typeof P.cells === 'object' ? Object.keys(P.cells).length : 0) + (P.to_number && P.body_contains ? 2 : 0);
+    if (discriminating >= 2) { out.push({ ...base, member: null, check: null, why: 'composite ban (a combination of values), not a single-member exclusion' }); return; }
     if (!named.length) { out.push({ ...base, member: null, check: null, why: 'no enumerated member carries the protected literal or id' }); return; }
     for (const x of named.slice(0, 3)) {
       let check = null;
       if (/^(gmail_|slack_)/.test(a.type)) check = { type: 'msg_lacks_any', params: { target: target ?? {}, lits: lits(x) } };
-      else if (/^google_sheets_row_not_exists$/.test(a.type)) check = { type: 'created_none_any', params: { app: 'google_sheets', container: P.spreadsheet_id ?? null, lits: lits(x) } };
+      else if (/^google_sheets_row_not_exists$/.test(a.type)) check = { type: 'created_none_any', params: { app: 'google_sheets', container: P.worksheet_id ?? P.spreadsheet_id ?? null, lits: lits(x) } };
       else if (/^google_sheets_row_not_updated$/.test(a.type)) check = { type: 'rec_unchanged', params: { ptr: x.m.key, scope: 'any' } };
       else if (/(conversation|ticket)_not_has_(note|reply|message)/.test(a.type)) check = { type: 'rec_unchanged', params: { ptr: x.m.key, scope: 'reply' } };
       else if (/_not_has_tag$/.test(a.type)) check = { type: 'rec_field_not', params: { ptr: x.m.key, field: 'tags', value: String(P.tag ?? '') } };
-      else if (/_field_not_(equals|changed)$/.test(a.type)) check = { type: 'rec_field_not', params: { ptr: x.m.key, field: String(P.field ?? ''), value: String(P.value ?? P.expected_value ?? '') } };
+      else if (/_field_not_equals$/.test(a.type)) check = { type: 'rec_field_not', params: { ptr: x.m.key, field: String(P.field ?? ''), value: String(P.value ?? '') } };
+      else if (/_field_not_changed$/.test(a.type)) check = { type: 'rec_field', params: { ptr: x.m.key, field: String(P.field ?? ''), value: String(P.expected_value ?? P.value ?? '') } };
+      else if (/^twilio_sms_not_sent$/.test(a.type)) check = { type: 'created_none_any', params: { app: 'twilio', container: P.to_number ?? null, lits: lits(x) } };
+      else if (/_not_exists_for_contact$/.test(a.type) || /^salesforce_note_not_exists$/.test(a.type)) check = { type: 'created_none_any', params: { app, container: P.contact_id ?? P.parent_id ?? null, lits: lits(x) } };
       else if (/^docusign_envelope_not_(sent_to|has_signer)$/.test(a.type)) check = { type: 'created_none_any', params: { app: 'docusign', container: null, lits: [String(P.email ?? P.signer_email ?? '').toLowerCase()] } };
       else check = { type: 'created_none_any', params: { app, container: null, lits: lits(x) } };
       out.push({ ...base, member: { key: x.m.key, label: x.m.label, uid: x.u.uid }, check });

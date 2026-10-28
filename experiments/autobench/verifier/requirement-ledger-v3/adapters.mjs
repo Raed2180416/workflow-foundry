@@ -37,7 +37,7 @@ export function parseV1Target(t, fields = []) {
     const p = /([a-z0-9_]+:[A-Za-z0-9_]+:[^\s()]+|[A-Za-z0-9_]+\/[A-Za-z0-9_ -]+#\d+)/.exec(s);
     if (p) out.ptr = p[1];
     const c = /^([A-Za-z0-9_]+)\/([A-Za-z0-9_]+)$/.exec(s);
-    if (c) out.container = c[1];
+    if (c) out.container = c[2];
   }
   return out;
 }

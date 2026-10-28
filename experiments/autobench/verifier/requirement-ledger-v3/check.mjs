@@ -11,6 +11,8 @@ export const CHECK_VERSION = 'rl3-check-v1';   // v2's rl2-check-v1 plus the Δ*
 const RECIPIENT_KEY = /^(to|cc|bcc|recipient|recipients|to_email|to_emails|emails?|attendees|guests|signers|invitees|participants|assignee_email|contact_email|customer_email|requester_email)$/i;
 const SENDER_KEY = /^(from_?|sender|from_email|reply_to|author_email|organizer|creator|host_email|owner_email)$/i;
 const MSG_LIST = /(^|\.)(conversation_parts|messages|notes|replies|comments|parts|thread|responses|internal_notes|posts|activities|events)$/;
+// Δ* v1 (pass 4): only these lists carry messages TO the record's person; notes, comments, events and activities are internal
+const OUTWARD_LIST = /(^|\.)(conversation_parts|messages|replies|parts|thread|responses|posts)$/;
 const deepEq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 function recipientsOf(rec, depth = 0, out = new Set()) {
@@ -41,18 +43,19 @@ export function effectsOf(diff, world0) {
       const fields = Object.entries(c.fields ?? {}).filter(([p]) => !TOUCH_FIELD.test(p));
       if (!fields.length) continue;
       const added = [], afterTexts = [];
-      let reply = false;
+      let reply = false, outward = false;
       for (const [p, [before, after]] of fields) {
         if (Array.isArray(after)) {
           const prior = Array.isArray(before) ? before : [];
           const add = after.filter(x => !prior.some(y => deepEq(x, y)));
           added.push(...add);
           if (add.length && MSG_LIST.test(p)) reply = true;
+          if (add.length && OUTWARD_LIST.test(p) && add.some(x => !(x && typeof x === 'object' && /note|internal/i.test(String(x.part_type ?? x.type ?? x.message_type ?? ''))))) outward = true;
           afterTexts.push(contentText(add));
         } else afterTexts.push(typeof after === 'object' ? contentText(after) : String(after ?? ''));
       }
       const before = (world0?.[c.app]?.[c.coll] ?? []).find?.(r => isObj(r) && String(r.id ?? r.row_id) === String(c.id)) ?? null;
-      updated.push({ app: c.app, coll: c.coll, id: String(c.id), fields: Object.fromEntries(fields), added, reply, text: afterTexts.join('\n'),
+      updated.push({ app: c.app, coll: c.coll, id: String(c.id), fields: Object.fromEntries(fields), added, reply, outward, text: afterTexts.join('\n'),
         beforeEmails: new Set(emailsIn(JSON.stringify(before ?? c.ref ?? {}))) });
     } else if (c.op === 'deleted') deleted.push({ app: c.app, coll: c.coll, id: String(c.id) });
   }
@@ -64,7 +67,7 @@ function messagesTo(target, eff, ctx) {
   if (target.email) {
     const e = target.email;
     return [...eff.created.filter(c => c.recipients.has(e)).map(c => ({ where: `${c.app}.${c.coll}:${c.id}`, text: c.text })),
-      ...eff.updated.filter(u => u.reply && u.beforeEmails.has(e)).map(u => ({ where: `${u.app}.${u.coll}:${u.id}`, text: u.text }))];
+      ...eff.updated.filter(u => u.outward && u.beforeEmails.has(e)).map(u => ({ where: `${u.app}.${u.coll}:${u.id}`, text: u.text }))];
   }
   if (target.channel) {
     const ids = new Set([target.channel.id, target.channel.name].filter(Boolean).map(x => norm(x)));
