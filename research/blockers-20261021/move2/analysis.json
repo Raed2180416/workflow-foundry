@@ -1,0 +1,7927 @@
+{
+ "evidence": "development (dev worlds 1161/1162/1164), $0, runtime2 vs frozen runtime1; D28(3)",
+ "verdicts": {
+  "S1 logical duplicates 0 under M4d outside the universal D4 loss (was 61 in COMP-1)": {
+   "r1": 61,
+   "r1OutsideD4": 20,
+   "r2": 0,
+   "r2OutsideD4": 0,
+   "cells": 18,
+   "holds": true
+  },
+  "S2 fault-free digests unchanged (logical journal and business rows)": {
+   "equal": 18,
+   "of": 18,
+   "monoliths": 9,
+   "holds": true
+  },
+  "S3 the distinct-refunds mutant still flagged": {
+   "cells": 12,
+   "flagged": 12,
+   "actedCells": 12,
+   "holds": true
+  },
+  "S4 no single-writer false positive on the three C-H-T manifests (and C-H flagged)": {
+   "cht": [
+    false,
+    false,
+    false
+   ],
+   "ch": [
+    true,
+    true,
+    true
+   ],
+   "holds": true
+  },
+  "X1 ch-e8-2 crash within 3 cases of fault-free on all three worlds": {
+   "r1": {
+    "loss": [
+     17,
+     15,
+     31
+    ],
+    "within3": false,
+    "critical": [
+     26,
+     33,
+     54
+    ]
+   },
+   "r2": {
+    "loss": [
+     1,
+     0,
+     2
+    ],
+    "within3": true,
+    "critical": [
+     0,
+     0,
+     0
+    ]
+   },
+   "holds": true
+  },
+  "X1 identity-conflict findings 0 on every fault-free run": {
+   "count": 0,
+   "holds": true
+  },
+  "X1 universal M4d loss on 1161 unchanged (D4 not claimed)": {
+   "d4": 8,
+   "composedR2Loss1161": [
+    8,
+    8,
+    8,
+    8,
+    8,
+    8
+   ]
+  },
+  "Move 2 COMP M4b/M4d within the monolith band": {
+   "crash:1161": {
+    "monolith": [
+     0,
+     1
+    ],
+    "r1Inside": "5/6",
+    "r2Inside": "6/6"
+   },
+   "crash:1162": {
+    "monolith": [
+     0,
+     0
+    ],
+    "r1Inside": "5/6",
+    "r2Inside": "6/6"
+   },
+   "crash:1164": {
+    "monolith": [
+     1,
+     2
+    ],
+    "r1Inside": "4/6",
+    "r2Inside": "6/6"
+   },
+   "dup-same:1161": {
+    "monolith": [
+     8,
+     8
+    ],
+    "r1Inside": "6/6",
+    "r2Inside": "6/6"
+   },
+   "dup-same:1162": {
+    "monolith": [
+     3,
+     3
+    ],
+    "r1Inside": "2/6",
+    "r2Inside": "6/6"
+   },
+   "dup-same:1164": {
+    "monolith": [
+     10,
+     11
+    ],
+    "r1Inside": "1/6",
+    "r2Inside": "6/6"
+   }
+  },
+  "M4a restart journal identical under runtime 2": {
+   "identical": 27,
+   "of": 27
+  },
+  "Read-back variant (reconcile): fault-free unchanged, crash losses r1 / r2 / r2+read-back summed over the three worlds": {
+   "ch-e8-1": {
+    "noneEqual": "3/3",
+    "crashLoss": [
+     4,
+     2,
+     0
+    ],
+    "outsideAllowed": [
+     4,
+     2,
+     0
+    ]
+   },
+   "ch-e8-2": {
+    "noneEqual": "3/3",
+    "crashLoss": [
+     63,
+     3,
+     0
+    ],
+    "outsideAllowed": [
+     64,
+     3,
+     0
+    ]
+   },
+   "ch-e8-3": {
+    "noneEqual": "3/3",
+    "crashLoss": [
+     2,
+     2,
+     0
+    ],
+    "outsideAllowed": [
+     12,
+     12,
+     10
+    ]
+   },
+   "cht-e8-1": {
+    "noneEqual": "3/3",
+    "crashLoss": [
+     3,
+     3,
+     0
+    ],
+    "outsideAllowed": [
+     3,
+     3,
+     0
+    ]
+   },
+   "cht-e8-2": {
+    "noneEqual": "3/3",
+    "crashLoss": [
+     3,
+     1,
+     0
+    ],
+    "outsideAllowed": [
+     3,
+     1,
+     0
+    ]
+   },
+   "cht-e8-3": {
+    "noneEqual": "3/3",
+    "crashLoss": [
+     0,
+     0,
+     0
+    ],
+    "outsideAllowed": [
+     0,
+     0,
+     0
+    ]
+   },
+   "b1lh-e8-1": {
+    "noneEqual": "3/3",
+    "crashLoss": [
+     1,
+     3,
+     0
+    ],
+    "outsideAllowed": [
+     1,
+     3,
+     0
+    ]
+   },
+   "b1nh-e8-2": {
+    "noneEqual": "3/3",
+    "crashLoss": [
+     2,
+     3,
+     0
+    ],
+    "outsideAllowed": [
+     2,
+     3,
+     0
+    ]
+   },
+   "b1nh-e8-3": {
+    "noneEqual": "3/3",
+    "crashLoss": [
+     2,
+     2,
+     0
+    ],
+    "outsideAllowed": [
+     2,
+     2,
+     0
+    ]
+   }
+  }
+ },
+ "faultTable": [
+  {
+   "subject": "ch-e8-1",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 39,
+   "completed": 43,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 115,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 32,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 9,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 289,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 155,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 36,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 5,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 349,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 57,
+   "completed": 69,
+   "lossVsNone": 3,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 239,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 49,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 0,
+   "dup": 13,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 502,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 39,
+   "completed": 43,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {
+    "orphan": 101
+   },
+   "hostDeduped": 99,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 32,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "passed": 38,
+   "completed": 42,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "31/31",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "orphan": 124
+   },
+   "hostDeduped": 124,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 36,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 354,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "passed": 39,
+   "completed": 46,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "37/37",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 59,
+   "completed": 69,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "orphan": 205,
+    "surplus": 4
+   },
+   "hostDeduped": 210,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 49,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 515,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "passed": 58,
+   "completed": 70,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "47/47",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 23,
+   "completed": 43,
+   "lossVsNone": 17,
+   "critical": 26,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "9/12",
+   "env": {},
+   "hostDeduped": 136,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 32,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 4,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 294,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 38,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 23,
+   "completed": 44,
+   "lossVsNone": 15,
+   "critical": 33,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "7/10",
+   "env": {},
+   "hostDeduped": 155,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 34,
+   "completed": 44,
+   "lossVsNone": 4,
+   "critical": 2,
+   "dup": 3,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 337,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 29,
+   "completed": 69,
+   "lossVsNone": 31,
+   "critical": 54,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "16/19",
+   "env": {},
+   "hostDeduped": 261,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 46,
+   "completed": 69,
+   "lossVsNone": 14,
+   "critical": 0,
+   "dup": 9,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 500,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 39,
+   "completed": 43,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {
+    "orphan": 100
+   },
+   "hostDeduped": 98,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 32,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "passed": 37,
+   "completed": 42,
+   "lossVsNone": 3,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "24/27",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 38,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "passed": 38,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 38,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "orphan": 134
+   },
+   "hostDeduped": 134,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "passed": 38,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 35,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "shared-identity": 1
+   },
+   "hostDeduped": 340,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "passed": 38,
+   "completed": 46,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "32/34",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 58,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "orphan": 202,
+    "surplus": 2
+   },
+   "hostDeduped": 204,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 49,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "shared-identity": 3
+   },
+   "hostDeduped": 509,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "passed": 58,
+   "completed": 70,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "38/41",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 107,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 34,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 165,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 38,
+   "completed": 44,
+   "lossVsNone": 4,
+   "critical": 2,
+   "dup": 3,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 351,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 56,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "17/37",
+   "env": {},
+   "hostDeduped": 1,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 54,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "17/37",
+   "env": {},
+   "hostDeduped": 177,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 43,
+   "completed": 69,
+   "lossVsNone": 13,
+   "critical": 0,
+   "dup": 3,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "17/37",
+   "env": {},
+   "hostDeduped": 538,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {
+    "orphan": 102
+   },
+   "hostDeduped": 102,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 34,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "passed": 41,
+   "completed": 42,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "31/31",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "orphan": 138
+   },
+   "hostDeduped": 137,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "shared-identity": 1
+   },
+   "hostDeduped": 354,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "passed": 44,
+   "completed": 46,
+   "lossVsNone": -2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "37/37",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 56,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "17/37",
+   "env": {},
+   "hostDeduped": 1,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "passed": 56,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "17/37",
+   "env": {},
+   "hostDeduped": 1,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 54,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "17/37",
+   "env": {
+    "orphan": 167,
+    "surplus": 27
+   },
+   "hostDeduped": 161,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "passed": 56,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "17/37",
+   "env": {},
+   "hostDeduped": 1,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 46,
+   "completed": 69,
+   "lossVsNone": 10,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "17/37",
+   "env": {
+    "shared-identity": 3
+   },
+   "hostDeduped": 541,
+   "armErrors": 0
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "passed": 59,
+   "completed": 70,
+   "lossVsNone": -3,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "42/57",
+   "env": {},
+   "hostDeduped": 1,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 41,
+   "completed": 43,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 107,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 34,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 128,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 38,
+   "completed": 44,
+   "lossVsNone": 4,
+   "critical": 2,
+   "dup": 1,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 353,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 65,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 63,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 186,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 51,
+   "completed": 69,
+   "lossVsNone": 14,
+   "critical": 0,
+   "dup": 3,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 512,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 41,
+   "completed": 43,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {
+    "orphan": 95
+   },
+   "hostDeduped": 93,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 34,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "passed": 41,
+   "completed": 42,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "24/24",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "orphan": 142,
+    "surplus": 8
+   },
+   "hostDeduped": 150,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "passed": 42,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "shared-identity": 1
+   },
+   "hostDeduped": 354,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "passed": 44,
+   "completed": 46,
+   "lossVsNone": -2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "29/29",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 65,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "passed": 65,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 63,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "orphan": 208,
+    "surplus": 3
+   },
+   "hostDeduped": 210,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "passed": 65,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 1
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 54,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "shared-identity": 3
+   },
+   "hostDeduped": 515,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "passed": 66,
+   "completed": 70,
+   "lossVsNone": -1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "39/39",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 39,
+   "completed": 43,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 142,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 32,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 137,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 35,
+   "completed": 44,
+   "lossVsNone": 4,
+   "critical": 2,
+   "dup": 1,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 353,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 58,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 242,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 46,
+   "completed": 69,
+   "lossVsNone": 14,
+   "critical": 0,
+   "dup": 3,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 512,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {
+    "orphan": 144
+   },
+   "hostDeduped": 144,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "passed": 40,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 32,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "passed": 39,
+   "completed": 42,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "24/24",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "orphan": 177
+   },
+   "hostDeduped": 177,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "passed": 39,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 36,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "shared-identity": 1
+   },
+   "hostDeduped": 354,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "passed": 41,
+   "completed": 46,
+   "lossVsNone": -2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "29/29",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 59,
+   "completed": 69,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "orphan": 227,
+    "surplus": 4
+   },
+   "hostDeduped": 232,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "passed": 60,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 49,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "shared-identity": 3
+   },
+   "hostDeduped": 515,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "passed": 61,
+   "completed": 70,
+   "lossVsNone": -1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "39/39",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 37,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 12,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "7/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 37,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 12,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "7/12",
+   "env": {},
+   "hostDeduped": 58,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 29,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 12,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "7/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 36,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 8,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "6/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 36,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 8,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "6/10",
+   "env": {},
+   "hostDeduped": 59,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 33,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 8,
+   "dup": 1,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "6/10",
+   "env": {},
+   "hostDeduped": 353,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 59,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 6,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "16/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 59,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 6,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "16/19",
+   "env": {},
+   "hostDeduped": 124,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 45,
+   "completed": 69,
+   "lossVsNone": 14,
+   "critical": 6,
+   "dup": 3,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "16/19",
+   "env": {},
+   "hostDeduped": 512,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 37,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 12,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "7/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "passed": 37,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 12,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "7/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 37,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 12,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "7/12",
+   "env": {
+    "orphan": 103
+   },
+   "hostDeduped": 103,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "passed": 37,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 12,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "7/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 29,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 12,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "7/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "passed": 35,
+   "completed": 42,
+   "lossVsNone": 2,
+   "critical": 16,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "17/24",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 36,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 8,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "6/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "passed": 36,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 8,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "6/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 36,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 8,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "6/10",
+   "env": {
+    "orphan": 125,
+    "surplus": 8
+   },
+   "hostDeduped": 133,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "passed": 36,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 8,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "6/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 34,
+   "completed": 44,
+   "lossVsNone": 2,
+   "critical": 8,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "6/10",
+   "env": {
+    "shared-identity": 1
+   },
+   "hostDeduped": 354,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "passed": 37,
+   "completed": 46,
+   "lossVsNone": -1,
+   "critical": 14,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "22/29",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 59,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 6,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "16/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "passed": 59,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 6,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "16/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 59,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 6,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "16/19",
+   "env": {
+    "orphan": 216,
+    "surplus": 3
+   },
+   "hostDeduped": 223,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "passed": 59,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 6,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "16/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 48,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 6,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "16/19",
+   "env": {
+    "shared-identity": 3
+   },
+   "hostDeduped": 515,
+   "armErrors": 0
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "passed": 58,
+   "completed": 70,
+   "lossVsNone": 1,
+   "critical": 14,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "33/39",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 115,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 35,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 139,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 41,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 339,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 67,
+   "completed": 69,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 251,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 57,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 506,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {
+    "orphan": 114
+   },
+   "hostDeduped": 112,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 35,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "passed": 40,
+   "completed": 42,
+   "lossVsNone": 3,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "24/27",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "orphan": 160
+   },
+   "hostDeduped": 160,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 41,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 339,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "passed": 44,
+   "completed": 46,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "32/34",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 66,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "orphan": 214,
+    "surplus": 2
+   },
+   "hostDeduped": 215,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 57,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 506,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "passed": 66,
+   "completed": 70,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "38/41",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 170,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 35,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 172,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 41,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 353,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 66,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 266,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 58,
+   "completed": 69,
+   "lossVsNone": 10,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 512,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 42,
+   "completed": 43,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {
+    "orphan": 161
+   },
+   "hostDeduped": 159,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 35,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "passed": 42,
+   "completed": 42,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "24/24",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "orphan": 192
+   },
+   "hostDeduped": 192,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 41,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 353,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "passed": 46,
+   "completed": 46,
+   "lossVsNone": -2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "29/29",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 66,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "orphan": 241,
+    "surplus": 6
+   },
+   "hostDeduped": 246,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 58,
+   "completed": 69,
+   "lossVsNone": 10,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 512,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "passed": 69,
+   "completed": 70,
+   "lossVsNone": -1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "39/39",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 144,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 1,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 35,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 171,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 1,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 41,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 353,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 66,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 243,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 1,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 57,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 512,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {
+    "orphan": 144
+   },
+   "hostDeduped": 144,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "passed": 43,
+   "completed": 43,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 1
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "passed": 35,
+   "completed": 43,
+   "lossVsNone": 8,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "12/12",
+   "env": {},
+   "hostDeduped": 298,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "passed": 42,
+   "completed": 42,
+   "lossVsNone": 1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "27/27",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {
+    "orphan": 172
+   },
+   "hostDeduped": 171,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "passed": 44,
+   "completed": 44,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 1
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "passed": 41,
+   "completed": 44,
+   "lossVsNone": 3,
+   "critical": 2,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "10/10",
+   "env": {},
+   "hostDeduped": 353,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "passed": 46,
+   "completed": 46,
+   "lossVsNone": -2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "34/34",
+   "env": {},
+   "hostDeduped": 0,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "passed": 66,
+   "completed": 69,
+   "lossVsNone": 2,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {
+    "orphan": 241,
+    "surplus": 2
+   },
+   "hostDeduped": 243,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "passed": 68,
+   "completed": 69,
+   "lossVsNone": 0,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 4
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "passed": 57,
+   "completed": 69,
+   "lossVsNone": 11,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "19/19",
+   "env": {},
+   "hostDeduped": 512,
+   "armErrors": 0
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "passed": 69,
+   "completed": 70,
+   "lossVsNone": -1,
+   "critical": 0,
+   "dup": 0,
+   "money": 0,
+   "keyConflicts": 0,
+   "comp": "41/41",
+   "env": {},
+   "hostDeduped": 5,
+   "armErrors": 0
+  }
+ ],
+ "digests": [
+  {
+   "subject": "ch-e8-1",
+   "seed": 1161,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "ch-e8-1",
+   "seed": 1162,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "ch-e8-1",
+   "seed": 1164,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "ch-e8-2",
+   "seed": 1161,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "ch-e8-2",
+   "seed": 1162,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "ch-e8-2",
+   "seed": 1164,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "ch-e8-3",
+   "seed": 1161,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "ch-e8-3",
+   "seed": 1162,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "ch-e8-3",
+   "seed": 1164,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "cht-e8-1",
+   "seed": 1161,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "cht-e8-1",
+   "seed": 1162,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "cht-e8-1",
+   "seed": 1164,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "cht-e8-2",
+   "seed": 1161,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "cht-e8-2",
+   "seed": 1162,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "cht-e8-2",
+   "seed": 1164,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "cht-e8-3",
+   "seed": 1161,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "cht-e8-3",
+   "seed": 1162,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "cht-e8-3",
+   "seed": 1164,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "seed": 1161,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "seed": 1162,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "seed": 1164,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "seed": 1161,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "seed": 1162,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "seed": 1164,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "seed": 1161,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "seed": 1162,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "seed": 1164,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envFindings": {}
+  }
+ ],
+ "restart": [
+  {
+   "subject": "ch-e8-1",
+   "seed": 1161,
+   "sameJournal": true
+  },
+  {
+   "subject": "ch-e8-1",
+   "seed": 1162,
+   "sameJournal": true
+  },
+  {
+   "subject": "ch-e8-1",
+   "seed": 1164,
+   "sameJournal": true
+  },
+  {
+   "subject": "ch-e8-2",
+   "seed": 1161,
+   "sameJournal": true
+  },
+  {
+   "subject": "ch-e8-2",
+   "seed": 1162,
+   "sameJournal": true
+  },
+  {
+   "subject": "ch-e8-2",
+   "seed": 1164,
+   "sameJournal": true
+  },
+  {
+   "subject": "ch-e8-3",
+   "seed": 1161,
+   "sameJournal": true
+  },
+  {
+   "subject": "ch-e8-3",
+   "seed": 1162,
+   "sameJournal": true
+  },
+  {
+   "subject": "ch-e8-3",
+   "seed": 1164,
+   "sameJournal": true
+  },
+  {
+   "subject": "cht-e8-1",
+   "seed": 1161,
+   "sameJournal": true
+  },
+  {
+   "subject": "cht-e8-1",
+   "seed": 1162,
+   "sameJournal": true
+  },
+  {
+   "subject": "cht-e8-1",
+   "seed": 1164,
+   "sameJournal": true
+  },
+  {
+   "subject": "cht-e8-2",
+   "seed": 1161,
+   "sameJournal": true
+  },
+  {
+   "subject": "cht-e8-2",
+   "seed": 1162,
+   "sameJournal": true
+  },
+  {
+   "subject": "cht-e8-2",
+   "seed": 1164,
+   "sameJournal": true
+  },
+  {
+   "subject": "cht-e8-3",
+   "seed": 1161,
+   "sameJournal": true
+  },
+  {
+   "subject": "cht-e8-3",
+   "seed": 1162,
+   "sameJournal": true
+  },
+  {
+   "subject": "cht-e8-3",
+   "seed": 1164,
+   "sameJournal": true
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "seed": 1161,
+   "sameJournal": true
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "seed": 1162,
+   "sameJournal": true
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "seed": 1164,
+   "sameJournal": true
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "seed": 1161,
+   "sameJournal": true
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "seed": 1162,
+   "sameJournal": true
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "seed": 1164,
+   "sameJournal": true
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "seed": 1161,
+   "sameJournal": true
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "seed": 1162,
+   "sameJournal": true
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "seed": 1164,
+   "sameJournal": true
+  }
+ ],
+ "duplicates": {
+  "ch-e8-1": {
+   "r1:dup-same": {
+    "worlds": 3,
+    "duplicates": 27,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r1:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-delayed": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:restart": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:downstream": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   }
+  },
+  "ch-e8-2": {
+   "r1:dup-same": {
+    "worlds": 3,
+    "duplicates": 16,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 4
+   },
+   "r1:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-delayed": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:restart": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:downstream": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   }
+  },
+  "ch-e8-3": {
+   "r1:dup-same": {
+    "worlds": 3,
+    "duplicates": 6,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 4
+   },
+   "r1:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-delayed": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:restart": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:downstream": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   }
+  },
+  "cht-e8-1": {
+   "r1:dup-same": {
+    "worlds": 3,
+    "duplicates": 4,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 4
+   },
+   "r1:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-delayed": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:restart": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:downstream": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   }
+  },
+  "cht-e8-2": {
+   "r1:dup-same": {
+    "worlds": 3,
+    "duplicates": 4,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 4
+   },
+   "r1:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-delayed": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:restart": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:downstream": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   }
+  },
+  "cht-e8-3": {
+   "r1:dup-same": {
+    "worlds": 3,
+    "duplicates": 4,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 4
+   },
+   "r1:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-delayed": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:restart": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:downstream": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   }
+  },
+  "b1lh-e8-1": {
+   "r1:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r1:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-delayed": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:restart": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:downstream": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   }
+  },
+  "b1nh-e8-2": {
+   "r1:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r1:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-delayed": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:restart": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:downstream": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   }
+  },
+  "b1nh-e8-3": {
+   "r1:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r1:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-same": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:crash": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:dup-delayed": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:restart": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   },
+   "r2:downstream": {
+    "worlds": 3,
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "outsideD4": 0
+   }
+  }
+ },
+ "d4": {
+  "1161": {
+   "universal": [
+    "o0009",
+    "o0012",
+    "o0023",
+    "o0025",
+    "o0028",
+    "o0035",
+    "o0040",
+    "o0041"
+   ],
+   "monolithLosses": {
+    "b1lh-e8-1": [
+     "o0009",
+     "o0012",
+     "o0023",
+     "o0025",
+     "o0028",
+     "o0035",
+     "o0040",
+     "o0041"
+    ],
+    "b1nh-e8-2": [
+     "o0009",
+     "o0012",
+     "o0023",
+     "o0025",
+     "o0028",
+     "o0035",
+     "o0040",
+     "o0041"
+    ],
+    "b1nh-e8-3": [
+     "o0009",
+     "o0012",
+     "o0023",
+     "o0025",
+     "o0028",
+     "o0035",
+     "o0040",
+     "o0041"
+    ]
+   }
+  },
+  "1162": {
+   "universal": [
+    "o0030",
+    "o0034",
+    "o0041"
+   ],
+   "monolithLosses": {
+    "b1lh-e8-1": [
+     "o0030",
+     "o0034",
+     "o0041"
+    ],
+    "b1nh-e8-2": [
+     "o0030",
+     "o0034",
+     "o0041"
+    ],
+    "b1nh-e8-3": [
+     "o0030",
+     "o0034",
+     "o0041"
+    ]
+   }
+  },
+  "1164": {
+   "universal": [
+    "o0010",
+    "o0017",
+    "o0020",
+    "o0025",
+    "o0026",
+    "o0040",
+    "o0045",
+    "o0051",
+    "o0065",
+    "o0067"
+   ],
+   "monolithLosses": {
+    "b1lh-e8-1": [
+     "o0010",
+     "o0017",
+     "o0020",
+     "o0025",
+     "o0026",
+     "o0040",
+     "o0045",
+     "o0051",
+     "o0055",
+     "o0065",
+     "o0067"
+    ],
+    "b1nh-e8-2": [
+     "o0010",
+     "o0017",
+     "o0020",
+     "o0025",
+     "o0026",
+     "o0040",
+     "o0045",
+     "o0051",
+     "o0065",
+     "o0067"
+    ],
+    "b1nh-e8-3": [
+     "o0010",
+     "o0017",
+     "o0020",
+     "o0025",
+     "o0026",
+     "o0040",
+     "o0045",
+     "o0051",
+     "o0055",
+     "o0065",
+     "o0067"
+    ]
+   }
+  }
+ },
+ "crashCollapse": {
+  "ch-e8-1.r1": {
+   "loss": [
+    1,
+    0,
+    3
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ch-e8-1.r2": {
+   "loss": [
+    1,
+    0,
+    1
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ch-e8-2.r1": {
+   "loss": [
+    17,
+    15,
+    31
+   ],
+   "within3": false,
+   "critical": [
+    26,
+    33,
+    54
+   ]
+  },
+  "ch-e8-2.r2": {
+   "loss": [
+    1,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ch-e8-3.r1": {
+   "loss": [
+    0,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "ch-e8-3.r2": {
+   "loss": [
+    0,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "cht-e8-1.r1": {
+   "loss": [
+    1,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "cht-e8-1.r2": {
+   "loss": [
+    1,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "cht-e8-2.r1": {
+   "loss": [
+    1,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "cht-e8-2.r2": {
+   "loss": [
+    0,
+    0,
+    1
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "cht-e8-3.r1": {
+   "loss": [
+    0,
+    0,
+    0
+   ],
+   "within3": true,
+   "critical": [
+    12,
+    8,
+    6
+   ]
+  },
+  "cht-e8-3.r2": {
+   "loss": [
+    0,
+    0,
+    0
+   ],
+   "within3": true,
+   "critical": [
+    12,
+    8,
+    6
+   ]
+  },
+  "b1lh-e8-1.r1": {
+   "loss": [
+    0,
+    0,
+    1
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "b1lh-e8-1.r2": {
+   "loss": [
+    1,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "b1nh-e8-2.r1": {
+   "loss": [
+    0,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "b1nh-e8-2.r2": {
+   "loss": [
+    1,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "b1nh-e8-3.r1": {
+   "loss": [
+    0,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  },
+  "b1nh-e8-3.r2": {
+   "loss": [
+    0,
+    0,
+    2
+   ],
+   "within3": true,
+   "critical": [
+    0,
+    0,
+    0
+   ]
+  }
+ },
+ "band": {
+  "crash:1161": {
+   "monolith": [
+    0,
+    1
+   ],
+   "composed": {
+    "ch-e8-1.r1": 1,
+    "ch-e8-1.r2": 1,
+    "ch-e8-2.r1": 17,
+    "ch-e8-2.r2": 1,
+    "ch-e8-3.r1": 0,
+    "ch-e8-3.r2": 0,
+    "cht-e8-1.r1": 1,
+    "cht-e8-1.r2": 1,
+    "cht-e8-2.r1": 1,
+    "cht-e8-2.r2": 0,
+    "cht-e8-3.r1": 0,
+    "cht-e8-3.r2": 0
+   },
+   "r2Inside": 6,
+   "r1Inside": 5,
+   "n": 6
+  },
+  "crash:1162": {
+   "monolith": [
+    0,
+    0
+   ],
+   "composed": {
+    "ch-e8-1.r1": 0,
+    "ch-e8-1.r2": 0,
+    "ch-e8-2.r1": 15,
+    "ch-e8-2.r2": 0,
+    "ch-e8-3.r1": 0,
+    "ch-e8-3.r2": 0,
+    "cht-e8-1.r1": 0,
+    "cht-e8-1.r2": 0,
+    "cht-e8-2.r1": 0,
+    "cht-e8-2.r2": 0,
+    "cht-e8-3.r1": 0,
+    "cht-e8-3.r2": 0
+   },
+   "r2Inside": 6,
+   "r1Inside": 5,
+   "n": 6
+  },
+  "crash:1164": {
+   "monolith": [
+    1,
+    2
+   ],
+   "composed": {
+    "ch-e8-1.r1": 3,
+    "ch-e8-1.r2": 1,
+    "ch-e8-2.r1": 31,
+    "ch-e8-2.r2": 2,
+    "ch-e8-3.r1": 2,
+    "ch-e8-3.r2": 2,
+    "cht-e8-1.r1": 2,
+    "cht-e8-1.r2": 2,
+    "cht-e8-2.r1": 2,
+    "cht-e8-2.r2": 1,
+    "cht-e8-3.r1": 0,
+    "cht-e8-3.r2": 0
+   },
+   "r2Inside": 6,
+   "r1Inside": 4,
+   "n": 6
+  },
+  "dup-same:1161": {
+   "monolith": [
+    8,
+    8
+   ],
+   "composed": {
+    "ch-e8-1.r1": 8,
+    "ch-e8-1.r2": 8,
+    "ch-e8-2.r1": 8,
+    "ch-e8-2.r2": 8,
+    "ch-e8-3.r1": 8,
+    "ch-e8-3.r2": 8,
+    "cht-e8-1.r1": 8,
+    "cht-e8-1.r2": 8,
+    "cht-e8-2.r1": 8,
+    "cht-e8-2.r2": 8,
+    "cht-e8-3.r1": 8,
+    "cht-e8-3.r2": 8
+   },
+   "r2Inside": 6,
+   "r1Inside": 6,
+   "n": 6
+  },
+  "dup-same:1162": {
+   "monolith": [
+    3,
+    3
+   ],
+   "composed": {
+    "ch-e8-1.r1": 3,
+    "ch-e8-1.r2": 3,
+    "ch-e8-2.r1": 4,
+    "ch-e8-2.r2": 3,
+    "ch-e8-3.r1": 4,
+    "ch-e8-3.r2": 3,
+    "cht-e8-1.r1": 4,
+    "cht-e8-1.r2": 3,
+    "cht-e8-2.r1": 4,
+    "cht-e8-2.r2": 3,
+    "cht-e8-3.r1": 3,
+    "cht-e8-3.r2": 2
+   },
+   "r2Inside": 6,
+   "r1Inside": 2,
+   "n": 6
+  },
+  "dup-same:1164": {
+   "monolith": [
+    10,
+    11
+   ],
+   "composed": {
+    "ch-e8-1.r1": 11,
+    "ch-e8-1.r2": 11,
+    "ch-e8-2.r1": 14,
+    "ch-e8-2.r2": 11,
+    "ch-e8-3.r1": 13,
+    "ch-e8-3.r2": 10,
+    "cht-e8-1.r1": 14,
+    "cht-e8-1.r2": 11,
+    "cht-e8-2.r1": 14,
+    "cht-e8-2.r2": 11,
+    "cht-e8-3.r1": 14,
+    "cht-e8-3.r2": 11
+   },
+   "r2Inside": 6,
+   "r1Inside": 1,
+   "n": 6
+  }
+ },
+ "gate": {
+  "ch-e8-1": {
+   "flagged": true,
+   "pairs": 4,
+   "examples": [
+    "parent & window: orders.setStatus:order / orders.setStatus:order",
+    "parent & window: orders.setStatus:fulfilment / orders.setStatus:fulfilment",
+    "parent & saga: orders.setStatus:fulfilment / orders.setStatus:fulfilment",
+    "window & saga: orders.setStatus:fulfilment / orders.setStatus:fulfilment"
+   ]
+  },
+  "ch-e8-2": {
+   "flagged": true,
+   "pairs": 9,
+   "examples": [
+    "parent & wait: orders.setStatus / orders.setStatus",
+    "parent & fulfil: orders.setStatus / orders.setStatus",
+    "parent & close: orders.setStatus / orders.setStatus",
+    "wait & fulfil: orders.setStatus / orders.setStatus"
+   ]
+  },
+  "ch-e8-3": {
+   "flagged": true,
+   "pairs": 2,
+   "examples": [
+    "fulfilment & orderflow: orders.setStatus:fulfilment / orders.setStatus:fulfilment",
+    "fulfilment & orderflow: notify.send:fulfilment-failed / notify.send"
+   ]
+  },
+  "cht-e8-1": {
+   "flagged": false,
+   "pairs": 0,
+   "examples": []
+  },
+  "cht-e8-2": {
+   "flagged": false,
+   "pairs": 0,
+   "examples": []
+  },
+  "cht-e8-3": {
+   "flagged": false,
+   "pairs": 0,
+   "examples": []
+  }
+ },
+ "fixes": [
+  {
+   "label": "ch-e8-2+fix-d3",
+   "seed": 1161,
+   "fault": "none",
+   "r1": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "ch-e8-2+fix-d3",
+   "seed": 1161,
+   "fault": "crash",
+   "r1": {
+    "passed": 23,
+    "completed": 43,
+    "dup": 0,
+    "crit": 26
+   },
+   "r1+fix": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 39,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 39,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "ch-e8-2+fix-d3",
+   "seed": 1161,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 32,
+    "completed": 43,
+    "dup": 4,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 32,
+    "completed": 43,
+    "dup": 4,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 32,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 32,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "ch-e8-2+fix-d3",
+   "seed": 1162,
+   "fault": "none",
+   "r1": {
+    "passed": 38,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 38,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 38,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 38,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "ch-e8-2+fix-d3",
+   "seed": 1162,
+   "fault": "crash",
+   "r1": {
+    "passed": 23,
+    "completed": 44,
+    "dup": 0,
+    "crit": 33
+   },
+   "r1+fix": {
+    "passed": 38,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 38,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 38,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "ch-e8-2+fix-d3",
+   "seed": 1162,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 34,
+    "completed": 44,
+    "dup": 3,
+    "crit": 2
+   },
+   "r1+fix": {
+    "passed": 34,
+    "completed": 44,
+    "dup": 3,
+    "crit": 2
+   },
+   "r2": {
+    "passed": 35,
+    "completed": 44,
+    "dup": 0,
+    "crit": 2
+   },
+   "r2+fix": {
+    "passed": 35,
+    "completed": 44,
+    "dup": 0,
+    "crit": 2
+   }
+  },
+  {
+   "label": "ch-e8-2+fix-d3",
+   "seed": 1164,
+   "fault": "none",
+   "r1": {
+    "passed": 60,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 60,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 60,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 60,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "ch-e8-2+fix-d3",
+   "seed": 1164,
+   "fault": "crash",
+   "r1": {
+    "passed": 29,
+    "completed": 69,
+    "dup": 0,
+    "crit": 54
+   },
+   "r1+fix": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 58,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 58,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "ch-e8-2+fix-d3",
+   "seed": 1164,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 46,
+    "completed": 69,
+    "dup": 9,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 46,
+    "completed": 69,
+    "dup": 9,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 49,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 49,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-1+fix-d2",
+   "seed": 1161,
+   "fault": "none",
+   "r1": {
+    "passed": 42,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 42,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 42,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 42,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-1+fix-d2",
+   "seed": 1161,
+   "fault": "crash",
+   "r1": {
+    "passed": 41,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 41,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 41,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 41,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-1+fix-d2",
+   "seed": 1161,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 34,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 34,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 34,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 34,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-1+fix-d2",
+   "seed": 1162,
+   "fault": "none",
+   "r1": {
+    "passed": 42,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 42,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 42,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 42,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-1+fix-d2",
+   "seed": 1162,
+   "fault": "crash",
+   "r1": {
+    "passed": 42,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 42,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 42,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 42,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-1+fix-d2",
+   "seed": 1162,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 38,
+    "completed": 44,
+    "dup": 1,
+    "crit": 2
+   },
+   "r1+fix": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 2
+   },
+   "r2": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 2
+   },
+   "r2+fix": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 2
+   }
+  },
+  {
+   "label": "cht-e8-1+fix-d2",
+   "seed": 1164,
+   "fault": "none",
+   "r1": {
+    "passed": 65,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 65,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 65,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 65,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-1+fix-d2",
+   "seed": 1164,
+   "fault": "crash",
+   "r1": {
+    "passed": 63,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 63,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 63,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 63,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-1+fix-d2",
+   "seed": 1164,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 51,
+    "completed": 69,
+    "dup": 3,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 54,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 54,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 54,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-2+fix-d2",
+   "seed": 1161,
+   "fault": "none",
+   "r1": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-2+fix-d2",
+   "seed": 1161,
+   "fault": "crash",
+   "r1": {
+    "passed": 39,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 39,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 40,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-2+fix-d2",
+   "seed": 1161,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 32,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 32,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 32,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 32,
+    "completed": 43,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-2+fix-d2",
+   "seed": 1162,
+   "fault": "none",
+   "r1": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-2+fix-d2",
+   "seed": 1162,
+   "fault": "crash",
+   "r1": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 39,
+    "completed": 44,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-2+fix-d2",
+   "seed": 1162,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 35,
+    "completed": 44,
+    "dup": 1,
+    "crit": 2
+   },
+   "r1+fix": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 2
+   },
+   "r2": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 2
+   },
+   "r2+fix": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 2
+   }
+  },
+  {
+   "label": "cht-e8-2+fix-d2",
+   "seed": 1164,
+   "fault": "none",
+   "r1": {
+    "passed": 60,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 60,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 60,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 60,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-2+fix-d2",
+   "seed": 1164,
+   "fault": "crash",
+   "r1": {
+    "passed": 58,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 58,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-2+fix-d2",
+   "seed": 1164,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 46,
+    "completed": 69,
+    "dup": 3,
+    "crit": 0
+   },
+   "r1+fix": {
+    "passed": 49,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2": {
+    "passed": 49,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   },
+   "r2+fix": {
+    "passed": 49,
+    "completed": 69,
+    "dup": 0,
+    "crit": 0
+   }
+  },
+  {
+   "label": "cht-e8-3+fix-d2",
+   "seed": 1161,
+   "fault": "none",
+   "r1": {
+    "passed": 37,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   },
+   "r1+fix": {
+    "passed": 37,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   },
+   "r2": {
+    "passed": 37,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   },
+   "r2+fix": {
+    "passed": 37,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   }
+  },
+  {
+   "label": "cht-e8-3+fix-d2",
+   "seed": 1161,
+   "fault": "crash",
+   "r1": {
+    "passed": 37,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   },
+   "r1+fix": {
+    "passed": 37,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   },
+   "r2": {
+    "passed": 37,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   },
+   "r2+fix": {
+    "passed": 37,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   }
+  },
+  {
+   "label": "cht-e8-3+fix-d2",
+   "seed": 1161,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 29,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   },
+   "r1+fix": {
+    "passed": 29,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   },
+   "r2": {
+    "passed": 29,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   },
+   "r2+fix": {
+    "passed": 29,
+    "completed": 43,
+    "dup": 0,
+    "crit": 12
+   }
+  },
+  {
+   "label": "cht-e8-3+fix-d2",
+   "seed": 1162,
+   "fault": "none",
+   "r1": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   },
+   "r1+fix": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   },
+   "r2": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   },
+   "r2+fix": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   }
+  },
+  {
+   "label": "cht-e8-3+fix-d2",
+   "seed": 1162,
+   "fault": "crash",
+   "r1": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   },
+   "r1+fix": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   },
+   "r2": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   },
+   "r2+fix": {
+    "passed": 36,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   }
+  },
+  {
+   "label": "cht-e8-3+fix-d2",
+   "seed": 1162,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 33,
+    "completed": 44,
+    "dup": 1,
+    "crit": 8
+   },
+   "r1+fix": {
+    "passed": 34,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   },
+   "r2": {
+    "passed": 34,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   },
+   "r2+fix": {
+    "passed": 34,
+    "completed": 44,
+    "dup": 0,
+    "crit": 8
+   }
+  },
+  {
+   "label": "cht-e8-3+fix-d2",
+   "seed": 1164,
+   "fault": "none",
+   "r1": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   },
+   "r1+fix": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   },
+   "r2": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   },
+   "r2+fix": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   }
+  },
+  {
+   "label": "cht-e8-3+fix-d2",
+   "seed": 1164,
+   "fault": "crash",
+   "r1": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   },
+   "r1+fix": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   },
+   "r2": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   },
+   "r2+fix": {
+    "passed": 59,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   }
+  },
+  {
+   "label": "cht-e8-3+fix-d2",
+   "seed": 1164,
+   "fault": "dup-same",
+   "r1": {
+    "passed": 45,
+    "completed": 69,
+    "dup": 3,
+    "crit": 6
+   },
+   "r1+fix": {
+    "passed": 48,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   },
+   "r2": {
+    "passed": 48,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   },
+   "r2+fix": {
+    "passed": 48,
+    "completed": 69,
+    "dup": 0,
+    "crit": 6
+   }
+  }
+ ],
+ "mutants": [
+  {
+   "label": "cht-e8-1+mut-splitrefund",
+   "seed": 1161,
+   "fault": "none",
+   "acts": [
+    8,
+    8
+   ],
+   "r1": {
+    "dup": 8,
+    "money": 8,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 8,
+    "identityConflict": 8,
+    "hostKeyConflict": 0
+   },
+   "flagged": true
+  },
+  {
+   "label": "cht-e8-1+mut-splitrefund",
+   "seed": 1161,
+   "fault": "downstream",
+   "acts": [
+    15,
+    15
+   ],
+   "r1": {
+    "dup": 15,
+    "money": 15,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 15,
+    "identityConflict": 15,
+    "hostKeyConflict": 0
+   },
+   "flagged": true
+  },
+  {
+   "label": "cht-e8-1+mut-splitrefund",
+   "seed": 1162,
+   "fault": "none",
+   "acts": [
+    9,
+    9
+   ],
+   "r1": {
+    "dup": 9,
+    "money": 9,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 9,
+    "identityConflict": 9,
+    "hostKeyConflict": 0
+   },
+   "flagged": true
+  },
+  {
+   "label": "cht-e8-1+mut-splitrefund",
+   "seed": 1162,
+   "fault": "downstream",
+   "acts": [
+    20,
+    20
+   ],
+   "r1": {
+    "dup": 20,
+    "money": 20,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 20,
+    "identityConflict": 20,
+    "hostKeyConflict": 0
+   },
+   "flagged": true
+  },
+  {
+   "label": "cht-e8-1+mut-splitrefund",
+   "seed": 1164,
+   "fault": "none",
+   "acts": [
+    9,
+    9
+   ],
+   "r1": {
+    "dup": 9,
+    "money": 9,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 9,
+    "identityConflict": 9,
+    "hostKeyConflict": 2
+   },
+   "flagged": true
+  },
+  {
+   "label": "cht-e8-1+mut-splitrefund",
+   "seed": 1164,
+   "fault": "downstream",
+   "acts": [
+    20,
+    20
+   ],
+   "r1": {
+    "dup": 20,
+    "money": 20,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 20,
+    "identityConflict": 20,
+    "hostKeyConflict": 2
+   },
+   "flagged": true
+  },
+  {
+   "label": "b1lh-e8-1+mut-splitrefund",
+   "seed": 1161,
+   "fault": "none",
+   "acts": [
+    8,
+    8
+   ],
+   "r1": {
+    "dup": 8,
+    "money": 8,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 8,
+    "identityConflict": 8,
+    "hostKeyConflict": 8
+   },
+   "flagged": true
+  },
+  {
+   "label": "b1lh-e8-1+mut-splitrefund",
+   "seed": 1161,
+   "fault": "downstream",
+   "acts": [
+    18,
+    18
+   ],
+   "r1": {
+    "dup": 18,
+    "money": 18,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 18,
+    "identityConflict": 18,
+    "hostKeyConflict": 18
+   },
+   "flagged": true
+  },
+  {
+   "label": "b1lh-e8-1+mut-splitrefund",
+   "seed": 1162,
+   "fault": "none",
+   "acts": [
+    9,
+    9
+   ],
+   "r1": {
+    "dup": 9,
+    "money": 9,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 9,
+    "identityConflict": 9,
+    "hostKeyConflict": 9
+   },
+   "flagged": true
+  },
+  {
+   "label": "b1lh-e8-1+mut-splitrefund",
+   "seed": 1162,
+   "fault": "downstream",
+   "acts": [
+    22,
+    22
+   ],
+   "r1": {
+    "dup": 22,
+    "money": 22,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 22,
+    "identityConflict": 22,
+    "hostKeyConflict": 22
+   },
+   "flagged": true
+  },
+  {
+   "label": "b1lh-e8-1+mut-splitrefund",
+   "seed": 1164,
+   "fault": "none",
+   "acts": [
+    9,
+    9
+   ],
+   "r1": {
+    "dup": 9,
+    "money": 9,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 9,
+    "identityConflict": 9,
+    "hostKeyConflict": 9
+   },
+   "flagged": true
+  },
+  {
+   "label": "b1lh-e8-1+mut-splitrefund",
+   "seed": 1164,
+   "fault": "downstream",
+   "acts": [
+    23,
+    23
+   ],
+   "r1": {
+    "dup": 23,
+    "money": 23,
+    "keyConflicts": 0
+   },
+   "r2": {
+    "dup": 0,
+    "money": 0,
+    "keyConflicts": 23,
+    "identityConflict": 23,
+    "hostKeyConflict": 23
+   },
+   "flagged": true
+  }
+ ],
+ "findings": {
+  "none": {},
+  "restart": {},
+  "crash": {
+   "orphan": 4349,
+   "surplus": 69
+  },
+  "dup-delayed": {},
+  "dup-same": {
+   "shared-identity": 20
+  },
+  "downstream": {}
+ },
+ "carry": {
+  "ch-e8-1": {
+   "total": 7736,
+   "envelope": 5095,
+   "r1Total": 2751
+  },
+  "ch-e8-2": {
+   "total": 8687,
+   "envelope": 5148,
+   "r1Total": 3588
+  },
+  "ch-e8-3": {
+   "total": 7370,
+   "envelope": 4695,
+   "r1Total": 2730
+  },
+  "cht-e8-1": {
+   "total": 10520,
+   "envelope": 5068,
+   "r1Total": 5526
+  },
+  "cht-e8-2": {
+   "total": 11178,
+   "envelope": 5068,
+   "r1Total": 6184
+  },
+  "cht-e8-3": {
+   "total": 11293,
+   "envelope": 5068,
+   "r1Total": 6299
+  },
+  "b1lh-e8-1": {
+   "total": 11824,
+   "envelope": 4962,
+   "r1Total": 6528
+  },
+  "b1nh-e8-2": {
+   "total": 9088,
+   "envelope": 4895,
+   "r1Total": 3901
+  },
+  "b1nh-e8-3": {
+   "total": 8631,
+   "envelope": 4753,
+   "r1Total": 3978
+  }
+ },
+ "armErrors": [
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "armErrors": 1
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "armErrors": 1
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "armErrors": 1
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "armErrors": 4
+  }
+ ],
+ "identityConflictsFaultFree": 0,
+ "readback": {
+  "ch-e8-1": {
+   "noneEqual": [
+    true,
+    true,
+    true
+   ],
+   "crash": [
+    {
+     "seed": 1161,
+     "r1": 1,
+     "r2": 1,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      1,
+      1,
+      0
+     ],
+     "env": {
+      "orphan-parked": 91,
+      "readback": 91,
+      "reconciled": 92,
+      "orphan": 10
+     }
+    },
+    {
+     "seed": 1162,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 110,
+      "readback": 110,
+      "reconciled": 110,
+      "orphan": 14
+     }
+    },
+    {
+     "seed": 1164,
+     "r1": 3,
+     "r2": 1,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      3,
+      1,
+      0
+     ],
+     "env": {
+      "orphan-parked": 170,
+      "readback": 170,
+      "reconciled": 173,
+      "surplus": 4,
+      "orphan": 35
+     }
+    }
+   ]
+  },
+  "ch-e8-2": {
+   "noneEqual": [
+    true,
+    true,
+    true
+   ],
+   "crash": [
+    {
+     "seed": 1161,
+     "r1": 17,
+     "r2": 1,
+     "r2rb": 0,
+     "critical": [
+      26,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      17,
+      1,
+      0
+     ],
+     "env": {
+      "orphan-parked": 93,
+      "readback": 93,
+      "reconciled": 93,
+      "orphan": 7
+     }
+    },
+    {
+     "seed": 1162,
+     "r1": 15,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      33,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      15,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 115,
+      "readback": 115,
+      "reconciled": 115,
+      "orphan": 19
+     }
+    },
+    {
+     "seed": 1164,
+     "r1": 31,
+     "r2": 2,
+     "r2rb": 0,
+     "critical": [
+      54,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      32,
+      2,
+      0
+     ],
+     "env": {
+      "orphan-parked": 175,
+      "readback": 175,
+      "reconciled": 177,
+      "orphan": 27,
+      "surplus": 2
+     }
+    }
+   ]
+  },
+  "ch-e8-3": {
+   "noneEqual": [
+    true,
+    true,
+    true
+   ],
+   "crash": [
+    {
+     "seed": 1161,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 83,
+      "readback": 83,
+      "reconciled": 83,
+      "orphan": 19
+     }
+    },
+    {
+     "seed": 1162,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 111,
+      "readback": 111,
+      "reconciled": 111,
+      "orphan": 27
+     }
+    },
+    {
+     "seed": 1164,
+     "r1": 2,
+     "r2": 2,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      12,
+      12,
+      10
+     ],
+     "env": {
+      "orphan-parked": 133,
+      "readback": 133,
+      "reconciled": 133,
+      "orphan": 34,
+      "surplus": 27
+     }
+    }
+   ]
+  },
+  "cht-e8-1": {
+   "noneEqual": [
+    true,
+    true,
+    true
+   ],
+   "crash": [
+    {
+     "seed": 1161,
+     "r1": 1,
+     "r2": 1,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      1,
+      1,
+      0
+     ],
+     "env": {
+      "orphan-parked": 86,
+      "readback": 86,
+      "reconciled": 86,
+      "orphan": 9
+     }
+    },
+    {
+     "seed": 1162,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 123,
+      "readback": 123,
+      "reconciled": 123,
+      "orphan": 19,
+      "surplus": 8
+     }
+    },
+    {
+     "seed": 1164,
+     "r1": 2,
+     "r2": 2,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      2,
+      2,
+      0
+     ],
+     "env": {
+      "orphan-parked": 173,
+      "readback": 172,
+      "reconciled": 175,
+      "surplus": 3,
+      "orphan": 35,
+      "park-expired": 1
+     }
+    }
+   ]
+  },
+  "cht-e8-2": {
+   "noneEqual": [
+    true,
+    true,
+    true
+   ],
+   "crash": [
+    {
+     "seed": 1161,
+     "r1": 1,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      1,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 125,
+      "readback": 125,
+      "reconciled": 125,
+      "orphan": 19
+     }
+    },
+    {
+     "seed": 1162,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 155,
+      "readback": 154,
+      "reconciled": 154,
+      "orphan": 22,
+      "park-expired": 1
+     }
+    },
+    {
+     "seed": 1164,
+     "r1": 2,
+     "r2": 1,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      2,
+      1,
+      0
+     ],
+     "env": {
+      "orphan-parked": 207,
+      "readback": 207,
+      "reconciled": 211,
+      "surplus": 4,
+      "orphan": 20
+     }
+    }
+   ]
+  },
+  "cht-e8-3": {
+   "noneEqual": [
+    true,
+    true,
+    true
+   ],
+   "crash": [
+    {
+     "seed": 1161,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      12,
+      12,
+      12
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 87,
+      "readback": 87,
+      "reconciled": 87,
+      "orphan": 16
+     }
+    },
+    {
+     "seed": 1162,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      8,
+      8,
+      8
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 105,
+      "readback": 105,
+      "reconciled": 105,
+      "orphan": 20,
+      "surplus": 8
+     }
+    },
+    {
+     "seed": 1164,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      6,
+      6,
+      6
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 170,
+      "readback": 170,
+      "reconciled": 173,
+      "orphan": 46,
+      "surplus": 3
+     }
+    }
+   ]
+  },
+  "b1lh-e8-1": {
+   "noneEqual": [
+    true,
+    true,
+    true
+   ],
+   "crash": [
+    {
+     "seed": 1161,
+     "r1": 0,
+     "r2": 1,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      1,
+      0
+     ],
+     "env": {
+      "orphan-parked": 101,
+      "readback": 101,
+      "reconciled": 101,
+      "orphan": 13
+     }
+    },
+    {
+     "seed": 1162,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan": 27,
+      "orphan-parked": 133,
+      "readback": 133,
+      "reconciled": 133
+     }
+    },
+    {
+     "seed": 1164,
+     "r1": 1,
+     "r2": 2,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      1,
+      2,
+      0
+     ],
+     "env": {
+      "orphan-parked": 197,
+      "readback": 197,
+      "reconciled": 200,
+      "orphan": 17,
+      "surplus": 2
+     }
+    }
+   ]
+  },
+  "b1nh-e8-2": {
+   "noneEqual": [
+    true,
+    true,
+    true
+   ],
+   "crash": [
+    {
+     "seed": 1161,
+     "r1": 0,
+     "r2": 1,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      1,
+      0
+     ],
+     "env": {
+      "orphan-parked": 144,
+      "readback": 144,
+      "reconciled": 144,
+      "orphan": 17
+     }
+    },
+    {
+     "seed": 1162,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan": 26,
+      "orphan-parked": 166,
+      "readback": 166,
+      "reconciled": 166
+     }
+    },
+    {
+     "seed": 1164,
+     "r1": 2,
+     "r2": 2,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      2,
+      2,
+      0
+     ],
+     "env": {
+      "orphan-parked": 211,
+      "readback": 211,
+      "reconciled": 211,
+      "orphan": 30,
+      "surplus": 6
+     }
+    }
+   ]
+  },
+  "b1nh-e8-3": {
+   "noneEqual": [
+    true,
+    true,
+    true
+   ],
+   "crash": [
+    {
+     "seed": 1161,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan-parked": 127,
+      "readback": 127,
+      "reconciled": 127,
+      "orphan": 17
+     }
+    },
+    {
+     "seed": 1162,
+     "r1": 0,
+     "r2": 0,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      0,
+      0,
+      0
+     ],
+     "env": {
+      "orphan": 24,
+      "orphan-parked": 148,
+      "readback": 148,
+      "reconciled": 148
+     }
+    },
+    {
+     "seed": 1164,
+     "r1": 2,
+     "r2": 2,
+     "r2rb": 0,
+     "critical": [
+      0,
+      0,
+      0
+     ],
+     "outsideAllowed": [
+      2,
+      2,
+      0
+     ],
+     "env": {
+      "orphan-parked": 213,
+      "readback": 213,
+      "reconciled": 213,
+      "orphan": 28,
+      "surplus": 2
+     }
+    }
+   ]
+  }
+ }
+}
