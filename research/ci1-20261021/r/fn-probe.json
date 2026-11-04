@@ -1,6 +1,6 @@
 {
  "probe": "ci1-r oracle false-negative probe ($0; reference effects rewritten, judged against the unmodified reference)",
- "at": "2026-11-04T19:24:45.182Z",
+ "at": "2026-11-04T19:37:33.669Z",
  "rewrites": [
   "identity",
   "greet-by-name",
@@ -2427,8 +2427,8 @@
    "oracle": "v1",
    "pass": false,
    "reasons": [
-    "response 1: body.email is \"JASPER.CASTELLAN@OUTLOOK.COM\", expected \"jasper.castellan@outlook.com\"",
-    "sheet leads: no row matches reference row {\"email\":\"calla.pemberton@yahoo.com\",\"name\":\"Calla Pemberton\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: e"
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Calla Pemberton\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: e"
    ]
   },
   {
@@ -2439,8 +2439,8 @@
    "oracle": "v2",
    "pass": false,
    "reasons": [
-    "response 1: body.email is \"JASPER.CASTELLAN@OUTLOOK.COM\", expected \"jasper.castellan@outlook.com\"",
-    "sheet leads: no row matches reference row {\"email\":\"calla.pemberton@yahoo.com\",\"name\":\"Calla Pemberton\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: e"
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Calla Pemberton\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: e"
    ]
   },
   {
@@ -2451,8 +2451,8 @@
    "oracle": "v1",
    "pass": false,
    "reasons": [
-    "response 1: body.email is \"GALINA.BRENNAGH@ICLOUD.COM\", expected \"galina.brennagh@icloud.com\"",
-    "sheet leads: no row matches reference row {\"email\":\"galina.brennagh@icloud.com\",\"name\":\"Galina Brennagh\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: "
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Galina Brennagh\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: "
    ]
   },
   {
@@ -2463,8 +2463,8 @@
    "oracle": "v2",
    "pass": false,
    "reasons": [
-    "response 1: body.email is \"GALINA.BRENNAGH@ICLOUD.COM\", expected \"galina.brennagh@icloud.com\"",
-    "sheet leads: no row matches reference row {\"email\":\"galina.brennagh@icloud.com\",\"name\":\"Galina Brennagh\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: "
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Galina Brennagh\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: "
    ]
   },
   {
@@ -2475,7 +2475,7 @@
    "oracle": "v1",
    "pass": false,
    "reasons": [
-    "sheet leads: no row matches reference row {\"email\":\"elif.lorrimer@gmail.com\",\"name\":\"Elif Lorrimer\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: email"
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Elif Lorrimer\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: email"
    ]
   },
   {
@@ -2486,7 +2486,7 @@
    "oracle": "v2",
    "pass": false,
    "reasons": [
-    "sheet leads: no row matches reference row {\"email\":\"elif.lorrimer@gmail.com\",\"name\":\"Elif Lorrimer\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: email"
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Elif Lorrimer\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: email"
    ]
   },
   {
@@ -2532,8 +2532,8 @@
    "oracle": "v1",
    "pass": false,
    "reasons": [
-    "response 1: body.email is \"TALIA.WHITLOCK@YAHOO.COM\", expected \"talia.whitlock@yahoo.com\"",
-    "sheet leads: no row matches reference row {\"email\":\"talia.whitlock@yahoo.com\",\"name\":\"Talia Whitlock\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: ema"
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Talia Whitlock\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: ema"
    ]
   },
   {
@@ -2544,8 +2544,8 @@
    "oracle": "v2",
    "pass": false,
    "reasons": [
-    "response 1: body.email is \"TALIA.WHITLOCK@YAHOO.COM\", expected \"talia.whitlock@yahoo.com\"",
-    "sheet leads: no row matches reference row {\"email\":\"talia.whitlock@yahoo.com\",\"name\":\"Talia Whitlock\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: ema"
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Talia Whitlock\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: ema"
    ]
   },
   {
@@ -5089,7 +5089,7 @@
    "oracle": "v1",
    "pass": false,
    "reasons": [
-    "response 1: body.email is \"JASPER.VANTONGEREN@GMAIL.COM\", expected \"jasper.vantongeren@gmail.com\"",
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
     "sheet leads: no row matches reference row {\"first_name\":\"Wendell\",\"last_name\":\"Underhill\",\"email\":\"wendell.underhill@post.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differi"
    ]
   },
@@ -5101,7 +5101,7 @@
    "oracle": "v2",
    "pass": false,
    "reasons": [
-    "response 1: body.email is \"JASPER.VANTONGEREN@GMAIL.COM\", expected \"jasper.vantongeren@gmail.com\"",
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
     "sheet leads: no row matches reference row {\"first_name\":\"Wendell\",\"last_name\":\"Underhill\",\"email\":\"wendell.underhill@post.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differi"
    ]
   },

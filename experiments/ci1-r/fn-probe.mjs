@@ -19,6 +19,7 @@ import { parseArgs } from 'node:util';
 import { equivalent, rowIdentities, normNumber } from '../ci1/canon.mjs';
 import { equivalentV2, rowIdentitiesWithAddresses, categoricalColumns, POSTHOC_DECL, factsV2 } from '../ci1-posthoc/oracle-v2.mjs';
 import { equivalentV3, rowsV3 } from './oracle-v3.mjs';
+import { scrubAddresses } from '../ci1/run-arm.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..', '..');
@@ -158,7 +159,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const out = { probe: 'ci1-r oracle false-negative probe ($0; reference effects rewritten, judged against the unmodified reference)', at: new Date().toISOString(),
     rewrites: names, strictMaybe: Object.keys(STRICT_MAYBE), mustFail: Object.keys(MUST_FAIL), table, teeth, failures: rows.filter(r => r.rewrite && !r.pass),
     missedMutations: rows.filter(r => r.mutation && !r.caught) };
-  if (a.out) writeFileSync(a.out, `${JSON.stringify(out, null, 1)}\n`);
+  // committed output: world addresses at non-fixture domains (some generators use real mail providers) are redacted, as in every summary
+  if (a.out) writeFileSync(a.out, `${scrubAddresses(JSON.stringify(out, null, 1))}\n`);
   for (const [k, v] of Object.entries(table)) if (v.failingWorlds || k.endsWith('identity')) console.log(`${k.padEnd(34)} applies ${String(v.appliesTo).padStart(2)} items / ${String(v.worlds).padStart(3)} worlds; fails ${v.failingWorlds} worlds on [${v.failingItems.join(', ')}]`);
   console.log('must fail (caught / worlds):');
   for (const [k, v] of Object.entries(teeth)) console.log(`${k.padEnd(34)} applies ${String(v.appliesTo).padStart(2)} items; caught ${v.caught}/${v.worlds}${v.missedItems.length ? `; missed on [${v.missedItems.join(', ')}]` : ''}`);
