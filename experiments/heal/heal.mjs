@@ -54,7 +54,10 @@ export async function buildIncident({ kit, trial, workflow, pool, localisation, 
     try {
       const task = t.key === trial.key ? bed.task : await taskOf(t);
       const r = t.key === trial.key ? base : await replayRun(c, workflow, t, { task });
-      if (!fidelity(t, r).identical) { excluded.push({ trial: t.key, why: 'REPLAY_INFIDELITY' }); return; }
+      // 2026-11-04 (FH-1 review m8): keep what diverged and how the replay ended, so a recurrence of the 10-21 P1 exclusion names
+      // its cause (a wall-clock DEADLINE or TOOL_TIMEOUT under CPU starvation, or a real divergence) instead of only the label.
+      const f = fidelity(t, r);
+      if (!f.identical) { excluded.push({ trial: t.key, why: 'REPLAY_INFIDELITY', diverged: Object.keys(f.checks).filter(k => !f.checks[k]), status: r.status ?? null, error: r.error?.code ?? null }); return; }
       tasks[t.key] = task; baseRuns[t.key] = { outputs: r.outputs, answer: r.answer, taskHash: r.taskHash };
       (t.pass ? passing : failing).push(t);
     } finally { c.close(); }

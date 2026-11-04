@@ -1,0 +1,9 @@
+{
+ "schema": "fh1-patch/1",
+ "label": "cht-e8-1.H-N.k1",
+ "base": "program:research/composition-20261021/runs/cht-e8-1/program",
+ "kind": "composed",
+ "baseDigest": "1058fadd154356d3",
+ "patchedDigest": "1058fadd154356d3",
+ "files": {}
+}

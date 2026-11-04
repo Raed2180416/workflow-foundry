@@ -1,0 +1,228 @@
+diff -ruN a/modules/customer-action.mjs b/modules/customer-action.mjs
+--- a/modules/customer-action.mjs	2026-11-04 14:33:20.483698705 +0000
++++ b/modules/customer-action.mjs	2026-11-04 14:33:20.483698705 +0000
+@@ -111,10 +111,12 @@
+ }
+ 
+ function resume(input, ctx) {
+-  // §3.5: a migrated order that is still waiting for its customer keeps its deadline (the wake-up is re-set).
++  // §3.5: a migrated order that is still waiting for its customer keeps its deadline (the wake-up is re-set). D is
++  // p + customerActionHours at the edition in force at p (R3.2, S1), as start computes it.
+   const r = input.records?.customerAction;
+   if (!r) return outOf(null);
+-  const st = { state: r.state, D: r.D, clearedAt: r.clearedAt, advanced: true, fulfilments: r.fulfilments, at: r.at ?? null, reason: r.reason ?? null };
++  const D = r.D ?? amsIso(Date.parse(r.placedAt) + policyParam(ctx.files, r.edition, 'customerActionHours') * 60 * MIN);
++  const st = { state: r.state, D, clearedAt: r.clearedAt ?? null, advanced: true, fulfilments: r.fulfilments, at: r.at ?? null, reason: r.reason ?? null };
+   if (st.state !== 'waiting') return { ...outOf(st), state: st };
+   return {
+     ...outOf(st),
+diff -ruN a/modules/fulfilment.mjs b/modules/fulfilment.mjs
+--- a/modules/fulfilment.mjs	2026-11-04 14:33:20.488627048 +0000
++++ b/modules/fulfilment.mjs	2026-11-04 14:33:20.488627048 +0000
+@@ -366,10 +366,45 @@
+   return { ...outOf(w), state: w, ...(eff.length ? { effects: eff } : {}) };
+ }
+ 
++// §3.5: a migrated fulfilment continues from its records: its status, its reservations, charge, refund and shipment.
++// A shipment the carrier had already reported collected (or later) is a report at the migration instant (S7): the
++// migration is before any cancel of this order.
+ function resume(input, ctx, w) {
+-  // §3.5: a migrated fulfilment resumes from its records; carrier messages already received are in reports.
+   const r = input.records?.fulfilment;
+   if (!r) return { ...outOf(w), state: w };
+-  const s = { ...blank(), ...r.state, started: true, reports: r.reports ?? [] };
++  const s = fromRecords(r);
+   return { ...outOf(s), state: s };
+ }
++
++function fromRecords(r) {
++  const s = blank();
++  const f = r.fulfilment;
++  Object.assign(s, { started: true, oid: r.orderId, cust: r.customerId, cur: r.currency, edition: r.edition, readyAt: r.readyAt ?? null,
++    f: { fulfilmentId: f.fulfilmentId, location: f.location, items: f.items, amountMinor: f.amountMinor } });
++  for (const it of f.items) s.items[it.sku] = { qty: it.qty, st: 'none' };
++  // R4.2 step 1: an item with an active reservation is reserved; a released one was reserved and then compensated (R5.1)
++  for (const row of r.reservations ?? []) if (s.items[row.sku] && row.status === 'active') s.items[row.sku].st = 'ok';
++  for (const row of r.reservations ?? []) {
++    if (s.items[row.sku] && row.status === 'released' && s.items[row.sku].st !== 'ok') { s.items[row.sku].st = 'ok'; s.rel[row.sku] = 'done'; }
++  }
++  // R4.2 step 2: the charge; R5.1: a refund of it
++  if ((r.charges ?? []).length) s.charge = 'ok';
++  if ((r.refunds ?? []).length || (r.charges ?? []).some(c => c.refundedMinor > 0)) s.refund = 'done';
++  // R4.2 step 3: the shipment; R5.2: a shipment the carrier could not collect
++  const sh = (r.shipments ?? [])[0];
++  if (sh) {
++    s.ship = 'ok';
++    if (sh.status === 'cancelled') s.unship = 'done';
++    if (sh.status === 'failed') s.cfail = true;
++    if (['collected', 'inTransit', 'delivered'].includes(sh.status)) {
++      s.collected = true;
++      s.reports = [{ meaning: sh.status, reportedAt: r.at }];
++    }
++  }
++  // R4.4, R4.5: the status the records give the fulfilment
++  if (r.status === 'dispatched' || r.status === 'completed') { s.dispatched = true; s.collected = true; }
++  if (r.status === 'completed') { s.end = 'completed'; s.endedAt = r.at; }
++  if (r.status === 'failed') { s.end = 'failed'; s.endedAt = r.at; s.failed = true; s.announced = true; }
++  if (r.status === 'cancelled') { s.end = 'stopped'; s.endedAt = r.at; }
++  return s;
++}
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.488627048 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.488627048 +0000
+@@ -99,7 +99,7 @@
+     if (others.length) return { merge: others[0], subject: oid };
+     return { subject: oid, close: true };                                          // §3.3: changes nothing
+   }
+-  if (kind === 'migration') return resumeMigration(ev, st, ctx);
++  if (kind === 'migration') return resumeMigration(ev, input, st, ctx);
+   return { subject: null, close: true };
+ }
+ 
+@@ -281,20 +281,50 @@
+   }
+ }
+ 
+-// §3.5: a migrated order continues from where it stands. Its own records (orders.*) say where that is.
+-function resumeMigration(ev, st, ctx) {
+-  // the migration payload carries the order; the first order-like reference in it names the case
+-  const found = (JSON.stringify(ev.payload ?? {}).match(/#?\s*ord-[\w-]+/i) ?? [null])[0];
+-  const oid = normalise(ev.payload?.orderId ?? ev.payload?.order?.orderId ?? found, ctx);
++// §3.5: a migrated order continues from where it stands. Its own records (orders.*, and the inventory, billing, carrier
++// and notify records of its steps) say where that is; the messages it had already received are in the migration's events.
++// Every module that owns a step of the order is resumed from those records, since it has no state of its own yet.
++function resumeMigration(ev, input, st, ctx) {
++  const payload = ev.payload ?? {};
++  const inner = Array.isArray(payload.events) ? payload.events : [];
++  const placedEv = inner.find(e => inboundKind(e) === 'placed');
++  // the first order-like reference in the migration names the case
++  const found = (JSON.stringify(payload).match(/#?\s*ord-[\w-]+/i) ?? [null])[0];
++  const oid = normalise(payload.orderId ?? payload.order?.orderId ?? placedEv?.payload?.orderId ?? found, ctx);
+   if (!oid) return { subject: null, close: true };
+   const ord = ctx.query('orders.orders', { where: { orderId: oid }, limit: 1 })[0];
+-  if (!ord) return { subject: oid, close: true };
++  if (!ord) {
++    // placed before go-live but not recorded yet: that placed message is what this instance does first (R1.1)
++    if (!placedEv) return { subject: oid, close: true };
++    const first = routeFirst(placedEv, input, st, ctx);
++    if (first.merge || first.close) return first;
++    for (const e of inner) if (e !== placedEv && inboundKind(e) === 'action') routeAction({ eventId: e.id, action: e.payload?.action, at: e.at }, st, ctx);
++    return first;
++  }
+   const rows = ctx.query('orders.fulfilments', { where: { orderId: oid }, limit: 1000 });
++  const byFulfilment = table => {
++    const groups = {};
++    for (const r of ctx.query(table, { where: { orderId: oid }, limit: 1000 })) {
++      if (!groups[r.fulfilmentId]) groups[r.fulfilmentId] = [];
++      groups[r.fulfilmentId].push(r);
++    }
++    return groups;
++  };
++  const reservations = byFulfilment('inventory.reservations');
++  const charges = byFulfilment('billing.charges');
++  const refunds = byFulfilment('billing.refunds');
++  const shipments = byFulfilment('carrier.shipments');
++  // the notices already sent for this order and its fulfilments (cancel-refused is keyed by its occurrence: not carried)
++  const sent = [oid, ...rows.map(f => f.fulfilmentId)]
++    .flatMap(about => ctx.query('notify.notifications', { where: { about }, limit: 1000 }))
++    .filter(n => n.template !== 'cancel-refused')
++    .map(n => `${n.template}.${n.about}`);
+   st.orderId = oid;
+   st.placedAt = ord.placedAt;
+   st.customerId = ord.customerId;
+   st.currency = ord.currency;
+-  st.fulfilments = rows.map(f => ({ fulfilmentId: f.fulfilmentId, location: f.location ?? null, available: f.status !== 'unavailable',
++  // an unavailable fulfilment has no location (R1.1); an amend later cancels it, so its status is not the test
++  st.fulfilments = rows.map(f => ({ fulfilmentId: f.fulfilmentId, location: f.location ?? null, available: (f.location ?? null) !== null,
+     items: f.items, amountMinor: f.amountMinor }));
+   const intake = callMod(st, ctx, 'intake', oid, { op: 'resume', records: { intake: { order: { orderId: oid, customerId: ord.customerId,
+     placedAt: ord.placedAt, currency: ord.currency, items: ord.items }, fulfilments: st.fulfilments, totalMinor: ord.totalMinor } } });
+@@ -305,13 +335,28 @@
+     st.outcome = ord.status;
+     return { subject: oid, close: true };
+   }
+-  if (ord.status === 'customerActionRequired') st.phase = 'waiting';
+-  else if (ord.status === 'processing') st.phase = 'processing';
+-  if (st.phase === 'processing') {
++  callMod(st, ctx, 'statuses', oid, { op: 'resume', records: { statuses: { order: ord.status,
++    fulfilments: rows.map(f => ({ fulfilmentId: f.fulfilmentId, status: f.status })) } } });
++  callMod(st, ctx, 'notices', oid, { op: 'resume', customerId: ord.customerId, records: { notices: { sent } } });
++  if (ord.status === 'customerActionRequired') {
++    st.phase = 'waiting';
++    callMod(st, ctx, 'customer-action', oid, { op: 'resume', records: { customerAction: { state: 'waiting', placedAt: ord.placedAt,
++      edition: st.edition, fulfilments: st.fulfilments.map(f => ({ fulfilmentId: f.fulfilmentId, available: f.available })) } } });
++  } else if (ord.status === 'processing') {
++    st.phase = 'processing';
+     st.readyAt = ord.placedAt;
+     st.progressReady = true;
+-    for (const f of st.fulfilments) if (f.available) st.started[f.fulfilmentId] = true;
+     callMod(st, ctx, 'order-progress', oid, { op: 'resume', records: { progress: { status: 'processing' } } });
++    for (const f of st.fulfilments) {
++      if (!f.available) continue;
++      const fid = f.fulfilmentId;
++      st.started[fid] = true;
++      callMod(st, ctx, 'fulfilment', fid, { op: 'resume', records: { fulfilment: { orderId: oid, customerId: ord.customerId,
++        currency: ord.currency, edition: st.edition, readyAt: st.readyAt, at: ev.at ?? ctx.now,
++        fulfilment: { fulfilmentId: fid, location: f.location, items: f.items, amountMinor: f.amountMinor },
++        status: rows.find(r => r.fulfilmentId === fid)?.status ?? 'pending', reservations: reservations[fid] ?? [],
++        charges: charges[fid] ?? [], refunds: refunds[fid] ?? [], shipments: shipments[fid] ?? [] } } });
++    }
+   }
+   return { subject: oid };
+ }
+diff -ruN a/tests/customer-action.test.mjs b/tests/customer-action.test.mjs
+--- a/tests/customer-action.test.mjs	2026-11-04 14:33:20.488627048 +0000
++++ b/tests/customer-action.test.mjs	2026-11-04 14:33:20.488627048 +0000
+@@ -54,3 +54,24 @@
+   assert.ok(fired.effects.some(e => e.args.status === 'timedOut'));
+   assert.ok(fired.effects.some(e => e.args.template === 'order-timed-out'));
+ });
++
++const migrated = { customerAction: { state: 'waiting', placedAt: '2026-03-02T10:00:00+01:00', edition: 'ED1', fulfilments } };
++
++test('a migrated waiting order resumes with its deadline: D is placedAt + customerActionHours, an amend still counts (R3.2, S1, §3.5)', () => {
++  const r = runCall({ mod: 'customer-action', key: K, files, carry, input: { op: 'resume', records: migrated } });
++  assert.equal(r.error, null);
++  assert.equal(r.output.state, 'waiting');
++  assert.equal(r.obligations.upsert[0].dueAt, '2026-03-05T10:01:00+01:00');
++  assert.equal(r.effects.length, 0);
++  const a = runCall({ mod: 'customer-action', key: K, files, carry: r.carry, input: { op: 'action', action: 'amend', at: D } });
++  assert.equal(a.output.state, 'ready');
++  assert.ok(a.effects.some(e => e.args.fulfilmentId === 'F2' && e.args.status === 'cancelled'));
++});
++
++test('a migrated waiting order times out at its deadline: every fulfilment cancelled, the order timedOut, one notice (R3.2, §3.5)', () => {
++  const r = runCall({ mod: 'customer-action', key: K, files, carry, input: { op: 'resume', records: migrated } });
++  const fired = runCall({ mod: 'customer-action', key: K, files, carry: r.carry,
++    event: { type: 'timer.fired', at: '2026-03-05T10:01:00+01:00', payload: { obligationId: 'deadline' } } });
++  assert.equal(fired.output.state, 'timedOut');
++  assert.ok(fired.effects.some(e => e.args.template === 'order-timed-out'));
++});
+diff -ruN a/tests/fulfilment.test.mjs b/tests/fulfilment.test.mjs
+--- a/tests/fulfilment.test.mjs	2026-11-04 14:33:20.488869973 +0000
++++ b/tests/fulfilment.test.mjs	2026-11-04 14:33:20.488869973 +0000
+@@ -102,3 +102,24 @@
+   assert.ok(!names(r.effects).includes('unship'));
+   assert.ok(names(r.effects).includes('refund'));
+ });
++
++test('a migrated dispatched fulfilment resumes from its records: a delivered report completes it (R4.4, §3.5)', () => {
++  const carry = { ...base, statuses: { [ORD]: { order: 'processing', f: { F1: 'dispatched' }, inflight: {}, last: null } } };
++  const records = { orderId: ORD, customerId: 'C-1', currency: 'EUR', edition: 'ED1', readyAt: READY, at: at('09:00:00'), fulfilment,
++    status: 'dispatched', reservations: [{ sku: 'A', status: 'active' }, { sku: 'B', status: 'active' }],
++    charges: [{ amountMinor: 2745, refundedMinor: 0 }], refunds: [], shipments: [{ status: 'inTransit' }] };
++  const resumed = run(carry, { input: { op: 'resume', records: { fulfilment: records } } });
++  assert.equal(resumed.output.state, 'dispatched');
++  assert.equal(resumed.effects.length, 0);
++  const r = run(resumed.carry, { input: { op: 'carrier', at: at('11:00:00'), message: { code: 'C2', reportedAt: at('10:59:00'), carrier: 'X', shipmentId: 'S1' } } });
++  assert.equal(r.output.end, 'completed');
++  assert.deepEqual(r.effects.map(e => e.args.status), ['completed']);
++});
++
++test('a migrated fulfilment with no reservation yet reserves its items when advanced (R4.2 step 1, §3.5)', () => {
++  const records = { orderId: ORD, customerId: 'C-1', currency: 'EUR', edition: 'ED1', readyAt: READY, at: at('09:00:00'), fulfilment,
++    status: 'processing', reservations: [], charges: [], refunds: [], shipments: [] };
++  const resumed = run(base, { input: { op: 'resume', records: { fulfilment: records } } });
++  const a = run(resumed.carry, { input: { op: 'advance' } });
++  assert.deepEqual(names(a.effects), ['reserve']);
++});

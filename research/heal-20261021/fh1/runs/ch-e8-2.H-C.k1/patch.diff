@@ -1,0 +1,248 @@
+diff -ruN a/composition.json b/composition.json
+--- a/composition.json	2026-11-04 14:33:20.122572521 +0000
++++ b/composition.json	2026-11-04 14:33:20.122572521 +0000
+@@ -32,7 +32,8 @@
+     "properties": {
+      "op": {
+       "enum": [
+-       "place"
++       "place",
++       "resume"
+       ]
+      }
+     }
+@@ -146,6 +147,7 @@
+      "op": {
+       "enum": [
+        "start",
++       "resume",
+        "carrier",
+        "compensate"
+       ]
+diff -ruN a/modules/fulfil.mjs b/modules/fulfil.mjs
+--- a/modules/fulfil.mjs	2026-11-04 14:33:20.122572521 +0000
++++ b/modules/fulfil.mjs	2026-11-04 14:33:20.122572521 +0000
+@@ -95,12 +95,34 @@
+       phase: 'reserving', undone: {}, attempts: 0, bad: {} };
+     return { state: next, effects: [setStatus(next, 'processing', 'status-processing'), reserveEffect(next)], output: { phase: 'reserving' } };
+   }
++  if (input.op === 'resume') return st ? { output: { phase: st.phase } } : resume(input);
+   if (!st) return { output: { phase: 'none' } };
+   if (input.op === 'carrier') return carrier(input.meaning, input.reportedAt, st, ctx);
+   if (input.op === 'compensate') return cancelFulfilment(st, input.reason);
+   return { output: { phase: st.phase } };
+ }
+ 
++// §3.5 go-live: a fulfilment in flight continues from the step its records show as the next one. `from` is that step:
++// reserving, charging, shipping (charge committed), shipped, or dispatched (collected). Only the next step is emitted.
++function resume(input) {
++  const items = input.items.map((it, i) => ({ key: `r${i}`, sku: it.sku, qty: it.qty }));
++  const all = Object.fromEntries(items.map(it => [it.key, 'ok']));
++  const base = { orderId: input.orderId, fid: input.fid, location: input.location, customerId: input.customerId, email: input.email,
++    currency: input.currency, amountMinor: input.amountMinor, items, res: {}, charge: 'none', ship: 'none', carrier: null,
++    phase: input.from, undone: {}, attempts: 0, bad: {} };
++  if (input.from === 'reserving') return { state: base, effects: [reserveEffect(base)], output: { phase: 'reserving' } };
++  if (input.from === 'charging') {
++    const next = { ...base, res: all };
++    return { state: next, effects: [chargeEffect(next)], output: { phase: 'charging' } };
++  }
++  if (input.from === 'shipping') {
++    const next = { ...base, res: all, charge: 'ok' };
++    return { state: next, effects: [shipEffect(next)], output: { phase: 'shipping' } };
++  }
++  if (input.from === 'shipped') return { state: { ...base, res: all, charge: 'ok', ship: 'ok', phase: 'shipped' }, output: { phase: 'shipped' } };
++  return { state: { ...base, res: all, charge: 'ok', ship: 'ok', phase: 'dispatched', collected: input.at }, output: { phase: 'dispatched' } };
++}
++
+ // R4.4: a carrier report about this fulfilment. Reports about a finished or cancelled fulfilment change nothing.
+ function carrier(meaning, reportedAt, st) {
+   const open = ['reserving', 'charging', 'shipping', 'shipped', 'dispatched'].includes(st.phase);
+diff -ruN a/modules/intake.mjs b/modules/intake.mjs
+--- a/modules/intake.mjs	2026-11-04 14:33:20.122908230 +0000
++++ b/modules/intake.mjs	2026-11-04 14:33:20.122908230 +0000
+@@ -18,6 +18,11 @@
+ }
+ 
+ function stepRaw(input, ctx) {
++  // §3.5 go-live: an order already recorded but not yet checked continues at its fraud check (R2.1)
++  if (input.op === 'resume') {
++    return { state: { orderId: input.orderId }, effects: [{ key: 'fraud', system: 'fraud', op: 'check', args: { orderId: input.orderId } }],
++      output: { phase: 'checking' } };
++  }
+   if (input.op !== 'place') return { output: null };
+   const st = { orderId: input.orderId, customerId: input.customerId, placedAt: input.placedAt, currency: input.currency,
+     items: input.items, prices: input.prices, fees: input.fees };
+diff -ruN a/modules/review.mjs b/modules/review.mjs
+--- a/modules/review.mjs	2026-11-04 14:33:20.122964158 +0000
++++ b/modules/review.mjs	2026-11-04 14:33:20.122964158 +0000
+@@ -11,10 +11,11 @@
+ };
+ 
+ // One review task (a new task id each time: a re-ask after an unusable answer keeps the same deadline).
++// Its own timeout falls a minute after the deadline, as the deadline timer does: an answer at the deadline still counts (R2.2).
+ const ask = (st, orderId) => ({
+   id: `task-${st.n}`, kind: 'fraudReview', role: 'fraudAnalyst', subject: orderId,
+   question: `Review order ${orderId}: approve or reject.`, answerSchema: ANSWER_SCHEMA,
+-  dueAt: st.deadline, onTimeout: 'cancel',
++  dueAt: addMin(st.deadline, 1), onTimeout: 'cancel',
+ });
+ 
+ export function step(input, ctx) {
+diff -ruN a/modules/wait.mjs b/modules/wait.mjs
+--- a/modules/wait.mjs	2026-11-04 14:33:20.123051891 +0000
++++ b/modules/wait.mjs	2026-11-04 14:33:20.123051891 +0000
+@@ -11,12 +11,14 @@
+     if (st) return { output: { phase: st.phase } };
+     const D = addMin(input.p, input.customerActionHours * 60);     // S1: anchored at p, not at the clearance
+     const next = { orderId: input.orderId, email: input.email, D, phase: 'waiting', fulfilments: input.fulfilments };
++    // §3.5: an order that went live already waiting has its status and notice on record: only the deadline is set
++    const done = input.resumed ? [] : [
++      { key: 'status', system: 'orders', op: 'setStatus', args: { orderId: input.orderId, fulfilmentId: null, status: 'customerActionRequired' } },
++      { key: 'notice', system: 'notify', op: 'send', args: { to: input.email, about: input.orderId, template: 'action-required', text: 'Some items are unavailable: amend or cancel your order.' } },
++    ];
+     return {
+       state: next,
+-      effects: [
+-        { key: 'status', system: 'orders', op: 'setStatus', args: { orderId: input.orderId, fulfilmentId: null, status: 'customerActionRequired' } },
+-        { key: 'notice', system: 'notify', op: 'send', args: { to: input.email, about: input.orderId, template: 'action-required', text: 'Some items are unavailable: amend or cancel your order.' } },
+-      ],
++      effects: done,
+       obligations: { upsert: [{ id: 'deadline', kind: 'customerActionDeadline', anchor: input.p, dueAt: addMin(D, 1), onDue: 'timeout' }] },
+       output: { phase: 'waiting', D },
+     };
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.123051891 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.123051891 +0000
+@@ -3,6 +3,7 @@
+ // modules for what the rules require. Modules keep their own state; the parent reads only their outputs.
+ 
+ const TERMINAL = ['completed', 'failed', 'cancelled'];
++const ENDED = ['completed', 'failed', 'cancelled', 'timedOut'];        // order statuses that end an order (R7.2)
+ const COLLECTED = ['collected', 'inTransit', 'delivered'];           // S7: reports that prove collection
+ const PHASE_STATUS = { reserving: 'processing', charging: 'processing', shipping: 'processing', shipped: 'processing',
+   dispatched: 'dispatched', completed: 'completed', failed: 'failed', cancelled: 'cancelled' };
+@@ -71,6 +72,7 @@
+ function kindOf(ev) {
+   const p = ev.payload ?? {};
+   if (ev.type === 'effect.result' || ev.type === 'timer.fired' || String(ev.type).startsWith('humanTask.')) return 'owned';
++  if (ev.type === 'migration') return 'migration';
+   if (p.orderId !== undefined && Array.isArray(p.items)) return 'placed';
+   if (p.orderRef !== undefined && p.action !== undefined) return 'customer';
+   if (p.fulfilmentRef !== undefined && p.code !== undefined) return 'carrier';
+@@ -131,12 +133,82 @@
+     const x = o();
+     x.phase = 'processing';
+     ctx.call('close', x.id, { op: 'processing', orderId: x.id });
+-    for (const [fid, f] of Object.entries(x.fs)) {
+-      if (!f.avail || f.status !== 'pending') continue;
+-      f.status = 'processing';
+-      ctx.call('fulfil', `${x.id}.${fid}`, { op: 'start', orderId: x.id, fid, location: f.loc, customerId: x.customerId,
+-        email: x.email, currency: x.currency, amountMinor: f.amt, items: f.items });
++    for (const [fid, f] of Object.entries(x.fs)) if (f.avail && f.status === 'pending') startFulfilment(fid, f);
++  }
++
++  // R4.2: one fulfilment's saga starts (its status becomes processing, with the reservation first)
++  function startFulfilment(fid, f) {
++    const x = o();
++    f.status = 'processing';
++    ctx.call('fulfil', `${x.id}.${fid}`, { op: 'start', orderId: x.id, fid, location: f.loc, customerId: x.customerId,
++      email: x.email, currency: x.currency, amountMinor: f.amt, items: f.items });
++  }
++
++  // §3.5 go-live: a migration event carries the records of one order in flight and the messages already received
++  function migrate(ev) {
++    const p = ev.payload ?? {};
++    const recs = isObj(p.records) ? p.records : {};
++    const msgs = Array.isArray(p.events) ? p.events : [];
++    const row = rowsOf(recs['orders.orders'])[0];
++    if (!row) {
++      for (const m of msgs) if (kindOf(m) === 'placed' && !st.o) startOrder(m);       // an order placed in the export itself
++      return;
++    }
++    resumeOrder(row, recs, ev.at);
++    for (const m of msgs) {
++      const k = kindOf(m);
++      if (k === 'owned') deliverOwned(m);
++      else if (k === 'customer') onCustomer(m);
++      else if (k === 'carrier') onCarrier(m);
++    }
++  }
++
++  // §3.5: an order in flight at go-live continues from the records that exist for it, under the same rules
++  function resumeOrder(row, recs, at) {
++    const oid = norm(row.orderId);
++    const ed = editionAt(ctx, row.placedAt);
++    const r = rulesOf(ctx, ed);
++    const cust = mapOf(jsonOf(ctx.files['master/customers.json']), ['customerId', 'id'], ['email']);
++    const fs = {};
++    for (const f of rowsOf(recs['orders.fulfilments'])) {
++      if (norm(f.orderId) === oid) fs[f.fulfilmentId] = { loc: f.location ?? null, amt: f.amountMinor, items: f.items ?? [], avail: f.location != null, status: f.status };
++    }
++    st.o = { id: oid, customerId: row.customerId, currency: row.currency, p: row.placedAt, ed, email: cust[row.customerId] ?? '',
++      reviewHours: r.policy.fraudReviewHours, actionHours: r.policy.customerActionHours, fs, coll: {}, phase: 'checking',
++      cleared: false, ended: null };
++    const x = st.o;
++    subject = oid;
++    if (ENDED.includes(row.status)) { x.cleared = true; x.ended = row.status; x.phase = 'ended'; return; }
++    if (row.status === 'customerActionRequired') {
++      // R3.2: the status and notice are on record already; the customer's deadline is set from p
++      x.cleared = true; x.phase = 'waiting';
++      ctx.call('wait', x.id, { op: 'arm', resumed: true, orderId: x.id, p: x.p, customerActionHours: x.actionHours, email: x.email,
++        fulfilments: Object.entries(x.fs).map(([fulfilmentId, f]) => ({ fulfilmentId, available: f.avail })) });
++      return;
+     }
++    if (row.status === 'processing') {
++      x.cleared = true; x.phase = 'processing';
++      for (const [fid, f] of Object.entries(x.fs)) {
++        if (f.avail && f.status === 'pending') startFulfilment(fid, f);
++        else if (f.status === 'processing' || f.status === 'dispatched') resumeFulfilment(fid, f, recs, at);
++      }
++      maybeOutcome();
++      return;
++    }
++    // pending: recorded but not yet checked for fraud (R2.1): the check is asked again
++    ctx.call('intake', x.id, { op: 'resume' });
++  }
++
++  // §3.5: a fulfilment in flight continues at the step after its last committed one, as its records show it
++  function resumeFulfilment(fid, f, recs, at) {
++    const x = o();
++    const of = t => rowsOf(recs[t]).filter(r => r?.fulfilmentId === fid);
++    const reserved = f.items.every(it => of('inventory.reservations').some(r => r.sku === it.sku && r.status === 'active'));
++    const from = f.status === 'dispatched' ? 'dispatched' : of('carrier.shipments').length ? 'shipped'
++      : of('billing.charges').length ? 'shipping' : reserved ? 'charging' : 'reserving';
++    if (from === 'dispatched') x.coll[fid] = at;                        // dispatched only follows a collection (R4.4)
++    ctx.call('fulfil', `${x.id}.${fid}`, { op: 'resume', orderId: x.id, fid, location: f.loc, customerId: x.customerId,
++      email: x.email, currency: x.currency, amountMinor: f.amt, items: f.items, from, at });
+   }
+ 
+   // R6.1, R6.2, R6.4, S15: the order is cancelled: started fulfilments compensated, the rest set cancelled, the order too
+@@ -268,6 +340,7 @@
+   for (const ev of input.events ?? []) {
+     const k = kindOf(ev);
+     if (k === 'owned') { deliverOwned(ev); continue; }
++    if (k === 'migration') { migrate(ev); continue; }
+     if (!st.o && (k === 'placed' || k === 'customer' || k === 'carrier')) {
+       const early = freshMessage(k, ev);
+       if (early) return early;
+diff -ruN a/tests/review.test.mjs b/tests/review.test.mjs
+--- a/tests/review.test.mjs	2026-11-04 14:33:20.123051891 +0000
++++ b/tests/review.test.mjs	2026-11-04 14:33:20.123051891 +0000
+@@ -14,7 +14,7 @@
+   assert.equal(t.kind, 'fraudReview');
+   assert.equal(t.role, 'fraudAnalyst');
+   assert.equal(t.subject, 'ORD-1');
+-  assert.equal(t.dueAt, '2026-03-03T09:00:00.000Z');
++  assert.equal(t.dueAt, '2026-03-03T09:01:00.000Z');
+   assert.deepEqual(t.answerSchema.properties.decision.enum, ['approve', 'reject']);
+ });
+ 
+@@ -33,7 +33,7 @@
+   assert.equal(r.output.phase, 'reask');
+   assert.equal(r.humanTasks.length, 1);
+   assert.equal(r.humanTasks[0].id, 'task-2');
+-  assert.equal(r.humanTasks[0].dueAt, '2026-03-03T09:00:00.000Z');
++  assert.equal(r.humanTasks[0].dueAt, '2026-03-03T09:01:00.000Z');
+ });
+ 
+ test('R2.2: no usable answer by the deadline times the review out (cancel)', () => {

@@ -1,0 +1,13 @@
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.602312613 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.602312613 +0000
+@@ -142,6 +142,9 @@
+     st.phase = 'ended';
+     call('fraud', st.orderId, { op: 'stop' });
+     if (st.hasUnavailable) call('customer-action', st.orderId, { op: 'stop' });
++    // R5.1, R6.2: a stopped fulfilment may still be compensating (its results come to this instance). Reading each saga
++    // here records whether it is busy, so the instance stays open until the last compensating step has committed.
++    for (const fid of Object.keys(st.sagas)) call('fulfilment', fid, { op: 'get' });
+   }
+ 
+   // Customer actions by phase (SPEC-E 3.2, R3.2, R6.2-R6.4, S5, S8, S11, S15).

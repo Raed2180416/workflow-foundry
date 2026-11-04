@@ -1,0 +1,36 @@
+diff -ruN a/modules/cancellation.mjs b/modules/cancellation.mjs
+--- a/modules/cancellation.mjs	2026-11-04 14:33:20.531902308 +0000
++++ b/modules/cancellation.mjs	2026-11-04 14:33:20.543698709 +0000
+@@ -33,8 +33,10 @@
+   // processing (R6.2, R6.3, S4, S6, S7): the cancel does not count if a collection was reported at or before its time.
+   const g = ctx.call('statuses', ctx.key, { op: 'get' });
+   let collected = false;
++  const failing = {};
+   for (const f of g.fulfilments) {
+     const r = ctx.call('fulfilment', f.fulfilmentId, { op: 'get' });
++    failing[f.fulfilmentId] = !!r.failing;
+     for (const x of r.reports) {
+       if (COLLECTED.includes(x.meaning) && Date.parse(x.reportedAt) <= Date.parse(input.at)) collected = true;
+     }
+@@ -43,6 +45,10 @@
+     ctx.call('notices', ctx.key, { op: 'send', template: 'cancel-refused', about: ctx.key, occurrence: input.eventId, customerId: input.customerId });
+     return { verdict: 'refused', busy: false };
+   }
++  // S13: a fulfilment that failed before the cancel is no longer open; when none is left the order has already ended.
++  if (!g.fulfilments.some(f => !TERMINAL.includes(f.status) && !failing[f.fulfilmentId])) {
++    return { verdict: 'nothing', busy: false };
++  }
+   ctx.call('order-progress', ctx.key, { op: 'stop' });
+   for (const f of g.fulfilments) {
+     if (TERMINAL.includes(f.status)) continue;
+diff -ruN a/modules/fulfilment.mjs b/modules/fulfilment.mjs
+--- a/modules/fulfilment.mjs	2026-11-04 14:33:20.543698709 +0000
++++ b/modules/fulfilment.mjs	2026-11-04 14:33:20.548091011 +0000
+@@ -123,6 +123,7 @@
+     const r = items ? items.find(x => x && x.key === `item.${sku}`) : null;
+     const src = r ?? p;
+     if (src.status === 'ok' || (!r && p.status === 'ok')) { s.reserve.st[sku] = 'ok'; continue; }
++    if (src.status === 'unknown') { s.reserve.st[sku] = ctx.status('inventory', `item.${sku}`) === 'committed' ? 'ok' : 'none'; continue; }
+     const e = errInfo(src);
+     if (e.invalid) { s.reserve.st[sku] = 'none'; s.reserve.reuse = true; badRequest(s, ctx); }
+     else if (e.permanent) { s.reserve.st[sku] = 'failed'; fail(s, `reserve:${e.code}`, ctx.now); }

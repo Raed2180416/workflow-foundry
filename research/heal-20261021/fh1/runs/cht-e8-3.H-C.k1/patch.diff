@@ -1,0 +1,72 @@
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.576673071 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.576673071 +0000
+@@ -14,6 +14,7 @@
+   const self = input.instance;
+   let st = input.state ?? null;
+   let migrated = null;
++  let feed = events;
+ 
+   // First tick of an instance started by an inbound message (SPEC-E 1 Routing, 3.5).
+   if (st === null) {
+@@ -41,11 +42,24 @@
+       if (other) return { decisions: { subject: oid }, merge: { into: other } };
+       return { decisions: { subject: oid }, close: true };
+     } else if (kind === 'migration') {
+-      const oid = normalise(ctx, first.payload?.orderId ?? first.payload?.order?.orderId);
++      // The export carries the records and the messages already received (3.5); the order id is in the records or in
++      // the placed message, not always at the top of the payload.
++      const payload = first.payload ?? {};
++      const inner = Array.isArray(payload.events) ? payload.events : [];
++      const placed = inner.find(e => kindOf(e) === 'placed');
++      const recorded = (payload.records?.['orders.orders'] ?? [])[0];
++      const oid = normalise(ctx, payload.orderId ?? payload.order?.orderId ?? recorded?.orderId ?? placed?.payload?.orderId);
+       const rows = oid ? ctx.query('orders.orders', { where: { orderId: oid }, limit: 1 }) : [];
+-      if (rows.length === 0) return { decisions: { subject: oid }, close: true };
+-      st = newState(oid, rows[0].placedAt);
+-      migrated = rows[0];
++      if (rows.length === 0 && !placed) return { decisions: { subject: oid }, close: true };
++      if (rows.length === 0) {
++        // Not recorded yet: the placed message in the export is processed as a placed order (R1.1).
++        st = newState(oid, placed.at);
++        feed = events.concat(inner);
++      } else {
++        st = newState(oid, rows[0].placedAt);
++        migrated = rows[0];
++        feed = events.concat(inner.filter(e => kindOf(e) !== 'placed'));
++      }
+     } else {
+       return { decisions: { subject: null }, close: true };
+     }
+@@ -204,6 +218,14 @@
+     }
+   }
+ 
++  // An ended order may still have compensation and status changes in flight. Those ran inside the modules a counted
++  // cancel called (cancellation, fulfilment, statuses), whose busy flags this tick never saw. Read them again, so the
++  // instance stays open until their results have come back (a closed instance loses them).
++  function refreshBusy() {
++    call('statuses', st.orderId, { op: 'get' });
++    for (const fid of Object.keys(st.sagas)) call('fulfilment', fid, { op: 'get' });
++  }
++
+   function availability() {
+     return st.fulfilments.map(f => ({ fulfilmentId: f.fulfilmentId, available: f.available }));
+   }
+@@ -258,7 +280,7 @@
+ 
+   if (migrated !== null) resumeMigration(migrated);
+ 
+-  for (const ev of events) {
++  for (const ev of feed) {
+     const k = kindOf(ev);
+     if (k === 'owned') deliver(ev);
+     else if (k === 'placed') { if (st.orderId) call('intake', st.orderId, { op: 'placed', order: placedOrder(ev) }); }
+@@ -267,6 +289,7 @@
+   }
+ 
+   if (st.phase !== 'ended') endOfTick();
++  else refreshBusy();
+ 
+   const out = { decisions: { subject: st.orderId ?? null }, state: st };
+   if (st.phase === 'ended' && !Object.values(st.busy).some(Boolean)) out.close = true;

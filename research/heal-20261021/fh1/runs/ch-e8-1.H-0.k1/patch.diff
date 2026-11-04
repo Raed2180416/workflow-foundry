@@ -1,0 +1,25 @@
+diff -ruN a/modules/saga.mjs b/modules/saga.mjs
+--- a/modules/saga.mjs	2026-11-04 14:33:19.935698673 +0000
++++ b/modules/saga.mjs	2026-11-04 14:33:19.935698673 +0000
+@@ -28,7 +28,7 @@
+ }
+ 
+ function failFwd(st, why, ctx, eff) {
+-  st.why = 'fail';
++  st.why = st.why === 'cancel' ? 'cancel' : 'fail';   // a cancel that counted first decides the end (S13)
+   st.fr = why;
+   return advance(st, ctx, eff);
+ }
+@@ -117,9 +117,10 @@
+       if (p.status === 'ok' || row === 'ok' || (p.status === 'unknown' && cstat(ctx, 'inventory', `r${it.n}`))) it.s = 'ok';
+     }
+     if (p.status === 'error' && !invalid(p)) {
+-      if (p.error?.retryable === false) return failFwd(st, 'reserve', ctx, eff);
+-      // A batch that failed without a usable outcome: items that did not commit (status(key)) are resubmitted.
++      // A batch that failed: the items that committed anyway (status(key)) are undone with the fulfilment (R5.1, S2).
+       for (const it of st.items) if (it.s !== 'ok' && cstat(ctx, 'inventory', `r${it.n}`)) it.s = 'ok';
++      if (p.error?.retryable === false) return failFwd(st, 'reserve', ctx, eff);
++      // A batch that failed without a usable outcome: items that did not commit are resubmitted.
+       st.bat += 1;
+     }
+     if (p.status === 'partial' || p.status === 'ok') st.bat += 1;

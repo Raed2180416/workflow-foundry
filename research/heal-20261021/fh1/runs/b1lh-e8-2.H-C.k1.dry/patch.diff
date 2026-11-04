@@ -1,0 +1,90 @@
+diff -ruN a/solver.mjs b/solver.mjs
+--- a/solver.mjs	2026-11-04 14:33:19.796285985 +0000
++++ b/solver.mjs	2026-11-04 14:33:19.796285985 +0000
+@@ -275,9 +275,55 @@
+ const isAction = P => 'orderRef' in P && 'action' in P;
+ const isCarrier = P => 'fulfilmentRef' in P && 'code' in P;
+ 
++// Every object inside a JSON value, the value itself first.
++function objects(x, out = []) {
++  if (Array.isArray(x)) for (const v of x) objects(v, out);
++  else if (x && typeof x === 'object') {
++    out.push(x);
++    for (const v of Object.values(x)) objects(v, out);
++  }
++  return out;
++}
++
++// The order a migration belongs to: the first order id its payload names (§3.5).
++function migOrderId(e) {
++  const id = objects(e.payload || {}).map(o => o.orderId ?? o.orderRef).find(v => typeof v === 'string' && v.trim() !== '');
++  return id === undefined ? '' : normId(id);
++}
++
++// The messages a migration replays (§3.5): the placed order, customer actions and carrier reports it carries.
++// A message's own time wins; otherwise the time of the migration.
++function migrationMessages(e) {
++  const out = [];
++  const walk = (x, at) => {
++    if (Array.isArray(x)) return x.forEach(v => walk(v, at));
++    if (!x || typeof x !== 'object') return;
++    const t = x.at ?? x.reportedAt ?? x.placedAt ?? at;
++    if (isPlaced(x) || isAction(x) || isCarrier(x)) out.push({ id: e.id, type: 'message.received', at: t, payload: x });
++    for (const v of Object.values(x)) walk(v, t);
++  };
++  walk(e.payload, e.at);
++  return out;
++}
++
++// Records of a table for the order being rebuilt: the query, or else the instance's own records
++// in sor/<instance>.json, where a migrated order's records sit (§3.4).
++function recs(w, table, where) {
++  let r = [];
++  try { r = w.ctx.query(table, { where, limit: 1000 }) || []; } catch { r = []; }
++  if (r.length) return r;
++  const sor = load(w.ctx, `sor/${w.instance}.json`) || {};
++  const [sys, tbl] = table.split('.');
++  return rows(sor[table] ?? sor[sys]?.[tbl]).filter(x => x && Object.entries(where).every(([k, v]) => x[k] === v));
++}
++
+ function applyEvent(w, e) {
+   const C = w.C;
+   const P = e.payload || {};
++  if (e.type === 'migration') {
++    for (const m of migrationMessages(e)) applyEvent(w, m);
++    return;
++  }
+   if (e.type === 'effect.result') return onResult(w, P);
+   if (e.type === 'humanTask.answered') return onAnswer(C, e, P);
+   if (e.type === 'humanTask.answerRejected' || e.type === 'humanTask.withdrawn') {
+@@ -337,9 +383,7 @@
+ // steps those records show as committed are marked so they are not issued again.
+ function rebuild(w, oid, e) {
+   const ctx = w.ctx;
+-  const q = (table, where) => {
+-    try { return ctx.query(table, { where, limit: 1000 }) || []; } catch { return []; }
+-  };
++  const q = (table, where) => recs(w, table, where);
+   const [o] = q('orders.orders', { orderId: oid });
+   if (!o) return false;
+   const C = newState(oid, T(o.placedAt ?? e.at));
+@@ -398,12 +442,16 @@
+   for (const e of events) {
+     const P = e.payload || {};
+     if (e.type === 'migration') {
+-      const oid = normId(P.orderId ?? P.orderRef);
++      const oid = migOrderId(e);
+       if (!oid) continue;
+       const other = openFor(w, oid)[0];
+       if (other) return mergeInto(oid, other);
+-      if (!rebuild(w, oid, e)) return closeOut(null);
+-      return w.C.oend ? closeOut(oid) : null;
++      if (rebuild(w, oid, e)) return w.C.oend ? closeOut(oid) : null;
++      // Not recorded yet: the order is still to be placed (R1), so it starts from its placed message.
++      const placed = migrationMessages(e).find(m => isPlaced(m.payload));
++      if (!placed) return closeOut(oid);
++      w.C = newState(oid, T(placed.at));
++      return null;
+     }
+     if (isPlaced(P)) {
+       const oid = normId(P.orderId);

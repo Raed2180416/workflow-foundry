@@ -1,0 +1,119 @@
+diff -ruN a/composition.json b/composition.json
+--- a/composition.json	2026-11-04 14:33:19.959698674 +0000
++++ b/composition.json	2026-11-04 14:33:19.959698674 +0000
+@@ -127,6 +127,9 @@
+      "customerId": {
+       "type": "string"
+      },
++     "known": {
++      "type": "boolean"
++     },
+      "unavailable": {
+       "type": "array",
+       "items": {
+diff -ruN a/modules/window.mjs b/modules/window.mjs
+--- a/modules/window.mjs	2026-11-04 14:33:19.959698674 +0000
++++ b/modules/window.mjs	2026-11-04 14:33:19.959698674 +0000
+@@ -83,7 +83,8 @@
+     return {
+       output: { status: 'waiting', deadline: iso(D) },
+       state: st,
+-      effects: [setStatus(input.orderId, null, 'customerActionRequired', 'cad-status')],
++      // A go-live order already in customerActionRequired has that status on record: it is not set again (R7.2).
++      effects: input.known === true ? [] : [setStatus(input.orderId, null, 'customerActionRequired', 'cad-status')],
+       obligations: { upsert: [{ id: 'cad', kind: 'customerActionTimeout', anchor: input.p, dueAt: iso(D + MIN), onDue: 'timeout' }], cancel: [] },
+     };
+   }
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:19.963662325 +0000
++++ b/parent.mjs	2026-11-04 14:33:19.963662325 +0000
+@@ -52,6 +52,23 @@
+   return ctx.query('orders.orders', { where: { orderId: oid }, limit: 1 })[0] ?? null;
+ }
+ 
++// A go-live export (§3.5) is { records, events }: its records and the messages already received. The order it belongs
++// to is named by its records, or else by a message that names one.
++const innerEvents = ev => (Array.isArray(ev?.payload?.events) ? ev.payload.events : []);
++function exportOrderId(sub) {
++  const rows = [...(sub.records?.['orders.orders'] ?? []), ...(sub.records?.['orders.fulfilments'] ?? [])];
++  const named = [...rows.map(r => r?.orderId), ...(sub.events ?? []).map(e => e?.payload?.orderId ?? e?.payload?.orderRef), sub.orderId, sub.orderRef];
++  const id = named.find(x => typeof x === 'string' && x.trim() !== '');
++  return id === undefined ? null : norm(id);
++}
++
++// The rows of one business table for this order: the export's own copy at go-live, else the records (§3.5).
++function rowsOf(sub, ctx, table, where) {
++  const own = sub.records?.[table];
++  const rows = Array.isArray(own) ? own : ctx.query(table, { where, limit: 200 });
++  return rows.filter(r => Object.entries(where).every(([k, v]) => r?.[k] === v));
++}
++
+ // An open instance of the same order to merge into. A placed order merges only into an older instance, so two
+ // instances that start together do not merge into each other.
+ function openOther(oid, input, ctx, placed) {
+@@ -91,9 +108,13 @@
+     return { ret: { decisions: { subject: oid }, close: true, effects: [] } };
+   }
+   if (first?.type === 'migration') {
+-    const oid = norm(sub.orderId ?? sub.orderRef);
+-    const rec = orderRecord(ctx, oid);
+-    if (!rec) return { ret: { decisions: { subject: null }, close: true, effects: [] } };
++    const oid = exportOrderId(sub);
++    const rec = oid ? (sub.records?.['orders.orders'] ?? []).find(r => norm(r?.orderId) === oid) ?? orderRecord(ctx, oid) : null;
++    if (!rec) {
++      // Not recorded yet: an order placed in the export starts as a new order, its placement is handled below (R1.1).
++      if (oid && innerEvents(first).some(e => e?.type === 'order.placed')) return { S: fresh(oid) };
++      return { ret: { decisions: { subject: null }, close: true, effects: [] } };
++    }
+     const S = fresh(oid);
+     adopt(S, rec, sub, ctx, eff);
+     return { S };
+@@ -109,7 +130,7 @@
+   S.cur = rec.currency;
+   S.p = rec.placedAt;
+   S.ed = editionAt(ctx.files, ms(rec.placedAt));
+-  for (const f of ctx.query('orders.fulfilments', { where: { orderId: S.id }, limit: 50 })) {
++  for (const f of rowsOf(sub, ctx, 'orders.fulfilments', { orderId: S.id })) {
+     const loc = f.location ?? null;
+     S.fulfs[f.fulfilmentId] = {
+       loc, avail: loc !== null && f.status !== 'unavailable', items: f.items, amt: f.amountMinor, st: f.status,
+@@ -127,7 +148,7 @@
+     S.stage = 'waiting';
+     const ids = Object.keys(S.fulfs);
+     ctx.call('window', S.id, {
+-      op: 'open', orderId: S.id, p: rec.placedAt, customerId: S.cust,
++      op: 'open', orderId: S.id, p: rec.placedAt, customerId: S.cust, known: true,
+       unavailable: ids.filter(f => !S.fulfs[f].avail), available: ids.filter(f => S.fulfs[f].avail),
+     });
+     return;
+@@ -138,17 +159,16 @@
+       if (!f.avail || f.term) continue;
+       const args = { orderId: S.id, fid, location: f.loc, items: f.items, amountMinor: f.amt, customerId: S.cust, currency: S.cur };
+       if (f.st === 'pending') { ctx.call('saga', fk(S.id, fid), { op: 'start', ...args }); continue; }
+-      const ships = ctx.query('carrier.shipments', { where: { fulfilmentId: fid }, limit: 50 });
++      const ships = rowsOf(sub, ctx, 'carrier.shipments', { fulfilmentId: fid });
+       const rows = {
+-        charged: ctx.query('billing.charges', { where: { fulfilmentId: fid }, limit: 50 }).length > 0,
+-        reservedSkus: ctx.query('inventory.reservations', { where: { fulfilmentId: fid, status: 'active' }, limit: 200 }).map(r => r.sku),
++        charged: rowsOf(sub, ctx, 'billing.charges', { fulfilmentId: fid }).length > 0,
++        reservedSkus: rowsOf(sub, ctx, 'inventory.reservations', { fulfilmentId: fid, status: 'active' }).map(r => r.sku),
+         ship: ships.at(-1)?.status ?? null,
+         dispatched: f.st === 'dispatched',
+         fstatus: f.st,
+       };
+       onOut(S, 'saga', ctx.call('saga', fk(S.id, fid), { op: 'resume', ...args, rows }), ctx, eff);
+     }
+-    for (const m of sub.messages ?? []) carrier(S, m, ctx, eff);
+     outcome(S, eff);
+     return;
+   }
+@@ -380,7 +400,8 @@
+     if (b.ret) return b.ret;
+     S = b.S;
+   }
+-  for (const ev of input.events ?? []) handle(S, ev, ctx, eff);
++  // A go-live export hands over the messages already received with it: they are handled as the messages they are (§3.5).
++  for (const ev of (input.events ?? []).flatMap(e => (e?.type === 'migration' ? innerEvents(e) : [e]))) handle(S, ev, ctx, eff);
+   const done = S.stage === 'ended' && Object.values(S.fulfs).every(f => f.term);
+   return { decisions: { subject: S.id }, state: S, effects: eff, ...(done ? { close: true } : {}) };
+ }

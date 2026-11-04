@@ -1,0 +1,86 @@
+diff -ruN a/modules/fulfil.mjs b/modules/fulfil.mjs
+--- a/modules/fulfil.mjs	2026-11-04 14:33:20.087756861 +0000
++++ b/modules/fulfil.mjs	2026-11-04 14:33:20.087756861 +0000
+@@ -149,18 +149,21 @@
+   const next = { ...st, res: { ...st.res } };
+   if (p.status === 'ok') for (const it of st.items) next.res[it.key] = 'ok';
+   if (Array.isArray(p.items)) for (const it of p.items) if (it?.status === 'ok' && it.key) next.res[it.key] = 'ok';
+-  if (p.status === 'error' && INVALID.includes(p.error?.code)) return reissue(next, 'reserve', reserveEffect(next), 'reserve');
++  if (p.status === 'error' && INVALID.includes(p.error?.code) && st.phase === 'reserving') return reissue(next, 'reserve', reserveEffect(next), 'reserve');
+   if (p.status === 'error' && p.error?.code !== 'batch-item-not-processed') return fail(next, 'reserve', p.error?.code ?? 'error');
+   if (st.phase !== 'reserving') return lateUndo(next, st.phase);
+   const flagged = next.items.filter(it => next.res[it.key] !== 'ok');
+   if (!flagged.length) return { state: { ...next, phase: 'charging' }, effects: [chargeEffect(next)], output: { phase: 'charging' } };
++  // R5.2: a permanent item error is never retried; the fulfilment fails
++  const permanent = (Array.isArray(p.items) ? p.items : []).find(it => it?.status !== 'ok' && it?.error?.retryable === false);
++  if (permanent) return fail(next, 'reserve', permanent.error.code ?? 'error');
+   if (next.attempts >= MAX_RESUBMIT) return fail(next, 'reserve', 'reserve-exhausted');
+   const again = { ...next, attempts: next.attempts + 1 };
+   return { state: again, effects: [reserveEffect(again)], output: { phase: 'reserving', resubmitted: flagged.length } };
+ }
+ 
+ function onCharge(p, st, ctx) {
+-  if (p.status === 'error' && INVALID.includes(p.error?.code)) return reissue(st, 'charge', chargeEffect(st), 'charge');
++  if (p.status === 'error' && INVALID.includes(p.error?.code) && st.phase === 'charging') return reissue(st, 'charge', chargeEffect(st), 'charge');
+   if (p.status === 'error') return fail({ ...st, charge: 'declined' }, 'charge', p.error?.code ?? 'error');
+   const s = outcomeOf(p, ctx, 'billing');
+   if (s === 'error') return fail({ ...st, charge: 'declined' }, 'charge', 'unknown');
+@@ -171,7 +174,7 @@
+ }
+ 
+ function onShip(p, st, ctx) {
+-  if (p.status === 'error' && INVALID.includes(p.error?.code)) return reissue(st, 'ship', shipEffect(st), 'ship');
++  if (p.status === 'error' && INVALID.includes(p.error?.code) && st.phase === 'shipping') return reissue(st, 'ship', shipEffect(st), 'ship');
+   if (p.status === 'error') return fail({ ...st, ship: 'error' }, 'ship', p.error?.code ?? 'error');
+   const s = outcomeOf(p, ctx, 'carrier');
+   if (s === 'error') return fail({ ...st, ship: 'error' }, 'ship', 'unknown');
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.090308886 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.090308886 +0000
+@@ -45,9 +45,19 @@
+   return out;
+ }
+ 
++// The Amsterdam calendar date of an instant: CEST (+2) from the last Sunday of March to the last Sunday of October
++// (01:00 UTC on those Sundays), CET (+1) otherwise. Written out so it does not depend on the runtime's Intl data.
++function amsterdamDate(iso) {
++  const t = Date.parse(iso);
++  const y = new Date(t).getUTCFullYear();
++  const lastSunday = m => { const d = new Date(Date.UTC(y, m + 1, 0)); return Date.UTC(y, m, d.getUTCDate() - d.getUTCDay(), 1); };
++  const summer = t >= lastSunday(2) && t < lastSunday(9);
++  return new Date(t + (summer ? 2 : 1) * 3600000).toISOString().slice(0, 10);
++}
++
+ // R1.3: the published edition with the latest effectiveFrom on or before the date of p (Amsterdam local date).
+ function editionAt(ctx, placedAt) {
+-  const day = String(placedAt).slice(0, 10);
++  const day = amsterdamDate(placedAt);
+   let best = null;
+   for (const k of Object.keys(ctx.files)) {
+     const m = /^rulebook\/([^/]+)\/edition\.json$/.exec(k);
+@@ -100,7 +110,7 @@
+     for (const it of p.items ?? []) if (cat[it.sku] !== undefined) prices[it.sku] = cat[it.sku];
+     st.o = { id: oid, customerId: p.customerId, currency: p.currency, p: p.placedAt, ed, email: cust[p.customerId] ?? '',
+       reviewHours: r.policy.fraudReviewHours, actionHours: r.policy.customerActionHours, fs: {}, coll: {}, phase: 'allocating',
+-      cleared: false, ended: null };
++      cleared: false, ended: null, heldCancel: null };
+     ctx.call('intake', oid, { op: 'place', orderId: oid, customerId: p.customerId, placedAt: p.placedAt, currency: p.currency,
+       items: p.items, prices, fees: r.fees });
+     subject = oid;
+@@ -189,6 +199,8 @@
+         for (const f of out.fulfilments) x.fs[f.fulfilmentId] = { loc: f.location, amt: f.amountMinor, items: f.items,
+           avail: f.available, status: f.available ? 'pending' : 'unavailable' };
+         x.phase = 'checking';
++        // a cancel that came before the record was made: it counts now, once the order exists (R1.1, R6.4)
++        if (x.heldCancel) { const at = x.heldCancel; x.heldCancel = null; cancelOrder('customer', at); }
+       }
+       if (out.phase === 'verdict') {
+         if (out.verdict === 'pass') clearAt();                              // R2.1: cleared at p
+@@ -219,6 +231,7 @@
+     const p = ev.payload;
+     if (!x || x.id !== norm(p.orderRef) || x.ended) return;
+     if (p.action === 'cancel') {
++      if (!x.cleared && x.phase === 'allocating') { x.heldCancel = ev.at; return; }   // not recorded yet (R1.1)
+       if (!x.cleared) return cancelOrder('customer', ev.at);                // R6.4: fraud review open
+       if (x.phase === 'waiting') {
+         const w = ctx.call('wait', x.id, { op: 'action', at: ev.at, action: 'cancel' });

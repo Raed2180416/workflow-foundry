@@ -1,0 +1,1464 @@
+diff -ruN a/solver.mjs b/solver.mjs
+--- a/solver.mjs	2026-11-04 14:33:19.852510636 +0000
++++ b/solver.mjs	2026-11-04 14:33:19.852510636 +0000
+@@ -1,750 +1,799 @@
+-// E8 order fulfilment with compensation (SPEC-E). A pure function of (input, ctx): time is input.now only.
+-// Each tick replays the events into the carry, then drives every rule whose window is open.
++// solver.mjs: E8 order fulfilment with compensation (SPEC-E.md).
++//
++// Each tick rebuilds what is due from the carry, the events that arrived and the
++// outcome of earlier effects. Effect keys come from ids, so an effect is emitted
++// once; it is re-issued only after a 400 (invalid request) or an unknown outcome
++// that the platform did not commit. Times are epoch milliseconds in the carry and
++// ISO 8601 with the Europe/Amsterdam offset in the output.
++
++const MIN = 60_000;
++const FINAL = new Set(['completed', 'failed', 'cancelled']);
++const FUL_ORDER = ['pending', 'unavailable', 'processing', 'dispatched', 'completed', 'failed', 'cancelled'];
++
++// ---------- time ----------
++const fmtAms = new Intl.DateTimeFormat('en-GB', {
++  timeZone: 'Europe/Amsterdam', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit',
++  hour: '2-digit', minute: '2-digit', second: '2-digit',
++});
++const pad = n => String(n).padStart(2, '0');
++const T = v => (typeof v === 'number' ? v : Date.parse(v));
+ 
+-const MIN = 60000;
+-const TERM = ['completed', 'failed', 'cancelled'];
+-const INVALID = ['invalid-args', 'field-renamed'];
+-const MEANINGS = ['collected', 'inTransit', 'delivered', 'collectionFailed', 'info'];
+-const MAX_TRIES = 5;
+-
+-export function createSolver() {
+-  return { id: 'solver', tick: (input, ctx) => tick(input, ctx) };
+-}
+-
+-function tick(input, ctx) {
+-  const now = Date.parse(input.now);
+-  const T = { now, ctx, fx: [], up: [], cancel: [], ht: [], merge: null, close: false, memo: {} };
+-  const ev = input.events || [];
+-  let c = input.carry ? JSON.parse(JSON.stringify(input.carry)) : null;
+-  if (!c) {
+-    const early = route(T, input, ev);
+-    if (early) return early;
+-    const start = ev.find(e => e.type === 'order.placed' || e.type === 'migration');
+-    if (!start) return out(T, null, null);
+-    c = (start.type === 'migration' && fromRecords(T, start)) || newCarry(T, start);
+-    if (!c.o) { T.close = true; return out(T, null, null); }
+-  }
+-  // Carrier reports first: a collection in the same instant as a cancel wins (S4).
+-  for (const e of ev) if (e.type === 'carrier.status') handle(T, c, e);
+-  for (const e of ev) if (e.type !== 'carrier.status') handle(T, c, e);
+-  drive(T, c);
+-  if (c.ph === 'end' && !pending(c)) {
+-    T.close = true;
+-    T.cancel.push(...c.ob);
+-    c.ob = [];
+-  }
+-  return out(T, c, c.o);
+-}
+-
+-// ---------- helpers ----------
+-
+-export function norm(raw) {
+-  if (raw === null || raw === undefined) return null;
+-  let s = String(raw).trim();
+-  if (s.startsWith('#')) s = s.slice(1).trim();
+-  return s.toUpperCase();
+-}
+-
+-// Amsterdam-local ISO string with offset, minute precision.
+ function isoAms(t) {
+-  const d = new Date(t);
+-  const f = new Intl.DateTimeFormat('en-GB', {
+-    timeZone: 'Europe/Amsterdam', hourCycle: 'h23', year: 'numeric', month: '2-digit',
+-    day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+-  });
+-  const p = Object.fromEntries(f.formatToParts(d).map(x => [x.type, x.value]));
+-  const local = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+-  const off = Math.round((local - t) / MIN);
++  const base = Math.floor(t / 1000) * 1000;
++  const g = {};
++  for (const p of fmtAms.formatToParts(new Date(base))) g[p.type] = p.value;
++  const local = Date.UTC(+g.year, +g.month - 1, +g.day, +g.hour, +g.minute, +g.second);
++  const off = Math.round((local - base) / MIN);
+   const a = Math.abs(off);
+-  const sign = off < 0 ? '-' : '+';
+-  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}${sign}${String(Math.floor(a / 60)).padStart(2, '0')}:${String(a % 60).padStart(2, '0')}`;
++  return `${g.year}-${g.month}-${g.day}T${g.hour}:${g.minute}:${g.second}${off < 0 ? '-' : '+'}${pad(Math.floor(a / 60))}:${pad(a % 60)}`;
+ }
++const dayOf = t => isoAms(t).slice(0, 10);
+ 
+-function localDay(t) {
+-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit' })
+-    .format(new Date(t));
+-}
++// Order ids as the spec normalises them: trim, drop leading '#', upper-case.
++const normId = s => String(s ?? '').trim().replace(/^#+/, '').trim().toUpperCase();
+ 
+-function fileOf(ctx, path) {
++// ---------- files: ctx.files holds the rulebook, master data and api files (JSON or CSV) ----------
++function listFiles(ctx) {
+   const f = ctx.files;
+-  if (!f) return undefined;
+-  const flat = f instanceof Map ? f.get(path) : f[path];
+-  if (flat !== undefined) return flat;
+-  let v = f;
+-  for (const seg of path.split('/')) {
+-    if (v === null || v === undefined) return undefined;
+-    v = v instanceof Map ? v.get(seg) : v[seg];
+-  }
+-  return v;
++  try {
++    if (f instanceof Map) return [...f.keys()];
++    if (Array.isArray(f)) return f.map(x => (typeof x === 'string' ? x : x.path));
++    if (typeof f?.list === 'function') return f.list('') || [];
++    if (f && typeof f === 'object') return Object.keys(f);
++  } catch { /* no listing: no editions visible */ }
++  return [];
+ }
+ 
+-function listOf(ctx, dir) {
+-  const f = ctx.files;
+-  if (!f) return [];
+-  const keys = f instanceof Map ? [...f.keys()] : Object.keys(f);
+-  const names = new Set();
+-  for (const k of keys) if (k.startsWith(dir + '/')) names.add(k.slice(dir.length + 1).split('/')[0]);
+-  if (!names.size) {
+-    const sub = fileOf(ctx, dir);
+-    if (sub && typeof sub === 'object' && !Array.isArray(sub)) return Object.keys(sub);
+-  }
+-  return [...names];
++function parseCsv(text) {
++  const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
++  if (lines.length === 0) return [];
++  const head = lines[0].split(',').map(s => s.trim());
++  return lines.slice(1).map(l => {
++    const cells = l.split(',').map(s => s.trim());
++    return Object.fromEntries(head.map((h, i) => [h, cells[i]]));
++  });
+ }
+ 
+ function load(ctx, path) {
+-  const v = fileOf(ctx, path);
+-  if (v === undefined || v === null) return undefined;
++  const f = ctx.files;
++  let v;
++  try {
++    if (typeof f === 'function') v = f(path);
++    else if (typeof f?.read === 'function') v = f.read(path);
++    else if (typeof f?.get === 'function') v = f.get(path);
++    else if (f instanceof Map) v = f.get(path);
++    else if (f && typeof f === 'object') v = f[path];
++  } catch { return undefined; }
++  if (v && typeof v === 'object' && typeof v.content === 'string') v = v.content;
+   if (typeof v !== 'string') return v;
+   if (path.endsWith('.csv')) return parseCsv(v);
+   try { return JSON.parse(v); } catch { return undefined; }
+ }
+ 
+-function parseCsv(text) {
+-  const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+-  if (!lines.length) return [];
+-  const head = lines[0].split(',').map(h => h.trim());
+-  return lines.slice(1).map(l => {
+-    const cells = l.split(',').map(x => x.trim());
+-    const row = {};
+-    head.forEach((h, i) => {
+-      const v = cells[i];
+-      row[h] = v !== undefined && v !== '' && !isNaN(Number(v)) ? Number(v) : v;
+-    });
+-    return row;
+-  });
+-}
+-
+-function rowsOf(doc) {
+-  if (Array.isArray(doc)) return doc;
+-  if (doc && typeof doc === 'object') for (const v of Object.values(doc)) if (Array.isArray(v)) return v;
+-  return [];
++// Rows of a table: an array, the first array inside an object, or an object keyed by id.
++function rows(x) {
++  if (Array.isArray(x)) return x;
++  if (!x || typeof x !== 'object') return [];
++  const arr = Object.values(x).find(Array.isArray);
++  if (arr) return arr;
++  return Object.entries(x).map(([k, v]) => (v && typeof v === 'object' ? { _key: k, ...v } : { _key: k, _value: v }));
+ }
+-
+-function field(row, names) {
+-  if (!row || typeof row !== 'object') return undefined;
+-  for (const n of names) if (row[n] !== undefined) return row[n];
+-  const keys = Object.keys(row);
+-  for (const n of names) {
+-    const hit = keys.find(k => k.toLowerCase() === n.toLowerCase());
+-    if (hit !== undefined) return row[hit];
+-  }
++const firstOf = (r, names) => {
++  for (const n of names) if (r && r[n] != null) return r[n];
+   return undefined;
+-}
++};
+ 
+-function findKey(o, k) {
+-  if (!o || typeof o !== 'object') return undefined;
+-  if (o[k] !== undefined) return o[k];
+-  for (const v of Object.values(o)) {
+-    const r = findKey(v, k);
+-    if (r !== undefined) return r;
++function pickEdition(ctx, t) {
++  const day = dayOf(t);
++  let best = null;
++  for (const p of listFiles(ctx)) {
++    const m = /^rulebook\/([^/]+)\/edition\.json$/.exec(p);
++    if (!m) continue;
++    const e = load(ctx, p) || {};
++    const from = String(e.effectiveFrom ?? '').slice(0, 10);
++    if (from && from <= day && (!best || from > best.from)) best = { dir: m[1], from, id: e.id ?? m[1] };
+   }
+-  return undefined;
++  return best;
+ }
+ 
+-function editionAt(ctx, t) {
+-  const day = localDay(t);
+-  const eds = [];
+-  for (const d of listOf(ctx, 'rulebook')) {
+-    const e = load(ctx, `rulebook/${d}/edition.json`);
+-    if (e && e.effectiveFrom) eds.push({ dir: d, from: String(e.effectiveFrom).slice(0, 10) });
++function priceMap(ctx) {
++  const m = {};
++  for (const r of rows(load(ctx, 'master/catalog.json'))) {
++    m[String(firstOf(r, ['sku', '_key']))] = Number(firstOf(r, ['unitPriceMinor', 'priceMinor', '_value'])) || 0;
+   }
+-  const ok = eds.filter(e => e.from <= day).sort((a, b) => (a.from < b.from ? 1 : -1));
+-  return ok.length ? ok[0].dir : null;
++  return m;
+ }
+ 
+-function policy(T, c, name) {
+-  const v = findKey(load(T.ctx, `rulebook/${c.ed}/policy.json`), name);
+-  return Number(v) || 0;
+-}
+-
+-function priceOf(T, sku) {
+-  if (!T.memo.cat) T.memo.cat = rowsOf(load(T.ctx, 'master/catalog.json'));
+-  const r = T.memo.cat.find(x => String(field(x, ['sku'])) === sku);
+-  return Number(field(r, ['unitPriceMinor', 'unitPrice', 'priceMinor'])) || 0;
+-}
+-
+-function feeOf(T, c, loc) {
+-  if (!loc) return 0;
+-  const rows = rowsOf(load(T.ctx, `rulebook/${c.ed}/shipping-fees.json`));
+-  const r = rows.find(x => String(field(x, ['location'])) === loc);
+-  return Number(field(r, ['feeMinor', 'fee'])) || 0;
+-}
+-
+-function emailOf(T, customerId) {
+-  const rows = rowsOf(load(T.ctx, 'master/customers.json'));
+-  const r = rows.find(x => String(field(x, ['customerId'])) === String(customerId));
+-  return field(r, ['email']) || customerId;
+-}
+-
+-function meaningOf(T, c, code) {
+-  const rows = rowsOf(load(T.ctx, `rulebook/${c.ed}/carrier-codes.json`));
+-  for (const r of rows) {
+-    const k = field(r, ['code', 'carrierCode']);
+-    if (k !== undefined && String(k) === String(code)) {
+-      const m = field(r, ['meaning', 'status', 'means', 'kind']);
+-      if (MEANINGS.includes(String(m))) return String(m);
+-    }
++function feeMap(ctx, dir) {
++  const m = {};
++  for (const r of rows(load(ctx, `rulebook/${dir}/shipping-fees.json`))) {
++    m[String(firstOf(r, ['location', '_key']))] = Number(firstOf(r, ['feeMinor', 'fee', '_value'])) || 0;
+   }
+-  return 'info';
+-}
+-
+-function openOf(T, subject) {
+-  const list = T.ctx.instances({ subject }) || [];
+-  return list.map(x => (typeof x === 'string' ? x : x.instance ?? x.id)).filter(Boolean);
+-}
+-
+-function queryRows(T, table, where) {
+-  const r = T.ctx.query(table, { where });
+-  return Array.isArray(r) ? r : (r && r.rows) || [];
+-}
+-
+-function errCode(err) {
+-  if (!err) return '';
+-  return typeof err === 'string' ? err : err.code || '';
++  return m;
+ }
+ 
+-function isInvalid(err) {
+-  return INVALID.includes(errCode(err)) || (err && typeof err === 'object' && err.status === 400);
++function codeMap(ctx, dir) {
++  const m = {};
++  for (const r of rows(load(ctx, `rulebook/${dir}/carrier-codes.json`))) {
++    const meaning = firstOf(r, ['meaning', 'kind', 'status', '_value']);
++    m[String(firstOf(r, ['code', '_key']))] = typeof meaning === 'string' ? meaning : 'info';
++  }
++  return m;
+ }
+ 
+-function pending(c) {
+-  return Object.values(c.k).some(v => v[3] === 'pend');
++function emailOf(ctx, cust) {
++  const r = rows(load(ctx, 'master/customers.json')).find(x => String(firstOf(x, ['customerId', '_key'])) === cust);
++  return r ? firstOf(r, ['email']) : undefined;
+ }
+ 
+-const STEP_TAGS = ['rsv', 'chg', 'shp', 'shpc', 'ref', 'rel'];
+-
+-function stepPending(c, fid) {
+-  return Object.values(c.k).some(v => v[1] === fid && STEP_TAGS.includes(v[0]) && v[3] === 'pend');
++// ---------- state ----------
++function newState(oid, p) {
++  return {
++    v: 1, oid, ph: 'new', p, ed: null, pol: null, D: null, cust: null, em: null, cur: null, items: [],
++    fl: [], tot: 0, fr: null, rv: null, cl: null, ac: [], stopped: false, oend: false,
++    os: {}, ek: {}, nt: {}, tk: {}, ob: {},
++  };
+ }
+ 
+-// ---------- routing of the first tick ----------
++// Keys: one per logical effect, derived from ids only.
++const fk = (C, F, suffix) => `${C.oid}|${F.id}|${suffix}`;
+ 
+-function route(T, input, ev) {
+-  const e = ev.find(x => ['order.placed', 'customer.action', 'carrier.status'].includes(x.type)) || ev[0];
+-  const done = (subject, extra) => ({ decisions: { subject }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], carry: {}, ...extra });
+-  if (!e || e.type === 'migration') return null;
+-  if (e.type === 'order.placed') {
+-    const o = norm(e.payload && e.payload.orderId);
+-    const open = openOf(T, o).filter(i => i !== input.instance);
+-    if (open.length) return done(o, { merge: { into: open[0] } });
+-    if (queryRows(T, 'orders.orders', { orderId: o }).length) return done(o, { close: true });
+-    return null;
+-  }
+-  if (e.type === 'customer.action') {
+-    const o = norm(e.payload && e.payload.orderRef);
+-    const open = openOf(T, o).filter(i => i !== input.instance);
+-    if (open.length) return done(o, { merge: { into: open[0] } });
+-    const known = queryRows(T, 'orders.orders', { orderId: o }).length > 0;
+-    return done(known ? o : null, { close: true });
+-  }
+-  if (e.type === 'carrier.status') {
+-    const fid = String((e.payload && e.payload.fulfilmentRef) || '').trim();
+-    const o = (queryRows(T, 'orders.fulfilments', { fulfilmentId: fid })[0] || {}).orderId ?? null;
+-    const open = o ? openOf(T, o).filter(i => i !== input.instance) : [];
+-    if (open.length) return done(o, { merge: { into: open[0] } });
+-    return done(o, { close: true });
++// fitArgs: the api schema in ctx.files carries the current field names (a rename may be active).
++// Our names missing from the schema are mapped to the schema's unclaimed names, by substring
++// match first and by position when exactly one is left.
++function fitArgs(w, sys, op, args) {
++  if (!w.sch) w.sch = {};
++  if (!(sys in w.sch)) w.sch[sys] = load(w.ctx, `api/${sys}.schema.json`) || null;
++  const props = w.sch[sys] && w.sch[sys].ops && w.sch[sys].ops[op] && w.sch[sys].ops[op].args
++    ? w.sch[sys].ops[op].args.properties : undefined;
++  if (!props) return args;
++  const have = Object.keys(args);
++  let missing = have.filter(k => !(k in props));
++  if (!missing.length) return args;
++  const norm = s => s.toLowerCase().replace(/[^a-z]/g, '');
++  let free = Object.keys(props).filter(k => !have.includes(k));
++  const out = { ...args };
++  for (const m of missing) {
++    const pick = free.find(f => norm(f).includes(norm(m)) || norm(m).includes(norm(f)));
++    if (pick === undefined) continue;
++    out[pick] = args[m];
++    delete out[m];
++    free = free.filter(f => f !== pick);
++  }
++  missing = Object.keys(out).filter(k => !(k in props));
++  if (missing.length === 1 && free.length === 1) {
++    out[free[0]] = out[missing[0]];
++    delete out[missing[0]];
+   }
+-  return done(null, { close: true });
++  return out;
+ }
+ 
+-// ---------- carry ----------
+-
+-function newCarry(T, e) {
+-  // Migration payloads may nest the order fields, so look each one up anywhere in the payload.
+-  const pl = (e && e.payload) || {};
+-  const p = (k) => findKey(pl, k);
+-  const o = norm(p('orderId'));
+-  const placed = p('placedAt') || e.at;
+-  const ed = editionAt(T.ctx, placed);
+-  const c = {
+-    o, p: placed, cu: p('customerId'), cur: p('currency'), it: p('items') || [], ed,
+-    R: 0, A: 0, em: null, al: null, fd: null, rec: 'no', fr: null, cl: null,
+-    ph: 'intake', D: null, act: null, ost: 'pending', stop: null, f: {}, k: {}, tries: {}, ob: [],
+-  };
+-  c.R = policy(T, c, 'fraudReviewHours');
+-  c.A = policy(T, c, 'customerActionHours');
+-  c.em = emailOf(T, c.cu);
+-  return c;
+-}
+-
+-// ---------- events ----------
+-
+-function handle(T, c, e) {
+-  const at = Date.parse(e.at);
+-  // An effect.result carries its fields at top level or inside payload; accept either.
+-  if (e.type === 'effect.result') return result(T, c, Object.assign({}, e, e.payload || {}));
+-  if (e.type === 'customer.action') return action(T, c, e, at);
+-  if (e.type === 'carrier.status') return carrier(T, c, e, at);
+-  if (e.type && e.type.startsWith('humanTask.') && c.fr) return task(T, c, e, at);
+-}
+-
+-// The batch reserve is unkeyed (its items carry the keys), so it is tracked per fulfilment.
+-function batchKey(c, e) {
+-  const its = Array.isArray(e.items) ? e.items : [];
+-  const hit = its.find(x => x && typeof x.key === 'string' && x.key.startsWith(`${c.o}:ri:`));
+-  if (hit) return `~inventory.reserve|${hit.key.slice(c.o.length + 4).split(':')[0]}`;
+-  const pend = Object.keys(c.k).filter(k => k.startsWith('~inventory.reserve|') && c.k[k][3] === 'pend');
+-  return pend.length === 1 ? pend[0] : '';
+-}
+-
+-function result(T, c, e) {
+-  // Unkeyed effects are matched by system.op, whatever key the platform echoes back.
+-  let kk = c.k[e.key] ? e.key : `~${e.system}.${e.op}`;
+-  if (e.op === 'reserve') kk = batchKey(c, e);
+-  const m = c.k[kk];
+-  if (!m) return;
+-  const [tag, fid, sub] = m;
+-  const f = fid ? c.f[fid] : null;
+-  const ok = e.status === 'ok';
+-  const code = errCode(e.error);
+-  if (!ok && tag !== 'rsv' && (tag === 'alloc' || tag === 'fraud' || tag === 'create' || isInvalid(e.error))) {
+-    c.tries[tag] = (c.tries[tag] || 0) + 1;
+-    if (c.tries[tag] <= MAX_TRIES) { delete c.k[kk]; return; }
+-  }
+-  m[3] = ok ? 'ok' : 'err';
+-  const body = e.items ?? e.result ?? e.output ?? e.value;
+-  switch (tag) {
+-    case 'alloc':
+-      if (ok) plan(T, c, body);
+-      return;
+-    case 'fraud': {
+-      const v = body && typeof body === 'object' ? (body.verdict ?? body) : body;
+-      c.fd = v === 'pass' ? 'pass' : v === 'reject' ? 'reject' : 'review';
+-      if (c.fd === 'pass') c.cl = c.p;
+-      if (c.fd === 'reject') c.stop = 'fraud';
+-      return;
+-    }
+-    case 'create':
+-      if (ok) c.rec = 'ok';
+-      return;
+-    case 'rsv':
+-      rsvResult(c, f, e);
+-      // Items still to submit: drop the batch entry so the next drive resubmits them with their own keys.
+-      if (f.items.some(it => f.rsv[it.sku] === 'no')) delete c.k[kk];
+-      return;
+-    case 'chg':
+-      if (ok) f.chg = 'ok';
+-      else f.chg = code === 'card-declined' || (e.error && e.error.status === 402) ? 'declined' : 'bad';
+-      return;
+-    case 'shp':
+-      f.shp = ok ? 'ok' : 'bad';
+-      return;
+-    case 'shpc':
+-      f.shpc = ok ? 'ok' : 'refused';
+-      return;
+-    case 'ref':
+-      f.ref = ok ? 'ok' : 'bad';
+-      return;
+-    case 'rel':
+-      f.rel[sub] = ok ? 'ok' : 'bad';
+-      return;
+-    default:
+-      return;
++// emit: one output effect plus the tracking entry used to read its result.
++function emit(w, sys, op, args, key, meta = {}) {
++  const prev = w.C.ek[key];
++  w.out.effects.push({ key, system: sys, op, args: fitArgs(w, sys, op, args) });
++  w.C.ek[key] = { s: sys, r: null, p: false, c: null, n: prev ? (prev.n || 0) + 1 : 0, ...meta };
++}
++
++// track: a tracking entry without its own effect (per-item keys of a batch reserve).
++function track(w, key, sys) {
++  const prev = w.C.ek[key];
++  w.C.ek[key] = { s: sys, r: null, p: false, c: null, n: prev ? (prev.n || 0) + 1 : 0, t: 'it' };
++}
++
++// settle: 'none' not emitted, 'pend' in flight, 'ok' committed, 'no' not committed.
++function settle(w, key) {
++  const e = w.C.ek[key];
++  if (!e) return 'none';
++  if (e.r === 'ok') return 'ok';
++  if (e.r === 'err') return 'no';
++  let st = 'pending';
++  try { st = w.ctx.status(e.s, key); } catch { /* status unreadable: keep waiting */ }
++  if (st === 'committed') return 'ok';
++  if (e.r === 'unk' && st === 'not-found') return 'no';
++  return 'pend';
++}
++
++const invalidArgs = e => /invalid|renamed|400/.test(e.c || '');
++
++// A failure is permanent when the platform says so (retryable: false) or when it is a
++// declined card (402, permanent by the api). Anything else may be re-issued (R4.2, R5.2).
++const permanent = (retryable, code) => retryable === false || /declined/.test(code || '');
++
++// run1: emit a keyed step once; re-issue it (same key, same args) only after a 400 or an
++// unknown outcome that did not commit. Returns 'pend' | 'ok' | 'no' | 'fail' | 'none'.
++function run1(w, key, sys, op, args, meta, go) {
++  const e = w.C.ek[key];
++  if (!e) {
++    if (!go) return 'none';
++    emit(w, sys, op, args, key, meta);
++    return 'pend';
++  }
++  const s = settle(w, key);
++  if (s !== 'no') return s;
++  if (e.p && !invalidArgs(e)) return 'fail';
++  if (go && e.n < 3) {
++    emit(w, sys, op, args, key, meta);
++    return 'pend';
++  }
++  return 'fail';
++}
++
++function planOf(x) {
++  return Array.isArray(x) ? x : (x && Array.isArray(x.fulfilments) ? x.fulfilments : []);
++}
++
++// itemResult: the outcome of one item of a batch reserve (a batch op keys its items, not the batch).
++function itemResult(C, k, ent, st, err, retry) {
++  const ie = C.ek[k];
++  const es = ent ? ent.status : undefined;
++  if (st === 'ok' || es === 'ok' || es === 'committed') {
++    ie.r = 'ok';
++    ie.p = false;
++  } else if (st === 'error' || es === 'error') {
++    const ec = ent && ent.error ? ent.error : err;
++    ie.r = 'err';
++    ie.c = ec && typeof ec === 'object' ? String(ec.code ?? '') : String(ec ?? '');
++    const eCode = ec && typeof ec === 'object' ? String(ec.code ?? '') : String(ec ?? '');
++    ie.p = permanent(ent ? (ent.retryable ?? (ent.error && ent.error.retryable)) : retry, eCode);
++  } else {
++    ie.r = 'unk';
+   }
+ }
+ 
+-function plan(T, c, items) {
+-  const rows = Array.isArray(items) ? items : (items && items.fulfilments) || [];
+-  c.f = {};
+-  for (const r of rows) {
+-    const fid = String(r.fulfilmentId);
+-    const avail = r.location !== null && r.location !== undefined && r.available !== false;
+-    const loc = avail ? String(r.location) : null;
+-    const its = (r.items || []).map(i => ({ sku: String(i.sku), qty: Number(i.qty) }));
+-    const amt = its.reduce((s, i) => s + i.qty * priceOf(T, i.sku), 0) + feeOf(T, c, loc);
+-    c.f[fid] = {
+-      id: fid, loc, avail, items: its, amt, st: avail ? 'pending' : 'unavailable',
+-      rsv: Object.fromEntries(its.map(i => [i.sku, 'no'])), rel: {},
+-      chg: 'no', shp: 'no', shpc: 'no', ref: 'no', coll: null, cd: false, cf: false, dl: false, fail: false,
+-    };
++// onResult: an effect.result. A batch reserve has no key of its own, so its result is matched
++// by item key; without item detail the pending items defer to status(key).
++function onResult(w, P) {
++  const C = w.C;
++  const err = P.error;
++  const code = err && typeof err === 'object' ? String(err.code ?? '') : String(err ?? '');
++  const retry = P.retryable ?? (err && typeof err === 'object' ? err.retryable : undefined);
++  const perm = permanent(retry, code);
++  const st = P.status;
++  const e = C.ek[P.key];
++  if (!e) {
++    const keys = (P.items || []).map(x => x && x.key).filter(k => k && C.ek[k] && C.ek[k].t === 'it');
++    if (keys.length) {
++      for (const k of keys) itemResult(C, k, (P.items || []).find(x => x && x.key === k), st, err, retry);
++    } else {
++      for (const k of Object.keys(C.ek)) if (C.ek[k].t === 'it' && C.ek[k].r == null) C.ek[k].r = 'unk';
++    }
++    return;
+   }
+-  c.al = Object.keys(c.f);
+-}
+-
+-function rsvResult(c, f, e) {
+-  const n = (c.tries['rsv' + f.id] = (c.tries['rsv' + f.id] || 0) + 1);
+-  for (const it of f.items) {
+-    if (f.rsv[it.sku] === 'ok') continue;
+-    const ik = `${c.o}:ri:${f.id}:${it.sku}`;
+-    const r = Array.isArray(e.items) ? e.items.find(x => x && x.key === ik) : undefined;
+-    if (e.status === 'ok' || (r && r.status === 'ok')) { f.rsv[it.sku] = 'ok'; continue; }
+-    const rc = r ? r.error : e.error;
+-    // Items the batch did not process committed nothing: resubmit them with their original keys.
+-    const retry = isInvalid(rc) || errCode(rc) === 'batch-item-not-processed'
+-      || (!r && e.status === 'partial') || (r && !rc && r.status === 'partial');
+-    f.rsv[it.sku] = retry && n <= MAX_TRIES ? 'no' : 'bad';
++  e.r = st === 'ok' ? 'ok' : st === 'error' ? 'err' : 'unk';
++  e.p = perm;
++  e.c = code;
++  if (st === 'ok' && e.t === 'al') e.plan = [P.result, P.items, P].find(x => x && typeof x === 'object' && (Array.isArray(x) || Array.isArray(x.fulfilments)));
++  if (st === 'ok' && e.t === 'fr') {
++    const b = [P.result, P.items, P].find(x => x && typeof x === 'object' && 'verdict' in x);
++    if (b && ['pass', 'review', 'reject'].includes(b.verdict)) C.fr = b.verdict;
+   }
+ }
+ 
+-function action(T, c, e, at) {
+-  const pl = e.payload || {};
+-  if (c.ph === 'intake') {
+-    if (pl.action === 'cancel' && !c.stop) c.stop = 'customer';
+-    return;
+-  }
+-  if (c.ph === 'wait' && !c.act && at <= Date.parse(c.D)) {
+-    c.act = pl.action === 'amend' ? 'amend' : 'cancel';
+-    if (c.act === 'cancel') c.stop = 'customer';
++// ---------- inbound events ----------
++const isPlaced = P => 'orderId' in P && 'items' in P && 'customerId' in P;
++const isAction = P => 'orderRef' in P && 'action' in P;
++const isCarrier = P => 'fulfilmentRef' in P && 'code' in P;
++
++function applyEvent(w, e) {
++  const C = w.C;
++  const P = e.payload || {};
++  if (e.type === 'effect.result') return onResult(w, P);
++  if (e.type === 'humanTask.answered') return onAnswer(C, e, P);
++  if (e.type === 'humanTask.answerRejected' || e.type === 'humanTask.withdrawn') {
++    if (C.rv) C.rv.reask = true;
+     return;
+   }
+-  if (c.ph === 'proc' && pl.action === 'cancel' && !c.stop) {
+-    const refused = Object.values(c.f).some(f => f.coll !== null && f.coll <= at);
+-    if (refused) {
+-      return notify(T, c, 'cancel-refused', null, c.em, 'Your order can no longer be cancelled: it has been collected for shipping.');
++  if (isPlaced(P)) {
++    if (C.cust == null) {
++      C.cust = String(P.customerId);
++      C.cur = String(P.currency);
++      C.items = P.items.map(i => ({ sku: String(i.sku), qty: Number(i.qty) }));
++      C.em = emailOf(w.ctx, C.cust) ?? null;
+     }
+-    c.stop = 'customer';
+-  }
+-}
+-
+-function carrier(T, c, e, at) {
+-  const p = e.payload || {};
+-  const f = c.f[String(p.fulfilmentRef || '').trim()];
+-  if (!f || TERM.includes(f.st) || f.st === 'unavailable') return;
+-  const mean = meaningOf(T, c, p.code);
+-  const t = Date.parse(p.reportedAt || e.at) || at;
+-  if (['collected', 'inTransit', 'delivered'].includes(mean)) {
+-    f.coll = f.coll === null ? t : Math.min(f.coll, t);
+-    if (mean !== 'inTransit') f.cd = true;
+-    if (mean === 'delivered') f.dl = true;
+-  } else if (mean === 'collectionFailed' && f.coll === null) {
+-    f.cf = true;
+-    f.fail = true;
+-  }
+-}
+-
+-function task(T, c, e, at) {
+-  // A rejected or withdrawn task is asked again (same deadline); timeout and delegation change nothing here.
+-  if (e.type === 'humanTask.answerRejected' || e.type === 'humanTask.withdrawn') {
+-    c.fr.redo = true;
+     return;
+   }
+-  if (e.type !== 'humanTask.answered') return;
+-  const pl = e.payload || {};
+-  const raw = pl.answer !== undefined ? pl.answer : pl;
+-  const d = typeof raw === 'string' ? raw : raw && raw.decision;
+-  if (!c.fr.ans && c.fd === 'review' && (d === 'approve' || d === 'reject') && at <= c.fr.due) {
+-    c.fr.ans = { d, at };
+-    if (d === 'approve') c.cl = isoAms(at);
+-    else c.stop = 'fraud';
+-  } else if (!c.fr.ans) {
+-    c.fr.redo = true;
++  if (isAction(P)) {
++    const t = T(e.at);
++    if (!C.ac.some(a => a.t === t && a.a === String(P.action))) C.ac.push({ t, a: String(P.action), u: false });
++    return;
+   }
++  if (isCarrier(P)) return onCarrier(w, e, P);
+ }
+ 
+-// ---------- effects ----------
+-
+-// Field names follow the live api schema in ctx.files (a system may rename a field mid-run).
+-const norm2 = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+-const tokens = s => String(s).replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+-
+-function renamedTo(props, k, args) {
+-  const have = Object.keys(props);
+-  const free = have.filter(h => !(h in args));
+-  const byNorm = free.find(h => norm2(h) === norm2(k));
+-  if (byNorm) return byNorm;
+-  const byNote = free.find(h => [].concat(props[h].renamedFrom || [], props[h].formerly || []).includes(k));
+-  if (byNote) return byNote;
+-  const kt = tokens(k);
+-  let best = null;
+-  let bestScore = 0;
+-  for (const h of free) {
+-    const ht = tokens(h);
+-    const score = kt.filter(t => ht.includes(t)).length;
+-    if (score > bestScore) { best = h; bestScore = score; }
++function onAnswer(C, e, P) {
++  const rv = C.rv;
++  if (!rv) return;
++  const ans = P.answer ?? P.value ?? P;
++  const d = ans && typeof ans === 'object' ? ans.decision : undefined;
++  if ((d === 'approve' || d === 'reject') && !rv.ans) rv.ans = { d, t: T(e.at) };
++  else if (d !== 'approve' && d !== 'reject') rv.reask = true;
++}
++
++function codeMeaning(w, code) {
++  if (!w.codes) w.codes = codeMap(w.ctx, w.C.ed);
++  return w.codes[String(code)] || 'info';
++}
++
++function onCarrier(w, e, P) {
++  const F = w.C.fl.find(f => f.id === String(P.fulfilmentRef).trim());
++  if (!F) return;
++  const m = codeMeaning(w, P.code);
++  const t = T(P.reportedAt ?? e.at);
++  if (m === 'collected' || m === 'inTransit' || m === 'delivered') F.coll = F.coll == null ? t : Math.min(F.coll, t);
++  if (FINAL.has(F.st) || F.xs) return;
++  if (m === 'collectionFailed') {
++    F.cfl = true;
++    return failFul(w, F, 'collection');
++  }
++  if (m === 'collected') return setFul(w, F, 'dispatched');
++  if (m === 'delivered') {
++    setFul(w, F, 'dispatched');
++    setFul(w, F, 'completed');
+   }
+-  return best;
+ }
+ 
+-function adapt(T, system, op, args) {
+-  const sch = load(T.ctx, `api/${system}.schema.json`);
+-  const a = sch && sch.ops && sch.ops[op] && sch.ops[op].args;
+-  if (!a || !a.properties) return args;
+-  const props = a.properties;
+-  const out = {};
+-  for (const [k, v] of Object.entries(args)) {
+-    if (k in props) out[k] = v;
+-    else {
+-      const nk = renamedTo(props, k, out);
+-      out[nk || k] = v;
+-    }
+-  }
+-  const itp = props.items && props.items.items && props.items.items.properties;
+-  if (Array.isArray(out.items) && itp) {
+-    out.items = out.items.map(it => {
+-      const r = {};
+-      for (const [k, v] of Object.entries(it)) {
+-        if (k in itp) r[k] = v;
+-        else r[renamedTo(itp, k, r) || k] = v;
+-      }
+-      return r;
+-    });
++// migration (R3.5): an order already in flight. Its state is read back from the records, and the
++// steps those records show as committed are marked so they are not issued again.
++function rebuild(w, oid, e) {
++  const ctx = w.ctx;
++  const q = (table, where) => {
++    try { return ctx.query(table, { where, limit: 1000 }) || []; } catch { return []; }
++  };
++  const [o] = q('orders.orders', { orderId: oid });
++  if (!o) return false;
++  const C = newState(oid, T(o.placedAt ?? e.at));
++  C.cust = String(o.customerId);
++  C.cur = String(o.currency);
++  C.items = (o.items || []).map(i => ({ sku: String(i.sku), qty: Number(i.qty) }));
++  C.em = emailOf(ctx, C.cust) ?? null;
++  w.C = C;
++  initRules(w);
++  C.tot = Number(o.totalMinor) || 0;
++  C.fl = q('orders.fulfilments', { orderId: oid }).map(r => {
++    const loc = r.location ?? null;
++    const F = {
++      id: String(r.fulfilmentId), loc, av: loc !== null,
++      items: (r.items || []).map(i => ({ sku: String(i.sku), qty: Number(i.qty) })),
++      amt: Number(r.amountMinor) || 0, st: r.status, resOk: false, na: 0, fail: null, cfl: false, coll: null, xs: false,
++    };
++    const held = q('inventory.reservations', { fulfilmentId: F.id }).filter(x => x.status === 'active');
++    for (const it of F.items) {
++      if (held.some(x => x.sku === it.sku)) C.ek[fk(C, F, `r|${it.sku}`)] = { s: 'inventory', r: 'ok', p: false, c: null, n: 0, t: 'it' };
++    }
++    F.resOk = F.items.every(it => held.some(x => x.sku === it.sku));
++    if (q('billing.charges', { fulfilmentId: F.id }).length) C.ek[fk(C, F, 'ch')] = { s: 'billing', r: 'ok', p: false, c: null, n: 0, t: 'ch' };
++    const [sh] = q('carrier.shipments', { fulfilmentId: F.id });
++    if (sh) {
++      C.ek[fk(C, F, 'sh')] = { s: 'carrier', r: 'ok', p: false, c: null, n: 0, t: 'sh' };
++      if (['collected', 'inTransit', 'delivered'].includes(sh.status)) F.coll = 0;
++      if (sh.status === 'cancelled') F.xs = true;
++      if (sh.status === 'failed') F.cfl = true;
++    }
++    if (F.st === 'failed') F.fail = { why: 'migrated' };
++    return F;
++  });
++  C.os[o.status] = true;
++  if (['completed', 'failed', 'cancelled', 'timedOut'].includes(o.status)) {
++    C.oend = true;
++    C.ph = 'end';
++  } else if (o.status === 'customerActionRequired') {
++    C.ph = 'wait';
++    C.cl = C.p;
++    C.nt[`${oid}|n|action-required|${oid}`] = true;
++  } else if (o.status === 'processing') {
++    C.ph = 'proc';
++    C.cl = C.p;
++    for (const F of C.fl) if (F.av && F.st === 'pending') setFul(w, F, 'processing');
++  } else {
++    C.ph = 'fraud';
++    C.ek[`${oid}|alloc`] = { s: 'inventory', r: 'ok', p: false, c: null, n: 0, t: 'al' };
++    C.ek[`${oid}|create`] = { s: 'orders', r: 'ok', p: false, c: null, n: 0, t: 'cr' };
+   }
+-  return out;
++  return true;
+ }
+ 
+-function send(T, c, tag, fid, sub, system, op, args, keyed = true) {
+-  const key = keyed ? `${c.o}:${tag}:${fid || '-'}:${sub || '-'}` : `~${system}.${op}`;
+-  if (c.k[key]) return false;
+-  const e = { system, op, args: adapt(T, system, op, args) };
+-  if (keyed) e.key = key;
+-  T.fx.push(e);
+-  c.k[key] = [tag, fid || null, sub || null, 'pend'];
+-  return true;
++// Routing for the first tick of an instance (no carry yet). Returns an output or null.
++function route(w, events) {
++  for (const e of events) {
++    const P = e.payload || {};
++    if (e.type === 'migration') {
++      const oid = normId(P.orderId ?? P.orderRef);
++      if (!oid) continue;
++      const other = openFor(w, oid)[0];
++      if (other) return mergeInto(oid, other);
++      if (!rebuild(w, oid, e)) return closeOut(null);
++      return w.C.oend ? closeOut(oid) : null;
++    }
++    if (isPlaced(P)) {
++      const oid = normId(P.orderId);
++      const other = openFor(w, oid)[0];
++      if (other) return mergeInto(oid, other);
++      if (recorded(w, oid)) return closeOut(oid);
++      w.C = newState(oid, T(e.at));
++      return null;
++    }
++    if (isAction(P)) {
++      const oid = normId(P.orderRef);
++      const other = openFor(w, oid)[0];
++      if (other) return mergeInto(oid, other);
++      return closeOut(recorded(w, oid) ? oid : null);
++    }
++    if (isCarrier(P)) {
++      const oid = orderOfFulfilment(w, String(P.fulfilmentRef).trim());
++      const other = oid ? openFor(w, oid)[0] : undefined;
++      if (other) return mergeInto(oid, other);
++      return closeOut(oid);
++    }
++  }
++  return closeOut(null);
++}
++
++function openFor(w, oid) {
++  let l = [];
++  try { l = w.ctx.instances({ subject: oid }) || []; } catch { l = []; }
++  return l.map(x => (typeof x === 'string' ? x : x?.instance ?? x?.id)).filter(x => x && x !== w.instance);
++}
++
++function recorded(w, oid) {
++  try { return (w.ctx.query('orders.orders', { where: { orderId: oid }, limit: 1 }) || []).length > 0; } catch { return false; }
++}
++
++function orderOfFulfilment(w, fid) {
++  try {
++    const r = w.ctx.query('orders.fulfilments', { where: { fulfilmentId: fid }, limit: 1 }) || [];
++    return r[0] ? normId(r[0].orderId) : null;
++  } catch { return null; }
++}
++
++const emptyOut = () => ({ decisions: { subject: null }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [] });
++const mergeInto = (oid, into) => ({ ...emptyOut(), decisions: { subject: oid }, merge: { into }, carry: { v: 1, merged: true } });
++const closeOut = oid => ({ ...emptyOut(), decisions: { subject: oid }, close: true, carry: { v: 1, closed: true } });
++
++function initRules(w) {
++  const C = w.C;
++  const ed = pickEdition(w.ctx, C.p);
++  C.ed = ed ? ed.dir : null;
++  const pol = (C.ed && load(w.ctx, `rulebook/${C.ed}/policy.json`)) || {};
++  C.pol = { fh: Number(pol.fraudReviewHours) || 0, ca: Number(pol.customerActionHours) || 0 };
++  C.D = C.p + C.pol.ca * 60 * MIN;
++}
++
++// ---------- fulfilments and order statuses ----------
++function buildFulfilments(w, plan) {
++  const C = w.C;
++  const price = priceMap(w.ctx);
++  const fee = C.ed ? feeMap(w.ctx, C.ed) : {};
++  C.fl = plan.map(f => {
++    const loc = f.location ?? null;
++    const av = loc !== null;
++    const items = (f.items || []).map(i => ({ sku: String(i.sku), qty: Number(i.qty) }));
++    const amt = items.reduce((s, i) => s + i.qty * (price[i.sku] || 0), 0) + (av ? (fee[loc] || 0) : 0);
++    return { id: String(f.fulfilmentId), loc, av, items, amt, st: av ? 'pending' : 'unavailable',
++      resOk: false, na: 0, fail: null, cfl: false, coll: null, xs: false };
++  });
++  C.tot = C.fl.reduce((s, F) => s + F.amt, 0);
+ }
+ 
+-function setOrd(T, c, status) {
+-  if (c.ost === status) return;
+-  c.ost = status;
+-  send(T, c, 'os', null, status, 'orders', 'setStatus', { orderId: c.o, fulfilmentId: null, status });
++// R1.1 record: the order and its fulfilments as allocated, with the amounts of R1.2.
++function createArgs(C) {
++  return {
++    orderId: C.oid, customerId: C.cust, placedAt: isoAms(C.p), currency: C.cur, items: C.items,
++    fulfilments: C.fl.map(F => ({ fulfilmentId: F.id, location: F.loc, items: F.items, amountMinor: F.amt })),
++    totalMinor: C.tot,
++  };
+ }
+ 
+-function setF(T, c, f, status) {
+-  if (f.st === status || TERM.includes(f.st)) return;
+-  f.st = status;
+-  send(T, c, 'fs', f.id, status, 'orders', 'setStatus', { orderId: c.o, fulfilmentId: f.id, status });
++function setFul(w, F, s) {
++  if (F.st === s || FINAL.has(F.st) || FUL_ORDER.indexOf(s) <= FUL_ORDER.indexOf(F.st)) return;
++  F.st = s;
++  emit(w, 'orders', 'setStatus', { orderId: w.C.oid, fulfilmentId: F.id, status: s }, `${w.C.oid}|f|${F.id}|${s}`);
++}
++
++function setOrd(w, s) {
++  const C = w.C;
++  if (C.os[s] || C.oend) return;
++  C.os[s] = true;
++  if (['completed', 'failed', 'cancelled', 'timedOut'].includes(s)) C.oend = true;
++  emit(w, 'orders', 'setStatus', { orderId: C.oid, fulfilmentId: null, status: s }, `${C.oid}|o|${s}`);
++}
++
++function notify(w, template, about, text, suffix = '') {
++  const C = w.C;
++  const key = `${C.oid}|n|${template}|${about}${suffix}`;
++  if (C.nt[key]) return;
++  C.nt[key] = true;
++  emit(w, 'notify', 'send', { to: C.em || C.cust || 'unknown', about, template, text }, key);
++}
++
++function failFul(w, F, why) {
++  if (F.fail || FINAL.has(F.st)) return;
++  F.fail = { why };
++  setFul(w, F, 'failed');
++  notify(w, 'fulfilment-failed', F.id, `Fulfilment ${F.id} of order ${w.C.oid} could not be completed (${why}).`);
++}
++
++// R6.1 (also R6.2 once the order is stopped): nothing of the order is left to ship.
++function cancelOrder(w, reason) {
++  const C = w.C;
++  for (const F of C.fl) if (!FINAL.has(F.st)) setFul(w, F, 'cancelled');
++  setOrd(w, 'cancelled');
++  notify(w, 'order-cancelled', C.oid, `Your order ${C.oid} was cancelled (${reason}).`);
++  C.stopped = true;
++  C.ph = 'end';
++}
++
++// R3.2: nothing counted by D.
++function timeOut(w) {
++  const C = w.C;
++  for (const F of C.fl) if (!FINAL.has(F.st)) setFul(w, F, 'cancelled');
++  setOrd(w, 'timedOut');
++  notify(w, 'order-timed-out', C.oid, `Your order ${C.oid} timed out: no change was requested in time.`);
++  C.ph = 'end';
++}
++
++function startProcessing(w) {
++  const C = w.C;
++  setOrd(w, 'processing');
++  for (const F of C.fl) if (F.av) setFul(w, F, 'processing');
++  C.ph = 'proc';
++}
++
++// R2 / R2.2: the order is cleared at t.
++function clearOrder(w, t) {
++  const C = w.C;
++  C.cl = t;
++  if (C.fl.some(F => !F.av)) {
++    setOrd(w, 'customerActionRequired');
++    notify(w, 'action-required', C.oid, `Some items of order ${C.oid} are unavailable. Reply by ${isoAms(C.D)} to amend or cancel.`);
++    C.ph = 'wait';
++  } else {
++    startProcessing(w);
++  }
+ }
+ 
+-function notify(T, c, template, fid, to, text) {
+-  return send(T, c, 'n', fid, template, 'notify', 'send', {
+-    to, about: fid || c.o, template, text,
++// R3.2 amend: drop the unavailable fulfilments; the rest is ready at t.
++function amend(w) {
++  const C = w.C;
++  for (const F of C.fl) if (!F.av) setFul(w, F, 'cancelled');
++  if (!C.fl.some(F => F.av)) return cancelOrder(w, 'nothing-available');
++  startProcessing(w);
++}
++
++function openTask(w) {
++  const C = w.C;
++  const rv = C.rv;
++  const id = `${C.oid}-rv${rv.n}`;
++  if (C.tk[id]) return;
++  C.tk[id] = true;
++  w.out.humanTasks.push({
++    id, kind: 'fraudReview', role: 'fraudAnalyst', subject: C.oid,
++    question: `Fraud review of order ${C.oid}: approve or reject.`,
++    answerSchema: {
++      type: 'object', required: ['decision'], additionalProperties: false,
++      properties: { decision: { type: 'string', enum: ['approve', 'reject'] } },
++    },
++    dueAt: isoAms(rv.dl), onTimeout: 'cancel',
+   });
+ }
+ 
+-// ---------- the driver ----------
+-
+-function drive(T, c) {
+-  const { now } = T;
+-  if (c.al === null) send(T, c, 'alloc', null, null, 'inventory', 'allocate', { orderId: c.o }, false);
+-  if (c.fd === null) send(T, c, 'fraud', null, null, 'fraud', 'check', { orderId: c.o }, false);
+-  if (c.al && c.rec === 'no') {
+-    const fs = Object.values(c.f);
+-    send(T, c, 'create', null, null, 'orders', 'create', {
+-      orderId: c.o, customerId: c.cu, placedAt: c.p, currency: c.cur, items: c.it,
+-      fulfilments: fs.map(f => ({ fulfilmentId: f.id, location: f.loc, items: f.items, amountMinor: f.amt })),
+-      totalMinor: fs.reduce((s, f) => s + f.amt, 0),
+-    });
+-  }
+-  if (c.rec !== 'ok') return;
+-
+-  // R2 fraud review
+-  if (c.fd === 'review' && !c.fr && !c.stop) {
+-    c.fr = { n: 1, emitted: 0, due: now + c.R * 60 * MIN, ans: null, redo: false };
+-  }
+-  if (c.fr && !c.fr.ans && c.fd === 'review' && !c.stop) {
+-    if (now > c.fr.due) c.stop = 'fraud-review-timeout';
+-    else {
+-      if (c.fr.redo) { c.fr.n += 1; c.fr.redo = false; }
+-      if (c.fr.emitted < c.fr.n) {
+-        c.fr.emitted = c.fr.n;
+-        T.ht.push({
+-          id: `${c.o}:fr${c.fr.n}`, kind: 'fraudReview', role: 'fraudAnalyst', subject: c.o,
+-          question: `Review order ${c.o} and answer approve or reject.`,
+-          answerSchema: { type: 'object', required: ['decision'], properties: { decision: { enum: ['approve', 'reject'] } } },
+-          dueAt: isoAms(c.fr.due), onTimeout: 'fraudReviewTimeout',
+-        });
+-      }
+-      obligation(T, c, `${c.o}:fr`, c.fr.due + MIN, 'fraudReviewDeadline');
+-    }
+-  }
+-
+-  // R2/R3 clearing
+-  if (c.cl && c.ph === 'intake' && !c.stop) {
+-    const unav = Object.values(c.f).some(f => !f.avail);
+-    if (unav) {
+-      c.ph = 'wait';
+-      c.D = isoAms(Date.parse(c.p) + c.A * 60 * MIN);
+-      setOrd(T, c, 'customerActionRequired');
+-      notify(T, c, 'action-required', null, c.em, 'Some items of your order are unavailable. Please amend or cancel within the deadline.');
+-    } else {
+-      ready(T, c);
+-    }
++function openReview(w) {
++  const C = w.C;
++  C.rv = { dl: w.now + C.pol.fh * 60 * MIN, n: 1, ans: null, reask: false };
++  C.ph = 'review';
++  openTask(w);
++}
++
++// Customer cancels not yet used, for the pre-clearing rules (R6.4).
++function takeCancel(C) {
++  let hit = false;
++  for (const a of C.ac) if (!a.u && a.a === 'cancel') { a.u = true; hit = true; }
++  return hit;
++}
++
++const collectedBy = (C, t) => C.fl.some(F => F.coll != null && F.coll <= t);
++
++// ---------- phases of the order ----------
++// ph: new -> alloc -> create -> fraud -> (review) -> wait? -> proc -> end
++function phaseStep(w) {
++  const C = w.C;
++  const now = w.now;
++  if (C.ph === 'new') {
++    C.ph = 'alloc';
++    emit(w, 'inventory', 'allocate', { orderId: C.oid }, `${C.oid}|alloc`, { t: 'al' });
++    return;
+   }
+-
+-  // R3.2 waiting for the customer
+-  if (c.ph === 'wait') {
+-    if (c.act === 'amend') {
+-      for (const f of Object.values(c.f)) if (!f.avail) setF(T, c, f, 'cancelled');
+-      if (!Object.values(c.f).some(f => f.avail)) c.stop = 'nothing-available';
+-      else ready(T, c);
+-    } else if (!c.act && now > Date.parse(c.D)) {
+-      for (const f of Object.values(c.f)) setF(T, c, f, 'cancelled');
+-      setOrd(T, c, 'timedOut');
+-      notify(T, c, 'order-timed-out', null, c.em, 'Your order timed out and was not shipped.');
+-      c.ph = 'end';
+-    } else if (!c.act) {
+-      obligation(T, c, `${c.o}:cust`, Date.parse(c.D) + MIN, 'customerDeadline');
+-    }
+-  }
+-  if (c.ph === 'end') return;
+-
+-  // R6 stop: compensate every fulfilment not yet terminal
+-  if (c.stop) {
+-    if (c.ost !== 'cancelled') {
+-      setOrd(T, c, 'cancelled');
+-      notify(T, c, 'order-cancelled', null, c.em, `Your order was cancelled (${c.stop}).`);
+-    }
+-    for (const f of Object.values(c.f)) {
+-      if (TERM.includes(f.st)) continue;
+-      if (compensate(T, c, f)) setF(T, c, f, 'cancelled');
+-    }
+-    if (Object.values(c.f).every(f => TERM.includes(f.st))) c.ph = 'end';
++  if (C.ph === 'alloc') {
++    const e = C.ek[`${C.oid}|alloc`];
++    if (!e || e.r !== 'ok' || !e.plan) return;
++    buildFulfilments(w, planOf(e.plan));
++    delete e.plan;
++    C.ph = 'create';
++    run1(w, `${C.oid}|create`, 'orders', 'create', createArgs(C), { t: 'cr' }, true);
+     return;
+   }
+-
+-  if (c.ph !== 'proc') return;
+-  for (const f of Object.values(c.f)) {
+-    if (!f.avail || TERM.includes(f.st)) continue;
+-    saga(T, c, f);
+-    if (f.fail) {
+-      if (compensate(T, c, f)) { setF(T, c, f, 'failed'); failNotice(T, c, f); }
+-      continue;
+-    }
+-    if (f.cd && f.st === 'processing') setF(T, c, f, 'dispatched');
+-    if (f.dl && f.st === 'dispatched') setF(T, c, f, 'completed');
+-  }
+-  const fs = Object.values(c.f);
+-  if (fs.every(f => TERM.includes(f.st))) {
+-    const st = fs.some(f => f.st === 'completed') ? 'completed' : fs.some(f => f.st === 'failed') ? 'failed' : 'cancelled';
+-    setOrd(T, c, st);
+-    c.ph = 'end';
++  if (C.ph === 'create') {
++    if (run1(w, `${C.oid}|create`, 'orders', 'create', createArgs(C), { t: 'cr' }, true) === 'ok') C.ph = 'fraud';
++    return;
+   }
+-}
+-
+-function ready(T, c) {
+-  c.ph = 'proc';
+-  setOrd(T, c, 'processing');
+-  for (const f of Object.values(c.f)) if (f.avail) setF(T, c, f, 'processing');
+-}
+-
+-function failNotice(T, c, f) {
+-  notify(T, c, 'fulfilment-failed', f.id, c.em, `Fulfilment ${f.id} failed and was refunded.`);
+-}
+-
+-function obligation(T, c, id, dueMs, onDue) {
+-  if (c.ob.includes(id)) return;
+-  c.ob.push(id);
+-  T.up.push({ id, kind: 'deadline', anchor: c.p, dueAt: isoAms(dueMs), onDue });
+-}
+-
+-// R4.2 steps of one fulfilment, each only after the previous one committed.
+-function saga(T, c, f) {
+-  if (stepPending(c, f.id)) return;
+-  const need = f.items.filter(it => f.rsv[it.sku] === 'no');
+-  if (need.length) {
+-    const kk = `~inventory.reserve|${f.id}`;
+-    if (!c.k[kk]) {
+-      T.fx.push({
+-        system: 'inventory', op: 'reserve', args: adapt(T, 'inventory', 'reserve', {
+-          orderId: c.o, fulfilmentId: f.id, location: f.loc,
+-          items: need.map(it => ({ key: `${c.o}:ri:${f.id}:${it.sku}`, sku: it.sku, qty: it.qty })),
+-        }),
+-      });
+-      c.k[kk] = ['rsv', f.id, null, 'pend'];
++  if (C.ph === 'fraud') {
++    const frK = `${C.oid}|fr`;
++    if (!C.ek[frK]) emit(w, 'fraud', 'check', { orderId: C.oid }, frK, { t: 'fr' });
++    if (!C.fr) {
++      if (takeCancel(C)) cancelOrder(w, 'customer');
++      return;
++    }
++    if (C.fr === 'reject') return cancelOrder(w, 'fraud');
++    if (C.fr === 'review') return openReview(w);
++    return clearOrder(w, C.p);
++  }
++  if (C.ph === 'review') {
++    const rv = C.rv;
++    if (takeCancel(C)) return cancelOrder(w, 'customer');
++    if (rv.ans && rv.ans.t <= rv.dl) {
++      if (rv.ans.d === 'reject') return cancelOrder(w, 'fraud');
++      return clearOrder(w, rv.ans.t);
++    }
++    if (now > rv.dl) return cancelOrder(w, 'fraud-review-timeout');
++    if (rv.reask) {
++      rv.reask = false;
++      rv.n += 1;
++      openTask(w);
+     }
+     return;
+   }
+-  if (f.items.some(it => f.rsv[it.sku] === 'bad')) { f.fail = true; return; }
+-  if (f.chg === 'no') {
+-    send(T, c, 'chg', f.id, null, 'billing', 'charge', {
+-      orderId: c.o, fulfilmentId: f.id, customerId: c.cu, amountMinor: f.amt, currency: c.cur,
+-    });
++  if (C.ph === 'wait') {
++    const D = C.D;
++    const due = C.ac.filter(a => !a.u && a.t <= D).sort((x, y) => x.t - y.t);
++    const first = due.find(a => a.a === 'amend' || a.a === 'cancel');
++    for (const a of due) a.u = true;
++    if (first) return first.a === 'cancel' ? cancelOrder(w, 'customer') : amend(w);
++    if (now > D) timeOut(w);
+     return;
+   }
+-  if (f.chg === 'declined' || f.chg === 'bad') { f.fail = true; return; }
+-  if (f.shp === 'no') {
+-    send(T, c, 'shp', f.id, null, 'carrier', 'create', { orderId: c.o, fulfilmentId: f.id, location: f.loc, ref: f.id });
+-    return;
++  if (C.ph === 'proc') {
++    const cancels = C.ac.filter(a => !a.u && a.a === 'cancel').sort((x, y) => x.t - y.t);
++    for (const a of C.ac) if (a.a === 'amend') a.u = true;
++    for (const a of cancels) {
++      a.u = true;
++      if (collectedBy(C, a.t)) {
++        notify(w, 'cancel-refused', C.oid, `Your order ${C.oid} can no longer be cancelled: it has been collected.`, `|${a.t}`);
++      } else {
++        return cancelOrder(w, 'customer');
++      }
++    }
+   }
+-  if (f.shp === 'bad') f.fail = true;
+ }
+ 
+-// R5.1 compensation in reverse order. Returns true once nothing is left to undo.
+-function compensate(T, c, f) {
+-  if (stepPending(c, f.id)) return false;
+-  if (f.shp === 'ok' && f.shpc === 'no') {
+-    if (f.coll !== null || f.cf) f.shpc = f.cf ? 'na' : 'refused';
+-    else send(T, c, 'shpc', f.id, null, 'carrier', 'cancel', { orderId: c.o, fulfilmentId: f.id });
+-    if (f.shpc === 'no') return false;
+-  }
+-  if (f.shp !== 'ok' && f.shpc === 'no') f.shpc = 'na';
+-  if (f.chg === 'ok' && f.ref === 'no') {
+-    send(T, c, 'ref', f.id, null, 'billing', 'refund', { orderId: c.o, fulfilmentId: f.id, amountMinor: f.amt });
+-    return false;
+-  }
+-  if (f.chg !== 'ok' && f.ref === 'no') f.ref = 'na';
+-  for (const it of f.items) {
+-    if (f.rsv[it.sku] === 'ok' && !f.rel[it.sku]) f.rel[it.sku] = 'no';
+-  }
+-  for (const it of f.items) {
+-    if (f.rel[it.sku] === 'no') {
+-      send(T, c, 'rel', f.id, it.sku, 'inventory', 'release', { orderId: c.o, fulfilmentId: f.id, sku: it.sku });
+-      return false;
+-    }
++// ---------- R4.2 forward steps (one saga per fulfilment) ----------
++function stepReserve(w, F, go) {
++  const C = w.C;
++  const ik = sku => fk(C, F, `r|${sku}`);
++  const rs = F.items.map(i => ({ sku: i.sku, qty: i.qty, s: settle(w, ik(i.sku)) }));
++  if (rs.some(x => x.s === 'pend')) return;
++  if (rs.every(x => x.s === 'ok')) {
++    F.resOk = true;
++    return;
+   }
+-  return true;
++  if (rs.some(x => x.s === 'no' && C.ek[ik(x.sku)].p && !invalidArgs(C.ek[ik(x.sku)]))) return failFul(w, F, 'reserve');
++  if (!go) return;
++  if (F.na >= 4) return failFul(w, F, 'reserve');
++  const need = rs.filter(x => x.s !== 'ok');
++  F.na += 1;
++  for (const x of need) track(w, ik(x.sku), 'inventory');
++  // A batch carries no top-level key: each item is keyed (R4.2, api/inventory.schema.json).
++  w.out.effects.push({
++    system: 'inventory', op: 'reserve',
++    args: fitArgs(w, 'inventory', 'reserve', {
++      orderId: C.oid, fulfilmentId: F.id, location: F.loc, items: need.map(x => ({ key: ik(x.sku), sku: x.sku, qty: x.qty })),
++    }),
++  });
+ }
+ 
+-// ---------- go-live (migration): rebuild the carry from the records that exist ----------
++function forward(w, F) {
++  const C = w.C;
++  const go = !C.stopped && !F.fail;
++  if (!F.resOk) {
++    stepReserve(w, F, go);
++    if (!F.resOk) return;
++  }
++  if (!go) return;
++  const c = run1(w, fk(C, F, 'ch'), 'billing', 'charge', {
++    orderId: C.oid, fulfilmentId: F.id, customerId: C.cust, amountMinor: F.amt, currency: C.cur,
++  }, { t: 'ch' }, true);
++  if (c === 'fail') return failFul(w, F, 'charge');
++  if (c !== 'ok') return;
++  const s = run1(w, fk(C, F, 'sh'), 'carrier', 'create', {
++    orderId: C.oid, fulfilmentId: F.id, location: F.loc, ref: F.id,
++  }, { t: 'sh' }, true);
++  if (s === 'fail') failFul(w, F, 'ship');
++}
++
++// R5.1 compensation in reverse order: shipment, then refund, then releases. Each step
++// waits for the one before it to settle; a step that never committed is not undone.
++function compensate(w, F) {
++  const C = w.C;
++  const xs = fk(C, F, 'xs'), sh = fk(C, F, 'sh'), ch = fk(C, F, 'ch'), rf = fk(C, F, 'rf');
++  if (settle(w, sh) === 'pend') return;
++  if (settle(w, sh) === 'ok' && !F.cfl && !C.ek[xs]) {
++    F.xs = true;
++    emit(w, 'carrier', 'cancel', { orderId: C.oid, fulfilmentId: F.id }, xs, { t: 'xs' });
++  }
++  if (C.ek[xs] && settle(w, xs) === 'pend') return;
++  const chS = settle(w, ch);
++  if (chS === 'pend') return;
++  if (chS === 'ok' && !C.ek[rf]) {
++    emit(w, 'billing', 'refund', { orderId: C.oid, fulfilmentId: F.id, amountMinor: F.amt }, rf, { t: 'rf' });
++  }
++  if (C.ek[rf] && settle(w, rf) === 'pend') return;
++  for (const sku of [...new Set(F.items.map(i => i.sku))]) {
++    const s = settle(w, fk(C, F, `r|${sku}`));
++    if (s === 'pend') return;
++    const rl = fk(C, F, `rl|${sku}`);
++    if (s === 'ok' && !C.ek[rl]) emit(w, 'inventory', 'release', { orderId: C.oid, fulfilmentId: F.id, sku }, rl, { t: 'rl' });
++  }
++}
++
++function advance(w) {
++  for (let i = 0; i < 6; i++) {
++    const before = w.C.ph;
++    phaseStep(w);
++    if (w.C.ph === before) break;
++  }
++  const C = w.C;
++  if (C.ph === 'proc') for (const F of C.fl) if (F.av) forward(w, F);
++  for (const F of C.fl) if (F.av && (F.fail || C.stopped) && F.st !== 'completed') compensate(w, F);
++  if (C.ph === 'proc' && C.fl.length && C.fl.every(F => FINAL.has(F.st))) {
++    setOrd(w, C.fl.some(F => F.st === 'completed') ? 'completed' : C.fl.some(F => F.st === 'failed') ? 'failed' : 'cancelled');
++    C.ph = 'end';
++  }
++}
++
++// ---------- obligations (wake-ups at deadlines; each fires one minute after its deadline) ----------
++function obligations(w) {
++  const C = w.C;
++  const want = {};
++  if (C.ph === 'review' && C.rv) want[`${C.oid}-review-deadline`] = { due: C.rv.dl + MIN, on: 'fraudReviewDeadline' };
++  if (C.ph === 'wait') want[`${C.oid}-customer-deadline`] = { due: C.D + MIN, on: 'customerDeadline' };
++  for (const [id, o] of Object.entries(want)) {
++    if (C.ob[id] === o.due) continue;
++    C.ob[id] = o.due;
++    w.out.obligations.upsert.push({ id, kind: 'deadline', anchor: isoAms(C.p), dueAt: isoAms(o.due), onDue: o.on });
++  }
++  for (const id of Object.keys(C.ob)) {
++    if (want[id]) continue;
++    delete C.ob[id];
++    w.out.obligations.cancel.push(id);
++  }
++}
++
++function finish(w) {
++  const C = w.C;
++  obligations(w);
++  const pending = Object.entries(C.ek).some(([k, e]) => e.r == null || (e.r === 'unk' && settle(w, k) === 'pend'));
++  w.out.decisions = { subject: C.oid };
++  w.out.carry = C;
++  if (C.ph === 'end' && !pending) w.out.close = true;
++  return w.out;
++}
+ 
+-function fromRecords(T, e) {
+-  const o = norm(findKey(e.payload, 'orderId'));
+-  const ord = o ? queryRows(T, 'orders.orders', { orderId: o })[0] : null;
+-  if (!ord) return null;
+-  const c = newCarry(T, { at: ord.placedAt || e.at, payload: { orderId: o, customerId: ord.customerId, currency: ord.currency, items: ord.items, placedAt: ord.placedAt } });
+-  const rows = queryRows(T, 'orders.fulfilments', { orderId: o });
+-  const res = queryRows(T, 'inventory.reservations', { orderId: o });
+-  const charges = queryRows(T, 'billing.charges', { orderId: o });
+-  const refunds = queryRows(T, 'billing.refunds', { orderId: o });
+-  const ships = queryRows(T, 'carrier.shipments', { orderId: o });
+-  const placedMs = Date.parse(c.p);
+-  for (const r of rows) {
+-    const fid = String(r.fulfilmentId);
+-    const avail = r.location !== null && r.location !== undefined;
+-    const its = (r.items || []).map(i => ({ sku: String(i.sku), qty: Number(i.qty) }));
+-    const f = {
+-      id: fid, loc: avail ? String(r.location) : null, avail, items: its, amt: Number(r.amountMinor) || 0, st: r.status,
+-      rsv: Object.fromEntries(its.map(i => [i.sku, 'no'])), rel: {},
+-      chg: 'no', shp: 'no', shpc: 'no', ref: 'no', coll: null, cd: false, cf: false, dl: false, fail: false,
+-    };
+-    for (const x of res.filter(x => x.fulfilmentId === fid)) {
+-      if (x.status === 'active' && f.rsv[x.sku] !== undefined) f.rsv[x.sku] = 'ok';
+-      if (x.status === 'released' && f.rsv[x.sku] !== undefined) { f.rsv[x.sku] = 'ok'; f.rel[x.sku] = 'ok'; }
+-    }
+-    const ch = charges.find(x => x.fulfilmentId === fid);
+-    if (ch) f.chg = 'ok';
+-    if (ch && refunds.some(x => x.fulfilmentId === fid)) f.ref = 'ok';
+-    const sh = ships.find(x => x.fulfilmentId === fid);
+-    if (sh) {
+-      f.shp = 'ok';
+-      if (sh.status === 'cancelled') f.shpc = 'ok';
+-      if (['collected', 'inTransit', 'delivered'].includes(sh.status)) f.coll = placedMs;
+-      if (['collected', 'delivered'].includes(sh.status)) f.cd = true;
+-      if (sh.status === 'delivered') f.dl = true;
+-    }
+-    c.f[fid] = f;
+-  }
+-  c.al = Object.keys(c.f);
+-  c.rec = 'ok';
+-  c.ost = ord.status;
+-  if (ord.status === 'pending') return c;
+-  c.fd = 'pass';
+-  c.cl = c.p;
+-  if (ord.status === 'customerActionRequired') {
+-    c.ph = 'wait';
+-    c.D = isoAms(placedMs + c.A * 60 * MIN);
+-  } else if (ord.status === 'processing') {
+-    c.ph = 'proc';
+-  } else {
+-    c.ph = 'end';
++// ---------- the arm ----------
++function tick(input, ctx) {
++  const w = {
++    C: input.carry && typeof input.carry === 'object' ? input.carry : null,
++    out: emptyOut(), ctx, now: T(input.now), instance: input.instance, codes: null,
++  };
++  const events = input.events || [];
++  if (!w.C) {
++    const early = route(w, events);
++    if (early) return early;
++    initRules(w);
+   }
+-  return c;
++  for (const e of events) applyEvent(w, e);
++  advance(w);
++  return finish(w);
+ }
+ 
+-// ---------- output ----------
+-
+-function out(T, c, subject) {
+-  const o = { decisions: { subject }, effects: T.fx, obligations: { upsert: T.up, cancel: T.cancel }, humanTasks: T.ht, carry: c || {} };
+-  if (T.merge) o.merge = { into: T.merge };
+-  if (T.close) o.close = true;
+-  return o;
++export function createSolver() {
++  return { id: 'solver', tick };
+ }

@@ -1,0 +1,66 @@
+diff -ruN a/solver.mjs b/solver.mjs
+--- a/solver.mjs	2026-11-04 14:33:19.770515843 +0000
++++ b/solver.mjs	2026-11-04 14:33:19.770515843 +0000
+@@ -279,6 +279,11 @@
+   const C = w.C;
+   const P = e.payload || {};
+   if (e.type === 'effect.result') return onResult(w, P);
++  // The messages already received at go-live are applied as they arrived.
++  if (e.type === 'migration') {
++    for (const x of P.events || []) if (x) applyEvent(w, x);
++    return;
++  }
+   if (e.type === 'humanTask.answered') return onAnswer(C, e, P);
+   if (e.type === 'humanTask.answerRejected' || e.type === 'humanTask.withdrawn') {
+     if (C.rv) C.rv.reask = true;
+@@ -337,7 +342,12 @@
+ // steps those records show as committed are marked so they are not issued again.
+ function rebuild(w, oid, e) {
+   const ctx = w.ctx;
++  // The export carries the records of the order; ctx.query reads the others.
++  const recs = (e.payload && e.payload.records) || {};
+   const q = (table, where) => {
++    if (Array.isArray(recs[table])) {
++      return recs[table].filter(r => r && Object.entries(where).every(([k, v]) => (k === 'orderId' ? normId(r[k]) : String(r[k])) === String(v)));
++    }
+     try { return ctx.query(table, { where, limit: 1000 }) || []; } catch { return []; }
+   };
+   const [o] = q('orders.orders', { orderId: oid });
+@@ -398,12 +408,18 @@
+   for (const e of events) {
+     const P = e.payload || {};
+     if (e.type === 'migration') {
+-      const oid = normId(P.orderId ?? P.orderRef);
++      const oid = migrationOid(P);
+       if (!oid) continue;
+       const other = openFor(w, oid)[0];
+       if (other) return mergeInto(oid, other);
+-      if (!rebuild(w, oid, e)) return closeOut(null);
+-      return w.C.oend ? closeOut(oid) : null;
++      if (rebuild(w, oid, e)) return w.C.oend ? closeOut(oid) : null;
++      // Not recorded yet (R1.1): the placed order carried in the export starts the order.
++      const placed = (P.events || []).find(x => x && isPlaced(x.payload || {}) && normId(x.payload.orderId) === oid);
++      if (placed) {
++        w.C = newState(oid, T(placed.at ?? e.at));
++        return null;
++      }
++      return closeOut(null);
+     }
+     if (isPlaced(P)) {
+       const oid = normId(P.orderId);
+@@ -429,6 +445,15 @@
+   return closeOut(null);
+ }
+ 
++// The order id a migration belongs to: its own field, its record, or a message it carries.
++function migrationOid(P) {
++  const rec = P.records && Array.isArray(P.records['orders.orders']) ? P.records['orders.orders'][0] : null;
++  const nested = (P.events || []).map(x => (x && x.payload) || {});
++  const cand = [P.orderId, P.orderRef, rec && rec.orderId, ...nested.map(x => x.orderId ?? x.orderRef)];
++  for (const c of cand) if (c != null && normId(c)) return normId(c);
++  return '';
++}
++
+ function openFor(w, oid) {
+   let l = [];
+   try { l = w.ctx.instances({ subject: oid }) || []; } catch { l = []; }
