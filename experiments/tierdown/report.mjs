@@ -17,16 +17,23 @@ for (const slice of ['C', 'H']) {
   const answers = files.flatMap(readJsonl);
   if (!answers.length) continue;
   console.log(`\n### Node replays, slice ${slice}\n`);
-  console.log('| site | tier | answered | usable | mean leaf agreement | exact | tier $/decision | ref $/decision | tier p50 / p95 | ref p50 / p95 | not usable |');
-  console.log('|---|---|---|---|---|---|---|---|---|---|---|');
-  for (const n of nodeTable(answers).filter(n => n.tier !== 'memo'))
-    console.log(`| ${n.site} | ${short(n.tier)} | ${n.answered} | ${n.usable} | ${f(n.agreement)} | ${f(n.exactRate, 2)} | ${usd(n.tierUsdPerDecision)} | ${usd(n.refUsdPerDecision)} | ${s(n.tierLatencyP50)} / ${s(n.tierLatencyP95)} | ${s(n.refLatencyP50)} / ${s(n.refLatencyP95)} | ${n.errors.map(([k, v]) => `${k} ${v}`).join(', ') || '—'} |`);
+  // K = answers asked per decision (always 1 here); k = the reference judge's vote size, which a model tier is charged
+  // (review #5). Reference latency here is the SUM of the reference calls (concurrent vote samples added up); the wall
+  // time per decision is in the injection detail (inject-H-v2.json decisions[].refWallMs, review #6).
+  console.log('| site | tier | K asked | ref k | answered | usable | mean leaf agreement | exact | tier $/decision (x k) | ref $/decision | tier p50 / p95 | ref p50 / p95 (sum of calls) | not usable |');
+  console.log('|---|---|---|---|---|---|---|---|---|---|---|---|---|');
+  for (const n of nodeTable(answers).filter(n => n.tier !== 'memo')) {
+    const ks = [...new Set(answers.filter(a => a.site === n.site && a.tier === n.tier).map(a => a.samples ?? 1))].join('/');
+    console.log(`| ${n.site} | ${short(n.tier)} | 1 | ${ks} | ${n.answered} | ${n.usable} | ${f(n.agreement)} | ${f(n.exactRate, 2)} | ${usd(n.tierUsdPerDecision)} | ${usd(n.refUsdPerDecision)} | ${s(n.tierLatencyP50)} / ${s(n.tierLatencyP95)} | ${s(n.refLatencyP50)} / ${s(n.refLatencyP95)} | ${n.errors.map(([k, v]) => `${k} ${v}`).join(', ') || '—'} |`);
+  }
   const memo = nodeTable(answers).filter(n => n.tier === 'memo');
   console.log(`\nMemo: ${memo.reduce((a, n) => a + n.usable, 0)} hits in ${memo.reduce((a, n) => a + n.answered, 0)} delivery decisions.`);
-  const injFile = path.join(dir, `inject-${slice}.json`);
+  // The corrected injection (review 2026-11-04) when present, else the original files.
+  const v2 = path.join(dir, `inject-${slice}-v2.json`), injFile = existsSync(v2) ? v2 : path.join(dir, `inject-${slice}.json`);
   if (!existsSync(injFile)) continue;
   const extra = path.join(dir, `inject-${slice}-provisional.json`);
-  const inj = injectTable(mergeInject([injFile, ...(existsSync(extra) ? [extra] : [])].map(f => JSON.parse(readFileSync(f, 'utf8')))).rows);
+  const inj = injectTable(mergeInject([injFile, ...(!existsSync(v2) && existsSync(extra) ? [extra] : [])].map(f => JSON.parse(readFileSync(f, 'utf8')))).rows);
+  console.log(`\n(${path.basename(injFile)}; pass→fail counts deopts of passing units, review #10)`);
   console.log(`\n### End-to-end injection, slice ${slice} (every other judge at its archived answer)\n`);
   console.log('| assignment | units | pass→fail | fail→pass | deopt/crash | unmeasured | incomplete | judge $ (tier + fallbacks + deopt) | reference $ |');
   console.log('|---|---|---|---|---|---|---|---|---|');

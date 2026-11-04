@@ -25,7 +25,7 @@ evidence, not memory.
 | A7 | Tracker: log the user's conditions and check the build against them, without over-engineering [67] | B | A1-C ledger, SPEC-1 derive-ledger, TRACKER-DESIGN | product-level tracker in app/ (task #60) |
 | A8 | Give the builder templates and the corpus's hardest enterprise patterns so it builds robustly [67] | B | template library (7) + E8 templates; corpus prior | pattern retrieval from the corpus into the builder |
 | A9 | Reuse = a proven workflow reused by a *separate program* [48] | 0, ⚠ | task #43 pending; SOP-Bench is build-once/run-many inside one program | **C2 reuse experiment** |
-| A10 | Procedure distillation: frontier-authored workflow, cheapest qualified model per node [0] | D | JIT tier-down tool; per-node model roles in A1-C (Mercury planner) | tier-down of hot judges (#33) |
+| A10 | Procedure distillation: frontier-authored workflow, cheapest qualified model per node [0] | D | JIT tier-down tool; per-node model roles in A1-C (Mercury planner); tierdown 2026-11-04 (dev, reviewed): preregistered 0% saved, nothing promoted; held-out exploratory 2.8% delivery judge cost at equal outcomes, equal accuracy not shown (research/tierdown-20261021/RESULT-TIERDOWN.md §0) | **gap:** no all-frontier accuracy arm (cost estimate only: 9× the compiled solvers); per-site bounds need a fresh draw sized to the class, unit = task; the decisive date-order leaf needs its own reader scored against ground truth |
 
 ## B. Deciding when a workflow is needed
 

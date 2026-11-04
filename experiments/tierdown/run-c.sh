@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# C-slice paid passes in priority order (RESULT-TIERDOWN.md §Deviations D3): the Mercury share of the item token cap
-# (225,000 of 450,000 for C) goes first to the Opus reader and the small Haiku sites; records/source-rules gets no more
-# Mercury calls (its C usable rate can no longer reach the preregistered 0.95: 2 of its first 6 answers were truncated
-# at ~24K output tokens), and kinetics/well-events and records/vendex-entries get what is left.
+# C-slice paid passes in priority order (AMENDMENT-1 clarification 4; RESULT-TIERDOWN.md §0 R7): the Mercury share of
+# the item token cap (225,000 of 450,000 for C) goes first to the Opus reader and the small Haiku sites; records/source-rules
+# gets no more Mercury calls (its C usable rate can no longer reach the preregistered 0.95: 2 of its first 5 recorded
+# answers were truncated at ~24K output tokens), and kinetics/well-events and records/vendex-entries get what is left.
+# Review 2026-11-04 #7/#16: this script was written after an earlier, interrupted C pass (answers-C.jsonl lines 1-79: 31
+# Haiku answers, $0.171923, and 12 Mercury answers, 111,092 tokens) that left no ledger line; its reconstruction is in
+# data/answers-C.runs.reconstructed.jsonl. It cited "§Deviations D3", which does not exist, and "first 6 answers" where
+# 5 are recorded.
 set -u
 cd "$(dirname "$0")/../.."
 D=research/tierdown-20261021/data

@@ -112,3 +112,87 @@ export function demotionMonitor(disagreements, { p0, ra = 2, h = 2.5 } = {}) {
   const r = runCusum(seq, { h, ra, reset: 'none' });
   return { alarms: r.alarms, demote: r.alarms.length > 0, firstAlarm: r.alarms[0] ?? null, path: r.path };
 }
+
+// ---------------------------------------------------------------------------------------------- review 2026-11-04
+// #11: the preregistered non-inferiority (nonInferior above) takes the gains at their point estimate. The corrected
+// (exploratory) test uses Tango's (1998) score interval for a paired difference of proportions, which keeps both
+// discordant cells random and does not collapse when there are no discordant pairs (Newcombe's hybrid interval does:
+// with b = c = 0 its width is the Wilson interval's asymmetry, about +-0.02 at n = 42, so it would "show" a 3-point
+// non-inferiority from zero events). Delta = (c - b) / n, c = gains (fail->pass), b = losses (pass->fail).
+// Closed form at b = c = 0: [-z^2 / (n + z^2), z^2 / (n + z^2)].
+export function normalQuantile(p) {
+  if (!(p > 0 && p < 1)) throw new Error(`normalQuantile: p must be in (0, 1), got ${p}`);
+  // Acklam's rational approximation (relative error < 1.2e-9; z(0.95) = 1.6448536).
+  const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+  const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+  const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+  const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+  const lo = 0.02425, hi = 1 - lo;
+  let x;
+  if (p < lo) { const q = Math.sqrt(-2 * Math.log(p)); x = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+  else if (p <= hi) { const q = p - 0.5, r = q * q; x = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1); }
+  else { const q = Math.sqrt(-2 * Math.log(1 - p)); x = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+  return x;
+}
+
+export function tangoScore({ b, c, n }, delta) {
+  const n12 = c, n21 = b;
+  const W = n12 + n21 - delta * (2 * n - n12 + n21);
+  const q = (W + Math.sqrt(Math.max(0, W * W + 8 * n * n21 * delta * (1 - delta)))) / (4 * n);
+  const v = n * (2 * q + delta * (1 - delta));
+  const num = n12 - n21 - n * delta;
+  return v > 0 ? num / Math.sqrt(v) : (num === 0 ? 0 : Math.sign(num) * Infinity);
+}
+
+// Two-sided interval at `level` (0.90 gives the one-sided 95% bounds) by bisection on the monotone score.
+export function tangoInterval({ b, c, n, level = 0.90 }) {
+  if (!(Number.isInteger(b) && Number.isInteger(c) && Number.isInteger(n) && b >= 0 && c >= 0 && b + c <= n && n > 0)) throw new Error(`tangoInterval: bad counts b ${b}, c ${c}, n ${n}`);
+  const z = normalQuantile(1 - (1 - level) / 2), est = (c - b) / n, eps = 1e-12;
+  const solve = (lo, hi, target) => { // tangoScore decreases in delta
+    for (let i = 0; i < 200; i++) { const mid = (lo + hi) / 2; if (tangoScore({ b, c, n }, mid) > target) lo = mid; else hi = mid; }
+    return (lo + hi) / 2;
+  };
+  const lower = est <= -1 + eps ? -1 : solve(-1 + eps, est, z), upper = est >= 1 - eps ? 1 : solve(est, 1 - eps, -z);
+  return { b, c, n, estimate: est, lower, upper, level, z };
+}
+
+// Corrected (exploratory) equal-accuracy test: Tango lower bound on (policy - reference) > -margin. Units are runs; when
+// `byTask` is given (one {b, c} per task: the sign of the task's mean paired difference), the same test is also run with
+// one unit per task (review #3: runs of one task are not independent). `holds` is the task-level verdict when tasks are
+// given, else the run-level one.
+export function nonInferiorTango({ b, c, n, byTask = null, margin = NI_MARGIN, level = 0.90 }) {
+  const runs = n ? tangoInterval({ b, c, n, level }) : null;
+  let tasks = null;
+  if (byTask?.length) {
+    const tb = byTask.filter(t => t.diff < 0).length, tc = byTask.filter(t => t.diff > 0).length;
+    tasks = tangoInterval({ b: tb, c: tc, n: byTask.length, level });
+  }
+  const decide = iv => (iv ? iv.lower > -margin : false);
+  return { margin, level, runs, tasks, holdsRuns: decide(runs), holdsTasks: tasks ? decide(tasks) : null, holds: tasks ? decide(tasks) : decide(runs) };
+}
+
+// Task-clustered percentile bootstrap of cost saved (1 - sum policy / sum reference over resampled tasks). Seeded and
+// deterministic: tasks are sorted by key and drawn with beds/lib/rng.mjs.
+export function clusterBootstrapSaved(units, { iterations = 4000, level = 0.90, seed = 'tierdown-review-20261104' } = {}, rngOf) {
+  const byTask = new Map();
+  for (const u of units) { const t = byTask.get(u.task) ?? { pol: 0, ref: 0 }; t.pol += u.policyUsd; t.ref += u.refUsd; byTask.set(u.task, t); }
+  const tasks = [...byTask.keys()].sort().map(k => byTask.get(k)), K = tasks.length;
+  if (!K) return null;
+  const r = rngOf(seed, 'cluster-saved'), out = new Float64Array(iterations);
+  for (let i = 0; i < iterations; i++) { let p = 0, q = 0; for (let j = 0; j < K; j++) { const t = tasks[r.int(0, K - 1)]; p += t.pol; q += t.ref; } out[i] = q > 0 ? 1 - p / q : 0; }
+  out.sort();
+  const at = x => out[Math.min(iterations - 1, Math.max(0, Math.floor(x * (iterations - 1))))];
+  const tp = tasks.reduce((s, t) => s + t.pol, 0), tr = tasks.reduce((s, t) => s + t.ref, 0);
+  return { tasks: K, estimate: tr > 0 ? 1 - tp / tr : null, lower: at((1 - level) / 2), upper: at(1 - (1 - level) / 2), level, iterations };
+}
+
+// #14: a confidence interval for Spearman's rho (Fisher z with the Bonett-Wright standard error sqrt((1 + rho^2/2) / (n - 3))).
+export function spearmanInterval(rho, n, { level = 0.95 } = {}) {
+  if (rho == null || !(n > 3)) return null;
+  const z = normalQuantile(1 - (1 - level) / 2), r = Math.max(-0.999999, Math.min(0.999999, rho));
+  const f = Math.atanh(r), se = Math.sqrt((1 + r * r / 2) / (n - 3));
+  return { rho, n, level, lower: Math.tanh(f - z * se), upper: Math.tanh(f + z * se) };
+}
+
+// Token-priced sensitivity (#9): a tier's tokens at another listed price ({inputPerMTok, outputPerMTok, cacheReadPerMTok}).
+export const pricedUsd = (tokens, price) => (tokens ? ((tokens.input ?? 0) * price.inputPerMTok + (tokens.output ?? 0) * price.outputPerMTok + (tokens.cacheRead ?? 0) * (price.cacheReadPerMTok ?? price.inputPerMTok)) / 1e6 : 0);

@@ -32,7 +32,10 @@ export function costIndexOf(journal) {
   for (const row of journal) {
     const m = memoRowOf(row);
     if (!m) continue;
-    const entry = { costUsd: row.costUsd ?? 0, latencyMs: row.latencyMs ?? null, inputTokens: row.inputTokens ?? null, outputTokens: row.outputTokens ?? null, modelId: m.model };
+    // createdAt is the journal row's write time, i.e. when the call returned (review 2026-11-04 #6: [createdAt - latencyMs,
+    // createdAt] is the call's wall interval, so concurrent samples of one decision can be counted once).
+    const entry = { costUsd: row.costUsd ?? 0, latencyMs: row.latencyMs ?? null, inputTokens: row.inputTokens ?? null, outputTokens: row.outputTokens ?? null,
+      cacheReadTokens: row.cacheReadTokens ?? null, cacheWriteTokens: row.cacheWriteTokens ?? null, createdAt: row.createdAt ?? null, modelId: m.model };
     const [map, k] = m.digest ? [byDigest, m.digest] : [byLoose, m.loose];
     if (!map.has(k)) map.set(k, []); map.get(k).push(entry);
   }
@@ -54,7 +57,8 @@ export function recordingMemoPort(journal) {
         const r = await memo.call(req);
         const orig = take(costs.byDigest, digest) ?? take(costs.byLoose, loose);
         calls.push({ key, promptSha: sha256(String(req.prompt ?? '')), modelId: req.modelId, served: true, ok: r.ok, value: r.ok ? r.value : undefined,
-          origCostUsd: orig?.costUsd ?? null, origLatencyMs: orig?.latencyMs ?? null, origInputTokens: orig?.inputTokens ?? null, origOutputTokens: orig?.outputTokens ?? null });
+          origCostUsd: orig?.costUsd ?? null, origLatencyMs: orig?.latencyMs ?? null, origInputTokens: orig?.inputTokens ?? null, origOutputTokens: orig?.outputTokens ?? null,
+          origCreatedAt: orig?.createdAt ?? null });
         return r;
       } catch (e) {
         calls.push({ key, promptSha: sha256(String(req.prompt ?? '')), modelId: req.modelId, served: false, miss: e.code ?? 'ERROR' });

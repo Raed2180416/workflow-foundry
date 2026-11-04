@@ -1,0 +1,785 @@
+{
+ "tool": "experiments/tierdown/readers.mjs",
+ "modelCalls": 0,
+ "site": "kinetics/prose-events-a",
+ "evidence": "development (archived dev runs, C and H slices; the fresh draw was paid in the tier-replay passes)",
+ "siteOpusUsd": 0.1703904,
+ "draws": [
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#10",
+   "taskKey": "kinetics:dev:d4:s211",
+   "slice": "H",
+   "key": "73c8c2d923f85ae4",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.016414150000000002,
+   "drawUsd": 0.008029325,
+   "singleReadUsd": 0.008029325
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#10",
+   "taskKey": "kinetics:dev:d4:s211",
+   "slice": "H",
+   "key": "73c8c2d923f85ae4",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.016414150000000002,
+   "drawUsd": 0.008384825,
+   "singleReadUsd": 0.008384825
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#10",
+   "taskKey": "kinetics:dev:d4:s211",
+   "slice": "H",
+   "key": "73c8c2d923f85ae4",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.016414150000000002,
+   "drawUsd": 0.0081177,
+   "singleReadUsd": 0.0081177
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#11",
+   "taskKey": "kinetics:dev:d4:s212",
+   "slice": "H",
+   "key": "bf4b1a334b834abc",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-opus-5-5",
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": true,
+   "refUsd": 0.328778285,
+   "drawUsd": 0.00638171,
+   "singleReadUsd": 0.31994771
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#11",
+   "taskKey": "kinetics:dev:d4:s212",
+   "slice": "H",
+   "key": "bf4b1a334b834abc",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-opus-5-5",
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": true,
+   "refUsd": 0.328778285,
+   "drawUsd": 0.008830575,
+   "singleReadUsd": 0.322396575
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#11",
+   "taskKey": "kinetics:dev:d4:s212",
+   "slice": "H",
+   "key": "bf4b1a334b834abc",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-opus-5-5",
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.328778285,
+   "drawUsd": 0.008708734999999999,
+   "singleReadUsd": 0.008708734999999999
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#13",
+   "taskKey": "kinetics:dev:d4:s214",
+   "slice": "C",
+   "key": "12fdd968052edfa2",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5",
+    "prose-events-arbiter@claude-opus-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.163110025,
+   "drawUsd": 0.0061863249999999995,
+   "singleReadUsd": 0.0061863249999999995
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#13",
+   "taskKey": "kinetics:dev:d4:s214",
+   "slice": "C",
+   "key": "12fdd968052edfa2",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5",
+    "prose-events-arbiter@claude-opus-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": false,
+   "outcome": "flip",
+   "checkRejected": false,
+   "refUsd": 0.163110025,
+   "drawUsd": 0.0072857,
+   "singleReadUsd": 0.0072857
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#13",
+   "taskKey": "kinetics:dev:d4:s214",
+   "slice": "C",
+   "key": "12fdd968052edfa2",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5",
+    "prose-events-arbiter@claude-opus-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.163110025,
+   "drawUsd": 0.00647445,
+   "singleReadUsd": 0.00647445
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#14",
+   "taskKey": "kinetics:dev:d4:s215",
+   "slice": "C",
+   "key": "81364bb4b61c4750",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.015172775,
+   "drawUsd": 0.006983075,
+   "singleReadUsd": 0.006983075
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#14",
+   "taskKey": "kinetics:dev:d4:s215",
+   "slice": "C",
+   "key": "81364bb4b61c4750",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.015172775,
+   "drawUsd": 0.0081897,
+   "singleReadUsd": 0.0081897
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#14",
+   "taskKey": "kinetics:dev:d4:s215",
+   "slice": "C",
+   "key": "81364bb4b61c4750",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.015172775,
+   "drawUsd": 0.00832345,
+   "singleReadUsd": 0.00832345
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#15",
+   "taskKey": "kinetics:dev:d4:s216",
+   "slice": "C",
+   "key": "21e7b95a2ce3215b",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": false,
+   "pass": false,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.0139839,
+   "drawUsd": 0.0071532,
+   "singleReadUsd": 0.0071532
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#15",
+   "taskKey": "kinetics:dev:d4:s216",
+   "slice": "C",
+   "key": "21e7b95a2ce3215b",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": false,
+   "pass": false,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.0139839,
+   "drawUsd": 0.0068307,
+   "singleReadUsd": 0.0068307
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#15",
+   "taskKey": "kinetics:dev:d4:s216",
+   "slice": "C",
+   "key": "21e7b95a2ce3215b",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": false,
+   "pass": false,
+   "outcome": "changed",
+   "checkRejected": false,
+   "refUsd": 0.0139839,
+   "drawUsd": 0.00922339,
+   "singleReadUsd": 0.00922339
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#3",
+   "taskKey": "kinetics:dev:d4:s204",
+   "slice": "H",
+   "key": "700bc030c16af5bb",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.015237025,
+   "drawUsd": 0.00747545,
+   "singleReadUsd": 0.00747545
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#3",
+   "taskKey": "kinetics:dev:d4:s204",
+   "slice": "H",
+   "key": "700bc030c16af5bb",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.015237025,
+   "drawUsd": 0.007761575,
+   "singleReadUsd": 0.007761575
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#3",
+   "taskKey": "kinetics:dev:d4:s204",
+   "slice": "H",
+   "key": "700bc030c16af5bb",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.015237025,
+   "drawUsd": 0.006843325,
+   "singleReadUsd": 0.006843325
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#4",
+   "taskKey": "kinetics:dev:d4:s205",
+   "slice": "C",
+   "key": "ee89b843b5a686dd",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.0139794,
+   "drawUsd": 0.006752324999999999,
+   "singleReadUsd": 0.006752324999999999
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#4",
+   "taskKey": "kinetics:dev:d4:s205",
+   "slice": "C",
+   "key": "ee89b843b5a686dd",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.0139794,
+   "drawUsd": 0.0072270749999999995,
+   "singleReadUsd": 0.0072270749999999995
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#4",
+   "taskKey": "kinetics:dev:d4:s205",
+   "slice": "C",
+   "key": "ee89b843b5a686dd",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.0139794,
+   "drawUsd": 0.00661895,
+   "singleReadUsd": 0.00661895
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#5",
+   "taskKey": "kinetics:dev:d4:s206",
+   "slice": "C",
+   "key": "98543c9dc73a22e6",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.01141087,
+   "drawUsd": 0.006489825,
+   "singleReadUsd": 0.006489825
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#5",
+   "taskKey": "kinetics:dev:d4:s206",
+   "slice": "C",
+   "key": "98543c9dc73a22e6",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.01141087,
+   "drawUsd": 0.004921044999999999,
+   "singleReadUsd": 0.004921044999999999
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#5",
+   "taskKey": "kinetics:dev:d4:s206",
+   "slice": "C",
+   "key": "98543c9dc73a22e6",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.01141087,
+   "drawUsd": 0.0060139500000000005,
+   "singleReadUsd": 0.0060139500000000005
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#6",
+   "taskKey": "kinetics:dev:d4:s207",
+   "slice": "H",
+   "key": "6384d5d7e9b3492a",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5",
+    "prose-events-arbiter@claude-opus-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": false,
+   "outcome": "flip",
+   "checkRejected": false,
+   "refUsd": 0.23618650000000002,
+   "drawUsd": 0.008749449999999999,
+   "singleReadUsd": 0.008749449999999999
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#6",
+   "taskKey": "kinetics:dev:d4:s207",
+   "slice": "H",
+   "key": "6384d5d7e9b3492a",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5",
+    "prose-events-arbiter@claude-opus-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.23618650000000002,
+   "drawUsd": 0.00907945,
+   "singleReadUsd": 0.00907945
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#6",
+   "taskKey": "kinetics:dev:d4:s207",
+   "slice": "H",
+   "key": "6384d5d7e9b3492a",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5",
+    "prose-events-arbiter@claude-opus-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.23618650000000002,
+   "drawUsd": 0.009384449999999999,
+   "singleReadUsd": 0.009384449999999999
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#9",
+   "taskKey": "kinetics:dev:d4:s210",
+   "slice": "H",
+   "key": "eedbdca67a9e3b02",
+   "draw": "archived-1",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.0154074,
+   "drawUsd": 0.0075712,
+   "singleReadUsd": 0.0075712
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#9",
+   "taskKey": "kinetics:dev:d4:s210",
+   "slice": "H",
+   "key": "eedbdca67a9e3b02",
+   "draw": "archived-2",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.0154074,
+   "drawUsd": 0.0078362,
+   "singleReadUsd": 0.0078362
+  },
+  {
+   "row": "jit-dev-kinetics-1/jit-claude-opus-5-5--claude-haiku-5-5#9",
+   "taskKey": "kinetics:dev:d4:s210",
+   "slice": "H",
+   "key": "eedbdca67a9e3b02",
+   "draw": "fresh",
+   "refEvents": [
+    "prose-events-a@claude-haiku-5-5",
+    "prose-events-b@claude-haiku-5-5"
+   ],
+   "refModels": [
+    "claude-haiku-5-5",
+    "claude-haiku-5-5"
+   ],
+   "readersIdentical": false,
+   "basePass": true,
+   "pass": true,
+   "outcome": "same",
+   "checkRejected": false,
+   "refUsd": 0.0154074,
+   "drawUsd": 0.007622825,
+   "singleReadUsd": 0.007622825
+  }
+ ],
+ "summary": {
+  "all": {
+   "draws": 30,
+   "units": 10,
+   "unmeasured": 0,
+   "losses": 2,
+   "gains": 0,
+   "lossUpper95": 0.19532604365492592,
+   "checkRejected": 2,
+   "refUsdPerUnit": 0.082968033,
+   "singleReadUsdPerUnit": 0.028419398499999998,
+   "saved": 0.6574656831987327,
+   "diff": {
+    "b": 2,
+    "c": 0,
+    "n": 30,
+    "estimate": -0.06666666666666667,
+    "lower": -0.18271556270486744,
+    "upper": 0.02157259515454174,
+    "level": 0.9,
+    "z": 1.644853625133699
+   }
+  },
+  "C": {
+   "draws": 15,
+   "units": 5,
+   "unmeasured": 0,
+   "losses": 1,
+   "gains": 0,
+   "lossUpper95": 0.27939619361287626,
+   "checkRejected": 0,
+   "refUsdPerUnit": 0.043531393999999994,
+   "singleReadUsdPerUnit": 0.006978210666666667,
+   "saved": 0.8396970548044782,
+   "diff": {
+    "b": 1,
+    "c": 0,
+    "n": 15,
+    "estimate": -0.06666666666666667,
+    "lower": -0.2507505628640031,
+    "upper": 0.09632821794560642,
+    "level": 0.9,
+    "z": 1.644853625133699
+   }
+  },
+  "H": {
+   "draws": 15,
+   "units": 5,
+   "unmeasured": 0,
+   "losses": 1,
+   "gains": 0,
+   "lossUpper95": 0.27939619361287626,
+   "checkRejected": 2,
+   "refUsdPerUnit": 0.122404672,
+   "singleReadUsdPerUnit": 0.04986058633333333,
+   "saved": 0.5926578167430298,
+   "diff": {
+    "b": 1,
+    "c": 0,
+    "n": 15,
+    "estimate": -0.06666666666666667,
+    "lower": -0.2507505628640031,
+    "upper": 0.09632821794560642,
+    "level": 0.9,
+    "z": 1.644853625133699
+   }
+  }
+ }
+}

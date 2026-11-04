@@ -5,12 +5,116 @@ Plan: [DOSSIER.md](DOSSIER.md). Preregistration: [PREREG-TIERDOWN.json](PREREG-T
 frozen before any paid call) and [AMENDMENT-1.md](AMENDMENT-1.md) (C-slice selection, rule-tier sha256s and the order,
 frozen before any H call; all seven input hashes re-verified unchanged at 17:20 UTC before the H injection).
 
+*Reviewed and corrected 2026-11-04 (§0); the preregistered primary result is unchanged, the exploratory headline is
+replaced.*
+
 **Evidence class: development.** Every unit is an archived dev-split compiled answer (records and kinetics, seeds
 201–248) from `research/jit-20261008/runs`. H is a hash-split half of that archive, held out from every choice this
 item made (tiers, rules, order, thresholds). It is **not sealed** and **not a fresh draw**. No sealed row, `beds/sealed/`
 path or devCheck directory was read (the archive reader refuses them, `archive.mjs` `assertDevPath`).
 
+## 0. Review 2026-11-04: corrections (read first; this section supersedes §1, §4, §6, §7 and §9 where they differ)
+
+An adversarial review of commits 78857489..569109ff found one blocker and six major defects. All were applied on
+2026-11-04 in this branch, at $0: no new paid call was made (no new model call of any kind). The preregistered primary
+result stands. **The 23.4% exploratory headline does not:** it was mostly a measurement artefact, and the root cause is
+more specific than the review stated (R1).
+
+### 0.1 Restated answer
+
+| question | answer (corrected) |
+|---|---|
+| Preregistered capability number (primary) | **0% cost saved at equal accuracy; nothing promoted.** Unchanged and valid: frozen in time, the fixed sequence stopped at site 1 (5 zero-flip H units, needs 149). |
+| Exploratory number held out from every choice | **`selected-tier`: 2.8% delivery judge cost saved** (task-clustered 90% bootstrap interval 1.3–6.0%), 29/42 runs = reference, 0 lost / 0 gained. These are the five C-selected pairs that change a tier: Mercury on void-values, date-order and vendex-entries, the rule tier on countries and country-names. Equal accuracy is **not shown** (Tango one-sided 95% lower bound −0.061 per run, −0.110 per task, against −0.03). At the only priced Mercury listing (mercury-2.5) the same policy costs **2.5% more** than the reference. Against the full judge cost of a task (delivery plus amortised compile and check, $0.473) it saves **0.4%**. K = 1 throughout. |
+| What was the 23.4%? | Two pairs that are **not tier changes**. `kinetics/prose-events-a`: two Haiku readers (`prose-events-a`, `prose-events-b`) and an Opus arbiter send one identical request; the override keyed on the request served one Haiku answer to all three, so the readers agreed by construction and the arbiter and the per-reader escalations never ran. `records/source-rules`: Haiku is the first tier of its own reference cascade. For both, the deployed cascade [tier, …reference] is the reference cascade itself (`policy.mjs` `cascadeOf`), so the expected tier-down saving is 0. Measured with K = 3 single-read draws at $0, replacing the two-reader vote by one Haiku read **loses 2 of 30 draws** (both where the arbiter decided), for 66% of that site's cost (R1). |
+| Which tier choices hold? | Cheap tiers hold on the cheap leaf judges (0 lost in 87 single-pair H runs, K = 1). The decisive date-order leaf, scored against the bed's ground truth at $0: the Opus `rules` reader is right on all 57 leaves (C+H) and Haiku is wrong on 5 tasks, so Bound 2 was not penalising Haiku there; the Haiku ×5 date-order vote is wrong on 2 of 18 tasks and Mercury on 1 (R13). |
+| Against all-frontier (the owner's baseline) | **Cost only:** the archived delivery judge calls re-priced at Opus 5.5 list price cost $0.594 per run, 9.0× the compiled solvers' $0.0661. Accuracy of an all-frontier arm is **not measured** (no Opus answers exist for the Haiku judges), so the owner's comparison remains open (R4). |
+| Latency | Wall time per decision (concurrent vote samples counted once), not the sum of calls: Mercury is **2.6× faster** on void-values (5.9 s → 2.3 s) and **2.5×** on date-order (3.2 s → 1.3 s), not "about 10×". Judge time per run, p50: reference 40.4 s, `selected-tier` 38.9 s (R6). |
+| Owner ask A10 | **Stays at D, not closed.** Gap: no all-frontier accuracy arm; per-site bounds need a fresh draw sized to the class; the decisive leaf needs its own reader scored against ground truth (§0.4). |
+
+### 0.2 Corrected capability table (H, development, held out; supersedes §6)
+
+42 runs of 22 tasks (records 28 runs / 14 tasks, kinetics 14 / 8). Runs of one task are not independent, so every
+interval below is also given with one unit per task. Losses count deopts of passing runs (R10). Tier charge per reference
+judge event × its k samples (R1). "Judge time" sums per-decision wall times over a run's decisions (R6). Full-system cost
+adds $0.407 per task of amortised build-time judge spend (compile $37.80 + check $19.98 over the archive's 142 streamed
+tasks, [data/full-system.json](data/full-system.json)). All tier arms ask K = 1 answer per decision; at the Haiku ×5 vote
+sites the one answer was copied to all five samples (a unanimous vote by construction) and is charged five times.
+
+| arm | runs (tasks) | passes | Δ acc (pt) | lost / gained | prereg NI (bound; holds) | Tango lower bound, runs / tasks | judge $ / run | **delivery saved** | 90% CI (tasks) | saved, Mercury at mercury-2.5 price | judge $ / verified success | full-system saved | full $ / verified success | judge time p50 / p95 (s) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| B-ref (solvers as compiled) | 42 (22) | 29 | 0 | — | — | — | $0.0661 | 0 | — | — | $0.0958 | 0 | $0.685 | 40.4 / 251.1 |
+| primary policy (preregistered) | 42 (22) | 29 | 0 | 0 / 0 | n/a (nothing changed) | — | $0.0661 | **0%** | — | — | $0.0958 | 0% | $0.685 | 40.4 / 251.1 |
+| **selected-tier** (5 tier changes, frozen before H) | 42 (22) | 29 | 0 | 0 / 0 | 0.069; no | −0.061 / −0.110 | $0.0643 | **2.8%** | 1.3–6.0% | −2.5% | $0.0931 | 0.4% | $0.682 | 38.9 / 251.1 |
+| selected (all 7 C picks, frozen before H) | 42 (22) | 29 | 0 | 1 / 1 | 0.084; no | −0.080 / −0.144 | $0.0484 | 26.9%* | 10.6–41.8% | 21.6% | $0.0700 | 3.8% | $0.659 | 38.4 / 251.1 |
+| provisional (6 pairs, chosen ON H: in-sample) | 42 (22) | 29 | 0 | 0 / 0 | 0.069; no | −0.061 / −0.110 | $0.0519 | 21.6%* | 4.4–36.5% | 16.3% | $0.0751 | 3.0% | $0.664 | 38.4 / 251.1 |
+| B-screen (0.98 agreement, no leverage) | 42 (22) | 29 | 0 | 0 / 0 | 0.069; no | −0.061 / −0.110 | $0.0646 | 2.4% | 1.1–5.0% | −1.9% | $0.0935 | 0.3% | $0.683 | 38.9 / 251.1 |
+| B-all-haiku | 42 (22) | 25 | −9.5 | 5 / 1 | 0.210; no | −0.206 / −0.317 | $0.0344 | 48.1%* | 36.1–62.9% | 48.1% | $0.0577 | 6.7% | $0.741 | 43.6 / 393.3 |
+| B-all-mercury | 28 (20); 14 incomplete | 18 | 0 | 0 / 0 | 0.101; no | −0.088 / −0.119 | $0.0672 | 3.3% | 1.4–11.1% | −5.4% | $0.1045 | 0.5% | $0.737 | 43.4 / 330.0 |
+| B-sink (reference on the global readers) | 42 (22) | 27 | −4.8 | 2 / 0 | 0.142; no | −0.134 / −0.241 | $0.0620 | 6.3% | −1.0–14.6% | 2.1% | $0.0964 | 0.9% | $0.729 | 38.9 / 393.3 |
+| B-memo (cache only) | 42 (22) | 29 | 0 | 0 / 0 | 0.069; no | −0.061 / −0.110 | $0.0661 | 0% | — | 0% | $0.0958 | 0% | $0.685 | 40.4 / 251.1 |
+| all-frontier (cost estimate only) | 42 (22) | not measured | — | — | — | — | $0.594 | −799% | — | — | — | — | — | — |
+
+\* Includes `prose-events-a@haiku` and/or `source-rules@haiku` (and, in B-all-haiku, `extract:*@haiku`, whose reference
+cascade starts at Haiku in 27 of 30 H decisions): their "saving" is the K = 1 suppression of an arbiter, a split vote or an
+escalation, not a tier change (R1). Source: [data/eval-H-v2.json](data/eval-H-v2.json) from
+[data/inject-H-v2.json](data/inject-H-v2.json); the original [data/eval-H.json](data/eval-H.json) and `inject-H*.json`
+are kept for the audit trail.
+
+### 0.3 Finding by finding
+
+| # | review finding | disposition | evidence |
+|---|---|---|---|
+| R1 | BLOCKER: 23.4% is an artefact; mechanism misstated | **Agreed, root cause refined.** The 2–3 "events" per run at `prose-events-a` are three different judges sending one request: readers `prose-events-a` and `prose-events-b` (Haiku, concurrent) and, on disagreement, `prose-events-arbiter` (Opus); in some solver versions each reader escalates to Opus on a failed check instead (s212). The override keys on the request without the model, so one value answered all three. Fixed: the tier is charged per reference event × k (`inject.mjs` `tierChargeOf`; prose-events-a: 11 asks for 5 decisions, not 5); a decision whose reference cascade starts at the candidate tier is flagged `sameFirstTier` (prose-events-a 5/5, source-rules 7/7, extract:* 27/30 on H); `selected-tier` drops those pairs by a rule read from the frozen PREREG `reference` field alone. Measured K = 3 at $0 (`readers.mjs`: both archived Haiku reader answers plus the paid fresh one, each injected end to end): one Haiku read instead of the vote loses **2 of 30 draws** (s214 C, s207 H; both arbiter units; 95% upper bound 0.195; Tango interval on the paired difference −0.183 to +0.022), and its expected cost is 34% of the reference at that site, so it is a speed-for-accuracy trade, not an equal-accuracy saving. The fresh K = 1 draw passed the check in s207 and s212 by chance; the archived Haiku answers of s212 fail it. | [readers-prose-events.json](data/readers-prose-events.json), `experiments/tierdown/readers.mjs`, `inject.mjs`, test `review.test.mjs` |
+| R2 | provisional chosen and scored on H | **Agreed.** `provisional` is labelled in-sample everywhere. The held-out exploratory number is `selected-tier` (defined before this run from the frozen preregistration, no H outcome read); `selected` (frozen before H, 1 lost / 1 gained) is reported beside it. | §0.2 |
+| R3 | units are runs, not tasks | **Agreed.** 42 runs = 22 tasks. Every arm now reports tasks, a Tango interval with one unit per task (the sign of the task's mean paired difference) and a task-clustered bootstrap of cost saved. The preregistered Bound 1 and NI stay unit = run as preregistered (PREREG `units`), and are anti-conservative; the next preregistration should use tasks. The build report's "42 held-out tasks" was wrong. | `policy.mjs` `nonInferiorTango`, `clusterBootstrapSaved` |
+| R4 | owner ask not closed | **Agreed.** A10 stays D (gap note in [REQUIREMENTS-COVERAGE-20261021.md](../REQUIREMENTS-COVERAGE-20261021.md)). Added at $0: cost per verified success, full-system booking (dossier §5: delivery is 14% of a task's judge cost here), and an all-frontier **cost** estimate. All-frontier **accuracy** needs Opus answers for every Haiku judge: about $25 for the delivery calls of 42 runs at archived token counts, above this item's $5, and a comparative paid call needing its own preregistration. Not run. | [full-system.json](data/full-system.json), `inject.mjs` `frontierRatios` |
+| R5 | K never labelled; vote sites tested as single answers | **Agreed; relabelled, not re-asked.** K = 1 is stated in every table. At date-order and void-values the "Mercury tier" is one answer copied to a unanimous 5-vote. Asking k = 5 would need 4 more answers for each of 16 H decisions, about 180K Mercury tokens at the observed 2.5–3.1K a call; the item has 31K left under its 0.5M limit, so the vote sites are relabelled instead. | §0.2, `report.mjs` |
+| R6 | latency inflated | **Agreed.** Reference latency is now the union of the calls' wall intervals (`createdAt − latencyMs`, `createdAt`), so concurrent samples count once and a sequential arbiter adds. void-values 24.3 s summed → 5.9 s wall against Mercury 2.3 s (2.6×); date-order 13.8 → 3.2 s against 1.3 s (2.5×); prose-events-a 84.9 → 44.0 s. | `inject.mjs` `refWallMs`, inject-H-v2 `decisions[].refWallMs` |
+| R7 | interrupted paid pass missing from the ledger | **Agreed, confirmed and documented.** `ledgerGap` over the committed files reproduces it exactly: answers-C.jsonl lines 1–79 hold 31 Haiku answers ($0.171923) and 12 Mercury answers (111,092 tokens) that no ledger line accounts for; the first ledger line (ended 14:43:30Z) starts from cap $2.828077 and 113,908 tokens, so the pass ended before it. A reconstructed line is in [answers-C.runs.reconstructed.jsonl](data/answers-C.runs.reconstructed.jsonl) (the original ledger file is left byte-identical). Its journal was deleted, so whether its first call preceded the PREREG commit (14:31:42; file final 14:27, content sha-checked by `--expect-sha`) **cannot be shown**. A sixth source-rules Mercury call cited by `run-c.sh` may have been billed and never written; unverifiable. Fixed forward: `tier-replay.mjs` writes its summary on SIGTERM/SIGINT and on errors, and stamps `askedAt` on every answer. | `tier-replay.mjs` `ledgerGap`, test #7 |
+| R8 | frozen Mercury order not implemented; F12 cause wrong | **Agreed.** `--sites` was a filter; jobs ran in archive-row order, and the Haiku-arm records rows (which carry `source-rules` but no `rules` judge) sort first, so the last H pass spent the remaining 44,222-token share on `records/source-rules` (3 calls, 63,187 tokens, 2 truncated) before any `records/rules` (Opus-arm rows) or `kinetics/well-events` (jit-r0-kinetics rows) decision. F12 is corrected below. Fixed: `--sites` is a priority order (`orderBySite`). The `max_tokens` fix was foreseeable from C and landed after H: agreed. | `tier-replay.mjs`, test #8 |
+| R9 | Mercury's $0 price drives the savings | **Agreed.** Every arm is re-priced at mercury-2.5's listed $0.20 / $0.75 per MTok: `selected-tier` turns from +2.8% to −2.5%, B-screen to −1.9%, B-all-mercury to −5.4%. Mercury is cheaper only at its promotional price, and capped by D18 tokens. | §0.2, `policy.mjs` `pricedUsd` |
+| R10 | a deopt is never a pass→fail flip | **Agreed, fixed.** `directionOf` and `lossOf` count a deopt or crash of a passing unit as a loss, in old and new files. No effect on H (no deopts). Rechecked on C: the frozen selection and order are unchanged (rules@haiku goes from 1 to 3 losses but was already excluded by Bound 2). | `analyze.mjs`, tests |
+| R11 | NI takes gains at their point estimate | **Agreed.** Tango's score interval is reported beside the preregistered test (which stays as preregistered). Newcombe's hybrid interval was rejected after checking it: with no discordant pairs its width is the Wilson asymmetry, about ±0.02 at n = 42, so it would "show" a 3-point NI from zero events; Tango gives the closed form ±z²/(n+z²) = ±0.061. | `policy.mjs` `tangoInterval`, tests |
+| R12 | H outcomes leaked into the paid-site choice | **Agreed, and measured as inconsequential.** The pooled screen did use H perturbation outcomes; AMENDMENT-1's "nothing in the H slice had been read" is overstated for that synthetic screen. Re-ranked on C rows only, the top eight sites come out in the same order (well-events, prose-events-a, rules, extract:*, source-rules, date-order, rulebook, void-values), so the site list would not have changed. Leverage classes (δ) were C-only all along. | this section |
+| R13 | date-order rule provenance unverifiable | **Agreed; cannot be repaired after the fact.** The skip-list (`rules/date-order.mjs` L44) contains all six of the generator's `UPDATE_FIELD` words. The rule's H results are not evidence of generalisation. It was never in a promoted or headline arm; it is wrong on one H task (s217) against ground truth. Next time: log the C request hashes read while writing a rule and test it on forms held out from C. | [truth-date-order.json](data/truth-date-order.json) |
+| R14 | kill-rule check is weak | **Agreed.** ρ = 0.53 over 10 sites, 95% interval −0.20 to 0.88: "kept" carries almost no information. | [leverage-check.json](data/leverage-check.json) `rhoInterval` |
+| R15 | test gaps | **Fixed.** `replay.test.mjs` now finds the archive through the main worktree when run from a linked one, says so on stderr when it skips, fails under `TIERDOWN_REQUIRE_ARCHIVE=1`, and tests a **real** replay miss (row #8, a swapped void marker). New `review.test.mjs` (11 tests) pins per-event charging, wall latency, deopt as loss, site order, the interrupted-run ledger against the committed files, Tango, task-level NI, the bootstrap, ρ's interval, Mercury pricing, frontier ratios, `readers.mjs` and `truth.mjs`. | tests |
+| R16 | provenance details | **Agreed.** `run-c.sh` cited a non-existent "§Deviations D3" and "first 6 answers" (5 recorded): corrected in its header. The `tier-replay.mjs` that asked the H passes (14:53–15:12) was committed at 17:19 (ae0ecc72), after them; f20e6ca7 does not hold the exact code that asked H. The diff between them (`git diff f20e6ca7 ae0ecc72 -- experiments/tierdown/tier-replay.mjs`, 4 lines) only adds Haiku to the allowed-model list given to `createModelPort`, so the policy subset validates in a Mercury-only pass; requests and decoding are unchanged. | git history |
+
+**Cheaper approaches the review named.** (1) *Score decisive leaves against the bed's truth*: done at $0
+(`truth.mjs`, R13 row and §0.1). (2) *Evaluate the rule + Mercury agreement cascade from committed data*: done. At
+records/date-order, serving the rule's answer when the rule and Mercury agree and the reference otherwise agrees on 15 of
+18 decisions, loses no task, gains one (C, in-sample for the rule), has the right leaves on 17 of 18 (the reference 16 of
+18) and costs 14% of the reference at that site. On H alone: 6 of 8 agree, 0 lost, 0 gained, 8 of 8 leaves right. Small
+and partly in-sample; it is the next preregistration's candidate, not a result. (3) *De-duplicate identical requests within
+a run*: the repeats at prose-events-a are an intentional two-reader vote with an arbiter, so de-duplication is exactly the
+single read measured in R1 (2 of 30 lost). **Disagree** that it is zero risk here. (4) *Retry the cheap tier before
+escalating*: not measured; the archive holds one first-tier draw per escalation, so it needs paid draws. (5) *Spend the
+budget where it can earn a promotion*: agreed. Re-running the existing compiled records solvers on about 30 fresh dev seeds
+costs roughly $0.07 a run in delivery judges (more where a run deopts), so a 29-unit draw for the low-leverage records sites
+fits in the $4.49 left. It is a new paid comparative run that needs its own seed-ledger block and preregistration, so it
+was not started in this fix pass; it is the first next step (§9.4).
+
+### 0.4 Files changed by this review, and manifest hashes
+
+No e-mail address of any kind is in this branch's files or commit metadata except `noreply@anthropic.com` (checked
+over all 61 changed or new files and every commit author and message), so no address was replaced.
+
+- Code: `experiments/tierdown/{inject,analyze,policy,tier-replay,replay,report}.mjs`, `run-c.sh`, `test/{analyze,replay}.test.mjs`;
+  new `readers.mjs`, `truth.mjs`, `run-inject-h-v2.sh`, `test/review.test.mjs`.
+- Data, new: `inject-H-v2.json`, `eval-H-v2.json`, `full-system.json`, `readers-prose-events.json`, `truth-date-order.json`,
+  `answers-C.runs.reconstructed.jsonl`. Data, regenerated: `leverage-check.json` (same rows and ρ, plus `rhoInterval`; its
+  hash changed; no manifest lists it).
+- Frozen inputs re-verified unchanged (sha256 prefix): PREREG-TIERDOWN.json `2790ad22d001`, rules `countries.mjs`
+  `cca9abe4e66e`, `date-order.mjs` `15374a388230`, `index.mjs` `12e3d48e8efd`, `select-C.json` `9613f165f7aa`,
+  `answers-C.jsonl` `e27d70a6184b`, `answers-C-rule.jsonl` `67cc5f6617cb`, `inject-C.json` `daadb673a585`. No earlier
+  manifest hash is invalidated by this review. The H answers files and `inject-H*.json`, `eval-H.json` are byte-identical.
+
 ## 1. Answer
+
+*(Original text of 2026-11-04 17:34. Superseded by §0.1 where they differ: the "exploratory provisional policy" and
+"where is the money" rows are wrong as written, see R1, R2, R6.)*
 
 | question | answer |
 |---|---|
@@ -38,11 +142,14 @@ path or devCheck directory was read (the archive reader refuses them, `archive.m
 | `buildmemo.mjs` | prices a build-time k-th-answer memo across runs (not applied) |
 | `leafdiff.mjs` | root-cause helper: decision-leaf differences of every moved unit against the value the solver was served |
 | `report.mjs` | tables below from the data files |
-| `run-paid.sh`, `run-c.sh`, `run-h.sh`, `run-inject-h.sh`, `run-inject-h-provisional.sh` | detached drivers |
+| `readers.mjs` (review) | $0 K = 3 single-read draws at `prose-events-a` (two archived Haiku reader answers plus the paid fresh one) |
+| `truth.mjs` (review) | $0 date-order leaf accuracy against the records world's ground truth; the rule + Mercury agreement cascade |
+| `run-paid.sh`, `run-c.sh`, `run-h.sh`, `run-inject-h.sh`, `run-inject-h-provisional.sh`, `run-inject-h-v2.sh` (review) | detached drivers |
 
-Tests (`nice -n 15 node --test --test-concurrency=1 <file>`, one at a time): `test/analyze.test.mjs` 10/10,
-`test/lib.test.mjs` 12/12, `test/rules.test.mjs` 6/6, `test/replay.test.mjs` 1/1 (real sandboxed replay of an archived
-row with `TIERDOWN_RUNS` pointing at the archive). All pass. Tests with teeth include these: a decisive perturbation
+Tests (`nice -n 15 node --test --test-concurrency=1 <file>`, one at a time), after the review: `test/analyze.test.mjs`
+11/11, `test/lib.test.mjs` 12/12, `test/rules.test.mjs` 6/6, `test/review.test.mjs` 11/11, `test/replay.test.mjs` 2/2
+(real sandboxed replays of archived rows; it now finds the archive through the main worktree, and its second test is a
+real replay miss). All pass. Before the review: analyze 10/10, lib 12/12, rules 6/6, replay 1/1. Tests with teeth include these: a decisive perturbation
 must flip the oracle, and a check-rejected served answer must fall back. An incomplete unit must never be scored as
 the reference. A reordered list must not count as a difference. A Mercury request must carry `max_tokens` equal to the
 provider's reservation (F2).
@@ -65,7 +172,9 @@ provider's reservation (F2).
 ## 4. Node replays (agreement on decision leaves; tolerant numbers; evidence stripped)
 
 H slice (C in [data/select-C.json](data/select-C.json) and `report.mjs`). Cost is per decision, a k-sample reference
-charged k times. Latency is the call's own.
+charged k times. Latency is the call's own. **K = 1 for every tier** (one answer per decision). *Review: the "ref p50"
+column sums concurrent calls; per-decision wall time is void-values 5.9 s, date-order 3.2 s, prose-events-a 44.0 s
+(§0.3 R6). prose-events-a's reference is two Haiku readers plus an Opus arbiter or escalation, not Opus (R1).*
 
 | site | tier | answered | usable | mean leaf agreement | tier $/decision | ref $/decision | tier p50 | ref p50 |
 |---|---|---|---|---|---|---|---|---|
@@ -106,6 +215,10 @@ Units per kept pair: prose-events-a 5, void-values 8, date-order 8, vendex-entri
 second $0 pass injected the six together ([data/inject-H-provisional.json](data/inject-H-provisional.json)).
 
 ## 6. Capability vs the simple baselines (H, 42 units: 28 records + 14 kinetics; dev, held out)
+
+*Superseded by §0.2 (review 2026-11-04). Kept as first written: the provisional and selected savings below include the
+arbiter/escalation suppression of R1, charge per request instead of per judge event, sum concurrent latencies, count
+units as if they were independent tasks, and price Mercury at its $0 promotional listing only.*
 
 Delivery judge USD per unit: archived list-price cost for reference answers, measured cost for tier answers, fallback
 answers charged twice. Latency is the sum of a unit's judge latencies, not wall clock. NI means non-inferior at a
@@ -214,15 +327,22 @@ diffs are against the value the solver was served ([data/leafdiff-C.txt](data/le
 any call (PREREG). This is a blocker, not a result. Jev's errors correlate with Claude's (phi 0.61), which already made
 it a weak cascade partner.
 
-**F11. Bound 2 measures agreement with a reference that is wrong on the decisive leaf.**
+**F11. Bound 2 measures agreement with a reference that is wrong on the decisive leaf.** *Review: refined by ground
+truth ([data/truth-date-order.json](data/truth-date-order.json)). True at date-order (the Haiku ×5 vote is wrong on 2 of 18
+tasks) and source-rules (the reference is wrong on 4 of 17); false at `records/rules`, where the Opus reference is right on
+all 57 date-order leaves and every Haiku disagreement there is a Haiku error.*
 - The date-order rule (C: 2 fail→pass, disagreement 0.083) was excluded by the preregistered yardstick.
 - On H it has 8 units, 0 flips and 1 abstention: VENDEX has no date-order cue, so that unit fell back to the reference.
 - Kept out of the policy as preregistered. The next preregistration should score the decisive leaf against the
   **oracle** (pass/fail), not against the reference answer.
 
 **F12. Incomplete baselines.** B-all-mercury leaves out 14 of 42 units. Mercury was never asked `records/rules` or
-`kinetics/well-events` on H: the H token share went first to the selected sites (AMENDMENT-1 §4), and the per-run cap then
-refused (`MODEL_BUDGET`). Incomplete units are counted, never scored as the reference (clarification 3).
+`kinetics/well-events` on H. *Corrected cause (review R8):* not the selected sites. `--sites` was a filter, not the frozen
+priority order (AMENDMENT-1 §4): the last pass walked rows in archive order, the Haiku-arm records rows (which carry
+`source-rules` and no `rules` judge) came first, and `records/source-rules`, already excluded on C for truncation, spent the
+whole remaining 44,222-token share in 3 calls (63,187 tokens, 2 truncated) before any `rules` or `well-events` decision was
+reached; the cap then refused (`MODEL_BUDGET`). Fixed (`orderBySite`). Incomplete units are counted, never scored as the
+reference (clarification 3).
 
 **F13. Own tool defect, found and fixed.**
 - The first `leafdiff.mjs` took "the first archived delivery answer to the identical request" as the reference.
@@ -244,6 +364,10 @@ refused (`MODEL_BUDGET`). Incomplete units are counted, never scored as the refe
 
 ## 9. Honest reading and next steps
 
+*§9 items 1 and 3 are corrected by §0: the delivery-time saving that holds out of sample is 2.8% at Mercury's $0 price
+(−2.5% at a priced Mercury listing), `prose-events-a` was not "a frontier-priced node asking an easy question" but a
+two-reader vote with an arbiter (R1), and the latency gain is about 2.5×, not 10× (R6).*
+
 1. **The plan works, and the capability claim is not earned yet.**
    - The $0 counterfactual substrate works: 88/88 faithful, injection without D11's re-sampling confound, and
      leverage-ranked sites.
@@ -261,7 +385,7 @@ refused (`MODEL_BUDGET`). Incomplete units are counted, never scored as the refe
    - Check-time judge calls are 31% of all judge spend, and 54.5% of that spend is cross-run repeats.
    - An owner decision on memoised checks (it changes what `jit-check` measures) is worth more than any delivery-time
      tier-down measured here.
-4. **To earn a preregistered promotion,** draw a fresh held-out set sized to the class: ≥ 29 units per low-leverage site
+4. **To earn a preregistered promotion** (first next step after the review), draw a fresh held-out set sized to the class, with one unit per task,: ≥ 29 units per low-leverage site
    (country, vendex) is cheap, while 149 per high-leverage site is not. Either cascade the high-leverage sites behind an
    oracle-grade check, or keep them at the reference.
 5. **Mercury:** usable and fast on short enum and map questions (void, date, countries, vendex), with 0 pass→fail. On
@@ -277,8 +401,22 @@ nice -n 15 node experiments/tierdown/analyze.mjs evaluate --prereg research/tier
 nice -n 15 node experiments/tierdown/report.mjs research/tierdown-20261021/data
 # injection and leaf diffs replay the archive (read-only): TIERDOWN_RUNS=<main tree>/research/jit-20261008/runs
 TIERDOWN_RUNS=... bash experiments/tierdown/run-inject-h.sh
+# review 2026-11-04 (all $0): corrected injection, evaluation, full-system booking, single-read draws, ground truth
+D=research/tierdown-20261021/data R=<main tree>/research/jit-20261008/runs
+TIERDOWN_RUNS=$R bash experiments/tierdown/run-inject-h-v2.sh
+node experiments/tierdown/analyze.mjs evaluate --prereg research/tierdown-20261021/PREREG-TIERDOWN.json --selection $D/select-C.json \
+  --answers $D/answers-H.jsonl,$D/answers-H-rule.jsonl --inject $D/inject-H-v2.json --out $D/eval-H-v2.json
+node experiments/tierdown/analyze.mjs fullsystem --prereg research/tierdown-20261021/PREREG-TIERDOWN.json --leverage $D/leverage.json \
+  --eval $D/eval-H-v2.json --runs $R --out $D/full-system.json
+node experiments/tierdown/analyze.mjs check --prereg research/tierdown-20261021/PREREG-TIERDOWN.json --inject $D/inject-C.json,$D/inject-H.json \
+  --classes $D/classes-C.json > $D/leverage-check.json
+node experiments/tierdown/readers.mjs --answers $D/answers-C.jsonl,$D/answers-H.jsonl --leverage $D/leverage.json --runs $R --out $D/readers-prose-events.json
+node experiments/tierdown/truth.mjs --answers $D/answers-C.jsonl,$D/answers-H.jsonl,$D/answers-C-rule.jsonl,$D/answers-H-rule.jsonl \
+  --inject $D/inject-C.json,$D/inject-H.json --leverage $D/leverage.json --runs $R --out $D/truth-date-order.json
 ```
 
 Data ([data/](data/)): `leverage.json`/`.md` (screen), `classes-C.json`, `answers-{C,H}{,-rule}.jsonl` (+ `.runs.jsonl`
 ledgers), `inject-C.json`, `select-C.json` (frozen), `inject-H.json`, `inject-H-provisional.json`, `eval-H.json`,
-`leverage-check.json`, `buildmemo.json`, `model-failures.json`, `leafdiff-{C,H}.txt`.
+`leverage-check.json`, `buildmemo.json`, `model-failures.json`, `leafdiff-{C,H}.txt`. Added by the review:
+`answers-C.runs.reconstructed.jsonl`, `inject-H-v2.json`, `eval-H-v2.json`, `full-system.json`, `readers-prose-events.json`,
+`truth-date-order.json`.

@@ -95,6 +95,32 @@ export function ledgerUse(files) {
   return { haikuUsd, mercuryTokens };
 }
 
+// Review 2026-11-04 #7: reconcile an answers file with its run ledger. Every summary line records the item cap left
+// when the run started (capUsd = cap - Haiku USD already used) and the Mercury token cap left (tokens.inception.cap); the
+// answers file is append-only. Whatever the answers file holds that no ledger line accounts for is an unledgered pass
+// (e.g. one killed before its summary was written). Returns the answers' totals, the ledgered totals and the gap.
+export function ledgerGap({ answers, runs, capUsd = 3, tokenCap = null }) {
+  const tot = { haikuUsd: 0, haikuCalls: 0, mercuryTokens: 0, mercuryCalls: 0 };
+  for (const a of answers) {
+    if (a.tier === 'claude-haiku-5-5') { tot.haikuUsd += a.costUsd ?? 0; tot.haikuCalls++; }
+    if (a.tier === 'mercury-3') { tot.mercuryTokens += (a.inputTokens ?? 0) + (a.outputTokens ?? 0) + (a.cacheReadTokens ?? 0); tot.mercuryCalls++; }
+  }
+  const led = { haikuUsd: 0, mercuryTokens: 0, calls: 0 };
+  for (const r of runs) { led.haikuUsd += r.spentUsd ?? 0; led.mercuryTokens += r.tokens?.inception?.spent ?? 0; led.calls += r.calls ?? 0; }
+  const first = runs[0] ?? null;
+  const usedBeforeFirst = first ? { haikuUsd: capUsd - first.capUsd, mercuryTokens: tokenCap != null && first.tokens?.inception ? tokenCap - first.tokens.inception.cap : null } : null;
+  const r6 = x => Math.round(x * 1e6) / 1e6;
+  return { answers: { ...tot, haikuUsd: r6(tot.haikuUsd) }, ledgered: { ...led, haikuUsd: r6(led.haikuUsd) }, usedBeforeFirst: usedBeforeFirst && { ...usedBeforeFirst, haikuUsd: r6(usedBeforeFirst.haikuUsd) },
+    gap: { haikuUsd: r6(tot.haikuUsd - led.haikuUsd), mercuryTokens: tot.mercuryTokens - led.mercuryTokens } };
+}
+
+// Review 2026-11-04 #8: --sites is a PRIORITY order, not only a filter. Decisions are asked site by site in the order
+// given, so a token cap that runs out leaves the last-listed sites unasked, never an earlier one.
+export function orderBySite(decisions, sites) {
+  const rank = new Map(sites.map((s, i) => [s, i]));
+  return decisions.filter(d => rank.has(d.site)).map((d, i) => ({ d, i })).sort((a, b) => rank.get(a.d.site) - rank.get(b.d.site) || a.i - b.i).map(x => x.d);
+}
+
 const done = file => new Set((existsSync(file) ? readFileSync(file, 'utf8').split('\n').filter(Boolean) : []).map(l => { const r = JSON.parse(l); return `${r.row}\0${r.key}\0${r.tier}`; }));
 
 async function main() {
@@ -132,6 +158,7 @@ async function main() {
       ...(modelTiers.includes('mercury-3') ? { tokenCap: mercuryTokens } : {}), timeoutMs: 300000 }));
   }
   let spent = 0, calls = 0, refusedByCap = 0, consecutiveFaults = 0, capRefused = 0;
+  const startedAt = new Date().toISOString();
   const faults = [], exhausted = new Set();
   const work = mkdtempSync(path.join(os.tmpdir(), 'tierdown-tr-')), indexes = new Map();
   const indexOf = arm => { if (!indexes.has(arm.dir)) indexes.set(arm.dir, requestIndex(arm)); return indexes.get(arm.dir); };
@@ -142,7 +169,20 @@ async function main() {
     for (const [k, v] of indexOf(arm)) { if (!fi.has(k)) fi.set(k, { ...v, rows: [] }); fi.get(k).rows.push(...v.rows.map(r => ({ ...r, arm: arm.slug }))); }
     familyIndex.set(arm.family, fi);
   }
+  // A summary line is written however the run ends: normally, on an error, or on SIGTERM/SIGINT (review #7: a killed pass
+  // left 43 paid answers with no ledger line).
+  let summarised = false;
+  const summarise = extra => {
+    if (summarised) return; summarised = true;
+    const summary = { prereg: sha, slice, tiers, sites, rows: jobs.length, calls, spentUsd: Math.round(spent * 1e6) / 1e6, capUsd, refusedByCap, faults: faults.length, faultCodes: [...new Set(faults.map(f => f.code))], tokens: tokens(), startedAt, at: new Date().toISOString(), ...extra };
+    appendFileSync(path.resolve(out).replace(/\.jsonl$/, '') + '.runs.jsonl', JSON.stringify(summary) + '\n');
+    console.log(JSON.stringify(summary));
+  };
+  const onSignal = sig => () => { try { summarise({ interrupted: sig }); } finally { db?.close(); rmSync(work, { recursive: true, force: true }); process.exit(sig === 'SIGINT' ? 130 : 143); } };
+  process.once('SIGTERM', onSignal('SIGTERM')); process.once('SIGINT', onSignal('SIGINT'));
   try {
+    // Phase 1 ($0): replay every row once and list its decisions at the target sites.
+    const decisions = [];
     await pool(jobs, concurrency, async ({ arm, row }) => {
       const id = rowId(arm, row), base = await replayRow({ arm, row, flowPath: arm.flows.hooked, work });
       const seen = new Set();
@@ -150,12 +190,20 @@ async function main() {
         const site = siteIdOf(arm.family, j.name);
         if (!sites.includes(site) || !j.key || seen.has(j.key)) continue;
         seen.add(j.key);
-        const req = indexOf(arm).get(j.key);
         const refCalls = base.calls.filter(c => c.key === j.key);
+        decisions.push({ arm, row, id, site, j: { key: j.key, name: j.name, samples: j.samples, value: j.value },
+          refModels: [...new Set(refCalls.map(c => c.modelId))], refCostUsd: refCalls.reduce((s, c) => s + (c.origCostUsd ?? 0), 0), refLatencyMs: refCalls.reduce((s, c) => s + (c.origLatencyMs ?? 0), 0) });
+      }
+    });
+    // Phase 2: ask in --sites priority order (rows in archive order within a site).
+    const rowOrder = new Map(jobs.map(({ arm, row }, i) => [rowId(arm, row), i]));
+    decisions.sort((a, b) => rowOrder.get(a.id) - rowOrder.get(b.id));
+    await pool(orderBySite(decisions, sites), concurrency, async ({ arm, row, id, site, j, refModels, refCostUsd, refLatencyMs }) => {
+      {
+        const req = indexOf(arm).get(j.key);
         // samples: the judge's k-sample vote. One answer per tier is asked here (K = 1); inject.mjs charges a model tier k
-        // times (a deployed k-sample vote), a rule or memo tier once.
-        const common = { row: id, taskKey: row.taskKey, slice, site, name: j.name, key: j.key, samples: j.samples ?? 1, refModels: [...new Set(refCalls.map(c => c.modelId))], refCostUsd: refCalls.reduce((s, c) => s + (c.origCostUsd ?? 0), 0),
-          refLatencyMs: refCalls.reduce((s, c) => s + (c.origLatencyMs ?? 0), 0) };
+        // times per reference event (a deployed k-sample vote), a rule or memo tier nothing.
+        const common = { row: id, taskKey: row.taskKey, slice, site, name: j.name, key: j.key, samples: j.samples ?? 1, refModels, refCostUsd, refLatencyMs };
         // Only the tiers the preregistration lists for this site (and this run's --tiers).
         const siteTiers = prereg.sites.find(s => s.site === site)?.tiers ?? [];
         for (const tier of tiers.filter(t => siteTiers.includes(t))) {
@@ -192,15 +240,15 @@ async function main() {
               inputTokens: r.usage?.inputTokens ?? null, outputTokens: r.usage?.outputTokens ?? null, cacheReadTokens: r.usage?.cacheReadTokens ?? null };
           }
           if (rec.ok) { rec.agreement = agreementOf(j.value, rec.value); rec.exact = exactOf(j.value, rec.value); }
-          appendFileSync(out, JSON.stringify({ ...common, tier, ...rec }) + '\n');
+          // askedAt: per-answer timestamp, so "before any paid call" stays checkable after the journals are gone (review #7).
+          appendFileSync(out, JSON.stringify({ ...common, tier, ...rec, askedAt: new Date().toISOString() }) + '\n');
         }
       }
     });
-  } finally {
+  } catch (e) { summarise({ error: String(e.code ?? e.message ?? e).slice(0, 200) }); throw e; }
+  finally {
+    summarise({});
     db?.close(); rmSync(work, { recursive: true, force: true });
-    const summary = { prereg: sha, slice, tiers, rows: jobs.length, calls, spentUsd: Math.round(spent * 1e6) / 1e6, capUsd, refusedByCap, faults: faults.length, faultCodes: [...new Set(faults.map(f => f.code))], tokens: tokens(), at: new Date().toISOString() };
-    appendFileSync(path.resolve(out).replace(/\.jsonl$/, '') + '.runs.jsonl', JSON.stringify(summary) + '\n');
-    console.log(JSON.stringify(summary));
   }
 }
 

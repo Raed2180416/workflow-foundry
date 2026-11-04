@@ -24,15 +24,23 @@ test('nodeTable: usable rate, agreement over usable answers only, k-sample charg
   assert.equal(t.find(x => x.site === 'v' && x.tier === 'rule').tierUsdPerDecision, 0);
 });
 
-const inj = (assignment, row, outcome, basePass, extra = {}) => ({ assignment, row, status: 'measured', outcome, basePass, pass: outcome === 'flip' ? !basePass : outcome === 'unmeasured' ? null : basePass,
-  direction: outcome === 'flip' ? (basePass ? 'pass->fail' : 'fail->pass') : null, judgeUsd: 0.002, refUsd: 0.01, deoptUsd: outcome === 'deopt' ? 0.5 : 0, latencyMs: 10, refLatencyMs: 100, ...extra });
+// As inject.mjs writes them: a deopt or crash does not pass. `legacy: true` leaves the direction off a deopt, as the
+// files written before the review fix (#10) did.
+const inj = (assignment, row, outcome, basePass, extra = {}) => {
+  const pass = outcome === 'flip' ? !basePass : outcome === 'unmeasured' ? null : outcome === 'deopt' || outcome === 'crash' ? false : basePass;
+  const direction = extra.legacy ? (outcome === 'flip' ? (basePass ? 'pass->fail' : 'fail->pass') : null) : (pass == null ? null : basePass && !pass ? 'pass->fail' : !basePass && pass ? 'fail->pass' : null);
+  return { assignment, row, status: 'measured', outcome, basePass, pass, direction, judgeUsd: 0.002, refUsd: 0.01, deoptUsd: outcome === 'deopt' ? 0.5 : 0, latencyMs: 10, refLatencyMs: 100, ...extra };
+};
 
-test('injectTable: flips both ways, unmeasured excluded, deopts charged', () => {
-  const t = injectTable([inj('a', 1, 'same', true), inj('a', 2, 'flip', true), inj('a', 3, 'flip', false), inj('a', 4, 'unmeasured', true), inj('a', 5, 'deopt', true),
-    { assignment: 'a', row: 6, status: 'incomplete' }]).a;
-  assert.equal(t.units, 4); assert.equal(t.unmeasured, 1); assert.equal(t.incomplete, 1);
-  assert.equal(t.passFail, 1); assert.equal(t.failPass, 1); assert.equal(t.deopts, 1);
-  assert.ok(Math.abs(t.judgeUsd - (4 * 0.002 + 0.5)) < 1e-12);
+test('injectTable: flips both ways, unmeasured excluded, deopts charged and counted as losses (review #10)', () => {
+  for (const legacy of [false, true]) {
+    const t = injectTable([inj('a', 1, 'same', true), inj('a', 2, 'flip', true), inj('a', 3, 'flip', false), inj('a', 4, 'unmeasured', true), inj('a', 5, 'deopt', true, { legacy }),
+      inj('a', 7, 'deopt', false, { legacy }), { assignment: 'a', row: 6, status: 'incomplete' }]).a;
+    assert.equal(t.units, 5); assert.equal(t.unmeasured, 1); assert.equal(t.incomplete, 1);
+    assert.equal(t.passFail, 2, `a deopt of a passing unit is a loss (${legacy ? 'legacy file' : 'new file'})`); assert.equal(t.flipsOnly, 1);
+    assert.equal(t.failPass, 1, 'a deopt of a failing unit is not a gain'); assert.equal(t.deopts, 2);
+    assert.ok(Math.abs(t.judgeUsd - (5 * 0.002 + 2 * 0.5)) < 1e-12);
+  }
 });
 
 test('selectOnC: cheapest eligible tier; a C pass->fail flip or a failed Bound 2 disqualifies; order by saving', () => {
@@ -81,6 +89,25 @@ test('capabilityRow: untouched units keep reference cost and outcome; NI and fli
   assert.equal(c.ni.holds, false, 'four units cannot show non-inferiority');
   const d = capabilityRow('q', [{ assignment: 'q', row: 1, status: 'incomplete' }, inj('q', 2, 'same', true)], units);
   assert.equal(d.incomplete, 1); assert.equal(d.units, 3, 'an incomplete unit is left out, never scored as the reference');
+  const e = capabilityRow('r', [inj('r', 1, 'deopt', true, { legacy: true })], units);
+  assert.equal(e.passFail, 1, 'a deopt of a passing unit is a loss in the capability row too (#10)'); assert.equal(e.pass, 2);
+});
+
+test('capabilityRow (review): tasks, task-level Tango NI, cost per verified success, Mercury re-priced, all-frontier estimate', () => {
+  // 6 runs of 3 tasks, all unchanged: run-level Tango cannot show a 3-point NI at n = 6, nor can the task level at n = 3.
+  const units = [1, 2, 3, 4, 5, 6].map(row => ({ row, taskKey: `t${Math.ceil(row / 2)}`, basePass: row !== 6, refUsd: 0.01, refLatencyMs: 100, allFrontierUsd: 0.2 }));
+  const rows = units.map(u => inj('p', u.row, 'same', u.basePass, { judgeUsd: 0.004, tierTokens: { 'mercury-3': { input: 1000, output: 4000, cacheRead: 0 } } }));
+  const c = capabilityRow('p', rows, units, { price: { inputPerMTok: 0.2, outputPerMTok: 0.75, cacheReadPerMTok: 0.02 } });
+  assert.equal(c.units, 6); assert.equal(c.tasks, 3);
+  assert.equal(c.niTango.runs.n, 6); assert.equal(c.niTango.tasks.n, 3); assert.equal(c.niTango.holds, false);
+  assert.ok(Math.abs(c.niTango.tasks.lower - (-(1.6448536 ** 2) / (3 + 1.6448536 ** 2))) < 1e-6, 'zero discordant tasks: the closed form -z^2/(n+z^2)');
+  assert.ok(Math.abs(c.usdPerSuccess - 0.024 / 5) < 1e-12, 'judge USD over passes');
+  assert.ok(Math.abs(c.mercuryPriced.usdPerUnit - (0.004 + (1000 * 0.2 + 4000 * 0.75) / 1e6)) < 1e-12, 'tokens at the listed price');
+  assert.ok(c.mercuryPriced.costSaved < c.costSaved, 'a priced Mercury saves less');
+  assert.ok(Math.abs(c.allFrontierUsdPerUnit - 0.2) < 1e-12);
+  assert.equal(c.savedCI.tasks, 3); assert.ok(Math.abs(c.savedCI.lower - 0.6) < 1e-9 && Math.abs(c.savedCI.upper - 0.6) < 1e-9, 'identical tasks: the bootstrap collapses on the estimate');
+  const legacy = capabilityRow('p', rows.map(({ tierTokens, ...r }) => r), units, { price: { inputPerMTok: 0.2, outputPerMTok: 0.75 } });
+  assert.equal(legacy.mercuryPriced.usdPerUnit, null, 'a file without token counts cannot be re-priced, and says so');
 });
 
 test('split, ledger and classes helpers', () => {
@@ -106,7 +133,7 @@ test('spearman and the screen-vs-injection kill rule', () => {
     row('c', 'rule', 'same'), row('c', 'memo', 'flip'), row('c', 'rule', 'unmeasured'), row('d', 'rule', 'flip'), { assignment: 'selected', status: 'measured', outcome: 'flip' }, row('c', 'rule', null, 'incomplete')];
   const k = leverageCheck(classes, rows);
   assert.deepEqual(k.rows.map(r => [r.site, r.units, r.moved]), [['a', 2, 2], ['b', 2, 1], ['c', 1, 0]], 'memo, unmeasured, incomplete, combined and unclassed rows are left out; a deopt moves the outcome');
-  assert.equal(k.rho, 1); assert.equal(k.keepScreen, true);
+  assert.equal(k.rho, 1); assert.equal(k.keepScreen, true); assert.equal(k.rhoInterval, null, 'no interval from 3 sites');
   const k2 = leverageCheck({ a: { flipRate: 0 }, b: { flipRate: 0.2 }, c: { flipRate: 0.4 } }, rows);
   assert.equal(k2.rho, -1); assert.equal(k2.keepScreen, false, 'an inverted ranking drops the screen');
 });
