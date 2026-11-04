@@ -376,6 +376,13 @@ test('read-back (reconcile): a crash-orphaned failure answers the re-emission on
   // a dependant on the outcome keeps the real emission
   const dep = rtick({ carry: t0.res.carry, events: [declined], out: out([charge('c1'), { key: 'ship', system: 'carrier', op: 'create', args: { orderId: 'O-1', fulfilmentId: 'F-1' }, after: 'c1' }]) });
   assert.equal(dep.res.effects[0].op, 'charge');
+  // and so does a re-emission that itself follows another effect: the host's `after` gate holds within one output
+  // only, so a read now and a re-issue later would drop it (the charge could commit after a failed predecessor)
+  const gated = rtick({ carry: t0.res.carry, events: [declined], out: out([{ key: 'st', system: 'orders', op: 'setStatus', args: { orderId: 'O-1', fulfilmentId: 'F-1', status: 'charging' } }, { ...charge('c1'), after: 'st' }]) });
+  assert.deepEqual(gated.res.effects.map(e => [e.op, e.key, e.after ?? null]), [['setStatus', '=status:O-1:F-1:charging', null], ['charge', '=charge:F-1', '=status:O-1:F-1:charging']]);
+  assert.ok(!gated.res.decisions.envelope.findings.some(f => f.code === 'readback'));
+  assert.deepEqual(Object.keys(gated.res.carry.x.q), []);
+  assert.deepEqual(Object.keys(gated.res.carry.x.p), ['=charge:F-1']);
   // so does a system with no status read
   const noStatus = { version: 1, ops: Object.fromEntries(Object.entries(REG.ops).filter(([k]) => k !== 'billing.status')) };
   const ns = rtick({ registry: noStatus, carry: rtick({ registry: noStatus, out: out([]) }).res.carry, events: [declined], out: out([charge('fulfil/O-1/charge')]) });

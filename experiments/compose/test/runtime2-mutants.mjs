@@ -53,6 +53,7 @@ export const MUTANTS = [
   // D2: read-back
   ['read-back-always-on', "export function withEnvelope(solver, { registry, id = null, ...opts } = {}) {", "export function withEnvelope(solver, { registry, id = null, ...opts0 } = {}) {\n  const opts = { ...opts0, reconcile: true };"],
   ['read-back-ignores-after', '!(legacy && afterTargets.has(legacy)) && ', ''],
+  ['read-back-ignores-own-after (resume finding)', " && !r2Own(e, 'after')", ''],
   ['read-back-parks-own-reads', " && !slots[0].key.startsWith('=?')", ''],
   ['read-back-no-status-guard', ' && registry?.ops?.[`${e.system}.status`]?.read === true', ''],
   ['read-back-parks-ok (pre-review D2)', "\n      && ev.payload.status !== 'ok') {", ') {'],

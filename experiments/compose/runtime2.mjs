@@ -28,8 +28,9 @@
 //      Option `reconcile` (read-back, off by default): the host remembers committed keys only, so a re-emission after a
 //      crash re-attempts an effect whose first attempt FAILED (a declined charge is tried twice). With `reconcile`, an
 //      orphaned FAILURE of a single write is parked in the carry; when the solver re-emits that identity (within three
-//      ticks, with no `after` dependant, on a system with a status read), the envelope sends a read of the identity
-//      key's status instead. If the read confirms that nothing committed (`not-found`), the re-emission is answered
+//      ticks, on a system with a status read, and neither carrying `after` nor named by another effect's `after`: the
+//      host's `after` gate holds only within one output, so a write re-issued later could not keep it), the envelope
+//      sends a read of the identity key's status instead. If the read confirms that nothing committed (`not-found`), the re-emission is answered
 //      with the parked failure; otherwise (committed, pending, or the read failed or never came) the re-emission goes
 //      to the system as written (`readback-reissued`), so the host's own idempotency answers it. An orphaned `ok` is
 //      never parked: the re-emission goes to the host, which answers with the committed result when the arguments are
@@ -459,11 +460,12 @@ export function envAfter(out, pre, registry, { maxEnvelopeBytes = 24 * 1024, max
         else local.set(legacy, nk);
         e.key = nk;
         // read-back: the platform already made this attempt and it failed (its result is parked); ask whether anything
-        // committed instead of a second attempt, unless a dependant follows this effect's outcome or the system has no
-        // status read
-        if (reconcile && r2Own(x.p, nk) && !(legacy && afterTargets.has(legacy)) && registry?.ops?.[`${e.system}.status`]?.read === true) {
+        // committed instead of a second attempt, unless a dependant follows this effect's outcome, the effect itself
+        // follows another's (`after` names an effect of the same output only, so a re-issue in a later output would
+        // lose the gate and could commit after a failed predecessor), or the system has no status read
+        if (reconcile && r2Own(x.p, nk) && !(legacy && afterTargets.has(legacy)) && !r2Own(e, 'after') && registry?.ops?.[`${e.system}.status`]?.read === true) {
           const rk = envKey(`readback:${ids.identity}`).replace(/^=/, '=?');
-          const { key: _k, after: _a, ...w } = e;
+          const { key: _k, ...w } = e;
           if (typeof w.compensates === 'string') w.compensates = local.get(w.compensates) ?? legacyMap.get(w.compensates) ?? w.compensates;
           x.q[rk] = { nk, legacy, payload: x.p[nk].payload, w, t: x.t };
           delete x.p[nk];

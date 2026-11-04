@@ -10,6 +10,7 @@
 // with a computed `holds`. ATTACK's Move 2 kill lines need Move 1's Δ* and the replay gate, so they are reported as not
 // evaluated; the composition analogue is labelled as such.
 //   node experiments/compose/move2-analyze.mjs [--runs dir[,dir2...]] [--out research/blockers-20261021/move2/analysis.json]
+//   node experiments/compose/move2-analyze.mjs --fresh 1181,1183 --runs <fresh dirs> [--out .../move2/fresh-analysis.json]
 // With several run directories, a later one supersedes an earlier one cell by cell (subject, runtime, world, fault);
 // every cell keeps the runtime2 sha256 it ran under (`provenance`).
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
@@ -44,11 +45,11 @@ const cell = (docs, label, rt, seed, fault) => docs[`${label}.r${rt}`]?.results.
 const loss = (docs, label, rt, seed, fault) => { const a = cell(docs, label, rt, seed, 'none'), b = cell(docs, label, rt, seed, fault); return a && b ? a.oracle.passed - b.oracle.passed : null; };
 const sum = xs => xs.reduce((a, b) => a + (b ?? 0), 0);
 
-export function analyse(docs) {
+export function analyse(docs, { seeds = SEEDS } = {}) {
   const subjects = [...COMPOSED, ...MONOLITHS];
   const res = { faultTable: [], digests: [], restart: [], duplicates: {}, d4: {}, crashCollapse: {}, band: {}, gate: {}, fixes: [], mutants: [], findings: {}, carry: {}, armErrors: [] };
   // 1. the fault table (passed/completed, loss against the subject's own fault-free run, duplicates)
-  for (const s of subjects) for (const rt of [1, 2]) for (const seed of SEEDS) for (const f of ['none', 'restart', 'crash', 'dup-delayed', 'dup-same', 'downstream']) {
+  for (const s of subjects) for (const rt of [1, 2]) for (const seed of seeds) for (const f of ['none', 'restart', 'crash', 'dup-delayed', 'dup-same', 'downstream']) {
     const c = cell(docs, s, rt, seed, f);
     if (!c) continue;
     res.faultTable.push({ subject: s, runtime: rt, seed, fault: f, passed: c.oracle.passed, completed: c.oracle.completed, lossVsNone: f === 'none' ? 0 : loss(docs, s, rt, seed, f),
@@ -57,21 +58,21 @@ export function analyse(docs) {
     if (c.armErrors) res.armErrors.push({ subject: s, runtime: rt, seed, fault: f, armErrors: c.armErrors });
   }
   // 2. transparency: fault-free journals equal modulo key spelling, and the same business rows at the end
-  for (const s of subjects) for (const seed of SEEDS) {
+  for (const s of subjects) for (const seed of seeds) {
     const a = cell(docs, s, 1, seed, 'none'), b = cell(docs, s, 2, seed, 'none');
     if (!a || !b) continue;
     res.digests.push({ subject: s, seed, logicalEqual: a.digest.logical === b.digest.logical, sorTablesEqual: a.digest.sorTables === b.digest.sorTables,
       passingEqual: JSON.stringify(a.passing) === JSON.stringify(b.passing), envFindings: b.envelope.byCode });
   }
   // 3. restart under runtime 2: the journal equals runtime 2's fault-free journal (M4a)
-  for (const s of subjects) for (const seed of SEEDS) {
+  for (const s of subjects) for (const seed of seeds) {
     const a = cell(docs, s, 2, seed, 'none'), b = cell(docs, s, 2, seed, 'restart');
     if (a && b) res.restart.push({ subject: s, seed, sameJournal: a.digest.logical === b.digest.logical });
   }
   // 4. duplicates under dup-same (M4d) and crash (M4b), runtime 1 vs 2; the universal D4 set from runtime 1
   const failing = (s, rt, seed, f) => new Set(cell(docs, s, rt, seed, f)?.failingCases ?? []);
   const lostCases = (s, rt, seed, f) => { const base = new Set(cell(docs, s, rt, seed, 'none')?.passing ?? []); return [...failing(s, rt, seed, f)].filter(c => base.has(c)); };
-  for (const seed of SEEDS) {
+  for (const seed of seeds) {
     const sets = MONOLITHS.map(m => new Set(lostCases(m, 1, seed, 'dup-same')));
     const universal = sets.length ? [...sets[0]].filter(c => sets.every(x => x.has(c))).sort() : [];
     res.d4[seed] = { universal, monolithLosses: Object.fromEntries(MONOLITHS.map((m, i) => [m, [...sets[i]].sort()])) };
@@ -79,7 +80,7 @@ export function analyse(docs) {
   for (const s of subjects) {
     const row = {};
     for (const rt of [1, 2]) for (const f of ['dup-same', 'crash', 'dup-delayed', 'restart', 'downstream']) {
-      const cs = SEEDS.map(seed => cell(docs, s, rt, seed, f)).filter(Boolean);
+      const cs = seeds.map(seed => cell(docs, s, rt, seed, f)).filter(Boolean);
       if (!cs.length) continue;
       const dupCases = cs.flatMap((c, i) => (c.exactlyOnce.dupCases ?? []).map(x => ({ seed: c.seed, case: x })));
       row[`r${rt}:${f}`] = { worlds: cs.length, duplicates: sum(cs.map(c => c.exactlyOnce.duplicates)), money: sum(cs.map(c => c.exactlyOnce.money)), keyConflicts: sum(cs.map(c => c.exactlyOnce.keyConflicts)),
@@ -89,8 +90,8 @@ export function analyse(docs) {
   }
   // 5. ch-e8-2 crash collapse (X1: within 3 cases of its fault-free run on all three worlds)
   for (const s of subjects) for (const rt of [1, 2]) {
-    const l = SEEDS.map(seed => loss(docs, s, rt, seed, 'crash'));
-    if (l.every(x => x !== null)) res.crashCollapse[`${s}.r${rt}`] = { loss: l, within3: l.every(x => x <= 3), critical: SEEDS.map(seed => cell(docs, s, rt, seed, 'crash')?.oracle.critical) };
+    const l = seeds.map(seed => loss(docs, s, rt, seed, 'crash'));
+    if (l.every(x => x !== null)) res.crashCollapse[`${s}.r${rt}`] = { loss: l, within3: l.every(x => x <= 3), critical: seeds.map(seed => cell(docs, s, rt, seed, 'crash')?.oracle.critical) };
   }
   // 6. the monolith band: composed losses under crash (M4b) and dup-same (M4d) against the monoliths' range, per world.
   // ATTACK names "the monolith band" without fixing its rows; the three COMP-1 monolith comparator rows are taken here.
@@ -100,7 +101,7 @@ export function analyse(docs) {
     const xs = MONOLITHS.map(m => loss(docs, label(m), rt, seed, f)).filter(x => x !== null);
     return xs.length === MONOLITHS.length ? [Math.min(...xs), Math.max(...xs)] : null;
   };
-  for (const f of ['crash', 'dup-same']) for (const seed of SEEDS) {
+  for (const f of ['crash', 'dup-same']) for (const seed of seeds) {
     const comp = Object.fromEntries(COMPOSED.flatMap(s => [1, 2].map(rt => [`${s}.r${rt}`, loss(docs, s, rt, seed, f)])));
     for (const s of COMPOSED) { const v = loss(docs, `${s}+readback`, 2, seed, f); if (v !== null) comp[`${s}+readback.r2`] = v; }
     const bands = { r1: monoBand(seed, f, 1), r2: monoBand(seed, f, 2), readback: monoBand(seed, f, 2, m => `${m}+readback`) };
@@ -118,7 +119,7 @@ export function analyse(docs) {
   }
   // 8. the skeptic's one-line source fixes against the envelope
   for (const [label, base] of [['ch-e8-2+fix-d3', 'ch-e8-2'], ['cht-e8-1+fix-d2', 'cht-e8-1'], ['cht-e8-2+fix-d2', 'cht-e8-2'], ['cht-e8-3+fix-d2', 'cht-e8-3']]) {
-    for (const seed of SEEDS) for (const f of ['none', 'crash', 'dup-same']) {
+    for (const seed of seeds) for (const f of ['none', 'crash', 'dup-same']) {
       const row = { label, seed, fault: f };
       for (const [k, s, rt] of [['r1', base, 1], ['r1+fix', label, 1], ['r2', base, 2], ['r2+fix', label, 2]]) {
         const c = cell(docs, s, rt, seed, f);
@@ -128,7 +129,7 @@ export function analyse(docs) {
     }
   }
   // 9. the distinct-refunds mutant
-  for (const label of ['cht-e8-1+mut-splitrefund', 'b1lh-e8-1+mut-splitrefund']) for (const seed of SEEDS) for (const f of ['none', 'downstream']) {
+  for (const label of ['cht-e8-1+mut-splitrefund', 'b1lh-e8-1+mut-splitrefund']) for (const seed of seeds) for (const f of ['none', 'downstream']) {
     const a = cell(docs, label, 1, seed, f), b = cell(docs, label, 2, seed, f);
     if (!a || !b) continue;
     res.mutants.push({ label, seed, fault: f, acts: [a.mutantActs, b.mutantActs], r1: { dup: a.exactlyOnce.duplicates, money: a.exactlyOnce.money, keyConflicts: a.exactlyOnce.keyConflicts },
@@ -136,7 +137,7 @@ export function analyse(docs) {
       flagged: (b.exactlyOnce.keyConflicts > 0) || (b.envelope.byCode['identity-conflict'] ?? 0) > 0 });
   }
   // 10. envelope findings by fault (runtime 2), identity conflicts on fault-free runs, carry
-  for (const s of subjects) for (const seed of SEEDS) for (const f of ['none', 'restart', 'crash', 'dup-delayed', 'dup-same', 'downstream']) {
+  for (const s of subjects) for (const seed of seeds) for (const f of ['none', 'restart', 'crash', 'dup-delayed', 'dup-same', 'downstream']) {
     const c = cell(docs, s, 2, seed, f);
     if (!c) continue;
     const t = (res.findings[f] ??= {});
@@ -144,18 +145,18 @@ export function analyse(docs) {
     const cb = (res.carry[s] ??= { total: 0, envelope: 0 });
     cb.total = Math.max(cb.total, c.carryBytes.total); cb.envelope = Math.max(cb.envelope, c.carryBytes.envelope);
   }
-  for (const s of subjects) for (const seed of SEEDS) {
+  for (const s of subjects) for (const seed of seeds) {
     const c = cell(docs, s, 1, seed, 'none');
     if (c) { const cb = (res.carry[s] ??= { total: 0, envelope: 0 }); cb.r1Total = Math.max(cb.r1Total ?? 0, c.carryBytes.total); }
   }
-  res.identityConflictsFaultFree = sum(subjects.flatMap(s => SEEDS.map(seed => cell(docs, s, 2, seed, 'none')?.envelope.byCode['identity-conflict'] ?? 0)));
+  res.identityConflictsFaultFree = sum(subjects.flatMap(s => seeds.map(seed => cell(docs, s, 2, seed, 'none')?.envelope.byCode['identity-conflict'] ?? 0)));
   // 11. the read-back variant (runtime2 option reconcile): fault-free equal to plain runtime 2; crash losses against both
   res.readback = {};
   for (const s of subjects) {
     const rb = `${s}+readback`;
     if (!docs[`${rb}.r2`]) continue;
     const row = { noneEqual: [], crash: [] };
-    for (const seed of SEEDS) {
+    for (const seed of seeds) {
       const a = cell(docs, s, 2, seed, 'none'), b = cell(docs, rb, 2, seed, 'none');
       if (a && b) row.noneEqual.push(a.digest.logical === b.digest.logical && a.digest.sorTables === b.digest.sorTables);
       const c = cell(docs, rb, 2, seed, 'crash');
@@ -167,6 +168,36 @@ export function analyse(docs) {
     res.readback[s] = row;
   }
   return res;
+}
+
+/**
+ * The read-back prediction committed before the fresh-world check (move2/READBACK-FRESH-PREDICTION.md, cd300991), read
+ * from the rows: P1 fault-free digests (read-back = plain r2 = r1), P2 crash loss (read-back <= plain r2 everywhere, = 0
+ * in at least 5 of 6), P3 no duplicate, no 409 key conflict and no critical finding beyond the fault-free run's in any
+ * runtime-2 cell; the kill is P1 failing or read-back losing more than plain r2 in any cell.
+ */
+export const FRESH_SUBJECTS = ['ch-e8-2', 'cht-e8-1', 'b1lh-e8-1'];
+export function freshVerdicts(docs, seeds) {
+  const cells = FRESH_SUBJECTS.flatMap(s => seeds.map(seed => ({ s, seed })));
+  const same = (a, b) => !!(a && b && a.digest.logical === b.digest.logical && a.digest.sorTables === b.digest.sorTables);
+  const rows = cells.map(({ s, seed }) => ({ subject: s, seed,
+    noneRbEqualsR2: same(cell(docs, s, 2, seed, 'none'), cell(docs, `${s}+readback`, 2, seed, 'none')),
+    noneR2EqualsR1: same(cell(docs, s, 1, seed, 'none'), cell(docs, s, 2, seed, 'none')),
+    crashLoss: { r1: loss(docs, s, 1, seed, 'crash'), r2: loss(docs, s, 2, seed, 'crash'), readback: loss(docs, `${s}+readback`, 2, seed, 'crash') },
+    p3: [s, `${s}+readback`].flatMap(l => ['none', 'crash'].map(f => { const c = cell(docs, l, 2, seed, f), n = cell(docs, l, 2, seed, 'none');
+      return c ? { label: l, fault: f, dup: c.exactlyOnce.duplicates, keyConflicts: c.exactlyOnce.keyConflicts, critical: c.oracle.critical, criticalFaultFree: n?.oracle.critical ?? null,
+        ok: c.exactlyOnce.duplicates === 0 && c.exactlyOnce.keyConflicts === 0 && n !== null && c.oracle.critical <= n.oracle.critical } : { label: l, fault: f, missing: true, ok: false }; })),
+    provenance: [s, `${s}+readback`].flatMap(l => [1, 2].map(rt => cell(docs, l, rt, seed, 'crash')?.provenance).filter(Boolean)) }));
+  const n = rows.length;
+  const p1 = { readbackEqualsR2: rows.filter(r => r.noneRbEqualsR2).length, r2EqualsR1: rows.filter(r => r.noneR2EqualsR1).length, of: n };
+  p1.holds = p1.readbackEqualsR2 === n && p1.r2EqualsR1 === n;
+  const p2 = { readbackLeR2: rows.filter(r => r.crashLoss.readback !== null && r.crashLoss.r2 !== null && r.crashLoss.readback <= r.crashLoss.r2).length,
+    readbackZero: rows.filter(r => r.crashLoss.readback === 0).length, of: n };
+  p2.holds = p2.readbackLeR2 === n && p2.readbackZero >= n - 1;
+  const p3 = { okCells: rows.reduce((a, r) => a + r.p3.filter(x => x.ok).length, 0), of: rows.reduce((a, r) => a + r.p3.length, 0) };
+  p3.holds = p3.okCells === p3.of;
+  const sums = ['r1', 'r2', 'readback'].map(k => sum(rows.map(r => r.crashLoss[k])));
+  return { P1: p1, P2: p2, P3: p3, kill: { crossed: !p1.holds || rows.some(r => r.crashLoss.readback === null || r.crashLoss.r2 === null || r.crashLoss.readback > r.crashLoss.r2) }, crashLossSums: { r1: sums[0], r2: sums[1], readback: sums[2] }, rows };
 }
 
 /** The ATTACK/X1 success and kill lines, evaluated. */
@@ -211,9 +242,19 @@ const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? proces
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const dirs = arg('--runs', 'research/blockers-20261021/move2/runs').split(',').map(d => path.resolve(ROOT, d));
   for (const dir of dirs) if (!existsSync(dir)) throw new Error(`no battery output at ${dir}`);
-  const res = analyse(load(dirs));
-  const v = verdicts(res);
-  const out = path.resolve(ROOT, arg('--out', 'research/blockers-20261021/move2/analysis.json'));
-  writeFileSync(out, JSON.stringify({ evidence: 'development (dev worlds 1161/1162/1164), $0, runtime2 vs frozen runtime1; D28(3)', runs: dirs.map(d => path.relative(ROOT, d)), verdicts: v, ...res }, null, 1));
-  console.log(JSON.stringify(v, null, 1));
+  const docs = load(dirs);
+  const fresh = arg('--fresh', null);                      // --fresh 1181,1183: read the committed read-back prediction
+  if (fresh) {
+    const seeds = fresh.split(',').map(Number);
+    const v = freshVerdicts(docs, seeds);
+    const out = path.resolve(ROOT, arg('--out', 'research/blockers-20261021/move2/fresh-analysis.json'));
+    writeFileSync(out, JSON.stringify({ evidence: `development (dev worlds ${seeds.join('/')}), $0, runtime2 read-back prediction (move2/READBACK-FRESH-PREDICTION.md)`, runs: dirs.map(d => path.relative(ROOT, d)), ...v }, null, 1));
+    console.log(JSON.stringify({ P1: v.P1, P2: v.P2, P3: v.P3, kill: v.kill, crashLossSums: v.crashLossSums }, null, 1));
+  } else {
+    const res = analyse(docs);
+    const v = verdicts(res);
+    const out = path.resolve(ROOT, arg('--out', 'research/blockers-20261021/move2/analysis.json'));
+    writeFileSync(out, JSON.stringify({ evidence: 'development (dev worlds 1161/1162/1164), $0, runtime2 vs frozen runtime1; D28(3)', runs: dirs.map(d => path.relative(ROOT, d)), verdicts: v, ...res }, null, 1));
+    console.log(JSON.stringify(v, null, 1));
+  }
 }

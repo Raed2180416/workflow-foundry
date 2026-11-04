@@ -65,15 +65,12 @@ export function plan(which = 'all') {
     }
   }
   if (which === 'v2') {
-    // the re-run after the 2026-11-04 review (MOVE2-COMP.md §8): every runtime-2 cell whose trajectory the fixes can
-    // change (D1 surplus rule and D2 read-back under crash, D8 order under dup-same), read-back first, then the
-    // fault-free cells as the check that nothing else moved; runtime 1 is unchanged and not re-run
-    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label: `${label}+readback`, spec: specOf(label), runtime: 2, faults: ['crash'], envelopeOptions: { reconcile: true } });
-    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label, spec: specOf(label), runtime: 2, faults: ['crash'] });
-    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label, spec: specOf(label), runtime: 2, faults: ['dup-same'] });
-    for (const [base, patches] of Object.entries(FIXES)) out.push({ label: `${base}+fix-${base === 'ch-e8-2' ? 'd3' : 'd2'}`, spec: specOf(base), runtime: 2, faults: ['crash', 'dup-same'], patches });
-    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label, spec: specOf(label), runtime: 2, faults: ['none'] });
-    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label: `${label}+readback`, spec: specOf(label), runtime: 2, faults: ['none'], envelopeOptions: { reconcile: true } });
+    // the re-run after the 2026-11-04 review (MOVE2-COMP.md §8): every runtime-2 cell the write-up reports (main,
+    // fixes, mutants, read-back), all under the one revised runtime2.mjs, so no table mixes envelope versions. The fixes
+    // (D1 surplus rule, D2 read-back, D7 eviction, D8 order, D9 escaping) can only move cells where their branches fire
+    // (surplus, shared identity, read-back, eviction); the pre-review rows of restart, dup-delayed and downstream had no
+    // envelope finding at all, and they are re-run anyway as the check. Runtime 1 is unchanged and not re-run.
+    for (const job of [...plan('all'), ...plan('readback')]) if (job.runtime === 2) out.push(job);
   }
   if (which === 'fresh-v2') {
     // the fresh worlds again, runtime-2 rows only (runtime 1 is unchanged): plain and read-back, crash then fault-free
