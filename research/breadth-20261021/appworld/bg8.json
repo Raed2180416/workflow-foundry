@@ -1,0 +1,170 @@
+{
+ "kind": "appworld-bg8",
+ "version": 1,
+ "at": "2026-11-04T14:27:51.134Z",
+ "planted": {
+  "hostSnapshot": "/var/tmp/foundry-work/appworld-host/runs/bg8-18213/units/x__r0/output/dbs/planted.jsonl",
+  "hostVerdict": "/var/tmp/foundry-work/appworld-host/runs/bg8-18213/units/x__r0/verdict.json",
+  "otherUnitLive": "/var/tmp/foundry-work/appworld-live/bg8-18213/u/other__r0/serve/experiments/outputs/planted.jsonl",
+  "parityCache": "/var/tmp/foundry-work/appworld-host/parity/bg8-18213/official.jsonl"
+ },
+ "kept": {
+  "venv": "/var/tmp/foundry-work/benches/appworld/venv",
+  "bridge": "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-14/experiments/breadth/appworld/bridge.py",
+  "publicView": "per unit",
+  "serveRoot": "per unit"
+ },
+ "executePath": {
+  "taskRole": "devTrain (pilot order 0)",
+  "groundTruthLoaded": false,
+  "toolsListed": [
+   "execute",
+   "api_docs",
+   "python"
+  ],
+  "unknownRejected": true,
+  "guardRefusedChunk": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "pathlib": {
+   "leaked": [],
+   "readableFiles": [],
+   "visible": [
+    "/home/user/workflow-foundry",
+    "/tmp"
+   ]
+  },
+  "bypass": {
+   "open": "TextIOWrapper",
+   "openedSensitiveFiles": [],
+   "openResults": {
+    "/var/tmp/foundry-work/benches/appworld/root/data": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/benches/appworld/root/data/tasks/afc0fce_2/ground_truth": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/benches/appworld/root/data/tasks/afc0fce_2/ground_truth/answer.json": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/benches/appworld/root/data/datasets/test_normal.txt": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/benches/appworld/root": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/benches/appworld/cache": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/benches/appworld/download": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/benches/appworld/home": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/benches/appworld/downloads.json": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-host": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-host/runs/bg8-18213/units/x__r0/output/dbs/planted.jsonl": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-host/runs/bg8-18213/units/x__r0/verdict.json": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-live/bg8-18213/u/other__r0/serve/experiments/outputs/planted.jsonl": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-host/parity/bg8-18213/official.jsonl": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-live/bg8-18213/u/probe__r0/pub/data/tasks/afc0fce_2/ground_truth": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-live/bg8-18213/u/probe__r0/pub/data/datasets": "err:FileNotFoundError",
+    "/home/user/workflow-foundry": "err:IsADirectoryError",
+    "/home/user/workflow-foundry/corpus": "err:FileNotFoundError",
+    "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-14/beds/sealed": "err:FileNotFoundError",
+    "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-14/research/breadth-20261021/appworld": "err:FileNotFoundError",
+    "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-14/research/breadth-20261021/appworld/SPLIT.json": "err:FileNotFoundError",
+    "/root/.cache/pip": "err:FileNotFoundError",
+    "/root/.cache/uv": "err:FileNotFoundError",
+    "/root/.cache/huggingface": "err:FileNotFoundError",
+    "/root/.appworld": "err:FileNotFoundError",
+    "/root/.claude": "err:FileNotFoundError",
+    "/tmp": "err:IsADirectoryError",
+    "/var/tmp/foundry-work/benches/agentdojo": "err:FileNotFoundError"
+   },
+   "listdirRoot": "err:TypeError",
+   "leaked": null
+  },
+  "process": {
+   "subprocess": "null-patched",
+   "net": "err:OSError",
+   "groundTruthObjects": 0,
+   "heapObjects": 1047263,
+   "uid": "err:TypeError",
+   "env": [
+    "APPWORLD_CACHE",
+    "APPWORLD_ROOT",
+    "HOME",
+    "LANG",
+    "OLDPWD",
+    "PATH",
+    "PWD",
+    "PYTHONDONTWRITEBYTECODE",
+    "PYTHONHASHSEED"
+   ]
+  },
+  "scan": {
+   "scanned": 108889,
+   "groundTruthHits": [],
+   "packageHits": []
+  },
+  "pythonViaRelay": {
+   "leaked": [],
+   "pkg": [],
+   "net": [],
+   "procs": 1,
+   "uid": 65534
+  },
+  "facade": {
+   "requests": 5,
+   "executes": 4,
+   "docs": 0,
+   "refused": 0,
+   "completed": false,
+   "pythonRuns": 1,
+   "notesOps": 0,
+   "bridgeError": null,
+   "error": null
+  },
+  "closedExecutes": 4,
+  "ok": true
+ },
+ "pythonTool": {
+  "ok": true,
+  "leaked": [],
+  "pkg": [],
+  "net": [],
+  "procs": [
+   1
+  ],
+  "uid": 65534
+ },
+ "sessionSandbox": {
+  "ok": true,
+  "leaked": [],
+  "plantedSeen": [],
+  "visible": [
+   "/tmp"
+  ],
+  "cwdFiles": [
+   ".tools",
+   "probe.mjs"
+  ]
+ },
+ "positiveControl": {
+  "ok": true,
+  "sawFullData": true,
+  "readAnswerFileBytes": 4,
+  "visible": [
+   "/var/tmp/foundry-work/benches/appworld/root/data",
+   "/var/tmp/foundry-work/benches/appworld/root/data/tasks/afc0fce_2/ground_truth",
+   "/var/tmp/foundry-work/benches/appworld/root/data/tasks/afc0fce_2/ground_truth/answer.json",
+   "/var/tmp/foundry-work/benches/appworld/root/data/datasets/test_normal.txt",
+   "/var/tmp/foundry-work/benches/appworld/root",
+   "/var/tmp/foundry-work/benches/appworld/cache",
+   "/var/tmp/foundry-work/benches/appworld/download",
+   "/var/tmp/foundry-work/benches/appworld/home",
+   "/var/tmp/foundry-work/benches/appworld/downloads.json",
+   "/var/tmp/foundry-work/appworld-host",
+   "/home/user/workflow-foundry",
+   "/home/user/workflow-foundry/corpus",
+   "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-14/beds/sealed",
+   "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-14/research/breadth-20261021/appworld",
+   "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-14/research/breadth-20261021/appworld/SPLIT.json",
+   "/root/.cache/pip",
+   "/root/.cache/uv",
+   "/root/.claude",
+   "/tmp",
+   "/var/tmp/foundry-work/benches/agentdojo"
+  ]
+ },
+ "pass": true
+}

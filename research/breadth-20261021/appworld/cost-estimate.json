@@ -1,0 +1,141 @@
+{
+ "kind": "appworld-cost-plan",
+ "evidence": "estimate [I] from PLAN §10.2 anchors; replaced by dev-pilot measurements before any sealed run",
+ "perTaskUsd": {
+  "A-H": 0.2,
+  "A-HN": 0.25,
+  "F-H": 0.4,
+  "A-S": 1.6,
+  "A-O": 4
+ },
+ "sizes": {
+  "haiku": 168,
+  "A-S": 64,
+  "A-O": 20
+ },
+ "dev": [
+  {
+   "step": "init probe (sessions stop at their init event; no model request is sent)",
+   "arm": "all",
+   "usd": 0,
+   "cmds": [
+    "node experiments/breadth/appworld/run.mjs --arm A-H --split devTrain --limit 2 --offline --cap 1.2",
+    "node experiments/breadth/appworld/run.mjs --arm A-HN --split devTrain --limit 2 --offline --cap 1.4",
+    "node experiments/breadth/appworld/run.mjs --arm A-S --split devTrain --limit 2 --offline --cap 8",
+    "node experiments/breadth/appworld/run.mjs --arm A-O --split devTrain --limit 2 --offline --cap 20"
+   ]
+  },
+  {
+   "step": "probe battery: 2 smoke units per arm on devTrain (identity and date checks read from these transcripts)",
+   "arm": "all",
+   "usd": 8.1,
+   "cmds": [
+    "node experiments/breadth/appworld/run.mjs --arm A-H --split devTrain --limit 2 --cap 1.2 --run-id aw-smoke-ah",
+    "node experiments/breadth/appworld/run.mjs --arm A-HN --split devTrain --limit 2 --cap 1.4 --run-id aw-smoke-ahn",
+    "node experiments/breadth/appworld/run.mjs --arm A-S --split devTrain --limit 2 --cap 8 --run-id aw-smoke-as",
+    "node experiments/breadth/appworld/run.mjs --arm A-O --split devTrain --limit 1 --cap 10 --run-id aw-smoke-ao"
+   ]
+  },
+  {
+   "step": "dev pilot and cost gate: A-H on the first 30 devTrain tasks in pilot order",
+   "arm": "A-H",
+   "usd": 6,
+   "cmds": [
+    "node experiments/breadth/appworld/run.mjs --arm A-H --pilot --cap 7.8 --run-id aw-pilot-a-h"
+   ]
+  },
+  {
+   "step": "dev pilot and cost gate: A-HN on the first 30 devTrain tasks in pilot order",
+   "arm": "A-HN",
+   "usd": 7.5,
+   "cmds": [
+    "node experiments/breadth/appworld/run.mjs --arm A-HN --pilot --cap 9.75 --run-id aw-pilot-a-hn"
+   ]
+  },
+  {
+   "step": "dev pilot and cost gate: A-S on the first 12 devTrain tasks in pilot order",
+   "arm": "A-S",
+   "usd": 19.2,
+   "cmds": [
+    "node experiments/breadth/appworld/run.mjs --arm A-S --pilot --cap 24.96 --run-id aw-pilot-a-s"
+   ]
+  },
+  {
+   "step": "dev pilot and cost gate: A-O on the first 6 devTrain tasks in pilot order",
+   "arm": "A-O",
+   "usd": 24,
+   "cmds": [
+    "node experiments/breadth/appworld/run.mjs --arm A-O --pilot --cap 31.2 --run-id aw-pilot-a-o"
+   ]
+  },
+  {
+   "step": "bed card (Opus, from public docs, the tool schema and devTrain only; written by the F-kit card step, not this adapter)",
+   "arm": "card",
+   "usd": 5,
+   "cmds": []
+  },
+  {
+   "step": "F-kit dev looks (F-H on devTrain, <= 3 looks on devCheck; the F-kit, not this adapter)",
+   "arm": "F-H",
+   "usd": 15,
+   "cmds": []
+  }
+ ],
+ "devUsd": 84.8,
+ "devCapUsd": 90,
+ "sealed": [
+  {
+   "arm": "A-H",
+   "subset": "haiku",
+   "n": 168,
+   "usd": 33.6,
+   "capUsd": 43.68,
+   "cmds": [
+    "node experiments/breadth/appworld/run.mjs --arm A-H --sealed --freeze research/breadth-20261021/appworld/SEALED-FREEZE.json --subset haiku --cap 43.68 --run-id aw-sealed-a-h"
+   ]
+  },
+  {
+   "arm": "F-H",
+   "subset": "haiku",
+   "n": 168,
+   "note": "F-kit (not this adapter); 2 F-reuse lineages",
+   "usd": 67.2,
+   "capUsd": 87.36,
+   "cmds": []
+  },
+  {
+   "arm": "A-S",
+   "subset": "A-S",
+   "n": 64,
+   "usd": 102.4,
+   "capUsd": 133.12,
+   "cmds": [
+    "node experiments/breadth/appworld/run.mjs --arm A-S --sealed --freeze research/breadth-20261021/appworld/SEALED-FREEZE.json --subset A-S --cap 133.12 --run-id aw-sealed-a-s"
+   ]
+  },
+  {
+   "arm": "A-O",
+   "subset": "A-O",
+   "n": 20,
+   "usd": 80,
+   "capUsd": 104,
+   "cmds": [
+    "node experiments/breadth/appworld/run.mjs --arm A-O --sealed --freeze research/breadth-20261021/appworld/SEALED-FREEZE.json --subset A-O --cap 104 --run-id aw-sealed-a-o"
+   ]
+  }
+ ],
+ "sealedUsd": 283.2,
+ "sealedCapSum": 368.16,
+ "sealedCapUsd": 380,
+ "control": {
+  "arm": "A-HN",
+  "subset": "haiku",
+  "n": 168,
+  "usd": 42,
+  "capUsd": 54.6,
+  "cmds": [
+   "node experiments/breadth/appworld/run.mjs --arm A-HN --sealed --freeze research/breadth-20261021/appworld/SEALED-FREEZE.json --subset haiku --cap 54.6 --run-id aw-sealed-a-hn"
+  ]
+ },
+ "order": "dev only after the AppWorld $0 gates; sealed only after the cheap beds and the portfolio dev gate, with a SEALED-FREEZE.json written at the PREREG v1 freeze (arms, F-kit and card hashes, per-arm caps from 1.5 x dev p99, the A-S cut from the pilot ICC)"
+}

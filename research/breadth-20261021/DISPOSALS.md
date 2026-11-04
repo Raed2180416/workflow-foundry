@@ -147,3 +147,26 @@ sweep's `tools-meth/portfolio_sim.py`). Read-only reads of repository files (REG
 R0-RUNBOOK, executor and sandbox sources, `policy/models.json`) and of the three critiques' scratchpad scripts. The rev-2
 author's private claude.ai artifact of PLAN.md was not opened, updated, republished or deleted (PLAN §11 OD-0). Disk during
 writing: 2.8–3.7 GB free (`df -h /`), `/var/tmp/foundry-work` 3.7 GB (other tracks).
+
+## AppWorld bed 3 adoption (2026-11-04, worktree wf_435f2b5e-3ff-14)
+
+Rule: D16. Detail: `research/breadth-20261021/appworld/ACQUISITION.md`. Disk free before the work: 1.70 GB (`df -B1 /`,
+13:49Z); 0.76–0.87 GB later in the session while other tracks wrote.
+
+**Installed and kept (adopted):** `/var/tmp/foundry-work/benches/appworld/` — venv (80 hash-pinned wheels, 147 MB on
+disk), unpacked data 0.1.0 (193 MB), the data bundle (34,280,074 B, sha256 `fd9f9608…8250`, kept so the data can be
+re-unpacked offline), the package-tests cache from `appworld install` (2.1 MB), `downloads.json` and logs. About 376 MB.
+
+**Deleted:**
+
+| Item | Size | When | Why |
+|---|---|---|---|
+| `/var/tmp/foundry-work/benches/appworld/wheels/` (the 80 downloaded wheels) | 33 MB | 2026-11-04 13:56:25Z | installed and verified (`verify_install.py`: 80/80, 10,905 files, 0 mismatches); `downloads.json` keeps every URL and sha256 |
+| scratchpad copy of the appworld wheel, unzipped to read `install.py`, `download.py`, `environment.py`, `evaluator.py`, `requester.py`, `common/safety_guard.py`, `common/path_store.py`, `verify.py`, `cli.py` | 2 MB | at the end of the session | read-only source reading |
+| scratchpad copy of the AppWorld README (`raw.githubusercontent.com/StonyBrookNLP/appworld/main/README.md`, 81,334 B, sha256 `f4049141…7bdd`) | 81 KB | at the end of the session | read for the licence, the agent loop and the experiment config |
+
+**Host-only, kept until the bed's analysis (PLAN §5.6):** `/var/tmp/foundry-work/appworld-host/` (parity cache,
+snapshots of scripted runs, verdict rows with assertion texts; train and dev only, no test content).
+
+**Not adopted, nothing fetched:** AppWorld `experiment-outputs-0.1.0.bundle` (other agents' outputs; not needed), the
+`private-appworld` repository (access-gated), the leaderboard repository.
