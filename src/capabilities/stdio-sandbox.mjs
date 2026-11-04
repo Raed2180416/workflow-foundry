@@ -118,6 +118,8 @@ export function sandboxedSpawn(entry, { env = process.env, unshare = null } = {}
   const namespaces = ['--user', '--map-root-user', '--mount', '--pid', '--fork', '--kill-child', '--mount-proc', ...(needsNetwork(entry) ? [] : ['--net'])];
   const childEnv = { PATH: SAFE_PATH };
   for (const name of entry.source.envAllow ?? []) if (env[name] !== undefined) childEnv[name] = env[name];
+  // Credentials (envSecrets) are passed only after the host resolved them into the scrub set (mcp-client.mjs).
+  for (const name of entry.source.envSecrets ?? []) if (env[name] !== undefined) childEnv[name] = env[name];
   return { command: unshareBinary, args: [...namespaces, '/bin/sh', '-c', SETUP, 'foundry-stdio', INNER, String(read.length), ...read, String(write.length), ...write, cwd, entry.source.command, ...entry.source.args],
     cwd: '/', env: childEnv, network: needsNetwork(entry) };
 }

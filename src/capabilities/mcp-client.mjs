@@ -44,6 +44,9 @@ export class McpConnection {
   async #open(scope, key) {
     let transport;
     if (this.entry.kind === 'mcp-stdio') {
+      // Credentials the server takes from its environment (envSecrets) are resolved by host code first: each value enters the scrub set,
+      // so a tool output, trace or log that echoes it is refused (SECRET_EXPOSURE); a missing or unscrubbably short one refuses the spawn.
+      for (const name of this.entry.source.envSecrets ?? []) await resolveCredential({ env: name }, { custody: 'C0', scrub: this.scrub, env: this.env });
       // Integrity pins first (SOURCE_INTEGRITY refuses the spawn), then the sandboxed command line.
       const spawn = sandboxedSpawn(this.entry, { env: this.env });
       // The SDK merges its default HOME/USER/... even when env is supplied: blank every inherited key before restoring the allowlist.

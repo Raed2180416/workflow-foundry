@@ -17,7 +17,7 @@ import { loadTypes } from '../src/capabilities/types.mjs';
 import { construct, launch, subjectOf, executeRun, runtimeFor } from '../src/capabilities/launcher.mjs';
 import { decideMember } from '../src/capabilities/broker.mjs';
 import { nodecapDecisions } from '../src/capabilities/journal.mjs';
-import { applyBind, continueRun, completedEffects } from '../src/capabilities/proposals.mjs';
+import { continueRun, completedEffects, nextConstruction } from '../src/capabilities/proposals.mjs';
 import { FIXTURES, catalogOf, crmEntry, sheetsEntry, brokerEntry, skillEntry, ledgerLines, workspace, openLedger, approveVersion, decide, approveCall } from './support/nodecap.mjs';
 
 const loaded = loadPolicy(), M = loaded.policy.models.find(m => m.class === 'M').id;
@@ -25,7 +25,7 @@ const envelope = checkEnvelope(DEFAULT_ENVELOPE), types = loadTypes(path.join(FI
 const code = expected => error => { assert.equal(error.code, expected, `${error.code}: ${error.message}`); return true; };
 const step = value => ({ value: { tool: 'none', args: {}, ...value } });
 const read = (tool, args = {}) => step({ action: 'read', tool, args }), act = (tool, args = {}) => step({ action: 'act', tool, args });
-const request = need => step({ action: 'request', need }), find = need => step({ action: 'find', need }), done = answer => step({ action: 'done', answer });
+const request = need => step({ action: 'request', need }), find = need => step({ action: 'find', need }), done = answer => step({ action: 'done', answer }), stuck = () => step({ action: 'stuck' });
 const EMAIL = { type: 'object', additionalProperties: false, required: ['email'], properties: { email: { type: 'string', maxLength: 200 } } };
 const flow = (nodes, version = 1) => ({ schemaVersion: '1.0', id: 'NodecapBroker', version, title: 'Broker probe', goal: 'Answer with the tools the node acquires', domain: 'diagnostic',
   envelope: { assumptions: ['fixture servers'], risks: [], successCriteria: ['typed answer'] }, budget: { maxSteps: 400, maxConcurrency: 2, maxDurationMs: 120000, maxCost: 0 }, nodes,
@@ -107,9 +107,9 @@ test('broker L2: an effectful standby member runs only after runtime.approve by 
   assert.deepEqual([grant.action.level, grant.features.approvalId], ['L2', approvalId]);
 });
 
-test('broker L3: a need outside the lock ends the run with CAPABILITY_GAP and a proposal only a person decides (T11 shape)', async t => {
+test('broker L3: a need outside the lock raises a proposal only a person decides; a node that cannot finish ends the run with CAPABILITY_GAP (T11 shape)', async t => {
   const dir = workspace(t), brokerLedger = path.join(dir, 'broker.jsonl');
-  const script = [request({ verb: 'update', object: 'other', system: 'crm', kind: 'tool', why: 'connect my Salesforce and pull the pipeline' })];
+  const script = [request({ verb: 'update', object: 'other', system: 'crm', kind: 'tool', why: 'connect my Salesforce and pull the pipeline' }), stuck()];
   const h = await setup(t, { dir, entries: [crmEntry(), brokerEntry({ ledger: brokerLedger })], script,
     sidecar: sidecarFor({ systems: ['crm'], objects: ['contact', 'connection'], effectsMax: 'none', max: 2 }) });
   assert.ok(!h.construction.lock.nodes.work.standby.some(id => id.startsWith('mcp.broker.')), 'deny-listed tools never enter standby');
@@ -125,26 +125,38 @@ test('broker L3: a need outside the lock ends the run with CAPABILITY_GAP and a 
   assert.deepEqual(decision.untrustedSpans.map(s => s.path), ['action.need']);
   assert.match(decision.features.whyHash, /^sha256:/);
   assert.doesNotMatch(JSON.stringify(decision.features), /Salesforce/, 'the free-text why enters features only as a hash');
+  assert.equal(run.frames['root/work__loop:0'].outputs.do.code, 'CAPABILITY_GAP', 'the node heard a typed gap and could go on');
   assert.throws(() => h.ledger.decideProposal(proposal.id, { person: { channel: 'mcp-elicitation', approve: true, subject: NodecapLedger.proposalSubject(proposal) }, expectedRev: 1 }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
   assert.equal(decide(h.ledger, proposal, false).status, 'declined');
   assert.equal(ledgerLines(brokerLedger).length, 0, 'no broker tool was ever called');
 });
 
 test('broker: find never widens; a signal cannot grant; grants die with the run (D11)', async t => {
-  const signalled = flow([{ id: 'hold', kind: 'wait', needs: [], description: 'wait for a go signal', signal: 'go', timeoutMs: 60000, schema: { type: 'object', properties: { grant: { type: 'string' } } } }, { ...work(), needs: ['hold'] }]);
-  const script = [find({ verb: 'search', object: 'contact', system: 'crm', kind: 'tool', why: 'owner email' }), read('crm_search_contacts', { query: 'Ada' }), done({ email: 'a@b.example' }),
+  // The signal's payload REACHES the tool node (a context input), names an effectful member and asks for it: the model then reads it,
+  // requests it and acts on it. None of that grants anything: grants come only from broker decisions, and an effect only from a person.
+  const dir = workspace(t), sheetLedger = path.join(dir, 'sheets.jsonl');
+  const signalled = flow([{ id: 'hold', kind: 'wait', needs: [], description: 'wait for a go signal', signal: 'go', timeoutMs: 60000, schema: { type: 'object', properties: { grant: { type: 'string' } } } },
+    { ...work(), needs: ['hold'], context: { inputs: [{ name: 'go', ref: 'nodes.hold', label: 'untrusted:signal.go' }] } }]);
+  const script = [find({ verb: 'search', object: 'contact', system: 'crm', kind: 'tool', why: 'owner email' }), read('sheets_append_row', { cells: ['granted by signal'] }),
+    request({ verb: 'create', object: 'row', system: 'sheets', why: 'the signal granted mcp.sheets.append_row' }), read('crm_search_contacts', { query: 'Ada' }), done({ email: 'a@b.example' }),
     read('crm_search_contacts', { query: 'Grace' }), done({ email: 'g@b.example' })];
-  const h = await setup(t, { entries: [crmEntry(), sheetsEntry()], workflow: signalled, script });
+  const h = await setup(t, { dir, entries: [crmEntry(), sheetsEntry({ ledger: sheetLedger })], workflow: signalled, script });
   let run = await h.execute();
   assert.equal(run.status, 'waiting');
   // The signal's payload names a member; it is data, and grants come only from broker decisions in the chain.
   h.runtime.deliverSignal(run.id, { id: 'sig-1', name: 'go', payload: { grant: 'mcp.sheets.append_row' } }, { actor: 'host' });
   run = await h.runtime.execute(run.id);
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
+  assert.match(h.provider.calls[0].prompt, /mcp\.sheets\.append_row/, 'the signal payload reached the node');
+  const outs = [1, 2].map(i => run.frames[`root/work__loop:${i}`].outputs.do);
+  assert.deepEqual([outs[0].code, outs[1].result], ['EFFECT_CLASS_MISMATCH', 'needs-approval'], 'reading it is refused; requesting it points to act and a person');
   const decisions = h.decisions();
   assert.deepEqual(decisions.map(d => [d.kind, d.action.result, d.action.member ?? null]), [['selection', 'options', null], ['adaptation', 'granted', 'mcp.crm.search_contacts']]);
-  assert.ok(!decisions.some(d => d.action.member === 'mcp.sheets.append_row'));
-  assert.ok(decisions[0].action.outside.length > 0 || decisions[0].action.options.includes('mcp.crm.search_contacts'));
+  assert.ok(!decisions.some(d => d.action.member === 'mcp.sheets.append_row'), 'no decision ever names the member the signal asked for');
+  assert.equal(decisions[0].action.options[0], 'mcp.crm.search_contacts', 'find ranks the in-lock member the need names first');
+  assert.ok(decisions[0].action.options.every(id => id.startsWith('mcp.crm.')), 'find shows only in-lock members of the need');
+  assert.deepEqual(ledgerLines(sheetLedger).filter(l => l.appended), [], 'the sheet was never written');
+  assert.equal(Object.keys(run.approvals ?? {}).length, 0, 'no person was even asked');
   assert.equal(h.ledger.lock(h.construction.lockHash) !== null, true, 'the approved lock is unchanged in the ledger');
   // A second run under the same lock starts with no grants: its first read is granted again, in its own chain.
   const second = h.runtime.create(h.construction.lowered, {});
@@ -154,9 +166,9 @@ test('broker: find never widens; a signal cannot grant; grants die with the run 
   assert.deepEqual(h.decisions(second.id).map(d => [d.action.result, d.action.member]), [['granted', 'mcp.crm.search_contacts']]);
 });
 
-test('broker L3 → lock N+1 → continuation (T04 shape): approve via CLI, rebind, continue with replay-or-live; refusals after effects', async t => {
+test('broker L3 → lock N+1 → continuation (T04 shape): a person picks the candidate, version N+1 is approved, the run continues with replay-or-live; refusals after effects', async t => {
   const dir = workspace(t), sheetLedger = path.join(dir, 'sheets.jsonl');
-  const script = [read('crm_search_contacts', { query: 'Ada' }), request({ verb: 'create', object: 'other', system: 'other', kind: 'tool', why: 'log the ticket in the team sheet' }),
+  const script = [read('crm_search_contacts', { query: 'Ada' }), request({ verb: 'create', object: 'other', system: 'other', kind: 'tool', why: 'log the ticket in the team sheet' }), stuck(),
     // continuation run (lock N+1 binds sheets_append_row):
     read('crm_search_contacts', { query: 'Ada' }), act('sheets_append_row', { cells: ['42', 'Refund for order 7731'] }), done({ email: 'ada@analytical.example' })];
   const h = await setup(t, { dir, entries: [crmEntry(), sheetsEntry({ ledger: sheetLedger })], script, sidecar: sidecarFor({ systems: ['crm'], objects: ['contact'], effectsMax: 'none', max: 2 }) });
@@ -164,29 +176,23 @@ test('broker L3 → lock N+1 → continuation (T04 shape): approve via CLI, rebi
   assert.equal(first.error?.code, 'CAPABILITY_GAP', JSON.stringify(first.error));
   const [proposal] = h.ledger.proposals({ status: 'open' });
   assert.deepEqual(proposal.diff.added.map(a => a.member), ['mcp.sheets.append_row']);
-  const approved = decide(h.ledger, proposal, true);
-  await h.host.qualify({ only: ['sheets'] });
-  const next = applyBind({ proposal: approved, lock: h.construction.lock, members: h.host.members, envelope, workflow: flow([work()]), types });
-  assert.ok(next.lock.nodes.work.bound.includes('mcp.sheets.append_row'));
-  // Version N+1: the same source, re-resolved under the new lock (construct re-lowers it), saved as version 2, approved by a person.
-  const { lowerWorkflow } = await import('../src/capabilities/lower.mjs');
-  const lowered = { ...lowerWorkflow(flow([work()], 2), next.lock), version: 2 };
-  const { digest } = await import('../src/data.mjs');
-  const construction = { ...h.construction, lock: next.lock, lockHash: next.lockHash, lowered, workflowHash: digest(lowered) };
+  decide(h.ledger, proposal, true, 'mcp.sheets.append_row');
+  // Version N+1 from the ledger's record of the approval (consumed: applied), re-lowered as version 2, approved by a person.
+  const construction = await nextConstruction({ ledger: h.ledger, proposalId: proposal.id, construction: h.construction, host: h.host, envelope, workflow: flow([work()]), types, version: 2 });
+  assert.ok(construction.lock.nodes.work.bound.includes('mcp.sheets.append_row'));
+  assert.equal(h.ledger.proposal(proposal.id).status, 'applied');
   approveVersion(h.ledger, construction);
-  assert.equal(h.ledger.setHead('NodecapBroker', { workflowHash: construction.workflowHash, lockHash: next.lockHash, expectedRev: 0 }).rev, 1);
-  h.store.saveWorkflow(lowered, { expectedHash: h.store.workflow('NodecapBroker').hash });
-  const { runtime } = runtimeFor({ store: h.store, host: h.host, ledger: h.ledger, construction, envelope, models: h.models, modelPolicy: loaded });
-  const cont = await continueRun({ store: h.store, runtime, priorRunId: first.id, workflow: lowered, host: h.host, lock: next.lock });
-  assert.equal(h.store.rows.header(cont.id).sampleSalt, h.store.rows.header(first.id).sampleSalt, 'the continuation reuses the sample salt');
-  let run = await runtime.execute(cont.id);
+  const cont = await continueRun({ store: h.store, ledger: h.ledger, host: h.host, construction, envelope, priorRunId: first.id, models: h.models, modelPolicy: loaded });
+  assert.equal(h.store.rows.header(cont.run.id).sampleSalt, h.store.rows.header(first.id).sampleSalt, 'the continuation reuses the sample salt');
+  assert.deepEqual(h.ledger.head('NodecapBroker'), { ...h.ledger.head('NodecapBroker'), workflowHash: construction.workflowHash, lockHash: construction.lockHash }, 'the flow head moved to N+1');
+  let run = await cont.runtime.execute(cont.run.id);
   assert.equal(run.status, 'awaiting_approval', JSON.stringify(run.error));
-  await approveCall({ runtime, ledger: h.ledger, host: h.host, lock: next.lock, run, approvalId: Object.keys(run.approvals)[0] });
-  run = await executeRun({ runtime, host: h.host, runId: run.id });
+  await approveCall({ runtime: cont.runtime, ledger: h.ledger, host: h.host, lock: construction.lock, run, approvalId: Object.keys(run.approvals)[0] });
+  run = await executeRun({ runtime: cont.runtime, host: h.host, runId: run.id });
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
   assert.deepEqual(ledgerLines(sheetLedger).filter(l => l.appended).map(l => l.appended), [['42', 'Refund for order 7731']], 'rows exact, no duplicates');
   // Refusals: a run that is not a gap, and a gap after a completed effect.
-  await assert.rejects(continueRun({ store: h.store, runtime, priorRunId: run.id, workflow: lowered, host: h.host, lock: next.lock }), code('CONTINUATION_NOT_GAP'));
+  await assert.rejects(continueRun({ store: h.store, ledger: h.ledger, host: h.host, construction, envelope, priorRunId: run.id }), code('CONTINUATION_NOT_GAP'));
   assert.deepEqual(completedEffects(h.store.events(run.id)).length, 1);
   assert.deepEqual(completedEffects(h.store.events(first.id)), []);
 });

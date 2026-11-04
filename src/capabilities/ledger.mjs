@@ -17,6 +17,8 @@ import { acceptPerson, DEFAULT_PERSON_CHANNELS, PERSON_CHANNELS, subjectOf } fro
 // bindable) and needs a person; quarantine and revocation narrow and are host actions.
 const TRANSITIONS = { imported: ['qualified', 'revoked'], qualified: ['active', 'quarantined', 'revoked'], active: ['quarantined', 'revoked'], quarantined: ['active', 'revoked'], revoked: [] };
 const PROPOSAL_KINDS = ['capability.bind', 'capability.admit', 'capability.definition-changed', 'scope.step-up'];
+// Kinds whose approval names exactly one offered candidate.
+const CHOICE_KINDS = ['capability.bind', 'capability.admit'];
 const json = value => canonical(value);
 const parse = row => row ? JSON.parse(row.body) : null;
 
@@ -67,34 +69,52 @@ export class NodecapLedger {
   /** The subject a person decides to move an entry to `to` from (status, rev). */
   static statusSubject({ entryId, status, to, rev }) { return subjectOf({ kind: 'entry.status', entryId, status, to, rev }); }
   /**
-   * Move an entry along the status machine (CAS on its revision; 0 for an entry the ledger has not seen, whose status is `from`). A move to
-   * active widens authority: it needs `person`, a PersonDecision (approve) for statusSubject({entryId, status, to, rev}).
+   * The current status of an entry: the ledger's record, else the status the owner wrote in the catalog entry (`catalog`, the host's
+   * checked catalog), else 'imported' (the start of the machine). Never a status the caller claims (review-thesis #2).
    */
-  setStatus(entryId, { from, to, expectedRev = null, reason = '', actor = 'host', person = null }) {
+  currentStatus(entryId, { catalog = null } = {}) {
+    const current = this.status(entryId);
+    if (current) return { status: current.status, rev: current.rev };
+    const entry = catalog?.entries?.find(e => e.id === entryId) ?? null;
+    if (catalog && !entry) fail('LEDGER_ENTRY_UNKNOWN', `${entryId} is not an entry of the catalog`);
+    return { status: entry?.status ?? 'imported', rev: 0 };
+  }
+  /**
+   * Move an entry along the status machine (CAS on its revision: `expectedRev` is required, 0 for an entry the ledger has not recorded).
+   * The status it moves FROM is derived (currentStatus), never passed. A move to active widens authority: it needs `person`, a
+   * PersonDecision (approve) for statusSubject({entryId, status, to, rev}).
+   */
+  setStatus(entryId, { to, expectedRev, reason = '', actor = 'host', person = null, catalog = null, ...rest }) {
+    if (Object.hasOwn(rest, 'from')) fail('LEDGER_FROM', 'The status an entry moves from is the ledger\'s record or the catalog\'s, never the caller\'s claim');
     if (!STATUSES.includes(to)) fail('LEDGER_STATUS', `Unknown status ${to}`);
+    if (!Number.isSafeInteger(expectedRev)) fail('LEDGER_REV_REQUIRED', 'A status change is a compare-and-swap: pass expectedRev (0 for an entry the ledger has not recorded)');
     return this.tx(() => {
-      const current = this.status(entryId), rev = current?.rev ?? 0, status = current?.status ?? from;
-      if (expectedRev !== null && rev !== expectedRev) fail('CONFLICT', `Entry ${entryId} is at revision ${rev}, not ${expectedRev}`, { rev });
+      const { status, rev } = this.currentStatus(entryId, { catalog });
+      if (rev !== expectedRev) fail('CONFLICT', `Entry ${entryId} is at revision ${rev}, not ${expectedRev}`, { rev });
       if (!(TRANSITIONS[status] ?? []).includes(to)) fail('LEDGER_TRANSITION', `Entry ${entryId} cannot move from ${status} to ${to}`);
       let decided = null;
       if (to === 'active') {
         decided = acceptPerson(person, NodecapLedger.statusSubject({ entryId, status, to, rev }), { channels: this.channels });
         if (!decided.approve) fail('PERSON_DECLINED', `The person declined to activate ${entryId}`);
       }
-      const body = json({ status: to, reason: String(reason).slice(0, 300), actor: decided ? decided.channel : String(actor).slice(0, 40), ...(decided ? { principal: decided.principal } : {}), at: Date.now() });
-      if (current) {
-        if (this.db.prepare('UPDATE entry_status SET rev=?, body=? WHERE entry_id=? AND rev=?').run(rev + 1, body, entryId, rev).changes !== 1) fail('CONFLICT', `Entry ${entryId} changed concurrently`);
-      } else this.db.prepare('INSERT INTO entry_status VALUES(?,?,?)').run(entryId, 1, body);
-      return { rev: rev + 1, status: to };
+      return this.#writeStatus(entryId, rev, json({ status: to, from: status, reason: String(reason).slice(0, 300), actor: decided ? decided.channel : String(actor).slice(0, 40), ...(decided ? { principal: decided.principal } : {}), at: Date.now() }), to);
     });
   }
-  /** Quarantine on observed drift (definition or behaviour change): recorded with its evidence, the entry stops being bindable at once. */
-  quarantine(entryId, code, details = {}, { from = 'active' } = {}) {
+  #writeStatus(entryId, rev, body, to) {
+    if (rev === 0) this.db.prepare('INSERT INTO entry_status VALUES(?,?,?)').run(entryId, 1, body);
+    else if (this.db.prepare('UPDATE entry_status SET rev=?, body=? WHERE entry_id=? AND rev=?').run(rev + 1, body, entryId, rev).changes !== 1) fail('CONFLICT', `Entry ${entryId} changed concurrently`);
+    return { rev: rev + 1, status: to };
+  }
+  /** Quarantine on observed drift (definition or behaviour change): recorded with its evidence, the entry stops being bindable at once.
+   *  Narrowing: from any status but revoked, by the host, with no person (its own compare-and-swap inside one transaction). */
+  quarantine(entryId, code, details = {}) {
     checkData(details);
-    this.db.prepare('INSERT INTO quarantine(entry_id, code, body, at) VALUES(?,?,?,?)').run(entryId, code, json(details), Date.now());
-    const current = this.status(entryId)?.status ?? from;
-    if (current === 'quarantined' || current === 'revoked') return { status: current };
-    return this.setStatus(entryId, { from, to: 'quarantined', reason: code, actor: 'host' });
+    return this.tx(() => {
+      this.db.prepare('INSERT INTO quarantine(entry_id, code, body, at) VALUES(?,?,?,?)').run(entryId, code, json(details), Date.now());
+      const current = this.status(entryId);
+      if (current?.status === 'quarantined' || current?.status === 'revoked') return { status: current.status, rev: current.rev };
+      return this.#writeStatus(entryId, current?.rev ?? 0, json({ status: 'quarantined', from: current?.status ?? null, reason: String(code).slice(0, 300), actor: 'host', at: Date.now() }), 'quarantined');
+    });
   }
   quarantineLog(entryId) { return this.db.prepare('SELECT code, body, at FROM quarantine WHERE entry_id=? ORDER BY id').all(entryId).map(r => ({ code: r.code, at: r.at, ...JSON.parse(r.body) })); }
   // ---- pins and receipts ----
@@ -175,18 +195,46 @@ export class NodecapLedger {
   proposals({ status = null } = {}) {
     return (status ? this.db.prepare('SELECT id FROM proposals WHERE status=? ORDER BY rowid').all(status) : this.db.prepare('SELECT id FROM proposals ORDER BY rowid').all()).map(r => this.proposal(r.id));
   }
-  /** The subject a person decides for one proposal at one revision: its whole recorded body (what the dashboard or CLI renders). */
-  static proposalSubject(proposal) { const { status, decision, ...body } = proposal; return subjectOf({ kind: 'proposal', ...body }); }
-  /** A person decides a proposal (CAS on its revision; one winner among concurrent deciders): `person` is a PersonDecision for proposalSubject. */
-  decideProposal(id, { person, expectedRev }) {
+  /**
+   * The subject a person decides for one proposal at one revision: its whole recorded body (what the dashboard or CLI renders) and, for an
+   * approval of a capability.bind or capability.admit, the ONE candidate the person picked (review-thesis #1: a person approves one member,
+   * never "the proposal as a whole").
+   */
+  static proposalSubject(proposal, { choice = null } = {}) {
+    const { status, decision, applied, ...body } = proposal;
+    return subjectOf({ kind: 'proposal', ...body, ...(choice !== null ? { choice } : {}) });
+  }
+  /**
+   * A person decides a proposal (CAS on its revision; one winner among concurrent deciders): `person` is a PersonDecision for
+   * proposalSubject(proposal, {choice}). Approving a capability.bind or capability.admit names exactly one offered candidate (`choice`).
+   */
+  decideProposal(id, { person, expectedRev, choice = null }) {
     return this.tx(() => {
       const current = this.proposal(id);
       if (!current) fail('NOT_FOUND', `No proposal ${id}`);
       if (current.status !== 'open' || current.rev !== expectedRev) fail('CONFLICT', `Proposal ${id} is ${current.status} at revision ${current.rev}`, { rev: current.rev, status: current.status });
-      const decided = acceptPerson(person, NodecapLedger.proposalSubject(current), { channels: this.channels }), approve = decided.approve;
-      const status = approve ? 'approved' : 'declined', body = { ...current, status, decision: { approve, channel: decided.channel, principal: decided.principal, at: decided.at } };
+      const picks = CHOICE_KINDS.includes(current.kind);
+      if (choice !== null && (!picks || !(current.diff?.added ?? []).some(a => a.member === choice))) fail('PROPOSAL_CHOICE', `${String(choice).slice(0, 80)} is not a candidate this proposal offers`);
+      const decided = acceptPerson(person, NodecapLedger.proposalSubject(current, { choice }), { channels: this.channels }), approve = decided.approve;
+      if (approve && picks && choice === null) fail('PROPOSAL_CHOICE_REQUIRED', 'A person approves one candidate of a capability proposal, never the proposal as a whole');
+      const status = approve ? 'approved' : 'declined', body = { ...current, status, decision: { approve, ...(approve && picks ? { choice } : {}), channel: decided.channel, principal: decided.principal, at: decided.at } };
       delete body.rev;
       if (this.db.prepare('UPDATE proposals SET rev=?, status=?, body=? WHERE id=? AND rev=?').run(expectedRev + 1, status, json(body), id, expectedRev).changes !== 1) fail('CONFLICT', `Proposal ${id} changed concurrently`);
+      return { ...body, rev: expectedRev + 1 };
+    });
+  }
+  /**
+   * Consume an approved proposal once (CAS approved -> applied on its revision): the lock and workflow it produced are recorded, and no
+   * later caller can apply the same approval again (review-thesis #1).
+   */
+  markApplied(id, { expectedRev, lockHash, workflowHash }) {
+    return this.tx(() => {
+      const current = this.proposal(id);
+      if (!current) fail('NOT_FOUND', `No proposal ${id}`);
+      if (current.status !== 'approved' || current.rev !== expectedRev) fail('PROPOSAL_APPLIED', `Proposal ${id} is ${current.status} at revision ${current.rev}; an approval is applied once`, { rev: current.rev, status: current.status });
+      const body = { ...current, status: 'applied', applied: { lockHash, workflowHash, at: Date.now() } };
+      delete body.rev;
+      if (this.db.prepare('UPDATE proposals SET rev=?, status=?, body=? WHERE id=? AND rev=?').run(expectedRev + 1, 'applied', json(body), id, expectedRev).changes !== 1) fail('PROPOSAL_APPLIED', `Proposal ${id} changed concurrently`);
       return { ...body, rev: expectedRev + 1 };
     });
   }

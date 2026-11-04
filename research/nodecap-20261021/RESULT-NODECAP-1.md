@@ -188,3 +188,61 @@ unchanged and still describe the frozen code.** What the review changes in how t
 
 A rerun on the fixed code would need a new preregistration (the commit member's arguments, the person's rules and the GUI members'
 effect classes changed).
+
+## Addendum, 2026-11-04: the thesis-invariants review, and what it changes in this result
+
+A second review of the spike (2026-10-22, "thesis invariants and correctness"; findings, fixes and tests in
+[ARCHITECTURE.md §9](ARCHITECTURE.md)) found code defects in what this run used and four readings of this result that are wrong or need a
+second reading. **The numbers in §1-§3 are unchanged and the frozen rules are reported as frozen.** The blocker (a continuation could run
+a lock no person approved; an approval was tied to no version) did not touch any episode: no arm-A proposal was approved in this run (both
+were declined), so no lock N+1 and no continuation happened. What changes:
+
+1. **One arm-B success is a failed run (review #12).** B T06 counts as a success because its oracle reads the world only (the label was
+   set), but the run failed with `NODE_ANSWER_INVALID`. The same slip fails B T12, whose oracle reads the answer. Under one success
+   definition (the oracle passes AND the run succeeded; for the refusal task T11, the run ends without an answer) the arms are U 8, A 6,
+   C 1, **B 7**. Then A − B = −1 and **R2 would be met** (token ratio 0.017, success gap −1); R1 (+5) and R4 (−2) are unchanged. R2 as
+   frozen is not met, and stays the reported rule; `analyze.mjs` now reports both readings (`successStrict`, `decisions.secondary`). The
+   next preregistration uses the one definition.
+2. **"Arm A carried 1.7% of B's tool-definition tokens" (§6) is true by construction (review #13).** `toolDefTokens` is one static number
+   per episode (the step's tools, standby and skill sections), labelled "per turn". It leaves out the tool views that reach the model
+   through `find` matches, `request` answers and `ARGS_INVALID` signatures, and in arm B those sections are every definition by design.
+   This run did not keep per-call prompts (the report holds a lossy trace), so the per-call measure cannot be recomputed for it. Read §6
+   as "A's static tool sections were 1.7% of B's". The bed now records tool text per model call (`toolTextPerCallTokens`) and
+   `analyze.mjs` reports its median per arm. On the scripted re-run (fixed code, development evidence only, [RESULTS-SCRIPTED.md](RESULTS-SCRIPTED.md))
+   the per-call medians are A 56 and B 2,695 tokens (0.021), but scripted plans rarely call `find`, so the per-call ratio a real model
+   produces is unmeasured.
+3. **Arm A's acquire clauses were written per task by the builder, who knew the gold sets (review #14).** Each clause in `tasks.mjs`
+   names the systems and objects of that task's gold members (median 3 members exposed), so arm A's standby is a curated superset of the
+   answer, not what an author blind to the answer would write. Arm A is partly answer-informed; §6's comparison of A with U and B must be
+   read with that. The next preregistration generates the clauses blind to the gold set (from the instruction alone) or uses one fixed
+   clause per task family.
+4. **At least three, likely four, of A's six losses involve Foundry design, not two (review #15).** §4 and §6 blamed the model for
+   T04, T08, T09 and T11. On the record:
+   - T02: §4's defect 1 (the unreachable L2 path); also, the `request` at turn 2 **granted** `search_tickets`, a read the model had not
+     asked for and never used (review #4: a request for an effect fell through to the one remaining read, decisive at any score).
+   - T10: §4's defect 2 (the click sent as `act`; review #6: routing followed the model's label).
+   - T08 and T09 ended on gaps. The pre-fix `find`/`request` matched computer-use members only for a need of kind `ui`; a need of kind
+     `tool`, or none, hid them (review #5), and a gap ended the run on the spot. The model's `find`s in both episodes returned nothing
+     although `ui.*` members were on its standby. The request that ended each episode is not in the record (§4, raw-record gap), so this
+     cause is likely, not proven.
+   - T04 (no request at all) is the model's. T11 is the model's and partly the task's (item 5).
+
+   Of the 14 L1 grants (§1), two were unwanted (T02 turn 2 and T06 turn 4 granted `search_tickets` for a request for the comment or the
+   label tool; neither was used) and one (T11, `list_deals`) enabled the wrong substitution. §6's "Haiku acquired what it needed by
+   itself (14 L1 grants)" should read 11 wanted grants.
+5. **T11 is not the same task in every arm (review #16).** In U and C no deal tool is in reach, so the node passes by being stuck; this is
+   C's only success, so C's 1/12 is 0/11 on the other tasks. In A and B the CRM deals are in reach and both fail by substitution.
+   §7 item 4 (separate the account to connect from any reachable CRM) is needed before T11 compares arms.
+6. **The oracle check V2 proved nothing for five tasks (review #17).** It fed wrong outputs to an untouched world; the oracles of T02,
+   T04, T06, T08 and T11 read the world only, so 15 of its 36 rejections would have happened whatever the output. V2 now requires each
+   oracle to accept the correct outcome and reject three mutations of it, world mutations for the effect tasks (a comment on the wrong
+   ticket, a duplicate row, a second write, a call to a forbidden server). All 12 NC-1 oracles pass it unchanged (bed test, fixed code).
+7. **Process (review #25).** The owner go-ahead in the preregistration's header is a quote relayed by the workflow, not an owner message
+   kept in this repository, and the build report itself listed the paid run as needing the owner's go-ahead. **The owner should confirm
+   decision O5 for the $0.08 spent.** The run's `dirty` flag covered `src` and `experiments/nodecap` but not `policy/models.json`, which
+   selects the model; `run-model.mjs` now includes `policy` (this run checked the served model id on every call, so which model ran is not
+   in doubt). The build report's count of 62 tests was stale; 64 ran at the freeze (header table).
+
+A rerun on the fixed code needs a new preregistration: request, routing and gap behaviour changed (a gap is now a refusal the node can
+continue past; a request never grants a different tool; an `act` on an effects-none tool is a read and an `act` that cannot run is
+refused before any person is asked).

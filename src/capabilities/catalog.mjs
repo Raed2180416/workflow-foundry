@@ -95,7 +95,8 @@ const sourceSchemas = {
   // member attests a non-local egress, no host files beyond the binds, its own session (no controlling terminal).
   'mcp-stdio': { type: 'object', additionalProperties: false, required: ['command', 'args', 'integrity'], properties: {
     command: { type: 'string', pattern: SANDBOX_PATH, maxLength: 1024 }, args: { type: 'array', maxItems: 100, items: { type: 'string', maxLength: 4096 } },
-    cwd: sandboxPath, envAllow: { type: 'array', maxItems: 30, items: { type: 'string', pattern: ENV } },
+    // envAllow: plain settings passed through; envSecrets: credentials passed through AND held in the run's scrub set (review-thesis #21).
+    cwd: sandboxPath, envAllow: { type: 'array', maxItems: 30, items: { type: 'string', pattern: ENV } }, envSecrets: { type: 'array', maxItems: 10, uniqueItems: true, items: { type: 'string', pattern: ENV } },
     integrity: { type: 'object', minProperties: 1, maxProperties: 50, propertyNames: { pattern: SANDBOX_PATH, maxLength: 1024 }, additionalProperties: { type: 'string', pattern: '^[0-9a-f]{64}$' } },
     sandbox: sandboxSchema } },
   'mcp-http': { type: 'object', additionalProperties: false, required: ['url', 'transport'], properties: {
@@ -130,6 +131,8 @@ function scanSecrets(value, at = '$') {
   if (typeof value === 'string') { if (secretLike(value)) fail('CATALOG_SECRET_VALUE', `The catalog holds a credential-like value at ${at}; catalogs hold env or keychain names only`, { path: at }); return; }
   if (value && typeof value === 'object') for (const [key, child] of Object.entries(value)) { if (secretLike(key)) fail('CATALOG_SECRET_VALUE', `Credential-like key at ${at}`); scanSecrets(child, `${at}.${key}`); }
 }
+// An environment name that names a credential: it belongs under envSecrets (scrubbed), never envAllow (passed unscrubbed).
+const CREDENTIAL_NAME = /(TOKEN|SECRET|PASSW|API_?KEY|ACCESS_?KEY|PRIVATE_?KEY|CREDENTIAL|AUTH|COOKIE|SESSION|BEARER)/i;
 const loopback = url => { try { const u = new URL(url); return u.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(u.hostname); } catch { return false; } };
 
 /** Check a parsed catalog object (closed keys, per-kind sources, secret scan, dev gating). Returns a deep copy with defaults applied. */
@@ -155,6 +158,10 @@ export function checkCatalog(catalog, { allowDev = false } = {}) {
     }
     if (entry.kind === 'cua') for (const origin of entry.source.origins) if (!origin.startsWith('https://') && !(entry.dev === true && loopback(origin))) fail('CATALOG_TRANSPORT', `Entry ${entry.id}: UI origins must be https (loopback http only for dev entries)`);
     if (entry.kind === 'mcp-stdio' && !Object.hasOwn(entry.source.integrity, entry.source.command)) fail('CATALOG_INTEGRITY', `Entry ${entry.id}: the integrity pins must cover the command itself`, { id: entry.id });
+    if (entry.kind === 'mcp-stdio') for (const name of entry.source.envAllow ?? []) {
+      if (CREDENTIAL_NAME.test(name)) fail('CATALOG_ENV_SECRET', `Entry ${entry.id}: ${name} names a credential; list it under envSecrets so its value is scrubbed from every model-visible value, trace and log`, { id: entry.id, name });
+      if ((entry.source.envSecrets ?? []).includes(name)) fail('CATALOG_ENV_SECRET', `Entry ${entry.id}: ${name} is listed both as a setting and as a secret`, { id: entry.id, name });
+    }
     if (['mcp-stdio', 'mcp-http', 'builtin', 'program'].includes(entry.kind) && !entry.members) fail('CATALOG_MEMBERS', `Entry ${entry.id} attests no members; an unattested tool is never bindable`, { id: entry.id });
     if (entry.kind === 'program' && (Object.keys(entry.members).length !== 1 || !entry.uses)) fail('CATALOG_PROGRAM', `Program entry ${entry.id} attests exactly one member and lists the members it uses`, { id: entry.id });
     if (entry.kind !== 'program' && entry.uses) fail('CATALOG_PROGRAM', `Only program entries list uses (${entry.id})`);

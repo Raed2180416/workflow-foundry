@@ -3,8 +3,10 @@
 // typed call instead of many model turns. No model sees a tool while it runs (Tier 0 cost: zero tool-definition tokens).
 // Rules (v1):
 //   - reads only: every member in `uses` must be effects none, so the program's effects (the max over uses) are none;
-//   - its output label is the join of its attested label and every used member's label (untrusted data stays untrusted); its data class
-//     and its egress are the maximum over its own attestation and the members it uses;
+//   - its output label is the join of its attested label and every used member's label (untrusted data stays untrusted); its data class,
+//     its egress, its risk and its approval flag are the maximum over its own attestation and the members it uses, and its trust and
+//     custody the WEAKEST of the program entry's and the used members' (review-thesis #9): a T0 program wrapping a T2 third-party tool is
+//     a T2 third-party egress, so neither auto-bind nor the Rule of Two can be laundered through it;
 //   - its cost is the sum of reservations: maxCalls x the dearest used member;
 //   - it can call ONLY the members it lists, each through the host's own gates (pins, schemas, credentials, scrub); anything else is
 //     CAPABILITY_DENIED and ends the program; the host counts the calls (maxCalls);
@@ -13,8 +15,8 @@
 import { readFileSync, lstatSync } from 'node:fs';
 import { checkMemberSchema } from './import-mcp.mjs';
 import { compileDataSchema } from '../validate.mjs';
-import { EGRESS, fail, FoundryError, joinLabels, sha256 } from './common.mjs';
-import { memberRecord } from './members.mjs';
+import { CUSTODY, EGRESS, fail, FoundryError, joinLabels, sha256, TRUST } from './common.mjs';
+import { custodyOf, memberRecord } from './members.mjs';
 import { runProgram } from './rpc-sandbox.mjs';
 
 function readSource(entry) {
@@ -40,10 +42,14 @@ export function programMember(entry, members) {
   // Egress is derived like the data class (review M6): a program that calls a third-party egress member IS a third-party egress, whatever
   // its own attestation says, so the Rule of Two sees it.
   const egress = [attestation.egress, ...uses.map(m => m.egress)].reduce((a, b) => EGRESS.indexOf(b) > EGRESS.indexOf(a) ? b : a, 'local');
-  const derived = { ...attestation, effects: 'none', egress, outputLabel: joinLabels([attestation.outputLabel, ...uses.map(m => m.outputLabel)]),
+  const worst = (order, values) => values.filter(v => v !== null && v !== undefined).reduce((a, b) => order.indexOf(b) > order.indexOf(a) ? b : a, null);
+  const risk = [attestation.risk, ...uses.map(m => m.risk)].includes('high') ? 'high' : attestation.risk;
+  const derived = { ...attestation, effects: 'none', egress, risk, requiresApproval: attestation.requiresApproval === true || risk === 'high' || uses.some(m => m.requiresApproval === true),
+    outputLabel: joinLabels([attestation.outputLabel, ...uses.map(m => m.outputLabel)]),
     dataClass: uses.some(m => m.dataClass === 'secret') ? 'secret' : uses.some(m => m.dataClass === 'private') ? 'private' : attestation.dataClass,
     cost: Math.max(attestation.cost ?? 0, maxCalls * Math.max(0, ...uses.map(m => m.cost ?? 0))) };
-  return memberRecord({ entry, name, id: `program.${entry.id}.${name}`, attestation: derived, adapter: 'nodecap-program/1',
+  const trust = worst(TRUST, [entry.trust, ...uses.map(m => m.trust)]), custody = worst(CUSTODY, [custodyOf(entry), ...uses.map(m => m.custody)]);
+  return memberRecord({ entry: { ...entry, trust }, name, id: `program.${entry.id}.${name}`, attestation: derived, adapter: 'nodecap-program/1', custody,
     pins: { source: entry.source.sha256, uses: Object.fromEntries(uses.map(m => [m.id, m.implementation])) },
     extra: { program: { uses: [...entry.uses], maxCalls, lang: entry.source.lang } } });
 }

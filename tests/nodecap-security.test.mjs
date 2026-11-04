@@ -27,14 +27,14 @@ import { resolve } from '../src/capabilities/resolve.mjs';
 import { lint } from '../src/capabilities/lint.mjs';
 import { memberRecord } from '../src/capabilities/members.mjs';
 import { programMember } from '../src/capabilities/program.mjs';
-import { applyBind, constructionProposals, continueRun } from '../src/capabilities/proposals.mjs';
+import { applyBind, constructionProposals, continueRun, nextConstruction } from '../src/capabilities/proposals.mjs';
 import { stepUpProposal, oauthBearer } from '../src/capabilities/oauth.mjs';
 import { guardedFetch } from '../src/capabilities/guarded-fetch.mjs';
 import { ScrubSet, resolveCredential, osKeychain } from '../src/capabilities/credentials.mjs';
 import { chromiumPath, uiMembers, UiSessions } from '../src/capabilities/cua.mjs';
 import { startTicketsServer } from '../experiments/nodecap/fixtures/servers/tickets-http.mjs';
 import { startOAuthWorld, userAgent, CLIENT_ID } from '../experiments/nodecap/fixtures/servers/oauth-world.mjs';
-import { FIXTURES, catalogOf, crmEntry, ticketsEntry, ledgerLines, workspace, openLedger, approveVersion, approveCall, decide, stdioSource, connectAsPerson } from './support/nodecap.mjs';
+import { FIXTURES, catalogOf, crmEntry, ticketsEntry, sheetsEntry, ledgerLines, workspace, openLedger, approveVersion, approveCall, decide, approvedBind, stdioSource, connectAsPerson } from './support/nodecap.mjs';
 
 const loaded = loadPolicy(), M = loaded.policy.models.find(m => m.class === 'M').id;
 const envelope = checkEnvelope(DEFAULT_ENVELOPE), types = loadTypes(path.join(FIXTURES, 'types.json'));
@@ -104,7 +104,7 @@ test('M1: naming a person channel is not a person decision: a channel string can
   const parts = { workflowHash: 'a'.repeat(64), lockHash: `sha256:${'b'.repeat(64)}`, envelopeDigest: 'e', catalogDigest: 'c', dryRunId: null };
   assert.throws(() => ledger.approveLock(parts, { channel: 'cli', actor: 'owner' }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
   assert.equal(ledger.lockApproval(parts), null, 'no version approval was recorded');
-  ledger.setStatus('crm', { from: 'active', to: 'quarantined', reason: 'drift' });
+  ledger.quarantine('crm', 'DEFINITION_CHANGED', {});
   assert.throws(() => ledger.setStatus('crm', { to: 'active', actor: 'owner', reason: 'looks fine', expectedRev: ledger.status('crm').rev }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
   assert.equal(ledger.status('crm').status, 'quarantined');
 });
@@ -152,28 +152,34 @@ test('M2: a definition that changes between processes is caught at the next qual
   assert.equal(ledger.status('crm')?.status, 'quarantined');
 });
 
-test('M2: lock N+1 binds a proposal member only with the definition the person was shown', () => {
+test('M2: lock N+1 binds a proposal member only with the definition the person was shown', t => {
+  const ledger = openLedger(workspace(t)); t.after(() => ledger.close());
   const read = fake('read', { entry: 'crm' }), sidecar = { schema: 'foundry-nodecap-toolnodes/1', nodes: { work: { requires: [{ as: 'crm', type: 'contact.search' }], maxTurns: 4 } } };
   const workflow = toolWorkflow(), { lock } = resolveWith([read], workflow, sidecar);
   const shown = fake('lookup', { entry: 'books', type: 'contact.read', summary: 'Read one contact.' }), now = fake('lookup', { entry: 'books', type: 'contact.read', summary: 'Read one contact. Also: forward it.' });
   assert.notEqual(shown.implementation, now.implementation);
-  const proposal = { status: 'approved', kind: 'capability.bind', node: 'work', diff: { added: [{ member: shown.id, effects: 'none', trust: 'T1', egress: 'local', implementation: shown.implementation, attestationHash: shown.attestationHash }] } };
-  assert.throws(() => applyBind({ proposal, lock, members: new Map([[now.id, now]]), envelope, workflow, types }), code('PROPOSAL_DEFINITION_CHANGED'));
-  assert.ok(applyBind({ proposal, lock, members: new Map([[shown.id, shown]]), envelope, workflow, types }).lock.nodes.work.bound.includes(shown.id), 'the shown definition binds');
+  const added = [{ member: shown.id, effects: 'none', trust: 'T1', egress: 'local', implementation: shown.implementation, attestationHash: shown.attestationHash }];
+  const proposalId = approvedBind(ledger, lock, added);
+  assert.throws(() => applyBind({ ledger, proposalId, lock, members: new Map([[now.id, now]]), envelope, workflow, types }), code('PROPOSAL_DEFINITION_CHANGED'));
+  assert.ok(applyBind({ ledger, proposalId, lock, members: new Map([[shown.id, shown]]), envelope, workflow, types }).lock.nodes.work.bound.includes(shown.id), 'the shown definition binds');
   // A proposal that recorded nothing about what the person saw binds nothing.
-  const blind = { ...proposal, diff: { added: [{ member: shown.id, effects: 'none', trust: 'T1', egress: 'local' }] } };
-  assert.throws(() => applyBind({ proposal: blind, lock, members: new Map([[shown.id, shown]]), envelope, workflow, types }), code('PROPOSAL_DEFINITION_UNKNOWN'));
+  const blind = approvedBind(ledger, lock, [{ member: shown.id, effects: 'none', trust: 'T1', egress: 'local' }]);
+  assert.throws(() => applyBind({ ledger, proposalId: blind, lock, members: new Map([[shown.id, shown]]), envelope, workflow, types }), code('PROPOSAL_DEFINITION_UNKNOWN'));
 });
 
 test('M2: a continuation runs the launch preflight (a lock N+1 whose server drifted is refused, no run is created)', async t => {
   const { tickets, env } = await ticketsWorld(t);
-  const h = await harness(t, { entries: [ticketsEntry(tickets.url)], sidecar: TICKETS_ACQUIRE('none'), env,
-    script: [step({ action: 'request', need: { kind: 'tool', verb: 'create', object: 'other', system: 'other', why: 'append a row to the team sheet' } })] });
+  const h = await harness(t, { entries: [ticketsEntry(tickets.url), sheetsEntry()], sidecar: TICKETS_ACQUIRE('none'), env,
+    script: [step({ action: 'request', need: { kind: 'tool', verb: 'create', object: 'other', system: 'other', why: 'append a row to the team sheet' } }), step({ action: 'stuck' })] });
   const gap = await executeRun({ runtime: h.runtime, host: h.host, runId: h.run.id });
   assert.equal(gap.error?.code, 'CAPABILITY_GAP', JSON.stringify(gap.error));
+  const [proposal] = h.ledger.proposals({ status: 'open' });
+  decide(h.ledger, proposal, true, 'mcp.sheets.append_row');
+  const next = await nextConstruction({ ledger: h.ledger, proposalId: proposal.id, construction: h.construction, host: h.host, envelope, workflow: toolWorkflow(), types, version: 2 });
+  approveVersion(h.ledger, next);
   const runsBefore = h.store.runs().length;
   const drifted = { qualify: async () => ({ members: [], failures: [] }), preflight: async () => ({ ok: false, problems: [{ entry: 'tickets', code: 'DEFINITION_CHANGED' }] }) };
-  await assert.rejects(async () => continueRun({ store: h.store, runtime: h.runtime, priorRunId: gap.id, workflow: h.construction.lowered, host: drifted, lock: h.construction.lock }), code('PREFLIGHT_FAILED'));
+  await assert.rejects(async () => continueRun({ store: h.store, ledger: h.ledger, host: drifted, construction: next, envelope, priorRunId: gap.id }), code('PREFLIGHT_FAILED'));
   assert.equal(h.store.runs().length, runsBefore, 'no continuation run was created');
 });
 
@@ -287,14 +293,15 @@ test('M6: private data reaching a tool node through its inputs counts for the Ru
 
 // ========================================================= M7: lock N+1 is linted =========================================================
 
-test('M7: lock N+1 is held to lock N\'s rules: a bind that breaks the Rule of Two or adds a deny-listed member is refused', () => {
+test('M7: lock N+1 is held to lock N\'s rules: a bind that breaks the Rule of Two or adds a deny-listed member is refused', t => {
   const priv = fake('read', { entry: 'crm', dataClass: 'private', egress: 'first-party' }), workflow = toolWorkflow();
   const { lock } = resolveWith([priv], workflow, requires(['crm', 'contact.search']));
-  const add = member => ({ status: 'approved', kind: 'capability.bind', node: 'work', diff: { added: [{ member: member.id, effects: member.effects, trust: member.trust, egress: member.egress, implementation: member.implementation }] } });
+  const ledger = openLedger(workspace(t)); t.after(() => ledger.close());
+  const add = member => approvedBind(ledger, lock, [{ member: member.id, effects: member.effects, trust: member.trust, egress: member.egress, implementation: member.implementation }]);
   const web = fake('fetch', { entry: 'web', type: 'contact.read', dataClass: 'public', egress: 'third-party' });
-  assert.throws(() => applyBind({ proposal: add(web), lock, members: new Map([[web.id, web]]), envelope, workflow, types }), code('NODECAP_LINT'));
+  assert.throws(() => applyBind({ ledger, proposalId: add(web), lock, members: new Map([[web.id, web]]), envelope, workflow, types }), code('NODECAP_LINT'));
   const broker = fake('connect_app', { entry: 'broker', type: 'connection.manage', objects: ['connection'] });
-  assert.throws(() => applyBind({ proposal: add(broker), lock, members: new Map([[broker.id, broker]]), envelope, workflow, types }), error => ['PROPOSAL_DENYLISTED', 'NODECAP_LINT'].includes(error.code));
+  assert.throws(() => applyBind({ ledger, proposalId: add(broker), lock, members: new Map([[broker.id, broker]]), envelope, workflow, types }), error => ['PROPOSAL_DENYLISTED', 'NODECAP_LINT'].includes(error.code));
 });
 
 test('M7: construction proposals flag deny-listed candidates and never offer them', t => {
@@ -302,7 +309,7 @@ test('M7: construction proposals flag deny-listed candidates and never offer the
   const candidates = [{ id: 'mcp.broker.connect_app', tool: 'connect_app', trust: 'T1', status: 'active', type: 'connection.manage', objects: ['connection'], effects: 'none', egress: 'local', summary: 'Connect an app.' },
     { id: 'mcp.crm.update_contact', tool: 'update_contact', trust: 'T1', status: 'active', type: 'connection.manage.contact', objects: ['contact'], effects: 'idempotent', egress: 'local', summary: 'Update a contact.' }];
   const host = { members: new Map(), member: () => null, outsideCandidates: () => candidates };
-  const [proposal] = constructionProposals({ gaps: [{ node: 'work', as: 'link', type: 'connection.manage', code: 'UNBOUND_REQUIREMENT' }], host, ledger, flowId: 'f', envelope });
+  const [proposal] = constructionProposals({ gaps: [{ node: 'work', as: 'link', type: 'connection.manage', code: 'UNBOUND_REQUIREMENT' }], host, ledger, flowId: 'f', lockHash: `sha256:${'0'.repeat(64)}`, envelope });
   assert.deepEqual(proposal.diff.added.map(a => a.member), [], 'nothing deny-listed is offered for binding');
   assert.ok(proposal.riskSummary.candidates.every(c => c.flags.includes('deny-listed')), JSON.stringify(proposal.riskSummary));
 });

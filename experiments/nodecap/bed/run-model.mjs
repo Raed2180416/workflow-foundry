@@ -36,7 +36,7 @@ async function main() {
   const policy = loadPolicy(), modelId = policy.policy.models.find(m => m.class === 'M').id;
   const sha = f => createHash('sha256').update(readFileSync(path.join(ROOT, f))).digest('hex');
   const meta = { schema: 'nc1-model/1', model: model === 'haiku' ? modelId : 'scripted', policyVersion: policy.policy.policyVersion, cap, reserve, params: PARAMS,
-    head: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim(), dirty: execFileSync('git', ['status', '--porcelain', '--', 'src', 'experiments/nodecap'], { cwd: ROOT, encoding: 'utf8' }).trim() !== '',
+    head: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim(), dirty: execFileSync('git', ['status', '--porcelain', '--', 'src', 'experiments/nodecap', 'policy'], { cwd: ROOT, encoding: 'utf8' }).trim() !== '',
     prereg: (() => { try { return sha('research/nodecap-20261021/PREREG-NODECAP-1.md'); } catch { return null; } })(), chromium: !!chromium, startedAt: new Date().toISOString(),
     evidence: model === 'haiku' ? 'preregistered NC-1 model run (n = 12 per arm, K = 1: directional)' : 'development rehearsal: scripted competent model, NOT a capability claim' };
   const rows = [], save = () => writeFileSync(path.join(out, 'report.json'), `${JSON.stringify({ ...meta, spentUsd: spent, ...analyze(rows.filter(r => !r.superseded)), rows }, null, 2)}\n`);

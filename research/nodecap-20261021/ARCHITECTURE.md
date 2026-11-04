@@ -293,8 +293,10 @@ a route handler misses [B]. A restore re-navigates only to an allowlisted safe G
 Rules:
 
 - Standby members are not registered: a task node can never call one.
-- The dispatcher's `implementation` digests the lock section (pins, views, attestations), the envelope digest and the mode. Any change to
-  the *lock* therefore fails a resume with `CAPABILITY_DRIFT` [B].
+- The dispatcher's `implementation` digests the lock section (pins, views, attestations), the envelope digest, the mode, the broker
+  thresholds in force and the digest of the `src/capabilities/*.mjs` source; a Tier-0 member's digests its member implementation, the
+  source digest and the mode. Any change to the *lock*, to the broker's rules or to the adapters' code therefore fails a resume (and a
+  replay) with `CAPABILITY_DRIFT` [B] (§9, #10).
 - **Interim taint rule (b):** in a lock that binds any untrusted output, Tier-0 effect members are compiled approval-gated.
 - The allow-list is the explicit set of tools the lowered workflow names, never the runtime default.
 
@@ -328,16 +330,20 @@ under an unchanged lock is caught by comparing the approved member records with 
 `construct()` runs:
 
 1. qualify
-2. resolve
+2. resolve, under the digest of the catalog the host qualifies from (a caller's digest is only a cross-check:
+   `CATALOG_DIGEST_MISMATCH`)
 3. lower
 4. lint
+
+and records the flow head (ledger) and the workflow head (store) it was constructed against.
 
 `launch()` runs:
 
 1. Refuse on any lint error.
 2. Preflight: the lock against this process's members (drift), a forced re-list against the pins, the canaries, and credential presence.
 3. Require the person's approval of the exact subject.
-4. Save and create the run.
+4. Save the version and move the flow head by compare-and-swap FROM the heads construction saw (a version constructed before the flow
+   moved on is refused: `CONFLICT` / `STALE_WORKFLOW`), then create the run.
 
 `executeRun()` closes UI sessions only at a terminal status. **`host.mjs`** qualifies the catalog into member records (programs last,
 after the members they use) and invokes members.
@@ -351,11 +357,15 @@ A source `agent` node named in the sidecar becomes:
     - Its context holds: the brief; authored views of the bound members; a standby index; bound skill bodies; and the transcript, with
       label `untrusted:nodecap.<id>`.
     - A node without `acquire` cannot `find` or `request`.
-  - **`do`** (`nodecap.do`), when the action is read, find or request.
-  - **`act`** (`nodecap.act`, gated), when the action is act.
+  - **`do`** (`nodecap.do`), when the action is read, act, find or request: an `act` on an effects-none tool is a read, and an `act` on
+    an effectful tool is checked here before anyone is asked (§2.8).
+  - **`act`** (`nodecap.act`, gated), when the action is act, the tool is one of the node's effectful views and `do` answered ready.
   - **`log`** (`nodecap.log`, join `all_resolved`, `{$ref, default}`): keeps a bounded 24 KiB transcript.
 - **`<id>`**, a `nodecap.close` task. It validates the answer against the original `returns`, so downstream `nodes.<id>.*` references
-  still work. It ends the node's UI sessions and records the trace receipt.
+  still work. It ends the node's UI sessions and records the trace receipt. A node that ends without an answer after raising a gap
+  proposal ends the run with `CAPABILITY_GAP`.
+- Agent-node settings with no lowered equivalent (`timeoutMs`, `onError`, `context.budget`, `checks`, `quarantined`) are refused with
+  `LOWER_UNSUPPORTED`, never dropped; `context.persona`, `context.recite` and `context.history` go onto every turn (§9, #11).
 
 **Why a lowering and not an executor session.**
 
@@ -368,7 +378,14 @@ A source `agent` node named in the sidecar becomes:
 ### 2.8 The broker and the dispatcher (`broker.mjs`)
 
 **Dispatcher pipeline** (since 2026-10-28: every call that reaches a member, failed ones included, counts against `maxCallsPerMember`;
-every proposal of a run, whichever path raised it, counts against `proposalsPerRun`, and an open proposal for the same thing is reused).
+every proposal of a run, whichever path raised it, counts against `proposalsPerRun`, and an open proposal for the same thing is reused.
+Since 2026-11-04 (§9): the call budget is the node's own, and every proposal a call raises is also an adaptation decision in the chain).
+
+**Routing (§9, #6).** The lowered loop routes by the TOOL's effects, not the model's label: `read`, `find`, `request` and every `act` go
+to `nodecap.do`; an `act` on an effects-none tool is a read; an `act` on an effectful tool is first checked there (the L2 broker rule,
+the call budget, the arguments against the authored view, and for `ui.commit` a held request with that id) and reaches `nodecap.act`,
+and so the engine's approval, only when `nodecap.do` answered `ready`. `nodecap.act` requires the user's decision AFTER its own
+`approval.requested` in the chain, as the runtime does.
 
 1. Derive the node from `ctx.nodeKey`, never from arguments.
 2. Map the view to a member.
@@ -388,16 +405,21 @@ every proposal of a run, whichever path raised it, counts against `proposalsPerR
 - "Holds private data" means the node can reach a private-data member through bound or granted members (conservative).
 
 **`find(need)`**:
-- Typed fields first. `other` means outside the values the node knows.
+- Typed fields first (`object`, `system`). `other` means outside the values the node knows. The need's `kind` (tool, skill, ui) is a
+  ranking hint, never a filter (§9, #5).
 - Then BM25F ranking.
 - Out-of-lock candidates (qualified members outside the section, and catalog tools that did not qualify) are host records for a
   proposal. The model learns only **how many** exist, never their ids or names.
 
-**`request(need)`**:
-- held → bound;
-- one viable standby, or score ≥ τ and margin ≥ δ → grant;
-- several viable → a closed choice (up to 3);
-- none → **L3**: a `capability.bind`/`admit` proposal, then `CAPABILITY_GAP`.
+**`request(need)`** (since 2026-11-04, §9 #4 and #5):
+- candidates: the in-lock matches of the need's effect class (`effect`, else a changing verb means an effect), narrowed to the need's
+  `verb` when any candidate has it;
+- top held → bound;
+- top effectful → `needs-approval` with its authored view (use `act`; a person decides the exact call). A request never grants an effect;
+- top grantable by L1 with score ≥ τ and margin ≥ δ over the next candidate (one candidate included) → grant the TOP candidate only;
+- otherwise → a closed choice (up to 3) among the candidates the node could use;
+- none → **L3**: a `capability.bind`/`admit` proposal and a `CAPABILITY_GAP` refusal to the node, which may still finish with what it
+  holds; if it ends without an answer, `nodecap.close` ends the run with `CAPABILITY_GAP` (the proposal id in its details).
 
 Proposal handling:
 - Deny-listed candidates are flagged in `riskSummary` and never offered in `diff.added`.
@@ -417,13 +439,22 @@ is no side table of authority.
 - `constructionProposals` (L0): candidates quoted as `untrusted:catalog`, with a code-computed risk summary; deny-listed candidates are
   flagged and never offered. Every offered member records the definition the person is shown: its implementation (pins, view,
   attestation) when it qualified, else its owner attestation hash.
-- `applyBind`: lock N+1, adding the member to the node's bound set, only if every added member still has the recorded definition
+- A person approves ONE candidate of a `capability.bind`/`admit` proposal (`choice`, part of the decided subject); "approve the
+  proposal" without a candidate is refused (`PROPOSAL_CHOICE_REQUIRED`).
+- `applyBind({ledger, proposalId, ...})`: lock N+1 from the LEDGER's record of the proposal (never a caller's copy), only if it is
+  approved on a channel this ledger accepts and not applied yet, was raised on this flow (`PROPOSAL_FLOW_MISMATCH`) and on exactly this
+  lock (`fromLockHash`, `PROPOSAL_LOCK_MISMATCH`), and only for the chosen candidate, if it still has the recorded definition
   (`PROPOSAL_DEFINITION_CHANGED`; a proposal that recorded none binds nothing) and lock N+1 passes `lint` (deny list, Rule of Two, effect
-  ceilings, schemas, sizes). `nextConstruction` qualifies only the added members' entries, applies the bind and lowers version N+1; a
-  person then approves that exact version (its pins included).
-- `continueRun`: refused for workflows with cross-run state (`CONTINUATION_STATEFUL`), for runs that are not a gap
-  (`CONTINUATION_NOT_GAP`), and for **any completed effect before the gap** (`CONTINUATION_AFTER_EFFECT`). It runs the launch preflight
-  against lock N+1 first (`PREFLIGHT_FAILED`). Otherwise it creates a run with `modelMode: 'replay-or-live'` and the prior `sampleSalt`.
+  ceilings, schemas, sizes). `nextConstruction` qualifies only the chosen member's entry, applies the bind, lowers version N+1 and
+  consumes the approval (`approved → applied`, compare-and-swap: one approval, one lock N+1); a person then approves that exact version
+  (its pins included).
+- `continueRun({store, ledger, host, construction, envelope, priorRunId})`: runs every check `launch` runs (lint, the person's approval
+  of the exact version, the preflight against lock N+1) plus its own: the prior run did not succeed and its own chain raised the applied
+  proposal, on the version and lock it ran; no cross-run state (`CONTINUATION_STATEFUL`); **no completed effect before the gap**
+  (`CONTINUATION_AFTER_EFFECT`). The flow head must still be the gap's version (`CONTINUATION_STALE_HEAD`) and moves to N+1 by
+  compare-and-swap; the run is created with `modelMode: 'replay-or-live'` and the prior `sampleSalt`.
+- Entry status (`ledger.setStatus`): the status an entry moves from is the ledger's record, else the owner catalog's, else `imported`,
+  never the caller's; every move is a compare-and-swap on a mandatory revision; a move to `active` needs a person.
 - `stepUpProposal` (`oauth.mjs`): `scope.step-up {entry, scopeClass, scopes}`; `connectScopes` accepts the extra scopes only from an
   approved proposal for that entry and scope class.
 
@@ -472,8 +503,9 @@ bed's page-by-page plan takes 6 [B].
 - **Authority.** It may call only the members its entry lists in `uses`. Any other call is `CAPABILITY_DENIED` and ends the program.
   Every call goes through `host.invoke`, so pins, schemas, credentials and the scrub set apply.
 - **v1 is reads only.** Effectful `uses` are refused at admission (`PROGRAM_USES_EFFECT`). Effects are none; the output label is the join
-  with every used member; the data class and the egress are the maximum over its attestation and its uses (a program that calls a
-  third-party egress is one); cost is maxCalls × the dearest use.
+  with every used member; the data class, the egress, the risk and the approval flag are the maximum over its attestation and its uses
+  (a program that calls a third-party egress is one), and its trust and custody the weakest of its entry's and its uses' (a T0 program
+  that calls a T2 tool is T2; §9, #9); cost is maxCalls × the dearest use.
 - **Pins.** The source is re-hashed before every run (`PROGRAM_PIN_MISMATCH`). The used members' implementations enter the program's
   pins, so drift in a used server is drift of the program (§2.6).
 - No network and no child process from inside [B].
@@ -657,3 +689,60 @@ can tell the two apart.
 What the fixes do not claim: the CLI channel is a tested primitive without a `foundry` command, and no dashboard exists (§7); the safe-GET
 allowlist is only as good as the owner's attestation; the sandbox is Linux-only. The NODECAP-1 result ran on the pre-fix code; see its
 addendum.
+
+## 9. Thesis-invariants and correctness review of 2026-10-22: findings, fixes and tests
+
+The review (`review:thesis invariants and correctness` of workflow `wf_c56a08f8-048`) found 1 blocker, 14 majors and 10 minors. The
+security fixes of §8 had already closed #3 (the person channel), #7 (the commit body), #8 (GETs and WebSockets) and #19 (Rule-of-Two
+order). Everything else is fixed below or answered, except where marked. Each code fix has a test in `tests/nodecap-thesis.test.mjs`
+(or the file named) that drives the surface the finding named and checks what happened. **All 21 tests of that file fail on the pre-fix
+code** (HEAD `8b200022`, run with the new test file, the new test support and the new probe fixture copied onto it); 20 fail by an
+assertion about what happened (a run created, a member bound, a grant made, a person asked, a value reached a prompt), and #13's fails
+because the measure did not exist. Per-test record:
+[runs/thesisfix-prefix-2026-11-04/prefix-results.json](runs/thesisfix-prefix-2026-11-04/prefix-results.json). The tests call the old
+and the new interface together where they differ (`applyBind`, `nextConstruction`, `continueRun`), so the same test runs on both.
+
+| # | Finding | Fix | Test | Pre-fix result |
+|---|---|---|---|---|
+| 1 (blocker) | a continuation could run a lock no person approved; an approval was tied to no version, bound every candidate, and could be applied again | `continueRun` runs every launch check (lint, the person's approval of the exact version, the preflight) and its own (the prior run's chain raised the applied proposal on the version and lock it ran; the flow head is still that version, moved by CAS); a person approves ONE candidate (`choice`, in the decided subject); `applyBind` reads the ledger's record and refuses another flow or lock; `nextConstruction` consumes the approval (`approved → applied`, CAS) | thesis #1 ×4; `nodecap-broker` L3 → continuation; `nodecap-security` M2 | a continuation run was created with no version approval, and over a moved head; a proposal of another flow and of another lock bound its member; both candidates were bound; the approval yielded a second lock N+1 |
+| 2 | entries re-activated without a person; the caller's `from` trusted | the status an entry moves from is the ledger's record, else the owner catalog's, else `imported`; `from` is refused; `expectedRev` is mandatory; `active` needs a person (since §8) | thesis #2; `nodecap-catalog` | a never-qualified entry became `active` on a person decision for the status the caller claimed; a revision-less move revoked a just-quarantined entry |
+| 3 | the person channel was a string | fixed in §8 (M1: `PersonDecision`) | `nodecap-person`, `nodecap-security` M1 | (§8) |
+| 4 | a request for an effect granted a different read-only tool; any single candidate was decisive | the need's effect class filters, its verb narrows; only the top candidate is granted, with τ and δ applied to one candidate too; an effectful top answers `needs-approval` with its authored view | thesis #4 ×2; `nodecap-broker` signal test | `sheets_read_range` was granted for "append a row", and granted at a score under τ |
+| 5 | `kind` hid computer-use and skill members; a gap failed the whole run | `kind` is a ranking hint; a gap is a `CAPABILITY_GAP` refusal plus a proposal and the node goes on; a node that ends without an answer after a gap ends the run with `CAPABILITY_GAP` (continuation unchanged) | thesis #5 ×2; `nodecap-broker` L3 | `find {kind:'tool', object:'page'}` returned nothing; a node that could have finished failed on the gap |
+| 6 | `act` routed by the model's label; a person asked about calls that cannot run | the lowering routes by the tool's effects: `act` on an effects-none tool is a read; on an effectful tool `nodecap.do` checks reach, call budget, arguments and a held request before the engine asks anyone | thesis #6 ×2; `nodecap-broker` L2 | a person was asked to approve a read, a call with invalid arguments and a call naming no tool |
+| 7 | the commit's person saw a model-written body | fixed in §8 (B3) | `nodecap-security` B3 | (§8) |
+| 8 | page GETs and WebSockets ungated | fixed in §8 (B1) | `nodecap-security` B1 | (§8) |
+| 9 | programs hid the trust, custody and risk of the tools they call | a program's trust and custody are the weakest of its entry's and its uses', its risk and approval flag the strongest (egress already derived, §8 M6) | thesis #9 | a T0 program wrapping a T2, C2, high-risk third-party tool was T0, low risk, and auto-bindable |
+| 10 | replay and resume not bound to the broker's code | registry implementations digest the `src/capabilities` source and the thresholds in force | thesis #10 | other thresholds and a changed broker gave the same registry hash |
+| 11 | lowering dropped agent-node settings | `timeoutMs`, `onError`, `context.budget` refused (`LOWER_UNSUPPORTED`); `context.recite` and `context.history` carried onto every turn | thesis #11 | `timeoutMs` was dropped silently; `recite` was lost |
+| 12 | one arm-B "success" was a failed run | `analyze.mjs` reports `successStrict` (oracle AND run succeeded; T11: ended without an answer) beside the frozen count, and the R2/R4 readings under it; RESULT addendum | thesis #12 | (evaluation) no such reading |
+| 13 | "1.7% of B's tool tokens" true by construction | the bed records tool text per model call (sections plus views delivered by find, request and ARGS_INVALID); `analyze.mjs` reports it; RESULT addendum | thesis #13 | (new measure) |
+| 14 | arm A's acquire clauses were written knowing the answers | disclosed in the RESULT addendum; the next preregistration generates them blind to the gold set or per task family | (evaluation) | |
+| 15 | the model blamed for broker-caused losses | RESULT addendum: at least 3, likely 4, of A's 6 losses involve Foundry design; 2 of the 14 L1 grants were unwanted and 1 enabled a substitution | (evaluation) | |
+| 16 | T11 not the same task in every arm | RESULT addendum (C's only success is T11's stuck) | (evaluation) | |
+| 17 | V2 proved nothing for world-only oracles | V2: each oracle accepts the correct outcome and rejects three mutations of it, world mutations for effect tasks | `nodecap-bed` V2 test | the old check could not tell an oracle that ignores the output from one that checks it |
+| 18 | step-up and definition-changed proposals were not chained decisions | every proposal a call raises is also an adaptation decision in the run's chain (they already counted against `proposalsPerRun` since §8 M8) | thesis #18 | the definition-changed proposal had no decision in the chain |
+| 19 | Rule-of-Two order | fixed in §8 (M6) | `nodecap-security` M6 | (§8) |
+| 20 | `launch` compared-and-swapped what it had just read; `construct` trusted the caller's catalog digest | construct records the heads it saw and uses the host's own catalog digest (a different one is `CATALOG_DIGEST_MISMATCH`); launch moves both heads by CAS from what construction saw | thesis #20 | a version constructed before the flow moved on replaced it; a false catalog digest entered the lock |
+| 21 | secrets passed to stdio servers were not scrubbed; SSE uncapped | `envSecrets`: credentials a stdio server takes from its environment are resolved by host code into the scrub set (refused when short); a credential-like `envAllow` name is refused (`CATALOG_ENV_SECRET`). SSE capped in §8 (m1) | thesis #21 | a credential-named `envAllow` was accepted (its value is passed to the server and was never in the scrub set) |
+| 22 | the per-member call budget was summed across nodes | counted per node | thesis #22 | node b's first call was refused `BUDGET_EXHAUSTED` by node a's call |
+| 23 | `act` did not check that the decision followed the request | the runtime's own rule: the user's decision must come after this call's `approval.requested` | thesis #23 | a decision recorded before the request sent the call |
+| 24 | weak broker tests | the signal test now delivers a payload that reaches the node and names an effectful member, and asserts nothing was granted, written or asked; exact `find` assertions; `needs-approval` tested (thesis #4) | `nodecap-broker` | (tests) |
+| 25 | process | RESULT addendum: the go-ahead was relayed, the owner should confirm O5; `run-model.mjs` `dirty` covers `policy/`; the build report's count was stale | (process) | |
+
+**Disputed in part.**
+- #2 asked that a move to `qualified` need a person too. It does not widen anything: only `active` entries are bindable or invocable
+  (`catalog.mjs` `bindable`, `host.mjs` qualify, preflight and invoke all require `active`), and `qualified → active` needs a person.
+  Requiring one for a non-widening step would make the host's own qualification wait on a person for no protection.
+- #24's "line 82 locks in defect 4" (`decideMember` returns `NEED_UNTRUSTED_EFFECT` for an effectful member under untrusted control):
+  that assertion is about the pure rule, which is right (an effect is never auto-bound under untrusted control). Defect 4 was how
+  `request` used the rule; it is fixed in `request` and tested there (thesis #4), and the rule's assertion stays.
+
+**Behaviour that changed (beyond the findings).** A gap no longer ends the run on the spot (#5): the scripted bed's plans answer
+`stuck` after a `CAPABILITY_GAP` refusal, so their runs still end on the gap and the continuation path is unchanged; a paid model may
+instead finish with what it holds. An applied proposal reports `applied`, not `approved` (the bed's oracles and analysis count both as
+approved). Arm B (the raw baseline) shares the lowering, so its `nodecap.do` answers an `act` on an effectful tool `ready` with no check,
+as a raw client would.
+
+**Not done.** The `dashboard` channel still does not exist (§7). The paid NODECAP-1 numbers are unchanged; a rerun on the fixed code
+needs a new preregistration (routing, request and gap behaviour changed).

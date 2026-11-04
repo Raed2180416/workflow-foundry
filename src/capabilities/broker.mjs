@@ -7,8 +7,13 @@
 //       bound to (workflow, registry, node, exact arguments); the dispatcher verifies that decision in the chain AND a person's decision
 //       (./person.mjs) for the host's own rendering of the call (describeCall: the member, its arguments, and for ui.commit the held
 //       request as the host recorded it, body included) before calling. A person never approves a model's account of an effect.
-//   L3  out of lock: a need nothing in bound ∪ standby can meet ends the run with a typed CAPABILITY_GAP and a proposal a person decides
-//       on the dashboard or CLI (never a model, a signal, or an MCP elicitation); approval yields lock N+1 and a continuation run.
+//   L3  out of lock: a need nothing in bound ∪ standby can meet raises a proposal a person decides on the dashboard or CLI (never a model,
+//       a signal, or an MCP elicitation) and comes back to the node as a CAPABILITY_GAP refusal: the node may still finish with what it
+//       holds; if it ends without an answer, the run ends with a typed CAPABILITY_GAP (nodecap.close), and approval yields lock N+1 and a
+//       continuation run (review-thesis #5: a gap no longer kills the node on the spot).
+// Routing is by the TOOL's effects, never the model's label (review-thesis #6): an `act` on an effects-none tool is a read; an `act` on an
+// effectful tool is first checked by nodecap.do (the tool is in reach, its arguments match its view, a ui.commit names a held request) and
+// only then reaches the engine's approval gate, so a person is never asked about a call that cannot run.
 // Nothing here widens the lock: find never widens, a signal cannot grant, grants die with the run (THESIS D11).
 import { clone } from '../data.mjs';
 import { validateData } from '../validate.mjs';
@@ -25,6 +30,13 @@ import { stepUpProposal } from './oauth.mjs';
 /** Selection thresholds for a typed need (score ≥ τ and margin ≥ δ grant a single best match). Development defaults; NC-1 freezes them on D1-D6. */
 export const THRESHOLDS = Object.freeze({ tau: 1.0, delta: 0.5 });
 const TRANSCRIPT_BYTES = 24 * 1024;
+// Verbs that change something: a request with one of them (and no explicit effect) asks for an effectful tool.
+const CHANGING_VERBS = new Set(['create', 'update', 'delete', 'send']);
+/** Whether the user's decision for `approvalId` is in the chain AFTER its request (the runtime's own rule, src/runtime.mjs approvedInChain). */
+export function approvedAfterRequest(events, approvalId) {
+  const requested = events.findIndex(e => e.type === 'approval.requested' && e.approvalId === approvalId);
+  return requested >= 0 && events.slice(requested + 1).some(e => e.type === 'approval.decided' && e.approvalId === approvalId && e.approved === true && e.actor === 'user');
+}
 
 /**
  * The pure broker rule for one member (I10: recomputable from the recorded features). `features`: { inBound, priorGrant, inStandby,
@@ -78,8 +90,9 @@ export class Dispatcher {
     const section = this.lock.nodes[node], reachable = [...section.bound, ...section.skills, ...nodeGrants].map(id => this.lock.members[id]);
     // Every call that reached a member counts against maxCallsPerMember, failed ones included: a server that fails every call (and asks
     // for a step-up each time) cannot buy itself unlimited turns.
-    const calls = new Map();
-    for (const e of ctx.store.events(ctx.runId)) if (e.type === 'node.completed' && /__loop:\d+\/(do|act)$/.test(e.nodeKey ?? '') && e.output?.member) calls.set(e.output.member, (calls.get(e.output.member) ?? 0) + 1);
+    // maxCallsPerMember is a per-NODE budget (its lock section's): only this node's calls count (review-thesis #22).
+    const calls = new Map(), own = new RegExp(`/${node}__loop:\\d+/(do|act)$`);
+    for (const e of ctx.store.events(ctx.runId)) if (e.type === 'node.completed' && own.test(e.nodeKey ?? '') && e.output?.member) calls.set(e.output.member, (calls.get(e.output.member) ?? 0) + 1);
     // Every proposal raised in the run counts against proposalsPerRun, whichever path raised it (L3 gap, definition change, step-up).
     proposals = Math.max(proposals, this.ledger?.proposalsOfRun(ctx.runId).length ?? 0);
     // The Rule of Two counts private data the node holds through its members AND through its inputs (resolve records the input class).
@@ -112,24 +125,28 @@ export class Dispatcher {
   /** Ranked authored views of the node's members matching a typed need; out-of-lock catalog tools come back as names only. */
   find(node, need) {
     const section = this.lock.nodes[node], pool = [...section.bound, ...section.skills, ...section.standby].map(id => this.lock.members[id]);
-    // "other" means outside the values this node knows: it matches no member of the node's section, only outside candidates.
-    const fits = m => (need.kind === 'skill' ? m.kind === 'skill' : need.kind === 'ui' ? m.kind === 'cua' : m.kind !== 'skill' && m.kind !== 'cua')
-      && need.object !== 'other' && need.system !== 'other' && (!need.object || m.objects.includes(need.object)) && (!need.system || m.system === need.system);
+    // "other" means outside the values this node knows: it matches no member of the node's section, only outside candidates. The need's
+    // `kind` (tool, skill, ui) is a ranking hint, never a filter (review-thesis #5): members of the named kind come first.
+    const fits = m => need.object !== 'other' && need.system !== 'other' && (!need.object || m.objects.includes(need.object)) && (!need.system || m.system === need.system);
+    const kindOf = m => m.kind === 'skill' ? 'skill' : m.kind === 'cua' ? 'ui' : 'tool', hinted = m => !need.kind || kindOf(m) === need.kind;
     const knownObjects = new Set(pool.flatMap(m => m.objects)), knownSystems = new Set(pool.map(m => m.system));
     const outsideFits = c => (!need.verb || (c.verbs ?? []).includes(need.verb))
       && (!need.system || (need.system === 'other' ? !knownSystems.has(c.system) : c.system === need.system))
       && (!need.object || (need.object === 'other' ? c.objects.some(o => !knownObjects.has(o)) : c.objects.includes(need.object)));
     const eligible = pool.filter(fits);
-    const ranked = eligible.length ? indexMembers(eligible).rank(`${need.verb} ${need.object} ${need.system ?? ''} ${need.why ?? ''}`, 5) : [];
-    // Members that fit the typed fields but share no word with the query still count (ranked after the scored ones).
-    const rest = eligible.filter(m => !ranked.some(r => r.id === m.id)).map(m => ({ id: m.id, score: 0 }));
+    const scored = eligible.length ? indexMembers(eligible).rank(`${need.verb ?? ''} ${need.object ?? ''} ${need.system ?? ''} ${need.why ?? ''}`, eligible.length) : [];
+    // Members that fit the typed fields but share no word with the query still count (ranked after the scored ones); then the kind hint
+    // orders the list (stable: score order within each part).
+    const all = [...scored, ...eligible.filter(m => !scored.some(r => r.id === m.id)).map(m => ({ id: m.id, score: 0 }))];
+    const ranked = [...all.filter(r => hinted(this.lock.members[r.id])), ...all.filter(r => !hinted(this.lock.members[r.id]))];
     // Outside this node's lock: qualified members the lock did not give this node, and catalog tools that did not qualify (T3, quarantined,
     // revoked, imported). Names only, for a proposal; never callable in this run.
     const inSection = new Set(pool.map(m => m.id));
     const qualified = [...this.host.members.values()].filter(m => !inSection.has(m.id)).map(m => ({ id: m.id, entry: m.entryId, trust: m.trust, status: entryStatus(this.host.entry(m.entryId), this.host.ledger),
       type: m.type, system: m.system, objects: m.objects, verbs: m.verbs, effects: m.effects, egress: m.egress, summary: m.view.summary }));
     const outside = [...qualified, ...this.host.outsideCandidates()].filter(outsideFits);
-    return { ranked: [...ranked, ...rest].slice(0, 5), outside: outside.slice(0, 5) };
+    // `ranked`: what find shows (five); `all`: every in-lock match, for a typed request.
+    return { ranked: ranked.slice(0, 5), all: ranked, outside: outside.slice(0, 5) };
   }
   // ---- the dispatchers ----
   async do(args, ctx) {
@@ -144,10 +161,13 @@ export class Dispatcher {
       return this.#out(ctx, { ok: true, action: 'find', matches: found.ranked.map(r => renderView(this.lock.members[r.id])), outsideLock: found.outside.length });
     }
     if (decision.action === 'request') return this.#request(ctx, node, decision, state);
-    if (decision.action !== 'read') return this.#out(ctx, refusal('ACTION_UNSUPPORTED'));
+    if (decision.action !== 'read' && decision.action !== 'act') return this.#out(ctx, refusal('ACTION_UNSUPPORTED'));
     const memberId = viewIndex(this.lock, node).get(decision.tool);
     if (!memberId) return this.#out(ctx, refusal('TOOL_ABSENT', { hint: 'Use a tool listed under tools or standby, or action request with a need' }));
     const member = this.lock.members[memberId];
+    // An act on an effectful tool: checked here, before the engine asks a person (nodecap.act runs only when this says ready).
+    if (decision.action === 'act' && member.effects !== 'none') return this.#prepare(ctx, node, member, decision, state);
+    // An act on an effects-none tool is a read: routing follows the tool's effects, never the model's label.
     if (member.effects !== 'none') return this.#out(ctx, refusal('EFFECT_CLASS_MISMATCH', { hint: 'This tool changes something: use action act' }));
     const granted = this.acquire(ctx, node, memberId, state, { via: 'implicit' });
     if (granted.result !== 'bound' && granted.result !== 'granted') return this.#out(ctx, refusal(granted.code, { tool: decision.tool }));
@@ -160,8 +180,8 @@ export class Dispatcher {
     // The engine gated this task (requiresApproval): verify the user's decision for these exact arguments is in the chain...
     const header = ctx.store.rows.header(ctx.runId);
     const approvalId = digest({ workflowHash: header.workflowHash, registryHash: header.registryHash, nodeKey: ctx.nodeKey, tool: 'nodecap.act', args, idempotencyKey: ctx.idempotencyKey });
-    if (!ctx.store.events(ctx.runId).some(e => e.type === 'approval.decided' && e.approvalId === approvalId && e.approved === true && e.actor === 'user'))
-      fail('APPROVAL_MISSING', 'nodecap.act runs only after a user approved this exact call');
+    // (the decision must come AFTER this call's own request in the chain, as the runtime requires: review-thesis #23)
+    if (!approvedAfterRequest(ctx.store.events(ctx.runId), approvalId)) fail('APPROVAL_MISSING', 'nodecap.act runs only after a user approved this exact call, after it was requested');
     // ...and that a person (an authenticated person channel, not the string 'user') approved the host's rendering of this call as it stands now.
     const rendering = await describeCall({ host: this.host, lock: this.lock, runId: ctx.runId, nodeKey: ctx.nodeKey, decision });
     if (this.ledger?.callDecision(callSubject(approvalId, rendering))?.approve !== true)
@@ -174,36 +194,66 @@ export class Dispatcher {
     if (granted.result !== 'bound' && granted.result !== 'granted') return this.#out(ctx, refusal(granted.code, { tool: decision.tool }));
     return this.#call(ctx, node, member, decision, state);
   }
+  /**
+   * nodecap.do for an act on an effectful tool: every check that does not need the person, made BEFORE the engine asks one (review-thesis
+   * #6): the tool is in reach for an L2 call (status, deny list, limits), its arguments match its authored view, its call budget is not
+   * spent, and a ui.commit names a request the page holds. Ready means only "a person may now be asked"; nodecap.act re-checks all of it.
+   */
+  async #prepare(ctx, node, member, decision, state) {
+    const verdict = decideMember(this.features(ctx, node, member.id, state, { via: 'act', approvalId: 'pending-approval' }), member, this.envelope);
+    if (verdict.result !== 'bound' && verdict.result !== 'granted') return this.#out(ctx, refusal(verdict.code, { tool: decision.tool }));
+    if ((state.calls.get(member.id) ?? 0) >= this.lock.nodes[node].maxCallsPerMember) return this.#out(ctx, refusal('BUDGET_EXHAUSTED', { tool: member.view.name }));
+    try { validateData(member.view.inputSchema, decision.args ?? {}, `${member.id} arguments`); }
+    catch (error) { if (!(error instanceof FoundryError)) throw error; return this.#out(ctx, refusal('ARGS_INVALID', { tool: member.view.name, signature: renderView(member) })); }
+    if (member.kind === 'cua' && member.tool === 'commit' && !(await this.host.heldRequest({ runId: ctx.runId, node, entryId: member.entryId, id: decision.args?.id })))
+      return this.#out(ctx, refusal('HELD_UNKNOWN', { tool: member.view.name, hint: 'commit names the id of a request the page holds (pending)' }));
+    return this.#out(ctx, { ok: true, action: 'act', ready: true, tool: member.view.name, note: 'A person decides this call.' });
+  }
+  /**
+   * A typed request (review-thesis #4): the need's effect class filters (a request for a change never yields a read-only tool, nor a read
+   * an effect), its verb narrows when any candidate has it, and only the TOP candidate is ever granted, when its score clears τ and its
+   * margin over the next clears δ (one candidate included). An effectful top answers needs-approval with its authored view (use act). A
+   * need nothing in reach meets raises a proposal and comes back as a CAPABILITY_GAP refusal (the node continues; review-thesis #5).
+   */
   async #request(ctx, node, decision, state) {
     const need = decision.need;
     if (!need) return this.#out(ctx, refusal('NEED_REQUIRED'));
     const found = this.find(node, need), section = this.lock.nodes[node];
-    const held = found.ranked.find(r => section.bound.includes(r.id) || section.skills.includes(r.id) || state.nodeGrants.has(r.id));
-    if (held && (found.ranked[0].id === held.id)) return this.#out(ctx, { ok: true, action: 'request', result: 'bound', tool: this.lock.members[held.id].view.name });
-    const standby = found.ranked.filter(r => section.standby.includes(r.id) && !state.nodeGrants.has(r.id));
-    const viable = standby.filter(r => { const d = decideMember(this.features(ctx, node, r.id, state, { via: 'request' }), this.lock.members[r.id], this.envelope); return d.result === 'granted' || d.code === 'NEED_EFFECTFUL'; });
-    if (!viable.length) {
-      // L3: nothing in the lock meets the need. The node ends with a typed gap and a proposal for a person (never a model or a signal).
+    const wantsEffect = need.effect ? need.effect !== 'none' : CHANGING_VERBS.has(need.verb);
+    const sameClass = found.all.filter(r => (this.lock.members[r.id].effects !== 'none') === wantsEffect);
+    const byVerb = need.verb ? sameClass.filter(r => (this.lock.members[r.id].verbs ?? []).includes(need.verb)) : [];
+    const candidates = byVerb.length ? byVerb : sameClass;
+    if (!candidates.length) {
+      // L3: nothing in the lock meets the need. A proposal for a person (never a model or a signal); the node hears a typed gap.
       if (state.proposals >= this.envelope.limits.proposalsPerRun) return this.#out(ctx, refusal('PROPOSAL_LIMIT'));
-      const refusedHere = standby.length ? decideMember(this.features(ctx, node, standby[0].id, state, { via: 'request' }), this.lock.members[standby[0].id], this.envelope).code : null;
-      if (refusedHere && refusedHere !== 'NOT_BOUND') {
-        this.decide(ctx, 'adaptation', { ...this.features(ctx, node, standby[0].id, state, { via: 'request' }) }, { result: 'refused', member: standby[0].id, code: refusedHere }, { need, rationale: `refused ${standby[0].id}: ${refusedHere}` });
-        return this.#out(ctx, refusal(refusedHere));
-      }
       const proposal = this.#propose(ctx, node, need, found.outside);
-      const decisionId = this.decide(ctx, 'adaptation', { node, nodeKey: ctx.nodeKey, lockHash: this.lockHash, envelopeDigest: this.envelopeDigest, via: 'request', controlLabel: section.controlLabel,
-        candidates: found.outside.map(c => c.id) }, { result: 'proposal', proposalId: proposal?.id ?? null }, { need, rationale: 'need outside the lock: typed gap and a proposal for a person' });
-      throw new FoundryError('CAPABILITY_GAP', 'This node needs a capability outside its approved lock; a person must decide the proposal', { proposalId: proposal?.id ?? null, decisionId, node });
+      this.decide(ctx, 'adaptation', { node, nodeKey: ctx.nodeKey, lockHash: this.lockHash, envelopeDigest: this.envelopeDigest, via: 'request', controlLabel: section.controlLabel,
+        candidates: found.outside.map(c => c.id) }, { result: 'proposal', proposalId: proposal?.id ?? null }, { need, rationale: 'need outside the lock: a proposal for a person; the node continues with what it holds' });
+      return this.#out(ctx, refusal('CAPABILITY_GAP', { proposal: !!proposal, hint: 'Nothing in reach meets this need; a person will decide. Finish with the tools you have, or answer stuck.' }));
     }
-    const [top, second] = viable;
-    const decisive = viable.length === 1 || (top.score >= this.thresholds.tau && top.score - (second?.score ?? 0) >= this.thresholds.delta);
+    const [top, second] = candidates, member = this.lock.members[top.id];
+    const held = id => section.bound.includes(id) || section.skills.includes(id) || state.nodeGrants.has(id);
+    if (held(top.id)) return this.#out(ctx, { ok: true, action: 'request', result: 'bound', tool: member.view.name });
+    const features = this.features(ctx, node, top.id, state, { via: 'request' }), verdict = decideMember(features, member, this.envelope);
+    if (member.effects !== 'none') {
+      // An effect is never granted by a request: the model is pointed at act, where a person decides the exact call.
+      if (verdict.code === 'NEED_UNTRUSTED_EFFECT' || verdict.code === 'NEED_EFFECTFUL') return this.#out(ctx, { ok: true, action: 'request', result: 'needs-approval', tool: member.view.name, view: renderView(member), hint: 'Use action act with this tool; a person approves the call.' });
+      this.decide(ctx, 'adaptation', features, { result: 'refused', member: top.id, code: verdict.code }, { need, rationale: `refused ${top.id}: ${verdict.code}` });
+      return this.#out(ctx, refusal(verdict.code));
+    }
+    const decisive = verdict.result === 'granted' && top.score >= this.thresholds.tau && top.score - (second?.score ?? 0) >= this.thresholds.delta;
     if (!decisive) {
-      this.decide(ctx, 'selection', { node, nodeKey: ctx.nodeKey, lockHash: this.lockHash, envelopeDigest: this.envelopeDigest, via: 'request', scores: viable.slice(0, 3).map(r => Math.round(r.score * 1000) / 1000) },
-        { result: 'options', options: viable.slice(0, 3).map(r => r.id) }, { need, rationale: 'several viable standby members: a closed choice' });
-      return this.#out(ctx, { ok: true, action: 'request', result: 'options', options: viable.slice(0, 3).map(r => renderView(this.lock.members[r.id])) });
+      // A closed choice among the candidates this node could actually use (held, or grantable by L1); the model picks by reading one.
+      const usable = r => held(r.id) || decideMember(this.features(ctx, node, r.id, state, { via: 'request' }), this.lock.members[r.id], this.envelope).result === 'granted';
+      const options = candidates.filter(usable).slice(0, 3);
+      if (!options.length) {
+        this.decide(ctx, 'adaptation', features, { result: 'refused', member: top.id, code: verdict.code ?? 'NEED_UNDECIDED' }, { need, rationale: `refused ${top.id}: ${verdict.code ?? 'NEED_UNDECIDED'}` });
+        return this.#out(ctx, refusal(verdict.code ?? 'NEED_UNDECIDED'));
+      }
+      this.decide(ctx, 'selection', { node, nodeKey: ctx.nodeKey, lockHash: this.lockHash, envelopeDigest: this.envelopeDigest, via: 'request', scores: options.map(r => Math.round(r.score * 1000) / 1000) },
+        { result: 'options', options: options.map(r => r.id) }, { need, rationale: 'no decisive standby member: a closed choice' });
+      return this.#out(ctx, { ok: true, action: 'request', result: 'options', options: options.map(r => renderView(this.lock.members[r.id])) });
     }
-    const member = this.lock.members[top.id];
-    if (member.effects !== 'none') return this.#out(ctx, { ok: true, action: 'request', result: 'needs-approval', tool: member.view.name, view: renderView(member) });
     const granted = this.acquire(ctx, node, top.id, state, { via: 'request', need });
     if (granted.result !== 'granted' && granted.result !== 'bound') return this.#out(ctx, refusal(granted.code));
     return this.#out(ctx, { ok: true, action: 'request', result: 'granted', tool: member.view.name, view: renderView(member) });
@@ -238,17 +288,21 @@ export class Dispatcher {
       if (!(error instanceof FoundryError)) throw error;
       // Proposals raised by a failing call share the run's proposal limit and are de-duplicated: a hostile server cannot raise one per turn.
       const room = this.ledger && this.state(ctx, node).proposals < this.envelope.limits.proposalsPerRun;
+      // Every proposal a call raises is also an adaptation decision in the run's chain (review-thesis #18), like a gap's.
+      const chain = (proposal, rationale) => { if (proposal?.evidence?.runId === ctx.runId && !nodecapDecisions(ctx.store, ctx.runId).some(d => d.action?.proposalId === proposal.id))
+        this.decide(ctx, 'adaptation', { node, nodeKey: ctx.nodeKey, lockHash: this.lockHash, envelopeDigest: this.envelopeDigest, via: 'call', member: member.id, controlLabel: this.lock.nodes[node].controlLabel },
+          { result: 'proposal', proposalId: proposal.id, kind: proposal.kind }, { rationale }); };
       if (error.code === 'DEFINITION_CHANGED' && room) {
         const dedupKey = `sha256:${digest({ kind: 'capability.definition-changed', entry: member.entryId })}`;
-        if (!this.ledger.openProposal(dedupKey)) this.ledger.putProposal({ kind: 'capability.definition-changed', flowId: this.lock.flowId, node, fromLockHash: this.lockHash, dedupKey,
-          diff: { added: [] }, riskSummary: { entry: member.entryId, fieldDiff: error.details?.fieldDiff ?? [] }, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey } });
+        chain(this.ledger.openProposal(dedupKey) ?? this.ledger.putProposal({ kind: 'capability.definition-changed', flowId: this.lock.flowId, node, fromLockHash: this.lockHash, dedupKey,
+          diff: { added: [] }, riskSummary: { entry: member.entryId, fieldDiff: error.details?.fieldDiff ?? [] }, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey } }), `${member.entryId} changed its definition: a proposal for a person`);
       }
       // A 403 insufficient_scope is never stepped up automatically: it becomes a scope.step-up proposal a person decides. Only an HTTP
       // challenge on an OAuth entry is one (guarded-fetch raises it; JSON-RPC error codes and error text never are), and only owner-listed
       // scopes are carried (oauth.mjs stepUpProposal).
       const entry = this.host.entry(member.entryId);
-      if (error.code === 'SCOPE_INSUFFICIENT' && room && entry?.kind === 'mcp-http' && entry.credential?.oauth) stepUpProposal(this.ledger, { entry, scopeClass: member.effects === 'none' ? 'read' : 'write',
-        scopes: error.details?.scopes ?? [], flowId: this.lock.flowId, node, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey, member: member.id } });
+      if (error.code === 'SCOPE_INSUFFICIENT' && room && entry?.kind === 'mcp-http' && entry.credential?.oauth) chain(stepUpProposal(this.ledger, { entry, scopeClass: member.effects === 'none' ? 'read' : 'write',
+        scopes: error.details?.scopes ?? [], flowId: this.lock.flowId, node, evidence: { runId: ctx.runId, nodeKey: ctx.nodeKey, member: member.id } }), `${member.entryId} asked for a scope step-up: a proposal for a person`);
       if (['CANCELLED', 'SECRET_EXPOSURE'].includes(error.code)) throw error;
       // Host-chosen code only: upstream text never reaches the model. Invalid arguments come back with the member's Foundry-authored
       // signature (owner text, never server text): a standby index line names a tool without its arguments, so a model that called it
@@ -263,7 +317,8 @@ export class Dispatcher {
   #out(ctx, value) { this.host.scrub.assertClean(value, 'a node output'); return value; }
   log(args) {
     const { decision, result, effect, previous } = args, turns = (previous?.turns ?? 0) + 1;
-    const entry = { turn: turns, action: decision.action, tool: decision.tool, ...(decision.args && Object.keys(decision.args).length ? { args: decision.args } : {}), result: result ?? effect ?? null };
+    // An act's own result (the effect) wins over nodecap.do's pre-check of it.
+    const entry = { turn: turns, action: decision.action, tool: decision.tool, ...(decision.args && Object.keys(decision.args).length ? { args: decision.args } : {}), result: effect ?? result ?? null };
     const transcript = [...(previous?.transcript ?? []), entry];
     let dropped = previous?.dropped ?? 0;
     while (transcript.length > 1 && Buffer.byteLength(JSON.stringify(transcript)) > TRANSCRIPT_BYTES) { transcript.shift(); dropped++; }
@@ -285,7 +340,12 @@ export class Dispatcher {
       await this.host.sessions.closeNode(ctx.runId, node);
     }
     const log = args.log;
-    if (log.status !== 'done') fail('NODE_STUCK', `Tool node ${node} ended without an answer (${log.status})`);
+    if (log.status !== 'done') {
+      // A node that raised a gap proposal and could not finish without it ends the run with the typed gap (a person decides; continuation).
+      const gap = nodecapDecisions(ctx.store, ctx.runId).filter(d => d.action?.result === 'proposal' && d.features?.via === 'request' && d.features?.node === node).at(-1);
+      if (gap) throw new FoundryError('CAPABILITY_GAP', 'This node needs a capability outside its approved lock; a person must decide the proposal', { proposalId: gap.action.proposalId, decisionId: gap.id, node });
+      fail('NODE_STUCK', `Tool node ${node} ended without an answer (${log.status})`);
+    }
     if (log.answer === undefined) fail('NODE_ANSWER_INVALID', `Tool node ${node} returned no answer`);
     validateData(section.returns, log.answer, `${node} answer`);
     return log.answer;

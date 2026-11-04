@@ -58,10 +58,12 @@ class RawDispatcher {
   }
   async do(args, ctx) {
     const { node } = toolNodeOf(ctx.nodeKey), decision = args.decision;
-    if (decision.action !== 'read') return refusal('ACTION_UNSUPPORTED');
+    if (decision.action !== 'read' && decision.action !== 'act') return refusal('ACTION_UNSUPPORTED');
     const id = viewIndex(this.lock, node).get(decision.tool);
     if (!id) return refusal('TOOL_ABSENT');
     const member = this.lock.members[id];
+    // The shared lowering routes an act through nodecap.do first: a raw client checks nothing before asking for approval.
+    if (decision.action === 'act' && member.effects !== 'none') return { ok: true, action: 'act', ready: true, tool: member.view.name };
     if (member.effects !== 'none') return refusal('EFFECT_CLASS_MISMATCH', { hint: 'This tool changes something: use action act' });
     return this.#call(ctx, node, member, decision);
   }

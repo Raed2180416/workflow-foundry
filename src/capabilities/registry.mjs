@@ -3,10 +3,21 @@
 // reachable only through a dispatcher, so a task node cannot call one directly. Every pin, view and attestation enters the registry hash
 // (Tier-0 members through their `implementation`, the rest through the dispatchers' implementation digest over the lock section), so any
 // drift makes a resume fail closed with CAPABILITY_DRIFT (src/runtime.mjs). Practice mode simulates effects and hashes differently.
+// The code that decides and dispatches is part of that identity too (review-thesis #10): every implementation hash here includes the
+// digest of this directory's source (broker, envelope, host, adapters) and the broker thresholds in force, so a changed broker or adapter
+// makes a resume, or a replay, of an earlier run fail closed instead of silently running other rules.
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createDefaultRegistry } from '../capabilities.mjs';
-import { digest, fail, joinLabels } from './common.mjs';
+import { digest, fail, joinLabels, sha256 } from './common.mjs';
 import { walkNodes } from './resolve.mjs';
-import { Dispatcher, callSubject, describeTier0Call } from './broker.mjs';
+import { Dispatcher, THRESHOLDS, callSubject, describeTier0Call } from './broker.mjs';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+/** The digest of the node-capability layer's source files (`*.mjs` of `dir`, by name and content). */
+export const nodecapCodeDigest = (dir = HERE) => `sha256:${digest(readdirSync(dir).filter(f => f.endsWith('.mjs')).sort().map(f => [f, sha256(readFileSync(path.join(dir, f)))]))}`;
+const CODE = nodecapCodeDigest();
 
 const DECISION_IN = { type: 'object', additionalProperties: false, required: ['decision'], properties: { decision: { type: 'object' } } };
 const OPEN = { type: 'object' };
@@ -14,12 +25,12 @@ const OPEN = { type: 'object' };
 /** Interim taint rule (b): when a lock binds any untrusted-labelled member, every Tier-0 effect member is compiled approval-gated. */
 export const untrustedLock = lock => Object.values(lock.members).some(m => m.outputLabel !== 'trusted') || Object.keys(lock.nodes).length > 0;
 
-export function compileRegistry({ lock, lockHash, host, envelope, envelopeDigest, ledger = null, mode = 'live' }) {
+export function compileRegistry({ lock, lockHash, host, envelope, envelopeDigest, ledger = null, mode = 'live', thresholds = THRESHOLDS }) {
   if (!['live', 'practice'].includes(mode)) fail('REGISTRY_MODE', 'mode is live or practice');
   const registry = createDefaultRegistry(), gateEffects = untrustedLock(lock);
   for (const memberId of [...new Set(Object.values(lock.tier0))]) {
     const m = lock.members[memberId], requiresApproval = m.requiresApproval === true || (gateEffects && m.effects !== 'none');
-    registry.register({ name: m.id, description: m.view.summary, version: '1', implementation: `${m.implementation}${mode === 'practice' ? '+practice' : ''}`,
+    registry.register({ name: m.id, description: m.view.summary, version: '1', implementation: `sha256:${digest({ member: m.implementation, code: CODE, mode })}`,
       inputSchema: m.view.inputSchema, outputSchema: m.outputSchema, effects: m.effects, risk: m.risk,
       requiresApproval, maxTimeoutMs: m.maxTimeoutMs, cost: m.cost,
       cancellation: 'protocol-request-only; external effect reconciliation may be required',
@@ -34,9 +45,9 @@ export function compileRegistry({ lock, lockHash, host, envelope, envelopeDigest
       } });
   }
   if (Object.keys(lock.nodes).length) {
-    const dispatcher = new Dispatcher({ host, lock, lockHash, envelope, envelopeDigest, ledger, mode });
+    const dispatcher = new Dispatcher({ host, lock, lockHash, envelope, envelopeDigest, ledger, mode, thresholds });
     const section = { nodes: lock.nodes, members: Object.fromEntries(Object.entries(lock.members).filter(([id]) => Object.values(lock.nodes).some(n => [...n.bound, ...n.skills, ...n.standby].includes(id)))) };
-    const implementation = `sha256:${digest({ adapter: 'nodecap-dispatch/1', lockSection: section, envelopeDigest, mode })}`;
+    const implementation = `sha256:${digest({ adapter: 'nodecap-dispatch/1', lockSection: section, envelopeDigest, mode, code: CODE, thresholds: { ...dispatcher.thresholds } })}`;
     const base = { version: '1', implementation, maxTimeoutMs: 120000, cost: 0, cancellation: 'cooperative' };
     registry.register({ ...base, name: 'nodecap.do', description: 'Run one read, find or typed request of a tool node (effects none).', inputSchema: DECISION_IN, outputSchema: OPEN,
       effects: 'none', risk: 'low', requiresApproval: false, execute: (args, ctx) => dispatcher.do(args, ctx) });

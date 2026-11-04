@@ -1,0 +1,260 @@
+{
+  "schema": "nodecap-prefix-results/1",
+  "file": "tests/nodecap-thesis.test.mjs",
+  "preFixCommit": "8b200022",
+  "method": "the fixed test file, test support (tests/support/nodecap.mjs) and probe fixture (probe-stdio.mjs) copied onto a git archive of 8b200022; node --test --test-concurrency=1",
+  "summary": {
+    "tests": 21,
+    "failed": 21,
+    "byAssertion": 20
+  },
+  "results": {
+    "thesis #1: a continuation runs nothing a person did not approve: lock N+1 without a version approval is refused and no run is created": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Missing expected rejection.",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: undefined,",
+        "operator: 'rejects',",
+        "diff: 'simple'"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #1: a continuation is refused once the flow moved on since the gap (head compare-and-swap from the gap's version)": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Missing expected rejection.",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: undefined,",
+        "operator: 'rejects',",
+        "diff: 'simple'"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #1: lock N+1 is built only on the flow and the exact lock the proposal was raised on": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: undefined,",
+        "operator: 'throws',",
+        "diff: 'simple'"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #1: a person approves ONE candidate; lock N+1 binds exactly that one, and an approval yields one lock N+1": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: undefined,",
+        "operator: 'throws',",
+        "diff: 'simple'"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #2: a status move never takes the caller's \"from\": a never-qualified entry is not activated even with a person decision for the claimed status": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: undefined,",
+        "operator: 'throws',",
+        "diff: 'simple'"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #4: a request for a change never grants a read-only tool: it answers needs-approval with the effectful view": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: {\"action\":\"request\",\"ok\":true,\"result\":\"granted\",\"tool\":\"sheets_read_range\",\"view\":\"sheets_read_range() — Read every row of the team sheet.\"}",
+        "+ actual - expected",
+        "[",
+        "+   'granted',",
+        "+   'sheets_read_range'",
+        "-   'needs-approval',"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #4: a single viable candidate below the score threshold is offered, never granted": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: {\"action\":\"request\",\"ok\":true,\"result\":\"granted\",\"tool\":\"sheets_read_range\",\"view\":\"sheets_read_range() — Read every row of the team sheet.\"}",
+        "+ actual - expected",
+        "+ 'granted'",
+        "- 'options'",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #5: find matches computer-use and skill members whatever kind the need names (kind is a ranking hint)": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:",
+        "+ actual - expected",
+        "+ []",
+        "- [",
+        "-   'ui.app.observe'",
+        "- ]"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #5: a need outside the lock raises a proposal and the node goes on: it can still finish with what it holds": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: {\"code\":\"CAPABILITY_GAP\",\"message\":\"This node needs a capability outside its approved lock; a person must decide the proposal\"}",
+        "+ actual - expected",
+        "+ 'failed'",
+        "- 'succeeded'",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #6: an act on an effects-none tool is a read: no person is asked about a call with no effect": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: null",
+        "+ actual - expected",
+        "+ 'awaiting_approval'",
+        "- 'succeeded'",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #6: an act whose arguments cannot run, or that names no effectful tool, is refused before any person is asked": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: no approval was requested",
+        "+ actual - expected",
+        "+ [",
+        "+   'ea259e42e890e5054cfd8de7499f5db864b51f874b211a42f768e0f7df2c21a4'",
+        "+ ]",
+        "- []"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #9: a program wrapping a T2, high-risk, C2 tool is T2, high-risk and C2 itself, so it is never auto-bound": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:",
+        "+ actual - expected",
+        "[",
+        "+   'T0',",
+        "+   null,",
+        "+   'low',"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #10: the compiled registry identity covers the broker thresholds and the capability source code": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: other selection thresholds are another registry",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: 'a248a8932797c72eb72fab5daf7a79507055d6db19d8b9c90c911778dfb33d22',",
+        "expected: 'a248a8932797c72eb72fab5daf7a79507055d6db19d8b9c90c911778dfb33d22',",
+        "operator: 'notStrictEqual',"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #11: agent-node settings the lowering cannot carry are refused; recitation is carried onto every turn": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Missing expected exception: {\"timeoutMs\":1000}",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: undefined,",
+        "operator: 'throws',",
+        "diff: 'simple'"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #12: the analysis reports the one-definition success (oracle AND run succeeded) beside the frozen oracle-only count": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:",
+        "+ actual - expected",
+        "[",
+        "3,",
+        "+   undefined,",
+        "+   undefined"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #13: tool text is measured per model call, views delivered through find and ARGS_INVALID answers included": {
+      "result": "fail",
+      "failure": [
+        "TypeError: toolTextPerCall is not a function"
+      ],
+      "kind": "error"
+    },
+    "thesis #18: a definition change found during a call raises a proposal that is also an adaptation decision in the run's chain": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:",
+        "+ actual - expected",
+        "[",
+        "+   undefined,",
+        "+   undefined",
+        "-   'prop-9a180bd1-883c-488d-bb66-8a2ccd44f602',"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #20: a version constructed before the flow moved on is not launched over it; the catalog digest is the host's own": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Missing expected rejection.",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: undefined,",
+        "operator: 'rejects',",
+        "diff: 'simple'"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #21: a credential a stdio server takes from its environment is scrubbed: envAllow refuses credential names; an envSecrets value echoed back never reaches the model": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Missing expected exception.",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: undefined,",
+        "operator: 'throws',",
+        "diff: 'simple'"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #22: maxCallsPerMember is each node's own budget: one node's calls do not spend another's": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: {\"code\":\"BUDGET_EXHAUSTED\",\"ok\":false,\"tool\":\"crm_search_contacts\"}",
+        "false !== true",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: false,",
+        "expected: true,"
+      ],
+      "kind": "assertion"
+    },
+    "thesis #23: nodecap.act accepts the user's decision only when it follows the call's own approval request in the chain": {
+      "result": "fail",
+      "failure": [
+        "AssertionError [ERR_ASSERTION]: Missing expected rejection.",
+        "generatedMessage: false,",
+        "code: 'ERR_ASSERTION',",
+        "actual: undefined,",
+        "operator: 'rejects',",
+        "diff: 'simple'"
+      ],
+      "kind": "assertion"
+    }
+  }
+}

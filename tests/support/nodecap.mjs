@@ -7,6 +7,7 @@ import { NodecapLedger } from '../../src/capabilities/ledger.mjs';
 import { subjectOf } from '../../src/capabilities/launcher.mjs';
 import { callSubject, describeApproval } from '../../src/capabilities/broker.mjs';
 import { createHash } from 'node:crypto';
+import { digest } from '../../src/data.mjs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,8 +33,19 @@ export function stdioSource(file, args = [], { envAllow = [], write = [], integr
 export const openLedger = (dir, { channels = TEST_CHANNELS } = {}) => new NodecapLedger(dir, { channels });
 /** The scripted person approves one constructed version (its exact subject). */
 export const approveVersion = (ledger, construction, dryRunId = null) => ledger.approveLock(subjectOf(construction, dryRunId), { person: person(NodecapLedger.subject(subjectOf(construction, dryRunId)), true) });
-/** The scripted person decides one proposal at its current revision. */
-export const decide = (ledger, proposal, approve) => ledger.decideProposal(proposal.id, { person: person(NodecapLedger.proposalSubject(proposal), approve), expectedRev: proposal.rev });
+/** The scripted person decides one proposal at its current revision; approving a capability proposal picks one candidate (`choice`,
+ *  default: the only one offered). */
+export const decide = (ledger, proposal, approve, choice = approve && ['capability.bind', 'capability.admit'].includes(proposal.kind) ? proposal.diff?.added?.[0]?.member ?? null : null) =>
+  ledger.decideProposal(proposal.id, { person: person(NodecapLedger.proposalSubject(proposal, { choice }), approve), expectedRev: proposal.rev, choice });
+/**
+ * A capability.bind proposal recorded in `ledger` on `lock` (its flow and its exact hash), offering `added`, and the scripted person's
+ * approval of ONE candidate (`choice`, default the first). Returns the proposal id (what applyBind and nextConstruction take).
+ */
+export function approvedBind(ledger, lock, added, { node = 'work', choice = added[0]?.member ?? null, extra = {} } = {}) {
+  const proposal = ledger.putProposal({ kind: 'capability.bind', flowId: lock.flowId, fromLockHash: `sha256:${digest(lock)}`, node, diff: { added }, ...extra });
+  decide(ledger, proposal, true, choice);
+  return proposal.id;
+}
 /** The scripted person decides one pending effect approval: on the host's rendering of the call, recorded in the ledger, then the engine's approval. */
 export async function approveCall({ runtime, ledger, host, lock, run, approvalId, approve = true }) {
   const rendering = await describeApproval({ host, lock, run, approvalId }), subject = callSubject(approvalId, rendering);

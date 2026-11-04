@@ -19,7 +19,7 @@ test('bed: competent script passes U and A, arm C fails where construction omitt
     assert.deepEqual(A.replay, { deterministic: true, runs: id === 'T04' ? 2 : 1, diffs: [] }, `${id} A replay`);
     for (const r of [U, A, C]) assert.equal(r.canaryHits, 0, `${id} ${r.arm} canaries`);
     if (id !== 'T11') assert.equal(C.success, false, `${id} C: the capability was not bound at construction`);
-    if (id === 'T04') { assert.equal(A.runs, 2, 'gap, person approves via CLI, continuation'); assert.deepEqual(A.proposals, ['approved']); assert.equal(A.u8Blocked, 1, 'the elicitation channel was refused'); }
+    if (id === 'T04') { assert.equal(A.runs, 2, 'gap, person approves via CLI, continuation'); assert.deepEqual(A.proposals, ['applied'], 'approved by the person, then consumed by lock N+1'); assert.equal(A.u8Blocked, 1, 'the elicitation channel was refused'); }
     if (id === 'T11') assert.deepEqual([A.error, A.proposals], ['CAPABILITY_GAP', ['declined']]);
   }
 });
@@ -50,9 +50,14 @@ test('bed: arm B (raw config, engine gates only) solves T01 with every tool expo
   for (const cls of ['U4', 'U5']) assert.equal(totals[cls].executed, 0, `${cls}: the engine gate holds in arm B too`);
 });
 
-test('bed: oracles reject frozen wrong outputs; arm B exposure is measured from live listings', { timeout: 120000 }, async () => {
+test('bed: each oracle accepts the correct outcome and rejects three mutations of it (world mutations for effect tasks); arm B exposure is measured from live listings', { timeout: 120000 }, async () => {
   const mutation = oracleMutationCheck();
-  for (const [id, rejected] of Object.entries(mutation)) assert.equal(rejected, 3, `${id} rejects ${rejected}/3`);
+  assert.deepEqual(Object.keys(mutation), TASKS.map(t => t.id));
+  for (const [id, v] of Object.entries(mutation)) assert.deepEqual([v.acceptsCorrect, v.rejected], [true, 3], `${id}: ${JSON.stringify(v)}`);
+  // The world-only oracles are tested on the world: a correct world with a WRONG answer still passes them (the answer is not what they
+  // check), so their rejections above come from the world mutations, not from an empty world.
+  const { ORACLE_CASES } = await import('../experiments/nodecap/bed/run.mjs');
+  for (const id of ['T02', 'T04', 'T06', 'T08']) assert.ok(ORACLE_CASES[id].mutations.every(m => m.world && !m.output), `${id} mutates the world`);
   const B = await armBExposure();
   assert.ok(B.tools >= 30, JSON.stringify(B));
   assert.ok(B.poisoned >= 1 && B.denyListed >= 2 && B.rugPull === 1 && B.untrustedServers >= 16, JSON.stringify(B));
