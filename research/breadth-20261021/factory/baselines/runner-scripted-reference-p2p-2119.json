@@ -1,0 +1,28 @@
+{
+ "runId": "scripted-ref-p2p-2119",
+ "arm": "scripted",
+ "family": "abr-p2p-audit",
+ "seeds": "2119",
+ "sealed": false,
+ "cap": 0,
+ "solver": "reference",
+ "mode": "fast",
+ "spentUsd": 0,
+ "streams": 1,
+ "cleanStreams": 1,
+ "cleanWeeks": "4/4",
+ "triggers": 80,
+ "passRate": 1,
+ "hardViolations": 0,
+ "perStream": [
+  {
+   "id": "abr-p2p-audit/2119",
+   "triggers": 80,
+   "passed": 80,
+   "hard": 0,
+   "cleanWeeks": 4,
+   "weeks": 4,
+   "clean": true
+  }
+ ]
+}

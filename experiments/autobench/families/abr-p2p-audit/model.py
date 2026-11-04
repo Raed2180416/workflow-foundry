@@ -147,7 +147,7 @@ class Gen(G.Gen):
         r = self.rng
         live = [i for i in self.invs if self.in_stream(i["at"])]
         r.shuffle(live)
-        kinds = ["PRICE", "PRICE-conflict", "QTY", "NO-GR", "SOD-buyer", "SOD-poster", "SUPPLIER", "DUPLICATE", "AT-LIMIT"]
+        kinds = ["PRICE", "PRICE-conflict", "QTY", "NO-GR", "SOD-buyer", "SOD-poster", "SUPPLIER", "DUPLICATE", "AT-LIMIT", "DUPLICATE"]
         for kind, i in zip(kinds, live):
             p = next(x for x in self.pos if x["id"] == i["po"])
             tol = TOL["edition2"] if i["at"].date() >= self.amend_eff else TOL["edition1"]

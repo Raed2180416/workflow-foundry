@@ -57,8 +57,26 @@ def _ts_jira(a) -> datetime | None:
     return parse_instant(a.get("created_at"))
 
 
+def _is_empty(x) -> bool:
+    if x is None or x is False or x == 0 or x == "":
+        return True
+    if isinstance(x, (list, tuple)):
+        return all(_is_empty(i) for i in x)
+    if isinstance(x, dict):
+        return all(_is_empty(v) for v in x.values())
+    return False
+
+
 def ledger(before: dict, after: dict) -> dict:
-    """Everything created, changed or removed between two world dumps (factory families' apps)."""
+    """Everything created, changed or removed between two world dumps (factory families' apps). A family world lists
+    only its own apps while AutomationBench's dump lists every app with an empty default: an app absent on one side
+    and empty on the other is the same app, not a change."""
+    before, after = dict(before), dict(after)
+    for app in set(before) | set(after):
+        if app not in before and _is_empty(after[app]):
+            before[app] = after[app]
+        elif app not in after and _is_empty(before[app]):
+            after[app] = before[app]
     L = {"posts": [], "mails": [], "issues": [], "cells": {}, "appends": [], "bad": []}
     chans = {c["id"]: c["name"] for c in after.get("slack", {}).get("channels", [])}
     bm = {(m["channel_id"], m["ts"]): m for m in before.get("slack", {}).get("messages", [])}

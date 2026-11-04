@@ -1,6 +1,6 @@
 {
  "id": "abr-p2p-audit",
- "version": "0.1.0",
+ "version": "0.1.1",
  "title": "Procure-to-pay audit: three-way match, holds and releases, separation of duties, payment runs",
  "node": "V (enterprise streams), family-factory prototype T1-4",
  "adapter": "A2 clean population + injected violations",

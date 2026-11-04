@@ -102,6 +102,10 @@ class ABHost:
         self.r = self.b.Rollout(row, host.MAX_STEPS, stream["world0"], 0)
         asyncio.run(self.r.setup())
 
+    def dump(self, w: dict) -> dict:
+        with self.b.SHIM.active():
+            return self.WS(**w).model_dump(mode="json")
+
     def run(self, before: dict, at: str, seed: int, solver, payload) -> tuple[dict, object]:
         from datetime import datetime
         with self.b.SHIM.active():
@@ -141,6 +145,7 @@ def run_stream(fam: Family, stream: dict, solver, mode: str = "fast", grader: Gr
                     traceback.print_exc()
             after = ctx.store.world
         else:
+            before = host.dump(before)        # the app path's worlds list every app; compare like with like
             after, ctx, err = host.run(before, trig["at"], tseed, solver, trig["payload"])
         v = grader.grade(truth, before, after, end=stream["end"] if k == last else None)
         abd = []

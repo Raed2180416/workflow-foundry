@@ -278,9 +278,13 @@ class Gates:
 
     def pending(self, gid):
         cmds = {
-            "G8": f"node experiments/breadth/factory/run.mjs --arm blind-H --family {self.fam.name} --seeds 2113-2116 --budget-usd 0.10",
-            "G9": f"node experiments/breadth/factory/second-reader.mjs --family {self.fam.name} --practice 2101-2104 (a session that did not write the family)",
-            "G11": f"node experiments/breadth/factory/run.mjs --arm A-H,A-S --family {self.fam.name} --seeds 2113 --budget-usd 12",
+            "G8": f"NOT BUILT: run.mjs mode blind refuses (no tools may be given); needs a no-tool Haiku session per sampled dev "
+                  f"trigger of {self.fam.name}, about $0.05-0.15 for 200 triggers; bar: pass rate below the no-op share + 0.15",
+            "G9": f"MANUAL: a session that did not write {self.fam.name} reads POLICY.md and practice worlds (seeds 2101-2104) and "
+                  f"writes the effects of 20 sampled triggers; compare host-side with the truth; about $1",
+            "G11": f"node experiments/breadth/factory/run.mjs --arm A-H --family {self.fam.name} --seeds 2113 --cap 2 ; "
+                   f"node experiments/breadth/factory/run.mjs --arm A-S --family {self.fam.name} --seeds 2113 --cap 25 "
+                   f"(flag if A-H beats A-S by more than 0.10 in clean-week share); $5-24",
         }
         return {"pass": None, "status": "pending: paid or needs another session; not run here ($0 rule)", "command": cmds[gid]}
 
@@ -349,9 +353,10 @@ def mutants(before: dict, after: dict, truth: dict, rng):
     old_posts = [i for i, msg in enumerate(after["slack"]["messages"]) if (msg["channel_id"], msg["ts"]) in bmsg]
     if old_posts and rng.random() < 0.3:
         m(lambda w, i=old_posts[0]: w["slack"]["messages"][i].update(is_deleted=True), "delete-old-post")
-    if rng.random() < 0.15:
-        m(lambda w: w["slack"]["messages"].append(dict(copy.deepcopy(w["slack"]["messages"][0]), ts="1999999999.000001",
-                                                       created_at=w["meta"]["current_time"].replace("Z", ""), text="stray")), "stray-post")
+    if rng.random() < 0.15 and chans:
+        from abr.lib.factory.world import slack_message
+        m(lambda w: w["slack"]["messages"].append(slack_message("1999999999.000001", chans[0], "USLACKBOT", "stray",
+                                                                w["meta"]["current_time"].replace("Z", ""), is_bot=True)), "stray-post")
     return out
 
 
@@ -366,8 +371,11 @@ def abr_apply_parity(fam, seeds, grader) -> dict:
         apps = fam.spec["host"]["apps"]
         for k, ((_, a), (_, b)) in enumerate(zip(fast["worlds"], slow["worlds"])):
             n += 1
-            if canon(mask(project(a, apps))) != canon(mask(project(b, apps))) or not round_trips(project(b, apps) | {"meta": b["meta"]}):
-                diffs.append(f"{s}/t{k:03d}: {first_diff(mask(a), mask(b))}")
+            pa, pb = mask(project(a, apps)), mask(project(b, apps))
+            if canon(pa) != canon(pb):
+                diffs.append(f"{s}/t{k:03d}: {first_diff(pa, pb)}")
+            elif not round_trips(project(b, apps) | {"meta": b["meta"]}):
+                diffs.append(f"{s}/t{k:03d}: the app path's world does not round-trip through WorldState")
         if not all(x["pass"] for x in slow["rows"]):
             diffs.append(f"{s}: reference fails on the AutomationBench path {sum(not x['pass'] for x in slow['rows'])} times")
     return {"streams": seeds, "triggers_compared": n, "differences": diffs[:20], "n_differences": len(diffs)}
@@ -404,7 +412,7 @@ def mask(w: dict) -> dict:
     for a in w.get("jira", {}).get("actions", {}).get("create_issue", []):
         a["id"], a["created_at"] = "masked", a["created_at"][:16]
     for r in w["google_sheets"]["rows"]:
-        if not re.match(r"^[a-z]+\d", r["id"]):
+        if re.fullmatch(r"[0-9a-f]{32}", r["id"]):          # an id the app (or abr-apply) generated for an appended row
             r["id"] = "masked"
     w["google_sheets"]["rows"].sort(key=lambda r: (r["spreadsheet_id"], r["worksheet_id"], r["row_id"]))
     return w

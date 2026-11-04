@@ -78,6 +78,9 @@ def cmd_grade(a):
     meta, trig, truth = load_host(Path(a.host))
     fam = H.Family(meta["family"])
     before, after = json.loads(Path(a.before).read_text()), json.loads(Path(a.after).read_text())
+    if set(before) != set(after):                 # the app path dumps every app: normalise both sides the same way
+        from automationbench.schema.world import WorldState
+        before, after = (WorldState(**w).model_dump(mode="json") for w in (before, after))
     last = a.k == len(trig) - 1
     end = json.loads((Path(a.host) / "end.json").read_text()) if last else None
     v = Grader(fam.spec).grade(truth[a.k], before, after, end=end)

@@ -188,6 +188,7 @@ export async function main(argv = process.argv.slice(2)) {
     console.log(JSON.stringify({ runId, arm: o.arm, streams, estimate: est, note: 'dry run: nothing generated, no session started ($0)' }, null, 1));
     return 0;
   }
+  if (ARMS[o.arm].mode === 'blind') throw new Error('blind-H (G8) session wiring is not built yet (README, known gaps); refusing rather than giving it tools');
   if (ARMS[o.arm].mode !== 'scripted' && !(o.cap > 0)) throw new Error('--cap <USD> is required for a model arm');
   const launch = { runId, arm: o.arm, family: o.family, seeds: o.seeds, sealed: o.sealed, cap: o.cap, solver: o.solver, mode: o.mode };
   const lf = path.join(runDir, 'launch.json');

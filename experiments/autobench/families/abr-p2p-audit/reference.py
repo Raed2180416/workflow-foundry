@@ -82,8 +82,12 @@ class Ref:
             self.payment_run()
         elif ev == ("schedule", "daily_close"):
             self.close()
+            if "eager" in self.flags:                  # A6's control: acts on a quiet trigger (pays at every close)
+                self.payment_run()
         elif ev == ("gmail", "new_email"):
             self.email()
+        elif "eager" in self.flags and ev == ("google_sheets", "new_row") and ws == "Purchase Orders":
+            self.release((d.get("row") or {}).get("PO ID", "").strip())
         self.st.flush()
 
     # -- reads -----------------------------------------------------------------------------------------------------------
