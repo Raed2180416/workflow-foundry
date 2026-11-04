@@ -306,3 +306,18 @@ the repo's own pattern in `experiments/mercury/port-probe.mjs`); every call stil
 by Haiku; the A2 transport preflight and the `cli-args` audit apply only when the run's model is served by the claude CLI.
 Haiku runs are unchanged by A3 (same port subset, same preflight). E1 then runs as A2 states: `gqa1m3` agent r1-r3, then
 workflow r1-r3 (each followed by its workflow-random), descriptive only, $0 listed, hard token caps of §2.
+
+### A4 (2026-11-04, written before any run it governs; frozen as `amendments[3]` of FREEZE.json)
+
+**Harness fault 4: the Mercury output cap is below what the construct node needs.** Under A3 the E1 lane ran. The three
+`gqa1m3/agent` runs completed (3, 4 and 7 bugs), but each of the three `gqa1m3/workflow` runs ended at its first call:
+the construct answer stopped at the 12,000-token output cap that `run.mjs` set for mercury-3 on 2026-10-28
+(`MODELS['mercury-3'].decoding.maxTokens`; `MODEL_TRUNCATED`, finish_reason=length, 11.6-11.8k output tokens), so the runs
+had no personas and no checks, and the three `workflow-random` runs then had no construction to reuse (runner exception).
+The cap is a configuration that never let this node answer, not a model behaviour: Haiku's ten constructions used 8.9k-20.1k
+output tokens, five of them above 12k. Same class as A1's rate-limit fault (§6: a run whose calls fail for a non-model
+reason). Fix: mercury-3 `maxTokens` 32,000 (the per-call cap of 120k tokens and the per-run cap of 3M stay). The six
+faulted runs move to `runs/_harness-fault/` with their journals and re-run under the same run ids:
+`MODEL=mercury-3 chain.sh workflow 1 3`. The three A3 agent runs stay as results (11-25% of their turns were truncated at
+the old cap: 11 of 47, 5 of 45, 8 of 44 calls; under the 50% rule they are results, and the RESULT states the cap). E1 stays
+descriptive only. Haiku runs are unaffected.

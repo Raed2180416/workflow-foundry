@@ -46,7 +46,8 @@ export const BUDGETS = Object.freeze({
 // at $0 with a token allowance) is an exploratory secondary: hard token caps instead of a dollar cap, its own run tag.
 export const MODELS = Object.freeze({
   'claude-haiku-5-5': { tag: 'gqa1', decoding: { reasoning: 'low' } },
-  'mercury-3': { tag: 'gqa1m3', exploratory: true, tokenCap: 3_000_000, callTokens: 120_000, decoding: { reasoning: 'low', maxTokens: 12000 } },
+  // A4: maxTokens 12000 -> 32000 (the construct answer needs 9-20k output tokens; at 12k all three E1 constructions were truncated)
+  'mercury-3': { tag: 'gqa1m3', exploratory: true, tokenCap: 3_000_000, callTokens: 120_000, decoding: { reasoning: 'low', maxTokens: 32000 } },
 });
 const { values: a } = parseArgs({ options: { arm: { type: 'string' }, rep: { type: 'string' }, live: { type: 'boolean', default: false }, dev: { type: 'boolean', default: false },
   out: { type: 'string', default: path.join(ROOT, 'research/gameqa-20261021/runs') }, tag: { type: 'string' }, model: { type: 'string', default: MODEL },
