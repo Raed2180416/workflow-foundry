@@ -38,8 +38,10 @@ The weak points below appear in published traces and in ours. Each has a counter
 4. **Fan out as sized, not as allowed.** The count comes from step 2. One `map` takes at most 1,000 items and
    runs at most 16 at once; that is a limit, not a target. Beyond it, nest maps (a map of shard groups). Set `failure: "collect"` and gate on the failed count, so a
    failed shard is visible and never silently dropped. Set `concurrency` from the budget.
-5. **Coverage ledger.** A `code` node computes, per unit: assigned, read and finding count. Acceptance requires
-   covered = inventory size and each unit read exactly once, except units read on purpose by the second reader.
+5. **Coverage ledger.** Each reader returns the unit ids it read. A `verify` node with `method: "ledger"` (subject: the
+   map; `ledger.inventory`: the ids code listed in step 1; `ledger.reads`: the path to each item's ids) fails unless
+   every unit is read, none more than `maxReads` times (default 1; raise it only for a planned second reading), no read
+   names a unit outside the inventory, and no shard failed. Never hand-write this count (`antipatterns.md`).
 6. **Re-decompose, don't drop.** A shard that fails, times out or exceeds budget is split and re-run in a bounded
    `loop` until none fail or the retry budget ends. Remaining failures are reported by name, never absorbed.
 7. **Sampled second reader.** Pick a fixed-rule sample of shards (every k-th), so a model doesn't choose its own
@@ -82,14 +84,10 @@ large workflow that does not beat both is not optimal, however thorough it looks
    exclusions listed.
 2. A cheap exhaustive pass by code: linters, a secret scan, a dependency audit, complexity and churn metrics. It
    flags hot units.
-3. Shards are modules under the measured budget, with hot units first. A cheap reader returns read ids and located
-   findings. Code checks coverage per shard.
+3. Shards are modules under the measured budget, hot units first. Readers return read ids and located findings.
 4. A sampled, different-model second reader estimates misses.
 5. Reconcile across the import edges: cross-module issues, duplicates, contradictions.
-6. Acceptance:
-   - the ledger equals the inventory;
-   - there are no failed shards;
-   - the miss rate is under its threshold.
+6. Acceptance: the ledger verifier passes and the sampled miss rate is under its threshold.
 
 **A research program over ~300 GB of artifacts.**
 1. Treat the data as an environment, never as a prompt. Code profiles it: formats, schemas, partitions, row counts,
@@ -109,9 +107,8 @@ large workflow that does not beat both is not optimal, however thorough it looks
 - `map.maxItems` is at most 1,000, so nest maps for more.
 - `budget.maxConcurrency` is at most 16.
 - A sandboxed `code` node has no network and a 10 s default timeout; set `timeoutMs` for heavy steps.
-- Values pass between nodes as inline JSON, and a `code` node's output is capped at 512 KB. There is no first-class
-  data handle yet, so a shard plan for more than about 10,000 units, or any bulk data, must travel as references
-  (path or key plus content hash) that capabilities read in slices. Never inline the data itself.
+- Values pass between nodes as inline JSON; a `code` node's output is capped at 512 KB. With no data handle yet,
+  bulk data and plans beyond about 10,000 units travel as references (path or key plus content hash) read in slices.
 - In-node creation of a sub-workflow at run time is not built yet. Plan the decomposition at construction time,
   and use a bounded `loop` to re-split.
 

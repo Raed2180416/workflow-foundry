@@ -91,7 +91,7 @@ export const stateLabelMessage = (slot, slotLabel, label, via = []) => `State sl
 export const VERIFY_RETURNS = Object.freeze({ type: 'object', additionalProperties: false, required: ['pass', 'score', 'reasons'], properties: {
   pass: { type: 'boolean' }, score: { type: 'number', minimum: 0, maximum: 1 },
   reasons: { type: 'array', maxItems: 8, items: { type: 'string', maxLength: 1000 } } } });
-const verifyFields = { code: ['lang', 'source'], agent: ['instructions', 'context', 'model', 'decoding', 'escalation'], capability: ['tool', 'args'] };
+const verifyFields = { code: ['lang', 'source'], agent: ['instructions', 'context', 'model', 'decoding', 'escalation'], capability: ['tool', 'args'], ledger: ['ledger'] };
 const describe = violations => violations.slice(0, 5).map(v => `${v.path}${v.keyword ? ` ${v.keyword}` : ''}: ${v.problem}`).join('; ');
 // Context input refs are plain strings in the IR; inspection uses the {$ref} form.
 export const contextRefs = node => (node.context?.inputs ?? []).filter(spec => Object.hasOwn(spec, 'ref')).map(spec => ({ $ref: spec.ref }));
@@ -184,7 +184,7 @@ function effectTaint(workflow, registry, add) {
       const inputs = () => joinLabels((node.context?.inputs ?? []).map(spec => joinLabels([spec.label ?? TRUSTED, Object.hasOwn(spec, 'ref') ? inheritedLabel(spec.ref, own) : TRUSTED])));
       if (node.kind === 'agent') label = joinLabels([node.quarantined === true ? TRUSTED : inputs(), labelOf(bindOutput(node.checks ?? []), own)]);
       else if (node.kind === 'assert') failure = labelOf(node.checks, own);
-      else if (node.kind === 'verify') label = joinLabels([labelOf(node.subject, own), labelOf(node.args ?? null, own), inputs()]);
+      else if (node.kind === 'verify') label = joinLabels([labelOf(node.subject, own), labelOf(node.args ?? null, own), labelOf(node.ledger?.inventory ?? null, own), inputs()]);
       else if (node.kind === 'task' || node.kind === 'code') label = labelOf(node.args ?? null, own);
       else if (isSignalWait(node) || node.at !== undefined) label = joinLabels([node.label ?? TRUSTED, labelOf(node.at ?? null, own), ...correlateTemplates(node).map(t => labelOf(t, own))]);
       else if (node.kind === 'state') {

@@ -15,13 +15,13 @@ Every node needs `id`, `kind`, `needs`, `description`. Node kinds and the fields
 | `wait` | (none beyond the common fields) |
 | `agent` | `instructions`, `returns`, `model` |
 | `code` | `lang`, `source` |
-| `verify` | `method`, `subject`, `independence`; plus by `method`: code → `lang`, `source`; agent → `instructions`, `model`; capability → `tool`, `args` |
+| `verify` | `method`, `subject`, `independence`; plus by `method`: code → `lang`, `source`; agent → `instructions`, `model`; capability → `tool`, `args`; ledger → `ledger` |
 | `state` | `slot`, `op`, `key` |
 
 Enumerated fields:
 
 - `role`: classify | route | extract | judge | generate | synthesis | code_edit | plan | verify
-- `method`: code | agent | capability
+- `method`: code | agent | capability | ledger
 - `independence`: execution | different-model | same-model
 - `failure`: fail_fast | collect
 - `onError`: stop | continue
@@ -48,3 +48,4 @@ References and runtime contracts (from src/runtime.mjs and src/sandbox.mjs):
 - A `code` node runs `export default function main(input)` in a sandbox (no network, PATH only), with `input` = its resolved `args`; `returns` validates the result.
 - A `verify` with `method: "code"` receives `main({ subject })`, `subject` being its resolved `subject` (an object of refs is allowed); it returns `{ pass, … }`. Code and capability verifiers have `independence: "execution"`.
 - `agent` nodes take `instructions`, typed `returns`, `model`, optional `role`, `context.inputs` (`{ name, ref }`) and `escalation`.
+- A `verify` with `method: "ledger"` takes `ledger` { `inventory`, `reads`, `maxReads`, `allowEmpty` }: `inventory` references the unit ids code listed, `reads` is the dotted path to each item's read ids. It passes only if every unit is read, none more than `maxReads` times (default 1), no read names a unit outside the inventory and no item failed; its output adds `ledger` { units, covered, missing, missingIds, overRead, unknown, failedItems, … } and `score` is the covered share.

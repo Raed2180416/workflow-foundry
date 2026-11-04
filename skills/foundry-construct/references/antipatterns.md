@@ -10,6 +10,7 @@
 | Paid model pass where code would do | Model extraction did not beat a regex; rules found 80/83 (MOVE0-CERTIFY.md) | Code first, model for the residue (P5) |
 | Outcome monitor raising alarms in steady state | 8 false alarms in 71 tasks (`research/jit-20261008/DEV-NOTES.md`) | Input-profile checks at the envelope |
 | A gate that cannot fail | E8 oracle: mutants survived until the mutation ledger forced fixes (`beds/ebed/e8/README.md`) | Mutation-test every gate in practice |
+| Coverage counted by hand-written code | Our own exemplar's reconcile counted distinct ids seen, so an invented id hid a unit never read, and double reads were computed but never gated (found 2026-11-04) | `verify` with `method: "ledger"` (`scale.md` step 5) |
 | Validator limits discovered late | `map.maxItems` caps at 1,000 (schema) | Nest maps or enlarge shards (`scale.md`) |
 
 Published, for large jobs: premature termination and missing verification (MAST, arXiv 2503.13657); no exit

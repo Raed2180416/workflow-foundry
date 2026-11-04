@@ -1,3 +1,4 @@
+import { ledgerVerdict } from './ledger.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -1609,6 +1610,11 @@ class Invocation {
     const subject = resolve(node.subject, ctx), subjectLabel = labelOf(node.subject, this.labelScope(frameKey, node.subject));
     let verdict, label = subjectLabel, meta = {};
     if (node.method === 'code') verdict = this.verdictShape(await this.sandboxed({ lang: node.lang, source: node.source, input: { subject }, timeoutMs: node.timeoutMs ?? 60000 }), 'CODE_OUTPUT');
+    else if (node.method === 'ledger') {
+      // Coverage proved by code (src/ledger.mjs): the readers' returned unit ids against the inventory code produced.
+      verdict = ledgerVerdict(subject, resolve(node.ledger.inventory, ctx), node.ledger);
+      label = joinLabels([subjectLabel, labelOf(node.ledger.inventory, this.labelScope(frameKey, node.ledger.inventory))]);
+    }
     else if (node.method === 'capability') {
       verdict = this.verdictShape(await this.oracle(node, frameKey, ctx), 'VERIFY_PROTOCOL');
       label = joinLabels([subjectLabel, labelOf(node.args, this.labelScope(frameKey, node.args))]);
