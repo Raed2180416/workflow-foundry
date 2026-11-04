@@ -18,7 +18,7 @@ for (const [s, ids] of [['dev', split.dev], ['test', split.test]]) for (const id
   const eff = o.hidden.reduce((a, h) => ({ mail: a.mail + h.reference.mail.length, chat: a.chat + h.reference.chat.length, respond: a.respond + h.reference.respond.length, empty: a.empty + (h.reference.mail.length + h.reference.chat.length + h.reference.respond.length === 0 ? 1 : 0) }), { mail: 0, chat: 0, respond: 0, empty: 0 });
   rows.push({ id, split: s, trigger: spec.workspace.trigger.kind, created: (p.createdAt ?? '').slice(0, 10), post: (p.createdAt ?? '') >= '2026-07-01', nodes: p.n, code: p.code,
     patches: (spec.patches ?? []).length, hidden: o.hidden.length, mutants: o.mutation.total, killable: o.mutation.killable, killed: o.mutation.killedByHidden,
-    survivors: o.mutation.survivors, agreement: `${o.agreement.pass}/${o.agreement.of}`, effects: eff });
+    survivors: o.mutation.survivors.length, agreement: `${o.agreement.pass}/${o.agreement.of}`, effects: eff });
 }
 console.log('| Item | Split | Trigger | Created | Nodes (code) | Patches | Hidden worlds (no effect) | Effects in hidden worlds (mail / chat / answers) | Mutants killed / killable / total | Two-reference agreement |');
 console.log('|---|---|---|---|---|---|---|---|---|---|');

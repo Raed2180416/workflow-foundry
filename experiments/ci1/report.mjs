@@ -61,9 +61,17 @@ export function table(stats) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = name => args.includes(name) ? args[args.indexOf(name) + 1] : null;
-  const labels = args.filter((x, i) => !x.startsWith('--') && !['--pairs', '--json', '--boot'].includes(args[i - 1]));
+  const labels = args.filter((x, i) => !x.startsWith('--') && !['--pairs', '--json', '--boot', '--oracle', '--items', '--exclude'].includes(args[i - 1]));
   const boot = Number(opt('--boot') ?? BOOT);
-  const sums = labels.map(l => { const f = path.join(SUMMARIES, l, 'summary.json'); if (!existsSync(f)) throw new Error(`no summary for ${l}`); return JSON.parse(readFileSync(f, 'utf8')); });
+  // --oracle v2: POST HOC verdicts from runs/<label>/rescore-v2.json (experiments/ci1-posthoc); --items / --exclude: an item subset
+  const v2 = opt('--oracle') === 'v2', only = opt('--items')?.split(','), drop = opt('--exclude')?.split(',') ?? [];
+  const sums = labels.map(l => {
+    const f = path.join(SUMMARIES, l, 'summary.json'); if (!existsSync(f)) throw new Error(`no summary for ${l}`);
+    const s = JSON.parse(readFileSync(f, 'utf8'));
+    if (v2) { const r = JSON.parse(readFileSync(path.join(SUMMARIES, l, 'rescore-v2.json'), 'utf8')); const by = new Map(r.rows.map(x => [`${x.item}-k${x.k}`, x.v2])); s.records = s.records.map(x => ({ ...x, pass: by.get(`${x.item}-k${x.k}`) ?? x.pass })); s.label = `${s.label} (v2)`; }
+    s.records = s.records.filter(x => (!only || only.includes(x.item)) && !drop.includes(x.item));
+    return s;
+  });
   const stats = sums.map(s => armStats(s, { boot }));
   console.log(table(stats));
   const pairs = (opt('--pairs') ?? '').split(',').filter(Boolean).map(p => p.split(':'));

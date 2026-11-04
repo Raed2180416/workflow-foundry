@@ -1,0 +1,213 @@
+{
+ "arm": "A2-M",
+ "label": "test-A2M",
+ "split": "test",
+ "model": "mercury-3",
+ "K": 1,
+ "items": [
+  "14177",
+  "17545",
+  "16364",
+  "17342",
+  "17878"
+ ],
+ "manifestSha256": "39bf40bd420be14b4b666f5d5e9c0ceb4cb03a85d9c87774a2b0578ebb19def6",
+ "started": "2026-10-28T18:30:47.261Z",
+ "finished": "2026-10-28T18:33:52.609Z",
+ "capUsd": 3,
+ "spentUsd": 0,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": {
+  "inception": {
+   "cap": 330000,
+   "callCap": 60000,
+   "spent": 209337,
+   "reserved": 0,
+   "calls": 12,
+   "refused": 0,
+   "unknown": 0
+  }
+ },
+ "records": [
+  {
+   "item": "14177",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 32244,
+   "calls": 2,
+   "wallMs": 16295,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P12",
+     "P36",
+     "P60"
+    ],
+    "exemplars": [
+     "16312",
+     "7987",
+     "16882"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to user@example.com: no message carries the facts [1, 2]"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17545",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 37640,
+   "calls": 2,
+   "wallMs": 20841,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P42",
+     "P36",
+     "P12"
+    ],
+    "exemplars": [
+     "11684",
+     "17804",
+     "7766"
+    ],
+    "excluded": 3
+   },
+   "firstFailure": {
+    "world": "c03",
+    "reasons": [
+     "sheet digest-log: no row matches reference row {\"week_start\":\"2026-08-31\",\"open_count\":2,\"value_at_risk\":10825.9,\"needs_nudge\":0,\"going_cold\":2,\"sent_at\":\"2026-08-31 08:00\"} (first differing columns: open_count)"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "16364",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 45315,
+   "calls": 3,
+   "wallMs": 16810,
+   "questions": 0,
+   "repairs": 1,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P36",
+     "P12",
+     "P39"
+    ],
+    "exemplars": [
+     "1298",
+     "17807",
+     "19546"
+    ],
+    "excluded": 1
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "17342",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 3,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 49567,
+   "calls": 3,
+   "wallMs": 28627,
+   "questions": 0,
+   "repairs": 1,
+   "practice": [
+    "failed",
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P37",
+     "P12",
+     "P27"
+    ],
+    "exemplars": [
+     "17512",
+     "18561",
+     "16816"
+    ],
+    "excluded": 8
+   },
+   "firstFailure": {
+    "world": "c04",
+    "reasons": [
+     "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.alertAudit.pass"
+    ],
+    "status": "failed"
+   }
+  },
+  {
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 44571,
+   "calls": 2,
+   "wallMs": 32848,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P42",
+     "P36",
+     "P08"
+    ],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": null
+  }
+ ]
+}
