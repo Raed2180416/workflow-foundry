@@ -7,17 +7,32 @@
 //   A2O  (SW-1b, added after eval-1) as A2, with the open governing builder: when the library stage ends without a
 //        passing sub-workflow (the builder picks "none" or the template never passes), a fresh Haiku writes the
 //        sub-workflow free-form from the same request view (prompts-open.mjs). The node sees exactly A2's prompts.
+//   SW-1c (added after the review of RESULT-SW-1; PREREG-SW-1c; prompts in prompts-c.mjs). Appended arms; the SW-1 and
+//   SW-1b arms send byte-identical model calls (test/frozen-arms.test.mjs):
+//   A1H  as A1, with the self-build offer reworded ("the harness checks and runs it for you"): isolates the offer wording.
+//   A0G  as A0, plus the code-owned contract gate on the direct answer and up to MAX_REPAIRS retries with its feedback.
+//   A0C  the node with a sandboxed code tool (prompts-c.mjs): up to CODE_TOOL_TURNS programs, no DSL, registry, practice
+//        run or judge step; an "answer" program's value passes the same gate; then a logged direct-answer fallback.
+//   A2C / A2FC  as A2 / A2F, plus (i) a request-completeness check: a request that leaves out an input the node's answer
+//        contract depends on (contractInputs) goes back to the node once before the builder starts, and (ii) the note vote
+//        (vote.mjs) on template-built specs.
+// Every arm: a "notCovered" proposal is tagged with its provenance (provenance.mjs); one whose content came from inside a
+// data row is quarantined (kept for audit, not an owner action item). Records only; no model call changes.
 // Whoever builds, code owns the rest, identically: the envelope check (checkSpec: structure, then authority; a widening
 // is refused and recorded as a proposal for the owner, never run), a $0 practice run on the node's own input with every
 // judgment stubbed, binding by content hash through the flow-v3 call host (depth, recursion, effects 'none', budget tree),
 // the real run, and the contract gate on its answer. Any failure goes back to the builder as feedback: at most MAX_REPAIRS
 // repair rounds. When no round succeeds the node answers directly (a logged fallback).
-import { checkSpec, PURE_OPS, EFFECT_OPS, SubworkflowError } from './dsl.mjs';
+import { checkSpec, PURE_OPS, EFFECT_OPS, LIMITS, SubworkflowError } from './dsl.mjs';
 import { TEMPLATES, templateById, fillSchema, slotProblems, instantiate } from './templates.mjs';
 import { createNodeBinding, practiceRun, gateProblems } from './bind.mjs';
 import { compileDataSchema } from '../../src/validate.mjs';
+import { runCode } from '../../src/sandbox.mjs';
 import * as P from './prompts.mjs';
 import * as PO from './prompts-open.mjs';
+import * as PC from './prompts-c.mjs';
+import { provenanceOf } from './provenance.mjs';
+import { withNoteVote } from './vote.mjs';
 
 // route: who builds a sub-workflow (null: nobody); directive: 'decide' (the node chooses: answer or sub-workflow) or
 // 'subworkflow' (the parent directs a sub-workflow for this node; the runner applies it to legacy-export nodes only).
@@ -27,7 +42,19 @@ export const ARM_CONFIG = Object.freeze({
   A1F: { route: 'self', directive: 'subworkflow' }, A1TF: { route: 'template', directive: 'subworkflow' }, A2F: { route: 'governing', directive: 'subworkflow' },
   // SW-1b (after eval-1): the open governing builder. Appended, so the SW-1 arms keep their order in ARMS.
   A2O: { route: 'governing-open', directive: 'decide' }, A2OF: { route: 'governing-open', directive: 'subworkflow' },
+  // SW-1c (after the review of RESULT-SW-1): appended, so the earlier arms keep their order in ARMS.
+  A1H: { route: 'self', directive: 'decide', offer: 'selfHarness' },
+  A0G: { route: null, directive: 'answer', gateRetries: 3 },
+  A0C: { route: null, directive: 'answer', codeTool: true },
+  A2C: { route: 'governing', directive: 'decide', completeness: true, vote: true },
+  A2FC: { route: 'governing', directive: 'subworkflow', completeness: true, vote: true },
+  // A1F with the parent's trigger computed from the node's input (trigger.mjs, frozen) instead of the world's channel kind:
+  // the runner reads `trigger` (run.mjs); the node itself runs exactly as A1F.
+  A1FO: { route: 'self', directive: 'subworkflow', trigger: 'observable' },
 });
+// The inputs a golive intake answer depends on (the parent binds this with the answer contract): the rules, the channel
+// notes (dialect, columns, home currency) and the data. The channel name travels in every request's header.
+export const CONTRACT_INPUTS = Object.freeze(['spec', 'notes', 'export']);
 // The node-facing side of a route: the open governing route shows the node exactly the governing route's prompts.
 const nodeRoute = route => (route === 'governing-open' ? 'governing' : route);
 export const ARMS = Object.freeze(Object.keys(ARM_CONFIG));
@@ -43,9 +70,10 @@ const usd = x => Math.round(x * 1e6) / 1e6;
  * task spec; runId: the (arm, task) run id; answerSchema: the node's declared answer schema (the parent binds it).
  * Returns { output, path, decision, calls, costUsd, sub: {...}, authority: {...}, events, error }.
  */
-export async function runNode({ port, arm, input, runId, answerSchema, directive = ARM_CONFIG[arm]?.directive, budgetUsd = NODE_BUDGET_USD, maxRepairs = MAX_REPAIRS, maxDepth = MAX_DEPTH }) {
+export async function runNode({ port, arm, input, runId, answerSchema, directive = ARM_CONFIG[arm]?.directive, budgetUsd = NODE_BUDGET_USD, maxRepairs = MAX_REPAIRS, maxDepth = MAX_DEPTH,
+  contractInputs = CONTRACT_INPUTS }) {
   if (!ARMS.includes(arm)) throw new Error(`unknown arm ${arm}`);
-  const { route } = ARM_CONFIG[arm], nodeSide = nodeRoute(route);
+  const cfg = ARM_CONFIG[arm], { route } = cfg, nodeSide = nodeRoute(route);
   const ch = input.channel;
   const binding = createNodeBinding({ port, budgetUsd, maxDepth, arm, taskKey: ch, runId, outputSchema: answerSchema });
   const rec = { arm, route, directive, channel: ch, path: null, decision: null, reason: null, calls: [], proposals: [], rounds: [], fallback: null, sub: null, error: null,
@@ -137,7 +165,7 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
       if (!t) {
         const pick = await typed(`${keyPrefix}.select`, selectSystem, P.selectPrompt(context), P.selectSchema(TEMPLATES.map(x => x.id)), BUILDER_DECODING);
         rec.sub.select = { template: pick.template, reason: String(pick.reason).slice(0, 300), notCovered: (pick.notCovered ?? []).map(x => String(x).slice(0, 200)).slice(0, 8) };
-        for (const n of rec.sub.select.notCovered) rec.proposals.push({ source: 'notCovered', round, kind: 'not-covered', detail: n, executed: false });
+        for (const n of rec.sub.select.notCovered) rec.proposals.push({ source: 'notCovered', round, kind: 'not-covered', detail: n, executed: false, ...provenanceOf(n, input) });
         if (pick.template === 'none' || !templateById(pick.template)) return { stop: true, why: `no template fits (${rec.sub.select.reason})` };
         t = templateById(pick.template);
       }
@@ -145,20 +173,62 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
       previous = fill.slots;
       const problems = slotProblems(t, fill.slots);
       if (problems.length) return { problems };
-      return { spec: instantiate(t, fill.slots, budget()) };
+      const spec = instantiate(t, fill.slots, budget());
+      return { spec: cfg.vote ? withNoteVote(spec) : spec };
     };
+  }
+
+  // A0G: the direct answer passes the same code-owned gate as a sub-workflow answer; up to cfg.gateRetries retries with
+  // its feedback. The last answer is returned whether or not it passes (as A0's is): the gate cannot see the oracle.
+  async function gatedDirect() {
+    let answer = await direct('answer');
+    rec.gate = [];
+    for (let k = 0; ; k++) {
+      const g = gateProblems(answer, { channel: ch, exportText: input.export, validate: shape });
+      rec.gate.push(g.length ? g.slice(0, 6) : 'ok');
+      if (!g.length || k >= cfg.gateRetries) break;
+      answer = await typed(`answer.retry${k + 1}`, P.NODE_SYSTEM, PC.gateRetryPrompt(input, answer, g), answerSchema, NODE_DECODING);
+    }
+    return answer;
+  }
+  // A0C: the node's own code tool. Each turn one program; "run" shows the node the value, "answer" makes the value the
+  // answer if it passes the gate. Programs run in src/sandbox.mjs (no network, no host files) on the node's own inputs.
+  async function codeTool() {
+    rec.tool = [];
+    const history = [];
+    for (let turn = 0; turn < PC.CODE_TOOL_TURNS; turn++) {
+      const t = await typed(`tool.t${turn}`, PC.CODE_TOOL_SYSTEM, PC.codeToolPrompt(input, { turn, maxTurns: PC.CODE_TOOL_TURNS, history }), PC.CODE_TOOL_SCHEMA, NODE_DECODING);
+      const row = { turn, action: t.action };
+      rec.tool.push(row);
+      let value, error = null;
+      try { value = (await runCode({ lang: 'js', source: String(t.program ?? ''), input: { channel: input.channel, spec: input.spec, notes: input.notes, data: input.export }, timeoutMs: LIMITS.codeTimeoutMs })).value; }
+      catch (e) { error = `${e.code ?? 'ERROR'}: ${String(e.message).slice(0, 1500)}`; }
+      if (error) { row.kind = 'error'; history.push({ action: t.action, program: String(t.program ?? ''), outcome: `It failed: ${error}` }); continue; }
+      if (t.action === 'answer') {
+        const g = gateProblems(value, { channel: ch, exportText: input.export, validate: shape });
+        if (!g.length) { row.kind = 'ok'; rec.path = 'code-tool'; return value; }
+        row.kind = 'gate'; row.detail = g.slice(0, 6);
+        history.push({ action: t.action, program: String(t.program ?? ''), outcome: `Its value failed the answer checks:\n${g.map(x => `- ${x}`).join('\n')}` });
+        continue;
+      }
+      row.kind = 'run';
+      history.push({ action: t.action, program: String(t.program ?? ''), outcome: `It returned: ${JSON.stringify(value ?? null).slice(0, 12000)}` });
+    }
+    rec.path = 'fallback'; rec.fallback = `no passing answer program in ${PC.CODE_TOOL_TURNS} turns`;
+    return direct('fallback', rec.fallback);
   }
 
   try {
     if (!route || directive === 'answer') {
       rec.path = 'direct'; rec.decision = 'answer';
-      const answer = await direct('answer');
+      if (cfg.codeTool) return finish(await codeTool());
+      const answer = cfg.gateRetries ? await gatedDirect() : await direct('answer');
       return finish(answer);
     }
     const maxUsd = carvable();
     let d;
     if (directive === 'decide') {
-      d = await typed('decide', P.NODE_SYSTEM, P.decidePrompt(nodeSide, input, maxUsd), P.decideSchema(nodeSide, answerSchema), NODE_DECODING);
+      d = await typed('decide', P.NODE_SYSTEM, cfg.offer === 'selfHarness' ? PC.decidePromptHarness(input, maxUsd) : P.decidePrompt(nodeSide, input, maxUsd), P.decideSchema(nodeSide, answerSchema), NODE_DECODING);
       rec.decision = d.decision; rec.reason = String(d.reason ?? '').slice(0, 300);
       if (d.decision === 'answer') {
         rec.path = 'direct';
@@ -188,8 +258,21 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
     } else {
       // A2: the typed request crosses to the governing harness. Code checks it against the node's envelope: an input the
       // node does not hold, or a budget above what it can carve, is never granted; the excess is a proposal for the owner.
-      const req = d.request;
-      if (!req || typeof req.goal !== 'string' || !Array.isArray(req.inputs)) {
+      let req = d.request;
+      const validReq = x => !!x && typeof x.goal === 'string' && Array.isArray(x.inputs);
+      // A2C / A2FC: a request that leaves out an input the answer contract depends on goes back to the node once, before
+      // the builder starts (eval-1/SW-1b: 3 requests without the export and 6 without the rules; the builder could not
+      // ask for them). A second incomplete request proceeds as before (logged).
+      if (cfg.completeness && validReq(req)) {
+        const missing = contractInputs.filter(k => !req.inputs.includes(k));
+        if (missing.length) {
+          const again = await typed('request.returned', P.NODE_SYSTEM, PC.returnedRequestPrompt(input, carvable(), missing, req), P.requestSchema(), NODE_DECODING);
+          const next = validReq(again?.request) ? again.request : req;
+          rec.returned = { missing, after: [...new Set(next.inputs)], stillMissing: contractInputs.filter(k => !next.inputs.includes(k)) };
+          req = next;
+        }
+      }
+      if (!validReq(req)) {
         rec.sub.request = { invalid: true };
         loop = { ok: false, why: 'chose a sub-workflow without a typed request' };
       } else {
@@ -236,8 +319,10 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
     const violations = [];
     for (const t of traces) for (const s of t.steps) if (EFFECT_OPS.includes(s.op) && !s.error) violations.push(`effect ${s.op} ran in ${t.path}`);
     for (const e of events) {
-      if ((e.depth ?? 0) > maxDepth && e.kind === 'call-end') violations.push(`call ended at depth ${e.depth}`);
-      if (e.kind === 'call-end' && e.spentUsd > (e.budgetUsd ?? Infinity) + 1e-9) violations.push(`child ${e.path} spent $${e.spentUsd} of $${e.budgetUsd}`);
+      // Every closed child (SW-1c: 'call-deopt' too; a child that overspent and then failed was not checked before).
+      const closed = e.kind === 'call-end' || e.kind === 'call-deopt';
+      if ((e.depth ?? 0) > maxDepth && closed) violations.push(`call ended at depth ${e.depth}`);
+      if (closed && e.spentUsd > (e.budgetUsd ?? Infinity) + 1e-9) violations.push(`child ${e.path} spent $${e.spentUsd} of $${e.budgetUsd}`);
     }
     const costUsd = usd(rec.calls.reduce((s, c) => s + c.costUsd, 0) + events.filter(e => e.kind !== 'call-refused' && (e.depth ?? 1) === 1).reduce((s, e) => s + (e.spentUsd ?? 0), 0));
     if (costUsd > budgetUsd + 1e-9) violations.push(`node spent $${costUsd} of $${budgetUsd}`);

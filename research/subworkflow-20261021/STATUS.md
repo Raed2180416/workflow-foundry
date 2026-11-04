@@ -25,6 +25,13 @@ Plan (attempt 5, resumed 2026-10-28 17:50Z):
     envaudit.json committed.
 11. [done] RESULT-SW-1.md (2026-11-04). Total Haiku spend $4.916 of the $5 cap; no further paid runs on this budget.
     Open next steps are listed in RESULT-SW-1.md §9 (each needs a new frozen arm and new budget).
+12. [done 2026-11-04] Review response ($0, no model calls): RESULT-SW-1 readings corrected (§1, §5, §7-§9, new §12: [70]
+    not shown; Q3 confounded; Q2 a construction tie; scope); coverage rows A5/F4 stay ⚠. Built and tested at $0: SW-1c
+    arms (A1H, A0G, A0C, A2C, A2FC, A1FO; prompts-c.mjs), request completeness, note vote (vote.mjs), proposal provenance
+    (provenance.mjs), independent audit (audit.mjs), budget-meter fix (dsl.mjs), cap reservation (cap.mjs), frozen
+    observable trigger (trigger.mjs), clustered stats (stats.mjs), review-posthoc.mjs (runs/eval-1/review-posthoc.*),
+    frozen-arms regression test. PREREG-SW-1c frozen, NOT launched: needs an owner budget decision (about $3.70 Haiku, cap
+    $4.25; runs under runs/sw1c/, spend counted there only). Resume = owner budget, then the PREREG-SW-1c protocol.
 
 Spend check: node -e over runs/*/journal.sqlite (SUM(cost_usd) FROM model_calls); run.mjs --cap-usd enforces it before
 each unit. Owner cap: Haiku $5 for SW-1 + SW-1b together.

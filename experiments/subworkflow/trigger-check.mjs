@@ -2,27 +2,23 @@
 // SW-1 post hoc check ($0, analysis side; not part of the frozen pipeline). The parent-directed arms (A1F, A1TF, A2F,
 // A2OF) route a node to a sub-workflow when bed.channelKinds(task) says the channel is a backlog: the world's own field,
 // a trigger that is right by construction. This asks whether a trigger computed only from what the parent observes in the
-// node's input would have routed the same nodes. Two observable primitives, no model:
+// node's input would have routed the same nodes. The primitives live in trigger.mjs (frozen for SW-1c):
 //   format: the export is not a JSON list (simple channels hand over a JSON list; backlogs are legacy text reports);
 //   size:   the export holds more than ROWS records (lines that look like data rows, or @@ RECORD blocks).
 // Reported per (layout, difficulty): agreement of each primitive and of "format OR size" with the world's kind.
+// Caveat (review defect 3): the threshold 40 was chosen after seeing the record ranges below, so agreement on these
+// manifests is a fit, not a test; PREREG-SW-1c freezes it before a stratum where it can be wrong.
 //   node experiments/subworkflow/trigger-check.mjs [--manifests research/subworkflow-20261021/tasks-eval.json,research/subworkflow-20261021/tasks-sw1b.json] [--rows 40]
 import { readFileSync } from 'node:fs';
 import * as bed from '../../beds/golive/index.mjs';
 import * as layouts from '../../beds/golive/layouts.mjs';
+import { records, primitives, SIZE_ROWS } from './trigger.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, all) => (x.startsWith('--') ? [...a, [x.slice(2), all[i + 1]]] : a), []));
 const manifests = (args.manifests ?? 'research/subworkflow-20261021/tasks-eval.json,research/subworkflow-20261021/tasks-sw1b.json').split(',');
-const ROWS = Number(args.rows ?? 40);
-
-const isJsonList = text => { try { return Array.isArray(JSON.parse(text)); } catch { return false; } };
-export function records(text) {
-  if (isJsonList(text)) return JSON.parse(text).length;
-  const blocks = (text.match(/^@@ RECORD /gm) ?? []).length;
-  if (blocks) return blocks;
-  return text.split('\n').filter(l => l.trim() && !l.startsWith('#')).length - 1; // minus the header line
-}
-export const trigger = { format: input => !isJsonList(input.export), size: input => records(input.export) > ROWS };
+const ROWS = Number(args.rows ?? SIZE_ROWS);
+export { records };
+export const trigger = { format: primitives.format, size: input => primitives.size(input, ROWS) };
 
 const cells = new Map();
 for (const m of manifests) for (const t of JSON.parse(readFileSync(m, 'utf8')).tasks) {

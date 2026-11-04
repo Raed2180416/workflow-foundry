@@ -240,11 +240,17 @@ async function judgeRows(step, rows, ctx, meter, budget) {
     const prompt = `${step.instructions}\n\nLabels: ${step.labels.join(', ')}\n\nRows (JSON, one per line):\n${items.map(x => JSON.stringify(x)).join('\n')}\n\nGive one label for every row i from ${base} to ${base + chunk.length - 1}.`;
     let got = null, feedback = '';
     for (let attempt = 0; attempt < 2 && !got; attempt++) {
-      const reserve = Math.max(0.002, ((tokensOf(JUDGE_SYSTEM + prompt) * 2) * (ctx.price?.inputPerMTok ?? 0.1) + 2000 * (ctx.price?.outputPerMTok ?? 0.5)) / 1e6);
+      // The reserve is the larger of a token estimate and the dearest call this sub-workflow has paid so far (SW-1c fix,
+      // review defect 8: with the estimate alone, calls dearer than it overshot the budget, e.g. $0.05 of $0.03 at
+      // $0.025 per call; the call host does not meter a leaf child's own model calls). Overshoot is now bounded by the
+      // first call's excess over the estimate, and nothing runs after the budget is passed.
+      const estimate = Math.max(0.002, ((tokensOf(JUDGE_SYSTEM + prompt) * 2) * (ctx.price?.inputPerMTok ?? 0.1) + 2000 * (ctx.price?.outputPerMTok ?? 0.5)) / 1e6);
+      const reserve = Math.max(estimate, meter.maxCallUsd ?? 0);
       if (meter.spent + reserve > budget + 1e-9) throw new SubworkflowError('BUDGET', `judge_rows ${step.id}: the next call (reserve $${usd(reserve)}) does not fit the sub-workflow budget $${budget} (spent $${usd(meter.spent)})`);
       const r = await ctx.model({ runId: ctx.runId, nodeKey: `${ctx.nodeKey}.${step.id}.b${b}`, attempt, modelId: step.model, system: JUDGE_SYSTEM,
         prompt: prompt + feedback, schema, decoding: { reasoning: 'none' } });
-      meter.spent += r.costUsd ?? 0; meter.calls++;
+      meter.spent += r.costUsd ?? 0; meter.calls++; meter.maxCallUsd = Math.max(meter.maxCallUsd ?? 0, r.costUsd ?? 0);
+      if (meter.spent > budget + 1e-9) throw new SubworkflowError('BUDGET', `judge_rows ${step.id}: spent $${usd(meter.spent)}, past the sub-workflow budget $${budget} (a call cost more than its reserve $${usd(reserve)})`);
       if (!r.ok) { feedback = `\n\nYour previous reply was refused (${r.error?.code}). Reply with valid JSON.`; continue; }
       const map = new Map(r.value.items.map(x => [x.i, x.label]));
       const missing = chunk.map((_, j) => base + j).filter(i => !map.has(i));
