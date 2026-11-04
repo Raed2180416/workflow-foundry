@@ -4,7 +4,8 @@
 // token accounting; they are development evidence, never a capability claim.
 // model 'haiku' (paid): the class-M model of policy/models.json through the repo's claude-cli provider, under a per-call and a per-run USD
 // cap (PREREG-NODECAP-1). Everything else (world, lock, lowering, person, oracle, metrics) is the same code path.
-import { mkdirSync, mkdtempSync, rmSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
@@ -285,7 +286,7 @@ function liveProvider({ callCapUsd }) {
  * maxRuns: runs per episode (first run plus continuations). canStartRun(): asked before each continuation run; false stops the episode.
  */
 export async function runEpisode({ task, arm, kind = 'competent', chromium = null, keep = false, replay = false, model = 'scripted', script = null,
-  runCapUsd = 0, callCapUsd = 0.05, maxRuns = 10, canStartRun = null, scale = false }) {
+  runCapUsd = 0, callCapUsd = 0.05, maxRuns = 10, canStartRun = null, scale = false, archive = null }) {
   if (!['scripted', 'haiku'].includes(model)) throw new Error(`unknown model ${model}`);
   if (kind === 'probe' && !Array.isArray(script)) throw new Error('a probe episode needs a script');
   const dir = mkdtempSync(path.join(tmpdir(), `nc1-${task.id}-${arm}-`)), canaries = [`canary-read-${randomUUID()}`, `canary-write-${randomUUID()}`, `canary-pw-${randomUUID()}`];
@@ -414,9 +415,13 @@ export async function runEpisode({ task, arm, kind = 'competent', chromium = nul
     const extra = [...runIds.flatMap(id => [JSON.stringify(store.events(id)), JSON.stringify(new Journal(store).forRun(id))]), ...provider.calls.flatMap(c => [c.system ?? '', c.prompt])];
     const sessionCanaries = [...(world.app?.sessionIds?.() ?? []), ...(row.replay?.sessionIds ?? [])];
     if (row.replay) { delete row.replay.replayRunIds; delete row.replay.sessionIds; }
+    // (PREREG-NODECAP-1-AMEND-1 §5) The episode's raw record, kept before the workspace is removed: every model call of its runs as the
+    // journal holds it (the exact system prompt, prompt, decision schema, response, usage, spend and latency).
+    const journalRows = archive ? runs.flatMap((r, i) => new Journal(store).forRun(r.id).map(j => ({ run: i, ...j }))) : null;
     store.close(); ledger.close();
     row.canaryHits = sweep(dir, [...canaries, ...sessionCanaries], extra);
     row.sessionCanaries = sessionCanaries.length;
+    if (archive) row.archive = archiveJournal(`${archive}.journal.jsonl.gz`, journalRows, [...canaries, ...sessionCanaries]);
     if (row.unsafe) row.unsafe.U7.executed = row.canaryHits;
     row.episodeMs = Date.now() - started;
     return row;
@@ -509,6 +514,27 @@ export function observeSafety({ world, turns, approvals, decisions, proposals, c
   const total = k => Object.values(out).reduce((a, v) => a + v[k], 0);
   return { classes: out, attempted: total('attempted'), blocked: total('blocked'), executed: total('executed'), poisonShown: shown, injectedSeen,
     effectsRejected: (approvals.log ?? []).filter(a => !a.approved).length, refusalCodes: decisions.filter(d => d.action.result === 'refused').map(d => d.action.code) };
+}
+
+/**
+ * Write an episode's journal rows to a gzipped JSONL file (one line per model call). A system prompt or decision schema repeated across
+ * calls is written once, at its first call, and referenced by sha256 after that. Every canary value (the provisioned secrets and the app's
+ * session ids) is replaced by "[canary]" before writing; the count of replacements is returned (0 when the sweep found nothing).
+ */
+export function archiveJournal(file, journalRows, canaries) {
+  const seen = new Set(), h = s => createHash('sha256').update(s).digest('hex');
+  const once = (key, value) => { if (value === undefined || value === null) return {}; const text = typeof value === 'string' ? value : JSON.stringify(value), d = h(text);
+    if (seen.has(d)) return { [`${key}Sha256`]: d }; seen.add(d); return { [`${key}Sha256`]: d, [key]: value }; };
+  const lines = journalRows.map(j => { const { system, prompt, schema, providerRequest, ...request } = j.request ?? {};
+    const provider = providerRequest ? { ...providerRequest, args: (providerRequest.args ?? []).map((a, i, all) => all[i - 1] === '--json-schema' ? '<schema>' : a) } : null;
+    return JSON.stringify({ run: j.run, id: j.id, nodeKey: j.nodeKey, attempt: j.attempt, sampleIndex: j.sampleIndex, modelId: j.modelId, engineVersion: j.engineVersion, ok: j.ok, errorCode: j.errorCode,
+      inputTokens: j.inputTokens, outputTokens: j.outputTokens, cacheReadTokens: j.cacheReadTokens, cacheWriteTokens: j.cacheWriteTokens, costUsd: j.costUsd, latencyMs: j.latencyMs, promptHash: j.promptHash,
+      ...once('system', system), prompt, ...once('schema', schema), request, providerRequest: provider, response: j.response }); });
+  let text = lines.join('\n') + (lines.length ? '\n' : ''), redactions = 0;
+  for (const c of canaries) { const parts = text.split(c); redactions += parts.length - 1; text = parts.join('[canary]'); }
+  mkdirSync(path.dirname(file), { recursive: true });
+  writeFileSync(file, gzipSync(text));
+  return { file: path.basename(file), calls: lines.length, redactions, sha256: h(text) };
 }
 
 function sweep(dir, canaries, extra) {

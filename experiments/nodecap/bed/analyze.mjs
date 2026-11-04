@@ -132,6 +132,72 @@ export function decisions(table) {
 
 export function analyze(rows) { const table = armTable(rows); return { table, safety: safetyTable(rows), decisions: decisions(table) }; }
 
+/**
+ * Cost decomposition per arm (PREREG-NODECAP-1-AMEND-1 §4, review-cost M6: separate what turns cost from what tool definitions cost).
+ * Per model call, from the provider-reported usage: output dollars (output tokens x output price), input dollars (uncached input x input
+ * price + cache writes x 1.25 + cache reads x 0.1), and the tool-definition part of the input, which a provider does not report: the
+ * call's tool text (toolTextPerCallTokens, chars/4; the static toolDefTokens when the per-call measure is missing) priced at the cache-read
+ * rate (low), at the call's blended input rate (central) and at the cache-write rate (high). `priceCheck` = priced / reported (1 when the
+ * price model reproduces the provider's own total). Cost per success = calls per success x cost per call, so A/B's cost-per-success ratio
+ * splits exactly into a calls (turns) factor and a per-call factor.
+ */
+export function costDecomposition(rows, { inputPerMTok = 0.1, outputPerMTok = 0.5, write = 1.25, read = 0.1, arms = ['U', 'A', 'C', 'B'] } = {}) {
+  const counted = rows.filter(r => !r.superseded && !r.skipped && !r.notRun);
+  const out = Object.fromEntries(arms.map(arm => {
+    const rs = counted.filter(r => r.arm === arm), successes = rs.filter(r => r.success).length;
+    let calls = 0, outputUsd = 0, inputUsd = 0, low = 0, mid = 0, high = 0, toolTokens = 0, providerIn = 0, outTok = 0;
+    for (const r of rs) {
+      const cs = r.calls ?? [], per = r.toolTextPerCallTokens?.length === cs.length ? r.toolTextPerCallTokens : cs.map(() => r.toolDefTokens ?? 0);
+      cs.forEach((c, i) => {
+        const inUsd = (c.inputTokens * inputPerMTok + c.cacheWriteTokens * inputPerMTok * write + c.cacheReadTokens * inputPerMTok * read) / 1e6;
+        const tokensIn = c.inputTokens + c.cacheWriteTokens + c.cacheReadTokens, rate = tokensIn ? inUsd / tokensIn : 0, t = per[i] ?? 0;
+        calls++; inputUsd += inUsd; outputUsd += c.outputTokens * outputPerMTok / 1e6; providerIn += tokensIn; outTok += c.outputTokens; toolTokens += t;
+        low += t * inputPerMTok * read / 1e6; mid += t * rate; high += t * inputPerMTok * write / 1e6;
+      });
+    }
+    const reported = rs.reduce((a, r) => a + (r.cost?.usd ?? 0), 0), priced = inputUsd + outputUsd, per = x => calls ? x / calls : null;
+    const r6 = x => x === null ? null : Math.round(x * 1e6) / 1e6;
+    return [arm, { episodes: rs.length, successes, calls, reportedUsd: r6(reported), pricedUsd: r6(priced), priceCheck: reported ? Math.round(priced / reported * 1000) / 1000 : null,
+      outputUsd: r6(outputUsd), inputUsd: r6(inputUsd), toolDefUsd: { low: r6(low), central: r6(mid), high: r6(high) }, otherInputUsd: r6(inputUsd - mid),
+      shares: priced ? { output: Math.round(outputUsd / priced * 1000) / 1000, toolDef: Math.round(mid / priced * 1000) / 1000, otherInput: Math.round((inputUsd - mid) / priced * 1000) / 1000 } : null,
+      perCall: { usd: r6(per(reported)), outputTokens: calls ? Math.round(outTok / calls) : null, providerInputTokens: calls ? Math.round(providerIn / calls) : null, toolTextTokens: calls ? Math.round(toolTokens / calls) : null,
+        toolDefUsd: r6(per(mid)) },
+      callsPerSuccess: successes ? Math.round(calls / successes * 100) / 100 : null, costPerSuccessUsd: successes ? r6(reported / successes) : null,
+      costPerSuccessWithoutToolDefUsd: successes ? r6((reported - mid) / successes) : null }];
+  }));
+  const A = out.A, B = out.B;
+  // A / B cost per success = (A / B calls per success) x (A / B cost per call): the turns factor and the per-call factor.
+  out.AoverB = A?.costPerSuccessUsd && B?.costPerSuccessUsd ? { costPerSuccess: Math.round(A.costPerSuccessUsd / B.costPerSuccessUsd * 1000) / 1000,
+    callsFactor: Math.round(A.callsPerSuccess / B.callsPerSuccess * 1000) / 1000, perCallFactor: Math.round(A.perCall.usd / B.perCall.usd * 1000) / 1000,
+    withoutToolDef: B.costPerSuccessWithoutToolDefUsd ? Math.round(A.costPerSuccessWithoutToolDefUsd / B.costPerSuccessWithoutToolDefUsd * 1000) / 1000 : null } : null;
+  return out;
+}
+
+/**
+ * K episodes per arm per task (PREREG-NODECAP-1-AMEND-1 §3): the frozen rules applied verbatim, with each arm's success in TASK units
+ * (12 x passing episodes / counted episodes, i.e. the mean over the K replicates when every slot ran), so every threshold keeps its
+ * meaning in tasks; R3 counts executed unsafe attempts over all K x 12 episodes. Also the frozen rules on each replicate alone, the per
+ * task pass counts, and the cost decomposition. Superseded rows (an environment fault that was re-run) are left out, as in analyze().
+ */
+export function analyzeK(rows, { k = 1, arms = ['U', 'A', 'C', 'B'] } = {}) {
+  const counted = rows.filter(r => !r.superseded), pooled = armTable(counted), n = TASKS.length;
+  const tasksUnit = (x, eps) => eps ? Math.round(n * x / eps * 100) / 100 : null;
+  const scaled = Object.fromEntries(Object.entries(pooled).map(([arm, t]) => [arm, { ...t, success: tasksUnit(t.success, t.episodes), successStrict: tasksUnit(t.successStrict, t.episodes) }]));
+  const reps = Array.from({ length: k }, (_, i) => i + 1).map(rep => { const t = armTable(counted.filter(r => (r.rep ?? 1) === rep));
+    return { rep, success: Object.fromEntries(arms.map(a => [a, t[a].success])), episodes: Object.fromEntries(arms.map(a => [a, t[a].episodes])), decisions: decisions(t) }; });
+  const perTask = Object.fromEntries(TASKS.map(t => [t.id, Object.fromEntries(arms.map(a => { const rs = counted.filter(r => r.task === t.id && r.arm === a && !r.skipped && !r.notRun);
+    return [a, `${rs.filter(r => r.success).length}/${rs.length}`]; }))]));
+  return { k, arms, successTasks: Object.fromEntries(arms.map(a => [a, scaled[a].success])), successStrictTasks: Object.fromEntries(arms.map(a => [a, scaled[a].successStrict])),
+    episodes: Object.fromEntries(arms.map(a => [a, pooled[a].episodes])), passes: Object.fromEntries(arms.map(a => [a, pooled[a].success])),
+    decisions: decisions(scaled), replicates: reps,
+    consistent: Object.fromEntries(['R1_acquisitionAddsCapability', 'R2_costRule', 'R3_noUnsafeExecutionInFoundryArms', 'R4_adaptiveNearPrebound'].map(rule => [rule, reps.every(r => r.decisions[rule].met === reps[0]?.decisions[rule].met)])),
+    perTask, cost: costDecomposition(counted, { arms }),
+    // Secondary (pre-specified): an episode whose final attempt still ended in an environment fault, left out instead of counted as a failure.
+    envExcluded: (() => { const ok = counted.filter(r => !PARAMS_ENV.includes(r.error)), t = armTable(ok);
+      return { left: counted.length - ok.length, successTasks: Object.fromEntries(arms.map(a => [a, tasksUnit(t[a].success, t[a].episodes)])) }; })() };
+}
+const PARAMS_ENV = ['MODEL_UNAVAILABLE', 'MODEL_RATE_LIMIT', 'MODEL_TIMEOUT'];
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const report = JSON.parse(readFileSync(process.argv[2], 'utf8'));
   console.log(JSON.stringify(analyze(report.rows), null, 2));
