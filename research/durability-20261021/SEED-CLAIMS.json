@@ -1,8 +1,8 @@
-{ "schema": "dur1-seed-claims/1", "status": "draft", "date": "2026-10-22",
-  "note": "Draft claim of PREREG-DUR-1 §3 / Appendix A. The status turns to claimed at the F-B freeze. The ledger (research/jit-20261008/SEED-LEDGER.json) cannot take a new E-bed row (experiments/lib/ebed-seed-ledger.test.mjs) and knows no draft status (experiments/jit/seeds.mjs), so the claim is a dated sentence in the use text of ebed-dev and ebed-e8-rehearsal plus this file. experiments/durability/schedule.mjs assertDurSeeds enforces it.",
+{ "schema": "dur1-seed-claims/1", "status": "claimed", "date": "2026-10-22", "claimedAt": "2026-11-04 (PREREG-DUR-1 FROZEN)",
+  "note": "Draft claim of PREREG-DUR-1 §3 / Appendix A. The status turned to claimed at the PREREG-DUR-1 freeze (2026-11-04, before P1; §13.1 as amended). The ledger (research/jit-20261008/SEED-LEDGER.json) cannot take a new E-bed row (experiments/lib/ebed-seed-ledger.test.mjs) and knows no draft status (experiments/jit/seeds.mjs), so the claim is a dated sentence in the use text of ebed-dev and ebed-e8-rehearsal plus this file. experiments/durability/schedule.mjs assertDurSeeds enforces it.",
   "claims": [
     { "bed": "ebed-e8", "split": "dev", "ledgerRow": "ebed-dev", "purpose": "jit-dev", "seeds": [1171, 1188], "use": "DUR-1 streams s1-s3, 6 worlds each" },
-    { "bed": "ebed-e8", "split": "dev", "ledgerRow": "ebed-dev-fuzz", "purpose": "jit-dev", "seeds": [1301, 1310], "use": "WC-1 bases, salts dur1/<target>/<i>, shared row" },
+    { "bed": "ebed-e8", "split": "dev", "ledgerRow": "ebed-dev-fuzz", "purpose": "jit-dev", "seeds": [1301, 1310], "use": "WC-1 bases, derived salts (split fuzz-dur1-<base>-<salt>), shared row" },
     { "bed": "ebed-e8", "split": "dev", "ledgerRow": "ebed-e8-rehearsal", "purpose": "ebed-rehearsal", "seeds": [1207, 1210], "use": "harness rehearsal" },
     { "bed": "ebed-e8", "split": "dev", "ledgerRow": "ebed-e8-rehearsal", "purpose": "ebed-rehearsal", "seeds": [1223, 1226], "use": "sealed author validation, count-only" } ],
   "reused": [[1101, 1102], [1232, 1234], [1235, 1237]],

@@ -32,7 +32,9 @@ test('ADV-SET cross-run and A-H red-team windows: every t0 code arm meets the fr
   // An R1 overlay: valid for the reference (it knows the rule), failed by the static starting versions (they do not).
   // (MR11 on 1302 d4 salt 5 is a bed finding: the bed's own injectFailures makes the earliest reference emit an
   // inventory.reserve outside the allowed set on o0014; WC-1 classes it as such, BUILD-NOTES §5.)
-  const vector = { base: 1301, salt: 11, difficulty: 3, mix: 'tail', size: 14, transforms: [], fault: 'none', overlays: ['R1'] };
+  // Salt 12 since the B1 fix (2026-11-04): a vector is one world for every target, so the world of salt 11 changed (it no
+  // longer holds an R1 case the static versions fail); on salt 12 every starting version fails one R1 case silently.
+  const vector = { base: 1301, salt: 12, difficulty: 3, mix: 'tail', size: 14, transforms: [], fault: 'none', overlays: ['R1'] };
   writeFileSync(path.join(runs, 'ADV-SET.json'), JSON.stringify({ frozenAt: 'test', set: [{ source: 'test', vector }] }));
   const a = await advSetStage({ sealed });
   assert.equal(a.set.length, 1);

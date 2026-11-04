@@ -26,7 +26,7 @@ SD_RATES   0.043 [95%: 0.029, 0.083], the as-delivered build rates of the 9 prog
            commissioned versions 0.000 (all 1,022/1,022); the SD of heal-minus-static differences under change is unmeasured
 STOP       fixed K = 9, one look; operational stops K-0 ($0 kill) and K-4 (drop stream s3) only
 MDE        D-1 exact sign-flip, one-sided alpha 0.025, power 0.8: 0.047 at SD 0.043 (0.031 at 0.029; 0.091 at 0.083);
-           without cht (n = 6): 0.078. D-3 (two-way bootstrap, NI margin 0.10): power 0.59 at a true gap of 0, 0.96 at +0.05
+           without cht (n = 6): 0.078. D-3 (two-way bootstrap, NI margin 0.10): power 0.59 at a true gap of 0, 0.97 at +0.05
 PREDICTION S-H* W2-W6 exposed-case pass 0.60-0.90; MH-H 0.88-0.99; durable share 0.65-0.90; A-H routed 0.75-0.92;
            maintenance about $0.3-0.8 per lineage-stream; D-5 PARTIAL or NO (expected silent cases under U1s and E2s)
 REFUTED    D-1 falsified (durable share < 0.50, or heal worse than static on W6 in >= 3 lineages, or lasting
@@ -45,7 +45,8 @@ REFUTED    D-1 falsified (durable share < 0.50, or heal worse than static on W6 
 | Q6 | Runs expose flaws in a hand-crafted workflow? | latent defects healed from complaints; false complaints harmless | D-8 |
 | Q7 | Every failure figured out? | root-cause ledger complete before any result text | §14.3 |
 
-Primary family: **D-1 and D-3**, Holm at family-wise one-sided α = 0.05 (smaller p at 0.025, the other at 0.05).
+Primary family: **D-1 and D-3**, Holm step-down at family-wise one-sided α = 0.05: the smaller p is tested at 0.025;
+only if it is rejected is the other tested at 0.05; if the smaller p exceeds 0.025, neither is supported.
 Everything else is a preregistered rule or descriptive.
 
 ## 1. The claim and what falsifies it
@@ -93,7 +94,7 @@ which results surprised us.
   twin, routed window, practice-with-overlay world and adversarial world; every bad control (`noop`, `echo`,
   `declare-every-obligation`, `escalate-everything`, `charge-twice`, `hold-everything`) fails every changed world.
 
-## 3. Seeds (claimed as a draft; status turns `claimed` at the freeze)
+## 3. Seeds (claimed 2026-11-04 at the freeze)
 
 | Use | Seeds | Ledger block (`research/jit-20261008/SEED-LEDGER.json`) | Purpose for `assertEbedSeeds` |
 |---|---|---|---|
@@ -104,7 +105,7 @@ which results surprised us.
 | Sealed author's own validation worlds (count-only output) | 1223–1226 | `ebed-e8-rehearsal` (unassigned part) | `ebed-rehearsal` |
 | Practice, calibration, canary base (reused, FH-1/B1 practice) | 1235–1237 | `ebed-e8-rehearsal` | `ebed-rehearsal` |
 | Grading-world replay check V-11 (reused) | 1232–1234 | `ebed-e8-rehearsal` | `ebed-rehearsal` |
-| WC-1 fuzz bases (derived salts `dur1/<target>/<i>`; derived worlds are not ledger seeds) | 1301–1310 | `ebed-dev-fuzz` | `jit-dev` |
+| WC-1 fuzz bases (derived salts: generator split `fuzz-dur1-<base>-<salt>`, one world per knob vector; derived worlds are not ledger seeds) | 1301–1310 | `ebed-dev-fuzz` | `jit-dev` |
 | Latent-defect manifests (reused, already inspected) | 1101–1102 | `ebed-dev` | `jit-dev` |
 | **Not touched** | 1161–1168 (composition harness, `experiments/compose/validate.mjs:2`); held-out 9101–9104 (kept for DUR-1C); sealed 9201–9204 (kept for DUR-2); scale 9301–9302; AutomationBench-R 8801–8840 | | |
 
@@ -118,7 +119,14 @@ Every DUR-1 runner calls `assertEbedSeeds` (`experiments/lib/ebed-seeds.mjs`) be
 ### 4.1 Schedule (identical for every stream; no arm sees world or change labels)
 
 Days are world-days d1–d14 of each world; the stream day is 14·(k − 1) + d for world Wk. Changes persist to the end of
-the stream unless marked transient or reverted.
+the stream unless marked transient or reverted. **Calendar (amended 2026-11-04, review B7).** The generator has one t0, so
+every world replays the same calendar fortnight (2026-03-02 to 03-15). A change with an effective *placement* date (P1's
+edition, R1, R2s, E2s's edition) keeps, in every later world, the effective date it was published with, in the truth,
+the in-world notice, the contract readings and the practice overlays: in W4–W6, R1 applies to orders placed on or after
+2026-03-06, as published in W3. A heal that encodes the published date therefore stays correct in later worlds (with the
+date moved to each world's t0, such a heal failed every W4–W6 order placed 03-02..03-05, a spurious re-heal R-maint never
+pays). API renames (E1, E2s's renames), loads, faults and documents stay in force from the world start. A true calendar
+offset (world k shifted by 14·(k − 1) days) was not built: every per-day computation of the harness is world-relative.
 
 | World | Id | Change | Class | Onset | Visible to arms as | Exposure floor per world |
 |---|---|---|---|---|---|---|
@@ -144,7 +152,11 @@ the stream unless marked transient or reverted.
   For sealed changes only counts are printed until the run ends.
 - **Change-induced failure** (arm a, change c, case x): x ∈ exposed(c), x fails in W under a's version timeline, and x
   passes in twin(W, c) under the same timeline (deterministic replay, $0). **Base failure:** fails in twin₀ as well.
-- **Heal-requiring cell** (lineage ℓ, stream s, change c): S-H\* of ℓ has ≥ 1 change-induced failure of c on s.
+- **Heal-requiring cell** (lineage ℓ, stream s, change c): S-H\* of ℓ has ≥ 1 change-induced failure of c on s **and
+  S-H\*'s own TTD of c on s is ∞** (amended 2026-11-04, review M4: with the TTD tolerance of max(1, 2%) over about 450
+  exposed cases, a cell where the static program has a handful of induced failures is "durable" with no heal at all).
+  Cells with an induced failure and a finite static TTD are reported with S-H\*'s durable share on them, never counted
+  as heals.
 
 ### 4.3 Maintainer channels (frozen, seeded, templated; no model writes them)
 
@@ -183,7 +195,7 @@ All built programs are frozen by sha256 at the freeze. "Tier" names who acted (b
 | **REF-M** | S1–S3 + Opus 5.5 xhigh maintainer under the same channels, incidents, gate and C-O contracts as MH-H | 3 | stream s1 | as MH-H | Opus 5.5 xhigh, $1.00 and 30 min per session, ≤ 2 per incident | Opus / Opus / Opus |
 | **A-H** | Per-tick Haiku agent with the AGENTV validator (`experiments/agentv/arm.mjs`), fresh session per case-tick, reads the spec in force at the tick | 1 draw per routed case (a second draw on one window) | routed windows (§7) | reads spec and errors | Haiku 5.5, effort high, $0.40 and 6 min per tick, 1 retry | Haiku per tick |
 | **A-Ox** | Same harness at Opus 5.5 xhigh | ≤ 6 routed cases | R2s and E2s windows of s1 | reads spec and errors | Opus 5.5 xhigh, $1.00 and 8 min per tick, 1 retry | Opus per tick |
-| C-O | Contract owner: updates the 13 contracts' rule reading at announced rule changes (R1 once, R2s once, shared by every stream and lineage) and on verifier-blind incidents (≤ 1 per change per stream, shared by that stream's lineages and REF-M) | shared | — | — | Opus 5.5 xhigh, $1.50 and 30 min per session, 1 revision | Opus |
+| C-O | Contract owner: updates the 13 contracts' rule reading at announced rule changes (R1 once, R2s once, shared by every stream and lineage) and on verifier-blind incidents (**≤ 1 session per stream**, the oracle-free form of "≤ 1 per change per stream": the deployment cannot tell changes apart; spent on the stream's first verifier-blind incident, shared by that stream's lineages and REF-M); its contract patches run out of process (§6.4) | shared | — | — | Opus 5.5 xhigh, $1.50 and 30 min per session, 1 revision | Opus |
 | LD-H | The 6 admitted latent defects (`ld-k0`, `ld-k8`, `ld-k9`, `ld-k11`, `ld-k118`, `ld-k149`) as reference-mutant programs, static vs MH loop driven by the manifests' 16 true and 16 false complaints | 6 | manifest worlds 1101–1102 at their band difficulties | complaints + contracts | Haiku 5.5 as MH-H | hand-crafted with a defect |
 | RT-O, RT-H | J2 red team (§8.3) | 2 + 1 sessions | t0 targets | — | Opus 5.5 xhigh $3 / 30 min; Haiku 5.5 high $0.50 / 20 min; 25 probes each | — |
 | c-oss | Literal port of the Temporal reference app (fails 52–59% at base, `beds/ebed/e8/README.md:94-96`) | 1 | 3 streams | none | $0 | descriptive |
@@ -220,12 +232,20 @@ case is therefore re-measured in P0 before the window size k is fixed (§12). Ev
 2. **Announcement or config change (m4):** a $0 canary first: the current version on practice worlds 1235–1237 with
    the announced overlay, under the contracts (for spec text changes, the C-O-certified update). An incident opens
    only if contracts flag failures. A proactive patch can be promoted before the effective date.
-3. **Corroborated complaint:** a complaint on a case with an m1–m3 signal joins that incident.
+3. **Corroborated complaint:** a complaint on an order that any defect incident holds (any status, healed included: an
+   order with an m1–m3 signal) joins that incident (amended 2026-11-04, review B5: late true complaints about orders of an
+   already-healed incident were uncorroborated and fed rule 4).
 4. **Verifier-blind:** ≥ 2 uncorroborated complaints on the same topic (charge, refund, notice, status, delivery) within
-   3 world-days → one C-O session from the complaint texts (quoted as untrusted data), SPEC-E and the contracts.
-   Accepted iff the updated contracts flag ≥ 50% of the complained cases and ≤ 1% of the arm's other completed cases of
-   the same days; then rule 1 applies under the updated contracts. Rejected → the incident stays open, logged
-   "needs human" (a loud failure).
+   3 world-days → a verifier-blind incident (loud). The stream's **one** C-O session (from the complaint texts, quoted as
+   untrusted data, SPEC-E and the contracts) runs at the stream's first such incident; every verifier-blind incident of
+   the stream, in every lineage and REF-M, is then judged with that reading **on its own journal** (amended 2026-11-04,
+   review B3: a reused reading reached only the first lineage). Accepted iff the updated contracts flag ≥ 50% of the
+   incident's complained cases and ≤ 1% of the arm's other completed cases of the same days; then rule 1 applies under the
+   updated contracts. Rejected, no reading, or no room in P2 → the incident is "needs human" (a loud failure). *Expected
+   consequence, computed at $0 from the frozen false-complaint draws before the freeze:* false complaints alone open a
+   verifier-blind incident before W6 on every stream (s1 and s2 in W3, s3 in W1; 2, 1 and 5 incidents), so each stream's
+   session is expected to be spent on a false alarm and U1s's incidents to end "needs human" (loud; D-10's loudness clause
+   is unaffected; U1s heal outcomes are reported). A session per incident would cost about $12–16 against P2's $6.
 5. **m6 alone:** recorded, never an incident.
 6. **Complaint text and documents are untrusted data:** quoted in `FAILURES.md` as data, never as instructions.
 
@@ -238,26 +258,41 @@ case is therefore re-measured in P0 before the window size k is fixed (§12). Ev
   candidate on: practice worlds with the *announced* overlays only; and, for unannounced changes, a replay of the cases
   the arm has seen to completion. It reports the candidate's own effects and contract results, never grades.
 - **Heal until clean:** a second fresh session only if the first one's gate failed or left verifier failures on the
-  evidence. ≤ 2 Haiku sessions per incident; ≤ $1.50 per lineage-stream, after which the lineage-stream is
-  `budget-stop`: it keeps its last version, and open incidents are "needs human".
+  evidence. ≤ 2 Haiku sessions per incident. **Budget (amended 2026-11-04, review B4):** a session starts only if the
+  lineage-stream's spend so far plus the session's cap is ≤ its cap ($1.50; REF-M $2.00 per solver-stream, P6 over three
+  solvers; MH-H→O $2.50, the Haiku cap plus its one Opus patch) and its row and the $80 total have room. Otherwise its
+  open incidents are `budget-stop` (a loud "needs human"), it keeps its last version and the stream runs on without heals;
+  a budget stop is never a freeze failure and never ends a stage. An attempt restarted after an environment fault has its
+  own ledger scope, so the faulted attempt's spend stays in the row and the total but not in the restarted cap.
 - **Gate (code, $0):** the candidate loads; adds no arm error on the replay set; fixes ≥ 1 flagged case class
   (corrective) or clears the canary's contract failures (proactive); and adds **0** new contract failures on the
   regression set: practice worlds under the change sets announced by then, the arm's completed cases of the last 3
-  world-days, and W1's completed cases of the same stream, each under the rules in force at its placement.
+  world-days, and W1's completed cases of the same stream; and adds no new m1 or m3 finding (per order) and no arm error
+  on any of them (amended 2026-11-04, review R2-M1). Every case is judged under the readings in force at the alarm for its
+  placement; W1 too: W1's orders carry the same calendar dates as the current world's (§4.1), so judging W1 under W1's own
+  base readings would reject every correct date-gated heal (a review suggestion not adopted, with this reason).
   **Red-team and WC-1 worlds never enter any evidence or regression set.**
 - **Canary:** the accepted candidate runs in shadow through the next world-day (the incumbent delivers); promoted at the
-  following day boundary iff its shadow shows no contract violation on that day's active cases that the incumbent lacks.
+  following day boundary iff its shadow shows no finding on that day's cases that the incumbent lacks, compared **per case**
+  over every defect channel (m1 including arm errors, m2, m3; amended 2026-11-04, review R2-M1). The canary day itself is
+  monitored with the incumbent's signals (incidents, complaints, the record), and no session starts on it (review B2).
 - **Promotion:** compare-and-swap on a hash-chained version registry (expected head = the incumbent); proposer = the
   session, approver = the code gate, never the same. In-flight instances keep their carry; a carry that breaks the new
   version is a `version-migration` failure.
-- **Rollback:** a contract-violation class the promoted version shows within 2 world-days, and the incumbent's shadow
-  over the same days lacks, rolls it back at the next day boundary and reopens the incident.
+- **Rollback:** a finding (per case; m1, m2 or m3) the promoted version shows within 2 world-days, and the incumbent's
+  shadow over the same days lacks, rolls it back at the next day boundary and reopens the incident.
 - **Information hygiene (checked by V-7):** heal and C-O inputs come only from the arm's journal up to the alarm,
   cases completed by then, complaints delivered by then, the spec, rulebook and API files in force or announced, and
   practice worlds with announced overlays. Never: truth, grades, exposure tags, change labels, the sealed bundle,
   another arm's results or adversarial worlds.
 
 ### 6.4 Contract owner (C-O) certification ($0, before the update gates anything)
+
+C-O's output is a rule-reading knob (`READING.json`) or an edited copy of `capabilities.mjs`. An edited copy is
+model-written code: it is evaluated **out of process** (`experiments/durability/contract-sandbox.mjs`, amended 2026-11-04,
+review R2-B5) in a child process under Node's permission model (reads limited to the code it imports, its readings
+directory and the transition item; no writes, child processes, workers or addons; an empty environment). A module that
+errors or hangs there is not certified (announced) or not accepted (verifier-blind).
 
 For an announced rule change: the updated contracts must flag 0 cases of the **drifted** reference's journals on
 practice worlds with the overlay, flag ≥ 90% of the exposed cases of the **undrifted** reference's journals, and keep
@@ -288,6 +323,11 @@ blind version is also compared with the analyst's existing variant (`rules: { re
 ## 8. Worst-case stage
 
 ### 8.1 Scenario classes (every number is reported per class)
+
+A failing case belongs to the classes of **every change whose incremental twin repairs it** (attribution, §4.2;
+multi-label); a case no twin repairs belongs to the class of the first change it is exposed to in the order E1, R1, R2s,
+L1, F, E2s, ADV, E1r, U1s, P1 (**P1 last**: it exposes nearly every order after W2 d6), else IP (amended 2026-11-04,
+review M5: the first change in schedule order put almost every case in CHG-A).
 
 | Class | Definition | Oracle |
 |---|---|---|
@@ -364,7 +404,9 @@ launch manifest (a paid run with effort unset is refused). Gaps under 3 points a
 1. **Per-world (epoch) success** W1–W6 and per world-day success curves; on all completed cases, on exposed cases per
    change, and on unexposed cases.
 2. **Silent wrong cases:** a failing case is *silent* for an arm iff no attributable signal visible to that arm (§6.1;
-   for static arms and agents only m1) arrived before its last effect + 1 world-day. Reported with **loud failures**,
+   for static arms and agents only m1) arrived before its last effect + 1 world-day (a case with no effect: its first
+   divergence + 1 world-day; with neither: its world's end + 1 world-day; the same rule for code arms and agents; amended
+   2026-11-04, review M10). Reported with **loud failures**,
    **false incidents** (incidents whose evidence cases all pass), and **escalations** ("needs human"). Silent critical
    cases separately. Agents are also scored with the full monitor applied to their journals.
 3. **TTD per change** (oracle view): with E the exposed cases of c on the stream placed at or after the onset, TTD_c
@@ -377,7 +419,9 @@ launch manifest (a paid run with effort unset is refused). Gaps under 3 points a
 4. **Worst-case pass rate under the red team:** per arm, the minimum and mean world pass rate over ADV-SET, at t0 and
    at stream end; max silent critical per world.
 5. **Regressions and forgetting:** version matrix (every promoted version of a lineage-stream on every world of the
-   stream, $0): cases passing under v and failing under v+1; collateral = new failures on unexposed cases within 2
+   stream, $0): cases passing under v and failing under v+1; a **heal-caused critical regression** is a case the incumbent
+   passes and the promoted version fails critically, among the cases it acted on (its world from the promotion on, and the
+   next world), in force from the promotion to the lineage-stream's next promotion or rollback or the stream's end; collateral = new failures on unexposed cases within 2
    world-days of a promotion; forgetting = exposed cases of an earlier healed change failing after a later promotion,
    and E1r's exposed cases.
 6. **Maintenance $ per change:** session $ of incidents attributed to c (the change for which most of the incident's
@@ -409,7 +453,8 @@ the exact Wilcoxon signed-rank p (`wilcoxonExact`, `experiments/lib/stats-ebed.m
 its interval are printed beside it. **Supported** iff p ≤ its Holm level, **and** the mean difference ≥ 3 points,
 **and** the durable share of heal-requiring cells ≥ 0.80 (certified-durable when `certify.mjs` is available, see
 *Certification* below), **and** no lineage's W6 pass rate (excluding U1s's exposed cases, judged under D-10) is more
-than 3 points below its own W1 rate, **and** no heal-caused critical regression stays in force > 2 world-days.
+than 3 points below its own W1 rate, **and** no heal-caused critical regression (§9 item 5) stays in force > 2 world-days;
+if that clause cannot be evaluated (a promotion without its certification), D-1 is not supported (fail closed; review B8).
 **Falsified** iff the durable share < 0.50, **or** MH-H is more than 3 points below S-H\* on W6 in ≥ 3 lineages,
 **or** heal-caused critical regressions stay > 2 world-days in ≥ 2 lineages. Otherwise inconclusive. Sensitivity:
 without the 3 `cht` lineages (shared templates; n = 6, smallest one-sided p 1/64). *Rationale:* 0.80 is "heals most
@@ -423,7 +468,8 @@ cases. H₀: mean d ≤ −0.10 (the E-BED margin, `NI_MARGIN`, `stats-ebed.mjs:
 that resamples the 9 lineages and the windows independently, with replacement (B = 10,000, seed `dur1/d3`), so
 both the build spread and the case clustering are in it; one-sided p = the share of bootstrap means ≤ −0.10.
 **Supported** iff p ≤ its Holm level. **Falsified** (the agent adapts better) iff the two-way 95% upper bound of mean
-d < 0 **and** the median MH-H TTD over the windowed changes > 2 world-days. Directional only if s3 is dropped (K-4).
+d < 0 **and** the median MH-H TTD over the heal-requiring cells of the windowed changes (E1, R1, R2s, E2s; a non-durable
+cell counts as ∞, unjudgeable cells are left out) > 2 world-days. Directional only if s3 is dropped (K-4).
 Per-lineage differences and the window-only bootstrap (`nonInferiority`, `stats-ebed.mjs:473`, lineages averaged
 first) are printed beside it; the decision uses the two-way interval.
 
@@ -433,7 +479,9 @@ more than 25%. Also reported against REF-M's maintenance $ and A-Ox's $/case. *R
 mean sessions; at 25% upkeep alone eats a quarter of what an agent costs to do all the work, and priced verification
 has already erased a compiled path's per-case savings once (DEV-NOTES D30, `research/jit-20261008/DEV-NOTES.md:908-911`).
 
-**D-4 durable state ≥ a human's.** Final week = cases placed W6 d8–d14. **Equal** iff MH-H's final-week success ≥
+**D-4 durable state ≥ a human's.** Final week = cases placed W6 d8–d14, pooled over the streams run (per lineage; R-maint
+and R-static likewise). TTD medians are over s1's heal-requiring cells: MH-H's, and REF-M's (the cells where REF-S of
+the same solver has an induced failure and an infinite TTD), ∞ included. **Equal** iff MH-H's final-week success ≥
 R-maint(2) − 0.03 in ≥ 7 of 9 lineages, **and** on s1 the lineage median ≥ min over S1–S3 of REF-M − δ with δ =
 max(3 points, REF-M's spread across S1–S3), **and** median MH-H TTD ≤ median REF-M TTD + 1 world-day. **Better** iff ≥
 every REF-M solver + δ and median TTD ≤ REF-M's. Only then may we write "equal to (or better than) an expert-maintained
@@ -445,14 +493,16 @@ p = 0.95, 0.95 at 0.90, 0.74 at 0.80 and 0.46 at 0.70.
 **D-5 worst case (Q1).** **YES** only if MH-H has: (a) 0 silent critical cases on every IP, OOP-S, CHG-A, CHG-U and FLT
 world in every lineage, with one carve-out: U1s is silent by design until the world complains, so for U1s clause (a)
 reads "0 silent critical cases placed more than 2 world-days after its first true complaint reached the maintainer";
-the silent critical cases of U1s before that point are reported as its *silent exposure*; (b) on ADV-SET at stream
-end, 0 silent critical cases and a per-world maximum of silent failing cases ≤ REF-S's on the same worlds + δ_c
+the silent critical **U1s-induced** cases before that point are reported as its *silent exposure* (a case another change
+also breaks still counts in that change's class; review M8); (b) on ADV-SET at stream
+end, 0 silent critical cases and, **on every world**, the MH-H finals' maximum silent failing cases ≤ REF-S's maximum on
+that same world + δ_c (one knob vector is one world for every arm and stage; review B1, M7)
 (δ_c = max(1 case, 1% of the class's cases)); (c) per class, worst-lineage silent failing rate ≤ worst REF-M (REF-S off
 s1) + δ_c; (d) on routed cases, MH-H's silent-failure rate minus A-H's (mean over lineages and cases) ≤ 0, with a
 two-way bootstrap 95% upper bound ≤ +0.05 (as D-3); (e) ≤ 1 false incident per lineage-world on W1 (the alarm-flood
 guard). Any silent critical case outside the carve-out → **NO**, with a mandatory root-cause record. Any other clause
-missed → **PARTIAL**, naming it. Zero-event bounds use the (lineage × world) unit, never cases: 0 events in N units →
-rate ≤ 3/N per world. Wording: "the worst observed over the stated search (N worlds, M probes), with monitor M"; never
+missed **or not evaluated** (a missing input never passes; review M6) → **PARTIAL**, naming it. Zero-event bounds use the
+(lineage × world) unit, never cases: 0 events in N evaluated lineage-worlds → rate ≤ 3/N per world. Wording: "the worst observed over the stated search (N worlds, M probes), with monitor M"; never
 "worst-case correctness".
 
 **D-6 detection.** Recall within 1 world-day and delay per change class. "Detects" is claimed only for unannounced
@@ -521,10 +571,11 @@ All numbers in this section were computed at $0 before any DUR-1 data, by the sc
   operating characteristics are under D-1 (simulation: 9 lineages × 12 cells, lineage effect SD 0.8 on the logit
   scale).
 - **D-3.** 12 windows × (6 exposed + 2 controls) ≈ 96 routed cases (64 without s3). Simulated power of the two-way
-  bootstrap rule (lineage SD 0.4, window SD 0.6 and case SD 1.0 on the logit scale; agent pass rate 0.85): at Holm
-  level 0.025, **0.59** at a true difference of 0, 0.96 at +0.05, 0.14 at −0.05; at 0.05, 0.73 / 0.99 / 0.23. Without
-  s3 (8 windows): 0.49 / 0.82 at 0.025. With k = 4 (the P0 fallback): 0.36 at a true difference of 0. The size at the
-  margin (true −0.10) is 0.025, as designed. So a D-3 "inconclusive" at a true tie is likely, and is stated now.
+  bootstrap rule (lineage SD 0.4, window SD 0.6 and case SD 1.0 on the logit scale; agent pass rate 0.85; `power.mjs` at
+  the frozen seeds, `POWER.json`, corrected 2026-11-04 from the draft's hand figures): at Holm level 0.025, **0.59** at a
+  true difference of 0, 0.97 at +0.05, 0.14 at −0.05; at 0.05, 0.71 / 0.983 / 0.22. Without s3 (8 windows): 0.49 / 0.89
+  at 0.025. With k = 4 (the P0 fallback): 0.36 at a true difference of 0. The size at the margin (true −0.10) is 0.028
+  (simulation error around the designed 0.025). So a D-3 "inconclusive" at a true tie is likely, and is stated now.
 - **D-6.** 6 unannounced onsets × 3 streams = 18 onsets per lineage; 18/18 has a Wilson lower bound of 0.82; operating
   characteristics under D-6.
 - **D-5.** Silent-critical bounds per world unit: 9 lineages × 18 worlds = 162 units; 0 events → ≤ 1.9% of worlds.
@@ -579,6 +630,12 @@ FH-1 reservation rule). Spend is the CLI-reported list price, an open session co
 
 ### 13.1 Freeze order
 
+*Amended 2026-11-04 (Fix phase): this file is FROZEN before P1, which is stricter than the order below (the analysis,
+the harness and every threshold are fixed before the sealed changes exist). F-A (`FREEZE-A.json`) covers the author's
+files and this file; the sealed author runs; F-B (`FREEZE.json`) then adds only the sealed bundle's sha256 and refuses to
+write unless every other file digest equals Appendix D. The first step of the author phase is the $0 dry run on the
+frozen code (`dur1-chain.sh author`); no money is spent before it passes.*
+
 1. **F-A (author freeze):** `AUTHOR-BRIEF.md`, the change-operator API, the author's gate code and cap are hashed and
    committed. Then the sealed-author session runs (P1). Its bundle is stored outside the repo
    (`/var/tmp/foundry-work/dur1-sealed/`), never read by the experimenter; its sha256 is committed; code gates print
@@ -608,7 +665,10 @@ FH-1 reservation rule). Spend is the CLI-reported list price, an open session co
 | Rate or session limit, model unavailable, sandbox unavailable | **environment fault**: wait 30 minutes and resume from the last commit; never scored; a faulted heal session is re-run once fresh (its spend counts) |
 | > 25% of a window's ticks (or an arm's sessions) impaired by environment faults | that window or arm is invalid (`ENV_FAULT_LIMIT`, `experiments/jit/stats.mjs:45`) |
 | Container restart (C9) | environment fault; the chain resumes with `--resume` from its last commit |
-| A harness error twice on one step | the step is excluded and reported |
+| A harness error twice on one step | the step is excluded and reported (the dry run and Stage Z: the chain stops) |
+| Stage Z: V-1, V-2, V-3 (an exposure floor) or V-11 fails; K-1 or V-6 anywhere; K0.json missing | stop (exit 5, `runs/stagez/STOP.json`); a dated amendment before any paid step |
+| A world run that does not complete (time limit, wake-up limit) | never graded: a harness error |
+| A routed window frozen by environment faults 3 times | recorded invalid (ENV_FAULT_LIMIT), excluded from pairing |
 
 ### 13.3 Deviations
 
@@ -649,6 +709,16 @@ labelled where they appear. Negative and void results are kept.
     implementation; the agent arm's effort differs from the AGENTV and OT-0 measurements (re-measured in P0).
 12. Power: D-3 is likely inconclusive at a true tie (power 0.59); D-1's MDE rests on an unmeasured difference SD, bounded
     by the measured build spread (§11).
+13. The worlds replay one calendar fortnight (§4.1): a heal that drops an effective date (applies a rule to every order)
+    fails W4–W6 orders placed before the published date; the practice gate makes such a heal unlikely to be promoted.
+14. Verifier-blind budget (§6.2 rule 4): the stream's one C-O session is expected to go to a false-complaint incident.
+15. Isolation: C-O contract patches run under Node's permission model (not a full sandbox: network is not restricted;
+    the child has no credentials and reads only code). LD-H's transition candidates run in the harness process behind a
+    static capability-token guard (no import, process, globals, prototypes, eval/Function, timers, network names); an
+    obfuscated escape is not excluded; LD-H sessions see no untrusted text. The sealed author's transition edits are
+    oracle-side (trusted, gated by the author's checks).
+16. If the bed's own MR11 `f6-reserve` behaviour (BUILD-NOTES §4 item 8) makes V-1 fail on a real stream world, Stage Z
+    stops and L1 needs a dated amendment (skip `f6-reserve` on multi-fulfilment orders) before any paid step.
 
 ## 16. Proposed decision text (for `research/decisions-20261021.md`, next free number)
 
@@ -709,8 +779,10 @@ Appended to the `use` text of `ebed-e8-rehearsal`:
 | Agents | A-H `claude-haiku-5-5` high, $0.40/6 min per tick, 1 retry; A-Ox `claude-opus-5-5` xhigh, $1.00/8 min per tick, 1 retry |
 | m6 | `profile.mjs` PARAMS; calibration = completed cases of 1235–1237; ε = 0.3; h = 10,000 |
 | Complaints | q = 0.5; delay 4 h + 26 h·u₂; false complaints Bernoulli(1/3) per world-day; adversarial complaint W5 d6 |
-| Verifier-blind rule | ≥ 2 uncorroborated complaints on one topic within 3 world-days; accept ≥ 50% flagged, ≤ 1% other |
-| Gate / canary / rollback | 0 new contract failures; regression set = practice (announced overlays) + last 3 world-days + W1; canary 1 world-day; rollback window 2 world-days |
+| Verifier-blind rule | ≥ 2 uncorroborated complaints on one topic within 3 world-days; accept ≥ 50% flagged, ≤ 1% other; ≤ 1 C-O session per stream |
+| Lineage-stream caps | MH-H $1.50; REF-M $2.00 per solver-stream; MH-H→O $2.50; a session starts only if spend + its cap ≤ the cap |
+| World time limits | 30 min per 80 arriving orders (stream and evidence runs); routed windows 12 ticks × the per-tick limit per case (≥ 30 min); 3 environment-fault attempts per window |
+| Gate / canary / rollback | 0 new contract failures, 0 new m1/m3 findings, no new arm errors; regression set = practice (announced overlays) + last 3 world-days + W1; canary 1 world-day, per case over m1-m3; rollback window 2 world-days |
 | TTD | exceptions ≤ max(1, 2%); ≥ 3 judgeable days |
 | Windows | k = 6 exposed + 2 controls (k = 4 by the P0 rule); A-Ox ≤ 6 cases |
 | WC-1 | 400 / 150 evaluations per target per pass; min π 0.01; 5 fresh salts, confirm ≥ 3 of 5 |

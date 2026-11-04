@@ -491,7 +491,7 @@
    "allow": [
     "jit-dev"
    ],
-   "use": "E-bed dev worlds, every item E1-E13: bed health, property, metamorphic and mutation suites, $0 controls, specificity and product-equals-oracle checks (20 worlds per difficulty), dev streams. Worlds are salted by item, so one seed is a different world in each item. Disjoint from every other bounded range DUR-1 (DRAFT claim 2026-10-22, research/durability-20261021/PREREG-DUR-1.md §3): E8 streams s1 1171-1176, s2 1177-1182, s3 1183-1188 (d3 tail; W6 size 160) and fuzz-derived worlds of 1301-1310 under salts dur1/<target>/<i>; claimed at the PREREG-DUR-1 freeze, used from its first run.",
+   "use": "E-bed dev worlds, every item E1-E13: bed health, property, metamorphic and mutation suites, $0 controls, specificity and product-equals-oracle checks (20 worlds per difficulty), dev streams. Worlds are salted by item, so one seed is a different world in each item. Disjoint from every other bounded range DUR-1 (claim drafted 2026-10-22, CLAIMED 2026-11-04 at the PREREG-DUR-1 freeze, research/durability-20261021/PREREG-DUR-1.md §3): E8 streams s1 1171-1176, s2 1177-1182, s3 1183-1188 (d3 tail; W6 size 160) and fuzz-derived worlds of 1301-1310 under derived salts (generator split fuzz-dur1-<base>-<salt>: one world per knob vector); used from its first run.",
    "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
   },
   {
@@ -1095,7 +1095,7 @@
    "allow": [
     "ebed-rehearsal"
    ],
-   "use": "E8 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, B1 build-loop practice worlds 1235-1237 (experiments/ebed/smoke-service.mjs; assigned 2026-10-14), specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1238-1240 unassigned). OT-0 (research/org-20261021, 2026-10-21, $0): re-uses the dev rehearsals 1232-1234 at d2, d3, d5 and 1232 d2 size 12 under the org overlay (experiments/constitution/overlay.mjs; world ids unchanged) and the practice worlds 1235-1237 for the W-C smoke loop under a practice registry; no other seed DUR-1 (DRAFT claim 2026-10-22): 1207-1210 harness rehearsal (mini-stream 1207-1208, A-H window 1209, spare 1210); 1223-1226 the sealed author's validation worlds (count-only output); re-uses 1232-1234 (replay check) and practice 1235-1237 (calibration, canary base, heal smoke loop).",
+   "use": "E8 pre-freeze single-use dev worlds: (c) author fixtures 1201-1206, attacks 1211-1222, reference validation 1231, dev rehearsals 1232-1234, B1 build-loop practice worlds 1235-1237 (experiments/ebed/smoke-service.mjs; assigned 2026-10-14), specificity-solver and Track C rehearsals 1241-1249 (1207-1210, 1223-1230, 1238-1240 unassigned). OT-0 (research/org-20261021, 2026-10-21, $0): re-uses the dev rehearsals 1232-1234 at d2, d3, d5 and 1232 d2 size 12 under the org overlay (experiments/constitution/overlay.mjs; world ids unchanged) and the practice worlds 1235-1237 for the W-C smoke loop under a practice registry; no other seed DUR-1 (claim drafted 2026-10-22, CLAIMED 2026-11-04 at the PREREG-DUR-1 freeze): 1207-1210 harness rehearsal (mini-stream 1207-1208, A-H window 1209, spare 1210); 1223-1226 the sealed author's validation worlds (count-only output); re-uses 1232-1234 (replay check) and practice 1235-1237 (calibration, canary base, heal smoke loop).",
    "source": "research/enterprise-20261014/E-BED.md section 6; research/enterprise-20261014/BED-CONTRACT-v1.1.md section 10"
   },
   {

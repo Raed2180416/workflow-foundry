@@ -29,12 +29,43 @@ const walk = (rel, pred = () => true) => {
 };
 const code = f => /\.(mjs|js|json|sh|md)$/.test(f) && !/\/test\//.test(f) || /\/test\/.*\.test\.mjs$/.test(f);
 
+export const PREREG = `${RES}/PREREG-DUR-1.md`;
+/**
+ * F-A: the author's files, the run entry points it goes through (run.mjs, heal-adapter.mjs for the metered session), and the
+ * preregistration itself: since 2026-11-04 the prereg is FROZEN before P1 (§13.1 as amended), so the author cannot run on
+ * a changed prereg.
+ */
 export const FROZEN_A = Object.freeze([
-  `${RES}/AUTHOR-BRIEF.md`, 'experiments/durability/author.mjs', 'experiments/durability/changes.mjs', 'experiments/durability/schedule.mjs',
+  `${RES}/AUTHOR-BRIEF.md`, PREREG, 'experiments/durability/author.mjs', 'experiments/durability/changes.mjs', 'experiments/durability/schedule.mjs',
+  'experiments/durability/run.mjs', 'experiments/durability/heal-adapter.mjs', 'experiments/durability/dur1-chain.sh',
   'experiments/durability/fixtures/author-api.md', 'experiments/compose/drift.mjs', 'policy/models.json', 'src/executors/claude-code.mjs',
 ]);
+
+/**
+ * Every repository module the paid run executes: the static import closure (relative specifiers of `from '...'` and of
+ * literal `import('...')`) of every non-test module under experiments/durability, which includes the chain's entry point
+ * run.mjs, paid.mjs and the contract worker. Files written at run time (transition copies, contract readings, candidate
+ * programs) are not repository files; the bed is pinned by its digest, the programs by theirs.
+ */
+export function executedFiles() {
+  const seen = new Set();
+  const visit = rel => {
+    if (seen.has(rel)) return;
+    const abs = path.join(ROOT, rel);
+    if (!existsSync(abs) || !statSync(abs).isFile()) return;
+    seen.add(rel);
+    if (!/\.m?js$/.test(rel)) return;
+    const src = readFileSync(abs, 'utf8');
+    for (const m of src.matchAll(/(?:from\s+|import\s*\(\s*)['"](\.{1,2}\/[^'"]+)['"]/g)) visit(path.relative(ROOT, path.resolve(path.dirname(abs), m[1])));
+  };
+  for (const f of walk('experiments/durability', f => /\.mjs$/.test(f) && !/\/test\//.test(f))) visit(f);
+  return [...seen].sort();
+}
+/** Files the run READS at run time (data, prompts, texts it copies into workspaces), beyond its modules. */
+export const READ_FILES = Object.freeze(['policy/models.json', 'research/jit-20261008/SEED-LEDGER.json', `${RES}/AUTHOR-BRIEF.md`, `${RES}/SEED-CLAIMS.json`, `${RES}/POWER.json`,
+  'experiments/durability/fixtures/sealed-stub.json', 'experiments/durability/fixtures/author-api.md', 'experiments/durability/dur1-chain.sh', 'experiments/compose/capabilities.mjs', 'experiments/compose/drift.mjs']);
 export function frozenB() {
-  return [...new Set([
+  return [...new Set([...executedFiles(), ...READ_FILES,
     `${RES}/PREREG-DUR-1.md`, `${RES}/AUTHOR-BRIEF.md`, `${RES}/SEED-CLAIMS.json`,
     ...walk('experiments/durability', code),
     ...walk('experiments/fh', f => /\.mjs$/.test(f)),
@@ -44,7 +75,23 @@ export function frozenB() {
     'experiments/ebed/build.mjs', 'experiments/ebed/smoke-service.mjs', 'experiments/ebed/agent-arm.mjs', 'experiments/agentv/arm.mjs',
     'experiments/constitution/observer.mjs', 'experiments/constitution/port.mjs', 'experiments/tracker/nversion.mjs',
     'src/executors/claude-code.mjs', 'policy/models.json', 'research/jit-20261008/SEED-LEDGER.json',
-  ])].filter(f => existsSync(path.join(ROOT, f)));
+  ])].filter(f => existsSync(path.join(ROOT, f))).sort();
+}
+
+/**
+ * The digests recorded in the preregistration's Appendix D (a fenced `freeze-digests` block of "<sha256>  <path>" lines),
+ * or null when it has none. F-B refuses to write unless every file of frozenB() other than the prereg has exactly the
+ * digest the frozen prereg records (§13.1 as amended 2026-11-04).
+ */
+export function preregDigests(text = readFileSync(path.join(ROOT, PREREG), 'utf8')) {
+  const m = text.match(/```freeze-digests\n([\s\S]*?)```/);
+  if (!m) return null;
+  return Object.fromEntries(m[1].trim().split('\n').filter(l => /^[0-9a-f]{64}\s+\S/.test(l)).map(l => { const [h, ...p] = l.trim().split(/\s+/); return [p.join(' '), h]; }));
+}
+/** The Appendix D block for the current tree: every frozenB() file except the prereg itself. */
+export function digestBlock() {
+  const files = frozenB().filter(f => f !== PREREG);
+  return files.map(f => `${sha(readFileSync(path.join(ROOT, f)))}  ${f}`).join('\n');
 }
 const digestsOf = files => Object.fromEntries(files.map(f => [f, existsSync(path.join(ROOT, f)) ? sha(readFileSync(path.join(ROOT, f))) : null]));
 
@@ -70,7 +117,16 @@ export async function writeFreeze(stage, { commit = null, allowMissingSealed = f
   const extra = stage === 'B' ? await extraDigests() : { bedDigest: bedDigest() };
   if (stage === 'B' && !extra.sealed && !allowMissingSealed) throw new Error('DUR1_FREEZE: F-B needs the sealed bundle hash (SEALED.json, after P1)');
   if (stage === 'B' && !extra.power) throw new Error('DUR1_FREEZE: F-B needs POWER.json (node experiments/durability/power.mjs > POWER.json)');
-  const out = { experiment: 'DUR-1', stage, at: new Date().toISOString(), commit, ...extra, files };
+  if (stage === 'B') {
+    // The frozen prereg's Appendix D must hold every file's digest unchanged (nothing moved between F-A and F-B).
+    const want = preregDigests();
+    if (!want) throw new Error('DUR1_FREEZE: the prereg has no Appendix D digests (it must be FROZEN first)');
+    const differs = Object.entries(files).filter(([f]) => f !== PREREG).filter(([f, h]) => want[f] !== h).map(([f]) => f);
+    const gone = Object.keys(want).filter(f => !(f in files));
+    if (differs.length || gone.length) throw new Error(`DUR1_FREEZE: F-B differs from the frozen prereg's Appendix D: ${[...differs, ...gone.map(f => `${f} (missing)`)].slice(0, 12).join(', ')}`);
+  }
+  const pd = preregDigests();
+  const out = { experiment: 'DUR-1', stage, at: new Date().toISOString(), commit, ...extra, ...(pd ? { preregBlock: sha(JSON.stringify(pd)), preregFiles: Object.keys(pd).length } : {}), files };
   writeFileSync(FREEZE_FILES[stage], JSON.stringify(out, null, 1) + '\n');
   return out;
 }
@@ -81,6 +137,7 @@ export async function checkFreeze(stage, { file = FREEZE_FILES[stage] } = {}) {
   const want = JSON.parse(readFileSync(file, 'utf8'));
   const have = stage === 'A' ? digestsOf(FROZEN_A) : digestsOf(frozenB());
   const changed = Object.keys(want.files).filter(f => have[f] !== want.files[f]);
+  if (stage === 'A' && want.preregBlock) { const d = preregDigests(); if (!d || sha(JSON.stringify(d)) !== want.preregBlock) changed.push(`${PREREG} (Appendix D)`); }
   const extra = Object.keys(have).filter(f => !(f in want.files));
   const problems = [];
   if (bedDigest() !== want.bedDigest) problems.push(`bed ${want.bedDigest} -> ${bedDigest()}`);
@@ -103,9 +160,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const commitIx = process.argv.indexOf('--commit');
     const r = await writeFreeze(stage, { commit: commitIx > 0 ? process.argv[commitIx + 1] : null });
     console.log(`FREEZE ${stage}: ${Object.keys(r.files).length} files, bed ${r.bedDigest}${r.sealed ? `, sealed ${r.sealed.slice(0, 16)}` : ''}`);
+  } else if (mode === 'digests') {
+    console.log(digestBlock());
   } else if (mode === 'check') {
     const c = await checkFreeze(stage);
     console.log(JSON.stringify(c));
     process.exit(c.ok ? 0 : 1);
-  } else { console.error('usage: freeze.mjs write|check A|B'); process.exit(2); }
+  } else { console.error('usage: freeze.mjs write|check A|B, or freeze.mjs digests (the Appendix D block)'); process.exit(2); }
 }

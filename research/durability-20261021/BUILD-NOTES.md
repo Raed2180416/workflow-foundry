@@ -126,14 +126,12 @@ Every command runs from the root of this worktree (or of main once this branch i
 detached from the chain script file, never typed inline. All spend goes to one ledger,
 `research/durability-20261021/runs/spend.jsonl`; rows and caps are prereg §12 (`run.mjs` `PRIORITY`).
 
-**Fix phase, before any money ($0):**
+**Fix phase, before any money ($0): done 2026-11-04 (§9).** Prereg §11 corrected to `POWER.json`; the review fixes
+applied; the seed claim CLAIMED; the prereg FROZEN with every executed file's sha256 in its Appendix D; F-A written and
+committed (`FREEZE-A.json`). Superseded by §9 and the prereg's §13.1 as amended: the order below is the current one.
 
-1. Correct prereg §11 and the banner to `POWER.json` (four D-3 cells, §4 item 7 above); review code and prereg; record
-   the decision (proposed D31, prereg §16) and the seed claim.
-2. Freeze F-A and commit it: `node experiments/durability/freeze.mjs write A --commit $(git rev-parse HEAD)`, then
-   `git add research/durability-20261021/FREEZE-A.json` and commit.
-
-**P1, the sealed author (Opus 5.5 xhigh, $2 and 60 min per session, one revision; row cap $4):**
+**P1, the sealed author (Opus 5.5 xhigh, $2 and 60 min per session, one revision; row cap $4).** The author phase first
+runs the $0 dry run on the frozen code (`run.mjs dry --light`, ~35 min; the chain stops if it fails), then P1:
 
     setsid nohup sh experiments/durability/dur1-chain.sh author > research/durability-20261021/runs/chain-author.log 2>&1 &
 
@@ -142,10 +140,8 @@ It writes the bundle to `/var/tmp/foundry-work/dur1-sealed/bundle.json` (outside
 
 **F-B, then everything else:**
 
-    node experiments/durability/power.mjs --out research/durability-20261021/POWER.json
-    # prereg status -> FROZEN; commit; then:
-    node experiments/durability/freeze.mjs write B --commit $(git rev-parse HEAD)
-    git add research/durability-20261021/FREEZE.json && git commit (trailers as usual)
+    node experiments/durability/freeze.mjs write B --commit $(git rev-parse HEAD)   # refuses unless every digest equals Appendix D
+    git add research/durability-20261021/SEALED.json research/durability-20261021/FREEZE.json && git commit (trailers as usual)
     setsid nohup sh experiments/durability/dur1-chain.sh after-author > research/durability-20261021/runs/chain.log 2>&1 &
 
 The chain runs, in prereg §13.1 order, each as `nice -n 15 node experiments/durability/run.mjs ...`:
@@ -165,8 +161,10 @@ The chain runs, in prereg §13.1 order, each as `nice -n 15 node experiments/dur
 | P9 | `forks --paid` (MH-stale on s1, LD-H x 6) | <= $5 |
 | analysis | `analyze` (writes runs/REPORT.json; owner table first) | $0 |
 
-Exit codes: 3 stops the chain (freeze changed or `--paid` missing), 4 budget-stops a row and moves on, 75 is an
-environment fault (wait 30 minutes, resume the same step), anything else is retried once and then excluded and reported.
+Exit codes: 3 stops the chain (freeze changed or `--paid` missing; never a budget), 4 budget-stops a row and moves on,
+5 stops the chain (a stop rule: V-1, V-2, V-3, V-11, K-1, V-6, a missing K-0), 75 is an environment fault (wait 30
+minutes, resume the same step), anything else is retried once and then excluded and reported (the dry run and Stage Z:
+the chain stops). K-0 needs `runs/stagez/K0.json` with `"kill": false`.
 Resume after a restart: the same `setsid nohup sh ... after-author` line (finished steps leave `runs/.done-<step>`).
 
 ## 7. The $0 dry run (plumbing, never evidence)
@@ -219,3 +217,51 @@ dry --light`, then delete `/var/tmp/foundry-work/dur1-dry`.
 
 46 tests pass (about 8 minutes in all on the shared machine). Also run once after the imports: Move 0's
 `experiments/lib/certify.test.mjs` 20/20 and `gauntlet.test.mjs` 46/46; the seed ledger test 6/6.
+
+## 9. Fix phase (2026-11-04): the two build reviews of `a9b97e29`, applied
+
+Two reviews of the build (8 blockers, 23 majors, 13 minors; 5 blockers, 12 majors, 10 minors) reached this phase
+**truncated**: review 1 after its M10, review 2 after its M7. Every blocker and every major that was readable is applied
+below or disagreed with, with the reason; review 1's M11-M23, review 2's M8-M12 and both reviews' minors were not
+available to this phase and are **not addressed** (they must be read from the reviewers' outputs before any paid step).
+
+| Finding | What changed | Test |
+|---|---|---|
+| R1-B1 world identity | `knobs.mjs`: split `fuzz-dur1-<base>-<salt>`, MR11/overlay salts and the LDFI draw keyed on (base, salt); the target stays in the key only | `fixes` B1 |
+| R1-B2 canary day skipped | `stream.mjs`: a re-run keeps the delivered signals of the days before the swap; after a promotion the loop resumes on the canary day (monitored, no session); the deferred canary's day 1 likewise | `fixes` B2 (stream) |
+| R1-B3 / R2-M2 VB reuse | one verifier-blind C-O session per stream; every incident judged with its reading on its own journal; the reading reaches every lineage; VB lock across workers | `fixes` B3/B5 |
+| R1-B4 / R2-B1 / R2-B2 budget plumbing | `BudgetStop` (row, total, scope) apart from `FreezeError`; `preflight` and `meteredRun` shared by heal, C-O, red-team and author sessions; the stream checks spend + cap <= its cap before every session and budget-stops the incidents; REF-M $2.00 per solver-stream, MH-H->O $2.50; C-O with no room: quarantine (announced) or needs-human (VB); P0 counts its 3 sessions on the ledger and always writes P0.json; `windowK` refuses a missing P0.json | `fixes` B4 (unit + stream) |
+| R1-B5 VB sessions exhaust P2 | <= 1 VB C-O session per stream; rule 3 corroborates on any incident holding the order (any status). $0 computation from the frozen false-complaint draws: 2 / 1 / 5 VB incidents on s1 / s2 / s3 from false complaints alone, the first in W3 / W3 / W1, so each stream's session is expected to go to a false alarm (prereg §6.2 rule 4 discloses it) | `fixes` B3/B5 |
+| R1-B6 / R2-B3 fail-open | Stage Z stops (exit 5, `STOP.json`) on V-1, V-2, V-3, V-11; K-1 and V-6 throw `StopError` in `runStream`; the chain stops on 5, needs `K0.json` with `"kill": false`, stops when the dry run or Stage Z is excluded, and a stop in a background P3 worker reaches the chain through `runs/STOP-chain` | `fixes`; chain by reading |
+| R1-B7 replayed calendar | dated changes (P1, R1, R2s, E2s's edition) keep their published effective date in every later world (truth, notice, visible configuration, practice); renames, loads, faults stay from t0 (prereg §4.1). **Not adopted:** judging W1 under its own readings (with the replayed calendar it rejects every correct date-gated heal; prereg §6.3) and a true calendar offset (every per-day computation is world-relative; disclosed §15) | `fixes` B7 |
+| R1-B8 D-1 critical regressions | `certifyPromotion` finds the cases the candidate fails critically that the incumbent passes; `critRegressionDays` measures days in force; `report` passes them to D-1, which fails closed when they are missing | `analysis` D-1 |
+| R2-B4 window timeouts | routed windows get a world limit of 12 ticks x the per-tick limit per case; a non-frozen stop is a harness error; 3 environment-fault attempts make the window invalid (recorded, excluded) | by reading |
+| R2-B5 model code in process | C-O contract patches run in `contract-worker.mjs` under Node's permission model (reads limited to code, readings and the item; no writes, no child processes; empty environment); LD-H transition candidates pass a static capability-token guard before import (residual disclosed, prereg §15) | `fixes` R2-B5 (x2) |
+| R1-M1 Holm | step-down: the second hypothesis gets level 0 unless the first is rejected; level 0 never passes | `analysis` Holm |
+| R1-M2 medians | D-3's falsifier over the windowed changes' cells with infinity; D-4's TTD on s1 cells against REF-M's s1 cells | by reading |
+| R1-M3 D-4 inputs | REF-M cells from REF-S's heal-requiring cells (REF-S now attributed); final week pooled over streams | by reading |
+| R1-M4 TTD tolerance | heal-requiring = S-H* induced failure AND S-H* TTD infinite; S-H*'s durable share on the wider set is reported | `analysis` (report) |
+| R1-M5 classes | attribution first, multi-label; exposure fallback with P1 last | `analysis` (report) |
+| R1-M6 D-5(c) | computed (MH-H vs REF-M on s1, REF-S elsewhere); every D-5 clause fails closed | `analysis` D-5 |
+| R1-M7 D-5(b) | per ADV-SET world | `analysis` D-5 |
+| R1-M8 U1s carve-out | U1s-induced cases only | by reading |
+| R1-M9 zero-event unit | N = lineage-worlds evaluated | `analysis` D-5 |
+| R1-M10 silent deadline | the last effect time is recorded per case (`wrec.grade[c][6]`); deadline = last effect, else first divergence, else world end, + 1 day; the same rule for windows | `analysis` silent |
+| R2-M1 canary/rollback/gate | per case over m1 (incl. arm errors), m2, m3; the gate adds m1/m3 findings and arm errors on practice and W1; a candidate run that does not complete is a rejection, an incumbent one a harness error | `fixes` R2-M1; stream: break/obey never promoted |
+| R2-M3 C-O lock | owner-stamped (host, pid, time) locks, reclaimed when the owner is gone or older than 4 h; the reading file is re-checked inside the lock | `fixes` R2-M3 |
+| R2-M4 faulted attempts | per-attempt ledger scope `<label>#a<n>` and session directory; `envInvalid` applied in `analyzeRuns`; a thrown `SANDBOX_UNAVAILABLE` gets its end row at $0 | `fixes` R2-M4 |
+| R2-M5 truncated worlds | every stream, shadow, re-run and evidence run must complete or is a harness error (never graded); world limit 30 min per 80 orders | by reading |
+| R2-M6 labels | `unitOfLabel`: single-unit arms are 'ref' | `analysis` |
+| R2-M7 dry run vs paid paths | partly: the paid plumbing has unit and stream tests here (preflight, metered rows, budget stops in a stream, locks, VB reuse, sandbox); a stubbed rehearsal of the whole chain was not built. P0 (<= $2) is the first paid exercise of the heal and window paths, before P3 | - |
+
+**Other changes.** The prereg §11 D-3 cells and the banner now read `POWER.json` (0.97; 0.71 / 0.983 / 0.22; 8 windows
+0.89; size at the margin 0.028). The seed claim is CLAIMED (ledger use texts, `SEED-CLAIMS.json`). `stages.test.mjs`'s
+ADV-SET vector moved from salt 11 to 12 (with one world per vector the old world held no R1 failure). `freeze.mjs`
+freezes the import closure of every module under `experiments/durability` (`executedFiles`) plus the files read at run
+time; F-A also covers the prereg, `run.mjs`, `heal-adapter.mjs` and the chain; F-B refuses to write unless every digest
+equals the prereg's Appendix D.
+
+**Not done in this phase (open):** V-9 (payload-derived case index); a stubbed rehearsal of the whole chain (R2-M7);
+a stream-level rollback test (the per-case comparison is tested as a function); finer resume than the lineage-stream;
+the MR11 `f6-reserve` check on the real L1 worlds (Stage Z's V-1 decides it and stops the chain if it bites); the
+truncated review items above.
