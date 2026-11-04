@@ -15,13 +15,15 @@ const maxTokens = arg('--max-tokens', 4000), tokenCap = arg('--token-cap', 70000
 const faulted = readJsonl(rowsFile('mercury', 'test')).filter(r => !r.ok).map(r => r.id);
 const items = loadSet().filter(it => it.split === 'test' && faulted.includes(it.id));
 const out = path.join(RUNS, `mercury-test-refault-${maxTokens}.jsonl`);
-const done = new Set(readJsonl(out).map(r => r.id));
+const done = new Set(readJsonl(out).filter(r => r.ok).map(r => r.id));          // a faulted row is asked again on a re-run
 const todo = items.filter(it => !done.has(it.id));
 console.log(`refault: ${faulted.length} faulted test ids; ${todo.length} to ask at maxTokens ${maxTokens}; token cap ${tokenCap}`);
 if (todo.length) {
   mkdirSync(LIVE, { recursive: true });
   const { createModelPort } = await import('../../lib/models.mjs');
-  const { port, tokens } = createModelPort({ journalFile: path.join(LIVE, 'mercury-refault.sqlite'), allowedModels: ['claude-haiku-5-5', MERCURY], tokenCap, callTokens: maxTokens + 2000 });
+  // callTokens: the per-call reservation must hold the input too (eb-e8's prompt is about 2,000 tokens; the first run reserved
+  // maxTokens + 2,000 and the port refused that call with MODEL_BUDGET before sending it).
+  const { port, tokens } = createModelPort({ journalFile: path.join(LIVE, 'mercury-refault.sqlite'), allowedModels: ['claude-haiku-5-5', MERCURY], tokenCap, callTokens: maxTokens + 6000 });
   for (const it of todo) {
     let r;
     try {
