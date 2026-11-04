@@ -293,3 +293,49 @@ corpus/sop-bench-venv/bin/python -I experiments/sopbench/bridge.py worldcheck --
 corpus/sop-bench-venv/bin/python -I experiments/sopbench/bridge.py probe --upstream corpus/sop-bench --split research/sopbench-20261021/SPLIT.json
 corpus/sop-bench-venv/bin/python -I experiments/sopbench/cf_ceiling.py 40
 ```
+
+## Phase 2 result: the reliability claim is not supported (DESIGN §7.4 negative result, 2026-11-04)
+
+Full write-up, read by the frozen rule and adversarially verified: [RESULT-p2.md](RESULT-p2.md). By the rule, the build-once
+workflows (W-H) **beat the per-row agent (A-H) and are cheaper**, but the **90% reliability claim fails**: W-H macro strict
+pass^3 is 87.6% [85.6, 89.5] (88.0% [85.8, 90.0] without the orchestration-only SOP), below the 0.90 point estimate the
+claim needs; both lower bounds clear 0.85. A-H is 67.1% [64.8, 69.4]; W − A +20.5 [+18.1, +23.0]. Per DESIGN §7.4 the
+per-SOP table and the failure anatomy follow (from RESULT-p2.md §3.2 and §5.1; the upstream metric exists only per run, so
+no upstream pass^3 stands beside the strict pass^3, a disclosed gap, RESULT-p2.md §8).
+
+### Per SOP (sealed, k = 3)
+
+| SOP | sealed rows | dev pass (training) | W pass^3 | A pass^3 | W − A | W pass@1 | A pass@1 | A upstream@1 |
+|---|---|---|---|---|---|---|---|---|
+| aircraft_inspection (orchestration-only) | 92 | 20/20 | 83.7% (77) | 45.7% (42) | +38.0 | 83.7% | 46.4% | 46.4% |
+| customer_service | 136 | 20/20 | 94.1% (128) | 60.3% (82) | +33.8 | 94.1% | 78.9% | 78.9% |
+| dangerous_goods | 254 | 20/20 | 97.6% (248) | 89.4% (227) | +8.3 | 97.6% | 95.0% | 95.0% |
+| email_intent | 166 | 20/20 | 100.0% (166) | 81.3% (135) | +18.7 | 100.0% | 88.0% | 88.0% |
+| know_your_business | 70 | 20/20 | 88.6% (62) | 25.7% (18) | +62.9 | 88.6% | 31.4% | 31.4% |
+| order_fulfillment | 23 | 7/7 | 78.3% (18) | 87.0% (20) | −8.7 | 78.3% | 87.0% | 87.0% |
+| referral_abuse_detection_v1 | 180 | 20/20 | 100.0% (180) | 99.4% (179) | +0.6 | 100.0% | 99.8% | 99.8% |
+| referral_abuse_detection_v2 | 180 | 20/20 | 100.0% (180) | 87.8% (158) | +12.2 | 100.0% | 94.1% | 94.1% |
+| traffic_spoofing_detection | 180 | 15/20 | 72.8% (131) | 81.1% (146) | −8.3 | 72.8% | 81.5% | 81.5% |
+| video_annotation | 105 | 20/20 | 99.0% (104) | 33.3% (35) | +65.7 | 99.0% | 42.5% | 43.8% |
+| video_classification | 177 | 19/20 | 87.6% (155) | 65.5% (116) | +22.0 | 87.8% | 76.1% | 76.1% |
+| warehouse_package_inspection | 130 | 17/20 | 50.0% (65) | 49.2% (64) | +0.8 | 50.0% | 49.2% | 49.2% |
+| **macro, 12 SOPs** | 1,693 | 96.3% | **87.6%** [85.6, 89.5] | **67.1%** [64.8, 69.4] | **+20.5** [+18.1, +23.0] | 87.7% | 72.5% | 72.6% |
+| macro without aircraft_inspection | 1,601 | | 88.0% [85.8, 90.0] | 69.1% [66.7, 71.5] | +18.9 [+16.5, +21.3] | 88.0% | 74.9% | 75.0% |
+
+### Failure anatomy (aggregate counts, primary)
+
+| SOP | W rows always failing / flaky | W most-missed columns (column misses) | A rows always failing / flaky | A failing runs: wrong value / L5 / other | A most-missed columns (column misses) |
+|---|---|---|---|---|---|
+| aircraft_inspection | 15 / 0 | aircraft_ready 33, cross_check_response 24, component_mismatch_response 12 | 49 / 1 | 146 / 2 / – | component_incident_response 135, component_mismatch_response 135, cross_check_reporting_response 115 |
+| customer_service | 8 / 0 | final_resolution_status 24 | 10 / 44 | 62 / 24 / – | final_resolution_status 62 |
+| dangerous_goods | 6 / 0 | hazard_class 18 | 5 / 22 | 28 / 10 / – | hazard_class 28 |
+| email_intent | 0 / 0 | – | 11 / 20 | 58 / 2 / – | action 55, seller_intent 22 |
+| know_your_business | 8 / 0 | escalation_status 24 | 43 / 9 | 141 / 3 / – | escalation_status 141 |
+| order_fulfillment | 5 / 0 | expected_output 15 | 3 / 0 | 9 / 0 / – | expected_output 9 |
+| referral_abuse_detection_v1 | 0 / 0 | – | 0 / 1 | 0 / 1 / – | – |
+| referral_abuse_detection_v2 | 0 / 0 | – | 3 / 19 | 31 / 1 / – | final_decision 31 |
+| traffic_spoofing_detection | 49 / 0 | enforcement_action 147 | 33 / 1 | 99 / 1 / – | enforcement_action 99 |
+| video_annotation | 1 / 0 | final status 3 | 52 / 18 | 172 / 0 / 9 (8 invalid JSON, 1 no final output) | final status 172 |
+| video_classification | 21 / 1 | final_decision 65 | 27 / 34 | 121 / 6 / – | final_decision 121 |
+| warehouse_package_inspection | 65 / 0 | resolution_status 195 | 66 / 0 | 198 / 0 / – | resolution_status 198 |
+| **total** | **178 / 1** | 536 failing runs | **302 / 169** | 1,065 / 50 / 9 | |

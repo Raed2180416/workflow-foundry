@@ -1,18 +1,28 @@
 # SOP-Bench phase 2 result: build-once workflows on sealed rows, read by DESIGN §7
 
-> **DRAFT, not yet adversarially verified (2026-11-04).** Written by one agent on 2026-10-28; the two independent verifiers and the fix pass stopped on a usage limit. Numbers were recomputed by the writer from aggregates only; treat them as unverified until the verification pass lands.
+> **Verified 2026-11-04.** Written by one agent on 2026-10-28 from aggregates only; on 2026-11-04 two independent
+> verifiers checked every number and claim against the sources, and a fix pass applied 29 of their 30 findings in full and
+> one in part (the rejection and its reason are in the fix record; workflow run wf_06047c98-40c).
 
 *2026-10-28. Design and preregistration: `DESIGN.md` (§7 decision rule, §8 ablation, §13 as built). Frozen in
 `FREEZE-p2.json` (sha256 `14effe18…`), committed in 5a8c6603 at 2026-10-21 13:32Z, before any sealed row was prepared.
-The split is `SPLIT.json` (`1d957beb…`), and phase 1 with its dev baseline is in `NOTES.md`. **The primary run is sealed,
-claim-bearing evidence, read by the frozen rule.** It covers 12 SOPs and 1,693 sealed rows, with k = 3 and both arms
-interleaved per row. **The three cells (V1-minimal, V2-bloated, patient_intake) ran on sealed rows with frozen
+The split is `SPLIT.json`; its `splitSha256`, the hash of the canonical row lists that the freeze also records, is
+`1d957beb…` (the file's own sha256 is `f3949416…`). Phase 1 with its dev baseline is in `NOTES.md`. **The primary run
+is sealed, claim-bearing evidence, read by the frozen rule.** It covers 12 SOPs and 1,693 sealed rows, with k = 3 and
+both arms interleaved per row. **The three cells (V1-minimal, V2-bloated, patient_intake) ran on sealed rows with frozen
 workflows, but no rule decides them.** They are reported against their stated purpose, and every comparison of a cell
-with the primary is read post hoc. The build numbers are development evidence: dev rows are training data. Every number
-is recomputed by a $0 script from the committed aggregates (`runs/*/summary.json`, `runs/*/failures.json`,
-`runs/*/build-summary.json`) and the freeze. The one exception is the bootstrap intervals, which need row-level records;
-those are quoted from the summaries, where `analyse()` (`experiments/sopbench/sealed.mjs:64`) computed them. No per-row
-record was opened for this file.*
+with the primary is read post hoc. The build numbers are development evidence: dev rows are training data. The result
+numbers of §2–§6 are recomputed by a $0 script from the committed aggregates (`runs/*/summary.json`,
+`runs/*/failures.json`, `runs/*/build-summary.json`) and the freeze, with these exceptions:*
+
+- *The bootstrap intervals need row-level records. They are quoted from the summaries, where `analyse()`
+  (`experiments/sopbench/sealed.mjs:64`) computed them.*
+- *V1's rough unpaired interval (§4.1) is a separate post-hoc computation from the aggregates.*
+- *The run history (§7) and the CLI versions come from other records, which §7 lists: the chain log's `[chain` lines (not
+  committed), the runs' `launch.json` histories, partial summaries in git, decision D31, the compromise register and
+  RESULT-OT0.*
+
+*No per-row record was opened for this file.*
 
 ## 1. Summary
 
@@ -22,7 +32,9 @@ record was opened for this file.*
    [+18.1, +23.0].
    - The reliability clause fails on its point estimates: 87.6% < 90%, and 88.0% < 90% without the orchestration-only
      SOP. Both 95% lower bounds clear 85%.
-   - By §7.4 the "90%+ reliable" claim is therefore not supported. This is a negative result for that clause.
+   - By the frozen rule the claim under test (DESIGN §0: strict pass^3 ≥ 0.90 **and** more reliable than the agent) is
+     therefore not supported: clause 1 fails, clauses 2 and 3 hold. Per §7.4 this is a negative result. Carrying it
+     into NOTES and docs/RESEARCH.md, as §7.4 asks, is still outstanding (§8 item 14).
 2. **W is almost deterministic, and its failures are all wrong labels.** Only 1 of its 1,693 rows changed outcome
    across the three runs; the agent had 169 such rows.
    - W's pass@1 (87.7%) is close to its pass^3. The agent's pass@1 of 72.5% falls to 67.1% at pass^3.
@@ -40,13 +52,13 @@ record was opened for this file.*
 5. **The cells show large W − A gaps but do not show a distractor effect.**
    - **V1-minimal** gives video_annotation only its 6 real tools. W scores 98.1% and A 38.1%. Against the primary's
      26-tool video_annotation, bloated − minimal is +1.0 point for W (1 row) and −4.8 points for A (5 rows). A's
-     direction matches upstream's, but the difference is well within noise.
+     point estimate goes upstream's way, but its rough interval, [−17.7, +8.2], spans zero.
    - **V2-bloated** adds 20 distractor tools to each of three SOPs. W scores 89.2% and A 65.0%, so W − A is +24.2
      [+15.8, +32.5]. The preregistered comparison with the primary on the same 120 rows is in no aggregate, so the V2
      distractor effect is unknown here.
    - **patient_intake** scores 100% for W and 48.0% for A. It is an orchestration-only SOP.
 6. **The run history.** There were 11 stops on environment faults (9 in the primary, 2 in V2-bloated; 26 fault
-   records), 3 process kills and 16 resumes.
+   records), 3 process kills and 16 resumes. Six stop reasons are recorded: five rate limits and one full disk.
    - V2-bloated stood still for 6 d 10 h because the account hit its weekly usage limit (D31).
    - No frozen file changed.
    - The CLI binary is not frozen, and no summary records its version. Other records put three patch versions inside the
@@ -56,7 +68,7 @@ record was opened for this file.*
 
 | run | cell | SOPs | sealed rows | runs (W + A) | ran (UTC) | env-fault records | spend (cap) |
 |---|---|---|---|---|---|---|---|
-| `p2-sealed` | primary | the 12 of §6 | 1,693 | 10,158 | 2026-10-21, after the freeze commit, to 10-22 03:59Z | 23 | $8.7294 ($40) |
+| `p2-sealed` | primary | the 12 of §6 | 1,693 | 10,158 | 2026-10-21 13:32Z, 24 s after the freeze commit, to 10-22 03:59Z | 23 | $8.7294 ($40) |
 | `p2-abl-v1-sealed` | V1-minimal | video_annotation, 6-tool catalog | 105 | 630 | 10-22 03:59–04:23Z | 0 | $0.7421 ($5) |
 | `p2-abl-v2-sealed` | V2-bloated | dangerous_goods, customer_service, know_your_business, +20 distractors each | 120 (40 each, seeded subsample) | 720 | 10-22 04:23Z to 10-28 18:06Z | 3 | $0.7484 ($5) |
 | `p2-pi-sealed` | patient_intake | patient_intake | 50 | 300 | 10-28 18:06–18:29Z | 0 | $0.2659 ($5) |
@@ -160,13 +172,16 @@ aircraft_inspection.
 
 The summary's own `decision` is `{"reliabilityClaim":false,"beatsAgent":true,"cheaperThanAgent":true}`, the same.
 
-**Reading:** W beats the agent and is cheaper. The 90% reliability claim is **not supported**, and §7.4 makes it a
-negative result for that clause. It fails on the point estimates, not on the intervals.
+**Reading:** W beats the agent and is cheaper, but the reliability clause fails, on the point estimates rather than
+the intervals. DESIGN §0 states one claim under test, strict pass^3 ≥ 0.90 **and** more reliable than the agent, so by
+the frozen rule that claim is **not supported** (clause 1 fails; clauses 2 and 3 hold). Per §7.4 this is a negative
+result.
 
 ### 3.2 Per SOP
 
 Pass^3 shows the share of rows, with the number of rows passing all three runs in parentheses. Upstream@1 is upstream's
-lenient metric, reported beside the strict one as §7.4 asks.
+lenient metric per run. `analyse()` computes the upstream metric only per run, so no upstream pass^3 stands beside the
+pass^3 columns; §7.4 asks for it "beside every strict number" (§8).
 
 | SOP | sealed rows | dev pass (training) | W pass^3 | A pass^3 | W − A | W pass@1 | A pass@1 | A upstream@1 |
 |---|---|---|---|---|---|---|---|---|
@@ -218,7 +233,9 @@ then rise by at most 2.9 points, from Σ over SOPs of min(violations, rows) / ro
 **What it shows:**
 
 - On SOP-Bench's sealed rows of these 12 SOPs, Haiku 5.5 wrote code once per SOP from the SOP text, the tool specs and
-  5 build rows, and repaired it on at most 15 dev rows. That code answers more rows correctly on all three runs than the
+  5 build rows. Where the code missed a repair row, Haiku repaired it with every dev row in view, up to 20 (5 build + 15
+  repair; 7 for order_fulfillment), since a repair session sees each dev row with its expected answer (DESIGN §13,
+  Deviation). That code answers more rows correctly on all three runs than the
   Haiku 5.5 agent working through the SOP on every row: +20.5 points macro, with a paired interval excluding 0.
 - It does so almost without run-to-run variation.
 - It costs about a third as much per run once its build cost is spread over the run.
@@ -229,7 +246,7 @@ then rise by at most 2.9 points, from Σ over SOPs of min(violations, rows) / ro
 - Superiority on every SOP.
 - Anything about a frontier agent. The A-S Sonnet reference of DESIGN §9 was not run.
 - That model loops are being compared. Per DESIGN §13, 11 of the 12 workflows made no model call on dev rows. The run
-  therefore compares code fitted on 20 dev rows with an agent per row.
+  therefore compares code fitted on up to 20 dev rows with an agent per row.
 - Parity with upstream's published numbers, which come from other models, agent loops, rows and scorers (NOTES §6).
 
 ## 4. The cells, as preregistered
@@ -254,10 +271,10 @@ catalog and refused by the bridge. Its comparator is the shipped 26-tool catalog
 W was rebuilt under the minimal catalog in `p2-abl-v1`: 20/20 on dev rows at round 0, for $0.192. The bloated W is the
 primary's workflow, which reached 20/20 after one repair for $0.186.
 
-| arm | minimal (V1 cell) | bloated (primary) | Δ bloated − minimal | pass@1 minimal / bloated |
-|---|---|---|---|---|
-| W | 98.1% (103/105) [95.2, 100] | 99.0% (104/105) | +1.0 (1 row) | 98.1% / 99.0% |
-| A | 38.1% (40/105) [28.6, 47.6] | 33.3% (35/105) | −4.8 (5 rows) | 46.7% / 42.5% |
+| arm | minimal (V1 cell) | bloated (primary) | Δ bloated − minimal | pass@1 minimal / bloated | upstream@1 minimal / bloated |
+|---|---|---|---|---|---|
+| W | 98.1% (103/105) [95.2, 100] | 99.0% (104/105) | +1.0 (1 row) | 98.1% / 99.0% | 98.1% / 99.0% |
+| A | 38.1% (40/105) [28.6, 47.6] | 33.3% (35/105) | −4.8 (5 rows) | 46.7% / 42.5% | 47.9% / 43.8% |
 
 In the cell, W − A is +60.0 [+50.5, +69.5].
 
@@ -265,11 +282,6 @@ In the cell, W − A is +60.0 [+50.5, +69.5].
 
 - Under either catalog the build-once workflow gets 98–99% of rows right on all three runs, and the agent gets 33–38%.
   The catalog moves neither arm by more than 5 of 105 rows.
-- The agent's direction matches upstream's report: bloated is worse. Upstream had Sonnet 4.5 ReAct at "minimal registry
-  37% TSR" against 20.8% bloated, on its lenient metric (NOTES §6). Here the effect is −4.1 points pass@1 and −4.8
-  pass^3, about a quarter of upstream's 16 points.
-- A rough post-hoc 95% interval for A's Δ is [−17.7, +8.2]. It is unpaired, so it is wider than a paired interval would
-  be if the rows correlate positively. This cell therefore does not show a distractor effect on the agent.
 - The agent fails the same way in both catalogs, with `final status` wrong:
   - minimal: 158 of 168 failing runs, plus 9 invalid-JSON answers and 1 with no final output;
   - bloated: 172 of 181 failing runs, plus 8 invalid-JSON answers and 1 with no final output.
@@ -278,12 +290,20 @@ In the cell, W − A is +60.0 [+50.5, +69.5].
     `tryCall` when detection reports tracking off (`frozen/p2/video_annotation/solve.mjs:52, 58`). The stub's body is
     `pass`.
   - The minimal build names no stub.
-  - Whether that branch ran on any sealed row is not in the aggregates. It cost W at most the 1-row difference above.
+  - Whether that branch ran on any sealed row is not in the aggregates. If it hurt W at all, it cost at most the one
+    row the primary W failed (104/105 pass^3). The 1-row Δ favours the bloated build, so it is not such a cost.
 
 **What it does not show:**
 
+- A distractor effect on the agent. The point estimate goes upstream's way: bloated is worse, by 4.1 points pass@1
+  and 4.8 pass^3, about a quarter of upstream's 16 points (Sonnet 4.5 ReAct at "minimal registry 37% TSR" against
+  20.8% bloated, on upstream's lenient metric; NOTES §6). But a rough post-hoc 95% interval for A's Δ is [−17.7, +8.2]
+  and spans zero. It is unpaired, so it is wider than a paired interval would be if the rows correlate positively.
 - A paired interval for Δ (§8 item 3).
 - W's Δ separates the catalog from build-to-build variation. There is one build per catalog, so it cannot.
+- A comparison on one CLI version. Going by other records, the two catalogs' agent runs were made on different CLI
+  patch versions (inference, §7). By the job order of `sealed.mjs:155–158`, every primary video_annotation run comes
+  before about run 6,770 of 10,158, and 7,362 were done by 23:29Z (2.1.306); the V1 cell ran on 2.1.307.
 - Anything beyond one SOP whose agent baseline is low in both catalogs.
 
 ### 4.2 V2-bloated: our distractors on three SOPs
@@ -303,7 +323,8 @@ catalog)".
 | know_your_business | 40 | 75.0% (30) | 27.5% (11) | +47.5 | 0.2608 / 0.6672 | 88.6% / 25.7% (70) |
 | **macro** | 120 | **89.2%** [83.3, 94.2] | **65.0%** [58.3, 71.7] | **+24.2** [+15.8, +32.5] | 0.4863 / 0.9421 | 93.4% / 58.5% |
 
-A's pass@1 under the bloated catalogs is 71.4% macro.
+A's pass@1 under the bloated catalogs is 71.4% macro, and W's is 89.2%. Each arm's upstream@1 equals its strict pass@1
+on every SOP of the cell (no upstream-only pass).
 
 **What it shows:**
 
@@ -320,8 +341,10 @@ A's pass@1 under the bloated catalogs is 71.4% macro.
 - The preregistered quantity, Δ (bloated − original catalog) per arm on the same 120 rows. The primary's results on those
   rows exist only as row-level records; no aggregate holds them, and none was opened for this file.
 - What the last column of the table can support. It sets this cell against other rows (all of each SOP's sealed rows, of
-  which the 40 are a subsample) and, for W, against other builds. For A, the runs were made up to six days apart and,
-  going by other records, on a different CLI patch version (§7).
+  which the 40 are a subsample) and, for W, against other builds. For A, the runs were made up to about seven days and
+  four hours apart (the primary's first agent runs of these SOPs on 10-21 soon after 13:32Z, V2's last on 10-28 at
+  18:06Z) and,
+  going by other records, on different CLI patch versions (§7).
   - Read loosely, W is lower on know_your_business under the bloated catalog (75.0% against 88.6%, from a cheaper build
     that kept round 1 rather than round 2).
   - A is higher on customer_service (77.5% against 60.3%).
@@ -335,10 +358,10 @@ The patient_intake workflow was built in `p2-pi` (16/16 dev rows at round 0, $0.
 arms at k = 3. By decision D3 (`research/decisions-20261021.md`) it is reported separately and is not in the primary
 set or the rule.
 
-| arm | pass^3 | pass@1 | rows always failing / flaky |
-|---|---|---|---|
-| W | 100.0% (50/50) [100, 100] | 100.0% (150/150 runs) | 0 / 0 |
-| A | 48.0% (24/50) [34.0, 62.0] | 62.7% | 10 / 16 |
+| arm | pass^3 | pass@1 | upstream@1 | rows always failing / flaky |
+|---|---|---|---|---|
+| W | 100.0% (50/50) [100, 100] | 100.0% (150/150 runs) | 100.0% | 0 / 0 |
+| A | 48.0% (24/50) [34.0, 62.0] | 62.7% | 62.7% | 10 / 16 |
 
 W − A is +52.0 [+38.0, +66.0]. All 56 of A's failing runs have `user_registration` wrong; `life_style_risk_level` is
 wrong in 46 of them and `overall_risk_level` in 44.
@@ -359,7 +382,10 @@ The data is synthetic; no patient, clinician or record was touched (D3).
 ## 5. Failure anatomy (aggregate counts)
 
 *Evidence: sealed runs, aggregate counts from `experiments/sopbench/failures.mjs`. That script is not a frozen file. It
-was committed on 2026-10-21 at 13:44Z, after the freeze and before any sealed grade existed, and has not changed since.*
+was committed on 2026-10-21 at 13:44:12Z (96cab649), after the freeze and about 12 minutes after the primary launched
+(13:32:32Z), and has not changed since. The primary's first leg made about 20 runs a minute and grades every 40 runs
+(`sealed.mjs:204`), so its first grade batches very probably existed by then. They went only to the per-row records;
+no grade is shown while a run is open (`sealed.mjs:205`).*
 
 `failures.mjs` gives each graded run one category and records column names, flaky rows (some but not all of the three
 runs pass) and rows that fail all three runs. Causes beyond these counts need the row-level records and are not given
@@ -413,12 +439,15 @@ A run can miss more than one column, so the column misses can add up to more tha
    - Whether they fail the same rows is not in the aggregates.
    - So is whether the cause is the SOP, the ground truth or both builds.
 5. **The two SOPs where the agent wins.**
-   - On traffic_spoofing_detection, W misses `enforcement_action` on 49 rows against the agent's 33 + 1 flaky. Its
-     workflow had missed 5 of 20 dev rows, and `p2-main` rejected both repair rounds.
+   - On traffic_spoofing_detection, W fails 49 rows on every run, all on `enforcement_action` (147 misses). The agent
+     fails 33 rows on every run and 1 flaky row (99 `enforcement_action` misses and 1 L5 violation). W's workflow had
+     missed 5 of 20 dev rows, and `p2-main` rejected both repair rounds.
    - On order_fulfillment, W misses `expected_output` on 5 rows against the agent's 3.
 6. **The SOPs where the agent is weakest.**
-   - know_your_business: `escalation_status` is wrong on 43 of 70 rows every time (W: 8).
-   - video_annotation: `final status` is wrong on 52 of 105 rows (W: 1), plus 9 malformed or missing answers.
+   - know_your_business: 43 of 70 rows fail every run (W: 8). `escalation_status` is the only column the agent
+     misses (141 misses); its other 3 failing runs are L5 violations, which may fall in those rows.
+   - video_annotation: 52 of 105 rows fail every run (W: 1). `final status` is the only column the agent misses (172
+     misses); its other 9 failing runs are malformed or missing answers, which may fall in those rows.
    - Phase 1 saw the same two SOPs fail on the final decision on dev rows (NOTES §8).
    - DESIGN §12 names know_your_business's rule as date-relative: "license is not expired for more than 42 days", with no
      reference date. Whether that ambiguity explains the agent's misses is not known here.
@@ -450,7 +479,7 @@ A run can miss more than one column, so the column misses can add up to more tha
 | **all builds** | 17 workflows, 31 sessions | **$3.5338** | | estimate $6–24 builds + $0–26 repairs |
 | primary sealed, W (judge calls) | 5,079 | $0.1019 | $0.0000201 run-time; $0.000545 amortised | estimate $0–15 |
 | primary sealed, A | 5,079 | $8.6226 | $0.001698 | estimate ≈ $11 at $0.0022 |
-| primary sealed, sessions in fault records | 23 | $0.0048 | – | |
+| primary sealed, runs in fault records (agent sessions and at least one W run) | 23 | $0.0048 | – | |
 | **primary sealed, total** | 10,158 | **$8.7294** | | cap $40 |
 | V1-minimal (A; W $0) | 630 | $0.7421 | A $0.002356; W $0.000609 amortised | cap $5; estimate ≤ $5 |
 | V2-bloated (A $0.7461, fault records $0.0023; W $0) | 720 | $0.7484 | A $0.002072; W $0.001351 amortised | cap $5; estimate ≤ $4 |
@@ -461,40 +490,51 @@ A run can miss more than one column, so the column misses can add up to more tha
 - **Amortised cost.** "Amortised" is the rule's formula: build plus sealed spend, over the W runs. For a cell, the cell's
   own builds are spread over its own W runs (`sealed.mjs:224–226`).
 - **Per row.** At k = 3, a row costs $0.0051 with A and $0.0016 with W amortised.
-- **Payback (post hoc).** At the agent's $0.0017 per run, the primary builds' $2.67 is recovered after about 1,590 W
-  runs, which is 31% of the 5,079.
+- **Payback (post hoc).** A W run saves $0.001678 against an agent run (the agent's $0.001698 less W's $0.0000201 of
+  judge calls). At that saving the primary builds' $2.67 are recovered after about 1,590 runs, which is 31% of the
+  5,079 (about 1,570 runs at the agent's full $0.001698).
 - **Spend not recorded.** A killed process leaves no record for the sessions it had in flight. Three kills at
   concurrency 3 leave at most 9 such sessions (§7). The hard bound is the $0.25 session budget each, so at most $2.25.
-  At the agent's mean cost per run the expected loss is about 2 cents.
-- **What is not included.** Phase-1 spend ($0.54 plus a $0.0019 smoke run) is not in these totals.
+  At the agent's mean cost per run the expected loss is about 1.5 cents (9 × $0.0017).
+- **What is not included.** Phase-1 spend ($0.5395 for 247 rows plus a $0.0019 smoke run, $0.54 in all; NOTES §8) is
+  not in these totals.
 
 ## 7. Run history
 
 *Evidence: the sources are:*
 
 - *the `[chain …]` lines of the orchestrator's chain log (kept in the orchestrating session's scratch directory, not
-  committed);*
-- *the stopped fields of two partial summaries in git (7b344f13, 53d65fdf);*
+  committed); its other lines, sealed.mjs's own output, were not read for this file;*
+- *the chain script `chain.sh` and its backup `chain.sh.bak-20261022` (same directory);*
+- *the runs' `launch.json` histories (`/var/tmp/foundry-work/sopbench/<run-id>/launch.json`, outside the repository),
+  for the launch and resume times;*
+- *the `stopped`, `runs`, `spentUsd` and `finishedAt` fields of five partial summaries in git: the primary's in
+  594cc346, e6ffe334, 7b344f13 and 647f9d3f, and V2's in 53d65fdf;*
 - *decision D31;*
-- *for the container restarts and CLI versions, this machine's OT-0 record (`research/org-20261021/RESULT-OT0.md`).*
+- *for the container restarts and CLI versions, this machine's OT-0 record (`research/org-20261021/RESULT-OT0.md`) and
+  the compromise register (`research/compromises-20261021/REGISTER.md`, C8 and C9, also in `docs/RESEARCH.md`).*
 
 *The chain (`chain.sh`) watched the primary process, then resumed any run that stopped with exit 3 (an environment fault)
 after 30 minutes. It ran V1, V2 and patient_intake in turn, at concurrency 3. A run whose `launch.json` exists is always
-started with `--resume`.*
+started with `--resume`. At 02:07:44Z on 10-22, before the second chain instance started, `chain.sh` was edited: the
+edit dropped the 30-minute wait before a new instance's first resume of the primary, which is why the primary resumes at
+02:08:45, 03:16:22 and 03:42:51Z came at once. The wait after an exit 3 within an instance stayed. This is an
+orchestration change; no frozen file or setting changed.*
 
 | when (UTC) | run | event |
 |---|---|---|
 | 10-21 13:29Z / 13:32Z | – | `FREEZE-p2.json` created, then committed (5a8c6603) |
-| before 14:27:58Z | p2-sealed | launched outside the chain (its launch time is not in the chain lines); stopped on an environment fault at `A-video_annotation-20-2: MODEL_RATE_LIMIT` |
-| 14:57:58Z, 15:28:03Z, 15:58:15Z | p2-sealed | three resumes, each exiting 3 after 4–12 s |
-| 16:28:19–17:35:02Z | p2-sealed | resume; ran 67 min, exit 3 |
+| 13:32:32Z to before 14:27:58Z | p2-sealed | launched outside the chain at 13:32:32Z (`launch.json` history); sealed rows prepared by 13:32:42Z; stopped on an environment fault at `A-video_annotation-20-2: MODEL_RATE_LIMIT`, which the first chain instance logged at 14:27:58Z |
+| 13:44:12Z | – | `failures.mjs` committed (96cab649) while the primary ran (§5) |
+| 14:57:58Z, 15:28:03Z, 15:58:15Z | p2-sealed | three resumes, each exiting 3 after 4–12 s. The third stopped at `A-video_classification-15-0: MODEL_RATE_LIMIT`, with 1,139 runs done ($0.98; the partial summary in 594cc346) |
+| 16:28:19–17:35:02Z | p2-sealed | resume; ran 67 min, exit 3 at `W-referral_abuse_detection_v2-46-0: ENOSPC: no space left on device`, with 2,814 runs done ($2.55; e6ffe334). This is the full disk of 17:30Z (REGISTER C8), on a W run |
 | 18:05:02–19:31:57Z | p2-sealed | resume; ran 87 min, exit 3 |
 | 20:01:57Z, 20:32:01Z | p2-sealed | two resumes, each exiting 3 after 4 s. At 20:32:05Z, 4,602 of 10,158 runs were done ($4.19), stopped at `A-referral_abuse_detection_v2-74-2: MODEL_RATE_LIMIT` (snapshot in 7b344f13) |
-| 21:02:05–23:29:29Z | p2-sealed | resume; ran 147 min, exit 3 at `A-customer_service-135-2: MODEL_RATE_LIMIT`, the minute of the account session limit recorded in RESULT-OT0 §2.1 |
+| 21:02:05–23:29:29Z | p2-sealed | resume; ran 147 min, exit 3 at `A-customer_service-135-2: MODEL_RATE_LIMIT`, the minute of the account session limit recorded in RESULT-OT0 §2.1, with 7,362 of 10,158 runs done ($6.65; 647f9d3f) |
 | 23:29Z–02:08Z | – | no chain line. The chain's next retry, due at 23:59:29Z, was never logged, so that chain instance ended before it; why is not recorded |
 | 10-22 02:08:45Z | p2-sealed | a new chain instance, after the 02:06Z container restart (RESULT-OT0 §4.1); resume. No exit line: killed, matching the 03:11Z container restart (same source) |
-| 03:16:22Z | p2-sealed | a new chain instance; resume. No exit line: killed before 03:42:51Z, cause not recorded |
-| 03:42:51–03:59:19Z | p2-sealed | resume; **exit 0**. The summary's `finishedAt` is 03:59:16Z |
+| 03:16:22Z | p2-sealed | a new chain instance; resume. No exit line: killed, matching the container restart at about 03:40Z, which killed every detached chain, SOP-Bench sealed included (REGISTER C9) |
+| 03:42:51–03:59:19Z | p2-sealed | a new chain instance; resume; **exit 0**. The summary's `finishedAt` is 03:59:16Z |
 | 03:59:19Z | V1-minimal | start. No exit line: killed before 04:18:01Z, cause not recorded |
 | 04:18:02–04:23:41Z | V1-minimal | a new chain instance; resume; **exit 0** |
 | 04:20:30Z | – | primary summary committed (e801255f) |
@@ -516,8 +556,12 @@ started with `--resume`.*
 - V2 started once and was resumed twice. It stopped twice on environment faults, with 3 fault records.
 - patient_intake ran once.
 - In all there were 16 resumes and 7 chain instances.
-- Every stop reason that is recorded (the primary's first, its 20:32Z and 23:29Z stops, and V2's second) is a
-  `MODEL_RATE_LIMIT` on an agent session. The other seven of the 11 stop reasons are not in these sources.
+- Six of the 11 stop reasons are recorded. Five are a `MODEL_RATE_LIMIT` on an agent session: the primary's first stop,
+  its 15:58:19Z, 20:32:05Z and 23:29:29Z stops, and V2's second. One is a full disk (`ENOSPC`) on a W run, at 17:35:02Z.
+  The other five (the primary's 14:58:03Z, 15:28:15Z, 19:31:57Z and 20:02:01Z stops, and V2's first at 04:37:10Z) are
+  not in the sources read for this file. The chain log's other lines, which hold sealed.mjs's own output, were not read
+  and may record them.
+- The 23 primary fault records are runs, not only agent sessions: at least one, the `ENOSPC` record, is a W run.
 - No fault was ever scored. `sealed.mjs:200` writes a fault to `faults.jsonl`, not to the graded file, and stops.
 
 **The six-day pause.**
@@ -541,8 +585,11 @@ started with `--resume`.*
   - 2.1.307 after that restart, seen with `claude --version` at 02:11Z and 03:18Z (same source);
   - a move from 2.1.307 to 2.1.312 during the pause (D31).
 - If those apply here, which is inference and not observed in these runs:
-  - The primary's agent and judge sessions ran on 2.1.306 up to 23:29Z and on 2.1.307 from 02:08Z. At least 4,602 of
-    its 10,158 runs were done by 20:32Z; the exact split is not recorded.
+  - The primary's agent and judge sessions ran on 2.1.306 up to 23:29Z and on 2.1.307 from 02:08Z. Its first 7,362
+    runs were done by 23:29:29Z (647f9d3f), and nothing of it ran again until 02:08:45Z, so 7,362 runs fall on 2.1.306
+    and 2,796 on 2.1.307. For a W run only its judge calls, if any, depend on the CLI.
+  - Every primary video_annotation run falls among those first 7,362 (by the job order, before about run 6,770), so
+    the V1 comparison of §4.1 crosses the two versions.
   - V1 ran on 2.1.307.
   - V2's first 410 runs ran on 2.1.307 and its last 310 on 2.1.312.
   - patient_intake ran on 2.1.312.
@@ -582,13 +629,27 @@ started with `--resume`.*
    does not list it. Its phase-1 dev numbers are in NOTES §8.
 10. **The freeze lists only aircraft_inspection as orchestration-only**, but patient_intake's tools also return its answer
     columns (NOTES §7.4). This affects only the patient_intake cell's second analysis, which decides nothing.
-11. **The graders agreed everywhere.** There were 0 grader disagreements in all 11,808 graded runs, by the summaries'
-    `graderDisagreements`: the JS and Python strict graders agree with each other and with the upstream port.
+11. **The graders agreed wherever they are compared.** The summaries' `graderDisagreements` is 0 in all 11,808 graded
+    runs (`run.mjs:169`). The JS and Python strict graders agree on every run, and the JS port of upstream's metric
+    agrees with upstream's own evaluator on every run it covers; where the port does not cover an answer, no
+    comparison is made. The strict and upstream metrics themselves differ, as designed: there are 4 upstream-only passes
+    in the primary's A arm and 4 in V1's A arm (§5).
 12. **Not run:** the stretch variants of DESIGN §9 (W-H-call, W-H-T, A-S).
+13. **The upstream metric exists only per run.** DESIGN §7.4 and the freeze's `decisionRule.upstreamMetric` ask for
+    the upstream metric "beside every strict number". `analyse()` computes it only as upstream@1, so no upstream
+    pass^3 stands beside any pass^3 headline. This file gives upstream@1 beside every pass@1 (§3.2, §4). It differs
+    from strict pass@1 only for the agent on video_annotation: 43.8% against 42.5% in the primary, and 47.9% against
+    46.7% in V1.
+14. **The §7.4 reporting is not done yet.** §7.4 sends "the numbers, the per-SOP table and the failure anatomy" to NOTES
+    and docs/RESEARCH.md as a negative result. NOTES.md has no phase-2 entry. docs/RESEARCH.md (line 144) gives the
+    primary's headline numbers and says the reliability claim is not met, but it still lists the cells and this file
+    as not yet reported. This file holds the three items; carrying them into NOTES and docs/RESEARCH.md is outstanding.
+15. **The chain script changed mid-run** (§7). At 02:07:44Z on 10-22 the 30-minute wait before a new chain instance's
+    first resume of the primary was removed. It is an orchestration setting, not a frozen one.
 
 ## 9. What is unknown
 
-- **Why W fails the rows it fails.** The candidates are rules fitted to 20 dev rows, ambiguous SOP text (DESIGN §12:
+- **Why W fails the rows it fails.** The candidates are rules fitted to up to 20 dev rows, ambiguous SOP text (DESIGN §12:
   dangerous_goods' cut-offs, the date-relative rules of know_your_business and referral v2) and noisy ground truth.
   Telling them apart needs the row-level records.
 - Whether W and A fail the same rows of warehouse_package_inspection.
@@ -596,7 +657,9 @@ started with `--resume`.*
 - What the 49 commands flagged by the L5 audit referenced.
 - How often the judge paths of aircraft_inspection and video_classification fired on sealed rows.
 - Each run's CLI version, and whether the agent's behaviour changed with it.
-- What caused two of the three process kills, and seven of the 11 environment-fault stops.
+- What caused one of the three process kills (V1's, before 04:18:01Z on 10-22) and five of the 11 environment-fault
+  stops, which the chain log's unread lines may record. Also why two chain instances ended without logging their next
+  retry (before 23:59:29Z on 10-21 and before 05:07:10Z on 10-22).
 
 ## 10. Files
 
