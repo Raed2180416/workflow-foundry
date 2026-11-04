@@ -7,6 +7,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { appendFileSync, closeSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, writeSync } from 'node:fs';
 import path from 'node:path';
+import { faultState } from './faults.mjs';
 import { PYTHON_TOOL, runPythonTool } from './python-tool.mjs';
 
 export const MAX_REQUEST_BYTES = 256 * 1024;
@@ -33,16 +34,18 @@ export function readRequest(file) {
 }
 
 /**
- * startFacadeHost({ mailbox, hostDir, catalog, bed, python, stopOnFatal }) -> { stop(), state }.
+ * startFacadeHost({ mailbox, hostDir, catalog, bed, python, stopOnFatal, fault }) -> { stop(), state }.
+ * fault: an optional declared fault or drift spec (faults.mjs); catalog entries may carry `distractor: true`.
  * catalog: [{ name (MCP name), bedName, write }] of the bed tools exposed in this session.
  * bed: { request(obj) } (bed-process.mjs startBedServer). python: expose the python tool (default true).
  */
-export function startFacadeHost({ mailbox, hostDir, catalog, bed, python = true, stopOnFatal = true, pollMs = 15, pythonTimeoutMs = 30_000, runPython = runPythonTool }) {
+export function startFacadeHost({ mailbox, hostDir, catalog, bed, python = true, stopOnFatal = true, pollMs = 15, pythonTimeoutMs = 30_000, runPython = runPythonTool, fault = null }) {
   mkdirSync(mailbox, { recursive: true });
   mkdirSync(hostDir, { recursive: true });
   const byName = new Map(catalog.map(t => [t.name, t]));
   const log = path.join(hostDir, 'calls.jsonl');
-  const state = { seq: 0, handled: new Set(), fatal: null, worldCalls: 0, writes: 0, pythonCalls: 0, refused: 0, rejected: 0, envFault: null };
+  const faults = faultState(fault);
+  const state = { seq: 0, handled: new Set(), fatal: null, worldCalls: 0, writes: 0, pythonCalls: 0, refused: 0, rejected: 0, envFault: null, faultEvents: [] };
   let stopping = false, busy = null;
 
   async function handle(n, file) {
@@ -76,16 +79,28 @@ export function startFacadeHost({ mailbox, hostDir, catalog, bed, python = true,
       Object.assign(rec, { kind: 'refused', name: req.name, args: req.arguments ?? {} });
     } else {
       const t = byName.get(req.name);
+      // a declared fault or drift (faults.mjs) decides first; a plain pass forwards the arguments unchanged
+      const d = faults.decide({ name: req.name, bedName: t.bedName, write: Boolean(t.write), distractor: Boolean(t.distractor), args: req.arguments ?? {} });
+      if (d.fault) state.faultEvents.push({ seq: rec.seq, fault: d.fault, name: req.name });
+      if (d.action === 'refuse') {
+        res = { isError: true, text: d.text };
+        Object.assign(rec, { kind: 'fault', fault: d.fault, name: req.name, args: req.arguments ?? {}, text: d.text });
+        rec.ms = Date.now() - t0;
+        appendFileSync(log, JSON.stringify(rec) + '\n');
+        writeResponse(mailbox, n, res);
+        return;
+      }
       state.worldCalls += 1;
       try {
-        const r = await bed.request({ op: 'call', name: t.bedName, args: req.arguments ?? {} });
+        const r = await bed.request({ op: 'call', name: t.bedName, args: d.args });
         if (r.kind !== 'call') throw new Error(`bed answered ${r.kind}: ${r.error ?? ''}`);
         if (r.write) state.writes += 1;
         if (r.fatal) state.fatal ??= { seq: rec.seq, error: r.error };
         const text = r.fatal ? `Error: ${r.error}` : String(r.text ?? r.error ?? '');
-        res = { isError: Boolean(r.fatal || r.error), text: text.slice(0, MAX_TEXT_CHARS) };
-        Object.assign(rec, { kind: 'world', name: req.name, bedName: t.bedName, args: req.arguments ?? {}, action: r.action, write: Boolean(r.write), fatal: Boolean(r.fatal),
-          error: r.error ?? null, textSha256: sha256(text), textLen: text.length, text: text.slice(0, 4000) });
+        // lost acknowledgement: the call was applied, the answer says it timed out
+        res = d.action === 'apply_then_error' ? { isError: true, text: d.text } : { isError: Boolean(r.fatal || r.error), text: text.slice(0, MAX_TEXT_CHARS) };
+        Object.assign(rec, { kind: 'world', name: req.name, bedName: t.bedName, args: d.args, action: r.action, write: Boolean(r.write), fatal: Boolean(r.fatal),
+          error: r.error ?? null, textSha256: sha256(text), textLen: text.length, text: text.slice(0, 4000), ...(d.fault ? { fault: d.fault, ...(d.action === 'apply_then_error' ? { answered: d.text } : {}), ...(d.args !== req.arguments ? { argsSent: req.arguments ?? {} } : {}) } : {}) });
       } catch (e) {
         state.envFault ??= `bed: ${String(e?.message ?? e).slice(0, 300)}`;
         res = { isError: true, text: 'the environment is unavailable' };
@@ -110,7 +125,7 @@ export function startFacadeHost({ mailbox, hostDir, catalog, bed, python = true,
   };
   function summary() {
     return { worldCalls: state.worldCalls, writes: state.writes, pythonCalls: state.pythonCalls, refused: state.refused, rejected: state.rejected,
-      fatal: state.fatal, envFault: state.envFault, calls: state.seq };
+      fatal: state.fatal, envFault: state.envFault, calls: state.seq, faultEvents: state.faultEvents };
   }
 }
 

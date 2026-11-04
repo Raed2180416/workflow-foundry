@@ -58,8 +58,11 @@ export async function bedJson(args, opts) {
   if (r.code !== 0) throw new Error(`bed ${args[0]} failed (${r.code}): ${r.stderr.slice(-1500)}`);
   return r.lines;
 }
+/** World start-up imports pandas and loads seven CSVs: seconds when idle, but over a minute was seen on a loaded host
+ * (load 18 on 4 cores, 2026-10-28), so the ready wait is generous; a world that never answers is an environment fault. */
+export const WORLD_READY_MS = 240_000;
 export function startWorld(cwd) {
-  return startBedServer({ python: VENV_PY, script: BED_PY, args: ['--root', CLONE, 'serve'], cwd });
+  return startBedServer({ python: VENV_PY, script: BED_PY, args: ['--root', CLONE, 'serve'], cwd, readyTimeoutMs: WORLD_READY_MS });
 }
 
 /** All shipped tasks with gold (host-only data; the listing never reaches an agent). */
@@ -88,7 +91,7 @@ export function materializeFacadeBin(dir, mcpTools) {
  * raw result; ctx = { mcpConfig, workdir, facadeBin, server }. Returns { trajectory, snapshot, facade, agentResult }.
  * The world is reset first; the snapshot is taken after the agent ends, before the next reset.
  */
-export async function runTaskThroughFacade({ task, seed = 0, world, catalog, facadeBin, workRoot, hostDir, agent, python = true, keepWorkdir = false }) {
+export async function runTaskThroughFacade({ task, seed = 0, world, catalog, facadeBin, workRoot, hostDir, agent, python = true, keepWorkdir = false, fault = null, hostCatalog = null }) {
   const workdir = path.join(workRoot, task.id.replace(/[^A-Za-z0-9_.-]/g, '_'));
   rmSync(workdir, { recursive: true, force: true });
   mkdirSync(workdir, { recursive: true });
@@ -97,7 +100,7 @@ export async function runTaskThroughFacade({ task, seed = 0, world, catalog, fac
   const reset = await world.request({ op: 'reset', task: task.id, seed });
   if (reset.kind !== 'reset') throw new Error(`reset failed: ${JSON.stringify(reset).slice(0, 300)}`);
   const mailbox = path.join(workdir, '.facade');
-  const host = startFacadeHost({ mailbox, hostDir, catalog: catalog.bedTools, bed: world, python });
+  const host = startFacadeHost({ mailbox, hostDir, catalog: hostCatalog ?? catalog.bedTools, bed: world, python, fault });
   const mcpConfig = relayMcpConfigFor(facadeBin, mailbox);
   let agentResult = null, agentError = null;
   try { agentResult = await agent({ mcpConfig, workdir, facadeBin, server: mcpConfig.mcpServers[SERVER_NAME] }); }
@@ -112,7 +115,7 @@ export async function runTaskThroughFacade({ task, seed = 0, world, catalog, fac
 }
 
 /** A scripted agent: the given MCP steps through a real relay process, as the CLI would issue them. */
-export const scriptedAgent = steps => async ({ server }) => runScripted({ server: { command: server.command, args: server.args }, steps });
+export const scriptedAgent = (steps, policy = null) => async ({ server }) => runScripted({ server: { command: server.command, args: server.args }, steps, policy });
 
 /** Action strings -> MCP steps (the bed parses; host side only). */
 export async function stepsFor(world, actions) {
@@ -123,14 +126,28 @@ export async function stepsFor(world, actions) {
 }
 
 /** Grade facade trajectories host-side, in a separate bed process. rows: [{id, actions, error, live}]. */
-export async function gradeTrajectories(rows, { tasksFile, dir }) {
+export async function gradeTrajectories(rows, { tasksFile, dir, parallel = 1 }) {
+  return bedChunked('grade', rows, { tasksFile, dir, parallel });
+}
+
+/** Run a row-wise bed command (grade, replay) over rows in `parallel` contiguous chunks, each in its own bed process;
+ * rows are independent, so the verdicts are the same as one process gives, in input order. */
+export async function bedChunked(cmd, rows, { tasksFile, dir, parallel = 1 }) {
   mkdirSync(dir, { recursive: true });
-  const inFile = path.join(dir, `traj-${process.pid}-${Date.now()}.jsonl`), outFile = path.join(dir, `verdicts-${process.pid}-${Date.now()}.jsonl`);
-  writeJsonl(inFile, rows);
-  await bedJson(['grade', '--tasks', tasksFile, '--in', inFile, '--out', outFile], { cwd: dir });
-  const v = readJsonl(outFile);
-  rmSync(inFile, { force: true }); rmSync(outFile, { force: true });
-  return v;
+  const k = Math.max(1, Math.min(parallel, rows.length));
+  const size = Math.ceil(rows.length / k), tag = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const parts = await Promise.all(Array.from({ length: k }, async (_, i) => {
+    const chunk = rows.slice(i * size, (i + 1) * size);
+    if (!chunk.length) return [];
+    const inFile = path.join(dir, `${cmd}-in-${tag}-${i}.jsonl`), outFile = path.join(dir, `${cmd}-out-${tag}-${i}.jsonl`);
+    writeJsonl(inFile, chunk);
+    await bedJson([cmd, '--tasks', tasksFile, '--in', inFile, '--out', outFile], { cwd: dir });
+    const v = readJsonl(outFile);
+    rmSync(inFile, { force: true }); rmSync(outFile, { force: true });
+    if (v.length !== chunk.length) throw new Error(`bed ${cmd}: ${v.length} verdicts for ${chunk.length} rows`);
+    return v;
+  }));
+  return parts.flat();
 }
 
 export { NODE_BIN };

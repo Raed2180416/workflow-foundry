@@ -91,6 +91,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     },
     anchor: { rule: "40 dev instances: dev templates in ascending sha256(salt + ':h45:' + template id); per template its instances in ascending sha256(salt + ':h45:' + id); round 1 takes one per template (29), round 2 one more from the first 11 templates", salt: split.salt.sha,
       ids: anchor, idsSha256: sha(anchor.join('\n')), publishedHaiku45Correct: anchorCorrect, publishedHaiku45Rate: pct(anchorCorrect, anchor.length),
+      publishedHaiku45ById: Object.fromEntries(anchor.map(id => [id, hRows.get(id)?.correct === 'True'])),
       comparison: 'H45 arm (claude-haiku-4-5-20251001 through the A-H harness) on these 40 vs the published verdicts; a gap above 10 points is reported as a harness difference' },
   };
   writeJson(out, res);

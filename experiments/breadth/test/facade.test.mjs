@@ -10,6 +10,7 @@ import { armExpectation, compareFingerprint, fingerprintHash, initFingerprint } 
 import { claim, makeServer, PROTOCOL_VERSIONS } from '../facade/mcp-relay.mjs';
 import { doseSummary, gate, meterReading } from '../facade/meter.mjs';
 import { HARDENED_FLAGS, SAFE_MODE_FLAGS, relayMcpConfig, sessionArgs } from '../facade/session.mjs';
+import { FAULT_TEXT, applyFaultToCatalog, faultState, normalizeFault } from '../facade/faults.mjs';
 import { PYTHON_TOOL, runPythonTool } from '../facade/python-tool.mjs';
 
 const made = [];
@@ -57,12 +58,12 @@ function fakeBed(script = {}) {
   const calls = [];
   return { calls, request: async req => { calls.push(req); return script[req.name] ?? { kind: 'call', text: `did ${req.name}`, action: `${req.name}.func()`, write: req.name.includes('send'), fatal: false }; } };
 }
-async function hostRound(files, { bed = fakeBed(), catalog = [{ name: 'email_send_email', bedName: 'email.send_email', write: true }, { name: 'email_search', bedName: 'email.search', write: false }], runPython } = {}) {
+async function hostRound(files, { bed = fakeBed(), catalog = [{ name: 'email_send_email', bedName: 'email.send_email', write: true }, { name: 'email_search', bedName: 'email.search', write: false }], runPython, fault = null } = {}) {
   const box = tmp(), hostDir = tmp();
   for (const [name, content] of Object.entries(files)) {
     if (content?.symlinkTo) symlinkSync(content.symlinkTo, path.join(box, name)); else writeFileSync(path.join(box, name), typeof content === 'string' ? content : JSON.stringify(content));
   }
-  const host = startFacadeHost({ mailbox: box, hostDir, catalog, bed, runPython, pollMs: 5 });
+  const host = startFacadeHost({ mailbox: box, hostDir, catalog, bed, runPython, pollMs: 5, fault });
   await sleep(150);
   const summary = await host.stop();
   const res = n => (existsSync(path.join(box, `res-${n}.json`)) ? JSON.parse(readFileSync(path.join(box, `res-${n}.json`), 'utf8')) : null);
@@ -119,7 +120,7 @@ test('python tool: argument checks; real sandbox when available (network off, no
   assert.equal(err.isError, true); assert.match(err.text, /ValueError: boom/);
 });
 
-test('session: hardened flags exclude --safe-mode (it drops --mcp-config servers on CLI 2.1.307) and set no setting sources', () => {
+test('session: hardened flags exclude --safe-mode (it drops --mcp-config servers on CLI 2.1.307 and 2.1.312) and set no setting sources', () => {
   assert.ok(!HARDENED_FLAGS.includes('--safe-mode'));
   assert.ok(SAFE_MODE_FLAGS.includes('--safe-mode'));
   const i = HARDENED_FLAGS.indexOf('--setting-sources');
@@ -162,5 +163,67 @@ test('meter: reading, gates and dose summary', () => {
   const d = doseSummary([{ fiveHour: 0.1, sevenDay: 0.2 }, { fiveHour: 0.13, sevenDay: 0.21 }], 0.06);
   assert.equal(d.fiveHourDelta, 0.03); assert.equal(d.usdPerFiveHourTick, 0.02); assert.equal(d.usdPerSevenDayTick, 0.06);
   assert.equal(doseSummary([{ fiveHour: 0.1 }], 1).usdPerFiveHourTick, null);
+});
+
+// --- fault and drift injection (faults.mjs) -------------------------------------------------------------------------
+const SEND = { name: 'email_send_email', description: 'Sends an email. recipient: the address.', inputSchema: { type: 'object', properties: { recipient: { type: 'string' }, subject: { type: 'string' } }, required: ['recipient'] } };
+const SEARCH = { name: 'email_search', description: 'Search.', inputSchema: { type: 'object', properties: { query: { type: 'string' } } } };
+const BED = [{ name: 'email_send_email', bedName: 'email.send_email', write: true }, { name: 'email_search', bedName: 'email.search', write: false }];
+
+test('faults: specs are validated; the catalog view renames a parameter or adds a retired twin, and leaves the input untouched', () => {
+  assert.throws(() => normalizeFault({ kind: 'nope' }), /unknown fault kind/);
+  assert.throws(() => normalizeFault({ kind: 'rename_param', tool: 'x' }), /needs tool, from, to/);
+  assert.deepEqual(normalizeFault({ kind: 'transient' }), { kind: 'transient', target: 'write', nth: 1, times: 1 });
+  const base = { mcpTools: [SEND, SEARCH], bedTools: BED };
+  const r = applyFaultToCatalog(base, { kind: 'rename_param', tool: 'email.send_email', from: 'recipient', to: 'to' });
+  assert.deepEqual(Object.keys(r.mcpTools[0].inputSchema.properties), ['to', 'subject']);
+  assert.deepEqual(r.mcpTools[0].inputSchema.required, ['to']);
+  assert.match(r.mcpTools[0].description, /to: the address/);
+  assert.deepEqual(Object.keys(SEND.inputSchema.properties), ['recipient', 'subject']); // input not mutated
+  assert.throws(() => applyFaultToCatalog(base, { kind: 'rename_param', tool: 'email.send_email', from: 'cc', to: 'x' }), /no parameter cc/);
+  const d = applyFaultToCatalog(base, { kind: 'distractor', like: 'email.send_email' });
+  assert.deepEqual(d.extraToolNames, ['email_send_email_v2']);
+  assert.equal(d.mcpTools.at(-1).name, 'email_send_email_v2');
+  assert.deepEqual(d.hostCatalog.at(-1), { name: 'email_send_email_v2', bedName: null, write: false, distractor: true });
+  assert.deepEqual(applyFaultToCatalog(base, null).mcpTools.map(t => t.name), ['email_send_email', 'email_search']);
+});
+
+test('faults: transient refuses the nth matching write without touching the world; a retry goes through', async () => {
+  const r = await hostRound({ 'req-1.json': { name: 'email_search', arguments: {} }, 'req-2.json': { name: 'email_send_email', arguments: { recipient: 'a@b.co' } },
+    'req-3.json': { name: 'email_send_email', arguments: { recipient: 'a@b.co' } } }, { fault: { kind: 'transient', target: 'write', nth: 1 } });
+  assert.equal(r.res(2).text, FAULT_TEXT.transient); assert.equal(r.res(2).isError, true);
+  assert.equal(r.res(3).text, 'did email.send_email');
+  assert.deepEqual(r.bed.calls.map(c => c.name), ['email.search', 'email.send_email']); // the faulted call never reached the world
+  assert.deepEqual(trajectoryFromCalls(path.join(r.hostDir, 'calls.jsonl')).actions, ['email.search.func()', 'email.send_email.func()']);
+  assert.deepEqual(r.summary.faultEvents.map(e => e.fault), ['transient']);
+  assert.equal(r.summary.envFault, null);
+});
+
+test('faults: lost_ack applies the write but answers with a timeout, so a blind retry duplicates it', async () => {
+  const r = await hostRound({ 'req-1.json': { name: 'email_send_email', arguments: { recipient: 'a@b.co' } }, 'req-2.json': { name: 'email_send_email', arguments: { recipient: 'a@b.co' } } },
+    { fault: { kind: 'lost_ack' } });
+  assert.equal(r.res(1).text, FAULT_TEXT.lost_ack); assert.equal(r.res(1).isError, true);
+  assert.equal(r.res(2).text, 'did email.send_email');
+  assert.equal(r.bed.calls.length, 2);
+  assert.deepEqual(trajectoryFromCalls(path.join(r.hostDir, 'calls.jsonl')).actions, ['email.send_email.func()', 'email.send_email.func()']);
+});
+
+test('faults: rename_param drift maps the new name back and refuses the old one; a distractor never reaches the world', async () => {
+  const fault = { kind: 'rename_param', tool: 'email.send_email', from: 'recipient', to: 'to' };
+  const r = await hostRound({ 'req-1.json': { name: 'email_send_email', arguments: { recipient: 'a@b.co' } }, 'req-2.json': { name: 'email_send_email', arguments: { to: 'a@b.co', subject: 's' } } }, { fault });
+  assert.equal(r.res(1).text, FAULT_TEXT.unknownParam('recipient', 'to'));
+  assert.equal(r.bed.calls.length, 1);
+  assert.deepEqual(Object.entries(r.bed.calls[0].args), [['recipient', 'a@b.co'], ['subject', 's']]); // mapped back in place
+  const calls = readFileSync(path.join(r.hostDir, 'calls.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+  assert.deepEqual(calls.map(c => [c.kind, c.fault]), [['fault', 'rename_param_old_name'], ['world', 'rename_param_mapped']]);
+  const cat = applyFaultToCatalog({ mcpTools: [SEND, SEARCH], bedTools: BED }, { kind: 'distractor', like: 'email.send_email' });
+  const d = await hostRound({ 'req-1.json': { name: 'email_send_email_v2', arguments: { recipient: 'a@b.co' } }, 'req-2.json': { name: 'email_send_email', arguments: { recipient: 'a@b.co' } } },
+    { catalog: cat.hostCatalog, fault: { kind: 'distractor', like: 'email.send_email' } });
+  assert.equal(d.res(1).text, FAULT_TEXT.retired('email_send_email_v2'));
+  assert.deepEqual(d.bed.calls.map(c => c.name), ['email.send_email']);
+  // without a fault the twin is unknown (rejected before any decision)
+  const none = await hostRound({ 'req-1.json': { name: 'email_send_email_v2', arguments: {} } });
+  assert.equal(none.summary.rejected, 1);
+  assert.equal(faultState(null).decide({ name: 'x', args: { a: 1 } }).action, 'pass');
 });
 

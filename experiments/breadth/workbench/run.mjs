@@ -28,12 +28,13 @@ import { appendFileSync, chmodSync, copyFileSync, existsSync, mkdirSync, readFil
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ENV_FAULTS } from '../../lib/runner.mjs';
+import { applyFaultToCatalog } from '../facade/faults.mjs';
 import { fingerprintHash } from '../facade/init-check.mjs';
 import { doseSummary, gate, meterJournal } from '../facade/meter.mjs';
 import { runFacadeSession } from '../facade/session.mjs';
 import { ARMS, armModel } from './arms.mjs';
 import { foreignAddresses, identityVerdict, worldAddresses } from './audit.mjs';
-import { BENCH, CLONE, HOST_ONLY, MAX_EXECUTION_S, MAX_ITERATIONS, RESEARCH, catalogFrom, gradeTrajectories, materializeFacadeBin, readJson, readJsonl, runTaskThroughFacade, sha256, shippedTasks, startWorld, systemPrompt, writeJson, writeJsonl } from './lib.mjs';
+import { BENCH, CLONE, HOST_ONLY, MAX_EXECUTION_S, MAX_ITERATIONS, RESEARCH, SERVER_NAME, catalogFrom, gradeTrajectories, materializeFacadeBin, readJson, readJsonl, runTaskThroughFacade, sha256, shippedTasks, startWorld, systemPrompt, writeJson, writeJsonl } from './lib.mjs';
 import { anchorInstances } from './prescreen.mjs';
 
 export const RUNNER_VERSION = 'wb-run-v1';
@@ -93,6 +94,22 @@ export function selectTasks({ pool, n, ids, sealedAck, shipped, split, prescreen
     if (sha256(JSON.stringify(m)) !== want) throw new Error(`${pool} manifest hash differs from SPLIT.json`);
     return { tasks: m.instances.slice(0, n ?? Infinity), sealed: true };
   }
+  if (pool === 'streams' || pool === 'faults') {
+    // the frozen extras (EXTRAS.json, rule wb-extras-v1): held out like the sealed set, same acknowledgement
+    if (sealedAck !== SEALED_ACK) throw new Error(`the ${pool} pool needs --sealed-ack ${SEALED_ACK} (after the portfolio dev gate)`);
+    const extras = readJson(path.join(RESEARCH, 'EXTRAS.json'));
+    const m = readJson(path.join(HOST_ONLY, 'extras', pool === 'streams' ? 'STREAMS.json' : 'FAULTS.json'));
+    if (sha256(JSON.stringify(m)) !== extras[pool].manifestSha256) throw new Error(`${pool} manifest hash differs from EXTRAS.json`);
+    if (pool === 'streams') {
+      // stream order (template, then arrival position): the order a reuse arm would meet them
+      const tasks = m.streams.flatMap(s => s.instances.map((t, pos) => ({ ...t, stream: s.template_id, position: pos })));
+      return { tasks: tasks.slice(0, n ?? Infinity), sealed: true, ordered: true };
+    }
+    const sm = readJson(path.join(HOST_ONLY, 'sealed', 'MANIFEST.json'));
+    if (sha256(JSON.stringify(sm)) !== split.sealed.manifestSha256) throw new Error('sealed manifest hash differs from SPLIT.json');
+    const byId = new Map(sm.instances.map(t => [t.id, t]));
+    return { tasks: m.units.slice(0, n ?? Infinity).map(u => ({ ...byId.get(u.id), fault: u.fault })), sealed: true };
+  }
   if (ids) {
     const bad = ids.filter(id => !devById.has(id));
     if (bad.length) throw new Error(`not dev-template instances (refused): ${bad.slice(0, 5).join(', ')}`);
@@ -108,7 +125,7 @@ export function selectTasks({ pool, n, ids, sealedAck, shipped, split, prescreen
     const order = anchorInstances(dev.map(t => ({ id: t.id, template_id: t.template_id })), `${split.salt.sha}:${pool}:${runKey}`, n ?? dev.length);
     return { tasks: order.map(id => devById.get(id)), sealed: false };
   }
-  throw new Error(`unknown pool ${pool} (anchor, dev, screen, sealed, companion)`);
+  throw new Error(`unknown pool ${pool} (anchor, dev, screen, sealed, companion, streams, faults)`);
 }
 
 /** The arms' frozen init expectations (INIT-PROBE.json, from probe-init.mjs; $0). */
@@ -158,7 +175,7 @@ async function main() {
     // hashed interleaved order (PLAN §5.2 "Interleaving"), keyed by the split salt so it is the same on every run and
     // resume: all arms of a unit run together on identical reset worlds, and a stopped run is an unbiased paired subset.
     const rank = id => sha256(`${split.salt.sha}:order:${id}`);
-    units.sort((a, b) => (rank(a.task.id) < rank(b.task.id) ? -1 : rank(a.task.id) > rank(b.task.id) ? 1 : a.k - b.k));
+    if (!sel.ordered) units.sort((a, b) => (rank(a.task.id) < rank(b.task.id) ? -1 : rank(a.task.id) > rank(b.task.id) ? 1 : a.k - b.k)); // streams keep arrival order
   }
   // --arm-n A-S=77,A-O=20: an arm runs only on the first n distinct tasks of the hashed order (PLAN §8.2 n_eff subsets)
   const taskOrder = [...new Set(units.map(u => u.task.id))];
@@ -184,11 +201,18 @@ async function main() {
   mkdirSync(live, { recursive: true });
   const nWorkers = Math.max(1, Math.min(o.concurrency, units.length));
   const worlds = Array.from({ length: nWorkers }, (_, i) => startWorld(path.join(live, `world-${i}`)));
-  await Promise.all(worlds.map(w => w.ready));
-  const catalog = await catalogFrom(worlds[0]);
-  const facadeBin = materializeFacadeBin(path.join(live, 'facade-bin'), catalog.mcpTools);
-  let binary = 'claude';
-  if (o.binary) { binary = path.join(path.dirname(facadeBin.relayScript), 'cli-standin.mjs'); copyFileSync(o.binary, binary); chmodSync(binary, 0o755); }
+  let catalog, facadeBin, binary = 'claude';
+  try {
+    await Promise.all(worlds.map(w => w.ready));
+    catalog = await catalogFrom(worlds[0]);
+    facadeBin = materializeFacadeBin(path.join(live, 'facade-bin'), catalog.mcpTools);
+    if (o.binary) { binary = path.join(path.dirname(facadeBin.relayScript), 'cli-standin.mjs'); copyFileSync(o.binary, binary); chmodSync(binary, 0o755); }
+  } catch (e) {
+    // a world that never came up (e.g. a slow start on a loaded machine) is an environment problem: clean up, no session ran
+    await Promise.all(worlds.map(w => w.close()));
+    rmSync(live, { recursive: true, force: true });
+    throw e;
+  }
   const meterReadings = [];
   let next = 0, waveOk = null;
   const one = async (wi, u, arm) => {
@@ -203,11 +227,18 @@ async function main() {
     reserved += budget;
     const hostDir = path.join(runDir, 'host', `${arm.id}-${u.task.id}-${u.k}`);
     let session = null, hostError = null, tr = null;
+    // a fault/drift unit (faults pool): the session sees the faulted catalog; the frozen init fingerprint gains any
+    // listed twin (a renamed parameter changes no tool name)
+    const view = u.task.fault ? applyFaultToCatalog(catalog, u.task.fault) : null;
+    const fb = view ? materializeFacadeBin(path.join(live, 'facade-bin-fault', `${wi}`), view.mcpTools) : facadeBin;
+    const baseExpect = o.initCheck ? initExpectation(arm.id, initProbe) : null;
+    const expectInit = baseExpect && view?.extraToolNames.length ? { ...baseExpect, tools: [...baseExpect.tools, ...view.extraToolNames.map(n => `mcp__${SERVER_NAME}__${n}`)].sort() } : baseExpect;
     try {
-      tr = await runTaskThroughFacade({ task: u.task, world: worlds[wi], catalog, facadeBin, workRoot: path.join(live, 'w', `${wi}`), hostDir, keepWorkdir: false,
+      tr = await runTaskThroughFacade({ task: u.task, world: worlds[wi], catalog, facadeBin: fb, workRoot: path.join(live, 'w', `${wi}`), hostDir, keepWorkdir: false,
+        fault: u.task.fault ?? null, hostCatalog: view?.hostCatalog ?? null,
         agent: async ({ mcpConfig, workdir }) => {
-          session = await runFacadeSession({ model: arm.model, effort: arm.effort, prompt: u.prompt, workdir, keepRo: [path.dirname(facadeBin.relayScript)], mcpConfig, builtinTools: arm.builtinTools,
-            budgetUsd: budget, maxTurns: MAX_ITERATIONS, systemPrompt: sp, timeoutMs: TIMEOUT_MS, expectInit: o.initCheck ? initExpectation(arm.id, initProbe) : null, binary,
+          session = await runFacadeSession({ model: arm.model, effort: arm.effort, prompt: u.prompt, workdir, keepRo: [...new Set([path.dirname(facadeBin.relayScript), path.dirname(fb.relayScript)])], mcpConfig, builtinTools: arm.builtinTools,
+            budgetUsd: budget, maxTurns: MAX_ITERATIONS, systemPrompt: sp, timeoutMs: TIMEOUT_MS, expectInit, binary,
             onMeter: m => {
               lastMeter = m; meter.record(m, { arm: arm.id, id: u.task.id, k: u.k });
               meterReadings.push({ ...m, arm: arm.id });
@@ -221,6 +252,7 @@ async function main() {
     const cost = session?.costUsd ?? (session ? session.costUpperUsd : 0);
     spent += cost ?? 0;
     const base = { runId, arm: arm.id, model: arm.model, effort: arm.effort, id: u.task.id, template: u.task.template_id, domain: u.task.domain, k: u.k, sealed,
+      ...(u.task.fault ? { fault: u.task.fault.kind, faultEvents: (tr?.facade?.faultEvents ?? []).map(e => e.fault) } : {}), ...(u.task.stream ? { stream: u.task.stream, position: u.task.position } : {}),
       sessionError: session?.error?.code ?? null, facadeEnvFault: tr?.facade?.envFault ?? null, hostError, costUsd: session?.costUsd ?? null, costUnknown: session?.costUnknown ?? !session,
       costUpperUsd: session?.costUpperUsd ?? budget, turns: session?.turns ?? null, durationMs: session?.durationMs ?? null, initFingerprintSha256: session?.initFingerprint ? fingerprintHash(session.initFingerprint) : null,
       streamUsage: session?.streamUsage ?? null, meter: session?.meter?.at(-1) ?? null, at: new Date().toISOString() };
@@ -239,7 +271,7 @@ async function main() {
       const [v] = await gradeTrajectories([{ id: u.task.id, key: key, actions: tr.trajectory.actions, error: outcomeError, fatal: Boolean(tr.trajectory.fatal), live: tr.snapshot }],
         { tasksFile: sealed ? path.join(runDir, 'sealed-tasks.jsonl') : path.join(runDir, 'tasks.jsonl'), dir: path.join(runDir, 'grade') });
       const idn = foreignAddresses({ calls, taskText: u.task.task, world });
-      rec = { ...base, correct: v.correct, correctState: v.correct_state, sideEffects: v.side_effects, sideEffectsExecuted: v.side_effects_executed ?? null, exactMatch: v.exact_match,
+      rec = { ...base, correct: v.correct, correctState: v.correct_state, correctSem: v.correct_sem ?? null, sideEffects: v.side_effects, sideEffectsExecuted: v.side_effects_executed ?? null, exactMatch: v.exact_match,
         nativeCorrect: v.native_correct ?? null, graderAgree: v.agree ?? null, liveMatchesReplay: v.live_matches_replay ?? null, error: v.error, fatal: v.fatal, capHit: base.sessionError,
         nActions: v.n_actions, gtLen: v.gt_len, worldCalls: tr.facade.worldCalls, writes: tr.facade.writes, pythonCalls: tr.facade.pythonCalls, refused: tr.facade.refused, rejected: tr.facade.rejected,
         argAddresses: idn.argAddresses, foreignAddresses: idn.foreign, foreignDomains: idn.foreignDomains };
@@ -248,7 +280,7 @@ async function main() {
     appendFileSync(resultsFile, JSON.stringify(rec) + '\n');
     done.add(key);
     // sealed runs never print a per-task grade (it stays in the host-only results file)
-    const shown = o.probe ? (rec.pass ?? rec.reply) : sealed ? 'done' : rec.correct ? 'correct' : `wrong${rec.capHit ? ` (${rec.capHit})` : ''}`;
+    const shown = o.probe === 'identity' ? `identity ${rec.pass ? 'pass' : 'FAIL'}` : sealed ? 'done' : rec.correct ? 'correct' : `wrong${rec.capHit ? ` (${rec.capHit})` : ''}`;
     log(`${arm.id} ${u.task.id}#${u.k}: ${shown} $${(base.costUsd ?? 0).toFixed(4)} spent $${spent.toFixed(3)} 5h ${lastMeter?.fiveHour ?? '-'} 7d ${lastMeter?.sevenDay ?? '-'}`);
   };
   if (!o.probe) writeJsonl(path.join(runDir, sealed ? 'sealed-tasks.jsonl' : 'tasks.jsonl'), [...new Map(units.map(u => [u.task.id, u.task])).values()]);
@@ -267,16 +299,20 @@ async function main() {
   const summary = { runId, settings, at: new Date().toISOString(), stop, units: units.length, recorded: recs.length, faults: faults.length, spentUsd: Math.round(spent * 10000) / 10000,
     perArm: Object.fromEntries(arms.map(a => { const rs = recs.filter(r => r.arm === a.id); return [a.id, o.probe === 'identity' ? { n: rs.length, pass: rs.filter(r => r.pass).length, saidUnknown: rs.filter(r => r.saidUnknown).length, foreignDomains: [...new Set(rs.flatMap(r => r.replyForeignDomains ?? []))] }
       : sealed ? { n: rs.length, costUsd: rs.reduce((s, r) => s + (r.costUsd ?? 0), 0) }
-      : { n: rs.length, correct: rs.filter(r => r.correct).length, sideEffects: rs.filter(r => r.sideEffects).length, capHits: rs.filter(r => r.capHit).length, foreignAddressSessions: rs.filter(r => r.foreignAddresses).length,
+      : { n: rs.length, correct: rs.filter(r => r.correct).length, correctSem: rs.filter(r => r.correctSem).length, sideEffects: rs.filter(r => r.sideEffects).length, capHits: rs.filter(r => r.capHit).length, foreignAddressSessions: rs.filter(r => r.foreignAddresses).length,
         graderDisagree: rs.filter(r => r.graderAgree === false).length, costUsd: Math.round(rs.reduce((s, r) => s + (r.costUsd ?? 0), 0) * 10000) / 10000 }]; })) };
   // meter movement against list-price spend (attributable only when no other session ran on the account)
   summary.meter = { first: meterReadings[0] ?? null, last: meterReadings.at(-1) ?? null, ...doseSummary(meterReadings, Math.round(spent * 10000) / 10000),
     note: 'one shared meter for every model and agent on the account; with other sessions running these are upper bounds per tick' };
+  // fault/drift units: success per arm and fault kind (host-only, as every sealed summary)
+  if (o.pool === 'faults') summary.byFault = Object.fromEntries(arms.map(a => { const rs = recs.filter(r => r.arm === a.id); return [a.id, Object.fromEntries([...new Set(rs.map(r => r.fault))].map(k => [k, { n: rs.filter(r => r.fault === k).length, correct: rs.filter(r => r.fault === k && r.correct).length }]))]; }));
   if (o.pool === 'anchor' && !o.probe) {
-    const rows = recs.filter(r => r.arm === 'H45');
-    summary.anchor = { n: rows.length, ours: rows.filter(r => r.correct).length, published: prescreen.anchor.publishedHaiku45Correct, publishedN: prescreen.anchor.ids.length,
-      gapPoints: rows.length ? Math.round(((rows.filter(r => r.correct).length / rows.length) - prescreen.anchor.publishedHaiku45Rate / 100) * 1000) / 10 : null,
-      rule: 'a gap above 10 points is reported as a harness difference' };
+    // ours vs the published Haiku 4.5 verdicts on the same ids (paired; discordant pairs show where the harnesses differ)
+    const rows = recs.filter(r => r.arm === 'H45'), pub = prescreen.anchor.publishedHaiku45ById ?? {};
+    const both = rows.filter(r => r.id in pub), ours = both.filter(r => r.correct).length, theirs = both.filter(r => pub[r.id]).length;
+    summary.anchor = { n: both.length, ours, published: theirs, gapPoints: both.length ? Math.round(((ours - theirs) / both.length) * 1000) / 10 : null,
+      oursOnly: both.filter(r => r.correct && !pub[r.id]).length, publishedOnly: both.filter(r => !r.correct && pub[r.id]).length,
+      harnessDifference: both.length ? Math.abs(ours - theirs) / both.length > 0.10 : null, rule: 'a gap above 10 points is reported as a harness difference' };
   }
   writeJson(path.join(runDir, 'SUMMARY.json'), summary);
   // dev and probe aggregates are committed; sealed ones and stand-in (test) runs stay host-only

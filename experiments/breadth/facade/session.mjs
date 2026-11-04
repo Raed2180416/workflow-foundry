@@ -7,7 +7,7 @@
 //     --strict-mcp-config, the arm's --tools list, --max-turns (the bed's official cap), --max-budget-usd, --effort.
 //     NOT --safe-mode: on CLI 2.1.307 it also drops the --mcp-config servers, so the bed's tools never load (observed
 //     2026-10-22 by the $0 offline init probe: mcp_servers [] and 0 tools with it; workbench "connected" and 27 + 1
-//     tools without it). What --safe-mode would add is covered here by --setting-sources '' (no user, project or
+//     tools without it; the same on 2.1.312, 2026-10-28, and on 2.1.318, 2026-11-04, INIT-PROBE.json safeModeCheck). What --safe-mode would add is covered here by --setting-sources '' (no user, project or
 //     local settings: no settings hooks, permissions or env), the sandbox's empty private HOME (no ~/.claude: no
 //     installed plugins, skills, agents, output styles or user CLAUDE.md), a fresh workdir, and the init check, which
 //     refuses any session whose tools, MCP servers, skills, plugins, slash commands or agents differ from the arm's

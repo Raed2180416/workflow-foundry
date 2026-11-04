@@ -16,6 +16,9 @@ Subcommands (all output is JSON; `serve` speaks JSON lines on stdin/stdout):
   mutants --tasks F --out M
                         deterministic mutants of each gold action list (operators: drop_last, wrong_argument,
                         extra_write, duplicate_write)
+  variants --tasks F --out V
+                        deterministic valid non-golden variants of each gold list (BG-6: reordering, formats, case,
+                        two-step updates, interleaved reads); replay reports which ones the official comparator accepts
   regen  --seed S --per-template N --out F
                         WorkBench's own task generators with our seed (shipped data unchanged); writes host-only
   published --models a,b --out F
@@ -142,6 +145,65 @@ def combined(d: dict) -> str:
     return sha(json.dumps(d, sort_keys=True))
 
 
+# --- the semantic view (BG-6: is a valid non-golden trajectory accepted?) -----------------------------------------------
+ID_COLS = {"calendar_events": "event_id", "emails": "email_id", "project_tasks": "task_id", "crm_data": "customer_id"}
+DATE_COLS = ("event_start", "due_date", "last_contact_date", "follow_up_by", "sent_datetime")
+NUM_COLS = ("duration",)
+
+
+def pristine_ids(st_mod) -> dict:
+    st_mod.reset_state()
+    st = st_mod.get_state()
+    return {tab: set(getattr(st, tab)[col].astype(str)) for tab, col in ID_COLS.items()}
+
+
+def _canon_cell(col: str, v: str) -> str:
+    import pandas as pd
+
+    if col in DATE_COLS and v:
+        try:
+            return pd.Timestamp(v).isoformat()
+        except Exception:  # noqa: BLE001
+            return v
+    if col in NUM_COLS and v:
+        try:
+            f = float(v)
+            return str(int(f)) if f.is_integer() else str(f)
+        except ValueError:
+            return v
+    return v
+
+
+def sem_digests(st, ids: dict) -> dict:
+    """The official comparison's view (5 mutable tables, case-folded except status/list_name/board, row order ignored)
+    plus three equivalences a reader of the task would grant: a row created during the task is identified by its
+    content, not by the ID the call order gave it; date-times are compared as instants (any format pandas parses);
+    numbers as numbers ("30" = "30.0"); and the official comparator's own chart end-date tolerance. Not an official
+    metric: it is the BG-6 comparator (which variants count as the same outcome), reported beside is_correct."""
+    out = {}
+    for n in MUTABLE:
+        df = getattr(st, n)
+        cols = list(df.columns)
+        idc = ID_COLS.get(n)
+        rows = []
+        for rec in df.astype(object).where(df.notna(), None).itertuples(index=False, name=None):
+            cells = []
+            for c, v in zip(cols, rec):
+                v = "" if v is None else str(v)
+                if c == idc and v not in ids[n]:
+                    v = "<new>"
+                v = _canon_cell(c, v)
+                if n == "plots_data" and c == "file_path":
+                    # plots/{time_min}_{time_max}_{value}_{type}.png: either chart end date, as the official comparator
+                    v = re.sub(r"^(plots/[^_]*_)2023-11-30_", r"\g<1>2023-11-29_", v)
+                if c not in CASE_SENSITIVE:
+                    v = v.lower()
+                cells.append(v)
+            rows.append(json.dumps(cells, ensure_ascii=False))
+        out[n] = sha("\n".join([json.dumps(cols)] + sorted(rows)))
+    return out
+
+
 # --- an independent executor (for equivalence and the native check) ---------------------------------------------------
 def parse_action(action: str, allowed: set[str]):
     """Action string -> (dotted tool name, kwargs as strings). Same grammar as the official strings; written here
@@ -258,6 +320,19 @@ def _gold_cache(st_mod, dispatch):
     return gold
 
 
+def _gold_sem_cache(st_mod, dispatch, ids):
+    cache = {}
+
+    def gold_sem(task):
+        key = json.dumps(task["outcome"])
+        if key not in cache:
+            _, s = run_actions(task["outcome"], st_mod, dispatch)
+            cache[key] = sem_digests(s, ids)
+        return cache[key]
+
+    return gold_sem
+
+
 def read_jsonl(path: str) -> list[dict]:
     with open(path, encoding="utf-8") as f:
         return [json.loads(x) for x in f if x.strip()]
@@ -273,6 +348,8 @@ def cmd_grade(args) -> None:
     dispatch = {t.name: t for t in toolkits.all_tools}
     tasks = load_task_file(args.tasks)
     gold = _gold_cache(st_mod, dispatch)
+    ids = pristine_ids(st_mod)
+    gold_sem = _gold_sem_cache(st_mod, dispatch, ids)
     out = []
     for tr in read_jsonl(args.input):
         t = tasks[tr["id"]]
@@ -290,6 +367,10 @@ def cmd_grade(args) -> None:
                "side_effects": bool(evaluation.has_side_effects(pred, correct_state)),
                "exact_match": bool(evaluation.is_exact_match(pred, gt)), "error": err or None, "fatal": fatal,
                "n_actions": len(pred), "n_executed": len(executed), "gt_len": len(gt)}
+        # BG-6 comparator on the official prediction: the same end state up to creation-order IDs, date-time and number
+        # formats (sem_digests); an error still fails it. Reported beside the official verdict, never in its place.
+        okp, ps = run_actions(pred, st_mod, dispatch)
+        rec["correct_sem"] = bool(not err and okp and sem_digests(ps, ids) == gold_sem(t))
         if fatal:
             # harm as executed (not an official metric): did the executed writes change the four side-effect tables?
             rec["side_effects_executed"] = bool(evaluation.has_side_effects(executed, False))
@@ -314,6 +395,8 @@ def cmd_replay(args) -> None:
     dispatch = {t.name: t for t in toolkits.all_tools}
     tasks = load_task_file(args.tasks)
     gold = _gold_cache(st_mod, dispatch)
+    ids = pristine_ids(st_mod)
+    gold_sem = _gold_sem_cache(st_mod, dispatch, ids)
     out = []
     for tr in read_jsonl(args.input):
         t = tasks[tr["id"]]
@@ -325,11 +408,140 @@ def cmd_replay(args) -> None:
         md = state_digests(s)
         out.append({"id": t["id"], "key": tr.get("key"), "op": tr.get("op"), "correct": correct,
                     "equivalent_raw": bool(ok and md["raw"] == gd["raw"]),
-                    "equivalent_norm": bool(ok and md["norm"] == gd["norm"]), "executes": ok})
+                    "equivalent_norm": bool(ok and md["norm"] == gd["norm"]),
+                    "equivalent_sem": bool(ok and sem_digests(s, ids) == gold_sem(t)), "executes": ok})
     with open(args.out, "w", encoding="utf-8") as f:
         for r in out:
             f.write(json.dumps(r, sort_keys=True) + "\n")
     emit({"kind": "replayed", "n": len(out)})
+
+
+# --- BG-6 variants: valid non-golden trajectories ------------------------------------------------------------------
+TABLE_OF = {"calendar": "calendar_events", "email": "emails", "project_management": "project_tasks",
+            "customer_relationship_manager": "crm_data", "analytics": "plots_data"}
+CREATES = {"calendar.create_event", "email.send_email", "email.forward_email", "email.reply_email",
+           "project_management.create_task", "customer_relationship_manager.add_customer", "analytics.create_plot"}
+RECORD_KEYS = ("event_id", "email_id", "task_id", "customer_id")
+# Formats the tool documentation (the schema description the model sees) states for an argument [code: src/tools/*.py]
+DOCUMENTED_FORMAT = {("calendar.create_event", "event_start"): "YYYY-MM-DD HH:MM:SS",
+                     ("project_management.create_task", "due_date"): "YYYY-MM-DD",
+                     ("customer_relationship_manager.add_customer", "last_contact_date"): "YYYY-MM-DD",
+                     ("customer_relationship_manager.add_customer", "follow_up_by"): "YYYY-MM-DD"}
+DT_RE = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$")
+READ_FOR_TABLE = {"calendar_events": ("calendar.search_events", {"query": "meeting"}),
+                  "emails": ("email.search_emails", {"query": "update"}),
+                  "project_tasks": ("project_management.search_tasks", {"task_name": "task"}),
+                  "crm_data": ("customer_relationship_manager.search_customers", {"customer_name": "a"}),
+                  "plots_data": ("analytics.engaged_users_count", {"time_min": "2023-11-01", "time_max": "2023-11-29"})}
+VARIANT_OPS = ("reorder_cross_table", "reorder_same_table_creates", "reorder_same_table_edits", "datetime_iso_t",
+               "datetime_minutes", "number_decimal", "email_upper", "chart_end_today", "update_twice",
+               "reads_interleaved")
+
+
+def _tool_of(action: str) -> str:
+    return action.split("(")[0].rsplit(".func", 1)[0]
+
+
+def _swap(gt: list, i: int, j: int) -> list:
+    m = list(gt)
+    m[i], m[j] = gt[j], gt[i]
+    return m
+
+
+def _with(gt: list, k: int, name: str, kw: dict) -> list:
+    m = list(gt)
+    m[k] = _fmt_action(name, kw)
+    return m
+
+
+def cmd_variants(args) -> None:
+    """Deterministic variants of each gold list that a reader of the task would accept as the same outcome (BG-6).
+    Each keeps the task's outcome; the replay's equivalent_sem says whether the end state is the same in the semantic
+    view, and correct says whether the official comparator accepts it."""
+    actions, evaluation, st_mod, toolkits, _ = official()
+    allowed = {t.name for t in toolkits.all_tools}
+    tasks = read_jsonl(args.tasks)
+    st_mod.reset_state()
+    st = st_mod.get_state().copy()
+    out = []
+
+    def add(t, op, acts, **detail):
+        out.append({"id": t["id"], "op": op, "key": f"{t['id']}:{op}", "actions": acts, "detail": detail})
+
+    for t in tasks:
+        gt = t["outcome"]
+        if not gt:
+            continue
+        tools = [_tool_of(a) for a in gt]
+        tabs = [TABLE_OF[x.split(".")[0]] for x in tools]
+        parsed = [parse_action(a, allowed) for a in gt]
+        pairs = [(i, j) for i in range(len(gt)) for j in range(i + 1, len(gt))]
+
+        def rec(k):
+            return next((parsed[k][1][r] for r in RECORD_KEYS if r in parsed[k][1]), None)
+
+        # two writes on different tables in the other order (IDs are per table)
+        p = next(((i, j) for i, j in pairs if tabs[i] != tabs[j]), None)
+        if p:
+            add(t, "reorder_cross_table", _swap(gt, *p), tools=[tools[p[0]], tools[p[1]]])
+        # two creations on one table in the other order (the generated IDs swap)
+        p = next(((i, j) for i, j in pairs if tabs[i] == tabs[j] != "plots_data" and tools[i] in CREATES
+                  and tools[j] in CREATES and gt[i] != gt[j]), None)
+        if p:
+            add(t, "reorder_same_table_creates", _swap(gt, *p), tools=[tools[p[0]], tools[p[1]]])
+        # two edits (update or delete) of different records of one table in the other order
+        p = next(((i, j) for i, j in pairs if tabs[i] == tabs[j] and tools[i] not in CREATES and tools[j] not in CREATES
+                  and rec(i) is not None and rec(j) is not None and rec(i) != rec(j)), None)
+        if p:
+            add(t, "reorder_same_table_edits", _swap(gt, *p), tools=[tools[p[0]], tools[p[1]]])
+        # the same date-time in another format: ISO 'T' separator; without seconds
+        hit = next(((k, a) for k in range(len(gt)) for a, v in parsed[k][1].items() if DT_RE.match(v)), None)
+        if hit:
+            k, a = hit
+            name, kw = parsed[k]
+            add(t, "datetime_iso_t", _with(gt, k, name, {**kw, a: kw[a].replace(" ", "T")}), tool=name, arg=a,
+                documented=DOCUMENTED_FORMAT.get((name, a)))
+            add(t, "datetime_minutes", _with(gt, k, name, {**kw, a: kw[a][:16]}), tool=name, arg=a,
+                documented=DOCUMENTED_FORMAT.get((name, a)))
+        # a whole number written as a decimal ("30" -> "30.0")
+        hit = next(((k, a) for k in range(len(gt)) for a, v in parsed[k][1].items()
+                    if (a == "duration" or (a == "new_value" and parsed[k][1].get("field") == "duration"))
+                    and v.isdigit()), None)
+        if hit:
+            k, a = hit
+            name, kw = parsed[k]
+            add(t, "number_decimal", _with(gt, k, name, {**kw, a: kw[a] + ".0"}), tool=name, arg=a)
+        # an e-mail address in capitals
+        hit = next(((k, a) for k in range(len(gt)) for a, v in parsed[k][1].items()
+                    if "@" in v and " " not in v and v != v.upper()), None)
+        if hit:
+            k, a = hit
+            name, kw = parsed[k]
+            add(t, "email_upper", _with(gt, k, name, {**kw, a: kw[a].upper()}), tool=name, arg=a)
+        # a chart ending today instead of yesterday (the official comparator accepts either, by design)
+        k = next((k for k in range(len(gt)) if tools[k] == "analytics.create_plot"
+                  and parsed[k][1].get("time_max") == "2023-11-29"), None)
+        if k is not None:
+            name, kw = parsed[k]
+            add(t, "chart_end_today", _with(gt, k, name, {**kw, "time_max": "2023-11-30"}), tool=name)
+        # an update reached in two steps (first another value, then the asked one)
+        k = next((k for k in range(len(gt)) if tools[k].endswith((".update_event", ".update_task", ".update_customer"))), None)
+        if k is not None:
+            name, kw = parsed[k]
+            other = mutate_value(name, "new_value", kw["new_value"], st, _h(t["id"], "u2"))
+            if other != kw["new_value"]:
+                add(t, "update_twice", gt[:k] + [_fmt_action(name, {**kw, "new_value": other})] + gt[k:], tool=name,
+                    field=kw.get("field"))
+        # a search before every write
+        m = []
+        for k, a in enumerate(gt):
+            rn, rkw = READ_FOR_TABLE[tabs[k]]
+            m += [_fmt_action(rn, rkw), a]
+        add(t, "reads_interleaved", m)
+    with open(args.out, "w", encoding="utf-8") as f:
+        for r in out:
+            f.write(json.dumps(r, sort_keys=True, ensure_ascii=False) + "\n")
+    emit({"kind": "variants", "n": len(out), "ops": {op: sum(r["op"] == op for r in out) for op in VARIANT_OPS}})
 
 
 # --- mutants --------------------------------------------------------------------------------------------------------
@@ -567,6 +779,9 @@ def main() -> None:
     m = sub.add_parser("mutants")
     m.add_argument("--tasks", required=True)
     m.add_argument("--out", required=True)
+    va = sub.add_parser("variants")
+    va.add_argument("--tasks", required=True)
+    va.add_argument("--out", required=True)
     rg = sub.add_parser("regen")
     rg.add_argument("--seed", type=int, required=True)
     rg.add_argument("--per-template", type=int, default=10)
@@ -575,6 +790,11 @@ def main() -> None:
     pb.add_argument("--models", required=True)
     pb.add_argument("--out", required=True)
     a = p.parse_args()
+    # boot() changes into the clone (WorkBench reads its CSVs by relative path): resolve file arguments first, so a
+    # relative --out never writes into the pinned clone
+    for k in ("tasks", "input", "out"):
+        if getattr(a, k, None):
+            setattr(a, k, os.path.abspath(getattr(a, k)))
     boot(a.root)
     if a.cmd == "tasks":
         for t in load_tasks():
@@ -587,6 +807,8 @@ def main() -> None:
         cmd_replay(a)
     elif a.cmd == "mutants":
         cmd_mutants(a)
+    elif a.cmd == "variants":
+        cmd_variants(a)
     elif a.cmd == "regen":
         cmd_regen(a)
     elif a.cmd == "published":

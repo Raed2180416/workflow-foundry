@@ -3,8 +3,10 @@
 // Used for gold replay, floors and mutants through the full facade path (relay -> mailbox -> host -> bed).
 import { spawn } from 'node:child_process';
 
-/** runScripted({ server: {command, args}, steps: [{name, arguments}], timeoutMs }) -> { tools, results, ms } */
-export function runScripted({ server, steps, timeoutMs = 120_000, protocolVersion = '2025-06-18' }) {
+/** runScripted({ server: {command, args}, steps: [{name, arguments}], timeoutMs, policy }) -> { tools, results, ms }
+ * policy (optional): after each call, policy({ step, result, tools, attempt }) may return a step to issue next instead of
+ * moving on (a scripted reaction to an error: retry, or a renamed argument); at most `maxAttempts` per planned step. */
+export function runScripted({ server, steps, timeoutMs = 120_000, protocolVersion = '2025-06-18', policy = null, maxAttempts = 3 }) {
   const t0 = Date.now();
   const c = spawn(server.command, server.args, { stdio: ['pipe', 'pipe', 'pipe'], env: { PATH: process.env.PATH ?? '/usr/bin:/bin' } });
   let buf = '', stderr = '', nextId = 1;
@@ -35,7 +37,14 @@ export function runScripted({ server, steps, timeoutMs = 120_000, protocolVersio
       notify('notifications/initialized');
       const { tools } = await rpc('tools/list', {});
       const results = [];
-      for (const s of steps) results.push(await rpc('tools/call', { name: s.name, arguments: s.arguments ?? {} }));
+      for (const s of steps) {
+        let step = s;
+        for (let attempt = 1; step && attempt <= maxAttempts; attempt++) {
+          const result = await rpc('tools/call', { name: step.name, arguments: step.arguments ?? {} });
+          results.push(result);
+          step = policy ? await policy({ step, result, tools, attempt }) : null;
+        }
+      }
       return { init, tools, results, ms: Date.now() - t0 };
     } finally {
       clearTimeout(timer);
