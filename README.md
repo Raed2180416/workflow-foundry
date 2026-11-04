@@ -68,7 +68,9 @@ else below is still development and diagnostic evidence.*
     blockers to one missing object, an expected diff derived in code.
   - **Unmerged, development** (on branches rescued 10-28): asking Haiku beats the preregistered code need router (F1 0.944
     vs 0.739); FH-1 heal removes 75.2% of recurring failing cases with 0 regressions for $1.14; for reuse, the profile gate
-    is worse than rebuilding and a history-check gate had 0 wrong in 98 accepted. Durability over time (DUR-1) is designed
+    is worse than rebuilding; a gate that checks the consumer's own labelled history ties rebuilding (0 wrong in 98
+    accepted, a count without an M3 certificate), and both beat a Haiku agent given the same labels, 98% vs 91.5%,
+    mostly on items the labels leave open (C2-3, preregistered). Durability over time (DUR-1) is designed
     and drafted but not run; adaptive in-node sub-workflow creation is not built.
   - Three container restarts on 10-22 killed in-flight runs; chains now resume from their last commit (register C9).
 - **2026-10-21, evening.** Development evidence only; rows with links are in [RESEARCH.md](docs/RESEARCH.md):
@@ -166,7 +168,7 @@ Every phase still ends with a capability number against a simple baseline and a
 | UI | **Prototype** read-only run viewer (`tools/run-view/`) | 19 unit tests and 74 browser checks pass. The owner has not reviewed it yet; the game-QA screenshots are a scripted fixture |
 | Security | Labels, quarantine and sandbox exist; control-flow taint landed 2026-10-08; **gaps** | Landed: an ungated effect whose firing depends on untrusted data (`when`, loop `until`, map items, a skip chain, `onError` continuation) is rejected `LABEL_POLICY` / `UNTRUSTED_CONTROL` by the validator and again at dispatch (`tests/control-taint.test.mjs`; lane-7 probe B now fails; 0 of 393 test-suite workflows newly rejected [M]). Still open: the sink-field policy (untrusted data cannot fill even a data field of an ungated effect), the declassification budget, builder provenance taint, executor isolation. Each fix gates the first run that needs it ([synthesis §7](research/review-20261007/00-SYNTHESIS.md)) |
 | Evaluation validity | **Weakest link** | Every bed is synthetic and Claude-written; the sealed families are unused; nothing external has run. Next is the wild ladder (ROADMAP §4.2). *Corrected 2026-10-28: external benchmarks have run since 10-14 (AutomationBench, development) and SOP-Bench's sealed rows on 10-22; our own sealed families are still unused* |
-| Reuse library | **Experimental** registry keyed by contract hash, with producer-profile and consumer-conformance gates (`experiments/reuse/`) | Development evidence only: [RESULT-C2-1](research/reuse-20261021/RESULT-C2-1.md) (the producer-profile gate let 32 of 112 accepted items through wrong) and [RESULT-C2-2](research/reuse-20261021/RESULT-C2-2.md) (consumer conformance: 0 wrong in 98 accepted on fresh suppliers, blind to drift after the history). Not in `src/`; no monitoring of admitted reuse yet |
+| Reuse library | **Experimental** registry keyed by contract hash, with producer-profile and consumer-conformance gates (`experiments/reuse/`) | Development evidence only: [RESULT-C2-1](research/reuse-20261021/RESULT-C2-1.md) (the producer-profile gate let 32 of 112 accepted items through wrong), [RESULT-C2-2](research/reuse-20261021/RESULT-C2-2.md) (consumer conformance: 0 wrong in 98 accepted on fresh suppliers, no M3 certificate when clustered by supplier, blind to drift after the history) and [RESULT-C2-3](research/reuse-20261021/RESULT-C2-3.md) (a Haiku agent with the same labels: 91.5% against 98% for rebuilding and for history-gated reuse, which tie). Not in `src/`; no monitoring of admitted reuse yet |
 
 Counts over these 14 layers:
 - built and tested, with known gaps: 6;

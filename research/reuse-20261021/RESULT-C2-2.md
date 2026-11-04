@@ -43,7 +43,8 @@ sentence is superseded it is marked "(corrected, §0)". Nothing here changes a c
   `freeze-guard.mjs`, which refuses a freeze while any result-feeding record file is non-empty (C2-3 does).
 - **What the capability number is now.** On fresh suppliers of every C2-1 kind: 0 wrong reuses in 98 accepted items,
   in 5 admitted suppliers, with no M3 certificate. No baseline ran in C2-2 (REUSE and SCRATCH accuracy are bounded,
-  costs projected). Against rebuilding, C2-1's measured arms say the history gate ties it on accuracy (C2-1 §0).
+  costs projected). Against rebuilding, C2-1's measured arms say the history gate ties it on accuracy (C2-1 §0); against a Haiku agent
+  given the same 15 labels (C2-3, preregistered), both are 6.4–6.8 points better ([RESULT-C2-3.md](RESULT-C2-3.md)).
 
 ## 1. The answer
 

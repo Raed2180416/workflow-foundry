@@ -8,6 +8,66 @@ its oracle were written by the experimenter, so nothing here is sealed or claim-
 [runs/c2-1/](runs/c2-1/). The follow-up that tests this result's post-hoc fix, preregistered, is
 [RESULT-C2-2.md](RESULT-C2-2.md).*
 
+## 0. Review corrections (dated 2026-11-04)
+
+*An adversarial review of C2-1 and C2-2 (2026-11-04) found four claims here unsupported or overstated. The preregistered
+results below are kept as they were; a superseded sentence is marked "(corrected, §0)". Nothing here changes a count.*
+
+- **The agent baseline had no labels (finding 2).** AGENT saw the procedure and the item and none of B's labelled history,
+  while SCRATCH and the post-hoc G0 each used the supplier's 15 labelled products, and 5 of the 12 suppliers (S2, S3, S4,
+  H3, H4) cannot be answered without them. AGENT is the **no-history agent**, and D3's "+28 points" measures an
+  information gap, not a capability gap: it is **withdrawn as a capability claim**. C2-3 (preregistered, frozen, paid,
+  K = 2, $0.805) ran the same agent with the same 15 labelled products: [RESULT-C2-3.md](RESULT-C2-3.md). It scores
+  91.5% in both repetitions: 6.4–6.8 points below SCRATCH and REUSE-G0 (every interval above 0) and about 6 points above
+  this file's preregistered REUSE (b3). Post-hoc, most of that gap sits on items whose class the 15 labels leave open and
+  B's matrix decides with the builder's own default bands, and the rest is the agent following the procedure's id and
+  zero-score rules over the supplier's labelled practice.
+- **M3 "serve" for G0 was clustered on the wrong unit (finding 1).** G0 admits or refuses whole suppliers; its 91 admitted
+  decisions fall in 5 suppliers. Clustered by supplier, M3 returns **no-decision** (upper 0.086 at ρ 0.1; 0.454 if each
+  supplier counts once), not `serve` (0.036, by shipment). `posthoc.mjs` now reports both. The count, 0 wrong in 91, stands.
+- **The registry lookup was not exercised (finding 3).** The runs fetched A's entry by id (`registry.get(PROVEN_ID)` in
+  `c2.mjs`, `posthoc.mjs`, `c22.mjs`); §1's "B asks for the contract and gets A's entry" described the design, not what ran.
+  A $0 post-hoc check ([runs/c2-1/lookup-check.json](runs/c2-1/lookup-check.json), `lookup-check.mjs`, `lookup-b.mjs`) has B
+  compute its own contract (its procedure text, catalog, input and output columns) and look it up with a declared choice
+  rule (the first live unscoped entry from another program; the supplier's own rebuilds are returned apart, for the deopt
+  path). For all 12 C2-1 and 16 C2-2 suppliers it returns the entry the runs used, same artifact hash; one changed
+  character in the procedure, a changed tool description or reordered input columns each miss. The results stand; the
+  claim is now checked. B's procedure text is byte-identical to A's by construction (both read the same file), so this
+  registry cannot match a reworded procedure.
+- **Efficiency was overstated (finding 4).** At about 20 items per supplier (this run) REUSE-G0 is cheaper and faster than
+  SCRATCH: $0.0018 / $0.0015 against $0.0026 / $0.0024 per item (5 builds avoided per lineage, $0.18 and $0.20), 10.0 /
+  9.7 s against 13.3 / 13.8 s. It is **exactly** as accurate: its item outcomes equal SCRATCH's in both lineages (the entry
+  is right on every item of an admitted supplier, and refused suppliers get the same build; checked in C2-3's analysis).
+  Projected to 1,000 items per supplier (from the measured means; a projection), the time advantage is gone: SCRATCH 1.20 /
+  0.74 s per item, REUSE-G0 1.10 / 0.82 s (G0 refuses whole suppliers before running anything), and the preregistered
+  REUSE (b3) 1.45 / 1.21 s, slower than rebuilding in both lineages because a refused item runs the entry and its checks
+  before its build. The cost difference at that volume is $0.00001–0.00002 per item. The case for reuse here is a few
+  avoided builds at about $0.05 each, not accuracy and not speed at volume.
+- **"Proven" is training evidence (finding 7).** The registered evidence is 20/20 on the 20 dev rows the workflow was built
+  and repaired on, below M3's minimum of 60 and not held out. The same artifact (sha256 `8e7b1822…`, `FREEZE-p2.json`) was
+  measured after C2-1 on SOP-Bench's 254 sealed dangerous_goods rows: 97.6% strict pass^3 (248; 6 rows always fail, all
+  on hazard_class; `research/sopbench-20261021/NOTES.md`, sealed per-SOP table, read as a summary). M3 on those 254 rows
+  would return `serve` (upper 0.046). That is independent evidence in program A's data, not in B's. `registry.mjs` is
+  frozen with C2-1 and C2-2, so the entry is not rewritten and `register()` still does not require held-out evidence;
+  instead a $0 sidecar ([runs/c2-1/producer-evidence.json](runs/c2-1/producer-evidence.json), `producer-evidence.mjs`,
+  tested) checks the hash chain from the entry's artifact to `FREEZE-p2.json` to the sealed summary and holds the producer
+  to the consumer's rule: training evidence 20/20 `no-decision` (upper 0.139, below the minimum of 60), sealed 248/254
+  `serve` (upper 0.046). The rebuilt entries were registered as "15/15" on their own training labels and were wrong on 5
+  and 4 test items; no held-out check gates them (§7, next step 3).
+- **"Separate program" is a thin wrapper (review, owner ask [48]).** B's own logic (holds, transport mode, reroutes)
+  consumes the class but plays no part in the reuse decision, B reads byte-identical procedure text, and the only thing
+  the experiment varies is supplier data drift. C2 shows reuse of one sub-task across two programs that share a
+  procedure verbatim, not reuse across programs that differ in what they ask of it.
+- **B's oracle shares the workflow's bands (finding 13).** The 6 sealed rows the workflow always fails have no known cause
+  (`research/sopbench-20261021/RESULT-p2.md` §9). If they are band-edge errors, B's oracle inherits them, and no C2 number
+  can show it.
+- **Agent latency is not like for like (finding 14).** Repetition 2 resumed at concurrency 2 after the rate-limit fault
+  (repetition 1 ran at 3), so 9.4 s against 11.4 s per item is partly the setting.
+- **The freezes after the main-tree merge.** The branch merged the main tree's HEAD (`6a0f5ccd`) on 2026-11-04, which
+  appended functions to `experiments/lib/stats.mjs`, a file this freeze pins. The frozen text is a byte prefix of the
+  current file (`freeze-guard.mjs auditFrozenCode`, tested), so every function C2 uses is unchanged, but `checkFreeze`
+  now lists `../lib/stats.mjs` as changed (paid phases refuse to start, as they should).
+
 ## 1. What ran
 
 - **Program A (the proven workflow):** SOP-Bench `dangerous_goods`, phase-2 frozen workflow (Haiku-built for $0.028, read
@@ -15,7 +75,8 @@ its oracle were written by the experimenter, so nothing here is sealed or claim-
 - **Program B (the separate program):** the Hazmat Shipment Desk (`program-b.mjs`): books shipments for 12 suppliers and needs
   each line item's hazard class under the same procedure; its own code holds, picks the mode, reroutes and escorts.
 - **Registry** (`registry.mjs`): append-only, keyed by contract hash (procedure text, canonical tool catalog, input and output
-  columns). B asks for the dangerous_goods contract and gets A's entry with its evidence and two profiles.
+  columns). B asks for the dangerous_goods contract and gets A's entry with its evidence and two profiles (corrected, §0: the
+  runs fetched the entry by id; B's own lookup, checked post-hoc at $0, returns the same entry).
 - **Gate (preregistered primary b3):** G2, the item's inputs against the profile of A's 20 proven inputs ($0, before the run),
   and G3, the run's tool results, section path, flags and answer against the profile of A's 20 proving runs ($0, after the
   run, sound for effect-free tools). Accept: A's answer. Refuse: deopt to the supplier's rebuild.
@@ -50,8 +111,8 @@ measured unit costs; a projection, not a measurement): REUSE $0.00003 and 1.2–
 |---|---|---|
 | D1: may b3 serve reuse (M3b crossed returns `serve`)? | no | **no**: M3b `kill` (upper 0.618, one entry); parent-clustered aE `kill` (upper 0.394, 32 wrong of 112 admitted) |
 | D2: REUSE non-inferior to SCRATCH (paired 95% interval above −3 pts), per lineage | ≈ SCRATCH except S4 and H4 | **fails, both lineages: REUSE is inferior.** L1 −12.8 pts [−18.9, −7.2], L2 −12.8 [−19.0, −7.1]. The deficit is exactly the wrong reuses: S4 21, H4 7, S3 4 |
-| D3: REUSE vs AGENT | AGENT poor on harmful suppliers | **REUSE better**, +28.1 to +28.9 pts, every interval excludes 0 (L1 vs k1 [20.4, 36.1]) |
-| D4: REUSE USD and latency per item below SCRATCH and AGENT | cheaper than SCRATCH; cost win over the agent only with volume | below SCRATCH on both, both lineages; below AGENT on time (9.2 / 8.2 s vs 11.4 / 9.4 s) and on USD per correct item, **not** on USD per item at this volume ($0.0017 / $0.0013 vs $0.0013 / $0.0010) |
+| D3: REUSE vs AGENT | AGENT poor on harmful suppliers | **REUSE better**, +28.1 to +28.9 pts, every interval excludes 0 (L1 vs k1 [20.4, 36.1]). *(Withdrawn as a capability claim, §0: the agent had no labels. With the same 15 labels (C2-3, preregistered) the agent scores 91.5%, and REUSE is 6.0–6.4 points below it.)* |
+| D4: REUSE USD and latency per item below SCRATCH and AGENT | cheaper than SCRATCH; cost win over the agent only with volume | below SCRATCH on both, both lineages; below AGENT on time (9.2 / 8.2 s vs 11.4 / 9.4 s) and on USD per correct item, **not** on USD per item at this volume ($0.0017 / $0.0013 vs $0.0013 / $0.0010). *(Corrected, §0: at 1,000 items per supplier SCRATCH is faster; the agent's two repetitions ran at different concurrency.)* |
 | D5: does the gate generalise to held-out drift kinds? | – | catch rate on harmful held-out items 70/77 = 90.9% (H1, H2, H3 all; H4 7 of 14) against 32/57 = 56.1% on dev-known harmful kinds; 0 false deopts on H5 (German). It generalises to **shape** drift (types, field names, id case) and not to **meaning** drift (H4 offset, as S4 inversion on dev) |
 
 ## 4. Root causes of every failure
@@ -91,12 +152,13 @@ Conceived after the dev and test gate results (not preregistered in C2-1): befor
 on that supplier's 15 labelled history products ($0) and admit it only if it reproduces every label (`posthoc.mjs`, G0).
 On C2-1's test set: 91 accepted, **0 wrong**, 10 false deopts (5 S3 and 5 H4 items A got right by coincidence), 7 builds;
 REUSE-G0 equals SCRATCH's accuracy in both lineages (230 and 231) at $0.0018 / $0.0015 per item instead of $0.0026 / $0.0024.
-M3 aE on its admitted decisions: `serve` (upper 0.036); M3b `no-decision` (one entry).
+M3 aE on its admitted decisions: `serve` (upper 0.036, by shipment; corrected, §0: no-decision by supplier, upper 0.086); M3b
+`no-decision` (one entry).
 
 Because that is post-hoc, it was tested in a separate preregistered experiment, **C2-2** ([RESULT-C2-2.md](RESULT-C2-2.md), $0,
 fresh suppliers, 60 history labels each, four supplier kinds designed against it): the M3 rule on the history plus a per-run
 check against A's proof widened with B's conforming history made **0 wrong reuses in 98 accepted items on fresh suppliers of
-every C2-1 kind** (M3 `serve`, upper 0.034; b3 on the same items: 38 wrong of 123), and failed, as predicted, on a supplier
+every C2-1 kind** (M3 `serve`, upper 0.034, by shipment; corrected, §0 of RESULT-C2-2: no-decision by supplier; b3 on the same items: 38 wrong of 123), and failed, as predicted, on a supplier
 whose scale changed after the history (17 of 17 accepted, all wrong).
 
 ## 6. Honest reading
@@ -106,9 +168,12 @@ whose scale changed after the history (17 of 17 accepted, all wrong).
   right on every item at $0 per run (S0, S1, S5, H5: 72 of 72; plus S6 when admitted). But **proof in the producer's
   program is not proof in the consumer's**: gating on the producer's evidence (b3) was inferior to rebuilding by 12.8 points
   in both lineages and let 28.6% of accepted items through wrong. The gate that works is proof in the consumer's program
-  (its own labelled history), which C2-2 confirmed preregistered.
-- **Capability number (dev):** preregistered REUSE 85.1 / 85.5% vs SCRATCH 97.9 / 98.3% vs AGENT 57.0 / 56.6%; post-hoc
-  REUSE-G0 97.9 / 98.3% at 60–70% of SCRATCH's cost. K = 2 lineages and K = 2 repetitions: the gate's decisions are deterministic
+  (its own labelled history), which C2-2 confirmed preregistered as a count (0 wrong in 98), without a certificate (corrected,
+  §0) and without a baseline; it ties rebuilding on accuracy and saves a few builds.
+- **Capability number (dev):** preregistered REUSE 85.1 / 85.5% vs SCRATCH 97.9 / 98.3% vs AGENT 57.0 / 56.6% (no labels;
+  with the same 15 labels, C2-3: 91.5 / 91.5%); post-hoc
+  REUSE-G0 97.9 / 98.3% at 60–70% of SCRATCH's cost (at about 20 items per supplier; corrected, §0: equal to SCRATCH item by
+  item, and slower than SCRATCH at volume). K = 2 lineages and K = 2 repetitions: the gate's decisions are deterministic
   (identical in both lineages), and the two lineages' builds differ by at most 3 items on any supplier.
 - **What it does not show.** Program B, its 12 suppliers, its oracle and the gate are mine; the band cut-offs are B's by
   construction (pinned-subset accuracy is within 1.5 points of the full accuracy for every arm). One entry and one procedure:
