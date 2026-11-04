@@ -60,6 +60,14 @@ function interruptOnSignal(foundry, halt) {
 // Model-run options (DESIGN §5.1): which commands accept them.
 const runOnly = ['model-mode', 'salt', 'max-cost', 'assignment'];
 const modelCommands = new Set(['run', 'resume', 'tick']);
+async function buildGeneratorProvider(args) {
+  if (!['opencode-free', 'opencode-v2-free'].includes(args.agent)) throw new FoundryError('GENERATOR_PROVIDER', 'Choose --agent opencode-free for the legacy interface or opencode-v2-free for the pinned v2 interface, with an explicitly selected observed free model. Other host agents use MCP or the generator library interface.');
+  if (!args.model) throw new FoundryError('MODEL_ID', 'An explicit --model is required; this CLI never silently chooses a model or price tier.');
+  const Provider = args.agent === 'opencode-v2-free'
+    ? (await import('../src/opencode-v2-free.mjs')).OpenCodeV2FreeProvider
+    : (await import('../src/opencode-free.mjs')).OpenCodeFreeProvider;
+  return new Provider({ model: args.model });
+}
 function checkModelArguments(command, args) {
   const misplaced = [...runOnly.filter(name => args[name] !== undefined && command !== 'run'),
     ...(args.policy !== undefined && !modelCommands.has(command) && command !== 'validate' && command !== 'lint' ? ['policy'] : []), ...(args['tick-interval'] !== undefined && command !== 'serve' ? ['tick-interval'] : []),
@@ -231,6 +239,9 @@ async function main() {
   if (args['outcome-repair'] && args['auto-apply']) {
     throw new FoundryError('OUTCOME_CLI_ARGUMENT', 'Outcome generation produces a proposal; use a separate outcome-apply command to reverify its evidence.');
   }
+  // generate: the agent and model are checked and the provider is built (its constructor only reads and hashes the
+  // installed binary) before the workspace store is opened, so a refused request leaves no workspace state behind.
+  const generatorProvider = command === 'generate' ? await buildGeneratorProvider(args) : null;
   const workspace = path.resolve(args.workspace ?? args.project ?? process.cwd());
   if (command === 'outcome-history') {
     if (positionals.length !== 1 || !/^[a-f0-9]{64}$/.test(args.receipt ?? '') ||
@@ -424,13 +435,8 @@ async function main() {
     }
     if (command === 'outcome-apply') { print(outcomes.apply(item)); return; }
     if (args.agent || command === 'generate') {
-      if (!['opencode-free', 'opencode-v2-free'].includes(args.agent)) throw new FoundryError('GENERATOR_PROVIDER', 'Choose --agent opencode-free for the legacy interface or opencode-v2-free for the pinned v2 interface, with an explicitly selected observed free model. Other host agents use MCP or the generator library interface.');
-      if (!args.model) throw new FoundryError('MODEL_ID', 'An explicit --model is required; this CLI never silently chooses a model or price tier.');
+      const provider = generatorProvider ?? await buildGeneratorProvider(args);
       const { WorkflowGenerator } = await import('../src/generator.mjs');
-      const Provider = args.agent === 'opencode-v2-free'
-        ? (await import('../src/opencode-v2-free.mjs')).OpenCodeV2FreeProvider
-        : (await import('../src/opencode-free.mjs')).OpenCodeFreeProvider;
-      const provider = new Provider({ model: args.model });
       const evaluator = args.suite ? (await import('../src/evaluation.mjs')).suiteEvaluator(readJson(args.suite), { registryFactory: () => registry }) : null;
       foundry.generator = new WorkflowGenerator(args['outcome-repair'] ? outcomes.generationHost() : foundry, provider, { maxRounds: args.rounds ? Number(args.rounds) : 3, maxDurationMs: args['generation-timeout'] ? Number(args['generation-timeout']) : 900000, autoApply: !!args['auto-apply'], evaluator });
     }

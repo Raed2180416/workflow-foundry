@@ -49,7 +49,16 @@ const lines = [
   `- \`map.maxItems\` <= ${nodeProps.maxItems.maximum ?? 'see schema'}; \`budget.maxConcurrency\` <= ${top.budget.properties.maxConcurrency.maximum};` +
     ` \`budget.maxSteps\` <= ${top.budget.properties.maxSteps.maximum}; \`budget.maxDurationMs\` <= ${top.budget.properties.maxDurationMs.maximum}`,
   `- \`loop.maxIterations\` <= ${nodeProps.maxIterations?.maximum ?? 'see schema'}; \`code.source\` <= ${nodeProps.source.maxLength} characters`,
+  `- \`budget\` fields: ${Object.keys(top.budget.properties).map(k => '`' + k + '`').join(', ')}; required: ${(top.budget.required ?? []).map(k => '`' + k + '`').join(', ') || '(none)'}`,
   '',
+  ...(defs.principal ? [
+    'Approvals (human nodes):',
+    '',
+    `- A \`human\` node may name a \`principal\` { ${Object.keys(defs.principal.properties).map(k => '`' + k + '`').join(', ')} }: the role (from the host's role matrix) that may answer it. ` +
+      `A \`threshold\` { ${Object.keys(defs.principal.properties.threshold.properties).map(k => '`' + k + '`').join(', ')} } routes answers whose \`amount\` is above \`above\` to another role. Only human nodes take a principal.`,
+    ...(top.segregation ? [`- Top-level \`segregation\` (at most ${top.segregation.maxItems} groups) lists ${top.segregation.items.properties.nodes.minItems}–${top.segregation.items.properties.nodes.maxItems} human nodes whose answerers must be pairwise distinct in one run (segregation of duties: requester ≠ approver).`] : []),
+    '',
+  ] : []),
   'References and runtime contracts (from src/runtime.mjs and src/sandbox.mjs):',
   '',
   '- Values are referenced as `{"$ref": "input.<field>"}`, `{"$ref": "nodes.<id>.<field>"}`, and inside a map body `{"$ref": "item.<field>"}`.',

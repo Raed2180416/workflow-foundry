@@ -1,6 +1,6 @@
 # The workflow IR (generated from schemas/workflow.schema.json; do not edit by hand)
 
-Regenerate with `node tools/skillpack/gen-ir.mjs`. Top-level fields: `schemaVersion`, `id`, `version`, `title`, `goal`, `domain`, `envelope`, `inputSchema`, `budget`, `nodes`, `acceptance`, `labels`, `discovery`, `state`, `defaultClass`, `oracle`, `metadata`;
+Regenerate with `node tools/skillpack/gen-ir.mjs`. Top-level fields: `schemaVersion`, `id`, `version`, `title`, `goal`, `domain`, `envelope`, `inputSchema`, `budget`, `nodes`, `acceptance`, `labels`, `discovery`, `segregation`, `state`, `defaultClass`, `oracle`, `metadata`;
 required: `schemaVersion`, `id`, `version`, `title`, `goal`, `domain`, `envelope`, `budget`, `nodes`, `acceptance`.
 
 Every node needs `id`, `kind`, `needs`, `description`. Node kinds and the fields each kind requires:
@@ -34,6 +34,12 @@ Limits the validator enforces:
 
 - `map.maxItems` <= 1000; `budget.maxConcurrency` <= 16; `budget.maxSteps` <= 100000; `budget.maxDurationMs` <= 2592000000
 - `loop.maxIterations` <= 1000; `code.source` <= 262144 characters
+- `budget` fields: `maxSteps`, `maxConcurrency`, `maxDurationMs`, `maxCost`, `maxTokens`; required: `maxSteps`, `maxConcurrency`, `maxDurationMs`
+
+Approvals (human nodes):
+
+- A `human` node may name a `principal` { `role`, `threshold` }: the role (from the host's role matrix) that may answer it. A `threshold` { `amount`, `above`, `role` } routes answers whose `amount` is above `above` to another role. Only human nodes take a principal.
+- Top-level `segregation` (at most 50 groups) lists 2–10 human nodes whose answerers must be pairwise distinct in one run (segregation of duties: requester ≠ approver).
 
 References and runtime contracts (from src/runtime.mjs and src/sandbox.mjs):
 

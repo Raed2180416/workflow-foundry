@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -44,4 +44,21 @@ test('CLI does not use an unknown agent or silently fall back', () => {
   const result = invoke(['generate', '--task', 'Offline routing test', '--agent', 'unknown', '--model', 'opencode/big-pickle']);
   assert.equal(result.status, 1);
   assert.equal(JSON.parse(result.stderr).error.code, 'GENERATOR_PROVIDER');
+});
+
+test('a refused generate leaves no workspace state and opens no store', () => {
+  // The agent and model are checked, and the provider built, before the workspace store is opened (bin/foundry.mjs
+  // buildGeneratorProvider). Before 2026-11-04 a refused request created .foundry/foundry.sqlite first.
+  for (const args of [['--agent', 'opencode-free'], ['--agent', 'unknown', '--model', 'opencode/big-pickle'], ['--agent', 'opencode-v2-free', '--model', 'invalid/no-provider']]) {
+    const workspace = mkdtempSync(path.join(tmpdir(), 'foundry-cli-refusal-'));
+    try {
+      const result = spawnSync(process.execPath, [cli.pathname, 'generate', '--task', 'Offline routing test', ...args, '--workspace', workspace], {
+        env: { PATH: '/usr/bin:/bin', HOME: workspace, NODE_NO_WARNINGS: '1' }, encoding: 'utf8', timeout: 5000, maxBuffer: 100000,
+      });
+      assert.equal(result.error, undefined);
+      assert.equal(result.status, 1);
+      assert.ok(['MODEL_ID', 'GENERATOR_PROVIDER'].includes(JSON.parse(result.stderr).error.code));
+      assert.equal(existsSync(path.join(workspace, '.foundry')), false, `${args.join(' ')} created workspace state`);
+    } finally { rmSync(workspace, { recursive: true, force: true }); }
+  }
 });
