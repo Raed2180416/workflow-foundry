@@ -1,7 +1,7 @@
 // CI-1 wave 2: the runner refuses the wave-1 bed and wave-1 oracles, the freeze detects any changed, missing or added frozen file, the
 // committed summary row keeps the first failing world, and the wave-2 scorer has teeth on a frozen item (the transliteration passes;
 // no effects, a dropped effect, a doubled effect and a wrong recipient all fail). The bed lives outside git: the bed-dependent tests
-// skip when it is absent.
+// skip when it is absent; the scorer's teeth are also tested on a synthetic first-party item (fixture-item.mjs) that always runs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync, mkdirSync } from 'node:fs';
@@ -52,7 +52,8 @@ test('the committed summary row keeps the first failing world and the v1 verdict
   assert.deepEqual(refused.firstFailure, { outcome: 'unsupported', error: 'UNSUPPORTED no' });
 });
 
-test('the wave-2 freeze reports changed, missing and added files', { skip: !existsSync(MANIFEST_W2) && 'MANIFEST-W2.json not built yet' }, () => {
+// the manifest hashes the local bed files too, so this check needs the bed (it failed rather than skipped on a fresh clone before)
+test('the wave-2 freeze reports changed, missing and added files', { skip: (!existsSync(MANIFEST_W2) && 'MANIFEST-W2.json not built yet') || (!haveBed && 'wave-2 bed not present') }, () => {
   assert.deepEqual(checkManifestW2(MANIFEST_W2), [], 'the committed manifest matches the tree');
   const dir = mkdtempSync(path.join(tmpdir(), 'ci1w2m-'));
   try {
@@ -104,4 +105,24 @@ test('survivor audit: a mutant in another trigger\'s subgraph is unreachable, on
   assert.equal(mutantNode('skip:Nowhere', names), null);
   const s = split(wf, 'Daily', ['drop-effect:Record heartbeat', 'skip:Send digest', 'skip:Nowhere', 'dup-effect:Send digest #2']);
   assert.deepEqual(s, { unreachable: ['drop-effect:Record heartbeat'], reachable: ['skip:Send digest', 'dup-effect:Send digest #2'], unknown: ['skip:Nowhere'] });
+});
+
+// Review finding 11: the same teeth on a synthetic, first-party item (fixture-item.mjs), so they run on a fresh clone without the bed.
+test('the wave-2 scorer has teeth on a synthetic fixture item (always runs): reference passes; empty, dropped, misaddressed, doubled fail', async () => {
+  const { fixtureOracle, FIXTURE_EXAMPLE } = await import('./fixture-item.mjs');
+  const oracle = await fixtureOracle(), wf = FIXTURE_EXAMPLE.workflow;
+  assert.ok(oracle.hidden.some(h => h.reference.mail.length) && oracle.hidden.some(h => !h.reference.mail.length), 'worlds with and without e-mail');
+  const ref = await scoreBuilt2(oracle, wf);
+  assert.equal(ref.pass, true, JSON.stringify(ref.worlds.filter(w => !w.pass)).slice(0, 400));
+  assert.equal((await scoreBuilt2(oracle, EMPTY_WORKFLOW)).pass, false, 'no effects');
+  const dropped = clone(wf); dropped.nodes.find(n => n.id === 'tell').when = { op: 'eq', left: 1, right: 2 };
+  assert.equal((await scoreBuilt2(oracle, dropped)).pass, false, 'the chat post never sent');
+  const wrong = clone(wf); wrong.nodes.find(n => n.kind === 'map').body.nodes[0].args.to = 'someone.else@team.example';
+  assert.equal((await scoreBuilt2(oracle, wrong)).pass, false, 'a wrong recipient');
+  const doubled = clone(wf); const tell = doubled.nodes.find(n => n.id === 'tell'); doubled.nodes.push({ ...clone(tell), id: 'tell2', needs: ['tell'] });
+  assert.equal((await scoreBuilt2(oracle, doubled)).pass, false, 'a doubled chat post');
+  const loose = clone(wf); const plan = loose.nodes.find(n => n.id === 'plan');
+  plan.source = plan.source.replace("String(r.status ?? '').trim().toLowerCase() !== 'done' && ", '');
+  assert.notEqual(plan.source, wf.nodes.find(n => n.id === 'plan').source, 'the mutation applies');
+  assert.equal((await scoreBuilt2(oracle, loose)).pass, false, 'reminding owners of finished tasks');
 });
