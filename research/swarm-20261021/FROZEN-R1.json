@@ -1,0 +1,161 @@
+{
+ "schema": "swarm-r1-freeze/1",
+ "design": {
+  "capUsd": 8,
+  "probeUsd": 0.00444496,
+  "reserveUsd": 0.5,
+  "margin": 1.25,
+  "nMin": 4,
+  "nMax": 10,
+  "agent": {
+   "budgetUsd": 1,
+   "timeoutMs": 1800000
+  },
+  "swarm": {
+   "budgetUsd": 1,
+   "timeoutMs": 1800000
+  },
+  "workflow": {
+   "perTaskUsd": 0.4,
+   "timeoutMs": 1200000,
+   "maxCallUsd": 0.4
+  },
+  "build": {
+   "probeSeeds": [
+    365,
+    366,
+    367
+   ],
+   "builderEffort": "high",
+   "builderBudgetUsd": 1,
+   "constructionModelUsd": 0.4,
+   "minutes": 40,
+   "scoreChecks": 6
+  },
+  "calibrationSeeds": [
+   368
+  ],
+  "heldoutSeeds": [
+   9301,
+   9302,
+   9303,
+   9304,
+   9305,
+   9306,
+   9307,
+   9308,
+   9309,
+   9310
+  ],
+  "blocksInParallel": 2
+ },
+ "family": "wbed-r6",
+ "bedVersion": "1.1.0",
+ "model": "claude-haiku-5-5",
+ "code": {
+  "experiments/swarm/arms.mjs": "208b06a10d1db650326e36e89290dfb1cc4fd56f1450c90f8a3ebf623fcae407",
+  "experiments/swarm/spawn-tree.mjs": "79726e9a7a003b07d8430131a0ee69a4852fd7aa73d977564c42fd85d1848b07",
+  "experiments/swarm/coord.mjs": "c03bdf1c0a14958cb23e9a9febeb1c50e7eb80e52cb212d032dfc03c73f4ae9b",
+  "experiments/swarm/rootcause.mjs": "7d169bd34fdf104e10d3cda39f5b510818257b9938ddbb11f791e974d1c062e0",
+  "experiments/swarm/run-r1.mjs": "aaee4df2a2ab9dd987af50dbcd0c5a5c6b69332687b54727790d9393c142e4ae",
+  "experiments/swarm/analyze-r1.mjs": "1068129e352c6106cb20efd17d85f974c88e8baa3a9a1c09627fd717fea16740",
+  "experiments/swarm/launch-r1.sh": "13a83d2efec18a11f9744b59aa082d856313ee383717ad5aaa9d22ff6a335133",
+  "src/executors/claude-code.mjs": "548fc9a59ba71845e6190c5944a80d74141d8bcbfcfea1ad21ef55f5f280e3bb",
+  "src/executors/sandboxed-command.mjs": "a2060eb2a2620317a1b0a4dc1a6a27b0b5dd23d4d0ea0aaa51a67583925bf943",
+  "experiments/lib/runner.mjs": "cbc4b19741f809f766ed2765302bc4b0e0a52931007b7e6b001cbecdb4ff1f29",
+  "experiments/lib/beds.mjs": "db994111c8a643652e194e37d6613e6ba02257b1fa20697e4c3e5e41cb5f2fbf",
+  "experiments/lib/services.mjs": "ea1e17b28d4a220307c8eca469cad0dcf40bddd41207c709b1e0557c120f6a29",
+  "experiments/lib/arms/b0-agent.mjs": "d779dc7d6e1a1481c3159e7c3eee2041e60860cda79f611fba8bbab3311dd403",
+  "experiments/lib/arms/b1-script.mjs": "d65afcec384c01fb1204f87b9adf150fd150b5a66bb2659f04691f1bfce021a5",
+  "experiments/c0/construct.mjs": "024e482e9f016b24b29ec88c30df1b21115cbcff570e92b922a53542a34079c6",
+  "experiments/c0/prompts.mjs": "f6fcb2d3e940905059e099b349b893688d52f831fbf9fbb6f5c747c36e41cfbf",
+  "experiments/lib/kit.mjs": "288afaee2b5ac232a8c1d251e6113ebbfbba131175bc8765cf2b22de7d3ed665",
+  "beds/wbed/r6/index.mjs": "72a7a12b20e53f729bfc58c1bc911ff2b7994f0bcceee677998a79a08a509b64",
+  "beds/wbed/r6/world.mjs": "09ec84725bd153e52cd36f9a938394b7ab9918599460e772b518fd64b1e4b183",
+  "beds/wbed/r6/render.mjs": "c060ebe9bc5cdd1b9696f06126d201dc1e6495fd270e5d3868a6780da8cbc387",
+  "beds/wbed/r6/pipeline.mjs": "ded4f261a22740c2248f42a890174917e8ab76c56ba5a13a5d43015d4a45517e",
+  "beds/wbed/r6/score.mjs": "821cd4158146ccdb59e025574fdbb34bfcc1000d612a64838e6e49edcab6f755",
+  "beds/wbed/r6/stages.mjs": "236d3cdaebfefa1fcf56b2b1d903e0bad3315d814708ae4df3f1fc31f78503c2",
+  "beds/wbed/r6/verify.mjs": "2178c58e347fa095fd450bccce5d9ffc8b60a98947eff4bf193d8e6738a2b8b9",
+  "beds/wbed/r6/vocab.mjs": "c6c9dc18bd0cde6317c1f6931b718fcacc4071aaea11fdb01403a3c129621e92",
+  "beds/wbed/r6/controls.mjs": "628a34ef04b21f578df1c0f4d708eaafb0be4723f8634bdf06f22c93541da2f6",
+  "beds/wbed/r6/budget.mjs": "921298ae196f857312efbd781556423da206872ffc06bd74dda2cbd2c19df398",
+  "beds/wbed/r6/whitebox.mjs": "07bd9a20cd8fe13384f50c94b247f22b9e380c7407ad385f0828bb872a311344",
+  "beds/wbed/r6/heuristic.mjs": "2be7b0d36de3bf476734b25417d8d804d8c82c87fbfbe2d8f5d0577237f73067",
+  "policy/models.json": "cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69",
+  "research/swarm-20261021/PREREG-SWARM-R1.md": "23369a6c02bba73e67fc67a5f89b399ce072237a991d79e7b131a9cc9cca314e"
+ },
+ "leadPreambleSha16": "56d5dd472bbd0a24",
+ "arms": {
+  "A-agent-haiku": "b44bdb1ae8fd2986",
+  "S-swarm-haiku": "91aa46c1a9fae189"
+ },
+ "tasks": {
+  "calibration": [
+   [
+    "wbed-r6:dev:d5:s368",
+    "23a6634100a45bf3d4ccc87d94542ceda22c97d4d963b323eb18d54191b8922d"
+   ]
+  ],
+  "heldout": [
+   [
+    "wbed-r6:test:d5:s9301",
+    "1a9967024f750861d1a69a3a4ee3da37c4f2525309a5b8f1d0c6f783f4b10d62"
+   ],
+   [
+    "wbed-r6:test:d5:s9302",
+    "98d753aa8ad5e49b975c533a2ef8af993b307bf20d80ab8def963e1d5ec499f2"
+   ],
+   [
+    "wbed-r6:test:d5:s9303",
+    "9aa49ba547d7d0ef93ed6e77e3839060a9245b63cce46662c386a742ac3c36fc"
+   ],
+   [
+    "wbed-r6:test:d5:s9304",
+    "58515cecdf37f9fc239ca8cabdddda5b3cdf619bcabad616450d15865f4348b9"
+   ],
+   [
+    "wbed-r6:test:d5:s9305",
+    "1e690133423452c37c3536d5fef2c6a93cd7f453ec04229ccb9dd63cbbf84450"
+   ],
+   [
+    "wbed-r6:test:d5:s9306",
+    "d05cd84dc64fb5583003f1c7d581cfcf0d3c4c866d9a44eb02ca5b319983c207"
+   ],
+   [
+    "wbed-r6:test:d5:s9307",
+    "93f653b1f9047beac2877b3fa41e47481f286f24b837b4e7721481d011ab5fda"
+   ],
+   [
+    "wbed-r6:test:d5:s9308",
+    "1801768b852f34984ecc823aceef72f2c6ac4703d632c2a3aaf82cfdf3fa0d52"
+   ],
+   [
+    "wbed-r6:test:d5:s9309",
+    "f50e3097c4b17d4eac6f620f89acce75fd957ab6fcd30f31f740912f4137ebc0"
+   ],
+   [
+    "wbed-r6:test:d5:s9310",
+    "948b1fc6f3c2722fef55857bd53e0ca12a450a3a0609718db6923b20d2f38c74"
+   ]
+  ],
+  "probes": [
+   [
+    "wbed-r6:dev:d5:s365",
+    "e4216ccf1e067e1b891092d1d28308b06143ce5276726a8402e1a8237355d28e"
+   ],
+   [
+    "wbed-r6:dev:d5:s366",
+    "4e725742136ff0ca271fe9b6e45e292cb318316ef990c1bbed7089c81f632590"
+   ],
+   [
+    "wbed-r6:dev:d5:s367",
+    "61f61be9655d3695420cd3d8b9341012ee596d1d90dadd7f0384a81d79629828"
+   ]
+  ]
+ },
+ "cli": {
+  "version": "2.1.318 (Claude Code)",
+  "sha256": "708c77b204db30086ff6f1ed34577bda03e1be74ced80557cbf7b54249ebf0bd"
+ }
+}

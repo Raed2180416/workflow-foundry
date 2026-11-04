@@ -1,0 +1,92 @@
+{
+ "ok": true,
+ "error": null,
+ "costUsd": 0.00444496,
+ "turns": 5,
+ "durationMs": 16799,
+ "initTools": [
+  "Task",
+  "Bash",
+  "Edit",
+  "Glob",
+  "Grep",
+  "Read",
+  "Write"
+ ],
+ "initModel": "claude-haiku-5-5",
+ "modelUsage": {
+  "claude-haiku-5-5": {
+   "costUSD": 0.00444496,
+   "in": 18,
+   "out": 1320,
+   "cr": 49716,
+   "cw": 19391
+  }
+ },
+ "answer": {
+  "words": {
+   "a.txt": "heliotrope",
+   "b.txt": "quarzite",
+   "c.txt": "marlinspike"
+  }
+ },
+ "expected": {
+  "a.txt": "heliotrope",
+  "b.txt": "quarzite",
+  "c.txt": "marlinspike"
+ },
+ "forwardedEvents": 12,
+ "eventTypes": [
+  "system:init",
+  "system:thinking_tokens",
+  "assistant",
+  "system:task_started",
+  "user(sub)",
+  "system:task_progress",
+  "assistant(sub)",
+  "rate_limit_event",
+  "system:task_updated",
+  "system:task_notification",
+  "user",
+  "result:success"
+ ],
+ "tree": {
+  "workers": 3,
+  "models": {
+   "claude-haiku-5-5": 9
+  },
+  "maxConcurrent": 3,
+  "workersDetail": [
+   {
+    "id": "toolu_018APWMfVBmcLyWFhFxi3cY4",
+    "briefChars": 279,
+    "resultChars": 647,
+    "ms": 3691,
+    "subEvents": 4,
+    "models": {
+     "claude-haiku-5-5": 2
+    }
+   },
+   {
+    "id": "toolu_01PVcjq9L4NWBpVv4q6n5pWh",
+    "briefChars": 279,
+    "resultChars": 645,
+    "ms": 3611,
+    "subEvents": 4,
+    "models": {
+     "claude-haiku-5-5": 2
+    }
+   },
+   {
+    "id": "toolu_01VQ6Yu9uZpaDyP4XDC6typ5",
+    "briefChars": 279,
+    "resultChars": 648,
+    "ms": 2469,
+    "subEvents": 4,
+    "models": {
+     "claude-haiku-5-5": 2
+    }
+   }
+  ]
+ }
+}

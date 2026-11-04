@@ -1,6 +1,6 @@
 {
  "schema": "seed-ledger/1",
- "updated": "2026-10-15",
+ "updated": "2026-11-04",
  "about": "Per-(bed, split) seed ledger (BLOCKER-SYNTHESIS S0-5). Checked by experiments/jit/seeds.mjs assertSeedsAllowed (stream.mjs config validation) and by experiments/kev-data/lib/registry.mjs (the Kev factory refuses every range here that another owner holds as reserved or fresh). A seed range applies to every difficulty. beds ['*'] means every bed. allow: the purposes that may use the range (null: any purpose); a purpose with fresh: true also refuses ranges whose status is used or burned. Edit this file when a run consumes a range (status fresh -> used), in the same commit as the run's config.",
  "rules": {
   "heldoutMinSeed": 8001,
@@ -83,6 +83,12 @@
    "fresh": true,
    "heldout": true,
    "about": "need router: held-out label tasks, used once after the router freeze"
+  },
+  "swarm-r1": {
+   "split": "test",
+   "fresh": true,
+   "heldout": true,
+   "about": "swarm ladder rung 1 held-out tasks (research/swarm-20261021/PREREG-SWARM-R1.md): A single Haiku agent vs S Haiku swarm vs W Haiku-built workflow, used once"
   }
  },
  "ranges": [
@@ -1545,6 +1551,38 @@
    ],
    "use": "need router held-out label tasks (used once, after the freeze)",
    "source": "research/need-router-20261014/DESIGN.md section 4 and section 9 decision 8; DECISIONS-ADOPTED.md (2026-10-14)"
+  },
+  {
+   "id": "swarm-r1-heldout",
+   "beds": [
+    "wbed-r6"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9310,
+   "status": "reserved",
+   "owner": "swarm",
+   "allow": [
+    "swarm-r1"
+   ],
+   "use": "swarm ladder rung 1 held-out tasks at d5 (the first N run, N by PREREG-SWARM-R1 §6.2); reserved at the freeze, used once by the rung-1 run",
+   "source": "research/swarm-20261021/PREREG-SWARM-R1.md §1"
+  },
+  {
+   "id": "swarm-r1-dev",
+   "beds": [
+    "wbed-r6"
+   ],
+   "split": "dev",
+   "from": 365,
+   "to": 368,
+   "status": "used",
+   "owner": "swarm",
+   "allow": [
+    "jit-dev"
+   ],
+   "use": "swarm ladder rung 1: W build probes 365-367 and the cost calibration task 368 (d5), inside wbed-dev tuning 349-372",
+   "source": "research/swarm-20261021/PREREG-SWARM-R1.md §1"
   }
  ]
 }

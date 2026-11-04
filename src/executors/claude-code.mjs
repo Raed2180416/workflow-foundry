@@ -285,15 +285,27 @@ export function sessionError({ result, stderr = '', timedOut = false, sandboxRea
   return result.is_error ? 'EXECUTOR_ERROR' : null;
 }
 
+// Extra CLI flags a caller may add (swarm ladder, research/swarm-20261021): a closed list of value-less flags that change
+// what the transcript records, never what the session may do. --forward-subagent-text puts each subagent's text and
+// thinking into the stream-json transcript (parent_tool_use_id set), so a spawn tree can be read back. Empty by default:
+// every existing caller's argv is unchanged.
+export const EXTRA_ARGS_ALLOWED = Object.freeze(['--forward-subagent-text']);
+export function checkExtraArgs(extraArgs = []) {
+  if (!Array.isArray(extraArgs)) throw new FoundryError('EXECUTOR_ARGS', 'extraArgs must be a list');
+  for (const a of extraArgs) if (!EXTRA_ARGS_ALLOWED.includes(a)) throw new FoundryError('EXECUTOR_ARGS', `extra CLI argument ${JSON.stringify(a)} is not allowed; allowed: ${EXTRA_ARGS_ALLOWED.join(', ')}`);
+  return [...new Set(extraArgs)];
+}
+
 // Run one headless Claude Code session. Returns raw facts; callers decide success with an oracle.
 // costUsd is the CLI-reported spend, or null when the session ended without a result (killed on timeout, crashed):
 // then costUnknown is true and costUpperUsd is the session budget (a soft bound: the CLI checks it between turns).
 export async function runClaudeCode({
   model, prompt, workdir, files = {}, budgetUsd = 1, timeoutMs = 15 * 60 * 1000, tools = DEFAULT_TOOLS,
   hidden = DEFAULT_HIDDEN, keepRo = DEFAULT_KEEP_RO, kitDir = null, systemPrompt = null, appendSystemPrompt = null, effort = null, binary = 'claude', signal,
-  env: extraEnv = {}, hostEnv = process.env,
+  env: extraEnv = {}, hostEnv = process.env, extraArgs = [],
 } = {}) {
   if (!model) throw new FoundryError('EXECUTOR_MODEL', 'An explicit model id from the policy file is required');
+  const flags = checkExtraArgs(extraArgs);
   if (!sandboxAvailable()) throw new FoundryError('SANDBOX_UNAVAILABLE', 'User/mount/pid namespaces are required to hide oracles from executors');
   // Extra variables for the whole session (C0: the model gateway, so even a direct call of the kit's CLI is policed).
   // hostEnv is the environment the allow-list draws from (tests seed a fake one).
@@ -305,6 +317,7 @@ export async function runClaudeCode({
   if (systemPrompt) args.push('--system-prompt', systemPrompt);
   if (appendSystemPrompt) args.push('--append-system-prompt', appendSystemPrompt);
   if (effort) args.push('--effort', effort);
+  args.push(...flags);
   const script = sandboxScript(maskSteps({ workdir, kitDir, hidden, keepRo }), workdir, [binary, ...args]);
   const started = Date.now();
   const child = spawn('unshare', [...UNSHARE_ARGS, 'sh', '-c', script], { env, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
