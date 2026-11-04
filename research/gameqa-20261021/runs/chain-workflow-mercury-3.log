@@ -101,3 +101,41 @@ FoundryError: Model policy: models must be a non-empty list
 Node.js v24.21.0
 2026-11-04T18:25:42Z end --arm workflow-random --rep 3 --live --model mercury-3 (exit 1; spent so far $0.6089)
 2026-11-04T18:25:43Z lane workflow 1..3 done
+2026-11-04T19:21:21Z start --arm workflow --rep 1 --live --model mercury-3
+{"runId":"gqa1m3-workflow-r1","wallS":27,"usd":0,"calls":1,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":null}
+2026-11-04T19:21:53Z end --arm workflow --rep 1 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:21:53Z start --arm workflow-random --rep 1 --live --model mercury-3
+{"runId":"gqa1m3-workflow-random-r1","wallS":0,"usd":0,"calls":0,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":"Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1m3-workflow-r1/constructed.json: run that first"}
+2026-11-04T19:22:01Z end --arm workflow-random --rep 1 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:22:01Z start --arm workflow --rep 2 --live --model mercury-3
+{"runId":"gqa1m3-workflow-r2","wallS":29,"usd":0,"calls":1,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":null}
+2026-11-04T19:22:36Z end --arm workflow --rep 2 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:22:36Z start --arm workflow-random --rep 2 --live --model mercury-3
+{"runId":"gqa1m3-workflow-random-r2","wallS":0,"usd":0,"calls":0,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":"Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1m3-workflow-r2/constructed.json: run that first"}
+2026-11-04T19:22:42Z end --arm workflow-random --rep 2 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:22:43Z start --arm workflow --rep 3 --live --model mercury-3
+{"runId":"gqa1m3-workflow-r3","wallS":27,"usd":0,"calls":1,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":null}
+2026-11-04T19:23:15Z end --arm workflow --rep 3 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:23:16Z start --arm workflow-random --rep 3 --live --model mercury-3
+{"runId":"gqa1m3-workflow-random-r3","wallS":0,"usd":0,"calls":0,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":"Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1m3-workflow-r3/constructed.json: run that first"}
+2026-11-04T19:23:19Z end --arm workflow-random --rep 3 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:23:19Z lane workflow 1..3 done
+2026-11-04T19:28:20Z start --arm workflow --rep 1 --live --model mercury-3
+{"runId":"gqa1m3-workflow-r1","wallS":145,"usd":0,"calls":2,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":null}
+2026-11-04T19:30:48Z end --arm workflow --rep 1 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:30:48Z start --arm workflow-random --rep 1 --live --model mercury-3
+{"runId":"gqa1m3-workflow-random-r1","wallS":0,"usd":0,"calls":0,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":"Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1m3-workflow-r1/constructed.json: run that first"}
+2026-11-04T19:30:51Z end --arm workflow-random --rep 1 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:30:51Z start --arm workflow --rep 2 --live --model mercury-3
+{"runId":"gqa1m3-workflow-r2","wallS":80,"usd":0,"calls":1,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":null}
+2026-11-04T19:32:14Z end --arm workflow --rep 2 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:32:14Z start --arm workflow-random --rep 2 --live --model mercury-3
+{"runId":"gqa1m3-workflow-random-r2","wallS":0,"usd":0,"calls":0,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":"Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1m3-workflow-r2/constructed.json: run that first"}
+2026-11-04T19:32:17Z end --arm workflow-random --rep 2 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:32:17Z start --arm workflow --rep 3 --live --model mercury-3
+{"runId":"gqa1m3-workflow-r3","wallS":69,"usd":0,"calls":1,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":null}
+2026-11-04T19:33:29Z end --arm workflow --rep 3 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:33:29Z start --arm workflow-random --rep 3 --live --model mercury-3
+{"runId":"gqa1m3-workflow-random-r3","wallS":0,"usd":0,"calls":0,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":"Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1m3-workflow-r3/constructed.json: run that first"}
+2026-11-04T19:33:32Z end --arm workflow-random --rep 3 --live --model mercury-3 (exit 0; spent so far $1.3128)
+2026-11-04T19:33:32Z lane workflow 1..3 done

@@ -1,0 +1,16 @@
+2026-11-04T18:24:05Z start --arm agent --rep 1 --live --model claude-haiku-5-5 --tag gqa1v
+{"runId":"gqa1v-agent-r1","wallS":37,"usd":0.003981125,"calls":5,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":2,"error":null}
+2026-11-04T18:24:47Z end --arm agent --rep 1 --live --model claude-haiku-5-5 --tag gqa1v (exit 0; spent so far $0.6089)
+2026-11-04T18:24:47Z start --arm agent --rep 2 --live --model claude-haiku-5-5 --tag gqa1v
+{"runId":"gqa1v-agent-r2","wallS":64,"usd":0.00504219,"calls":6,"reports":1,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":6,"error":null}
+2026-11-04T18:25:57Z end --arm agent --rep 2 --live --model claude-haiku-5-5 --tag gqa1v (exit 0; spent so far $0.6139)
+2026-11-04T18:25:58Z start --arm agent --rep 3 --live --model claude-haiku-5-5 --tag gqa1v
+{"runId":"gqa1v-agent-r3","wallS":50,"usd":0.004496249999999999,"calls":5,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":6,"error":null}
+2026-11-04T18:26:55Z end --arm agent --rep 3 --live --model claude-haiku-5-5 --tag gqa1v (exit 0; spent so far $0.6184)
+2026-11-04T18:26:55Z start --arm agent --rep 4 --live --model claude-haiku-5-5 --tag gqa1v
+{"runId":"gqa1v-agent-r4","wallS":18,"usd":0.0016668450000000001,"calls":3,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":2,"error":null}
+2026-11-04T18:27:19Z end --arm agent --rep 4 --live --model claude-haiku-5-5 --tag gqa1v (exit 0; spent so far $0.6201)
+2026-11-04T18:27:19Z start --arm agent --rep 5 --live --model claude-haiku-5-5 --tag gqa1v
+{"runId":"gqa1v-agent-r5","wallS":82,"usd":0.00528488,"calls":5,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":8,"error":null}
+2026-11-04T18:28:49Z end --arm agent --rep 5 --live --model claude-haiku-5-5 --tag gqa1v (exit 0; spent so far $0.7005)
+2026-11-04T18:28:49Z lane agent 1..5 done

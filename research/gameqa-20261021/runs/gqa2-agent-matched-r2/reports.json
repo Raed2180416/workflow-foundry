@@ -1,0 +1,102 @@
+[
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes wrap the score below zero to ~65136 instead of clamping at 0",
+  "observed": "Score 100 (after collecting a coin) then stepping onto spikes at (3,3) via dash-right: score becomes 65136 (= 100 - 500 wrapped modulo 65536). HUD shows Score 65136.",
+  "expected": "Spikes cost 500 points but score never goes below 0, so the score should be 0 after the hit.",
+  "seed": 42,
+  "steps": [
+   "down",
+   "down",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Finish button (btn-next) is covered by the time-bonus banner on the level-complete dialog",
+  "observed": "After reaching the exit, the Level complete dialog shows btn-next with top=false. A click on btn-next lands on the 'bonus-banner' element instead, so the dialog stays in mode complete/levelup and the level is not finished.",
+  "expected": "Every visible button must be clickable: clicking Finish should reach the button and show the victory dialog with Play again.",
+  "seed": 7,
+  "steps": [
+   "goto:4,5",
+   "goto:1,8",
+   "use",
+   "goto:10,5",
+   "down",
+   "down",
+   "right",
+   "right",
+   "click:btn-next"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Movement key in the same tick as pause still moves the player while paused",
+  "observed": "Input pause+right from the start (player at (1,1)). The game pauses (mode paused, pause menu open) and the player moves to (2,1) in the same tick. Events are [pause, move], so the move happened after the pause took effect.",
+  "expected": "Pause takes effect immediately; the rest of that tick's input is ignored, so the player stays at (1,1) and nothing moves while paused.",
+  "seed": 13,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Two movement keys in the same tick both apply; the first key moves and the last key bumps",
+  "observed": "Fresh game, seed 7, one tick with right+down: player moves to (2,1) (event move) and the down key then bumps the wall at (2,2) (event bump). Position is (2,1) after the tick.",
+  "expected": "Only the last movement key pressed in a tick counts, so right+down should move the player down to (1,2) and nothing else.",
+  "seed": 7,
+  "steps": [
+   "right+down"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a wall and triggers spikes beyond it",
+  "observed": "From (3,1), dash-down moves the player through the solid wall at (3,2), lands on spikes at (3,3), costs a life and 500 points (score wraps to 65036), and respawns at (1,1) with Dash 5.",
+  "expected": "The wall at (3,2) is the first tile of the dash and is solid, so the dash does not happen and is not used up. The player stays at (3,1) with no spikes hit, lives 3, score 0, and Dash ready.",
+  "seed": 101,
+  "steps": [
+   "right",
+   "right",
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a closed gate and is consumed when the first tile is a shut gate",
+  "observed": "At (7,3) with gate (8,3) shut, dash-right is not blocked: the dash event fires, the dash recharge is set to 5, and the player goes through the gate and is hit by an enemy at (9,3), then respawns at (1,1) with lives 2->1.",
+  "expected": "A closed gate is solid to a dash. The dash stops before it; if the first tile is solid the dash does not happen and is not used up. The player stays at (7,3), no hit, dashCd stays 0.",
+  "seed": 777,
+  "steps": [
+   "goto:1,8",
+   "use",
+   "wait",
+   "goto:7,3",
+   "dash-right",
+   "wait"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a closed gate and is consumed when the first tile is a shut gate (shorter repro)",
+  "observed": "Player at (7,3) with gate at (8,3) shut does dash-right: player ends at (9,3), event 'dash', gate still shut, dash recharge set to 5 (HUD 'Dash 5').",
+  "expected": "A dash stops before a closed gate: the player stays at (7,3) and the dash is not used up (HUD stays 'Dash ready').",
+  "seed": 777,
+  "steps": [
+   "goto:7,3",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level leaves the game paused instead of running",
+  "observed": "After pausing and clicking btn-restart, the state shows mode=paused, the pause menu stays open, and a further wait tick does nothing (time stays 300, player stays at (1,1)).",
+  "expected": "Restart level resets the level (score 0, 3 lives, items back) and the game is running again straight away (mode=playing, pause menu closed, timer ticks on the next running tick).",
+  "seed": 2024,
+  "steps": [
+   "pause",
+   "click:btn-restart",
+   "wait"
+  ]
+ }
+]

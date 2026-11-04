@@ -1,0 +1,15 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Time stays stale after resuming via Resume button",
+  "observed": "After pause then click:btn-resume, the state timeLeft drops (299, 298, 297) but the HUD Time field keeps showing 300 on every tick.",
+  "expected": "The HUD Time field always shows the current timer value (state timeLeft), so it should read 299, 298, 297 on the ticks after resume.",
+  "seed": 1,
+  "steps": [
+   "pause",
+   "click:btn-resume",
+   "wait",
+   "wait"
+  ]
+ }
+]

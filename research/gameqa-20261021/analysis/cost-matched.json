@@ -1,0 +1,278 @@
+{
+ "note": "POST HOC (review finding M3). Expected distinct bugs over k restarts of the frozen-prompt Haiku agent (all its runs pooled: gqa1, gqa1nb, gqa1v; S2/S2v show the budget line changes nothing), exact over all k-subsets, on every report ever listed, against the per-run spend of each Haiku workflow arm (workflow-random including the construction it borrows). The live cost-matched answer is gqa2/agent-matched.",
+ "targets": {
+  "gqa1/workflow": {
+   "usdPerRun": 0.067,
+   "foundMinMean": 6.4
+  },
+  "gqa1/workflow-random": {
+   "usdPerRun": 0.01538,
+   "judgeOnlyUsdPerRun": 0.0076,
+   "borrowedConstructionUsdPerRun": 0.00778,
+   "foundMinMean": 6.4
+  },
+  "gqa1v/workflow": {
+   "usdPerRun": 0.0648,
+   "foundMinMean": 5
+  },
+  "gqa1v/workflow-random": {
+   "usdPerRun": 0.01335,
+   "judgeOnlyUsdPerRun": 0.0052,
+   "borrowedConstructionUsdPerRun": 0.00815,
+   "foundMinMean": 4.2
+  }
+ },
+ "groups": {
+  "frozen-prompt Haiku agent, 15 runs (final lists)": {
+   "curve": [
+    {
+     "k": 1,
+     "expectedBugs": 0.933,
+     "usd": 0.00387,
+     "subsets": 15
+    },
+    {
+     "k": 2,
+     "expectedBugs": 1.61,
+     "usd": 0.00773,
+     "subsets": 105
+    },
+    {
+     "k": 3,
+     "expectedBugs": 2.114,
+     "usd": 0.0116,
+     "subsets": 455
+    },
+    {
+     "k": 4,
+     "expectedBugs": 2.507,
+     "usd": 0.01546,
+     "subsets": 1365
+    },
+    {
+     "k": 5,
+     "expectedBugs": 2.828,
+     "usd": 0.01933,
+     "subsets": 3003
+    },
+    {
+     "k": 6,
+     "expectedBugs": 3.102,
+     "usd": 0.02319,
+     "subsets": 5005
+    },
+    {
+     "k": 7,
+     "expectedBugs": 3.347,
+     "usd": 0.02706,
+     "subsets": 6435
+    },
+    {
+     "k": 8,
+     "expectedBugs": 3.574,
+     "usd": 0.03092,
+     "subsets": 6435
+    },
+    {
+     "k": 9,
+     "expectedBugs": 3.789,
+     "usd": 0.03479,
+     "subsets": 5005
+    },
+    {
+     "k": 10,
+     "expectedBugs": 3.996,
+     "usd": 0.03865,
+     "subsets": 3003
+    },
+    {
+     "k": 11,
+     "expectedBugs": 4.199,
+     "usd": 0.04252,
+     "subsets": 1365
+    },
+    {
+     "k": 12,
+     "expectedBugs": 4.4,
+     "usd": 0.04638,
+     "subsets": 455
+    },
+    {
+     "k": 13,
+     "expectedBugs": 4.6,
+     "usd": 0.05025,
+     "subsets": 105
+    },
+    {
+     "k": 14,
+     "expectedBugs": 4.8,
+     "usd": 0.05411,
+     "subsets": 15
+    },
+    {
+     "k": 15,
+     "expectedBugs": 5,
+     "usd": 0.05798,
+     "subsets": 1
+    }
+   ],
+   "atTarget": {
+    "gqa1/workflow": {
+     "reachable": false,
+     "maxUsd": 0.05798,
+     "expectedBugsAtMax": 5,
+     "gapAtMax": 1.4
+    },
+    "gqa1/workflow-random": {
+     "k": 4,
+     "usd": 0.01546,
+     "expectedBugs": 2.507,
+     "gap": 3.893
+    },
+    "gqa1v/workflow": {
+     "reachable": false,
+     "maxUsd": 0.05798,
+     "expectedBugsAtMax": 5,
+     "gapAtMax": 0
+    },
+    "gqa1v/workflow-random": {
+     "k": 4,
+     "usd": 0.01546,
+     "expectedBugs": 2.507,
+     "gap": 1.693
+    }
+   }
+  },
+  "frozen-prompt Haiku agent, 15 runs (ever lists)": {
+   "curve": [
+    {
+     "k": 1,
+     "expectedBugs": 0.933,
+     "usd": 0.00387,
+     "subsets": 15
+    },
+    {
+     "k": 2,
+     "expectedBugs": 1.61,
+     "usd": 0.00773,
+     "subsets": 105
+    },
+    {
+     "k": 3,
+     "expectedBugs": 2.114,
+     "usd": 0.0116,
+     "subsets": 455
+    },
+    {
+     "k": 4,
+     "expectedBugs": 2.507,
+     "usd": 0.01546,
+     "subsets": 1365
+    },
+    {
+     "k": 5,
+     "expectedBugs": 2.828,
+     "usd": 0.01933,
+     "subsets": 3003
+    },
+    {
+     "k": 6,
+     "expectedBugs": 3.102,
+     "usd": 0.02319,
+     "subsets": 5005
+    },
+    {
+     "k": 7,
+     "expectedBugs": 3.347,
+     "usd": 0.02706,
+     "subsets": 6435
+    },
+    {
+     "k": 8,
+     "expectedBugs": 3.574,
+     "usd": 0.03092,
+     "subsets": 6435
+    },
+    {
+     "k": 9,
+     "expectedBugs": 3.789,
+     "usd": 0.03479,
+     "subsets": 5005
+    },
+    {
+     "k": 10,
+     "expectedBugs": 3.996,
+     "usd": 0.03865,
+     "subsets": 3003
+    },
+    {
+     "k": 11,
+     "expectedBugs": 4.199,
+     "usd": 0.04252,
+     "subsets": 1365
+    },
+    {
+     "k": 12,
+     "expectedBugs": 4.4,
+     "usd": 0.04638,
+     "subsets": 455
+    },
+    {
+     "k": 13,
+     "expectedBugs": 4.6,
+     "usd": 0.05025,
+     "subsets": 105
+    },
+    {
+     "k": 14,
+     "expectedBugs": 4.8,
+     "usd": 0.05411,
+     "subsets": 15
+    },
+    {
+     "k": 15,
+     "expectedBugs": 5,
+     "usd": 0.05798,
+     "subsets": 1
+    }
+   ],
+   "atTarget": {
+    "gqa1/workflow": {
+     "reachable": false,
+     "maxUsd": 0.05798,
+     "expectedBugsAtMax": 5,
+     "gapAtMax": 1.4
+    },
+    "gqa1/workflow-random": {
+     "k": 4,
+     "usd": 0.01546,
+     "expectedBugs": 2.507,
+     "gap": 3.893
+    },
+    "gqa1v/workflow": {
+     "reachable": false,
+     "maxUsd": 0.05798,
+     "expectedBugsAtMax": 5,
+     "gapAtMax": 0
+    },
+    "gqa1v/workflow-random": {
+     "k": 4,
+     "usd": 0.01546,
+     "expectedBugs": 2.507,
+     "gap": 1.693
+    }
+   }
+  }
+ },
+ "liveMatchedAgent": {
+  "foundMin": [
+   4,
+   4,
+   5,
+   4,
+   5
+  ],
+  "mean": 4.4,
+  "usdPerRun": 0.0676
+ }
+}

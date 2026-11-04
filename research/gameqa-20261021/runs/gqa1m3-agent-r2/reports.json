@@ -1,0 +1,52 @@
+[
+ {
+  "bug_class": "input_race",
+  "title": "Pause+move in same tick still moves player",
+  "observed": "On the tick 'pause+right', the game became paused but the player also moved one tile right from (1,1) to (2,1).",
+  "expected": "Pause takes effect immediately, so the rest of that tick's input should be ignored and the player should not move.",
+  "seed": 1,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Key collected in same tick as enemy hit is not kept after respawn",
+  "observed": "After collecting a key and being hit by an enemy in the same tick, the respawn left keys at 0, losing the key just collected.",
+  "expected": "After losing a life the player keeps everything collected, including a key picked up in the same tick, so keys should remain 1.",
+  "seed": 1,
+  "steps": [
+   "down",
+   "down",
+   "down",
+   "down",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score underflows when spikes subtract 500 below 0",
+  "observed": "With score below 500, stepping onto spikes caused score to go below zero (showed -400) instead of stopping at 0.",
+  "expected": "Score is never negative; when spikes subtract 500 points the score should clamp to 0.",
+  "seed": 1,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart via pause menu button leaves game paused",
+  "observed": "After opening pause and clicking Restart level, the level reset but the game stayed paused with the pause menu still visible.",
+  "expected": "Restart level should restore the starting state and leave the game running immediately.",
+  "seed": 1,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ }
+]

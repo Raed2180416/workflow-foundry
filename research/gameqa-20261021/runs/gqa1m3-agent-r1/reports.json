@@ -1,0 +1,38 @@
+[
+ {
+  "bug_class": "input_race",
+  "title": "Pause + movement in same tick still moves the player",
+  "observed": "Running `pause+right` from a fresh seed 1 game pauses the game but the player moves from (1,1) to (2,1).",
+  "expected": "Pause takes effect immediately after being read, so the right movement key should be ignored; the player should stay at (1,1) and no other effects should occur that tick.",
+  "seed": 1,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Multiple movement keys in same tick all execute",
+  "observed": "Running `right+up` from (1,1) moves the player to (2,1), even though the last movement key is `up`. which is blocked by the wall at (1,0).",
+  "expected": "Only the last movement key in a tick should count; `up` is blocked, so the player should bump and remain at (1,1).",
+  "seed": 1,
+  "steps": [
+   "right+up"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Key collected in same tick as enemy hit is lost on respawn",
+  "observed": "The player picks up the key at (4,5) on the same tick an enemy hit occurs; after respawn the HUD Keys value is 0 instead of 1.",
+  "expected": "The player should keep all items collected in the same tick they lose a life, including the key, so HUD Keys should show 1 after respawn.",
+  "seed": 1,
+  "steps": [
+   "down",
+   "down",
+   "down",
+   "down",
+   "right",
+   "right",
+   "right"
+  ]
+ }
+]

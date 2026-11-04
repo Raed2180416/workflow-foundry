@@ -1,0 +1,84 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter does not update after collecting a coin",
+  "observed": "After moving right then dashing right, state coins=1 but HUD shows Coins 0/5.",
+  "expected": "HUD should show Coins 1/5 when a coin is collected.",
+  "seed": 1,
+  "steps": [
+   "right",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Movement key in same tick as pause still moves the player",
+  "observed": "pause+right moves player to (2,1) despite pause taking effect immediately; rest of tick input should be ignored.",
+  "expected": "Pause takes effect immediately and ignores remaining input, so player should not move.",
+  "seed": 1,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes underflow score instead of losing points",
+  "observed": "With score 0, hitting spikes results in score 65136 or similar instead of staying at 0 (score never goes below).",
+  "expected": "Score should never go below 0; spikes should reduce to 0 at minimum.",
+  "seed": 1,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD time does not update after pause resume",
+  "observed": "After pause then resume, state timeLeft=299 but HUD shows Time 300.",
+  "expected": "HUD should always show current timeLeft.",
+  "seed": 1,
+  "steps": [
+   "pause",
+   "click:btn-resume"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Key lost on death when collected in same tick as enemy hit",
+  "observed": "Collecting a key and being hit in the same tick loses both a life and the key; state shows keys=0 after respawn.",
+  "expected": "Player keeps collected items, including keys picked up in the same tick.",
+  "seed": 1,
+  "steps": [
+   "down",
+   "down",
+   "down",
+   "down",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "First movement key wins instead of last when multiple movement keys pressed in same tick",
+  "observed": "With tokens right+down, player moves right to (2,1) instead of down to (1,2).",
+  "expected": "Only the last movement key pressed in a tick counts, so the player should move down.",
+  "seed": 1,
+  "steps": [
+   "right+down"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level leaves game paused instead of running",
+  "observed": "After pause then click btn-restart, mode remains paused; game does not resume running.",
+  "expected": "Restart level should reset the level and the game should be running again straight away.",
+  "seed": 1,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ }
+]

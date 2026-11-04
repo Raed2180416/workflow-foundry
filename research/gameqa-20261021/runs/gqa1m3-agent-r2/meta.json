@@ -1,0 +1,62 @@
+{
+ "runId": "gqa1m3-agent-r2",
+ "arm": "agent",
+ "rep": 2,
+ "dev": false,
+ "model": "mercury-3",
+ "transport": "cli",
+ "exploratory": true,
+ "policyHash": "29282f4bfc6c962db7fa4c7493452cb029c360f5e938d882af476afed73e4868",
+ "bed": "ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95",
+ "prompts": {
+  "agentSystem": "221305990a71b7f3",
+  "agentMatchedSystem": "9139fe550e7abdaa",
+  "constructSystem": "bb0f415ba040f394",
+  "judgeSystem": "18e5a140e8295aca",
+  "exploreSystem": "09404fbee3e9c471",
+  "spec": "a03c56ab28701df3",
+  "template": "5ce0e410a9d93b0d"
+ },
+ "budgets": {
+  "exploreTicks": 8000,
+  "maxTurns": 40,
+  "usdPerRun": 0.5
+ },
+ "rngSeed": 177539257,
+ "started": "2026-11-04T19:01:58.589Z",
+ "wallMs": 548355,
+ "scoreMs": 1029,
+ "cost": {
+  "spent": 0,
+  "calls": 45,
+  "failed": 10,
+  "inputTokens": 106572,
+  "outputTokens": 228867,
+  "latencyMs": 545519,
+  "unknownSpend": 0
+ },
+ "tokenMeter": {
+  "inception": {
+   "cap": 3000000,
+   "callCap": 120000,
+   "spent": 460852,
+   "reserved": 0,
+   "calls": 45,
+   "refused": 0,
+   "unknown": 0
+  }
+ },
+ "error": null,
+ "summary": {
+  "reports": 4,
+  "bugs": 12,
+  "foundMin": 4,
+  "foundMinClass": 3,
+  "foundAny": 4,
+  "falseReports": 0,
+  "duplicates": 0,
+  "precision": 1,
+  "nondeterministic": 0,
+  "replays": 21
+ }
+}

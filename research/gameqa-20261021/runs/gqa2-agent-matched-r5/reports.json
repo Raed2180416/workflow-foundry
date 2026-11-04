@@ -1,0 +1,84 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "Key picked up on the same tick as an enemy hit is lost on respawn",
+  "observed": "Player steps onto key at (4,5) while enemy is there; tick reports key and hit and respawn; afterwards keys=0 and HUD Keys 0 although toast 'Key collected' was shown.",
+  "expected": "Keys collected in the same tick are kept after respawn (keys should be 1).",
+  "seed": 42,
+  "steps": [
+   "down",
+   "down",
+   "down",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Key picked up on the same tick as an enemy hit is lost on respawn",
+  "observed": "Walking goto:4,5 from start on seed 42: the key is collected on the tick the player steps onto (4,5), an enemy hits the player the same tick, and the player respawns at (1,1) with keys=0 and the toast 'Key collected'. The key is gone.",
+  "expected": "Per section 5, the player keeps everything collected, including keys picked up in the same tick, so keys should be 1 after respawn.",
+  "seed": 42,
+  "steps": [
+   "goto:4,5"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes take score below zero and it wraps to 65136",
+  "observed": "Player has score 100 (one coin). Stepping onto spikes costs 500 points, and the HUD and state show Score 65136 (a wrapped negative value) instead of 0.",
+  "expected": "Spikes cost 500 points but the score never goes below 0, so it should read Score 0.",
+  "seed": 42,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a closed gate",
+  "observed": "With the gate at (8,3) shut, dash-right from (7,3) moved the player to (9,3), passing through the closed gate. HUD showed Dash 5 afterwards.",
+  "expected": "A dash stops before the first solid tile, and closed gates are solid to a dash. The player should stay at (7,3) and the dash should not be used up.",
+  "seed": 7,
+  "steps": [
+   "goto:7,3",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a wall tile and triggers spikes beyond it",
+  "observed": "From (3,1), dash-down moved the player through the wall at (3,2) to (3,3) (spikes). Events: dash, spikes, respawn. Lost a life and 500 points, respawned at (1,1).",
+  "expected": "A dash stops before the first solid tile. The wall at (3,2) is directly below (3,1), so the dash should not happen and should not use up the recharge.",
+  "seed": 7,
+  "steps": [
+   "right",
+   "right",
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Movement key pressed in the same tick as pause still moves the player",
+  "observed": "Player moves from (1,1) to (2,1) on the tick where pause is pressed; events [pause, move]; game is paused afterwards.",
+  "expected": "Pause takes effect immediately and the rest of that tick's input is ignored. Player stays at (1,1); events should be [pause] only.",
+  "seed": 1,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level from the pause menu leaves the game paused instead of running",
+  "observed": "After pause then click:btn-restart, the level resets (score 0, lives 3, time 300) but mode stays 'paused', the event is 'restart', and the pause menu with Resume and Restart buttons is still shown.",
+  "expected": "Restart level resets the level and the game is running again straight away (mode 'playing', pause menu closed).",
+  "seed": 1,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ }
+]

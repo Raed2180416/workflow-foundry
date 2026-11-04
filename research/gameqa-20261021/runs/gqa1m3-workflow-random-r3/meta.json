@@ -1,0 +1,61 @@
+{
+ "runId": "gqa1m3-workflow-random-r3",
+ "arm": "workflow-random",
+ "rep": 3,
+ "dev": false,
+ "model": "mercury-3",
+ "transport": "cli",
+ "exploratory": true,
+ "policyHash": "29282f4bfc6c962db7fa4c7493452cb029c360f5e938d882af476afed73e4868",
+ "bed": "ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95",
+ "prompts": {
+  "agentSystem": "221305990a71b7f3",
+  "agentMatchedSystem": "9139fe550e7abdaa",
+  "constructSystem": "bb0f415ba040f394",
+  "judgeSystem": "18e5a140e8295aca",
+  "exploreSystem": "09404fbee3e9c471",
+  "spec": "a03c56ab28701df3",
+  "template": "5ce0e410a9d93b0d"
+ },
+ "budgets": {
+  "exploreTicks": 8000,
+  "usdPerRun": 0.5
+ },
+ "rngSeed": 4244798356,
+ "started": "2026-11-04T19:33:32.280Z",
+ "wallMs": 1,
+ "scoreMs": 484,
+ "cost": {
+  "spent": 0,
+  "calls": 0,
+  "failed": 0,
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "latencyMs": 0,
+  "unknownSpend": 0
+ },
+ "tokenMeter": {
+  "inception": {
+   "cap": 3000000,
+   "callCap": 120000,
+   "spent": 0,
+   "reserved": 0,
+   "calls": 0,
+   "refused": 0,
+   "unknown": 0
+  }
+ },
+ "error": "Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1m3-workflow-r3/constructed.json: run that first\n    at file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/gameqa-web/run.mjs:128:38\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:541:9)",
+ "summary": {
+  "reports": 0,
+  "bugs": 12,
+  "foundMin": 0,
+  "foundMinClass": 0,
+  "foundAny": 0,
+  "falseReports": 0,
+  "duplicates": 0,
+  "precision": null,
+  "nondeterministic": 0,
+  "replays": 0
+ }
+}

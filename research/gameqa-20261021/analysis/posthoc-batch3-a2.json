@@ -1,0 +1,1279 @@
+[
+ {
+  "runId": "gqa2-agent-matched-r1",
+  "arm": "agent-matched",
+  "foundMin": [
+   "GQ01",
+   "GQ05",
+   "GQ06",
+   "GQ11"
+  ],
+  "creditedCandidates": null,
+  "exploreWithPerfectChecks": {
+   "played": 61,
+   "signatures": 11,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ10",
+    "GQ11"
+   ],
+   "n": 8
+  }
+ },
+ {
+  "runId": "gqa2-agent-matched-r2",
+  "arm": "agent-matched",
+  "foundMin": [
+   "GQ01",
+   "GQ10",
+   "GQ11",
+   "GQ12"
+  ],
+  "creditedCandidates": null,
+  "exploreWithPerfectChecks": {
+   "played": 55,
+   "signatures": 10,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ03",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ08",
+    "GQ10",
+    "GQ11"
+   ],
+   "n": 8
+  }
+ },
+ {
+  "runId": "gqa2-agent-matched-r3",
+  "arm": "agent-matched",
+  "foundMin": [
+   "GQ05",
+   "GQ06",
+   "GQ10",
+   "GQ11",
+   "GQ12"
+  ],
+  "creditedCandidates": null,
+  "exploreWithPerfectChecks": {
+   "played": 60,
+   "signatures": 13,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ09",
+    "GQ10",
+    "GQ11"
+   ],
+   "n": 10
+  }
+ },
+ {
+  "runId": "gqa2-agent-matched-r4",
+  "arm": "agent-matched",
+  "foundMin": [
+   "GQ01",
+   "GQ06",
+   "GQ10",
+   "GQ11"
+  ],
+  "creditedCandidates": null,
+  "exploreWithPerfectChecks": {
+   "played": 57,
+   "signatures": 12,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ10",
+    "GQ11"
+   ],
+   "n": 9
+  }
+ },
+ {
+  "runId": "gqa2-agent-matched-r5",
+  "arm": "agent-matched",
+  "foundMin": [
+   "GQ01",
+   "GQ05",
+   "GQ06",
+   "GQ10",
+   "GQ11"
+  ],
+  "creditedCandidates": null,
+  "exploreWithPerfectChecks": {
+   "played": 63,
+   "signatures": 12,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ09",
+    "GQ10",
+    "GQ11"
+   ],
+   "n": 9
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-r1",
+  "arm": "workflow",
+  "foundMin": [
+   "GQ01",
+   "GQ03",
+   "GQ05",
+   "GQ07",
+   "GQ08",
+   "GQ09",
+   "GQ11"
+  ],
+  "creditedCandidates": {
+   "candidates": 14,
+   "foundMinByCandidates": [
+    "GQ01",
+    "GQ03",
+    "GQ05",
+    "GQ07",
+    "GQ08",
+    "GQ09",
+    "GQ11"
+   ],
+   "perCandidate": [
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "playing",
+     "bug": "GQ03",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "paused-frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "restart-resets",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-no-silent-loss",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-ignores-rest",
+     "ctx": "pause",
+     "bug": "GQ11",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "visible-buttons-clickable",
+     "ctx": "levelup",
+     "bug": "GQ08",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "one-move-per-tick",
+     "ctx": "playing",
+     "bug": "GQ01",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "generic:frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "pause",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "pause",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "visible-buttons-clickable",
+     "ctx": "pause",
+     "bug": "GQ07",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "levelup",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "victory",
+     "bug": "GQ09",
+     "minimal": false,
+     "verdict": "credited"
+    }
+   ]
+  },
+  "exploreWithPerfectChecks": {
+   "played": 51,
+   "signatures": 20,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ08",
+    "GQ09",
+    "GQ10",
+    "GQ11"
+   ],
+   "n": 11
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-r2",
+  "arm": "workflow",
+  "foundMin": [
+   "GQ03",
+   "GQ05",
+   "GQ07",
+   "GQ08",
+   "GQ09",
+   "GQ11"
+  ],
+  "creditedCandidates": {
+   "candidates": 12,
+   "foundMinByCandidates": [
+    "GQ03",
+    "GQ05",
+    "GQ07",
+    "GQ08",
+    "GQ09",
+    "GQ11"
+   ],
+   "perCandidate": [
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "playing",
+     "bug": "GQ03",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-bounds",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-drop-only-spikes",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-tick-no-input",
+     "ctx": "pause",
+     "bug": "GQ11",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "paused-frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-menu-shown",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "restart-resets",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "buttons-clickable",
+     "ctx": "pause",
+     "bug": "GQ07",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "one-move-per-tick",
+     "ctx": "playing",
+     "bug": "GQ12",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "pause",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-bounds",
+     "ctx": "pause",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "buttons-clickable",
+     "ctx": "levelup",
+     "bug": "GQ08",
+     "minimal": true,
+     "verdict": "credited"
+    }
+   ]
+  },
+  "exploreWithPerfectChecks": {
+   "played": 54,
+   "signatures": 18,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ08",
+    "GQ09",
+    "GQ10",
+    "GQ11"
+   ],
+   "n": 11
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-r3",
+  "arm": "workflow",
+  "foundMin": [
+   "GQ03",
+   "GQ05",
+   "GQ07",
+   "GQ08",
+   "GQ09",
+   "GQ11",
+   "GQ12"
+  ],
+  "creditedCandidates": {
+   "candidates": 13,
+   "foundMinByCandidates": [
+    "GQ03",
+    "GQ05",
+    "GQ07",
+    "GQ08",
+    "GQ09",
+    "GQ11",
+    "GQ12"
+   ],
+   "perCandidate": [
+    {
+     "checkId": "no-hit-while-invulnerable",
+     "ctx": "playing",
+     "bug": null,
+     "minimal": null,
+     "verdict": "no_fault"
+    },
+    {
+     "checkId": "visible-buttons-clickable",
+     "ctx": "pause",
+     "bug": "GQ07",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "paused-frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "restart-resets-level",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-coins",
+     "ctx": "playing",
+     "bug": "GQ03",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-no-drop-except-spikes",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "one-move-per-tick",
+     "ctx": "playing",
+     "bug": "GQ12",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "generic:frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-no-movement",
+     "ctx": "pause",
+     "bug": "GQ11",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "visible-buttons-clickable",
+     "ctx": "levelup",
+     "bug": "GQ08",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-coins",
+     "ctx": "pause",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-coins",
+     "ctx": "levelup",
+     "bug": "GQ08",
+     "minimal": true,
+     "verdict": "credited"
+    }
+   ]
+  },
+  "exploreWithPerfectChecks": {
+   "played": 53,
+   "signatures": 19,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ08",
+    "GQ09",
+    "GQ10",
+    "GQ11",
+    "GQ12"
+   ],
+   "n": 12
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-r4",
+  "arm": "workflow",
+  "foundMin": [
+   "GQ03",
+   "GQ05",
+   "GQ07",
+   "GQ08",
+   "GQ09"
+  ],
+  "creditedCandidates": {
+   "candidates": 12,
+   "foundMinByCandidates": [
+    "GQ03",
+    "GQ05",
+    "GQ07",
+    "GQ08",
+    "GQ09"
+   ],
+   "perCandidate": [
+    {
+     "checkId": "hud-keys-coins",
+     "ctx": "playing",
+     "bug": "GQ03",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "buttons-clickable",
+     "ctx": "pause",
+     "bug": "GQ07",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-freezes-timer",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-freezes-enemies",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "restart-resets-state",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "paused-shows-menu",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-floor",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-drops-only-by-spikes",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "won-only-after-finish",
+     "ctx": "victory",
+     "bug": "GQ08",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "generic:frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-keys-coins",
+     "ctx": "pause",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "buttons-clickable",
+     "ctx": "levelup",
+     "bug": "GQ08",
+     "minimal": true,
+     "verdict": "credited"
+    }
+   ]
+  },
+  "exploreWithPerfectChecks": {
+   "played": 52,
+   "signatures": 16,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ08",
+    "GQ09",
+    "GQ10",
+    "GQ11"
+   ],
+   "n": 11
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-r5",
+  "arm": "workflow",
+  "foundMin": [],
+  "creditedCandidates": null,
+  "exploreWithPerfectChecks": {
+   "played": 52,
+   "signatures": 18,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ09",
+    "GQ10",
+    "GQ11"
+   ],
+   "n": 10
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-random-r1",
+  "arm": "workflow-random",
+  "foundMin": [
+   "GQ03",
+   "GQ05",
+   "GQ07",
+   "GQ09",
+   "GQ11"
+  ],
+  "creditedCandidates": {
+   "candidates": 14,
+   "foundMinByCandidates": [
+    "GQ03",
+    "GQ05",
+    "GQ07",
+    "GQ09",
+    "GQ11"
+   ],
+   "perCandidate": [
+    {
+     "checkId": "pause-ignores-rest",
+     "ctx": "pause",
+     "bug": "GQ11",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-no-silent-loss",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "visible-buttons-clickable",
+     "ctx": "pause",
+     "bug": "GQ07",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "spikes-cost",
+     "ctx": "gameover",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "one-move-per-tick",
+     "ctx": "playing",
+     "bug": "GQ12",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "playing",
+     "bug": "GQ03",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "paused-frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "restart-resets",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "generic:frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "pause",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "pause",
+     "bug": "GQ04",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "gameover",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "gameover",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    }
+   ]
+  },
+  "exploreWithPerfectChecks": {
+   "played": 37,
+   "signatures": 21,
+   "foundMinWithPerfectChecks": [
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ09",
+    "GQ10",
+    "GQ11",
+    "GQ12"
+   ],
+   "n": 10
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-random-r2",
+  "arm": "workflow-random",
+  "foundMin": [
+   "GQ03",
+   "GQ05",
+   "GQ07",
+   "GQ09",
+   "GQ11"
+  ],
+  "creditedCandidates": {
+   "candidates": 15,
+   "foundMinByCandidates": [
+    "GQ03",
+    "GQ05",
+    "GQ07",
+    "GQ09",
+    "GQ11",
+    "GQ12"
+   ],
+   "perCandidate": [
+    {
+     "checkId": "buttons-clickable",
+     "ctx": "pause",
+     "bug": "GQ07",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-drop-only-spikes",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "playing",
+     "bug": "GQ03",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "one-move-per-tick",
+     "ctx": "playing",
+     "bug": "GQ12",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "no-run-when-not-playing",
+     "ctx": "gameover",
+     "bug": "GQ01",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "paused-frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-menu-shown",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "restart-resets",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "generic:frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-tick-no-input",
+     "ctx": "pause",
+     "bug": "GQ11",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-bounds",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "pause",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-bounds",
+     "ctx": "pause",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-matches-state",
+     "ctx": "gameover",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-bounds",
+     "ctx": "gameover",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    }
+   ]
+  },
+  "exploreWithPerfectChecks": {
+   "played": 36,
+   "signatures": 22,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ09",
+    "GQ10",
+    "GQ11",
+    "GQ12"
+   ],
+   "n": 11
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-random-r3",
+  "arm": "workflow-random",
+  "foundMin": [
+   "GQ03",
+   "GQ05",
+   "GQ07",
+   "GQ09",
+   "GQ11",
+   "GQ12"
+  ],
+  "creditedCandidates": {
+   "candidates": 12,
+   "foundMinByCandidates": [
+    "GQ03",
+    "GQ05",
+    "GQ07",
+    "GQ09",
+    "GQ11",
+    "GQ12"
+   ],
+   "perCandidate": [
+    {
+     "checkId": "hud-coins",
+     "ctx": "playing",
+     "bug": "GQ03",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-no-drop-except-spikes",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "paused-frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "restart-resets-level",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "generic:frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "one-move-per-tick",
+     "ctx": "playing",
+     "bug": "GQ12",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-no-movement",
+     "ctx": "pause",
+     "bug": "GQ11",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "no-hit-while-invulnerable",
+     "ctx": "playing",
+     "bug": null,
+     "minimal": null,
+     "verdict": "no_fault"
+    },
+    {
+     "checkId": "visible-buttons-clickable",
+     "ctx": "pause",
+     "bug": "GQ07",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-coins",
+     "ctx": "pause",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-range",
+     "ctx": "pause",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    }
+   ]
+  },
+  "exploreWithPerfectChecks": {
+   "played": 37,
+   "signatures": 17,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ07",
+    "GQ09",
+    "GQ10",
+    "GQ11",
+    "GQ12"
+   ],
+   "n": 10
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-random-r4",
+  "arm": "workflow-random",
+  "foundMin": [
+   "GQ03",
+   "GQ05",
+   "GQ07",
+   "GQ09"
+  ],
+  "creditedCandidates": {
+   "candidates": 14,
+   "foundMinByCandidates": [
+    "GQ03",
+    "GQ05",
+    "GQ07",
+    "GQ09"
+   ],
+   "perCandidate": [
+    {
+     "checkId": "score-floor",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-drops-only-by-spikes",
+     "ctx": "playing",
+     "bug": "GQ09",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-freezes-timer",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "pause-freezes-enemies",
+     "ctx": "paused",
+     "bug": "GQ11",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "restart-resets-state",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "paused-shows-menu",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-keys-coins",
+     "ctx": "playing",
+     "bug": "GQ03",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "generic:frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "buttons-clickable",
+     "ctx": "pause",
+     "bug": "GQ07",
+     "minimal": true,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-floor",
+     "ctx": "pause",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-drops-only-by-spikes",
+     "ctx": "pause",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-keys-coins",
+     "ctx": "pause",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "score-floor",
+     "ctx": "gameover",
+     "bug": "GQ10",
+     "minimal": false,
+     "verdict": "credited"
+    },
+    {
+     "checkId": "hud-keys-coins",
+     "ctx": "gameover",
+     "bug": "GQ03",
+     "minimal": false,
+     "verdict": "credited"
+    }
+   ]
+  },
+  "exploreWithPerfectChecks": {
+   "played": 36,
+   "signatures": 23,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ02",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ07",
+    "GQ09",
+    "GQ10",
+    "GQ11",
+    "GQ12"
+   ],
+   "n": 11
+  }
+ },
+ {
+  "runId": "gqa1v-workflow-random-r5",
+  "arm": "workflow-random",
+  "foundMin": [
+   "GQ05"
+  ],
+  "creditedCandidates": {
+   "candidates": 1,
+   "foundMinByCandidates": [
+    "GQ05"
+   ],
+   "perCandidate": [
+    {
+     "checkId": "generic:frozen",
+     "ctx": "paused",
+     "bug": "GQ05",
+     "minimal": true,
+     "verdict": "credited"
+    }
+   ]
+  },
+  "exploreWithPerfectChecks": {
+   "played": 36,
+   "signatures": 21,
+   "foundMinWithPerfectChecks": [
+    "GQ01",
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ07",
+    "GQ09",
+    "GQ10",
+    "GQ11",
+    "GQ12"
+   ],
+   "n": 9
+  }
+ }
+]

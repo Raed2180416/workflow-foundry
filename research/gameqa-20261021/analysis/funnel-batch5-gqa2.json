@@ -1,0 +1,677 @@
+[
+ {
+  "runId": "gqa2-agent-matched-r1",
+  "arm": "agent-matched",
+  "played": 61,
+  "perBug": {
+   "GQ01": {
+    "stage": "foundMin",
+    "triggered": 4,
+    "firstTriggerRun": 5,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ02": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ03": {
+    "stage": "triggered-not-detected",
+    "triggered": 4,
+    "firstTriggerRun": 3,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ04": {
+    "stage": "triggered-not-detected",
+    "triggered": 14,
+    "firstTriggerRun": 2,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ05": {
+    "stage": "foundMin",
+    "triggered": 4,
+    "firstTriggerRun": 7,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ06": {
+    "stage": "foundMin",
+    "triggered": 8,
+    "firstTriggerRun": 1,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ07": {
+    "stage": "triggered-not-detected",
+    "triggered": 2,
+    "firstTriggerRun": 20,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ08": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ09": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ10": {
+    "stage": "reported-not-minimal",
+    "triggered": 4,
+    "firstTriggerRun": 5,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": false
+   },
+   "GQ11": {
+    "stage": "foundMin",
+    "triggered": 1,
+    "firstTriggerRun": 3,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ12": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   }
+  },
+  "stages": {
+   "GQ01": "foundMin",
+   "GQ02": "never-triggered",
+   "GQ03": "triggered-not-detected",
+   "GQ04": "triggered-not-detected",
+   "GQ05": "foundMin",
+   "GQ06": "foundMin",
+   "GQ07": "triggered-not-detected",
+   "GQ08": "never-triggered",
+   "GQ09": "never-triggered",
+   "GQ10": "reported-not-minimal",
+   "GQ11": "foundMin",
+   "GQ12": "never-triggered"
+  },
+  "falseReports": [],
+  "judgeRejectedReal": [],
+  "replays": 57
+ },
+ {
+  "runId": "gqa2-agent-matched-r2",
+  "arm": "agent-matched",
+  "played": 55,
+  "perBug": {
+   "GQ01": {
+    "stage": "foundMin",
+    "triggered": 8,
+    "firstTriggerRun": 0,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ02": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ03": {
+    "stage": "triggered-not-detected",
+    "triggered": 4,
+    "firstTriggerRun": 8,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ04": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ05": {
+    "stage": "reported-not-minimal",
+    "triggered": 6,
+    "firstTriggerRun": 4,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": false
+   },
+   "GQ06": {
+    "stage": "triggered-not-detected",
+    "triggered": 1,
+    "firstTriggerRun": 23,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ07": {
+    "stage": "triggered-not-detected",
+    "triggered": 2,
+    "firstTriggerRun": 17,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ08": {
+    "stage": "reported-not-minimal",
+    "triggered": 4,
+    "firstTriggerRun": 10,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": false
+   },
+   "GQ09": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ10": {
+    "stage": "foundMin",
+    "triggered": 6,
+    "firstTriggerRun": 0,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ11": {
+    "stage": "foundMin",
+    "triggered": 5,
+    "firstTriggerRun": 3,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ12": {
+    "stage": "foundMin",
+    "triggered": 2,
+    "firstTriggerRun": 3,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   }
+  },
+  "stages": {
+   "GQ01": "foundMin",
+   "GQ02": "never-triggered",
+   "GQ03": "triggered-not-detected",
+   "GQ04": "never-triggered",
+   "GQ05": "reported-not-minimal",
+   "GQ06": "triggered-not-detected",
+   "GQ07": "triggered-not-detected",
+   "GQ08": "reported-not-minimal",
+   "GQ09": "never-triggered",
+   "GQ10": "foundMin",
+   "GQ11": "foundMin",
+   "GQ12": "foundMin"
+  },
+  "falseReports": [],
+  "judgeRejectedReal": [],
+  "replays": 55
+ },
+ {
+  "runId": "gqa2-agent-matched-r3",
+  "arm": "agent-matched",
+  "played": 60,
+  "perBug": {
+   "GQ01": {
+    "stage": "triggered-not-detected",
+    "triggered": 6,
+    "firstTriggerRun": 15,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ02": {
+    "stage": "triggered-not-detected",
+    "triggered": 4,
+    "firstTriggerRun": 1,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ03": {
+    "stage": "triggered-not-detected",
+    "triggered": 5,
+    "firstTriggerRun": 0,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ04": {
+    "stage": "triggered-not-detected",
+    "triggered": 2,
+    "firstTriggerRun": 13,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ05": {
+    "stage": "foundMin",
+    "triggered": 6,
+    "firstTriggerRun": 2,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ06": {
+    "stage": "foundMin",
+    "triggered": 5,
+    "firstTriggerRun": 3,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ07": {
+    "stage": "triggered-not-detected",
+    "triggered": 1,
+    "firstTriggerRun": 37,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ08": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ09": {
+    "stage": "triggered-not-detected",
+    "triggered": 1,
+    "firstTriggerRun": 19,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ10": {
+    "stage": "foundMin",
+    "triggered": 7,
+    "firstTriggerRun": 14,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ11": {
+    "stage": "foundMin",
+    "triggered": 6,
+    "firstTriggerRun": 1,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ12": {
+    "stage": "foundMin",
+    "triggered": 4,
+    "firstTriggerRun": 7,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   }
+  },
+  "stages": {
+   "GQ01": "triggered-not-detected",
+   "GQ02": "triggered-not-detected",
+   "GQ03": "triggered-not-detected",
+   "GQ04": "triggered-not-detected",
+   "GQ05": "foundMin",
+   "GQ06": "foundMin",
+   "GQ07": "triggered-not-detected",
+   "GQ08": "never-triggered",
+   "GQ09": "triggered-not-detected",
+   "GQ10": "foundMin",
+   "GQ11": "foundMin",
+   "GQ12": "foundMin"
+  },
+  "falseReports": [],
+  "judgeRejectedReal": [],
+  "replays": 56
+ },
+ {
+  "runId": "gqa2-agent-matched-r4",
+  "arm": "agent-matched",
+  "played": 57,
+  "perBug": {
+   "GQ01": {
+    "stage": "foundMin",
+    "triggered": 9,
+    "firstTriggerRun": 14,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ02": {
+    "stage": "triggered-not-detected",
+    "triggered": 1,
+    "firstTriggerRun": 10,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ03": {
+    "stage": "triggered-not-detected",
+    "triggered": 5,
+    "firstTriggerRun": 0,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ04": {
+    "stage": "triggered-not-detected",
+    "triggered": 1,
+    "firstTriggerRun": 39,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ05": {
+    "stage": "reported-not-minimal",
+    "triggered": 6,
+    "firstTriggerRun": 26,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": false
+   },
+   "GQ06": {
+    "stage": "foundMin",
+    "triggered": 5,
+    "firstTriggerRun": 11,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ07": {
+    "stage": "triggered-not-detected",
+    "triggered": 1,
+    "firstTriggerRun": 10,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ08": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ09": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ10": {
+    "stage": "foundMin",
+    "triggered": 7,
+    "firstTriggerRun": 14,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ11": {
+    "stage": "foundMin",
+    "triggered": 2,
+    "firstTriggerRun": 0,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ12": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   }
+  },
+  "stages": {
+   "GQ01": "foundMin",
+   "GQ02": "triggered-not-detected",
+   "GQ03": "triggered-not-detected",
+   "GQ04": "triggered-not-detected",
+   "GQ05": "reported-not-minimal",
+   "GQ06": "foundMin",
+   "GQ07": "triggered-not-detected",
+   "GQ08": "never-triggered",
+   "GQ09": "never-triggered",
+   "GQ10": "foundMin",
+   "GQ11": "foundMin",
+   "GQ12": "never-triggered"
+  },
+  "falseReports": [],
+  "judgeRejectedReal": [],
+  "replays": 55
+ },
+ {
+  "runId": "gqa2-agent-matched-r5",
+  "arm": "agent-matched",
+  "played": 63,
+  "perBug": {
+   "GQ01": {
+    "stage": "foundMin",
+    "triggered": 6,
+    "firstTriggerRun": 10,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ02": {
+    "stage": "triggered-not-detected",
+    "triggered": 1,
+    "firstTriggerRun": 1,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ03": {
+    "stage": "triggered-not-detected",
+    "triggered": 7,
+    "firstTriggerRun": 9,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ04": {
+    "stage": "triggered-not-detected",
+    "triggered": 4,
+    "firstTriggerRun": 13,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ05": {
+    "stage": "foundMin",
+    "triggered": 5,
+    "firstTriggerRun": 24,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ06": {
+    "stage": "foundMin",
+    "triggered": 2,
+    "firstTriggerRun": 1,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ07": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ08": {
+    "stage": "never-triggered",
+    "triggered": 0,
+    "firstTriggerRun": null,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ09": {
+    "stage": "triggered-not-detected",
+    "triggered": 1,
+    "firstTriggerRun": 6,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   },
+   "GQ10": {
+    "stage": "foundMin",
+    "triggered": 7,
+    "firstTriggerRun": 6,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ11": {
+    "stage": "foundMin",
+    "triggered": 4,
+    "firstTriggerRun": 9,
+    "candidate": [],
+    "confirmed": [],
+    "reported": true,
+    "foundMin": true
+   },
+   "GQ12": {
+    "stage": "triggered-not-detected",
+    "triggered": 1,
+    "firstTriggerRun": 15,
+    "candidate": [],
+    "confirmed": [],
+    "reported": false,
+    "foundMin": false
+   }
+  },
+  "stages": {
+   "GQ01": "foundMin",
+   "GQ02": "triggered-not-detected",
+   "GQ03": "triggered-not-detected",
+   "GQ04": "triggered-not-detected",
+   "GQ05": "foundMin",
+   "GQ06": "foundMin",
+   "GQ07": "never-triggered",
+   "GQ08": "never-triggered",
+   "GQ09": "triggered-not-detected",
+   "GQ10": "foundMin",
+   "GQ11": "foundMin",
+   "GQ12": "triggered-not-detected"
+  },
+  "falseReports": [
+   {
+    "index": 0,
+    "verdict": "no_fault",
+    "bug_class": "state_desync",
+    "title": "Key picked up on the same tick as an enemy hit is lost on respawn",
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ]
+   }
+  ],
+  "judgeRejectedReal": [],
+  "replays": 57
+ }
+]

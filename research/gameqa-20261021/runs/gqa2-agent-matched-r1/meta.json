@@ -1,0 +1,57 @@
+{
+ "runId": "gqa2-agent-matched-r1",
+ "arm": "agent-matched",
+ "rep": 1,
+ "dev": false,
+ "model": "claude-haiku-5-5",
+ "transport": "nb",
+ "exploratory": false,
+ "policyHash": "b77dd19c53ba78aa5954bf5a3c7d8683ed4587dc39dde64a4c1ee38d4fa5add0",
+ "bed": "ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95",
+ "cli": {
+  "start": "claude-code 2.1.318",
+  "end": "claude-code 2.1.318"
+ },
+ "prompts": {
+  "agentSystem": "221305990a71b7f3",
+  "agentMatchedSystem": "9139fe550e7abdaa",
+  "constructSystem": "bb0f415ba040f394",
+  "judgeSystem": "18e5a140e8295aca",
+  "exploreSystem": "09404fbee3e9c471",
+  "spec": "a03c56ab28701df3",
+  "template": "5ce0e410a9d93b0d"
+ },
+ "budgets": {
+  "exploreTicks": 8000,
+  "maxTurns": 40,
+  "maxTotalTurns": 100,
+  "usdPerRun": 0.067
+ },
+ "rngSeed": 728309464,
+ "started": "2026-11-04T18:28:56.194Z",
+ "wallMs": 643976,
+ "scoreMs": 1465,
+ "cost": {
+  "spent": 0.06775152,
+  "calls": 72,
+  "failed": 0,
+  "inputTokens": 158,
+  "outputTokens": 70625,
+  "latencyMs": 632986,
+  "unknownSpend": 0
+ },
+ "tokenMeter": {},
+ "error": null,
+ "summary": {
+  "reports": 5,
+  "bugs": 12,
+  "foundMin": 4,
+  "foundMinClass": 3,
+  "foundAny": 5,
+  "falseReports": 0,
+  "duplicates": 0,
+  "precision": 1,
+  "nondeterministic": 0,
+  "replays": 25
+ }
+}

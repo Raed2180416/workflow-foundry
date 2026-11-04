@@ -845,6 +845,292 @@
     }
    }
   },
+  "gqa1m3/agent": {
+   "tag": "gqa1m3",
+   "arm": "agent",
+   "model": "mercury-3",
+   "reps": [
+    1,
+    2,
+    3
+   ],
+   "n": 3,
+   "foundMin": [
+    3,
+    4,
+    7
+   ],
+   "foundMinMean": 4.667,
+   "foundMinSd": 2.082,
+   "foundMinRange": [
+    3,
+    7
+   ],
+   "foundMinClass": [
+    3,
+    3,
+    6
+   ],
+   "foundAny": [
+    3,
+    4,
+    7
+   ],
+   "falseReports": [
+    0,
+    0,
+    0
+   ],
+   "falseReportsMean": 0,
+   "reports": [
+    3,
+    4,
+    7
+   ],
+   "duplicates": [
+    0,
+    0,
+    0
+   ],
+   "precision": [
+    1,
+    1,
+    1
+   ],
+   "usd": [
+    0,
+    0,
+    0
+   ],
+   "usdTotal": 0,
+   "usdPerFoundMin": 0,
+   "calls": [
+    47,
+    45,
+    44
+   ],
+   "inputTokens": [
+    123212,
+    106572,
+    119256
+   ],
+   "outputTokens": [
+    307252,
+    228867,
+    256186
+   ],
+   "wallS": [
+    651,
+    548,
+    607
+   ],
+   "wallMeanS": 602,
+   "perBug": {
+    "GQ01": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ02": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ03": {
+     "foundMin": 1,
+     "foundAny": 1,
+     "foundMinClass": 1
+    },
+    "GQ04": {
+     "foundMin": 1,
+     "foundAny": 1,
+     "foundMinClass": 1
+    },
+    "GQ05": {
+     "foundMin": 2,
+     "foundAny": 2,
+     "foundMinClass": 0
+    },
+    "GQ06": {
+     "foundMin": 3,
+     "foundAny": 3,
+     "foundMinClass": 3
+    },
+    "GQ07": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ08": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ09": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ10": {
+     "foundMin": 2,
+     "foundAny": 2,
+     "foundMinClass": 2
+    },
+    "GQ11": {
+     "foundMin": 3,
+     "foundAny": 3,
+     "foundMinClass": 3
+    },
+    "GQ12": {
+     "foundMin": 2,
+     "foundAny": 2,
+     "foundMinClass": 2
+    }
+   }
+  },
+  "gqa1m3/workflow": {
+   "tag": "gqa1m3",
+   "arm": "workflow",
+   "model": "mercury-3",
+   "reps": [
+    1,
+    2,
+    3
+   ],
+   "n": 3,
+   "foundMin": [
+    0,
+    0,
+    0
+   ],
+   "foundMinMean": 0,
+   "foundMinSd": 0,
+   "foundMinRange": [
+    0,
+    0
+   ],
+   "foundMinClass": [
+    0,
+    0,
+    0
+   ],
+   "foundAny": [
+    0,
+    0,
+    0
+   ],
+   "falseReports": [
+    0,
+    0,
+    0
+   ],
+   "falseReportsMean": 0,
+   "reports": [
+    0,
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0,
+    0
+   ],
+   "precision": [
+    null,
+    null,
+    null
+   ],
+   "usd": [
+    0,
+    0,
+    0
+   ],
+   "usdTotal": 0,
+   "usdPerFoundMin": null,
+   "calls": [
+    2,
+    1,
+    1
+   ],
+   "inputTokens": [
+    2316,
+    137,
+    138
+   ],
+   "outputTokens": [
+    56124,
+    30842,
+    31310
+   ],
+   "wallS": [
+    145,
+    80,
+    69
+   ],
+   "wallMeanS": 98,
+   "perBug": {
+    "GQ01": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ02": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ03": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ04": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ05": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ06": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ07": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ08": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ09": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ10": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ11": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ12": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    }
+   }
+  },
   "gqa1nb/agent-persist": {
    "tag": "gqa1nb",
    "arm": "agent-persist",
@@ -1182,6 +1468,682 @@
      "foundMinClass": 1
     }
    }
+  },
+  "gqa1v/agent": {
+   "tag": "gqa1v",
+   "arm": "agent",
+   "model": "claude-haiku-5-5",
+   "reps": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "n": 5,
+   "foundMin": [
+    1,
+    0,
+    1,
+    1,
+    1
+   ],
+   "foundMinMean": 0.8,
+   "foundMinSd": 0.447,
+   "foundMinRange": [
+    0,
+    1
+   ],
+   "foundMinClass": [
+    1,
+    0,
+    1,
+    1,
+    1
+   ],
+   "foundAny": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "falseReports": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "falseReportsMean": 0,
+   "reports": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "precision": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "usd": [
+    0.004,
+    0.005,
+    0.004,
+    0.002,
+    0.005
+   ],
+   "usdTotal": 0.02,
+   "usdPerFoundMin": 0.005,
+   "calls": [
+    5,
+    6,
+    5,
+    3,
+    5
+   ],
+   "inputTokens": [
+    12,
+    16,
+    12,
+    6,
+    10
+   ],
+   "outputTokens": [
+    4065,
+    5872,
+    5754,
+    2063,
+    7420
+   ],
+   "wallS": [
+    37,
+    64,
+    50,
+    18,
+    82
+   ],
+   "wallMeanS": 50,
+   "perBug": {
+    "GQ01": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ02": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ03": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ04": {
+     "foundMin": 0,
+     "foundAny": 1,
+     "foundMinClass": 0
+    },
+    "GQ05": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ06": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ07": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ08": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ09": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ10": {
+     "foundMin": 2,
+     "foundAny": 2,
+     "foundMinClass": 2
+    },
+    "GQ11": {
+     "foundMin": 2,
+     "foundAny": 2,
+     "foundMinClass": 2
+    },
+    "GQ12": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    }
+   }
+  },
+  "gqa1v/workflow": {
+   "tag": "gqa1v",
+   "arm": "workflow",
+   "model": "claude-haiku-5-5",
+   "reps": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "n": 5,
+   "foundMin": [
+    7,
+    6,
+    7,
+    5,
+    0
+   ],
+   "foundMinMean": 5,
+   "foundMinSd": 2.915,
+   "foundMinRange": [
+    0,
+    7
+   ],
+   "foundMinClass": [
+    6,
+    5,
+    7,
+    5,
+    0
+   ],
+   "foundAny": [
+    8,
+    8,
+    7,
+    5,
+    0
+   ],
+   "falseReports": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "falseReportsMean": 0,
+   "reports": [
+    12,
+    9,
+    9,
+    6,
+    0
+   ],
+   "duplicates": [
+    4,
+    1,
+    2,
+    1,
+    0
+   ],
+   "precision": [
+    1,
+    1,
+    1,
+    1,
+    null
+   ],
+   "usd": [
+    0.075,
+    0.063,
+    0.066,
+    0.063,
+    0.056
+   ],
+   "usdTotal": 0.324,
+   "usdPerFoundMin": 0.013,
+   "calls": [
+    22,
+    21,
+    21,
+    21,
+    19
+   ],
+   "inputTokens": [
+    66,
+    56,
+    60,
+    62,
+    52
+   ],
+   "outputTokens": [
+    77488,
+    63461,
+    65792,
+    65966,
+    59163
+   ],
+   "wallS": [
+    238,
+    183,
+    221,
+    159,
+    129
+   ],
+   "wallMeanS": 186,
+   "perBug": {
+    "GQ01": {
+     "foundMin": 1,
+     "foundAny": 1,
+     "foundMinClass": 0
+    },
+    "GQ02": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ03": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 4
+    },
+    "GQ04": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ05": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 3
+    },
+    "GQ06": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ07": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 4
+    },
+    "GQ08": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 4
+    },
+    "GQ09": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 4
+    },
+    "GQ10": {
+     "foundMin": 0,
+     "foundAny": 2,
+     "foundMinClass": 0
+    },
+    "GQ11": {
+     "foundMin": 3,
+     "foundAny": 3,
+     "foundMinClass": 3
+    },
+    "GQ12": {
+     "foundMin": 1,
+     "foundAny": 2,
+     "foundMinClass": 1
+    }
+   }
+  },
+  "gqa1v/workflow-random": {
+   "tag": "gqa1v",
+   "arm": "workflow-random",
+   "model": "claude-haiku-5-5",
+   "reps": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "n": 5,
+   "foundMin": [
+    5,
+    5,
+    6,
+    4,
+    1
+   ],
+   "foundMinMean": 4.2,
+   "foundMinSd": 1.924,
+   "foundMinRange": [
+    1,
+    6
+   ],
+   "foundMinClass": [
+    5,
+    4,
+    5,
+    4,
+    1
+   ],
+   "foundAny": [
+    8,
+    6,
+    7,
+    6,
+    1
+   ],
+   "falseReports": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "falseReportsMean": 0,
+   "reports": [
+    11,
+    9,
+    8,
+    11,
+    1
+   ],
+   "duplicates": [
+    3,
+    3,
+    1,
+    5,
+    0
+   ],
+   "precision": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "usd": [
+    0.008,
+    0.006,
+    0.004,
+    0.006,
+    0.001
+   ],
+   "usdTotal": 0.026,
+   "usdPerFoundMin": 0.001,
+   "calls": [
+    2,
+    2,
+    2,
+    2,
+    1
+   ],
+   "inputTokens": [
+    4,
+    4,
+    4,
+    4,
+    2
+   ],
+   "outputTokens": [
+    6184,
+    6330,
+    4053,
+    5607,
+    532
+   ],
+   "wallS": [
+    213,
+    173,
+    95,
+    136,
+    57
+   ],
+   "wallMeanS": 135,
+   "perBug": {
+    "GQ01": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ02": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ03": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 4
+    },
+    "GQ04": {
+     "foundMin": 0,
+     "foundAny": 1,
+     "foundMinClass": 0
+    },
+    "GQ05": {
+     "foundMin": 5,
+     "foundAny": 5,
+     "foundMinClass": 3
+    },
+    "GQ06": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ07": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 4
+    },
+    "GQ08": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ09": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 4
+    },
+    "GQ10": {
+     "foundMin": 0,
+     "foundAny": 4,
+     "foundMinClass": 0
+    },
+    "GQ11": {
+     "foundMin": 3,
+     "foundAny": 4,
+     "foundMinClass": 3
+    },
+    "GQ12": {
+     "foundMin": 1,
+     "foundAny": 2,
+     "foundMinClass": 1
+    }
+   }
+  },
+  "gqa2/agent-matched": {
+   "tag": "gqa2",
+   "arm": "agent-matched",
+   "model": "claude-haiku-5-5",
+   "reps": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "n": 5,
+   "foundMin": [
+    4,
+    4,
+    5,
+    4,
+    5
+   ],
+   "foundMinMean": 4.4,
+   "foundMinSd": 0.548,
+   "foundMinRange": [
+    4,
+    5
+   ],
+   "foundMinClass": [
+    3,
+    3,
+    4,
+    3,
+    4
+   ],
+   "foundAny": [
+    5,
+    6,
+    5,
+    5,
+    5
+   ],
+   "falseReports": [
+    0,
+    0,
+    0,
+    0,
+    1
+   ],
+   "falseReportsMean": 0.2,
+   "reports": [
+    5,
+    8,
+    7,
+    6,
+    7
+   ],
+   "duplicates": [
+    0,
+    2,
+    2,
+    1,
+    1
+   ],
+   "precision": [
+    1,
+    1,
+    1,
+    1,
+    0.857
+   ],
+   "usd": [
+    0.068,
+    0.067,
+    0.068,
+    0.067,
+    0.068
+   ],
+   "usdTotal": 0.338,
+   "usdPerFoundMin": 0.015,
+   "calls": [
+    72,
+    69,
+    71,
+    66,
+    72
+   ],
+   "inputTokens": [
+    158,
+    158,
+    164,
+    138,
+    162
+   ],
+   "outputTokens": [
+    70625,
+    69128,
+    69658,
+    72282,
+    69471
+   ],
+   "wallS": [
+    644,
+    558,
+    530,
+    506,
+    525
+   ],
+   "wallMeanS": 553,
+   "perBug": {
+    "GQ01": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 4
+    },
+    "GQ02": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ03": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ04": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ05": {
+     "foundMin": 3,
+     "foundAny": 5,
+     "foundMinClass": 0
+    },
+    "GQ06": {
+     "foundMin": 4,
+     "foundAny": 4,
+     "foundMinClass": 4
+    },
+    "GQ07": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ08": {
+     "foundMin": 0,
+     "foundAny": 1,
+     "foundMinClass": 0
+    },
+    "GQ09": {
+     "foundMin": 0,
+     "foundAny": 0,
+     "foundMinClass": 0
+    },
+    "GQ10": {
+     "foundMin": 4,
+     "foundAny": 5,
+     "foundMinClass": 3
+    },
+    "GQ11": {
+     "foundMin": 5,
+     "foundAny": 5,
+     "foundMinClass": 4
+    },
+    "GQ12": {
+     "foundMin": 2,
+     "foundAny": 2,
+     "foundMinClass": 2
+    }
+   }
   }
  },
  "tests": [
@@ -1304,7 +2266,140 @@
    "p": 0.167,
    "permutations": 252,
    "decision": "no difference shown"
+  },
+  {
+   "a": "gqa1v/workflow",
+   "b": "gqa1v/agent",
+   "role": "R1 (A2): H1 replicated on one CLI version, all reps run on the same day",
+   "alt": "greater",
+   "nA": 5,
+   "nB": 5,
+   "meanA": 5,
+   "meanB": 0.8,
+   "diff": 4.2,
+   "U": 20.5,
+   "p": 0.048,
+   "permutations": 252,
+   "decision": "supported (dev evidence)"
+  },
+  {
+   "a": "gqa1v/workflow",
+   "b": "gqa1/monkey",
+   "role": "R2 (A2): H2 with the replication workflow runs",
+   "alt": "greater",
+   "nA": 5,
+   "nB": 5,
+   "meanA": 5,
+   "meanB": 1,
+   "diff": 4,
+   "U": 20,
+   "p": 0.063,
+   "permutations": 252,
+   "decision": "not supported"
+  },
+  {
+   "a": "gqa1v/workflow",
+   "b": "gqa1v/workflow-random",
+   "role": "R4 (A2): H4 replicated",
+   "alt": "two-sided",
+   "nA": 5,
+   "nB": 5,
+   "meanA": 5,
+   "meanB": 4.2,
+   "diff": 0.8,
+   "U": 17.5,
+   "p": 0.341,
+   "permutations": 252,
+   "decision": "no difference shown"
+  },
+  {
+   "a": "gqa1v/workflow",
+   "b": "gqa2/agent-matched",
+   "role": "C1 (A2): the workflow vs the agent with the persona prompt wording, append-only reports and restarts up to the workflow's dollars",
+   "alt": "greater",
+   "nA": 5,
+   "nB": 5,
+   "meanA": 5,
+   "meanB": 4.4,
+   "diff": 0.6,
+   "U": 19,
+   "p": 0.107,
+   "permutations": 252,
+   "decision": "not supported"
+  },
+  {
+   "a": "gqa1v/workflow-random",
+   "b": "gqa2/agent-matched",
+   "role": "C2 (A2): the cheaper random-exploration workflow vs the same matched agent",
+   "alt": "greater",
+   "nA": 5,
+   "nB": 5,
+   "meanA": 4.2,
+   "meanB": 4.4,
+   "diff": -0.2,
+   "U": 14.5,
+   "p": 0.437,
+   "permutations": 252,
+   "decision": "not supported"
+  },
+  {
+   "a": "gqa2/agent-matched",
+   "b": "gqa1v/agent",
+   "role": "C3 (A2): does matching (prompt, report log, restarts, dollars) change the agent?",
+   "alt": "two-sided",
+   "nA": 5,
+   "nB": 5,
+   "meanA": 4.4,
+   "meanB": 0.8,
+   "diff": 3.6,
+   "U": 25,
+   "p": 0.008,
+   "permutations": 252,
+   "decision": "a > b"
+  },
+  {
+   "a": "gqa1v/agent",
+   "b": "gqa1nb/agent",
+   "role": "S2v (A2): the budget line on one CLI version (S2 compared 2.1.312 with the line against 2.1.318 without it)",
+   "alt": "two-sided",
+   "nA": 5,
+   "nB": 5,
+   "meanA": 0.8,
+   "meanB": 1,
+   "diff": -0.2,
+   "U": 10,
+   "p": 1,
+   "permutations": 252,
+   "decision": "no difference shown"
+  },
+  {
+   "a": "gqa1+gqa1v/workflow",
+   "b": "gqa1+gqa1v/agent",
+   "role": "P1 (A2, secondary): H1 pooled over both series (K = 10 vs 10, unpaired)",
+   "alt": "greater",
+   "nA": 10,
+   "nB": 10,
+   "meanA": 5.7,
+   "meanB": 0.9,
+   "diff": 4.8,
+   "U": 90.5,
+   "p": 0,
+   "permutations": 184756,
+   "decision": "supported (dev evidence)"
   }
  ],
- "excluded": []
+ "excluded": [
+  {
+   "run": "gqa1m3-workflow-random-r1",
+   "why": "harness fault (runner exception)"
+  },
+  {
+   "run": "gqa1m3-workflow-random-r2",
+   "why": "harness fault (runner exception)"
+  },
+  {
+   "run": "gqa1m3-workflow-random-r3",
+   "why": "harness fault (runner exception)"
+  }
+ ]
 }

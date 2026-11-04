@@ -1,0 +1,12 @@
+[
+ {
+  "bug_class": "input_race",
+  "title": "Movement key pressed in the same tick as pause still moves the player",
+  "observed": "Tick 'pause+right' from a fresh game: mode becomes paused (pause menu open), but the player moves (1,1) -> (2,1) and events are [pause, move]. The move is applied after the game has paused.",
+  "expected": "Pause takes effect immediately; the rest of that tick's input is ignored and nothing else happens in that tick. The player should remain at (1,1) with no move event.",
+  "seed": 42,
+  "steps": [
+   "pause+right"
+  ]
+ }
+]
