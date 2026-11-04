@@ -20,8 +20,11 @@ Plan (attempt 5, resumed 2026-10-28 17:50Z):
     (route 'governing-open', arms A2O / A2OF; --layout) are held in sw1b-pending.patch and applied only AFTER eval-1
     finishes (a restart must not resume eval-1 on changed code). [done 2026-11-04 12:40Z] patch applied after eval-1
     ended (patch -p0); node.mjs 519549a0..., run.mjs 0f9948f1... = the PREREG-SW-1b frozen hashes; $0 tests pass
-    (node 13, node-open 5, layouts 5, template 3, golive 7). Next: the SW-1b run (PREREG-SW-1b §Budget), analysis.
-11. [ ] RESULT-SW-1.md.
+    (node 13, node-open 5, layouts 5, template 3, golive 7). [done] SW-1b run sw1b-1 (2026-11-04 12:42Z, frozen command):
+    the $4.85 cap stopped it after 5 complete worlds (201-205, 20 units, 0 env faults, $0.876); analysis.md/json,
+    envaudit.json committed.
+11. [done] RESULT-SW-1.md (2026-11-04). Total Haiku spend $4.916 of the $5 cap; no further paid runs on this budget.
+    Open next steps are listed in RESULT-SW-1.md §9 (each needs a new frozen arm and new budget).
 
 Spend check: node -e over runs/*/journal.sqlite (SUM(cost_usd) FROM model_calls); run.mjs --cap-usd enforces it before
 each unit. Owner cap: Haiku $5 for SW-1 + SW-1b together.

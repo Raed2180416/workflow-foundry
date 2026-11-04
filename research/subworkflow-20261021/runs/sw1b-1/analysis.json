@@ -1,0 +1,365 @@
+{
+ "files": [
+  "research/subworkflow-20261021/runs/sw1b-1/results.jsonl",
+  "research/subworkflow-20261021/runs/eval-1/results.jsonl"
+ ],
+ "difficulty": 4,
+ "seeds": [
+  201,
+  202,
+  203,
+  204,
+  205
+ ],
+ "units": 50,
+ "complete": 50,
+ "notComplete": [],
+ "summaries": [
+  {
+   "arm": "A0",
+   "layout": "delimited",
+   "tasks": 5,
+   "taskPass": 1,
+   "backlogNodes": 10,
+   "backlogPass": 5,
+   "simplePass": 10,
+   "simpleNodes": 10,
+   "costPerTask": 0.037276,
+   "backlogCostPerNode": 0.018071,
+   "costPerPassingBacklogNode": 0.036142,
+   "paths": {
+    "direct": 10
+   },
+   "passByPath": {
+    "direct": 5
+   },
+   "template": {},
+   "openUsed": 0,
+   "openPass": 0,
+   "rounds": {},
+   "audit": 0,
+   "violations": 0,
+   "effects": 0,
+   "proposals": 0,
+   "maxDepth": 0,
+   "nodeOver": 0,
+   "errors": {},
+   "wallSec": 126
+  },
+  {
+   "arm": "A1F",
+   "layout": "delimited",
+   "tasks": 5,
+   "taskPass": 5,
+   "backlogNodes": 10,
+   "backlogPass": 10,
+   "simplePass": 10,
+   "simpleNodes": 10,
+   "costPerTask": 0.025369,
+   "backlogCostPerNode": 0.012211,
+   "costPerPassingBacklogNode": 0.012211,
+   "paths": {
+    "subworkflow": 10
+   },
+   "passByPath": {
+    "subworkflow": 10
+   },
+   "template": {},
+   "openUsed": 0,
+   "openPass": 0,
+   "rounds": {
+    "1": 9,
+    "2": 1
+   },
+   "audit": 0,
+   "violations": 0,
+   "effects": 0,
+   "proposals": 0,
+   "maxDepth": 1,
+   "nodeOver": 0,
+   "errors": {},
+   "wallSec": 120
+  },
+  {
+   "arm": "A2F",
+   "layout": "delimited",
+   "tasks": 5,
+   "taskPass": 4,
+   "backlogNodes": 10,
+   "backlogPass": 9,
+   "simplePass": 10,
+   "simpleNodes": 10,
+   "costPerTask": 0.016585,
+   "backlogCostPerNode": 0.007875,
+   "costPerPassingBacklogNode": 0.00875,
+   "paths": {
+    "subworkflow": 10
+   },
+   "passByPath": {
+    "subworkflow": 9
+   },
+   "template": {
+    "legacy-export-intake": 10
+   },
+   "openUsed": 0,
+   "openPass": 0,
+   "rounds": {
+    "1": 10
+   },
+   "audit": 0,
+   "violations": 0,
+   "effects": 0,
+   "proposals": 31,
+   "maxDepth": 1,
+   "nodeOver": 0,
+   "errors": {},
+   "wallSec": 93
+  },
+  {
+   "arm": "A0",
+   "layout": "blocks",
+   "tasks": 5,
+   "taskPass": 0,
+   "backlogNodes": 10,
+   "backlogPass": 3,
+   "simplePass": 10,
+   "simpleNodes": 10,
+   "costPerTask": 0.031779,
+   "backlogCostPerNode": 0.015296,
+   "costPerPassingBacklogNode": 0.050988,
+   "paths": {
+    "direct": 10
+   },
+   "passByPath": {
+    "direct": 3
+   },
+   "template": {},
+   "openUsed": 0,
+   "openPass": 0,
+   "rounds": {},
+   "audit": 0,
+   "violations": 0,
+   "effects": 0,
+   "proposals": 0,
+   "maxDepth": 0,
+   "nodeOver": 0,
+   "errors": {},
+   "wallSec": 109
+  },
+  {
+   "arm": "A1F",
+   "layout": "blocks",
+   "tasks": 5,
+   "taskPass": 5,
+   "backlogNodes": 10,
+   "backlogPass": 10,
+   "simplePass": 10,
+   "simpleNodes": 10,
+   "costPerTask": 0.027192,
+   "backlogCostPerNode": 0.013184,
+   "costPerPassingBacklogNode": 0.013184,
+   "paths": {
+    "subworkflow": 10
+   },
+   "passByPath": {
+    "subworkflow": 10
+   },
+   "template": {},
+   "openUsed": 0,
+   "openPass": 0,
+   "rounds": {
+    "1": 10
+   },
+   "audit": 0,
+   "violations": 0,
+   "effects": 0,
+   "proposals": 0,
+   "maxDepth": 1,
+   "nodeOver": 0,
+   "errors": {},
+   "wallSec": 147
+  },
+  {
+   "arm": "A2F",
+   "layout": "blocks",
+   "tasks": 5,
+   "taskPass": 0,
+   "backlogNodes": 10,
+   "backlogPass": 2,
+   "simplePass": 10,
+   "simpleNodes": 10,
+   "costPerTask": 0.057975,
+   "backlogCostPerNode": 0.028575,
+   "costPerPassingBacklogNode": 0.142873,
+   "paths": {
+    "fallback": 10
+   },
+   "passByPath": {
+    "fallback": 2
+   },
+   "template": {
+    "legacy-export-intake": 10
+   },
+   "openUsed": 0,
+   "openPass": 0,
+   "rounds": {
+    "4": 10
+   },
+   "audit": 0,
+   "violations": 0,
+   "effects": 0,
+   "proposals": 33,
+   "maxDepth": 0,
+   "nodeOver": 0,
+   "errors": {},
+   "wallSec": 210
+  },
+  {
+   "arm": "A2OF",
+   "layout": "blocks",
+   "tasks": 5,
+   "taskPass": 3,
+   "backlogNodes": 10,
+   "backlogPass": 8,
+   "simplePass": 10,
+   "simpleNodes": 10,
+   "costPerTask": 0.05819,
+   "backlogCostPerNode": 0.028675,
+   "costPerPassingBacklogNode": 0.035844,
+   "paths": {
+    "subworkflow": 10
+   },
+   "passByPath": {
+    "subworkflow": 8
+   },
+   "template": {
+    "legacy-export-intake": 10
+   },
+   "openUsed": 10,
+   "openPass": 8,
+   "rounds": {
+    "5": 10
+   },
+   "audit": 0,
+   "violations": 0,
+   "effects": 0,
+   "proposals": 29,
+   "maxDepth": 1,
+   "nodeOver": 0,
+   "errors": {},
+   "wallSec": 241
+  }
+ ],
+ "pairs": [
+  {
+   "a": "A0/blocks",
+   "b": "A0/delimited",
+   "worlds": 5,
+   "both": 2,
+   "onlyA": 1,
+   "onlyB": 3,
+   "neither": 4,
+   "costA": 0.158897,
+   "costB": 0.18638
+  },
+  {
+   "a": "A1F/blocks",
+   "b": "A1F/delimited",
+   "worlds": 5,
+   "both": 10,
+   "onlyA": 0,
+   "onlyB": 0,
+   "neither": 0,
+   "costA": 0.135959,
+   "costB": 0.126846
+  },
+  {
+   "a": "A2F/blocks",
+   "b": "A2F/delimited",
+   "worlds": 5,
+   "both": 2,
+   "onlyA": 0,
+   "onlyB": 7,
+   "neither": 1,
+   "costA": 0.289873,
+   "costB": 0.082927
+  },
+  {
+   "a": "A2OF/blocks",
+   "b": "A2OF/delimited",
+   "worlds": 0,
+   "both": 0,
+   "onlyA": 0,
+   "onlyB": 0,
+   "neither": 0,
+   "costA": 0,
+   "costB": 0
+  },
+  {
+   "a": "A1F/blocks",
+   "b": "A2F/blocks",
+   "worlds": 5,
+   "both": 2,
+   "onlyA": 8,
+   "onlyB": 0,
+   "neither": 0,
+   "costA": 0.135959,
+   "costB": 0.289873
+  },
+  {
+   "a": "A2OF/blocks",
+   "b": "A2F/blocks",
+   "worlds": 5,
+   "both": 2,
+   "onlyA": 6,
+   "onlyB": 0,
+   "neither": 2,
+   "costA": 0.290951,
+   "costB": 0.289873
+  },
+  {
+   "a": "A2OF/blocks",
+   "b": "A1F/blocks",
+   "worlds": 5,
+   "both": 8,
+   "onlyA": 0,
+   "onlyB": 2,
+   "neither": 0,
+   "costA": 0.290951,
+   "costB": 0.135959
+  },
+  {
+   "a": "A1F/blocks",
+   "b": "A0/blocks",
+   "worlds": 5,
+   "both": 3,
+   "onlyA": 7,
+   "onlyB": 0,
+   "neither": 0,
+   "costA": 0.135959,
+   "costB": 0.158897
+  },
+  {
+   "a": "A2F/blocks",
+   "b": "A0/blocks",
+   "worlds": 5,
+   "both": 1,
+   "onlyA": 1,
+   "onlyB": 2,
+   "neither": 6,
+   "costA": 0.289873,
+   "costB": 0.158897
+  },
+  {
+   "a": "A2OF/blocks",
+   "b": "A0/blocks",
+   "worlds": 5,
+   "both": 3,
+   "onlyA": 5,
+   "onlyB": 0,
+   "neither": 2,
+   "costA": 0.290951,
+   "costB": 0.158897
+  }
+ ]
+}
