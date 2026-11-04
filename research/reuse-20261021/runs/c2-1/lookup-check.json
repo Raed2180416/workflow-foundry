@@ -1,0 +1,331 @@
+{
+ "kind": "c2-lookup-check",
+ "note": "POST-HOC ($0, 2026-11-04): B's own contract lookup with the declared choice rule, against the C2 registry the runs fetched by id",
+ "rule": "first-registered live unscoped entry whose origin program is not the caller",
+ "bContractHash": "560837af9a0740fea0f2c8d146e8df4a36c61fc726270c85beeb0d1f88e98123",
+ "entryContractHash": "560837af9a0740fea0f2c8d146e8df4a36c61fc726270c85beeb0d1f88e98123",
+ "contractMatches": true,
+ "inputColumns": [
+  "product_id",
+  "sds_label_text",
+  "handling_and_storage_guidelines",
+  "transportation_requirements",
+  "disposal_guidelines"
+ ],
+ "allChoseFetchedEntry": true,
+ "perSource": {
+  "c2-1 test:S0": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S0-L1",
+    "c2-built:test:S0-L2"
+   ]
+  },
+  "c2-1 test:S1": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S1-L1",
+    "c2-built:test:S1-L2"
+   ]
+  },
+  "c2-1 test:S2": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S2-L1",
+    "c2-built:test:S2-L2"
+   ]
+  },
+  "c2-1 test:S3": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S3-L1",
+    "c2-built:test:S3-L2"
+   ]
+  },
+  "c2-1 test:S4": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S4-L1",
+    "c2-built:test:S4-L2"
+   ]
+  },
+  "c2-1 test:S5": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S5-L1",
+    "c2-built:test:S5-L2"
+   ]
+  },
+  "c2-1 test:S6": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S6-L1",
+    "c2-built:test:S6-L2"
+   ]
+  },
+  "c2-1 test:H1": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H1-L1",
+    "c2-built:test:H1-L2"
+   ]
+  },
+  "c2-1 test:H2": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H2-L1",
+    "c2-built:test:H2-L2"
+   ]
+  },
+  "c2-1 test:H3": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H3-L1",
+    "c2-built:test:H3-L2"
+   ]
+  },
+  "c2-1 test:H4": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H4-L1",
+    "c2-built:test:H4-L2"
+   ]
+  },
+  "c2-1 test:H5": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H5-L1",
+    "c2-built:test:H5-L2"
+   ]
+  },
+  "c2-2:S0": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S0-L1",
+    "c2-built:test:S0-L2"
+   ]
+  },
+  "c2-2:S1": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S1-L1",
+    "c2-built:test:S1-L2"
+   ]
+  },
+  "c2-2:S2": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S2-L1",
+    "c2-built:test:S2-L2"
+   ]
+  },
+  "c2-2:S3": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S3-L1",
+    "c2-built:test:S3-L2"
+   ]
+  },
+  "c2-2:S4": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S4-L1",
+    "c2-built:test:S4-L2"
+   ]
+  },
+  "c2-2:S5": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S5-L1",
+    "c2-built:test:S5-L2"
+   ]
+  },
+  "c2-2:S6": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:S6-L1",
+    "c2-built:test:S6-L2"
+   ]
+  },
+  "c2-2:H1": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H1-L1",
+    "c2-built:test:H1-L2"
+   ]
+  },
+  "c2-2:H2": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H2-L1",
+    "c2-built:test:H2-L2"
+   ]
+  },
+  "c2-2:H3": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H3-L1",
+    "c2-built:test:H3-L2"
+   ]
+  },
+  "c2-2:H4": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H4-L1",
+    "c2-built:test:H4-L2"
+   ]
+  },
+  "c2-2:H5": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": [
+    "c2-built:test:H5-L1",
+    "c2-built:test:H5-L2"
+   ]
+  },
+  "c2-2:T1": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": []
+  },
+  "c2-2:T2": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": []
+  },
+  "c2-2:T3": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": []
+  },
+  "c2-2:T4": {
+   "candidates": [
+    "sopbench-p2:dangerous_goods"
+   ],
+   "chosen": "sopbench-p2:dangerous_goods",
+   "sameAsFetched": true,
+   "own": []
+  }
+ },
+ "misses": {
+  "procedureOneChar": {
+   "hash": "938d21106f5115ac498e5a702a9bdcc4a960378e2deda7bb1cb2c59921d2cde3",
+   "hit": false,
+   "chosen": null
+  },
+  "toolDescription": {
+   "hash": "2ac04723bd3914678d2aac6bb32fbc71fde60b771df79c0a72127e3519d241ee",
+   "hit": false,
+   "chosen": null
+  },
+  "inputColumnOrder": {
+   "hash": "a51bb3175e589953e66eb1c32699bc5ab3bfbf665f4de4f29015a861dc79e289",
+   "hit": false,
+   "chosen": null
+  }
+ }
+}

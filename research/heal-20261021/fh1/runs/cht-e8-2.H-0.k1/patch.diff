@@ -1,0 +1,33 @@
+diff -ruN a/modules/fulfilment.mjs b/modules/fulfilment.mjs
+--- a/modules/fulfilment.mjs	2026-11-04 14:33:20.443698703 +0000
++++ b/modules/fulfilment.mjs	2026-11-04 14:33:20.443698703 +0000
+@@ -149,15 +149,19 @@
+   } else if (key === 'unship') {
+     if (p.status === 'ok') w.unship = 'done';
+     else if (p.status === 'unknown') w.unship = 'unknown';
++    else if (isInvalidRequest(p.error)) w.unship = 'none';                 // our request was wrong: same key, again
+     else w.unship = 'refused';                                             // 409 already-collected: no cancel possible
+   } else if (key === 'refund') {
+     if (p.status === 'ok') w.refund = 'done';
+     else if (p.status === 'unknown') w.refund = 'unknown';
++    else if (isInvalidRequest(p.error)) w.refund = 'none';                 // our request was wrong: same key, again
+     else w.refund = 'refused';
+   } else if (key.startsWith('release.')) {
+     const sku = key.slice('release.'.length);
+     if (p.status === 'unknown') w.rel[sku] = 'unknown';
+-    else w.rel[sku] = 'done';
++    else if (p.status === 'ok') w.rel[sku] = 'done';
++    else if (isInvalidRequest(p.error)) w.rel[sku] = 'none';               // our request was wrong: same key, again
++    else w.rel[sku] = 'refused';                                           // not released: never sent again (R5.1)
+   }
+   if (w.failed && !w.announced) announce(w, ctx, event.at ?? ctx.now);
+   drive(w, ctx, eff, ctx.now);
+@@ -232,7 +236,7 @@
+   for (const sku of Object.keys(w.rel)) {
+     if (w.rel[sku] !== 'unknown') continue;
+     const s = ask('inventory', `release.${sku}`);
+-    w.rel[sku] = s === 'not-found' ? 'none' : 'done';
++    if (s === 'committed') w.rel[sku] = 'done'; else if (s === 'not-found') w.rel[sku] = 'none';
+   }
+ }
+ 

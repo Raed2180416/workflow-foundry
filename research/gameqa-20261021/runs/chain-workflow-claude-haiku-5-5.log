@@ -1,0 +1,51 @@
+2026-10-28T18:47:10Z start --arm workflow --rep 1 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-r1","wallS":225,"usd":0.07026553999999999,"calls":22,"reports":14,"bugs":12,"foundMin":8,"foundMinClass":7,"foundAny":9,"falseReports":0,"duplicates":5,"precision":1,"nondeterministic":0,"replays":72,"error":null}
+2026-10-28T18:51:04Z end --arm workflow --rep 1 --live --model claude-haiku-5-5 (exit 0; spent so far $0.0756)
+2026-10-28T18:51:05Z start --arm workflow-random --rep 1 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-random-r1","wallS":295,"usd":0.008080145,"calls":3,"reports":15,"bugs":12,"foundMin":7,"foundMinClass":6,"foundAny":7,"falseReports":0,"duplicates":8,"precision":1,"nondeterministic":0,"replays":194,"error":null}
+2026-10-28T18:56:27Z end --arm workflow-random --rep 1 --live --model claude-haiku-5-5 (exit 0; spent so far $0.0836)
+2026-10-28T18:56:27Z lane workflow 1..1 done
+2026-10-28T18:56:40Z start --arm workflow --rep 2 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-r2","wallS":289,"usd":0.06731357500000001,"calls":22,"reports":16,"bugs":12,"foundMin":8,"foundMinClass":8,"foundAny":8,"falseReports":0,"duplicates":8,"precision":1,"nondeterministic":0,"replays":85,"error":null}
+2026-10-28T19:01:43Z end --arm workflow --rep 2 --live --model claude-haiku-5-5 (exit 0; spent so far $0.1634)
+2026-10-28T19:01:44Z start --arm workflow-random --rep 2 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-random-r2","wallS":298,"usd":0.00325709,"calls":3,"reports":5,"bugs":12,"foundMin":5,"foundMinClass":4,"foundAny":5,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":28,"error":null}
+2026-10-28T19:06:51Z end --arm workflow-random --rep 2 --live --model claude-haiku-5-5 (exit 0; spent so far $0.1667)
+2026-10-28T19:06:52Z start --arm workflow --rep 3 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-r3","wallS":5,"usd":0,"calls":1,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":null}
+2026-10-28T19:07:03Z end --arm workflow --rep 3 --live --model claude-haiku-5-5 (exit 0; spent so far $0.1667)
+2026-10-28T19:07:04Z start --arm workflow-random --rep 3 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-random-r3","wallS":0,"usd":0,"calls":0,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":"Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1-workflow-r3/constructed.json: run that first"}
+2026-10-28T19:07:11Z end --arm workflow-random --rep 3 --live --model claude-haiku-5-5 (exit 0; spent so far $0.1667)
+2026-10-28T19:07:12Z start --arm workflow --rep 4 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-r4","wallS":4,"usd":0,"calls":1,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":null}
+2026-10-28T19:07:22Z end --arm workflow --rep 4 --live --model claude-haiku-5-5 (exit 0; spent so far $0.1667)
+2026-10-28T19:07:23Z start --arm workflow-random --rep 4 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-random-r4","wallS":0,"usd":0,"calls":0,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":"Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1-workflow-r4/constructed.json: run that first"}
+2026-10-28T19:07:29Z end --arm workflow-random --rep 4 --live --model claude-haiku-5-5 (exit 0; spent so far $0.1667)
+2026-10-28T19:07:29Z start --arm workflow --rep 5 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-r5","wallS":4,"usd":0,"calls":1,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":null}
+2026-10-28T19:07:38Z end --arm workflow --rep 5 --live --model claude-haiku-5-5 (exit 0; spent so far $0.1667)
+2026-10-28T19:07:38Z start --arm workflow-random --rep 5 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-random-r5","wallS":0,"usd":0,"calls":0,"reports":0,"bugs":12,"foundMin":0,"foundMinClass":0,"foundAny":0,"falseReports":0,"duplicates":0,"precision":null,"nondeterministic":0,"replays":0,"error":"Error: workflow-random reuses the construction of /home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1-workflow-r5/constructed.json: run that first"}
+2026-10-28T19:07:44Z end --arm workflow-random --rep 5 --live --model claude-haiku-5-5 (exit 0; spent so far $0.1667)
+2026-10-28T19:07:44Z lane workflow 2..5 done
+2026-11-04T12:39:23Z start --arm workflow --rep 3 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-r3","wallS":244,"usd":0.068771695,"calls":21,"reports":8,"bugs":12,"foundMin":6,"foundMinClass":5,"foundAny":6,"falseReports":0,"duplicates":2,"precision":1,"nondeterministic":0,"replays":48,"error":null}
+2026-11-04T12:43:35Z end --arm workflow --rep 3 --live --model claude-haiku-5-5 (exit 0; spent so far $0.2633)
+2026-11-04T12:43:35Z start --arm workflow-random --rep 3 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-random-r3","wallS":166,"usd":0.003967555,"calls":2,"reports":9,"bugs":12,"foundMin":6,"foundMinClass":6,"foundAny":6,"falseReports":0,"duplicates":3,"precision":1,"nondeterministic":0,"replays":63,"error":null}
+2026-11-04T12:46:33Z end --arm workflow-random --rep 3 --live --model claude-haiku-5-5 (exit 0; spent so far $0.2741)
+2026-11-04T12:46:34Z start --arm workflow --rep 4 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-r4","wallS":220,"usd":0.06038193,"calls":21,"reports":7,"bugs":12,"foundMin":5,"foundMinClass":5,"foundAny":5,"falseReports":0,"duplicates":2,"precision":1,"nondeterministic":0,"replays":30,"error":null}
+2026-11-04T12:50:23Z end --arm workflow --rep 4 --live --model claude-haiku-5-5 (exit 0; spent so far $0.3345)
+2026-11-04T12:50:24Z start --arm workflow-random --rep 4 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-random-r4","wallS":264,"usd":0.00461443,"calls":2,"reports":8,"bugs":12,"foundMin":5,"foundMinClass":5,"foundAny":8,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":45,"error":null}
+2026-11-04T12:55:02Z end --arm workflow-random --rep 4 --live --model claude-haiku-5-5 (exit 0; spent so far $0.3763)
+2026-11-04T12:55:03Z start --arm workflow --rep 5 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-r5","wallS":278,"usd":0.068238175,"calls":21,"reports":9,"bugs":12,"foundMin":5,"foundMinClass":5,"foundAny":5,"falseReports":0,"duplicates":4,"precision":1,"nondeterministic":0,"replays":54,"error":null}
+2026-11-04T12:59:58Z end --arm workflow --rep 5 --live --model claude-haiku-5-5 (exit 0; spent so far $0.4445)
+2026-11-04T12:59:59Z start --arm workflow-random --rep 5 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-random-r5","wallS":524,"usd":0.014518355,"calls":4,"reports":16,"bugs":12,"foundMin":7,"foundMinClass":6,"foundAny":8,"falseReports":0,"duplicates":8,"precision":1,"nondeterministic":0,"replays":174,"error":null}
+2026-11-04T13:09:07Z end --arm workflow-random --rep 5 --live --model claude-haiku-5-5 (exit 0; spent so far $0.4987)
+2026-11-04T13:09:07Z lane workflow 3..5 done

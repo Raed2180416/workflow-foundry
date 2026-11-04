@@ -1,0 +1,89 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "Key picked up in the same tick as a hit is lost on respawn",
+  "observed": "Player collects a key at (4,5) and is hit by a slime in the same tick. After respawn at (1,1) the HUD shows Keys 0 and state keys=0, although the 'Key collected - find the locked door' toast was shown.",
+  "expected": "Keys collected in the same tick are kept after respawn (keys=1, HUD Keys 1).",
+  "seed": 42,
+  "steps": [
+   "down",
+   "down",
+   "down",
+   "down",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Key picked up in the same tick as a hit is lost on respawn (shorter repro)",
+  "seed": 42,
+  "steps": [
+   "down",
+   "down",
+   "down",
+   "down",
+   "dash-right",
+   "right"
+  ],
+  "observed": "After the 6th tick the player respawns at (1,1) with lives=2 and keys=0. The toast reads 'Key collected - find the locked door', so the HUD and toast say a key was collected while the state shows none.",
+  "expected": "The key collected in the same tick as the hit is kept on respawn (section 5: 'You keep everything you have collected, including keys picked up in the same tick'), so keys should be 1."
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Same-tick movement keys: first pressed direction wins instead of last",
+  "observed": "Pressing right+down in one tick from (1,1) moves the player right to (2,1). Pressing down+right in one tick moves the player down to (1,2). The first key pressed in the tick wins.",
+  "expected": "Of the movement keys pressed in a tick, only the last one counts. right+down should move the player down to (1,2); down+right should move right to (2,1).",
+  "seed": 7,
+  "steps": [
+   "right+down"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes make the score wrap around to about 65136 instead of clamping at 0",
+  "observed": "After collecting a coin (score 100), stepping onto spikes at (3,3) left the score at 65136 (100 - 500 wrapped below zero). The HUD showed Score 65136.",
+  "expected": "Spikes subtract 500 points but the score never goes below 0, so the score should be 0 after the spike hit.",
+  "seed": 7,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a wall tile and triggers spikes behind it",
+  "observed": "From (3,1), dash-down moves the player through the wall at (3,2) onto the spikes at (3,3). Events: dash, spikes, respawn. Lives drop 3 to 2, score goes to 65036 (wrap-around from spikes), and the player respawns at (1,1).",
+  "expected": "A dash stops before the first solid tile. The wall at (3,2) is solid, so the dash should not happen at all, is not used up, and the player stays at (3,1) with no spike hit.",
+  "seed": 13,
+  "steps": [
+   "right",
+   "right",
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart from the pause menu leaves the game paused instead of running",
+  "observed": "After pause then click on btn-restart, the restart event fires and score, lives and time reset (score 0, lives 3, time 300), but mode stays 'paused' and the pause menu remains open. Nothing moves until the player resumes.",
+  "expected": "Per doc section 7, Restart level puts the level back to its starting state and the game is running again straight away (mode 'playing', no pause menu).",
+  "seed": 202,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Move key pressed in the same tick as pause is still applied",
+  "observed": "With the player at (1,1), the tick [pause+right] pauses the game and also moves the player to (2,1). Events are [pause, move] and mode is paused.",
+  "expected": "Pause takes effect immediately and the rest of that tick's input is ignored, so the player stays at (1,1) and events are [pause] only.",
+  "seed": 2024,
+  "steps": [
+   "pause+right"
+  ]
+ }
+]

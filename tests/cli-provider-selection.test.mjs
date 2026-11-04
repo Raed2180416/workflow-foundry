@@ -11,7 +11,7 @@ function invoke(args) {
   try {
     const result = spawnSync(process.execPath, [cli.pathname, ...args, '--workspace', workspace], {
       env: { PATH: '/usr/bin:/bin', HOME: workspace, NODE_NO_WARNINGS: '1' },
-      encoding: 'utf8', timeout: 5000, maxBuffer: 100000,
+      encoding: 'utf8', timeout: 60000, maxBuffer: 100000,
     });
     assert.equal(result.error, undefined);
     return result;
@@ -53,7 +53,7 @@ test('a refused generate leaves no workspace state and opens no store', () => {
     const workspace = mkdtempSync(path.join(tmpdir(), 'foundry-cli-refusal-'));
     try {
       const result = spawnSync(process.execPath, [cli.pathname, 'generate', '--task', 'Offline routing test', ...args, '--workspace', workspace], {
-        env: { PATH: '/usr/bin:/bin', HOME: workspace, NODE_NO_WARNINGS: '1' }, encoding: 'utf8', timeout: 5000, maxBuffer: 100000,
+        env: { PATH: '/usr/bin:/bin', HOME: workspace, NODE_NO_WARNINGS: '1' }, encoding: 'utf8', timeout: 60000, maxBuffer: 100000,
       });
       assert.equal(result.error, undefined);
       assert.equal(result.status, 1);

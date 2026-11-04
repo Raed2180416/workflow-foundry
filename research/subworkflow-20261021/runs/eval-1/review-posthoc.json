@@ -1,0 +1,715 @@
+{
+ "clustered": {
+  "P": [
+   {
+    "a": "A1F",
+    "b": "A2F",
+    "tasks": 16,
+    "passA": 32,
+    "passB": 27,
+    "onlyA": 5,
+    "onlyB": 0,
+    "mcnemarP": 0.0625,
+    "clusteredP": 0.125,
+    "tasksFavA": 4,
+    "tasksFavB": 0,
+    "taskSignP": 0.125
+   },
+   {
+    "a": "A1",
+    "b": "A2",
+    "tasks": 16,
+    "passA": 15,
+    "passB": 22,
+    "onlyA": 4,
+    "onlyB": 11,
+    "mcnemarP": 0.118469,
+    "clusteredP": 0.146484,
+    "tasksFavA": 3,
+    "tasksFavB": 8,
+    "taskSignP": 0.226563
+   },
+   {
+    "a": "A0",
+    "b": "A1F",
+    "tasks": 16,
+    "passA": 11,
+    "passB": 32,
+    "onlyA": 0,
+    "onlyB": 21,
+    "mcnemarP": 0.000001,
+    "clusteredP": 0.000122,
+    "tasksFavA": 0,
+    "tasksFavB": 14,
+    "taskSignP": 0.000122
+   },
+   {
+    "a": "A0",
+    "b": "A2F",
+    "tasks": 16,
+    "passA": 11,
+    "passB": 27,
+    "onlyA": 1,
+    "onlyB": 17,
+    "mcnemarP": 0.000145,
+    "clusteredP": 0.001343,
+    "tasksFavA": 1,
+    "tasksFavB": 13,
+    "taskSignP": 0.001831
+   },
+   {
+    "a": "A0",
+    "b": "A1",
+    "tasks": 16,
+    "passA": 11,
+    "passB": 15,
+    "onlyA": 6,
+    "onlyB": 10,
+    "mcnemarP": 0.454498,
+    "clusteredP": 0.464844,
+    "tasksFavA": 4,
+    "tasksFavB": 6,
+    "taskSignP": 0.753906
+   },
+   {
+    "a": "A0",
+    "b": "A2",
+    "tasks": 16,
+    "passA": 11,
+    "passB": 22,
+    "onlyA": 5,
+    "onlyB": 16,
+    "mcnemarP": 0.026604,
+    "clusteredP": 0.050781,
+    "tasksFavA": 1,
+    "tasksFavB": 8,
+    "taskSignP": 0.039063
+   },
+   {
+    "a": "A1TF",
+    "b": "A2F",
+    "tasks": 16,
+    "passA": 31,
+    "passB": 27,
+    "onlyA": 4,
+    "onlyB": 0,
+    "mcnemarP": 0.125,
+    "clusteredP": 0.25,
+    "tasksFavA": 3,
+    "tasksFavB": 0,
+    "taskSignP": 0.25
+   },
+   {
+    "a": "A1TF",
+    "b": "A1F",
+    "tasks": 16,
+    "passA": 31,
+    "passB": 32,
+    "onlyA": 0,
+    "onlyB": 1,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 0,
+    "tasksFavB": 1,
+    "taskSignP": 1
+   },
+   {
+    "a": "A1",
+    "b": "A1F",
+    "tasks": 16,
+    "passA": 15,
+    "passB": 32,
+    "onlyA": 0,
+    "onlyB": 17,
+    "mcnemarP": 0.000015,
+    "clusteredP": 0.000244,
+    "tasksFavA": 0,
+    "tasksFavB": 13,
+    "taskSignP": 0.000244
+   },
+   {
+    "a": "A2",
+    "b": "A2F",
+    "tasks": 16,
+    "passA": 22,
+    "passB": 27,
+    "onlyA": 4,
+    "onlyB": 9,
+    "mcnemarP": 0.266846,
+    "clusteredP": 0.34082,
+    "tasksFavA": 3,
+    "tasksFavB": 8,
+    "taskSignP": 0.226563
+   }
+  ],
+  "d4": [
+   {
+    "a": "A1F",
+    "b": "A2F",
+    "tasks": 8,
+    "passA": 16,
+    "passB": 14,
+    "onlyA": 2,
+    "onlyB": 0,
+    "mcnemarP": 0.5,
+    "clusteredP": 0.5,
+    "tasksFavA": 2,
+    "tasksFavB": 0,
+    "taskSignP": 0.5
+   },
+   {
+    "a": "A1",
+    "b": "A2",
+    "tasks": 8,
+    "passA": 7,
+    "passB": 9,
+    "onlyA": 2,
+    "onlyB": 4,
+    "mcnemarP": 0.6875,
+    "clusteredP": 0.75,
+    "tasksFavA": 2,
+    "tasksFavB": 3,
+    "taskSignP": 1
+   },
+   {
+    "a": "A0",
+    "b": "A1F",
+    "tasks": 8,
+    "passA": 8,
+    "passB": 16,
+    "onlyA": 0,
+    "onlyB": 8,
+    "mcnemarP": 0.007813,
+    "clusteredP": 0.03125,
+    "tasksFavA": 0,
+    "tasksFavB": 6,
+    "taskSignP": 0.03125
+   },
+   {
+    "a": "A0",
+    "b": "A2F",
+    "tasks": 8,
+    "passA": 8,
+    "passB": 14,
+    "onlyA": 1,
+    "onlyB": 7,
+    "mcnemarP": 0.070313,
+    "clusteredP": 0.109375,
+    "tasksFavA": 1,
+    "tasksFavB": 6,
+    "taskSignP": 0.125
+   },
+   {
+    "a": "A0",
+    "b": "A1",
+    "tasks": 8,
+    "passA": 8,
+    "passB": 7,
+    "onlyA": 4,
+    "onlyB": 3,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 4,
+    "tasksFavB": 2,
+    "taskSignP": 0.6875
+   },
+   {
+    "a": "A0",
+    "b": "A2",
+    "tasks": 8,
+    "passA": 8,
+    "passB": 9,
+    "onlyA": 4,
+    "onlyB": 5,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 1,
+    "tasksFavB": 2,
+    "taskSignP": 1
+   },
+   {
+    "a": "A1TF",
+    "b": "A2F",
+    "tasks": 8,
+    "passA": 15,
+    "passB": 14,
+    "onlyA": 1,
+    "onlyB": 0,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 1,
+    "tasksFavB": 0,
+    "taskSignP": 1
+   },
+   {
+    "a": "A1TF",
+    "b": "A1F",
+    "tasks": 8,
+    "passA": 15,
+    "passB": 16,
+    "onlyA": 0,
+    "onlyB": 1,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 0,
+    "tasksFavB": 1,
+    "taskSignP": 1
+   },
+   {
+    "a": "A1",
+    "b": "A1F",
+    "tasks": 8,
+    "passA": 7,
+    "passB": 16,
+    "onlyA": 0,
+    "onlyB": 9,
+    "mcnemarP": 0.003906,
+    "clusteredP": 0.03125,
+    "tasksFavA": 0,
+    "tasksFavB": 6,
+    "taskSignP": 0.03125
+   },
+   {
+    "a": "A2",
+    "b": "A2F",
+    "tasks": 8,
+    "passA": 9,
+    "passB": 14,
+    "onlyA": 1,
+    "onlyB": 6,
+    "mcnemarP": 0.125,
+    "clusteredP": 0.1875,
+    "tasksFavA": 1,
+    "tasksFavB": 5,
+    "taskSignP": 0.21875
+   }
+  ],
+  "d5": [
+   {
+    "a": "A1F",
+    "b": "A2F",
+    "tasks": 8,
+    "passA": 16,
+    "passB": 13,
+    "onlyA": 3,
+    "onlyB": 0,
+    "mcnemarP": 0.25,
+    "clusteredP": 0.5,
+    "tasksFavA": 2,
+    "tasksFavB": 0,
+    "taskSignP": 0.5
+   },
+   {
+    "a": "A1",
+    "b": "A2",
+    "tasks": 8,
+    "passA": 8,
+    "passB": 13,
+    "onlyA": 2,
+    "onlyB": 7,
+    "mcnemarP": 0.179688,
+    "clusteredP": 0.1875,
+    "tasksFavA": 1,
+    "tasksFavB": 5,
+    "taskSignP": 0.21875
+   },
+   {
+    "a": "A0",
+    "b": "A1F",
+    "tasks": 8,
+    "passA": 3,
+    "passB": 16,
+    "onlyA": 0,
+    "onlyB": 13,
+    "mcnemarP": 0.000244,
+    "clusteredP": 0.007813,
+    "tasksFavA": 0,
+    "tasksFavB": 8,
+    "taskSignP": 0.007813
+   },
+   {
+    "a": "A0",
+    "b": "A2F",
+    "tasks": 8,
+    "passA": 3,
+    "passB": 13,
+    "onlyA": 0,
+    "onlyB": 10,
+    "mcnemarP": 0.001953,
+    "clusteredP": 0.015625,
+    "tasksFavA": 0,
+    "tasksFavB": 7,
+    "taskSignP": 0.015625
+   },
+   {
+    "a": "A0",
+    "b": "A1",
+    "tasks": 8,
+    "passA": 3,
+    "passB": 8,
+    "onlyA": 2,
+    "onlyB": 7,
+    "mcnemarP": 0.179688,
+    "clusteredP": 0.125,
+    "tasksFavA": 0,
+    "tasksFavB": 4,
+    "taskSignP": 0.125
+   },
+   {
+    "a": "A0",
+    "b": "A2",
+    "tasks": 8,
+    "passA": 3,
+    "passB": 13,
+    "onlyA": 1,
+    "onlyB": 11,
+    "mcnemarP": 0.006348,
+    "clusteredP": 0.03125,
+    "tasksFavA": 0,
+    "tasksFavB": 6,
+    "taskSignP": 0.03125
+   },
+   {
+    "a": "A1TF",
+    "b": "A2F",
+    "tasks": 8,
+    "passA": 16,
+    "passB": 13,
+    "onlyA": 3,
+    "onlyB": 0,
+    "mcnemarP": 0.25,
+    "clusteredP": 0.5,
+    "tasksFavA": 2,
+    "tasksFavB": 0,
+    "taskSignP": 0.5
+   },
+   {
+    "a": "A1TF",
+    "b": "A1F",
+    "tasks": 8,
+    "passA": 16,
+    "passB": 16,
+    "onlyA": 0,
+    "onlyB": 0,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 0,
+    "tasksFavB": 0,
+    "taskSignP": 1
+   },
+   {
+    "a": "A1",
+    "b": "A1F",
+    "tasks": 8,
+    "passA": 8,
+    "passB": 16,
+    "onlyA": 0,
+    "onlyB": 8,
+    "mcnemarP": 0.007813,
+    "clusteredP": 0.015625,
+    "tasksFavA": 0,
+    "tasksFavB": 7,
+    "taskSignP": 0.015625
+   },
+   {
+    "a": "A2",
+    "b": "A2F",
+    "tasks": 8,
+    "passA": 13,
+    "passB": 13,
+    "onlyA": 3,
+    "onlyB": 3,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 2,
+    "tasksFavB": 3,
+    "taskSignP": 1
+   }
+  ],
+  "d3": [
+   {
+    "a": "A1F",
+    "b": "A2F",
+    "tasks": 4,
+    "passA": 8,
+    "passB": 8,
+    "onlyA": 0,
+    "onlyB": 0,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 0,
+    "tasksFavB": 0,
+    "taskSignP": 1
+   },
+   {
+    "a": "A1",
+    "b": "A2",
+    "tasks": 4,
+    "passA": 6,
+    "passB": 6,
+    "onlyA": 2,
+    "onlyB": 2,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 1,
+    "tasksFavB": 1,
+    "taskSignP": 1
+   },
+   {
+    "a": "A0",
+    "b": "A1F",
+    "tasks": 4,
+    "passA": 5,
+    "passB": 8,
+    "onlyA": 0,
+    "onlyB": 3,
+    "mcnemarP": 0.25,
+    "clusteredP": 0.5,
+    "tasksFavA": 0,
+    "tasksFavB": 2,
+    "taskSignP": 0.5
+   },
+   {
+    "a": "A0",
+    "b": "A2F",
+    "tasks": 4,
+    "passA": 5,
+    "passB": 8,
+    "onlyA": 0,
+    "onlyB": 3,
+    "mcnemarP": 0.25,
+    "clusteredP": 0.5,
+    "tasksFavA": 0,
+    "tasksFavB": 2,
+    "taskSignP": 0.5
+   },
+   {
+    "a": "A0",
+    "b": "A1",
+    "tasks": 4,
+    "passA": 5,
+    "passB": 6,
+    "onlyA": 1,
+    "onlyB": 2,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 0,
+    "tasksFavB": 1,
+    "taskSignP": 1
+   },
+   {
+    "a": "A0",
+    "b": "A2",
+    "tasks": 4,
+    "passA": 5,
+    "passB": 6,
+    "onlyA": 1,
+    "onlyB": 2,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 1,
+    "tasksFavB": 2,
+    "taskSignP": 1
+   },
+   {
+    "a": "A1TF",
+    "b": "A2F",
+    "tasks": 4,
+    "passA": 8,
+    "passB": 8,
+    "onlyA": 0,
+    "onlyB": 0,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 0,
+    "tasksFavB": 0,
+    "taskSignP": 1
+   },
+   {
+    "a": "A1TF",
+    "b": "A1F",
+    "tasks": 4,
+    "passA": 8,
+    "passB": 8,
+    "onlyA": 0,
+    "onlyB": 0,
+    "mcnemarP": 1,
+    "clusteredP": 1,
+    "tasksFavA": 0,
+    "tasksFavB": 0,
+    "taskSignP": 1
+   },
+   {
+    "a": "A1",
+    "b": "A1F",
+    "tasks": 4,
+    "passA": 6,
+    "passB": 8,
+    "onlyA": 0,
+    "onlyB": 2,
+    "mcnemarP": 0.5,
+    "clusteredP": 0.5,
+    "tasksFavA": 0,
+    "tasksFavB": 2,
+    "taskSignP": 0.5
+   },
+   {
+    "a": "A2",
+    "b": "A2F",
+    "tasks": 4,
+    "passA": 6,
+    "passB": 8,
+    "onlyA": 0,
+    "onlyB": 2,
+    "mcnemarP": 0.5,
+    "clusteredP": 0.5,
+    "tasksFavA": 0,
+    "tasksFavB": 2,
+    "taskSignP": 0.5
+   }
+  ]
+ },
+ "gateProbe": {
+  "delimited P": {
+   "oneShot": 66,
+   "failing": 45,
+   "failingFlagged": 2,
+   "passing": 21,
+   "passingFlagged": 0,
+   "byArm": {
+    "A1": {
+     "failing": 17,
+     "flagged": 0
+    },
+    "A0": {
+     "failing": 21,
+     "flagged": 2
+    },
+    "A2": {
+     "failing": 5,
+     "flagged": 0
+    },
+    "A2F": {
+     "failing": 2,
+     "flagged": 0
+    }
+   }
+  },
+  "delimited d3": {
+   "oneShot": 24,
+   "failing": 7,
+   "failingFlagged": 0,
+   "passing": 17,
+   "passingFlagged": 0,
+   "byArm": {
+    "A0": {
+     "failing": 3,
+     "flagged": 0
+    },
+    "A1": {
+     "failing": 2,
+     "flagged": 0
+    },
+    "A2": {
+     "failing": 2,
+     "flagged": 0
+    }
+   }
+  },
+  "blocks P": {
+   "oneShot": 20,
+   "failing": 15,
+   "failingFlagged": 1,
+   "passing": 5,
+   "passingFlagged": 0,
+   "byArm": {
+    "A0": {
+     "failing": 7,
+     "flagged": 0
+    },
+    "A2F": {
+     "failing": 8,
+     "flagged": 1
+    }
+   }
+  }
+ },
+ "provenance": {
+  "A2": {
+   "notCovered": 78,
+   "export": 44,
+   "notes": 12,
+   "spec": 0,
+   "builder": 22,
+   "quarantined": 44,
+   "writeBackKept": 25,
+   "writeBackQuarantined": 0
+  },
+  "A1TF": {
+   "notCovered": 119,
+   "export": 59,
+   "notes": 35,
+   "spec": 0,
+   "builder": 25,
+   "quarantined": 59,
+   "writeBackKept": 40,
+   "writeBackQuarantined": 0
+  },
+  "A2F": {
+   "notCovered": 164,
+   "export": 76,
+   "notes": 29,
+   "spec": 0,
+   "builder": 59,
+   "quarantined": 76,
+   "writeBackKept": 48,
+   "writeBackQuarantined": 0
+  },
+  "A2OF": {
+   "notCovered": 29,
+   "export": 12,
+   "notes": 6,
+   "spec": 0,
+   "builder": 11,
+   "quarantined": 12,
+   "writeBackKept": 9,
+   "writeBackQuarantined": 0
+  }
+ },
+ "judgeSlipsByNode": {
+  "template": {
+   "nodes": 104,
+   "slip": 9
+  },
+  "freeForm": {
+   "nodes": 46,
+   "slip": 0
+  },
+  "fisherOneSided": 0.033123,
+  "note": "node = a sub-workflow node whose spec ran; slip = >= 1 wrong judge label anywhere in its judge calls; template-built judges batch 15 rows, the free-form ones mostly 25 (confounded)"
+ },
+ "decisions": {
+  "A1": {
+   "backlog": 32,
+   "chose": 6,
+   "chosePass": 6,
+   "answered": 26,
+   "answeredPass": 9,
+   "noToolReason": 10,
+   "noToolPass": 2,
+   "withoutCodeReason": 3,
+   "withoutCodePass": 1
+  },
+  "A2": {
+   "backlog": 32,
+   "chose": 26,
+   "chosePass": 21,
+   "answered": 6,
+   "answeredPass": 1,
+   "noToolReason": 0,
+   "noToolPass": 0,
+   "withoutCodeReason": 0,
+   "withoutCodePass": 0
+  }
+ }
+}

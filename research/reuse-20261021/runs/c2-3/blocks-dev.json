@@ -1,0 +1,37 @@
+{
+ "kind": "c23-blocks",
+ "version": "c2-agent-h/1",
+ "runId": "c2-dev",
+ "set": "dev",
+ "manifestSha256": "06191fb4feca9034f51f6605dedb0f2006a1793c34031f7bec2a4bfceab8ddeb",
+ "blocks": {
+  "S0": {
+   "sha256": "1170135d9f05eb31d29fb5dcbbafc7cfea7ef17b54fe264d52c3a4182bda7f7c",
+   "chars": 9021
+  },
+  "S1": {
+   "sha256": "12a24ec48e3bf23fc3ec687f694b694c1a4155072663f4ae8f2f25fd990900ba",
+   "chars": 12543
+  },
+  "S2": {
+   "sha256": "2a38d4be530aa5209943aebf61dc3d476dfa26bf0e6f1e8314d74d87166a5fac",
+   "chars": 9014
+  },
+  "S3": {
+   "sha256": "862c939e223494cdf95050df1b1bffcafc3d57aa25ded27dfb840e760e0147bc",
+   "chars": 8980
+  },
+  "S4": {
+   "sha256": "9794511448be48b5e67b30721c1aefa0b709ed1b0e70f04e77edf7480a4439d7",
+   "chars": 9027
+  },
+  "S5": {
+   "sha256": "82366db3e65dc364701b3462e893ce331cd6974c46ffcfaff26bfb76abe1a186",
+   "chars": 14117
+  },
+  "S6": {
+   "sha256": "734528e27e0fb3933ce99639e598a583578928502c28e5ddaf055c5712ddff58",
+   "chars": 8785
+  }
+ }
+}

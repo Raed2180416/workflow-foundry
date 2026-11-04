@@ -1,0 +1,82 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter stale after dash collects a coin",
+  "observed": "After dash-right at tick 7 the state reports coins=2 (score 200), but the HUD still shows 'Coins 1/5'. Keys and time HUD match the state.",
+  "expected": "The HUD always shows the current coin count, so after collecting the second coin it should read 'Coins 2/5'.",
+  "seed": 12345,
+  "steps": [
+   "goto:4,5",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Movement applied in the same tick as pause",
+  "observed": "Token 'pause+right' pauses the game and the player still moves from (1,1) to (2,1) in that tick (event 'move' logged alongside 'pause').",
+  "expected": "Pause takes effect immediately; the rest of that tick's input is ignored, so the player should remain at (1,1).",
+  "seed": 42,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart leaves the game paused with the pause menu gone",
+  "observed": "After 'click:btn-restart' from the pause menu, the state is still mode=paused with no dialog or buttons listed (events=[restart]). The restart-resets check also fails because mode is 'paused' rather than 'playing'.",
+  "expected": "Restart Level resets the level and the game is running again straight away (mode playing, no pause menu).",
+  "seed": 99,
+  "steps": [
+   "pause+left",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "softlock",
+  "title": "Game stuck paused with no visible menu after restart",
+  "observed": "After pause then click:btn-restart, the game remains paused with no dialog or button shown. Thirty 'wait' ticks change nothing; the timer and world stay frozen.",
+  "expected": "Restart runs the game straight away. The player should not be left in a paused state with no way to act on it.",
+  "seed": 777,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Level-complete Finish button covered by bonus banner and toast",
+  "observed": "On the level-complete dialog the 'btn-next' (Finish) button reports top=false; the 'bonus-banner' and a 'Relic!' toast sit on top of it, so a click there would not reach Finish.",
+  "expected": "Every visible button must be clickable; nothing may cover the Finish button in the level-complete dialog.",
+  "seed": 7,
+  "steps": [
+   "goto:4,5",
+   "goto:1,8",
+   "use",
+   "goto:7,4",
+   "goto:12,7"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes wrap score to 65136, then drive it negative (-300)",
+  "observed": "At tick 3 the player steps on spikes with score 100. Score becomes 65136 (about 100 - 500 wrapped as unsigned 16-bit) instead of clamping at 0. A later coin then shows -300 on the HUD and in state, so score goes negative.",
+  "expected": "Spikes cost 500 points, but the score never goes below 0 (it clamps at 0). Score must stay within 0..999,999 at all times.",
+  "seed": 101,
+  "steps": [
+   "goto:3,3",
+   "goto:4,3"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coins counter stale after dash collects a coin",
+  "observed": "After dash-right at tick 1 collects a coin, state reports coins=1 and the HUD score updates to 100, but the HUD still shows 'Coins 0/5'. The HUD is out of sync with the game state.",
+  "expected": "The HUD always shows the current coin count, so it should read 'Coins 1/5' right after the coin is collected.",
+  "seed": 99991,
+  "steps": [
+   "right",
+   "dash-right",
+   "pause+dash-down"
+  ]
+ }
+]

@@ -1,0 +1,171 @@
+diff -ruN a/modules/customer-action.mjs b/modules/customer-action.mjs
+--- a/modules/customer-action.mjs	2026-11-04 14:33:20.515698707 +0000
++++ b/modules/customer-action.mjs	2026-11-04 14:33:20.515698707 +0000
+@@ -111,10 +111,14 @@
+ }
+ 
+ function resume(input, ctx) {
+-  // §3.5: a migrated order that is still waiting for its customer keeps its deadline (the wake-up is re-set).
++  // §3.5: a migrated order that is still waiting for its customer keeps its deadline (the wake-up is re-set). D is
++  // placedAt + customerActionHours at the edition in force at placedAt (R3.2), as for a new order.
+   const r = input.records?.customerAction;
+   if (!r) return outOf(null);
+-  const st = { state: r.state, D: r.D, clearedAt: r.clearedAt, advanced: true, fulfilments: r.fulfilments, at: r.at ?? null, reason: r.reason ?? null };
++  const hours = policyParam(ctx.files, input.edition, 'customerActionHours');
++  const D = r.D ?? amsIso(Date.parse(input.placedAt) + hours * 60 * MIN);
++  const st = { state: r.state, D, clearedAt: r.clearedAt ?? input.clearedAt ?? null, advanced: true,
++    fulfilments: input.fulfilments ?? [], at: r.at ?? null, reason: r.reason ?? null };
+   if (st.state !== 'waiting') return { ...outOf(st), state: st };
+   return {
+     ...outOf(st),
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.519864388 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.519864388 +0000
+@@ -74,15 +74,7 @@
+     const oid = normalise(p.orderId, ctx);
+     const others = openOthers(oid, input.instance, ctx);
+     if (others.length) return { merge: others[0], subject: oid };
+-    st.orderId = oid;
+-    st.phase = 'intake';
+-    st.placedAt = ev.at;
+-    st.customerId = p.customerId;
+-    st.currency = p.currency;
+-    const order = { orderId: oid, customerId: p.customerId, placedAt: ev.at, currency: p.currency, items: p.items };
+-    const r = callMod(st, ctx, 'intake', oid, { op: 'placed', order });
+-    if (r.duplicate) { st.phase = 'ended'; return { subject: oid, close: true }; }    // R1.4: nothing
+-    return { subject: oid };
++    return startPlaced(ev, st, ctx);
+   }
+   if (kind === 'action') {
+     const oid = normalise(p.orderRef, ctx);
+@@ -99,10 +91,25 @@
+     if (others.length) return { merge: others[0], subject: oid };
+     return { subject: oid, close: true };                                          // §3.3: changes nothing
+   }
+-  if (kind === 'migration') return resumeMigration(ev, st, ctx);
++  if (kind === 'migration') return resumeMigration(ev, input, st, ctx);
+   return { subject: null, close: true };
+ }
+ 
++// A placed order starts its case: intake records it (R1.1).
++function startPlaced(ev, st, ctx) {
++  const p = ev.payload ?? {};
++  const oid = normalise(p.orderId, ctx);
++  st.orderId = oid;
++  st.phase = 'intake';
++  st.placedAt = ev.at;
++  st.customerId = p.customerId;
++  st.currency = p.currency;
++  const order = { orderId: oid, customerId: p.customerId, placedAt: ev.at, currency: p.currency, items: p.items };
++  const r = callMod(st, ctx, 'intake', oid, { op: 'placed', order });
++  if (r.duplicate) { st.phase = 'ended'; return { subject: oid, close: true }; }    // R1.4: nothing
++  return { subject: oid };
++}
++
+ function handle(ev, st, ctx, input) {
+   const owner = ctx.ownerOf(ev);
+   if (owner) {
+@@ -282,19 +289,19 @@
+ }
+ 
+ // §3.5: a migrated order continues from where it stands. Its own records (orders.*) say where that is.
+-function resumeMigration(ev, st, ctx) {
++function resumeMigration(ev, input, st, ctx) {
+   // the migration payload carries the order; the first order-like reference in it names the case
+   const found = (JSON.stringify(ev.payload ?? {}).match(/#?\s*ord-[\w-]+/i) ?? [null])[0];
+   const oid = normalise(ev.payload?.orderId ?? ev.payload?.order?.orderId ?? found, ctx);
+   if (!oid) return { subject: null, close: true };
+   const ord = ctx.query('orders.orders', { where: { orderId: oid }, limit: 1 })[0];
+-  if (!ord) return { subject: oid, close: true };
++  if (!ord) return resumeUnrecorded(ev, oid, input, st, ctx);
+   const rows = ctx.query('orders.fulfilments', { where: { orderId: oid }, limit: 1000 });
+   st.orderId = oid;
+   st.placedAt = ord.placedAt;
+   st.customerId = ord.customerId;
+   st.currency = ord.currency;
+-  st.fulfilments = rows.map(f => ({ fulfilmentId: f.fulfilmentId, location: f.location ?? null, available: f.status !== 'unavailable',
++  st.fulfilments = rows.map(f => ({ fulfilmentId: f.fulfilmentId, location: f.location ?? null, available: migratedAvailable(f),
+     items: f.items, amountMinor: f.amountMinor }));
+   const intake = callMod(st, ctx, 'intake', oid, { op: 'resume', records: { intake: { order: { orderId: oid, customerId: ord.customerId,
+     placedAt: ord.placedAt, currency: ord.currency, items: ord.items }, fulfilments: st.fulfilments, totalMinor: ord.totalMinor } } });
+@@ -305,13 +312,76 @@
+     st.outcome = ord.status;
+     return { subject: oid, close: true };
+   }
+-  if (ord.status === 'customerActionRequired') st.phase = 'waiting';
+-  else if (ord.status === 'processing') st.phase = 'processing';
+-  if (st.phase === 'processing') {
++  // §3.5: the statuses and notices already on the records count as set and sent (R7.2, §4.8).
++  callMod(st, ctx, 'statuses', oid, { op: 'resume', records: { statuses: { order: ord.status,
++    fulfilments: rows.map(f => ({ fulfilmentId: f.fulfilmentId, status: f.status })) } } });
++  callMod(st, ctx, 'notices', oid, { op: 'resume', customerId: ord.customerId, records: { notices: { sent: sentKeys(oid, rows, ctx) } } });
++  if (ord.status === 'customerActionRequired') {
++    st.phase = 'waiting';
++    // the customer's deadline runs from placedAt (R3.2): the module re-sets its wake-up, its notice was already sent.
++    callMod(st, ctx, 'customer-action', oid, { op: 'resume', placedAt: ord.placedAt, edition: st.edition,
++      fulfilments: st.fulfilments.map(f => ({ fulfilmentId: f.fulfilmentId, available: f.available })),
++      records: { customerAction: { state: 'waiting' } } });
++  } else if (ord.status === 'processing') {
++    st.phase = 'processing';
+     st.readyAt = ord.placedAt;
+     st.progressReady = true;
+-    for (const f of st.fulfilments) if (f.available) st.started[f.fulfilmentId] = true;
+     callMod(st, ctx, 'order-progress', oid, { op: 'resume', records: { progress: { status: 'processing' } } });
++    for (const f of st.fulfilments) {
++      if (!f.available) continue;
++      const row = rows.find(r => r.fulfilmentId === f.fulfilmentId);
++      if (row.status === 'completed' || row.status === 'failed') { st.ended[f.fulfilmentId] = row.status; continue; }
++      st.started[f.fulfilmentId] = true;
++      callMod(st, ctx, 'fulfilment', f.fulfilmentId, { op: 'resume', records: { fulfilment: resumedFulfilment(ord, row, st, ev.at, ctx) } });
++    }
+   }
+   return { subject: oid };
+ }
++
++// A fulfilment of a migrated order is available when it has a location and has not been cancelled (R3.2).
++function migratedAvailable(f) {
++  return f.location !== null && f.location !== undefined && f.status !== 'unavailable' && f.status !== 'cancelled';
++}
++
++// §3.5: an order not yet recorded whose order.placed is among the export's messages starts as if just placed (R1.1);
++// the other messages of the export are then given to it as they would have arrived.
++function resumeUnrecorded(ev, oid, input, st, ctx) {
++  const msgs = ev.payload?.events ?? [];
++  const placed = msgs.find(e => inboundKind(e) === 'placed' && normalise(e.payload?.orderId, ctx) === oid);
++  if (!placed) return { subject: oid, close: true };
++  const r = startPlaced(placed, st, ctx);
++  if (r.close) return r;
++  for (const e of msgs) if (e !== placed) handle(e, st, ctx, input);
++  return r;
++}
++
++// §3.5: the state of a migrated fulfilment that is still open, from the records of the steps that committed.
++function resumedFulfilment(ord, row, st, at, ctx) {
++  const fid = row.fulfilmentId;
++  const reservations = ctx.query('inventory.reservations', { where: { fulfilmentId: fid }, limit: 1000 });
++  const charge = ctx.query('billing.charges', { where: { fulfilmentId: fid }, limit: 1 })[0];
++  const shipment = ctx.query('carrier.shipments', { where: { fulfilmentId: fid }, limit: 1 })[0];
++  const items = {};
++  for (const it of row.items) {
++    const reserved = reservations.some(r => r.sku === it.sku && r.status === 'active');
++    items[it.sku] = { qty: it.qty, st: reserved ? 'ok' : 'none' };
++  }
++  const collected = !!shipment && ['collected', 'inTransit', 'delivered'].includes(shipment.status);
++  // a collection happened before go-live, so it is reported before any cancel that follows (S7)
++  const reports = collected ? [{ meaning: shipment.status, reportedAt: shipment.createdAt ?? at }] : [];
++  const state = {
++    oid: ord.orderId, cust: ord.customerId, cur: ord.currency, edition: st.edition, readyAt: st.readyAt,
++    f: { fulfilmentId: fid, location: row.location, items: row.items, amountMinor: row.amountMinor },
++    items, charge: charge ? 'ok' : 'none', ship: shipment ? 'ok' : 'none',
++    refund: charge && charge.refundedMinor > 0 ? 'done' : 'none',
++    dispatched: row.status === 'dispatched', collected,
++  };
++  return { state, reports };
++}
++
++// §3.5: the notices already on the records, as the notices module keys them (template and order or fulfilment id).
++function sentKeys(oid, rows, ctx) {
++  const about = [oid, ...rows.map(f => f.fulfilmentId)];
++  return about.flatMap(id => ctx.query('notify.notifications', { where: { about: id }, limit: 1000 }))
++    .map(n => `${n.template}.${n.about}`);
++}

@@ -1,0 +1,105 @@
+{
+ "note": "Review finding M4 (disclosure). Every injected fault has a normative sentence in the public design document (beds/gameqa-web/spec/DESIGN.md) that a check can be written from, written by the same session after the faults. The report class enum given to every arm (DESIGN.md section 9, prompts.mjs CLASSES) is exactly the six injected classes. The three template check examples (template.json checkExamples) have the shapes cap/range (fuel-cap), frozen-while-in-a-mode (docked-still) and display vs state (hud-fuel); the three faults no workflow run found (GQ01, GQ02, GQ06) have the three shapes with no example: transition, disjunction, conservation. Analysis data only: no arm reads this file. ruleShape is the shape of the check that catches the fault.",
+ "classEnum": {
+  "specLine": 138,
+  "injectedClasses": [
+   "collision",
+   "state_desync",
+   "softlock",
+   "ui_overlap",
+   "score_overflow",
+   "input_race"
+  ]
+ },
+ "checkExampleShapes": {
+  "fuel-cap": "cap / range",
+  "docked-still": "nothing changes while in a mode",
+  "hud-fuel": "display vs state"
+ },
+ "faults": [
+  {
+   "bug": "GQ01",
+   "class": "collision",
+   "ruleShape": "transition",
+   "specLine": 51,
+   "quote": "The dash stops before the first solid tile: walls, closed gates and locked doors"
+  },
+  {
+   "bug": "GQ02",
+   "class": "collision",
+   "ruleShape": "disjunction",
+   "specLine": 81,
+   "quote": "or** swapping tiles with an enemy in the same tick (you step onto its tile while it steps onto yours)"
+  },
+  {
+   "bug": "GQ03",
+   "class": "state_desync",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "quote": "A dash collects items on every tile it passes"
+  },
+  {
+   "bug": "GQ04",
+   "class": "state_desync",
+   "ruleShape": "display vs state",
+   "specLine": 97,
+   "quote": "clicking **Resume**, closes it and the game continues exactly where it was"
+  },
+  {
+   "bug": "GQ05",
+   "class": "softlock",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "quote": "puts the whole level back to its starting state (score 0, 3 lives, all items back) and the game is running again straight away"
+  },
+  {
+   "bug": "GQ06",
+   "class": "softlock",
+   "ruleShape": "conservation",
+   "specLine": 82,
+   "quote": "**You keep everything you have collected**, including keys picked up in the same tick"
+  },
+  {
+   "bug": "GQ07",
+   "class": "ui_overlap",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "quote": "Every visible button must be clickable: nothing may cover it."
+  },
+  {
+   "bug": "GQ08",
+   "class": "ui_overlap",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "quote": "Every visible button must be clickable: nothing may cover it."
+  },
+  {
+   "bug": "GQ09",
+   "class": "score_overflow",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "quote": "Score is never negative and is capped at 999,999."
+  },
+  {
+   "bug": "GQ10",
+   "class": "score_overflow",
+   "ruleShape": "cap / range",
+   "specLine": 77,
+   "quote": "Spikes** cost one life and **500 points** (the score stops at 0, it never goes below)"
+  },
+  {
+   "bug": "GQ11",
+   "class": "input_race",
+   "ruleShape": "same-tick input",
+   "specLine": 33,
+   "quote": "When the game becomes paused, the rest of that tick's input is ignored, and nothing else happens in that tick."
+  },
+  {
+   "bug": "GQ12",
+   "class": "input_race",
+   "ruleShape": "same-tick input",
+   "specLine": 35,
+   "quote": "Of the movement keys pressed in a tick while the game is running, only the last one counts: the player makes at most one move (a step or a dash) per tick."
+  }
+ ]
+}

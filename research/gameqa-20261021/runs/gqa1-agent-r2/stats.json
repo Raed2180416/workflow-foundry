@@ -1,0 +1,37 @@
+{
+ "stats": {
+  "exploreTicks": 12,
+  "runs": 3,
+  "finished": true,
+  "notes": "Budget is nearly spent, so I'm stopping here. Confirmed one bug: a movement key pressed in the same tick as pause still moves the player. Seed 1, single token 'pause+right' from the start moves the player from (1,1) to (2,1) while the game ends paused, with events [pause,move]. Per section 2 and section 7, pause is pressed first, so the rest of that tick's input must be ignored and the player should stay at (1,1). Replay confirmed this, and one token is already minimal. Not yet tested: pause+dash, pause+use on the lever, HUD-vs-state checks, spikes, timer bonus, and dialog buttons.",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "wait",
+     "pause+left",
+     "wait",
+     "pause",
+     "dash-left",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "pause+left"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+right"
+    ]
+   }
+  ]
+ }
+}

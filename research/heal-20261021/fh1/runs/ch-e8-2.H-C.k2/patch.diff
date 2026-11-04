@@ -1,0 +1,262 @@
+diff -ruN a/composition.json b/composition.json
+--- a/composition.json	2026-11-04 14:33:20.157763198 +0000
++++ b/composition.json	2026-11-04 14:33:20.157763198 +0000
+@@ -105,7 +105,8 @@
+       "enum": [
+        "arm",
+        "action",
+-       "timeout"
++       "timeout",
++       "adopt"
+       ]
+      }
+     }
+@@ -147,6 +148,7 @@
+       "enum": [
+        "start",
+        "carrier",
++       "adopt",
+        "compensate"
+       ]
+      }
+diff -ruN a/modules/fulfil.mjs b/modules/fulfil.mjs
+--- a/modules/fulfil.mjs	2026-11-04 14:33:20.157763198 +0000
++++ b/modules/fulfil.mjs	2026-11-04 14:33:20.157763198 +0000
+@@ -83,6 +83,33 @@
+   return { state: { ...st, phase: 'failed', undone: u.undone }, effects, output: { phase: 'failed', where, why } };
+ }
+ 
++// go-live (§3.5): a fulfilment already in flight continues from what its records show. A reserved item, a charge or a
++// booked shipment in the records is a step that committed; the first step not shown is issued with its own key, which
++// the system answers with the original result if it had already committed (§1).
++function adoptFulfilment(input, st) {
++  if (st) return { output: { phase: st.phase } };
++  const items = input.items.map((it, i) => ({ key: `r${i}`, sku: it.sku, qty: it.qty }));
++  const left = [...(input.reservedSkus ?? [])];
++  const res = {};
++  for (const it of items) {
++    const j = left.indexOf(it.sku);
++    if (j >= 0) { left.splice(j, 1); res[it.key] = 'ok'; }
++  }
++  const next = { orderId: input.orderId, fid: input.fid, location: input.location, customerId: input.customerId, email: input.email,
++    currency: input.currency, amountMinor: input.amountMinor, items, res, charge: 'none', ship: 'none', carrier: null,
++    phase: 'reserving', undone: {}, attempts: 0, bad: {} };
++  if (input.dispatched) {                                   // collected already: every step committed (R4.4)
++    for (const it of items) res[it.key] = 'ok';
++    return { state: { ...next, charge: 'ok', ship: 'ok', phase: 'dispatched' }, output: { phase: 'dispatched' } };
++  }
++  if (items.some(it => res[it.key] !== 'ok')) return { state: next, effects: [reserveEffect(next)], output: { phase: 'reserving' } };
++  next.charge = input.charged ? 'ok' : 'none';
++  next.ship = input.shipped ? 'ok' : 'none';
++  if (next.charge !== 'ok') return { state: { ...next, phase: 'charging' }, effects: [chargeEffect(next)], output: { phase: 'charging' } };
++  if (next.ship !== 'ok') return { state: { ...next, phase: 'shipping' }, effects: [shipEffect(next)], output: { phase: 'shipping' } };
++  return { state: { ...next, phase: 'shipped' }, output: { phase: 'shipped' } };
++}
++
+ export function step(input, ctx) { return fitAll(stepRaw(input, ctx), ctx.files); }
+ 
+ function stepRaw(input, ctx) {
+@@ -95,6 +122,7 @@
+       phase: 'reserving', undone: {}, attempts: 0, bad: {} };
+     return { state: next, effects: [setStatus(next, 'processing', 'status-processing'), reserveEffect(next)], output: { phase: 'reserving' } };
+   }
++  if (input.op === 'adopt') return adoptFulfilment(input, st);
+   if (!st) return { output: { phase: 'none' } };
+   if (input.op === 'carrier') return carrier(input.meaning, input.reportedAt, st, ctx);
+   if (input.op === 'compensate') return cancelFulfilment(st, input.reason);
+diff -ruN a/modules/review.mjs b/modules/review.mjs
+--- a/modules/review.mjs	2026-11-04 14:33:20.158047752 +0000
++++ b/modules/review.mjs	2026-11-04 14:33:20.158047752 +0000
+@@ -14,7 +14,7 @@
+ const ask = (st, orderId) => ({
+   id: `task-${st.n}`, kind: 'fraudReview', role: 'fraudAnalyst', subject: orderId,
+   question: `Review order ${orderId}: approve or reject.`, answerSchema: ANSWER_SCHEMA,
+-  dueAt: st.deadline, onTimeout: 'cancel',
++  dueAt: addMin(st.deadline, 1), onTimeout: 'cancel',   // a minute after the deadline: an answer exactly at it still counts (R2.2)
+ });
+ 
+ export function step(input, ctx) {
+diff -ruN a/modules/wait.mjs b/modules/wait.mjs
+--- a/modules/wait.mjs	2026-11-04 14:33:20.158117596 +0000
++++ b/modules/wait.mjs	2026-11-04 14:33:20.158117596 +0000
+@@ -21,6 +21,17 @@
+       output: { phase: 'waiting', D },
+     };
+   }
++  if (input.op === 'adopt') {
++    // go-live (§3.5): the window was opened before go-live; its status and notice are already recorded, so no effects
++    if (st) return { output: { phase: st.phase } };
++    const D = addMin(input.p, input.customerActionHours * 60);
++    const next = { orderId: input.orderId, email: input.email, D, phase: 'waiting', fulfilments: input.fulfilments };
++    return {
++      state: next,
++      obligations: { upsert: [{ id: 'deadline', kind: 'customerActionDeadline', anchor: input.p, dueAt: addMin(D, 1), onDue: 'timeout' }] },
++      output: { phase: 'waiting', D },
++    };
++  }
+   if (!st) return { output: { phase: 'none' } };
+   if (input.op === 'action') {
+     // R3.2: the first amend or cancel at or before D counts; later ones change nothing (S5, S8)
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.158117596 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.158117596 +0000
+@@ -12,6 +12,14 @@
+ const norm = s => String(s ?? '').trim().replace(/^#/, '').trim().toUpperCase();     // SPEC §3.1
+ const jsonOf = f => (typeof f === 'string' ? JSON.parse(f) : (f ?? null));
+ const rowsOf = r => (Array.isArray(r) ? r : (isObj(r) && Array.isArray(r.rows) ? r.rows : []));
++const rowsIn = (records, table) => rowsOf(records?.[table]);
++
++// go-live (§3.5): the steps a fulfilment's records show as committed (reserved skus, a charge, a booked shipment)
++const factsOf = (records, fid) => ({
++  reservedSkus: rowsIn(records, 'inventory.reservations').filter(r => r.fulfilmentId === fid && r.status !== 'released').map(r => r.sku),
++  charged: rowsIn(records, 'billing.charges').some(c => c.fulfilmentId === fid),
++  shipped: rowsIn(records, 'carrier.shipments').some(s => s.fulfilmentId === fid && s.status !== 'cancelled'),
++});
+ 
+ // The API may rename a field: api/<system>.schema.json in ctx.files shows the current names, so send those.
+ const fitNorm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+@@ -106,6 +114,62 @@
+     subject = oid;
+   }
+ 
++  // §3.5 go-live: a migrated order continues from its records, waiting for the customer (R3) or processing (R4) with
++  // each fulfilment where it stands. Statuses and notices already recorded are not sent again.
++  function adopt(row, records, at) {
++    const oid = norm(row.orderId);
++    const ed = editionAt(ctx, row.placedAt);
++    const r = rulesOf(ctx, ed);
++    const cust = mapOf(jsonOf(ctx.files['master/customers.json']), ['customerId', 'id'], ['email']);
++    const x = { id: oid, customerId: row.customerId, currency: row.currency, p: row.placedAt, ed, email: cust[row.customerId] ?? '',
++      reviewHours: r.policy.fraudReviewHours, actionHours: r.policy.customerActionHours, fs: {}, coll: {}, phase: 'checking',
++      cleared: true, ended: null };
++    for (const f of rowsIn(records, 'orders.fulfilments')) {
++      if (norm(f.orderId) !== oid) continue;
++      x.fs[f.fulfilmentId] = { loc: f.location ?? null, amt: f.amountMinor, items: f.items ?? [], avail: f.location != null, status: f.status };
++    }
++    st.o = x;
++    subject = oid;
++    if (['completed', 'failed', 'cancelled', 'timedOut'].includes(row.status)) { x.ended = row.status; x.phase = 'ended'; return; }
++    if (row.status === 'customerActionRequired') {
++      x.phase = 'waiting';
++      ctx.call('wait', oid, { op: 'adopt', orderId: oid, p: x.p, customerActionHours: x.actionHours, email: x.email,
++        fulfilments: Object.entries(x.fs).map(([fulfilmentId, f]) => ({ fulfilmentId, available: f.avail })) });
++      return;
++    }
++    if (row.status === 'processing') {
++      x.phase = 'processing';
++      for (const [fid, f] of Object.entries(x.fs)) {
++        if (!f.avail) continue;
++        if (f.status === 'pending') startFulfilment(x, fid, f);
++        else if (f.status === 'dispatched') {
++          x.coll[fid] = at;                                   // collected before go-live: the customer can no longer cancel (S7)
++          ctx.call('fulfil', `${oid}.${fid}`, { op: 'adopt', ...fulfilArgs(x, fid, f), dispatched: true });
++        } else if (f.status === 'processing') {
++          ctx.call('fulfil', `${oid}.${fid}`, { op: 'adopt', ...fulfilArgs(x, fid, f), dispatched: false, ...factsOf(records, fid) });
++        }
++      }
++      maybeOutcome();
++    }
++  }
++
++  // §3.5: the first event of a migrated instance. An order in flight continues from its records; an order not yet
++  // recorded starts as a placed order would (R1.1); the messages already received are then handled as they come.
++  function migrate(ev) {
++    const records = isObj(ev.payload?.records) ? ev.payload.records : {};
++    const inner = Array.isArray(ev.payload?.events) ? ev.payload.events : [];
++    const row = rowsIn(records, 'orders.orders')[0];
++    const placed = inner.find(e => kindOf(e) === 'placed');
++    if (row) adopt(row, records, ev.at);
++    else if (placed) startOrder(placed);
++    for (const e of inner) {
++      if (e === placed) continue;
++      const k = kindOf(e);
++      if (k === 'customer') onCustomer(e);
++      else if (k === 'carrier') onCarrier(e);
++    }
++  }
++
+   // R2.2: a review task opens (its deadline is fixed from this first task)
+   function openReview(at) {
+     const x = o();
+@@ -131,12 +195,15 @@
+     const x = o();
+     x.phase = 'processing';
+     ctx.call('close', x.id, { op: 'processing', orderId: x.id });
+-    for (const [fid, f] of Object.entries(x.fs)) {
+-      if (!f.avail || f.status !== 'pending') continue;
+-      f.status = 'processing';
+-      ctx.call('fulfil', `${x.id}.${fid}`, { op: 'start', orderId: x.id, fid, location: f.loc, customerId: x.customerId,
+-        email: x.email, currency: x.currency, amountMinor: f.amt, items: f.items });
+-    }
++    for (const [fid, f] of Object.entries(x.fs)) startFulfilment(x, fid, f);
++  }
++
++  const fulfilArgs = (x, fid, f) => ({ orderId: x.id, fid, location: f.loc, customerId: x.customerId,
++    email: x.email, currency: x.currency, amountMinor: f.amt, items: f.items });
++  function startFulfilment(x, fid, f) {
++    if (!f.avail || f.status !== 'pending') return;
++    f.status = 'processing';
++    ctx.call('fulfil', `${x.id}.${fid}`, { op: 'start', ...fulfilArgs(x, fid, f) });
+   }
+ 
+   // R6.1, R6.2, R6.4, S15: the order is cancelled: started fulfilments compensated, the rest set cancelled, the order too
+@@ -266,6 +333,7 @@
+   }
+ 
+   for (const ev of input.events ?? []) {
++    if (ev.type === 'migration') { migrate(ev); continue; }
+     const k = kindOf(ev);
+     if (k === 'owned') { deliverOwned(ev); continue; }
+     if (!st.o && (k === 'placed' || k === 'customer' || k === 'carrier')) {
+diff -ruN a/tests/fulfil.test.mjs b/tests/fulfil.test.mjs
+--- a/tests/fulfil.test.mjs	2026-11-04 14:33:20.158117596 +0000
++++ b/tests/fulfil.test.mjs	2026-11-04 14:33:20.158117596 +0000
+@@ -111,3 +111,12 @@
+   assert.equal(f.effects.filter(e => e.op === 'cancel').length, 0);
+   assert.equal(f.effects.filter(e => e.op === 'refund').length, 1);
+ });
++
++test('go-live: a fulfilment whose charge is recorded but whose shipment is not continues with the shipment', () => {
++  const r = fulfil.step({ op: 'adopt', orderId: 'ORD-1', fid: 'ORD-1-F1', location: 'WH-EIN', customerId: 'C-1', email: 'a@x.example',
++    currency: 'EUR', amountMinor: 100, items: [{ sku: 'SKU-1', qty: 1 }], dispatched: false, reservedSkus: ['SKU-1'], charged: true, shipped: false },
++    { key: 'ORD-1.ORD-1-F1', state: null, now: NOW, files: {} });
++  assert.equal(r.violations.length, 0);
++  assert.equal(r.output.phase, 'shipping');
++  assert.deepEqual(r.effects.map(e => e.key), ['ship']);
++});
+diff -ruN a/tests/review.test.mjs b/tests/review.test.mjs
+--- a/tests/review.test.mjs	2026-11-04 14:33:20.158534977 +0000
++++ b/tests/review.test.mjs	2026-11-04 14:33:20.158534977 +0000
+@@ -14,7 +14,7 @@
+   assert.equal(t.kind, 'fraudReview');
+   assert.equal(t.role, 'fraudAnalyst');
+   assert.equal(t.subject, 'ORD-1');
+-  assert.equal(t.dueAt, '2026-03-03T09:00:00.000Z');
++  assert.equal(t.dueAt, '2026-03-03T09:01:00.000Z');
+   assert.deepEqual(t.answerSchema.properties.decision.enum, ['approve', 'reject']);
+ });
+ 
+@@ -33,7 +33,7 @@
+   assert.equal(r.output.phase, 'reask');
+   assert.equal(r.humanTasks.length, 1);
+   assert.equal(r.humanTasks[0].id, 'task-2');
+-  assert.equal(r.humanTasks[0].dueAt, '2026-03-03T09:00:00.000Z');
++  assert.equal(r.humanTasks[0].dueAt, '2026-03-03T09:01:00.000Z');
+ });
+ 
+ test('R2.2: no usable answer by the deadline times the review out (cancel)', () => {
+diff -ruN a/tests/wait.test.mjs b/tests/wait.test.mjs
+--- a/tests/wait.test.mjs	2026-11-04 14:33:20.158610710 +0000
++++ b/tests/wait.test.mjs	2026-11-04 14:33:20.158610710 +0000
+@@ -62,3 +62,11 @@
+   assert.equal(order.args.status, 'timedOut');
+   assert.equal(r.effects.find(e => e.key === 'notice-timeout').args.template, 'order-timed-out');
+ });
++
++test('go-live: a window already open is adopted with its deadline and without notices again', () => {
++  const r = wait.step({ op: 'adopt', orderId: 'ORD-1', p: P, customerActionHours: 48, email: 'a@x.example',
++    fulfilments: [{ fulfilmentId: 'ORD-1-F2', available: false }] }, { key: 'ORD-1', state: null, now: NOW, files: {} });
++  assert.equal(r.violations.length, 0);
++  assert.equal(r.effects.length, 0);
++  assert.equal(r.obligations.upsert[0].dueAt, '2026-03-04T09:01:00.000Z');
++});

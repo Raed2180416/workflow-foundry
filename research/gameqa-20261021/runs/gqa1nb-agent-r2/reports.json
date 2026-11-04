@@ -1,0 +1,15 @@
+[
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike damage wraps score below zero to ~65136 instead of clamping at 0",
+  "observed": "After collecting a coin (score 100) and then stepping on spikes at (3,3), score shows 65136 (65536 - 400), i.e. the subtraction wrapped around. From a score of 0, a spike hit gives 65036.",
+  "expected": "Spikes cost 500 points but the score never goes below 0, so the score should read 0 after the spike hit.",
+  "seed": 42,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ }
+]

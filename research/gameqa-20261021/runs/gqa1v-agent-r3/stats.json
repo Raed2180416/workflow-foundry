@@ -1,0 +1,53 @@
+{
+ "stats": {
+  "exploreTicks": 23,
+  "runs": 4,
+  "finished": true,
+  "notes": "Budget is nearly exhausted, so I'm stopping here. One confirmed bug: stepping onto spikes while the score is below 500 wraps the score around to about 65,000 instead of clamping at 0. Reproduced in runs 2 and 4 (seed 1). The only route to spikes (3,3) passes the coin at (1,3), so the 4-token sequence is the minimal repro. Unverified suspicion: a dash-down from (2,1) may pass through the wall at (2,2). It is not reported because I did not confirm it.",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-down",
+     "wait",
+     "pause",
+     "left+right",
+     "enter",
+     "down+right",
+     "dash-right",
+     "wait",
+     "pause+left",
+     "esc",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-down",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "down",
+     "down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,55 @@
+{
+ "runId": "gqa1v-workflow-r4",
+ "arm": "workflow",
+ "rep": 4,
+ "dev": false,
+ "model": "claude-haiku-5-5",
+ "transport": "cli",
+ "exploratory": false,
+ "policyHash": "b77dd19c53ba78aa5954bf5a3c7d8683ed4587dc39dde64a4c1ee38d4fa5add0",
+ "bed": "ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95",
+ "cli": {
+  "start": "claude-code 2.1.318",
+  "end": "claude-code 2.1.318"
+ },
+ "prompts": {
+  "agentSystem": "221305990a71b7f3",
+  "agentMatchedSystem": "9139fe550e7abdaa",
+  "constructSystem": "bb0f415ba040f394",
+  "judgeSystem": "18e5a140e8295aca",
+  "exploreSystem": "09404fbee3e9c471",
+  "spec": "a03c56ab28701df3",
+  "template": "5ce0e410a9d93b0d"
+ },
+ "budgets": {
+  "exploreTicks": 8000,
+  "usdPerRun": 0.5
+ },
+ "rngSeed": 454317527,
+ "started": "2026-11-04T18:43:56.812Z",
+ "wallMs": 158795,
+ "scoreMs": 1540,
+ "cost": {
+  "spent": 0.0626475,
+  "calls": 21,
+  "failed": 0,
+  "inputTokens": 62,
+  "outputTokens": 65966,
+  "latencyMs": 397290,
+  "unknownSpend": 0
+ },
+ "tokenMeter": {},
+ "error": null,
+ "summary": {
+  "reports": 6,
+  "bugs": 12,
+  "foundMin": 5,
+  "foundMinClass": 5,
+  "foundAny": 5,
+  "falseReports": 0,
+  "duplicates": 1,
+  "precision": 1,
+  "nondeterministic": 0,
+  "replays": 29
+ }
+}

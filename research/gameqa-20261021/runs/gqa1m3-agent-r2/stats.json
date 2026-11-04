@@ -1,0 +1,342 @@
+{
+ "stats": {
+  "exploreTicks": 291,
+  "runs": 34,
+  "finished": true,
+  "notes": "Final turn. Confirmed dash HUD cooldown counts down correctly; lever use toggles gateOpen correctly. Reporting 4 confirmed minimal bugs: pause+move still moves, key lost on same-tick enemy hit, spike score underflow, restart button leaves game paused. No further runs possible; finishing with current report list.",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "dash-right",
+     "dash-right",
+     "pause",
+     "right",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:12,7"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-left",
+     "dash-up",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "left",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "goto:8,3",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "pause+right",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "pause+right",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "left",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "left"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:3,8",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right",
+     "goto:1,8",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:12,7",
+     "enter"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:8,3",
+     "goto:12,7"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right",
+     "dash-right",
+     "dash-right",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right",
+     "dash-right",
+     "right",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "wait",
+     "wait",
+     "wait",
+     "pause"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "pause",
+     "click:btn-restart",
+     "right",
+     "right",
+     "pause",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:3,5",
+     "goto:1,8",
+     "use",
+     "goto:10,5",
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right",
+     "goto:1,8",
+     "use"
+    ]
+   }
+  ]
+ }
+}

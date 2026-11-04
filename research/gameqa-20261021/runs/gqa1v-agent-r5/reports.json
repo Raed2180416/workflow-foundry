@@ -1,0 +1,17 @@
+[
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike hit with low score wraps score to ~65136 instead of flooring at 0",
+  "observed": "Score was 100 after collecting a coin. Stepping onto spikes at (3,3) cost a life (lives 3->2, respawn at (1,1)) but the score became 65136 (HUD 'Score 65136'), which equals 100 - 500 wrapped modulo 65536.",
+  "expected": "Spikes subtract 500 points but the score is floored at 0 and never goes negative, so the score should read 0 after the hit.",
+  "seed": 42,
+  "steps": [
+   "right",
+   "right",
+   "right",
+   "down",
+   "down",
+   "left"
+  ]
+ }
+]

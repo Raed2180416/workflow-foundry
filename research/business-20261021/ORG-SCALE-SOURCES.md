@@ -506,3 +506,5 @@ CC BY 4.0; the outcome for each is "ok; profiled with `python3 -I`, scripts kept
   - the Dolibarr multi-company module status;
   - the run weights of ERPNext, iDempiere and OpenBoxes;
   - the public-domain status of the FAR and USSGL as US government works.
+
+**Disposal, 2026-11-04 ~19:20Z.** The local clones under `/var/tmp/foundry-work/org-scale-src/` (94 MB) were deleted to free disk for VL-1. They were inert research material, never built or run. Re-fetch them from the URLs and commits in §12 with a shallow clone, hooks off and no LFS.

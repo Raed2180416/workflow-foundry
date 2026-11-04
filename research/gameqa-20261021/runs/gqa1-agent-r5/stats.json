@@ -1,0 +1,39 @@
+{
+ "stats": {
+  "exploreTicks": 14,
+  "runs": 3,
+  "finished": true,
+  "notes": "Confirmed one bug: a dash passes through a wall. From (1,1), 'right' moves to (2,1); then 'dash-down' should stop before the wall at (2,2) and leave the player at (2,1). Instead it goes to (2,3), crossing the wall. Run 2 reproduces it on seed 1 with 2 tokens. Neither 'right' nor 'dash-down' alone reproduces it, so 2 tokens is minimal.\n\nPause/timer checks (runs 1 and 3) looked correct. The timer stays at 300 while paused, and the esc tick that resumes the game also counts down by 1. Under section 2, the resuming tick is a running tick, so I did not report it.\n\nNot explored: enemy collisions, spikes, gates and levers, the dialogs, and the score/lives limits. The USD budget was nearly exhausted, so I stopped here.",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-down",
+     "wait",
+     "pause",
+     "wait",
+     "esc",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "wait",
+     "wait",
+     "esc",
+     "wait"
+    ]
+   }
+  ]
+ }
+}

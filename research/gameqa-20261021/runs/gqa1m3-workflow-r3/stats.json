@@ -1,0 +1,10 @@
+{
+ "stats": {
+  "failed": "construct",
+  "error": {
+   "code": "MODEL_TRUNCATED",
+   "message": "Generation stopped at the token limit (finish_reason=length)",
+   "feedback": "Generation stopped at the token limit (finish_reason=length)"
+  }
+ }
+}

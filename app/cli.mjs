@@ -8,12 +8,16 @@
 //   node app/cli.mjs mcp     [--workspace DIR] [--dashboard] [--consent]  stdio MCP server for Claude Code, Codex, Cursor, ...
 //        [--builder stub|haiku|mercury] [--token-cap N]                    who builds flows from words alone: the $0 stub (default), or a cheap
 //                                                                           model over the template library, only if Settings allow it
+//        [--need-judge haiku|mercury] [--need-cap-usd 0.5]                 need_check asks a cheap model unless the code clears the request
+//                                                                           (capped per call and per server process; only the model Settings allow); default: code-only hint
 //   node app/cli.mjs doctor  [--workspace DIR] [--json] [--consent]     what works here and what does not, in plain words (--json: for IT)
 //   node app/cli.mjs connect [--workspace DIR] [--json]                 the exact line for each coding agent (prints only)
 //   node app/cli.mjs approve APPROVAL_ID [--workspace DIR]              approve in this terminal (asks you to type yes; needs a real terminal):
 //                                                                        turning a version on, or one paused action (shows To, Subject, full text)
 //   node app/cli.mjs check-evidence FILE [--head HASH]...               re-check an evidence file on its own; says what it checked and what not,
 //                                                                        and where each hash you kept elsewhere is in it
+//   node app/cli.mjs need "REQUEST" [--sensitivity 0.5] [--judge haiku|mercury]   does this request need a workflow at all? (a code-only hint and $0
+//                                                                           by default; --judge asks a cheap model unless the code clears it, only the model Settings allow; ROUTER-1)
 //
 // Safe defaults: the workspace is a private directory (0700) under the user's home; nothing listens beyond 127.0.0.1; no config file of any
 // coding agent is written (connect prints what to paste); no model is called unless --builder names one and Settings allow it; nothing is
@@ -50,6 +54,27 @@ export async function builderAllowed(name, workspace) {
   const { loadSettings } = await import('./onboarding/settings.mjs');
   const s = loadSettings(workspace);
   return s.allowedAI === name ? null : `Settings say no AI may build from your words with ${name} (Allowed AI: ${s.allowedAI}${s.managed?.allowedAI ? ', set by your organisation' : ''}). Change Allowed AI in Settings first, or start without --builder.`;
+}
+// The need judge (ROUTER-1 cascade): a policy model over the builder's ModelPort, $0.05 per call at most and maxUsd per process.
+// Output caps per model (reliability.json judgeOutputCap). Mercury 3 reasons on every call: at 1,000 tokens 13 of 193 ROUTER-1 test
+// calls were cut off with no answer; re-asked at 4,000 all 13 answered (largest answer 1,275 tokens; RESULT-ROUTER-1 addendum C).
+export const NEED_JUDGE_MAX_TOKENS = Object.freeze({ 'claude-haiku-5-5': 1000, 'mercury-3': 4000 });
+export async function makeNeedJudge(name, { workspace, tokenCap = 20000, maxUsd = 0.5 } = {}) {
+  if (!['haiku', 'mercury'].includes(name)) throw Object.assign(new Error('the need judge is haiku or mercury'), { code: 'NEED_JUDGE_CHOICE' });
+  // The need judge reads the person's request, so it obeys the same Allowed AI setting as a model builder (onboarding P4 walkthrough B3).
+  const { loadSettings } = await import('./onboarding/settings.mjs');
+  const settings = loadSettings(workspace);
+  if (settings.allowedAI !== name) throw Object.assign(new Error(`Settings say no AI may judge your requests with ${name} (Allowed AI: ${settings.allowedAI}${settings.managed?.allowedAI ? ', set by your organisation' : ''}). Change Allowed AI in Settings first, or leave out the judge: need_check then gives the code-only hint, at $0.`), { code: 'NEED_JUDGE_NOT_ALLOWED' });
+  const [{ createBuilderPort }, { modelJudge, cappedJudge }] = await Promise.all([import('./core/builder-model.mjs'), import('../src/need/router.mjs')]);
+  mkdirSync(workspace, { recursive: true, mode: 0o700 });
+  const model = BUILDERS[name];
+  const { port } = await createBuilderPort({ model, journalFile: path.join(workspace, 'need-journal.sqlite'), maxBudgetUsdPerCall: 0.05, ...(name === 'mercury' ? { tokenCap } : {}) });
+  return cappedJudge(modelJudge({ port, modelId: model, runId: `need-${Date.now()}`, maxTokens: NEED_JUDGE_MAX_TOKENS[model] }), { maxUsd, perCallUsd: 0.05 });
+}
+export function needLine(a) {
+  const judged = a.scoreBy !== 'code';
+  return `${a.mode.toUpperCase()}  decided by ${a.decidedBy} at sensitivity ${a.sensitivity}: ${judged ? `judge ${Math.round(a.probability * 100)}% against a bar of ${Math.round(a.threshold * 100)}% (code p=${a.codeProbability}, threshold ${a.codeThreshold.toFixed(3)})`
+    : `code p=${a.codeProbability} against ${a.basis === 'slider' ? 'the slider end' : `threshold ${a.threshold.toFixed(3)}`}`}\n${a.say}\n${a.why}\nReliability: ${a.reliability}`;
 }
 export function defaultWorkspace(env = process.env, os = platform()) {
   if (env.FOUNDRY_HOME) return path.resolve(env.FOUNDRY_HOME);
@@ -266,11 +291,26 @@ export const OUTSIDE_COPY = bundle => `This shows nothing changed after the file
 
 async function main() {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { workspace: { type: 'string' }, port: { type: 'string' }, 'no-open': { type: 'boolean' }, dashboard: { type: 'boolean' },
-    builder: { type: 'string' }, 'token-cap': { type: 'string' }, consent: { type: 'boolean' }, json: { type: 'boolean' }, head: { type: 'string', multiple: true }, help: { type: 'boolean', short: 'h' } } });
+    builder: { type: 'string' }, 'token-cap': { type: 'string' }, sensitivity: { type: 'string' }, judge: { type: 'string' }, 'need-judge': { type: 'string' }, 'need-cap-usd': { type: 'string' }, consent: { type: 'boolean' }, json: { type: 'boolean' }, head: { type: 'string', multiple: true }, help: { type: 'boolean', short: 'h' } } });
   const [command = 'help', item] = positionals;
   const workspace = path.resolve(args.workspace ?? defaultWorkspace());
   const print = value => process.stdout.write(`${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}\n`);
-  if (command === 'help' || args.help) return print('Usage: node app/cli.mjs open | site | connect | doctor [--json] | mcp | approve ID | check-evidence FILE [--head HASH]  [--workspace DIR]');
+  if (command === 'help' || args.help) return print('Usage: node app/cli.mjs open | site | connect | doctor [--json] | mcp | approve ID | check-evidence FILE [--head HASH] | need "REQUEST" [--sensitivity 0..1] [--judge haiku|mercury]  [--workspace DIR]');
+  if (command === 'need') {
+    if (!item) { process.stderr.write('need: pass the request in quotes\n'); process.exitCode = 2; return; }
+    const { needAdvice } = await import('./core/need.mjs');
+    const s = args.sensitivity === undefined ? undefined : Number(args.sensitivity);
+    if (s !== undefined && !(s >= 0 && s <= 1)) { process.stderr.write('need: --sensitivity must be between 0 and 1\n'); process.exitCode = 2; return; }
+    let judge = null;
+    if (args.judge) {
+      if (!['haiku', 'mercury'].includes(args.judge)) { process.stderr.write('need: --judge is haiku or mercury\n'); process.exitCode = 2; return; }
+      try { judge = await makeNeedJudge(args.judge, { workspace, ...(args['token-cap'] ? { tokenCap: Number(args['token-cap']) } : {}), maxUsd: 0.05 }); }
+      catch (error) { if (error.code !== 'NEED_JUDGE_NOT_ALLOWED') throw error; process.stderr.write(`need: ${error.message}\n`); process.exitCode = 2; return; }
+    }
+    const a = await needAdvice({ request: positionals.slice(1).join(' '), ...(s === undefined ? {} : { sensitivity: s }), judge });
+    print(needLine(a));
+    return;
+  }
   if (command === 'doctor') {
     const report = await doctorFull({ workspace, consent: !!args.consent });
     if (args.json) {
@@ -369,7 +409,14 @@ async function main() {
     // Foundry looks, no launch flag that can carry hooks no file shows.
     const { dialogAllowed } = await import('./onboarding/detect.mjs');
     const dialog = args.consent ? ({ server }) => dialogAllowed({ client: server?.getClientVersion?.() ?? null }) : false;
-    await serveAppMcp(app, { dashboardUrl, batches, dialog, openCommand: openCmd });
+    // --need-judge: need_check (and propose_flow's need field) use the cascade with a capped cheap model; without it, a code-only hint.
+    if (args['need-judge'] && !['haiku', 'mercury'].includes(args['need-judge'])) { process.stderr.write('--need-judge is haiku or mercury\n'); process.exitCode = 2; await app.close(); return; }
+    let needJudge = null;
+    if (args['need-judge']) {
+      try { needJudge = await makeNeedJudge(args['need-judge'], { workspace, ...(args['token-cap'] ? { tokenCap: Number(args['token-cap']) } : {}), maxUsd: args['need-cap-usd'] ? Number(args['need-cap-usd']) : 0.5 }); }
+      catch (error) { if (error.code !== 'NEED_JUDGE_NOT_ALLOWED') throw error; process.stderr.write(`${error.message}\n`); process.exitCode = 2; siteLock?.release?.(); await app.close(); return; }
+    }
+    await serveAppMcp(app, { dashboardUrl, batches, dialog, openCommand: openCmd, needJudge });
     process.once('exit', () => siteLock?.release?.());
     return;
   }

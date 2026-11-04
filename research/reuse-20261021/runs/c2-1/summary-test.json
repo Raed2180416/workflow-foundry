@@ -1,0 +1,3158 @@
+{
+ "kind": "c2-summary",
+ "id": "C2-1",
+ "set": "test",
+ "runId": "c2-1",
+ "evidence": "development evidence (preregistered; self-authored second program; not sealed)",
+ "freeze": {
+  "ok": true,
+  "changed": []
+ },
+ "manifestSha256": "15f753dc0b602f1982f96987ab3cdde14a927c8a084781a56f46f96f9a6df3ae",
+ "items": 235,
+ "shipments": 120,
+ "sources": [
+  "S0",
+  "S1",
+  "S2",
+  "S3",
+  "S4",
+  "S5",
+  "S6",
+  "H1",
+  "H2",
+  "H3",
+  "H4",
+  "H5"
+ ],
+ "completeLineages": [
+  1,
+  2
+ ],
+ "completeKs": [
+  1,
+  2
+ ],
+ "gateView": {
+  "b0": {
+   "accepted": 235,
+   "reuseRate": 1,
+   "wrongReuse": 134,
+   "wrongReuseRate": 0.5702127659574469,
+   "deopt": 0,
+   "falseDeopt": 0,
+   "falseDeoptRate": null,
+   "catchRate": 0,
+   "devKnown": {
+    "items": 137,
+    "accepted": 137,
+    "wrongAccepted": 57,
+    "falseDeopt": 0
+   },
+   "heldOut": {
+    "items": 98,
+    "accepted": 98,
+    "wrongAccepted": 77,
+    "falseDeopt": 0
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "H2": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "H3": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "H4": {
+     "items": 19,
+     "accepted": 19,
+     "wrongAccepted": 14,
+     "falseDeopt": 0
+    },
+    "H5": {
+     "items": 16,
+     "accepted": 16,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 20,
+     "accepted": 20,
+     "wrongAccepted": 15,
+     "falseDeopt": 0
+    },
+    "S4": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "accepted": 17,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "accepted": 19,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    }
+   }
+  },
+  "b1": {
+   "accepted": 213,
+   "reuseRate": 0.9063829787234042,
+   "wrongReuse": 113,
+   "wrongReuseRate": 0.5305164319248826,
+   "deopt": 22,
+   "falseDeopt": 1,
+   "falseDeoptRate": 0.045454545454545456,
+   "catchRate": 0.15671641791044777,
+   "devKnown": {
+    "items": 137,
+    "accepted": 115,
+    "wrongAccepted": 36,
+    "falseDeopt": 1
+   },
+   "heldOut": {
+    "items": 98,
+    "accepted": 98,
+    "wrongAccepted": 77,
+    "falseDeopt": 0
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "H2": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "H3": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "H4": {
+     "items": 19,
+     "accepted": 19,
+     "wrongAccepted": 14,
+     "falseDeopt": 0
+    },
+    "H5": {
+     "items": 16,
+     "accepted": 16,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 20,
+     "accepted": 20,
+     "wrongAccepted": 15,
+     "falseDeopt": 0
+    },
+    "S4": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "accepted": 17,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 1
+    }
+   }
+  },
+  "b2": {
+   "accepted": 95,
+   "reuseRate": 0.40425531914893614,
+   "wrongReuse": 32,
+   "wrongReuseRate": 0.3368421052631579,
+   "deopt": 140,
+   "falseDeopt": 38,
+   "falseDeoptRate": 0.2714285714285714,
+   "catchRate": 0.7611940298507462,
+   "devKnown": {
+    "items": 137,
+    "accepted": 68,
+    "wrongAccepted": 25,
+    "falseDeopt": 37
+   },
+   "heldOut": {
+    "items": 98,
+    "accepted": 27,
+    "wrongAccepted": 7,
+    "falseDeopt": 1
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H3": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H4": {
+     "items": 19,
+     "accepted": 11,
+     "wrongAccepted": 7,
+     "falseDeopt": 1
+    },
+    "H5": {
+     "items": 16,
+     "accepted": 16,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 20,
+     "accepted": 8,
+     "wrongAccepted": 4,
+     "falseDeopt": 1
+    },
+    "S4": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 17
+    },
+    "S6": {
+     "items": 19,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 19
+    }
+   }
+  },
+  "b3": {
+   "accepted": 112,
+   "reuseRate": 0.4765957446808511,
+   "wrongReuse": 32,
+   "wrongReuseRate": 0.2857142857142857,
+   "deopt": 123,
+   "falseDeopt": 21,
+   "falseDeoptRate": 0.17073170731707318,
+   "catchRate": 0.7611940298507462,
+   "devKnown": {
+    "items": 137,
+    "accepted": 85,
+    "wrongAccepted": 25,
+    "falseDeopt": 20
+   },
+   "heldOut": {
+    "items": 98,
+    "accepted": 27,
+    "wrongAccepted": 7,
+    "falseDeopt": 1
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H3": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H4": {
+     "items": 19,
+     "accepted": 11,
+     "wrongAccepted": 7,
+     "falseDeopt": 1
+    },
+    "H5": {
+     "items": 16,
+     "accepted": 16,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 20,
+     "accepted": 8,
+     "wrongAccepted": 4,
+     "falseDeopt": 1
+    },
+    "S4": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 21,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "accepted": 17,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 19
+    }
+   }
+  },
+  "oracle": {
+   "accepted": 101,
+   "reuseRate": 0.4297872340425532,
+   "wrongReuse": 0,
+   "wrongReuseRate": 0,
+   "deopt": 134,
+   "falseDeopt": 0,
+   "falseDeoptRate": 0,
+   "catchRate": 1,
+   "devKnown": {
+    "items": 137,
+    "accepted": 80,
+    "wrongAccepted": 0,
+    "falseDeopt": 0
+   },
+   "heldOut": {
+    "items": 98,
+    "accepted": 21,
+    "wrongAccepted": 0,
+    "falseDeopt": 0
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H3": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H4": {
+     "items": 19,
+     "accepted": 5,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "H5": {
+     "items": 16,
+     "accepted": 16,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "accepted": 18,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "accepted": 21,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "items": 20,
+     "accepted": 5,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S4": {
+     "items": 21,
+     "accepted": 0,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "accepted": 17,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "accepted": 19,
+     "wrongAccepted": 0,
+     "falseDeopt": 0
+    }
+   }
+  }
+ },
+ "primaryGate": "b3",
+ "m3": {
+  "admitted": 112,
+  "wrong": 32,
+  "parentExact": {
+   "decision": "kill",
+   "upper": 0.3943135273517461,
+   "n": 112,
+   "nEff": 62.34907706195461,
+   "deff": 1.796337737104089,
+   "rhoUsed": 0.7823668996110348,
+   "minN": 60
+  },
+  "crossedExact": {
+   "decision": "kill",
+   "upper": 0.6178740781923662,
+   "n": 112,
+   "nEff": 8.684636079106744,
+   "deff": 12.89633773710409,
+   "rhoParentUsed": 0.7823668996110348,
+   "rhoEntryUsed": 0.1,
+   "entries": 1,
+   "minN": 60
+  }
+ },
+ "metrics": [
+  {
+   "arm": "REUSE@L1",
+   "items": 235,
+   "correct": 200,
+   "itemAcc": 0.851063829787234,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.8414634146341463,
+   "wrongClass": 35,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.8416666666666667,
+   "holds": 7,
+   "wrongBookings": 19,
+   "buildsPaid": 7,
+   "buildUsd": 0.408923,
+   "agentUsd": 0,
+   "totalUsd": 0.408923,
+   "usdPerItem": 0.00174,
+   "medianItemMs": 1148,
+   "meanItemMs": 1292,
+   "buildWallMs": 1864288,
+   "meanItemMsWithBuilds": 9225,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.001704,
+     "msPerItem": 9060
+    },
+    "100": {
+     "usdPerItem": 0.000341,
+     "msPerItem": 2845
+    },
+    "1000": {
+     "usdPerItem": 0.000034,
+     "msPerItem": 1447
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H4": {
+     "items": 19,
+     "correct": 9,
+     "acc": 0.47368421052631576,
+     "reused": 11,
+     "wrongReuse": 7,
+     "deopt": 8
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 16,
+     "acc": 0.8,
+     "reused": 8,
+     "wrongReuse": 4,
+     "deopt": 12
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 19
+    }
+   },
+   "reuseRate": 0.4765957446808511,
+   "deoptRate": 0.5234042553191489,
+   "wrongReuse": 32,
+   "wrongReuseRate": 0.2857142857142857,
+   "falseDeopt": 21,
+   "falseDeoptRate": 0.17073170731707318,
+   "harmfulItems": 134,
+   "harmfulCaught": 102,
+   "catchRate": 0.7611940298507462
+  },
+  {
+   "arm": "REUSE-sticky@L1",
+   "items": 235,
+   "correct": 208,
+   "itemAcc": 0.8851063829787233,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.8780487804878049,
+   "wrongClass": 27,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.8833333333333333,
+   "holds": 7,
+   "wrongBookings": 14,
+   "buildsPaid": 7,
+   "buildUsd": 0.408923,
+   "agentUsd": 0,
+   "totalUsd": 0.408923,
+   "usdPerItem": 0.00174,
+   "medianItemMs": 903,
+   "meanItemMs": 926,
+   "buildWallMs": 1864288,
+   "meanItemMsWithBuilds": 8859,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.001704,
+     "msPerItem": 8694
+    },
+    "100": {
+     "usdPerItem": 0.000341,
+     "msPerItem": 2480
+    },
+    "1000": {
+     "usdPerItem": 0.000034,
+     "msPerItem": 1082
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H4": {
+     "items": 19,
+     "correct": 14,
+     "acc": 0.7368421052631579,
+     "reused": 1,
+     "wrongReuse": 1,
+     "deopt": 18
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 19,
+     "acc": 0.95,
+     "reused": 1,
+     "wrongReuse": 1,
+     "deopt": 19
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 19
+    }
+   },
+   "reuseRate": 0.40425531914893614,
+   "deoptRate": 0.5957446808510638,
+   "wrongReuse": 23,
+   "wrongReuseRate": 0.24210526315789474,
+   "falseDeopt": 29,
+   "falseDeoptRate": 0.20714285714285716,
+   "harmfulItems": 134,
+   "harmfulCaught": 111,
+   "catchRate": 0.8283582089552238
+  },
+  {
+   "arm": "REUSE-b0@L1",
+   "items": 235,
+   "correct": 101,
+   "itemAcc": 0.4297872340425532,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.43902439024390244,
+   "wrongClass": 134,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.425,
+   "holds": 58,
+   "wrongBookings": 18,
+   "buildsPaid": 0,
+   "buildUsd": 0,
+   "agentUsd": 0,
+   "totalUsd": 0,
+   "usdPerItem": 0,
+   "medianItemMs": 886,
+   "meanItemMs": 891,
+   "buildWallMs": 0,
+   "meanItemMsWithBuilds": 891,
+   "projected": {
+    "20": {
+     "usdPerItem": 0,
+     "msPerItem": 891
+    },
+    "100": {
+     "usdPerItem": 0,
+     "msPerItem": 891
+    },
+    "1000": {
+     "usdPerItem": 0,
+     "msPerItem": 891
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H2": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H3": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H4": {
+     "items": 19,
+     "correct": 5,
+     "acc": 0.2631578947368421,
+     "reused": 19,
+     "wrongReuse": 14,
+     "deopt": 0
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S3": {
+     "items": 20,
+     "correct": 5,
+     "acc": 0.25,
+     "reused": 20,
+     "wrongReuse": 15,
+     "deopt": 0
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 19,
+     "wrongReuse": 0,
+     "deopt": 0
+    }
+   },
+   "reuseRate": 1,
+   "deoptRate": 0,
+   "wrongReuse": 134,
+   "wrongReuseRate": 0.5702127659574469,
+   "falseDeopt": 0,
+   "falseDeoptRate": null,
+   "harmfulItems": 134,
+   "harmfulCaught": 0,
+   "catchRate": 0
+  },
+  {
+   "arm": "REUSE-b1@L1",
+   "items": 235,
+   "correct": 122,
+   "itemAcc": 0.5191489361702127,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.524390243902439,
+   "wrongClass": 113,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.5083333333333333,
+   "holds": 48,
+   "wrongBookings": 18,
+   "buildsPaid": 2,
+   "buildUsd": 0.093827,
+   "agentUsd": 0,
+   "totalUsd": 0.093827,
+   "usdPerItem": 0.000399,
+   "medianItemMs": 908,
+   "meanItemMs": 924,
+   "buildWallMs": 475980,
+   "meanItemMsWithBuilds": 2949,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.000391,
+     "msPerItem": 2907
+    },
+    "100": {
+     "usdPerItem": 0.000078,
+     "msPerItem": 1320
+    },
+    "1000": {
+     "usdPerItem": 0.000008,
+     "msPerItem": 963
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H2": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H3": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H4": {
+     "items": 19,
+     "correct": 5,
+     "acc": 0.2631578947368421,
+     "reused": 19,
+     "wrongReuse": 14,
+     "deopt": 0
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 5,
+     "acc": 0.25,
+     "reused": 20,
+     "wrongReuse": 15,
+     "deopt": 0
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 1
+    }
+   },
+   "reuseRate": 0.9063829787234042,
+   "deoptRate": 0.09361702127659574,
+   "wrongReuse": 113,
+   "wrongReuseRate": 0.5305164319248826,
+   "falseDeopt": 1,
+   "falseDeoptRate": 0.045454545454545456,
+   "harmfulItems": 134,
+   "harmfulCaught": 21,
+   "catchRate": 0.15671641791044777
+  },
+  {
+   "arm": "REUSE-b2@L1",
+   "items": 235,
+   "correct": 200,
+   "itemAcc": 0.851063829787234,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.8414634146341463,
+   "wrongClass": 35,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.8416666666666667,
+   "holds": 7,
+   "wrongBookings": 19,
+   "buildsPaid": 8,
+   "buildUsd": 0.442033,
+   "agentUsd": 0,
+   "totalUsd": 0.442033,
+   "usdPerItem": 0.001881,
+   "medianItemMs": 1312,
+   "meanItemMs": 1366,
+   "buildWallMs": 2020825,
+   "meanItemMsWithBuilds": 9965,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.001842,
+     "msPerItem": 9786
+    },
+    "100": {
+     "usdPerItem": 0.000368,
+     "msPerItem": 3050
+    },
+    "1000": {
+     "usdPerItem": 0.000037,
+     "msPerItem": 1534
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H4": {
+     "items": 19,
+     "correct": 9,
+     "acc": 0.47368421052631576,
+     "reused": 11,
+     "wrongReuse": 7,
+     "deopt": 8
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 16,
+     "acc": 0.8,
+     "reused": 8,
+     "wrongReuse": 4,
+     "deopt": 12
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 17
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 19
+    }
+   },
+   "reuseRate": 0.40425531914893614,
+   "deoptRate": 0.5957446808510638,
+   "wrongReuse": 32,
+   "wrongReuseRate": 0.3368421052631579,
+   "falseDeopt": 38,
+   "falseDeoptRate": 0.2714285714285714,
+   "harmfulItems": 134,
+   "harmfulCaught": 102,
+   "catchRate": 0.7611940298507462
+  },
+  {
+   "arm": "REUSE-oracle@L1",
+   "items": 235,
+   "correct": 230,
+   "itemAcc": 0.9787234042553191,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.975609756097561,
+   "wrongClass": 5,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.975,
+   "holds": 7,
+   "wrongBookings": 3,
+   "buildsPaid": 7,
+   "buildUsd": 0.425036,
+   "agentUsd": 0,
+   "totalUsd": 0.425036,
+   "usdPerItem": 0.001809,
+   "medianItemMs": 1515,
+   "meanItemMs": 1420,
+   "buildWallMs": 1965593,
+   "meanItemMsWithBuilds": 9785,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.001771,
+     "msPerItem": 9610
+    },
+    "100": {
+     "usdPerItem": 0.000354,
+     "msPerItem": 3058
+    },
+    "1000": {
+     "usdPerItem": 0.000035,
+     "msPerItem": 1584
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H4": {
+     "items": 19,
+     "correct": 14,
+     "acc": 0.7368421052631579,
+     "reused": 5,
+     "wrongReuse": 0,
+     "deopt": 14
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 20,
+     "acc": 1,
+     "reused": 5,
+     "wrongReuse": 0,
+     "deopt": 15
+    },
+    "S4": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 19,
+     "wrongReuse": 0,
+     "deopt": 0
+    }
+   },
+   "reuseRate": 0.4297872340425532,
+   "deoptRate": 0.5702127659574469,
+   "wrongReuse": 0,
+   "wrongReuseRate": 0,
+   "falseDeopt": 0,
+   "falseDeoptRate": 0,
+   "harmfulItems": 134,
+   "harmfulCaught": 134,
+   "catchRate": 1
+  },
+  {
+   "arm": "SCRATCH@L1",
+   "items": 235,
+   "correct": 230,
+   "itemAcc": 0.9787234042553191,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.975609756097561,
+   "wrongClass": 5,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.975,
+   "holds": 7,
+   "wrongBookings": 3,
+   "buildsPaid": 12,
+   "buildUsd": 0.607702,
+   "agentUsd": 0,
+   "totalUsd": 0.607702,
+   "usdPerItem": 0.002586,
+   "medianItemMs": 938,
+   "meanItemMs": 955,
+   "buildWallMs": 2895494,
+   "meanItemMsWithBuilds": 13276,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.002532,
+     "msPerItem": 13019
+    },
+    "100": {
+     "usdPerItem": 0.000506,
+     "msPerItem": 3368
+    },
+    "1000": {
+     "usdPerItem": 0.000051,
+     "msPerItem": 1196
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "H4": {
+     "items": 19,
+     "correct": 14,
+     "acc": 0.7368421052631579
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "S3": {
+     "items": 20,
+     "correct": 20,
+     "acc": 1
+    },
+    "S4": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1
+    }
+   }
+  },
+  {
+   "arm": "REUSE@L2",
+   "items": 235,
+   "correct": 201,
+   "itemAcc": 0.8553191489361702,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.8536585365853658,
+   "wrongClass": 34,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.85,
+   "holds": 7,
+   "wrongBookings": 18,
+   "buildsPaid": 7,
+   "buildUsd": 0.309562,
+   "agentUsd": 0,
+   "totalUsd": 0.309562,
+   "usdPerItem": 0.001317,
+   "medianItemMs": 1059,
+   "meanItemMs": 1069,
+   "buildWallMs": 1684477,
+   "meanItemMsWithBuilds": 8237,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.00129,
+     "msPerItem": 8087
+    },
+    "100": {
+     "usdPerItem": 0.000258,
+     "msPerItem": 2472
+    },
+    "1000": {
+     "usdPerItem": 0.000026,
+     "msPerItem": 1209
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H4": {
+     "items": 19,
+     "correct": 12,
+     "acc": 0.631578947368421,
+     "reused": 11,
+     "wrongReuse": 7,
+     "deopt": 8
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 14,
+     "acc": 0.7,
+     "reused": 8,
+     "wrongReuse": 4,
+     "deopt": 12
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 19
+    }
+   },
+   "reuseRate": 0.4765957446808511,
+   "deoptRate": 0.5234042553191489,
+   "wrongReuse": 32,
+   "wrongReuseRate": 0.2857142857142857,
+   "falseDeopt": 21,
+   "falseDeoptRate": 0.17073170731707318,
+   "harmfulItems": 134,
+   "harmfulCaught": 102,
+   "catchRate": 0.7611940298507462
+  },
+  {
+   "arm": "REUSE-sticky@L2",
+   "items": 235,
+   "correct": 208,
+   "itemAcc": 0.8851063829787233,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.8841463414634146,
+   "wrongClass": 27,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.8833333333333333,
+   "holds": 7,
+   "wrongBookings": 14,
+   "buildsPaid": 7,
+   "buildUsd": 0.309562,
+   "agentUsd": 0,
+   "totalUsd": 0.309562,
+   "usdPerItem": 0.001317,
+   "medianItemMs": 588,
+   "meanItemMs": 670,
+   "buildWallMs": 1684477,
+   "meanItemMsWithBuilds": 7838,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.00129,
+     "msPerItem": 7689
+    },
+    "100": {
+     "usdPerItem": 0.000258,
+     "msPerItem": 2074
+    },
+    "1000": {
+     "usdPerItem": 0.000026,
+     "msPerItem": 811
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H4": {
+     "items": 19,
+     "correct": 16,
+     "acc": 0.8421052631578947,
+     "reused": 1,
+     "wrongReuse": 1,
+     "deopt": 18
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 17,
+     "acc": 0.85,
+     "reused": 1,
+     "wrongReuse": 1,
+     "deopt": 19
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 19
+    }
+   },
+   "reuseRate": 0.40425531914893614,
+   "deoptRate": 0.5957446808510638,
+   "wrongReuse": 23,
+   "wrongReuseRate": 0.24210526315789474,
+   "falseDeopt": 29,
+   "falseDeoptRate": 0.20714285714285716,
+   "harmfulItems": 134,
+   "harmfulCaught": 111,
+   "catchRate": 0.8283582089552238
+  },
+  {
+   "arm": "REUSE-b0@L2",
+   "items": 235,
+   "correct": 101,
+   "itemAcc": 0.4297872340425532,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.43902439024390244,
+   "wrongClass": 134,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.425,
+   "holds": 58,
+   "wrongBookings": 18,
+   "buildsPaid": 0,
+   "buildUsd": 0,
+   "agentUsd": 0,
+   "totalUsd": 0,
+   "usdPerItem": 0,
+   "medianItemMs": 886,
+   "meanItemMs": 891,
+   "buildWallMs": 0,
+   "meanItemMsWithBuilds": 891,
+   "projected": {
+    "20": {
+     "usdPerItem": 0,
+     "msPerItem": 891
+    },
+    "100": {
+     "usdPerItem": 0,
+     "msPerItem": 891
+    },
+    "1000": {
+     "usdPerItem": 0,
+     "msPerItem": 891
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H2": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H3": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H4": {
+     "items": 19,
+     "correct": 5,
+     "acc": 0.2631578947368421,
+     "reused": 19,
+     "wrongReuse": 14,
+     "deopt": 0
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S3": {
+     "items": 20,
+     "correct": 5,
+     "acc": 0.25,
+     "reused": 20,
+     "wrongReuse": 15,
+     "deopt": 0
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 19,
+     "wrongReuse": 0,
+     "deopt": 0
+    }
+   },
+   "reuseRate": 1,
+   "deoptRate": 0,
+   "wrongReuse": 134,
+   "wrongReuseRate": 0.5702127659574469,
+   "falseDeopt": 0,
+   "falseDeoptRate": null,
+   "harmfulItems": 134,
+   "harmfulCaught": 0,
+   "catchRate": 0
+  },
+  {
+   "arm": "REUSE-b1@L2",
+   "items": 235,
+   "correct": 122,
+   "itemAcc": 0.5191489361702127,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.524390243902439,
+   "wrongClass": 113,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.5083333333333333,
+   "holds": 48,
+   "wrongBookings": 18,
+   "buildsPaid": 2,
+   "buildUsd": 0.092697,
+   "agentUsd": 0,
+   "totalUsd": 0.092697,
+   "usdPerItem": 0.000394,
+   "medianItemMs": 871,
+   "meanItemMs": 866,
+   "buildWallMs": 598287,
+   "meanItemMsWithBuilds": 3412,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.000386,
+     "msPerItem": 3358
+    },
+    "100": {
+     "usdPerItem": 0.000077,
+     "msPerItem": 1364
+    },
+    "1000": {
+     "usdPerItem": 0.000008,
+     "msPerItem": 915
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H2": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H3": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "H4": {
+     "items": 19,
+     "correct": 5,
+     "acc": 0.2631578947368421,
+     "reused": 19,
+     "wrongReuse": 14,
+     "deopt": 0
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 5,
+     "acc": 0.25,
+     "reused": 20,
+     "wrongReuse": 15,
+     "deopt": 0
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 1
+    }
+   },
+   "reuseRate": 0.9063829787234042,
+   "deoptRate": 0.09361702127659574,
+   "wrongReuse": 113,
+   "wrongReuseRate": 0.5305164319248826,
+   "falseDeopt": 1,
+   "falseDeoptRate": 0.045454545454545456,
+   "harmfulItems": 134,
+   "harmfulCaught": 21,
+   "catchRate": 0.15671641791044777
+  },
+  {
+   "arm": "REUSE-b2@L2",
+   "items": 235,
+   "correct": 201,
+   "itemAcc": 0.8553191489361702,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.8536585365853658,
+   "wrongClass": 34,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.85,
+   "holds": 7,
+   "wrongBookings": 18,
+   "buildsPaid": 8,
+   "buildUsd": 0.347032,
+   "agentUsd": 0,
+   "totalUsd": 0.347032,
+   "usdPerItem": 0.001477,
+   "medianItemMs": 1098,
+   "meanItemMs": 1101,
+   "buildWallMs": 1864779,
+   "meanItemMsWithBuilds": 9037,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.001446,
+     "msPerItem": 8871
+    },
+    "100": {
+     "usdPerItem": 0.000289,
+     "msPerItem": 2655
+    },
+    "1000": {
+     "usdPerItem": 0.000029,
+     "msPerItem": 1257
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H4": {
+     "items": 19,
+     "correct": 12,
+     "acc": 0.631578947368421,
+     "reused": 11,
+     "wrongReuse": 7,
+     "deopt": 8
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 14,
+     "acc": 0.7,
+     "reused": 8,
+     "wrongReuse": 4,
+     "deopt": 12
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0,
+     "reused": 21,
+     "wrongReuse": 21,
+     "deopt": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 17
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 19
+    }
+   },
+   "reuseRate": 0.40425531914893614,
+   "deoptRate": 0.5957446808510638,
+   "wrongReuse": 32,
+   "wrongReuseRate": 0.3368421052631579,
+   "falseDeopt": 38,
+   "falseDeoptRate": 0.2714285714285714,
+   "harmfulItems": 134,
+   "harmfulCaught": 102,
+   "catchRate": 0.7611940298507462
+  },
+  {
+   "arm": "REUSE-oracle@L2",
+   "items": 235,
+   "correct": 233,
+   "itemAcc": 0.9914893617021276,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.9939024390243902,
+   "wrongClass": 2,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.9916666666666667,
+   "holds": 7,
+   "wrongBookings": 1,
+   "buildsPaid": 7,
+   "buildUsd": 0.352939,
+   "agentUsd": 0,
+   "totalUsd": 0.352939,
+   "usdPerItem": 0.001502,
+   "medianItemMs": 1159,
+   "meanItemMs": 1168,
+   "buildWallMs": 1967127,
+   "meanItemMsWithBuilds": 9539,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.001471,
+     "msPerItem": 9365
+    },
+    "100": {
+     "usdPerItem": 0.000294,
+     "msPerItem": 2808
+    },
+    "1000": {
+     "usdPerItem": 0.000029,
+     "msPerItem": 1332
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "H4": {
+     "items": 19,
+     "correct": 18,
+     "acc": 0.9473684210526315,
+     "reused": 5,
+     "wrongReuse": 0,
+     "deopt": 14
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1,
+     "reused": 16,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1,
+     "reused": 18,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 21,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S3": {
+     "items": 20,
+     "correct": 19,
+     "acc": 0.95,
+     "reused": 5,
+     "wrongReuse": 0,
+     "deopt": 15
+    },
+    "S4": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1,
+     "reused": 0,
+     "wrongReuse": 0,
+     "deopt": 21
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1,
+     "reused": 17,
+     "wrongReuse": 0,
+     "deopt": 0
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1,
+     "reused": 19,
+     "wrongReuse": 0,
+     "deopt": 0
+    }
+   },
+   "reuseRate": 0.4297872340425532,
+   "deoptRate": 0.5702127659574469,
+   "wrongReuse": 0,
+   "wrongReuseRate": 0,
+   "falseDeopt": 0,
+   "falseDeoptRate": 0,
+   "harmfulItems": 134,
+   "harmfulCaught": 134,
+   "catchRate": 1
+  },
+  {
+   "arm": "SCRATCH@L2",
+   "items": 235,
+   "correct": 231,
+   "itemAcc": 0.9829787234042553,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.9817073170731707,
+   "wrongClass": 4,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.9833333333333333,
+   "holds": 7,
+   "wrongBookings": 2,
+   "buildsPaid": 12,
+   "buildUsd": 0.55656,
+   "agentUsd": 0,
+   "totalUsd": 0.55656,
+   "usdPerItem": 0.002368,
+   "medianItemMs": 456,
+   "meanItemMs": 476,
+   "buildWallMs": 3130176,
+   "meanItemMsWithBuilds": 13796,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.002319,
+     "msPerItem": 13518
+    },
+    "100": {
+     "usdPerItem": 0.000464,
+     "msPerItem": 3085
+    },
+    "1000": {
+     "usdPerItem": 0.000046,
+     "msPerItem": 737
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "H3": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "H4": {
+     "items": 19,
+     "correct": 17,
+     "acc": 0.8947368421052632
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1
+    },
+    "S1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "S2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "S3": {
+     "items": 20,
+     "correct": 18,
+     "acc": 0.9
+    },
+    "S4": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "S5": {
+     "items": 17,
+     "correct": 17,
+     "acc": 1
+    },
+    "S6": {
+     "items": 19,
+     "correct": 19,
+     "acc": 1
+    }
+   }
+  },
+  {
+   "arm": "AGENT@k1",
+   "items": 235,
+   "correct": 134,
+   "itemAcc": 0.5702127659574469,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.5609756097560976,
+   "wrongClass": 101,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.5416666666666666,
+   "holds": 45,
+   "wrongBookings": 17,
+   "buildsPaid": 0,
+   "buildUsd": 0,
+   "agentUsd": 0.315624,
+   "totalUsd": 0.315624,
+   "usdPerItem": 0.001343,
+   "medianItemMs": 11628,
+   "meanItemMs": 11449,
+   "buildWallMs": 0,
+   "meanItemMsWithBuilds": 11449,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.001343,
+     "msPerItem": 11449
+    },
+    "100": {
+     "usdPerItem": 0.001343,
+     "msPerItem": 11449
+    },
+    "1000": {
+     "usdPerItem": 0.001343,
+     "msPerItem": 11449
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "H2": {
+     "items": 21,
+     "correct": 20,
+     "acc": 0.9523809523809523
+    },
+    "H3": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0
+    },
+    "H4": {
+     "items": 19,
+     "correct": 5,
+     "acc": 0.2631578947368421
+    },
+    "H5": {
+     "items": 16,
+     "correct": 16,
+     "acc": 1
+    },
+    "S0": {
+     "items": 18,
+     "correct": 16,
+     "acc": 0.8888888888888888
+    },
+    "S1": {
+     "items": 21,
+     "correct": 20,
+     "acc": 0.9523809523809523
+    },
+    "S2": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0
+    },
+    "S3": {
+     "items": 20,
+     "correct": 3,
+     "acc": 0.15
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 15,
+     "acc": 0.8823529411764706
+    },
+    "S6": {
+     "items": 19,
+     "correct": 18,
+     "acc": 0.9473684210526315
+    }
+   }
+  },
+  {
+   "arm": "AGENT@k2",
+   "items": 235,
+   "correct": 133,
+   "itemAcc": 0.5659574468085107,
+   "pinnedItems": 164,
+   "itemAccPinned": 0.5548780487804879,
+   "wrongClass": 102,
+   "noAnswer": 0,
+   "missingComponent": 0,
+   "shipments": 120,
+   "shipAcc": 0.55,
+   "holds": 50,
+   "wrongBookings": 11,
+   "buildsPaid": 0,
+   "buildUsd": 0,
+   "agentUsd": 0.246104,
+   "totalUsd": 0.246104,
+   "usdPerItem": 0.001047,
+   "medianItemMs": 9632,
+   "meanItemMs": 9389,
+   "buildWallMs": 0,
+   "meanItemMsWithBuilds": 9389,
+   "projected": {
+    "20": {
+     "usdPerItem": 0.001047,
+     "msPerItem": 9389
+    },
+    "100": {
+     "usdPerItem": 0.001047,
+     "msPerItem": 9389
+    },
+    "1000": {
+     "usdPerItem": 0.001047,
+     "msPerItem": 9389
+    }
+   },
+   "bySource": {
+    "H1": {
+     "items": 21,
+     "correct": 19,
+     "acc": 0.9047619047619048
+    },
+    "H2": {
+     "items": 21,
+     "correct": 21,
+     "acc": 1
+    },
+    "H3": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0
+    },
+    "H4": {
+     "items": 19,
+     "correct": 4,
+     "acc": 0.21052631578947367
+    },
+    "H5": {
+     "items": 16,
+     "correct": 15,
+     "acc": 0.9375
+    },
+    "S0": {
+     "items": 18,
+     "correct": 18,
+     "acc": 1
+    },
+    "S1": {
+     "items": 21,
+     "correct": 20,
+     "acc": 0.9523809523809523
+    },
+    "S2": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0
+    },
+    "S3": {
+     "items": 20,
+     "correct": 3,
+     "acc": 0.15
+    },
+    "S4": {
+     "items": 21,
+     "correct": 0,
+     "acc": 0
+    },
+    "S5": {
+     "items": 17,
+     "correct": 16,
+     "acc": 0.9411764705882353
+    },
+    "S6": {
+     "items": 19,
+     "correct": 17,
+     "acc": 0.8947368421052632
+    }
+   }
+  }
+ ],
+ "comparisons": [
+  {
+   "a": "REUSE@L1",
+   "b": "SCRATCH@L1",
+   "point": -0.1276595744680851,
+   "lo": -0.18907563025210083,
+   "hi": -0.07228915662650602
+  },
+  {
+   "a": "REUSE@L1",
+   "b": "AGENT@k1",
+   "point": 0.28085106382978725,
+   "lo": 0.20392156862745098,
+   "hi": 0.36123348017621143
+  },
+  {
+   "a": "REUSE@L1",
+   "b": "AGENT@k2",
+   "point": 0.2851063829787234,
+   "lo": 0.20614035087719298,
+   "hi": 0.36554621848739494
+  },
+  {
+   "a": "REUSE@L2",
+   "b": "SCRATCH@L2",
+   "point": -0.1276595744680851,
+   "lo": -0.19047619047619047,
+   "hi": -0.07114624505928854
+  },
+  {
+   "a": "REUSE@L2",
+   "b": "AGENT@k1",
+   "point": 0.2851063829787234,
+   "lo": 0.2088888888888889,
+   "hi": 0.36486486486486486
+  },
+  {
+   "a": "REUSE@L2",
+   "b": "AGENT@k2",
+   "point": 0.28936170212765955,
+   "lo": 0.2109704641350211,
+   "hi": 0.37083333333333335
+  },
+  {
+   "a": "SCRATCH@L1",
+   "b": "AGENT@k1",
+   "point": 0.4085106382978723,
+   "lo": 0.3247863247863248,
+   "hi": 0.49572649572649574
+  },
+  {
+   "a": "SCRATCH@L2",
+   "b": "AGENT@k1",
+   "point": 0.4127659574468085,
+   "lo": 0.329004329004329,
+   "hi": 0.4978902953586498
+  },
+  {
+   "a": "SCRATCH@L1",
+   "b": "AGENT@k2",
+   "point": 0.4127659574468085,
+   "lo": 0.3274336283185841,
+   "hi": 0.5
+  },
+  {
+   "a": "SCRATCH@L2",
+   "b": "AGENT@k2",
+   "point": 0.41702127659574467,
+   "lo": 0.3333333333333333,
+   "hi": 0.5041666666666667
+  }
+ ],
+ "builds": [
+  {
+   "label": "S0-L1",
+   "source": "S0",
+   "lineage": 1,
+   "costUsd": 0.031325,
+   "wallMin": 2.7,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "14d65cbf4740b352bfced7349bf4f3f2bc0a4465b6fc60e9c82545566017e509"
+  },
+  {
+   "label": "S1-L1",
+   "source": "S1",
+   "lineage": 1,
+   "costUsd": 0.035567,
+   "wallMin": 2.8,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "99a6447f21b5bce4057675a64da4327cfce71fb7db28ed96def9ed19a6bde8b1"
+  },
+  {
+   "label": "S2-L1",
+   "source": "S2",
+   "lineage": 1,
+   "costUsd": 0.040395,
+   "wallMin": 3.2,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "708907e4c9135df925f708cdd765b75eb0d26a6aedbd42dec3706411a471e46b"
+  },
+  {
+   "label": "S3-L1",
+   "source": "S3",
+   "lineage": 1,
+   "costUsd": 0.052577,
+   "wallMin": 4.8,
+   "rounds": 2,
+   "bestRound": 1,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "73c0682ede00eacf0748f11a351fa8e0bec8e7cdd6146d037be4c7781d389f14"
+  },
+  {
+   "label": "S5-L1",
+   "source": "S5",
+   "lineage": 1,
+   "costUsd": 0.03311,
+   "wallMin": 2.6,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "9832261047df3d63e53170ac955b7e15ea3b116444427c0661fbb243175eafaa"
+  },
+  {
+   "label": "S4-L1",
+   "source": "S4",
+   "lineage": 1,
+   "costUsd": 0.069546,
+   "wallMin": 6.4,
+   "rounds": 2,
+   "bestRound": 1,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "99c5db8fd241691f362bc7e38ccae398895a52bdf64a44f84660946919cb8f7b"
+  },
+  {
+   "label": "S6-L1",
+   "source": "S6",
+   "lineage": 1,
+   "costUsd": 0.053432,
+   "wallMin": 4.8,
+   "rounds": 2,
+   "bestRound": 1,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "57adad7666f6f6229d9e25f8c6361f7feedc96d16dc86115d3890689126fc390"
+  },
+  {
+   "label": "H1-L1",
+   "source": "H1",
+   "lineage": 1,
+   "costUsd": 0.036056,
+   "wallMin": 3,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "e58f9a88997a96475e265d7a9355a616398ea6cea30dd94ce47329ae3637eb31"
+  },
+  {
+   "label": "H2-L1",
+   "source": "H2",
+   "lineage": 1,
+   "costUsd": 0.032096,
+   "wallMin": 2.8,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "e05a162855c9bf24f45e5814fc84ff80bd930cf9a6ff5a1035dae26ba7741a02"
+  },
+  {
+   "label": "H3-L1",
+   "source": "H3",
+   "lineage": 1,
+   "costUsd": 0.041457,
+   "wallMin": 3.5,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "147aa6f38cda3a17c10fb9dc0c3ed81e149e86511205290a507fd9231f7f08ba"
+  },
+  {
+   "label": "H5-L1",
+   "source": "H5",
+   "lineage": 1,
+   "costUsd": 0.029232,
+   "wallMin": 2.6,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "99285cc82fc9c667f25d459001ba94afb84cc619b8e424ab8ee71ec347c468cf"
+  },
+  {
+   "label": "H4-L1",
+   "source": "H4",
+   "lineage": 1,
+   "costUsd": 0.152909,
+   "wallMin": 9.1,
+   "rounds": 2,
+   "bestRound": 1,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "9b694090ffec3e2f00194230707a5fc0ae7cd2d67c6afa443ed6db1b5e4de7f5"
+  },
+  {
+   "label": "S0-L2",
+   "source": "S0",
+   "lineage": 2,
+   "costUsd": 0.033219,
+   "wallMin": 2.8,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "630c3ea49555fa8b2a32111245d9b5b8763c08a6991fda70eb0695209b65aeea"
+  },
+  {
+   "label": "S1-L2",
+   "source": "S1",
+   "lineage": 2,
+   "costUsd": 0.033014,
+   "wallMin": 5.5,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "b21e8fcbc1900efc7850fa353714315df9673e1223f9345fbd8282f3494a68ff"
+  },
+  {
+   "label": "S2-L2",
+   "source": "S2",
+   "lineage": 2,
+   "costUsd": 0.031666,
+   "wallMin": 5,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "f8aefac8952fbede7448eb57eb2728a42a43fcf75d0898a28b893225c617a3bb"
+  },
+  {
+   "label": "S3-L2",
+   "source": "S3",
+   "lineage": 2,
+   "costUsd": 0.034622,
+   "wallMin": 5,
+   "rounds": 1,
+   "bestRound": null,
+   "devPass": 0,
+   "devRows": null,
+   "failedBuild": true,
+   "envFault": "MODEL_RATE_LIMIT",
+   "judgeCallsPerRun": null,
+   "artifactSha256": null
+  },
+  {
+   "label": "S4-L2",
+   "source": "S4",
+   "lineage": 2,
+   "costUsd": 0,
+   "wallMin": 2.6,
+   "rounds": 1,
+   "bestRound": null,
+   "devPass": 0,
+   "devRows": null,
+   "failedBuild": true,
+   "envFault": "MODEL_RATE_LIMIT",
+   "judgeCallsPerRun": null,
+   "artifactSha256": null
+  },
+  {
+   "label": "S3-L2",
+   "source": "S3",
+   "lineage": 2,
+   "costUsd": 0.056298,
+   "wallMin": 4.9,
+   "rounds": 2,
+   "bestRound": 1,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "17328850fa1d173c0de81817fe58903464d7c87d3015fb400b8e68509059316d"
+  },
+  {
+   "label": "S4-L2",
+   "source": "S4",
+   "lineage": 2,
+   "costUsd": 0.104408,
+   "wallMin": 9.7,
+   "rounds": 2,
+   "bestRound": 1,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "18bbd7eb4190ff4090149024ad958db5dd359858fac5628079f86fc55234b168"
+  },
+  {
+   "label": "S5-L2",
+   "source": "S5",
+   "lineage": 2,
+   "costUsd": 0.03747,
+   "wallMin": 3,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "47628888b69e22a771443eba65780df6db36b3dd01698c226ee54de6e9c5c794"
+  },
+  {
+   "label": "S6-L2",
+   "source": "S6",
+   "lineage": 2,
+   "costUsd": 0.061031,
+   "wallMin": 5,
+   "rounds": 2,
+   "bestRound": 1,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "a0ebaadffa338de26d049520bf5c6971f28e4894c4c652f3f479dd31c9f10b66"
+  },
+  {
+   "label": "H1-L2",
+   "source": "H1",
+   "lineage": 2,
+   "costUsd": 0.027985,
+   "wallMin": 2.3,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "a229aa22ffc843dc4bc732b7aa4d3a3acd19fcc2a95a128adb528d2b24b908a3"
+  },
+  {
+   "label": "H2-L2",
+   "source": "H2",
+   "lineage": 2,
+   "costUsd": 0.043974,
+   "wallMin": 3.5,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "f0ee682177cdedb2819175fafbc3f68cf43818459365788935e87d4a76b0a7ae"
+  },
+  {
+   "label": "H3-L2",
+   "source": "H3",
+   "lineage": 2,
+   "costUsd": 0.030787,
+   "wallMin": 2.6,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "6fa5f48501f9e5cc725706c1b835d0f3c61039583d32b4bdba3ed81896725f8d"
+  },
+  {
+   "label": "H4-L2",
+   "source": "H4",
+   "lineage": 2,
+   "costUsd": 0.057822,
+   "wallMin": 4.8,
+   "rounds": 2,
+   "bestRound": 1,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "7bc87f349a34251386441dd6128f59a3e793c496f6e7e20d05d35f7031f24c19"
+  },
+  {
+   "label": "H5-L2",
+   "source": "H5",
+   "lineage": 2,
+   "costUsd": 0.038887,
+   "wallMin": 3.1,
+   "rounds": 1,
+   "bestRound": 0,
+   "devPass": 15,
+   "devRows": 15,
+   "failedBuild": false,
+   "envFault": null,
+   "judgeCallsPerRun": 0,
+   "artifactSha256": "dd1724f4f3cef146dc72a26046434059d9d4e56f6a537bb1b202ad9affc0408a"
+  }
+ ],
+ "spend": {
+  "buildsUsd": 1.198885,
+  "agentUsd": 0.561728,
+  "agentItems": 470,
+  "agentViolations": 0,
+  "agentSessionErrors": 0,
+  "agentNoAnswer": 0
+ },
+ "generatedAt": "2026-10-22T02:59:08.007Z"
+}

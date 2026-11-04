@@ -1,0 +1,68 @@
+{
+ "stats": {
+  "exploreTicks": 38,
+  "runs": 4,
+  "finished": true,
+  "notes": "Found one clear bug: stepping onto spikes with a low score wraps the score around to about 65,136 instead of flooring at 0. Seed 42, run 4: score was 100 before the spike hit, and afterwards the HUD and state both show 65136 (65536 - 400). The design says spikes cost 500 points and the score never goes below 0. The 6-token sequence is the shortest route to the spikes at (3,3) from the start, since the only path goes through (4,1) to collect the coin. Dropping any token changes the route, so this is effectively minimal. I did not re-verify the score-0 case or the exact wrap constant with spare budget, so treat the wrap as observed rather than characterised further. Remaining budget is nearly spent, so I am finishing.",
+  "played": [
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "dash-right",
+     "dash-down",
+     "pause",
+     "right",
+     "esc",
+     "use",
+     "dash-left",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "dash-right",
+     "pause",
+     "wait",
+     "wait",
+     "wait",
+     "esc",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "left"
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,356 @@
+{
+ "practiceWorlds": [
+  "1235:d2",
+  "1236:d3",
+  "1237:d5"
+ ],
+ "perBuild": {
+  "b1lh-e8-1": {
+   "orders": 324,
+   "oracleFailing": 0,
+   "byClass": {},
+   "contracts": {
+    "flagged": 0,
+    "truePositives": 0,
+    "precision": null,
+    "recall": null
+   },
+   "nversion": {
+    "flagged": 0,
+    "truePositives": 0,
+    "precision": null,
+    "recall": null
+   }
+  },
+  "b1lh-e8-2": {
+   "orders": 324,
+   "oracleFailing": 16,
+   "byClass": {
+    "gl-intake": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-awaiting": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-dispatched": {
+     "failing": 4,
+     "contracts": 4,
+     "nversion": 0
+    }
+   },
+   "contracts": {
+    "flagged": 16,
+    "truePositives": 16,
+    "precision": 1,
+    "recall": 1
+   },
+   "nversion": {
+    "flagged": 0,
+    "truePositives": 0,
+    "precision": null,
+    "recall": 0
+   }
+  },
+  "b1lh-e8-3": {
+   "orders": 324,
+   "oracleFailing": 4,
+   "byClass": {
+    "f4-reserve": {
+     "failing": 4,
+     "contracts": 4,
+     "nversion": 4
+    }
+   },
+   "contracts": {
+    "flagged": 4,
+    "truePositives": 4,
+    "precision": 1,
+    "recall": 1
+   },
+   "nversion": {
+    "flagged": 20,
+    "truePositives": 4,
+    "precision": 0.2,
+    "recall": 1
+   }
+  },
+  "ch-e8-1": {
+   "orders": 324,
+   "oracleFailing": 16,
+   "byClass": {
+    "gl-intake": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-awaiting": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-dispatched": {
+     "failing": 4,
+     "contracts": 4,
+     "nversion": 0
+    }
+   },
+   "contracts": {
+    "flagged": 16,
+    "truePositives": 16,
+    "precision": 1,
+    "recall": 1
+   },
+   "nversion": {
+    "flagged": 0,
+    "truePositives": 0,
+    "precision": null,
+    "recall": 0
+   }
+  },
+  "ch-e8-2": {
+   "orders": 324,
+   "oracleFailing": 23,
+   "byClass": {
+    "gl-intake": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-awaiting": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-dispatched": {
+     "failing": 4,
+     "contracts": 4,
+     "nversion": 0
+    },
+    "review-reject": {
+     "failing": 2,
+     "contracts": 2,
+     "nversion": 0
+    },
+    "review-approve": {
+     "failing": 1,
+     "contracts": 1,
+     "nversion": 0
+    },
+    "review-timeout": {
+     "failing": 4,
+     "contracts": 4,
+     "nversion": 0
+    }
+   },
+   "contracts": {
+    "flagged": 23,
+    "truePositives": 23,
+    "precision": 1,
+    "recall": 1
+   },
+   "nversion": {
+    "flagged": 0,
+    "truePositives": 0,
+    "precision": null,
+    "recall": 0
+   }
+  },
+  "ch-e8-3": {
+   "orders": 324,
+   "oracleFailing": 42,
+   "byClass": {
+    "gl-intake": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "straight": {
+     "failing": 17,
+     "contracts": 17,
+     "nversion": 17
+    },
+    "cancel-processing": {
+     "failing": 3,
+     "contracts": 3,
+     "nversion": 3
+    },
+    "f1-charge": {
+     "failing": 2,
+     "contracts": 2,
+     "nversion": 2
+    },
+    "f4-reserve": {
+     "failing": 2,
+     "contracts": 2,
+     "nversion": 2
+    },
+    "cancel-after-collection": {
+     "failing": 3,
+     "contracts": 3,
+     "nversion": 3
+    },
+    "f3-charge": {
+     "failing": 2,
+     "contracts": 2,
+     "nversion": 2
+    },
+    "f3-refund": {
+     "failing": 2,
+     "contracts": 2,
+     "nversion": 2
+    },
+    "decline": {
+     "failing": 2,
+     "contracts": 2,
+     "nversion": 0
+    },
+    "review-approve": {
+     "failing": 1,
+     "contracts": 1,
+     "nversion": 1
+    },
+    "collection-failed": {
+     "failing": 2,
+     "contracts": 2,
+     "nversion": 2
+    }
+   },
+   "contracts": {
+    "flagged": 42,
+    "truePositives": 42,
+    "precision": 1,
+    "recall": 1
+   },
+   "nversion": {
+    "flagged": 44,
+    "truePositives": 34,
+    "precision": 0.773,
+    "recall": 0.81
+   }
+  },
+  "cht-e8-1": {
+   "orders": 324,
+   "oracleFailing": 7,
+   "byClass": {
+    "gl-intake": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "cancel-processing": {
+     "failing": 1,
+     "contracts": 1,
+     "nversion": 0
+    }
+   },
+   "contracts": {
+    "flagged": 7,
+    "truePositives": 7,
+    "precision": 1,
+    "recall": 1
+   },
+   "nversion": {
+    "flagged": 10,
+    "truePositives": 0,
+    "precision": 0,
+    "recall": 0
+   }
+  },
+  "cht-e8-2": {
+   "orders": 324,
+   "oracleFailing": 16,
+   "byClass": {
+    "gl-intake": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-awaiting": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-dispatched": {
+     "failing": 4,
+     "contracts": 4,
+     "nversion": 0
+    }
+   },
+   "contracts": {
+    "flagged": 16,
+    "truePositives": 16,
+    "precision": 1,
+    "recall": 1
+   },
+   "nversion": {
+    "flagged": 0,
+    "truePositives": 0,
+    "precision": null,
+    "recall": 0
+   }
+  },
+  "cht-e8-3": {
+   "orders": 324,
+   "oracleFailing": 34,
+   "byClass": {
+    "gl-intake": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-awaiting": {
+     "failing": 6,
+     "contracts": 6,
+     "nversion": 0
+    },
+    "gl-dispatched": {
+     "failing": 4,
+     "contracts": 4,
+     "nversion": 0
+    },
+    "cancel-processing": {
+     "failing": 16,
+     "contracts": 16,
+     "nversion": 16
+    },
+    "amend-then-cancel": {
+     "failing": 2,
+     "contracts": 2,
+     "nversion": 2
+    }
+   },
+   "contracts": {
+    "flagged": 34,
+    "truePositives": 34,
+    "precision": 1,
+    "recall": 1
+   },
+   "nversion": {
+    "flagged": 18,
+    "truePositives": 18,
+    "precision": 1,
+    "recall": 0.529
+   }
+  }
+ },
+ "pooled": {
+  "contracts": {
+   "flagged": 158,
+   "truePositives": 158,
+   "oracleFailing": 158,
+   "precision": 1,
+   "recall": 1
+  },
+  "nversion": {
+   "flagged": 92,
+   "truePositives": 56,
+   "oracleFailing": 158,
+   "precision": 0.609,
+   "recall": 0.354
+  }
+ }
+}

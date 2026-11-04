@@ -1,0 +1,97 @@
+{
+ "kind": "c23-freeze",
+ "id": "C2-3",
+ "createdAt": "2026-11-04T14:54:10.617Z",
+ "runId": "c2-1",
+ "set": "test",
+ "manifestSha256": "15f753dc0b602f1982f96987ab3cdde14a927c8a084781a56f46f96f9a6df3ae",
+ "preregSha256": "df280986039edfadbe53eec5b5f43246798de36ab95aeb949bf1d912a2e30dd3",
+ "code": {
+  "c23.mjs": "04cf38addf58532b5eff8ea358137404622d665e128320182303ef622f0d45f3",
+  "agent-h.mjs": "e5ac8e5c25bf947071cedcb837ccbb75ade54bd3e24024eab5b7a27bb065fafd",
+  "agent-b.mjs": "f9105f6ec1a7a2d7301eb64c240a320574aa95fe9172f58e94264f1ba281597b",
+  "world-b.mjs": "59993225c95df86d46e8d5b53557025ae63a12c3636d08aa53318d4b2dc8fa01",
+  "gen-b.mjs": "cf45861128de55c459b1c806a4637eb39025d52ac3adb325f6bfed99e5d7e7e0",
+  "program-b.mjs": "7322d26958f3732ffffb81467eb292a6d1cea7e65f76d8e52fe8eb8c15134deb",
+  "c2.mjs": "a3b7ffc9f37b413ffd2ab8cd390a01ca36b9eea313fee3d2fe263ef1c42b9b82",
+  "lib.mjs": "54b238e34eb780fa21a28145cea2ae2443a1b5df16592b4efa7bf2612be6a2ff",
+  "analyze.mjs": "b2c746928e93a6e6ab688f4c947fb4a37b1c77b11869b3a193c8050336211c77",
+  "posthoc.mjs": "07acd86aaa497f95333d5bf675c825d9265b5346d04ea242d18305a8f435928a",
+  "freeze-guard.mjs": "8af69cab2eddedce13f7c1b1a5a92088164b70af1ec5c1240092658f619147b8",
+  "../sopbench/run.mjs": "700e33ceb19acf576e4ce8dd6e5a362af1f0f2ee277048512b33f06286f0df70",
+  "../sopbench/scorer.mjs": "7ae987729ef034a6986f030b1f5deeb5cbe5def15847da04acb367151f7ac531",
+  "../sopbench/lib.mjs": "6e0ccfa9e54048a27810e6dd79351db25521352737610e36cec8b49602f65af4",
+  "../autobench/accounting.mjs": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
+  "../lib/stats.mjs": "94c94d3ece8e88a5835e072fb4444b6e43d0b488bf1a1a586f347914e1eed4dc",
+  "../../src/executors/claude-code.mjs": "f363c80418bf9bb91e6e8d42adc1345eba24274a56f6d870759ea2eebbe35afc"
+ },
+ "blocks": {
+  "S0": {
+   "sha256": "fce94b74013443c137368e868c565ebbee1180b8434cf0598af5892edc7d8592",
+   "chars": 8970
+  },
+  "S1": {
+   "sha256": "58fa54e7c2e966f31ba6962b0b5aa54d7ac8e904f23b1fb36150f87e174683e5",
+   "chars": 12485
+  },
+  "S2": {
+   "sha256": "cf203d98e34f4f522e1da99c952c0f1ebdb2d253a43a627b605ed62e17c857d1",
+   "chars": 8987
+  },
+  "S3": {
+   "sha256": "d83751cb52d465dfc056bedabadb77ea74c6bdad6fbcbd16afd69fcc63402747",
+   "chars": 9000
+  },
+  "S4": {
+   "sha256": "e9e8b294aeefd708ca04e69a0ef6ec491b195eeff11ca292f0c62442cd71fbe2",
+   "chars": 8956
+  },
+  "S5": {
+   "sha256": "df8031de428d275ab313de02cc3654e9b4cc96ad7beb0c1f99e08861af593423",
+   "chars": 14162
+  },
+  "S6": {
+   "sha256": "843fc3d6ad760aee29e76a4068ad1db9dcb1333ccb6428063af5a85d44d5c5f1",
+   "chars": 8791
+  },
+  "H1": {
+   "sha256": "594c189ab6e90c42ce4e953a01e06802e9579c0b48aab1f61f668ec7558004a5",
+   "chars": 9186
+  },
+  "H2": {
+   "sha256": "0f86a71a5d960a4223a99859f34b5f77cb8c0eb976bd4200bdb5a8fe9cf0ee9b",
+   "chars": 8356
+  },
+  "H3": {
+   "sha256": "47b5dd92434267e94f76d39d2cb8d504a101ab0cee8608fe7fcdf508aea3c9c6",
+   "chars": 8994
+  },
+  "H4": {
+   "sha256": "48e409f7acd50e9abc2e45f371a53961fde03c187a197aa8841c20fbe848c107",
+   "chars": 8967
+  },
+  "H5": {
+   "sha256": "6cfece7d99af47bea22a87680c95c393774e441aecff79c87c746b53b82a3bb7",
+   "chars": 9174
+  }
+ },
+ "model": "claude-haiku-5-5",
+ "limits": {
+  "model": "claude-haiku-5-5",
+  "budgetUsd": 0.05,
+  "maxSteps": 10,
+  "timeoutMin": 10,
+  "tools": [
+   "Bash"
+  ]
+ },
+ "repetitions": [
+  1,
+  2
+ ],
+ "ledgerSpentAtFreezeUsd": 1.862615,
+ "spendCapUsd": 2.9,
+ "recordsBeforeFreeze": {
+  "/var/tmp/foundry-work/reuse-c2/c2-1/test/agent-h.jsonl": 0
+ }
+}

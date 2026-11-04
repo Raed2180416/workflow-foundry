@@ -1,0 +1,199 @@
+{
+ "note": "GQA-1 regression pack: per injected bug, one oracle-credited 1-minimal repro with the executable check that detects it; each test fails on B1 and passes on the clean build. Bug ids are oracle-side labels (analysis only).",
+ "tests": [
+  {
+   "bug": "GQ03",
+   "from": "gqa1-workflow-r1",
+   "seed": 99131,
+   "steps": [
+    "dash-down"
+   ],
+   "checks": [
+    {
+     "id": "hud-coins",
+     "rule": "The HUD Coins n/5 shows the current coin count.",
+     "bug_class": "state_desync",
+     "expect": "num(cur.hud.coins) == cur.state.coins"
+    }
+   ],
+   "title": "HUD coin counter stale after collecting a coin"
+  },
+  {
+   "bug": "GQ04",
+   "from": "gqa1-workflow-r1",
+   "seed": 4242,
+   "steps": [
+    "pause",
+    "click:btn-resume"
+   ],
+   "checks": [
+    {
+     "id": "hud-time",
+     "rule": "The HUD Time shows the ticks left on the timer.",
+     "bug_class": "state_desync",
+     "expect": "num(cur.hud.time) == cur.state.timeLeft"
+    }
+   ],
+   "title": "HUD Time stale after resume"
+  },
+  {
+   "bug": "GQ05",
+   "from": "gqa1-workflow-r1",
+   "seed": 42,
+   "steps": [
+    "esc",
+    "click:btn-restart"
+   ],
+   "checks": [
+    {
+     "id": "restart-resets",
+     "rule": "Restart level puts everything back: score 0, 3 lives, 0 coins, 0 keys, timer 300, and the game is running.",
+     "bug_class": "state_desync",
+     "when": "includes(cur.state.events, 'restart')",
+     "expect": "cur.state.score == 0 && cur.state.lives == 3 && cur.state.coins == 0 && cur.state.keys == 0 && cur.state.timeLeft == 300 && cur.state.mode == 'playing'"
+    },
+    {
+     "id": "pause-menu-buttons",
+     "rule": "The pause menu shows Resume and Restart level, and each visible button is clickable (not covered).",
+     "bug_class": "ui_overlap",
+     "when": "cur.state.mode == 'paused'",
+     "expect": "any(cur.ui, u => u.id == 'btn-resume' && u.visible && u.top) && any(cur.ui, u => u.id == 'btn-restart' && u.visible && u.top)"
+    }
+   ],
+   "title": "Restart level leaves game paused instead of running"
+  },
+  {
+   "bug": "GQ07",
+   "from": "gqa1-workflow-r1",
+   "seed": 4242,
+   "steps": [
+    "goto:1,8",
+    "goto:4,5",
+    "pause"
+   ],
+   "checks": [
+    {
+     "id": "pause-menu-buttons",
+     "rule": "The pause menu shows Resume and Restart level, and each visible button is clickable (not covered).",
+     "bug_class": "ui_overlap",
+     "when": "cur.state.mode == 'paused'",
+     "expect": "any(cur.ui, u => u.id == 'btn-resume' && u.visible && u.top) && any(cur.ui, u => u.id == 'btn-restart' && u.visible && u.top)"
+    },
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it.",
+     "bug_class": "ui_overlap",
+     "expect": "all(cur.ui, u => u.kind != 'button' || !u.visible || u.top)"
+    }
+   ],
+   "title": "Pause menu Resume button covered by toast"
+  },
+  {
+   "bug": "GQ08",
+   "from": "gqa1-workflow-r1",
+   "seed": 9001,
+   "steps": [
+    "goto:4,5",
+    "goto:1,8",
+    "use",
+    "goto:10,7",
+    "goto:12,7"
+   ],
+   "checks": [
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it.",
+     "bug_class": "ui_overlap",
+     "expect": "all(cur.ui, u => u.kind != 'button' || !u.visible || u.top)"
+    }
+   ],
+   "title": "Finish button covered by the time-bonus banner on level complete"
+  },
+  {
+   "bug": "GQ09",
+   "from": "gqa1-workflow-r1",
+   "seed": 99,
+   "steps": [
+    "down",
+    "down",
+    "right",
+    "right",
+    "right",
+    "right",
+    "right"
+   ],
+   "checks": [
+    {
+     "id": "score-range",
+     "rule": "Score is never negative and is capped at 999,999.",
+     "bug_class": "score_overflow",
+     "expect": "cur.state.score >= 0 && cur.state.score <= 999999"
+    },
+    {
+     "id": "coin-value",
+     "rule": "Each coin gives +100 score and +1 coins.",
+     "bug_class": "score_overflow",
+     "when": "includes(cur.state.events, 'coin') && !includes(cur.state.events, 'spikes') && !includes(cur.state.events, 'hit') && !includes(cur.state.events, 'respawn') && !includes(cur.state.events, 'restart') && cur.state.mode == 'playing'",
+     "expect": "cur.state.score - prev.state.score >= 100 && cur.state.coins - prev.state.coins >= 1"
+    }
+   ],
+   "title": "Score goes negative (-300) after spikes and a coin"
+  },
+  {
+   "bug": "GQ10",
+   "from": "gqa1-workflow-r1",
+   "seed": 4242,
+   "steps": [
+    "goto:1,3",
+    "dash-right"
+   ],
+   "checks": [
+    {
+     "id": "spikes-cost",
+     "rule": "Spikes cost one life and 500 points, with the score floored at 0 (spikes hurt even when invulnerable).",
+     "bug_class": "state_desync",
+     "when": "includes(cur.state.events, 'spikes') && !includes(cur.state.events, 'coin') && !includes(cur.state.events, 'gem') && !includes(cur.state.events, 'relic') && !includes(cur.state.events, 'heart') && !includes(cur.state.events, 'level-complete')",
+     "expect": "cur.state.score == max(0, prev.state.score - 500) && cur.state.lives == max(0, prev.state.lives - 1)"
+    }
+   ],
+   "title": "Spikes wrap the score instead of flooring at 0"
+  },
+  {
+   "bug": "GQ11",
+   "from": "gqa1-workflow-r1",
+   "seed": 42,
+   "steps": [
+    "goto:2,1",
+    "pause+left"
+   ],
+   "checks": [
+    {
+     "id": "pause-tick-no-move",
+     "rule": "Pause takes effect immediately; the rest of that tick's input is ignored (e.g. pause+left does not move).",
+     "bug_class": "input_race",
+     "when": "includes(cur.state.events, 'pause')",
+     "expect": "cur.state.mode == 'paused' && cur.state.player == prev.state.player"
+    }
+   ],
+   "title": "Pause does not stop the rest of the tick's input"
+  },
+  {
+   "bug": "GQ12",
+   "from": "gqa1-workflow-r2",
+   "seed": 1234,
+   "steps": [
+    "dash-right+right"
+   ],
+   "checks": [
+    {
+     "id": "one-move-per-tick",
+     "rule": "At most one move per tick: a step is one tile, a dash is at most two tiles in a straight line.",
+     "bug_class": "collision",
+     "when": "!includes(cur.state.events,'respawn') && !includes(cur.state.events,'restart') && prev.state.mode == 'playing'",
+     "expect": "abs(cur.state.player.x - prev.state.player.x) + abs(cur.state.player.y - prev.state.player.y) <= 2 && (cur.state.player.x == prev.state.player.x || cur.state.player.y == prev.state.player.y)"
+    }
+   ],
+   "title": "Dash and step pressed in same tick both move the player (3 tiles)"
+  }
+ ]
+}

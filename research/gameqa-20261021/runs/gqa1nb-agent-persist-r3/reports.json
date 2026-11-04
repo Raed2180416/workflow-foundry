@@ -1,0 +1,27 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level from pause menu leaves the game paused instead of running",
+  "observed": "After pausing, clicking btn-restart and waiting one tick, mode stays paused and the timer stays at 300 (ticks do not advance).",
+  "expected": "Restart level puts the level back to its starting state and the game is running again straight away (mode playing).",
+  "seed": 7,
+  "steps": [
+   "pause",
+   "click:btn-restart",
+   "wait"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike hit with low score wraps score to 65,136 instead of clamping at 0",
+  "observed": "Score is 0 when the player steps on spikes; after the hit the score shows 65136 (wrapped negative value), lives drop by one.",
+  "expected": "Spikes cost 500 points but score never goes below 0, so score should stay at 0.",
+  "seed": 7,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ }
+]

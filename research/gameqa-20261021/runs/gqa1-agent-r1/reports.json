@@ -1,0 +1,14 @@
+[
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike penalty wraps score negative to a large positive value",
+  "observed": "After collecting a coin (score 100), stepping onto spikes subtracts 500 and the score shows 65136 (wrapped from -400). Lives drop to 2.",
+  "expected": "Score never goes below 0. Spikes should floor the score at 0, so the score should read 0 after the spike hit.",
+  "seed": 42,
+  "steps": [
+   "dash-down",
+   "right",
+   "right"
+  ]
+ }
+]

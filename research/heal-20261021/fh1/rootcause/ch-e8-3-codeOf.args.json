@@ -1,0 +1,1 @@
+{"incident":"ch-e8-3","file":"modules/fulfilment.mjs","old":"const codeOf = err => (typeof err === 'string' ? err : err?.code);","new":"const codeOf = err => (typeof err === 'string' ? err : err?.reason ?? err?.code);","out":"/var/tmp/foundry-work/fh-rootcause/ch-e8-3-codeOf"}

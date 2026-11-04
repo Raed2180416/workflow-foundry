@@ -1,0 +1,61 @@
+{
+ "runId": "gqa1m3-workflow-r1",
+ "arm": "workflow",
+ "rep": 1,
+ "dev": false,
+ "model": "mercury-3",
+ "transport": "cli",
+ "exploratory": true,
+ "policyHash": "29282f4bfc6c962db7fa4c7493452cb029c360f5e938d882af476afed73e4868",
+ "bed": "ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95",
+ "prompts": {
+  "agentSystem": "221305990a71b7f3",
+  "agentMatchedSystem": "9139fe550e7abdaa",
+  "constructSystem": "bb0f415ba040f394",
+  "judgeSystem": "18e5a140e8295aca",
+  "exploreSystem": "09404fbee3e9c471",
+  "spec": "a03c56ab28701df3",
+  "template": "5ce0e410a9d93b0d"
+ },
+ "budgets": {
+  "exploreTicks": 8000,
+  "usdPerRun": 0.5
+ },
+ "rngSeed": 1373328055,
+ "started": "2026-11-04T19:21:25.164Z",
+ "wallMs": 26832,
+ "scoreMs": 889,
+ "cost": {
+  "spent": 0,
+  "calls": 1,
+  "failed": 1,
+  "inputTokens": 3867,
+  "outputTokens": 11625,
+  "latencyMs": 26659,
+  "unknownSpend": 0
+ },
+ "tokenMeter": {
+  "inception": {
+   "cap": 3000000,
+   "callCap": 120000,
+   "spent": 15492,
+   "reserved": 0,
+   "calls": 1,
+   "refused": 0,
+   "unknown": 0
+  }
+ },
+ "error": null,
+ "summary": {
+  "reports": 0,
+  "bugs": 12,
+  "foundMin": 0,
+  "foundMinClass": 0,
+  "foundAny": 0,
+  "falseReports": 0,
+  "duplicates": 0,
+  "precision": null,
+  "nondeterministic": 0,
+  "replays": 0
+ }
+}

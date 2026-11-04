@@ -1,0 +1,43 @@
+diff -ruN a/solver.mjs b/solver.mjs
+--- a/solver.mjs	2026-11-04 14:33:19.752940077 +0000
++++ b/solver.mjs	2026-11-04 14:33:19.752940077 +0000
+@@ -629,11 +629,13 @@
+   }
+   if (C.ph === 'review') {
+     const rv = C.rv;
+-    if (takeCancel(C)) return cancelOrder(w, 'customer');
++    // The answer reaches us before a cancel of the same instant (S12): a reject decides the
++    // order for fraud, and an approve clears it so that the cancel is judged afterwards.
+     if (rv.ans && rv.ans.t <= rv.dl) {
+       if (rv.ans.d === 'reject') return cancelOrder(w, 'fraud');
+       return clearOrder(w, rv.ans.t);
+     }
++    if (takeCancel(C)) return cancelOrder(w, 'customer');
+     if (now > rv.dl) return cancelOrder(w, 'fraud-review-timeout');
+     if (rv.reask) {
+       rv.reask = false;
+@@ -646,12 +648,22 @@
+     const D = C.D;
+     const due = C.ac.filter(a => !a.u && a.t <= D).sort((x, y) => x.t - y.t);
+     const first = due.find(a => a.a === 'amend' || a.a === 'cancel');
+-    for (const a of due) a.u = true;
+-    if (first) return first.a === 'cancel' ? cancelOrder(w, 'customer') : amend(w);
++    if (first) {
++      // Only the counted action is used up: a later cancel at or before D is judged as a cancel
++      // during processing after a counted amend (S8).
++      first.u = true;
++      if (first.a === 'cancel') {
++        for (const a of due) a.u = true;
++        return cancelOrder(w, 'customer');
++      }
++      return amend(w);
++    }
+     if (now > D) timeOut(w);
+     return;
+   }
+   if (C.ph === 'proc') {
++    // A fulfilment that ended in this instant (S13) ends the order before a cancel of that instant.
++    if (C.fl.length && C.fl.every(F => FINAL.has(F.st))) return;
+     const cancels = C.ac.filter(a => !a.u && a.a === 'cancel').sort((x, y) => x.t - y.t);
+     for (const a of C.ac) if (a.a === 'amend') a.u = true;
+     for (const a of cancels) {

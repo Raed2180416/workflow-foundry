@@ -1,0 +1,189 @@
+{
+ "stats": {
+  "exploreTicks": 92,
+  "runs": 17,
+  "finished": true,
+  "notes": "Final turn. Submitting the two confirmed bugs: restart from pause leaves game paused (state_desync), and spikes with score below 500 wrap to 65136 instead of flooring at 0 (score_overflow). Untested: level completion and time bonus, timer expiry, heart cap, score cap, swap collisions, locked-door dash rule, lever gates.",
+  "refusedFinishes": 22,
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-down",
+     "pause",
+     "wait",
+     "enter",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "wait",
+     "dash-down",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+right",
+     "enter"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "click:btn-restart"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:13,8",
+     "click:btn-next",
+     "click:btn-again"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right",
+     "pause",
+     "wait",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "down",
+     "down",
+     "left",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "down",
+     "down",
+     "left"
+    ]
+   }
+  ]
+ }
+}

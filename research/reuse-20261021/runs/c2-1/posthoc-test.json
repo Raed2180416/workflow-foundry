@@ -1,0 +1,414 @@
+{
+ "kind": "c2-posthoc",
+ "note": "POST-HOC, not preregistered: consumer-side conformance on B's labelled history before reuse. m3.supplierExact* added 2026-11-04 (review finding 1): the admission unit is the supplier.",
+ "set": "test",
+ "perSource": {
+  "S0": {
+   "pass": 15,
+   "of": 15
+  },
+  "S1": {
+   "pass": 15,
+   "of": 15
+  },
+  "S2": {
+   "pass": 0,
+   "of": 15
+  },
+  "S3": {
+   "pass": 4,
+   "of": 15
+  },
+  "S4": {
+   "pass": 0,
+   "of": 15
+  },
+  "S5": {
+   "pass": 15,
+   "of": 15
+  },
+  "S6": {
+   "pass": 15,
+   "of": 15
+  },
+  "H1": {
+   "pass": 0,
+   "of": 15
+  },
+  "H2": {
+   "pass": 0,
+   "of": 15
+  },
+  "H3": {
+   "pass": 0,
+   "of": 15
+  },
+  "H4": {
+   "pass": 8,
+   "of": 15
+  },
+  "H5": {
+   "pass": 15,
+   "of": 15
+  }
+ },
+ "view": {
+  "G0": {
+   "accepted": 91,
+   "wrongReuse": 0,
+   "wrongReuseRate": 0,
+   "deopt": 144,
+   "falseDeopt": 10,
+   "catchRate": 1,
+   "m3": {
+    "parentExact": {
+     "decision": "serve",
+     "upper": 0.035948038697271534,
+     "n": 91,
+     "nEff": 81.82806324110672,
+     "deff": 1.1120879120879121
+    },
+    "crossedExact": {
+     "decision": "no-decision",
+     "upper": 0.28315188720266116,
+     "n": 91,
+     "nEff": 8.99913062377744,
+     "deff": 10.112087912087912
+    },
+    "supplierExact": {
+     "decision": "no-decision",
+     "upper": 0.08614025507891548,
+     "n": 91,
+     "nEff": 33.257028112449795,
+     "deff": 2.7362637362637363,
+     "suppliers": 5,
+     "wrongSuppliers": 0
+    },
+    "supplierExactRho1": {
+     "decision": "no-decision",
+     "upper": 0.45365274029843616,
+     "n": 91,
+     "nEff": 4.955715140634351,
+     "deff": 18.36263736263736
+    }
+   },
+   "bySource": {
+    "S0": {
+     "accepted": 18,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "accepted": 21,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 5
+    },
+    "S4": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "accepted": 17,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "accepted": 19,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H1": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H2": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H3": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H4": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 5
+    },
+    "H5": {
+     "accepted": 16,
+     "wrong": 0,
+     "falseDeopt": 0
+    }
+   }
+  },
+  "G0+b3": {
+   "accepted": 72,
+   "wrongReuse": 0,
+   "wrongReuseRate": 0,
+   "deopt": 163,
+   "falseDeopt": 29,
+   "catchRate": 1,
+   "m3": {
+    "parentExact": {
+     "decision": "serve",
+     "upper": 0.04495735413143681,
+     "n": 72,
+     "nEff": 65.12562814070351,
+     "deff": 1.1055555555555556
+    },
+    "crossedExact": {
+     "decision": "no-decision",
+     "upper": 0.289233825828498,
+     "n": 72,
+     "nEff": 8.77454299255247,
+     "deff": 8.205555555555556
+    },
+    "supplierExact": {
+     "decision": "no-decision",
+     "upper": 0.1069824030725251,
+     "n": 72,
+     "nEff": 26.475995914198165,
+     "deff": 2.719444444444444,
+     "suppliers": 4,
+     "wrongSuppliers": 0
+    },
+    "supplierExactRho1": {
+     "decision": "no-decision",
+     "upper": 0.530939440784383,
+     "n": 72,
+     "nEff": 3.957251908396947,
+     "deff": 18.194444444444443
+    }
+   },
+   "bySource": {
+    "S0": {
+     "accepted": 18,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "accepted": 21,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 5
+    },
+    "S4": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "accepted": 17,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 19
+    },
+    "H1": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H2": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H3": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H4": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 5
+    },
+    "H5": {
+     "accepted": 16,
+     "wrong": 0,
+     "falseDeopt": 0
+    }
+   }
+  },
+  "b3": {
+   "accepted": 112,
+   "wrongReuse": 32,
+   "wrongReuseRate": 0.2857142857142857,
+   "deopt": 123,
+   "falseDeopt": 21,
+   "catchRate": 0.7611940298507462,
+   "m3": {
+    "parentExact": {
+     "decision": "kill",
+     "upper": 0.3943135273517461,
+     "n": 112,
+     "nEff": 62.34907706195461,
+     "deff": 1.796337737104089
+    },
+    "crossedExact": {
+     "decision": "kill",
+     "upper": 0.6178740781923662,
+     "n": 112,
+     "nEff": 8.684636079106744,
+     "deff": 12.89633773710409
+    },
+    "supplierExact": {
+     "decision": "kill",
+     "upper": 0.6366549211141024,
+     "n": 112,
+     "nEff": 7.847887323943663,
+     "deff": 14.271356783919597,
+     "suppliers": 7,
+     "wrongSuppliers": 3
+    },
+    "supplierExactRho1": {
+     "decision": "no-decision",
+     "upper": 0.6741655968942435,
+     "n": 112,
+     "nEff": 6.479338842975207,
+     "deff": 17.285714285714285
+    }
+   },
+   "bySource": {
+    "S0": {
+     "accepted": 18,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S1": {
+     "accepted": 21,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S2": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S3": {
+     "accepted": 8,
+     "wrong": 4,
+     "falseDeopt": 1
+    },
+    "S4": {
+     "accepted": 21,
+     "wrong": 21,
+     "falseDeopt": 0
+    },
+    "S5": {
+     "accepted": 17,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "S6": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 19
+    },
+    "H1": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H2": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H3": {
+     "accepted": 0,
+     "wrong": 0,
+     "falseDeopt": 0
+    },
+    "H4": {
+     "accepted": 11,
+     "wrong": 7,
+     "falseDeopt": 1
+    },
+    "H5": {
+     "accepted": 16,
+     "wrong": 0,
+     "falseDeopt": 0
+    }
+   }
+  }
+ },
+ "arms": {
+  "REUSE-G0@L1": {
+   "items": 235,
+   "correct": 230,
+   "itemAcc": 0.9787234042553191,
+   "reused": 91,
+   "wrongReuse": 0,
+   "buildsPaid": 7,
+   "buildUsd": 0.42503612999999996,
+   "usdPerItem": 0.0018086643829787231,
+   "meanItemMs": 919,
+   "meanItemMsWithBuildsAndConformance": 9966
+  },
+  "REUSE-G0+b3@L1": {
+   "items": 235,
+   "correct": 230,
+   "itemAcc": 0.9787234042553191,
+   "reused": 72,
+   "wrongReuse": 0,
+   "buildsPaid": 8,
+   "buildUsd": 0.47846820999999995,
+   "usdPerItem": 0.0020360349361702125,
+   "meanItemMs": 907,
+   "meanItemMsWithBuildsAndConformance": 11170
+  },
+  "REUSE-G0@L2": {
+   "items": 235,
+   "correct": 231,
+   "itemAcc": 0.9829787234042553,
+   "reused": 91,
+   "wrongReuse": 0,
+   "buildsPaid": 7,
+   "buildUsd": 0.35293917,
+   "usdPerItem": 0.0015018688085106384,
+   "meanItemMs": 647,
+   "meanItemMsWithBuildsAndConformance": 9701
+  },
+  "REUSE-G0+b3@L2": {
+   "items": 235,
+   "correct": 231,
+   "itemAcc": 0.9829787234042553,
+   "reused": 72,
+   "wrongReuse": 0,
+   "buildsPaid": 8,
+   "buildUsd": 0.4139703,
+   "usdPerItem": 0.001761575744680851,
+   "meanItemMs": 608,
+   "meanItemMsWithBuildsAndConformance": 10931
+  }
+ },
+ "conformanceRunMs": 160567
+}

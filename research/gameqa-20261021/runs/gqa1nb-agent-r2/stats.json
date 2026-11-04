@@ -1,0 +1,39 @@
+{
+ "stats": {
+  "exploreTicks": 14,
+  "runs": 3,
+  "finished": true,
+  "notes": "Confirmed one bug: spikes subtract 500 from the score with no clamp at 0, so the score wraps to 65536-400=65136 (unsigned underflow). Seed 42, [down down right right] gave score 65136 after a coin (+100) and a spike hit. Run 1 (score 0 before the spike) gave 65036, which fits the same wrap. The design says the score never goes below 0. My planned dash test was wrong: the first dash set a cooldown of 5, so dash-right was an ordinary step and did not reach the spike. Not yet checked: whether the HUD shows the same wrapped value, and whether a score of 0 alone (no coin) gives 65036 on a minimal run. The 4-token run is believed minimal: removing any token leaves no spike hit or no path to (3,3).",
+  "played": [
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "dash-down",
+     "pause",
+     "wait",
+     "wait",
+     "esc",
+     "down",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "dash-down",
+     "dash-right"
+    ]
+   }
+  ]
+ }
+}

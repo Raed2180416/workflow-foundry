@@ -1,0 +1,15 @@
+[
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike hit below 500 points wraps score to ~65,000 instead of clamping at 0",
+  "observed": "After collecting the coin (score 100) and stepping onto spikes at (3,3), score becomes 65136 (wrapped negative value) and lives drop to 2.",
+  "expected": "Spikes cost 500 points but the score never goes below 0, so the score should be 0 after the hit.",
+  "seed": 1,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ }
+]

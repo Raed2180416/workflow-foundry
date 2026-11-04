@@ -1,0 +1,989 @@
+{
+ "cells": 54,
+ "allEqual": true,
+ "envelopeFindings": 0,
+ "armErrors": 0,
+ "earlierR2Equal": 54,
+ "pooled": {
+  "ch-e8-1": [
+   [
+    974,
+    1022
+   ],
+   [
+    974,
+    1022
+   ]
+  ],
+  "ch-e8-2": [
+   [
+    955,
+    1022
+   ],
+   [
+    955,
+    1022
+   ]
+  ],
+  "ch-e8-3": [
+   [
+    886,
+    1022
+   ],
+   [
+    886,
+    1022
+   ]
+  ],
+  "cht-e8-1": [
+   [
+    1003,
+    1022
+   ],
+   [
+    1003,
+    1022
+   ]
+  ],
+  "cht-e8-2": [
+   [
+    974,
+    1022
+   ],
+   [
+    974,
+    1022
+   ]
+  ],
+  "cht-e8-3": [
+   [
+    920,
+    1022
+   ],
+   [
+    920,
+    1022
+   ]
+  ]
+ },
+ "cmp": [
+  {
+   "label": "ch-e8-1",
+   "seed": 1232,
+   "d": 2,
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-1",
+   "seed": 1232,
+   "d": 3,
+   "passed": [
+    80,
+    80
+   ],
+   "completed": 85,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-1",
+   "seed": 1232,
+   "d": 5,
+   "passed": [
+    194,
+    194
+   ],
+   "completed": 202,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-1",
+   "seed": 1233,
+   "d": 2,
+   "passed": [
+    48,
+    48
+   ],
+   "completed": 51,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-1",
+   "seed": 1233,
+   "d": 3,
+   "passed": [
+    76,
+    76
+   ],
+   "completed": 81,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-1",
+   "seed": 1233,
+   "d": 5,
+   "passed": [
+    200,
+    200
+   ],
+   "completed": 208,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-1",
+   "seed": 1234,
+   "d": 2,
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-1",
+   "seed": 1234,
+   "d": 3,
+   "passed": [
+    81,
+    81
+   ],
+   "completed": 86,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-1",
+   "seed": 1234,
+   "d": 5,
+   "passed": [
+    197,
+    197
+   ],
+   "completed": 205,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-2",
+   "seed": 1232,
+   "d": 2,
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-2",
+   "seed": 1232,
+   "d": 3,
+   "passed": [
+    76,
+    76
+   ],
+   "completed": 85,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-2",
+   "seed": 1232,
+   "d": 5,
+   "passed": [
+    189,
+    189
+   ],
+   "completed": 202,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-2",
+   "seed": 1233,
+   "d": 2,
+   "passed": [
+    48,
+    48
+   ],
+   "completed": 51,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-2",
+   "seed": 1233,
+   "d": 3,
+   "passed": [
+    75,
+    75
+   ],
+   "completed": 81,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-2",
+   "seed": 1233,
+   "d": 5,
+   "passed": [
+    198,
+    198
+   ],
+   "completed": 208,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-2",
+   "seed": 1234,
+   "d": 2,
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-2",
+   "seed": 1234,
+   "d": 3,
+   "passed": [
+    78,
+    78
+   ],
+   "completed": 86,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-2",
+   "seed": 1234,
+   "d": 5,
+   "passed": [
+    193,
+    193
+   ],
+   "completed": 205,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-3",
+   "seed": 1232,
+   "d": 2,
+   "passed": [
+    51,
+    51
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-3",
+   "seed": 1232,
+   "d": 3,
+   "passed": [
+    83,
+    83
+   ],
+   "completed": 85,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-3",
+   "seed": 1232,
+   "d": 5,
+   "passed": [
+    156,
+    156
+   ],
+   "completed": 202,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-3",
+   "seed": 1233,
+   "d": 2,
+   "passed": [
+    50,
+    50
+   ],
+   "completed": 51,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-3",
+   "seed": 1233,
+   "d": 3,
+   "passed": [
+    79,
+    79
+   ],
+   "completed": 81,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-3",
+   "seed": 1233,
+   "d": 5,
+   "passed": [
+    168,
+    168
+   ],
+   "completed": 208,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-3",
+   "seed": 1234,
+   "d": 2,
+   "passed": [
+    51,
+    51
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-3",
+   "seed": 1234,
+   "d": 3,
+   "passed": [
+    84,
+    84
+   ],
+   "completed": 86,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "ch-e8-3",
+   "seed": 1234,
+   "d": 5,
+   "passed": [
+    164,
+    164
+   ],
+   "completed": 205,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-1",
+   "seed": 1232,
+   "d": 2,
+   "passed": [
+    51,
+    51
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-1",
+   "seed": 1232,
+   "d": 3,
+   "passed": [
+    83,
+    83
+   ],
+   "completed": 85,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-1",
+   "seed": 1232,
+   "d": 5,
+   "passed": [
+    199,
+    199
+   ],
+   "completed": 202,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-1",
+   "seed": 1233,
+   "d": 2,
+   "passed": [
+    50,
+    50
+   ],
+   "completed": 51,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-1",
+   "seed": 1233,
+   "d": 3,
+   "passed": [
+    79,
+    79
+   ],
+   "completed": 81,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-1",
+   "seed": 1233,
+   "d": 5,
+   "passed": [
+    205,
+    205
+   ],
+   "completed": 208,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-1",
+   "seed": 1234,
+   "d": 2,
+   "passed": [
+    50,
+    50
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-1",
+   "seed": 1234,
+   "d": 3,
+   "passed": [
+    84,
+    84
+   ],
+   "completed": 86,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-1",
+   "seed": 1234,
+   "d": 5,
+   "passed": [
+    202,
+    202
+   ],
+   "completed": 205,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-2",
+   "seed": 1232,
+   "d": 2,
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-2",
+   "seed": 1232,
+   "d": 3,
+   "passed": [
+    80,
+    80
+   ],
+   "completed": 85,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-2",
+   "seed": 1232,
+   "d": 5,
+   "passed": [
+    194,
+    194
+   ],
+   "completed": 202,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-2",
+   "seed": 1233,
+   "d": 2,
+   "passed": [
+    48,
+    48
+   ],
+   "completed": 51,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-2",
+   "seed": 1233,
+   "d": 3,
+   "passed": [
+    76,
+    76
+   ],
+   "completed": 81,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-2",
+   "seed": 1233,
+   "d": 5,
+   "passed": [
+    200,
+    200
+   ],
+   "completed": 208,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-2",
+   "seed": 1234,
+   "d": 2,
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-2",
+   "seed": 1234,
+   "d": 3,
+   "passed": [
+    81,
+    81
+   ],
+   "completed": 86,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-2",
+   "seed": 1234,
+   "d": 5,
+   "passed": [
+    197,
+    197
+   ],
+   "completed": 205,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-3",
+   "seed": 1232,
+   "d": 2,
+   "passed": [
+    46,
+    46
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-3",
+   "seed": 1232,
+   "d": 3,
+   "passed": [
+    74,
+    74
+   ],
+   "completed": 85,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-3",
+   "seed": 1232,
+   "d": 5,
+   "passed": [
+    184,
+    184
+   ],
+   "completed": 202,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-3",
+   "seed": 1233,
+   "d": 2,
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 51,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-3",
+   "seed": 1233,
+   "d": 3,
+   "passed": [
+    73,
+    73
+   ],
+   "completed": 81,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-3",
+   "seed": 1233,
+   "d": 5,
+   "passed": [
+    194,
+    194
+   ],
+   "completed": 208,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-3",
+   "seed": 1234,
+   "d": 2,
+   "passed": [
+    46,
+    46
+   ],
+   "completed": 52,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-3",
+   "seed": 1234,
+   "d": 3,
+   "passed": [
+    77,
+    77
+   ],
+   "completed": 86,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  },
+  {
+   "label": "cht-e8-3",
+   "seed": 1234,
+   "d": 5,
+   "passed": [
+    182,
+    182
+   ],
+   "completed": 205,
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "envelope": {},
+   "armErrors": 0,
+   "earlierR2LogicalEqual": true,
+   "earlierR2PassingEqual": true
+  }
+ ]
+}

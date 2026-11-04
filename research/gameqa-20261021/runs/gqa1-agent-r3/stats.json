@@ -1,0 +1,49 @@
+{
+ "stats": {
+  "exploreTicks": 24,
+  "runs": 3,
+  "finished": true,
+  "notes": "Found one confirmed bug: spikes subtract 500 points from a score of 100 and the score wraps to 65136 (unsigned 16-bit underflow) instead of flooring at 0. Reproduced in run 2 and run 3 (seed 1, 4 tokens). The 4-token path is the shortest possible because spikes at (3,3) are 4 Manhattan steps from the start. Budget is nearly spent, so I stopped here without exploring further mechanics (dash, pause, doors, enemies, gates, timer, dialogs).",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "dash-right",
+     "dash-down",
+     "use",
+     "pause",
+     "right",
+     "enter",
+     "dash-left",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   }
+  ]
+ }
+}

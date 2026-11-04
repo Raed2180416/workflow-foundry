@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lantern Vault</title>
+<style>
+  :root { --cell: 32px; --bg: #14161c; --fg: #e8e6df; --wall: #3a3f4b; --floor: #22252d; --accent: #f2c14e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.3 system-ui, sans-serif; }
+  #app { position: relative; width: 448px; margin: 12px; }
+  #hud { display: flex; gap: 10px; flex-wrap: wrap; padding: 6px 4px; height: 44px; font-variant-numeric: tabular-nums; }
+  #hud span { white-space: nowrap; }
+  #stage { position: relative; width: 448px; height: 320px; }
+  #board { display: grid; width: 448px; height: 320px; }
+  .cell { width: var(--cell); height: var(--cell); display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--floor); }
+  .wall { background: var(--wall); }
+  .coin { color: #f2c14e; } .gem { color: #59c3c3; } .relic { color: #ff9f1c; } .key { color: #f6e27f; }
+  .door { color: #b5651d; background: #3b2a1a; } .door-open { background: #2d241c; }
+  .spikes { color: #d64545; } .exit { color: #7bd389; background: #1f3326; } .lever { color: #c9a0dc; } .heart { color: #ff6b8b; }
+  .gate { color: #9aa0ad; background: #2e323b; } .gate.open { background: var(--floor); }
+  .enemy { color: #ff6b6b; } .player { color: #ffffff; background: #4062bb; } .player.blink { opacity: .55; }
+  #overlay-root { position: absolute; inset: 0; pointer-events: none; }
+  .dialog { position: absolute; inset: 0; background: rgba(8, 9, 12, .72); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+  .dialog[hidden] { display: none; }
+  .panel { position: relative; background: #2a2e38; border: 1px solid #555b69; border-radius: 8px; padding: 16px 18px; width: 240px; text-align: center; }
+  .panel h2 { margin: 0 0 10px; font-size: 18px; }
+  .panel button { display: block; width: 100%; margin: 8px 0 0; padding: 8px; font: inherit; background: #3d4352; color: var(--fg); border: 1px solid #6b7285; border-radius: 6px; cursor: pointer; }
+  .banner { margin: 6px 0; color: var(--accent); }
+  .banner-wide { position: absolute; left: 0; right: 0; bottom: 14px; padding: 12px 0; background: #2a2e38; font-size: 20px; z-index: 3; }
+  .toast { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); padding: 4px 10px; background: #40465a; border-radius: 4px; font-size: 13px; z-index: 10; pointer-events: auto; white-space: nowrap; }
+  .toast[hidden] { display: none; }
+  .toast-center { top: 50%; transform: translate(-50%, -50%); padding: 22px 30px; font-size: 16px; z-index: 60; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <span id="hud-score">Score 0</span><span id="hud-lives">Lives 3</span><span id="hud-keys">Keys 0</span>
+    <span id="hud-coins">Coins 0/5</span><span id="hud-time">Time 300</span><span id="hud-dash">Dash ready</span>
+  </div>
+  <div id="stage">
+    <div id="board" aria-label="board"></div>
+    <div id="toast" class="toast" hidden></div>
+    <div id="pause" class="dialog" hidden role="dialog" aria-label="Paused">
+      <div class="panel"><h2>Paused</h2><button id="btn-resume">Resume</button><button id="btn-restart">Restart level</button></div>
+    </div>
+    <div id="levelup" class="dialog" hidden role="dialog" aria-label="Level complete">
+      <div class="panel"><h2>Level complete!</h2><div id="levelup-score"></div><div id="bonus-banner" class="banner"></div><button id="btn-next">Finish</button></div>
+    </div>
+    <div id="gameover" class="dialog" hidden role="dialog" aria-label="Game over">
+      <div class="panel"><h2>Game over</h2><button id="btn-retry">Retry</button></div>
+    </div>
+    <div id="victory" class="dialog" hidden role="dialog" aria-label="Victory">
+      <div class="panel"><h2>The vault is yours</h2><div id="final-score"></div><button id="btn-again">Play again</button></div>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

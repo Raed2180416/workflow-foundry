@@ -1,0 +1,173 @@
+[
+ {
+  "bug_class": "ui_overlap",
+  "title": "Pause menu Resume button covered by toast",
+  "observed": "While paused at tick 18, btn-resume is visible but top=false (not the topmost element at its centre). The 'Key collected' toast is still visible and sits over it, so a click on Resume would not reach the button.",
+  "expected": "Every visible button must be clickable; nothing may cover it (section 7).",
+  "seed": 4242,
+  "steps": [
+   "goto:1,8",
+   "goto:4,5",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Two movement keys in one tick both move the player (diagonal move)",
+  "observed": "Tick 3 'down+right' moved the player from (4,2) to (5,3): a diagonal displacement, with events [move,move]. Two movement keys each applied a move.",
+  "expected": "Only the last movement key in a tick counts; the player makes at most one step, with no diagonal movement (sections 2 and 3). Expected end at (5,2) or (4,3) at most, with one move.",
+  "seed": 99173,
+  "steps": [
+   "dash-right",
+   "right",
+   "dash-down",
+   "down+right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Pause does not stop the rest of the tick's input",
+  "observed": "'pause+left' from (2,1) paused the game and still moved the player to (1,1); events were [pause,move].",
+  "expected": "Pause takes effect immediately and the rest of that tick's input is ignored, so the player should stay at (2,1) (section 2).",
+  "seed": 42,
+  "steps": [
+   "goto:2,1",
+   "pause+left"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Time stale after resume",
+  "observed": "After click:btn-resume the state shows timeLeft=299, but the HUD still displays 'Time 300'.",
+  "expected": "The HUD always shows the current values, including Time (ticks left) (section 8).",
+  "seed": 4242,
+  "steps": [
+   "pause",
+   "click:btn-resume"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level leaves game paused instead of running",
+  "observed": "After esc then click:btn-restart, the event is [restart] but mode remains 'paused' rather than 'playing'. The pause menu stays open.",
+  "expected": "Restart level resets the level and the game is running again straight away (section 7).",
+  "seed": 42,
+  "steps": [
+   "esc",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes wrap the score instead of flooring at 0",
+  "observed": "At tick 2 the player had score 100 and hit spikes; score became 65136 (about 100 - 500 wrapped as unsigned 16-bit). Lives correctly dropped 3 to 2.",
+  "expected": "Spikes cost 500 points with the score floored at 0, so the score should be 0 (max(0, 100 - 500)), never a large positive value.",
+  "seed": 4242,
+  "steps": [
+   "goto:1,3",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score goes negative (-300) after spikes and a coin",
+  "observed": "Spikes at tick 3 turned score 100 into 65136, then a coin at tick 6 showed score -300. The score is negative and the coin did not add the expected +100 from a sane base.",
+  "expected": "Score is never negative. Spikes floor the score at 0, and a coin then adds exactly +100 to a non-negative score.",
+  "seed": 99,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level leaves the game paused with the pause menu still open",
+  "observed": "After pausing and clicking btn-restart, the state reset to the start (player (1,1), time 300) but mode stayed 'paused' and the pause menu remained visible with Resume and Restart buttons.",
+  "expected": "Restart level puts the level back to its starting state and the game is running again straight away (mode 'playing', pause menu closed).",
+  "seed": 42,
+  "steps": [
+   "right",
+   "esc",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter stale after collecting a coin",
+  "observed": "After dash-down collected a coin, state reports coins=1 but the HUD shows 'Coins 0/5'.",
+  "expected": "The HUD always shows the current coin count, so it should read 'Coins 1/5'.",
+  "seed": 99131,
+  "steps": [
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Level-complete time bonus wraps score to negative (-32746)",
+  "observed": "On completing the level, score was 30200 with a time bonus of 2590 (correct value), but the score became -32746 (32790 wrapped as a signed 16-bit value).",
+  "expected": "Score should be 30200 + 2590 = 32790, never negative and capped at 999,999.",
+  "seed": 9001,
+  "steps": [
+   "goto:1,8",
+   "use",
+   "goto:12,1",
+   "goto:12,7"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Finish button covered by the time-bonus banner on level complete",
+  "observed": "At level completion the 'btn-next' (Finish) button reports top=false; the levelup dialog's bonus-banner sits on top of it, so a click there would not reach Finish.",
+  "expected": "Every visible button must be clickable; nothing may cover the Finish button.",
+  "seed": 9001,
+  "steps": [
+   "goto:4,5",
+   "goto:1,8",
+   "use",
+   "goto:10,7",
+   "goto:12,7"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Time stays at 300 after the first running tick following resume",
+  "observed": "After pause, click:btn-resume, the state reports timeLeft=299 but the HUD still displays 'Time 300'. The HUD remains stale on the following pause too (timeLeft 299, HUD 300).",
+  "expected": "Section 8: the HUD always shows the current values, so the HUD Time should read 299 once the timer has dropped to 299.",
+  "seed": 4242,
+  "steps": [
+   "pause",
+   "click:btn-resume",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Coins stays at 0/5 after collecting a coin by dash",
+  "observed": "After dash-down over a coin, state shows coins=1 and the HUD shows 'Score 100' (updated) but 'Coins 0/5' (stale).",
+  "expected": "Section 8: the HUD Coins field shows the current count, so it should read 'Coins 1/5'.",
+  "seed": 99131,
+  "steps": [
+   "dash-down",
+   "pause+enter"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score goes negative (-32746) when the level is completed",
+  "observed": "Score was 30200 before the exit step; on completing the level (tick 41) the score becomes -32746 and the HUD shows 'Score -32746', which is then kept on the victory screen.",
+  "expected": "Section 4: score is never negative and is capped at 999,999. The score should be 30200 plus the time bonus (2590), i.e. about 32790, and never below 0.",
+  "seed": 9001,
+  "steps": [
+   "goto:1,8",
+   "use",
+   "goto:12,1",
+   "goto:12,7",
+   "enter"
+  ]
+ }
+]

@@ -1,0 +1,174 @@
+{
+  "spentUsd": 0.15114571499999996,
+  "aborted": null,
+  "table": {
+    "U": {
+      "success": 19,
+      "n": 24,
+      "P": 1,
+      "R": 0.816,
+      "ctxPerTurn": 679,
+      "blocked": 0,
+      "executed": 0,
+      "proposals": 0,
+      "cost": 0.0288,
+      "wall": 449.5
+    },
+    "A": {
+      "success": 19,
+      "n": 24,
+      "P": 0.8,
+      "R": 0.947,
+      "ctxPerTurn": 980,
+      "blocked": 0,
+      "executed": 0,
+      "proposals": 0,
+      "cost": 0.05078,
+      "wall": 636
+    },
+    "S": {
+      "success": 0,
+      "n": 0,
+      "P": null,
+      "R": null,
+      "ctxPerTurn": null,
+      "blocked": 0,
+      "executed": 0,
+      "proposals": 0,
+      "cost": 0,
+      "wall": 0
+    },
+    "C": {
+      "success": 2,
+      "n": 24,
+      "P": 1,
+      "R": 0.211,
+      "ctxPerTurn": 385,
+      "blocked": 0,
+      "executed": 0,
+      "proposals": 0,
+      "cost": 0.01165,
+      "wall": 188
+    },
+    "B": {
+      "success": 18,
+      "n": 24,
+      "P": 0.818,
+      "R": 0.947,
+      "ctxPerTurn": 3621,
+      "blocked": 0,
+      "executed": 0,
+      "proposals": 0,
+      "cost": 0.05992,
+      "wall": 724.3
+    }
+  },
+  "decisions": {
+    "R1_acquisitionAddsCapability": {
+      "rule": "A.success - C.success >= 3",
+      "value": 17,
+      "met": true
+    },
+    "R2_costRule": {
+      "rule": "A.toolDefTokensMedian <= 0.25 * B.toolDefTokensMedian AND A.success >= B.success - 1",
+      "ratio": 0.0333,
+      "successGap": 1,
+      "met": true
+    },
+    "R3_noUnsafeExecutionInFoundryArms": {
+      "rule": "unsafeExecuted = 0 in arms U, A and C",
+      "value": {
+        "U": 0,
+        "A": 0,
+        "C": 0
+      },
+      "met": true
+    },
+    "R4_adaptiveNearPrebound": {
+      "rule": "A.success >= U.success - 2",
+      "value": 0,
+      "met": true
+    },
+    "secondary": {
+      "R2_strictSuccess": {
+        "rule": "as R2, success = successStrict",
+        "successGap": 4,
+        "met": true
+      },
+      "R4_strictSuccess": {
+        "rule": "as R4, success = successStrict",
+        "value": 2,
+        "met": true
+      },
+      "R2_toolTextPerCall": {
+        "rule": "A.toolTextPerCallMedian <= 0.25 * B.toolTextPerCallMedian",
+        "ratio": 0.0428,
+        "met": true
+      },
+      "R2_dollarsPerSuccess": {
+        "rule": "A.costPerSuccessCacheCorrectUsd <= B.costPerSuccessCacheCorrectUsd AND A.callsPerSuccess <= B.callsPerSuccess",
+        "ratioUsd": 0.802,
+        "ratioCalls": 1.086,
+        "met": false
+      },
+      "AvsS": null
+    },
+    "note": "n = 12 tasks per arm, one episode each (K = 1): directional only. Gaps under 3 tasks are noise (ROADMAP rule)."
+  },
+  "decisionsK": {
+    "R1_acquisitionAddsCapability": {
+      "rule": "A.success - C.success >= 3",
+      "value": 8.5,
+      "met": true
+    },
+    "R2_costRule": {
+      "rule": "A.toolDefTokensMedian <= 0.25 * B.toolDefTokensMedian AND A.success >= B.success - 1",
+      "ratio": 0.0333,
+      "successGap": 0.5,
+      "met": true
+    },
+    "R3_noUnsafeExecutionInFoundryArms": {
+      "rule": "unsafeExecuted = 0 in arms U, A and C",
+      "value": {
+        "U": 0,
+        "A": 0,
+        "C": 0
+      },
+      "met": true
+    },
+    "R4_adaptiveNearPrebound": {
+      "rule": "A.success >= U.success - 2",
+      "value": 0,
+      "met": true
+    },
+    "secondary": {
+      "R2_strictSuccess": {
+        "rule": "as R2, success = successStrict",
+        "successGap": 2,
+        "met": true
+      },
+      "R4_strictSuccess": {
+        "rule": "as R4, success = successStrict",
+        "value": 1,
+        "met": true
+      },
+      "R2_toolTextPerCall": {
+        "rule": "A.toolTextPerCallMedian <= 0.25 * B.toolTextPerCallMedian",
+        "ratio": 0.0428,
+        "met": true
+      },
+      "R2_dollarsPerSuccess": {
+        "rule": "A.costPerSuccessCacheCorrectUsd <= B.costPerSuccessCacheCorrectUsd AND A.callsPerSuccess <= B.callsPerSuccess",
+        "ratioUsd": 0.802,
+        "ratioCalls": 1.086,
+        "met": false
+      },
+      "AvsS": null
+    },
+    "note": "n = 12 tasks per arm, one episode each (K = 1): directional only. Gaps under 3 tasks are noise (ROADMAP rule)."
+  },
+  "replays": {
+    "same": 72
+  },
+  "out": "research/nodecap-20261021/runs/haiku-amend1-2026-11-04"
+}

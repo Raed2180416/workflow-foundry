@@ -1,0 +1,33 @@
+{
+ "at": "2026-10-22T04:31:17.448Z",
+ "argv": [
+  "--run-dir",
+  "research/subworkflow-20261021/runs/eval-1",
+  "--tasks",
+  "research/subworkflow-20261021/tasks-eval.json",
+  "--arms",
+  "A0,A1,A2,A1F,A1TF,A2F",
+  "--concurrency",
+  "3",
+  "--model-concurrency",
+  "5",
+  "--cap-usd",
+  "4.75",
+  "--runs-root",
+  "research/subworkflow-20261021/runs"
+ ],
+ "arms": [
+  "A0",
+  "A1",
+  "A2",
+  "A1F",
+  "A1TF",
+  "A2F"
+ ],
+ "tasks": 20,
+ "capUsd": 4.75,
+ "concurrency": 3,
+ "modelConcurrency": 5,
+ "policyHash": "b77dd19c53ba78aa5954bf5a3c7d8683ed4587dc39dde64a4c1ee38d4fa5add0",
+ "pid": 18762
+}

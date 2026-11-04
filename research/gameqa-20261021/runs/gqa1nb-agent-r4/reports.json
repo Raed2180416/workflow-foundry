@@ -1,0 +1,15 @@
+[
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes drive score negative and it wraps to 65136",
+  "observed": "After collecting the coin at (1,3) (score 100) and then stepping onto spikes at (3,3) (-500), the score shows 65136 (65536-400), not 0. The score wraps around instead of clamping at 0.",
+  "expected": "Score never goes below 0. Spikes subtract 500 but the score stops at 0, so it should read 0.",
+  "seed": 42,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ }
+]

@@ -1,0 +1,52 @@
+{
+ "runId": "gqa1nb-agent-persist-r5",
+ "arm": "agent-persist",
+ "rep": 5,
+ "dev": false,
+ "model": "claude-haiku-5-5",
+ "transport": "nb",
+ "exploratory": false,
+ "policyHash": "b77dd19c53ba78aa5954bf5a3c7d8683ed4587dc39dde64a4c1ee38d4fa5add0",
+ "bed": "ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95",
+ "prompts": {
+  "agentSystem": "221305990a71b7f3",
+  "constructSystem": "bb0f415ba040f394",
+  "judgeSystem": "18e5a140e8295aca",
+  "exploreSystem": "09404fbee3e9c471",
+  "spec": "a03c56ab28701df3",
+  "template": "5ce0e410a9d93b0d"
+ },
+ "budgets": {
+  "exploreTicks": 8000,
+  "maxTurns": 40,
+  "usdPerRun": 0.5,
+  "persist": true
+ },
+ "rngSeed": 4024738319,
+ "started": "2026-11-04T13:17:13.379Z",
+ "wallMs": 311527,
+ "scoreMs": 906,
+ "cost": {
+  "spent": 0.03300664500000001,
+  "calls": 40,
+  "failed": 0,
+  "inputTokens": 92,
+  "outputTokens": 40029,
+  "latencyMs": 309591,
+  "unknownSpend": 0
+ },
+ "tokenMeter": {},
+ "error": null,
+ "summary": {
+  "reports": 2,
+  "bugs": 12,
+  "foundMin": 2,
+  "foundMinClass": 1,
+  "foundAny": 2,
+  "falseReports": 0,
+  "duplicates": 0,
+  "precision": 1,
+  "nondeterministic": 0,
+  "replays": 11
+ }
+}

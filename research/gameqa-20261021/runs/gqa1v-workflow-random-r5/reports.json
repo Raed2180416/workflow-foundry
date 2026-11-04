@@ -1,0 +1,13 @@
+[
+ {
+  "bug_class": "softlock",
+  "title": "Restart level from pause leaves the game paused and unresponsive",
+  "observed": "After esc (pause) and click:btn-restart, the event log shows 'restart' but mode stays 'paused'. The state and HUD reset to the starting values, but every following wait tick changes nothing: the timer stays at 300 and the clock does not advance. The game does not resume.",
+  "expected": "Restart level resets the level (score 0, 3 lives, items back) and the game is running again straight away. Subsequent ticks should advance the game in the playing mode, with the timer dropping by 1 per running tick.",
+  "seed": 549765,
+  "steps": [
+   "esc",
+   "click:btn-restart"
+  ]
+ }
+]

@@ -1,0 +1,66 @@
+diff -ruN a/modules/fulfilment.mjs b/modules/fulfilment.mjs
+--- a/modules/fulfilment.mjs	2026-11-04 14:33:20.281391180 +0000
++++ b/modules/fulfilment.mjs	2026-11-04 14:33:20.293873961 +0000
+@@ -233,13 +233,15 @@
+ }
+ 
+ function undoResult(state, p, r, ctx) {
+-  const s = { ...state };
++  const s = { ...state, reserve: { ...state.reserve } };
+   if (p.key === 'unship') s.shipUndo = 'done';
+   if (p.key === 'refund') s.refund = 'ok';
+   if (typeof p.key === 'string' && p.key.startsWith('release.')) {
+     const sku = p.key.slice('release.'.length);
+     if (sku in s.reserve) s.reserve[sku] = 'released';
+   }
++  // A result may make the next undo step due (the refund once the shipment's cancel has its result): compensate again.
++  if (s.phase === 'failed' || s.phase === 'stopped') return compensate(s, ctx);
+   return { output: view(s), state: s };
+ }
+ 
+@@ -270,14 +272,20 @@
+     s.shipUndo = 'pending';
+     effects.push({ key: 'unship', system: 'carrier', op: 'cancel', args: { orderId: s.orderId, fulfilmentId: s.fid } });
+   }
+-  if (s.charge === 'ok' && s.refund === 'none') {
++  // The refund comes after the shipment's cancel (R5.1): it waits for the cancel's result, and for a shipment still in
++  // flight, since that shipment may yet commit and then has to be cancelled first.
++  if (s.charge === 'ok' && s.refund === 'none' && s.shipUndo !== 'pending' && s.ship !== 'pending') {
+     s.refund = 'pending';
+     effects.push({ key: 'refund', system: 'billing', op: 'refund', args: { orderId: s.orderId, fulfilmentId: s.fid, amountMinor: s.amountMinor } });
+   }
+-  for (const i of s.items) {
+-    if (s.reserve[i.sku] === 'ok') {
+-      s.reserve[i.sku] = 'released';
+-      effects.push({ key: `release.${i.sku}`, system: 'inventory', op: 'release', args: { orderId: s.orderId, fulfilmentId: s.fid, sku: i.sku } });
++  // The items are released after the refund (R5.1): while a due refund waits, the items wait with it.
++  const refundDue = s.charge === 'ok' && s.refund === 'none';
++  if (!refundDue) {
++    for (const i of s.items) {
++      if (s.reserve[i.sku] === 'ok') {
++        s.reserve[i.sku] = 'released';
++        effects.push({ key: `release.${i.sku}`, system: 'inventory', op: 'release', args: { orderId: s.orderId, fulfilmentId: s.fid, sku: i.sku } });
++      }
+     }
+   }
+   if (effects.length === 0) return { output: view(s), state: s };
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.293873961 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.293873961 +0000
+@@ -74,7 +74,15 @@
+   // replayed through the same handlers (they are idempotent), and the rules continue unchanged.
+   const rec = ev.payload.records ?? {};
+   const row = (rec['orders.orders'] ?? [])[0];
+-  if (!row) return { close: true, subject: null };
++  if (!row) {
++    // Not recorded yet (R1.1 still due): the placed order it carries starts intake, as a placed order would (§3.1).
++    const placed = (ev.payload.events ?? []).find(e => e.type === 'order.placed');
++    if (!placed) return { close: true, subject: null };
++    const r = firstTick(placed, state, input, ctx);
++    if (r.merge || r.close) return r;
++    for (const e of ev.payload.events ?? []) if (e.type !== 'order.placed') handleEvent(e, state, input, ctx);
++    return r;
++  }
+   const orderId = normalise(row.orderId, ctx);
+   const rows = rec['orders.fulfilments'] ?? [];
+   state.orderId = orderId;

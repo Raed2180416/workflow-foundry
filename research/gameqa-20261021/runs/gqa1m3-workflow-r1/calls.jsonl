@@ -1,0 +1,2 @@
+{"t":"2026-11-04T19:29:20.675Z","nodeKey":"construct","attempt":0,"ok":false,"costUsd":0,"latencyMs":57701,"usage":{"inputTokens":137,"outputTokens":24831,"cacheReadTokens":3710,"cacheWriteTokens":0},"error":"MODEL_SCHEMA"}
+{"t":"2026-11-04T19:30:47.681Z","nodeKey":"construct","attempt":1,"ok":false,"costUsd":0,"latencyMs":87002,"usage":{"inputTokens":2179,"outputTokens":31293,"cacheReadTokens":1762,"cacheWriteTokens":0},"error":"MODEL_TRUNCATED"}

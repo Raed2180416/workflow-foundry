@@ -1,0 +1,108 @@
+[
+ {
+  "bug_class": "ui_overlap",
+  "title": "Pause menu Resume button covered and not clickable",
+  "observed": "When paused at tick 21, the btn-resume button reports top=false, so something else (the 'Key collected' toast is still on screen) sits on top of it and a click would not reach it.",
+  "expected": "Every visible button must be clickable with nothing covering it, so Resume must be the topmost element at its centre while the pause menu is open.",
+  "seed": 1234,
+  "steps": [
+   "goto:1,8",
+   "use",
+   "goto:7,3",
+   "dash-right+pause"
+  ]
+ },
+ {
+  "bug_class": "softlock",
+  "title": "Restart leaves the game paused with no dialog, so input is stuck",
+  "observed": "After pause then click btn-restart, the state stays mode=paused with no pause dialog or button shown in the UI list. Waiting does nothing and the state is frozen for 30+ ticks.",
+  "expected": "Restart puts the level back to its starting state and the game is running again straight away, so mode should be playing and the player can act.",
+  "seed": 1000,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter stays at 0/5 after a coin is collected",
+  "observed": "After dash-down+use, the state reports coins=1 and the coin was collected (score 100), but the HUD still shows 'Coins 0/5'.",
+  "expected": "The HUD always shows the current values, so it should read 'Coins 1/5'.",
+  "seed": 42,
+  "steps": [
+   "dash-down+use"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike damage underflows the score into large positive and negative values",
+  "observed": "Score was 100 when spikes hit. Instead of flooring at 0, the score became 65136 (a 16-bit wraparound of 100-500), and later went to -300 after a coin, which violates the 0 to 999,999 range.",
+  "expected": "Spikes cost 500 points but the score never goes below 0, so it should be 0 after the spike, and it must always stay within 0 to 999,999.",
+  "seed": 99,
+  "steps": [
+   "goto:2,3",
+   "right",
+   "goto:5,1"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Two movement keys in one tick move the player 3 tiles (down then dash-down)",
+  "observed": "Tick 0 with tokens down+dash-down moved the player from (1,1) to (1,4), a 3-tile displacement. The earlier 'down' step was applied in addition to the dash.",
+  "expected": "Only the last movement key counts (dash-down), so the player makes at most one move (a dash of up to 2 tiles). Expected position is (1,3).",
+  "seed": 99173,
+  "steps": [
+   "down+dash-down"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Input after pause in the same tick still moves the player",
+  "observed": "Tokens pause+right paused the game, but the player moved from (1,1) to (2,1) in that tick (events: pause, move).",
+  "expected": "When the game becomes paused, the rest of that tick's input is ignored and nothing moves. The player should stay at (1,1).",
+  "seed": 7,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Level-complete Finish button is covered by the bonus banner",
+  "observed": "After completing the level, the Finish button (btn-next) is visible but top=false, meaning another element (the 'Time bonus' banner) sits on top of its centre, so clicks do not reach it.",
+  "expected": "Every visible button must be clickable; nothing may cover it. Finish should receive clicks on the level-complete dialog.",
+  "seed": 4096,
+  "steps": [
+   "goto:1,8",
+   "use",
+   "goto:4,5",
+   "goto:12,7"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Coins counter stays at 0/5 after collecting a coin during a dash",
+  "observed": "After dash-down collected a coin, state reports coins=1 but the HUD still shows 'Coins 0/5', and it remains stale when paused.",
+  "expected": "The HUD always shows the current coin count, so after one coin it should read 'Coins 1/5'.",
+  "seed": 42,
+  "steps": [
+   "dash-down",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Coins counter lags behind the coin count (same symptom as HUD coins mismatch)",
+  "observed": "After dash-down+use collected a coin, state coins=1 but HUD shows 'Coins 0/5'. The HUD catches up only later (1/5 at tick 18), so it lags the real count.",
+  "expected": "The HUD shows the current coin count at all times, so it should read 'Coins 1/5' immediately after the coin is collected. This is the same underlying HUD desync as candidate 9.",
+  "seed": 42,
+  "steps": [
+   "dash-down+use",
+   "goto:1,8",
+   "use",
+   "goto:4,5",
+   "goto:10,5",
+   "dash-down",
+   "goto:12,7"
+  ]
+ }
+]

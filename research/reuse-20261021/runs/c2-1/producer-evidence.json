@@ -1,0 +1,37 @@
+{
+ "kind": "c2-producer-evidence",
+ "entry": "sopbench-p2:dangerous_goods",
+ "artifactSha256": "8e7b18221a16eae23db331e3eb96b2ae0388405d6e0d20e8a8826ce6a69ac875",
+ "chain": {
+  "entryArtifact": "8e7b18221a16eae23db331e3eb96b2ae0388405d6e0d20e8a8826ce6a69ac875",
+  "freezeArtifact": "8e7b18221a16eae23db331e3eb96b2ae0388405d6e0d20e8a8826ce6a69ac875",
+  "freezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
+  "summaryFreezeSha256": "14effe1898795b58d56d0fdac30557b6e567573ad22c9b3d01cfe33bbe0b7782",
+  "ok": true
+ },
+ "training": {
+  "what": "dev rows (build + repair), strict, re-run here through the SOP-Bench bridge",
+  "heldOut": false,
+  "rows": 20,
+  "wrong": 0,
+  "decision": "no-decision",
+  "upper": 0.1391083406682651,
+  "n": 20,
+  "nEff": 20,
+  "minN": 60
+ },
+ "sealed": {
+  "what": "SOP-Bench sealed rows, workflow arm W, pass^3 (research/sopbench-20261021/runs/p2-sealed/summary.json)",
+  "heldOut": true,
+  "k": 3,
+  "rows": 254,
+  "wrong": 6,
+  "decision": "serve",
+  "upper": 0.04608868644656722,
+  "n": 254,
+  "nEff": 254,
+  "minN": 60
+ },
+ "reading": "Evidence in the PRODUCER's program (SOP-Bench), not in B's: it says the artifact is right on A's rows, not that it is right on B's suppliers (C2-1: b3 let 32 of 112 accepted items through wrong).",
+ "generatedAt": "2026-11-04T17:21:05.256Z"
+}

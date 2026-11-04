@@ -1,0 +1,28 @@
+{
+  "schema": "foundry-nodecap-types/1",
+  "types": {
+    "contact.search": { "effectCeiling": "none", "outputTaint": "untrusted", "summary": "Find contacts" },
+    "contact.read": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "contact.update": { "effectCeiling": "idempotent", "outputTaint": "untrusted", "verifiedBy": "contact.read" },
+    "deal.list": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "ticket.search": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "ticket.read": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "ticket.comment": { "effectCeiling": "non-idempotent", "outputTaint": "untrusted", "verifiedBy": "ticket.read" },
+    "ticket.label": { "effectCeiling": "idempotent", "outputTaint": "untrusted", "verifiedBy": "ticket.read" },
+    "ticket.classify": { "effectCeiling": "none", "outputTaint": "trusted" },
+    "row.export": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "row.append": { "effectCeiling": "non-idempotent", "outputTaint": "untrusted", "verifiedBy": "row.read" },
+    "row.read": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "refund.compute": { "effectCeiling": "none", "outputTaint": "trusted" },
+    "charge.compute": { "effectCeiling": "none", "outputTaint": "trusted" },
+    "charge.prorate": { "effectCeiling": "none", "outputTaint": "trusted" },
+    "ui.observe": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "ui.find": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "ui.act": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "ui.extract": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "ui.assert": { "effectCeiling": "none", "outputTaint": "untrusted" },
+    "ui.commit": { "effectCeiling": "non-idempotent", "outputTaint": "untrusted", "verifiedBy": "ui.assert" },
+    "ui.trace-export": { "effectCeiling": "idempotent", "outputTaint": "trusted" },
+    "connection.manage": { "effectCeiling": "non-idempotent", "outputTaint": "untrusted" }
+  }
+}

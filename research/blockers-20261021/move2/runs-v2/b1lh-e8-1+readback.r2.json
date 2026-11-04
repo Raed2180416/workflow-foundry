@@ -1,0 +1,883 @@
+{
+ "subject": "b1lh-e8-1+readback",
+ "spec": "solver:research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs",
+ "kind": "monolith",
+ "runtime": 2,
+ "runtimeLabel": "runtime2 (compose-runtime/2)",
+ "envelope": "host",
+ "envelopeOptions": {
+  "reconcile": true
+ },
+ "mutant": null,
+ "patches": [],
+ "gate": null,
+ "gateMode": null,
+ "evidence": "development (dev worlds 1161/1162/1164), $0, runtime2 outside the PREREG-COMP1 freeze (D28(3)); not a re-run of the prereg",
+ "harness": {
+  "experiments/compose/runtime2.mjs": "cde405e3828f032b6a5db13c692dd9e7fa312afeabfa719d8b85551fc3a6f857",
+  "experiments/compose/effects.registry.json": "e25221878024a5f43adbd76bc7ea153accded941d6a1ce94e0635205a17c844c",
+  "experiments/compose/bundle2.mjs": "1e870704e36f12ec77317b42c3dfc17e47db8911e840138958782731cff0da69",
+  "experiments/compose/fault-run2.mjs": "4f42a2780f6b2467e68851ad821d43add1d6e136f5510904346664186efdd9ae",
+  "experiments/compose/mutants2.mjs": "733f4d6e6c9f655164ffc6acf7d23cd7c8162a48048be9118a0b45d308a0a704",
+  "experiments/compose/move2-battery.mjs": "be111bb9a3b67ce108ea05ee9b454d56abc1e6cee11a1faf7adfe1a7b3b07c07",
+  "experiments/compose/runtime.mjs": "14591e30564316afaf552bf277956b6d1a030f843d09093d49b0c500db78517c",
+  "experiments/compose/bundle.mjs": "d1591a73f8fefd95861a65b665b4b5e43403eb8936110648862f0b346ee27e11",
+  "experiments/compose/faults.mjs": "b2c6c6d40fc0d74e220cab0edfe6acea525fa41b75a87cb8ddffbad4a90fad57",
+  "experiments/compose/run.mjs": "a12bac31af9e6446483136767990a62c25e1d29f3a74b227dd9113a81ec5f8d3"
+ },
+ "sourceDigest": "837f2255e912809d761328972348f12e4d869d0966720b4cb7503d933626bb0b",
+ "results": [
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "ms": 6082,
+   "load": 27.52,
+   "fault": "none",
+   "status": "complete",
+   "injected": 0,
+   "mutantActs": 0,
+   "oracle": {
+    "completed": 43,
+    "passed": 43,
+    "critical": 0,
+    "codes": {}
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 43
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "dupCases": [],
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12
+   },
+   "interface": null,
+   "armErrors": 0,
+   "envelope": {
+    "byCode": {},
+    "examples": []
+   },
+   "hostDeduped": 0,
+   "multiInstanceCases": [
+    "o0002",
+    "o0003",
+    "o0006",
+    "o0009",
+    "o0012",
+    "o0014",
+    "o0019",
+    "o0023",
+    "o0025",
+    "o0028",
+    "o0035",
+    "o0040",
+    "o0041"
+   ],
+   "carryBytes": {
+    "total": 8927,
+    "envelope": 3812
+   },
+   "digest": {
+    "raw": "977ccc9d80f578ff12f78c2dad1bdd7a21566d26328f0b6d832c43de08bf830b",
+    "logical": "c8b0556078dabfa9674dc168fadc8538950f17607827ebdc99995579c073fa49",
+    "sorTables": "0e84afb58bc8955adc6c44cd40f6123e8eb58c1bb7b014b09d00044075a0032b"
+   },
+   "passing": [
+    "o0001",
+    "o0002",
+    "o0003",
+    "o0004",
+    "o0005",
+    "o0006",
+    "o0007",
+    "o0008",
+    "o0009",
+    "o0010",
+    "o0011",
+    "o0012",
+    "o0013",
+    "o0014",
+    "o0015",
+    "o0016",
+    "o0017",
+    "o0018",
+    "o0019",
+    "o0020",
+    "o0021",
+    "o0022",
+    "o0023",
+    "o0024",
+    "o0025",
+    "o0026",
+    "o0027",
+    "o0028",
+    "o0029",
+    "o0030",
+    "o0031",
+    "o0032",
+    "o0033",
+    "o0034",
+    "o0035",
+    "o0036",
+    "o0037",
+    "o0038",
+    "o0039",
+    "o0040",
+    "o0041",
+    "o0042",
+    "o0043"
+   ],
+   "failingCases": []
+  },
+  {
+   "seed": 1161,
+   "d": 2,
+   "size": 40,
+   "ms": 51706,
+   "load": 24.33,
+   "fault": "crash",
+   "status": "complete",
+   "injected": 64,
+   "mutantActs": 0,
+   "oracle": {
+    "completed": 43,
+    "passed": 43,
+    "critical": 0,
+    "codes": {}
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 43
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "dupCases": [],
+    "examples": []
+   },
+   "compensation": {
+    "due": 12,
+    "complete": 12
+   },
+   "interface": null,
+   "armErrors": 0,
+   "envelope": {
+    "byCode": {
+     "orphan": 112,
+     "orphan-parked": 2,
+     "readback": 2,
+     "reconciled": 2
+    },
+    "examples": [
+     {
+      "code": "orphan",
+      "key": "=charge:ORD-1161-0001-F1",
+      "event": "h-0000009"
+     },
+     {
+      "code": "orphan",
+      "key": "=charge:ORD-1161-0001-F2",
+      "event": "h-0000010"
+     },
+     {
+      "code": "orphan",
+      "key": "=create:ORD-1161-0004",
+      "event": "h-0000032"
+     },
+     {
+      "code": "orphan",
+      "key": "=status:ORD-1161-0001:ORD-1161-0001-F2:dispatched",
+      "event": "h-0000046"
+     },
+     {
+      "code": "orphan",
+      "key": "=reserve:ORD-1161-0006-F1:SKU-1029",
+      "event": "h-0000055"
+     },
+     {
+      "code": "orphan",
+      "key": "=reserve:ORD-1161-0006-F2:SKU-1011",
+      "event": "h-0000056"
+     }
+    ]
+   },
+   "hostDeduped": 112,
+   "multiInstanceCases": [
+    "o0002",
+    "o0003",
+    "o0006",
+    "o0009",
+    "o0012",
+    "o0014",
+    "o0019",
+    "o0023",
+    "o0025",
+    "o0028",
+    "o0035",
+    "o0040",
+    "o0041"
+   ],
+   "carryBytes": {
+    "total": 8927,
+    "envelope": 3812
+   },
+   "digest": {
+    "raw": "77fe1df45c1b82c56aff8dfcff10c004463bbf0701d7b80c2e28f5002ac04f06",
+    "logical": "3172ef363c45b3773475f94758793510b2c2ee1283cf4d5a3c6ffd7951197316",
+    "sorTables": "03c2c79418343bc7ba5c4e74dbf37bfe0e15972d6648c651193aa5fedd88d43e"
+   },
+   "passing": [
+    "o0001",
+    "o0002",
+    "o0003",
+    "o0004",
+    "o0005",
+    "o0006",
+    "o0007",
+    "o0008",
+    "o0009",
+    "o0010",
+    "o0011",
+    "o0012",
+    "o0013",
+    "o0014",
+    "o0015",
+    "o0016",
+    "o0017",
+    "o0018",
+    "o0019",
+    "o0020",
+    "o0021",
+    "o0022",
+    "o0023",
+    "o0024",
+    "o0025",
+    "o0026",
+    "o0027",
+    "o0028",
+    "o0029",
+    "o0030",
+    "o0031",
+    "o0032",
+    "o0033",
+    "o0034",
+    "o0035",
+    "o0036",
+    "o0037",
+    "o0038",
+    "o0039",
+    "o0040",
+    "o0041",
+    "o0042",
+    "o0043"
+   ],
+   "failingCases": []
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "ms": 15516,
+   "load": 23.62,
+   "fault": "none",
+   "status": "complete",
+   "injected": 0,
+   "mutantActs": 0,
+   "oracle": {
+    "completed": 44,
+    "passed": 44,
+    "critical": 0,
+    "codes": {}
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 43
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "dupCases": [],
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10
+   },
+   "interface": null,
+   "armErrors": 0,
+   "envelope": {
+    "byCode": {},
+    "examples": []
+   },
+   "hostDeduped": 0,
+   "multiInstanceCases": [
+    "o0003",
+    "o0005",
+    "o0006",
+    "o0008",
+    "o0012",
+    "o0019",
+    "o0020",
+    "o0021",
+    "o0025",
+    "o0028",
+    "o0030",
+    "o0034",
+    "o0035",
+    "o0038",
+    "o0039",
+    "o0041",
+    "o0044"
+   ],
+   "carryBytes": {
+    "total": 11406,
+    "envelope": 4855
+   },
+   "digest": {
+    "raw": "6d1a5fb9c739db0e9847d2140740a33b186db3a58f5c7804469d882a0fba2715",
+    "logical": "95ce0d587cd52fa24b4f08ff473426ac50c912836aa993ea69e35535d9a9eb60",
+    "sorTables": "13b52ffb98d3defde4cff39d951883db0f3f6f3456cfc5dd0ad2e76c64c33673"
+   },
+   "passing": [
+    "o0001",
+    "o0002",
+    "o0003",
+    "o0004",
+    "o0005",
+    "o0006",
+    "o0007",
+    "o0008",
+    "o0009",
+    "o0010",
+    "o0011",
+    "o0012",
+    "o0013",
+    "o0014",
+    "o0015",
+    "o0016",
+    "o0017",
+    "o0018",
+    "o0019",
+    "o0020",
+    "o0021",
+    "o0022",
+    "o0023",
+    "o0024",
+    "o0025",
+    "o0026",
+    "o0027",
+    "o0028",
+    "o0029",
+    "o0030",
+    "o0031",
+    "o0032",
+    "o0033",
+    "o0034",
+    "o0035",
+    "o0036",
+    "o0037",
+    "o0038",
+    "o0039",
+    "o0040",
+    "o0041",
+    "o0042",
+    "o0043",
+    "x0046"
+   ],
+   "failingCases": []
+  },
+  {
+   "seed": 1162,
+   "d": 3,
+   "size": 40,
+   "ms": 60011,
+   "load": 25.99,
+   "fault": "crash",
+   "status": "complete",
+   "injected": 77,
+   "mutantActs": 0,
+   "oracle": {
+    "completed": 44,
+    "passed": 44,
+    "critical": 0,
+    "codes": {}
+   },
+   "capabilities": {
+    "completed": 43,
+    "passed": 43
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "dupCases": [],
+    "examples": []
+   },
+   "compensation": {
+    "due": 10,
+    "complete": 10
+   },
+   "interface": null,
+   "armErrors": 0,
+   "envelope": {
+    "byCode": {
+     "orphan": 160
+    },
+    "examples": [
+     {
+      "code": "orphan",
+      "key": "=reserve:ORD-1162-0001-F1:SKU-1012",
+      "event": "h-0000009"
+     },
+     {
+      "code": "orphan",
+      "key": "=reserve:ORD-1162-0001-F1:SKU-1027",
+      "event": "h-0000009"
+     },
+     {
+      "code": "orphan",
+      "key": "=reserve:ORD-1162-0001-F1:SKU-1023",
+      "event": "h-0000009"
+     },
+     {
+      "code": "orphan",
+      "key": "=status:ORD-1162-0001:-:processing",
+      "event": "h-0000007"
+     },
+     {
+      "code": "orphan",
+      "key": "=status:ORD-1162-0001:ORD-1162-0001-F1:processing",
+      "event": "h-0000008"
+     },
+     {
+      "code": "orphan",
+      "key": "=ship:ORD-1162-0004-F1",
+      "event": "h-0000026"
+     }
+    ]
+   },
+   "hostDeduped": 160,
+   "multiInstanceCases": [
+    "o0003",
+    "o0005",
+    "o0006",
+    "o0008",
+    "o0012",
+    "o0019",
+    "o0020",
+    "o0021",
+    "o0025",
+    "o0028",
+    "o0030",
+    "o0034",
+    "o0035",
+    "o0038",
+    "o0039",
+    "o0041",
+    "o0044"
+   ],
+   "carryBytes": {
+    "total": 11406,
+    "envelope": 4855
+   },
+   "digest": {
+    "raw": "053704b06e6452cd3541b6fc195b791dfc1e18f368db7ec6494881efeca039ba",
+    "logical": "7d2836cfe0735fa522bd09ec71b097a9bc09989fe2b5118af3671e5237fb8c9e",
+    "sorTables": "cfa779e67e0d0a01b7eff7352c35ac96fab91198a95c98bdb6c37f7cd8287996"
+   },
+   "passing": [
+    "o0001",
+    "o0002",
+    "o0003",
+    "o0004",
+    "o0005",
+    "o0006",
+    "o0007",
+    "o0008",
+    "o0009",
+    "o0010",
+    "o0011",
+    "o0012",
+    "o0013",
+    "o0014",
+    "o0015",
+    "o0016",
+    "o0017",
+    "o0018",
+    "o0019",
+    "o0020",
+    "o0021",
+    "o0022",
+    "o0023",
+    "o0024",
+    "o0025",
+    "o0026",
+    "o0027",
+    "o0028",
+    "o0029",
+    "o0030",
+    "o0031",
+    "o0032",
+    "o0033",
+    "o0034",
+    "o0035",
+    "o0036",
+    "o0037",
+    "o0038",
+    "o0039",
+    "o0040",
+    "o0041",
+    "o0042",
+    "o0043",
+    "x0046"
+   ],
+   "failingCases": []
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "ms": 12923,
+   "load": 25.9,
+   "fault": "none",
+   "status": "complete",
+   "injected": 0,
+   "mutantActs": 0,
+   "oracle": {
+    "completed": 69,
+    "passed": 68,
+    "critical": 0,
+    "codes": {
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 67
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "dupCases": [],
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 19
+   },
+   "interface": null,
+   "armErrors": 0,
+   "envelope": {
+    "byCode": {},
+    "examples": []
+   },
+   "hostDeduped": 5,
+   "multiInstanceCases": [
+    "o0002",
+    "o0003",
+    "o0005",
+    "o0006",
+    "o0008",
+    "o0010",
+    "o0014",
+    "o0017",
+    "o0020",
+    "o0025",
+    "o0026",
+    "o0027",
+    "o0030",
+    "o0035",
+    "o0036",
+    "o0040",
+    "o0043",
+    "o0045",
+    "o0048",
+    "o0051",
+    "o0053",
+    "o0057",
+    "o0065",
+    "o0066",
+    "o0067"
+   ],
+   "carryBytes": {
+    "total": 11269,
+    "envelope": 4770
+   },
+   "digest": {
+    "raw": "74c91c2114a6b3a4edbdc153bd900f7bc85d73f457d10439863e55af8fcd35ed",
+    "logical": "28b8038d1f9f6d76c77bbb8e0802db469ef9b8e04b4112c234d1fe008dade2e3",
+    "sorTables": "e109ebd18a6ee7f997e667a7292bcd387b9fa516633618e6ff5ba3971a5dad48"
+   },
+   "passing": [
+    "o0001",
+    "o0002",
+    "o0003",
+    "o0004",
+    "o0005",
+    "o0006",
+    "o0007",
+    "o0008",
+    "o0009",
+    "o0010",
+    "o0011",
+    "o0012",
+    "o0013",
+    "o0014",
+    "o0015",
+    "o0016",
+    "o0017",
+    "o0018",
+    "o0019",
+    "o0020",
+    "o0021",
+    "o0022",
+    "o0023",
+    "o0024",
+    "o0025",
+    "o0026",
+    "o0027",
+    "o0028",
+    "o0029",
+    "o0030",
+    "o0031",
+    "o0032",
+    "o0033",
+    "o0034",
+    "o0035",
+    "o0036",
+    "o0037",
+    "o0038",
+    "o0039",
+    "o0040",
+    "o0041",
+    "o0042",
+    "o0043",
+    "o0044",
+    "o0045",
+    "o0046",
+    "o0047",
+    "o0048",
+    "o0049",
+    "o0050",
+    "o0051",
+    "o0052",
+    "o0053",
+    "o0054",
+    "o0055",
+    "o0056",
+    "o0057",
+    "o0058",
+    "o0059",
+    "o0060",
+    "o0061",
+    "o0062",
+    "o0063",
+    "o0065",
+    "o0066",
+    "o0067",
+    "x0069",
+    "x0070"
+   ],
+   "failingCases": [
+    "o0064"
+   ]
+  },
+  {
+   "seed": 1164,
+   "d": 5,
+   "size": 60,
+   "ms": 137473,
+   "load": 34.01,
+   "fault": "crash",
+   "status": "complete",
+   "injected": 116,
+   "mutantActs": 0,
+   "oracle": {
+    "completed": 69,
+    "passed": 68,
+    "critical": 0,
+    "codes": {
+     "unfinished": 1
+    }
+   },
+   "capabilities": {
+    "completed": 67,
+    "passed": 67
+   },
+   "exactlyOnce": {
+    "duplicates": 0,
+    "money": 0,
+    "keyConflicts": 0,
+    "dupCases": [],
+    "examples": []
+   },
+   "compensation": {
+    "due": 19,
+    "complete": 19
+   },
+   "interface": null,
+   "armErrors": 0,
+   "envelope": {
+    "byCode": {
+     "orphan": 208,
+     "orphan-parked": 6,
+     "readback": 6,
+     "reconciled": 6,
+     "surplus": 2
+    },
+    "examples": [
+     {
+      "code": "orphan",
+      "key": "=create:ORD-1164-0007",
+      "event": "h-0000008"
+     },
+     {
+      "code": "orphan",
+      "key": "=charge:ORD-1164-0007-F1",
+      "event": "h-0000025"
+     },
+     {
+      "code": "orphan",
+      "key": "=charge:ORD-1164-0007-F2",
+      "event": "h-0000026"
+     },
+     {
+      "code": "orphan",
+      "key": "=ship:ORD-1164-0001-F1",
+      "event": "h-0000038"
+     },
+     {
+      "code": "orphan",
+      "key": "=ship:ORD-1164-0001-F2",
+      "event": "h-0000047"
+     },
+     {
+      "code": "orphan",
+      "key": "=notify:ORD-1164-0002:order-cancelled",
+      "event": "h-0000075"
+     }
+    ]
+   },
+   "hostDeduped": 215,
+   "multiInstanceCases": [
+    "o0002",
+    "o0003",
+    "o0005",
+    "o0006",
+    "o0008",
+    "o0010",
+    "o0014",
+    "o0017",
+    "o0020",
+    "o0025",
+    "o0026",
+    "o0027",
+    "o0030",
+    "o0035",
+    "o0036",
+    "o0040",
+    "o0043",
+    "o0045",
+    "o0048",
+    "o0051",
+    "o0053",
+    "o0057",
+    "o0065",
+    "o0066",
+    "o0067"
+   ],
+   "carryBytes": {
+    "total": 11269,
+    "envelope": 4770
+   },
+   "digest": {
+    "raw": "ca251579117ced95fad5ae6170dad30b45ac13a77d1fbb5f5d2f042925a806bb",
+    "logical": "95464ed4d8a8b5532326ebea234c1c871ab9f5116c2e70b3cc4a33bc50e8bbd7",
+    "sorTables": "861f1f5bafb7bda7f91bfc5690327afd8df721f5fff4602e628f0f784f39e7f9"
+   },
+   "passing": [
+    "o0001",
+    "o0002",
+    "o0003",
+    "o0004",
+    "o0005",
+    "o0006",
+    "o0007",
+    "o0008",
+    "o0009",
+    "o0010",
+    "o0011",
+    "o0012",
+    "o0013",
+    "o0014",
+    "o0015",
+    "o0016",
+    "o0017",
+    "o0018",
+    "o0019",
+    "o0020",
+    "o0021",
+    "o0022",
+    "o0023",
+    "o0024",
+    "o0025",
+    "o0026",
+    "o0027",
+    "o0028",
+    "o0029",
+    "o0030",
+    "o0031",
+    "o0032",
+    "o0033",
+    "o0034",
+    "o0035",
+    "o0036",
+    "o0037",
+    "o0038",
+    "o0039",
+    "o0040",
+    "o0041",
+    "o0042",
+    "o0043",
+    "o0044",
+    "o0045",
+    "o0046",
+    "o0047",
+    "o0048",
+    "o0049",
+    "o0050",
+    "o0051",
+    "o0052",
+    "o0053",
+    "o0054",
+    "o0055",
+    "o0056",
+    "o0057",
+    "o0058",
+    "o0059",
+    "o0060",
+    "o0061",
+    "o0062",
+    "o0063",
+    "o0065",
+    "o0066",
+    "o0067",
+    "x0069",
+    "x0070"
+   ],
+   "failingCases": [
+    "o0064"
+   ]
+  }
+ ]
+}

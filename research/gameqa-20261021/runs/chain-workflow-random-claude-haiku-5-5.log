@@ -1,0 +1,4 @@
+2026-11-04T13:09:08Z start --arm workflow-random --rep 2 --live --model claude-haiku-5-5
+{"runId":"gqa1-workflow-random-r2","wallS":248,"usd":0.00711602,"calls":3,"reports":14,"bugs":12,"foundMin":7,"foundMinClass":6,"foundAny":7,"falseReports":0,"duplicates":7,"precision":1,"nondeterministic":0,"replays":151,"error":null}
+2026-11-04T13:13:35Z end --arm workflow-random --rep 2 --live --model claude-haiku-5-5 (exit 0; spent so far $0.5354)
+2026-11-04T13:13:35Z lane workflow-random 2..2 done

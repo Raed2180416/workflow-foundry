@@ -1,0 +1,289 @@
+[
+ {
+  "bug_class": "softlock",
+  "title": "Restart level leaves the game paused",
+  "observed": "After pause then click:btn-restart, mode stays 'paused' (not 'playing'). Waiting 30 ticks changes nothing: the timer stays at 300, and no dialog is shown to act on.",
+  "expected": "Restart level puts the level back to its starting state and the game is running again straight away, so mode should be 'playing' and time should respond to ticks.",
+  "seed": 250476,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD timer shows stale value after resuming",
+  "observed": "After esc then click:btn-resume, state timeLeft is 299 but the HUD reads 'Time 300'.",
+  "expected": "The HUD always shows the current timer value, so it should read Time 299.",
+  "seed": 596230,
+  "steps": [
+   "esc",
+   "click:btn-resume"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike hit at score 100 wraps score to 65136, then goes negative",
+  "observed": "At tick 9 a spike hit with score 100 showed score 65136 (an unsigned wrap of 100-500 = -400). A later coin pickup showed score -300, so the score is not clamped at 0 and goes negative.",
+  "expected": "Spikes cost 500 points, floored at 0. Score is never negative, so the score should be 0 after the spike, and then 100 after the coin.",
+  "seed": 113734,
+  "steps": [
+   "goto:6,8",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter not updated after collecting a coin",
+  "observed": "After a dash that collects a coin, state coins=1 and the event list includes coin, but the HUD still reads 'Coins 0/5'.",
+  "expected": "The HUD shows the current coin count as n/5, so it should read 'Coins 1/5'.",
+  "seed": 670737,
+  "steps": [
+   "dash-down+up"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Key-collected toast covers the pause menu's Resume button",
+  "observed": "At tick 11 the pause menu is open with a 'Key collected' toast visible, and btn-resume reports top=false, so the toast is on top of it and a click on Resume would not reach it.",
+  "expected": "Every visible button must be clickable; nothing may cover it (section 7). Resume must receive clicks while the pause menu is open.",
+  "seed": 350306,
+  "steps": [
+   "enter",
+   "up",
+   "wait",
+   "use",
+   "goto:4,5",
+   "esc"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Simultaneous up+right dash moves the player diagonally in one tick",
+  "observed": "Tick 13 with dash-up+dash-right moves the player from (2,8) to (3,7): a diagonal displacement made by two moves in one tick, with only one move allowed.",
+  "expected": "Only the last movement key pressed in a tick counts, so the player makes at most one straight step or dash. Diagonal movement is not allowed.",
+  "seed": 398315,
+  "steps": [
+   "enter",
+   "goto:2,8",
+   "pause",
+   "use+esc",
+   "dash-up+dash-right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD time stays at 300 one tick after the timer has dropped to 299",
+  "observed": "After clicking Resume at tick 1, the state reports timeLeft 299 but the HUD shows 'Time 300', so the displayed value is one tick stale.",
+  "expected": "The HUD always shows the current timer value (section 8), so after the tick that drops the timer to 299 it should show 'Time 299'.",
+  "seed": 596230,
+  "steps": [
+   "esc",
+   "click:btn-resume",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike hit wraps score to 65136 and then goes negative",
+  "observed": "At tick 3 a spike hit with score 100 makes the score 65136 (100 minus 500 wraps to 65136 in a 16-bit value). Later the score reads -300 at tick 6, so the score goes out of its valid range.",
+  "expected": "Score is never negative and never wraps; spikes cost 500 points but the score stops at 0 (sections 4 and 5). The score should read 0 after the spike, not 65136 or -300.",
+  "seed": 814888,
+  "steps": [
+   "dash-down+down",
+   "dash-up+dash-left",
+   "right",
+   "up+dash-right",
+   "right",
+   "right",
+   "right",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes at 100 points wrap score to 65136 instead of flooring at 0",
+  "observed": "At tick 16 the player (score 100, 4 lives? no, 4 lives) hits spikes and the score jumps from 100 to 65136. Later the score falls from 65136 to 2270 at level complete with no spikes or restart event.",
+  "expected": "Spikes cost 500 points but the score never goes below 0, so score should be 0 after the spike at tick 16. Score should never drop except by spikes or restart.",
+  "seed": 449754,
+  "steps": [
+   "right",
+   "goto:4,5",
+   "dash-down",
+   "goto:2,8",
+   "dash-right+down",
+   "dash-right",
+   "enter",
+   "right",
+   "goto:7,5",
+   "dash-right+dash-right",
+   "wait",
+   "dash-up",
+   "click:btn-resume",
+   "right+dash-right",
+   "wait",
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coins stays 0/5 after collecting a coin on a dash",
+  "observed": "After dash-right collects a coin, state reports coins=1 but the HUD shows 'Coins 0/5'.",
+  "expected": "HUD Coins field shows the current count, so it should read 'Coins 1/5'.",
+  "seed": 74267,
+  "steps": [
+   "right",
+   "dash-right",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Relic toast covers the Finish button on the level complete dialog",
+  "observed": "On level complete, btn-next (Finish) reports top=false while the 'Relic! +20000' toast is visible, so a click at its centre does not reach the button.",
+  "expected": "Every visible button must be clickable; nothing may cover it, so Finish must be the topmost element at its centre.",
+  "seed": 294920,
+  "steps": [
+   "left",
+   "up",
+   "up",
+   "goto:7,7",
+   "esc",
+   "left+pause",
+   "dash-right+dash-down",
+   "goto:12,7"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD time lags one tick behind the timer after resume",
+  "observed": "After click:btn-resume the state shows time 287 but the HUD shows Time 288; the HUD keeps showing the stale value for several ticks.",
+  "expected": "The HUD always shows the current timer value (ticks left), matching timeLeft.",
+  "seed": 113734,
+  "steps": [
+   "right",
+   "up",
+   "wait",
+   "left",
+   "dash-down",
+   "left",
+   "use",
+   "dash-down",
+   "dash-left",
+   "down",
+   "down",
+   "dash-up",
+   "esc",
+   "click:btn-resume",
+   "use+enter",
+   "up",
+   "wait",
+   "goto:6,8",
+   "dash-down+dash-right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score goes negative (-300) after spike underflow",
+  "observed": "Spikes at score 65136 (the wrapped value from an earlier spike at low score) leave the score at 65136 and a later coin makes the HUD read Score -300.",
+  "expected": "Score is never negative and is capped at 999,999. Spikes should floor the score at 0, so no negative value should appear.",
+  "seed": 113734,
+  "steps": [
+   "right",
+   "up",
+   "wait",
+   "left",
+   "dash-left",
+   "dash-down",
+   "left",
+   "use",
+   "dash-down",
+   "dash-left",
+   "down",
+   "down",
+   "dash-up",
+   "click:btn-resume",
+   "use+enter",
+   "up",
+   "wait",
+   "goto:6,8",
+   "left",
+   "right",
+   "right",
+   "wait",
+   "right",
+   "dash-up",
+   "left",
+   "wait",
+   "use",
+   "goto:5,8"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coins stays at 0/5 after collecting a coin",
+  "observed": "At tick 4 the player steps onto a coin: state coins=1, score=100, and the event list includes coin. The HUD keeps showing 'Coins 0/5' for the rest of the run, even after coins=1 is confirmed in state.",
+  "expected": "The HUD always shows the current coin count, so it should read 'Coins 1/5' right after the coin is collected (section 8).",
+  "seed": 113734,
+  "steps": [
+   "right",
+   "up",
+   "wait",
+   "left",
+   "dash-down",
+   "left",
+   "use",
+   "dash-down",
+   "dash-left",
+   "down",
+   "down",
+   "dash-up",
+   "click:btn-resume",
+   "use+enter",
+   "up",
+   "wait",
+   "goto:6,8",
+   "dash-down+dash-right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD timer lags one tick behind the real timer after resuming from pause",
+  "observed": "Tick 19 (click:btn-resume) is a running tick: timeLeft drops 283 to 282, but the HUD shows 'Time 283'. The HUD stays one tick behind (ticks 20-23 show 283 while timeLeft is 281, 280, 279). The score and other HUD fields update correctly.",
+  "expected": "The HUD time field shows the current ticks left on the timer, which should be 282 after that tick, matching timeLeft (section 8).",
+  "seed": 294920,
+  "steps": [
+   "left",
+   "up",
+   "up",
+   "goto:7,7",
+   "esc",
+   "left+pause",
+   "dash-right+dash-down",
+   "pause",
+   "click:btn-resume",
+   "goto:12,7"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD timer lags one tick behind the real timer after resuming from pause (duplicate of hud-time repro)",
+  "observed": "Same symptom as the previous candidate: the resume tick at #19 drops timeLeft to 282 while the HUD still shows 'Time 283', and the HUD stays stale through the level-complete and victory screens. The trailing 'enter' token is not needed to show the bug, so this repro is not minimal.",
+  "expected": "The HUD time field matches timeLeft on every tick (section 8). The timer should show 282 right after the resume tick.",
+  "seed": 294920,
+  "steps": [
+   "left",
+   "up",
+   "up",
+   "goto:7,7",
+   "esc",
+   "left+pause",
+   "dash-right+dash-down",
+   "pause",
+   "click:btn-resume",
+   "goto:12,7",
+   "enter"
+  ]
+ }
+]

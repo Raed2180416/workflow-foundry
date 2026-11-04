@@ -1,0 +1,406 @@
+{
+ "stats": {
+  "exploreTicks": 324,
+  "runs": 28,
+  "finished": true,
+  "notes": "Final turn. Already minimized and confirmed three bugs: pause+right input race, right+up multiple-move input race, and key lost on same-tick respawn. The lever/gate route worked normally and gate opened, but no additional distinct bug was confirmed.",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "up"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "wait",
+     "wait",
+     "pause"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+left",
+     "enter",
+     "right",
+     "right",
+     "left+pause"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right+left"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right+up"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+dash-right",
+     "pause+down",
+     "esc",
+     "up",
+     "enter",
+     "wait",
+     "down",
+     "right+up",
+     "right",
+     "up",
+     "dash-left",
+     "wait",
+     "pause"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "down",
+     "down",
+     "down",
+     "left",
+     "left",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "down",
+     "down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "down",
+     "down",
+     "down",
+     "left",
+     "left",
+     "use",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-left",
+     "dash-left"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "wait",
+     "wait",
+     "wait",
+     "enter"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left",
+     "down",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left",
+     "down",
+     "use",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:10,5",
+     "down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "wait",
+     "right",
+     "left",
+     "down",
+     "down",
+     "left",
+     "left",
+     "down",
+     "use",
+     "up",
+     "right",
+     "right",
+     "up",
+     "up",
+     "right",
+     "right",
+     "right",
+     "right",
+     "up",
+     "up",
+     "right",
+     "right",
+     "down",
+     "down",
+     "right",
+     "down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "wait",
+     "right",
+     "left",
+     "down",
+     "down",
+     "left",
+     "left",
+     "down",
+     "use",
+     "goto:10,6"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:10,7",
+     "up",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "wait",
+     "wait",
+     "right",
+     "right",
+     "right",
+     "left",
+     "down",
+     "down",
+     "down",
+     "left",
+     "left",
+     "use",
+     "wait",
+     "right",
+     "right",
+     "up",
+     "up",
+     "up",
+     "right",
+     "right",
+     "right",
+     "right",
+     "up",
+     "up",
+     "right",
+     "right",
+     "down",
+     "down",
+     "right",
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "wait",
+     "wait",
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right",
+     "left",
+     "down",
+     "down",
+     "left",
+     "left",
+     "down",
+     "use"
+    ]
+   }
+  ]
+ }
+}

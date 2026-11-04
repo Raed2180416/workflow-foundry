@@ -1,0 +1,2017 @@
+{
+ "note": "POST-HOC review addendum; $0; computed from committed rows. Diagnostic except section A.",
+ "A": {
+  "commits": [
+   {
+    "sha": "72785e59",
+    "what": "set frozen",
+    "at": "2026-10-21T19:29:10+00:00",
+    "rowsExisting": {
+     "haiku-dev": "0/252",
+     "haiku-test": "0/386",
+     "mercury-dev": "0/126",
+     "mercury-test": "0/193"
+    }
+   },
+   {
+    "sha": "04db31b9",
+    "what": "PREREG frozen",
+    "at": "2026-10-21T21:17:34+00:00",
+    "rowsExisting": {
+     "haiku-dev": "0/252",
+     "haiku-test": "0/386",
+     "mercury-dev": "0/126",
+     "mercury-test": "0/193"
+    }
+   },
+   {
+    "sha": "f9641ff9",
+    "what": "router v1 frozen (step 3)",
+    "at": "2026-10-21T21:30:26+00:00",
+    "rowsExisting": {
+     "haiku-dev": "0/252",
+     "haiku-test": "0/386",
+     "mercury-dev": "0/126",
+     "mercury-test": "0/193"
+    }
+   },
+   {
+    "sha": "45909902",
+    "what": "deviations D1, D2",
+    "at": "2026-10-21T21:31:57+00:00",
+    "rowsExisting": {
+     "haiku-dev": "28/252",
+     "haiku-test": "0/386",
+     "mercury-dev": "40/126",
+     "mercury-test": "0/193"
+    }
+   },
+   {
+    "sha": "f13864a5",
+    "what": "step 4 frozen; D3",
+    "at": "2026-10-21T21:36:56+00:00",
+    "rowsExisting": {
+     "haiku-dev": "252/252",
+     "haiku-test": "0/386",
+     "mercury-dev": "126/126",
+     "mercury-test": "0/193"
+    }
+   },
+   {
+    "sha": "297a303e",
+    "what": "v1.1 frozen; D4",
+    "at": "2026-10-21T21:43:37+00:00",
+    "rowsExisting": {
+     "haiku-dev": "252/252",
+     "haiku-test": "342/386",
+     "mercury-dev": "126/126",
+     "mercury-test": "193/193"
+    }
+   },
+   {
+    "sha": "2fd70d02",
+    "what": "step 5 test results",
+    "at": "2026-10-21T21:51:45+00:00",
+    "rowsExisting": {
+     "haiku-dev": "252/252",
+     "haiku-test": "386/386",
+     "mercury-dev": "126/126",
+     "mercury-test": "193/193"
+    }
+   }
+  ],
+  "firstRow": {
+   "haiku-dev": "2026-10-21T21:31:25.916Z",
+   "haiku-test": "2026-10-21T21:37:18.646Z",
+   "mercury-dev": "2026-10-21T21:31:21.813Z",
+   "mercury-test": "2026-10-21T21:37:16.838Z"
+  },
+  "lastRow": {
+   "haiku-dev": "2026-10-21T21:36:17.065Z",
+   "haiku-test": "2026-10-21T21:44:19.474Z",
+   "mercury-dev": "2026-10-21T21:33:09.034Z",
+   "mercury-test": "2026-10-21T21:39:48.217Z"
+  }
+ },
+ "B": {
+  "quoted": [
+   {
+    "id": "ab-sales.historical_context_pipeline_report",
+    "where": "RUBRIC.md:29 \"this week's update, same format as last time\"; judge-prompt.mjs:12 \"this week's update, same as last time\"",
+    "gold": "recurring"
+   },
+   {
+    "id": "ab-marketing.newsletter_unsubscribe_processing",
+    "where": "RUBRIC.md:30 \"the latest batch, same workflow as last time\"",
+    "gold": "recurring"
+   },
+   {
+    "id": "au-biz09",
+    "where": "RUBRIC.md:62 \"Close the books for September\"",
+    "gold": "workflow"
+   },
+   {
+    "id": "ab-finance.commission_calculation",
+    "where": "RUBRIC.md:62-63 \"calculate March commissions\"",
+    "gold": "workflow"
+   },
+   {
+    "id": "au-adv12",
+    "where": "RUBRIC.md:65 \"what did I spend each month last year\"",
+    "gold": "none"
+   },
+   {
+    "id": "au-adv13",
+    "where": "RUBRIC.md:28 and judge-prompt.mjs:12 \"keep an eye on\"",
+    "gold": "recurring"
+   }
+  ],
+  "pattern": [
+   {
+    "id": "ab-hr.anniversary_recognition",
+    "where": "\"this month's ..., same format as last month\" (the RUBRIC.md:29 pattern)",
+    "gold": "recurring"
+   },
+   {
+    "id": "me-m2-casual-2",
+    "where": "\"Same format as last week's report\" (the RUBRIC.md:29 pattern)",
+    "gold": "recurring"
+   }
+  ],
+  "testOnlyCues": [
+   {
+    "cue": "retrospective",
+    "testItems": [
+     "au-adv12",
+     "me-m-oss-1",
+     "me-m-question-8",
+     "me-m-bizauto-8",
+     "me-m2-ongoing-2",
+     "me-m2-process-7",
+     "me-m2-program-6",
+     "me-m2-casual-2",
+     "ab-hr.anniversary_recognition",
+     "ab-hr.recognition_nominations",
+     "abr-abr-ops-slawatch"
+    ]
+   },
+   {
+    "cue": "same-as-last",
+    "testItems": [
+     "me-m2-casual-2",
+     "ab-hr.anniversary_recognition",
+     "ab-marketing.newsletter_unsubscribe_processing",
+     "ab-sales.historical_context_pipeline_report",
+     "abr-abr-ops-slawatch"
+    ]
+   },
+   {
+    "cue": "what-if",
+    "testItems": [
+     "au-rc11",
+     "au-adv04"
+    ]
+   },
+   {
+    "cue": "irr:money-move",
+    "testItems": [
+     "au-biz07"
+    ]
+   },
+   {
+    "cue": "irr:mass-send",
+    "testItems": [
+     "au-biz11"
+    ]
+   },
+   {
+    "cue": "keep-watch",
+    "testItems": [
+     "au-adv13"
+    ]
+   }
+  ],
+  "sets": {
+   "L1": 6,
+   "L1b": 2,
+   "L2": 18,
+   "union": 20
+  },
+  "scores": {
+   "all test": {
+    "router v1 (preregistered)": {
+     "n": 193,
+     "negatives": 132,
+     "positives": 61,
+     "fp": 9,
+     "tp": 41,
+     "fn": 20,
+     "recall": 0.6721,
+     "precision": 0.82,
+     "f1": 0.7387,
+     "fpUpper95": 0.1255,
+     "auroc": 0.9155
+    },
+    "router v1.1 (dev evidence)": {
+     "n": 193,
+     "negatives": 132,
+     "positives": 61,
+     "fp": 8,
+     "tp": 43,
+     "fn": 18,
+     "recall": 0.7049,
+     "precision": 0.8431,
+     "f1": 0.7679,
+     "fpUpper95": 0.1159,
+     "auroc": 0.9282
+    },
+    "Haiku direct": {
+     "n": 193,
+     "negatives": 132,
+     "positives": 61,
+     "fp": 5,
+     "tp": 59,
+     "fn": 2,
+     "recall": 0.9672,
+     "precision": 0.9219,
+     "f1": 0.944,
+     "fpUpper95": 0.0862,
+     "auroc": 0.9957
+    },
+    "Mercury direct (faults = no)": {
+     "n": 193,
+     "negatives": 132,
+     "positives": 61,
+     "fp": 5,
+     "tp": 54,
+     "fn": 7,
+     "recall": 0.8852,
+     "precision": 0.9153,
+     "f1": 0.9,
+     "fpUpper95": 0.0862,
+     "auroc": 0.9144
+    },
+    "keyword": {
+     "n": 193,
+     "negatives": 132,
+     "positives": 61,
+     "fp": 27,
+     "tp": 43,
+     "fn": 18,
+     "recall": 0.7049,
+     "precision": 0.6143,
+     "f1": 0.6565,
+     "fpUpper95": 0.2835,
+     "auroc": 0.7502
+    },
+    "n-gram LR ($0 learned, post-hoc)": {
+     "n": 193,
+     "negatives": 132,
+     "positives": 61,
+     "fp": 1,
+     "tp": 18,
+     "fn": 43,
+     "recall": 0.2951,
+     "precision": 0.9474,
+     "f1": 0.45,
+     "fpUpper95": 0.0415,
+     "auroc": 0.9179
+    }
+   },
+   "without L1 (quoted)": {
+    "router v1 (preregistered)": {
+     "n": 187,
+     "negatives": 131,
+     "positives": 56,
+     "fp": 9,
+     "tp": 38,
+     "fn": 18,
+     "recall": 0.6786,
+     "precision": 0.8085,
+     "f1": 0.7379,
+     "fpUpper95": 0.1264,
+     "auroc": 0.9168
+    },
+    "router v1.1 (dev evidence)": {
+     "n": 187,
+     "negatives": 131,
+     "positives": 56,
+     "fp": 8,
+     "tp": 40,
+     "fn": 16,
+     "recall": 0.7143,
+     "precision": 0.8333,
+     "f1": 0.7692,
+     "fpUpper95": 0.1168,
+     "auroc": 0.9308
+    },
+    "Haiku direct": {
+     "n": 187,
+     "negatives": 131,
+     "positives": 56,
+     "fp": 5,
+     "tp": 54,
+     "fn": 2,
+     "recall": 0.9643,
+     "precision": 0.9153,
+     "f1": 0.9391,
+     "fpUpper95": 0.0868,
+     "auroc": 0.9956
+    },
+    "Mercury direct (faults = no)": {
+     "n": 187,
+     "negatives": 131,
+     "positives": 56,
+     "fp": 5,
+     "tp": 49,
+     "fn": 7,
+     "recall": 0.875,
+     "precision": 0.9074,
+     "f1": 0.8909,
+     "fpUpper95": 0.0868,
+     "auroc": 0.9117
+    },
+    "keyword": {
+     "n": 187,
+     "negatives": 131,
+     "positives": 56,
+     "fp": 27,
+     "tp": 40,
+     "fn": 16,
+     "recall": 0.7143,
+     "precision": 0.597,
+     "f1": 0.6504,
+     "fpUpper95": 0.2855,
+     "auroc": 0.7541
+    },
+    "n-gram LR ($0 learned, post-hoc)": {
+     "n": 187,
+     "negatives": 131,
+     "positives": 56,
+     "fp": 1,
+     "tp": 17,
+     "fn": 39,
+     "recall": 0.3036,
+     "precision": 0.9444,
+     "f1": 0.4595,
+     "fpUpper95": 0.0418,
+     "auroc": 0.9256
+    }
+   },
+   "without L1 + L1b": {
+    "router v1 (preregistered)": {
+     "n": 185,
+     "negatives": 131,
+     "positives": 54,
+     "fp": 9,
+     "tp": 37,
+     "fn": 17,
+     "recall": 0.6852,
+     "precision": 0.8043,
+     "f1": 0.74,
+     "fpUpper95": 0.1264,
+     "auroc": 0.9164
+    },
+    "router v1.1 (dev evidence)": {
+     "n": 185,
+     "negatives": 131,
+     "positives": 54,
+     "fp": 8,
+     "tp": 38,
+     "fn": 16,
+     "recall": 0.7037,
+     "precision": 0.8261,
+     "f1": 0.76,
+     "fpUpper95": 0.1168,
+     "auroc": 0.9284
+    },
+    "Haiku direct": {
+     "n": 185,
+     "negatives": 131,
+     "positives": 54,
+     "fp": 5,
+     "tp": 52,
+     "fn": 2,
+     "recall": 0.963,
+     "precision": 0.9123,
+     "f1": 0.9369,
+     "fpUpper95": 0.0868,
+     "auroc": 0.9955
+    },
+    "Mercury direct (faults = no)": {
+     "n": 185,
+     "negatives": 131,
+     "positives": 54,
+     "fp": 5,
+     "tp": 47,
+     "fn": 7,
+     "recall": 0.8704,
+     "precision": 0.9038,
+     "f1": 0.8868,
+     "fpUpper95": 0.0868,
+     "auroc": 0.9085
+    },
+    "keyword": {
+     "n": 185,
+     "negatives": 131,
+     "positives": 54,
+     "fp": 27,
+     "tp": 39,
+     "fn": 15,
+     "recall": 0.7222,
+     "precision": 0.5909,
+     "f1": 0.65,
+     "fpUpper95": 0.2855,
+     "auroc": 0.7581
+    },
+    "n-gram LR ($0 learned, post-hoc)": {
+     "n": 185,
+     "negatives": 131,
+     "positives": 54,
+     "fp": 1,
+     "tp": 16,
+     "fn": 38,
+     "recall": 0.2963,
+     "precision": 0.9412,
+     "f1": 0.4507,
+     "fpUpper95": 0.0418,
+     "auroc": 0.9242
+    }
+   },
+   "without L1 + L1b + L2 (test-only cues)": {
+    "router v1 (preregistered)": {
+     "n": 173,
+     "negatives": 124,
+     "positives": 49,
+     "fp": 9,
+     "tp": 34,
+     "fn": 15,
+     "recall": 0.6939,
+     "precision": 0.7907,
+     "f1": 0.7391,
+     "fpUpper95": 0.1333,
+     "auroc": 0.9153
+    },
+    "router v1.1 (dev evidence)": {
+     "n": 173,
+     "negatives": 124,
+     "positives": 49,
+     "fp": 8,
+     "tp": 35,
+     "fn": 14,
+     "recall": 0.7143,
+     "precision": 0.814,
+     "f1": 0.7609,
+     "fpUpper95": 0.1232,
+     "auroc": 0.9291
+    },
+    "Haiku direct": {
+     "n": 173,
+     "negatives": 124,
+     "positives": 49,
+     "fp": 5,
+     "tp": 47,
+     "fn": 2,
+     "recall": 0.9592,
+     "precision": 0.9038,
+     "f1": 0.9307,
+     "fpUpper95": 0.0916,
+     "auroc": 0.9951
+    },
+    "Mercury direct (faults = no)": {
+     "n": 173,
+     "negatives": 124,
+     "positives": 49,
+     "fp": 5,
+     "tp": 43,
+     "fn": 6,
+     "recall": 0.8776,
+     "precision": 0.8958,
+     "f1": 0.8866,
+     "fpUpper95": 0.0916,
+     "auroc": 0.9119
+    },
+    "keyword": {
+     "n": 173,
+     "negatives": 124,
+     "positives": 49,
+     "fp": 27,
+     "tp": 35,
+     "fn": 14,
+     "recall": 0.7143,
+     "precision": 0.5645,
+     "f1": 0.6306,
+     "fpUpper95": 0.3008,
+     "auroc": 0.7483
+    },
+    "n-gram LR ($0 learned, post-hoc)": {
+     "n": 173,
+     "negatives": 124,
+     "positives": 49,
+     "fp": 1,
+     "tp": 15,
+     "fn": 34,
+     "recall": 0.3061,
+     "precision": 0.9375,
+     "f1": 0.4615,
+     "fpUpper95": 0.0441,
+     "auroc": 0.919
+    }
+   }
+  },
+  "haikuHighConfidence": {
+   "all": {
+    "n": 160,
+    "negatives": 112,
+    "positives": 48,
+    "fp": 0,
+    "tp": 48,
+    "fn": 0,
+    "recall": 1,
+    "precision": 1,
+    "f1": 1,
+    "fpUpper95": 0.0324,
+    "auroc": 1
+   },
+   "withoutLeaks": {
+    "n": 145,
+    "negatives": 106,
+    "positives": 39,
+    "fp": 0,
+    "tp": 39,
+    "fn": 0,
+    "recall": 1,
+    "precision": 1,
+    "f1": 1,
+    "fpUpper95": 0.0342,
+    "auroc": 1
+   }
+  }
+ },
+ "C": {
+  "faults": [
+   {
+    "id": "au-q11",
+    "gold": "none",
+    "code": "MODEL_PROTOCOL"
+   },
+   {
+    "id": "au-ci03",
+    "gold": "recurring",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "au-oss11",
+    "gold": "workflow",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "au-biz07",
+    "gold": "checklist",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "au-biz16",
+    "gold": "recurring",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "au-adv04",
+    "gold": "none",
+    "code": "MODEL_SCHEMA"
+   },
+   {
+    "id": "me-m-bizauto-2",
+    "gold": "none",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "me-m-bizauto-4",
+    "gold": "none",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "me-m-bizauto-5",
+    "gold": "none",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "me-m-bizauto-6",
+    "gold": "none",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "ab-finance.revenue_recognition",
+    "gold": "workflow",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "ab-hr.slack_benefits_inquiry",
+    "gold": "workflow",
+    "code": "MODEL_TRUNCATED"
+   },
+   {
+    "id": "eb-e8",
+    "gold": "recurring",
+    "code": "MODEL_TRUNCATED"
+   }
+  ],
+  "survivors": {
+   "n": 180,
+   "negatives": 125,
+   "positives": 55,
+   "fp": 5,
+   "tp": 54,
+   "fn": 1,
+   "recall": 0.9818,
+   "precision": 0.9153,
+   "f1": 0.9474,
+   "fpUpper95": 0.0909,
+   "auroc": 0.974
+  },
+  "faultsAsNo": {
+   "n": 193,
+   "negatives": 132,
+   "positives": 61,
+   "fp": 5,
+   "tp": 54,
+   "fn": 7,
+   "recall": 0.8852,
+   "precision": 0.9153,
+   "f1": 0.9,
+   "fpUpper95": 0.0862,
+   "auroc": 0.9144
+  },
+  "faultsToCodeV1": {
+   "n": 193,
+   "negatives": 132,
+   "positives": 61,
+   "fp": 7,
+   "tp": 59,
+   "fn": 2,
+   "recall": 0.9672,
+   "precision": 0.8939,
+   "f1": 0.9291,
+   "fpUpper95": 0.1062,
+   "auroc": 0.9725
+  },
+  "refault4000": {
+   "rows": [
+    {
+     "id": "au-q11",
+     "gold": "none",
+     "mode": "none",
+     "p": 0,
+     "outputTokens": 61
+    },
+    {
+     "id": "au-ci03",
+     "gold": "recurring",
+     "mode": "none",
+     "p": 0.15,
+     "outputTokens": 1049
+    },
+    {
+     "id": "au-oss11",
+     "gold": "workflow",
+     "mode": "checklist",
+     "p": 0.1,
+     "outputTokens": 941
+    },
+    {
+     "id": "au-biz07",
+     "gold": "checklist",
+     "mode": "checklist",
+     "p": 0.2,
+     "outputTokens": 409
+    },
+    {
+     "id": "au-biz16",
+     "gold": "recurring",
+     "mode": "recurring",
+     "p": 0.95,
+     "outputTokens": 113
+    },
+    {
+     "id": "au-adv04",
+     "gold": "none",
+     "mode": "none",
+     "p": 0,
+     "outputTokens": 142
+    },
+    {
+     "id": "me-m-bizauto-2",
+     "gold": "none",
+     "mode": "workflow",
+     "p": 0.85,
+     "outputTokens": 653
+    },
+    {
+     "id": "me-m-bizauto-4",
+     "gold": "none",
+     "mode": "none",
+     "p": 0.1,
+     "outputTokens": 342
+    },
+    {
+     "id": "me-m-bizauto-5",
+     "gold": "none",
+     "mode": "none",
+     "p": 0.05,
+     "outputTokens": 581
+    },
+    {
+     "id": "me-m-bizauto-6",
+     "gold": "none",
+     "mode": "none",
+     "p": 0.05,
+     "outputTokens": 1275
+    },
+    {
+     "id": "ab-finance.revenue_recognition",
+     "gold": "workflow",
+     "mode": "workflow",
+     "p": 0.9,
+     "outputTokens": 310
+    },
+    {
+     "id": "ab-hr.slack_benefits_inquiry",
+     "gold": "workflow",
+     "mode": "workflow",
+     "p": 0.9,
+     "outputTokens": 990
+    },
+    {
+     "id": "eb-e8",
+     "gold": "recurring",
+     "mode": "none",
+     "p": 0.01,
+     "outputTokens": 389
+    }
+   ],
+   "answered": 13,
+   "merged": {
+    "n": 193,
+    "negatives": 132,
+    "positives": 61,
+    "fp": 6,
+    "tp": 57,
+    "fn": 4,
+    "recall": 0.9344,
+    "precision": 0.9048,
+    "f1": 0.9194,
+    "fpUpper95": 0.0963,
+    "auroc": 0.9679
+   }
+  }
+ },
+ "D": {
+  "router v1": {
+   "fp<=0": {
+    "t": 0.6034,
+    "fp": 0,
+    "recall": 0.5574
+   },
+   "fp<=1": {
+    "t": 0.5555,
+    "fp": 1,
+    "recall": 0.5902
+   },
+   "fp<=5": {
+    "t": 0.4642,
+    "fp": 5,
+    "recall": 0.623
+   },
+   "fp<=9": {
+    "t": 0.4026,
+    "fp": 9,
+    "recall": 0.6721
+   }
+  },
+  "router v1.1": {
+   "fp<=0": {
+    "t": 0.6046,
+    "fp": 0,
+    "recall": 0.6066
+   },
+   "fp<=1": {
+    "t": 0.5568,
+    "fp": 1,
+    "recall": 0.6557
+   },
+   "fp<=5": {
+    "t": 0.4658,
+    "fp": 5,
+    "recall": 0.6721
+   },
+   "fp<=9": {
+    "t": 0.4019,
+    "fp": 9,
+    "recall": 0.7377
+   }
+  },
+  "Haiku": {
+   "fp<=0": {
+    "t": 0.92,
+    "fp": 0,
+    "recall": 0.5574
+   },
+   "fp<=1": {
+    "t": 0.8,
+    "fp": 1,
+    "recall": 0.9344
+   },
+   "fp<=5": {
+    "t": 0.6,
+    "fp": 5,
+    "recall": 0.9672
+   },
+   "fp<=9": {
+    "t": 0.25,
+    "fp": 9,
+    "recall": 1
+   }
+  },
+  "Mercury (faults = 0)": {
+   "fp<=0": {
+    "t": 0.98,
+    "fp": 0,
+    "recall": 0.3607
+   },
+   "fp<=1": {
+    "t": 0.97,
+    "fp": 1,
+    "recall": 0.377
+   },
+   "fp<=5": {
+    "t": 0.75,
+    "fp": 5,
+    "recall": 0.8689
+   },
+   "fp<=9": {
+    "t": 0.75,
+    "fp": 5,
+    "recall": 0.8689
+   }
+  },
+  "n-gram LR": {
+   "fp<=0": {
+    "t": 0.591112,
+    "fp": 0,
+    "recall": 0.082
+   },
+   "fp<=1": {
+    "t": 0.427413,
+    "fp": 1,
+    "recall": 0.3443
+   },
+   "fp<=5": {
+    "t": 0.388371,
+    "fp": 5,
+    "recall": 0.459
+   },
+   "fp<=9": {
+    "t": 0.366657,
+    "fp": 9,
+    "recall": 0.5574
+   }
+  }
+ },
+ "E": {
+  "preregRulePassChance": {
+   "devNegatives": 84,
+   "testNegatives": 132,
+   "chance": 0.3889,
+   "note": "for any score whose negatives are i.i.d. across splits, P(no test negative above the highest dev negative) = 84/216; the +0.02 margin raises it a little"
+  },
+  "cpUpperAtZero": {
+   "n132": 0.0276,
+   "n84": 0.043
+  },
+  "negativesNeededForZeroFp": {
+   "5%": {
+    "twoSided95": 72,
+    "oneSided95": 59
+   },
+   "2%": {
+    "twoSided95": 183,
+    "oneSided95": 149
+   },
+   "1%": {
+    "twoSided95": 368,
+    "oneSided95": 299
+   }
+  },
+  "oofRouterV1": {
+   "fp": 1,
+   "recall": 0.9524,
+   "auroc": 0.9983
+  },
+  "rule": "post-hoc: among (judge, band, delta), the highest OUT-OF-FOLD dev recall whose OOF dev false triggers do not exceed code only; ties -> Mercury before Haiku, smaller delta, one-sided before two-sided",
+  "grid": [
+   {
+    "judge": "mercury",
+    "band": "none",
+    "delta": 0,
+    "dev": {
+     "fp": 1,
+     "recall": 0.9524,
+     "f1": 0.9639,
+     "asked": 0,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 9,
+     "recall": 0.6721,
+     "f1": 0.7387,
+     "asked": 0,
+     "fallbacks": 0
+    }
+   },
+   {
+    "judge": "mercury",
+    "band": "one-sided",
+    "delta": 0.1,
+    "dev": {
+     "fp": 1,
+     "recall": 1,
+     "f1": 0.9882,
+     "asked": 4,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 10,
+     "recall": 0.7213,
+     "f1": 0.7652,
+     "asked": 10,
+     "fallbacks": 1
+    }
+   },
+   {
+    "judge": "mercury",
+    "band": "one-sided",
+    "delta": 0.2,
+    "dev": {
+     "fp": 2,
+     "recall": 1,
+     "f1": 0.9767,
+     "asked": 10,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 10,
+     "recall": 0.8689,
+     "f1": 0.8548,
+     "asked": 25,
+     "fallbacks": 3
+    }
+   },
+   {
+    "judge": "mercury",
+    "band": "one-sided",
+    "delta": 0.3,
+    "dev": {
+     "fp": 4,
+     "recall": 1,
+     "f1": 0.9545,
+     "asked": 31,
+     "fallbacks": 1
+    },
+    "test": {
+     "fp": 11,
+     "recall": 0.9016,
+     "f1": 0.8661,
+     "asked": 61,
+     "fallbacks": 4
+    }
+   },
+   {
+    "judge": "mercury",
+    "band": "one-sided",
+    "delta": 0.4,
+    "dev": {
+     "fp": 5,
+     "recall": 1,
+     "f1": 0.9438,
+     "asked": 84,
+     "fallbacks": 1
+    },
+    "test": {
+     "fp": 13,
+     "recall": 0.9672,
+     "f1": 0.8872,
+     "asked": 137,
+     "fallbacks": 6
+    }
+   },
+   {
+    "judge": "mercury",
+    "band": "two-sided",
+    "delta": 0.1,
+    "dev": {
+     "fp": 1,
+     "recall": 0.9762,
+     "f1": 0.9762,
+     "asked": 6,
+     "fallbacks": 1
+    },
+    "test": {
+     "fp": 7,
+     "recall": 0.7213,
+     "f1": 0.7857,
+     "asked": 17,
+     "fallbacks": 4
+    }
+   },
+   {
+    "judge": "mercury",
+    "band": "two-sided",
+    "delta": 0.2,
+    "dev": {
+     "fp": 2,
+     "recall": 0.9762,
+     "f1": 0.9647,
+     "asked": 14,
+     "fallbacks": 2
+    },
+    "test": {
+     "fp": 4,
+     "recall": 0.8689,
+     "f1": 0.8983,
+     "asked": 37,
+     "fallbacks": 7
+    }
+   },
+   {
+    "judge": "mercury",
+    "band": "two-sided",
+    "delta": 0.3,
+    "dev": {
+     "fp": 4,
+     "recall": 0.9762,
+     "f1": 0.9425,
+     "asked": 38,
+     "fallbacks": 3
+    },
+    "test": {
+     "fp": 5,
+     "recall": 0.9016,
+     "f1": 0.9091,
+     "asked": 81,
+     "fallbacks": 8
+    }
+   },
+   {
+    "judge": "mercury",
+    "band": "two-sided",
+    "delta": 0.4,
+    "dev": {
+     "fp": 5,
+     "recall": 0.9762,
+     "f1": 0.9318,
+     "asked": 97,
+     "fallbacks": 4
+    },
+    "test": {
+     "fp": 7,
+     "recall": 0.9672,
+     "f1": 0.9291,
+     "asked": 162,
+     "fallbacks": 10
+    }
+   },
+   {
+    "judge": "haiku",
+    "band": "none",
+    "delta": 0,
+    "dev": {
+     "fp": 1,
+     "recall": 0.9524,
+     "f1": 0.9639,
+     "asked": 0,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 9,
+     "recall": 0.6721,
+     "f1": 0.7387,
+     "asked": 0,
+     "fallbacks": 0
+    }
+   },
+   {
+    "judge": "haiku",
+    "band": "one-sided",
+    "delta": 0.1,
+    "dev": {
+     "fp": 1,
+     "recall": 1,
+     "f1": 0.9882,
+     "asked": 4,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 10,
+     "recall": 0.7213,
+     "f1": 0.7652,
+     "asked": 11,
+     "fallbacks": 0
+    }
+   },
+   {
+    "judge": "haiku",
+    "band": "one-sided",
+    "delta": 0.2,
+    "dev": {
+     "fp": 1,
+     "recall": 1,
+     "f1": 0.9882,
+     "asked": 10,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 11,
+     "recall": 0.8525,
+     "f1": 0.8387,
+     "asked": 28,
+     "fallbacks": 0
+    }
+   },
+   {
+    "judge": "haiku",
+    "band": "one-sided",
+    "delta": 0.3,
+    "dev": {
+     "fp": 2,
+     "recall": 1,
+     "f1": 0.9767,
+     "asked": 32,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 11,
+     "recall": 0.9016,
+     "f1": 0.8661,
+     "asked": 65,
+     "fallbacks": 0
+    }
+   },
+   {
+    "judge": "haiku",
+    "band": "one-sided",
+    "delta": 0.4,
+    "dev": {
+     "fp": 2,
+     "recall": 1,
+     "f1": 0.9767,
+     "asked": 85,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 13,
+     "recall": 0.9672,
+     "f1": 0.8872,
+     "asked": 143,
+     "fallbacks": 0
+    }
+   },
+   {
+    "judge": "haiku",
+    "band": "two-sided",
+    "delta": 0.1,
+    "dev": {
+     "fp": 1,
+     "recall": 0.9762,
+     "f1": 0.9762,
+     "asked": 7,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 5,
+     "recall": 0.7213,
+     "f1": 0.8,
+     "asked": 21,
+     "fallbacks": 0
+    }
+   },
+   {
+    "judge": "haiku",
+    "band": "two-sided",
+    "delta": 0.2,
+    "dev": {
+     "fp": 1,
+     "recall": 0.9762,
+     "f1": 0.9762,
+     "asked": 16,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 3,
+     "recall": 0.8525,
+     "f1": 0.8966,
+     "asked": 44,
+     "fallbacks": 0
+    }
+   },
+   {
+    "judge": "haiku",
+    "band": "two-sided",
+    "delta": 0.3,
+    "dev": {
+     "fp": 2,
+     "recall": 0.9762,
+     "f1": 0.9647,
+     "asked": 41,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 3,
+     "recall": 0.9016,
+     "f1": 0.9244,
+     "asked": 89,
+     "fallbacks": 0
+    }
+   },
+   {
+    "judge": "haiku",
+    "band": "two-sided",
+    "delta": 0.4,
+    "dev": {
+     "fp": 2,
+     "recall": 0.9762,
+     "f1": 0.9647,
+     "asked": 101,
+     "fallbacks": 0
+    },
+    "test": {
+     "fp": 5,
+     "recall": 0.9672,
+     "f1": 0.944,
+     "asked": 172,
+     "fallbacks": 0
+    }
+   }
+  ],
+  "choice": {
+   "judge": "mercury",
+   "band": "one-sided",
+   "delta": 0.1,
+   "dev": {
+    "fp": 1,
+    "recall": 1,
+    "f1": 0.9882,
+    "asked": 4,
+    "fallbacks": 0
+   },
+   "test": {
+    "fp": 10,
+    "recall": 0.7213,
+    "f1": 0.7652,
+    "asked": 10,
+    "fallbacks": 1
+   }
+  }
+ },
+ "F": {
+  "mercuryCalls": {
+   "me-m-code": {
+    "dev": 3,
+    "test": 5
+   },
+   "me-m-bigcode": {
+    "dev": 2,
+    "test": 6
+   },
+   "me-m-devops": {
+    "dev": 4,
+    "test": 4
+   },
+   "me-m-oss": {
+    "dev": 3,
+    "test": 5
+   },
+   "me-m-research": {
+    "dev": 3,
+    "test": 5
+   },
+   "me-m-question": {
+    "dev": 6,
+    "test": 2
+   },
+   "me-m-bizauto": {
+    "dev": 3,
+    "test": 5
+   },
+   "me-m-bizone": {
+    "dev": 2,
+    "test": 6
+   },
+   "me-m-tricky": {
+    "dev": 2,
+    "test": 6
+   },
+   "me-m-casual": {
+    "dev": 3,
+    "test": 5
+   },
+   "me-m2-ongoing": {
+    "dev": 4,
+    "test": 4
+   },
+   "me-m2-process": {
+    "dev": 3,
+    "test": 5
+   },
+   "me-m2-program": {
+    "dev": 3,
+    "test": 5
+   },
+   "me-m2-casual": {
+    "dev": 4,
+    "test": 4
+   }
+  },
+  "straddling": 14,
+  "callsTotal": 14,
+  "clusterCleanSlice": {
+   "what": "independent text without the Mercury-written items (AutomationBench prompts, anchor beds, family policies, E-bed specs)",
+   "scores": {
+    "router v1 (preregistered)": {
+     "n": 46,
+     "negatives": 22,
+     "positives": 24,
+     "fp": 3,
+     "tp": 18,
+     "fn": 6,
+     "recall": 0.75,
+     "precision": 0.8571,
+     "f1": 0.8,
+     "fpUpper95": 0.3491,
+     "auroc": 0.8864
+    },
+    "router v1.1 (dev evidence)": {
+     "n": 46,
+     "negatives": 22,
+     "positives": 24,
+     "fp": 3,
+     "tp": 19,
+     "fn": 5,
+     "recall": 0.7917,
+     "precision": 0.8636,
+     "f1": 0.8261,
+     "fpUpper95": 0.3491,
+     "auroc": 0.9034
+    },
+    "Haiku direct": {
+     "n": 46,
+     "negatives": 22,
+     "positives": 24,
+     "fp": 2,
+     "tp": 23,
+     "fn": 1,
+     "recall": 0.9583,
+     "precision": 0.92,
+     "f1": 0.9388,
+     "fpUpper95": 0.2916,
+     "auroc": 0.9934
+    },
+    "Mercury direct (faults = no)": {
+     "n": 46,
+     "negatives": 22,
+     "positives": 24,
+     "fp": 1,
+     "tp": 21,
+     "fn": 3,
+     "recall": 0.875,
+     "precision": 0.9545,
+     "f1": 0.913,
+     "fpUpper95": 0.2284,
+     "auroc": 0.9129
+    },
+    "keyword": {
+     "n": 46,
+     "negatives": 22,
+     "positives": 24,
+     "fp": 10,
+     "tp": 17,
+     "fn": 7,
+     "recall": 0.7083,
+     "precision": 0.6296,
+     "f1": 0.6667,
+     "fpUpper95": 0.6779,
+     "auroc": 0.6269
+    },
+    "n-gram LR ($0 learned, post-hoc)": {
+     "n": 46,
+     "negatives": 22,
+     "positives": 24,
+     "fp": 1,
+     "tp": 18,
+     "fn": 6,
+     "recall": 0.75,
+     "precision": 0.9474,
+     "f1": 0.8372,
+     "fpUpper95": 0.2284,
+     "auroc": 0.8977
+    }
+   }
+  },
+  "mercurySlice": {
+   "router v1 (preregistered)": {
+    "n": 67,
+    "negatives": 50,
+    "positives": 17,
+    "fp": 5,
+    "tp": 7,
+    "fn": 10,
+    "recall": 0.4118,
+    "precision": 0.5833,
+    "f1": 0.4828,
+    "fpUpper95": 0.2181,
+    "auroc": 0.7712
+   },
+   "router v1.1 (dev evidence)": {
+    "n": 67,
+    "negatives": 50,
+    "positives": 17,
+    "fp": 4,
+    "tp": 8,
+    "fn": 9,
+    "recall": 0.4706,
+    "precision": 0.6667,
+    "f1": 0.5517,
+    "fpUpper95": 0.1923,
+    "auroc": 0.8029
+   },
+   "Haiku direct": {
+    "n": 67,
+    "negatives": 50,
+    "positives": 17,
+    "fp": 1,
+    "tp": 17,
+    "fn": 0,
+    "recall": 1,
+    "precision": 0.9444,
+    "f1": 0.9714,
+    "fpUpper95": 0.1065,
+    "auroc": 0.9935
+   },
+   "Mercury direct (faults = no)": {
+    "n": 67,
+    "negatives": 50,
+    "positives": 17,
+    "fp": 1,
+    "tp": 16,
+    "fn": 1,
+    "recall": 0.9412,
+    "precision": 0.9412,
+    "f1": 0.9412,
+    "fpUpper95": 0.1065,
+    "auroc": 0.9488
+   },
+   "keyword": {
+    "n": 67,
+    "negatives": 50,
+    "positives": 17,
+    "fp": 11,
+    "tp": 11,
+    "fn": 6,
+    "recall": 0.6471,
+    "precision": 0.5,
+    "f1": 0.5641,
+    "fpUpper95": 0.3596,
+    "auroc": 0.7135
+   },
+   "n-gram LR ($0 learned, post-hoc)": {
+    "n": 67,
+    "negatives": 50,
+    "positives": 17,
+    "fp": 0,
+    "tp": 0,
+    "fn": 17,
+    "recall": 0,
+    "precision": null,
+    "f1": 0,
+    "fpUpper95": 0.0711,
+    "auroc": 0.9094
+   }
+  }
+ },
+ "G": {
+  "choice": {
+   "lambda": 1,
+   "threshold": 0.457064,
+   "oofNegMax": 0.4370638513139236,
+   "grid": [
+    {
+     "lambda": 0.01,
+     "oofAuroc": 0.8909
+    },
+    {
+     "lambda": 0.03,
+     "oofAuroc": 0.8923
+    },
+    {
+     "lambda": 0.1,
+     "oofAuroc": 0.8951
+    },
+    {
+     "lambda": 0.3,
+     "oofAuroc": 0.8971
+    },
+    {
+     "lambda": 1,
+     "oofAuroc": 0.9025
+    },
+    {
+     "lambda": 3,
+     "oofAuroc": 0.8934
+    },
+    {
+     "lambda": 10,
+     "oofAuroc": 0.7795
+    }
+   ],
+   "devOof": {
+    "tp": 10,
+    "fp": 0,
+    "fn": 32,
+    "tn": 84,
+    "precision": 1,
+    "recall": 0.2381,
+    "f1": 0.3846,
+    "accuracy": 0.746,
+    "auroc": 0.9025
+   }
+  },
+  "test": {
+   "tp": 18,
+   "fp": 1,
+   "fn": 43,
+   "tn": 131,
+   "precision": 0.9474,
+   "recall": 0.2951,
+   "f1": 0.45,
+   "accuracy": 0.772,
+   "negatives": 132,
+   "fpRateUpper95": 0.0415,
+   "auroc": 0.9179,
+   "msTotalFitAndScore": 381
+  },
+  "routerV1Auroc": 0.9155,
+  "haikuAuroc": 0.9957
+ },
+ "H": {
+  "schema": "foundry.need-reliability/1",
+  "generatedBy": "experiments/need-router/router1/addendum.mjs",
+  "paramsSha": "102928b5ef8493dce79939e45c42949c1850d095c3d9e7dcaa8b04c736881e58",
+  "detector": "need-primitives/1.1",
+  "cascadeClearBelow": 0.05,
+  "judgeOutputCap": {
+   "claude-haiku-5-5": 1000,
+   "mercury-3": 4000
+  },
+  "preregisteredV1AtDefault": {
+   "fp": 9,
+   "negatives": 132,
+   "tp": 41,
+   "positives": 61,
+   "recall": 0.6721,
+   "fpUpper95": 0.1255
+  },
+  "measuredOn": "ROUTER-1 test split (193 requests: 132 do not need a workflow, 61 do; one author wrote the rubric and every label)",
+  "grade": {
+   "code": "development evidence: the shipped detectors (v1.1) were frozen after test judge rows existed and tuned on probes that paraphrase test items (RESULT-ROUTER-1, review B1); the preregistered v1 scored 9/132 false triggers and recall 0.67 at 0.5",
+   "cascade:claude-haiku-5-5": "post-hoc: the cascade and its 0.05 clearing bar were chosen after the test split was read; sealed confirmation pending",
+   "cascade:mercury-3": "post-hoc, as the Haiku cascade; the frozen pass used a 1,000-token output cap and 13 of 193 test calls gave no answer, so those 13 were re-asked at the product's 4,000-token cap on 2026-11-04 (all answered) and their answers are used here"
+  },
+  "points": {
+   "code": {
+    "0": {
+     "test": {
+      "n": 193,
+      "fp": 0,
+      "negatives": 132,
+      "tp": 0,
+      "positives": 61,
+      "recall": 0,
+      "precision": null,
+      "fpUpper95": 0.0276,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 0,
+      "negatives": 84,
+      "tp": 0,
+      "positives": 42,
+      "recall": 0,
+      "precision": null,
+      "fpUpper95": 0.043,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "1": {
+     "test": {
+      "n": 193,
+      "fp": 132,
+      "negatives": 132,
+      "tp": 61,
+      "positives": 61,
+      "recall": 1,
+      "precision": 0.3161,
+      "fpUpper95": 1,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 84,
+      "negatives": 84,
+      "tp": 42,
+      "positives": 42,
+      "recall": 1,
+      "precision": 0.3333,
+      "fpUpper95": 1,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "0.25": {
+     "test": {
+      "n": 193,
+      "fp": 0,
+      "negatives": 132,
+      "tp": 26,
+      "positives": 61,
+      "recall": 0.4262,
+      "precision": 1,
+      "fpUpper95": 0.0276,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 0,
+      "negatives": 84,
+      "tp": 34,
+      "positives": 42,
+      "recall": 0.8095,
+      "precision": 1,
+      "fpUpper95": 0.043,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "0.5": {
+     "test": {
+      "n": 193,
+      "fp": 8,
+      "negatives": 132,
+      "tp": 43,
+      "positives": 61,
+      "recall": 0.7049,
+      "precision": 0.8431,
+      "fpUpper95": 0.1159,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 0,
+      "negatives": 84,
+      "tp": 42,
+      "positives": 42,
+      "recall": 1,
+      "precision": 1,
+      "fpUpper95": 0.043,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "0.75": {
+     "test": {
+      "n": 193,
+      "fp": 26,
+      "negatives": 132,
+      "tp": 52,
+      "positives": 61,
+      "recall": 0.8525,
+      "precision": 0.6667,
+      "fpUpper95": 0.2751,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 8,
+      "negatives": 84,
+      "tp": 42,
+      "positives": 42,
+      "recall": 1,
+      "precision": 0.84,
+      "fpUpper95": 0.1791,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     }
+    }
+   },
+   "cascade:claude-haiku-5-5": {
+    "0": {
+     "test": {
+      "n": 193,
+      "fp": 0,
+      "negatives": 132,
+      "tp": 0,
+      "positives": 61,
+      "recall": 0,
+      "precision": null,
+      "fpUpper95": 0.0276,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 0,
+      "negatives": 84,
+      "tp": 0,
+      "positives": 42,
+      "recall": 0,
+      "precision": null,
+      "fpUpper95": 0.043,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "1": {
+     "test": {
+      "n": 193,
+      "fp": 132,
+      "negatives": 132,
+      "tp": 61,
+      "positives": 61,
+      "recall": 1,
+      "precision": 0.3161,
+      "fpUpper95": 1,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 84,
+      "negatives": 84,
+      "tp": 42,
+      "positives": 42,
+      "recall": 1,
+      "precision": 0.3333,
+      "fpUpper95": 1,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "0.25": {
+     "test": {
+      "n": 193,
+      "fp": 2,
+      "negatives": 132,
+      "tp": 58,
+      "positives": 61,
+      "recall": 0.9508,
+      "precision": 0.9667,
+      "fpUpper95": 0.0537,
+      "judgeShare": 0.7668,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0.000208
+     },
+     "dev": {
+      "n": 126,
+      "fp": 2,
+      "negatives": 84,
+      "tp": 39,
+      "positives": 42,
+      "recall": 0.9286,
+      "precision": 0.9512,
+      "fpUpper95": 0.0834,
+      "judgeShare": 0.6825,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0.000191
+     }
+    },
+    "0.5": {
+     "test": {
+      "n": 193,
+      "fp": 5,
+      "negatives": 132,
+      "tp": 59,
+      "positives": 61,
+      "recall": 0.9672,
+      "precision": 0.9219,
+      "fpUpper95": 0.0862,
+      "judgeShare": 0.7668,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0.000208
+     },
+     "dev": {
+      "n": 126,
+      "fp": 2,
+      "negatives": 84,
+      "tp": 41,
+      "positives": 42,
+      "recall": 0.9762,
+      "precision": 0.9535,
+      "fpUpper95": 0.0834,
+      "judgeShare": 0.6825,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0.000191
+     }
+    },
+    "0.75": {
+     "test": {
+      "n": 193,
+      "fp": 9,
+      "negatives": 132,
+      "tp": 61,
+      "positives": 61,
+      "recall": 1,
+      "precision": 0.8714,
+      "fpUpper95": 0.1255,
+      "judgeShare": 0.7668,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0.000208
+     },
+     "dev": {
+      "n": 126,
+      "fp": 5,
+      "negatives": 84,
+      "tp": 41,
+      "positives": 42,
+      "recall": 0.9762,
+      "precision": 0.8913,
+      "fpUpper95": 0.1335,
+      "judgeShare": 0.6825,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0.000191
+     }
+    }
+   },
+   "cascade:mercury-3": {
+    "0": {
+     "test": {
+      "n": 193,
+      "fp": 0,
+      "negatives": 132,
+      "tp": 0,
+      "positives": 61,
+      "recall": 0,
+      "precision": null,
+      "fpUpper95": 0.0276,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 0,
+      "negatives": 84,
+      "tp": 0,
+      "positives": 42,
+      "recall": 0,
+      "precision": null,
+      "fpUpper95": 0.043,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "1": {
+     "test": {
+      "n": 193,
+      "fp": 132,
+      "negatives": 132,
+      "tp": 61,
+      "positives": 61,
+      "recall": 1,
+      "precision": 0.3161,
+      "fpUpper95": 1,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 84,
+      "negatives": 84,
+      "tp": 42,
+      "positives": 42,
+      "recall": 1,
+      "precision": 0.3333,
+      "fpUpper95": 1,
+      "judgeShare": 0,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "0.25": {
+     "test": {
+      "n": 193,
+      "fp": 5,
+      "negatives": 132,
+      "tp": 56,
+      "positives": 61,
+      "recall": 0.918,
+      "precision": 0.918,
+      "fpUpper95": 0.0862,
+      "judgeShare": 0.7668,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 4,
+      "negatives": 84,
+      "tp": 39,
+      "positives": 42,
+      "recall": 0.9286,
+      "precision": 0.907,
+      "fpUpper95": 0.1175,
+      "judgeShare": 0.6825,
+      "judgeFaults": 7,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "0.5": {
+     "test": {
+      "n": 193,
+      "fp": 5,
+      "negatives": 132,
+      "tp": 56,
+      "positives": 61,
+      "recall": 0.918,
+      "precision": 0.918,
+      "fpUpper95": 0.0862,
+      "judgeShare": 0.7668,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 4,
+      "negatives": 84,
+      "tp": 41,
+      "positives": 42,
+      "recall": 0.9762,
+      "precision": 0.9111,
+      "fpUpper95": 0.1175,
+      "judgeShare": 0.6825,
+      "judgeFaults": 7,
+      "costPerDecisionUsd": 0
+     }
+    },
+    "0.75": {
+     "test": {
+      "n": 193,
+      "fp": 5,
+      "negatives": 132,
+      "tp": 56,
+      "positives": 61,
+      "recall": 0.918,
+      "precision": 0.918,
+      "fpUpper95": 0.0862,
+      "judgeShare": 0.7668,
+      "judgeFaults": 0,
+      "costPerDecisionUsd": 0
+     },
+     "dev": {
+      "n": 126,
+      "fp": 4,
+      "negatives": 84,
+      "tp": 41,
+      "positives": 42,
+      "recall": 0.9762,
+      "precision": 0.9111,
+      "fpUpper95": 0.1175,
+      "judgeShare": 0.6825,
+      "judgeFaults": 7,
+      "costPerDecisionUsd": 0
+     }
+    }
+   }
+  }
+ }
+}

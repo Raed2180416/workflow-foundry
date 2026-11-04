@@ -1,4 +1,5 @@
-node_modules/
+# no trailing slash: a worktree links node_modules to the main tree, and "node_modules/" does not match a symlink
+node_modules
 corpus/
 .foundry/
 .venv/
@@ -38,3 +39,6 @@ research/sopbench-20261021/runs/**/rows/
 
 # Model journals can carry host account identity (claude -p puts the session account e-mail in context); keep them outside git.
 research/surface-20261021/runs/**/journal.sqlite*
+
+# SW-1 sub-workflow runs: model journals stay outside git (same reason as above).
+research/subworkflow-20261021/runs/**/journal.sqlite*

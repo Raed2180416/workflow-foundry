@@ -1,0 +1,235 @@
+{
+ "version": "effort-cost-v2",
+ "evidence": "development; stored dev60 records and RL2 journals, $0; prices from policy/models.json",
+ "prices": {
+  "qwen3.5-2b-q4km": {
+   "in": 0,
+   "out": 0
+  },
+  "granite-4.2-3b-q4km": {
+   "in": 0,
+   "out": 0
+  },
+  "qwen3.5-4b-q4km": {
+   "in": 0,
+   "out": 0
+  },
+  "claude-haiku-5-5": {
+   "in": 0.1,
+   "out": 0.5
+  },
+  "claude-haiku-4-5-20251001": {
+   "in": 1,
+   "out": 5
+  },
+  "claude-sonnet-5-5": {
+   "in": 2,
+   "out": 10
+  },
+  "claude-opus-5-5": {
+   "in": 4,
+   "out": 20
+  },
+  "mercury-3": {
+   "in": 0,
+   "out": 0
+  },
+  "mercury-2.5": {
+   "in": 0.2,
+   "out": 0.75
+  }
+ },
+ "arms": {
+  "haiku-a0": {
+   "runs": [
+    "a0-dev60-dn"
+   ],
+   "manifest": [
+    "session:claude-haiku-5-5@UNSET/T?/cap0.75"
+   ],
+   "conforming": false,
+   "tasks": 60,
+   "usdPerTask": 0.013176225166666666,
+   "usdPerTaskMedian": 0.0123128,
+   "tokensPerTask": {},
+   "accounting": null
+  },
+  "sonnet-a0": {
+   "runs": [
+    "a0s-dev60-dn"
+   ],
+   "manifest": [
+    "session:claude-sonnet-5-5@UNSET/T?/cap1.5"
+   ],
+   "conforming": false,
+   "tasks": 60,
+   "usdPerTask": 0.10055609166666672,
+   "usdPerTaskMedian": 0.09778329999999999,
+   "tokensPerTask": {},
+   "accounting": null
+  },
+  "opus-a0-xhigh": {
+   "runs": [
+    "a0o-dev60-dn"
+   ],
+   "manifest": [
+    "session:claude-opus-5-5@xhigh/T?/cap3"
+   ],
+   "conforming": true,
+   "tasks": 60,
+   "usdPerTask": 0.40712968999999993,
+   "usdPerTaskMedian": 0.38539309999999993,
+   "tokensPerTask": {
+    "claude-opus-5-5": {
+     "input": 239916.58333333334,
+     "output": 174.41666666666666,
+     "cachedInput": 212277.78333333333
+    }
+   },
+   "accounting": {
+    "meanRecordedOutput": 174.41666666666666,
+    "meanImpliedOutputUpper": 14828.724500000004,
+    "meanImpliedOutputLower": 0,
+    "sessionsRecordingUnderImplied": 60,
+    "sessionsRecordingUnderImpliedLower": 0,
+    "n": 60
+   }
+  },
+  "haiku-a1": {
+   "runs": [
+    "a1-dev60-dn",
+    "a1-dev60-dn-fill"
+   ],
+   "manifest": [
+    "session:claude-haiku-5-5@UNSET/T?/cap0.75"
+   ],
+   "conforming": false,
+   "tasks": 60,
+   "usdPerTask": 0.015650070999999998,
+   "usdPerTaskMedian": 0.0154512,
+   "tokensPerTask": {},
+   "accounting": null
+  },
+  "sonnet-a1": {
+   "runs": [
+    "a1s-dev60-dn",
+    "a1s-dev60-dn-fill"
+   ],
+   "manifest": [
+    "session:claude-sonnet-5-5@UNSET/T?/cap1.5"
+   ],
+   "conforming": false,
+   "tasks": 60,
+   "usdPerTask": 0.11527942666666662,
+   "usdPerTaskMedian": 0.10781945,
+   "tokensPerTask": {},
+   "accounting": null
+  },
+  "haiku-a1c": {
+   "runs": [
+    "a1c-dev60-dn"
+   ],
+   "manifest": [
+    "session:claude-haiku-5-5@UNSET/T?/cap0.75"
+   ],
+   "conforming": false,
+   "tasks": 60,
+   "usdPerTask": 0.037086808,
+   "usdPerTaskMedian": 0.03714724,
+   "tokensPerTask": {
+    "claude-haiku-5-5": {
+     "input": 316666.0333333333,
+     "output": 105.48333333333333,
+     "cachedInput": 223601.96666666667
+    }
+   },
+   "accounting": {
+    "meanRecordedOutput": 105.48333333333333,
+    "meanImpliedOutputUpper": 55560.802666666685,
+    "meanImpliedOutputLower": 13338.288500000002,
+    "sessionsRecordingUnderImplied": 60,
+    "sessionsRecordingUnderImpliedLower": 40,
+    "n": 60
+   }
+  },
+  "m3-a1c": {
+   "runs": [
+    "m3-a1c-dev60-dn",
+    "m3-a1c-dev60-dn-fill"
+   ],
+   "manifest": [
+    "session:claude-haiku-5-5@UNSET/T?/cap0.75"
+   ],
+   "conforming": false,
+   "tasks": 60,
+   "usdPerTask": 0.015467971833333333,
+   "usdPerTaskMedian": 0.01335182,
+   "tokensPerTask": {
+    "mercury-3": {
+     "input": 26600.9,
+     "output": 34732.75,
+     "cachedInput": 69.95
+    },
+    "claude-haiku-5-5": {
+     "input": 225396.68333333332,
+     "output": 78.58333333333333,
+     "cachedInput": 180254.51666666666
+    }
+   },
+   "accounting": {
+    "meanRecordedOutput": 78.58333333333333,
+    "meanImpliedOutputUpper": 21907.510333333335,
+    "meanImpliedOutputLower": 430.7081666666666,
+    "sessionsRecordingUnderImplied": 60,
+    "sessionsRecordingUnderImpliedLower": 6,
+    "n": 60
+   }
+  }
+ },
+ "dose": {
+  "model": "claude-haiku-5-5",
+  "role": "RL2 ledger reader",
+  "from": "low (1,024 thinking tokens)",
+  "to": "medium (8,000)",
+  "pairs": 15,
+  "tasks": 5,
+  "outputPerCall": {
+   "low": 8933.933333333332,
+   "medium": 11130.266666666666
+  },
+  "usdPerCall": {
+   "low": 0.005014266666666667,
+   "medium": 0.006107150333333333
+  },
+  "outputRatio": 1.245841697199442,
+  "outputRatioCI": {
+   "lo": 1.1018760366354885,
+   "hi": 1.4481945438237576,
+   "B": 2000
+  },
+  "costRatio": 1.2179548355359373,
+  "costRatioCI": {
+   "lo": 1.0268146018760884,
+   "hi": 1.4887272844817112,
+   "B": 2000
+  }
+ },
+ "projections": {
+  "RL2 readers low -> medium (3 readers, per task)": {
+   "usdPerTask": 0.018321451,
+   "measured": true,
+   "ratio": 1.2179548355359373
+  },
+  "haiku-a0 session UNSET -> max": {
+   "usdPerTask": null,
+   "measured": false,
+   "reason": "no paired measurement of claude-haiku-5-5 UNSET -> max"
+  },
+  "m3-a1c act node UNSET -> max": {
+   "usdPerTask": null,
+   "measured": false,
+   "reason": "no paired measurement of claude-haiku-5-5 UNSET -> max"
+  }
+ },
+ "note": "Every dev60 arm except opus-a0-xhigh ran with effort unset (the CLI default applied, not recorded). The only paired effort dose in the stored data is the RL2 Haiku reader at reasoning low vs medium; projections through any other dose return null."
+}

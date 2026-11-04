@@ -1,0 +1,913 @@
+{
+ "note": "Report-log re-score (rescore-union.mjs): per agent-type run, foundMin of the final list vs of every report ever listed. Post hoc for the A1 runs; the A2 secondary metric foundMinEver for gqa1v/agent.",
+ "arms": {
+  "gqa1/agent": {
+   "final": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "ever": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "unionAcrossRuns": [
+    "GQ01",
+    "GQ03",
+    "GQ10",
+    "GQ11"
+   ],
+   "usdTotal": 0.0178
+  },
+  "gqa1m3/agent": {
+   "final": [
+    3,
+    4,
+    7
+   ],
+   "ever": [
+    3,
+    4,
+    7
+   ],
+   "unionAcrossRuns": [
+    "GQ03",
+    "GQ04",
+    "GQ05",
+    "GQ06",
+    "GQ10",
+    "GQ11",
+    "GQ12"
+   ],
+   "usdTotal": 0
+  },
+  "gqa1nb/agent-persist": {
+   "final": [
+    2,
+    1,
+    1,
+    2,
+    2
+   ],
+   "ever": [
+    2,
+    2,
+    1,
+    2,
+    4
+   ],
+   "unionAcrossRuns": [
+    "GQ01",
+    "GQ05",
+    "GQ06",
+    "GQ10",
+    "GQ11"
+   ],
+   "usdTotal": 0.1759
+  },
+  "gqa1nb/agent": {
+   "final": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "ever": [
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "unionAcrossRuns": [
+    "GQ10",
+    "GQ11",
+    "GQ12"
+   ],
+   "usdTotal": 0.0197
+  },
+  "gqa1v/agent": {
+   "final": [
+    1,
+    0,
+    1,
+    1,
+    1
+   ],
+   "ever": [
+    1,
+    0,
+    1,
+    1,
+    1
+   ],
+   "unionAcrossRuns": [
+    "GQ10",
+    "GQ11"
+   ],
+   "usdTotal": 0.0205
+  },
+  "gqa2/agent-matched": {
+   "final": [
+    4,
+    4,
+    5,
+    4,
+    5
+   ],
+   "ever": [
+    4,
+    4,
+    5,
+    4,
+    5
+   ],
+   "unionAcrossRuns": [
+    "GQ01",
+    "GQ05",
+    "GQ06",
+    "GQ10",
+    "GQ11",
+    "GQ12"
+   ],
+   "usdTotal": 0.3376
+  }
+ },
+ "runs": [
+  {
+   "run": "gqa1-agent-r1",
+   "arm": "agent",
+   "transport": null,
+   "usd": 0.005297960000000001,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 2,
+    "falseReports": 0,
+    "duplicates": 1
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1-agent-r2",
+   "arm": "agent",
+   "transport": null,
+   "usd": 0.003016065,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ11"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ11"
+    ],
+    "reports": 2,
+    "falseReports": 0,
+    "duplicates": 1
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1-agent-r3",
+   "arm": "agent",
+   "transport": null,
+   "usd": 0.00329188,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1-agent-r4",
+   "arm": "agent",
+   "transport": null,
+   "usd": 0.0030191600000000003,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ03"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ03"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1-agent-r5",
+   "arm": "agent",
+   "transport": null,
+   "usd": 0.0031324100000000004,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ01"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ01"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1m3-agent-r1",
+   "arm": "agent",
+   "transport": "cli",
+   "usd": 0,
+   "final": {
+    "foundMin": 3,
+    "bugs": [
+     "GQ06",
+     "GQ11",
+     "GQ12"
+    ],
+    "reports": 3,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 3,
+    "bugs": [
+     "GQ06",
+     "GQ11",
+     "GQ12"
+    ],
+    "reports": 3,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1m3-agent-r2",
+   "arm": "agent",
+   "transport": "cli",
+   "usd": 0,
+   "final": {
+    "foundMin": 4,
+    "bugs": [
+     "GQ05",
+     "GQ06",
+     "GQ10",
+     "GQ11"
+    ],
+    "reports": 4,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 4,
+    "bugs": [
+     "GQ05",
+     "GQ06",
+     "GQ10",
+     "GQ11"
+    ],
+    "reports": 6,
+    "falseReports": 1,
+    "duplicates": 1
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1m3-agent-r3",
+   "arm": "agent",
+   "transport": "cli",
+   "usd": 0,
+   "final": {
+    "foundMin": 7,
+    "bugs": [
+     "GQ03",
+     "GQ04",
+     "GQ05",
+     "GQ06",
+     "GQ10",
+     "GQ11",
+     "GQ12"
+    ],
+    "reports": 7,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 7,
+    "bugs": [
+     "GQ03",
+     "GQ04",
+     "GQ05",
+     "GQ06",
+     "GQ10",
+     "GQ11",
+     "GQ12"
+    ],
+    "reports": 7,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1nb-agent-persist-r1",
+   "arm": "agent-persist",
+   "transport": "nb",
+   "usd": 0.037164884999999995,
+   "final": {
+    "foundMin": 2,
+    "bugs": [
+     "GQ05",
+     "GQ10"
+    ],
+    "reports": 3,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 2,
+    "bugs": [
+     "GQ05",
+     "GQ10"
+    ],
+    "reports": 4,
+    "falseReports": 0,
+    "duplicates": 2
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1nb-agent-persist-r2",
+   "arm": "agent-persist",
+   "transport": "nb",
+   "usd": 0.03971889999999999,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ05"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 2,
+    "bugs": [
+     "GQ05",
+     "GQ06"
+    ],
+    "reports": 3,
+    "falseReports": 0,
+    "duplicates": 1
+   },
+   "dropped": [
+    {
+     "bug": "GQ06",
+     "firstListed": "turn-3",
+     "lastListed": "turn-9",
+     "seed": 1,
+     "steps": [
+      "down",
+      "down",
+      "down",
+      "down",
+      "right",
+      "right",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-persist-r3",
+   "arm": "agent-persist",
+   "transport": "nb",
+   "usd": 0.029553195000000008,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 2,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 3,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1nb-agent-persist-r4",
+   "arm": "agent-persist",
+   "transport": "nb",
+   "usd": 0.036475065,
+   "final": {
+    "foundMin": 2,
+    "bugs": [
+     "GQ10",
+     "GQ11"
+    ],
+    "reports": 3,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 2,
+    "bugs": [
+     "GQ10",
+     "GQ11"
+    ],
+    "reports": 3,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1nb-agent-persist-r5",
+   "arm": "agent-persist",
+   "transport": "nb",
+   "usd": 0.03300664500000001,
+   "final": {
+    "foundMin": 2,
+    "bugs": [
+     "GQ05",
+     "GQ10"
+    ],
+    "reports": 2,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 4,
+    "bugs": [
+     "GQ01",
+     "GQ05",
+     "GQ10",
+     "GQ11"
+    ],
+    "reports": 5,
+    "falseReports": 0,
+    "duplicates": 1
+   },
+   "dropped": [
+    {
+     "bug": "GQ01",
+     "firstListed": "turn-4",
+     "lastListed": "turn-18",
+     "seed": 1,
+     "steps": [
+      "right",
+      "dash-down"
+     ]
+    },
+    {
+     "bug": "GQ11",
+     "firstListed": "turn-7",
+     "lastListed": "turn-18",
+     "seed": 1,
+     "steps": [
+      "pause+right"
+     ]
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-r1",
+   "arm": "agent",
+   "transport": "nb",
+   "usd": 0.004457145,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ12"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ12"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1nb-agent-r2",
+   "arm": "agent",
+   "transport": "nb",
+   "usd": 0.00359257,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1nb-agent-r3",
+   "arm": "agent",
+   "transport": "nb",
+   "usd": 0.004843715,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1nb-agent-r4",
+   "arm": "agent",
+   "transport": "nb",
+   "usd": 0.004865405,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1nb-agent-r5",
+   "arm": "agent",
+   "transport": "nb",
+   "usd": 0.001988295,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ11"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ11"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1v-agent-r1",
+   "arm": "agent",
+   "transport": "cli",
+   "usd": 0.003981125,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ11"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ11"
+    ],
+    "reports": 2,
+    "falseReports": 0,
+    "duplicates": 1
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1v-agent-r2",
+   "arm": "agent",
+   "transport": "cli",
+   "usd": 0.00504219,
+   "final": {
+    "foundMin": 0,
+    "bugs": [],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 0,
+    "bugs": [],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1v-agent-r3",
+   "arm": "agent",
+   "transport": "cli",
+   "usd": 0.004496249999999999,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1v-agent-r4",
+   "arm": "agent",
+   "transport": "cli",
+   "usd": 0.0016668450000000001,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ11"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ11"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa1v-agent-r5",
+   "arm": "agent",
+   "transport": "cli",
+   "usd": 0.00528488,
+   "final": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 1,
+    "bugs": [
+     "GQ10"
+    ],
+    "reports": 1,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa2-agent-matched-r1",
+   "arm": "agent-matched",
+   "transport": "nb",
+   "usd": 0.06775152,
+   "final": {
+    "foundMin": 4,
+    "bugs": [
+     "GQ01",
+     "GQ05",
+     "GQ06",
+     "GQ11"
+    ],
+    "reports": 5,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 4,
+    "bugs": [
+     "GQ01",
+     "GQ05",
+     "GQ06",
+     "GQ11"
+    ],
+    "reports": 5,
+    "falseReports": 0,
+    "duplicates": 0
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa2-agent-matched-r2",
+   "arm": "agent-matched",
+   "transport": "nb",
+   "usd": 0.06728383000000003,
+   "final": {
+    "foundMin": 4,
+    "bugs": [
+     "GQ01",
+     "GQ10",
+     "GQ11",
+     "GQ12"
+    ],
+    "reports": 8,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 4,
+    "bugs": [
+     "GQ01",
+     "GQ10",
+     "GQ11",
+     "GQ12"
+    ],
+    "reports": 8,
+    "falseReports": 0,
+    "duplicates": 2
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa2-agent-matched-r3",
+   "arm": "agent-matched",
+   "transport": "nb",
+   "usd": 0.06757471500000001,
+   "final": {
+    "foundMin": 5,
+    "bugs": [
+     "GQ05",
+     "GQ06",
+     "GQ10",
+     "GQ11",
+     "GQ12"
+    ],
+    "reports": 7,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 5,
+    "bugs": [
+     "GQ05",
+     "GQ06",
+     "GQ10",
+     "GQ11",
+     "GQ12"
+    ],
+    "reports": 7,
+    "falseReports": 0,
+    "duplicates": 2
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa2-agent-matched-r4",
+   "arm": "agent-matched",
+   "transport": "nb",
+   "usd": 0.06706137500000002,
+   "final": {
+    "foundMin": 4,
+    "bugs": [
+     "GQ01",
+     "GQ06",
+     "GQ10",
+     "GQ11"
+    ],
+    "reports": 6,
+    "falseReports": 0
+   },
+   "ever": {
+    "foundMin": 4,
+    "bugs": [
+     "GQ01",
+     "GQ06",
+     "GQ10",
+     "GQ11"
+    ],
+    "reports": 6,
+    "falseReports": 0,
+    "duplicates": 1
+   },
+   "dropped": []
+  },
+  {
+   "run": "gqa2-agent-matched-r5",
+   "arm": "agent-matched",
+   "transport": "nb",
+   "usd": 0.06797688499999999,
+   "final": {
+    "foundMin": 5,
+    "bugs": [
+     "GQ01",
+     "GQ05",
+     "GQ06",
+     "GQ10",
+     "GQ11"
+    ],
+    "reports": 7,
+    "falseReports": 1
+   },
+   "ever": {
+    "foundMin": 5,
+    "bugs": [
+     "GQ01",
+     "GQ05",
+     "GQ06",
+     "GQ10",
+     "GQ11"
+    ],
+    "reports": 7,
+    "falseReports": 1,
+    "duplicates": 1
+   },
+   "dropped": []
+  }
+ ]
+}

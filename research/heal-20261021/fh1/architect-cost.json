@@ -1,0 +1,40 @@
+{
+ "transcript": "agent-a7bbdcc40ea099ae0.jsonl",
+ "file": "experiments/compose/capabilities.mjs",
+ "at": "2026-11-04T14:36:07.137Z",
+ "calls": 329,
+ "models": [
+  "claude-opus-5-5"
+ ],
+ "from": "2026-10-21T11:10:02.206Z",
+ "to": "2026-10-21T18:23:51.609Z",
+ "usage": {
+  "input_tokens": 662,
+  "cache_creation_input_tokens": 15929804,
+  "cache_read_input_tokens": 125015962,
+  "output_tokens": 9060
+ },
+ "writtenChars": 312460,
+ "fileWrites": 1,
+ "fileChars": 46541,
+ "fileShareOfWrittenChars": 0.14895026563400116,
+ "usd": {
+  "wholeSession": 131.44,
+  "wholeSession1hCache": 179.23,
+  "lowerBound": 6.69,
+  "lowerBoundNote": "every call up to and including the first write of the file (reading SPEC-E, the bed and the oracle views), plus the file's own output tokens; later validation and tests not counted",
+  "allocated": 19.58,
+  "allocatedNote": "the whole session times the file's share of all characters the session wrote",
+  "upperBound": 179.23,
+  "upperBoundNote": "the whole session (it also built the runtime, builder kit, reference, faults, drift and the COMP-1 docs), 1-hour cache-write rate; thinking tokens still uncounted"
+ },
+ "price": {
+  "inputPerMTok": 4,
+  "outputPerMTok": 20,
+  "cacheReadMult": 0.1,
+  "cacheWriteMult": 1.25,
+  "cacheWrite1hMult": 2,
+  "charsPerToken": 3.5,
+  "source": "policy/models.json claude-opus-5-5 price (R05 S38): $4 in / $20 out per MTok; cache multipliers assumed"
+ }
+}

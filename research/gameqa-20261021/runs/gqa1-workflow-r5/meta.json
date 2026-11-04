@@ -1,0 +1,50 @@
+{
+ "runId": "gqa1-workflow-r5",
+ "arm": "workflow",
+ "rep": 5,
+ "dev": false,
+ "model": "claude-haiku-5-5",
+ "transport": "cli",
+ "exploratory": false,
+ "policyHash": "b77dd19c53ba78aa5954bf5a3c7d8683ed4587dc39dde64a4c1ee38d4fa5add0",
+ "bed": "ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95",
+ "prompts": {
+  "agentSystem": "221305990a71b7f3",
+  "constructSystem": "bb0f415ba040f394",
+  "judgeSystem": "18e5a140e8295aca",
+  "exploreSystem": "09404fbee3e9c471",
+  "spec": "a03c56ab28701df3",
+  "template": "5ce0e410a9d93b0d"
+ },
+ "budgets": {
+  "exploreTicks": 8000,
+  "usdPerRun": 0.5
+ },
+ "rngSeed": 1082919462,
+ "started": "2026-11-04T12:55:15.688Z",
+ "wallMs": 278403,
+ "scoreMs": 3763,
+ "cost": {
+  "spent": 0.068238175,
+  "calls": 21,
+  "failed": 0,
+  "inputTokens": 66,
+  "outputTokens": 68497,
+  "latencyMs": 485990,
+  "unknownSpend": 0
+ },
+ "tokenMeter": {},
+ "error": null,
+ "summary": {
+  "reports": 9,
+  "bugs": 12,
+  "foundMin": 5,
+  "foundMinClass": 5,
+  "foundAny": 5,
+  "falseReports": 0,
+  "duplicates": 4,
+  "precision": 1,
+  "nondeterministic": 0,
+  "replays": 54
+ }
+}

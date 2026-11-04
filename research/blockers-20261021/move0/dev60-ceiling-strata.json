@@ -1,0 +1,29 @@
+{
+  "about": "Ceiling strata of the AutomationBench dev60 draw (devTrain, subset 60, seed 21) for the reachable-subset column of every dev60 headline (decision D28 (4); ATTACK.md §6 Move 0). Analysis input only: keep it out of every harness, verifier and model context, like VERIFIER-LAB.md. Task names only; no grader requirement is stated here.",
+  "source": {
+    "file": "research/automationbench-20261014/VERIFIER-LAB.md",
+    "section": "§2 Ceiling: the 19 dev60 tasks no arm passed",
+    "sha256": "086b216181b04c3674d07e9e584172099ee48c0f51122691b9e5ff4bf4be26dd",
+    "commit": "f77c8d7f"
+  },
+  "draw": { "pool": "devTrain", "subset": 60, "seed": "21" },
+  "hard": [
+    "support.intercom_zoho_customer_360",
+    "operations.invoice_shipping_trigger",
+    "operations.docusign_contractor_offboard",
+    "support.intercom_demo_scheduling",
+    "hr.visa_expiry_tracking",
+    "marketing.engagement_optimization",
+    "hr.monday_onboarding_pipeline"
+  ],
+  "soft": [
+    "sales.vendor_review_prep",
+    "finance.bad_debt_writeoff",
+    "marketing.customer_story_intake",
+    "operations.calendar_airtable_maintenance"
+  ],
+  "columns": {
+    "reachable": "dev60 minus the 7 hard benchmark defects (53 tasks; VERIFIER-LAB realistic ceiling 53/60)",
+    "conservative": "dev60 minus the 7 hard and 4 soft defects (49 tasks; VERIFIER-LAB conservative ceiling 49/60)"
+  }
+}

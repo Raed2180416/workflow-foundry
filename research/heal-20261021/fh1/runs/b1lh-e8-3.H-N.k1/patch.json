@@ -1,0 +1,9 @@
+{
+ "schema": "fh1-patch/1",
+ "label": "b1lh-e8-3.H-N.k1",
+ "base": "solver:research/enterprise-20261014/runs/b1lh-e8-3/solver.mjs",
+ "kind": "monolith",
+ "baseDigest": "1056e57ed7bf9aaf",
+ "patchedDigest": "1056e57ed7bf9aaf",
+ "files": {}
+}

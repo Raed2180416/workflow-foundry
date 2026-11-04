@@ -1,0 +1,336 @@
+{
+ "stats": {
+  "exploreTicks": 262,
+  "runs": 31,
+  "finished": true,
+  "notes": "Final. 7 bugs. 1. HUD coin counter does not update after collecting coin (state_desync). 2. Movement key in same tick as pause still moves player (input_race). 3. Spikes underflow score (score_overflow). 4. HUD time not update after pause resume (state_desync). 5. Key lost on same-tick death (state_desync). 6. First movement key wins instead of last (input_race). 7. Restart level from pause leaves game paused; expected running straight away. Confirmed minimal repro: pause,click:btn-restart. Final reports below.",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "wait",
+     "right",
+     "pause",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "wait",
+     "wait",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left",
+     "left",
+     "down",
+     "use",
+     "up",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "up",
+     "up",
+     "left",
+     "left",
+     "left",
+     "right",
+     "right",
+     "right",
+     "up",
+     "up",
+     "right",
+     "right",
+     "down",
+     "down",
+     "right",
+     "down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:10,5",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "goto:10,5",
+     "down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "goto:10,5",
+     "down",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-left",
+     "dash-up"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:10,6",
+     "goto:12,7"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "wait",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "wait",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-left",
+     "dash-right",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "click:btn-resume",
+     "pause",
+     "enter",
+     "pause",
+     "click:btn-restart"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:12,7"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "click:btn-resume"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "down",
+     "left",
+     "left"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right+down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down+right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "wait"
+    ]
+   }
+  ]
+ }
+}

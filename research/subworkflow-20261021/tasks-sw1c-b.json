@@ -1,0 +1,452 @@
+{
+ "kind": "sw1c-task-manifest",
+ "bed": "golive@1.0.0",
+ "split": "test",
+ "note": "SW-1c boundary stratum B: fresh held-out seeds of a dev bed (not sealed)",
+ "tasks": [
+  {
+   "id": "golive:test:d3:211",
+   "seed": 211,
+   "split": "test",
+   "difficulty": 3,
+   "inputsSha256": "f66610fbfde98d69e920dd6cfff960c350bcd930b05227b473ed9e692a22a9ea",
+   "channels": [
+    {
+     "channel": "OldCart",
+     "kind": "backlog",
+     "rows": 48,
+     "records": 48,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "Showroom",
+     "kind": "simple",
+     "rows": 5,
+     "records": 5,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "TillMaster",
+     "kind": "backlog",
+     "rows": 52,
+     "records": 52,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "Pop-up stall",
+     "kind": "simple",
+     "rows": 5,
+     "records": 5,
+     "sizeTrigger": false
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d2:211",
+   "seed": 211,
+   "split": "test",
+   "difficulty": 2,
+   "inputsSha256": "18c0c9bd0230380bdebaf77de05f0ff45261f230773a2593e18b5f17d012ec5e",
+   "channels": [
+    {
+     "channel": "ShopLine",
+     "kind": "backlog",
+     "rows": 35,
+     "records": 35,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "TradeDesk",
+     "kind": "backlog",
+     "rows": 34,
+     "records": 34,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Showroom",
+     "kind": "simple",
+     "rows": 2,
+     "records": 2,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Phone orders",
+     "kind": "simple",
+     "rows": 3,
+     "records": 3,
+     "sizeTrigger": false
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d3:212",
+   "seed": 212,
+   "split": "test",
+   "difficulty": 3,
+   "inputsSha256": "ab8e295c7bb3986a8b268f7c433baa3b765b63985bf408ef8e2ac5d31678474e",
+   "channels": [
+    {
+     "channel": "TillMaster",
+     "kind": "backlog",
+     "rows": 49,
+     "records": 49,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "LegacyPOS",
+     "kind": "backlog",
+     "rows": 51,
+     "records": 51,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "Wholesale desk",
+     "kind": "simple",
+     "rows": 4,
+     "records": 4,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Showroom",
+     "kind": "simple",
+     "rows": 5,
+     "records": 5,
+     "sizeTrigger": false
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d2:212",
+   "seed": 212,
+   "split": "test",
+   "difficulty": 2,
+   "inputsSha256": "1cfc6fbb682c35a1c8183bba9d8cb404dc28c347a3370b67dd025fbc3679efda",
+   "channels": [
+    {
+     "channel": "MarketBox",
+     "kind": "backlog",
+     "rows": 28,
+     "records": 28,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Pop-up stall",
+     "kind": "simple",
+     "rows": 2,
+     "records": 2,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "OldCart",
+     "kind": "backlog",
+     "rows": 35,
+     "records": 35,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Wholesale desk",
+     "kind": "simple",
+     "rows": 3,
+     "records": 3,
+     "sizeTrigger": false
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d3:213",
+   "seed": 213,
+   "split": "test",
+   "difficulty": 3,
+   "inputsSha256": "c8d13e42f7c91b880971b65d14e34e0e1067507a73fcee02ea604611aa7b4026",
+   "channels": [
+    {
+     "channel": "TillMaster",
+     "kind": "backlog",
+     "rows": 44,
+     "records": 44,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "Showroom",
+     "kind": "simple",
+     "rows": 5,
+     "records": 5,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Wholesale desk",
+     "kind": "simple",
+     "rows": 4,
+     "records": 4,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "TradeDesk",
+     "kind": "backlog",
+     "rows": 44,
+     "records": 44,
+     "sizeTrigger": true
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d2:213",
+   "seed": 213,
+   "split": "test",
+   "difficulty": 2,
+   "inputsSha256": "470f80d1eff7c68aa5318030dafd7d229c2a6ba38f4d9922a6e4aba989253c9f",
+   "channels": [
+    {
+     "channel": "Wholesale desk",
+     "kind": "simple",
+     "rows": 2,
+     "records": 2,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "MarketBox",
+     "kind": "backlog",
+     "rows": 32,
+     "records": 32,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "TillMaster",
+     "kind": "backlog",
+     "rows": 36,
+     "records": 36,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Pop-up stall",
+     "kind": "simple",
+     "rows": 3,
+     "records": 3,
+     "sizeTrigger": false
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d3:214",
+   "seed": 214,
+   "split": "test",
+   "difficulty": 3,
+   "inputsSha256": "49fc82931f81dc5ea5d4e84ed9774a7db268105f1bb75c0ddeb90cb786ac75e8",
+   "channels": [
+    {
+     "channel": "OldCart",
+     "kind": "backlog",
+     "rows": 51,
+     "records": 51,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "Pop-up stall",
+     "kind": "simple",
+     "rows": 4,
+     "records": 4,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "TradeDesk",
+     "kind": "backlog",
+     "rows": 51,
+     "records": 51,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "Wholesale desk",
+     "kind": "simple",
+     "rows": 3,
+     "records": 3,
+     "sizeTrigger": false
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d2:214",
+   "seed": 214,
+   "split": "test",
+   "difficulty": 2,
+   "inputsSha256": "61a10729adbd7f1b84cc78bb3fe38f53a74b4671d3739f5feb983da3a72b03e1",
+   "channels": [
+    {
+     "channel": "Showroom",
+     "kind": "simple",
+     "rows": 4,
+     "records": 4,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "ShopLine",
+     "kind": "backlog",
+     "rows": 34,
+     "records": 34,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "LegacyPOS",
+     "kind": "backlog",
+     "rows": 31,
+     "records": 31,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Phone orders",
+     "kind": "simple",
+     "rows": 3,
+     "records": 3,
+     "sizeTrigger": false
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d3:215",
+   "seed": 215,
+   "split": "test",
+   "difficulty": 3,
+   "inputsSha256": "58ece0e83d93945c5c810442a4c2e7e576ef71ecf5e319fd8dffb61696739bb4",
+   "channels": [
+    {
+     "channel": "TillMaster",
+     "kind": "backlog",
+     "rows": 56,
+     "records": 56,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "Showroom",
+     "kind": "simple",
+     "rows": 4,
+     "records": 4,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "LegacyPOS",
+     "kind": "backlog",
+     "rows": 46,
+     "records": 46,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "Catalogue",
+     "kind": "simple",
+     "rows": 4,
+     "records": 4,
+     "sizeTrigger": false
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d2:215",
+   "seed": 215,
+   "split": "test",
+   "difficulty": 2,
+   "inputsSha256": "dfee8fdd62e47c5314ab32775310e8e4217793ad85af45a62d7db1928b73d0d6",
+   "channels": [
+    {
+     "channel": "Catalogue",
+     "kind": "simple",
+     "rows": 4,
+     "records": 4,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Phone orders",
+     "kind": "simple",
+     "rows": 3,
+     "records": 3,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "TradeDesk",
+     "kind": "backlog",
+     "rows": 30,
+     "records": 30,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "LegacyPOS",
+     "kind": "backlog",
+     "rows": 36,
+     "records": 36,
+     "sizeTrigger": false
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d3:216",
+   "seed": 216,
+   "split": "test",
+   "difficulty": 3,
+   "inputsSha256": "52f3839429a77078188704be426de9b9957e44cd9b975aacbe6c094e8eede40b",
+   "channels": [
+    {
+     "channel": "MarketBox",
+     "kind": "backlog",
+     "rows": 52,
+     "records": 52,
+     "sizeTrigger": true
+    },
+    {
+     "channel": "Phone orders",
+     "kind": "simple",
+     "rows": 3,
+     "records": 3,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Pop-up stall",
+     "kind": "simple",
+     "rows": 5,
+     "records": 5,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "OldCart",
+     "kind": "backlog",
+     "rows": 53,
+     "records": 53,
+     "sizeTrigger": true
+    }
+   ]
+  },
+  {
+   "id": "golive:test:d2:216",
+   "seed": 216,
+   "split": "test",
+   "difficulty": 2,
+   "inputsSha256": "6847843b6532eb02d23fa06d2804d560a66a7f78205f9d859609ba3cdee8a76a",
+   "channels": [
+    {
+     "channel": "Pop-up stall",
+     "kind": "simple",
+     "rows": 4,
+     "records": 4,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "Showroom",
+     "kind": "simple",
+     "rows": 2,
+     "records": 2,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "OldCart",
+     "kind": "backlog",
+     "rows": 30,
+     "records": 30,
+     "sizeTrigger": false
+    },
+    {
+     "channel": "LegacyPOS",
+     "kind": "backlog",
+     "rows": 36,
+     "records": 36,
+     "sizeTrigger": false
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+2026-11-04T18:28:50Z start --arm agent-matched --rep 1 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa2-agent-matched-r1","wallS":644,"usd":0.06775152,"calls":72,"reports":5,"bugs":12,"foundMin":4,"foundMinClass":3,"foundAny":5,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":25,"error":null}
+2026-11-04T18:39:41Z end --arm agent-matched --rep 1 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $0.8457)
+2026-11-04T18:39:42Z start --arm agent-matched --rep 2 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa2-agent-matched-r2","wallS":558,"usd":0.06728383000000003,"calls":69,"reports":8,"bugs":12,"foundMin":4,"foundMinClass":3,"foundAny":6,"falseReports":0,"duplicates":2,"precision":1,"nondeterministic":0,"replays":42,"error":null}
+2026-11-04T18:49:06Z end --arm agent-matched --rep 2 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $1.0529)
+2026-11-04T18:49:07Z start --arm agent-matched --rep 3 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa2-agent-matched-r3","wallS":530,"usd":0.06757471500000001,"calls":71,"reports":7,"bugs":12,"foundMin":5,"foundMinClass":4,"foundAny":5,"falseReports":0,"duplicates":2,"precision":1,"nondeterministic":0,"replays":36,"error":null}
+2026-11-04T18:58:03Z end --arm agent-matched --rep 3 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $1.1778)
+2026-11-04T18:58:03Z start --arm agent-matched --rep 4 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa2-agent-matched-r4","wallS":506,"usd":0.06706137500000002,"calls":66,"reports":6,"bugs":12,"foundMin":4,"foundMinClass":3,"foundAny":5,"falseReports":0,"duplicates":1,"precision":1,"nondeterministic":0,"replays":39,"error":null}
+2026-11-04T19:06:36Z end --arm agent-matched --rep 4 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $1.2449)
+2026-11-04T19:06:36Z start --arm agent-matched --rep 5 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa2-agent-matched-r5","wallS":525,"usd":0.06797688499999999,"calls":72,"reports":7,"bugs":12,"foundMin":5,"foundMinClass":4,"foundAny":5,"falseReports":1,"duplicates":1,"precision":0.8571428571428571,"nondeterministic":0,"replays":24,"error":null}
+2026-11-04T19:15:26Z end --arm agent-matched --rep 5 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $1.3128)
+2026-11-04T19:15:26Z lane agent-matched 1..5 done

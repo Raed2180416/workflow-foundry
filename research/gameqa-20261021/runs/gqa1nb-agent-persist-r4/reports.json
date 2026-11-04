@@ -1,0 +1,36 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "Restart from pause menu leaves game paused instead of running",
+  "observed": "After pause then clicking btn-restart, the game stays in mode paused with the pause menu still shown.",
+  "expected": "Restart level puts the level back to its starting state and the game is running again straight away.",
+  "seed": 12345,
+  "steps": [
+   "pause",
+   "click:btn-restart",
+   "wait"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes at score 0 wrap the score to 65036 instead of clamping at 0",
+  "observed": "Stepping onto spikes with score 0 shows score 65036 (wrapped negative value) instead of 0.",
+  "expected": "Spikes cost 500 points but the score stops at 0 and never goes below.",
+  "seed": 12345,
+  "steps": [
+   "right",
+   "right",
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Movement key pressed in the same tick as pause is applied before pausing",
+  "observed": "In the tick pause+right, the player moves from (1,1) to (2,1) while the game becomes paused.",
+  "expected": "When the game becomes paused, the rest of that tick's input is ignored; the player should not move.",
+  "seed": 12345,
+  "steps": [
+   "pause+right"
+  ]
+ }
+]

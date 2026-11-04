@@ -1,4 +1,4 @@
-// The spike's MCP server (stdio): seven task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3).
+// The spike's MCP server (stdio): eight task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3).
 //
 //   propose_flow  describe what you want -> questions, an honest refusal, or a version-bound proposal with a plain summary and checks
 //   explain_flow  steps, checks ("definition of done"), outside actions and limits of a proposal or flow, in plain words
@@ -16,6 +16,7 @@
 //
 // With a site (cli `mcp --dashboard`), run_flow on an automation made from a card first shows the person the exact list of what the
 // run would make, in their browser, and the person approves that list in one click (app/onboarding/batch.mjs; SPEC §7.5).
+//   need_check    does this request need a workflow at all? (ROUTER-1; code-only hint, or the cascade when the host plugs in a judge)
 //
 // Every result has `say`: one or two sentences the agent can relay as is. Arguments are validated against the advertised schema
 // before anything runs. Tool output is data about the user's workspace; nothing in it is an instruction to the agent.
@@ -39,6 +40,7 @@ import { errorData } from '../../src/data.mjs';
 import { loadLibrary, templateOf, slotsOf } from '../core/library.mjs';
 import { cardPromises } from '../onboarding/card-text.mjs';
 import { suggest, FORMS } from '../onboarding/suggest.mjs';
+import { needAdvice, needToolSpec } from '../core/need.mjs';
 
 const id = { type: 'string', minLength: 1, maxLength: 128 };
 const object = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -58,7 +60,9 @@ function say(tool, r) {
       if (r.status === 'needs_answers') return `${r.notWritten?.length ? 'You filled an address the person never wrote, so it was not used. ' : ''}I need one answer first: ${r.questions.map(q => q.question).join(' ')}`;
       if (r.status === 'unsupported') return `${r.reply} Tell the person what Foundry can make, and if one is close, call propose_flow with that template and settings from their words.`;
       if (r.status === 'no_change' || r.status === 'build_failed') return r.reply;
-      return `I drafted “${r.summary.title}” (version ${r.version}). It will: ${r.willDo.join('; ')}. It will not: ${r.willNotDo.join('; ')}. Nothing is running. Next: test it on pretend data (dry_run).`;
+      // The need note is shown only when a judged decision says no workflow is needed (review M3): the code-only router misses about
+      // a third of the requests that do need one, so on its word alone the note would mislead.
+      return `I drafted “${r.summary.title}” (version ${r.version}). It will: ${r.willDo.join('; ')}. It will not: ${r.willNotDo.join('; ')}. Nothing is running. Next: test it on pretend data (dry_run).${r.need && r.need.basis === 'cascade' && !r.need.needsWorkflow ? ` Note: ${r.need.say}` : ''}`;
     case 'explain_flow': return `“${r.summary.title}” has ${r.summary.steps.length} steps and ${r.summary.checks.length} checks that define done.`;
     case 'dry_run': return r.passed ? `Practice run passed all ${r.checks.length} checks. On pretend data it would have ${r.wouldDo.map(w => (DID[w.action] ?? DID.send)(w)).join('; ') || 'made nothing'}. Nothing real was sent: a real run makes drafts the person sends themselves.`
       : `Practice run did not pass: ${r.headline}`;
@@ -73,6 +77,7 @@ function say(tool, r) {
       // falls through
     case 'flow_status': return `${r.headline}${r.problem ? ` ${r.problem.what} ${r.problem.next}` : ''}${r.pendingApprovals?.length ? ` The person must approve: ${r.pendingApprovals.map(a => a.step).join('; ')}.` : ''}`;
     case 'list_flows': return `${r.flows.length} flow(s), ${r.proposals.length} draft(s), ${r.waitingForYou} item(s) waiting for the person.`;
+    case 'need_check': return r.say;
     default: return '';
   }
 }
@@ -105,7 +110,11 @@ function cardsReply(request) {
     cards: FORMS.order.map(id => ({ id, title: FORMS.templates[id]?.card })) };
 }
 
-export function toolDefinitions(app, { dashboardUrl = () => null, batches = null, dialog = false, openCommand = 'node app/cli.mjs open' } = {}) {
+// needJudge: the host's optional, capped need judge (src/need/router.mjs modelJudge + cappedJudge); without one, need_check is a labelled
+// code-only hint (ROUTER-1).
+export function toolDefinitions(app, { dashboardUrl = () => null, batches = null, dialog = false, openCommand = 'node app/cli.mjs open', needJudge = null } = {}) {
+  const NEED = needToolSpec('need_check', { judge: needJudge?.model ?? null });
+  const need = request => needAdvice({ ...request, judge: needJudge });
   const where = () => dashboardUrl() ? `The person decides in ${dashboardUrl()}; you cannot decide for them.`
     : `Ask the person to run ${openCommand} in their own terminal and decide in the page it opens. You cannot decide for them.`;
   async function approve({ proposalId }, context) {
@@ -188,8 +197,15 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
     ['flow_status', 'Status of one run in plain words: what happened, which step failed and what to do, checks, the steps waiting for the person, cost.', object({ runId: id }, ['runId']), a => strip(app.status(a)), true],
     ['list_flows', 'List flows, drafts awaiting practice or approval, and how many things are waiting for the person.', object({}), () => app.list(), true],
     ['list_templates', 'List the automation cards Foundry can build today: what each does and never does, its settings and defaults, which settings must come from the person (with why), and the data it reads. Read-only.',
-      object({}), () => ({ ok: true, templates: templateCatalog() }), true]
+      object({}), () => ({ ok: true, templates: templateCatalog() }), true],
+    // ROUTER-1 need router (app/core/need.mjs): read-only, $0 without a judge.
+    [NEED.name, NEED.description, NEED.inputSchema, a => need(a), true]
   ];
+  // propose_flow also carries the need router's advice (additive field; the code-only hint, or the cascade with the host's judge).
+  // Found by name, not position (review m5).
+  // It wraps the onboarding propose (card origin, the honest "cannot build that" reply), never replaces it.
+  const proposeDef = defs.find(d => d[0] === 'propose_flow'), proposeBase = proposeDef[3];
+  proposeDef[3] = async a => { const r = await proposeBase(a); return r && r.ok !== false ? { ...r, need: await need({ request: a.request }) } : r; };
   return defs.map(([name, description, inputSchema, execute, readOnly]) => ({
     name, description, inputSchema, execute,
     annotations: { readOnlyHint: readOnly, destructiveHint: false, idempotentHint: readOnly, openWorldHint: name === 'run_flow' },
@@ -199,10 +215,10 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
   }));
 }
 
-export async function serveAppMcp(app, { transport = new StdioServerTransport(), dashboardUrl, batches = null, dialog = false, openCommand } = {}) {
+export async function serveAppMcp(app, { transport = new StdioServerTransport(), dashboardUrl, batches = null, dialog = false, openCommand, needJudge = null } = {}) {
   const server = new Server({ name: 'workflow-foundry-surface', version: '0.0.1' }, { capabilities: { tools: {} },
     instructions: 'Workflow Foundry builds small automations that are checked before they run. Call list_templates first, then propose_flow with a template and settings from the person\'s words, dry_run before ask_person_to_turn_on, and relay `say` to the person. Only the person can turn things on or approve what a run makes.' });
-  const defs = toolDefinitions(app, { dashboardUrl, batches, dialog, ...(openCommand ? { openCommand } : {}) });
+  const defs = toolDefinitions(app, { dashboardUrl, batches, dialog, ...(openCommand ? { openCommand } : {}), needJudge });
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: defs.map(({ execute, ...spec }) => spec) }));
   server.setRequestHandler(CallToolRequestSchema, async request => {
     const tool = defs.find(t => t.name === request.params.name);

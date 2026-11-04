@@ -1,0 +1,18 @@
+{
+ "episodes": 200,
+ "rngSeed": 11,
+ "ticks": 26852,
+ "diverged": 200,
+ "unprobedDivergence": [],
+ "silentProbes": [],
+ "firstProbeCounts": {
+  "hud_coin_dash": 48,
+  "multi_move": 54,
+  "pause_move": 10,
+  "restart_pause_lock": 23,
+  "timer_hud_freeze": 29,
+  "enemy_swap": 2,
+  "dash_tunnel": 20,
+  "spike_wrap": 14
+ }
+}

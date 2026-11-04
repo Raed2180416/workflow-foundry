@@ -1,0 +1,929 @@
+{
+ "note": "POST HOC (M4). Per found bug: the Haiku-written check(s) that caught it and the share of the fault-describing spec sentence (leakage-map.json) found in the check text (content words). Analysis only.",
+ "summary": {
+  "GQ01": {
+   "finds": 1,
+   "meanOverlap": 0.18,
+   "min": 0.18,
+   "max": 0.18
+  },
+  "GQ03": {
+   "finds": 9,
+   "meanOverlap": 0.04,
+   "min": 0,
+   "max": 0.2
+  },
+  "GQ04": {
+   "finds": 3,
+   "meanOverlap": 0,
+   "min": 0,
+   "max": 0
+  },
+  "GQ05": {
+   "finds": 9,
+   "meanOverlap": 0.68,
+   "min": 0.53,
+   "max": 0.94
+  },
+  "GQ07": {
+   "finds": 8,
+   "meanOverlap": 0.98,
+   "min": 0.8,
+   "max": 1
+  },
+  "GQ08": {
+   "finds": 8,
+   "meanOverlap": 1,
+   "min": 1,
+   "max": 1
+  },
+  "GQ09": {
+   "finds": 9,
+   "meanOverlap": 0.87,
+   "min": 0.2,
+   "max": 1
+  },
+  "GQ10": {
+   "finds": 3,
+   "meanOverlap": 0.73,
+   "min": 0.64,
+   "max": 0.91
+  },
+  "GQ11": {
+   "finds": 5,
+   "meanOverlap": 0.65,
+   "min": 0.33,
+   "max": 0.83
+  },
+  "GQ12": {
+   "finds": 2,
+   "meanOverlap": 0.44,
+   "min": 0.41,
+   "max": 0.47
+  }
+ },
+ "rows": [
+  {
+   "run": "gqa1-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ07",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "pause-menu-buttons",
+     "rule": "The pause menu shows Resume and Restart level, and each visible button is clickable (not covered)."
+    },
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ11",
+   "ruleShape": "same-tick input",
+   "specLine": 33,
+   "checks": [
+    {
+     "id": "pause-tick-no-move",
+     "rule": "Pause takes effect immediately; the rest of that tick's input is ignored (e.g. pause+left does not move)."
+    }
+   ],
+   "quoteOverlap": 0.33
+  },
+  {
+   "run": "gqa1-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ04",
+   "ruleShape": "display vs state",
+   "specLine": 97,
+   "checks": [
+    {
+     "id": "hud-time",
+     "rule": "The HUD Time shows the ticks left on the timer."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ05",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "checks": [
+    {
+     "id": "restart-resets",
+     "rule": "Restart level puts everything back: score 0, 3 lives, 0 coins, 0 keys, timer 300, and the game is running."
+    },
+    {
+     "id": "pause-menu-buttons",
+     "rule": "The pause menu shows Resume and Restart level, and each visible button is clickable (not covered)."
+    }
+   ],
+   "quoteOverlap": 0.59
+  },
+  {
+   "run": "gqa1-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ10",
+   "ruleShape": "cap / range",
+   "specLine": 77,
+   "checks": [
+    {
+     "id": "spikes-cost",
+     "rule": "Spikes cost one life and 500 points, with the score floored at 0 (spikes hurt even when invulnerable)."
+    }
+   ],
+   "quoteOverlap": 0.64
+  },
+  {
+   "run": "gqa1-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ09",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "checks": [
+    {
+     "id": "score-range",
+     "rule": "Score is never negative and is capped at 999,999."
+    },
+    {
+     "id": "coin-value",
+     "rule": "Each coin gives +100 score and +1 coins."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ03",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "checks": [
+    {
+     "id": "hud-coins",
+     "rule": "The HUD Coins n/5 shows the current coin count."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ08",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ03",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "checks": [
+    {
+     "id": "hud-coins",
+     "rule": "The HUD Coins field shows the current coin count as n/5."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ04",
+   "ruleShape": "display vs state",
+   "specLine": 97,
+   "checks": [
+    {
+     "id": "hud-time",
+     "rule": "The HUD Time field shows the ticks left on the timer."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ05",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "checks": [
+    {
+     "id": "restart-resets",
+     "rule": "Restart level restores score 0, 3 lives, all items back, timer 300 and the game running."
+    },
+    {
+     "id": "pause-menu-shows",
+     "rule": "In the paused state the pause menu with Resume is visible and clickable."
+    },
+    {
+     "id": "generic:frozen",
+     "rule": "(generic detector)"
+    }
+   ],
+   "quoteOverlap": 0.65
+  },
+  {
+   "run": "gqa1-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ10",
+   "ruleShape": "cap / range",
+   "specLine": 77,
+   "checks": [
+    {
+     "id": "spikes-cost",
+     "rule": "Spikes cost 500 points (score never goes below 0) and one life."
+    }
+   ],
+   "quoteOverlap": 0.91
+  },
+  {
+   "run": "gqa1-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ12",
+   "ruleShape": "same-tick input",
+   "specLine": 35,
+   "checks": [
+    {
+     "id": "one-move-per-tick",
+     "rule": "At most one move per tick: a step is one tile, a dash is at most two tiles in a straight line."
+    }
+   ],
+   "quoteOverlap": 0.41
+  },
+  {
+   "run": "gqa1-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ09",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "checks": [
+    {
+     "id": "score-no-silent-drop",
+     "rule": "Score only decreases through spikes or a restart."
+    }
+   ],
+   "quoteOverlap": 0.2
+  },
+  {
+   "run": "gqa1-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ07",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    },
+    {
+     "id": "pause-menu-shows",
+     "rule": "In the paused state the pause menu with Resume is visible and clickable."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ08",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ03",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "checks": [
+    {
+     "id": "hud-coins",
+     "rule": "The HUD Coins field shows Coins n/5 with the current coin count."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ05",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "checks": [
+    {
+     "id": "restart-resets",
+     "rule": "Restart level puts the level back to its starting state (score 0, 3 lives, all items back, timer 300) and the game is running again."
+    }
+   ],
+   "quoteOverlap": 0.82
+  },
+  {
+   "run": "gqa1-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ10",
+   "ruleShape": "cap / range",
+   "specLine": 77,
+   "checks": [
+    {
+     "id": "spikes-cost-life-and-500",
+     "rule": "Spikes cost one life and 500 points, with the score floored at 0."
+    }
+   ],
+   "quoteOverlap": 0.64
+  },
+  {
+   "run": "gqa1-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ09",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "checks": [
+    {
+     "id": "score-range",
+     "rule": "Score is never negative and is capped at 999,999."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ07",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ08",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ03",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "checks": [
+    {
+     "id": "hud-keys-coins-time",
+     "rule": "The HUD always shows the current keys, coins n/5 and time left."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ11",
+   "ruleShape": "same-tick input",
+   "specLine": 33,
+   "checks": [
+    {
+     "id": "pause-ignores-rest-of-tick",
+     "rule": "Pause takes effect immediately; the rest of that tick's input is ignored and nothing else happens in that tick."
+    }
+   ],
+   "quoteOverlap": 0.67
+  },
+  {
+   "run": "gqa1-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ05",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "checks": [
+    {
+     "id": "paused-menu-buttons",
+     "rule": "Paused mode shows the pause menu with Resume and Restart level buttons."
+    },
+    {
+     "id": "restart-resets-everything",
+     "rule": "Restart level puts the whole level back to its start: score 0, 3 lives, keys 0, coins 0, running straight away."
+    }
+   ],
+   "quoteOverlap": 0.71
+  },
+  {
+   "run": "gqa1-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ08",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "every-visible-button-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ09",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "checks": [
+    {
+     "id": "score-range",
+     "rule": "Score is never negative and is capped at 999,999."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r5",
+   "arm": "workflow",
+   "bug": "GQ09",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "checks": [
+    {
+     "id": "score-range",
+     "rule": "Score is never negative and is capped at 999,999."
+    },
+    {
+     "id": "score-no-drop",
+     "rule": "Score only goes down from spikes (500 points, floored at 0) or from a restart."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1-workflow-r5",
+   "arm": "workflow",
+   "bug": "GQ05",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "checks": [
+    {
+     "id": "restart-resets",
+     "rule": "Restart level restores score 0, 3 lives, all items back, keys 0 and the timer at 300."
+    }
+   ],
+   "quoteOverlap": 0.53
+  },
+  {
+   "run": "gqa1-workflow-r5",
+   "arm": "workflow",
+   "bug": "GQ03",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "checks": [
+    {
+     "id": "hud-coins",
+     "rule": "The HUD coins field shows the current coin count as n/5."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1-workflow-r5",
+   "arm": "workflow",
+   "bug": "GQ04",
+   "ruleShape": "display vs state",
+   "specLine": 97,
+   "checks": [
+    {
+     "id": "hud-time",
+     "rule": "The HUD time shows the ticks left on the timer."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1-workflow-r5",
+   "arm": "workflow",
+   "bug": "GQ07",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing covers it."
+    }
+   ],
+   "quoteOverlap": 0.8
+  },
+  {
+   "run": "gqa1v-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ03",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "checks": [
+    {
+     "id": "hud-matches-state",
+     "rule": "The HUD always shows the current score (below 1,000), lives, keys, coins, time and dash status."
+    }
+   ],
+   "quoteOverlap": 0.2
+  },
+  {
+   "run": "gqa1v-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ05",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "checks": [
+    {
+     "id": "restart-resets",
+     "rule": "Restart level puts the level back to its start: score 0, 3 lives, all items back, timer 300, and the game is running."
+    }
+   ],
+   "quoteOverlap": 0.71
+  },
+  {
+   "run": "gqa1v-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ09",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "checks": [
+    {
+     "id": "score-range",
+     "rule": "Score is never negative and is capped at 999,999."
+    },
+    {
+     "id": "score-no-silent-loss",
+     "rule": "Score only drops because of spikes or a restart; items never reduce it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ11",
+   "ruleShape": "same-tick input",
+   "specLine": 33,
+   "checks": [
+    {
+     "id": "pause-ignores-rest",
+     "rule": "When pausing, the rest of that tick's input is ignored and nothing else happens in that tick."
+    }
+   ],
+   "quoteOverlap": 0.75
+  },
+  {
+   "run": "gqa1v-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ08",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ01",
+   "ruleShape": "transition",
+   "specLine": 51,
+   "checks": [
+    {
+     "id": "one-move-per-tick",
+     "rule": "The player makes at most one move per tick: a step of one tile or a dash of up to two tiles in a straight line."
+    }
+   ],
+   "quoteOverlap": 0.18
+  },
+  {
+   "run": "gqa1v-workflow-r1",
+   "arm": "workflow",
+   "bug": "GQ07",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ03",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "checks": [
+    {
+     "id": "hud-matches-state",
+     "rule": "The HUD always shows the current Lives, Keys, Coins n/5, Time and dash status."
+    }
+   ],
+   "quoteOverlap": 0.2
+  },
+  {
+   "run": "gqa1v-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ09",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "checks": [
+    {
+     "id": "score-bounds",
+     "rule": "Score is never negative and is capped at 999,999."
+    },
+    {
+     "id": "score-drop-only-spikes",
+     "rule": "Score only goes down from spikes (500, floor 0) or a restart."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ11",
+   "ruleShape": "same-tick input",
+   "specLine": 33,
+   "checks": [
+    {
+     "id": "pause-tick-no-input",
+     "rule": "When the game becomes paused, the rest of that tick's input is ignored."
+    }
+   ],
+   "quoteOverlap": 0.67
+  },
+  {
+   "run": "gqa1v-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ05",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "checks": [
+    {
+     "id": "pause-menu-shown",
+     "rule": "The pause menu shows Resume and Restart level while paused, and is hidden while playing."
+    },
+    {
+     "id": "restart-resets",
+     "rule": "Restart level restores score 0, 3 lives, full timer, no keys or coins, and the game is running again."
+    }
+   ],
+   "quoteOverlap": 0.53
+  },
+  {
+   "run": "gqa1v-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ07",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r2",
+   "arm": "workflow",
+   "bug": "GQ08",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ07",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ05",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "checks": [
+    {
+     "id": "restart-resets-level",
+     "rule": "Restart level puts the level back to its starting state (score 0, 3 lives, all items back) and the game is running again straight away."
+    },
+    {
+     "id": "generic:frozen",
+     "rule": "(generic detector)"
+    }
+   ],
+   "quoteOverlap": 0.94
+  },
+  {
+   "run": "gqa1v-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ03",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "checks": [
+    {
+     "id": "hud-coins",
+     "rule": "The HUD shows Coins n/5 with the current coin count."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1v-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ09",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "checks": [
+    {
+     "id": "score-range",
+     "rule": "Score is never negative and is capped at 999,999."
+    },
+    {
+     "id": "score-no-drop-except-spikes",
+     "rule": "Score only drops by spike damage (500, floored at 0); coins, gems and relics never lower it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ12",
+   "ruleShape": "same-tick input",
+   "specLine": 35,
+   "checks": [
+    {
+     "id": "one-move-per-tick",
+     "rule": "The player makes at most one move per tick: a step (1 tile) or a dash (up to 2 tiles in a straight line)."
+    }
+   ],
+   "quoteOverlap": 0.47
+  },
+  {
+   "run": "gqa1v-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ11",
+   "ruleShape": "same-tick input",
+   "specLine": 33,
+   "checks": [
+    {
+     "id": "pause-no-movement",
+     "rule": "When the game becomes paused, the rest of that tick's input is ignored and nothing moves that tick."
+    }
+   ],
+   "quoteOverlap": 0.83
+  },
+  {
+   "run": "gqa1v-workflow-r3",
+   "arm": "workflow",
+   "bug": "GQ08",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "visible-buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ03",
+   "ruleShape": "display vs state",
+   "specLine": 53,
+   "checks": [
+    {
+     "id": "hud-keys-coins",
+     "rule": "The HUD shows keys and Coins n/5 from the current state."
+    }
+   ],
+   "quoteOverlap": 0
+  },
+  {
+   "run": "gqa1v-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ07",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  },
+  {
+   "run": "gqa1v-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ05",
+   "ruleShape": "mode after an action",
+   "specLine": 98,
+   "checks": [
+    {
+     "id": "restart-resets-state",
+     "rule": "Restart level restores score 0, 3 lives, all items, timer 300, and the game runs straight away."
+    },
+    {
+     "id": "paused-shows-menu",
+     "rule": "Pausing opens the pause menu with Resume and Restart level; the game is never paused without it (no softlock)."
+    },
+    {
+     "id": "generic:frozen",
+     "rule": "(generic detector)"
+    }
+   ],
+   "quoteOverlap": 0.65
+  },
+  {
+   "run": "gqa1v-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ09",
+   "ruleShape": "cap / range",
+   "specLine": 71,
+   "checks": [
+    {
+     "id": "score-floor",
+     "rule": "Score is never negative; spikes stop at 0."
+    },
+    {
+     "id": "score-drops-only-by-spikes",
+     "rule": "Score only drops through spikes (and restart)."
+    }
+   ],
+   "quoteOverlap": 0.6
+  },
+  {
+   "run": "gqa1v-workflow-r4",
+   "arm": "workflow",
+   "bug": "GQ08",
+   "ruleShape": "clickability",
+   "specLine": 101,
+   "checks": [
+    {
+     "id": "buttons-clickable",
+     "rule": "Every visible button must be clickable: nothing may cover it."
+    }
+   ],
+   "quoteOverlap": 1
+  }
+ ]
+}

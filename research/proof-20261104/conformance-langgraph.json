@@ -1,0 +1,65 @@
+{
+ "schema": "foundry.conformance.result/1",
+ "system": "langgraph",
+ "versions": {
+  "langgraph": "1.2.19",
+  "langgraph-checkpoint": "4.3.1",
+  "langgraph-checkpoint-sqlite": "3.1.3",
+  "langchain-core": "1.7.5"
+ },
+ "notApplicable": {
+  "P6": "no verifier concept: nothing to attack",
+  "P9": "no provider/model selection layer of its own",
+  "P11": "no engine identity: covered by P4"
+ },
+ "rows": [
+  {
+   "property": "P1",
+   "attack": "compile a graph whose only check inspects nothing",
+   "outcome": "absent",
+   "observed": "compile() accepted it; there is no notion of an acceptance gate to reject"
+  },
+  {
+   "property": "P2",
+   "attack": "a loop that never exits",
+   "outcome": "native",
+   "observed": "GraphRecursionError at recursion_limit (default 25 steps per run)"
+  },
+  {
+   "property": "P3",
+   "attack": "process killed right after a node's side effect, then the thread resumed",
+   "outcome": "absent",
+   "observed": "the effect happened 2 time(s); crash exit 9, resume exit 0"
+  },
+  {
+   "property": "P4",
+   "attack": "resume a pending run after its code changed (pay x1 became pay x10)",
+   "outcome": "absent",
+   "observed": "resumed silently under the new code: paid 1000"
+  },
+  {
+   "property": "P5",
+   "attack": "edit a finished run's stored state (total 42 -> 41)",
+   "outcome": "absent",
+   "observed": "get_state returned total=41 with no integrity error"
+  },
+  {
+   "property": "P7",
+   "attack": "a fan-out reader drops a unit",
+   "outcome": "absent",
+   "observed": "the run succeeded; units never read: ['c']; nothing in the framework compares reads with the inventory"
+  },
+  {
+   "property": "P8",
+   "attack": "the requester answers their own approval, from the wrong role",
+   "outcome": "absent",
+   "observed": "accepted: approved=True by 'intern-who-requested-it'; interrupt() carries no principal or segregation rule"
+  },
+  {
+   "property": "P10",
+   "attack": "untrusted uploaded text flows into an email-sending node with no approval",
+   "outcome": "absent",
+   "observed": "the effect ran with the untrusted arguments; there is no label or taint tracking to refuse the graph at build time"
+  }
+ ]
+}

@@ -1,0 +1,2083 @@
+{
+ "plan": "3cd586bd7994a4a4bd0de00e771568516eeda808dc45b0297575d9a659cd2ea4",
+ "look": 2,
+ "tasks": 60,
+ "exposed": [
+  "finance.intercompany_balance_recon",
+  "finance.qb_estimate_conversion",
+  "hr.recognition_nominations",
+  "sales.calendly_sequential_meetings",
+  "sales.dependency_chain",
+  "support.helpscout_customer_merge"
+ ],
+ "absent": [],
+ "arms": {
+  "A0": {
+   "dir": "/home/user/workflow-foundry/.claude/worktrees/a1c-v1-pin/research/automationbench-20261014/runs/a0-look2",
+   "n": 60,
+   "spentUsd": 0.76274906,
+   "perTaskUsd": 0.012712484333333333,
+   "unknownCostSessions": 0,
+   "tokens": null,
+   "envFaults": {
+    "records": 0,
+    "tasks": 0,
+    "sessions": 0,
+    "spentUsd": 0
+   }
+  },
+  "A0-AA": {
+   "dir": "/home/user/workflow-foundry/.claude/worktrees/a1c-v1-pin/research/automationbench-20261014/runs/a0-look2-aa",
+   "n": 60,
+   "spentUsd": 0.7153519100000002,
+   "perTaskUsd": 0.011922531833333336,
+   "unknownCostSessions": 0,
+   "tokens": null,
+   "envFaults": {
+    "records": 0,
+    "tasks": 0,
+    "sessions": 0,
+    "spentUsd": 0
+   }
+  },
+  "v1": {
+   "dir": "/home/user/workflow-foundry/.claude/worktrees/a1c-v1-pin/research/automationbench-20261014/runs/a1c-v1-look2",
+   "n": 60,
+   "spentUsd": 1.9639016700000003,
+   "perTaskUsd": 0.032731694500000005,
+   "unknownCostSessions": 0,
+   "tokens": {
+    "claude-haiku-5-5": {
+     "input": 15808240,
+     "output": 5404,
+     "cachedInput": 10676127,
+     "total": 15813644
+    }
+   },
+   "envFaults": {
+    "records": 0,
+    "tasks": 0,
+    "sessions": 0,
+    "spentUsd": 0
+   }
+  },
+  "v2": {
+   "dir": "/home/user/workflow-foundry/.claude/worktrees/wf_3674d3bc-0a7-12/research/automationbench-20261014/runs/a1c-v2-look2",
+   "n": 60,
+   "spentUsd": 1.76289309,
+   "perTaskUsd": 0.0293815515,
+   "unknownCostSessions": 0,
+   "tokens": {
+    "claude-haiku-5-5": {
+     "input": 10675986,
+     "output": 3448,
+     "cachedInput": 6508163,
+     "total": 10679434
+    }
+   },
+   "envFaults": {
+    "records": 3,
+    "tasks": 3,
+    "sessions": 3,
+    "spentUsd": 0.05491306
+   }
+  },
+  "v1-M": {
+   "dir": "/home/user/workflow-foundry/.claude/worktrees/a1c-v1-pin/research/automationbench-20261014/runs/a1c-v1m-look2",
+   "n": 60,
+   "spentUsd": 0.9718760599999998,
+   "perTaskUsd": 0.01619793433333333,
+   "unknownCostSessions": 0,
+   "tokens": {
+    "mercury-3": {
+     "input": 1504472,
+     "output": 2019197,
+     "cachedInput": 7312,
+     "total": 3523669
+    },
+    "claude-haiku-5-5": {
+     "input": 14367317,
+     "output": 4445,
+     "cachedInput": 11573056,
+     "total": 14371762
+    }
+   },
+   "envFaults": {
+    "records": 5,
+    "tasks": 3,
+    "sessions": 5,
+    "spentUsd": 0
+   }
+  },
+  "v2-M": {
+   "dir": "/home/user/workflow-foundry/.claude/worktrees/wf_3674d3bc-0a7-12/research/automationbench-20261014/runs/a1c-v2m-look2",
+   "n": 60,
+   "spentUsd": 0.65521343,
+   "perTaskUsd": 0.010920223833333333,
+   "unknownCostSessions": 0,
+   "tokens": {
+    "mercury-3": {
+     "input": 1576250,
+     "output": 2322057,
+     "cachedInput": 30100,
+     "total": 3898307
+    },
+    "claude-haiku-5-5": {
+     "input": 8707564,
+     "output": 2508,
+     "cachedInput": 6812423,
+     "total": 8710072
+    }
+   },
+   "envFaults": {
+    "records": 0,
+    "tasks": 0,
+    "sessions": 0,
+    "spentUsd": 0
+   }
+  }
+ },
+ "t3": {
+  "note": "T3 A/A (AMEND-1 §4), read before the confirmatory result; descriptive",
+  "n": 60,
+  "a": 8,
+  "b": 9,
+  "diff": -1,
+  "aOnly": 2,
+  "bOnly": 3,
+  "p": 0.9999999999999999,
+  "wilsonA": {
+   "p": 0.13333333333333333,
+   "lo": 0.06914026978309641,
+   "hi": 0.24165394590072103
+  },
+  "wilsonB": {
+   "p": 0.15,
+   "lo": 0.08097349242295689,
+   "hi": 0.26114825891159615
+  },
+  "pcA": 0.5654218101586523,
+  "pcB": 0.5555078235031794,
+  "pcDiff": 0.009913986655472721,
+  "pcP": 0.8267317326826732,
+  "neverGraded": {
+   "a": [],
+   "b": []
+  }
+ },
+ "confirmatory": {
+  "note": "SEQUENTIAL-PLAN-v1 look 2, A1-C v2 (first look 2) vs A0; D23 fixed sequence",
+  "plan": "3cd586bd7994a4a4bd0de00e771568516eeda808dc45b0297575d9a659cd2ea4",
+  "draft": false,
+  "firstLook": 2,
+  "schedule": [
+   60,
+   83
+  ],
+  "procedure": "fixed sequence: strict pass is tested first at the full alpha with its own O'Brien-Fleming boundary; partial credit is tested at the full alpha with its own O'Brien-Fleming boundary only at a look where strict pass is rejected (closed testing: family-wise error at most alpha)",
+  "stopOn": "strict",
+  "rows": [
+   {
+    "look": 2,
+    "n": 60,
+    "status": "complete",
+    "nominal": {
+     "strict": 0.017992313179704986,
+     "partialCredit": 0.017992313179704986
+    },
+    "neverGraded": {
+     "treatment": [],
+     "control": []
+    },
+    "strict": {
+     "treatment": 29,
+     "control": 9,
+     "b": 21,
+     "c": 1,
+     "p": 0.000010967254638671875,
+     "diff": 0.3333333333333333,
+     "wilsonT": {
+      "p": 0.48333333333333334,
+      "lo": 0.3617484128577001,
+      "hi": 0.6069240514915643
+     },
+     "wilsonC": {
+      "p": 0.15,
+      "lo": 0.08097349242295689,
+      "hi": 0.26114825891159615
+     },
+     "bayes": {
+      "kind": "binary",
+      "n": 60,
+      "table": {
+       "both": 8,
+       "aOnly": 21,
+       "bOnly": 1,
+       "neither": 30
+      },
+      "mean": 0.3125448601155895,
+      "lo": 0.18678461363200424,
+      "hi": 0.44260010101258124,
+      "level": 0.95,
+      "pPositive": 1,
+      "draws": 20000,
+      "seed": "ab-seq-strict-2"
+     },
+     "eValue": 8289.138339920948
+    },
+    "partialCredit": {
+     "meanDiff": 0.2550590369669318,
+     "p": 0.00000999990000099999,
+     "method": "monte-carlo",
+     "bayes": {
+      "kind": "continuous",
+      "n": 60,
+      "mean": 0.25474952158760655,
+      "lo": 0.17600923467627222,
+      "hi": 0.3435777204161202,
+      "level": 0.95,
+      "pPositive": 1,
+      "draws": 20000,
+      "seed": "ab-seq-pc-2"
+     }
+    },
+    "crossed": {
+     "strict": true,
+     "partialCredit": true
+    },
+    "tested": {
+     "strict": true,
+     "partialCredit": true
+    },
+    "rejected": {
+     "strict": true,
+     "partialCredit": true
+    }
+   }
+  ],
+  "decision": {
+   "look": 2,
+   "label": "effect on strict pass at look 2; partial credit rejected too (treatment ahead)",
+   "strictClaim": true,
+   "partialCreditClaim": true,
+   "harm": false
+  }
+ },
+ "descriptive": [
+  {
+   "a": "v2",
+   "b": "v1",
+   "all": {
+    "n": 60,
+    "a": 29,
+    "b": 19,
+    "diff": 10,
+    "aOnly": 11,
+    "bOnly": 1,
+    "p": 0.006347656250000002,
+    "wilsonA": {
+     "p": 0.48333333333333334,
+     "lo": 0.3617484128577001,
+     "hi": 0.6069240514915643
+    },
+    "wilsonB": {
+     "p": 0.31666666666666665,
+     "lo": 0.21305705841174333,
+     "hi": 0.4423400494301654
+    },
+    "pcA": 0.8105668604701111,
+    "pcB": 0.7275218457010253,
+    "pcDiff": 0.08304501476908598,
+    "pcP": 0.00026999730002699973,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   },
+   "sensitivity": {
+    "n": 54,
+    "a": 28,
+    "b": 18,
+    "diff": 10,
+    "aOnly": 11,
+    "bOnly": 1,
+    "p": 0.006347656250000002,
+    "wilsonA": {
+     "p": 0.5185185185185185,
+     "lo": 0.3885147504846543,
+     "hi": 0.6460624396345678
+    },
+    "wilsonB": {
+     "p": 0.3333333333333333,
+     "lo": 0.22241243520150356,
+     "hi": 0.466392853725497
+    },
+    "pcA": 0.840202587644108,
+    "pcB": 0.7485839437830322,
+    "pcDiff": 0.09161864386107592,
+    "pcP": 0.00027954578399658203,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   }
+  },
+  {
+   "a": "v2-M",
+   "b": "v1-M",
+   "all": {
+    "n": 60,
+    "a": 27,
+    "b": 29,
+    "diff": -2,
+    "aOnly": 4,
+    "bOnly": 6,
+    "p": 0.7539062500000001,
+    "wilsonA": {
+     "p": 0.45,
+     "lo": 0.33093453853760824,
+     "hi": 0.575082854510185
+    },
+    "wilsonB": {
+     "p": 0.48333333333333334,
+     "lo": 0.3617484128577001,
+     "hi": 0.6069240514915643
+    },
+    "pcA": 0.7753191117161704,
+    "pcB": 0.812181562346036,
+    "pcDiff": -0.03686245062986549,
+    "pcP": 0.22890771092289078,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   },
+   "sensitivity": {
+    "n": 54,
+    "a": 24,
+    "b": 25,
+    "diff": -1,
+    "aOnly": 4,
+    "bOnly": 5,
+    "p": 1,
+    "wilsonA": {
+     "p": 0.4444444444444444,
+     "lo": 0.3200225687559781,
+     "hi": 0.5762458608863554
+    },
+    "wilsonB": {
+     "p": 0.46296296296296297,
+     "lo": 0.33689688992410527,
+     "hi": 0.5939487298374504
+    },
+    "pcA": 0.7729883134294899,
+    "pcB": 0.8116832174215216,
+    "pcDiff": -0.038694903992031605,
+    "pcP": 0.2533921003341675,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   }
+  },
+  {
+   "a": "v2-M",
+   "b": "v2",
+   "all": {
+    "n": 60,
+    "a": 27,
+    "b": 29,
+    "diff": -2,
+    "aOnly": 6,
+    "bOnly": 8,
+    "p": 0.7905273437500009,
+    "wilsonA": {
+     "p": 0.45,
+     "lo": 0.33093453853760824,
+     "hi": 0.575082854510185
+    },
+    "wilsonB": {
+     "p": 0.48333333333333334,
+     "lo": 0.3617484128577001,
+     "hi": 0.6069240514915643
+    },
+    "pcA": 0.7753191117161704,
+    "pcB": 0.8105668604701111,
+    "pcDiff": -0.03524774875394072,
+    "pcP": 0.3318266817331827,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   },
+   "sensitivity": {
+    "n": 54,
+    "a": 24,
+    "b": 28,
+    "diff": -4,
+    "aOnly": 4,
+    "bOnly": 8,
+    "p": 0.38769531250000056,
+    "wilsonA": {
+     "p": 0.4444444444444444,
+     "lo": 0.3200225687559781,
+     "hi": 0.5762458608863554
+    },
+    "wilsonB": {
+     "p": 0.5185185185185185,
+     "lo": 0.3885147504846543,
+     "hi": 0.6460624396345678
+    },
+    "pcA": 0.7729883134294899,
+    "pcB": 0.840202587644108,
+    "pcDiff": -0.06721427421461822,
+    "pcP": 0.039150118827819824,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   }
+  },
+  {
+   "a": "v1-M",
+   "b": "v1",
+   "all": {
+    "n": 60,
+    "a": 29,
+    "b": 19,
+    "diff": 10,
+    "aOnly": 15,
+    "bOnly": 5,
+    "p": 0.04138946533203121,
+    "wilsonA": {
+     "p": 0.48333333333333334,
+     "lo": 0.3617484128577001,
+     "hi": 0.6069240514915643
+    },
+    "wilsonB": {
+     "p": 0.31666666666666665,
+     "lo": 0.21305705841174333,
+     "hi": 0.4423400494301654
+    },
+    "pcA": 0.812181562346036,
+    "pcB": 0.7275218457010253,
+    "pcDiff": 0.08465971664501076,
+    "pcP": 0.0026399736002639972,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   },
+   "sensitivity": {
+    "n": 54,
+    "a": 25,
+    "b": 18,
+    "diff": 7,
+    "aOnly": 12,
+    "bOnly": 5,
+    "p": 0.1434631347656251,
+    "wilsonA": {
+     "p": 0.46296296296296297,
+     "lo": 0.33689688992410527,
+     "hi": 0.5939487298374504
+    },
+    "wilsonB": {
+     "p": 0.3333333333333333,
+     "lo": 0.22241243520150356,
+     "hi": 0.466392853725497
+    },
+    "pcA": 0.8116832174215216,
+    "pcB": 0.7485839437830322,
+    "pcDiff": 0.06309927363848934,
+    "pcP": 0.012439875601243988,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   }
+  },
+  {
+   "a": "v1",
+   "b": "A0",
+   "all": {
+    "n": 60,
+    "a": 19,
+    "b": 9,
+    "diff": 10,
+    "aOnly": 14,
+    "bOnly": 4,
+    "p": 0.03088378906250002,
+    "wilsonA": {
+     "p": 0.31666666666666665,
+     "lo": 0.21305705841174333,
+     "hi": 0.4423400494301654
+    },
+    "wilsonB": {
+     "p": 0.15,
+     "lo": 0.08097349242295689,
+     "hi": 0.26114825891159615
+    },
+    "pcA": 0.7275218457010253,
+    "pcB": 0.5555078235031794,
+    "pcDiff": 0.17201402219784578,
+    "pcP": 0.0012999870001299987,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   },
+   "sensitivity": {
+    "n": 54,
+    "a": 18,
+    "b": 8,
+    "diff": 10,
+    "aOnly": 13,
+    "bOnly": 3,
+    "p": 0.021270751953125003,
+    "wilsonA": {
+     "p": 0.3333333333333333,
+     "lo": 0.22241243520150356,
+     "hi": 0.466392853725497
+    },
+    "wilsonB": {
+     "p": 0.14814814814814814,
+     "lo": 0.07702971308229412,
+     "hi": 0.266003674652485
+    },
+    "pcA": 0.7485839437830322,
+    "pcB": 0.5712069498619207,
+    "pcDiff": 0.17737699392111161,
+    "pcP": 0.0017599824001759982,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   }
+  },
+  {
+   "a": "v1-M",
+   "b": "A0",
+   "all": {
+    "n": 60,
+    "a": 29,
+    "b": 9,
+    "diff": 20,
+    "aOnly": 23,
+    "bOnly": 3,
+    "p": 0.00008797645568847668,
+    "wilsonA": {
+     "p": 0.48333333333333334,
+     "lo": 0.3617484128577001,
+     "hi": 0.6069240514915643
+    },
+    "wilsonB": {
+     "p": 0.15,
+     "lo": 0.08097349242295689,
+     "hi": 0.26114825891159615
+    },
+    "pcA": 0.812181562346036,
+    "pcB": 0.5555078235031794,
+    "pcDiff": 0.25667373884285655,
+    "pcP": 0.00000999990000099999,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   },
+   "sensitivity": {
+    "n": 54,
+    "a": 25,
+    "b": 8,
+    "diff": 17,
+    "aOnly": 20,
+    "bOnly": 3,
+    "p": 0.00048828125,
+    "wilsonA": {
+     "p": 0.46296296296296297,
+     "lo": 0.33689688992410527,
+     "hi": 0.5939487298374504
+    },
+    "wilsonB": {
+     "p": 0.14814814814814814,
+     "lo": 0.07702971308229412,
+     "hi": 0.266003674652485
+    },
+    "pcA": 0.8116832174215216,
+    "pcB": 0.5712069498619207,
+    "pcDiff": 0.24047626755960091,
+    "pcP": 0.00000999990000099999,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   }
+  },
+  {
+   "a": "v2-M",
+   "b": "A0",
+   "all": {
+    "n": 60,
+    "a": 27,
+    "b": 9,
+    "diff": 18,
+    "aOnly": 22,
+    "bOnly": 4,
+    "p": 0.0005335211753845221,
+    "wilsonA": {
+     "p": 0.45,
+     "lo": 0.33093453853760824,
+     "hi": 0.575082854510185
+    },
+    "wilsonB": {
+     "p": 0.15,
+     "lo": 0.08097349242295689,
+     "hi": 0.26114825891159615
+    },
+    "pcA": 0.7753191117161704,
+    "pcB": 0.5555078235031794,
+    "pcDiff": 0.2198112882129911,
+    "pcP": 0.0002599974000259997,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   },
+   "sensitivity": {
+    "n": 54,
+    "a": 24,
+    "b": 8,
+    "diff": 16,
+    "aOnly": 19,
+    "bOnly": 3,
+    "p": 0.0008554458618164058,
+    "wilsonA": {
+     "p": 0.4444444444444444,
+     "lo": 0.3200225687559781,
+     "hi": 0.5762458608863554
+    },
+    "wilsonB": {
+     "p": 0.14814814814814814,
+     "lo": 0.07702971308229412,
+     "hi": 0.266003674652485
+    },
+    "pcA": 0.7729883134294899,
+    "pcB": 0.5712069498619207,
+    "pcDiff": 0.20178136356756926,
+    "pcP": 0.0011799882001179989,
+    "neverGraded": {
+     "a": [],
+     "b": []
+    }
+   }
+  }
+ ],
+ "gate": {
+  "note": "development gate for devCheck look 3 (A1C-V2-DESIGN.md §5); never a claim",
+  "strictDiff": 10,
+  "strictOk": true,
+  "pcDiff": 0.08304501476908598,
+  "pcOk": true,
+  "costPerTask": {
+   "v2": 0.0293815515,
+   "v1": 0.032731694500000005,
+   "ok": true
+  },
+  "harm": {
+   "evidence": "development/diagnostic",
+   "a": {
+    "run": "/var/tmp/foundry-work/autobench/a1c-v1-look2",
+    "tasks": 60,
+    "missing": [],
+    "totals": {
+     "duplicates": 21,
+     "removals": 0,
+     "extraMessages": 33,
+     "containers": 5,
+     "readFlips": 25
+    },
+    "rows": [
+     {
+      "task": "finance.cash_sweep",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.expense_reclassification",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.grant_expense_tracking",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.intercompany_balance_recon",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.invoice_aging_followup",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.qb_customer_balance_review",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.qb_customer_onboard",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 4,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.qb_estimate_conversion",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.sales_tax_remittance",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.xero_expense_claim_review",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.comp_adjustment_batch",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 2,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.intern_program_coordination",
+      "duplicates": 2,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.jira_it_onboarding",
+      "duplicates": 4,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.job_posting_refresh",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 3,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.offer_letter_generation",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 1,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.payroll_bonus_processing",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.probation_review_reminder",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.recognition_nominations",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 1,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.rto_compliance_check",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.zoom_all_hands_setup",
+      "duplicates": 4,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.budget_reallocation",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.hashtag_performance",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.market_trend",
+      "duplicates": 1,
+      "removals": 0,
+      "extraMessages": 1,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.partner_comarketing",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 4,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.partner_commission_calculation",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.social_crisis_response",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 4,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.social_roi",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.tam_analysis",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.topic_cluster",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.video_repurpose",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.asana_fire_drill",
+      "duplicates": 2,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.asana_slack_sheets_audit",
+      "duplicates": 2,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.chatgpt_feedback_analysis",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 8,
+      "containers": 0,
+      "readFlips": 10,
+      "flips": [
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       }
+      ]
+     },
+     {
+      "task": "operations.drive_notion_lease_archive",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.facebook_roas_monitoring",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 1,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.hazmat_shipping_compliance",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.holiday_coverage_planning",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.monday_calendar_emergency_drill",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.notion_gmail_checklist_update",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.zoom_project_kickoff",
+      "duplicates": 2,
+      "removals": 0,
+      "extraMessages": 1,
+      "containers": 1,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.calendly_sequential_meetings",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.chatgpt_email_sentiment_routing",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 1,
+      "containers": 0,
+      "readFlips": 15,
+      "flips": [
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 6,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 11,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 11,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 11,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 11,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 11,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 15,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 15,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 15,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 15,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 15,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       }
+      ]
+     },
+     {
+      "task": "sales.cold_email_personalization",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.dependency_chain",
+      "duplicates": 1,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.docusign_compliance_template",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.docusign_conditional_template_selection",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.linkedin_sales_prospecting",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.milestone_celebration",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.priority_selection",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.sheets_multi_channel_campaign_router",
+      "duplicates": 3,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.gorgias_loyalty_program",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.helpscout_customer_merge",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.helpscout_health_sync",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.helpscout_response_audit",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.intercom_sf_opportunity_alerts",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.reamaze_intercom_sync",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 4,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.zendesk_cross_org_merge",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.zendesk_intercom_company_sync",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.zendesk_maintenance_notify",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 2,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.zoho_desk_capacity_planning",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     }
+    ]
+   },
+   "b": {
+    "run": "/var/tmp/foundry-work/autobench/a1c-v2-look2",
+    "tasks": 60,
+    "missing": [],
+    "totals": {
+     "duplicates": 7,
+     "removals": 149,
+     "extraMessages": 27,
+     "containers": 5,
+     "readFlips": 25
+    },
+    "rows": [
+     {
+      "task": "finance.cash_sweep",
+      "duplicates": 0,
+      "removals": 4,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.expense_reclassification",
+      "duplicates": 0,
+      "removals": 10,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.grant_expense_tracking",
+      "duplicates": 0,
+      "removals": 6,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.intercompany_balance_recon",
+      "duplicates": 0,
+      "removals": 6,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.invoice_aging_followup",
+      "duplicates": 0,
+      "removals": 4,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.qb_customer_balance_review",
+      "duplicates": 0,
+      "removals": 4,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.qb_customer_onboard",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.qb_estimate_conversion",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.sales_tax_remittance",
+      "duplicates": 0,
+      "removals": 11,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "finance.xero_expense_claim_review",
+      "duplicates": 0,
+      "removals": 5,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.comp_adjustment_batch",
+      "duplicates": 0,
+      "removals": 8,
+      "extraMessages": 2,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.intern_program_coordination",
+      "duplicates": 0,
+      "removals": 4,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.jira_it_onboarding",
+      "duplicates": 0,
+      "removals": 9,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.job_posting_refresh",
+      "duplicates": 0,
+      "removals": 8,
+      "extraMessages": 3,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.offer_letter_generation",
+      "duplicates": 0,
+      "removals": 8,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.payroll_bonus_processing",
+      "duplicates": 0,
+      "removals": 5,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.probation_review_reminder",
+      "duplicates": 0,
+      "removals": 4,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.recognition_nominations",
+      "duplicates": 0,
+      "removals": 8,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.rto_compliance_check",
+      "duplicates": 7,
+      "removals": 8,
+      "extraMessages": 1,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "hr.zoom_all_hands_setup",
+      "duplicates": 0,
+      "removals": 7,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.budget_reallocation",
+      "duplicates": 0,
+      "removals": 13,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.hashtag_performance",
+      "duplicates": 0,
+      "removals": 17,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.market_trend",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.partner_comarketing",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.partner_commission_calculation",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.social_crisis_response",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 3,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.social_roi",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.tam_analysis",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.topic_cluster",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "marketing.video_repurpose",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.asana_fire_drill",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.asana_slack_sheets_audit",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.chatgpt_feedback_analysis",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 4,
+      "containers": 0,
+      "readFlips": 20,
+      "flips": [
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 8,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 9,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       }
+      ]
+     },
+     {
+      "task": "operations.drive_notion_lease_archive",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.facebook_roas_monitoring",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 1,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.hazmat_shipping_compliance",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.holiday_coverage_planning",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.monday_calendar_emergency_drill",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.notion_gmail_checklist_update",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "operations.zoom_project_kickoff",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 1,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.calendly_sequential_meetings",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.chatgpt_email_sentiment_routing",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 2,
+      "containers": 0,
+      "readFlips": 5,
+      "flips": [
+       {
+        "step": 7,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 7,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 7,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 7,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       },
+       {
+        "step": 7,
+        "op": "gmail.users.messages.modify",
+        "add": false
+       }
+      ]
+     },
+     {
+      "task": "sales.cold_email_personalization",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.dependency_chain",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.docusign_compliance_template",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.docusign_conditional_template_selection",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.linkedin_sales_prospecting",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.milestone_celebration",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.priority_selection",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "sales.sheets_multi_channel_campaign_router",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.gorgias_loyalty_program",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 9,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.helpscout_customer_merge",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.helpscout_health_sync",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.helpscout_response_audit",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.intercom_sf_opportunity_alerts",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.reamaze_intercom_sync",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 4,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.zendesk_cross_org_merge",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.zendesk_intercom_company_sync",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.zendesk_maintenance_notify",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 2,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     },
+     {
+      "task": "support.zoho_desk_capacity_planning",
+      "duplicates": 0,
+      "removals": 0,
+      "extraMessages": 0,
+      "containers": 0,
+      "readFlips": 0,
+      "flips": []
+     }
+    ]
+   },
+   "paired": {
+    "paired": 60,
+    "comparable": true,
+    "missing": {
+     "a": [],
+     "b": [],
+     "onlyInA": [],
+     "onlyInB": []
+    },
+    "a": {
+     "duplicates": 21,
+     "removals": 0,
+     "extraMessages": 33,
+     "containers": 5,
+     "readFlips": 25
+    },
+    "b": {
+     "duplicates": 7,
+     "removals": 149,
+     "extraMessages": 27,
+     "containers": 5,
+     "readFlips": 25
+    },
+    "bNotWorseThanA": {
+     "duplicates": true,
+     "removals": false,
+     "extraMessages": true,
+     "containers": true,
+     "readFlips": true
+    }
+   }
+  },
+  "rest": "mean responses, H3, L1-L5 and the Δdev60 condition: §5, read by hand"
+ }
+}

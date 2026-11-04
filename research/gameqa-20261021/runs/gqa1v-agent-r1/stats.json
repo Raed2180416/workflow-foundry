@@ -1,0 +1,42 @@
+{
+ "stats": {
+  "exploreTicks": 12,
+  "runs": 4,
+  "finished": true,
+  "notes": "Confirmed one bug with a minimal reproduction: a movement key pressed in the same tick as pause still moves the player. From a fresh game with seed 1, pause+right moved the player from (1,1) to (2,1) with events [pause, move], while the game ended paused. The design says that when pause takes effect, the rest of that tick's input is ignored and nothing else happens. Run 2 (pause+left) showed a bump, which is the same root cause, so it is not reported separately. I stopped here because the remaining budget is small. Untested areas: toasts, restart, dash edge cases, hearts and spikes, enemy contact, and swap collisions.",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right",
+     "wait",
+     "pause+left",
+     "wait",
+     "enter",
+     "dash-down",
+     "right+down",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+left"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "pause+right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+right"
+    ]
+   }
+  ]
+ }
+}

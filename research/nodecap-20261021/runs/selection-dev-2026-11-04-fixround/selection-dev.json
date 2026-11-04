@@ -1,0 +1,159 @@
+{
+  "schema": "nodecap-selection-dev/1",
+  "date": "2026-11-04",
+  "evidence": "development split written by the builder (knows the gold sets); $0; never held-out",
+  "current": {
+    "thresholds": {
+      "tau": 1,
+      "delta": 0.5
+    },
+    "cases": 25,
+    "exact": 24,
+    "wrongGrants": 0,
+    "optionsWithExpected": 0,
+    "unmetWithExpectedNearest": 1,
+    "misses": [
+      {
+        "task": "T05",
+        "phrasing": "loose",
+        "expect": "grant:skill.refund-policy",
+        "got": "unmet",
+        "full": "unmet:skill.fast-refunds,skill.refund-policy"
+      }
+    ]
+  },
+  "verifierCases": {
+    "thresholds": {
+      "tau": 1,
+      "delta": 0.5
+    },
+    "cases": 6,
+    "exact": 6,
+    "wrongGrants": 0,
+    "optionsWithExpected": 0,
+    "unmetWithExpectedNearest": 0,
+    "misses": []
+  },
+  "grid": [
+    {
+      "tau": 0.5,
+      "delta": 0.25,
+      "exact": 24,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 0.5,
+      "delta": 0.5,
+      "exact": 24,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 0.5,
+      "delta": 1,
+      "exact": 23,
+      "wrongGrants": 0,
+      "optionsWithExpected": 1,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1,
+      "delta": 0.25,
+      "exact": 24,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1,
+      "delta": 0.5,
+      "exact": 24,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1,
+      "delta": 1,
+      "exact": 23,
+      "wrongGrants": 0,
+      "optionsWithExpected": 1,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1.5,
+      "delta": 0.25,
+      "exact": 24,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1.5,
+      "delta": 0.5,
+      "exact": 24,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1.5,
+      "delta": 1,
+      "exact": 23,
+      "wrongGrants": 0,
+      "optionsWithExpected": 1,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 2,
+      "delta": 0.25,
+      "exact": 22,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 3
+    },
+    {
+      "tau": 2,
+      "delta": 0.5,
+      "exact": 22,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 3
+    },
+    {
+      "tau": 2,
+      "delta": 1,
+      "exact": 22,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 3
+    },
+    {
+      "tau": 3,
+      "delta": 0.25,
+      "exact": 18,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 7
+    },
+    {
+      "tau": 3,
+      "delta": 0.5,
+      "exact": 18,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 7
+    },
+    {
+      "tau": 3,
+      "delta": 1,
+      "exact": 18,
+      "wrongGrants": 0,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 7
+    }
+  ]
+}

@@ -1,0 +1,5995 @@
+{
+ "part": "seeds",
+ "worlds": [
+  {
+   "seed": 1191,
+   "d": 2
+  },
+  {
+   "seed": 1191,
+   "d": 3
+  },
+  {
+   "seed": 1191,
+   "d": 5
+  },
+  {
+   "seed": 1192,
+   "d": 2
+  },
+  {
+   "seed": 1192,
+   "d": 3
+  },
+  {
+   "seed": 1192,
+   "d": 5
+  },
+  {
+   "seed": 1193,
+   "d": 2
+  },
+  {
+   "seed": 1193,
+   "d": 3
+  },
+  {
+   "seed": 1193,
+   "d": 5
+  }
+ ],
+ "reference": {
+  "1191:2": {
+   "completed": 50,
+   "passed": 50,
+   "critical": 0,
+   "failing": [],
+   "contracts": "50/50",
+   "dup": 0,
+   "dupMoney": 0,
+   "comp": "27/27",
+   "armErrors": 0,
+   "ticks": 412,
+   "effects": 593,
+   "wakeups": 384
+  },
+  "1191:3": {
+   "completed": 83,
+   "passed": 83,
+   "critical": 0,
+   "failing": [],
+   "contracts": "81/81",
+   "dup": 0,
+   "dupMoney": 0,
+   "comp": "23/23",
+   "armErrors": 0,
+   "ticks": 866,
+   "effects": 1033,
+   "wakeups": 744
+  },
+  "1191:5": {
+   "completed": 199,
+   "passed": 199,
+   "critical": 0,
+   "failing": [],
+   "contracts": "194/194",
+   "dup": 0,
+   "dupMoney": 0,
+   "comp": "59/59",
+   "armErrors": 0,
+   "ticks": 2288,
+   "effects": 2647,
+   "wakeups": 1860
+  },
+  "1192:2": {
+   "completed": 52,
+   "passed": 52,
+   "critical": 0,
+   "failing": [],
+   "contracts": "52/52",
+   "dup": 0,
+   "dupMoney": 0,
+   "comp": "17/17",
+   "armErrors": 0,
+   "ticks": 441,
+   "effects": 602,
+   "wakeups": 407
+  },
+  "1192:3": {
+   "completed": 83,
+   "passed": 83,
+   "critical": 0,
+   "failing": [],
+   "contracts": "81/81",
+   "dup": 0,
+   "dupMoney": 0,
+   "comp": "24/24",
+   "armErrors": 0,
+   "ticks": 876,
+   "effects": 1033,
+   "wakeups": 773
+  },
+  "1192:5": {
+   "completed": 199,
+   "passed": 199,
+   "critical": 0,
+   "failing": [],
+   "contracts": "194/194",
+   "dup": 0,
+   "dupMoney": 0,
+   "comp": "47/47",
+   "armErrors": 0,
+   "ticks": 2432,
+   "effects": 2683,
+   "wakeups": 1974
+  },
+  "1193:2": {
+   "completed": 50,
+   "passed": 50,
+   "critical": 0,
+   "failing": [],
+   "contracts": "50/50",
+   "dup": 0,
+   "dupMoney": 0,
+   "comp": "16/16",
+   "armErrors": 0,
+   "ticks": 442,
+   "effects": 583,
+   "wakeups": 392
+  },
+  "1193:3": {
+   "completed": 84,
+   "passed": 84,
+   "critical": 0,
+   "failing": [],
+   "contracts": "82/82",
+   "dup": 0,
+   "dupMoney": 0,
+   "comp": "26/26",
+   "armErrors": 0,
+   "ticks": 972,
+   "effects": 1156,
+   "wakeups": 881
+  },
+  "1193:5": {
+   "completed": 195,
+   "passed": 195,
+   "critical": 0,
+   "failing": [],
+   "contracts": "190/190",
+   "dup": 0,
+   "dupMoney": 0,
+   "comp": "55/55",
+   "armErrors": 0,
+   "ticks": 2209,
+   "effects": 2583,
+   "wakeups": 1825
+  }
+ },
+ "subjects": {
+  "ch-e8-1": {
+   "incident": "ch-e8-1",
+   "arm": "original",
+   "digest": null,
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 3717,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 445,
+     "effects": 672,
+     "wakeups": 466
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 5219,
+     "completed": 83,
+     "passed": 78,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "76/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 862,
+     "effects": 1154,
+     "wakeups": 816
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 17769,
+     "completed": 199,
+     "passed": 191,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "186/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2346,
+     "effects": 2987,
+     "wakeups": 2085
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 3866,
+     "completed": 52,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "49/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 454,
+     "effects": 688,
+     "wakeups": 469
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 5154,
+     "completed": 83,
+     "passed": 78,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "76/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 859,
+     "effects": 1147,
+     "wakeups": 837
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 16756,
+     "completed": 199,
+     "passed": 191,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "186/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2441,
+     "effects": 3011,
+     "wakeups": 2180
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 3097,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 461,
+     "effects": 663,
+     "wakeups": 460
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 9140,
+     "completed": 84,
+     "passed": 79,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "77/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 957,
+     "effects": 1265,
+     "wakeups": 958
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 14477,
+     "completed": 195,
+     "passed": 187,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "182/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2276,
+     "effects": 2940,
+     "wakeups": 2053
+    }
+   ]
+  },
+  "ch-e8-1.H-C.k1": {
+   "incident": "ch-e8-1",
+   "arm": "H-C k1",
+   "digest": "51c858a0ed7b189e",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 3162,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 460,
+     "effects": 695,
+     "wakeups": 479
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 5742,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 895,
+     "effects": 1197,
+     "wakeups": 843
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 18143,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2393,
+     "effects": 3053,
+     "wakeups": 2114
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 4207,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 464,
+     "effects": 704,
+     "wakeups": 479
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 7266,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 900,
+     "effects": 1197,
+     "wakeups": 869
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 16388,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2507,
+     "effects": 3089,
+     "wakeups": 2222
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 3326,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 476,
+     "effects": 685,
+     "wakeups": 476
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 5789,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1000,
+     "effects": 1320,
+     "wakeups": 986
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 12933,
+     "completed": 195,
+     "passed": 195,
+     "critical": 0,
+     "failing": [],
+     "contracts": "190/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2309,
+     "effects": 2989,
+     "wakeups": 2076
+    }
+   ]
+  },
+  "ch-e8-2": {
+   "incident": "ch-e8-2",
+   "arm": "original",
+   "digest": null,
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 3213,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 490,
+     "effects": 672,
+     "wakeups": 465
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 8310,
+     "completed": 83,
+     "passed": 76,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0065",
+       "review-timeout"
+      ],
+      [
+       "o0072",
+       "review-approve"
+      ]
+     ],
+     "contracts": "74/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 984,
+     "effects": 1154,
+     "wakeups": 856
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 20161,
+     "completed": 199,
+     "passed": 186,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ],
+      [
+       "o0086",
+       "review-timeout"
+      ],
+      [
+       "o0096",
+       "review-timeout"
+      ],
+      [
+       "o0154",
+       "review-timeout"
+      ],
+      [
+       "o0174",
+       "review-timeout"
+      ],
+      [
+       "o0192",
+       "review-timeout"
+      ]
+     ],
+     "contracts": "181/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2634,
+     "effects": 2987,
+     "wakeups": 2164
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 5100,
+     "completed": 52,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "49/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 528,
+     "effects": 688,
+     "wakeups": 494
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 7779,
+     "completed": 83,
+     "passed": 78,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "76/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 977,
+     "effects": 1147,
+     "wakeups": 873
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 22094,
+     "completed": 199,
+     "passed": 189,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ],
+      [
+       "o0097",
+       "review-approve"
+      ],
+      [
+       "o0116",
+       "review-approve"
+      ]
+     ],
+     "contracts": "184/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2748,
+     "effects": 3011,
+     "wakeups": 2268
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 5226,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 524,
+     "effects": 663,
+     "wakeups": 475
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 10577,
+     "completed": 84,
+     "passed": 77,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0036",
+       "review-timeout"
+      ],
+      [
+       "o0041",
+       "review-reject"
+      ]
+     ],
+     "contracts": "75/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1067,
+     "effects": 1265,
+     "wakeups": 986
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 24495,
+     "completed": 195,
+     "passed": 186,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ],
+      [
+       "o0066",
+       "review-approve"
+      ]
+     ],
+     "contracts": "181/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2568,
+     "effects": 2940,
+     "wakeups": 2123
+    }
+   ]
+  },
+  "ch-e8-2.H-C.k1": {
+   "incident": "ch-e8-2",
+   "arm": "H-C k1",
+   "digest": "43514494acb836be",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 4352,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 509,
+     "effects": 695,
+     "wakeups": 479
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 8353,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1025,
+     "effects": 1197,
+     "wakeups": 883
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 23949,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2693,
+     "effects": 3053,
+     "wakeups": 2194
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 4538,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 542,
+     "effects": 704,
+     "wakeups": 505
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 10377,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1025,
+     "effects": 1197,
+     "wakeups": 906
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 29064,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2826,
+     "effects": 3089,
+     "wakeups": 2312
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 4895,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 543,
+     "effects": 685,
+     "wakeups": 492
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 11410,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1117,
+     "effects": 1320,
+     "wakeups": 1015
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 30119,
+     "completed": 195,
+     "passed": 195,
+     "critical": 0,
+     "failing": [],
+     "contracts": "190/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2613,
+     "effects": 2989,
+     "wakeups": 2146
+    }
+   ]
+  },
+  "ch-e8-3": {
+   "incident": "ch-e8-3",
+   "arm": "original",
+   "digest": null,
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 3664,
+     "completed": 50,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "49/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 395,
+     "effects": 678,
+     "wakeups": 419
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 6302,
+     "completed": 83,
+     "passed": 81,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "79/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 843,
+     "effects": 1169,
+     "wakeups": 798
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 13364,
+     "completed": 199,
+     "passed": 158,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0143",
+       "straight"
+      ],
+      [
+       "o0145",
+       "straight"
+      ],
+      [
+       "o0146",
+       "collection-failed"
+      ],
+      [
+       "o0147",
+       "cancel-processing"
+      ],
+      [
+       "o0148",
+       "straight"
+      ],
+      [
+       "o0149",
+       "straight"
+      ],
+      [
+       "o0151",
+       "straight"
+      ],
+      [
+       "o0152",
+       "f4-reserve"
+      ],
+      [
+       "o0153",
+       "straight"
+      ],
+      [
+       "o0155",
+       "decline"
+      ],
+      [
+       "o0156",
+       "collection-failed"
+      ],
+      [
+       "o0157",
+       "straight"
+      ],
+      [
+       "o0159",
+       "f4-reserve"
+      ],
+      [
+       "o0160",
+       "cancel-after-collection"
+      ],
+      [
+       "o0162",
+       "f6-carrier"
+      ],
+      [
+       "o0164",
+       "collection-failed"
+      ],
+      [
+       "o0165",
+       "straight"
+      ],
+      [
+       "o0166",
+       "cancel-processing"
+      ],
+      [
+       "o0167",
+       "f4-reserve"
+      ],
+      [
+       "o0168",
+       "straight"
+      ],
+      [
+       "o0169",
+       "cancel-at-collection"
+      ],
+      [
+       "o0170",
+       "straight"
+      ],
+      [
+       "o0172",
+       "straight"
+      ],
+      [
+       "o0175",
+       "straight"
+      ],
+      [
+       "o0176",
+       "straight"
+      ],
+      [
+       "o0177",
+       "cancel-processing"
+      ],
+      [
+       "o0178",
+       "straight"
+      ],
+      [
+       "o0179",
+       "straight"
+      ],
+      [
+       "o0180",
+       "straight"
+      ],
+      [
+       "o0183",
+       "straight"
+      ],
+      [
+       "o0184",
+       "straight"
+      ],
+      [
+       "o0185",
+       "f6-carrier"
+      ],
+      [
+       "o0186",
+       "straight"
+      ],
+      [
+       "o0187",
+       "decline"
+      ],
+      [
+       "o0188",
+       "straight"
+      ],
+      [
+       "o0189",
+       "straight"
+      ],
+      [
+       "o0198",
+       "straight"
+      ],
+      [
+       "o0200",
+       "cancel-processing"
+      ]
+     ],
+     "contracts": "153/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "40/110",
+     "armErrors": 0,
+     "ticks": 1996,
+     "effects": 3339,
+     "wakeups": 1866
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 3863,
+     "completed": 52,
+     "passed": 51,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "51/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 431,
+     "effects": 693,
+     "wakeups": 449
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 8709,
+     "completed": 83,
+     "passed": 81,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "79/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 844,
+     "effects": 1169,
+     "wakeups": 820
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 16007,
+     "completed": 199,
+     "passed": 168,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0150",
+       "straight"
+      ],
+      [
+       "o0151",
+       "amend"
+      ],
+      [
+       "o0152",
+       "f3-refund"
+      ],
+      [
+       "o0153",
+       "f1-charge"
+      ],
+      [
+       "o0154",
+       "straight"
+      ],
+      [
+       "o0155",
+       "amend"
+      ],
+      [
+       "o0157",
+       "collection-failed"
+      ],
+      [
+       "o0158",
+       "cancel-after-collection"
+      ],
+      [
+       "o0159",
+       "straight"
+      ],
+      [
+       "o0164",
+       "f3-refund"
+      ],
+      [
+       "o0166",
+       "cancel-at-collection"
+      ],
+      [
+       "o0167",
+       "straight"
+      ],
+      [
+       "o0168",
+       "straight"
+      ],
+      [
+       "o0169",
+       "straight"
+      ],
+      [
+       "o0170",
+       "straight"
+      ],
+      [
+       "o0173",
+       "f3-refund"
+      ],
+      [
+       "o0174",
+       "action-at-deadline"
+      ],
+      [
+       "o0175",
+       "straight"
+      ],
+      [
+       "o0176",
+       "straight"
+      ],
+      [
+       "o0177",
+       "straight"
+      ],
+      [
+       "o0179",
+       "amend-then-cancel"
+      ],
+      [
+       "o0180",
+       "straight"
+      ],
+      [
+       "o0181",
+       "straight"
+      ],
+      [
+       "o0183",
+       "decline"
+      ],
+      [
+       "o0185",
+       "f4-reserve"
+      ],
+      [
+       "o0187",
+       "straight"
+      ],
+      [
+       "o0188",
+       "straight"
+      ],
+      [
+       "o0203",
+       "straight"
+      ]
+     ],
+     "contracts": "163/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "38/94",
+     "armErrors": 0,
+     "ticks": 2110,
+     "effects": 3343,
+     "wakeups": 1964
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 3989,
+     "completed": 50,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "49/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 428,
+     "effects": 668,
+     "wakeups": 428
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 6934,
+     "completed": 84,
+     "passed": 82,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "80/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 931,
+     "effects": 1280,
+     "wakeups": 926
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 13160,
+     "completed": 195,
+     "passed": 156,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0136",
+       "review-approve"
+      ],
+      [
+       "o0141",
+       "review-approve"
+      ],
+      [
+       "o0142",
+       "amend-then-cancel"
+      ],
+      [
+       "o0143",
+       "straight"
+      ],
+      [
+       "o0145",
+       "straight"
+      ],
+      [
+       "o0147",
+       "straight"
+      ],
+      [
+       "o0149",
+       "straight"
+      ],
+      [
+       "o0150",
+       "collection-failed"
+      ],
+      [
+       "o0151",
+       "straight"
+      ],
+      [
+       "o0152",
+       "straight"
+      ],
+      [
+       "o0153",
+       "f6-carrier"
+      ],
+      [
+       "o0154",
+       "decline"
+      ],
+      [
+       "o0156",
+       "amend"
+      ],
+      [
+       "o0158",
+       "straight"
+      ],
+      [
+       "o0159",
+       "straight"
+      ],
+      [
+       "o0161",
+       "f3-charge"
+      ],
+      [
+       "o0162",
+       "straight"
+      ],
+      [
+       "o0163",
+       "straight"
+      ],
+      [
+       "o0164",
+       "cancel-after-collection"
+      ],
+      [
+       "o0167",
+       "cancel-processing"
+      ],
+      [
+       "o0168",
+       "straight"
+      ],
+      [
+       "o0169",
+       "cancel-processing"
+      ],
+      [
+       "o0171",
+       "decline"
+      ],
+      [
+       "o0173",
+       "cancel-processing"
+      ],
+      [
+       "o0175",
+       "amend"
+      ],
+      [
+       "o0178",
+       "f1-charge"
+      ],
+      [
+       "o0179",
+       "straight"
+      ],
+      [
+       "o0180",
+       "f4-reserve"
+      ],
+      [
+       "o0184",
+       "straight"
+      ],
+      [
+       "o0189",
+       "f6-carrier"
+      ],
+      [
+       "o0195",
+       "straight"
+      ],
+      [
+       "o0199",
+       "straight"
+      ],
+      [
+       "o0200",
+       "cancel-processing"
+      ],
+      [
+       "o0201",
+       "decline"
+      ],
+      [
+       "o0202",
+       "amend-then-cancel"
+      ],
+      [
+       "o0205",
+       "f3-charge"
+      ]
+     ],
+     "contracts": "151/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "35/99",
+     "armErrors": 1,
+     "ticks": 1931,
+     "effects": 3263,
+     "wakeups": 1812
+    }
+   ]
+  },
+  "ch-e8-3.H-C.k1": {
+   "incident": "ch-e8-3",
+   "arm": "H-C k1",
+   "digest": "b4af8dcc81adb174",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 3124,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 408,
+     "effects": 695,
+     "wakeups": 429
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 6257,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 865,
+     "effects": 1197,
+     "wakeups": 816
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 15919,
+     "completed": 199,
+     "passed": 161,
+     "critical": 0,
+     "failing": [
+      [
+       "o0143",
+       "straight"
+      ],
+      [
+       "o0145",
+       "straight"
+      ],
+      [
+       "o0146",
+       "collection-failed"
+      ],
+      [
+       "o0147",
+       "cancel-processing"
+      ],
+      [
+       "o0148",
+       "straight"
+      ],
+      [
+       "o0149",
+       "straight"
+      ],
+      [
+       "o0151",
+       "straight"
+      ],
+      [
+       "o0152",
+       "f4-reserve"
+      ],
+      [
+       "o0153",
+       "straight"
+      ],
+      [
+       "o0155",
+       "decline"
+      ],
+      [
+       "o0156",
+       "collection-failed"
+      ],
+      [
+       "o0157",
+       "straight"
+      ],
+      [
+       "o0159",
+       "f4-reserve"
+      ],
+      [
+       "o0160",
+       "cancel-after-collection"
+      ],
+      [
+       "o0162",
+       "f6-carrier"
+      ],
+      [
+       "o0164",
+       "collection-failed"
+      ],
+      [
+       "o0165",
+       "straight"
+      ],
+      [
+       "o0166",
+       "cancel-processing"
+      ],
+      [
+       "o0167",
+       "f4-reserve"
+      ],
+      [
+       "o0168",
+       "straight"
+      ],
+      [
+       "o0169",
+       "cancel-at-collection"
+      ],
+      [
+       "o0170",
+       "straight"
+      ],
+      [
+       "o0172",
+       "straight"
+      ],
+      [
+       "o0175",
+       "straight"
+      ],
+      [
+       "o0176",
+       "straight"
+      ],
+      [
+       "o0177",
+       "cancel-processing"
+      ],
+      [
+       "o0178",
+       "straight"
+      ],
+      [
+       "o0179",
+       "straight"
+      ],
+      [
+       "o0180",
+       "straight"
+      ],
+      [
+       "o0183",
+       "straight"
+      ],
+      [
+       "o0184",
+       "straight"
+      ],
+      [
+       "o0185",
+       "f6-carrier"
+      ],
+      [
+       "o0186",
+       "straight"
+      ],
+      [
+       "o0187",
+       "decline"
+      ],
+      [
+       "o0188",
+       "straight"
+      ],
+      [
+       "o0189",
+       "straight"
+      ],
+      [
+       "o0198",
+       "straight"
+      ],
+      [
+       "o0200",
+       "cancel-processing"
+      ]
+     ],
+     "contracts": "156/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "40/110",
+     "armErrors": 0,
+     "ticks": 2031,
+     "effects": 3384,
+     "wakeups": 1884
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 3408,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 439,
+     "effects": 704,
+     "wakeups": 456
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 8002,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 868,
+     "effects": 1197,
+     "wakeups": 837
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 14470,
+     "completed": 199,
+     "passed": 171,
+     "critical": 0,
+     "failing": [
+      [
+       "o0150",
+       "straight"
+      ],
+      [
+       "o0151",
+       "amend"
+      ],
+      [
+       "o0152",
+       "f3-refund"
+      ],
+      [
+       "o0153",
+       "f1-charge"
+      ],
+      [
+       "o0154",
+       "straight"
+      ],
+      [
+       "o0155",
+       "amend"
+      ],
+      [
+       "o0157",
+       "collection-failed"
+      ],
+      [
+       "o0158",
+       "cancel-after-collection"
+      ],
+      [
+       "o0159",
+       "straight"
+      ],
+      [
+       "o0164",
+       "f3-refund"
+      ],
+      [
+       "o0166",
+       "cancel-at-collection"
+      ],
+      [
+       "o0167",
+       "straight"
+      ],
+      [
+       "o0168",
+       "straight"
+      ],
+      [
+       "o0169",
+       "straight"
+      ],
+      [
+       "o0170",
+       "straight"
+      ],
+      [
+       "o0173",
+       "f3-refund"
+      ],
+      [
+       "o0174",
+       "action-at-deadline"
+      ],
+      [
+       "o0175",
+       "straight"
+      ],
+      [
+       "o0176",
+       "straight"
+      ],
+      [
+       "o0177",
+       "straight"
+      ],
+      [
+       "o0179",
+       "amend-then-cancel"
+      ],
+      [
+       "o0180",
+       "straight"
+      ],
+      [
+       "o0181",
+       "straight"
+      ],
+      [
+       "o0183",
+       "decline"
+      ],
+      [
+       "o0185",
+       "f4-reserve"
+      ],
+      [
+       "o0187",
+       "straight"
+      ],
+      [
+       "o0188",
+       "straight"
+      ],
+      [
+       "o0203",
+       "straight"
+      ]
+     ],
+     "contracts": "166/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "38/94",
+     "armErrors": 0,
+     "ticks": 2147,
+     "effects": 3388,
+     "wakeups": 1985
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 3080,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 441,
+     "effects": 685,
+     "wakeups": 441
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 5854,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 964,
+     "effects": 1320,
+     "wakeups": 946
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 14867,
+     "completed": 195,
+     "passed": 159,
+     "critical": 0,
+     "failing": [
+      [
+       "o0136",
+       "review-approve"
+      ],
+      [
+       "o0141",
+       "review-approve"
+      ],
+      [
+       "o0142",
+       "amend-then-cancel"
+      ],
+      [
+       "o0143",
+       "straight"
+      ],
+      [
+       "o0145",
+       "straight"
+      ],
+      [
+       "o0147",
+       "straight"
+      ],
+      [
+       "o0149",
+       "straight"
+      ],
+      [
+       "o0150",
+       "collection-failed"
+      ],
+      [
+       "o0151",
+       "straight"
+      ],
+      [
+       "o0152",
+       "straight"
+      ],
+      [
+       "o0153",
+       "f6-carrier"
+      ],
+      [
+       "o0154",
+       "decline"
+      ],
+      [
+       "o0156",
+       "amend"
+      ],
+      [
+       "o0158",
+       "straight"
+      ],
+      [
+       "o0159",
+       "straight"
+      ],
+      [
+       "o0161",
+       "f3-charge"
+      ],
+      [
+       "o0162",
+       "straight"
+      ],
+      [
+       "o0163",
+       "straight"
+      ],
+      [
+       "o0164",
+       "cancel-after-collection"
+      ],
+      [
+       "o0167",
+       "cancel-processing"
+      ],
+      [
+       "o0168",
+       "straight"
+      ],
+      [
+       "o0169",
+       "cancel-processing"
+      ],
+      [
+       "o0171",
+       "decline"
+      ],
+      [
+       "o0173",
+       "cancel-processing"
+      ],
+      [
+       "o0175",
+       "amend"
+      ],
+      [
+       "o0178",
+       "f1-charge"
+      ],
+      [
+       "o0179",
+       "straight"
+      ],
+      [
+       "o0180",
+       "f4-reserve"
+      ],
+      [
+       "o0184",
+       "straight"
+      ],
+      [
+       "o0189",
+       "f6-carrier"
+      ],
+      [
+       "o0195",
+       "straight"
+      ],
+      [
+       "o0199",
+       "straight"
+      ],
+      [
+       "o0200",
+       "cancel-processing"
+      ],
+      [
+       "o0201",
+       "decline"
+      ],
+      [
+       "o0202",
+       "amend-then-cancel"
+      ],
+      [
+       "o0205",
+       "f3-charge"
+      ]
+     ],
+     "contracts": "154/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "35/99",
+     "armErrors": 1,
+     "ticks": 1959,
+     "effects": 3296,
+     "wakeups": 1829
+    }
+   ]
+  },
+  "cht-e8-1": {
+   "incident": "cht-e8-1",
+   "arm": "original",
+   "digest": null,
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 3496,
+     "completed": 50,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "49/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 505,
+     "effects": 678,
+     "wakeups": 516
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 7365,
+     "completed": 83,
+     "passed": 81,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "79/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1001,
+     "effects": 1169,
+     "wakeups": 934
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 17748,
+     "completed": 199,
+     "passed": 196,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "191/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2676,
+     "effects": 3008,
+     "wakeups": 2349
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 4749,
+     "completed": 52,
+     "passed": 51,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "51/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 537,
+     "effects": 693,
+     "wakeups": 544
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 7303,
+     "completed": 83,
+     "passed": 81,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "79/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1001,
+     "effects": 1169,
+     "wakeups": 959
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 21405,
+     "completed": 199,
+     "passed": 196,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "191/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2802,
+     "effects": 3044,
+     "wakeups": 2468
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 3980,
+     "completed": 50,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "49/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 537,
+     "effects": 668,
+     "wakeups": 528
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 9297,
+     "completed": 84,
+     "passed": 82,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "80/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1085,
+     "effects": 1280,
+     "wakeups": 1074
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 28276,
+     "completed": 195,
+     "passed": 192,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "187/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2601,
+     "effects": 2956,
+     "wakeups": 2300
+    }
+   ]
+  },
+  "cht-e8-1.H-C.k1": {
+   "incident": "cht-e8-1",
+   "arm": "H-C k1",
+   "digest": "bb0842f6205d6f02",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 6183,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 527,
+     "effects": 695,
+     "wakeups": 534
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 10980,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1031,
+     "effects": 1197,
+     "wakeups": 957
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 24665,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2730,
+     "effects": 3053,
+     "wakeups": 2380
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 4685,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 553,
+     "effects": 704,
+     "wakeups": 559
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 10157,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1034,
+     "effects": 1197,
+     "wakeups": 983
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 33130,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2854,
+     "effects": 3089,
+     "wakeups": 2499
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 5907,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 557,
+     "effects": 685,
+     "wakeups": 548
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 12653,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1128,
+     "effects": 1320,
+     "wakeups": 1102
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 24389,
+     "completed": 195,
+     "passed": 195,
+     "critical": 0,
+     "failing": [],
+     "contracts": "190/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2647,
+     "effects": 2989,
+     "wakeups": 2329
+    }
+   ]
+  },
+  "cht-e8-2": {
+   "incident": "cht-e8-2",
+   "arm": "original",
+   "digest": null,
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 5027,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 561,
+     "effects": 672,
+     "wakeups": 531
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 10547,
+     "completed": 83,
+     "passed": 78,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "76/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1076,
+     "effects": 1154,
+     "wakeups": 938
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 30441,
+     "completed": 199,
+     "passed": 191,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "186/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2875,
+     "effects": 2987,
+     "wakeups": 2379
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 7981,
+     "completed": 52,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "49/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 593,
+     "effects": 688,
+     "wakeups": 554
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 12772,
+     "completed": 83,
+     "passed": 78,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "76/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1071,
+     "effects": 1147,
+     "wakeups": 961
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 34023,
+     "completed": 199,
+     "passed": 191,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "186/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2982,
+     "effects": 3011,
+     "wakeups": 2481
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 6429,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 591,
+     "effects": 663,
+     "wakeups": 541
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 12893,
+     "completed": 84,
+     "passed": 79,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "77/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1165,
+     "effects": 1265,
+     "wakeups": 1082
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 23695,
+     "completed": 195,
+     "passed": 187,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "182/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2805,
+     "effects": 2940,
+     "wakeups": 2331
+    }
+   ]
+  },
+  "cht-e8-2.H-C.k1": {
+   "incident": "cht-e8-2",
+   "arm": "H-C k1",
+   "digest": "3dcafd0e151ee9fc",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 5021,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 580,
+     "effects": 695,
+     "wakeups": 546
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 11642,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1114,
+     "effects": 1197,
+     "wakeups": 966
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 30553,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2931,
+     "effects": 3053,
+     "wakeups": 2409
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 7215,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 607,
+     "effects": 704,
+     "wakeups": 566
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 12597,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1118,
+     "effects": 1197,
+     "wakeups": 994
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 33047,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 3057,
+     "effects": 3089,
+     "wakeups": 2525
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 7182,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 610,
+     "effects": 685,
+     "wakeups": 559
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 12775,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1214,
+     "effects": 1320,
+     "wakeups": 1112
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 39886,
+     "completed": 195,
+     "passed": 195,
+     "critical": 0,
+     "failing": [],
+     "contracts": "190/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2848,
+     "effects": 2989,
+     "wakeups": 2355
+    }
+   ]
+  },
+  "cht-e8-3": {
+   "incident": "cht-e8-3",
+   "arm": "original",
+   "digest": null,
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 7842,
+     "completed": 50,
+     "passed": 40,
+     "critical": 20,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "cancel-processing"
+      ],
+      [
+       "o0016",
+       "cancel-processing"
+      ],
+      [
+       "o0021",
+       "cancel-processing"
+      ],
+      [
+       "o0025",
+       "cancel-processing"
+      ],
+      [
+       "o0026",
+       "cancel-processing"
+      ],
+      [
+       "o0038",
+       "cancel-processing"
+      ],
+      [
+       "o0048",
+       "cancel-processing"
+      ]
+     ],
+     "contracts": "40/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "18/27",
+     "armErrors": 0,
+     "ticks": 513,
+     "effects": 652,
+     "wakeups": 533
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 13685,
+     "completed": 83,
+     "passed": 74,
+     "critical": 21,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0018",
+       "cancel-processing"
+      ],
+      [
+       "o0021",
+       "cancel-processing"
+      ],
+      [
+       "o0044",
+       "cancel-processing"
+      ],
+      [
+       "o0053",
+       "cancel-processing"
+      ]
+     ],
+     "contracts": "72/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "15/23",
+     "armErrors": 0,
+     "ticks": 996,
+     "effects": 1133,
+     "wakeups": 937
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 41191,
+     "completed": 199,
+     "passed": 178,
+     "critical": 63,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ],
+      [
+       "o0014",
+       "cancel-processing"
+      ],
+      [
+       "o0024",
+       "cancel-processing"
+      ],
+      [
+       "o0034",
+       "cancel-processing"
+      ],
+      [
+       "o0037",
+       "cancel-processing"
+      ],
+      [
+       "o0052",
+       "amend-then-cancel"
+      ],
+      [
+       "o0058",
+       "cancel-processing"
+      ],
+      [
+       "o0095",
+       "cancel-processing"
+      ],
+      [
+       "o0125",
+       "cancel-processing"
+      ],
+      [
+       "o0131",
+       "cancel-processing"
+      ],
+      [
+       "o0147",
+       "cancel-processing"
+      ],
+      [
+       "o0166",
+       "cancel-processing"
+      ],
+      [
+       "o0177",
+       "cancel-processing"
+      ],
+      [
+       "o0200",
+       "cancel-processing"
+      ]
+     ],
+     "contracts": "173/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "33/59",
+     "armErrors": 0,
+     "ticks": 2676,
+     "effects": 2924,
+     "wakeups": 2377
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 10102,
+     "completed": 52,
+     "passed": 43,
+     "critical": 25,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "cancel-processing"
+      ],
+      [
+       "o0008",
+       "cancel-processing"
+      ],
+      [
+       "o0028",
+       "cancel-processing"
+      ],
+      [
+       "o0035",
+       "cancel-processing"
+      ],
+      [
+       "o0037",
+       "cancel-processing"
+      ],
+      [
+       "o0040",
+       "cancel-processing"
+      ]
+     ],
+     "contracts": "43/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "5/17",
+     "armErrors": 0,
+     "ticks": 535,
+     "effects": 663,
+     "wakeups": 545
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 16099,
+     "completed": 83,
+     "passed": 73,
+     "critical": 24,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0020",
+       "cancel-processing"
+      ],
+      [
+       "o0026",
+       "cancel-processing"
+      ],
+      [
+       "o0060",
+       "cancel-processing"
+      ],
+      [
+       "o0061",
+       "cancel-processing"
+      ],
+      [
+       "o0068",
+       "amend-then-cancel"
+      ]
+     ],
+     "contracts": "71/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "13/24",
+     "armErrors": 0,
+     "ticks": 993,
+     "effects": 1123,
+     "wakeups": 960
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 41905,
+     "completed": 199,
+     "passed": 182,
+     "critical": 38,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ],
+      [
+       "o0009",
+       "cancel-processing"
+      ],
+      [
+       "o0037",
+       "cancel-processing"
+      ],
+      [
+       "o0054",
+       "cancel-processing"
+      ],
+      [
+       "o0057",
+       "cancel-processing"
+      ],
+      [
+       "o0081",
+       "cancel-processing"
+      ],
+      [
+       "o0112",
+       "cancel-processing"
+      ],
+      [
+       "o0137",
+       "cancel-processing"
+      ],
+      [
+       "o0138",
+       "cancel-processing"
+      ],
+      [
+       "o0179",
+       "amend-then-cancel"
+      ]
+     ],
+     "contracts": "177/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "30/47",
+     "armErrors": 0,
+     "ticks": 2785,
+     "effects": 2973,
+     "wakeups": 2486
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 7600,
+     "completed": 50,
+     "passed": 42,
+     "critical": 18,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "cancel-processing"
+      ],
+      [
+       "o0008",
+       "cancel-processing"
+      ],
+      [
+       "o0011",
+       "cancel-processing"
+      ],
+      [
+       "o0032",
+       "cancel-processing"
+      ],
+      [
+       "o0040",
+       "cancel-processing"
+      ]
+     ],
+     "contracts": "42/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "9/16",
+     "armErrors": 0,
+     "ticks": 539,
+     "effects": 645,
+     "wakeups": 538
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 18160,
+     "completed": 84,
+     "passed": 73,
+     "critical": 32,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0026",
+       "cancel-processing"
+      ],
+      [
+       "o0047",
+       "cancel-processing"
+      ],
+      [
+       "o0053",
+       "cancel-processing"
+      ],
+      [
+       "o0059",
+       "cancel-processing"
+      ],
+      [
+       "o0068",
+       "cancel-processing"
+      ],
+      [
+       "o0085",
+       "amend-then-cancel"
+      ]
+     ],
+     "contracts": "71/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "13/26",
+     "armErrors": 0,
+     "ticks": 1082,
+     "effects": 1233,
+     "wakeups": 1076
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 45290,
+     "completed": 195,
+     "passed": 175,
+     "critical": 44,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ],
+      [
+       "o0014",
+       "cancel-processing"
+      ],
+      [
+       "o0029",
+       "cancel-processing"
+      ],
+      [
+       "o0076",
+       "cancel-processing"
+      ],
+      [
+       "o0095",
+       "cancel-processing"
+      ],
+      [
+       "o0097",
+       "cancel-processing"
+      ],
+      [
+       "o0124",
+       "cancel-processing"
+      ],
+      [
+       "o0142",
+       "amend-then-cancel"
+      ],
+      [
+       "o0167",
+       "cancel-processing"
+      ],
+      [
+       "o0169",
+       "cancel-processing"
+      ],
+      [
+       "o0173",
+       "cancel-processing"
+      ],
+      [
+       "o0200",
+       "cancel-processing"
+      ],
+      [
+       "o0202",
+       "amend-then-cancel"
+      ]
+     ],
+     "contracts": "170/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "37/55",
+     "armErrors": 0,
+     "ticks": 2609,
+     "effects": 2896,
+     "wakeups": 2332
+    }
+   ]
+  },
+  "cht-e8-3.H-C.k1": {
+   "incident": "cht-e8-3",
+   "arm": "H-C k1",
+   "digest": "1c4e09ebad1ebf6b",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 7164,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 594,
+     "effects": 695,
+     "wakeups": 560
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 19607,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1123,
+     "effects": 1197,
+     "wakeups": 973
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 56583,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2950,
+     "effects": 3053,
+     "wakeups": 2429
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 9592,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 611,
+     "effects": 704,
+     "wakeups": 569
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 19711,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1129,
+     "effects": 1197,
+     "wakeups": 1003
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 50816,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 3071,
+     "effects": 3089,
+     "wakeups": 2547
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 14360,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 617,
+     "effects": 685,
+     "wakeups": 566
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 28809,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1223,
+     "effects": 1320,
+     "wakeups": 1118
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 51542,
+     "completed": 195,
+     "passed": 195,
+     "critical": 0,
+     "failing": [],
+     "contracts": "190/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2870,
+     "effects": 2989,
+     "wakeups": 2377
+    }
+   ]
+  },
+  "b1lh-e8-2": {
+   "incident": "b1lh-e8-2",
+   "arm": "original",
+   "digest": null,
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 3797,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 560,
+     "effects": 672,
+     "wakeups": 531
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 8681,
+     "completed": 83,
+     "passed": 78,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "76/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1071,
+     "effects": 1154,
+     "wakeups": 938
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 23900,
+     "completed": 199,
+     "passed": 191,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "186/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2853,
+     "effects": 2987,
+     "wakeups": 2358
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 6926,
+     "completed": 52,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "49/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 592,
+     "effects": 688,
+     "wakeups": 554
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 10970,
+     "completed": 83,
+     "passed": 78,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "76/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1068,
+     "effects": 1147,
+     "wakeups": 961
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 31510,
+     "completed": 199,
+     "passed": 191,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "186/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2964,
+     "effects": 3011,
+     "wakeups": 2467
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 6958,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 590,
+     "effects": 663,
+     "wakeups": 541
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 12960,
+     "completed": 84,
+     "passed": 79,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "77/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1162,
+     "effects": 1265,
+     "wakeups": 1080
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 29859,
+     "completed": 195,
+     "passed": 187,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "182/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2787,
+     "effects": 2940,
+     "wakeups": 2316
+    }
+   ]
+  },
+  "b1lh-e8-2.H-C.k1": {
+   "incident": "b1lh-e8-2",
+   "arm": "H-C k1",
+   "digest": "f7fc00743543c30b",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 8689,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 580,
+     "effects": 695,
+     "wakeups": 546
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 15679,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1113,
+     "effects": 1197,
+     "wakeups": 966
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 33941,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2914,
+     "effects": 3053,
+     "wakeups": 2388
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 6203,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 607,
+     "effects": 704,
+     "wakeups": 566
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 12102,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1118,
+     "effects": 1197,
+     "wakeups": 994
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 33729,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 3044,
+     "effects": 3089,
+     "wakeups": 2511
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 7522,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 610,
+     "effects": 685,
+     "wakeups": 559
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 15929,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1214,
+     "effects": 1320,
+     "wakeups": 1110
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 28730,
+     "completed": 195,
+     "passed": 195,
+     "critical": 0,
+     "failing": [],
+     "contracts": "190/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2834,
+     "effects": 2989,
+     "wakeups": 2340
+    }
+   ]
+  },
+  "b1lh-e8-3": {
+   "incident": "b1lh-e8-3",
+   "arm": "original",
+   "digest": null,
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 6764,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 566,
+     "effects": 695,
+     "wakeups": 533
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 11317,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1060,
+     "effects": 1197,
+     "wakeups": 917
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 35135,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2797,
+     "effects": 3053,
+     "wakeups": 2293
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 7419,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 568,
+     "effects": 704,
+     "wakeups": 529
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 13998,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1066,
+     "effects": 1197,
+     "wakeups": 946
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 30850,
+     "completed": 199,
+     "passed": 194,
+     "critical": 0,
+     "failing": [
+      [
+       "o0011",
+       "f4-reserve"
+      ],
+      [
+       "o0027",
+       "f4-reserve"
+      ],
+      [
+       "o0033",
+       "f4-reserve"
+      ],
+      [
+       "o0086",
+       "f4-reserve"
+      ],
+      [
+       "o0136",
+       "f4-reserve"
+      ]
+     ],
+     "contracts": "189/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/52",
+     "armErrors": 0,
+     "ticks": 2873,
+     "effects": 3081,
+     "wakeups": 2381
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 6120,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 579,
+     "effects": 685,
+     "wakeups": 528
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 12192,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1165,
+     "effects": 1320,
+     "wakeups": 1064
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 36513,
+     "completed": 195,
+     "passed": 194,
+     "critical": 0,
+     "failing": [
+      [
+       "o0015",
+       "f4-reserve"
+      ]
+     ],
+     "contracts": "189/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/56",
+     "armErrors": 0,
+     "ticks": 2701,
+     "effects": 2985,
+     "wakeups": 2241
+    }
+   ]
+  },
+  "b1lh-e8-3.H-C.k1": {
+   "incident": "b1lh-e8-3",
+   "arm": "H-C k1",
+   "digest": "1de6418ec11cd0d8",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 5467,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 566,
+     "effects": 695,
+     "wakeups": 533
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 10274,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1060,
+     "effects": 1197,
+     "wakeups": 917
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 35463,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2797,
+     "effects": 3053,
+     "wakeups": 2293
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 6364,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 568,
+     "effects": 704,
+     "wakeups": 529
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 12528,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1066,
+     "effects": 1197,
+     "wakeups": 946
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 34050,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2907,
+     "effects": 3089,
+     "wakeups": 2403
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 6994,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 579,
+     "effects": 685,
+     "wakeups": 528
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 16089,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1165,
+     "effects": 1320,
+     "wakeups": 1064
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 27134,
+     "completed": 195,
+     "passed": 195,
+     "critical": 0,
+     "failing": [],
+     "contracts": "190/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2715,
+     "effects": 2989,
+     "wakeups": 2251
+    }
+   ]
+  },
+  "ch-e8-3.H-C.k2": {
+   "incident": "ch-e8-3",
+   "arm": "H-C k2",
+   "digest": "9f44d0546979025b",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 4905,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 408,
+     "effects": 695,
+     "wakeups": 429
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 7762,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 865,
+     "effects": 1197,
+     "wakeups": 816
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 17055,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2362,
+     "effects": 3155,
+     "wakeups": 2078
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 2361,
+     "completed": 52,
+     "passed": 52,
+     "critical": 0,
+     "failing": [],
+     "contracts": "52/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 439,
+     "effects": 704,
+     "wakeups": 456
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 4102,
+     "completed": 83,
+     "passed": 83,
+     "critical": 0,
+     "failing": [],
+     "contracts": "81/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 868,
+     "effects": 1197,
+     "wakeups": 837
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 11807,
+     "completed": 199,
+     "passed": 199,
+     "critical": 0,
+     "failing": [],
+     "contracts": "194/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2482,
+     "effects": 3176,
+     "wakeups": 2183
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 2399,
+     "completed": 50,
+     "passed": 50,
+     "critical": 0,
+     "failing": [],
+     "contracts": "50/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 441,
+     "effects": 685,
+     "wakeups": 441
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 4917,
+     "completed": 84,
+     "passed": 84,
+     "critical": 0,
+     "failing": [],
+     "contracts": "82/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 964,
+     "effects": 1320,
+     "wakeups": 946
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 10497,
+     "completed": 195,
+     "passed": 195,
+     "critical": 0,
+     "failing": [],
+     "contracts": "190/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2278,
+     "effects": 3090,
+     "wakeups": 2034
+    }
+   ]
+  },
+  "ch-e8-3.H-0.k1": {
+   "incident": "ch-e8-3",
+   "arm": "H-0 k1",
+   "digest": "556a9867f013120b",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 2244,
+     "completed": 50,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "49/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 395,
+     "effects": 678,
+     "wakeups": 419
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 4708,
+     "completed": 83,
+     "passed": 81,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "79/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 843,
+     "effects": 1169,
+     "wakeups": 798
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 11901,
+     "completed": 199,
+     "passed": 196,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "191/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2269,
+     "effects": 3008,
+     "wakeups": 2009
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 2775,
+     "completed": 52,
+     "passed": 51,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "51/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 431,
+     "effects": 693,
+     "wakeups": 449
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 4997,
+     "completed": 83,
+     "passed": 81,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "79/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 844,
+     "effects": 1169,
+     "wakeups": 820
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 13089,
+     "completed": 199,
+     "passed": 196,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "191/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2401,
+     "effects": 3044,
+     "wakeups": 2120
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 2491,
+     "completed": 50,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "49/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 428,
+     "effects": 668,
+     "wakeups": 428
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 5340,
+     "completed": 84,
+     "passed": 82,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "80/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 931,
+     "effects": 1280,
+     "wakeups": 926
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 12179,
+     "completed": 195,
+     "passed": 192,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ]
+     ],
+     "contracts": "187/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2192,
+     "effects": 2956,
+     "wakeups": 1965
+    }
+   ]
+  },
+  "cht-e8-3.H-N.k1": {
+   "incident": "cht-e8-3",
+   "arm": "H-N k1",
+   "digest": "efe0373c3a68d650",
+   "cells": [
+    {
+     "seed": 1191,
+     "d": 2,
+     "status": "complete",
+     "ms": 4265,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "27/27",
+     "armErrors": 0,
+     "ticks": 534,
+     "effects": 672,
+     "wakeups": 545
+    },
+    {
+     "seed": 1191,
+     "d": 3,
+     "status": "complete",
+     "ms": 6882,
+     "completed": 83,
+     "passed": 78,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "76/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "23/23",
+     "armErrors": 0,
+     "ticks": 1008,
+     "effects": 1154,
+     "wakeups": 945
+    },
+    {
+     "seed": 1191,
+     "d": 5,
+     "status": "complete",
+     "ms": 18384,
+     "completed": 199,
+     "passed": 191,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "186/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "59/59",
+     "armErrors": 0,
+     "ticks": 2715,
+     "effects": 2987,
+     "wakeups": 2399
+    },
+    {
+     "seed": 1192,
+     "d": 2,
+     "status": "complete",
+     "ms": 4034,
+     "completed": 52,
+     "passed": 49,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "49/52",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "17/17",
+     "armErrors": 0,
+     "ticks": 553,
+     "effects": 688,
+     "wakeups": 557
+    },
+    {
+     "seed": 1192,
+     "d": 3,
+     "status": "complete",
+     "ms": 6859,
+     "completed": 83,
+     "passed": 78,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "76/81",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "24/24",
+     "armErrors": 0,
+     "ticks": 1008,
+     "effects": 1147,
+     "wakeups": 970
+    },
+    {
+     "seed": 1192,
+     "d": 5,
+     "status": "complete",
+     "ms": 18500,
+     "completed": 199,
+     "passed": 191,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "186/194",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "47/47",
+     "armErrors": 0,
+     "ticks": 2812,
+     "effects": 3011,
+     "wakeups": 2503
+    },
+    {
+     "seed": 1193,
+     "d": 2,
+     "status": "complete",
+     "ms": 3929,
+     "completed": 50,
+     "passed": 47,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ]
+     ],
+     "contracts": "47/50",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "16/16",
+     "armErrors": 0,
+     "ticks": 554,
+     "effects": 663,
+     "wakeups": 548
+    },
+    {
+     "seed": 1193,
+     "d": 3,
+     "status": "complete",
+     "ms": 8148,
+     "completed": 84,
+     "passed": 79,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "77/82",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "26/26",
+     "armErrors": 0,
+     "ticks": 1100,
+     "effects": 1265,
+     "wakeups": 1088
+    },
+    {
+     "seed": 1193,
+     "d": 5,
+     "status": "complete",
+     "ms": 18016,
+     "completed": 195,
+     "passed": 187,
+     "critical": 0,
+     "failing": [
+      [
+       "o0001",
+       "gl-intake"
+      ],
+      [
+       "o0002",
+       "gl-awaiting"
+      ],
+      [
+       "o0003",
+       "gl-dispatched"
+      ],
+      [
+       "o0004",
+       "gl-intake"
+      ],
+      [
+       "o0005",
+       "gl-awaiting"
+      ],
+      [
+       "o0006",
+       "gl-dispatched"
+      ],
+      [
+       "o0007",
+       "gl-intake"
+      ],
+      [
+       "o0008",
+       "gl-awaiting"
+      ]
+     ],
+     "contracts": "182/190",
+     "dup": 0,
+     "dupMoney": 0,
+     "comp": "55/55",
+     "armErrors": 0,
+     "ticks": 2645,
+     "effects": 2940,
+     "wakeups": 2353
+    }
+   ]
+  }
+ },
+ "at": "2026-11-04T15:16:56.051Z",
+ "wallMs": 2493072,
+ "evidence": "development (dev worlds), post hoc after the FH-1 result, $0"
+}

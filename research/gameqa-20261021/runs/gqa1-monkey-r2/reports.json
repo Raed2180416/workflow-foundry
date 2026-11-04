@@ -1,0 +1,13 @@
+[
+ {
+  "bug_class": "softlock",
+  "title": "Game stops responding after this input",
+  "observed": "After these tokens the state stops changing for 30 ticks and no dialog or button is visible.",
+  "expected": "The game must always respond: the state may not stay unchanged with no dialog or button to act on.",
+  "seed": 829095,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ }
+]

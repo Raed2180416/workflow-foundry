@@ -1,0 +1,99 @@
+diff -ruN a/modules/fulfilment.mjs b/modules/fulfilment.mjs
+--- a/modules/fulfilment.mjs	2026-11-04 14:33:20.183698687 +0000
++++ b/modules/fulfilment.mjs	2026-11-04 14:33:20.187698688 +0000
+@@ -88,7 +88,7 @@
+ 
+ const stopWith = (S, reason, at) => { if (S.st === 'run') { S.st = 'stop'; S.sr = reason; S.sat = at; } };
+ 
+-export function step(input, ctx) {
++function run(input, ctx) {
+   let S = ctx.state;
+   if (input.op === 'start') {
+     if (S) return { output: null, state: S };
+@@ -149,7 +149,7 @@
+   throw new Error(`fulfilment: unknown op ${input.op}`);
+ }
+ 
+-export function onEvent(event, ctx) {
++function handle(event, ctx) {
+   const S = ctx.state;
+   const p = event.payload ?? {};
+   if (!S || event.type !== 'effect.result') return { output: { ended: null }, state: S };
+@@ -168,6 +168,7 @@
+       if (!r || r.s !== 'pend') continue;
+       const c = classify(ctx, 'inventory', `r.${sku}`, it.status ?? p.status, it.error ?? p.error);
+       if (c === 'ok') r.s = 'ok';
++      else if (c !== 'pend' && S.st !== 'run') r.s = 'bad';   // stopped: nothing is re-issued, so nothing new is reserved (R6.2)
+       else if (c === 'invalid') fixable.push(sku);
+       else if (c === 'transient' && r.n < MAX_FIX) { r.n += 1; redo.push(sku); }
+       else if (c === 'bad' || c === 'transient') { r.s = 'bad'; fail(); }
+@@ -180,7 +181,7 @@
+     if (redo.length) eff.push(reserveEffect(S, redo));
+     if (Object.values(S.res).every(r => r.s === 'ok') && S.st === 'run') {
+       // all reserved: charge; if the charge was already committed (a go-live resume), book the shipment instead
+-      if (S.ch === 'none') { S.ch = 'pend'; eff.push({ key: 'charge', system: 'billing', op: 'charge', args: chargeArgs(S) }); }
++      if (S.ch === 'none') { S.ch = 'pend'; eff.push({ key: 'charge', system: 'billing', op: 'charge', args: fixArgs(chargeArgs(S), argsSchema(ctx, 'billing', 'charge')) }); }
+       else if (S.ch === 'ok' && S.sh === 'none') { S.sh = 'pend'; eff.push({ key: 'ship', system: 'carrier', op: 'create', args: shipArgs(S) }); }
+     }
+   } else if (sys === 'billing.charge') {
+@@ -188,6 +189,8 @@
+     if (c === 'ok') {
+       S.ch = 'ok';
+       if (S.st === 'run') { S.sh = 'pend'; eff.push({ key: 'ship', system: 'carrier', op: 'create', args: shipArgs(S) }); }
++    } else if (c !== 'pend' && S.st !== 'run') {
++      S.ch = 'bad';                                           // stopped: not charged again, and not committed (R6.2)
+     } else if (c === 'invalid') {
+       const fixed = fixArgs(chargeArgs(S), argsSchema(ctx, 'billing', 'charge'));
+       if (tryAgain(S, 'charge')) eff.push({ key: 'charge', system: 'billing', op: 'charge', args: fixed }); else { S.ch = 'bad'; fail(); }
+@@ -197,6 +200,7 @@
+   } else if (sys === 'carrier.create') {
+     const c = classify(ctx, 'carrier', 'ship', p.status, p.error);
+     if (c === 'ok') S.sh = 'ok';
++    else if (c !== 'pend' && S.st !== 'run') S.sh = 'bad';    // stopped: no shipment is booked after the cancel (R6.2)
+     else if (c === 'invalid') {
+       const fixed = fixArgs(shipArgs(S), argsSchema(ctx, 'carrier', 'create'));
+       if (tryAgain(S, 'ship')) eff.push({ key: 'ship', system: 'carrier', op: 'create', args: fixed }); else { S.sh = 'bad'; fail(); }
+@@ -209,3 +213,14 @@
+   ended = r.ended;
+   return { output: { ended }, state: S, effects: eff.concat(r.eff) };
+ }
++
++// every request goes out with the argument names the system's current schema shows (a renamed field is a 400 otherwise)
++const fit = (ctx, effects) => effects.map(e => (e.system && e.args ? { ...e, args: fixArgs(e.args, argsSchema(ctx, e.system, e.op)) } : e));
++export function step(input, ctx) {
++  const r = run(input, ctx);
++  return r.effects ? { ...r, effects: fit(ctx, r.effects) } : r;
++}
++export function onEvent(event, ctx) {
++  const r = handle(event, ctx);
++  return r.effects ? { ...r, effects: fit(ctx, r.effects) } : r;
++}
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.187698688 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.191105460 +0000
+@@ -17,7 +17,8 @@
+ 
+ // R1.3: the published edition with the latest effectiveFrom on or before the date of the order (its own local date)
+ function editionAt(files, at) {
+-  const day = at.slice(0, 10);
++  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam', year: 'numeric', month: '2-digit', day: '2-digit' })
++    .format(new Date(Date.parse(at)));
+   let best = null;
+   for (const k of Object.keys(files ?? {})) {
+     const m = /^rulebook\/([^/]+)\/edition\.json$/.exec(k);
+diff -ruN a/tests/fulfilment.test.mjs b/tests/fulfilment.test.mjs
+--- a/tests/fulfilment.test.mjs	2026-11-04 14:33:20.191105460 +0000
++++ b/tests/fulfilment.test.mjs	2026-11-04 14:33:20.191105460 +0000
+@@ -101,3 +101,12 @@
+   assert.equal(r.effects.length, 1);
+   assert.deepEqual(r.effects[0].args.items.map(i => i.key), ['r.S2']);
+ });
++
++test('a transient reserve error after a cancel is not re-issued: nothing new is reserved, and the fulfilment ends (R6.2)', () => {
++  const s0 = fulfilment.step({ op: 'start', fulfilment: fInput }, { key, state: null, now: NOW, files });
++  const c = fulfilment.step({ op: 'cancel', at: NOW, reason: 'customer' }, { key, state: s0.state, now: NOW, files });
++  assert.equal(c.output.ended, null);
++  const r = fulfilment.onEvent(result(RES, 'error', { error: { code: 'batch-item-not-processed', retryable: true } }), { key, state: c.state, now: NOW, files });
++  assert.equal(r.effects.some(e => e.op === 'reserve'), false);
++  assert.deepEqual(r.output.ended, { fid: 'ORD-1-F1', status: 'cancelled', at: NOW });
++});

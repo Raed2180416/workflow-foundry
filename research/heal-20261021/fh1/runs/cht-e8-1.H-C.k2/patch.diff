@@ -1,0 +1,86 @@
+diff -ruN a/modules/fulfilment.mjs b/modules/fulfilment.mjs
+--- a/modules/fulfilment.mjs	2026-11-04 14:33:20.321545798 +0000
++++ b/modules/fulfilment.mjs	2026-11-04 14:33:20.321545798 +0000
+@@ -270,12 +270,15 @@
+     s.shipUndo = 'pending';
+     effects.push({ key: 'unship', system: 'carrier', op: 'cancel', args: { orderId: s.orderId, fulfilmentId: s.fid } });
+   }
+-  if (s.charge === 'ok' && s.refund === 'none') {
++  // Reverse order: the shipment is settled before the charge is refunded, and the charge before the items are released.
++  // A step still in flight is undone only after it commits (S14), when this runs again with the earlier steps undone.
++  const settled = s.ship !== 'pending';
++  if (s.charge === 'ok' && s.refund === 'none' && settled) {
+     s.refund = 'pending';
+     effects.push({ key: 'refund', system: 'billing', op: 'refund', args: { orderId: s.orderId, fulfilmentId: s.fid, amountMinor: s.amountMinor } });
+   }
+   for (const i of s.items) {
+-    if (s.reserve[i.sku] === 'ok') {
++    if (s.reserve[i.sku] === 'ok' && settled && s.charge !== 'pending') {
+       s.reserve[i.sku] = 'released';
+       effects.push({ key: `release.${i.sku}`, system: 'inventory', op: 'release', args: { orderId: s.orderId, fulfilmentId: s.fid, sku: i.sku } });
+     }
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.322566672 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.322566672 +0000
+@@ -74,7 +74,7 @@
+   // replayed through the same handlers (they are idempotent), and the rules continue unchanged.
+   const rec = ev.payload.records ?? {};
+   const row = (rec['orders.orders'] ?? [])[0];
+-  if (!row) return { close: true, subject: null };
++  if (!row) return resumeUnrecorded(ev, state, input, ctx);
+   const orderId = normalise(row.orderId, ctx);
+   const rows = rec['orders.fulfilments'] ?? [];
+   state.orderId = orderId;
+@@ -112,6 +112,17 @@
+   return { subject: orderId };
+ }
+ 
++// §3.5: no record yet, so the order was not recorded before go-live: its order.placed is among the messages already
++// received. It is placed now, as if it had just arrived; the other messages are handled after it (held until recorded).
++function resumeUnrecorded(ev, state, input, ctx) {
++  const placed = (ev.payload.events ?? []).find(e => e.type === 'order.placed');
++  if (!placed) return { close: true, subject: null };
++  const r = firstTick(placed, state, input, ctx);
++  if (r.merge || r.close) return r;
++  for (const e of ev.payload.events ?? []) if (e.type !== 'order.placed') handleEvent(e, state, input, ctx);
++  return r;
++}
++
+ // The fulfilment's saga state, read back from its records (reservations, charge, shipment and status rows).
+ function fulfilmentRecord(f, state, rec, rows) {
+   const fid = f.fulfilmentId;
+diff -ruN a/tests/fulfilment.test.mjs b/tests/fulfilment.test.mjs
+--- a/tests/fulfilment.test.mjs	2026-11-04 14:33:20.322566672 +0000
++++ b/tests/fulfilment.test.mjs	2026-11-04 14:33:20.322566672 +0000
+@@ -80,17 +80,26 @@
+   assert.deepEqual(r.effects.filter(e => e.op === 'refund' || e.op === 'release' || e.op === 'cancel').map(e => e.op), ['refund', 'release', 'release']);
+ });
+ 
+-test('a stop with a charge in flight: nothing new; the charge is refunded when it commits (R6.2)', () => {
++test('a stop with a charge in flight: nothing new; the charge is refunded, then the items released, when it commits (R5.1, R6.2)', () => {
+   let s = fx.step(start, opts(null)).state;
+   s = fx.onEvent(reserveOk, opts(fx.step({ op: 'advance' }, opts(s)).state)).state;     // charge now in flight
+   const stopped = fx.step({ op: 'stop', at: T2 }, opts(s));
+-  // the reserved items are released now; nothing new is charged or booked
+-  assert.deepEqual(stopped.effects.map(e => e.op), ['release', 'release']);
++  // the reserved items are held until the charge settles (reverse order); nothing new is charged or booked
++  assert.deepEqual(stopped.effects.map(e => e.op), []);
+   assert.equal(stopped.output.state, 'stopped');
+   const late = fx.onEvent(result('charge', 'billing', 'charge', 'ok'), opts(stopped.state));
+-  assert.equal(eff(late, 'refund').key, 'refund');
++  assert.deepEqual(late.effects.map(e => e.op), ['refund', 'release', 'release']);
+   assert.equal(late.effects.some(e => e.op === 'create'), false);
+-  assert.equal(late.effects.filter(e => e.op === 'release').length, 0);       // released already at the stop
++});
++
++test('a stop with a shipment in flight: the shipment is cancelled, then the charge refunded, when it commits (R5.1, S14)', () => {
++  let s = fx.step(start, opts(null)).state;
++  s = fx.onEvent(reserveOk, opts(fx.step({ op: 'advance' }, opts(s)).state)).state;
++  s = fx.onEvent(result('charge', 'billing', 'charge', 'ok'), opts(s)).state;          // shipment now in flight
++  const stopped = fx.step({ op: 'stop', at: T2 }, opts(s));
++  assert.deepEqual(stopped.effects.map(e => e.op), []);                                 // no refund before the shipment settles
++  const late = fx.onEvent(result('ship', 'carrier', 'create', 'ok'), opts(stopped.state));
++  assert.deepEqual(late.effects.map(e => e.op), ['cancel', 'refund', 'release', 'release']);
+ });
+ 
+ test('a collection moves the fulfilment to dispatched; delivery completes it (R4.4)', () => {

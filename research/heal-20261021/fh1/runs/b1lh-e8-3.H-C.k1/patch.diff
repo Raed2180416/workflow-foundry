@@ -1,0 +1,31 @@
+diff -ruN a/solver.mjs b/solver.mjs
+--- a/solver.mjs	2026-11-04 14:33:19.833729452 +0000
++++ b/solver.mjs	2026-11-04 14:33:19.833729452 +0000
+@@ -207,6 +207,13 @@
+   return INVALID.includes(errCode(err)) || (err && typeof err === 'object' && err.status === 400);
+ }
+ 
++// A failed batch item may be sent again (R4.2) unless the system calls its error permanent (R5.2).
++function retryable(err) {
++  if (!err || (typeof err === 'object' && err.retryable === false)) return false;
++  if (isInvalid(err) || errCode(err) === 'batch-item-not-processed') return true;
++  return typeof err === 'object' && (err.retryable === true || err.status === 503 || err.status === 429);
++}
++
+ function pending(c) {
+   return Object.values(c.k).some(v => v[3] === 'pend');
+ }
+@@ -368,10 +375,10 @@
+     const ik = `${c.o}:ri:${f.id}:${it.sku}`;
+     const r = Array.isArray(e.items) ? e.items.find(x => x && x.key === ik) : undefined;
+     if (e.status === 'ok' || (r && r.status === 'ok')) { f.rsv[it.sku] = 'ok'; continue; }
+-    const rc = r ? r.error : e.error;
++    const rc = (r && r.error) || e.error;
+     // Items the batch did not process committed nothing: resubmit them with their original keys.
+-    const retry = isInvalid(rc) || errCode(rc) === 'batch-item-not-processed'
+-      || (!r && e.status === 'partial') || (r && !rc && r.status === 'partial');
++    // Only a permanent error (R5.2) fails the item; a transient one is resubmitted.
++    const retry = retryable(rc) || (!r && e.status === 'partial') || (r && !rc && r.status === 'partial');
+     f.rsv[it.sku] = retry && n <= MAX_TRIES ? 'no' : 'bad';
+   }
+ }

@@ -1,0 +1,476 @@
+{
+ "kind": "c23-posthoc",
+ "note": "post-hoc, not preregistered: supplier-clustered bootstrap (12 clusters) and a cost/time projection from measured unit costs",
+ "suppliers": 12,
+ "bySupplier": [
+  {
+   "a": "SCRATCH@L1",
+   "b": "AGENT-H@k1",
+   "cluster": "supplier",
+   "point": 0.06382978723404255,
+   "lo": 0,
+   "hi": 0.14042553191489363
+  },
+  {
+   "a": "REUSE-G0@L1",
+   "b": "AGENT-H@k1",
+   "cluster": "supplier",
+   "point": 0.06382978723404255,
+   "lo": 0,
+   "hi": 0.14042553191489363
+  },
+  {
+   "a": "REUSE-b3@L1",
+   "b": "AGENT-H@k1",
+   "cluster": "supplier",
+   "point": -0.06382978723404255,
+   "lo": -0.250996015936255,
+   "hi": 0.09401709401709402
+  },
+  {
+   "a": "SCRATCH@L2",
+   "b": "AGENT-H@k1",
+   "cluster": "supplier",
+   "point": 0.06808510638297872,
+   "lo": 0.016597510373443983,
+   "hi": 0.14042553191489363
+  },
+  {
+   "a": "REUSE-G0@L2",
+   "b": "AGENT-H@k1",
+   "cluster": "supplier",
+   "point": 0.06808510638297872,
+   "lo": 0.016597510373443983,
+   "hi": 0.14042553191489363
+  },
+  {
+   "a": "REUSE-b3@L2",
+   "b": "AGENT-H@k1",
+   "cluster": "supplier",
+   "point": -0.059574468085106386,
+   "lo": -0.24380165289256198,
+   "hi": 0.09361702127659574
+  },
+  {
+   "a": "AGENT-H@k1",
+   "b": "AGENT@k1",
+   "cluster": "supplier",
+   "point": 0.3446808510638298,
+   "lo": 0.12931034482758622,
+   "hi": 0.5662650602409639
+  },
+  {
+   "a": "SCRATCH@L1",
+   "b": "AGENT-H@k2",
+   "cluster": "supplier",
+   "point": 0.06382978723404255,
+   "lo": -0.030434782608695653,
+   "hi": 0.18181818181818182
+  },
+  {
+   "a": "REUSE-G0@L1",
+   "b": "AGENT-H@k2",
+   "cluster": "supplier",
+   "point": 0.06382978723404255,
+   "lo": -0.030434782608695653,
+   "hi": 0.18181818181818182
+  },
+  {
+   "a": "REUSE-b3@L1",
+   "b": "AGENT-H@k2",
+   "cluster": "supplier",
+   "point": -0.06382978723404255,
+   "lo": -0.26556016597510373,
+   "hi": 0.12448132780082988
+  },
+  {
+   "a": "SCRATCH@L2",
+   "b": "AGENT-H@k2",
+   "cluster": "supplier",
+   "point": 0.06808510638297872,
+   "lo": -0.008620689655172414,
+   "hi": 0.17796610169491525
+  },
+  {
+   "a": "REUSE-G0@L2",
+   "b": "AGENT-H@k2",
+   "cluster": "supplier",
+   "point": 0.06808510638297872,
+   "lo": -0.008620689655172414,
+   "hi": 0.17796610169491525
+  },
+  {
+   "a": "REUSE-b3@L2",
+   "b": "AGENT-H@k2",
+   "cluster": "supplier",
+   "point": -0.059574468085106386,
+   "lo": -0.25316455696202533,
+   "hi": 0.12396694214876033
+  },
+  {
+   "a": "AGENT-H@k2",
+   "b": "AGENT@k2",
+   "cluster": "supplier",
+   "point": 0.34893617021276596,
+   "lo": 0.1382488479262673,
+   "hi": 0.5726141078838174
+  },
+  {
+   "a": "AGENT-H@k1",
+   "b": "AGENT-H@k2",
+   "cluster": "supplier",
+   "point": 0,
+   "lo": -0.03571428571428571,
+   "hi": 0.04526748971193416
+  }
+ ],
+ "byStratum": [
+  {
+   "a": "SCRATCH@L1",
+   "b": "AGENT-H@k1",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 165,
+   "correctB": 164,
+   "point": 0.005917159763313609,
+   "lo": -0.027932960893854747,
+   "hi": 0.04242424242424243
+  },
+  {
+   "a": "REUSE-G0@L1",
+   "b": "AGENT-H@k1",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 165,
+   "correctB": 164,
+   "point": 0.005917159763313609,
+   "lo": -0.027932960893854747,
+   "hi": 0.04242424242424243
+  },
+  {
+   "a": "SCRATCH@L2",
+   "b": "AGENT-H@k1",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 168,
+   "correctB": 164,
+   "point": 0.023668639053254437,
+   "lo": -0.005917159763313609,
+   "hi": 0.05917159763313609
+  },
+  {
+   "a": "REUSE-G0@L2",
+   "b": "AGENT-H@k1",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 168,
+   "correctB": 164,
+   "point": 0.023668639053254437,
+   "lo": -0.005917159763313609,
+   "hi": 0.05917159763313609
+  },
+  {
+   "a": "AGENT-H@k1",
+   "b": "AGENT@k1",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 164,
+   "correctB": 87,
+   "point": 0.4556213017751479,
+   "lo": 0.3620689655172414,
+   "hi": 0.5508982035928144
+  },
+  {
+   "a": "SCRATCH@L1",
+   "b": "AGENT-H@k2",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 165,
+   "correctB": 160,
+   "point": 0.029585798816568046,
+   "lo": -0.017045454545454544,
+   "hi": 0.08074534161490683
+  },
+  {
+   "a": "REUSE-G0@L1",
+   "b": "AGENT-H@k2",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 165,
+   "correctB": 160,
+   "point": 0.029585798816568046,
+   "lo": -0.017045454545454544,
+   "hi": 0.08074534161490683
+  },
+  {
+   "a": "SCRATCH@L2",
+   "b": "AGENT-H@k2",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 168,
+   "correctB": 160,
+   "point": 0.047337278106508875,
+   "lo": 0.00625,
+   "hi": 0.09433962264150944
+  },
+  {
+   "a": "REUSE-G0@L2",
+   "b": "AGENT-H@k2",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 168,
+   "correctB": 160,
+   "point": 0.047337278106508875,
+   "lo": 0.00625,
+   "hi": 0.09433962264150944
+  },
+  {
+   "a": "AGENT-H@k2",
+   "b": "AGENT@k2",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 160,
+   "correctB": 86,
+   "point": 0.4378698224852071,
+   "lo": 0.3413173652694611,
+   "hi": 0.532967032967033
+  },
+  {
+   "a": "AGENT-H@k1",
+   "b": "AGENT-H@k2",
+   "stratum": "pinned",
+   "items": 169,
+   "correctA": 164,
+   "correctB": 160,
+   "point": 0.023668639053254437,
+   "lo": -0.00625,
+   "hi": 0.058823529411764705
+  },
+  {
+   "a": "SCRATCH@L1",
+   "b": "AGENT-H@k1",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 56,
+   "correctB": 42,
+   "point": 0.24561403508771928,
+   "lo": 0.140625,
+   "hi": 0.3620689655172414
+  },
+  {
+   "a": "REUSE-G0@L1",
+   "b": "AGENT-H@k1",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 56,
+   "correctB": 42,
+   "point": 0.24561403508771928,
+   "lo": 0.140625,
+   "hi": 0.3620689655172414
+  },
+  {
+   "a": "SCRATCH@L2",
+   "b": "AGENT-H@k1",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 54,
+   "correctB": 42,
+   "point": 0.21052631578947367,
+   "lo": 0.1016949152542373,
+   "hi": 0.3275862068965517
+  },
+  {
+   "a": "REUSE-G0@L2",
+   "b": "AGENT-H@k1",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 54,
+   "correctB": 42,
+   "point": 0.21052631578947367,
+   "lo": 0.1016949152542373,
+   "hi": 0.3275862068965517
+  },
+  {
+   "a": "AGENT-H@k1",
+   "b": "AGENT@k1",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 42,
+   "correctB": 38,
+   "point": 0.07017543859649122,
+   "lo": -0.07407407407407407,
+   "hi": 0.20754716981132076
+  },
+  {
+   "a": "SCRATCH@L1",
+   "b": "AGENT-H@k2",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 56,
+   "correctB": 46,
+   "point": 0.17543859649122806,
+   "lo": 0.07142857142857142,
+   "hi": 0.288135593220339
+  },
+  {
+   "a": "REUSE-G0@L1",
+   "b": "AGENT-H@k2",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 56,
+   "correctB": 46,
+   "point": 0.17543859649122806,
+   "lo": 0.07142857142857142,
+   "hi": 0.288135593220339
+  },
+  {
+   "a": "SCRATCH@L2",
+   "b": "AGENT-H@k2",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 54,
+   "correctB": 46,
+   "point": 0.14035087719298245,
+   "lo": 0.034482758620689655,
+   "hi": 0.2542372881355932
+  },
+  {
+   "a": "REUSE-G0@L2",
+   "b": "AGENT-H@k2",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 54,
+   "correctB": 46,
+   "point": 0.14035087719298245,
+   "lo": 0.034482758620689655,
+   "hi": 0.2542372881355932
+  },
+  {
+   "a": "AGENT-H@k2",
+   "b": "AGENT@k2",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 46,
+   "correctB": 38,
+   "point": 0.14035087719298245,
+   "lo": 0,
+   "hi": 0.2777777777777778
+  },
+  {
+   "a": "AGENT-H@k1",
+   "b": "AGENT-H@k2",
+   "stratum": "gap",
+   "items": 57,
+   "correctA": 42,
+   "correctB": 46,
+   "point": -0.07017543859649122,
+   "lo": -0.18181818181818182,
+   "hi": 0.03508771929824561
+  }
+ ],
+ "projection": {
+  "AGENT-H@k1": [
+   {
+    "N": 20,
+    "usdPerItem": 0.001714,
+    "msPerItem": 14554
+   },
+   {
+    "N": 100,
+    "usdPerItem": 0.001714,
+    "msPerItem": 14554
+   },
+   {
+    "N": 1000,
+    "usdPerItem": 0.001714,
+    "msPerItem": 14554
+   }
+  ],
+  "AGENT-H@k2": [
+   {
+    "N": 20,
+    "usdPerItem": 0.001533,
+    "msPerItem": 15999
+   },
+   {
+    "N": 100,
+    "usdPerItem": 0.001533,
+    "msPerItem": 15999
+   },
+   {
+    "N": 1000,
+    "usdPerItem": 0.001533,
+    "msPerItem": 15999
+   }
+  ],
+  "SCRATCH@L1": [
+   {
+    "N": 20,
+    "usdPerItem": 0.002532,
+    "msPerItem": 13019
+   },
+   {
+    "N": 100,
+    "usdPerItem": 0.000506,
+    "msPerItem": 3368
+   },
+   {
+    "N": 1000,
+    "usdPerItem": 0.000051,
+    "msPerItem": 1196
+   }
+  ],
+  "REUSE-G0@L1": [
+   {
+    "N": 20,
+    "usdPerItem": 0.001771,
+    "msPerItem": 9778
+   },
+   {
+    "N": 100,
+    "usdPerItem": 0.000354,
+    "msPerItem": 2691
+   },
+   {
+    "N": 1000,
+    "usdPerItem": 0.000035,
+    "msPerItem": 1096
+   }
+  ],
+  "SCRATCH@L2": [
+   {
+    "N": 20,
+    "usdPerItem": 0.002319,
+    "msPerItem": 13518
+   },
+   {
+    "N": 100,
+    "usdPerItem": 0.000464,
+    "msPerItem": 3085
+   },
+   {
+    "N": 1000,
+    "usdPerItem": 0.000046,
+    "msPerItem": 737
+   }
+  ],
+  "REUSE-G0@L2": [
+   {
+    "N": 20,
+    "usdPerItem": 0.001471,
+    "msPerItem": 9513
+   },
+   {
+    "N": 100,
+    "usdPerItem": 0.000294,
+    "msPerItem": 2421
+   },
+   {
+    "N": 1000,
+    "usdPerItem": 0.000029,
+    "msPerItem": 825
+   }
+  ]
+ },
+ "generatedAt": "2026-11-04T18:02:01.517Z"
+}

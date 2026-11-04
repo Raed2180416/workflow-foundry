@@ -1,0 +1,106 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Coins counter stuck at 0/5 after collecting a coin",
+  "observed": "After the dash picks up a coin, state reports coins=1 but the HUD still shows 'Coins 0/5'. The HUD lags the game state.",
+  "expected": "The HUD always shows the current coin count, so it should read 'Coins 1/5' right after the coin is collected.",
+  "seed": 7,
+  "steps": [
+   "goto:3,1",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level leaves the game paused instead of running",
+  "observed": "Pressing pause then clicking Restart level resets the values (score 0, lives 3, time 300), but mode stays 'paused' and the pause menu stays open.",
+  "expected": "Restart level puts the level back to its start and the game is running again straight away (mode 'playing', no pause menu).",
+  "seed": 1000,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike hit makes score jump to 65136 instead of dropping by 500",
+  "observed": "Score was 100. A dash over spikes cost a life, and the score became 65136 (about 100 - 500 wrapped as an unsigned 16-bit value) rather than being floored at 0.",
+  "expected": "Spikes cost 500 points with the score floored at 0, so the score should be 0 after this hit.",
+  "seed": 7,
+  "steps": [
+   "goto:2,3",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score goes negative (-200) and wraps to 65236 after spikes",
+  "observed": "Spike hits set the score to 65236 (a wrapped value of -300), and later it shows -200 in the HUD, which is negative.",
+  "expected": "Score is never negative and the spikes penalty is floored at 0, so the score should stay at or above 0.",
+  "seed": 90817,
+  "steps": [
+   "dash-down",
+   "goto:4,1",
+   "dash-right",
+   "goto:1,3",
+   "dash-right",
+   "goto:4,5",
+   "dash-right",
+   "pause+down",
+   "esc",
+   "down",
+   "goto:1,8"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Key-collected toast covers the pause menu Resume button",
+  "observed": "With the pause menu open, btn-resume reports top=false, meaning another element (the 'Key collected' toast) sits on top of it at its centre, so a click on Resume would not reach it.",
+  "expected": "Every visible button must be clickable, so nothing (including toasts) may cover the Resume button.",
+  "seed": 1234,
+  "steps": [
+   "goto:2,5",
+   "dash-right",
+   "pause+dash-right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Coins counter stays at 0/5 after collecting a coin",
+  "observed": "After the dash-right at tick 2 collects a coin, state shows coins=1 and the HUD reads 'Coins 0/5'. The HUD stays stale on that value in the pause frame too.",
+  "expected": "Per section 8 the HUD always shows the current values, so after collecting one coin it should read 'Coins 1/5'.",
+  "seed": 7,
+  "steps": [
+   "goto:3,1",
+   "dash-right",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike hit drives score negative and wraps it to 65136",
+  "observed": "At tick 4 the player (score 100) lands on spikes. Score jumps to 65136 (a wrapped value of 100 - 500), then goes to -300 on the next tick. HUD shows 'Score -300'.",
+  "expected": "Spikes cost 500 points but the score floors at 0 and is never negative. The score should read 0 after the hit, never 65136 or -300.",
+  "seed": 7,
+  "steps": [
+   "goto:4,2",
+   "down+left",
+   "dash-down",
+   "dash-right+pause"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Level-complete Finish button covered by the time-bonus banner",
+  "observed": "At tick 41 the 'Level complete!' dialog is open and btn-next (Finish) reports top=false while bonus-banner 'Time bonus +2590' is visible. The banner sits on top of the button, so a click there does not reach Finish.",
+  "expected": "Every visible button must be clickable. Nothing may cover Finish, so a click on it should reach the button and advance to the victory dialog.",
+  "seed": 4242,
+  "steps": [
+   "goto:4,5",
+   "goto:1,8",
+   "use",
+   "goto:10,5",
+   "goto:12,7"
+  ]
+ }
+]

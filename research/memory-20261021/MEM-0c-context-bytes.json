@@ -1,0 +1,238 @@
+{
+  "measurement": "mem-0c/2",
+  "bed": "gameqa (dev split)",
+  "split": "dev",
+  "seeds": {
+    "from": 2001,
+    "to": 2030
+  },
+  "tasks": [
+    "gameqa:dev:d3:s2001",
+    "gameqa:dev:d3:s2002",
+    "gameqa:dev:d3:s2003",
+    "gameqa:dev:d3:s2004",
+    "gameqa:dev:d3:s2005",
+    "gameqa:dev:d3:s2006",
+    "gameqa:dev:d3:s2007",
+    "gameqa:dev:d3:s2008",
+    "gameqa:dev:d3:s2009",
+    "gameqa:dev:d3:s2010",
+    "gameqa:dev:d3:s2011",
+    "gameqa:dev:d3:s2012",
+    "gameqa:dev:d3:s2013",
+    "gameqa:dev:d3:s2014",
+    "gameqa:dev:d3:s2015",
+    "gameqa:dev:d3:s2016",
+    "gameqa:dev:d3:s2017",
+    "gameqa:dev:d3:s2018",
+    "gameqa:dev:d3:s2019",
+    "gameqa:dev:d3:s2020",
+    "gameqa:dev:d3:s2021",
+    "gameqa:dev:d3:s2022",
+    "gameqa:dev:d3:s2023",
+    "gameqa:dev:d3:s2024",
+    "gameqa:dev:d3:s2025",
+    "gameqa:dev:d3:s2026",
+    "gameqa:dev:d3:s2027",
+    "gameqa:dev:d3:s2028",
+    "gameqa:dev:d3:s2029",
+    "gameqa:dev:d3:s2030",
+    "gameqa:dev:d4:s2001",
+    "gameqa:dev:d4:s2002",
+    "gameqa:dev:d4:s2003",
+    "gameqa:dev:d4:s2004",
+    "gameqa:dev:d4:s2005",
+    "gameqa:dev:d4:s2006",
+    "gameqa:dev:d4:s2007",
+    "gameqa:dev:d4:s2008",
+    "gameqa:dev:d4:s2009",
+    "gameqa:dev:d4:s2010",
+    "gameqa:dev:d4:s2011",
+    "gameqa:dev:d4:s2012",
+    "gameqa:dev:d4:s2013",
+    "gameqa:dev:d4:s2014",
+    "gameqa:dev:d4:s2015",
+    "gameqa:dev:d4:s2016",
+    "gameqa:dev:d4:s2017",
+    "gameqa:dev:d4:s2018",
+    "gameqa:dev:d4:s2019",
+    "gameqa:dev:d4:s2020",
+    "gameqa:dev:d4:s2021",
+    "gameqa:dev:d4:s2022",
+    "gameqa:dev:d4:s2023",
+    "gameqa:dev:d4:s2024",
+    "gameqa:dev:d4:s2025",
+    "gameqa:dev:d4:s2026",
+    "gameqa:dev:d4:s2027",
+    "gameqa:dev:d4:s2028",
+    "gameqa:dev:d4:s2029",
+    "gameqa:dev:d4:s2030",
+    "gameqa:dev:d5:s2001",
+    "gameqa:dev:d5:s2002",
+    "gameqa:dev:d5:s2003",
+    "gameqa:dev:d5:s2004",
+    "gameqa:dev:d5:s2005",
+    "gameqa:dev:d5:s2006",
+    "gameqa:dev:d5:s2007",
+    "gameqa:dev:d5:s2008",
+    "gameqa:dev:d5:s2009",
+    "gameqa:dev:d5:s2010",
+    "gameqa:dev:d5:s2011",
+    "gameqa:dev:d5:s2012",
+    "gameqa:dev:d5:s2013",
+    "gameqa:dev:d5:s2014",
+    "gameqa:dev:d5:s2015",
+    "gameqa:dev:d5:s2016",
+    "gameqa:dev:d5:s2017",
+    "gameqa:dev:d5:s2018",
+    "gameqa:dev:d5:s2019",
+    "gameqa:dev:d5:s2020",
+    "gameqa:dev:d5:s2021",
+    "gameqa:dev:d5:s2022",
+    "gameqa:dev:d5:s2023",
+    "gameqa:dev:d5:s2024",
+    "gameqa:dev:d5:s2025",
+    "gameqa:dev:d5:s2026",
+    "gameqa:dev:d5:s2027",
+    "gameqa:dev:d5:s2028",
+    "gameqa:dev:d5:s2029",
+    "gameqa:dev:d5:s2030"
+  ],
+  "assumptions": {
+    "turns": 150,
+    "usd": 0.6
+  },
+  "cost": {
+    "usd": 0,
+    "modelCalls": 0
+  },
+  "lowerBound": "transcripts are planner-minimal reproductions; real exploration is longer",
+  "byDifficulty": {
+    "d3": {
+      "tasks": 30,
+      "explorersK": 3,
+      "poolTokensPerRead": {
+        "n": 30,
+        "mean": 25529.377777777783,
+        "p10": 8872.533333333333,
+        "median": 25051.666666666664,
+        "p90": 43745.466666666674
+      },
+      "boardTokensPerRead": {
+        "n": 30,
+        "mean": 226.73333333333338,
+        "p10": 153.76666666666665,
+        "median": 229.33333333333334,
+        "p90": 308.1
+      },
+      "ratioOfMeans": 112.59649122807018,
+      "ratioPerTask": {
+        "n": 30,
+        "mean": 104.5122275538005,
+        "p10": 62.1386297647905,
+        "median": 111.58733666558678,
+        "p90": 147.27729667425712
+      },
+      "untrustedEvidenceTokens": {
+        "n": 30,
+        "mean": 2498.4666666666667,
+        "p10": 2256.8,
+        "median": 2507.5,
+        "p90": 2738.7
+      },
+      "usdPer1000Reads": {
+        "pool": 2.5529377777777786,
+        "board": 0.02267333333333334
+      },
+      "boardOverVsEdges": {
+        "tokensPerSession": 34010.00000000001,
+        "usdPerSession": 0.003401000000000001,
+        "shareOfSession": 0.005668333333333335
+      }
+    },
+    "d4": {
+      "tasks": 30,
+      "explorersK": 4,
+      "poolTokensPerRead": {
+        "n": 30,
+        "mean": 48547.55,
+        "p10": 21177.6,
+        "median": 41244,
+        "p90": 76271.925
+      },
+      "boardTokensPerRead": {
+        "n": 30,
+        "mean": 375.7583333333333,
+        "p10": 268.425,
+        "median": 341.625,
+        "p90": 501.05
+      },
+      "ratioOfMeans": 129.19886451841833,
+      "ratioPerTask": {
+        "n": 30,
+        "mean": 122.5882069476299,
+        "p10": 79.43532936237186,
+        "median": 120.69503976861894,
+        "p90": 157.92048034383112
+      },
+      "untrustedEvidenceTokens": {
+        "n": 30,
+        "mean": 3273.866666666667,
+        "p10": 2895.5,
+        "median": 3292,
+        "p90": 3716.1000000000004
+      },
+      "usdPer1000Reads": {
+        "pool": 4.854755,
+        "board": 0.037575833333333336
+      },
+      "boardOverVsEdges": {
+        "tokensPerSession": 56363.75,
+        "usdPerSession": 0.005636375,
+        "shareOfSession": 0.009393958333333334
+      }
+    },
+    "d5": {
+      "tasks": 30,
+      "explorersK": 5,
+      "poolTokensPerRead": {
+        "n": 30,
+        "mean": 100619.4933333333,
+        "p10": 43617.76,
+        "median": 88766.4,
+        "p90": 165057.44
+      },
+      "boardTokensPerRead": {
+        "n": 30,
+        "mean": 635.1733333333334,
+        "p10": 402.92,
+        "median": 595.8,
+        "p90": 900.6800000000001
+      },
+      "ratioOfMeans": 158.41265376380196,
+      "ratioPerTask": {
+        "n": 30,
+        "mean": 149.89819440388976,
+        "p10": 108.7724297182893,
+        "median": 152.16111331777884,
+        "p90": 183.2349613103179
+      },
+      "untrustedEvidenceTokens": {
+        "n": 30,
+        "mean": 4267.933333333333,
+        "p10": 3984,
+        "median": 4283,
+        "p90": 4658
+      },
+      "usdPer1000Reads": {
+        "pool": 10.061949333333331,
+        "board": 0.06351733333333334
+      },
+      "boardOverVsEdges": {
+        "tokensPerSession": 95276.00000000001,
+        "usdPerSession": 0.009527600000000002,
+        "shareOfSession": 0.01587933333333334
+      }
+    }
+  }
+}

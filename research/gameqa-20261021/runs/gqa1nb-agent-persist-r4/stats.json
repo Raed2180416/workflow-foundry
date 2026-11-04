@@ -1,0 +1,141 @@
+{
+ "stats": {
+  "exploreTicks": 75,
+  "runs": 13,
+  "finished": true,
+  "notes": "Finishing with three reproduced bugs from seed 12345. Not explored: enemy contact/swap rules, timer expiry, dash recharge display, Enter/Retry/Play again flows, late-game coin/key/door progression.",
+  "refusedFinishes": 25,
+  "played": [
+   {
+    "seed": 12345,
+    "steps": [
+     "right",
+     "pause+right",
+     "esc",
+     "dash-down",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "right",
+     "right",
+     "dash-down"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "pause+right",
+     "enter",
+     "right"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "dash-right",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "pause+right"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "pause",
+     "right",
+     "enter",
+     "right"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "right",
+     "right",
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "right",
+     "pause",
+     "esc",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "right",
+     "right",
+     "dash-down"
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,341 @@
+{
+ "summary": {
+  "reports": 14,
+  "bugs": 12,
+  "foundMin": 8,
+  "foundMinClass": 7,
+  "foundAny": 9,
+  "falseReports": 0,
+  "duplicates": 5,
+  "precision": 1,
+  "nondeterministic": 0,
+  "replays": 72
+ },
+ "perBug": {
+  "GQ01": {
+   "class": "collision",
+   "foundAny": false,
+   "foundMin": false,
+   "foundMinClass": false,
+   "reports": []
+  },
+  "GQ02": {
+   "class": "collision",
+   "foundAny": false,
+   "foundMin": false,
+   "foundMinClass": false,
+   "reports": []
+  },
+  "GQ03": {
+   "class": "state_desync",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    8,
+    12
+   ]
+  },
+  "GQ04": {
+   "class": "state_desync",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    3,
+    11
+   ]
+  },
+  "GQ05": {
+   "class": "softlock",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": false,
+   "reports": [
+    4,
+    7
+   ]
+  },
+  "GQ06": {
+   "class": "softlock",
+   "foundAny": false,
+   "foundMin": false,
+   "foundMinClass": false,
+   "reports": []
+  },
+  "GQ07": {
+   "class": "ui_overlap",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    0
+   ]
+  },
+  "GQ08": {
+   "class": "ui_overlap",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    10
+   ]
+  },
+  "GQ09": {
+   "class": "score_overflow",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    6,
+    9,
+    13
+   ]
+  },
+  "GQ10": {
+   "class": "score_overflow",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    5
+   ]
+  },
+  "GQ11": {
+   "class": "input_race",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    2
+   ]
+  },
+  "GQ12": {
+   "class": "input_race",
+   "foundAny": true,
+   "foundMin": false,
+   "foundMinClass": false,
+   "reports": [
+    1
+   ]
+  }
+ },
+ "perReport": [
+  {
+   "index": 0,
+   "verdict": "credited",
+   "bug": "GQ07",
+   "classMatch": true,
+   "fired": [
+    "GQ07"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 3,
+   "primitives": 19
+  },
+  {
+   "index": 1,
+   "verdict": "credited",
+   "bug": "GQ12",
+   "classMatch": true,
+   "fired": [
+    "GQ12"
+   ],
+   "symptom": "position",
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    2
+   ],
+   "steps": 4,
+   "primitives": 4
+  },
+  {
+   "index": 2,
+   "verdict": "credited",
+   "bug": "GQ11",
+   "classMatch": true,
+   "fired": [
+    "GQ11"
+   ],
+   "symptom": "position",
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 2,
+   "primitives": 2
+  },
+  {
+   "index": 3,
+   "verdict": "credited",
+   "bug": "GQ04",
+   "classMatch": true,
+   "fired": [
+    "GQ04"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 2,
+   "primitives": 2
+  },
+  {
+   "index": 4,
+   "verdict": "credited",
+   "bug": "GQ05",
+   "classMatch": false,
+   "fired": [
+    "GQ05"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 2,
+   "primitives": 2
+  },
+  {
+   "index": 5,
+   "verdict": "credited",
+   "bug": "GQ10",
+   "classMatch": true,
+   "fired": [
+    "GQ10"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 2,
+   "primitives": 3
+  },
+  {
+   "index": 6,
+   "verdict": "credited",
+   "bug": "GQ09",
+   "classMatch": true,
+   "fired": [
+    "GQ10",
+    "GQ09"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 7,
+   "primitives": 7
+  },
+  {
+   "index": 7,
+   "verdict": "credited",
+   "bug": "GQ05",
+   "classMatch": false,
+   "fired": [
+    "GQ05"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    0
+   ],
+   "steps": 3,
+   "primitives": 3,
+   "duplicate": true
+  },
+  {
+   "index": 8,
+   "verdict": "credited",
+   "bug": "GQ03",
+   "classMatch": true,
+   "fired": [
+    "GQ03"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 1,
+   "primitives": 1
+  },
+  {
+   "index": 9,
+   "verdict": "credited",
+   "bug": "GQ09",
+   "classMatch": true,
+   "fired": [
+    "GQ09",
+    "GQ08"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 4,
+   "primitives": 42,
+   "duplicate": true
+  },
+  {
+   "index": 10,
+   "verdict": "credited",
+   "bug": "GQ08",
+   "classMatch": true,
+   "fired": [
+    "GQ08"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 5,
+   "primitives": 40
+  },
+  {
+   "index": 11,
+   "verdict": "credited",
+   "bug": "GQ04",
+   "classMatch": true,
+   "fired": [
+    "GQ04"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    2
+   ],
+   "steps": 3,
+   "primitives": 3,
+   "duplicate": true
+  },
+  {
+   "index": 12,
+   "verdict": "credited",
+   "bug": "GQ03",
+   "classMatch": true,
+   "fired": [
+    "GQ03"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    1
+   ],
+   "steps": 2,
+   "primitives": 2,
+   "duplicate": true
+  },
+  {
+   "index": 13,
+   "verdict": "credited",
+   "bug": "GQ09",
+   "classMatch": true,
+   "fired": [
+    "GQ09",
+    "GQ08"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    4
+   ],
+   "steps": 5,
+   "primitives": 43,
+   "duplicate": true
+  }
+ ]
+}

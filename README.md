@@ -68,7 +68,9 @@ else below is still development and diagnostic evidence.*
     blockers to one missing object, an expected diff derived in code.
   - **Unmerged, development** (on branches rescued 10-28): asking Haiku beats the preregistered code need router (F1 0.944
     vs 0.739); FH-1 heal removes 75.2% of recurring failing cases with 0 regressions for $1.14; for reuse, the profile gate
-    is worse than rebuilding and a history-check gate had 0 wrong in 98 accepted. Durability over time (DUR-1) is designed
+    is worse than rebuilding; a gate that checks the consumer's own labelled history ties rebuilding (0 wrong in 98
+    accepted, a count without an M3 certificate), and both beat a Haiku agent given the same labels, 98% vs 91.5%,
+    mostly on items the labels leave open (C2-3, preregistered). Durability over time (DUR-1) is designed
     and drafted but not run; adaptive in-node sub-workflow creation is not built.
   - Three container restarts on 10-22 killed in-flight runs; chains now resume from their last commit (register C9).
 - **2026-10-21, evening.** Development evidence only; rows with links are in [RESEARCH.md](docs/RESEARCH.md):
@@ -99,6 +101,17 @@ else below is still development and diagnostic evidence.*
     - Mercury 3 as a second cheap model ([PROVISIONING](research/mercury-20261021/PROVISIONING.md));
     - the org layer and the open-core line ([v0](research/business-20261021/OPEN-CORE-AND-INVARIANTS.md)).
   - **Benchmark landscape:** `research/benchmarks-20261015/`.
+  - **Failure handling (C3), FH-1, 2026-10-22, reviewed 2026-11-04** ([RESULT](research/heal-20261021/RESULT-FH1.md) §10,
+    preregistered, dev, Haiku $4.62). Patch → replay on 475 real, deterministic failing cases of eight Haiku-built E8 programs.
+    With the 13 capability contracts as verifier, one Haiku session per program removed **75.2%** net (357), with 0
+    regressions, 11 of 12 defects and 7 of 8 programs fully fixed, for $1.14. Two caveats: the verifier is **near-oracle and
+    frontier-written** (precision = recall = 1.000 on practice), and **its authoring cost is not in the $1.14** ($6.69 lower
+    bound, $19.58 allocated). Baselines: retry 0 (deterministic by construction), regenerate +5.8% ungated, **+13.5% behind the
+    same gate** and +26.9% best-of-2 behind it ($16.13). 58% of the failing cases are one shared go-live misreading; off go-live
+    the contracts arm recovers 40.7% and the no-verifier arm 59.3% (one defect). On nine more unseen dev worlds the heals hold
+    (78.0% of the originals' failing cases, 0 regressions, 7 of 8 at the hand-written reference's 100%), but they inherit the
+    originals' fault weaknesses and none carries over to drift (0 of 8 changed cases). The heal unblock is D20. A4 stays open:
+    no hand-crafted comparison, no heal after drift or faults, no live variance routing, no added tool.
 - **2026-10-09: the cloud session ended** (usage limit); work continues on the owner's laptop. Stream run data, journals and
   the Kev held-out material were lost with the container (`research/jit-20261008/HANDOFF.md`). The two in-flight workflows
   were finished by hand:
@@ -157,7 +170,7 @@ Every phase still ends with a capability number against a simple baseline and a
 | Cheap execution (P1) | **First directional number, final** | See Results. A hand-written ceiling on one synthetic family |
 | Construction by Haiku (C0 dev) | **Partial; too small to call** | See Results. 2 families, one construction per cell |
 | Honest run verdicts | **Broken** | The run verdict said "pass" on all 5 failed F trials in C0 dev and on fhand-haiku's only P1 failure. Acceptance is "an answer exists" in all 7 constructed artifacts [M]. The fix is the strict construction lint and acceptance that must gate (ROADMAP §2.5 step 5, §2.6) |
-| Need router and slider | Design only | Built only if the RX1 headroom sweep finds something to route for (ROADMAP §2.8) |
+| Need router and slider | **⚠ Not closed. Built and measured (ROUTER-1, held-out test, same-author labels); the code router is a negative result and no system meets never-trigger** | Preregistered primitive router at the default slider: 9/132 false triggers, recall 0.67, F1 0.74; a $0 n-gram classifier ranks as well (AUROC 0.918 vs 0.915). Ask-Haiku directly: 5/132, recall 0.97, F1 0.944, $0.00026 per decision (also fails never-trigger). Ships as `src/need/` (MCP `need_check`, `foundry_need_check`, CLI `need`): a labelled code-only hint by default, the code pre-filter + a capped model judge when the host plugs one in (post-hoc design), every answer with its measured operating point. Not done: a sealed check by another labeller ([ROUTER-2 draft](research/need-router-20261014/router2/PROTOCOL-ROUTER-2.md)), Jev, launching a workflow from the decision, whether a workflow helps on these requests. Departs from ROADMAP §2.8 (owner decision needed). [RESULT](research/need-router-20261014/RESULT-ROUTER-1.md) |
 | Kev (typed judgments) | Engine, laptop bridge and contracts library built; nothing trained | Stock Kev-0.8B is at or below the rule baseline on 4 of 5 ports; CPU latency 2.5–13.7 s [M]. A Haiku 5.5 typed call takes about 1–1.5 s for under $0.001 |
 | Composition | Static nesting only (depth ≤ 6) | `src/validate.mjs` [D] |
 | Subagents (`executor`) | An adapter used by experiments; not an IR node | The network is not isolated, and the CLI login is readable in the sandbox. Under THESIS D10, no executor reads third-party text |
@@ -166,12 +179,12 @@ Every phase still ends with a capability number against a simple baseline and a
 | UI | **Prototype** read-only run viewer (`tools/run-view/`) | 19 unit tests and 74 browser checks pass. The owner has not reviewed it yet; the game-QA screenshots are a scripted fixture |
 | Security | Labels, quarantine and sandbox exist; control-flow taint landed 2026-10-08; **gaps** | Landed: an ungated effect whose firing depends on untrusted data (`when`, loop `until`, map items, a skip chain, `onError` continuation) is rejected `LABEL_POLICY` / `UNTRUSTED_CONTROL` by the validator and again at dispatch (`tests/control-taint.test.mjs`; lane-7 probe B now fails; 0 of 393 test-suite workflows newly rejected [M]). Still open: the sink-field policy (untrusted data cannot fill even a data field of an ungated effect), the declassification budget, builder provenance taint, executor isolation. Each fix gates the first run that needs it ([synthesis §7](research/review-20261007/00-SYNTHESIS.md)) |
 | Evaluation validity | **Weakest link** | Every bed is synthetic and Claude-written; the sealed families are unused; nothing external has run. Next is the wild ladder (ROADMAP §4.2). *Corrected 2026-10-28: external benchmarks have run since 10-14 (AutomationBench, development) and SOP-Bench's sealed rows on 10-22; our own sealed families are still unused* |
-| Reuse library | Not started | Phase 5 |
+| Reuse library | **Experimental** registry keyed by contract hash, with producer-profile and consumer-conformance gates (`experiments/reuse/`) | Development evidence only: [RESULT-C2-1](research/reuse-20261021/RESULT-C2-1.md) (the producer-profile gate let 32 of 112 accepted items through wrong), [RESULT-C2-2](research/reuse-20261021/RESULT-C2-2.md) (consumer conformance: 0 wrong in 98 accepted on fresh suppliers, no M3 certificate when clustered by supplier, blind to drift after the history) and [RESULT-C2-3](research/reuse-20261021/RESULT-C2-3.md) (a Haiku agent with the same labels: 91.5% against 98% for rebuilding and for history-gated reuse, which tie). Not in `src/`; no monitoring of admitted reuse yet |
 
 Counts over these 14 layers:
 - built and tested, with known gaps: 6;
-- partly built: 3;
-- not built: 5;
+- partly built: 4 (reuse library added 2026-10-22, experimental);
+- not built: 4;
 - measured on held-out tasks of development families: 2 (P1 and C0 dev);
 - measured on sealed or wild tasks: 1 (Haiku construction, on SOP-Bench's sealed rows, 2026-10-22).
 
@@ -411,7 +424,7 @@ $560–825 at list price (synthesis §5).
 | D1-aws | `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` exist in the environment with no stated purpose. They are not used as a model route. | Say whether they are meant for Bedrock; otherwise leave unused. | No |
 | OpenCode | Verify OpenCode v2.0.23 locally and add its (version, sha256, evidence) to `OPENCODE_V2_ALLOWLIST`. | Do it when convenient; cloud runs skip those tests. | No |
 | D7 | **Resolved 2026-10-09:** the owner's `TYPESAFE_API_KEY` is exported in their interactive bash; Jev runs read it only as `FOUNDRY_SYSTEMONE_API_KEY` from the environment, launched through `bash -ic`. Jev replaces Kev for the judge program. | None. | No |
-| Heal-kit drift (2026-10-15) | The 10-09 Jev drift (`judgmentModels`, `providers.typesafe-systemone`) is decided: a proved judgment-only exemption (Q6, e8d7a53). **New:** the P0 policy batch (`2026-10-15.1`, [PREREG-NEED-V1](research/need-router-20261014/PREREG-NEED-V1.md) §13 D6) makes the gate report blocking drift on `defaultsByRole` and `inputBudgetTokensByClass.{F,L,M}`, so `loadKit` refuses with `HEAL_POLICY_DRIFT` and every heal replay is blocked. The frozen kit and journals are on this machine, so the heal suite went red (66 of 95 tests failed). Those 66 tests now skip with the reason "HEAL_POLICY_DRIFT pending owner choice (D6)", only while the blocking drift is within those four paths; any other drift still fails them, and a test checks that `loadKit` still refuses. | Choose: (a) re-freeze the kit's policy of record, which clears the budgets (they cannot take a proved exemption, because the frozen `src/runtime.mjs` reads them); or (b) a proved exemption for `defaultsByRole` (no frozen-kit file names it), which clears that path only. Until then heal stays blocked. | Heal replays and 66 heal tests (skipped) |
+| Heal-kit drift (2026-10-15) | **Decided 2026-10-21 as D20** ([D20-HEAL-UNBLOCK](research/heal-20261008/D20-HEAL-UNBLOCK.md)), under the owner's complete permissions: neither re-freeze nor the `defaultsByRole` exemption alone. `defaultsByRole` takes the existing "unread" proof; the class budgets `inputBudgetTokensByClass.{F,L,M}` take a new, code-checked **envelope** proof (the frozen kit reads them only from its policy of record and only as an upper bound, and record ≤ owner per class). The policy of record, its hash `fe63f99b` and all 2,631 recorded replay keys are unchanged; a re-freeze would have broken every one of them (`d20-proof.json`). `loadKit` accepts the live owner file again; the heal suite runs with 0 skips (98 tests). | None. Reversal: empty `ENVELOPE_BOUNDS_READ_BY_KIT` and drop `defaultsByRole` from `TOP_LEVEL_KEYS_UNREAD_BY_KIT`. | No |
 | Blocker synthesis Q1–Q5 (2026-10-09) | Held-out JIT seeds 8001–8024 / 8101–8124 with a per-bed ledger; R0 records rehearsal of the §3 config ($25–40); R0-K kinetics O/H re-run (~$25); a dev-calibrated kinetics tolerance (O1); Jev scope and credit cap. | Yes to each, as recommended in [BLOCKER-SYNTHESIS §7](research/jit-20261008/BLOCKER-SYNTHESIS.md). | R0/R0-K gate the held-out freeze |
 | J2 prerequisites (2026-10-09) | Re-author the held-out material; a re-read validity rule for Jev's 2-decimal output (the current \|Δp\| < 0.01 rule fails at 0.03–0.07 while argmax never flips); pin the Jev version. | See [PREREG-J2-draft](research/judge-20261009/PREREG-J2-draft.md). | J2 only |
 | PR #1 | Phase 0 is in [PR #1](https://github.com/Raed2180416/workflow-foundry/pull/1). The session's permission policy does not let the agent merge without review, so later phases stack on the same branch as separate commits. | Review and merge when convenient. | No |
