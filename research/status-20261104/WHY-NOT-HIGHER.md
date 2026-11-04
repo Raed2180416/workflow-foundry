@@ -69,6 +69,16 @@ obeying them. The resolution keeps the rule. **Data may restrict, never authoris
   Apex executive, which partners);
 - it may never **add** an effect, a recipient outside the request's scope, or a capability.
 
+**Sizing, an upper bound and not a forecast** (from `runs/look2-blocking.json`). Of the 40 blocking assertions, 18 are
+forbidden effects.
+- 3 tasks are blocked by vetoes alone: `hr.offer_letter_generation`, `marketing.partner_commission_calculation` and
+  `operations.asana_fire_drill`.
+- 9 need a veto plus a choice among authorised candidates.
+- 3 have no forbidden-effect blocker.
+
+So a veto and select-among layer could at most reach 12 of the 15. The yield depends on how well rules are discovered,
+and on the tasks' other assertions.
+
 That is a declassification in the safe direction only, and it fits the taint model. In A1-C, it would be a
 policy-discovery step in the inventory (policy sheets, guidance emails, "latest" and "UPDATED" messages, eligibility
 fields) that produces typed constraints with provenance (veto, select-among, supersede-within-scope). These would be
