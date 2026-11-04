@@ -1,0 +1,28 @@
+{
+ "schema": "foundry.ci1.manifest-r/1",
+ "created": "2026-11-04T19:18:48.920Z",
+ "files": {
+  "research/ci1-20261021/r/PREREG-CI1-R.md": "46cc20ea575eca8055e237424b5158e049545cae87ac8cb03d0a4c393e906e8a",
+  "research/ci1-20261021/MANIFEST.json": "39bf40bd420be14b4b666f5d5e9c0ceb4cb03a85d9c87774a2b0578ebb19def6",
+  "research/ci1-20261021/w2/MANIFEST-W2.json": "333650cf0832f08018e5e3a257e1e2f57b64f958215e355308c54dd6ecc5a374",
+  "experiments/ci1-r/env-guard.mjs": "bf31cf984e0106fbcc2251220b5bef4b100af4a2f30e16aebbc087d4e664ac17",
+  "experiments/ci1-r/retrieve-r.mjs": "0dcd2a0f18f997f19180fd0c4febe57f31d33916150224a344916e95e123050f",
+  "experiments/ci1-r/builders-r.mjs": "051a58380b2fc99add4e7b146df1b1709a7301e2e5d643d3e6b67e062449860c",
+  "experiments/ci1-r/run-r.mjs": "4d153f3903a8f0cf28b175f311a7b852b77a7ce165966be3d90cfc66c16dbb71",
+  "experiments/ci1-r/run-detached-r.sh": "6812a76534200d2f5d1cdfd306e55fe1673068fe9938fe374f2518f10652d994",
+  "experiments/ci1-r/r-run.sh": "5a486f6504891b34373fb9242622e42e6be896051eaa0784e2a39955d01bea5c",
+  "experiments/ci1-r/library/pattern-hints-blind.json": "7a71d09c04c65d692b866c6fc299f4621d8f33509a6db50328c7c2e2c5499dc1",
+  "experiments/ci1-r/write-blind-cards.mjs": "21abeaded222047146e949efb4344536b89c4874e74b90156a65a43072671fa7",
+  "experiments/ci1-posthoc/oracle-v2.mjs": "8778dd7b03571b18ea71a2258b3c8d8b1700e03abab141165584724cbad10491",
+  "experiments/ci1-posthoc/rescore.mjs": "625a6a751a21a21e3084e519085faaafc7d8317b05d286de97d6444cb32d28f8",
+  "experiments/ci1-posthoc/rescore-w2x.mjs": "6d351c2864f58934c47d9fd99c417497f28bc885b16208d264367cd697bfa826",
+  "experiments/ci1-w2/bed2.mjs": "dbc21ed3d3dd21fce97ca7e84500b839cdb7d24261dc6b6a45a63cb1b2e97483",
+  "experiments/ci1-w2/pooled.mjs": "7868064cd1cf45cfa6d289fd6d94bcbf58ebfd023984e588a8499f6b3c4fa55d",
+  "experiments/ci1/report.mjs": "662489511b80ffc5807e06c7ff6f43735e0e29487700daa8ec38c6dd4027f07d",
+  "experiments/ci1/builders.mjs": "770b7e4dd9a1fcaf650ed785ee9fcb33f91f85f22ecc39cd8c719ebf84f28004",
+  "experiments/ci1/prompt.mjs": "a1565d48e49eafdf6e0a9ab076a03e6f71cd2550f61feb8a6c43de1dbf384999",
+  "experiments/ci1/retrieve.mjs": "91f70b5c98d4327b04c3dae0e2297590751ba36ce0817c86fe262c3610d6c2ad",
+  "experiments/ci1/run-arm.mjs": "a25e0c850aa9cff2020bbd438237dbe8db3644179ece8e119765cae0d6cb75cf",
+  "experiments/ci1-w2/run-w2.mjs": "c4f34bcd87da948a6712ecfd57434eaf8c0eef406329e5a451a5df983cf8b08a"
+ }
+}

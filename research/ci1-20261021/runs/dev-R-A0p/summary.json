@@ -1,0 +1,79 @@
+{
+ "wave": 1,
+ "review": "CI-1 review arms (PREREG-CI1-R)",
+ "evidence": "development smoke (not evidence)",
+ "oracle": "v1 recorded (v2 by rescore.mjs)",
+ "arm": "A0p",
+ "label": "dev-R-A0p",
+ "split": "dev",
+ "model": "claude-haiku-5-5",
+ "K": 1,
+ "items": [
+  "18832",
+  "17618"
+ ],
+ "manifestSha256": null,
+ "manifestRSha256": null,
+ "isolation": {
+  "accountVariablesRemoved": [
+   "CLAUDE_CODE_ACCOUNT_UUID",
+   "CLAUDE_CODE_ORGANIZATION_UUID",
+   "CLAUDE_CODE_USER_EMAIL"
+  ],
+  "emptyCliConfigDir": true
+ },
+ "privacy": {
+  "recordAddressesRedactedThisRun": 0,
+  "journalCellsWithAccountAddressScrubbed": 0
+ },
+ "started": "2026-11-04T19:14:57.541Z",
+ "finished": "2026-11-04T19:15:42.084Z",
+ "capUsd": 0.1,
+ "spentUsd": 0.012399,
+ "notRun": [],
+ "environmentFault": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.006659,
+   "tokens": 25736,
+   "calls": 1,
+   "wallMs": 38737,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17618",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.00574,
+   "tokens": 23920,
+   "calls": 1,
+   "wallMs": 38275,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  }
+ ]
+}

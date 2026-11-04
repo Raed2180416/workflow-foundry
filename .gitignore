@@ -1,5 +1,8 @@
 node_modules/
 corpus/
+# the same two as symlinks into the main tree (worktrees link them; a trailing-slash pattern does not match a symlink)
+node_modules
+corpus
 .foundry/
 .venv/
 __pycache__/
