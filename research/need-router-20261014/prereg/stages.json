@@ -9,7 +9,7 @@
  "checker": "node experiments/need-router/prereg-check.mjs",
  "policy": {
   "file": "policy/models.json",
-  "policyVersion": "2026-10-15.2",
+  "policyVersion": "2026-10-21.3",
   "perExperimentPauseAboveUsd": 500,
   "sessionSoftCapUsd": 1500
  },
@@ -180,7 +180,7 @@
    }
   },
   "sources": [
-   "base input/output: policy/models.json models[].price (policyVersion 2026-10-15.2, in force for NL0 and every later stage; M1 and M1-R ran under 2026-10-09.1, whose base prices are the same: PREREG §13 D6, D9; checked equal by prereg-check, and a version other than this one is an error once frozen)",
+   "base input/output: policy/models.json models[].price (policyVersion 2026-10-21.3, in force for NL0 (re-pinned 2026-11-04 from 2026-10-15.2 while still DRAFT: the Haiku, Sonnet and Opus 5.5 prices are identical in both; §13 D6, re-pin note) and every later stage; M1 and M1-R ran under 2026-10-09.1, whose base prices are the same: PREREG §13 D6, D9; checked equal by prereg-check, and a version other than this one is an error once frozen)",
    "Haiku 5.5 long-context tier ($0.50/$2.50 above 100K prompt tokens): policy/models.json price.source and the claude-api skill model table (cached 2026-10-06) [S]",
    "Opus 5.5 and Sonnet 5.5 cache read $0.20: claude-api skill shared/models.md [S]",
    "cache write 5m = 1.25x input: claude-api skill shared/prompt-caching.md:144 [S]",

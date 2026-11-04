@@ -373,7 +373,10 @@ test('minor 13 (refresh): the overshoot reporting the preregistration states is 
   }
   assert.match(sectionOf(TEXT, /^## 12\./m), /total overshoot \(`totals\.spend\.overBoundUsd`\) exceeds 10% of its cap/);
   // The CLI's budget is a soft bound by a code comment, not by a measurement: the text says so.
-  assert.match(readFileSync(path.join(REPO, 'src/executors/claude-code.mjs'), 'utf8').split('\n')[289], /soft bound: the CLI checks it between turns/);
-  assert.match(sectionOf(TEXT, /^## 12\./m), /the executor's own comment at `:290`; a\s+documentation claim, not measured here/);
+  // The cited line is found by its text (engine work moves it); the PREREG must cite the line it is on now.
+  const execLines = readFileSync(path.join(REPO, 'src/executors/claude-code.mjs'), 'utf8').split('\n');
+  const softAt = execLines.findIndex(l => /soft bound: the CLI checks it between turns/.test(l)) + 1;
+  assert.ok(softAt > 0, 'the executor still says its budget is a soft bound');
+  assert.match(sectionOf(TEXT, /^## 12\./m), new RegExp(`the executor's own comment at \`:${softAt}\`; a\\s+documentation claim, not measured here`));
   assert.doesNotMatch(sectionOf(TEXT, /^## 12\./m), /A listing in the stage report is open/);
 });

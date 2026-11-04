@@ -1036,7 +1036,7 @@ to every paid runner: `label-run.mjs`, `m1-run.mjs`, `m1-rerun.mjs`, judge-H, pr
   against its $25 plan cap (reported $7.8934; §13 D7).
 - **Overshoot: the bound is not a hard ceiling** [P, D9; `stages.json spendMeter.overshoot`].
   - *Why.* Reservation treats each start's bound as its ceiling. But the CLI's `--max-budget-usd` (passed at
-    `src/executors/claude-code.mjs:304`) is a soft bound, checked between turns (the executor's own comment at `:290`; a
+    `src/executors/claude-code.mjs:329`) is a soft bound, checked between turns (the executor's own comment at `:308`; a
     documentation claim, not measured here), so an agent session or a construct build can end above its bound. The meter
     books max(reported, re-priced) after the fact.
   - *Worst case.* A stage can end above its cap by the overshoot of the starts in flight when the cap binds: at most 4
@@ -1243,6 +1243,10 @@ label exists):
     checked).
   - *Policy version* (§13 D6 update). Pinned to `2026-10-15.2`, with the price-table source note updated. A mismatch is
     an error once frozen.
+  - *Policy version, re-pinned 2026-11-04* (still DRAFT). Policy `2026-10-21.3` (the Claude CLI pin, compromise C2) replaced
+    `2026-10-15.2`; the Haiku, Sonnet and Opus 5.5 prices are identical in both, so `stages.json` now pins `2026-10-21.3` and
+    the price table is unchanged. The executor line citations in the overshoot paragraph were updated to `:329` and `:308`
+    after the same engine work moved them.
   - *Voided lineages* (§5). They score as failures (`voidPolicy: 'fail'`) and are no longer a missing-data reason; 'drop'
     is a sensitivity.
   - *Probe purposes* (`stages.json` NL1). They name the probe task (§3.3) instead of example 601 (DESIGN §3 departure,
