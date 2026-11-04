@@ -142,12 +142,14 @@ test('timers: tick leaves a model run untouched when the runtime has no ModelPor
   const amount = { type: 'object', additionalProperties: false, required: ['amount'], properties: { amount: { type: 'number' } } };
   const agent = { id: 'norm', kind: 'agent', needs: ['pause'], description: 'Read the amount', role: 'extract', instructions: 'Return the amount as a number.',
     context: { inputs: [{ name: 'raw', ref: 'input.v', render: 'text' }] }, returns: amount, model: { class: 'S' } };
-  const wf = workflow([pause(150), agent], [{ op: 'gte', left: ref('nodes.norm.amount'), right: 0 }], 'TimerModelProbe');
+  // 3 s, not 150 ms: at load 40 (2026-11-04) execute took longer than 150 ms to park, so the timer was already due and the
+  // run went on to the agent node it cannot serve. The property here is the parked run, not the pause length.
+  const wf = workflow([pause(3000), agent], [{ op: 'gte', left: ref('nodes.norm.amount'), right: 0 }], 'TimerModelProbe');
   const bare = open(t, root, { modelPolicy: loaded });
   bare.store.saveWorkflow(wf);
   const created = bare.runtime.create(wf, { v: 'five' });
   assert.equal((await bare.runtime.execute(created.id)).status, 'waiting');
-  await delay(200);
+  await delay(3100);
   const skipped = await bare.runtime.tick();
   assert.deepEqual(skipped.runs, [{ runId: created.id, skipped: 'MODEL_PORT_REQUIRED' }]);
   assert.equal(bare.store.run(created.id).status, 'waiting', 'a missing port never fails the run');

@@ -320,7 +320,7 @@ audit('actual worker process loss does not duplicate an idempotent simulator eff
   ], [eq(ref('nodes.verify.healthy'), true), eq(ref('nodes.verify.actionCount'), 1)]);
   const h = harness(t, workflow, { runOptions: { fixture: { correctAction: 'rollback', healthy: false, observations: {} }, extra: { crashAfterTool: 'root/effect' } } });
   const childCode = `import {Store} from ${JSON.stringify(new URL('../src/store.mjs', import.meta.url).href)};\nimport {Runtime} from ${JSON.stringify(new URL('../src/runtime.mjs', import.meta.url).href)};\nimport {createDefaultRegistry} from ${JSON.stringify(new URL('../src/capabilities.mjs', import.meta.url).href)};\nconst store=new Store(process.argv[1]);await new Runtime(store,createDefaultRegistry()).execute(process.argv[2]);`;
-  const child = spawnSync(process.execPath, ['--input-type=module', '-e', childCode, h.workspace, h.run.id], { encoding: 'utf8', timeout: 3000, env: { PATH: process.env.PATH ?? '' } });
+  const child = spawnSync(process.execPath, ['--input-type=module', '-e', childCode, h.workspace, h.run.id], { encoding: 'utf8', timeout: 60000, env: { PATH: process.env.PATH ?? '' } });   // a safety net only: the child SIGKILLs itself mid-effect; a 3 s net fired first (SIGTERM) at load 40
   assert.equal(child.signal, 'SIGKILL', child.stderr);
   assert.equal(h.store.fixture(h.run.id).actions.length, 1);
   h.store.updateRun(h.run.id, run => { delete run.extra.crashAfterTool; }, { type: 'audit.crash-injection-disabled' });

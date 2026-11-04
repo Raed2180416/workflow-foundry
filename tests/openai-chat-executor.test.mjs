@@ -320,14 +320,17 @@ test('a session without tools needs no sandbox; an unknown tool call or bad argu
 });
 
 test('a rate limit cools the endpoint down for every session of the process, not only the one that saw it', { skip: live }, async t => {
-  const ep = await fakeEndpoint(t, [(_, n) => (n === 0 ? { status: 429, body: { error: 'too many requests per minute' }, headers: { 'retry-after': '1' } } : reply({ content: 'ok' }))]);
-  const retry = { attempts: 3, baseDelayMs: 20, maxDelayMs: 2000 };
+  const ep = await fakeEndpoint(t, [(_, n) => (n === 0 ? { status: 429, body: { error: 'too many requests per minute' }, headers: { 'retry-after': '3' } } : reply({ content: 'ok' }))]);
+  const retry = { attempts: 3, baseDelayMs: 20, maxDelayMs: 4000 };
   const first = run(t, { baseUrl: ep.baseUrl, retry });
-  await new Promise(r => setTimeout(r, 300));   // the first session's 429 has set the cooldown by now
+  // Wait for the event, not a fixed time: the 429 has been served once the endpoint saw the first request (a fixed 300 ms
+  // sleep let the second session start before it at load 40, 2026-11-04). The 3 s cooldown leaves the second session room.
+  for (let i = 0; i < 600 && ep.requests.length < 1; i++) await new Promise(r => setTimeout(r, 50));
+  await new Promise(r => setTimeout(r, 200));
   const [a, b] = await Promise.all([first, run(t, { baseUrl: ep.baseUrl, retry })]);
   assert.equal(a.ok, true); assert.equal(a.retries, 1); assert.equal(b.ok, true); assert.equal(b.retries, 0);
   const waited = readStream(b.transcript).filter(e => e.subtype === 'rate_limit_wait');
-  assert.equal(waited.length, 1); assert.ok(waited[0].waitMs > 0 && waited[0].waitMs <= 1200, `${waited[0].waitMs}`);
+  assert.equal(waited.length, 1); assert.ok(waited[0].waitMs > 0 && waited[0].waitMs <= 3200, `${waited[0].waitMs}`);
   assert.equal(ep.requests.length, 3, 'the second session sent nothing into the window');
 });
 
