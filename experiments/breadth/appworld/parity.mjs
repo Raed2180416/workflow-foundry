@@ -13,9 +13,10 @@
 //
 //   nice -n 15 node experiments/breadth/appworld/parity.mjs [--concurrency 3] [--limit N] [--out research/breadth-20261021/appworld/parity.json]
 // Batteries are cached host-only under a key of the code hashes; a rerun with the same code re-renders parity.json.
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, linkSync, readdirSync, statSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, linkSync, readdirSync, statSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
-import { BRIDGE, BridgeServer, DATA_DIR, HERE, HOST_ROOT, LIVE_ROOT, PIN, REPO, RESEARCH, WORLD_PROFILES, buildPublicView, buildServeRoot, fileSize, freeBytes, pool, readJson, readJsonl,
+import { BRIDGE, BridgeServer, DATA_DIR, HERE, HOST_ROOT, LIVE_ROOT, PIN, PROTO, REPO, RESEARCH, WORLD_PROFILES, bridgeEnv, buildPublicView, buildServeRoot, fileSize, freeBytes, hostArgv, hostRoot, pool, readJson, readJsonl,
   runHost, scenarioOf, sha256, shaCanon, snapshotOutputs, verifyInstall, writeJson } from './lib.mjs';
 import { Facade } from './facade.mjs';
 import { armTools } from './mcp.mjs';
@@ -44,27 +45,42 @@ export function batteryItems(plans, ids, policies) {
   return items;
 }
 
-/** Upstream's reference path over items, in `workers` host-only processes. */
-export async function officialBattery(items, { workers = 2, dir }) {
+/** Upstream's reference path over items, in `workers` host-only processes. Rows stream back as each item finishes
+ * and go to `onRow` (the cache appends them), so a stopped battery resumes where it stopped. */
+export async function officialBattery(items, { workers = 2, dir, onRow = () => {} }) {
   const parts = Array.from({ length: workers }, () => []);
   items.forEach((it, i) => parts[i % workers].push({ key: it.key, taskId: it.taskId, chunks: it.chunks, settings: WORLD_PROFILES[it.profile] }));
-  const rows = new Map();
   await Promise.all(parts.map(async (part, w) => {
     if (!part.length) return;
     const spec = path.join(dir, `official-spec-${w}.json`);
     writeJson(spec, { items: part });
-    const r = await runHost(['official', spec], { root: path.join(dir, `official-root-${w}`) });
-    for (const x of r.proto.filter(p => p.kind === 'official')) rows.set(x.key, x.error ? { error: x.error } : { ...x.row });
+    const root = hostRoot(path.join(dir, `official-root-${w}`));
+    const [bin, argv] = hostArgv(['official', spec]);
+    await new Promise((resolve, reject) => {
+      const c = spawn(bin, argv, { cwd: root, env: bridgeEnv(root), stdio: ['ignore', 'pipe', 'pipe'] });
+      let buf = '', err = '';
+      c.stdout.on('data', d => {
+        buf += d;
+        let i;
+        while ((i = buf.indexOf('\n')) >= 0) {
+          const l = buf.slice(0, i); buf = buf.slice(i + 1);
+          if (!l.startsWith(PROTO)) continue;
+          let x; try { x = JSON.parse(l.slice(PROTO.length)); } catch { continue; }
+          if (x.kind === 'official') onRow(x.key, x.error ? { error: x.error } : { ...x.row });
+        }
+      });
+      c.stderr.on('data', d => { if (err.length < 100_000) err += d; });
+      c.on('error', reject);
+      c.on('close', code => (code === 0 ? resolve() : reject(new Error(`official worker ${w} exited ${code}: ${err.slice(-800)}`))));
+    });
     rmSync(spec, { force: true });
   }));
-  return rows;
 }
 
 /** Our path (battery mode: one sandboxed serve process and one grader per worker, scripted relay client per item). */
-export async function oursBattery(items, { workers = 2, dir, snapRoot }) {
+export async function oursBattery(items, { workers = 2, dir, snapRoot, onRow = () => {} }) {
   const byWorker = Array.from({ length: workers }, () => []);
   items.forEach((it, i) => byWorker[i % workers].push(it));
-  const rows = new Map();
   await Promise.all(byWorker.map(async (part, w) => {
     if (!part.length) return;
     const live = path.join(LIVE_ROOT, `parity-${process.pid}-w${w}`);
@@ -90,26 +106,31 @@ export async function oursBattery(items, { workers = 2, dir, snapRoot }) {
           const closed = await serve.close(h);
           const snap = snapshotOutputs(serveRoot, closed.outputRel, path.join(snapRoot, it.key.replace(/[/@:]/g, '_')));
           const row = await grader.grade(it.taskId, snap);
-          rows.set(it.key, { ...row, executes: closed.executes, completed: closed.completed, serveDigest: closed.postDigest.sha256, outputsSha256: s.outputsSha256, refused: fstats.refused, snap });
+          onRow(it.key, { ...row, executes: closed.executes, completed: closed.completed, serveDigest: closed.postDigest.sha256, outputsSha256: s.outputsSha256, refused: fstats.refused, snap });
         } catch (e) {
-          rows.set(it.key, { error: String(e?.message ?? e).slice(0, 500) });
+          onRow(it.key, { error: String(e?.message ?? e).slice(0, 500) });
           await serve.close(h).catch(() => {});
         }
         rmSync(workdir, { recursive: true, force: true });
       }
     } finally { await serve.quit(); await grader.quit(); rmSync(live, { recursive: true, force: true }); }
   }));
-  return rows;
 }
 
 const cacheFile = (dir, name) => path.join(dir, `${name}.jsonl`);
-async function cached(dir, name, n, compute) {
+/** Incremental cache: rows already recorded are kept; only missing items are computed, each appended as it finishes. An
+ * error row is retried on the next run. */
+async function cached(dir, name, items, compute, log = () => {}) {
   const f = cacheFile(dir, name);
-  const prior = readJsonl(f);
-  if (prior.length === n && prior.every(r => r.key)) return new Map(prior.map(r => [r.key, r]));
-  const rows = await compute();
-  writeFileSync(f, [...rows.entries()].map(([key, r]) => JSON.stringify({ key, ...r })).join('\n') + '\n');
-  return new Map([...rows.entries()].map(([key, r]) => [key, { key, ...r }]));
+  const rows = new Map(readJsonl(f).filter(r => r.key && !r.error).map(r => [r.key, r]));
+  const todo = items.filter(it => !rows.has(it.key));
+  if (todo.length) {
+    log(`[parity] ${name}: ${rows.size} cached, ${todo.length} to run`);
+    writeFileSync(f, [...rows.values()].map(r => JSON.stringify(r)).join('\n') + (rows.size ? '\n' : ''));
+    let n = 0;
+    await compute(todo, (key, r) => { const row = { key, ...r }; rows.set(key, row); appendFileSync(f, JSON.stringify(row) + '\n'); if (++n % 50 === 0) log(`[parity] ${name}: ${n}/${todo.length}`); });
+  }
+  return rows;
 }
 
 export function compareRows(a, b, keys) {
@@ -197,13 +218,13 @@ export async function runParity({ concurrency = 2, limit = null, out = path.join
   // upstream's reference path depends only on bridge.py (its `official` command) and the plans: its own cache key
   const offDir = path.join(HOST_ROOT, 'parity', `official-${sha256(readFileSync(BRIDGE)).slice(0, 16)}${limit ? `-l${limit}` : ''}`);
   mkdirSync(offDir, { recursive: true });
-  const official = await cached(offDir, 'official', offItems.length, () => officialBattery(offItems, { workers: concurrency, dir: offDir }));
+  const official = await cached(offDir, 'official', offItems, (todo, onRow) => officialBattery(todo, { workers: concurrency, dir: offDir, onRow }), log);
   log(`[parity] official done (${Math.round((Date.now() - t0) / 1000)} s)`);
   const ourItems = offItems.filter(it => !it.policy.startsWith('gold@arm') && !it.policy.startsWith('docs@'));
-  const ours = await cached(dir, 'ours-1', ourItems.length, () => oursBattery(ourItems, { workers: concurrency, dir, snapRoot: path.join(snapRoot, 'run1') }));
+  const ours = await cached(dir, 'ours-1', ourItems, (todo, onRow) => oursBattery(todo, { workers: concurrency, dir, snapRoot: path.join(snapRoot, 'run1'), onRow }), log);
   log(`[parity] ours run 1 done (${Math.round((Date.now() - t0) / 1000)} s)`);
   const detItems = ourItems.filter(it => it.policy === 'gold@verify' || it.policy === 'null@arm');
-  const ours2 = await cached(dir, 'ours-2', detItems.length, () => oursBattery(detItems, { workers: concurrency, dir, snapRoot: path.join(snapRoot, 'run2') }));
+  const ours2 = await cached(dir, 'ours-2', detItems, (todo, onRow) => oursBattery(todo, { workers: concurrency, dir, snapRoot: path.join(snapRoot, 'run2'), onRow }), log);
   log(`[parity] ours run 2 done (${Math.round((Date.now() - t0) / 1000)} s)`);
   // run.mjs per-unit path: the scripted $0 baselines (fresh serve process per unit, arm world profile)
   const baselines = {};
