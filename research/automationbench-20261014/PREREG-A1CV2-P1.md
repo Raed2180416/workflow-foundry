@@ -424,3 +424,129 @@ a scratch copy of `manifest-hash.mjs` that also writes the manifest and accepts 
 - the manifests (code and settings, no task).
 
 No look-2 task, request, per-task outcome or grade was opened.
+
+### A2 (2026-11-04): v2 interrupted by a usage limit and a container restart; the remaining arms run at CLI 2.1.312 from a pinned copy of that binary
+
+**What happened.**
+- **Launch.** The chain launched at 2026-10-28T18:02:35Z (`launches.log`) under A1: V2COMMIT `a65a3aeb`, CLI 2.1.312.
+- **v1 (`a1c-v1-look2`) is complete, entirely at CLI 2.1.312.** Exit 0 at 18:51:55Z, 60 rows, 0 fault rows, $1.9639
+  (`summary.json` `cost.spentUsd`).
+- **v2 (`a1c-v2-look2`) stopped at an environment fault.** It launched at 18:51:57Z, and run.mjs exited 3 (a usage
+  limit) at 19:07:04Z, at CLI 2.1.312. It left 22 rows in `results.jsonl`, 3 fault rows in `results.faults.jsonl` and
+  no `summary.json`.
+- **The chain then died with the container** during its 30-minute wait ("resume 1 of 6"). The container restarted at
+  2026-11-04T12:14:20Z with CLI `2.1.318 (Claude Code)`, served by the read-only image mount `/opt/claude-code`.
+- **A0, A0-AA, v1-M and v2-M have not started.** None has a live directory.
+
+**The killed spend is $0, so no `a1c-v2-look2-killed.json` is needed.**
+- run.mjs had already exited before the container died: `launches.log` records `a1c-v2-look2 exit 3 (CLI 2.1.312)
+  2026-10-28T19:07:04Z`.
+- After an environment fault, run.mjs starts no new session. Its pool awaits every session in flight and records each
+  as a row or a fault row; sessions that never started leave no record and cost nothing.
+- So no session was in flight without a row when the container died. The counts fit: 22 rows plus 3 fault rows is 25
+  recorded sessions, with 3 in flight at the fault (concurrency 3).
+- §7 books 0.75 × 0 = $0.
+
+**Budget inputs.**
+- **The chain has spent $2.4488 so far.**
+  - `look2-guard.mjs spend` gives $2.3939: v1 $1.9639 plus v2's rows $0.4300.
+  - v2's 3 fault rows hold another $0.0549. run.mjs counts them on resume and in v2's eventual `summary.json`, but
+    look2-guard does not count them before then.
+- **`D22_LEFT` stays 17.74.**
+  - The chain subtracts its own settled spend.
+  - No other D22 run record appeared after A1: the only new AutomationBench live directories are this chain's two and
+    $0 dry-run folders.
+  - VL-1's judge has not run.
+- **`MERCURY_OTHER` is corrected from 812,875 to 1,165,219.** Since A1's check (2026-10-28 about 17:55Z), the Tracker
+  work used mercury-3 outside the AutomationBench run records (branch `worktree-wf_6d3b90c9-c30-6`):
+  - held-out requests: 4,943 tokens (`heldout/requests-mercury-3.json`, `tokenMeter`, at 2026-10-28T18:18Z);
+  - the T2-M bind: 149,841 tokens (`builder1/bind-claude-haiku-5-5-s0__mercury-3.json`, `tokenMeter`, written at
+    2026-10-28T19:03Z);
+  - the B-M builds: 97,560 tokens (`heldout/runs/b-m/summary.json`, `tokenMeter`, 2026-11-04).
+
+  That books 252,344 tokens. Its detached `paid-heldout.sh` is still running, and PREREG-TRACKER-H caps the Mercury
+  bind it has yet to make at 100,000 tokens. That bind is booked at its cap, an upper bound, as §6 booked ROUTER-1.
+- **D18 total, about 6.14M.** The run-record tally is 4,972,199 (`look2-guard.mjs mercury`, unchanged), and other use
+  is 1,165,219.
+- **Each Mercury arm's token cap stays 5.5M.** The worst case after both arms is about 17.1M of the 20M.
+
+**§7's contingency cannot be applied to v2 at a new CLI.**
+- On `--resume`, run.mjs requires every launch setting to match `launch.json`. Only the cap, the token cap and (with
+  `--accept-runner-change`) the runner may change. The harness manifest hash, which carries the CLI, is one of the
+  settings that must match.
+- v2's `launch.json` records `12bb43cf…`, the 2.1.312 hash.
+- **Probe, $0** (run.mjs's `runTasks` on a temporary copy of `launch.json`, with a $0.01 cap):
+  - at 2.1.318 the resume is refused with "the settings differ";
+  - with only the harness field changed in the copy, the next check is the first to refuse ("the cap can only be
+    raised").
+- Continuing v2 at 2.1.318 would need a change to run.mjs (under `experiments/`, excluded) or an edit of the launch
+  record.
+- **Not chosen:** restarting v2 at 2.1.318. It would set aside 22 recorded rows and put H2 (v2 vs v1) across a CLI
+  change.
+
+**Hashes at CLI 2.1.318, for reference only.** No arm runs at 2.1.318. The `run.mjs` dry runs and `manifest-hash.mjs`
+agree, and only `config.cli` differs from A1's manifests:
+- v1 `01177f729cc184a65e844f05f8fcf0a731fae9593ba3a0bed43e40d03c272177`
+- v1-M `081ef7dd65576519cdc4cb76ee0ed9fabb7b586388ecda03c28429e53f780db4`
+- v2 `7884e3646fff0547c6d1bc2fbafaf771e35750934daaa366c0a255aa76062c2b`
+- v2-M `4232f30564c128c44ed0f2ac873715d3aeffc98437e6987c65c9a3ab00fc3da5`
+
+**Decision (the orchestrator, 2026-11-04): every remaining P1 arm runs at CLI 2.1.312, from a pinned copy of that
+binary.** The launcher puts this copy first on `PATH` and checks its sha256 before `exec`. The CLI string the chain
+checks stays `2.1.312 (Claude Code)`.
+
+**The pinned binary.**
+- **Source:** `https://registry.npmjs.org/@anthropic-ai/claude-code-linux-x64/-/claude-code-linux-x64-2.1.312.tgz`,
+  fetched 2026-11-04 about 12:38Z.
+- **Tarball:** 132,751,486 bytes. Its sha512 equals the registry's `integrity`, read at fetch time:
+  `sha512-oj55HL9uasLWzym5eZNgC8xyk0N0H4hw8WdN0DeDuAlquhs2d4hhkQVZcRKvJarBB37IU9bbEGXZwtuhsex6EQ==`.
+- **Members:** `package/claude`, `package.json`, `LICENSE.md`, `README.md`.
+  - `package.json` declares no scripts: `os` linux, `cpu` x64, `libc` glibc, `files` `claude`, `README.md`,
+    `LICENSE.md`.
+  - `LICENSE.md` reads "© Anthropic PBC. All rights reserved. Use is subject to the Legal Agreements outlined here:
+    https://code.claude.com/docs/en/legal-and-compliance."
+- **Extraction:** only `package/claude`, with `tar --strip-components=1 --no-same-owner`. No `npm install` ran, and no
+  install script ran: the wrapper package's `postinstall` (`install.cjs`) was never fetched.
+- **Stored at** `/var/tmp/foundry-work/cli/2.1.312/claude`, outside the image, mode 0755: 293,592,432 bytes, sha256
+  `4f4178ce41d83e23341ebfbaecdbcf8ea6bf7baea0690025abe49eeec3a5d01d`.
+- **Housekeeping:** the tarball was deleted, and `/` kept 1.70 GiB free.
+
+**Why it is the same CLI.**
+- The registry's 2.1.318 member is byte-identical to the image's 2.1.318 binary: both have sha256
+  `708c77b204db30086ff6f1ed34577bda03e1be74ced80557cbf7b54249ebf0bd`.
+- The 2.1.312 member has exactly the size of the image binary seen on 2026-10-28 (293,592,432 bytes).
+- Byte identity with that 2026-10-28 binary cannot be shown, because its sha256 was not recorded. **Disclosed.**
+
+**Checks before launch ($0, 2026-11-04, the pin first on `PATH`).**
+- **Version.** `claude --version` prints `2.1.312 (Claude Code)`, both as the shell runs it and as `cliVersion()` runs
+  it (`PATH` only, `HOME=/nonexistent`).
+- **Sandbox visibility.** `binaryKeeps()` and `DEFAULT_KEEP_RO` keep `/var/tmp/foundry-work/cli/2.1.312/claude`
+  visible read-only inside the sandbox.
+- **Sandboxed run.** Inside the executor sandbox (`executorEnv`, `maskSteps` with `DEFAULT_HIDDEN` and
+  `DEFAULT_KEEP_RO`, `sandboxScript`, `unshare`; no model call):
+  - `claude --version` prints `2.1.312 (Claude Code)` as uid 65534;
+  - `command -v claude` resolves the pinned path, with the same sha256;
+  - nothing else under `/var/tmp/foundry-work` is visible.
+- **Hashes.** `run.mjs --dry-run --harness-hash 0` recomputes `12bb43cf…` (v2, branch) and `e2f1f491…` (v1, pin).
+  `manifest-hash.mjs` gives all four A1 hashes: `e2f1f491…`, `fff2886f…`, `12bb43cf…` and `cc16ed23…`.
+- **Resume.** The same resume probe at the pinned CLI passes the settings check. The only refusal left is the probe's
+  deliberate $0.01 cap.
+- **Rehearsal.** `rehearse-chain.sh` prints 28 passed, 0 failed on `a65a3aeb` with the pin first on `PATH`. It runs
+  again on this commit before launch.
+
+**Effect on P1.**
+- **Every P1 arm runs at 2.1.312, as A1 froze**, and A1's four hashes stand.
+- **v2 resumes from its 22 rows.** Its 3 faulted tasks and 35 unstarted tasks run, and run.mjs counts the fault rows'
+  $0.0549 on the cap.
+- **No comparison inside P1 crosses a CLI change.** A1's disclosures stand: the Opus reference arm `a0o-look2-1` and
+  VL-1's `a1s-look2` ran at 2.1.307.
+- **Restarts.** A later container restart no longer changes the CLI the chain uses. The image's CLI is not used, and the
+  launcher stops (exit 7) if the pinned file is missing or altered.
+
+**Disclosed deviations.**
+- **The binary source changed.** The image CLI was replaced by the registry copy of the same version, as above.
+- **v2 runs in two parts a week apart.** It ran 25 sessions on 2026-10-28 and the rest from 2026-11-04 on, so a time
+  gap falls inside one arm. v1 ran entirely on 2026-10-28, and the other arms run from 2026-11-04 on. Model-serving
+  drift is not modelled (§12.4).
+- **v2's three faulted tasks rerun** after their usage-limit fault rows. This is the outcome rule of §7, and they are
+  not scored twice.
