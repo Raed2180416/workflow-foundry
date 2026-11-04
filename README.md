@@ -502,6 +502,18 @@ node app/cli.mjs doctor                # what works on this computer, in plain w
 node app/cli.mjs check-evidence FILE   # re-checks an evidence file's chains on its own
 ```
 
+Construct a workflow (a model, or you, following `skills/foundry-construct/SKILL.md`), then gate it before running:
+
+```sh
+node bin/foundry.mjs validate my-flow.json
+node bin/foundry.mjs lint --fail-on error my-flow.json      # acceptance must gate on evidence
+node tools/sizing/plan.mjs --probes probes.json --units 5000 --budget 20 --recall 0.95   # size a fan-out from probes
+```
+
+A large fan-out proves its coverage with a `verify` node of `method: "ledger"` (see the exemplar
+`skills/foundry-construct/exemplars/partitioned-audit.json`). The laptop inspection kickoff is
+[docs/laptop-agent-kickoff.md](docs/laptop-agent-kickoff.md).
+
 Run `node bin/foundry.mjs help` for the full CLI, which also covers trials,
 repair requests, `outcome-*` commands, `construct-*` experiments, evaluate,
 propose/apply and export. The repair walkthrough is in

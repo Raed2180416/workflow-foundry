@@ -214,7 +214,15 @@
         "quarantined": {"type": "boolean"},
         "lang": {"enum": ["js", "python"]},
         "source": {"type": "string", "minLength": 1, "maxLength": 262144},
-        "method": {"enum": ["code", "agent", "capability"]},
+        "method": {"enum": ["code", "agent", "capability", "ledger"]},
+        "ledger": {"type": "object", "additionalProperties": false, "required": ["inventory", "reads"],
+          "description": "Verify method ledger (src/ledger.mjs): code proves a fan-out covered its inventory. subject is the readers' items (a map output or an array); inventory a reference to the unit ids code produced before the fan-out; reads the dotted path inside each item to the ids it read. Every unit must be read at least once and at most maxReads times (default 1), no read may name a unit outside the inventory, and no item may fail.",
+          "properties": {
+            "inventory": {"type": "object", "required": ["$ref"]},
+            "reads": {"type": "string", "minLength": 1, "maxLength": 256, "pattern": "^[A-Za-z_$][A-Za-z0-9_$-]*(\\.[A-Za-z_$][A-Za-z0-9_$-]*)*$"},
+            "maxReads": {"type": "integer", "minimum": 1, "maximum": 16},
+            "allowEmpty": {"type": "boolean"}
+          }},
         "subject": {},
         "independence": {"enum": ["execution", "different-model", "same-model"]},
         "gate": {"type": "boolean"},
@@ -241,7 +249,8 @@
         {"if": {"properties": {"kind": {"const": "state"}}}, "then": {"required": ["slot", "op", "key"]}},
         {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "code"}}}, "then": {"required": ["lang", "source"]}},
         {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "agent"}}}, "then": {"required": ["instructions", "model"]}},
-        {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "capability"}}}, "then": {"required": ["tool", "args"]}}
+        {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "capability"}}}, "then": {"required": ["tool", "args"]}},
+        {"if": {"required": ["method"], "properties": {"kind": {"const": "verify"}, "method": {"const": "ledger"}}}, "then": {"required": ["ledger"]}}
       ]
     }
   }

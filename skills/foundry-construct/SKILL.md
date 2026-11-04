@@ -48,13 +48,14 @@ other than the step that produced it. Build it, practise it, then stop on eviden
   0 of 8.
 - Side effects go through checks before commit: validate an effect against the host's contract and surface its
   refusals before applying it. Retrying an effect whose outcome is unknown is forbidden: reconcile first.
-- Coverage is reported by code from the ledger, never by a model's summary.
+- Coverage is proved by a `verify` node with `method: "ledger"` (each reader returns the unit ids it read; the engine compares them with the inventory), never by a model's summary.
 - Every finding carries its provenance: unit id plus location. A finding without a location is noise.
 - Spend a larger model class only where a cheaper one failed in practice, and say so in `model.justification`.
 - Prefer extracting with code (structure, section and cue rules) before asking a model. Code alone often matches
   or beats a cheap model on extraction.
 - Fan-out is sized, never maxed: code clears what it can first, and the number of model calls = the remaining
-  work ÷ the shard size where the chosen model's measured recall holds. The engine's 1,000 items per map is a limit.
+  work ÷ the shard size where the chosen model's measured recall holds (`tools/sizing/plan.mjs` computes it from probes).
+  The engine's 1,000 items per map is a limit.
 - Every loop has `maxIterations`, every wait a timeout, every map `maxItems`, every run a budget.
 
 ## Load only what the current step needs

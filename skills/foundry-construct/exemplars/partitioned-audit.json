@@ -91,7 +91,7 @@
       "needs": [],
       "description": "Pack the inventory into shards under a byte budget, keeping each directory together where it fits; code owns the coverage plan",
       "lang": "js",
-      "source": "export default function main({ inventory, shardBytes }) {\n  const byDir = new Map();\n  for (const u of inventory) { const d = u.path.split('/').slice(0, -1).join('/'); if (!byDir.has(d)) byDir.set(d, []); byDir.get(d).push(u); }\n  const shards = []; let cur = { id: 's0', units: [], bytes: 0 };\n  for (const [, units] of [...byDir.entries()].sort()) for (const u of units) {\n    if (cur.units.length && cur.bytes + u.bytes > shardBytes) { shards.push(cur); cur = { id: 's' + shards.length, units: [], bytes: 0 }; }\n    cur.units.push(u.id); cur.bytes += u.bytes;\n  }\n  if (cur.units.length) shards.push(cur);\n  return { shards, unitCount: inventory.length };\n}",
+      "source": "export default function main({ inventory, shardBytes }) {\n  const byDir = new Map();\n  for (const u of inventory) { const d = u.path.split('/').slice(0, -1).join('/'); if (!byDir.has(d)) byDir.set(d, []); byDir.get(d).push(u); }\n  const shards = []; let cur = { id: 's0', units: [], bytes: 0 };\n  for (const [, units] of [...byDir.entries()].sort()) for (const u of units) {\n    if (cur.units.length && cur.bytes + u.bytes > shardBytes) { shards.push(cur); cur = { id: 's' + shards.length, units: [], bytes: 0 }; }\n    cur.units.push(u.id); cur.bytes += u.bytes;\n  }\n  if (cur.units.length) shards.push(cur);\n  return { shards, unitIds: inventory.map(u => u.id), unitCount: inventory.length };\n}",
       "args": {
         "inventory": {
           "$ref": "input.inventory"
@@ -104,11 +104,18 @@
         "type": "object",
         "required": [
           "shards",
+          "unitIds",
           "unitCount"
         ],
         "properties": {
           "shards": {
             "type": "array"
+          },
+          "unitIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "unitCount": {
             "type": "integer"
@@ -235,35 +242,24 @@
         "audit",
         "partition"
       ],
-      "description": "Merge shard results: the coverage ledger (every unit read exactly once), de-duplicated findings, and the list of failed shards",
+      "description": "Merge the shards' findings, de-duplicated on unit + location + reason, and list failed shards by id (coverage is proved by the ledger verifier, not here)",
       "lang": "js",
-      "source": "export default function main({ shards, results, unitCount }) {\n  const seen = new Map(); const findings = new Map(); const failedShards = [];\n  results.forEach((r, i) => {\n    if (!r || r.$error) { failedShards.push(shards[i].id); return; }\n    for (const u of r.read.read) seen.set(u, (seen.get(u) ?? 0) + 1);\n    for (const f of r.read.findings) findings.set(f.unit + '|' + f.location + '|' + f.reason, f);\n  });\n  const twice = [...seen.values()].filter(n => n > 1).length;\n  return { covered: seen.size, unitCount, readTwice: twice, failedShards, findings: [...findings.values()] };\n}",
+      "source": "export default function main({ shards, results }) {\n  const findings = new Map(); const failedShards = [];\n  results.forEach((r, i) => {\n    if (!r || r.$error) { failedShards.push(shards[i].id); return; }\n    for (const f of r.read.findings) findings.set(f.unit + '|' + f.location + '|' + f.reason, f);\n  });\n  return { failedShards, findings: [...findings.values()] };\n}",
       "args": {
         "shards": {
           "$ref": "nodes.partition.shards"
         },
         "results": {
           "$ref": "nodes.audit.items"
-        },
-        "unitCount": {
-          "$ref": "nodes.partition.unitCount"
         }
       },
       "returns": {
         "type": "object",
         "required": [
-          "covered",
-          "unitCount",
           "failedShards",
           "findings"
         ],
         "properties": {
-          "covered": {
-            "type": "integer"
-          },
-          "unitCount": {
-            "type": "integer"
-          },
           "failedShards": {
             "type": "array"
           },
@@ -273,6 +269,28 @@
         }
       },
       "timeoutMs": 60000
+    },
+    {
+      "id": "coverage",
+      "kind": "verify",
+      "needs": [
+        "audit",
+        "partition"
+      ],
+      "description": "The engine's coverage ledger: every inventory unit was read by exactly one shard reader, no reader named a unit outside the inventory, and no shard failed",
+      "method": "ledger",
+      "independence": "execution",
+      "gate": true,
+      "subject": {
+        "$ref": "nodes.audit"
+      },
+      "ledger": {
+        "inventory": {
+          "$ref": "nodes.partition.unitIds"
+        },
+        "reads": "read.read",
+        "maxReads": 1
+      }
     },
     {
       "id": "pick",
@@ -397,11 +415,9 @@
     {
       "op": "eq",
       "left": {
-        "$ref": "nodes.reconcile.covered"
+        "$ref": "nodes.coverage.pass"
       },
-      "right": {
-        "$ref": "nodes.reconcile.unitCount"
-      }
+      "right": true
     },
     {
       "op": "eq",
