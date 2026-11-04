@@ -1,0 +1,144 @@
+{
+ "arm": "A2",
+ "label": "test-attr-17878-noP08",
+ "split": "test",
+ "dropPatterns": [
+  "P08"
+ ],
+ "model": "claude-haiku-5-5",
+ "K": 3,
+ "items": [
+  "17878"
+ ],
+ "manifestSha256": "39bf40bd420be14b4b666f5d5e9c0ceb4cb03a85d9c87774a2b0578ebb19def6",
+ "started": "2026-11-04T12:51:15.173Z",
+ "finished": "2026-11-04T12:58:21.648Z",
+ "capUsd": 0.2,
+ "spentUsd": 0.058505,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.025886,
+   "tokens": 152006,
+   "calls": 4,
+   "wallMs": 149154,
+   "questions": 0,
+   "repairs": 3,
+   "practice": [
+    "succeeded",
+    "succeeded",
+    "succeeded",
+    "succeeded"
+   ],
+   "reviewedOk": false,
+   "retrieval": {
+    "patterns": [
+     "P42",
+     "P36"
+    ],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: 0 sent, expected 1",
+     "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-61783\",\"ClientName\":\"Talia Rothwell\",\"ClientEmail\":\"talia.rothwell@post.example\",\"Amount\":5910.68,\"Currency\":\"\",\"DueDate\":\"2026-08-07\"} (first differing columns: LastReminde"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17878",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.024743,
+   "tokens": 179417,
+   "calls": 4,
+   "wallMs": 164352,
+   "questions": 0,
+   "repairs": 3,
+   "practice": [
+    "succeeded",
+    "succeeded",
+    "succeeded",
+    "succeeded"
+   ],
+   "reviewedOk": false,
+   "retrieval": {
+    "patterns": [
+     "P42",
+     "P36"
+    ],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17878",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.007876,
+   "tokens": 54704,
+   "calls": 2,
+   "wallMs": 55265,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P42",
+     "P36"
+    ],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded"
+   }
+  }
+ ]
+}

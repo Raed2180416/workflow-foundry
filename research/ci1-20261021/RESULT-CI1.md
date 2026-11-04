@@ -328,7 +328,28 @@ table pointed at different cards (16364 and 17807, both oracle artefacts), which
 
 ### 6.2 Leave-one-pattern-out attribution (paid, exploratory; PREREG-CI1-ATTR.md)
 
-<!-- ATTRIBUTION -->
+A2 rebuilt with retrieved pattern cards removed (`run-arm.mjs --drop`, frozen code; the exemplar skeletons stay), K = 3, scored by
+oracle v2 (`runs/test-attr-*/rescore-v2.json`). 18 builds, **$0.32** (estimate was $0.17: without their cards the builds asked the
+self-review for more fix rounds and used 2–3× the tokens of the original A2 builds).
+
+| Item | A1c (no retrieval) | A2 (3 cards + 3 exemplars) | − P42 cross-run state | − P36 scheduled batch | − P08 guard → act | − all 3 cards (exemplars only) |
+|---|---|---|---|---|---|---|
+| 17878 | 0/3 | **3/3** | 1/3 | 2/3 | 2/3 | 1/3 |
+| 11679 | 2/3 | 3/3 | – | – | – | 3/3 |
+| 16904 | 2/3 | 3/3 | – | – | – | 3/3 |
+
+- **17878:** every failing build fails the same way as A1c's three: it skips the unpaid invoice whose currency cell is empty, an
+  unstated filter. The cards carry most of the effect (3/3 with them, 1/3 with the exemplars alone, 0/3 with neither). The card whose
+  removal costs most is **P42** ("cross-run memory lives in the sheet: before acting, skip rows whose marker column says it was already
+  done"), which frames skipping around the explicit marker (LastReminderDate) instead of around data validity [I]. My preregistered
+  guess, P08 ("treat missing values explicitly"), was wrong: removing it cost 1 of 3, as did P36. At K = 3 none of the single-card
+  differences is distinguishable from noise (3/3 vs 1/3: Fisher p = 0.4); the all-cards contrast with A1c (3/3 vs 0/3, p = 0.1) is the
+  strongest single-item signal in the experiment, and it is still one item.
+- **11679, 16904:** with all cards removed A2 still passes 3/3, as predicted: the cards are not what these items' gains came from (A1c's
+  failures there were one dropped e-mail and one skipped-branch reference, each 1 in 3, within noise).
+- **Answer to "which retrieved patterns helped":** on this bed, one card (P42, with P36 and P08 contributing) on one item (17878), by
+  steering the model away from inventing a validity filter; nothing else is distinguishable from noise. Retrieval's measured gain is
+  small, real in sign under every oracle, and concentrated.
 
 ## 7. Mercury 3 (A2-M, exploratory)
 
@@ -358,3 +379,11 @@ competitive in this harness on this evidence (5 builds).
 | D14 | Wave 2 (§9): 9 more held-out items, wave-1 arms unchanged, oracle v2 frozen as primary; A1 and Mercury not run there | wave 1's intervals were wide and its items near ceiling; no template fits any wave-2 item (0/9); the Mercury allowance is nearly spent |
 | D15 | The wave-2 scorer and the post hoc rescorer rerun a world whose run ends in `CODE_TIMEOUT` (at most twice); the frozen wave-1 scorer did not | one wave-1 build failed on a Code-step wall clock under host load (load average above 20 on 4 shared CPUs) |
 | D16 | Pattern attribution, the label audit and the root-causing used the local run records; the committed summaries do not carry built workflows | records hold built workflows (corpus-derived content stays local); every number in this document is recomputable from them with the scripts named |
+
+## 9. Wave 2: nine larger items, oracle v2 frozen as primary
+
+<!-- WAVE2 -->
+
+## 10. What this means
+
+<!-- MEANING -->

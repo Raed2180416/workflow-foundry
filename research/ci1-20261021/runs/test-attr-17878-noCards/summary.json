@@ -1,0 +1,130 @@
+{
+ "arm": "A2",
+ "label": "test-attr-17878-noCards",
+ "split": "test",
+ "dropPatterns": [
+  "P42",
+  "P36",
+  "P08"
+ ],
+ "model": "claude-haiku-5-5",
+ "K": 3,
+ "items": [
+  "17878"
+ ],
+ "manifestSha256": "39bf40bd420be14b4b666f5d5e9c0ceb4cb03a85d9c87774a2b0578ebb19def6",
+ "started": "2026-11-04T12:58:25.340Z",
+ "finished": "2026-11-04T13:06:04.055Z",
+ "capUsd": 0.2,
+ "spentUsd": 0.063234,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.021457,
+   "tokens": 112828,
+   "calls": 4,
+   "wallMs": 143739,
+   "questions": 0,
+   "repairs": 3,
+   "practice": [
+    "succeeded",
+    "succeeded",
+    "succeeded",
+    "succeeded"
+   ],
+   "reviewedOk": false,
+   "retrieval": {
+    "patterns": [],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to talia.rothwell@post.example: 0 sent, expected 1",
+     "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-61783\",\"ClientName\":\"Talia Rothwell\",\"ClientEmail\":\"talia.rothwell@post.example\",\"Amount\":5910.68,\"Currency\":\"\",\"DueDate\":\"2026-08-07\"} (first differing columns: LastReminde"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17878",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.02106,
+   "tokens": 215754,
+   "calls": 3,
+   "wallMs": 115792,
+   "questions": 0,
+   "repairs": 1,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "17878",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.020717,
+   "tokens": 116621,
+   "calls": 4,
+   "wallMs": 145264,
+   "questions": 0,
+   "repairs": 3,
+   "practice": [
+    "succeeded",
+    "succeeded",
+    "succeeded",
+    "succeeded"
+   ],
+   "reviewedOk": false,
+   "retrieval": {
+    "patterns": [],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: 0 sent, expected 1",
+     "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-61783\",\"ClientName\":\"Talia Rothwell\",\"ClientEmail\":\"talia.rothwell@post.example\",\"Amount\":5910.68,\"Currency\":\"\",\"DueDate\":\"2026-08-07\"} (first differing columns: LastReminde"
+    ],
+    "status": "succeeded"
+   }
+  }
+ ]
+}
