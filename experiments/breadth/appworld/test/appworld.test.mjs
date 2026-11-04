@@ -167,7 +167,10 @@ test('L5 audit flags out-of-set tools and benchmark or network references in cod
   const tools = M.armTools(false);
   const a = RUN.auditSession({ toolUses: [{ name: 'Bash', input: {} }, { name: 'mcp__appworld__execute', input: { code: "open('/var/tmp/foundry-work/benches/appworld/root/data/tasks/x/ground_truth/answer.json')" } }], nestedModelUses: 0 }, tools);
   assert.equal(a.violations.length, 2);
-  assert.equal(RUN.auditSession({ toolUses: [{ name: 'mcp__appworld__execute', input: { code: 'print(apis.spotify.show_song(song_id=1))' } }] }, tools).violations.length, 0);
+  assert.equal(RUN.auditSession({ toolUses: [{ name: 'mcp__appworld__execute', input: { code: '# AppWorld: find the song\nprint(apis.spotify.show_song(song_id=1))' } }] }, tools).violations.length, 0);
+  for (const code of ['import appworld', 'from appworld.task import Task', "__import__('appworld')", "__import__('subprocess')", 'import socket']) {
+    assert.equal(RUN.auditSession({ toolUses: [{ name: 'mcp__appworld__execute', input: { code } }] }, tools).violations.length, 1, code);
+  }
 });
 
 test('prompts: AppWorld convention, date note, card appended', () => {

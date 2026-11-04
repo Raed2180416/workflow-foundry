@@ -70,7 +70,11 @@ ceilings A-H 0.60, A-HN 0.70, A-S 4.00, A-O 10.00. AppWorld has no single offici
 | SGC | a scenario counts when every run variant passes | co-reported (AppWorld's scenario goal completion) |
 | sub-goal share | passed / all assertions of the task, kept host-side per assertion | the sub-goal measure (PREREG §4), compared with F-H's own sub-workflow verdicts |
 | collateral | an assertion labelled `no_op_pass` failed: the unit broke something a do-nothing agent leaves intact | BG-11 harm measure |
-| L5 violation | a tool outside the arm's set, nested model use, or `execute`/`python` code naming the benchmark distribution or the network | scored as a failure |
+| L5 violation | a tool outside the arm's set, nested model use, or `execute`/`python` code that imports the package, names its files, host paths, processes or the network (`run.mjs BENCH_REF`; deliberately not the bare word "AppWorld", which the arm's own prompt uses) | scored as a failure |
+
+Horizon covariate: on train and dev, the gold's API-call count (`parity.json bg1.goldCalls`); on test_normal no solution
+is released, so the covariate there is AppWorld's own difficulty level (1-3), which the grader row carries host-side
+[doc, README; obs, `TestTracker.difficulty`].
 
 ## 4. Split and hygiene (SPLIT.json, `aw-split-v1`)
 

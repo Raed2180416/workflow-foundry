@@ -53,8 +53,10 @@ export const DEFAULTS = Object.freeze({ maxTurns: 50, maxExecutes: 100, timeoutM
 export const RUNS_ROOT = LIVE_ROOT;
 const INFRA_FAULT = /ENOSPC|EDQUOT|EMFILE|ENFILE|bridge (?:exited|is closed)|environment failed to answer|low disk/;
 export const isEnvFault = r => ENV_FAULTS.has(r?.sessionError) || r?.sessionError === 'CONFIG_MISMATCH' || INFRA_FAULT.test(`${r?.harnessError ?? ''} ${r?.facade?.bridgeError ?? ''}`);
-/** References to the benchmark's distribution or the network in python code an arm runs (L5 audit). */
-export const BENCH_REF = /appworld|stonybrook|ground_truth|huggingface\.co|\bhf_hub\b|pip\s+install|urllib|requests\.get|socket\./i;
+/** Attempts to reach the benchmark's distribution, host files, processes or the network in code an arm runs (L5 audit;
+ * a hit fails the unit). Deliberately NOT the bare word "appworld": the arm's own prompt names the AppWorld environment,
+ * so a comment or a print may mention it; what counts is importing the package or touching its files. */
+export const BENCH_REF = /\b(?:import|from)\s+appworld\b|__import__\(\s*['"]appworld|ground_truth|\/var\/tmp|benches\/|appworld-host|site-packages|stonybrook|huggingface\.co|\bhf_hub\b|pip\s+install|urllib|requests\.(?:get|post)|\bsocket\b|\bsubprocess\b/i;
 
 // ---- prompts ---------------------------------------------------------------------------------------------------------
 export const SYSTEM_PREAMBLE = `You are an autonomous agent that completes tasks for a person (your supervisor) by operating their apps through the AppWorld environment. Work on your own: there is no one to ask, and input() is not available.`;
