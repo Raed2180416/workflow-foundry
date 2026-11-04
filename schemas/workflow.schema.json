@@ -107,7 +107,7 @@
       "type": "object", "additionalProperties": false, "required": ["name"],
       "properties": {
         "name": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"}, "ref": {"type": "string", "minLength": 1, "maxLength": 512}, "value": {},
-        "label": {"$ref": "#/definitions/label"}, "render": {"enum": ["json", "text"]},
+        "label": {"$ref": "#/definitions/label"}, "render": {"enum": ["json", "text", "blob-text"]},
         "maxTokens": {"type": "integer", "minimum": 1, "maximum": 1000000}, "priority": {"type": "number", "minimum": -1000000, "maximum": 1000000}
       },
       "oneOf": [{"required": ["ref"]}, {"required": ["value"]}]

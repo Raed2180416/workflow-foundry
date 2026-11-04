@@ -1277,7 +1277,14 @@ class Invocation {
     if (!entry || excludeFamily.has(entry.family)) throw new FoundryError('VERIFY_INDEPENDENCE', `${node.id}: no permitted ${declared} model outside the producer famil${excludeFamily.size === 1 ? 'y' : 'ies'} ${[...excludeFamily].join(', ')}`);
     if (classIndex(policy, entry.class) > classIndex(policy, max)) throw new FoundryError('ASSIGNMENT_INVALID', `${entry.id} (class ${entry.class}) exceeds maxClass ${max} of ${node.id}`);
     if (resumed) this.eventNode(frameKey, node.id, () => {}, 'node.resumed', { attempt, source: 'journal' });
-    const inputs = [...contextInputs(node, ctx, this.labelScope(frameKey, ...(node.context?.inputs ?? []).map(spec => spec.ref).filter(ref => typeof ref === 'string'))), ...extraInputs];
+    // render "blob-text" (data handles): the input is a blob handle or view; it is read here (verified, at most the store's read
+    // limit) and compiled as text, so the token budget and onOverflow apply to the content as to any input. Its label is the ref's.
+    const inputs = [...contextInputs(node, ctx, this.labelScope(frameKey, ...(node.context?.inputs ?? []).map(spec => spec.ref).filter(ref => typeof ref === 'string'))), ...extraInputs]
+      .map(input => {
+        if (input.render !== 'blob-text') return input;
+        if (!isHandle(input.value)) throw new FoundryError('CONTEXT_INPUT', `Context input ${input.name} renders blob-text but is not a blob handle or view`);
+        return { ...input, value: this.blobStore().read(input.value, { as: 'text' }), render: 'text' };
+      });
     let retries = 0, resamples = 0, sampleIndex = 0, escalations = 0, retryNote = null, recovered = false, envRetries = 0;
     const escalate = (rule, code, message) => {
       let target = null;
@@ -1638,7 +1645,14 @@ class Invocation {
     if (node.method === 'code') verdict = this.verdictShape(await this.sandboxed({ lang: node.lang, source: node.source, input: { subject }, timeoutMs: node.timeoutMs ?? 60000 }), 'CODE_OUTPUT');
     else if (node.method === 'ledger') {
       // Coverage proved by code (src/ledger.mjs): the readers' returned unit ids against the inventory code produced.
-      verdict = ledgerVerdict(subject, resolve(node.ledger.inventory, ctx), node.ledger);
+      // The inventory may be a blob handle (data handles): NDJSON rows give their `id`, a JSON blob its array, text its lines.
+      let inventory = resolve(node.ledger.inventory, ctx);
+      if (isHandle(inventory)) {
+        const blobs = this.blobStore();
+        inventory = inventory.mediaType === 'application/json' ? blobs.read(inventory, { as: 'json' })
+          : blobs.read(inventory, { as: 'lines' }).map(row => (row && typeof row === 'object' && !Array.isArray(row) ? row.id : row));
+      }
+      verdict = ledgerVerdict(subject, inventory, node.ledger);
       label = joinLabels([subjectLabel, labelOf(node.ledger.inventory, this.labelScope(frameKey, node.ledger.inventory))]);
     }
     else if (node.method === 'capability') {

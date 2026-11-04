@@ -124,3 +124,51 @@ test('data.inventory: regular files under the root as NDJSON, symlinks not follo
   const tooMany = await run(t, many, registryFor([many.data]), flow([task('imp', 'data.import', { path: 'many.txt' }), task('split', 'data.split', { blob: { $ref: 'nodes.imp' }, maxLines: 1 }, { needs: ['imp'] })]));
   assert.equal(tooMany.status, 'failed'); assert.equal(tooMany.error.code, 'DATA_SPLIT_LIMIT', JSON.stringify(tooMany.error));
 });
+
+test('blob-text: an agent sees an imported file as text behind the untrusted preamble; a non-handle is refused', async t => {
+  const { ModelPort } = await import('../src/models/port.mjs');
+  const { Journal } = await import('../src/journal.mjs');
+  const { ScriptedProvider } = await import('../src/models/providers/scripted.mjs');
+  const { UNTRUSTED_PREAMBLE } = await import('../src/context.mjs');
+  const env = world(t), registry = registryFor([env.data]);
+  const model = loaded.policy.models.find(m => m.class === 'S').id, provider = new ScriptedProvider({ [model]: [{ value: { lines: 10 } }] });
+  const models = new ModelPort({ policy: loaded.policy, providers: { 'llama-server': provider, 'claude-cli': provider }, journal: new Journal(env.store) });
+  const agent = (ref) => ({ id: 'ask', kind: 'agent', needs: ['imp'], description: 'Count lines', role: 'extract', instructions: 'How many lines does the document have?',
+    context: { inputs: [{ name: 'doc', ref, render: 'blob-text' }] }, returns: { type: 'object', additionalProperties: false, required: ['lines'], properties: { lines: { type: 'integer' } } }, model: { class: 'S' } });
+  const wf = flow([task('imp', 'data.import', { path: 'big.txt' }), agent('nodes.imp')]);
+  assert.deepEqual(validateWorkflow(wf, { registry, modelPolicy: loaded }).errors, []);
+  env.store.saveWorkflow(wf);
+  const runtime = new Runtime(env.store, registry, { maxCost: 0 }, { models, modelPolicy: loaded });
+  const r = await runtime.execute(runtime.create(wf, {}).id);
+  assert.equal(r.status, 'succeeded', JSON.stringify(r.error));
+  const prompt = provider.calls[0].prompt, at = prompt.indexOf('line 9: xxxxxxxxx');
+  assert.ok(at > 0, 'the file text is in the prompt');
+  assert.ok(prompt.lastIndexOf(UNTRUSTED_PREAMBLE, at) >= 0 && prompt.includes('label="untrusted:import"'));
+  assert.equal(r.nodes.ask.outputLabel, 'untrusted:import');
+  const bad = flow([task('imp', 'data.import', { path: 'big.txt' }), agent('nodes.imp.bytes')]);
+  const env2 = world(t), runtime2 = new Runtime(env2.store, registryFor([env.data]), { maxCost: 0 }, { models, modelPolicy: loaded });
+  env2.store.saveWorkflow(bad);
+  const r2 = await runtime2.execute(runtime2.create(bad, {}).id);
+  assert.equal(r2.status, 'failed'); assert.equal(r2.error.code, 'CONTEXT_INPUT', JSON.stringify(r2.error));
+});
+
+test('a ledger verifier takes its inventory from a data.inventory handle: every file read once passes; a dropped file fails', async t => {
+  const plan = { id: 'plan', kind: 'code', needs: ['inv'], description: 'Shard the inventory', lang: 'js', args: { rows: { $read: { $ref: 'nodes.inv.inventory' }, as: 'lines' } }, timeoutMs: 10000,
+    source: 'export default function main(input) { const ids = input.rows.map(r => r.id); const shards = []; for (let i = 0; i < ids.length; i += 1) shards.push([ids[i]]); return { shards }; }',
+    returns: { type: 'object', required: ['shards'], properties: { shards: { type: 'array' } } } };
+  const audit = drop => ({ id: 'audit', kind: 'map', needs: ['plan'], description: 'Read each shard', items: { $ref: 'nodes.plan.shards' }, maxItems: 100, concurrency: 2, failure: 'collect',
+    body: { nodes: [{ id: 'read', kind: 'code', needs: [], description: 'Read one shard', lang: 'js', args: { ids: { $ref: 'item' } }, timeoutMs: 10000,
+      source: `export default function main(input) { return { readIds: input.ids.filter(id => id !== ${JSON.stringify(drop)}) }; }`,
+      returns: { type: 'object', required: ['readIds'], properties: { readIds: { type: 'array', items: { type: 'string' } } } } }], acceptance: [{ op: 'exists', value: { $ref: 'nodes.read.readIds' } }] } });
+  const covered = { id: 'covered', kind: 'verify', needs: ['inv', 'audit'], description: 'Every file read exactly once', method: 'ledger', independence: 'execution',
+    subject: { $ref: 'nodes.audit' }, ledger: { inventory: { $ref: 'nodes.inv.inventory' }, reads: 'read.readIds' }, gate: false };
+  for (const [drop, pass] of [['none', true], ['sub/a.json', false]]) {
+    const env = world(t), registry = registryFor([env.data]);
+    const wf = flow([task('inv', 'data.inventory', { root: '.' }), plan, audit(drop), covered], [{ op: 'exists', value: { $ref: 'nodes.covered.pass' } }]);
+    const r = await run(t, env, registry, wf);
+    assert.equal(r.status, 'succeeded', JSON.stringify(r.error));
+    assert.equal(r.outputs.covered.pass, pass, drop);
+    assert.equal(r.outputs.covered.ledger.units, 2);
+    if (!pass) assert.deepEqual(r.outputs.covered.ledger.missingIds, ['sub/a.json']);
+  }
+});
