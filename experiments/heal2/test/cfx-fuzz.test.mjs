@@ -69,3 +69,15 @@ test('teeth: the gate rejects the Sonnet candidate (kind-change crash), a too-le
   const self = await gate(scripts.base);
   assert.equal(self.verdict, 'reject'); assert.equal(self.missed, self.inClass);
 });
+
+test('the runner caps a stored script: no 2.5 GiB allocation, no fork, no 2 MiB file (review D13)', { skip }, async () => {
+  const xs = [{ id: 'a', input: {} }];
+  const mem = await runScript('def main(inp):\n    b = bytearray(5 << 29)\n    return {"ok": True}\n', xs);
+  assert.match(mem.a.crash ?? '', /^MemoryError/);
+  const fork = await runScript('import os\ndef main(inp):\n    pid = os.fork()\n    if pid == 0:\n        os._exit(0)\n    return {"ok": True}\n', xs);
+  assert.match(fork.a.crash ?? '', /^(BlockingIOError|OSError|PermissionError)/);
+  const big = await runScript('def main(inp):\n    open("big.bin", "wb").write(b"x" * (2 << 20))\n    return {"ok": True}\n', xs);
+  assert.match(big.a.crash ?? '', /^OSError/);
+  const fine = await runScript('def main(inp):\n    return {"ok": True}\n', xs);
+  assert.equal(fine.a.verdict, true);
+});

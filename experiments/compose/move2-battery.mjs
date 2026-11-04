@@ -3,7 +3,7 @@
 // evidence, labelled runtime2. PREREG-COMP1 stays frozen: its 16 files are imported unchanged and its numbers are not
 // re-read as a re-run of the prereg. Resumable: a finished (subject, runtime, world, fault) cell is skipped.
 //   nice -n 15 node experiments/compose/move2-battery.mjs [--only <label,...>] [--plan main|fixes|mutants|all]
-//        [--out research/blockers-20261021/move2/runs] [--worlds seed:d:size,...] (plans also: readback, fresh)
+//        [--out research/blockers-20261021/move2/runs] [--worlds seed:d:size,...] (plans also: readback, fresh, v2, fresh-v2)
 import { readFileSync, writeFileSync, mkdirSync, existsSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -64,6 +64,24 @@ export function plan(which = 'all') {
       out.push({ label: `${label}+readback`, spec: specOf(label), runtime: 2, faults: ['none', 'crash'], envelopeOptions: { reconcile: true } });
     }
   }
+  if (which === 'v2') {
+    // the re-run after the 2026-11-04 review (MOVE2-COMP.md §8): every runtime-2 cell whose trajectory the fixes can
+    // change (D1 surplus rule and D2 read-back under crash, D8 order under dup-same), read-back first, then the
+    // fault-free cells as the check that nothing else moved; runtime 1 is unchanged and not re-run
+    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label: `${label}+readback`, spec: specOf(label), runtime: 2, faults: ['crash'], envelopeOptions: { reconcile: true } });
+    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label, spec: specOf(label), runtime: 2, faults: ['crash'] });
+    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label, spec: specOf(label), runtime: 2, faults: ['dup-same'] });
+    for (const [base, patches] of Object.entries(FIXES)) out.push({ label: `${base}+fix-${base === 'ch-e8-2' ? 'd3' : 'd2'}`, spec: specOf(base), runtime: 2, faults: ['crash', 'dup-same'], patches });
+    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label, spec: specOf(label), runtime: 2, faults: ['none'] });
+    for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label: `${label}+readback`, spec: specOf(label), runtime: 2, faults: ['none'], envelopeOptions: { reconcile: true } });
+  }
+  if (which === 'fresh-v2') {
+    // the fresh worlds again, runtime-2 rows only (runtime 1 is unchanged): plain and read-back, crash then fault-free
+    for (const label of ['ch-e8-2', 'cht-e8-1', 'b1lh-e8-1']) {
+      out.push({ label: `${label}+readback`, spec: specOf(label), runtime: 2, faults: ['crash', 'none'], envelopeOptions: { reconcile: true } });
+      out.push({ label, spec: specOf(label), runtime: 2, faults: ['crash', 'none'] });
+    }
+  }
   if (which === 'mutants' || which === 'all') {
     for (const base of ['cht-e8-1', 'b1lh-e8-1']) {
       for (const runtime of [1, 2]) out.push({ label: `${base}+mut-splitrefund`, spec: specOf(base), runtime, faults: ['none', 'downstream'], mutant: 'splitrefund' });
@@ -86,7 +104,7 @@ export async function battery({ which = 'all', only = null, outDir, worlds = DEF
     const doc = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : null;
     const subject = subjectOf2(job.spec, { runtime: job.runtime, patches: job.patches ?? [], mutant: job.mutant ?? null, label: job.label, envelopeOptions: job.envelopeOptions ?? {} });
     const out = doc ?? { subject: job.label, spec: job.spec, kind: subject.kind, runtime: job.runtime, runtimeLabel: job.runtime === 2 ? 'runtime2 (compose-runtime/2)' : 'runtime1 (frozen compose-runtime/1)',
-      envelope: subject.envelope, envelopeOptions: job.envelopeOptions ?? {}, mutant: subject.mutant, patches: job.patches ?? [], gate: subject.gate,
+      envelope: subject.envelope, envelopeOptions: job.envelopeOptions ?? {}, mutant: subject.mutant, patches: job.patches ?? [], gate: subject.gate, gateMode: subject.gateMode ?? null,
       evidence: `development (dev worlds ${worlds.map(w => w.seed).join('/')}), $0, runtime2 outside the PREREG-COMP1 freeze (D28(3)); not a re-run of the prereg`,
       harness, sourceDigest: createHash('sha256').update(subject.source).digest('hex'), results: [] };
     if (doc && JSON.stringify(doc.harness) !== JSON.stringify(harness)) { out.harnessChanged = [...new Set([...(doc.harnessChanged ?? []), new Date().toISOString()])]; }

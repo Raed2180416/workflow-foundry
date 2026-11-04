@@ -1,9 +1,10 @@
 // Bundle a composed program for compose-runtime/2 (runtime2.mjs; research/blockers-20261021/MOVE2-COMP.md). $0.
 // The frozen bundle.mjs (PREREG-COMP1) is imported, not edited: the program is bundled with the same runtime.mjs and
 // loader.mjs, plus runtime2.mjs and the effect registry, and the composed solver is wrapped in the exactly-once
-// envelope inside the sandbox. The static single-writer gate is reported beside the program's other problems;
-// `gate: 'enforce'` refuses a program that fails it (a builder loop would use this), `gate: 'report'` (the default,
-// for replaying programs built before the gate existed) runs it and records the problems.
+// envelope inside the sandbox. The static single-writer gate is checked beside the program's other problems:
+// `gate: 'enforce'` (the default, as ATTACK.md Move 2 says: the gate refuses such a manifest) adds its problems to the
+// program's, so a flagged program does not bundle; `gate: 'report'` runs it and only records the problems, and is for
+// replaying programs built before the gate existed (fault-run2.mjs passes it explicitly; the battery rows say so).
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -24,7 +25,7 @@ export const E8_REGISTRY = JSON.parse(readFileSync(REGISTRY_PATH, 'utf8'));
  * bundle2({ manifest, sources, mode }, { item, registry, gate }) → { source, digest, programDigest, problems, gate }:
  * the solver.mjs text (runtime + loader + runtime2 + program) that sandbox-arm.mjs runs.
  */
-export function bundle2({ manifest, sources, mode = 'strict' }, { item = null, registry = E8_REGISTRY, gate = 'report', envelopeOptions = {} } = {}) {
+export function bundle2({ manifest, sources, mode = 'strict' }, { item = null, registry = E8_REGISTRY, gate = 'enforce', envelopeOptions = {} } = {}) {
   if (!['report', 'enforce'].includes(gate)) throw new Error(`gate must be report or enforce: ${gate}`);
   const regProblems = envRegistryProblems(registry);
   if (regProblems.length) throw new Error(`registry: ${regProblems.join('; ')}`);

@@ -212,7 +212,30 @@ export function generate(n, seed) {
 // ---------------------------------------------------------------------------------------------------------------------
 // Sandboxed runner
 
-export const RUNNER = `import json, sys, traceback
+// The stored check scripts are model-written: besides the namespace sandbox with the network off, the runner caps the
+// process before it loads one (review 2026-11-04, D13): 2 GiB of address space, 1 MiB per written file, 900 s of CPU
+// (the wall-clock timeout stays the host's), and RLIMIT_NPROC 0. Measured on this host: the first three hold; NPROC does
+// not, because the sandbox maps to the real uid 0, which the kernel exempts from RLIMIT_NPROC. So process creation is
+// also refused at the Python level (os.fork/exec*/spawn*/system/posix_spawn*, subprocess): defence in depth, not a
+// boundary (a script can reach the raw syscalls through ctypes); the pid namespace and the group kill bound the rest.
+export const RUNNER = `import json, sys, traceback, resource
+def _cap(r, v):
+    try:
+        resource.setrlimit(r, (v, v))
+    except (ValueError, OSError) as e:
+        sys.stderr.write('runner: cannot set rlimit ' + str(r) + ': ' + str(e) + '\\n')
+        sys.exit(3)
+_cap(resource.RLIMIT_AS, 2 << 30)
+_cap(resource.RLIMIT_NPROC, 0)
+_cap(resource.RLIMIT_FSIZE, 1 << 20)
+_cap(resource.RLIMIT_CPU, 900)
+import os, subprocess
+def _refuse(*a, **k):
+    raise PermissionError('process creation is not allowed in a check script')
+for _n in ['fork', 'forkpty', 'system', 'popen', 'posix_spawn', 'posix_spawnp', 'execv', 'execve', 'execl', 'execle', 'execlp', 'execlpe', 'execvp', 'execvpe', 'spawnv', 'spawnve', 'spawnl', 'spawnle', 'spawnlp', 'spawnlpe', 'spawnvp', 'spawnvpe']:
+    if hasattr(os, _n):
+        setattr(os, _n, _refuse)
+subprocess.Popen = _refuse
 src = open(sys.argv[1]).read()
 ns = {'__name__': 'checker'}
 exec(compile(src, 'checker.py', 'exec'), ns)

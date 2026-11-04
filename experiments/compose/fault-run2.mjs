@@ -57,10 +57,11 @@ export function subjectOf2(spec, { mode = 'strict', runtime = 2, patches = [], r
     let prog = readProgram(spec.slice(8));
     if (prog.problems.length) throw new Error(`program problems: ${prog.problems.join('; ')}`);
     if (patches.length) prog = patchSources(prog, patches);
-    const b = site === 'bundle' ? bundle2({ ...prog, mode }, { item: e8, registry, envelopeOptions }) : bundle({ ...prog, mode }, { item: e8 });
+    // gate 'report': the stored COMP-1 programs were built before the gate existed; a replay runs them and records it
+    const b = site === 'bundle' ? bundle2({ ...prog, mode }, { item: e8, registry, envelopeOptions, gate: 'report' }) : bundle({ ...prog, mode }, { item: e8 });
     if (b.problems.length) throw new Error(`program problems: ${b.problems.join('; ')}`);
     const gate = site ? singleWriterMessages(prog.manifest, registry) : null;
-    return { label: label ?? spec, runtime, kind: 'composed', manifest: prog.manifest, source: b.source, envelope: site, envelopeOptions, mutant, registry, gate, patches: patches.length };
+    return { label: label ?? spec, runtime, kind: 'composed', manifest: prog.manifest, source: b.source, envelope: site, envelopeOptions, mutant, registry, gate, gateMode: site ? 'report' : null, patches: patches.length };
   }
   if (spec.startsWith('solver:')) {
     if (patches.length) throw new Error('patches apply to composed programs only');

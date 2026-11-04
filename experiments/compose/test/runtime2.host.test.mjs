@@ -15,11 +15,13 @@ const ROOT = path.resolve(here, '../../..');
 const MONO = `solver:${path.join(ROOT, 'research/enterprise-20261014/runs/b1lh-e8-1/solver.mjs')}`;
 const CHT1 = `program:${path.join(ROOT, 'research/composition-20261021/runs/cht-e8-1/program')}`;
 const W = e8.generateWorld({ seed: 1161, difficulty: 2, mix: 'tail', size: 24 });
+// size 40: the smallest of the battery's worlds with a crash-orphaned FAILURE (a declined charge), which read-back is for
+const W40 = e8.generateWorld({ seed: 1161, difficulty: 2, mix: 'tail', size: 40 });
 const skip = sandboxAvailable() ? false : 'sandbox (user namespaces) unavailable';
 
-const run = async (spec, opts, fault = 'none') => {
+const run = async (spec, opts, fault = 'none', world = W) => {
   const subject = subjectOf2(spec, opts);
-  const r = await runUnder2(subject, W, fault);
+  const r = await runUnder2(subject, world, fault);
   const m = await measure({ subject, r, fault });
   assert.equal(m.armErrors, 0, `${spec} r${opts.runtime} ${fault}: arm errors (machine load?)`);
   return m;
@@ -76,15 +78,20 @@ test('D3 teeth: under crash-and-redeliver a late-undo program compensates health
   assert.ok(m2.oracle.passed > m1.oracle.passed);
 });
 
-test('read-back (reconcile): under crash-and-redeliver orphans are answered by a status read, never a second write; the late-undo mutant stays inert', { skip }, async () => {
-  const m = await run(MONO, { runtime: 2, mutant: 'lateundo', envelopeOptions: { reconcile: true } }, 'crash');
+test('read-back (reconcile): a crash-orphaned failure is answered after a status read, never by a second attempt; orphaned successes go to the host', { skip }, async () => {
+  const m = await run(MONO, { runtime: 2, mutant: 'lateundo', envelopeOptions: { reconcile: true } }, 'crash', W40);
+  const plain = await run(MONO, { runtime: 2, mutant: 'lateundo' }, 'crash', W40);
   assert.ok(m.injected > 0);
   assert.equal(m.mutantActs, 0, 'the parked result must reach the program once, as the answer to its re-emission');
   assert.ok((m.envelope.byCode['orphan-parked'] ?? 0) > 0 && (m.envelope.byCode.readback ?? 0) > 0 && (m.envelope.byCode.reconciled ?? 0) > 0);
+  assert.ok((m.envelope.byCode.orphan ?? 0) > 0, 'orphaned successes are not parked');
+  assert.equal(m.envelope.byCode['readback-reissued'] ?? 0, 0);
   assert.equal(m.exactlyOnce.duplicates, 0);
   assert.equal(m.exactlyOnce.keyConflicts, 0);
-  // the parked answers reach the program: it passes at least what it passes behind the plain envelope
-  const plain = await run(MONO, { runtime: 2, mutant: 'lateundo' }, 'crash');
+  // teeth: behind the plain envelope the declined charge is attempted a second time (the oracle's outside-allowed
+  // effect); read-back removes it and passes at least as many cases
+  assert.ok((plain.oracle.codes?.['L2:outside-allowed'] ?? 0) > 0, 'the world must exercise a crash-orphaned failure');
+  assert.equal(m.oracle.codes?.['L2:outside-allowed'] ?? 0, 0);
   assert.ok(m.oracle.passed >= plain.oracle.passed, `read-back ${m.oracle.passed} < plain ${plain.oracle.passed}`);
   assert.equal(m.oracle.critical, 0);
 });
