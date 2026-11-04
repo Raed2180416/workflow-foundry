@@ -96,3 +96,11 @@ Run: `nice -n 15 node --test --test-concurrency=1 beds/gameqa-web/gameqa-web.tes
   each, with setup prefixes that reach the deep rooms; about 9,000 ticks per fault) show 0 un-probed divergences and 0
   silent probes (`research/gameqa-20261021/audit/`). Sampling evidence, not proof; the deep faults (score overflow, toast,
   banner) diverge in few episodes.
+
+## Results
+
+GQA-1 (development evidence, preregistered, K = 5, Haiku 5.5): the cheap-built QA workflow finds 6.4 of 12 injected bugs
+per run with a 1-minimal repro (8, 8, 6, 5, 5), Haiku alone 1.0 and a random monkey 1.0 (p = 0.004 for both
+comparisons); 0 false reports; $0.067 per workflow run. Random exploration with the oracle-informed reference checks
+(calibration) reaches 9.8. GQ02 and GQ06 were never found by any Haiku arm (25 runs), GQ01 once (by the solo agent). Details, root causes and the CLI
+budget-line finding: [RESULT-GQA-1](../../research/gameqa-20261021/RESULT-GQA-1.md).
