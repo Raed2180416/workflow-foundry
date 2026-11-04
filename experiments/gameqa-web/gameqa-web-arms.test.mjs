@@ -136,6 +136,32 @@ bt('agent arm with a scripted model: runs, reads traces, keeps notes, final repo
   assertNoTruth(provider.calls);
 });
 
+bt('agent-persist (amendment A1): an early finish is refused and the agent keeps going; the last turn may finish', async () => {
+  const rep = { bug_class: 'input_race', title: 'two moves', observed: 'o', expected: 'e', seed: 1, steps: ['right+right'] };
+  const turns = [
+    { notes: 'start', action: 'run', seed: 1, steps: ['right+right'], reports: [rep] },
+    { notes: 'one bug, done', action: 'finish', seed: 1, steps: [], reports: [rep] },
+    { notes: 'told to go on', action: 'run', seed: 2, steps: ['down'], reports: [rep] },
+    { notes: 'last turn', action: 'finish', seed: 1, steps: [], reports: [rep] },
+  ];
+  const { port, provider } = portWith(turns.map(v => ({ value: v })));
+  const session = await openSession(browser, { flags: truth.build.flags });
+  const caller = makeCaller({ port, runId: 't-agent-persist', modelId: HAIKU, usdCap: 1 });
+  const r = await runAgent({ session, caller, budgets: { maxTurns: 4, exploreTicks: 100, persist: true } });
+  await session.close();
+  assert.equal(provider.calls.length, 4);
+  assert.equal(r.stats.runs, 2); assert.equal(r.stats.refusedFinishes, 1); assert.equal(r.stats.finished, true);
+  assert.match(provider.calls[2].prompt, /"finish" is not available before your last turn \(this was turn 2 of 4\)/);
+  assert.equal(r.reports.length, 1);
+  // without persist the same script stops at turn 2
+  const p2 = portWith(turns.map(v => ({ value: v })));
+  const s2 = await openSession(browser, { flags: truth.build.flags });
+  const r2 = await runAgent({ session: s2, caller: makeCaller({ port: p2.port, runId: 't-agent-np', modelId: HAIKU, usdCap: 1 }), budgets: { maxTurns: 4, exploreTicks: 100 } });
+  await s2.close();
+  assert.equal(p2.provider.calls.length, 2); assert.equal(r2.stats.refusedFinishes, undefined);
+  assertNoTruth(provider.calls);
+});
+
 bt('monkey arm is deterministic for a given rng seed', async () => {
   const run = async () => { const s = await openSession(browser, { flags: truth.build.flags }); try { return await runMonkey({ session: s, rng: mulberry32(7), budgets: { exploreTicks: 1500 } }); } finally { await s.close(); } };
   const a = await run(), b = await run();

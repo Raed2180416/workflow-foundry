@@ -1,0 +1,28 @@
+2026-10-28T18:49:07Z start --arm monkey --rep 1
+{"runId":"gqa1-monkey-r1","wallS":65,"usd":0,"calls":0,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":4,"error":null}
+2026-10-28T18:50:16Z end --arm monkey --rep 1 (exit 0; spent so far $0.0053)
+2026-10-28T18:50:16Z start --arm monkey-ref --rep 1
+{"runId":"gqa1-monkey-ref-r1","wallS":314,"usd":0,"calls":0,"reports":19,"bugs":12,"foundMin":8,"foundMinClass":8,"foundAny":9,"falseReports":0,"duplicates":10,"precision":1,"nondeterministic":0,"replays":366,"error":null}
+2026-10-28T18:56:08Z end --arm monkey-ref --rep 1 (exit 0; spent so far $0.0756)
+2026-10-28T18:56:08Z start --arm monkey --rep 2
+{"runId":"gqa1-monkey-r2","wallS":141,"usd":0,"calls":0,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":4,"error":null}
+2026-10-28T18:58:40Z end --arm monkey --rep 2 (exit 0; spent so far $0.0867)
+2026-10-28T18:58:41Z start --arm monkey-ref --rep 2
+{"runId":"gqa1-monkey-ref-r2","wallS":516,"usd":0,"calls":0,"reports":24,"bugs":12,"foundMin":9,"foundMinClass":9,"foundAny":12,"falseReports":0,"duplicates":12,"precision":1,"nondeterministic":0,"replays":366,"error":null}
+2026-10-28T19:07:47Z end --arm monkey-ref --rep 2 (exit 0; spent so far $0.1667)
+2026-10-28T19:07:48Z start --arm monkey --rep 3
+{"runId":"gqa1-monkey-r3","wallS":38,"usd":0,"calls":0,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":4,"error":null}
+2026-10-28T19:08:31Z end --arm monkey --rep 3 (exit 0; spent so far $0.1667)
+2026-10-28T19:08:31Z start --arm monkey-ref --rep 3
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+browser.newContext: Target page, context or browser has been closed
+    at async openSession (/home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/beds/gameqa-web/driver.mjs:181:19)
+    at async scoreReports (/home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/beds/gameqa-web/oracle.mjs:64:19)
+    at async file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/gameqa-web/run.mjs:93:15 {
+  log: []
+}
+
+Node.js v24.21.0

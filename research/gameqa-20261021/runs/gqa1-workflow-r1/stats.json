@@ -1,0 +1,1723 @@
+{
+ "reportChecks": [
+  [
+   "pause-menu-buttons",
+   "visible-buttons-clickable"
+  ],
+  [
+   "one-move-per-tick"
+  ],
+  [
+   "pause-tick-no-move"
+  ],
+  [
+   "hud-time"
+  ],
+  [
+   "restart-resets",
+   "pause-menu-buttons"
+  ],
+  [
+   "spikes-cost"
+  ],
+  [
+   "score-range",
+   "coin-value"
+  ],
+  [
+   "paused-frozen"
+  ],
+  [
+   "hud-coins"
+  ],
+  [
+   "completion-bonus",
+   "score-range"
+  ],
+  [
+   "visible-buttons-clickable"
+  ],
+  [
+   "hud-time"
+  ],
+  [
+   "hud-coins"
+  ],
+  [
+   "score-range"
+  ]
+ ],
+ "stats": {
+  "exploreTicks": 1421,
+  "rounds": 3,
+  "plansPlayed": 51,
+  "verifyReplays": 343,
+  "checks": 30,
+  "rejectedChecks": 0,
+  "repairedChecks": 0,
+  "smokeErrors": 0,
+  "evalErrors": [],
+  "candidates": 19,
+  "confirmed": 19,
+  "unique": 15,
+  "coverage": {
+   "tiles": 62,
+   "events": [
+    "bump",
+    "coin",
+    "dash",
+    "door-open",
+    "game-over",
+    "gate-open",
+    "gem",
+    "heart",
+    "hit",
+    "key",
+    "level-complete",
+    "lever",
+    "move",
+    "pause",
+    "relic",
+    "respawn",
+    "restart",
+    "resume",
+    "spikes",
+    "win"
+   ],
+   "modes": [
+    "complete",
+    "gameover",
+    "paused",
+    "playing",
+    "won"
+   ],
+   "dialogs": [
+    "gameover",
+    "levelup",
+    "pause",
+    "victory"
+   ]
+  },
+  "played": [
+   {
+    "seed": 4242,
+    "steps": [
+     "goto:5,1",
+     "goto:12,1",
+     "goto:12,8",
+     "goto:1,8",
+     "dash-right",
+     "dash-left",
+     "pause",
+     "wait",
+     "esc",
+     "enter",
+     "goto:7,5",
+     "use",
+     "dash-down",
+     "dash-up",
+     "pause+left",
+     "click:btn-resume",
+     "goto:1,1",
+     "goto:12,8"
+    ],
+    "persona": 0,
+    "round": 1
+   },
+   {
+    "seed": 99173,
+    "steps": [
+     "dash-right",
+     "right",
+     "dash-down",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-left",
+     "down+right",
+     "pause+left",
+     "enter",
+     "goto:6,3",
+     "goto:10,5",
+     "use",
+     "goto:2,8",
+     "esc",
+     "click:btn-resume",
+     "goto:13,8"
+    ],
+    "persona": 0,
+    "round": 1
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,4",
+     "goto:9,2",
+     "pause",
+     "click:btn-restart",
+     "goto:3,1",
+     "goto:12,1",
+     "pause",
+     "esc",
+     "goto:12,8",
+     "wait",
+     "wait",
+     "goto:3,1",
+     "goto:9,2"
+    ],
+    "persona": 0,
+    "round": 1
+   },
+   {
+    "seed": 4242,
+    "steps": [
+     "dash-up",
+     "dash-left",
+     "dash-right",
+     "dash-right",
+     "dash-down",
+     "dash-down",
+     "dash-left",
+     "use",
+     "dash-right",
+     "down+dash-right",
+     "pause+left",
+     "wait",
+     "esc",
+     "enter",
+     "goto:12,8",
+     "goto:6,5",
+     "dash-down",
+     "dash-up",
+     "dash-right",
+     "dash-right",
+     "goto:12,8",
+     "use",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right",
+     "dash-down"
+    ],
+    "persona": 1,
+    "round": 1
+   },
+   {
+    "seed": 77,
+    "steps": [
+     "goto:1,8",
+     "dash-right",
+     "dash-right",
+     "dash-up",
+     "dash-up",
+     "dash-up",
+     "dash-down",
+     "dash-left",
+     "goto:12,8",
+     "dash-right",
+     "dash-right",
+     "click:btn-resume",
+     "pause",
+     "click:btn-resume",
+     "pause+dash-right",
+     "click:btn-restart",
+     "dash-right",
+     "dash-down",
+     "goto:12,8",
+     "dash-up",
+     "dash-left",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right"
+    ],
+    "persona": 1,
+    "round": 1
+   },
+   {
+    "seed": 99131,
+    "steps": [
+     "goto:12,8",
+     "dash-right",
+     "dash-left",
+     "dash-right",
+     "up",
+     "down",
+     "goto:13,9",
+     "click:btn-next",
+     "click:btn-again",
+     "enter",
+     "goto:1,1",
+     "dash-down",
+     "dash-down",
+     "dash-down",
+     "dash-right",
+     "dash-right",
+     "use",
+     "pause+enter",
+     "esc",
+     "esc",
+     "click:btn-restart",
+     "goto:12,8",
+     "click:btn-next",
+     "enter",
+     "wait",
+     "click:btn-retry",
+     "dash-left"
+    ],
+    "persona": 1,
+    "round": 1
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "goto:2,1",
+     "pause+left",
+     "wait",
+     "click:btn-resume",
+     "esc",
+     "enter",
+     "pause+right",
+     "wait",
+     "click:btn-restart",
+     "dash-right+down",
+     "use+enter",
+     "pause+pause",
+     "click:btn-resume",
+     "wait",
+     "click:btn-resume",
+     "down+right",
+     "esc+pause",
+     "wait",
+     "enter",
+     "dash-down",
+     "left+up+right",
+     "click:btn-restart",
+     "wait",
+     "wait"
+    ],
+    "persona": 2,
+    "round": 1
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "wait",
+     "pause",
+     "wait",
+     "wait",
+     "esc",
+     "wait",
+     "wait",
+     "pause",
+     "click:btn-resume",
+     "wait",
+     "wait",
+     "pause",
+     "enter",
+     "wait",
+     "wait",
+     "goto:12,8",
+     "pause+right",
+     "click:btn-resume",
+     "dash-left+down",
+     "dash-left",
+     "use+pause",
+     "wait",
+     "click:btn-restart",
+     "wait",
+     "wait",
+     "goto:12,1",
+     "dash-down",
+     "dash-down",
+     "click:btn-retry",
+     "click:btn-again",
+     "wait"
+    ],
+    "persona": 2,
+    "round": 1
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "up",
+     "left",
+     "wait",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right",
+     "dash-down",
+     "dash-down",
+     "wait"
+    ],
+    "persona": 3,
+    "round": 1
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "right",
+     "down",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "right",
+     "esc",
+     "esc",
+     "click:btn-resume",
+     "down",
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ],
+    "persona": 3,
+    "round": 1
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:5,1",
+     "goto:7,1",
+     "goto:7,4",
+     "right",
+     "goto:9,4",
+     "wait",
+     "goto:12,8",
+     "use",
+     "goto:13,8"
+    ],
+    "persona": 3,
+    "round": 1
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "goto:1,5",
+     "goto:5,1",
+     "goto:5,5",
+     "goto:9,5",
+     "goto:9,1",
+     "goto:12,1",
+     "goto:12,8",
+     "wait",
+     "wait",
+     "wait",
+     "dash-left",
+     "dash-up",
+     "dash-down",
+     "dash-right",
+     "goto:1,8",
+     "goto:7,8",
+     "wait",
+     "wait",
+     "pause",
+     "wait",
+     "click:btn-resume",
+     "wait",
+     "goto:12,5",
+     "wait",
+     "wait"
+    ],
+    "persona": 4,
+    "round": 1
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:3,1",
+     "goto:3,8",
+     "goto:10,8",
+     "goto:10,3",
+     "wait",
+     "wait",
+     "dash-up",
+     "dash-down",
+     "pause+left",
+     "wait",
+     "click:btn-resume",
+     "down+right",
+     "up",
+     "left",
+     "goto:1,1",
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "wait",
+     "goto:12,8",
+     "wait"
+    ],
+    "persona": 4,
+    "round": 1
+   },
+   {
+    "seed": 99,
+    "steps": [
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "goto:4,4",
+     "goto:8,2",
+     "goto:8,7",
+     "goto:2,7",
+     "dash-right",
+     "dash-left",
+     "wait",
+     "wait",
+     "wait",
+     "esc",
+     "wait",
+     "enter",
+     "wait",
+     "goto:12,1",
+     "goto:12,8",
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "goto:6,6",
+     "wait",
+     "wait",
+     "wait"
+    ],
+    "persona": 4,
+    "round": 1
+   },
+   {
+    "seed": 4242,
+    "steps": [
+     "pause",
+     "wait",
+     "click:btn-resume",
+     "pause",
+     "esc",
+     "pause",
+     "enter",
+     "pause",
+     "click:btn-next",
+     "click:btn-retry",
+     "click:btn-again",
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "wait",
+     "click:btn-retry",
+     "click:btn-again",
+     "click:btn-next"
+    ],
+    "persona": 5,
+    "round": 1
+   },
+   {
+    "seed": 777,
+    "steps": [
+     "right",
+     "down+right",
+     "pause+left",
+     "wait",
+     "esc",
+     "down",
+     "pause+right",
+     "enter",
+     "right",
+     "wait",
+     "pause",
+     "click:btn-resume",
+     "up",
+     "pause",
+     "click:btn-restart",
+     "left"
+    ],
+    "persona": 5,
+    "round": 1
+   },
+   {
+    "seed": 99,
+    "steps": [
+     "goto:13,9",
+     "goto:12,1",
+     "goto:1,8",
+     "goto:6,4",
+     "goto:13,1",
+     "goto:13,9",
+     "wait",
+     "click:btn-retry",
+     "enter",
+     "click:btn-next",
+     "click:btn-again",
+     "enter",
+     "click:btn-again"
+    ],
+    "persona": 5,
+    "round": 1
+   },
+   {
+    "seed": 4242,
+    "steps": [
+     "goto:4,1",
+     "goto:1,3",
+     "goto:6,3",
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:7,3",
+     "goto:12,1",
+     "goto:9,3",
+     "goto:11,8",
+     "goto:3,8",
+     "goto:10,5",
+     "down",
+     "goto:10,7",
+     "goto:12,7"
+    ],
+    "persona": 0,
+    "round": 2
+   },
+   {
+    "seed": 77,
+    "steps": [
+     "goto:4,5",
+     "goto:3,7",
+     "goto:1,8",
+     "use",
+     "goto:7,3",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "wait",
+     "dash-right"
+    ],
+    "persona": 0,
+    "round": 2
+   },
+   {
+    "seed": 4242,
+    "steps": [
+     "goto:1,3",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right",
+     "use",
+     "goto:1,1",
+     "dash-right",
+     "dash-left"
+    ],
+    "persona": 1,
+    "round": 2
+   },
+   {
+    "seed": 99131,
+    "steps": [
+     "goto:10,5",
+     "dash-down",
+     "dash-down",
+     "dash-up",
+     "goto:12,7",
+     "dash-right",
+     "dash-down",
+     "wait",
+     "dash-down"
+    ],
+    "persona": 1,
+    "round": 2
+   },
+   {
+    "seed": 77,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "use",
+     "pause+dash-right",
+     "enter",
+     "dash-right",
+     "goto:1,3",
+     "dash-right",
+     "pause",
+     "click:btn-restart",
+     "use"
+    ],
+    "persona": 1,
+    "round": 2
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "esc",
+     "click:btn-restart",
+     "wait",
+     "right",
+     "dash-right",
+     "pause+down",
+     "enter",
+     "dash-right+down",
+     "wait",
+     "click:btn-restart",
+     "left",
+     "right+down",
+     "pause",
+     "click:btn-resume",
+     "dash-down",
+     "wait"
+    ],
+    "persona": 2,
+    "round": 2
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "pause+right",
+     "click:btn-resume",
+     "right",
+     "pause+down",
+     "esc",
+     "wait",
+     "enter",
+     "down",
+     "down+right",
+     "pause",
+     "wait",
+     "click:btn-resume",
+     "left",
+     "dash-up",
+     "wait",
+     "pause+use",
+     "esc",
+     "wait",
+     "use",
+     "dash-left",
+     "click:btn-restart",
+     "wait"
+    ],
+    "persona": 2,
+    "round": 2
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right",
+     "left",
+     "down",
+     "down",
+     "left",
+     "left",
+     "down",
+     "use",
+     "up",
+     "right",
+     "right",
+     "up",
+     "up",
+     "right",
+     "right",
+     "right",
+     "right",
+     "up",
+     "up",
+     "right",
+     "right",
+     "down",
+     "down",
+     "right",
+     "down"
+    ],
+    "persona": 3,
+    "round": 2
+   },
+   {
+    "seed": 99,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "down",
+     "down",
+     "left",
+     "left",
+     "left",
+     "left",
+     "down",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ],
+    "persona": 3,
+    "round": 2
+   },
+   {
+    "seed": 777,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right",
+     "left",
+     "down",
+     "down",
+     "left",
+     "left",
+     "down",
+     "use",
+     "up",
+     "right",
+     "right",
+     "up",
+     "up",
+     "right",
+     "right",
+     "right",
+     "right",
+     "up",
+     "up",
+     "right",
+     "right",
+     "down",
+     "down",
+     "right",
+     "dash-down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "click:btn-next",
+     "click:btn-again"
+    ],
+    "persona": 3,
+    "round": 2
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:7,3",
+     "goto:9,3",
+     "goto:10,5",
+     "down",
+     "down",
+     "goto:12,7",
+     "click:btn-next",
+     "click:btn-again"
+    ],
+    "persona": 4,
+    "round": 2
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "down",
+     "down",
+     "dash-right",
+     "left",
+     "left",
+     "right",
+     "right",
+     "wait"
+    ],
+    "persona": 4,
+    "round": 2
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:3,8",
+     "goto:1,3",
+     "right",
+     "right",
+     "wait"
+    ],
+    "persona": 4,
+    "round": 2
+   },
+   {
+    "seed": 99,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:9,3",
+     "goto:9,5",
+     "goto:10,5",
+     "down",
+     "goto:12,7",
+     "wait",
+     "click:btn-again",
+     "enter",
+     "click:btn-retry",
+     "pause",
+     "enter"
+    ],
+    "persona": 5,
+    "round": 2
+   },
+   {
+    "seed": 4242,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:9,5",
+     "goto:10,5",
+     "down",
+     "goto:12,7",
+     "click:btn-retry",
+     "click:btn-again",
+     "click:btn-next",
+     "enter",
+     "enter",
+     "click:btn-again",
+     "click:btn-resume"
+    ],
+    "persona": 5,
+    "round": 2
+   },
+   {
+    "seed": 777,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:1,4",
+     "goto:2,5",
+     "goto:3,5",
+     "goto:4,5",
+     "goto:5,5",
+     "goto:6,5",
+     "goto:7,5",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "click:btn-next",
+     "click:btn-again",
+     "click:btn-resume",
+     "enter",
+     "click:btn-retry",
+     "pause",
+     "enter"
+    ],
+    "persona": 5,
+    "round": 2
+   },
+   {
+    "seed": 77,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:6,3",
+     "dash-right",
+     "wait",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "wait",
+     "wait",
+     "dash-right",
+     "wait",
+     "wait"
+    ],
+    "persona": 0,
+    "round": 3
+   },
+   {
+    "seed": 4242,
+    "steps": [
+     "goto:4,1",
+     "goto:1,3",
+     "goto:6,3",
+     "goto:4,1",
+     "goto:1,3",
+     "wait",
+     "goto:4,5",
+     "goto:4,1",
+     "goto:4,5",
+     "wait",
+     "wait"
+    ],
+    "persona": 0,
+    "round": 3
+   },
+   {
+    "seed": 9001,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:7,3",
+     "goto:9,3",
+     "goto:12,1",
+     "goto:9,3",
+     "goto:10,5",
+     "goto:10,6",
+     "goto:10,7",
+     "goto:12,7",
+     "wait",
+     "enter",
+     "click:btn-next",
+     "click:btn-again"
+    ],
+    "persona": 0,
+    "round": 3
+   },
+   {
+    "seed": 4242,
+    "steps": [
+     "down",
+     "down",
+     "dash-right"
+    ],
+    "persona": 1,
+    "round": 3
+   },
+   {
+    "seed": 77,
+    "steps": [
+     "goto:1,8",
+     "pause",
+     "use",
+     "enter",
+     "use"
+    ],
+    "persona": 1,
+    "round": 3
+   },
+   {
+    "seed": 4242,
+    "steps": [
+     "down",
+     "down",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "down",
+     "down",
+     "dash-right"
+    ],
+    "persona": 1,
+    "round": 3
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "pause+right",
+     "wait",
+     "pause+left",
+     "click:btn-resume",
+     "pause+down",
+     "esc+right",
+     "enter+down",
+     "right",
+     "pause+up+left",
+     "wait",
+     "esc",
+     "esc",
+     "click:btn-resume",
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "dash-right",
+     "pause+use",
+     "click:btn-resume",
+     "right+left",
+     "dash-right+down",
+     "wait"
+    ],
+    "persona": 2,
+    "round": 3
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right",
+     "down",
+     "down",
+     "right",
+     "right",
+     "down",
+     "down",
+     "right",
+     "right",
+     "wait",
+     "esc",
+     "enter",
+     "pause+left",
+     "click:btn-retry",
+     "wait",
+     "esc",
+     "click:btn-retry",
+     "down+right",
+     "wait"
+    ],
+    "persona": 2,
+    "round": 3
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "wait",
+     "click:btn-restart",
+     "wait",
+     "right",
+     "esc",
+     "click:btn-restart",
+     "pause+dash-right",
+     "enter",
+     "wait",
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "enter+right",
+     "wait"
+    ],
+    "persona": 2,
+    "round": 3
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:10,5",
+     "down",
+     "down",
+     "right",
+     "right"
+    ],
+    "persona": 3,
+    "round": 3
+   },
+   {
+    "seed": 99,
+    "steps": [
+     "goto:3,8",
+     "wait",
+     "wait",
+     "goto:5,8",
+     "wait",
+     "wait",
+     "wait",
+     "pause",
+     "wait",
+     "esc",
+     "wait"
+    ],
+    "persona": 3,
+    "round": 3
+   },
+   {
+    "seed": 777,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:10,5",
+     "dash-down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "enter",
+     "enter"
+    ],
+    "persona": 3,
+    "round": 3
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ],
+    "persona": 4,
+    "round": 3
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "down",
+     "down",
+     "dash-right",
+     "wait"
+    ],
+    "persona": 4,
+    "round": 3
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:10,5",
+     "down",
+     "goto:12,7",
+     "click:btn-next",
+     "click:btn-again"
+    ],
+    "persona": 4,
+    "round": 3
+   },
+   {
+    "seed": 99,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:7,3",
+     "goto:10,5",
+     "goto:10,6",
+     "goto:12,7",
+     "click:btn-again",
+     "click:btn-retry",
+     "enter",
+     "wait",
+     "click:btn-again",
+     "enter"
+    ],
+    "persona": 5,
+    "round": 3
+   },
+   {
+    "seed": 777,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:6,5",
+     "goto:7,5",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "click:btn-next",
+     "click:btn-resume",
+     "click:btn-retry",
+     "wait",
+     "pause",
+     "enter"
+    ],
+    "persona": 5,
+    "round": 3
+   },
+   {
+    "seed": 4242,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:7,3",
+     "goto:10,5",
+     "goto:10,6",
+     "goto:12,7",
+     "pause",
+     "esc",
+     "click:btn-next",
+     "enter",
+     "click:btn-again"
+    ],
+    "persona": 5,
+    "round": 3
+   }
+  ]
+ },
+ "minimized": [
+  {
+   "checkId": "dash-sets-recharge",
+   "ctx": "playing",
+   "seed": 99173,
+   "steps": [
+    "dash-right"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 0,
+   "originalLength": 1
+  },
+  {
+   "checkId": "pause-menu-buttons",
+   "ctx": "pause",
+   "seed": 4242,
+   "steps": [
+    "goto:1,8",
+    "goto:4,5",
+    "pause"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 49,
+   "originalLength": 8
+  },
+  {
+   "checkId": "visible-buttons-clickable",
+   "ctx": "pause",
+   "seed": 4242,
+   "steps": [
+    "goto:1,8",
+    "goto:4,5",
+    "pause"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 49,
+   "originalLength": 8
+  },
+  {
+   "checkId": "one-move-per-tick",
+   "ctx": "playing",
+   "seed": 99173,
+   "steps": [
+    "dash-right",
+    "right",
+    "dash-down",
+    "down+right"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 46,
+   "originalLength": 11
+  },
+  {
+   "checkId": "pause-tick-no-move",
+   "ctx": "pause",
+   "seed": 42,
+   "steps": [
+    "goto:2,1",
+    "pause+left"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 6,
+   "originalLength": 2
+  },
+  {
+   "checkId": "hud-time",
+   "ctx": "playing",
+   "seed": 4242,
+   "steps": [
+    "pause",
+    "click:btn-resume"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 15,
+   "originalLength": 3
+  },
+  {
+   "checkId": "restart-resets",
+   "ctx": "paused",
+   "seed": 42,
+   "steps": [
+    "esc",
+    "click:btn-restart"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 14,
+   "originalLength": 3
+  },
+  {
+   "checkId": "spikes-cost",
+   "ctx": "playing",
+   "seed": 4242,
+   "steps": [
+    "goto:1,3",
+    "dash-right"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 6,
+   "originalLength": 2
+  },
+  {
+   "checkId": "score-range",
+   "ctx": "playing",
+   "seed": 99,
+   "steps": [
+    "down",
+    "down",
+    "right",
+    "right",
+    "right",
+    "right",
+    "right"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 33,
+   "originalLength": 7
+  },
+  {
+   "checkId": "coin-value",
+   "ctx": "playing",
+   "seed": 99,
+   "steps": [
+    "down",
+    "down",
+    "right",
+    "right",
+    "right",
+    "right",
+    "right"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 33,
+   "originalLength": 7
+  },
+  {
+   "checkId": "paused-frozen",
+   "ctx": "paused",
+   "seed": 42,
+   "steps": [
+    "right",
+    "esc",
+    "click:btn-restart"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 13,
+   "originalLength": 3
+  },
+  {
+   "checkId": "hud-coins",
+   "ctx": "playing",
+   "seed": 99131,
+   "steps": [
+    "dash-down"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 2,
+   "originalLength": 2
+  },
+  {
+   "checkId": "completion-bonus",
+   "ctx": "levelup",
+   "seed": 9001,
+   "steps": [
+    "goto:1,8",
+    "use",
+    "goto:12,1",
+    "goto:12,7"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 74,
+   "originalLength": 11
+  },
+  {
+   "checkId": "pause-menu-buttons",
+   "ctx": "paused",
+   "seed": 42,
+   "steps": [
+    "esc",
+    "click:btn-restart"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 14,
+   "originalLength": 3
+  },
+  {
+   "checkId": "visible-buttons-clickable",
+   "ctx": "levelup",
+   "seed": 9001,
+   "steps": [
+    "goto:4,5",
+    "goto:1,8",
+    "use",
+    "goto:10,7",
+    "goto:12,7"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 40,
+   "originalLength": 11
+  },
+  {
+   "checkId": "hud-time",
+   "ctx": "pause",
+   "seed": 4242,
+   "steps": [
+    "pause",
+    "click:btn-resume",
+    "pause"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 19,
+   "originalLength": 4
+  },
+  {
+   "checkId": "score-range",
+   "ctx": "levelup",
+   "seed": 9001,
+   "steps": [
+    "goto:1,8",
+    "use",
+    "goto:12,1",
+    "goto:12,7"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 74,
+   "originalLength": 11
+  },
+  {
+   "checkId": "hud-coins",
+   "ctx": "pause",
+   "seed": 99131,
+   "steps": [
+    "dash-down",
+    "pause+enter"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 35,
+   "originalLength": 18
+  },
+  {
+   "checkId": "score-range",
+   "ctx": "victory",
+   "seed": 9001,
+   "steps": [
+    "goto:1,8",
+    "use",
+    "goto:12,1",
+    "goto:12,7",
+    "enter"
+   ],
+   "confirmed": true,
+   "oneMinimal": true,
+   "ddminTests": 100,
+   "originalLength": 13
+  }
+ ],
+ "verdicts": [
+  {
+   "candidate": 0,
+   "checkIds": [
+    "dash-sets-recharge"
+   ],
+   "is_bug": false,
+   "bug_class": "state_desync",
+   "title": "Dash recharge reads 5 right after dash (false positive)"
+  },
+  {
+   "candidate": 1,
+   "checkIds": [
+    "pause-menu-buttons",
+    "visible-buttons-clickable"
+   ],
+   "is_bug": true,
+   "bug_class": "ui_overlap",
+   "title": "Pause menu Resume button covered by toast"
+  },
+  {
+   "candidate": 2,
+   "checkIds": [
+    "one-move-per-tick"
+   ],
+   "is_bug": true,
+   "bug_class": "input_race",
+   "title": "Two movement keys in one tick both move the player (diagonal move)"
+  },
+  {
+   "candidate": 3,
+   "checkIds": [
+    "pause-tick-no-move"
+   ],
+   "is_bug": true,
+   "bug_class": "input_race",
+   "title": "Pause does not stop the rest of the tick's input"
+  },
+  {
+   "candidate": 4,
+   "checkIds": [
+    "hud-time"
+   ],
+   "is_bug": true,
+   "bug_class": "state_desync",
+   "title": "HUD Time stale after resume"
+  },
+  {
+   "candidate": 5,
+   "checkIds": [
+    "restart-resets",
+    "pause-menu-buttons"
+   ],
+   "is_bug": true,
+   "bug_class": "state_desync",
+   "title": "Restart level leaves game paused instead of running"
+  },
+  {
+   "candidate": 6,
+   "checkIds": [
+    "spikes-cost"
+   ],
+   "is_bug": true,
+   "bug_class": "score_overflow",
+   "title": "Spikes wrap the score instead of flooring at 0"
+  },
+  {
+   "candidate": 7,
+   "checkIds": [
+    "score-range",
+    "coin-value"
+   ],
+   "is_bug": true,
+   "bug_class": "score_overflow",
+   "title": "Score goes negative (-300) after spikes and a coin"
+  },
+  {
+   "candidate": 8,
+   "checkIds": [
+    "paused-frozen"
+   ],
+   "is_bug": true,
+   "bug_class": "state_desync",
+   "title": "Restart level leaves the game paused with the pause menu still open"
+  },
+  {
+   "candidate": 9,
+   "checkIds": [
+    "hud-coins"
+   ],
+   "is_bug": true,
+   "bug_class": "state_desync",
+   "title": "HUD coin counter stale after collecting a coin"
+  },
+  {
+   "candidate": 10,
+   "checkIds": [
+    "completion-bonus",
+    "score-range"
+   ],
+   "is_bug": true,
+   "bug_class": "score_overflow",
+   "title": "Level-complete time bonus wraps score to negative (-32746)"
+  },
+  {
+   "candidate": 11,
+   "checkIds": [
+    "visible-buttons-clickable"
+   ],
+   "is_bug": true,
+   "bug_class": "ui_overlap",
+   "title": "Finish button covered by the time-bonus banner on level complete"
+  },
+  {
+   "candidate": 12,
+   "checkIds": [
+    "hud-time"
+   ],
+   "is_bug": true,
+   "bug_class": "state_desync",
+   "title": "HUD Time stays at 300 after the first running tick following resume"
+  },
+  {
+   "candidate": 13,
+   "checkIds": [
+    "hud-coins"
+   ],
+   "is_bug": true,
+   "bug_class": "state_desync",
+   "title": "HUD Coins stays at 0/5 after collecting a coin by dash"
+  },
+  {
+   "candidate": 14,
+   "checkIds": [
+    "score-range"
+   ],
+   "is_bug": true,
+   "bug_class": "score_overflow",
+   "title": "Score goes negative (-32746) when the level is completed"
+  }
+ ]
+}

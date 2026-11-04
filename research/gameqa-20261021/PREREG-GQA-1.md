@@ -158,3 +158,52 @@ monkey and of the oracle-informed `monkey-ref` calibration path (`--dev`, scratc
 ## Amendments
 
 (dated entries only)
+
+### A1 (2026-11-04, written before any run it governs; frozen as `amendments[0]` of FREEZE.json)
+
+**State at the amendment.** The 2026-10-28 session ran, under the frozen arms: `agent` r1-r5, `workflow` r1-r5,
+`workflow-random` r1-r5, `monkey` r1-r3 and `monkey-ref` r1-r2; `monkey-ref` r3 died when the session's container ended
+(the chain log has no end line; the browser was closed under it). Recorded spend $0.1667. Nothing has been changed in the
+bed, the prompts, the template, the budgets, the oracle or the scoring since the freeze.
+
+**Harness fault 1: rate limits.** `workflow` r3, r4, r5: the construct call (the run's first and only call) failed with
+`MODEL_RATE_LIMIT` (claude CLI, HTTP 429), so the runs ended with no model output; `workflow-random` r3-r5 then had no
+construction to reuse (runner exception); `workflow-random` r2: 2 of its 3 judge calls failed with `MODEL_RATE_LIMIT`, so the
+candidates of those batches were dropped. By §6 these are harness faults (≥ 50% of the run's model calls failed for a
+non-model reason). The frozen `analyze.mjs` excluded only runner exceptions, so the three rate-limited `workflow` runs would
+have entered H1 as foundMin 0 (H1 then reads "not supported" on 8, 8, 0, 0, 0 vs 1 × 5). Fixes:
+- `analyze.mjs` implements the §6 rule: a run is excluded when at least half of its model calls failed with a non-model
+  code (`MODEL_RATE_LIMIT`, `MODEL_UNAVAILABLE`, `MODEL_PROTOCOL`, `MODEL_TIMEOUT`, `MODEL_BUDGET`); a schema failure is
+  the model's and stays a result (test in `gameqa-web-transport.test.mjs`).
+- The faulted runs are kept as raw data in `runs/_harness-fault/` and re-run under the **same run ids** (so the same rng
+  streams and, for `workflow-random`, the same pairing): `workflow` r3-r5, `workflow-random` r2-r5. `monkey-ref` r3-r5 and
+  `monkey` r4-r5 ($0, never started or killed by the container's end) run as planned.
+- Transport: every paid call goes through `transport.mjs` `withRateLimitRetry` (a rate-limited call is retried after 60 s,
+  then 180 s, and logged; its spend, if any, is carried). The model sees nothing different.
+
+**Harness finding 2: the CLI writes a budget line into the model's context.** Claude Code 2.1.318 adds a meta message
+`USD budget: $<used>/$<cap>; $<remaining> remaining` whenever `--max-budget-usd` is passed (observed code: the `budget_usd`
+attachment, built from `options.maxBudgetUsd`); the repo's provider always passes it (`src/models/providers/claude-cli.mjs`
+`args()`), here with $0.25. It also adds `<total_tokens>15000000 tokens left</total_tokens>` with or without the flag. No arm
+prompt contains either line. In all 5 frozen `agent` reps Haiku answered `finish` after 4-6 of its 40 turns and almost none of its
+8,000 ticks (12-26 ticks), with one bug reported, and all 5 final notes give the budget as the reason ("Budget is nearly
+spent", "stay within the small USD budget", "The USD budget was nearly exhausted"). Diagnostic (post-hoc, $0.015, `probe-budget-line.mjs`, `diag/budget-line.json`): a
+quote probe confirms the line is in context with the flag and absent without it; replaying the exact finishing-turn prompt of
+each rep 2× with and 2× without the flag gives `finish` 7/10 vs 7/10, explicit budget-stop phrases ("nearly exhausted
+($0.25 cap)") 6/10 vs 0/10. So at the finishing turn the line changes the stated reason, not the decision; whether it drives
+the earlier, shorter play (r3's turn-2 notes: "Budget is tight, so keep runs short") is not settled by that replay. The
+frozen `agent` arm is therefore **kept as the primary baseline** (it is the arm as preregistered, and the agent's premature
+stop is a result), and two **secondary** arms are added to measure the confound and the stop:
+- `gqa1nb/agent`: the frozen `agent` with `--transport nb` (the provider's `--max-budget-usd` flag dropped for this port, so no
+  USD line; the per-run $0.50 cap is still enforced by `makeCaller` before every call). K = 5.
+- `gqa1nb/agent-persist`: the same, and a `finish` before the last turn is refused with "finish is not available before
+  your last turn ... keep testing parts of the game you have not tested yet; your reports are kept" (`arms.mjs` `persist`).
+  It isolates "keeps going" from everything else the workflow adds (checks, code repro, ddmin, judge). K = 5.
+- Tests (secondary, same rule as §5, dev evidence): **S1** `gqa1/workflow` > `gqa1nb/agent`; **S2** `gqa1nb/agent` vs
+  `gqa1/agent` (two-sided); **S3** `gqa1/workflow` > `gqa1nb/agent-persist`; **S4** `gqa1nb/agent-persist` vs `gqa1nb/agent`
+  (two-sided). S1 and S3 give the agent every benefit (the workflow keeps the budget line), so a workflow win there is
+  conservative. The H1-H4 decisions are unchanged and stay primary.
+- Order: `workflow` lane (r3-r5 with `workflow-random`), then `workflow-random` r2; `agent-nb` r1-r5, then `agent-persist`
+  r1-r5 in a second lane; monkeys in a third. Spend stop unchanged ($2.50, now counting the harness-faulted runs and the
+  diagnostic). Expected new spend about $0.9 (`agent-persist` up to $0.10 a run).
+- The Mercury E1 secondary is dropped from this session (time); stated in the result.

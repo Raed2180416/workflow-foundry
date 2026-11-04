@@ -128,8 +128,11 @@ export async function runMonkey({ session, rng, budgets, checks = [] }) {
 }
 
 // ------------------------------------------------------------------------------------------------ agent alone
+// persist (amendment A1, secondary arm agent-persist): a "finish" before the last turn is refused and the agent is told to
+// keep exploring (its reports are kept). It isolates the agent's premature stop from everything else the workflow adds.
 export async function runAgent({ session, caller, budgets }) {
-  const { maxTurns = 40, exploreTicks = 8000, maxStepsShown = 120 } = budgets;
+  const { maxTurns = 40, exploreTicks = 8000, maxStepsShown = 120, persist = false } = budgets;
+  let refusedFinishes = 0;
   let notes = '', reports = [], lastRun = null, lastError = null, ticks = 0, finished = false;
   const history = [];
   for (let turn = 1; turn <= maxTurns && !finished; turn++) {
@@ -139,6 +142,11 @@ export async function runAgent({ session, caller, budgets }) {
     if (!r.ok) { lastError = `the model call failed (${r.error?.code})`; if (r.error?.code === 'RUN_BUDGET') break; continue; }
     const v = r.value;
     notes = v.notes; reports = v.reports;
+    if (v.action === 'finish' && persist && turn < maxTurns && ticks < exploreTicks) {
+      refusedFinishes++;
+      lastError = `"finish" is not available before your last turn (this was turn ${turn} of ${maxTurns}). Keep testing parts of the game you have not tested yet; your reports are kept`;
+      lastRun = null; continue;
+    }
     if (v.action === 'finish') { finished = true; break; }
     const bad = v.steps.length ? v.steps.map(tokenError).find(Boolean) : 'steps is empty';
     if (bad) { lastError = `invalid steps (${bad}); nothing was run`; lastRun = null; continue; }
@@ -150,7 +158,7 @@ export async function runAgent({ session, caller, budgets }) {
     history.push({ n: history.length + 1, seed: v.seed, steps: v.steps, tokens: v.steps.length, outcome: outcomeOf(run) });
   }
   // played: every run the agent made (for the $0 funnel analysis: which faults its exploration triggered)
-  return { reports, stats: { exploreTicks: ticks, runs: history.length, finished, notes, played: history.map(h => ({ seed: h.seed, steps: h.steps })) } };
+  return { reports, stats: { exploreTicks: ticks, runs: history.length, finished, notes, ...(persist ? { refusedFinishes } : {}), played: history.map(h => ({ seed: h.seed, steps: h.steps })) } };
 }
 
 // ------------------------------------------------------------------------------------------------ cheap-built workflow

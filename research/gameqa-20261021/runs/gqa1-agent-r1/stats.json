@@ -1,0 +1,61 @@
+{
+ "stats": {
+  "exploreTicks": 26,
+  "runs": 5,
+  "finished": true,
+  "notes": "Confirmed the score wrap bug with a 3-token replay from a fresh game (seed 42): dash-down collects the coin (score 100), then right and right step onto the spikes at (3,3). Score goes 100 - 500 = -400 and displays as 65136 (a 16-bit wrap), and lives drop to 2. Design says score never goes below 0. Budget is nearly exhausted, so I am finishing here. Other areas (pause, dialogs, levers, gates, enemies, timer, completion) were not thoroughly tested.",
+  "played": [
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "pause+left",
+     "wait",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "esc"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "dash-down",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "dash-down",
+     "right",
+     "right"
+    ]
+   }
+  ]
+ }
+}

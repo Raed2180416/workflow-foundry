@@ -2,8 +2,11 @@
 // GQA-1 analysis (frozen with the arms before any paid call): per-arm summaries, per-bug detection, cost, and the
 // preregistered comparisons (exact permutation Mann-Whitney on per-run foundMin, research/gameqa-20261021/PREREG-GQA-1.md §5).
 //   node experiments/gameqa-web/analyze.mjs [RUNS_DIR] [--json]
-// Only runs whose meta matches the frozen bed (FREEZE.json), that are not --dev, and whose runner raised no exception
-// (a harness fault: reported, excluded) enter the comparison; the preregistered analysis uses complete rep indices only.
+// Only runs whose meta matches the frozen bed (FREEZE.json), that are not --dev, and that show no harness fault enter the
+// comparison; the preregistered analysis uses complete rep indices only. Harness fault (PREREG §6): the runner raised an
+// exception, or (amendment A1) at least 50% of the run's model calls failed for a non-model reason (rate limit, CLI
+// unavailable or crashed, timeout, the per-call cap): the frozen script checked only the first, so three rate-limited
+// workflow runs with no model output would have entered as foundMin 0.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,6 +36,15 @@ const mean = xs => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null
 const sd = xs => { if (xs.length < 2) return null; const m = mean(xs); return Math.sqrt(xs.reduce((s, x) => s + (x - m) ** 2, 0) / (xs.length - 1)); };
 const r3 = x => (x === null || x === undefined ? null : Math.round(x * 1000) / 1000);
 
+// Failure codes that are not the model's doing (src/models/providers/claude-cli.mjs, experiments/gameqa-web/arms.mjs makeCaller).
+export const NON_MODEL_FAILURES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_PROTOCOL', 'MODEL_TIMEOUT', 'MODEL_BUDGET', 'ERROR']);
+export function transportFailures(dir) {
+  const f = path.join(dir, 'calls.jsonl');
+  if (!existsSync(f)) return { calls: 0, nonModel: 0 };
+  const rows = readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).filter(r => typeof r.ok === 'boolean');
+  return { calls: rows.length, nonModel: rows.filter(r => !r.ok && NON_MODEL_FAILURES.includes(r.error)).length };
+}
+
 export function loadRuns(dir) {
   if (!existsSync(dir)) return [];
   const freeze = existsSync(path.join(ROOT, 'research/gameqa-20261021/FREEZE.json')) ? read(path.join(ROOT, 'research/gameqa-20261021/FREEZE.json')) : null;
@@ -41,7 +53,10 @@ export function loadRuns(dir) {
     const d = path.join(dir, name);
     if (!existsSync(path.join(d, 'meta.json')) || !existsSync(path.join(d, 'score.json'))) continue;
     const meta = read(path.join(d, 'meta.json')), score = read(path.join(d, 'score.json'));
-    const excluded = meta.dev ? 'dev run' : meta.error ? 'harness fault (runner exception)' : freeze && meta.bed !== freeze.bed?.sha256 ? 'bed hash differs from the freeze' : null;
+    const tf = transportFailures(d);
+    const excluded = meta.dev ? 'dev run' : meta.error ? 'harness fault (runner exception)'
+      : tf.calls && tf.nonModel / tf.calls >= 0.5 ? `harness fault (${tf.nonModel} of ${tf.calls} model calls failed for a non-model reason)`
+        : freeze && meta.bed !== freeze.bed?.sha256 ? 'bed hash differs from the freeze' : null;
     out.push({ dir: d, name, meta, score, tag: name.slice(0, name.indexOf(`-${meta.arm}-r`)), excluded });
   }
   return out;
@@ -85,15 +100,22 @@ export const COMPARISONS = Object.freeze([
   ['gqa1/workflow', 'gqa1/monkey', 'greater', 'H2: the workflow beats the random monkey baseline'],
   ['gqa1/agent', 'gqa1/monkey', 'greater', 'H3: the Haiku agent alone beats the random monkey baseline'],
   ['gqa1/workflow', 'gqa1/workflow-random', 'two-sided', 'H4 ablation: persona-guided exploration vs random exploration with the same constructed checks'],
+  // Amendment A1 (2026-11-04), secondary, decided before the gqa1nb runs: the agent without the CLI's "USD budget" line.
+  ['gqa1/workflow', 'gqa1nb/agent', 'greater', 'S1 (A1, secondary): H1 against the agent without the CLI budget line'],
+  ['gqa1nb/agent', 'gqa1/agent', 'two-sided', 'S2 (A1, secondary): does removing the CLI budget line change the agent?'],
+  ['gqa1/workflow', 'gqa1nb/agent-persist', 'greater', 'S3 (A1, secondary): H1 against the agent with no budget line whose early finish is refused'],
+  ['gqa1nb/agent-persist', 'gqa1nb/agent', 'two-sided', 'S4 (A1, secondary): does refusing the early finish change the agent?'],
 ]);
 export function compare(arms, { completeRepsOnly = true } = {}) {
   return COMPARISONS.map(([ka, kb, alt, role]) => {
     const A = arms[ka], B = arms[kb];
     if (!A || !B) return { a: ka, b: kb, role, missing: true };
     // complete rep indices only, for the two paid/paired arms; the $0 monkey keeps all its reps
-    const reps = completeRepsOnly && !kb.endsWith('/monkey') ? A.reps.filter(r => B.reps.includes(r)) : A.reps;
+    // (S1/S2 pair arms of two series: their reps are independent runs, not paired, so all valid reps of both enter)
+    const crossSeries = ka.split('/')[0] !== kb.split('/')[0];
+    const reps = completeRepsOnly && !kb.endsWith('/monkey') && !crossSeries ? A.reps.filter(r => B.reps.includes(r)) : A.reps;
     const a = A.reps.map((r, i) => [r, A.foundMin[i]]).filter(([r]) => reps.includes(r)).map(([, x]) => x);
-    const b = kb.endsWith('/monkey') ? B.foundMin : B.reps.map((r, i) => [r, B.foundMin[i]]).filter(([r]) => reps.includes(r)).map(([, x]) => x);
+    const b = kb.endsWith('/monkey') || crossSeries ? B.foundMin : B.reps.map((r, i) => [r, B.foundMin[i]]).filter(([r]) => reps.includes(r)).map(([, x]) => x);
     const t = mannWhitney(a, b, alt);
     const diff = mean(a) - mean(b);
     const decided = alt === 'two-sided' ? (t.p !== null && t.p <= 0.05 ? (diff > 0 ? 'a > b' : 'a < b') : 'no difference shown')

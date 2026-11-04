@@ -1,0 +1,44 @@
+{
+ "runId": "gqa1-monkey-ref-r2",
+ "arm": "monkey-ref",
+ "rep": 2,
+ "dev": false,
+ "model": null,
+ "exploratory": false,
+ "policyHash": null,
+ "bed": "ba728598bf6df7d7111b5f94d23eb5921fde2d3674728adda1352c01a4701e95",
+ "prompts": {
+  "agentSystem": "221305990a71b7f3",
+  "constructSystem": "bb0f415ba040f394",
+  "judgeSystem": "18e5a140e8295aca",
+  "exploreSystem": "09404fbee3e9c471",
+  "spec": "a03c56ab28701df3",
+  "template": "5ce0e410a9d93b0d"
+ },
+ "budgets": {
+  "exploreTicks": 8000,
+  "minimizeTestsPerCandidate": 400
+ },
+ "rngSeed": 3783210913,
+ "started": "2026-10-28T18:59:00.019Z",
+ "wallMs": 515530,
+ "scoreMs": 11985,
+ "cost": {
+  "spent": 0,
+  "calls": 0
+ },
+ "tokenMeter": null,
+ "error": null,
+ "summary": {
+  "reports": 24,
+  "bugs": 12,
+  "foundMin": 9,
+  "foundMinClass": 9,
+  "foundAny": 12,
+  "falseReports": 0,
+  "duplicates": 12,
+  "precision": 1,
+  "nondeterministic": 0,
+  "replays": 366
+ }
+}
