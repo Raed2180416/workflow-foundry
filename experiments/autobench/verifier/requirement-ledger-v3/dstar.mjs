@@ -245,7 +245,7 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
             else if (ins.every(x => !x)) vote(m, 'exclude', { kind: 'predicate', where, executed: true, complement: true });
             else {
               const days = [...r.byDay.keys()];
-              vote(m, 'unknown', { kind: 'null', why: 'the predicate reads today and the member flips inside the clock domain', flipsAt: days.find((d, i) => i > 0 && ins[i] !== ins[i - 1]) ?? null });
+              vote(m, 'unknown', { kind: 'null', clock: true, why: 'the predicate reads today and the member flips inside the clock domain', flipsAt: days.find((d, i) => i > 0 && ins[i] !== ins[i - 1]) ?? null });
             }
           }
         }
@@ -322,8 +322,11 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
       if (exc.length >= need && exc.length > incAny.length) { d = 'exclude'; basis = exc[0].basis; }
       else if (inc.length >= need && inc.length >= exc.length) { d = 'include'; basis = inc[0].basis; }
       else if (incAny.length >= need && !exc.length) { d = 'include'; basis = { kind: 'reader', verified: false }; }
+      // a labelled null keeps its label: when every vote is a null, the member carries the first vote's reason
+      if (d === 'unknown' && vs.every(v => v.d === 'unknown' && v.basis?.kind === 'null')) basis = vs[0].basis;
       dispositions.push({ group: g.key, uid: g.u.uid, mid: m.mid, ptr: m.key, label: m.label, disposition: d, basis, votes: vs.map(v => v.d), hard: d !== 'unknown' && ['predicate', 'quote'].includes(basis.kind) });
-      if (d === 'unknown' && vs.some(v => v.d === 'exclude' || v.basis?.claimed === 'exclude')) unknowns.push({ id: `U-${sha(`${g.key}|${m.key}`).slice(0, 10)}`, kind: 'member', about: g.key, member: m.key, label: m.label, why: basis.why });
+      // the UNKNOWN list: members some reader would exclude without support, and members whose disposition depends on today
+      if (d === 'unknown' && vs.some(v => v.d === 'exclude' || v.basis?.claimed === 'exclude' || v.basis?.clock)) unknowns.push({ id: `U-${sha(`${g.key}|${m.key}`).slice(0, 10)}`, kind: 'member', about: g.key, member: m.key, label: m.label, why: basis.why, ...(vs.some(v => v.basis?.clock) ? { clock: true } : {}) });
     }
   }
 
