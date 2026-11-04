@@ -1,0 +1,427 @@
+{
+ "note": "POST-HOC, not preregistered; rules chosen on dev; designs chosen after the test split was read. Diagnostic only.",
+ "a": {
+  "rule": "never-trigger on dev: t = max dev-negative Haiku p + 0.02",
+  "devNegMaxP": 0.9,
+  "threshold": 0.92,
+  "testAtRule": {
+   "tp": 34,
+   "fp": 0,
+   "fn": 27,
+   "tn": 132,
+   "precision": 1,
+   "recall": 0.5574,
+   "f1": 0.7158,
+   "accuracy": 0.8601,
+   "fpUpper95": 0.0276
+  },
+  "table": [
+   {
+    "threshold": 0.5,
+    "dev": {
+     "tp": 41,
+     "fp": 2,
+     "fn": 1,
+     "tn": 82,
+     "precision": 0.9535,
+     "recall": 0.9762,
+     "f1": 0.9647,
+     "accuracy": 0.9762,
+     "fpUpper95": 0.0834
+    },
+    "test": {
+     "tp": 59,
+     "fp": 5,
+     "fn": 2,
+     "tn": 127,
+     "precision": 0.9219,
+     "recall": 0.9672,
+     "f1": 0.944,
+     "accuracy": 0.9637,
+     "fpUpper95": 0.0862
+    }
+   },
+   {
+    "threshold": 0.6,
+    "dev": {
+     "tp": 41,
+     "fp": 2,
+     "fn": 1,
+     "tn": 82,
+     "precision": 0.9535,
+     "recall": 0.9762,
+     "f1": 0.9647,
+     "accuracy": 0.9762,
+     "fpUpper95": 0.0834
+    },
+    "test": {
+     "tp": 59,
+     "fp": 5,
+     "fn": 2,
+     "tn": 127,
+     "precision": 0.9219,
+     "recall": 0.9672,
+     "f1": 0.944,
+     "accuracy": 0.9637,
+     "fpUpper95": 0.0862
+    }
+   },
+   {
+    "threshold": 0.7,
+    "dev": {
+     "tp": 40,
+     "fp": 2,
+     "fn": 2,
+     "tn": 82,
+     "precision": 0.9524,
+     "recall": 0.9524,
+     "f1": 0.9524,
+     "accuracy": 0.9683,
+     "fpUpper95": 0.0834
+    },
+    "test": {
+     "tp": 58,
+     "fp": 4,
+     "fn": 3,
+     "tn": 128,
+     "precision": 0.9355,
+     "recall": 0.9508,
+     "f1": 0.9431,
+     "accuracy": 0.9637,
+     "fpUpper95": 0.0758
+    }
+   },
+   {
+    "threshold": 0.8,
+    "dev": {
+     "tp": 39,
+     "fp": 1,
+     "fn": 3,
+     "tn": 83,
+     "precision": 0.975,
+     "recall": 0.9286,
+     "f1": 0.9512,
+     "accuracy": 0.9683,
+     "fpUpper95": 0.0646
+    },
+    "test": {
+     "tp": 57,
+     "fp": 1,
+     "fn": 4,
+     "tn": 131,
+     "precision": 0.9828,
+     "recall": 0.9344,
+     "f1": 0.958,
+     "accuracy": 0.9741,
+     "fpUpper95": 0.0415
+    }
+   },
+   {
+    "threshold": 0.9,
+    "dev": {
+     "tp": 30,
+     "fp": 1,
+     "fn": 12,
+     "tn": 83,
+     "precision": 0.9677,
+     "recall": 0.7143,
+     "f1": 0.8219,
+     "accuracy": 0.8968,
+     "fpUpper95": 0.0646
+    },
+    "test": {
+     "tp": 46,
+     "fp": 1,
+     "fn": 15,
+     "tn": 131,
+     "precision": 0.9787,
+     "recall": 0.7541,
+     "f1": 0.8519,
+     "accuracy": 0.9171,
+     "fpUpper95": 0.0415
+    }
+   },
+   {
+    "threshold": 0.95,
+    "dev": {
+     "tp": 23,
+     "fp": 0,
+     "fn": 19,
+     "tn": 84,
+     "precision": 1,
+     "recall": 0.5476,
+     "f1": 0.7077,
+     "accuracy": 0.8492,
+     "fpUpper95": 0.043
+    },
+    "test": {
+     "tp": 32,
+     "fp": 0,
+     "fn": 29,
+     "tn": 132,
+     "precision": 1,
+     "recall": 0.5246,
+     "f1": 0.6882,
+     "accuracy": 0.8497,
+     "fpUpper95": 0.0276
+    }
+   },
+   {
+    "threshold": 1,
+    "dev": {
+     "tp": 2,
+     "fp": 0,
+     "fn": 40,
+     "tn": 84,
+     "precision": 1,
+     "recall": 0.0476,
+     "f1": 0.0909,
+     "accuracy": 0.6825,
+     "fpUpper95": 0.043
+    },
+    "test": {
+     "tp": 3,
+     "fp": 0,
+     "fn": 58,
+     "tn": 132,
+     "precision": 1,
+     "recall": 0.0492,
+     "f1": 0.0938,
+     "accuracy": 0.6995,
+     "fpUpper95": 0.0276
+    }
+   }
+  ]
+ },
+ "b": {
+  "rule": "L = lowest out-of-fold (5-fold dev CV) router p among dev positives - 0.02 (v1.1 detectors)",
+  "L": 0.3187,
+  "devOutOfFoldMinPositiveP": 0.3387,
+  "testV11AtRule": {
+   "L": 0.3187,
+   "haikuCalls": 61,
+   "haikuShare": 0.3161,
+   "costPerDecisionUsd": 0.00009450230569948188,
+   "tp": 47,
+   "fp": 2,
+   "fn": 14,
+   "tn": 130,
+   "precision": 0.9592,
+   "recall": 0.7705,
+   "f1": 0.8545,
+   "accuracy": 0.9171,
+   "fpUpper95": 0.0537
+  },
+  "haikuAloneTest": {
+   "tp": 59,
+   "fp": 5,
+   "fn": 2,
+   "tn": 127,
+   "precision": 0.9219,
+   "recall": 0.9672,
+   "f1": 0.944,
+   "accuracy": 0.9637,
+   "costPerDecisionUsd": 0.0002599801295336786
+  },
+  "frontier": [
+   {
+    "L": 0.02,
+    "v1": {
+     "L": 0.02,
+     "haikuCalls": 191,
+     "haikuShare": 0.9896,
+     "costPerDecisionUsd": 0.000257702487046632,
+     "tp": 59,
+     "fp": 5,
+     "fn": 2,
+     "tn": 127,
+     "precision": 0.9219,
+     "recall": 0.9672,
+     "f1": 0.944,
+     "accuracy": 0.9637,
+     "fpUpper95": 0.0862
+    },
+    "v11": {
+     "L": 0.02,
+     "haikuCalls": 191,
+     "haikuShare": 0.9896,
+     "costPerDecisionUsd": 0.000257702487046632,
+     "tp": 59,
+     "fp": 5,
+     "fn": 2,
+     "tn": 127,
+     "precision": 0.9219,
+     "recall": 0.9672,
+     "f1": 0.944,
+     "accuracy": 0.9637,
+     "fpUpper95": 0.0862
+    }
+   },
+   {
+    "L": 0.05,
+    "v1": {
+     "L": 0.05,
+     "haikuCalls": 148,
+     "haikuShare": 0.7668,
+     "costPerDecisionUsd": 0.00020764023316062176,
+     "tp": 59,
+     "fp": 5,
+     "fn": 2,
+     "tn": 127,
+     "precision": 0.9219,
+     "recall": 0.9672,
+     "f1": 0.944,
+     "accuracy": 0.9637,
+     "fpUpper95": 0.0862
+    },
+    "v11": {
+     "L": 0.05,
+     "haikuCalls": 148,
+     "haikuShare": 0.7668,
+     "costPerDecisionUsd": 0.00020764023316062176,
+     "tp": 59,
+     "fp": 5,
+     "fn": 2,
+     "tn": 127,
+     "precision": 0.9219,
+     "recall": 0.9672,
+     "f1": 0.944,
+     "accuracy": 0.9637,
+     "fpUpper95": 0.0862
+    }
+   },
+   {
+    "L": 0.1,
+    "v1": {
+     "L": 0.1,
+     "haikuCalls": 111,
+     "haikuShare": 0.5751,
+     "costPerDecisionUsd": 0.00016257082901554405,
+     "tp": 55,
+     "fp": 3,
+     "fn": 6,
+     "tn": 129,
+     "precision": 0.9483,
+     "recall": 0.9016,
+     "f1": 0.9244,
+     "accuracy": 0.9534,
+     "fpUpper95": 0.065
+    },
+    "v11": {
+     "L": 0.1,
+     "haikuCalls": 113,
+     "haikuShare": 0.5855,
+     "costPerDecisionUsd": 0.00016514121761658032,
+     "tp": 56,
+     "fp": 4,
+     "fn": 5,
+     "tn": 128,
+     "precision": 0.9333,
+     "recall": 0.918,
+     "f1": 0.9256,
+     "accuracy": 0.9534,
+     "fpUpper95": 0.0758
+    }
+   },
+   {
+    "L": 0.15,
+    "v1": {
+     "L": 0.15,
+     "haikuCalls": 91,
+     "haikuShare": 0.4715,
+     "costPerDecisionUsd": 0.00013623352331606223,
+     "tp": 54,
+     "fp": 3,
+     "fn": 7,
+     "tn": 129,
+     "precision": 0.9474,
+     "recall": 0.8852,
+     "f1": 0.9153,
+     "accuracy": 0.9482,
+     "fpUpper95": 0.065
+    },
+    "v11": {
+     "L": 0.15,
+     "haikuCalls": 93,
+     "haikuShare": 0.4819,
+     "costPerDecisionUsd": 0.00013880391191709848,
+     "tp": 55,
+     "fp": 4,
+     "fn": 6,
+     "tn": 128,
+     "precision": 0.9322,
+     "recall": 0.9016,
+     "f1": 0.9167,
+     "accuracy": 0.9482,
+     "fpUpper95": 0.0758
+    }
+   },
+   {
+    "L": 0.2,
+    "v1": {
+     "L": 0.2,
+     "haikuCalls": 76,
+     "haikuShare": 0.3938,
+     "costPerDecisionUsd": 0.00011454207253886015,
+     "tp": 50,
+     "fp": 3,
+     "fn": 11,
+     "tn": 129,
+     "precision": 0.9434,
+     "recall": 0.8197,
+     "f1": 0.8772,
+     "accuracy": 0.9275,
+     "fpUpper95": 0.065
+    },
+    "v11": {
+     "L": 0.2,
+     "haikuCalls": 78,
+     "haikuShare": 0.4041,
+     "costPerDecisionUsd": 0.00011715455958549228,
+     "tp": 51,
+     "fp": 3,
+     "fn": 10,
+     "tn": 129,
+     "precision": 0.9444,
+     "recall": 0.8361,
+     "f1": 0.887,
+     "accuracy": 0.9326,
+     "fpUpper95": 0.065
+    }
+   },
+   {
+    "L": 0.3,
+    "v1": {
+     "L": 0.3,
+     "haikuCalls": 59,
+     "haikuShare": 0.3057,
+     "costPerDecisionUsd": 0.00009248028497409327,
+     "tp": 43,
+     "fp": 2,
+     "fn": 18,
+     "tn": 130,
+     "precision": 0.9556,
+     "recall": 0.7049,
+     "f1": 0.8113,
+     "accuracy": 0.8964,
+     "fpUpper95": 0.0537
+    },
+    "v11": {
+     "L": 0.3,
+     "haikuCalls": 64,
+     "haikuShare": 0.3316,
+     "costPerDecisionUsd": 0.0000986185751295337,
+     "tp": 47,
+     "fp": 2,
+     "fn": 14,
+     "tn": 130,
+     "precision": 0.9592,
+     "recall": 0.7705,
+     "f1": 0.8545,
+     "accuracy": 0.9171,
+     "fpUpper95": 0.0537
+    }
+   }
+  ]
+ }
+}

@@ -31,7 +31,7 @@ evidence, not memory.
 
 | # | Owner ask | Status | Evidence | Gap / next |
 |---|---|---|---|---|
-| B1 | **"the goal ... is to detect if a certain task needs a workflow or not. And testing is the biggest part"** [62]; primitives → formula/threshold, tuned so no-workflow tasks never trigger [74]; routine coding usually no workflow, startup CI/CD or research programs yes [75]; sensitivity slider [20]; Jev for it [70] | **R, ⚠** | README: "Need router and slider: Design only"; PREREG-NEED-V1, anchor beds, NL0 pilot partial | **build and measure the need router end to end (primitive rules + threshold slider + cheap judgment for the middle; capability number against always/never/ask-Haiku baselines)** |
+| B1 | **"the goal ... is to detect if a certain task needs a workflow or not. And testing is the biggest part"** [62]; primitives → formula/threshold, tuned so no-workflow tasks never trigger [74]; routine coding usually no workflow, startup CI/CD or research programs yes [75]; sensitivity slider [20]; Jev for it [70] | **P (negative for code), ⚠** | ROUTER-1 ([RESULT](need-router-20261014/RESULT-ROUTER-1.md), review addendum 11-04): 319 labelled requests, frozen split, preregistered. Code router v1 on test: 9/132 false triggers, recall 0.67, F1 0.74 (fails never-trigger); a $0 n-gram classifier ranks as well (AUROC 0.918 vs 0.915); Haiku direct 5/132, recall 0.97, F1 0.944 at $0.00026 (also fails never-trigger at its default); Mercury as a system F1 0.900. Same-author labels, rubric quoted 6 test items. Shipped as `src/need/` + MCP/CLI: a labelled code-only hint by default, or the code pre-filter + a capped model judge (post-hoc); the slider works at both ends in every path; each answer states its measured operating point | **sealed check written and labelled by the owner ([ROUTER-2 draft](need-router-20261014/router2/PROTOCOL-ROUTER-2.md)); Jev run; launch-on-decision; counterfactual value of the workflows (label factory); owner decision on the ROADMAP §2.8 departure** |
 | B2 | Route tasks to agents/models automatically, with user control per node [70] | B | model policy class routing; per-role node models (A1-C) | product UI control |
 
 ## C. Judgment models (Kev/Jev)
@@ -39,7 +39,7 @@ evidence, not memory.
 | # | Owner ask | Status | Evidence | Gap / next |
 |---|---|---|---|---|
 | C1 | Deep analysis of Kev; fine-tune Kev 0.8B for every need; use the laptop GPU [13][14][15][16] | R/⚠ | laptop bridge built; stock Kev ≤ rule baseline on 4/5 ports; owner moved to hosted Jev (10-09); J2 prereg draft | Kev fine-tune never done; J2 not run |
-| C2 | Jev for routing, templates, need-a-workflow; "we implemented it right?" [68][70] | B/⚠ | Jev in policy (jev-1.13.0), J1 on Jev done | **Jev is not wired into the need router or template routing; say so plainly, then wire it where it beats Haiku** |
+| C2 | Jev for routing, templates, need-a-workflow; "we implemented it right?" [68][70] | B/⚠ | Jev in policy (jev-1.13.0), J1 on Jev done; ROUTER-1 Jev pass built and frozen (1,116 requests) but **not run: no Jev credential in the session (PREREG-ROUTER-1 D1)** | **Jev is still not wired into the need router; run `judges.mjs --judge jev` with the owner's key, then wire it only if it beats Haiku on the same items** |
 
 ## D. Expressiveness, engine, orchestration
 
