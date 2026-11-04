@@ -1,0 +1,117 @@
+{
+ "stats": {
+  "exploreTicks": 66,
+  "runs": 10,
+  "finished": true,
+  "notes": "Final submission. Two bugs reproduced on seed 7: restart from pause menu leaves game paused; spike hit at low score wraps score to 65,136 instead of clamping at 0. Untested: lever routes avoiding enemy patrols, gate state after lever use, dashing into locked doors, spikes at 0 lives, 5-life heart score rule.",
+  "refusedFinishes": 29,
+  "played": [
+   {
+    "seed": 7,
+    "steps": [
+     "right",
+     "right+down",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "dash-down",
+     "dash-right",
+     "dash-right",
+     "pause",
+     "esc",
+     "wait"
+    ]
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "right",
+     "pause",
+     "wait",
+     "wait",
+     "esc",
+     "right"
+    ]
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right",
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ]
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ]
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "dash-right",
+     "dash-down",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-left"
+    ]
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "right+pause",
+     "wait",
+     "esc",
+     "right"
+    ]
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "pause",
+     "enter",
+     "right"
+    ]
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "wait"
+    ]
+   }
+  ]
+ }
+}

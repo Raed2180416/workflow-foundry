@@ -1,0 +1,201 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Coins stays at 0/5 after collecting a coin by dash",
+  "observed": "After dash-right at tick 2, state shows coins=1 and Score 100, but the HUD still reads 'Coins 0/5'.",
+  "expected": "HUD shows current values: Coins should read 1/5 right after the coin is collected.",
+  "seed": 1234,
+  "steps": [
+   "goto:3,1",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Time lags one tick behind the timer after resuming from pause",
+  "observed": "After pause+right then click:btn-resume, state timeLeft is 299 but the HUD reads 'Time 300'.",
+  "expected": "HUD shows the current timer value (ticks left), i.e. 299 once the running tick has dropped the timer.",
+  "seed": 99991,
+  "steps": [
+   "pause+right",
+   "click:btn-resume"
+  ]
+ },
+ {
+  "bug_class": "softlock",
+  "title": "Restart level from pause leaves the game paused instead of running",
+  "observed": "After pause then click:btn-restart, state resets to score 0/lives 3/time 300 but mode stays 'paused' and the pause menu remains; further waits change nothing.",
+  "expected": "Restart level puts the level back to its starting state and the game is running again straight away (mode 'playing').",
+  "seed": 31337,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes subtract 500 from score 100 and wrap to 65136",
+  "observed": "Stepping on spikes with score 100 sets score to 65136 (unsigned underflow of 100-500) and lives drop to 2.",
+  "expected": "Spikes cost 500 points with the score floored at 0, so score should be 0 and lives 2.",
+  "seed": 7,
+  "steps": [
+   "goto:3,3"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Dash and step pressed in same tick both move the player (3 tiles)",
+  "observed": "Tick dash-right+right moves the player from (1,1) to (4,1): a 2-tile dash plus a 1-tile step in one tick.",
+  "expected": "Only the last movement key counts; the player makes at most one move (a step or a dash) per tick, so the player should end at (2,1).",
+  "seed": 1234,
+  "steps": [
+   "dash-right+right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score goes negative (-300) after spikes underflow",
+  "observed": "After the spike hit the score is 65136 and then shows -300 in the HUD at tick 5 (pause+right) and stays negative on resume.",
+  "expected": "Score is never negative; spikes floor the score at 0 and it must stay within 0..999,999.",
+  "seed": 7,
+  "steps": [
+   "goto:3,3",
+   "dash-right",
+   "pause+right",
+   "enter"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes at score 100 make score jump to 65136, then go negative (-300)",
+  "observed": "At tick 2 a spike hit with score 100 raised the score to 65136 instead of flooring at 0. Later, at tick 5, the score fell to -300 with no spikes event, and it stayed negative after coins were collected.",
+  "expected": "Spikes cost 500 points, but the score never goes below 0 and is never negative. Score 100 minus a spike hit should give 0, not 65136 or -300.",
+  "seed": 7,
+  "steps": [
+   "goto:1,3",
+   "dash-right",
+   "goto:7,3"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Pause menu Resume button covered by toast, so it is not clickable",
+  "observed": "After pausing, btn-resume reports top=false while the 'Key collected' toast is still visible. Something sits on top of the Resume button.",
+  "expected": "Every visible button must be clickable and nothing may cover it. The Resume button in the pause menu must be on top.",
+  "seed": 1000,
+  "steps": [
+   "goto:4,5",
+   "right+dash-right+pause"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Coins stays at 0/5 after collecting a coin",
+  "observed": "After dash-down collected a coin, state.coins is 1 but the HUD shows 'Coins 0/5' on the same tick and after the next tick.",
+  "expected": "The HUD always shows the current coin count, so it should read 'Coins 1/5'.",
+  "seed": 1000,
+  "steps": [
+   "dash-down",
+   "pause+dash-down"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Time lags one tick behind the timer",
+  "observed": "After resume, state.timeLeft is 299 but the HUD still shows 'Time 300'. The HUD keeps showing the previous value.",
+  "expected": "The HUD shows the current ticks left on the timer, so it should read 'Time 299' to match state.timeLeft.",
+  "seed": 99991,
+  "steps": [
+   "pause+right",
+   "click:btn-resume",
+   "right+pause"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes drive score to 65136 instead of clamping at 0",
+  "observed": "At tick 2 the player on 100 points hits spikes; score becomes 65136 (100 - 500 wrapped as unsigned 16-bit) while lives correctly drop 3 to 2.",
+  "expected": "Spikes cost 500 points but the score never goes below 0, so score should be 0 after the hit (max(100 - 500, 0)). Lives 3 to 2 is correct.",
+  "seed": 1000,
+  "steps": [
+   "dash-down",
+   "dash-right",
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score goes negative (-32746) on level completion after wrap",
+  "observed": "Score wraps to 65136 after an earlier spike hit; the time bonus of 2590 then gives score -32746 at completion.",
+  "expected": "Score is never negative and capped at 999,999; it should be a small positive value (about 32,790 plus bonus) with spikes clamped at 0.",
+  "seed": 42,
+  "steps": [
+   "goto:1,8",
+   "use",
+   "use",
+   "use",
+   "goto:11,3",
+   "goto:11,8",
+   "goto:12,7"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score silently drops from 65136 to -300 on a coin pickup",
+  "observed": "At tick 8 a coin is collected with no spikes or restart, yet score goes from 65136 to -300.",
+  "expected": "Score should only decrease through spikes or restart, and never below 0. A coin adds 100 to a valid score, so it should not drop at all.",
+  "seed": 7,
+  "steps": [
+   "goto:3,3",
+   "right",
+   "dash-left",
+   "dash-right",
+   "down+dash-right",
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Level-complete Finish button covered by overlay",
+  "observed": "At tick 39, on the Level complete dialog, btn-next (Finish) is visible but top=false, so something (the bonus banner or toast) covers it and clicks would not reach it.",
+  "expected": "Every visible button must be clickable; nothing may cover the Finish button.",
+  "seed": 42,
+  "steps": [
+   "goto:1,8",
+   "use",
+   "use",
+   "use",
+   "goto:11,3",
+   "goto:12,7"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score negative (-32746) at level completion, same wrap bug",
+  "observed": "Same sequence as the score overflow case: after an earlier spike wrap, the time bonus pushes score to -32746 at completion; Enter then shows victory with negative score.",
+  "expected": "Score must stay within 0 to 999,999; spikes should clamp at 0 rather than wrap.",
+  "seed": 42,
+  "steps": [
+   "goto:1,8",
+   "use",
+   "use",
+   "use",
+   "goto:11,3",
+   "goto:11,8",
+   "goto:12,7",
+   "enter"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score shows -300 after spike wrap and coin pickup",
+  "observed": "Spikes at tick 3 turn score 100 into 65136; at tick 5 a coin then gives score -300.",
+  "expected": "Score is never negative; spikes should clamp at 0 (score 0), and a coin adds 100 to a non-negative score.",
+  "seed": 7,
+  "steps": [
+   "goto:3,3",
+   "dash-right",
+   "pause+right"
+  ]
+ }
+]

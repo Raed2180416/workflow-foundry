@@ -1,0 +1,66 @@
+{
+ "stats": {
+  "exploreTicks": 31,
+  "runs": 5,
+  "finished": true,
+  "notes": "Run 5 replayed run 3 and confirmed the mismatch. After pause, click:btn-resume, and two waits, the state shows timeLeft 299, 298, 297 but the HUD Time field stays at 300 on every tick. Plain waits (run 4) keep HUD and state in step (297), so the pause/Resume path is the trigger. The minimal 4-token reproduction is [pause, click:btn-resume, wait, wait]. I'm finishing here because the remaining budget is small and this is the only bug confirmed so far.",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "right",
+     "down",
+     "down",
+     "wait",
+     "pause",
+     "wait",
+     "pause",
+     "left",
+     "dash-right",
+     "dash-left",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause+right",
+     "enter",
+     "wait",
+     "dash-down",
+     "pause",
+     "wait",
+     "click:btn-resume",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "click:btn-resume",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "click:btn-resume",
+     "wait",
+     "wait"
+    ]
+   }
+  ]
+ }
+}

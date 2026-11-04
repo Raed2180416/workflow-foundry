@@ -1,0 +1,73 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter stays at 0/5 after collecting a coin",
+  "observed": "After collecting a coin (state coins=1, score 100), the HUD still shows 'Coins 0/5' at tick 1 and later.",
+  "expected": "HUD always shows the current values, so after one coin it should read 'Coins 1/5'.",
+  "seed": 1337,
+  "steps": [
+   "right",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Pause menu Resume button covered by toast",
+  "observed": "With the pause menu open, btn-resume reports top=false (not the topmost element at its centre) while the 'Key collected' toast is visible, so a click on Resume would not reach it.",
+  "expected": "Every visible button must be clickable; nothing may cover it.",
+  "seed": 2024,
+  "steps": [
+   "goto:4,5",
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "softlock",
+  "title": "Restart level leaves the game paused with no dialog",
+  "observed": "After pause then click btn-restart, mode stays 'paused' and the pause menu is gone; the state no longer changes across subsequent waits (time stays 300, no dialog or button to act on).",
+  "expected": "Restart puts the level back to its starting state and the game is running again straight away.",
+  "seed": 555,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes drive score negative and wrap it to 65136",
+  "observed": "Spikes at score 100 produce score 65136 (wraparound from -400), and a later spike hit gives score -300.",
+  "expected": "Spikes subtract 500 but the score stops at 0 and never goes negative or wraps; score stays within 0..999,999.",
+  "seed": 555,
+  "steps": [
+   "goto:3,3",
+   "dash-right",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter stale after collecting a coin during a dash",
+  "observed": "After dash-right at tick 1 the state reports coins=1 and Score 100, but the HUD still reads 'Coins 0/5'. The score field updated in the same tick, so only the coins readout lags.",
+  "expected": "Section 8: the HUD always shows the current values, so after collecting a coin it should read 'Coins 1/5' to match state.coins.",
+  "seed": 1337,
+  "steps": [
+   "right",
+   "dash-right",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Time-bonus banner covers the Finish button on the Level complete dialog",
+  "observed": "At tick 41 the level-complete dialog is visible with btn-next (Finish) reported top=false, meaning the 'Time bonus +2590' banner sits on top of it at its centre, so a click on Finish would not reach the button.",
+  "expected": "Section 7: every visible button must be clickable and nothing may cover it. Finish should receive clicks on the Level complete dialog.",
+  "seed": 4242,
+  "steps": [
+   "goto:4,5",
+   "goto:1,8",
+   "use",
+   "goto:10,5",
+   "goto:12,7"
+  ]
+ }
+]

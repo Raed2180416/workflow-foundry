@@ -1,0 +1,1061 @@
+[
+ {
+  "runId": "gqa1-workflow-r1",
+  "arm": "workflow",
+  "reports": 14,
+  "validRegressionTests": 14,
+  "wrongChecks": 0,
+  "falseReportsCaughtByControl": 0,
+  "falseReportsMissedByControl": 0,
+  "perReport": [
+   {
+    "index": 0,
+    "checks": [
+     "pause-menu-buttons",
+     "visible-buttons-clickable"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ07",
+    "minimal": true,
+    "seed": 4242,
+    "steps": [
+     "goto:1,8",
+     "goto:4,5",
+     "pause"
+    ],
+    "title": "Pause menu Resume button covered by toast"
+   },
+   {
+    "index": 1,
+    "checks": [
+     "one-move-per-tick"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ12",
+    "minimal": false,
+    "seed": 99173,
+    "steps": [
+     "dash-right",
+     "right",
+     "dash-down",
+     "down+right"
+    ],
+    "title": "Two movement keys in one tick both move the player (diagonal move)"
+   },
+   {
+    "index": 2,
+    "checks": [
+     "pause-tick-no-move"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ11",
+    "minimal": true,
+    "seed": 42,
+    "steps": [
+     "goto:2,1",
+     "pause+left"
+    ],
+    "title": "Pause does not stop the rest of the tick's input"
+   },
+   {
+    "index": 3,
+    "checks": [
+     "hud-time"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ04",
+    "minimal": true,
+    "seed": 4242,
+    "steps": [
+     "pause",
+     "click:btn-resume"
+    ],
+    "title": "HUD Time stale after resume"
+   },
+   {
+    "index": 4,
+    "checks": [
+     "restart-resets",
+     "pause-menu-buttons"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ05",
+    "minimal": true,
+    "seed": 42,
+    "steps": [
+     "esc",
+     "click:btn-restart"
+    ],
+    "title": "Restart level leaves game paused instead of running"
+   },
+   {
+    "index": 5,
+    "checks": [
+     "spikes-cost"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ10",
+    "minimal": true,
+    "seed": 4242,
+    "steps": [
+     "goto:1,3",
+     "dash-right"
+    ],
+    "title": "Spikes wrap the score instead of flooring at 0"
+   },
+   {
+    "index": 6,
+    "checks": [
+     "score-range",
+     "coin-value"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": true,
+    "seed": 99,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right"
+    ],
+    "title": "Score goes negative (-300) after spikes and a coin"
+   },
+   {
+    "index": 7,
+    "checks": [
+     "paused-frozen"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ05",
+    "minimal": false,
+    "seed": 42,
+    "steps": [
+     "right",
+     "esc",
+     "click:btn-restart"
+    ],
+    "title": "Restart level leaves the game paused with the pause menu still open"
+   },
+   {
+    "index": 8,
+    "checks": [
+     "hud-coins"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": true,
+    "seed": 99131,
+    "steps": [
+     "dash-down"
+    ],
+    "title": "HUD coin counter stale after collecting a coin"
+   },
+   {
+    "index": 9,
+    "checks": [
+     "completion-bonus",
+     "score-range"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": true,
+    "seed": 9001,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:12,1",
+     "goto:12,7"
+    ],
+    "title": "Level-complete time bonus wraps score to negative (-32746)"
+   },
+   {
+    "index": 10,
+    "checks": [
+     "visible-buttons-clickable"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ08",
+    "minimal": true,
+    "seed": 9001,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:10,7",
+     "goto:12,7"
+    ],
+    "title": "Finish button covered by the time-bonus banner on level complete"
+   },
+   {
+    "index": 11,
+    "checks": [
+     "hud-time"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ04",
+    "minimal": false,
+    "seed": 4242,
+    "steps": [
+     "pause",
+     "click:btn-resume",
+     "pause"
+    ],
+    "title": "HUD Time stays at 300 after the first running tick following resume"
+   },
+   {
+    "index": 12,
+    "checks": [
+     "hud-coins"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": false,
+    "seed": 99131,
+    "steps": [
+     "dash-down",
+     "pause+enter"
+    ],
+    "title": "HUD Coins stays at 0/5 after collecting a coin by dash"
+   },
+   {
+    "index": 13,
+    "checks": [
+     "score-range"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": false,
+    "seed": 9001,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:12,1",
+     "goto:12,7",
+     "enter"
+    ],
+    "title": "Score goes negative (-32746) when the level is completed"
+   }
+  ]
+ },
+ {
+  "runId": "gqa1-workflow-r2",
+  "arm": "workflow",
+  "reports": 16,
+  "validRegressionTests": 16,
+  "wrongChecks": 0,
+  "falseReportsCaughtByControl": 0,
+  "falseReportsMissedByControl": 0,
+  "perReport": [
+   {
+    "index": 0,
+    "checks": [
+     "hud-coins"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": true,
+    "seed": 1234,
+    "steps": [
+     "goto:3,1",
+     "dash-right"
+    ],
+    "title": "HUD Coins stays at 0/5 after collecting a coin by dash"
+   },
+   {
+    "index": 1,
+    "checks": [
+     "hud-time"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ04",
+    "minimal": true,
+    "seed": 99991,
+    "steps": [
+     "pause+right",
+     "click:btn-resume"
+    ],
+    "title": "HUD Time lags one tick behind the timer after resuming from pause"
+   },
+   {
+    "index": 2,
+    "checks": [
+     "restart-resets",
+     "pause-menu-shows",
+     "generic:frozen"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ05",
+    "minimal": true,
+    "seed": 31337,
+    "steps": [
+     "pause",
+     "click:btn-restart"
+    ],
+    "title": "Restart level from pause leaves the game paused instead of running"
+   },
+   {
+    "index": 3,
+    "checks": [
+     "spikes-cost"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ10",
+    "minimal": true,
+    "seed": 7,
+    "steps": [
+     "goto:3,3"
+    ],
+    "title": "Spikes subtract 500 from score 100 and wrap to 65136"
+   },
+   {
+    "index": 4,
+    "checks": [
+     "one-move-per-tick"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ12",
+    "minimal": true,
+    "seed": 1234,
+    "steps": [
+     "dash-right+right"
+    ],
+    "title": "Dash and step pressed in same tick both move the player (3 tiles)"
+   },
+   {
+    "index": 5,
+    "checks": [
+     "score-range"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ10",
+    "minimal": false,
+    "seed": 7,
+    "steps": [
+     "goto:3,3",
+     "dash-right",
+     "pause+right",
+     "enter"
+    ],
+    "title": "Score goes negative (-300) after spikes underflow"
+   },
+   {
+    "index": 6,
+    "checks": [
+     "score-no-silent-drop"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": true,
+    "seed": 7,
+    "steps": [
+     "goto:1,3",
+     "dash-right",
+     "goto:7,3"
+    ],
+    "title": "Spikes at score 100 make score jump to 65136, then go negative (-300)"
+   },
+   {
+    "index": 7,
+    "checks": [
+     "visible-buttons-clickable",
+     "pause-menu-shows"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ07",
+    "minimal": true,
+    "seed": 1000,
+    "steps": [
+     "goto:4,5",
+     "right+dash-right+pause"
+    ],
+    "title": "Pause menu Resume button covered by toast, so it is not clickable"
+   },
+   {
+    "index": 8,
+    "checks": [
+     "hud-coins"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": false,
+    "seed": 1000,
+    "steps": [
+     "dash-down",
+     "pause+dash-down"
+    ],
+    "title": "HUD Coins stays at 0/5 after collecting a coin"
+   },
+   {
+    "index": 9,
+    "checks": [
+     "hud-time"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ04",
+    "minimal": false,
+    "seed": 99991,
+    "steps": [
+     "pause+right",
+     "click:btn-resume",
+     "right+pause"
+    ],
+    "title": "HUD Time lags one tick behind the timer"
+   },
+   {
+    "index": 10,
+    "checks": [
+     "spikes-cost"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ10",
+    "minimal": true,
+    "seed": 1000,
+    "steps": [
+     "dash-down",
+     "dash-right",
+     "pause+right"
+    ],
+    "title": "Spikes drive score to 65136 instead of clamping at 0"
+   },
+   {
+    "index": 11,
+    "checks": [
+     "score-range"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": true,
+    "seed": 42,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "use",
+     "use",
+     "goto:11,3",
+     "goto:11,8",
+     "goto:12,7"
+    ],
+    "title": "Score goes negative (-32746) on level completion after wrap"
+   },
+   {
+    "index": 12,
+    "checks": [
+     "score-no-silent-drop"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ10",
+    "minimal": false,
+    "seed": 7,
+    "steps": [
+     "goto:3,3",
+     "right",
+     "dash-left",
+     "dash-right",
+     "down+dash-right",
+     "pause+right"
+    ],
+    "title": "Score silently drops from 65136 to -300 on a coin pickup"
+   },
+   {
+    "index": 13,
+    "checks": [
+     "visible-buttons-clickable"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ08",
+    "minimal": true,
+    "seed": 42,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "use",
+     "use",
+     "goto:11,3",
+     "goto:12,7"
+    ],
+    "title": "Level-complete Finish button covered by overlay"
+   },
+   {
+    "index": 14,
+    "checks": [
+     "score-range"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": false,
+    "seed": 42,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "use",
+     "use",
+     "goto:11,3",
+     "goto:11,8",
+     "goto:12,7",
+     "enter"
+    ],
+    "title": "Score negative (-32746) at level completion, same wrap bug"
+   },
+   {
+    "index": 15,
+    "checks": [
+     "score-range"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": true,
+    "seed": 7,
+    "steps": [
+     "goto:3,3",
+     "dash-right",
+     "pause+right"
+    ],
+    "title": "Score shows -300 after spike wrap and coin pickup"
+   }
+  ]
+ },
+ {
+  "runId": "gqa1-workflow-r3",
+  "arm": "workflow",
+  "reports": 8,
+  "validRegressionTests": 8,
+  "wrongChecks": 0,
+  "falseReportsCaughtByControl": 0,
+  "falseReportsMissedByControl": 0,
+  "perReport": [
+   {
+    "index": 0,
+    "checks": [
+     "hud-coins"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": true,
+    "seed": 7,
+    "steps": [
+     "goto:3,1",
+     "dash-right"
+    ],
+    "title": "HUD Coins counter stuck at 0/5 after collecting a coin"
+   },
+   {
+    "index": 1,
+    "checks": [
+     "restart-resets"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ05",
+    "minimal": true,
+    "seed": 1000,
+    "steps": [
+     "pause",
+     "click:btn-restart"
+    ],
+    "title": "Restart level leaves the game paused instead of running"
+   },
+   {
+    "index": 2,
+    "checks": [
+     "spikes-cost-life-and-500"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ10",
+    "minimal": true,
+    "seed": 7,
+    "steps": [
+     "goto:2,3",
+     "dash-right"
+    ],
+    "title": "Spike hit makes score jump to 65136 instead of dropping by 500"
+   },
+   {
+    "index": 3,
+    "checks": [
+     "score-range"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": true,
+    "seed": 90817,
+    "steps": [
+     "dash-down",
+     "goto:4,1",
+     "dash-right",
+     "goto:1,3",
+     "dash-right",
+     "goto:4,5",
+     "dash-right",
+     "pause+down",
+     "esc",
+     "down",
+     "goto:1,8"
+    ],
+    "title": "Score goes negative (-200) and wraps to 65236 after spikes"
+   },
+   {
+    "index": 4,
+    "checks": [
+     "buttons-clickable"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ07",
+    "minimal": true,
+    "seed": 1234,
+    "steps": [
+     "goto:2,5",
+     "dash-right",
+     "pause+dash-right"
+    ],
+    "title": "Key-collected toast covers the pause menu Resume button"
+   },
+   {
+    "index": 5,
+    "checks": [
+     "hud-coins"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": false,
+    "seed": 7,
+    "steps": [
+     "goto:3,1",
+     "dash-right",
+     "pause"
+    ],
+    "title": "HUD Coins counter stays at 0/5 after collecting a coin"
+   },
+   {
+    "index": 6,
+    "checks": [
+     "score-range"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ10",
+    "minimal": false,
+    "seed": 7,
+    "steps": [
+     "goto:4,2",
+     "down+left",
+     "dash-down",
+     "dash-right+pause"
+    ],
+    "title": "Spike hit drives score negative and wraps it to 65136"
+   },
+   {
+    "index": 7,
+    "checks": [
+     "buttons-clickable"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ08",
+    "minimal": true,
+    "seed": 4242,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:10,5",
+     "goto:12,7"
+    ],
+    "title": "Level-complete Finish button covered by the time-bonus banner"
+   }
+  ]
+ },
+ {
+  "runId": "gqa1-workflow-r4",
+  "arm": "workflow",
+  "reports": 7,
+  "validRegressionTests": 7,
+  "wrongChecks": 0,
+  "falseReportsCaughtByControl": 0,
+  "falseReportsMissedByControl": 0,
+  "perReport": [
+   {
+    "index": 0,
+    "checks": [
+     "hud-keys-coins-time"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": true,
+    "seed": 12345,
+    "steps": [
+     "goto:4,5",
+     "dash-right"
+    ],
+    "title": "HUD coin counter stale after dash collects a coin"
+   },
+   {
+    "index": 1,
+    "checks": [
+     "pause-ignores-rest-of-tick"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ11",
+    "minimal": true,
+    "seed": 42,
+    "steps": [
+     "pause+right"
+    ],
+    "title": "Movement applied in the same tick as pause"
+   },
+   {
+    "index": 2,
+    "checks": [
+     "paused-menu-buttons",
+     "restart-resets-everything"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ05",
+    "minimal": true,
+    "seed": 99,
+    "steps": [
+     "pause+left",
+     "click:btn-restart"
+    ],
+    "title": "Restart leaves the game paused with the pause menu gone"
+   },
+   {
+    "index": 3,
+    "checks": [
+     "generic:frozen"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ05",
+    "minimal": true,
+    "seed": 777,
+    "steps": [
+     "pause",
+     "click:btn-restart"
+    ],
+    "title": "Game stuck paused with no visible menu after restart"
+   },
+   {
+    "index": 4,
+    "checks": [
+     "every-visible-button-clickable"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ08",
+    "minimal": true,
+    "seed": 7,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:7,4",
+     "goto:12,7"
+    ],
+    "title": "Level-complete Finish button covered by bonus banner and toast"
+   },
+   {
+    "index": 5,
+    "checks": [
+     "score-range"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": true,
+    "seed": 101,
+    "steps": [
+     "goto:3,3",
+     "goto:4,3"
+    ],
+    "title": "Spikes wrap score to 65136, then drive it negative (-300)"
+   },
+   {
+    "index": 6,
+    "checks": [
+     "hud-keys-coins-time"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": false,
+    "seed": 99991,
+    "steps": [
+     "right",
+     "dash-right",
+     "pause+dash-down"
+    ],
+    "title": "HUD coins counter stale after dash collects a coin"
+   }
+  ]
+ },
+ {
+  "runId": "gqa1-workflow-r5",
+  "arm": "workflow",
+  "reports": 9,
+  "validRegressionTests": 9,
+  "wrongChecks": 0,
+  "falseReportsCaughtByControl": 0,
+  "falseReportsMissedByControl": 0,
+  "perReport": [
+   {
+    "index": 0,
+    "checks": [
+     "score-range",
+     "score-no-drop"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ09",
+    "minimal": true,
+    "seed": 42,
+    "steps": [
+     "goto:7,1",
+     "goto:5,8",
+     "goto:1,8"
+    ],
+    "title": "Spikes corrupt score: 100 jumps to 65136, then goes negative (-300)"
+   },
+   {
+    "index": 1,
+    "checks": [
+     "restart-resets"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ05",
+    "minimal": true,
+    "seed": 7,
+    "steps": [
+     "pause",
+     "click:btn-restart"
+    ],
+    "title": "Restart level leaves the game paused instead of running"
+   },
+   {
+    "index": 2,
+    "checks": [
+     "hud-coins"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": true,
+    "seed": 99173,
+    "steps": [
+     "goto:3,1",
+     "dash-right"
+    ],
+    "title": "HUD coins shows 0/5 after collecting a coin"
+   },
+   {
+    "index": 3,
+    "checks": [
+     "hud-time"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ04",
+    "minimal": true,
+    "seed": 7,
+    "steps": [
+     "esc",
+     "click:btn-resume"
+    ],
+    "title": "HUD time stale after resuming from pause"
+   },
+   {
+    "index": 4,
+    "checks": [
+     "generic:frozen"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ05",
+    "minimal": true,
+    "seed": 7,
+    "steps": [
+     "pause+right",
+     "click:btn-restart"
+    ],
+    "title": "Restart level leaves the game paused with no dialog, so input is ignored"
+   },
+   {
+    "index": 5,
+    "checks": [
+     "buttons-clickable"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ07",
+    "minimal": true,
+    "seed": 42,
+    "steps": [
+     "goto:4,5",
+     "pause"
+    ],
+    "title": "Toast covers the pause menu's Resume button"
+   },
+   {
+    "index": 6,
+    "checks": [
+     "hud-coins"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": false,
+    "seed": 4242,
+    "steps": [
+     "dash-down",
+     "pause+left"
+    ],
+    "title": "HUD coins stays at 0/5 after a dash collects a coin"
+   },
+   {
+    "index": 7,
+    "checks": [
+     "hud-time"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ04",
+    "minimal": false,
+    "seed": 1234,
+    "steps": [
+     "right+pause",
+     "click:btn-resume",
+     "dash-right+esc"
+    ],
+    "title": "HUD timer lags one tick behind the game timer"
+   },
+   {
+    "index": 8,
+    "checks": [
+     "hud-coins"
+    ],
+    "failsOnB1": true,
+    "passesOnClean": true,
+    "oracle": "credited",
+    "bug": "GQ03",
+    "minimal": false,
+    "seed": 7,
+    "steps": [
+     "dash-right",
+     "dash-right",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right",
+     "dash-left",
+     "dash-down",
+     "dash-up",
+     "dash-up",
+     "dash-down",
+     "dash-down",
+     "goto:2,1",
+     "goto:5,5",
+     "goto:7,7",
+     "goto:1,4",
+     "goto:1,8"
+    ],
+    "title": "HUD coins not updated after a dash collects a coin"
+   }
+  ]
+ }
+]

@@ -1,0 +1,1 @@
+{"t":"2026-10-28T19:07:37.776Z","nodeKey":"construct","attempt":0,"ok":false,"costUsd":0,"latencyMs":4023,"usage":{"inputTokens":0,"outputTokens":0,"cacheReadTokens":0,"cacheWriteTokens":0},"error":"MODEL_RATE_LIMIT"}

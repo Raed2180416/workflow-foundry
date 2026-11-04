@@ -1,0 +1,859 @@
+{
+ "stats": {
+  "exploreTicks": 864,
+  "runs": 57,
+  "turns": 66,
+  "sessions": [
+   {
+    "session": 1,
+    "turns": 3,
+    "finished": true,
+    "runs": 2,
+    "notes": "Session 1 summary. Filed one bug: pause+<move> in the same tick still moves the player. The design says that once the game pauses, the rest of that tick's input is ignored, so a movement key pressed alongside pause should not move the player. Observed twice: pause+right from the start moved the player (1,1)->(2,1) with events [pause, move], and pause+left in run 1 also moved. The one-token repro pause+right is minimal, since plain pause does not move. Not yet tested: whether this also happens with the Escape key (esc+right), with dash variants, or with a movement key pressed before pause (right+pause). Other untested areas: dialog buttons, restart, spikes, enemy contact, the timer and time bonus, and the 999,999 score cap."
+   },
+   {
+    "session": 2,
+    "turns": 5,
+    "finished": true,
+    "runs": 4,
+    "notes": "Session 2 turn 5. Trace check: Dash stayed at 5 through both paused ticks and only started dropping on the resume tick, so the pause freeze holds. The timer also dropped on the Enter tick, which is consistent with that tick being a running tick once input is read; I am not filing it as a bug. Still untested: dash from (1,3) rightward over spikes at (3,3) (expect spikes hit, -1 life, -500 score), and dash into locked door D at (10,6) with no key (expect bump, dash unused). Next run: seed 7, tokens down down dash-right. No new bugs filed this turn."
+   },
+   {
+    "session": 3,
+    "turns": 9,
+    "finished": true,
+    "runs": 8,
+    "notes": "Confirmed on seed 1: the key at (4,5) is collected on the same tick the player walks into slime e1 at (4,5). The toast says \"Key collected\", but the player respawns at (1,1) with lives 3->2 and keys=0 (HUD Keys 0). The design says keys picked up in the same tick are kept. Not yet minimised: removing a token changes the enemy timing, so I did not verify a shorter list. Next ideas if continuing: Restart level, Enter on dialogs, button clicks, score cap, 5-life heart, timer reset at 0, Game over/Retry, spikes at (3,3) and (5,8), dash into a locked door, dash recharge boundary."
+   },
+   {
+    "session": 4,
+    "turns": 6,
+    "finished": true,
+    "runs": 5,
+    "notes": "Confirmed a dash-through-wall bug. Seed 7, [right, right, dash-down] from (3,1): (3,2) is a wall, so the dash should not happen (first tile solid, not used up). Instead the player moves through the wall to (3,3), which has spikes, loses a life, respawns at (1,1) and the score wraps to 65036. The 3-token repro is minimal: removing either right leaves the player on a different tile, and dash-right would put the cooldown on, so the dash-down would be a step. The score wrap is the already-filed spikes-at-0 bug (report 3); this report is the separate dash-collision bug. Next steps if continuing: test dash into walls from other directions, dash over gates and locked doors, and dash onto the exit."
+   },
+   {
+    "session": 5,
+    "turns": 8,
+    "finished": true,
+    "runs": 7,
+    "notes": "Session 5 turn 8: no new bug filed. Seed 50 trace re-checked: lever opens gate, gem/key/coin/heart pickups, hit+respawn with inv countdown, bumps and pause all matched the design. Toast durations look long (Key toast persists about 11 ticks) but the design gives no duration, so I did not file it. Still unchecked: timer reaching 0 (needs about 300 ticks), dash into a locked door, Finish/Play again flow, Restart level from pause, multi-key same-tick inputs, and score cap at 999,999. Found 4 bugs earlier in this session; those stay as filed."
+   },
+   {
+    "session": 6,
+    "turns": 12,
+    "finished": true,
+    "runs": 11,
+    "notes": "Session 6, turn 12: wrapping up. The seed 5150 run was interrupted by a slime hit on row 5 near (3,5), so the lever at (1,8) was never used and the gate stayed shut. Nothing new was confirmed this turn. Filed reports so far (4): pause+move still moves the player; a key collected on the same tick as a hit is lost on respawn; spikes at score 0 wrap to 65036; dash passes through a wall onto spikes beyond it. Untested: lever toggling, the gate and door interaction, Finish and Play again buttons, time bonus, and the score cap at 999,999. Those would need a route that avoids the row-5 slime, for example a timed crossing or a different seed."
+   },
+   {
+    "session": 7,
+    "turns": 8,
+    "finished": true,
+    "runs": 7,
+    "notes": "Session 7 wrap-up. Confirmed the gate-dash bug: with seed 3, goto:7,3 then dash-right passes the closed gate '=' at (8,3) and lands on (9,3) with gate still shut. Replayed in runs 5 and 7 (identical). Design section 3 says a dash stops before any closed gate. Not yet tried: dash into locked door D, heart at 5 lives, Enter/Escape during gameover, finishing the level via exit (12,7). Those are candidates for a future session."
+   },
+   {
+    "session": 8,
+    "turns": 7,
+    "finished": true,
+    "runs": 6,
+    "notes": "Session 8, turn 7. Last run (seed 1, 32 ticks) reached the lever at (1,8), toggled the gate to open (HUD and state agreed), collected a gem (+5000, HUD matched), and reached (8,3) with score 5300. The one anomaly, a key collected on the same tick as a slime hit being lost on respawn, is already filed. Nothing new is confirmed, so I am filing no new reports. Still unexplored: timer expiry (300 to 0 life loss and reset), score cap at 999,999, the locked door at (10,6) with keys, the exit and completion dialogs, Retry and Play again buttons, and swap-collision with enemies. Those would need a fresh session with a tick budget to spare. Stopping here with 6 reports filed."
+   },
+   {
+    "session": 9,
+    "turns": 8,
+    "finished": true,
+    "runs": 7,
+    "notes": "Session 9, turn 8. Ending the session here with no new reports. The seed-5 completion run never got the key: a slime at (3,5) blocked the route to the key at (4,5), so the door, exit, Finish and Play again steps could not be checked. Six bugs are already filed (pause+movement race, key lost on respawn, spikes score wrap, two dash-through-solid collisions, restart leaving the game paused). Untested ideas for a future session: the complete dialog's score and time bonus, Finish -> victory, Play again reset, Retry after gameover, spikes during invulnerability, and the timer reaching 0."
+   }
+  ],
+  "stop": "usd",
+  "filedAt": [
+   {
+    "session": 1,
+    "turn": 3
+   },
+   {
+    "session": 3,
+    "turn": 9
+   },
+   {
+    "session": 4,
+    "turn": 3
+   },
+   {
+    "session": 4,
+    "turn": 6
+   },
+   {
+    "session": 7,
+    "turn": 8
+   },
+   {
+    "session": 8,
+    "turn": 4
+   }
+  ],
+  "played": [
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "right",
+     "down",
+     "dash-right",
+     "pause+left",
+     "wait",
+     "enter",
+     "use",
+     "dash-down",
+     "dash-left",
+     "click:btn-resume",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ],
+    "session": 1
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "pause+right"
+    ],
+    "session": 1
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "dash-right",
+     "dash-down",
+     "dash-left",
+     "dash-up",
+     "dash-right",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ],
+    "session": 2
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:12,7"
+    ],
+    "session": 2
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "pause",
+     "enter",
+     "wait"
+    ],
+    "session": 2
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "dash-right",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "wait"
+    ],
+    "session": 2
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "goto:6,1",
+     "dash-right",
+     "dash-right",
+     "dash-down",
+     "pause",
+     "dash-left",
+     "esc",
+     "dash-left",
+     "up",
+     "down"
+    ],
+    "session": 3
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "goto:4,5",
+     "pause",
+     "enter",
+     "dash-left",
+     "dash-right",
+     "dash-right",
+     "dash-right",
+     "dash-right"
+    ],
+    "session": 3
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:10,6",
+     "goto:12,7"
+    ],
+    "session": 3
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "wait",
+     "wait"
+    ],
+    "session": 3
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "wait",
+     "goto:7,3",
+     "dash-right",
+     "dash-right",
+     "pause",
+     "use",
+     "esc"
+    ],
+    "session": 3
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "goto:10,5",
+     "down",
+     "down",
+     "goto:12,7"
+    ],
+    "session": 3
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ],
+    "session": 3
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ],
+    "session": 3
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "pause",
+     "wait",
+     "wait",
+     "esc",
+     "dash-down",
+     "enter",
+     "wait",
+     "pause+esc"
+    ],
+    "session": 4
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "pause",
+     "wait",
+     "wait",
+     "esc",
+     "dash-down"
+    ],
+    "session": 4
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-down"
+    ],
+    "session": 4
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-down"
+    ],
+    "session": 4
+   },
+   {
+    "seed": 7,
+    "steps": [
+     "right",
+     "right",
+     "dash-down"
+    ],
+    "session": 4
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "pause",
+     "esc",
+     "dash-right"
+    ],
+    "session": 5
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait"
+    ],
+    "session": 5
+   },
+   {
+    "seed": 11,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "wait"
+    ],
+    "session": 5
+   },
+   {
+    "seed": 25,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "goto:3,3",
+     "use",
+     "wait"
+    ],
+    "session": 5
+   },
+   {
+    "seed": 25,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "goto:8,3",
+     "use",
+     "pause",
+     "esc",
+     "enter",
+     "wait"
+    ],
+    "session": 5
+   },
+   {
+    "seed": 50,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "goto:8,3",
+     "use",
+     "wait"
+    ],
+    "session": 5
+   },
+   {
+    "seed": 50,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:8,3",
+     "goto:1,8",
+     "use",
+     "wait",
+     "goto:8,3",
+     "wait"
+    ],
+    "session": 5
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "right",
+     "right",
+     "pause",
+     "click:btn-restart",
+     "up",
+     "esc",
+     "enter",
+     "goto:6,1",
+     "use"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "dash-right",
+     "dash-right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "dash-up",
+     "dash-right"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "use",
+     "wait",
+     "goto:3,1",
+     "goto:8,3",
+     "goto:1,8",
+     "use"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "use",
+     "use",
+     "goto:7,3",
+     "right"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 99,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "use",
+     "use",
+     "goto:7,3",
+     "right"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:3,8",
+     "goto:4,8",
+     "goto:1,8",
+     "use",
+     "goto:3,1",
+     "goto:8,3"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:4,5",
+     "goto:10,5",
+     "down",
+     "down",
+     "goto:12,7"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:10,5",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right",
+     "wait",
+     "wait",
+     "enter",
+     "wait"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 1234,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 5150,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:7,5",
+     "goto:7,3",
+     "goto:9,3",
+     "goto:9,5",
+     "goto:10,5",
+     "down",
+     "down",
+     "goto:12,7"
+    ],
+    "session": 6
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "dash-right",
+     "dash-down",
+     "use",
+     "pause",
+     "enter",
+     "dash-left",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right"
+    ],
+    "session": 7
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "use",
+     "pause",
+     "enter",
+     "use"
+    ],
+    "session": 7
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "pause",
+     "click:btn-resume",
+     "dash-right",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right"
+    ],
+    "session": 7
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "right",
+     "right",
+     "dash-right",
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ],
+    "session": 7
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "goto:7,3",
+     "dash-right"
+    ],
+    "session": 7
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right",
+     "dash-right"
+    ],
+    "session": 7
+   },
+   {
+    "seed": 3,
+    "steps": [
+     "goto:7,3",
+     "dash-right"
+    ],
+    "session": 7
+   },
+   {
+    "seed": 100,
+    "steps": [
+     "right",
+     "dash-right",
+     "wait",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "wait",
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "wait",
+     "esc",
+     "esc",
+     "dash-down",
+     "wait",
+     "pause+down",
+     "wait"
+    ],
+    "session": 8
+   },
+   {
+    "seed": 100,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "wait"
+    ],
+    "session": 8
+   },
+   {
+    "seed": 100,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ],
+    "session": 8
+   },
+   {
+    "seed": 100,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait",
+     "esc",
+     "right"
+    ],
+    "session": 8
+   },
+   {
+    "seed": 100,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "goto:4,3",
+     "goto:7,3",
+     "use",
+     "wait"
+    ],
+    "session": 8
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "goto:7,3",
+     "use",
+     "wait",
+     "goto:8,3",
+     "wait"
+    ],
+    "session": 8
+   },
+   {
+    "seed": 5,
+    "steps": [
+     "pause",
+     "enter",
+     "wait",
+     "pause",
+     "esc",
+     "wait"
+    ],
+    "session": 9
+   },
+   {
+    "seed": 5,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "wait",
+     "use",
+     "wait"
+    ],
+    "session": 9
+   },
+   {
+    "seed": 5,
+    "steps": [
+     "dash-right",
+     "wait",
+     "wait",
+     "pause",
+     "wait",
+     "esc",
+     "wait",
+     "wait"
+    ],
+    "session": 9
+   },
+   {
+    "seed": 5,
+    "steps": [
+     "dash-right",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ],
+    "session": 9
+   },
+   {
+    "seed": 5,
+    "steps": [
+     "pause",
+     "enter+right",
+     "wait"
+    ],
+    "session": 9
+   },
+   {
+    "seed": 5,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:10,5",
+     "down",
+     "goto:12,7",
+     "click:btn-next",
+     "click:btn-again"
+    ],
+    "session": 9
+   },
+   {
+    "seed": 5,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:4,5",
+     "goto:10,5",
+     "down",
+     "goto:12,7",
+     "click:btn-next",
+     "click:btn-again"
+    ],
+    "session": 9
+   }
+  ]
+ }
+}

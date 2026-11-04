@@ -1,0 +1,13 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "Coins HUD stays 0/5 after dash collects a coin",
+  "observed": "After right then dash-right on seed 1, state shows coins=1 and score=100 at (4,1), and the HUD reads Score 100 but Coins 0/5.",
+  "expected": "Collecting a coin by dashing should update the HUD to Coins 1/5, matching the state.",
+  "seed": 1,
+  "steps": [
+   "right",
+   "dash-right"
+  ]
+ }
+]

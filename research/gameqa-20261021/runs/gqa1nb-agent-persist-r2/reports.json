@@ -1,0 +1,13 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level from pause menu leaves game paused",
+  "observed": "After pausing and clicking Restart level, mode stays 'paused', timeLeft stays frozen at 300 and the game does not advance on subsequent ticks.",
+  "expected": "Restart level puts the level back to its starting state and the game is running again straight away (mode 'playing').",
+  "seed": 1,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ }
+]

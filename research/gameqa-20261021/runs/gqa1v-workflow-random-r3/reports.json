@@ -1,0 +1,116 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter stays at 0/5 after collecting a coin",
+  "observed": "After dash-down collects one coin, state.coins is 1 but the HUD reads 'Coins 0/5'.",
+  "expected": "The HUD always shows the current coin count, so after collecting one coin it should read 'Coins 1/5'.",
+  "seed": 438262,
+  "steps": [
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike damage corrupts score: jumps to 65136 and goes negative",
+  "observed": "Score went 100 -> 65136 on a dash that hit spikes (lives 3->2), then to -300 and -200 later. Score is negative, and a spike hit raised it.",
+  "expected": "Spikes subtract 500 points floored at 0, so score should go 100 -> 0. Score must stay within 0..999999 and coins must only add points.",
+  "seed": 321024,
+  "steps": [
+   "dash-down",
+   "down",
+   "up",
+   "right",
+   "dash-right",
+   "goto:6,3"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level leaves the game paused instead of running",
+  "observed": "After pause then click btn-restart, the level resets (score 0, lives 3) but mode stays 'paused' and the pause menu remains open. Nothing progresses over 30 further ticks.",
+  "expected": "Restart puts the level back to its starting state and the game is running again straight away (mode 'playing', no pause menu).",
+  "seed": 32193,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Two dash keys in one tick move the player 3 tiles",
+  "observed": "dash-right+dash-right in one tick moved the player from (1,1) to (4,1): a 2-tile dash plus a step, with events dash, move, coin.",
+  "expected": "At most one move (a step or a dash) per tick. Of the movement keys pressed in a tick only the last counts, so the player should move 2 tiles at most.",
+  "seed": 662830,
+  "steps": [
+   "dash-right+dash-right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Movement key pressed after pause in the same tick still moves the player",
+  "observed": "pause+up: the game paused, but the player still moved from (1,2) to (1,1) with a move event and timer change in that tick.",
+  "expected": "Pause takes effect immediately. The rest of that tick's input is ignored and nothing moves that tick.",
+  "seed": 436594,
+  "steps": [
+   "down",
+   "pause+up"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Toast covers the pause menu's Resume button",
+  "observed": "At tick 24, after the player collects a key-toast ('Key collected - find the locked door') and the game is paused, the pause dialog's btn-resume reports top=false. Something else (the toast) sits on top of it, so a click on Resume would not reach it.",
+  "expected": "Every visible button must be clickable. Nothing may cover the Resume button while the pause menu is open (section 7).",
+  "seed": 255266,
+  "steps": [
+   "up",
+   "wait",
+   "pause",
+   "esc",
+   "wait",
+   "click:btn-restart",
+   "esc",
+   "esc",
+   "click:btn-retry",
+   "down",
+   "wait",
+   "right",
+   "click:btn-again",
+   "click:btn-resume",
+   "right",
+   "goto:7,5",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter stays at 0/5 after collecting a coin",
+  "observed": "At tick 0 the player collects a coin (state coins=1, score=100), but the HUD still shows 'Coins 0/5'.",
+  "expected": "The HUD always shows the current values (section 8), so after collecting one coin it should read 'Coins 1/5'.",
+  "seed": 246127,
+  "steps": [
+   "dash-down+dash-left",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes at score 0 wrap the score to 65036, which then goes negative",
+  "observed": "At tick 7 the player at score 0 hits spikes. The score becomes 65036 instead of staying at 0. Later a coin (+100) plus a spike-free step lead to score -400 at tick 9, so the score is negative.",
+  "expected": "Spikes cost 500 points but the score stops at 0 and never goes below it. The score must stay within 0..999,999, so it should read 0 after the spikes and never be negative.",
+  "seed": 321024,
+  "steps": [
+   "dash-right",
+   "left",
+   "down",
+   "dash-down",
+   "down",
+   "up",
+   "dash-down",
+   "dash-right",
+   "down",
+   "down+use",
+   "esc"
+  ]
+ }
+]

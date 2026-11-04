@@ -1,0 +1,607 @@
+{
+ "summary": {
+  "reports": 19,
+  "bugs": 12,
+  "foundMin": 10,
+  "foundMinClass": 10,
+  "foundAny": 10,
+  "falseReports": 0,
+  "duplicates": 9,
+  "precision": 1,
+  "nondeterministic": 0,
+  "replays": 282
+ },
+ "perBug": {
+  "GQ01": {
+   "class": "collision",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    0
+   ]
+  },
+  "GQ02": {
+   "class": "collision",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    5
+   ]
+  },
+  "GQ03": {
+   "class": "state_desync",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    6,
+    14,
+    17
+   ]
+  },
+  "GQ04": {
+   "class": "state_desync",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    7,
+    15
+   ]
+  },
+  "GQ05": {
+   "class": "softlock",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    2,
+    3,
+    4
+   ]
+  },
+  "GQ06": {
+   "class": "softlock",
+   "foundAny": false,
+   "foundMin": false,
+   "foundMinClass": false,
+   "reports": []
+  },
+  "GQ07": {
+   "class": "ui_overlap",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    12
+   ]
+  },
+  "GQ08": {
+   "class": "ui_overlap",
+   "foundAny": false,
+   "foundMin": false,
+   "foundMinClass": false,
+   "reports": []
+  },
+  "GQ09": {
+   "class": "score_overflow",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    10,
+    11
+   ]
+  },
+  "GQ10": {
+   "class": "score_overflow",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    1,
+    13,
+    16,
+    18
+   ]
+  },
+  "GQ11": {
+   "class": "input_race",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    9
+   ]
+  },
+  "GQ12": {
+   "class": "input_race",
+   "foundAny": true,
+   "foundMin": true,
+   "foundMinClass": true,
+   "reports": [
+    8
+   ]
+  }
+ },
+ "perReport": [
+  {
+   "index": 0,
+   "verdict": "credited",
+   "bug": "GQ01",
+   "classMatch": true,
+   "fired": [
+    "GQ01"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 2,
+   "primitives": 2
+  },
+  {
+   "index": 1,
+   "verdict": "credited",
+   "bug": "GQ10",
+   "classMatch": true,
+   "fired": [
+    "GQ03",
+    "GQ10"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 3,
+   "primitives": 3
+  },
+  {
+   "index": 2,
+   "verdict": "credited",
+   "bug": "GQ05",
+   "classMatch": false,
+   "fired": [
+    "GQ05"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    0
+   ],
+   "steps": 3,
+   "primitives": 3,
+   "duplicate": true
+  },
+  {
+   "index": 3,
+   "verdict": "credited",
+   "bug": "GQ05",
+   "classMatch": true,
+   "fired": [
+    "GQ05"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 2,
+   "primitives": 2
+  },
+  {
+   "index": 4,
+   "verdict": "credited",
+   "bug": "GQ05",
+   "classMatch": true,
+   "fired": [
+    "GQ05"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 2,
+   "primitives": 2,
+   "duplicate": true
+  },
+  {
+   "index": 5,
+   "verdict": "credited",
+   "bug": "GQ02",
+   "classMatch": true,
+   "fired": [
+    "GQ03",
+    "GQ02"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 9,
+   "primitives": 11
+  },
+  {
+   "index": 6,
+   "verdict": "credited",
+   "bug": "GQ03",
+   "classMatch": true,
+   "fired": [
+    "GQ03"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 1,
+   "primitives": 1
+  },
+  {
+   "index": 7,
+   "verdict": "credited",
+   "bug": "GQ04",
+   "classMatch": true,
+   "fired": [
+    "GQ04"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 2,
+   "primitives": 2
+  },
+  {
+   "index": 8,
+   "verdict": "credited",
+   "bug": "GQ12",
+   "classMatch": true,
+   "fired": [
+    "GQ03",
+    "GQ12"
+   ],
+   "symptom": "position",
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 1,
+   "primitives": 1
+  },
+  {
+   "index": 9,
+   "verdict": "credited",
+   "bug": "GQ11",
+   "classMatch": true,
+   "fired": [
+    "GQ11"
+   ],
+   "symptom": "position",
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 2,
+   "primitives": 4
+  },
+  {
+   "index": 10,
+   "verdict": "credited",
+   "bug": "GQ09",
+   "classMatch": true,
+   "fired": [
+    "GQ01",
+    "GQ10",
+    "GQ09"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 5,
+   "primitives": 5
+  },
+  {
+   "index": 11,
+   "verdict": "credited",
+   "bug": "GQ09",
+   "classMatch": true,
+   "fired": [
+    "GQ01",
+    "GQ10",
+    "GQ09"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 5,
+   "primitives": 5,
+   "duplicate": true
+  },
+  {
+   "index": 12,
+   "verdict": "credited",
+   "bug": "GQ07",
+   "classMatch": true,
+   "fired": [
+    "GQ03",
+    "GQ06",
+    "GQ07"
+   ],
+   "deterministic": true,
+   "minimal": true,
+   "removable": [],
+   "steps": 19,
+   "primitives": 19
+  },
+  {
+   "index": 13,
+   "verdict": "credited",
+   "bug": "GQ10",
+   "classMatch": true,
+   "fired": [
+    "GQ03",
+    "GQ07",
+    "GQ12",
+    "GQ10"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    55,
+    56,
+    57,
+    58,
+    59,
+    62,
+    63,
+    70
+   ],
+   "steps": 72,
+   "primitives": 73,
+   "duplicate": true
+  },
+  {
+   "index": 14,
+   "verdict": "credited",
+   "bug": "GQ03",
+   "classMatch": true,
+   "fired": [
+    "GQ03",
+    "GQ12"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    1
+   ],
+   "steps": 2,
+   "primitives": 2,
+   "duplicate": true
+  },
+  {
+   "index": 15,
+   "verdict": "credited",
+   "bug": "GQ04",
+   "classMatch": true,
+   "fired": [
+    "GQ04"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    2
+   ],
+   "steps": 3,
+   "primitives": 3,
+   "duplicate": true
+  },
+  {
+   "index": 16,
+   "verdict": "credited",
+   "bug": "GQ10",
+   "classMatch": true,
+   "fired": [
+    "GQ01",
+    "GQ10",
+    "GQ09"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    1,
+    3,
+    4,
+    5
+   ],
+   "steps": 6,
+   "primitives": 6,
+   "duplicate": true
+  },
+  {
+   "index": 17,
+   "verdict": "credited",
+   "bug": "GQ03",
+   "classMatch": true,
+   "fired": [
+    "GQ03",
+    "GQ01",
+    "GQ10",
+    "GQ12"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41
+   ],
+   "steps": 42,
+   "primitives": 41,
+   "duplicate": true
+  },
+  {
+   "index": 18,
+   "verdict": "credited",
+   "bug": "GQ10",
+   "classMatch": true,
+   "fired": [
+    "GQ01",
+    "GQ10",
+    "GQ09",
+    "GQ04"
+   ],
+   "deterministic": true,
+   "minimal": false,
+   "removable": [
+    0,
+    1,
+    3,
+    5,
+    6,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64
+   ],
+   "steps": 65,
+   "primitives": 62,
+   "duplicate": true
+  }
+ ]
+}

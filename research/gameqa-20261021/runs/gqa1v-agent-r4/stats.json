@@ -1,0 +1,28 @@
+{
+ "stats": {
+  "exploreTicks": 8,
+  "runs": 2,
+  "finished": true,
+  "notes": "Confirmed: a single tick 'pause+right' from a fresh game (seed 42) pauses the game (mode=paused, pause menu shown) but the player still moves from (1,1) to (2,1), with events [pause, move]. Design section 2 says pause takes effect immediately and the rest of that tick's input is ignored, so the player should stay at (1,1). Replayed from a fresh game, and the single-token form is already the shortest reproduction. Budget is nearly spent, so I am finishing here. Not explored: enemies, spikes, dashes, dialogs, and score caps.",
+  "played": [
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "dash-down",
+     "pause+left",
+     "wait",
+     "esc",
+     "down",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "pause+right"
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,66 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level leaves the game paused instead of running",
+  "observed": "After esc (pause) and click:btn-restart, the event 'restart' fires and score/lives/timer reset, but mode stays 'paused' and the game does not resume.",
+  "expected": "Restart level resets the level and the game is running again straight away (section 7), so mode should be 'playing'.",
+  "seed": 35207,
+  "steps": [
+   "esc",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD Coins stays 0/5 after collecting a coin during a dash",
+  "observed": "dash-down collects a coin (coins=1, Score 100), but the HUD reads 'Coins 0/5'.",
+  "expected": "The HUD always shows the current coin count, so it should read 'Coins 1/5'.",
+  "seed": 350384,
+  "steps": [
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes wrap score to 65136 instead of subtracting 500 and clamping at 0",
+  "observed": "Score 100 steps onto spikes and jumps to 65136 (lives 2, respawn). This looks like a 16-bit unsigned wraparound of 100-500.",
+  "expected": "Spikes cost 500 points with the score never going below 0, so score should be 0 with one life lost.",
+  "seed": 896886,
+  "steps": [
+   "dash-down",
+   "pause",
+   "esc+right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score goes negative (-300) after a coin pickup following a spikes wrap",
+  "observed": "Score is 65136 after spikes, then becomes -300 when a coin is collected on the next dash.",
+  "expected": "Score is never negative and only spikes or a restart may reduce it. Spikes should have clamped the score at 0, and a coin should add 100.",
+  "seed": 149767,
+  "steps": [
+   "down",
+   "down",
+   "dash-right",
+   "left",
+   "right",
+   "up",
+   "wait",
+   "wait",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Toast covers the pause menu Resume button",
+  "observed": "With the 'Key collected' toast visible, pausing shows btn-resume with top=false, so a click at its centre does not reach the button.",
+  "expected": "Every visible button must be clickable, so nothing (including a toast) may cover Resume.",
+  "seed": 210425,
+  "steps": [
+   "wait",
+   "goto:7,5",
+   "esc"
+  ]
+ }
+]

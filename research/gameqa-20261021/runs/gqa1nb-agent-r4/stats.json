@@ -1,0 +1,55 @@
+{
+ "stats": {
+  "exploreTicks": 35,
+  "runs": 4,
+  "finished": true,
+  "notes": "Confirmed one bug so far: spikes at (3,3) push the score below zero and it wraps to 65136 (65536-400) instead of clamping at 0. Reproduced on seed 42 with down, down, right, right. Score goes 0 -> 100 (coin at (1,3)) -> spikes -500 -> 65136. Pause/resume input was checked and behaved as specified in run 4. Not yet probed: enemy collision and swap, timer-0 respawn, exit/finish flow, gates and levers, heart at 5 lives, restart, dash through locked doors, button visibility, and HUD versus state. Stopping here because the tick budget is limited and the one confirmed bug is solid.",
+  "played": [
+   {
+    "seed": 42,
+    "steps": [
+     "goto:1,8",
+     "pause",
+     "right",
+     "enter",
+     "right",
+     "dash-right",
+     "dash-right",
+     "dash-up",
+     "use",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "dash-down",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "pause+right",
+     "wait",
+     "enter",
+     "right"
+    ]
+   }
+  ]
+ }
+}

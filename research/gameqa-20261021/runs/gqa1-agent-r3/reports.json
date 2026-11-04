@@ -1,0 +1,15 @@
+[
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes make score wrap around to 65136 instead of flooring at 0",
+  "observed": "After collecting a coin (score 100) and then stepping on spikes at (3,3), score becomes 65136 (100 - 500 wrapped around) and lives drop 3 -> 2.",
+  "expected": "Spikes cost 500 points but score never goes below 0, so score should be 0 after the spike hit (100 - 500 floored at 0).",
+  "seed": 1,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ }
+]

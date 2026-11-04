@@ -1,0 +1,16 @@
+import { chromium } from 'playwright';
+import { openSession } from '../../beds/gameqa-web/driver.mjs';
+const t0 = Date.now();
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
+console.log('launch ms', Date.now() - t0);
+const s = await openSession(browser, { flags: ['spike_wrap', 'multi_move'], oracle: true });
+const o = await s.reset(7);
+console.log(JSON.stringify(o.state).slice(0, 400));
+let t1 = Date.now();
+const r = await s.replayWithProbes(7, ['down', 'down', 'right', 'right']);
+console.log('fired', JSON.stringify(r.fired), 'final score', r.final.state.score, r.final.hud.score, Date.now() - t1, 'ms');
+t1 = Date.now();
+const steps = Array.from({ length: 1000 }, (_, i) => ['up', 'down', 'left', 'right', 'wait'][i % 5]);
+const r2 = await s.run(steps, { detail: 'each' });
+console.log('1000 ticks each-detail ms', Date.now() - t1, 'bytes', JSON.stringify(r2).length);
+await s.close(); await browser.close();

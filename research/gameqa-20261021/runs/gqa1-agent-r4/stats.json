@@ -1,0 +1,46 @@
+{
+ "stats": {
+  "exploreTicks": 16,
+  "runs": 4,
+  "finished": true,
+  "notes": "Stopping here to stay within the small USD budget. One bug confirmed and minimized: a dash that collects a coin updates state (coins=1, score=100) but the HUD still shows Coins 0/5. Minimal repro is 2 tokens: right, dash-right. Removing either token removes the coin pickup, so it is minimal. Step collection (down,down) updates the HUD correctly, so the desync is specific to dash pickup. Not explored: pause/resume edge cases, dash recharge at 0, spikes, enemy contact/swap, lever/gate, key/door, heart cap, timer expiry, dialog buttons and overlap checks.",
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "down",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "dash-right",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right"
+    ]
+   }
+  ]
+ }
+}

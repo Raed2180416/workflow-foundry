@@ -1,0 +1,27 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level from pause menu leaves game paused",
+  "observed": "After pausing and clicking Restart level, the state stays in mode paused with the pause menu still open, instead of resuming play.",
+  "expected": "Restart level puts the level back to its starting state and the game is running again straight away.",
+  "seed": 1,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes with score below 500 wrap score to 65136 instead of flooring at 0",
+  "observed": "Stepping onto spikes with score 0-499 makes the score wrap to 65136 (negative value wrapped to unsigned 16-bit style).",
+  "expected": "Spikes cost 500 points but the score stops at 0 and never goes negative.",
+  "seed": 1,
+  "steps": [
+   "right",
+   "dash-right",
+   "down",
+   "down",
+   "left"
+  ]
+ }
+]

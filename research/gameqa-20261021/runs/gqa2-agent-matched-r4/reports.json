@@ -1,0 +1,84 @@
+[
+ {
+  "bug_class": "input_race",
+  "title": "Movement key pressed in the same tick as pause still moves the player",
+  "observed": "Pressing pause+right from a fresh game moved the player from (1,1) to (2,1) in the same tick the game paused (events: pause, move). Same with pause+left in an earlier run (player moved (5,1)->(4,1)).",
+  "expected": "Pause takes effect immediately; the rest of that tick's input is ignored and nothing else happens in that tick. The player should stay at (1,1).",
+  "seed": 42,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Key collected on the same tick as a slime hit is lost on respawn",
+  "observed": "Player steps onto the key at (4,5) while slime e1 is there. Toast 'Key collected' appears, but the hit sends the player back to (1,1) with lives 3->2 and keys=0 (HUD Keys 0).",
+  "expected": "Keys picked up in the same tick are kept after the respawn (section 5), so keys should be 1.",
+  "seed": 1,
+  "steps": [
+   "down",
+   "down",
+   "down",
+   "down",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes at score 0 wrap score to 65036 instead of clamping at 0",
+  "observed": "Score goes 0 -> 65036 (65536 - 500, 16-bit wrap) when the player hits spikes with score 0. HUD also shows 65036.",
+  "expected": "Score never goes negative; spikes subtract 500 but the score stops at 0, so it should stay 0.",
+  "seed": 7,
+  "steps": [
+   "dash-right",
+   "wait",
+   "wait",
+   "wait",
+   "wait",
+   "wait",
+   "wait",
+   "pause",
+   "wait",
+   "wait",
+   "esc",
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a wall and lands on spikes beyond it",
+  "observed": "From (3,1) with dash ready, dash-down moved the player through the wall at (3,2) to spikes at (3,3). Events: dash, spikes, respawn. Lives 3->2, score wrapped to 65036, player respawned at (1,1), Dash 5.",
+  "expected": "The wall at (3,2) is the first tile of the dash and is solid, so the dash should not happen: the player bumps, stays at (3,1), no life lost, dash not used up (Dash ready).",
+  "seed": 7,
+  "steps": [
+   "right",
+   "right",
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a closed gate and lands beyond it",
+  "observed": "From (7,3) with the gate at (8,3) shut, dash-right moves the player to (9,3). The gate stays shut and the dash crosses it.",
+  "expected": "A dash stops before the first solid tile. A closed gate is solid, so the dash should stop at (7,3) without moving or using up the dash.",
+  "seed": 3,
+  "steps": [
+   "goto:7,3",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "softlock",
+  "title": "Restart level leaves the game paused; timer and movement frozen",
+  "observed": "After pausing and clicking Restart level, the state is mode=paused with event [restart]; the next tick with no input stays paused, timer stays at 300, and the pause menu is still open.",
+  "expected": "Per section 7, Restart level puts the level back to its starting state and the game is running again straight away (mode playing, timer ticking).",
+  "seed": 100,
+  "steps": [
+   "pause",
+   "click:btn-restart",
+   "wait"
+  ]
+ }
+]

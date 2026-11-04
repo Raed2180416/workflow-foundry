@@ -1,0 +1,9 @@
+{
+ "stats": {
+  "failed": "construct",
+  "error": {
+   "code": "MODEL_RATE_LIMIT",
+   "message": "claude CLI rate limited or overloaded: success (HTTP 429)"
+  }
+ }
+}

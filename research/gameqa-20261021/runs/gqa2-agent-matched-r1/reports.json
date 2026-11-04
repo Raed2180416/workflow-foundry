@@ -1,0 +1,63 @@
+[
+ {
+  "bug_class": "state_desync",
+  "title": "Key collected in the same tick as a hit is lost on respawn",
+  "observed": "Player steps onto key at (4,5) while enemy is there; key collected and hit in the same tick; respawn at (1,1) with keys=0, HUD Keys 0, while toast still reads 'Key collected - find the locked door'.",
+  "expected": "Keys should be 1 after respawn, since items collected in the same tick are kept (section 5).",
+  "seed": 42,
+  "steps": [
+   "down",
+   "down",
+   "down",
+   "down",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Movement is applied in the same tick as Pause when pause is pressed first",
+  "observed": "Tick with pause+right: the game paused and the player still moved from (1,1) to (2,1) in that tick (events: pause, move). The rest of the tick's input was not ignored.",
+  "expected": "Pause takes effect immediately; the keys after it in that tick are ignored and nothing else happens in that tick, so the player stays at (1,1) and no move occurs.",
+  "seed": 7,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes with score below 500 wrap the score to about 65136 instead of clamping at 0",
+  "observed": "Score 100 then stepping onto spikes: score became 65136 (lives 2->1). Looks like 100-500 = -400 wrapped to 65536-400.",
+  "expected": "Spikes cost 500 points but score never goes below 0, so the score should be 0 after the hit.",
+  "seed": 7,
+  "steps": [
+   "goto:4,5",
+   "goto:10,5",
+   "dash-down",
+   "down"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a wall when the wall is the first tile of the dash",
+  "observed": "From (7,1) with dash ready, dash-right moves the player to (9,1), over the wall at (8,1). The event is [dash], the HUD shows Dash 5, and the dash is used up.",
+  "expected": "The dash stops before the first solid tile. If the first tile is solid, the dash does not happen and is not used up. The player stays at (7,1) with Dash ready.",
+  "seed": 5,
+  "steps": [
+   "goto:7,1",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level leaves the game paused with the pause menu still open",
+  "observed": "After pausing and clicking btn-restart, the state resets (score 0, lives 3, time 300, player at (1,1)) but mode stays 'paused', dialog is still the pause menu, and the game does not advance.",
+  "expected": "Per design section 7, Restart Level puts the level back to its start and the game is running again straight away (mode 'playing', pause menu closed).",
+  "seed": 3,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ }
+]

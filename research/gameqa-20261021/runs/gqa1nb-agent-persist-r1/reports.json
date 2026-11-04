@@ -1,0 +1,37 @@
+[
+ {
+  "bug_class": "collision",
+  "title": "Dash passes through a wall tile",
+  "observed": "A dash down from (1,1) after two steps right moved the player through a solid wall tile.",
+  "expected": "Dash stops before the first solid tile (section 3).",
+  "seed": 42,
+  "steps": [
+   "right",
+   "right",
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes at score 0 wrap the score to 65036 instead of clamping at 0",
+  "observed": "Hitting spikes with score 0 shows score 65036 (wrapped negative value) instead of 0.",
+  "expected": "Score never goes below 0; spikes subtract 500 but clamp at 0.",
+  "seed": 42,
+  "steps": [
+   "right",
+   "right",
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level from pause leaves the game paused",
+  "observed": "After pausing and clicking Restart level, the mode remains paused instead of running.",
+  "expected": "Restart level puts the level back to start and the game is running again straight away.",
+  "seed": 42,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ }
+]
