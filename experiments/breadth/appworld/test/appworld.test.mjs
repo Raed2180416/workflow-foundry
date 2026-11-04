@@ -251,6 +251,38 @@ print(json.dumps([b.is_write(w[0]), b.is_write({'method': 'post', 'url': '/super
   assert.deepEqual(out, [true, false, false, 'update_note', { k: 1, api: 'simple_note.update_note', field: 'pinned', value: true }, null]);
 });
 
+test('mutant prelude: replays send the body with its access token (prepare() pops it from the dict it is given)', () => {
+  // a fake requester whose write methods pop access_token like appworld's requester.prepare and record what they sent
+  const code = `import sys, json; sys.path.insert(0, ${JSON.stringify(L.HERE)}); import bridge as b
+class R:
+    def __init__(self): self.sent = []
+    def _call(self, m, url, data=None, raise_on_failure=None, **kw):
+        d = data or {}
+        tok = d.pop('access_token', None)
+        self.sent.append([m, url, tok, dict(d)])
+        class Resp: status_code = 200 if (tok or url.startswith('/supervisor/')) else 401
+        return Resp()
+    def _post(self, url, data=None, **kw): return self._call('post', url, data, **kw)
+    def _put(self, url, data=None, **kw): return self._call('put', url, data, **kw)
+    def _patch(self, url, data=None, **kw): return self._call('patch', url, data, **kw)
+    def _delete(self, url, data=None, **kw): return self._call('delete', url, data, **kw)
+out = {}
+for op in ('repeat-last-write', 'touch-other-record'):
+    ns = {'requester': R()}
+    exec(b.MUTANT_PRELUDE + b.MUTANT_OPS[op], ns)
+    rq = ns['requester']
+    rq._post('/venmo/payments/7', data={'access_token': 'T', 'amount': 5})
+    rq._post('/supervisor/message', data={'message': 'done'})
+    out[op] = rq.sent
+print(json.dumps(out))`;
+  const out = JSON.parse(execFileSync('/usr/bin/python3', ['-I', '-c', code], { encoding: 'utf8' }).trim());
+  // repeat: the gold write, its authenticated replay, then completion
+  assert.deepEqual(out['repeat-last-write'], [['post', '/venmo/payments/7', 'T', { amount: 5 }], ['post', '/venmo/payments/7', 'T', { amount: 5 }], ['post', '/supervisor/message', null, { message: 'done' }]]);
+  // touch: the gold write, then the first neighbour (id 8) with the token, accepted, then completion
+  assert.deepEqual(out['touch-other-record'].slice(0, 2), [['post', '/venmo/payments/7', 'T', { amount: 5 }], ['post', '/venmo/payments/8', 'T', { amount: 5 }]]);
+  assert.equal(out['touch-other-record'].length, 3);
+});
+
 // ---- committed evidence matches the committed code ------------------------------------------------------------------
 test('parity.json and bg8.json: produced by the committed code and passing', { skip: !existsSync(path.join(L.RESEARCH, 'parity.json')) && 'parity.json not written yet' }, () => {
   const pj = L.readJson(path.join(L.RESEARCH, 'parity.json'));

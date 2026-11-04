@@ -323,9 +323,14 @@ def match_api(docs, method, url):
 # The mutant code is plain AppWorld code: a prefix chunk that wraps the requester's write methods for this world, then
 # the gold chunk. Writes are counted with is_write's rule; the supervisor's complete_task (POST /supervisor/message) is
 # the hook for the after-the-fact operators, so every mutation lands BEFORE the task is completed (both paths stop
-# executing at completion).
+# executing at completion). A write is recorded with a COPY of its body taken before the call and every replay sends a
+# fresh copy: the requester's prepare() pops access_token out of the body it is given (requester.py `prepare`), so a
+# replay of the same dict goes out unauthenticated and fails (the first version of these operators did exactly that,
+# which made every repeat-last-write mutant a silent no-op).
 MUTANT_PRELUDE = '''
 _fm_state = {"n": 0, "writes": [], "done": False}
+def _fm_copy(d):
+    return dict(d) if isinstance(d, dict) else d
 _fm_orig = {m: getattr(requester, "_" + m) for m in ("post", "put", "patch", "delete")}
 def _fm_is_write(m, url):
     return m in ("post", "put", "patch", "delete") and not url.startswith("/supervisor/") and "/auth/" not in url
@@ -334,8 +339,9 @@ def _fm_wrap(m):
         if _fm_is_write(m, url):
             _fm_state["n"] += 1
             data = _fm_on_write(m, url, data, _fm_state["n"])
+            saved = dict(data) if isinstance(data, dict) else data
             r = _fm_orig[m](url, data=data, **kw)
-            _fm_state["writes"].append((m, url, data))
+            _fm_state["writes"].append((m, url, saved))
             return r
         if m == "post" and url.startswith("/supervisor/message") and not _fm_state["done"]:
             _fm_state["done"] = True
@@ -355,7 +361,8 @@ def _fm_before_complete():
     if _fm_state["writes"]:
         m, url, data = _fm_state["writes"][-1]
         try:
-            _fm_orig[m](url, data=data, raise_on_failure=False)
+            r = _fm_orig[m](url, data=_fm_copy(data), raise_on_failure=False)
+            _fm_state["replayStatus"] = getattr(r, "status_code", None)
         except Exception:
             pass
 ''',
@@ -391,7 +398,7 @@ def _fm_before_complete():
             if u2 in touched:
                 continue
             try:
-                r = _fm_orig[m](u2, data=data, raise_on_failure=False)
+                r = _fm_orig[m](u2, data=_fm_copy(data), raise_on_failure=False)
             except Exception:
                 continue
             if 200 <= getattr(r, "status_code", 0) < 300:
