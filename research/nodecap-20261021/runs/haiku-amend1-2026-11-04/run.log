@@ -1,0 +1,96 @@
+T01 U r1: pass turns=3 $0.00084 total=$0.0008 replay:same
+T01 A r1: pass turns=4 $0.00146 total=$0.0023 replay:same
+T01 C r1: fail NODE_STUCK turns=1 $0.00033 total=$0.0026 replay:same
+T01 B r1: pass turns=3 $0.00158 total=$0.0042
+T02 A r1: pass turns=3 $0.00093 total=$0.0051 replay:same
+T02 C r1: fail NODE_STUCK turns=2 $0.00055 total=$0.0057 replay:same
+T02 B r1: pass turns=3 $0.00147 total=$0.0072
+T02 U r1: pass turns=3 $0.00083 total=$0.0080 replay:same
+T03 C r1: fail NODE_STUCK turns=1 $0.00039 total=$0.0084 replay:same
+T03 B r1: pass turns=6 $0.00275 total=$0.0111
+T03 U r1: pass turns=6 $0.00184 total=$0.0130 replay:same
+T03 A r1: pass turns=6 $0.00200 total=$0.0150 replay:same
+T04 B r1: pass turns=3 $0.00153 total=$0.0165
+T04 U r1: pass turns=3 $0.00088 total=$0.0174 replay:same
+T04 A r1: fail NODE_STUCK turns=3 $0.00108 total=$0.0185 replay:same
+T04 C r1: fail NODE_STUCK turns=2 $0.00078 total=$0.0192 replay:same
+T05 U r1: pass turns=2 $0.00060 total=$0.0198 replay:same
+T05 A r1: pass turns=2 $0.00079 total=$0.0206 replay:same
+T05 C r1: fail NODE_STUCK turns=1 $0.00038 total=$0.0210 replay:same
+T05 B r1: pass turns=2 $0.00133 total=$0.0223
+T06 A r1: pass turns=4 $0.00127 total=$0.0236 replay:same
+T06 C r1: fail NODE_ANSWER_INVALID turns=2 $0.00052 total=$0.0241 replay:same
+T06 B r1: pass turns=3 $0.00172 total=$0.0258
+T06 U r1: pass turns=3 $0.00105 total=$0.0269 replay:same
+T07 C r1: fail NODE_ANSWER_INVALID turns=1 $0.00036 total=$0.0273 replay:same
+T07 B r1: pass turns=2 $0.00151 total=$0.0288
+T07 U r1: pass turns=2 $0.00077 total=$0.0295 replay:same
+T07 A r1: pass turns=3 $0.00108 total=$0.0306 replay:same
+T08 B r1: pass turns=7 $0.00417 total=$0.0348
+T08 U r1: pass turns=6 $0.00242 total=$0.0372 replay:same
+T08 A r1: pass turns=6 $0.00278 total=$0.0400 replay:same
+T08 C r1: fail NODE_STUCK turns=1 $0.00030 total=$0.0403 replay:same
+T09 U r1: fail NODE_STUCK turns=1 $0.00044 total=$0.0407 replay:same
+T09 A r1: pass turns=7 $0.00310 total=$0.0438 replay:same
+T09 C r1: fail NODE_STUCK turns=1 $0.00037 total=$0.0442 replay:same
+T09 B r1: pass turns=5 $0.00252 total=$0.0467
+T10 A r1: fail LOOP_EXHAUSTED turns=12 $0.00794 total=$0.0546 replay:same
+T10 C r1: fail NODE_STUCK turns=4 $0.00146 total=$0.0561 replay:same
+T10 B r1: pass turns=10 $0.00678 total=$0.0629
+T10 U r1: pass turns=8 $0.00381 total=$0.0667 replay:same
+T11 C r1: pass turns=1 $0.00033 total=$0.0670 replay:same
+T11 B r1: fail succeeded turns=6 $0.00301 total=$0.0700
+T11 U r1: pass turns=1 $0.00019 total=$0.0702 replay:same
+T11 A r1: fail succeeded turns=6 $0.00193 total=$0.0722 replay:same
+T12 B r1: fail NODE_ANSWER_INVALID turns=2 $0.00137 total=$0.0735
+T12 U r1: pass turns=2 $0.00072 total=$0.0742 replay:same
+T12 A r1: pass turns=3 $0.00096 total=$0.0752 replay:same
+T12 C r1: fail NODE_STUCK turns=1 $0.00034 total=$0.0756 replay:same
+T01 C r2: fail NODE_STUCK turns=1 $0.00034 total=$0.0759 replay:same
+T01 B r2: pass turns=3 $0.00160 total=$0.0775
+T01 U r2: pass turns=3 $0.00090 total=$0.0784 replay:same
+T01 A r2: pass turns=4 $0.00133 total=$0.0797 replay:same
+T02 B r2: pass turns=3 $0.00142 total=$0.0811
+T02 U r2: fail NODE_STUCK turns=1 $0.00040 total=$0.0815 replay:same
+T02 A r2: pass turns=3 $0.00089 total=$0.0824 replay:same
+T02 C r2: fail NODE_STUCK turns=2 $0.00065 total=$0.0831 replay:same
+T03 U r2: fail NODE_STUCK turns=1 $0.00046 total=$0.0835 replay:same
+T03 A r2: pass turns=6 $0.00192 total=$0.0855 replay:same
+T03 C r2: fail NODE_STUCK turns=1 $0.00040 total=$0.0859 replay:same
+T03 B r2: pass turns=6 $0.00284 total=$0.0887
+T04 A r2: fail NODE_STUCK turns=4 $0.00188 total=$0.0906 replay:same
+T04 C r2: fail NODE_STUCK turns=2 $0.00066 total=$0.0913 replay:same
+T04 B r2: pass turns=3 $0.00178 total=$0.0930
+T04 U r2: pass turns=3 $0.00085 total=$0.0939 replay:same
+T05 C r2: fail NODE_STUCK turns=1 $0.00038 total=$0.0943 replay:same
+T05 B r2: pass turns=2 $0.00131 total=$0.0956
+T05 U r2: pass turns=2 $0.00063 total=$0.0962 replay:same
+T05 A r2: pass turns=2 $0.00073 total=$0.0969 replay:same
+T06 B r2: pass turns=3 $0.00149 total=$0.0984
+T06 U r2: pass turns=3 $0.00086 total=$0.0993 replay:same
+T06 A r2: pass turns=4 $0.00128 total=$0.1006 replay:same
+T06 C r2: fail succeeded turns=2 $0.00050 total=$0.1011 replay:same
+T07 U r2: fail NODE_STUCK turns=2 $0.00085 total=$0.1019 replay:same
+T07 A r2: pass turns=3 $0.00121 total=$0.1031 replay:same
+T07 C r2: fail NODE_ANSWER_INVALID turns=1 $0.00035 total=$0.1035 replay:same
+T07 B r2: fail NODE_ANSWER_INVALID turns=2 $0.00155 total=$0.1050
+T08 A r2: pass turns=7 $0.00323 total=$0.1082 replay:same
+T08 C r2: fail NODE_STUCK turns=1 $0.00032 total=$0.1086 replay:same
+T08 B r2: pass turns=7 $0.00450 total=$0.1131
+T08 U r2: pass turns=6 $0.00250 total=$0.1156 replay:same
+T09 C r2: fail NODE_STUCK turns=1 $0.00033 total=$0.1159 replay:same
+T09 B r2: fail NODE_ANSWER_INVALID turns=4 $0.00215 total=$0.1180
+T09 U r2: pass turns=4 $0.00114 total=$0.1192 replay:same
+T09 A r2: pass turns=7 $0.00315 total=$0.1223 replay:same
+T10 B r2: pass turns=10 $0.00688 total=$0.1292
+T10 U r2: fail NODE_STUCK turns=9 $0.00488 total=$0.1341 replay:same
+T10 A r2: pass turns=11 $0.00722 total=$0.1413 replay:same
+T10 C r2: fail NODE_STUCK turns=3 $0.00106 total=$0.1424 replay:same
+T11 U r2: pass turns=1 $0.00033 total=$0.1427 replay:same
+T11 A r2: fail succeeded turns=6 $0.00203 total=$0.1447 replay:same
+T11 C r2: pass turns=1 $0.00020 total=$0.1449 replay:same
+T11 B r2: fail succeeded turns=6 $0.00318 total=$0.1481
+T12 A r2: pass turns=2 $0.00058 total=$0.1487 replay:same
+T12 C r2: fail NODE_STUCK turns=1 $0.00033 total=$0.1490 replay:same
+T12 B r2: fail NODE_ANSWER_INVALID turns=2 $0.00150 total=$0.1505
+T12 U r2: pass turns=2 $0.00061 total=$0.1511 replay:same
