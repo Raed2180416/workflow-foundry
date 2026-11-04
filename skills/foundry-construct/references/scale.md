@@ -105,8 +105,10 @@ large workflow that does not beat both is not optimal, however thorough it looks
 - `map.maxItems` is at most 1,000, so nest maps for more.
 - `budget.maxConcurrency` is at most 16.
 - A sandboxed `code` node has no network and a 10 s default timeout; set `timeoutMs` for heavy steps.
-- Values pass between nodes as inline JSON; a `code` node's output is capped at 512 KB. With no data handle yet,
-  bulk data and plans beyond about 10,000 units travel as references (path or key plus content hash) read in slices.
+- Values pass as inline JSON (a `code` output is capped at 512 KB); bulk data travels as blob handles. The host
+  registers `data.import` (one file, untrusted), `data.inventory` (files as NDJSON ids) and `data.split` (views of at
+  most 2,000). Read a view in `code` or `task` args with `{"$read": {"$ref": "item"}, "as": "lines"}`, give an agent one
+  with `render: "blob-text"`, and pass the inventory handle to a `ledger` verify.
 - In-node creation of a sub-workflow at run time is not built yet. Plan the decomposition at construction time,
   and use a bounded `loop` to re-split.
 

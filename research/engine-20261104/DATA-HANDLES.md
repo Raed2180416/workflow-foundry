@@ -1,7 +1,24 @@
 # Data handles (engine gap 1): design draft, 2026-11-04
 
-**Status:** design. Step 1, the store with views (`src/blobs.mjs`, `tests/blobs.test.mjs`), is built on branch
-`data-handles`; the rest is not. This addresses research/skillpack-20261104/ANSWER.md gap 1.
+**Status (2026-11-04, late):** built on branch `data-handles`, with tests and mutation checks:
+- the store with views (`src/blobs.mjs`, in the engine identity);
+- capability output labels (the label prerequisite below);
+- the producers `data.import`, `data.split` and `data.inventory` (`src/data-capabilities.mjs`);
+- the `$read` consumer in task and code args;
+- `render: "blob-text"` agent inputs;
+- ledger inventories from a handle.
+
+Tests: `tests/blobs.test.mjs`, `tests/capability-output-label.test.mjs` and `tests/data-handles.test.mjs`. Every
+safeguard has a mutant the tests kill (13 mutants in all).
+
+**Not built yet:**
+- `verify-run` BLOB_MISSING/BLOB_CORRUPT checks, and blob bundling in `export`;
+- a per-node sandbox input cap above 2 MB;
+- store garbage collection.
+
+A real large-input run (the 300 GB case) has not been measured.
+
+This addresses research/skillpack-20261104/ANSWER.md gap 1.
 
 ## Problem
 Values pass between nodes as inline JSON:
