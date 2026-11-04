@@ -1,13 +1,11 @@
 // The ledger's mechanical checks ($0): verbatim quotes, coverage list, duplicates, ids, context, the user's edits.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { indexText, buildLedger, applyEdits, isNormative, contextQuotes, quoteHashOf, KIND_NAMES } from '../ledger.mjs';
+import { frozenSpecE } from '../eval-e8.mjs';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const SPEC = readFileSync(path.join(here, '../../../beds/ebed/e8/spec/SPEC-E.md'), 'utf8');
+// The frozen SPEC-E (git 48535bb): the line numbers and sha256 below are that text's (the working-tree file has moved).
+const SPEC = frozenSpecE();
 const L162 = 'If a batch comes back `partial`, resubmit only the failed items, with their original keys, inside the same window.';
 
 test('quotes locate verbatim (whitespace-normalised), or without markdown marks (flagged), or not at all', () => {

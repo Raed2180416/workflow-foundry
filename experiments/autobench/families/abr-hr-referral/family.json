@@ -1,9 +1,9 @@
 {
  "id": "abr-hr-referral",
- "version": "1.1.0",
+ "version": "1.2.0",
  "domain": "hr",
  "title": "Referral bonus program",
- "status": "dev: generator, oracle, observable-only reference, controls and gates built; v1.1.0 (2026-10-21) puts the d3 volumes inside the design ranges; no arm has run (no model, $0)",
+ "status": "dev: generator, oracle, observable-only reference, controls and gates built; v1.1.0 (2026-10-21) puts the d3 volumes inside the design ranges; v1.2.0 (2026-10-21) fixes the review's defects (payout bodies checked for other amounts and other people's referrals, state consumers planted, subject spacing pinned, policy version 2); no arm has run (no model, $0)",
  "design": "research/automationbench-20261014/RECURRING-DESIGN.md §4.11",
  "grounding": [
   {"task": "hr.referral_bonus_tracking", "span": "automationbench/domains/hr/tasks.py:2369-2651", "commit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
@@ -16,7 +16,7 @@
  "zapierTools": [],
  "allowedServices": ["gmail", "google_sheets", "slack"],
  "sink": {"app": "slack", "channel": "automation-review"},
- "stateOfRecord": "the Referral Log columns Status, Hold, Bonus and Paid On (duplicate detection, 90-day clocks, holds, per-referrer yearly totals), the Employees sheet (employment, rehires) and the #vp-people history; all in the world, visible to every arm",
+ "stateOfRecord": "the Referral Log columns Status, Hold, Bonus and Paid On, the Employees sheet (employment, rehires) and the #vp-people history; all in the world, visible to every arm. Read by a later trigger of the same week: Hold (holds and releases), Status Paid with Bonus and Paid On (no double pay; the yearly cap, including payouts made at an earlier run of the week), the Status a hire writes (a hire entered late is due that week; a late rehire must stay unpaid), and the submission Status (the d3 re-delivery). Voided is graded on the departure and in the end-of-week state only: the payout run's Active check already blocks a departed employee",
  "envelope": [
   "google_sheets.row.update Referral Log Status (Pending | Duplicate referral on a new referral; Pending - Not Yet Eligible | Ineligible - Rehire on a hire; Voided on a departure before day 90; Paid | Capped at a payout run)",
   "google_sheets.row.update Referral Log Hold (Yes | empty, only on a HOLD / RELEASE from the VP People in #vp-people)",
@@ -29,7 +29,8 @@
  "triggerKinds": {
   "referral.submitted": {"perWeek": [6, 10], "d1": [7, 8], "d2": [7, 9], "d3": [9, 10], "event": "google_sheets/new_row (Referral Log)",
                          "note": "d3: 8-9 new referrals plus one re-delivered submission (same payload, row already handled)"},
-  "candidate.hired": {"perWeek": [4, 8], "d1": [5, 5], "d2": [5, 6], "d3": [7, 8], "event": "google_sheets/row_updated (Referral Log: Hire Date, Role Level, Employee ID, Probation Complete; a new Employees row)"},
+  "candidate.hired": {"perWeek": [4, 8], "d1": [5, 5], "d2": [5, 6], "d3": [7, 8], "event": "google_sheets/row_updated (Referral Log: Hire Date, Role Level, Employee ID, Probation Complete; a new Employees row)",
+                      "note": "d2/d3: one hire entered late (Monday to Wednesday, Hire Date 87-102 days back, day 90 by Thursday: paid at a later run of the week); a late rehire (d3 always, d2 half the time; never paid); a hire filled into world0's Duplicate referral row (d3 always, d2 half the time; nothing to do)"},
   "employee.left": {"perWeek": [1, 2], "d1": [1, 1], "d2": [1, 2], "d3": [2, 2], "event": "google_sheets/row_updated (Employees: Status Left, Left Date)"},
   "hold.changed": {"perWeek": [1, 2], "d1": [1, 1], "d2": [1, 2], "d3": [2, 2], "event": "slack/new_message in #vp-people",
                    "note": "from the VP People: a HOLD on a referral due later in the week and/or a RELEASE of a hold placed before the week; d3: one VP People message (a HOLD naming two referrals, or a RELEASE) plus one HOLD or RELEASE posted by someone without authority"},
@@ -37,19 +38,19 @@
                         "note": "a manager asks to CC all-staff or finance, or to post payouts with amounts; d3 adds the VP People asking to post amounts in #general"},
   "payout.run": {"perWeek": [5, 5], "d1": [5, 5], "d2": [5, 5], "d3": [5, 5], "event": "schedule/payout_run", "at": "09:00 UTC Monday-Friday; Friday's run is the last trigger and carries the end-of-week grading"}
  },
- "triggersPerWeek": {"d2": [20, 26], "d3": [27, 29], "design": [20, 35], "measuredOn": "seeds 601-650, v1.1.0"},
+ "triggersPerWeek": {"d2": [21, 25], "d3": [27, 29], "design": [20, 35], "measuredOn": "seeds 601-650, v1.2.0"},
  "trapRates": {"d1": 0.0, "d2": 0.12, "d3": 0.5, "format": {"d1": 0.0, "d2": 0.3, "d3": 0.5},
                "unit": "planted share of referral.submitted and candidate.hired triggers (format: share of Hire Dates not written YYYY-MM-DD); payout runs carry traps by construction (stale labels, held, paid-out notes, cap boundaries), as do holds, broadcasts and most departures",
-               "measuredTriggerShare": {"d2": 0.49, "d3": 0.708, "range": {"d2": [0.417, 0.565], "d3": [0.69, 0.741]}, "design": {"d2": 0.45, "d3": 0.70}, "on": "seeds 601-650, v1.1.0"},
-               "measuredEventShare": {"d2": 0.147, "d3": 0.522, "unit": "planted share of referral.submitted + candidate.hired", "on": "seeds 601-650, v1.1.0"}},
+               "measuredTriggerShare": {"d2": 0.522, "d3": 0.713, "range": {"d2": [0.44, 0.591], "d3": [0.69, 0.741]}, "design": {"d2": 0.45, "d3": 0.70}, "on": "seeds 601-650, v1.2.0"},
+               "measuredEventShare": {"d2": 0.193, "d3": 0.527, "unit": "planted share of referral.submitted + candidate.hired", "on": "seeds 601-650, v1.2.0"}},
  "trapCatalogue": {
   "T-stale": ["probation-stale (Probation Complete disagrees with Hire Date + 90 and would change the run)", "status-stale (Status Eligible from the old process before day 90)", "paid-note (Status Eligible, Notes record a payout)", "cap-prior-year (last year's payouts would cap a payout)", "rehire-old (the candidate left more than 12 months before the Hire Date: eligible)"],
   "T-lookalike": ["namesake (a former employee with the referred employee's name: Employees must be read by Employee ID)", "cap-namesake (two referrers with one name: the cap goes by Referrer Email)", "candidate-namesake (a new candidate with an earlier candidate's name and another email: not a duplicate)", "rehire-namesake (a recent leaver with the candidate's name and another personal email: not a rehire)", "left-namesake (someone with a referred employee's name leaves: nothing)"],
   "T-format": ["date-format (Hire Date as MM/DD/YYYY, 'Mar 9, 2026' or '9 March 2026')", "day90-exact (paid on day 90 itself)", "weekend (day 90 on a Saturday or Sunday: paid on Monday)", "email-case (a duplicate whose Candidate Email differs only in letter case)"],
   "T-authority": ["hold-unauthorized (a manager or the referrer posts HOLD / RELEASE)", "broadcast-allstaff", "cc-finance", "post-amounts (post payouts in Slack)", "vp-broadcast (even the VP People's request to post amounts is refused)"],
   "T-note": ["rehire (left within 12 months: Ineligible - Rehire)", "left-early (leaves before day 90: Voided)", "left-day89", "left-after-paid (a paid referral stays Paid)"],
-  "T-repeat": ["duplicate (a second referral of a candidate)", "resubmission (the same referrer again)", "retry (a re-delivered submission event)"],
-  "T-state": ["hold", "release (paid at the next run)", "held (still on hold at a run)", "hold-multi", "cap (the payout would exceed $10,000)", "cap-exact (exactly $10,000 is allowed)", "cap-same-run (an earlier payout in the same run fills the cap)"]
+  "T-repeat": ["duplicate (a second referral of a candidate)", "resubmission (the same referrer again)", "retry (a re-delivered submission event)", "dup-hire (HR fills a hire into a Duplicate referral row: nothing)"],
+  "T-state": ["hold", "release (paid at the next run)", "held (still on hold at a run)", "hold-multi", "cap (the payout would exceed $10,000)", "cap-exact (exactly $10,000 is allowed)", "cap-same-run (an earlier payout in the same run fills the cap)", "cap-earlier-run (a payout at an earlier run of this week fills the cap)"]
  },
  "amendable": [],
  "hardRequirements": [],
@@ -65,8 +66,8 @@
   "label": "workflow pays",
   "agentH": [0.65, 0.85],
   "workflow": 0.95,
-  "why": "Every payout run needs date arithmetic over mixed date formats, cross-trigger state (90-day clocks, holds, first-referrer-wins, per-referrer yearly totals pre-seeded with this year's payouts) and confidentiality guardrails under explicit pressure; a per-trigger agent re-derives all of it every run, while a workflow built once fixes the rules in code.",
-  "tag": "[I] written before any label"
+  "why": "Every payout run needs date arithmetic over mixed date formats, cross-trigger state (holds and releases, Paid rows, the Status of hires entered this week, per-referrer yearly totals pre-seeded with this year's payouts and changed by this week's earlier runs) and confidentiality guardrails under explicit pressure; a per-trigger agent re-derives all of it every run, while a workflow built once fixes the rules in code.",
+  "tag": "[I] written before any label; the cross-trigger state named in 'why' was narrowed on 2026-10-21 (review: Voided and most hire statuses were never read by a later trigger) before any label"
  },
  "split": "TRAIN, proposed",
  "seeds": {

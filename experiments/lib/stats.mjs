@@ -386,3 +386,245 @@ export function reuseSamplingPlan(clusters, { n: planN = 181, c = 4, rho = RHO_R
   }
   return { rule: 'plan', decision: 'no-decision', reason: `effective n ${last.nEff.toFixed(1)} < plan n ${planN}`, planN, c, ...last };
 }
+
+// ------------------------------------------------------------------------------------------------ group-sequential (A4, B7)
+// research/compromises-20261021/FIXES.md §2 actions 6 and 7 (register A4, B7). One sequential core for both: the
+// AutomationBench dev design (experiments/autobench/sequential.mjs: looks over batches of new tasks, paired at k = 1)
+// and the build-level rule (experiments/lib/stats-builds.mjs: looks over blocks of builds). $0, pure, seeded.
+//
+// Boundaries are two-sided and symmetric, for a statistic that is standard normal under H0 at each look with
+// independent increments (the canonical joint distribution; Jennison & Turnbull 2000, ch. 2-3). At information fractions
+// t_1 < … < t_K = 1 the test stops at the first look k with |Z_k| ≥ z_k:
+//   O'Brien-Fleming (classical)  z_k = C / sqrt(t_k)    (C_B(5, 0.05) = 2.040: nominal .000005/.0013/.0085/.0226/.0413)
+//   Pocock                       z_k = c                (C_P(5, 0.05) = 2.413: nominal .0158 at every look)
+// C (c) is solved so that P(any crossing | H0) = alpha, by numerical integration of the score process S_k = Z_k·sqrt(t_k)
+// over the continuation region (Armitage, McPherson & Rowe 1969; Simpson's rule on a grid). `nominal[k]` is the two-sided
+// p-value threshold at look k: a test whose p-value is below it crosses. Exact discrete tests (McNemar, permutation) used
+// with these nominal levels are conservative or close to nominal; experiments/autobench/test/sequential.test.mjs and
+// experiments/lib/stats-builds.test.mjs measure the realised type-I error by simulation.
+//
+// Also here: the Beta-mixture e-value for paired binary outcomes (anytime-valid; reported, never the decision), the
+// paired sign-flip permutation test (the co-primary partial-credit test of PREREG-AB-v1-AMEND-1) and paired Bayes
+// intervals (Dirichlet for binary pairs, Bayesian bootstrap for continuous differences; Bowyer et al. 2025 2503.01747:
+// exact/Bayes intervals, not CLT bars, at n < 200).
+
+// erfc with fractional error < 1.2e-7 everywhere (Numerical Recipes §6.2 erfcc), so tail probabilities near 1e-6 keep
+// their relative precision (the A&S 7.1.26 form in experiments/jit/stats.mjs is accurate in absolute terms only).
+function erfc(x) {
+  const z = Math.abs(x), t = 1 / (1 + 0.5 * z);
+  const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806
+    + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+  return x >= 0 ? r : 2 - r;
+}
+/** Standard normal CDF and upper tail with small relative error in the tails. */
+export const normalCdf = x => 0.5 * erfc(-x / Math.SQRT2);
+export const normalUpper = x => 0.5 * erfc(x / Math.SQRT2);
+const normalPdf = x => Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+/** Two-sided p-value of a standard normal statistic. */
+export const twoSidedP = z => Math.min(1, 2 * normalUpper(Math.abs(z)));
+
+function infoFractions(looks, fractions) {
+  if (!(Number.isInteger(looks) && looks >= 1)) throw new Error(`group-sequential: looks must be a positive integer, got ${looks}`);
+  const t = fractions ? [...fractions] : Array.from({ length: looks }, (_, i) => (i + 1) / looks);
+  if (t.length !== looks) throw new Error(`group-sequential: ${t.length} fractions for ${looks} looks`);
+  for (let i = 0; i < t.length; i++) if (!(t[i] > 0 && (i === 0 || t[i] > t[i - 1]))) throw new Error('group-sequential: fractions must be positive and strictly increasing');
+  const last = t[t.length - 1];
+  return t.map(x => x / last);
+}
+const simpson = (n, h) => { const w = new Float64Array(n); for (let i = 0; i < n; i++) w[i] = ((i === 0 || i === n - 1) ? 1 : i % 2 ? 4 : 2) * h / 3; return w; };
+
+/**
+ * P(|Z_k| ≥ z[k] at some look k | H0) for two-sided boundaries z at information fractions t (t[K-1] = 1), and the
+ * crossing probability at each look. z[k] = Infinity means no stopping at look k. grid: Simpson points per look (odd).
+ */
+export function crossingProbability(z, t, { grid = 201 } = {}) {
+  const K = z.length, n = grid % 2 ? grid : grid + 1;
+  if (t.length !== K) throw new Error('crossingProbability: z and t differ in length');
+  const half = k => (Number.isFinite(z[k]) ? z[k] : 8) * Math.sqrt(t[k]);   // continuation half-width on the score scale
+  const perLook = [Number.isFinite(z[0]) ? 2 * normalUpper(z[0]) : 0];
+  let a = half(0), h = (2 * a) / (n - 1), w = simpson(n, h);
+  let xs = Float64Array.from({ length: n }, (_, i) => -a + i * h);
+  let f = xs.map(s => normalPdf(s / Math.sqrt(t[0])) / Math.sqrt(t[0]));
+  for (let k = 1; k < K; k++) {
+    const sd = Math.sqrt(t[k] - t[k - 1]), ak = half(k);
+    let p = 0;
+    if (Number.isFinite(z[k])) for (let i = 0; i < n; i++) p += w[i] * f[i] * (normalUpper((ak - xs[i]) / sd) + normalUpper((ak + xs[i]) / sd));
+    perLook.push(p);
+    if (k === K - 1) break;
+    const hk = (2 * ak) / (n - 1), ys = Float64Array.from({ length: n }, (_, j) => -ak + j * hk), g = new Float64Array(n);
+    for (let j = 0; j < n; j++) { let s = 0; for (let i = 0; i < n; i++) s += w[i] * f[i] * normalPdf((ys[j] - xs[i]) / sd); g[j] = s / sd; }
+    xs = ys; f = g; w = simpson(n, hk);
+  }
+  return { total: perLook.reduce((s, x) => s + x, 0), perLook };
+}
+
+const boundaryCache = new Map();
+function solveBoundary(type, looks, { alpha = 0.05, fractions = null, grid = 201 } = {}) {
+  if (!(alpha > 0 && alpha < 1)) throw new Error(`group-sequential: alpha must be in (0, 1), got ${alpha}`);
+  const t = infoFractions(looks, fractions);
+  const key = JSON.stringify([type, alpha, t, grid]);
+  if (boundaryCache.has(key)) return boundaryCache.get(key);
+  const shape = type === 'obrien-fleming' ? t.map(x => 1 / Math.sqrt(x)) : t.map(() => 1);
+  let lo = 0.1, hi = 12;
+  for (let i = 0; i < 48; i++) {
+    const mid = (lo + hi) / 2;
+    if (crossingProbability(shape.map(s => mid * s), t, { grid }).total > alpha) lo = mid; else hi = mid;
+  }
+  const constant = (lo + hi) / 2, z = shape.map(s => constant * s);
+  const cp = crossingProbability(z, t, { grid });
+  let cum = 0;
+  const out = Object.freeze({
+    type, alpha, looks, fractions: t, constant, z, nominal: z.map(twoSidedP), alphaAtLook: cp.perLook,
+    cumulativeAlpha: cp.perLook.map(p => (cum += p)), totalAlpha: cp.total,
+  });
+  boundaryCache.set(key, out);
+  return out;
+}
+/** Classical O'Brien-Fleming boundary: z_k = C/sqrt(t_k), two-sided total alpha. looks: K; fractions: optional t_1..t_K. */
+export const obrienFlemingBoundary = (looks, opts = {}) => solveBoundary('obrien-fleming', looks, opts);
+/** Pocock boundary: one constant z at every look, two-sided total alpha. */
+export const pocockBoundary = (looks, opts = {}) => solveBoundary('pocock', looks, opts);
+/** Does a two-sided p-value cross the boundary at look k (1-based)? Strict: p < nominal. */
+export const crossesAt = (boundary, look, p) => p < boundary.nominal[look - 1];
+
+/**
+ * Beta(1, 1)-mixture e-value for b "A only" and c "B only" discordant pairs against H0: P(A only | discordant) = 1/2:
+ * E = ∫ q^b (1 − q)^c dq / 2^-n = 2^n / ((n + 1)·C(n, b)), n = b + c. Computed after every pair it is a nonnegative
+ * martingale under H0, so P(sup E ≥ 1/alpha) ≤ alpha at any stopping time (Ville). mixtureEvalue(12, 2) = 12.0,
+ * mixtureEvalue(12, 3) = 4.5: below 20, where the fixed-n McNemar p is 0.013 and 0.035. Reported beside the planned looks
+ * (an unplanned look may cite only the e-value); never the planned decision.
+ */
+export function mixtureEvalue(b, c) {
+  if (!(Number.isInteger(b) && Number.isInteger(c) && b >= 0 && c >= 0)) throw new Error('mixtureEvalue: b and c must be non-negative integers');
+  const n = b + c;
+  return Math.exp(n * Math.log(2) - Math.log(n + 1) - logChoose(n, b));
+}
+
+const pairedDiffs = (x, y) => {
+  if (!Array.isArray(x) || !Array.isArray(y) || x.length !== y.length) throw new Error('paired: x and y must be arrays of equal length (one entry per paired task)');
+  return x.map((v, i) => {
+    const d = v - y[i];
+    if (!Number.isFinite(d)) throw new Error(`paired: entry ${i} is not a finite number`);
+    return d;
+  });
+};
+
+/**
+ * Paired sign-flip permutation test of mean(x − y) = 0, two-sided (x, y: per-task outcomes of arms A and B on the same
+ * tasks, e.g. official partial credit). Under H0 each task's difference is symmetric about 0, so its sign is
+ * exchangeable. p = P(|Σ s_i d_i| ≥ |Σ d_i|). Exact over all 2^m sign vectors of the m non-zero differences when
+ * m ≤ exactMax (Gray-code enumeration), else Monte Carlo with B seeded draws, p = (hits + 1)/(B + 1) (valid at any B).
+ */
+export function pairedPermutation(x, y, { exactMax = 24, iterations = 100000, seed = 'paired-permutation' } = {}) {
+  const d = pairedDiffs(x, y), nz = d.filter(v => v !== 0), m = nz.length;
+  const obs = nz.reduce((s, v) => s + v, 0), absObs = Math.abs(obs);
+  const scale = nz.reduce((s, v) => s + Math.abs(v), 0), tol = 1e-9 * Math.max(1, scale);
+  const base = { n: d.length, nonZero: m, meanDiff: d.length ? obs / d.length : NaN, sumDiff: obs };
+  if (m === 0) return { ...base, p: 1, method: 'exact', combinations: 1 };
+  if (m <= exactMax) {
+    // Gray code: step i flips the sign of item ctz(i); the running sum starts with every sign +1.
+    const total = 2 ** m;
+    let s = obs, hits = 0;
+    const sign = new Int8Array(m).fill(1);
+    for (let i = 0; i < total; i++) {
+      if (i) {
+        let j = 0; while (!((i >>> j) & 1)) j++;
+        s -= 2 * sign[j] * nz[j]; sign[j] = -sign[j];
+        if ((i & 0xffff) === 0) { s = 0; for (let q = 0; q < m; q++) s += sign[q] * nz[q]; } // re-anchor the float sum
+      }
+      if (Math.abs(s) >= absObs - tol) hits++;
+    }
+    return { ...base, p: hits / total, method: 'exact', combinations: total };
+  }
+  const r = rng(seed, m, obs);
+  let hits = 0;
+  for (let b = 0; b < iterations; b++) {
+    let s = 0;
+    for (let i = 0; i < m; i++) s += r.next() < 0.5 ? nz[i] : -nz[i];
+    if (Math.abs(s) >= absObs - tol) hits++;
+  }
+  return { ...base, p: (hits + 1) / (iterations + 1), method: 'monte-carlo', iterations, seed };
+}
+
+/** Large-sample form of the sign-flip test: z = Σd / sqrt(Σd²) (for simulations; the analysis uses pairedPermutation). */
+export function pairedSignFlipZ(x, y) {
+  const d = pairedDiffs(x, y);
+  const s = d.reduce((a, v) => a + v, 0), q = d.reduce((a, v) => a + v * v, 0);
+  return q > 0 ? s / Math.sqrt(q) : 0;
+}
+
+// Gamma(shape, 1) draw (Marsaglia & Tsang 2000; shape < 1 by the boost u^(1/shape)).
+function gammaDraw(r, shape) {
+  if (shape < 1) return gammaDraw(r, shape + 1) * Math.pow(r.next(), 1 / shape);
+  const dd = shape - 1 / 3, c = 1 / Math.sqrt(9 * dd);
+  for (;;) {
+    let z, v;
+    do { z = r.normal(); v = 1 + c * z; } while (v <= 0);
+    v = v * v * v;
+    const u = r.next();
+    if (u < 1 - 0.0331 * z ** 4 || Math.log(u) < 0.5 * z * z + dd * (1 - v + Math.log(v))) return dd * v;
+  }
+}
+const quantileSorted = (s, p) => { if (!s.length) return NaN; const h = (s.length - 1) * p, lo = Math.floor(h), hi = Math.ceil(h); return s[lo] + (s[hi] - s[lo]) * (h - lo); };
+
+/**
+ * Paired Bayes interval for mean(x) − mean(y) over paired tasks.
+ *   binary (every value 0 or 1): the 2×2 table (both, A only, B only, neither) gets a Dirichlet(1, 1, 1, 1) prior; the
+ *     difference is θ = P(A only) − P(B only) under the Dirichlet posterior (bayes_evals' paired comparison).
+ *   continuous (e.g. partial credit): Bayesian bootstrap (Rubin 1981), θ = Σ w_i d_i with w ~ Dirichlet(1, …, 1).
+ * Returns the posterior mean, the equal-tailed interval at `level` and P(θ > 0), from `draws` seeded draws.
+ */
+export function pairedBayesInterval(x, y, { kind = 'auto', level = 0.95, draws = 20000, seed = 'paired-bayes' } = {}) {
+  const d = pairedDiffs(x, y);
+  const binary = [...x, ...y].every(v => v === 0 || v === 1);
+  const k = kind === 'auto' ? (binary ? 'binary' : 'continuous') : kind;
+  if (k === 'binary' && !binary) throw new Error('pairedBayesInterval: kind binary needs 0/1 outcomes');
+  if (k !== 'binary' && k !== 'continuous') throw new Error(`pairedBayesInterval: unknown kind ${kind}`);
+  if (!d.length) return { kind: k, n: 0, mean: NaN, lo: NaN, hi: NaN, level, pPositive: NaN, draws: 0, seed };
+  const r = rng(seed, k, d.length);
+  const out = new Float64Array(draws);
+  let table = null;
+  if (k === 'binary') {
+    table = { both: 0, aOnly: 0, bOnly: 0, neither: 0 };
+    x.forEach((a, i) => { const b = y[i]; table[a && b ? 'both' : a ? 'aOnly' : b ? 'bOnly' : 'neither']++; });
+    const shapes = [table.both + 1, table.aOnly + 1, table.bOnly + 1, table.neither + 1];
+    for (let i = 0; i < draws; i++) {
+      const g = shapes.map(s => gammaDraw(r, s)), tot = g[0] + g[1] + g[2] + g[3];
+      out[i] = (g[1] - g[2]) / tot;
+    }
+  } else {
+    for (let i = 0; i < draws; i++) {
+      let tot = 0, s = 0;
+      for (let j = 0; j < d.length; j++) { const w = -Math.log(1 - r.next()); tot += w; s += w * d[j]; }
+      out[i] = s / tot;
+    }
+  }
+  const sorted = Float64Array.from(out).sort();
+  const a = (1 - level) / 2;
+  let mean = 0, pos = 0;
+  for (const v of out) { mean += v; if (v > 0) pos++; }
+  return { kind: k, n: d.length, ...(table ? { table } : {}), mean: mean / draws,
+    lo: quantileSorted(sorted, a), hi: quantileSorted(sorted, 1 - a), level, pPositive: pos / draws, draws, seed };
+}
+
+/** Exact two-sided McNemar on discordant counts (binomial at 1/2, the smaller tail doubled, capped at 1). */
+export function mcnemarExactCounts(b, c) {
+  const n = b + c, k = Math.min(b, c);
+  if (!n) return { aOnly: b, bOnly: c, p: 1 };
+  let p = 0;
+  for (let i = 0; i <= k; i++) p += Math.exp(logChoose(n, i) - n * Math.log(2));
+  return { aOnly: b, bOnly: c, p: Math.min(1, 2 * p) };
+}
+
+/** Student t CDF (via the regularized incomplete beta) and quantile, for small-sample build-level MDEs. */
+export function studentTCdf(t, df) {
+  if (!(df > 0)) throw new Error('studentTCdf: df must be positive');
+  const x = df / (df + t * t), tail = 0.5 * betaInc(x, df / 2, 0.5);
+  return t >= 0 ? 1 - tail : tail;
+}
+export function studentTQuantile(p, df) {
+  if (!(p > 0 && p < 1)) throw new Error('studentTQuantile: p must be in (0, 1)');
+  let lo = -1e3, hi = 1e3;
+  for (let i = 0; i < 200; i++) { const m = (lo + hi) / 2; if (studentTCdf(m, df) < p) lo = m; else hi = m; }
+  return (lo + hi) / 2;
+}

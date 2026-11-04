@@ -1,0 +1,22 @@
+{
+ "item": "VL-1 step 1 (PREREG-VL1 §3)",
+ "run": "a1s-look2",
+ "launchedAt": "2026-10-22T03:08:27Z",
+ "freezeCommit": "d13c338e0f9eff1e565083e5e7c20c2f3fe2907c",
+ "prereg": "f316ca5107058e7316dbb323b4c35a06b71d184a1272372e1d8e68ce1c90f1f4",
+ "frozenSums": "84854d98f681dc836fac62e9e416587f74054adc4ea7da103e295b8501775c6b",
+ "frozenSumsCheck": "OK at launch",
+ "cli": "2.1.307 (Claude Code)",
+ "pin": "b1e16e030470c077b8c09bc3fdf06a32c2a26209",
+ "launchJson": {
+  "sha256": "6ccc0857be31c8f648af4923ed833def994607b4d8d971dc5ae467b62235f0e6",
+  "model": "claude-sonnet-5-5",
+  "harness": "93cbeb4b7d3164821c6a9db5b4ae865503e5dfd66187b873122c97cb4ef70a86",
+  "runnerSha256": "ea1dca70628a80262430b0d693d013fab456aebccefaac9e48db9713d4c87c5f",
+  "capUsd": 10,
+  "budgetUsd": 1.5,
+  "tasks": 60,
+  "listSha": "a8c1ed5c8b18606c97feb7fcdd83115eab8cbdffa6e7956d9ee6d9d0974e916f"
+ },
+ "command": "setsid nohup bash experiments/autobench/verifier/live/launch-a1s-look2.sh > /var/tmp/foundry-work/a1s-look2.chain.log 2>&1 &"
+}

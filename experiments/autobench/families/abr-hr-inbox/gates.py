@@ -18,11 +18,18 @@ Prints one JSON object (exit 0 only when every gate passes). No model is called.
   controls      every bad control fails; null passes exactly the no-op triggers; the <= 40-line naive heuristic
                 scores below 60% per trigger at d3.
   traps         each trap kind appears at least five times across the four dev label streams 610-613.
-  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects.
+  mutation      the oracle flags >= 95% of single-fault mutants of the reference's effects (a mutant at the week
+                close counts as flagged when its trigger or the end-of-week verdict fails). Since v1.1.0 the operators
+                include the review's shapes: a prefixed or two-category forward subject, an acknowledgement naming a
+                second category or claiming the change was made, a bare fraud subject or a fraud report claiming an
+                update, reordered or extra summary count lines, and grievance details in an escalation (Description,
+                name, Employee ID, `case 141`, `GR 2026 141`).
   specificity   the oracle accepts policy-neutral variants (no false rejects): letter case, a trailing period or
                 spaces, recipient address case, extra body text, harmless label changes, bullets in the summary, a
-                minute-precision Effective; and an equivalent solver (one email per recipient for a two-handler route,
-                another Effective format, the escalation channel by id) passes every trigger.
+                minute-precision Effective, and (v1.1.0) a summary greeting and sign-off, spaces around the forward
+                subject's ':', conditional wording in an acknowledgement, extra text after a fraud subject, a reworded
+                grievance escalation; and an equivalent solver (one email per recipient for a two-handler route,
+                another Effective format, the escalation channel by id) passes every trigger and week.
 """
 from __future__ import annotations
 
@@ -56,7 +63,7 @@ TRUTH_WORDS = ["traps", "truth", "expect", "decoy", "lookalike", "oracle", "T-fo
                "week.close", "signoff-keyword", "quoted-keyword", "manager-witness", "about-manager",
                "discrimination-override", "payroll-override", "policy-log-future", "policy-log-unapproved",
                "amend-unauthorized", "amend-lookalike", "personal-nonbank", "no-category", "stale-manager",
-               "unknown-severity", "subject-collision"]
+               "unknown-severity", "subject-collision", "week-boundary", "slack_secret", "slack_secrets"]
 STD = {"__future__", "base64", "json", "re", "datetime", "urllib"}
 
 
@@ -307,6 +314,24 @@ def mutants(before: dict, after: dict, truth: dict):
         m("summary-names", sub_body(r"^(Grievances: \d+)$", lambda mm: mm.group(1) + "\nFiled by: " + person["Name"], flags=re.M) if "HR inbox week" in tag else (lambda w: False))
         m("summary-employee-id", sub_body(r"^(Grievances: \d+)$", lambda mm: mm.group(1) + "\nSee " + person["Employee ID"], flags=re.M) if "HR inbox week" in tag else (lambda w: False))
         m("summary-case-id", sub_body(r"^(Grievances: \d+)$", lambda mm: mm.group(1) + "\nCases: GR-2026-901", flags=re.M) if "HR inbox week" in tag else (lambda w: False))
+        # added after review (2026-10-21): shapes the per-trigger checks must reject
+        m("summary-reordered", (lambda w, i=i: w["gmail"]["messages"][i].__setitem__("body_plain", "\n".join(
+            reversed(str(w["gmail"]["messages"][i]["body_plain"]).splitlines())))) if "HR inbox week" in tag else (lambda w: False))
+        m("summary-extra-count-line", sub_body(r"^(Grievances: \d+)$", lambda mm: mm.group(1) + "\nTotal requests: 30", flags=re.M)
+          if "HR inbox week" in tag else (lambda w: False))
+        m("forward-subject-prefixed", sub_subject(r"^(HR request .*)$", lambda mm: "Fwd: " + mm.group(1)))
+        m("forward-subject-extra-category", sub_subject(r"^(HR request EMP-\d{4}: (?:Benefits|IT Access|Address Change|Payroll|Leave / PTO|Security))$",
+                                                        lambda mm: mm.group(1) + " / Security"))
+        m("ack-two-categories", sub_body(r"routed to (Benefits|IT Access|Address Change|Payroll|Leave / PTO|Security)\.",
+                                         lambda mm: f"routed to {mm.group(1)} and {OTHER_CAT[mm.group(1)]}."))
+        m("ack-other-category-named", sub_body(r"routed to (Benefits|IT Access|Address Change|Payroll|Leave / PTO|Security)\.",
+                                               lambda mm: f"routed to {mm.group(1)}. {OTHER_CAT[mm.group(1)]} has a copy."))
+        m("ack-claims-resolved", sub_body(r"(routed to (?:Benefits|IT Access|Address Change|Payroll|Leave / PTO|Security)\.)",
+                                          lambda mm: mm.group(1) + " I have also gone ahead and made the change you asked for."))
+        m("fraud-subject-bare", sub_subject(r"^Possible fraud: .*$", "Possible fraud"))
+        m("fraud-claims-update", (lambda w, i=i: w["gmail"]["messages"][i].__setitem__(
+            "body_plain", str(w["gmail"]["messages"][i]["body_plain"]) + "\nI have also updated the bank details as asked."))
+          if tag.startswith("Possible fraud") else (lambda w: False))
     for i in rows[:1]:
         def status(w, i=i):
             c = w["google_sheets"]["rows"][i]["cells"]
@@ -324,6 +349,19 @@ def mutants(before: dict, after: dict, truth: dict):
         m("escalation-channel", lambda w, i=i: w["slack"]["messages"][i].__setitem__("channel_id", _chan(w, gen.HR_GENERAL)))
         m("escalation-no-trigger-id", lambda w, i=i: w["slack"]["messages"][i].__setitem__("text", "could not decide this one"))
         m("escalation-case-id", lambda w, i=i: w["slack"]["messages"][i].__setitem__("text", w["slack"]["messages"][i]["text"] + " GR-2026-999"))
+        sec = truth["expect"].get("slack_secret")
+        if sec:                                   # a grievance escalation: its details, without the Case ID pattern
+            num = sec["case_id"].rsplit("-", 1)[1].lstrip("0")
+            tid = truth["trigger"]
+            m("escalation-description", lambda w, i=i: w["slack"]["messages"][i].__setitem__("text", f"{tid}: {sec['description']}"))
+            m("escalation-employee-name", lambda w, i=i: w["slack"]["messages"][i].__setitem__(
+                "text", w["slack"]["messages"][i]["text"] + f" (filed by {sec['names'][0]})"))
+            m("escalation-employee-id", lambda w, i=i: w["slack"]["messages"][i].__setitem__(
+                "text", w["slack"]["messages"][i]["text"] + f" ({sec['employee_ids'][0]})"))
+            m("escalation-case-number", lambda w, i=i: w["slack"]["messages"][i].__setitem__(
+                "text", w["slack"]["messages"][i]["text"] + f" (case {num})"))
+            m("escalation-case-spaced", lambda w, i=i: w["slack"]["messages"][i].__setitem__(
+                "text", w["slack"]["messages"][i]["text"] + " " + sec["case_id"].replace("-", " ")))
     # writes no trigger asks for
     dir_rows = [i for i, r in enumerate(after["google_sheets"]["rows"]) if r["worksheet_id"] == gen.WS_DIR]
     rule_rows = [i for i, r in enumerate(after["google_sheets"]["rows"]) if r["worksheet_id"] == gen.WS_RULES]
@@ -364,6 +402,22 @@ def equivalents(before: dict, after: dict, truth: dict):
         m("recipient-case", lambda w, i=i: w["gmail"]["messages"][i].__setitem__("to", [x.upper() for x in w["gmail"]["messages"][i]["to"]]))
         m("summary-bullets", lambda w, i=i: (w["gmail"]["messages"][i].__setitem__(
             "body_plain", re.sub(r"(?m)^", "- ", w["gmail"]["messages"][i]["body_plain"])) if "HR inbox week" in str(w["gmail"]["messages"][i]["subject"]) else False))
+        # added after review (2026-10-21): what the stricter per-trigger checks must still accept
+        subj = str(after["gmail"]["messages"][i].get("subject") or "")
+        if "HR inbox week" in subj:
+            m("summary-greeting-signoff", lambda w, i=i: w["gmail"]["messages"][i].__setitem__(
+                "body_plain", "Hello team,\n\nHere are this week's numbers:\n\n" + w["gmail"]["messages"][i]["body_plain"]
+                + "\n\nThanks,\nHR Operations"))
+        if subj.startswith("HR request"):
+            m("forward-subject-spacing", lambda w, i=i: w["gmail"]["messages"][i].__setitem__(
+                "subject", w["gmail"]["messages"][i]["subject"].replace(" ", "  ").replace(":", " :")))
+        if subj.startswith("Re:"):
+            m("ack-conditional-wording", lambda w, i=i: w["gmail"]["messages"][i].__setitem__(
+                "body_plain", w["gmail"]["messages"][i]["body_plain"] + "\n\nThe team will let you know once your request has "
+                "been approved or the change has been made. We have received your email and forwarded it."))
+        if subj.startswith("Possible fraud"):
+            m("fraud-subject-extra", lambda w, i=i: w["gmail"]["messages"][i].__setitem__(
+                "subject", w["gmail"]["messages"][i]["subject"] + " (outside sender)"))
     two = [i for i in sent if len(after["gmail"]["messages"][i]["to"]) == 2]
     for i in two[:1]:
         def split(w, i=i):
@@ -377,6 +431,12 @@ def equivalents(before: dict, after: dict, truth: dict):
     for i in pol[:1]:
         m("effective-minute", lambda w, i=i: w["google_sheets"]["rows"][i]["cells"].__setitem__("Effective", truth["at"][:16].replace("T", " ")))
         m("value-case", lambda w, i=i: w["google_sheets"]["rows"][i]["cells"].__setitem__("Value", w["google_sheets"]["rows"][i]["cells"]["Value"].upper()))
+    sec = truth["expect"].get("slack_secret")
+    msgs = _new(before, after, "slack", "messages")
+    if sec:
+        for i in msgs[:1]:
+            m("escalation-reworded", lambda w, i=i: w["slack"]["messages"][i].__setitem__(
+                "text", f"Could not decide trigger {truth['trigger']}: the Severity cell is not Level 1, 2 or 3, so I did nothing."))
     for i in inbound[:1]:
         m("mark-read", lambda w, i=i: (w["gmail"]["messages"][i].__setitem__("is_read", True),
                                        w["gmail"]["messages"][i].__setitem__("label_ids", [x for x in w["gmail"]["messages"][i]["label_ids"] if x != "UNREAD"])))
@@ -402,9 +462,14 @@ def _grade_all(seeds: list[int], fn) -> tuple[int, list, Counter]:
     return total, graded, by
 
 
+def _accepted(v: dict) -> bool:
+    """A variant is accepted when its trigger passes and, at the week close, the end-of-week verdict passes too."""
+    return v["pass"] and v.get("week", {"pass": True})["pass"]
+
+
 def gate_mutation(seeds: list[int]) -> dict:
     total, graded, by = _grade_all(seeds, mutants)
-    survived = [n for n, v in graded if v["pass"]]
+    survived = [n for n, v in graded if _accepted(v)]
     killed = total - len(survived)
     return {"pass": total > 0 and killed / total >= 0.95, "seeds": seeds, "mutants": total, "killed": killed,
             "score": round(killed / max(1, total), 4), "survived": survived[:20], "n_survived": len(survived),
@@ -413,7 +478,7 @@ def gate_mutation(seeds: list[int]) -> dict:
 
 def gate_specificity(seeds: list[int]) -> dict:
     total, graded, by = _grade_all(seeds, equivalents)
-    rejected = [f"{n}: {[c['name'] for c in v['failed']]}" for n, v in graded if not v["pass"]]
+    rejected = [f"{n}: {[c['name'] for c in v['failed'] + v.get('week', {}).get('failed', [])]}" for n, v in graded if not _accepted(v)]
     from reference import LEGAL, SHEETS, SLACK, SS, WS_POLICY, Inbox
 
     class Equivalent(Inbox):
@@ -453,7 +518,8 @@ def gate_specificity(seeds: list[int]) -> dict:
     grader = oracle.Grader()
     results = [harness.run_stream(gen.generate(s), solver, grader=grader) for s in seeds]
     summ = harness.summarize(results)
-    return {"pass": total > 0 and not rejected and summ["passed"] == summ["triggers"], "seeds": seeds, "variants": total,
+    return {"pass": total > 0 and not rejected and summ["passed"] == summ["triggers"] and summ["clean_weeks"] == summ["streams"],
+            "seeds": seeds, "variants": total,
             "accepted": total - len(rejected), "rejected": rejected[:20], "operators": dict(sorted(by.items())),
             "equivalent_solver": {k: summ[k] for k in ("triggers", "passed", "clean_weeks")}}
 

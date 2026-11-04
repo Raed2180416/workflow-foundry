@@ -33,6 +33,26 @@ export function clip(v, max) {
 
 const line = v => JSON.stringify(v);
 
+/** Flatten one level of nested plain objects into dotted keys (a sheet row's cells.Name); lists stay whole. */
+function flat(rec) {
+  const o = {};
+  for (const [k, v] of Object.entries(rec)) {
+    if (isObj(v) && Object.values(v).every(x => !isObj(x))) for (const [k2, v2] of Object.entries(v)) o[`${k}.${k2}`] = v2;
+    else o[k] = v;
+  }
+  return o;
+}
+const cell = v => (v === undefined ? '' : typeof v === 'string' ? v.replace(/\r?\n/g, '⏎').replace(/\|/g, '¦') : JSON.stringify(v).replace(/\|/g, '¦'));
+
+/** A collection of records as a table: one header of columns, one line of values per record (keys are not repeated, which
+ *  roughly halves the text of a typical collection). Lines are "| v1 | v2 | ..." in header order; an empty cell is empty. */
+export function renderTable(records, maxStr) {
+  const rows = records.map(r => (isObj(r) ? flat(clip(r, maxStr)) : { value: clip(r, maxStr) }));
+  const cols = [];
+  for (const r of rows) for (const k of Object.keys(r)) if (!cols.includes(k)) cols.push(k);
+  return [`| ${cols.join(' | ')} |`, ...rows.map(r => `| ${cols.map(c => cell(r[c])).join(' | ')} |`)].join('\n');
+}
+
 /** The initial records of the connected apps, as text within capChars. Shortens long strings first, then shows fewer
  *  records per collection (each cut is marked), so the rendering is bounded for any world. */
 export function renderRecords(world, { services = [], extraApps = [], capChars = 24000 } = {}) {
@@ -46,7 +66,7 @@ export function renderRecords(world, { services = [], extraApps = [], capChars =
         if (Array.isArray(x)) {
           out.push(`### ${app}.${coll} (${x.length} record${x.length === 1 ? '' : 's'})`);
           const shown = x.slice(0, maxRecords);
-          for (const r of shown) out.push(line(clip(r, maxStr)));
+          out.push(renderTable(shown, maxStr));
           if (x.length > shown.length) out.push(`[… ${x.length - shown.length} more ${app}.${coll} records not shown]`);
         } else out.push(`### ${app}.${coll}: ${line(clip(x, maxStr))}`);
       }
@@ -126,6 +146,7 @@ Connected apps: ${(view.services ?? []).join(', ') || 'none'}.
 The simulated systems' clock read ${view.today ?? 'unknown'} when they were set up. That clock may not be the task's date: take the task's dates from the request and the records, as the agent had to. Timestamps on records the agent created come from the machine that ran it and are not errors.
 </environment>
 ${withRecords ? `<records_before>
+(Each collection is a table: the first line names the columns, each later line is one record. ⏎ marks a line break inside a value, ¦ a | character.)
 ${records.text}
 </records_before>` : '<records_before>(not shown to this judge)</records_before>'}`;
   const candidate = `<changes>

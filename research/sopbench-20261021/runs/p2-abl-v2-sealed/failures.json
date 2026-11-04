@@ -1,0 +1,122 @@
+{
+ "runId": "p2-abl-v2-sealed",
+ "evidence": "SEALED rows; aggregate counts only",
+ "runs": 720,
+ "environmentFaults": 3,
+ "arms": {
+  "A": {
+   "runs": 360,
+   "categories": {
+    "pass": 257,
+    "wrong-value": 97,
+    "violation": 6
+   },
+   "deopts": {},
+   "violations": {
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4": 1,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4; L5: benchmark reference in response 5": 1,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4; L5: benchmark reference in response 5; L5: benchmark reference in response 6; L5: benchmark reference in response 7; L5: benchmark reference in response 8; L5: benchmark reference in response 9": 1,
+    "L5: benchmark reference in response 1": 1,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3": 1,
+    "L5: benchmark reference in response 1; L5: benchmark reference in response 2; L5: benchmark reference in response 3; L5: benchmark reference in response 4; L5: benchmark reference in response 5; L5: benchmark reference in response 6; L5: benchmark reference in response 7; L5: benchmark reference in response 8; L5: benchmark reference in response 9; L5: benchmark reference in response 10": 1
+   },
+   "sessionErrors": {},
+   "upstreamOnlyPasses": 0,
+   "bySop": {
+    "dangerous_goods": {
+     "runs": 120,
+     "categories": {
+      "pass": 114,
+      "wrong-value": 5,
+      "violation": 1
+     },
+     "wrongColumns": {
+      "hazard_class": 5
+     },
+     "flakyRows": 3,
+     "rowsAllFail": 1,
+     "rowsCount": 40
+    },
+    "customer_service": {
+     "runs": 120,
+     "categories": {
+      "pass": 105,
+      "wrong-value": 10,
+      "violation": 5
+     },
+     "wrongColumns": {
+      "final_resolution_status": 10
+     },
+     "flakyRows": 6,
+     "rowsAllFail": 3,
+     "rowsCount": 40
+    },
+    "know_your_business": {
+     "runs": 120,
+     "categories": {
+      "pass": 38,
+      "wrong-value": 82
+     },
+     "wrongColumns": {
+      "escalation_status": 82
+     },
+     "flakyRows": 4,
+     "rowsAllFail": 25,
+     "rowsCount": 40
+    }
+   }
+  },
+  "W": {
+   "runs": 360,
+   "categories": {
+    "pass": 321,
+    "wrong-value": 39
+   },
+   "deopts": {},
+   "violations": {},
+   "sessionErrors": {},
+   "upstreamOnlyPasses": 0,
+   "bySop": {
+    "dangerous_goods": {
+     "runs": 120,
+     "categories": {
+      "pass": 117,
+      "wrong-value": 3
+     },
+     "wrongColumns": {
+      "hazard_class": 3
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 1,
+     "rowsCount": 40
+    },
+    "customer_service": {
+     "runs": 120,
+     "categories": {
+      "pass": 114,
+      "wrong-value": 6
+     },
+     "wrongColumns": {
+      "final_resolution_status": 6
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 2,
+     "rowsCount": 40
+    },
+    "know_your_business": {
+     "runs": 120,
+     "categories": {
+      "pass": 90,
+      "wrong-value": 30
+     },
+     "wrongColumns": {
+      "escalation_status": 30
+     },
+     "flakyRows": 0,
+     "rowsAllFail": 10,
+     "rowsCount": 40
+    }
+   }
+  }
+ }
+}

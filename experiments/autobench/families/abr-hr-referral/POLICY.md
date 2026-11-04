@@ -1,7 +1,7 @@
 # Referral bonus program: standing policy
 
 Owner: People Operations (people-ops@company.example.com). The VP People is Marisol Ferreira, Slack user `U0VPPEOPLE`.
-Policy version 1.
+Policy version 2.
 
 > Every referral bonus is paid once, on time, to the right person, and nobody else learns the amount.
 
@@ -84,7 +84,8 @@ Go through the Referral Log rows in row order. A row is **eligible** at a run wi
 2. it was not paid: Paid On is empty and Notes do not contain `paid out` (any letter case). A payout recorded in the
    Notes counts as paid;
 3. Hold is empty;
-4. the Employees row with its Employee ID has Status `Active`;
+4. the Employees row with its Employee ID has Status `Active` (a row whose Employee ID is not in Employees is not
+   eligible);
 5. D is on or after day 90. **Ignore Probation Complete**: it is known to be stale.
 
 **Amount** by Role Level: IC1 and IC2 $2,000; IC3 and IC4 $3,500; M1 and above (M1, M2, M3) $5,000.
@@ -97,9 +98,10 @@ $10,000 is allowed.
 **Pay** an eligible row that is not capped:
 - send one email to payroll@company.example.com and nobody else (no CC, no BCC), subject exactly
   `Referral bonus payout: <Referral ID>`, whose body names the Referral ID, the Referrer, the Candidate (the referred
-  employee), the Role Level and the amount written like `$3,500`;
+  employee), the Role Level and the amount written like `$3,500`, and no other amount or Referral ID;
 - send one email to the referrer's Referrer Email and nobody else, subject exactly `Your referral bonus for <Candidate>`,
-  whose body states the amount written like `$3,500`;
+  whose body states the amount written like `$3,500`, no other amount, and nothing about anyone else's referral (no
+  other referrer's Referral IDs, candidates or names);
 - set Status `Paid`, Bonus to the amount (like `$3,500`) and Paid On to D.
 
 A run changes nothing else: rows that are not eligible keep all their cells.

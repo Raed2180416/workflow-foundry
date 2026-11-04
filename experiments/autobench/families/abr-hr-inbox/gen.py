@@ -14,8 +14,12 @@ Writes into HOSTDIR (host-only; nothing generated is committed):
   serve-inputs.jsonl one input row per trigger for `bridge.py serve --input <row> --world world_t.json`
   meta.json          family, version, seed, difficulty, counts, trap shares and sha256 of every file
 
-Determinism: one random.Random(f"{family}:{version}:{seed}:{difficulty}:{attempt}"); no wall clock, no set iteration
-in any output, every id and datetime written explicitly, so no pydantic default factory fires.
+Determinism: one random.Random(f"{family}:{PLAN_KEY}:{seed}:{difficulty}:{attempt}") for the plan and everything
+drawn after it, plus one random.Random(f"{family}:{version}:week-boundary:...") for world0's week-boundary records
+(v1.1.0); no wall clock, no set iteration in any output, every id and datetime written explicitly, so no pydantic
+default factory fires. PLAN_KEY stays "1.0.0": version 1.1.0 changed the oracle, the policy text and the truth's
+expectations, and added the week-boundary records to world0, but not the plan, so a seed's triggers (payloads, texts,
+ids, times) are exactly the ones 1.0.0 drew and results before and after the review fixes compare trigger by trigger.
 
 The truth comes from the generator's own canonical model of the business (`Book`: the Routing Rules, the Employee
 Directory, the Grievance Tracker, the Policy Log and the week's sent mail, as they would be after correct handling of
@@ -40,7 +44,8 @@ from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
 FAMILY = "abr-hr-inbox"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
+PLAN_KEY = "1.0.0"          # the plan's RNG key (see the module docstring): unchanged since 1.0.0
 HERE = Path(__file__).resolve().parent
 UTC = timezone.utc
 
@@ -101,9 +106,10 @@ TRAP_KIND = {
     "payroll-override": "T-stale", "policy-log-future": "T-stale", "policy-log-unapproved": "T-stale",
     "after-amendment": "T-stale", "stale-manager": "T-stale",
     # T-state (context): the week's own record
-    "amendment": "T-state", "week-counts": "T-state", "last-week-history": "T-state",
+    "amendment": "T-state", "week-counts": "T-state", "last-week-history": "T-state", "week-boundary": "T-state",
 }
-CONTEXT_LABELS = {"amendment", "week-counts", "last-week-history"}
+CONTEXT_LABELS = {"amendment", "week-counts", "last-week-history", "week-boundary"}
+PAYROLL_GAP = timedelta(minutes=5)       # payroll requests keep this far from the week's amendment (POLICY section 7)
 
 # Per difficulty (d1 is smoke only: no traps).
 COUNTS = {
@@ -442,7 +448,8 @@ class Book:
 class Gen:
     def __init__(self, seed: int, difficulty: str, attempt: int = 0):
         self.seed, self.d, self.attempt = seed, difficulty, attempt
-        self.r = random.Random(f"{FAMILY}:{VERSION}:{seed}:{difficulty}:{attempt}")
+        self.r = random.Random(f"{FAMILY}:{PLAN_KEY}:{seed}:{difficulty}:{attempt}")
+        self.rb = random.Random(f"{FAMILY}:{VERSION}:week-boundary:{seed}:{difficulty}:{attempt}")
         self.cnt = {k: (v if isinstance(v, int) else self.r.randint(*v)) for k, v in COUNTS[difficulty].items()}
         self.rate = RATES[difficulty]
         weeks = (date(2026, 11, 23) - date(2026, 2, 2)).days // 7
@@ -852,6 +859,32 @@ class Gen:
         self.mail0.append({"from": self.from_header("HR Operations", HR_OPS), "to": [f"all-staff@{ORG}"], "subject": r.choice(BROADCASTS),
                            "body": "Hello everyone,\n\nPlease see the intranet for details.\n\nHR Operations",
                            "at": lm + timedelta(days=3, hours=10), "sent": False})
+        # The week boundary (d2, d3): a request that arrived on Sunday night and was handled minutes after Monday
+        # 00:00 UTC. Its forward is this week's Sent mail and counts at Friday's close (POLICY section 8), although no
+        # trigger of the stream carries it and its inbound email is dated last week: a close that re-derives the
+        # counts from the inbox, or from the stream's own triggers, gets a different number.
+        self.boundary = None
+        if self.d != "d1":
+            main, self.r = self.r, self.rb       # its own RNG: the plan's draws stay those of 1.0.0
+            r = self.r
+            emp = r.choice(self.staff)
+            cat = r.choice(CATEGORIES)
+            subj, ask = r.choice(PLAIN[cat])
+            subj, body = self.compose(emp, subj, self.fill(ask), {})
+            got = self.monday - timedelta(seconds=r.randint(60, 150))      # handled within 4 minutes, like any trigger
+            sent = self.monday + timedelta(seconds=r.randint(5, 80))
+            box = RULES[CATEGORIES.index(cat)][2] if cat != PAYROLL else self.payroll_at(sent)
+            self.mail0.append({"from": self.from_header(emp["name"], emp["email"]), "to": [INBOX], "subject": subj, "body": body,
+                               "at": got, "sent": False, "rng": "boundary"})
+            self.mail0.append({"from": INBOX, "to": [box], "subject": f"HR request {emp['id']}: {cat}",
+                               "body": f"Employee: {emp['name']} ({emp['id']})\nCategory: {cat}\n\nOriginal subject: {subj}",
+                               "at": sent, "sent": True, "rng": "boundary"})
+            self.mail0.append({"from": INBOX, "to": [emp["email"]], "subject": f"Re: {subj}",
+                               "body": f"Hello {emp['first']},\n\nYour request has been routed to {cat}.\n\nHR Operations",
+                               "at": sent + timedelta(seconds=30), "sent": True, "rng": "boundary"})
+            self.boundary = {"category": cat, "sent": sent}
+            self.r = main
+            r = self.r
         # Slack: #hr-general chatter, including a request the policy forbids
         mgrs = list(self.managers.values())
         self.posts0.append({"channel": HR_GENERAL, "who": self.hrops[0], "text": "Reminder: payroll cut-off is Wednesday noon this month.",
@@ -886,13 +919,26 @@ class Gen:
         ev.append({"kind": "week.close", "at": self.friday + timedelta(hours=17)})
         self.events = ev
 
+    def slack_secret(self, cells: dict) -> dict:
+        """What POLICY section 6 keeps out of Slack for one grievance row: its Case ID, its Description, the names of
+        the employee (Directory and tracker), the tracker's Manager and everyone the Description names, and the
+        Employee ID."""
+        emp = next((p for p in self.everyone if p["id"] == cells["Employee ID"]), None)
+        names = {cells["Employee"], cells["Manager"]} | ({emp["name"]} if emp else set())
+        names |= {p["name"] for p in self.everyone if p["name"] in cells["Description"]}
+        return {"case_id": cells["Case ID"], "description": cells["Description"],
+                "names": sorted(n for n in names if n), "employee_ids": [cells["Employee ID"]]}
+
     def simulate(self):
         B = Book(self)
+        if self.boundary:
+            B.counts[self.boundary["category"]] += 1     # Sent mail from Monday 00:00 UTC on (POLICY section 8)
         self.truth, self.triggers, self.payloads = [], [], []
         g_row = 2 + len(self.griev0)             # A1 row numbers: header row 1, world0 rows 2..1+n
         week_mail: Counter = Counter()
         n_escalations = 0
         all_cases = [c["Case ID"] for c in self.griev0]
+        secrets = [self.slack_secret(c) for c in self.griev0]
         names = sorted(p["name"] for p in self.everyone)
         ids = sorted(p["id"] for p in self.everyone)
         amended_at = next((a["at"] for a in self.amends if a["type"] == "amend-ok"), None)
@@ -905,10 +951,15 @@ class Gen:
             asserts, labels = [], []
             kind, sub = e["kind"], ""
 
-            def email(to, subject_has, body_has, tag, split_ok=False, counts=None, body_not=None):
+            def email(to, subject_has, body_has, tag, split_ok=False, counts=None, body_not=None, **more):
+                """One expected email. `more` (all optional): subject_is (the whole subject, letter case and spaces
+                around ':' ignored), subject_prefix, routed_to (the acknowledgement names this category and no other),
+                no_claims (no sentence saying the request was changed, approved or done), orig (the inbound subject
+                and body, which the email may quote), labels + derive (the week close: the count lines in this order,
+                each counted from world_before's own record as POLICY section 8 says)."""
                 ex["emails"].append({"to": sorted(to), "subject_has": subject_has, "body_has": body_has, "tag": tag,
                                      "split_ok": split_ok, **({"counts": counts} if counts is not None else {}),
-                                     **({"body_not": body_not} if body_not else {})})
+                                     **({"body_not": body_not} if body_not else {}), **more})
                 for x in to:
                     week_mail[x] += 1
 
@@ -933,13 +984,17 @@ class Gen:
                               else {"internal": "Payroll Lead"}.get(a["variant"], "HR Director"))
                     body = self.amendment_body(a["value"], signer)
                     sub = a["type"] if a["type"] == "amend-ok" else f"amend-bad-{a['variant']}"
-                payload = inbound(frm, subject, body, self.r.randint(1, 4))
+                lead = self.r.randint(1, 4)              # the email's Date is 1-4 minutes before the event's `at`
+                payload = inbound(frm, subject, body, lead)
                 dec = B.on_email(frm, subject, body, at)
                 labels += self.request_labels(e, dec, subject, body, frm, at, B)
+                orig = {"subject": subject, "body": body}
                 if dec["type"] == "route":
                     emp, cat = dec["emp"], dec["category"]
-                    email([dec["mailbox"]], [emp["id"], cat], [emp["name"], emp["id"]], "forward")
-                    email([dec["sender"]], [], [f"Your request has been routed to {cat}"], "ack")
+                    email([dec["mailbox"]], [emp["id"], cat], [emp["name"], emp["id"]], "forward",
+                          subject_is=f"HR request {emp['id']}: {cat}")
+                    email([dec["sender"]], [], [f"Your request has been routed to {cat}"], "ack", routed_to=cat,
+                          no_claims=True, orig=orig)
                     B.counts[cat] += 1
                     asserts.append({"type": "gmail_message_sent_to_with_body_contains", "to": dec["mailbox"],
                                     "subject_contains": emp["id"], "body_contains": [emp["name"], emp["id"]]})
@@ -954,13 +1009,20 @@ class Gen:
                             if addr(stale) != dec["mailbox"]:
                                 asserts.append({"type": "gmail_message_not_sent_to", "to": addr(stale)})
                         if amended_at is not None:
+                            # The mailbox in force is fixed at the event's `at` (POLICY sections 5, 7). Keep every
+                            # payroll request clear of the amendment, so the email's Date (1-4 minutes earlier) and
+                            # the `at` never fall on different sides of it.
+                            if abs(at - amended_at) < PAYROLL_GAP:
+                                raise PlanError(f"{tid}: payroll request {at - amended_at} from the amendment")
+                            assert (at - timedelta(minutes=lead) < amended_at) == (at < amended_at), tid
                             if at < amended_at:
                                 payroll_before += 1
                             else:
                                 payroll_after += 1
                 elif dec["type"] == "fraud":
                     emp = dec["emp"]
-                    email([SECURITY_TEAM], ["Possible fraud"], [dec["sender"], emp["id"]], "fraud")
+                    email([SECURITY_TEAM], ["Possible fraud", subject], [dec["sender"], emp["id"]], "fraud",
+                          subject_prefix="Possible fraud", no_claims=True, orig=orig)
                     B.counts["Fraud reports"] += 1
                     asserts.append({"type": "gmail_message_sent_to_with_body_contains", "to": SECURITY_TEAM,
                                     "subject_contains": "Possible fraud", "body_contains": [emp["id"]]})
@@ -999,6 +1061,8 @@ class Gen:
                 sub = g["type"]
                 labels += self.grievance_labels(g, dec, cells, B)
                 ex["forbid_slack"].append(cid)
+                ex["slack_secret"] = self.slack_secret(cells)
+                secrets.append(ex["slack_secret"])
                 asserts.append({"type": "slack_message_not_exists", "text_contains": cid})
                 if dec["type"] == "route":
                     status = f"Routed to {dec['handler']}"
@@ -1023,11 +1087,16 @@ class Gen:
             else:  # week.close
                 day = at.date().isoformat()
                 payload = {"app": "schedule", "event": "week_close", "data": {"date": day}}
+                # `counts` is the week as correct handling leaves it (equal to `derive` on the reference's world).
+                # The oracle grades the close against `derive`: the counts POLICY section 8 takes from world_before
+                # (this arm's own Sent mail and Grievance Tracker), so an earlier error is charged where it happened
+                # and in the end-of-week verdict, never a second time at the close. Its AutomationBench assertion
+                # (gmail_message_sent_to_with_body_contains with those counts) is built by the oracle for the same
+                # reason.
                 counts = {k: B.counts.get(k, 0) for k in COUNT_LABELS}
-                email([HR_OPS], [f"HR inbox week {day}"], [], "summary", counts=counts, body_not=names + ids + all_cases)
-                asserts.append({"type": "gmail_message_sent_to_with_body_contains", "to": HR_OPS, "subject_contains": f"HR inbox week {day}",
-                                "body_contains": [f"{k}: {v}" for k, v in counts.items()]})
-                labels += ["week-counts", "last-week-history"]
+                email([HR_OPS], [f"HR inbox week {day}"], [], "summary", counts=counts, body_not=names + ids + all_cases,
+                      labels=list(COUNT_LABELS), derive={"since": iso_z(self.monday), "until": day})
+                labels += ["week-counts", "last-week-history"] + (["week-boundary"] if self.boundary else [])
                 sub = "week-close"
             payload = {"trigger": tid, "at": iso_z(at), **payload}
             outcome = "escalate" if ex["escalate"] else ("act" if ex["emails"] or ex["status"] or ex["policy"] else "no-op")
@@ -1050,7 +1119,7 @@ class Gen:
                     "grievances": {str(k): v for k, v in sorted(B.griev.items())},
                     "policy_log": B.policy, "mail_counts": dict(sorted(week_mail.items())),
                     "escalations": n_escalations, "case_ids": all_cases, "counts": {k: B.counts.get(k, 0) for k in COUNT_LABELS},
-                    "assertions": end_asserts}
+                    "slack_secrets": secrets, "assertions": end_asserts}
         self.check_week()
 
     # -- texts of the week's emails --------------------------------------------------------------------------------------
@@ -1229,7 +1298,9 @@ class Gen:
                              (WS_GRIEV, self.griev0), (WS_POLICY, self.policy0))]}]
         msgs = []
         for m in sorted(self.mail0, key=lambda m: m["at"]):
-            msgs.append({"id": self.hexid(16), "thread_id": self.hexid(16), "from_": m["from"], "to": m["to"],
+            g = self.r if m.get("rng") != "boundary" else self.rb      # boundary ids keep the plan's draws as in 1.0.0
+            hexid = lambda n: "".join(g.choice("0123456789abcdef") for _ in range(n))  # noqa: E731
+            msgs.append({"id": hexid(16), "thread_id": hexid(16), "from_": m["from"], "to": m["to"],
                          "subject": m["subject"], "body_plain": m["body"], "snippet": snippet_of(m["body"]),
                          "label_ids": ["SENT"] if m["sent"] else ["INBOX"], "is_read": True,
                          "date": ms(m["at"]), "internal_date": ms(m["at"])})

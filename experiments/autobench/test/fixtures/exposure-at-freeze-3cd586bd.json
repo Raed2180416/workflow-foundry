@@ -1,0 +1,212 @@
+{
+ "schema": "foundry.autobench.exposure-snapshot/v1",
+ "plan": "3cd586bd7994a4a4bd0de00e771568516eeda808dc45b0297575d9a659cd2ea4",
+ "planFile": "research/automationbench-20261014/SEQUENTIAL-PLAN-v1.json",
+ "evidence": "task NAMES only: no task content, result, grade or sealed record was read to build this file",
+ "purpose": "The exposure state SEQUENTIAL-PLAN-v1 was computed from, so experiments/autobench/test/sequential.test.mjs recomputes the frozen plan without reading the live run record (runs after the freeze, e.g. the look-2 reference arms a0o-look2-1 and a1s-look2, must not move a test).",
+ "freeze": {
+  "commit": "2df949cb31aa134d9ead8f57f1cce48602a1eb36",
+  "committedAt": "2026-10-21T23:15:45Z",
+  "branch": "worktree-wf_630f3979-599-4"
+ },
+ "derivation": "Reconstructed on 2026-10-22: sequential.mjs seenTasks over every exposure root (the main tree, every worktree, the live root /var/tmp/foundry-work/autobench), keeping the task names of run directories whose earliest record file (launch.json, summary.json, sequential-look.json, prep/, host/, w/) predates the freeze commit; devTrain names only (SPLIT-v1 dev minus devCheck: the only tasks the pool rule reads). The only devTrain names left out are look 2 (60), named only by the post-freeze runs a0o-look2-1 (D26) and a1s-look2 (D27). Check: computePlan on this snapshot, with the roots record below, reproduces the pinned plan sha256 (asserted by the test).",
+ "briefed": {
+  "source": "research/automationbench-20261014/EXPOSURE-20261015.json",
+  "sourceSha256": "d6f705d7d3c3189eaa856d00f58264aea8596edb214989149c0cd7640f2a8601",
+  "field": "dev.exposedNotForced",
+  "tasks": [
+   "finance.airtable_expense_approval",
+   "finance.payment_reconciliation",
+   "finance.wire_transfer_approval",
+   "hr.background_check_followup",
+   "hr.candidate_rejection_followup",
+   "hr.equipment_provisioning",
+   "hr.pto_balance_alert",
+   "marketing.lead_enrichment",
+   "marketing.lifecycle_stage",
+   "marketing.social_mention_response",
+   "marketing.trial_extension_processing",
+   "operations.hubspot_ticket_escalation",
+   "sales.calendly_lead_scoring",
+   "sales.champion_change_alert",
+   "support.freshdesk_auto_merge",
+   "support.reamaze_multi_channel_dedup",
+   "support.zendesk_weekend_handoff"
+  ]
+ },
+ "roots": [
+  {
+   "label": "main:research/automationbench-20261014/runs",
+   "runs": 29
+  },
+  {
+   "label": "worktree:a1c-v1-pin:research/automationbench-20261014/runs",
+   "runs": 25
+  },
+  {
+   "label": "worktree:wf_0f86d12b-ab5-1:research/automationbench-20261014/runs",
+   "runs": 29
+  },
+  {
+   "label": "worktree:wf_0f86d12b-ab5-2:research/automationbench-20261014/runs",
+   "runs": 29
+  },
+  {
+   "label": "worktree:wf_0f86d12b-ab5-3:research/automationbench-20261014/runs",
+   "runs": 29
+  },
+  {
+   "label": "worktree:wf_3674d3bc-0a7-12:research/automationbench-20261014/runs",
+   "runs": 25
+  },
+  {
+   "label": "worktree:wf_630f3979-599-3:research/automationbench-20261014/runs",
+   "runs": 26
+  },
+  {
+   "label": "worktree:wf_630f3979-599-4:research/automationbench-20261014/runs",
+   "runs": 26
+  },
+  {
+   "label": "worktree:wf_6d3b90c9-c30-6:research/automationbench-20261014/runs",
+   "runs": 29
+  },
+  {
+   "label": "worktree:wf_6d3b90c9-c30-7:research/automationbench-20261014/runs",
+   "runs": 29
+  },
+  {
+   "label": "worktree:wf_c56a08f8-048-15:research/automationbench-20261014/runs",
+   "runs": 26
+  },
+  {
+   "label": "worktree:wf_c7946468-203-16:research/automationbench-20261014/runs",
+   "runs": 25
+  },
+  {
+   "label": "worktree:/var/tmp/foundry-work/kit-e1:research/automationbench-20261014/runs",
+   "runs": 0,
+   "missing": true
+  },
+  {
+   "label": "live:/var/tmp/foundry-work/autobench",
+   "runs": 42
+  }
+ ],
+ "rootsSource": "the frozen plan file pool.roots, verbatim (the roots the freeze scan read and their run counts)",
+ "seenDevTrain": [
+  "finance.ap_aging_report",
+  "finance.bad_debt_writeoff",
+  "finance.budget_variance_analysis",
+  "finance.capex_approval",
+  "finance.commission_calculation",
+  "finance.duplicate_payment_detection",
+  "finance.escrow_tracking",
+  "finance.fiscal_year_rollover",
+  "finance.forex_gain_loss",
+  "finance.payroll_variance_check",
+  "finance.project_profitability",
+  "finance.qb_invoice_from_orders",
+  "finance.quarterly_tax_estimate",
+  "finance.revenue_recognition",
+  "finance.travel_advance_settlement",
+  "finance.vendor_1099_prep",
+  "finance.vendor_payment_approval",
+  "finance.wave_freelance_invoice",
+  "hr.anniversary_recognition",
+  "hr.background_check_followup",
+  "hr.candidate_rejection_followup",
+  "hr.disciplinary_action_tracking",
+  "hr.employee_request_routing",
+  "hr.equipment_provisioning",
+  "hr.grievance_routing",
+  "hr.i9_verification_tracking",
+  "hr.jira_security_access_review",
+  "hr.job_board_monitoring",
+  "hr.monday_onboarding_pipeline",
+  "hr.performance_review_kickoff",
+  "hr.promotion_announcement",
+  "hr.recruitment_channel_roi",
+  "hr.referral_bonus_processing",
+  "hr.referral_bonus_tracking",
+  "hr.salary_adjustment_processing",
+  "hr.slack_benefits_inquiry",
+  "hr.visa_expiration_monitoring",
+  "hr.visa_expiry_tracking",
+  "hr.zoom_orientation_sessions",
+  "marketing.analyst_briefing",
+  "marketing.community_engagement",
+  "marketing.contact_data_cleanup",
+  "marketing.customer_feedback_aggregation",
+  "marketing.customer_milestone",
+  "marketing.customer_story_intake",
+  "marketing.engagement_optimization",
+  "marketing.featured_snippet",
+  "marketing.google_ads_high_intent_list_from_hubspot",
+  "marketing.keyword_cannibalization",
+  "marketing.linkedin_company_update",
+  "marketing.seo_audit",
+  "marketing.social_benchmark",
+  "marketing.social_content_calendar",
+  "marketing.social_contest",
+  "marketing.voice_of_customer",
+  "marketing.webinar_cancellation_workflow",
+  "marketing.win_loss_analysis",
+  "operations.asana_safety_walk_log",
+  "operations.buffer_engagement_optimization",
+  "operations.calendar_airtable_maintenance",
+  "operations.compressed_gas_cylinder_tracking",
+  "operations.cross_training_assignment",
+  "operations.docusign_contractor_offboard",
+  "operations.docusign_lease_renewal",
+  "operations.drive_slack_dock_schedule",
+  "operations.equipment_lease_processing",
+  "operations.invoice_shipping_trigger",
+  "operations.loading_dock_scheduling",
+  "operations.overtime_threshold_monitoring",
+  "operations.parking_allocation_management",
+  "operations.sla_breach_early_warning",
+  "operations.training_compliance_check",
+  "operations.zoom_change_advisory",
+  "operations.zoom_dr_drill",
+  "operations.zoom_training_setup",
+  "sales.advance_opportunity_stage",
+  "sales.apply_project_label",
+  "sales.calendly_capacity_management",
+  "sales.calendly_no_show_followup",
+  "sales.chatgpt_lead_summary_generator",
+  "sales.chatgpt_proposal_customization",
+  "sales.competitive_displacement_outreach",
+  "sales.docusign_sequential_signing",
+  "sales.event_to_opportunity_pipeline",
+  "sales.five_level_conditional",
+  "sales.full_sales_cycle_orchestrator",
+  "sales.linkedin_content_engagement",
+  "sales.partnership_contract",
+  "sales.qualify_lead",
+  "sales.soft_matching",
+  "sales.vendor_review_prep",
+  "sales.zoom_calendar_conflict",
+  "sales.zoom_meeting_followup",
+  "sales.zoom_regional_webinar_coordinator",
+  "support.freshdesk_sla_monitoring",
+  "support.gorgias_quality_audit",
+  "support.helpcrunch_usage_alerts",
+  "support.helpcrunch_zoho_desk_bridge",
+  "support.helpscout_auto_categorization",
+  "support.hiver_csat_analysis",
+  "support.hiver_mailbox_audit",
+  "support.intercom_conversation_quality",
+  "support.intercom_demo_scheduling",
+  "support.intercom_feature_request",
+  "support.intercom_multi_product_routing",
+  "support.intercom_reactivation_campaign",
+  "support.intercom_sentiment_escalation",
+  "support.intercom_winback",
+  "support.intercom_zoho_customer_360",
+  "support.reamaze_cross_platform_dedup",
+  "support.zendesk_freshdesk_sync",
+  "support.zoho_desk_ticket_categorization",
+  "support.zoho_risk_scoring"
+ ]
+}

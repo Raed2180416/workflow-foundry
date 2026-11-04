@@ -1,0 +1,231 @@
+{
+ "runId": "a0o-dev60-dn",
+ "label": "model claude-opus-5-5",
+ "model": "claude-opus-5-5",
+ "scripted": false,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "arm": "A0 (no harness)",
+ "sealed": false,
+ "testSplitTasks": 0,
+ "harness": null,
+ "selection": {
+  "pool": "devTrain",
+  "subset": 60,
+  "seed": "21",
+  "domains": [
+   "sales",
+   "marketing",
+   "operations",
+   "support",
+   "finance",
+   "hr"
+  ]
+ },
+ "tasks": [
+  "sales.chatgpt_lead_summary_generator",
+  "sales.qualify_lead",
+  "sales.soft_matching",
+  "sales.docusign_sequential_signing",
+  "sales.advance_opportunity_stage",
+  "sales.vendor_review_prep",
+  "sales.competitive_displacement_outreach",
+  "sales.zoom_meeting_followup",
+  "sales.partnership_contract",
+  "sales.chatgpt_proposal_customization",
+  "marketing.linkedin_company_update",
+  "marketing.win_loss_analysis",
+  "marketing.customer_story_intake",
+  "marketing.customer_feedback_aggregation",
+  "marketing.engagement_optimization",
+  "marketing.social_contest",
+  "marketing.community_engagement",
+  "marketing.featured_snippet",
+  "marketing.customer_milestone",
+  "marketing.social_content_calendar",
+  "operations.parking_allocation_management",
+  "operations.zoom_dr_drill",
+  "operations.cross_training_assignment",
+  "operations.loading_dock_scheduling",
+  "operations.docusign_contractor_offboard",
+  "operations.zoom_training_setup",
+  "operations.overtime_threshold_monitoring",
+  "operations.calendar_airtable_maintenance",
+  "operations.invoice_shipping_trigger",
+  "operations.asana_safety_walk_log",
+  "support.intercom_reactivation_campaign",
+  "support.intercom_zoho_customer_360",
+  "support.intercom_demo_scheduling",
+  "support.intercom_sentiment_escalation",
+  "support.gorgias_quality_audit",
+  "support.reamaze_cross_platform_dedup",
+  "support.helpcrunch_usage_alerts",
+  "support.intercom_multi_product_routing",
+  "support.helpcrunch_zoho_desk_bridge",
+  "support.hiver_mailbox_audit",
+  "finance.vendor_payment_approval",
+  "finance.bad_debt_writeoff",
+  "finance.vendor_1099_prep",
+  "finance.forex_gain_loss",
+  "finance.project_profitability",
+  "finance.budget_variance_analysis",
+  "finance.travel_advance_settlement",
+  "finance.ap_aging_report",
+  "finance.capex_approval",
+  "finance.quarterly_tax_estimate",
+  "hr.anniversary_recognition",
+  "hr.visa_expiry_tracking",
+  "hr.monday_onboarding_pipeline",
+  "hr.candidate_rejection_followup",
+  "hr.employee_request_routing",
+  "hr.referral_bonus_tracking",
+  "hr.recruitment_channel_roi",
+  "hr.equipment_provisioning",
+  "hr.salary_adjustment_processing",
+  "hr.disciplinary_action_tracking"
+ ],
+ "dateNote": true,
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 3,
+ "capUsd": 45,
+ "tools": [
+  "Bash"
+ ],
+ "effort": "xhigh",
+ "n": 60,
+ "n_graded": 60,
+ "pass_rate": 0.4666666666666667,
+ "mean_partial_credit": 0.8442406899072608,
+ "by_domain": {
+  "sales": {
+   "n": 10,
+   "pass_rate": 0.6,
+   "mean_partial_credit": 0.8762605042016807
+  },
+  "marketing": {
+   "n": 10,
+   "pass_rate": 0.3,
+   "mean_partial_credit": 0.768371396405452
+  },
+  "operations": {
+   "n": 10,
+   "pass_rate": 0.4,
+   "mean_partial_credit": 0.7767748917748917
+  },
+  "support": {
+   "n": 10,
+   "pass_rate": 0.5,
+   "mean_partial_credit": 0.9321325851567787
+  },
+  "finance": {
+   "n": 10,
+   "pass_rate": 0.4,
+   "mean_partial_credit": 0.8357142857142857
+  },
+  "hr": {
+   "n": 10,
+   "pass_rate": 0.6,
+   "mean_partial_credit": 0.8761904761904763
+  }
+ },
+ "live_pass_rate": 0.4666666666666667,
+ "mean_cost_per_task_usd": 0.40712968999999993,
+ "accounting": {
+  "modelResponses": {
+   "mean": 11.45,
+   "max": 18
+  },
+  "toolResponses": {
+   "mean": 10.45,
+   "max": 17
+  },
+  "numTurnsCli": {
+   "mean": 11.466666666666667,
+   "max": 18
+  },
+  "worldSteps": {
+   "mean": 10.416666666666666,
+   "max": 17
+  },
+  "worldCalls": {
+   "mean": 31.45,
+   "max": 79
+  },
+  "reads": {
+   "mean": 14.683333333333334,
+   "max": 63
+  },
+  "searches": {
+   "mean": 10.583333333333334,
+   "max": 26
+  },
+  "writes": {
+   "mean": 5.95,
+   "max": 24
+  },
+  "stoppedByStepGuard": 0,
+  "extraModelCalls": 0,
+  "compactions": 0,
+  "capViolations": 0,
+  "l5Violations": 0,
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "ledger": null
+ },
+ "cost": {
+  "spentUsd": 24.427781399999997,
+  "knownUsd": 24.427781399999997,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 60,
+  "skipped": 0
+ },
+ "tokens": {
+  "input": 14394995,
+  "output": 10465,
+  "cachedInput": 12736667,
+  "total": 14405460,
+  "sessions": 60,
+  "meanPerTask": 240091,
+  "sessionBudget": null,
+  "cap": null,
+  "meterSpent": null,
+  "meterUnknownSessions": null,
+  "faultSessions": 0
+ },
+ "launchHistory": [],
+ "envFaults": {
+  "records": 0,
+  "tasks": 0,
+  "sessions": 0,
+  "spentUsd": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "caf3ddd6d1dc653b63d76a297225f762234b3cf050f2d40312cc6ef10e2c75f7",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "ea1dca70628a80262430b0d693d013fab456aebccefaac9e48db9713d4c87c5f",
+  "policyHash": "7447a8752174cb7ebe7f754a7a2fac7bfa081c6db1787db989cfeca29cf53462",
+  "policyVersion": "2026-10-21.2",
+  "policyFileSha256": "cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69",
+  "node": "v24.21.0",
+  "cli": "2.1.307 (Claude Code)",
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  },
+  "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
+  "harnessManifestSha256": null
+ },
+ "live": "/var/tmp/foundry-work/autobench/a0o-dev60-dn",
+ "finishedAt": "2026-10-22T04:10:11.650Z"
+}

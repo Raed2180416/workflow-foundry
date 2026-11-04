@@ -1,0 +1,58 @@
+{
+ "runId": "p2-pi-sealed",
+ "evidence": "SEALED rows; aggregate counts only",
+ "runs": 300,
+ "environmentFaults": 0,
+ "arms": {
+  "A": {
+   "runs": 150,
+   "categories": {
+    "pass": 94,
+    "wrong-value": 56
+   },
+   "deopts": {},
+   "violations": {},
+   "sessionErrors": {},
+   "upstreamOnlyPasses": 0,
+   "bySop": {
+    "patient_intake": {
+     "runs": 150,
+     "categories": {
+      "pass": 94,
+      "wrong-value": 56
+     },
+     "wrongColumns": {
+      "life_style_risk_level": 46,
+      "overall_risk_level": 44,
+      "user_registration": 56
+     },
+     "flakyRows": 16,
+     "rowsAllFail": 10,
+     "rowsCount": 50
+    }
+   }
+  },
+  "W": {
+   "runs": 150,
+   "categories": {
+    "pass": 150
+   },
+   "deopts": {},
+   "violations": {},
+   "sessionErrors": {},
+   "upstreamOnlyPasses": 0,
+   "bySop": {
+    "patient_intake": {
+     "runs": 150,
+     "categories": {
+      "pass": 150
+     },
+     "wrongColumns": {},
+     "flakyRows": 0,
+     "rowsAllFail": 0,
+     "rowsCount": 50
+    }
+   }
+  }
+ }
+}

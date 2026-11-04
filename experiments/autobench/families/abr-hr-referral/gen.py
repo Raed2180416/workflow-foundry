@@ -645,8 +645,11 @@ class Gen:
         pool = [x for x in self.pending if dup is None or norm(x["cand"]["email"]) != norm(dup["cand"]["email"])]
         targets = r.sample(pool, n - (1 if dup else 0))
         n_trap = round(TRAP_RATE[d] * n)
+        if dup is not None and n_trap >= 2:       # the Duplicate-row hire is one of the week's planted hire traps (d3),
+            n_trap -= 1                           # so the trap share stays near the design's 70%
         kinds = sorted(HIRE_WEIGHTS)
-        req = ["rehire"] if n_trap else []
+        # d3 plants each hire trap once (rehire, rehire-old, rehire-namesake); d2 plants the rehire
+        req = (["rehire", "rehire-old", "rehire-namesake"] if n_trap >= 3 else ["rehire"]) if n_trap else []
         cases = req[:n_trap] + r.choices(kinds, weights=[HIRE_WEIGHTS[k] for k in kinds], k=max(0, n_trap - len(req)))
         cases += ["clean"] * (len(targets) - len(cases))
         r.shuffle(cases)

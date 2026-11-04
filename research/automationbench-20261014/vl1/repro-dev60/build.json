@@ -1,0 +1,27 @@
+{
+ "tasks": 60,
+ "listSha256": "0358b32e058eb338b1196532954b90c7e89fc7f0de8357741e019ac9997ad920",
+ "armOrder": [
+  "m3-a1c",
+  "sonnet-a1",
+  "haiku-a1c",
+  "sonnet-a0",
+  "haiku-a1",
+  "haiku-a0"
+ ],
+ "rows": 364,
+ "canonicalRows": 360,
+ "canonicalByArm": {
+  "m3-a1c": 60,
+  "sonnet-a1": 60,
+  "haiku-a1c": 60,
+  "sonnet-a0": 60,
+  "haiku-a1": 60,
+  "haiku-a0": 60
+ },
+ "tasksWithoutCandidate": [],
+ "missingWorld": 2,
+ "notOutcome": 4,
+ "world0Rebuilt": 45,
+ "skippedNotListed": 0
+}

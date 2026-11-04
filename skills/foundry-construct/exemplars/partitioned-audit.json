@@ -1,0 +1,421 @@
+{
+  "schemaVersion": "1.0",
+  "id": "partitioned-audit",
+  "version": 1,
+  "title": "Exhaustive audit of a large artifact set, partitioned, with a coverage ledger and a sampled second reader",
+  "goal": "Audit every unit in the input inventory against the audit question, with each finding tied to its unit and location, and prove that every unit was read.",
+  "domain": "software",
+  "envelope": {
+    "assumptions": [
+      "The caller supplies a complete inventory (one entry per unit: id, path, bytes) produced by code, not by a model",
+      "Units are independent enough to audit one shard at a time; cross-unit issues are found in the reconcile step"
+    ],
+    "risks": [
+      "A shard silently skipped or skimmed",
+      "A finding without a location",
+      "The same issue reported twice across shards",
+      "The reader misses issues a second reader would catch"
+    ],
+    "successCriteria": [
+      "Every inventory unit appears in exactly one shard and is reported as read",
+      "Every finding names its unit and location",
+      "A different-model second reader on a sample of shards agrees within the stated miss rate"
+    ],
+    "unsupported": [
+      "Fixing the issues",
+      "Units larger than one reader's input budget (split them first)",
+      "Inventories whose shard plan exceeds the 512 KB code-output cap (about 10,000 units): pass references to the inventory, not the inventory"
+    ]
+  },
+  "inputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "question",
+      "inventory",
+      "shardBytes",
+      "sampleShards"
+    ],
+    "properties": {
+      "question": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      },
+      "inventory": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 200000,
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "path",
+            "bytes"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      },
+      "shardBytes": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 400000
+      },
+      "sampleShards": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 64
+      }
+    }
+  },
+  "budget": {
+    "maxSteps": 20000,
+    "maxConcurrency": 8,
+    "maxDurationMs": 21600000
+  },
+  "nodes": [
+    {
+      "id": "partition",
+      "kind": "code",
+      "needs": [],
+      "description": "Pack the inventory into shards under a byte budget, keeping each directory together where it fits; code owns the coverage plan",
+      "lang": "js",
+      "source": "export default function main({ inventory, shardBytes }) {\n  const byDir = new Map();\n  for (const u of inventory) { const d = u.path.split('/').slice(0, -1).join('/'); if (!byDir.has(d)) byDir.set(d, []); byDir.get(d).push(u); }\n  const shards = []; let cur = { id: 's0', units: [], bytes: 0 };\n  for (const [, units] of [...byDir.entries()].sort()) for (const u of units) {\n    if (cur.units.length && cur.bytes + u.bytes > shardBytes) { shards.push(cur); cur = { id: 's' + shards.length, units: [], bytes: 0 }; }\n    cur.units.push(u.id); cur.bytes += u.bytes;\n  }\n  if (cur.units.length) shards.push(cur);\n  return { shards, unitCount: inventory.length };\n}",
+      "args": {
+        "inventory": {
+          "$ref": "input.inventory"
+        },
+        "shardBytes": {
+          "$ref": "input.shardBytes"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "required": [
+          "shards",
+          "unitCount"
+        ],
+        "properties": {
+          "shards": {
+            "type": "array"
+          },
+          "unitCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "timeoutMs": 60000
+    },
+    {
+      "id": "audit",
+      "kind": "map",
+      "needs": [
+        "partition"
+      ],
+      "description": "Audit each shard; each reader must list every unit it read and tie every finding to a unit and location",
+      "items": {
+        "$ref": "nodes.partition.shards"
+      },
+      "maxItems": 1000,
+      "concurrency": 8,
+      "failure": "collect",
+      "body": {
+        "nodes": [
+          {
+            "id": "read",
+            "kind": "agent",
+            "needs": [],
+            "description": "Read every unit in this shard and answer the audit question for it",
+            "role": "extract",
+            "instructions": "Audit each unit listed in the shard against the question. Return every unit id you read in `read`, and every finding with its unit id, a location (line or byte range) and a one-sentence reason. Report an empty findings list for a clean unit; never skip a unit.",
+            "context": {
+              "inputs": [
+                {
+                  "name": "question",
+                  "ref": "input.question"
+                },
+                {
+                  "name": "shard",
+                  "ref": "item"
+                }
+              ]
+            },
+            "returns": {
+              "type": "object",
+              "required": [
+                "read",
+                "findings"
+              ],
+              "properties": {
+                "read": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "findings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "unit",
+                      "location",
+                      "reason"
+                    ],
+                    "properties": {
+                      "unit": {
+                        "type": "string"
+                      },
+                      "location": {
+                        "type": "string"
+                      },
+                      "reason": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "model": {
+              "class": "S"
+            },
+            "escalation": {
+              "schemaRetries": 1
+            }
+          },
+          {
+            "id": "covered",
+            "kind": "verify",
+            "needs": [
+              "read"
+            ],
+            "description": "Code checks that the reader read exactly the shard's units and that every finding names a unit of this shard",
+            "method": "code",
+            "lang": "js",
+            "source": "export default function main({ subject: { units, out } }) {\n  const want = new Set(units), got = new Set(out.read);\n  const missing = units.filter(u => !got.has(u));\n  const stray = out.findings.filter(f => !want.has(f.unit));\n  return { pass: missing.length === 0 && stray.length === 0, missing, stray: stray.length };\n}",
+            "subject": {
+              "units": {
+                "$ref": "item.units"
+              },
+              "out": {
+                "$ref": "nodes.read"
+              }
+            },
+            "independence": "execution",
+            "gate": true
+          }
+        ],
+        "acceptance": [
+          {
+            "op": "eq",
+            "left": {
+              "$ref": "nodes.covered.pass"
+            },
+            "right": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reconcile",
+      "kind": "code",
+      "needs": [
+        "audit",
+        "partition"
+      ],
+      "description": "Merge shard results: the coverage ledger (every unit read exactly once), de-duplicated findings, and the list of failed shards",
+      "lang": "js",
+      "source": "export default function main({ shards, results, unitCount }) {\n  const seen = new Map(); const findings = new Map(); const failedShards = [];\n  results.forEach((r, i) => {\n    if (!r || r.$error) { failedShards.push(shards[i].id); return; }\n    for (const u of r.read.read) seen.set(u, (seen.get(u) ?? 0) + 1);\n    for (const f of r.read.findings) findings.set(f.unit + '|' + f.location + '|' + f.reason, f);\n  });\n  const twice = [...seen.values()].filter(n => n > 1).length;\n  return { covered: seen.size, unitCount, readTwice: twice, failedShards, findings: [...findings.values()] };\n}",
+      "args": {
+        "shards": {
+          "$ref": "nodes.partition.shards"
+        },
+        "results": {
+          "$ref": "nodes.audit.items"
+        },
+        "unitCount": {
+          "$ref": "nodes.partition.unitCount"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "required": [
+          "covered",
+          "unitCount",
+          "failedShards",
+          "findings"
+        ],
+        "properties": {
+          "covered": {
+            "type": "integer"
+          },
+          "unitCount": {
+            "type": "integer"
+          },
+          "failedShards": {
+            "type": "array"
+          },
+          "findings": {
+            "type": "array"
+          }
+        }
+      },
+      "timeoutMs": 60000
+    },
+    {
+      "id": "pick",
+      "kind": "code",
+      "needs": [
+        "partition"
+      ],
+      "description": "Choose the shards for the second reader by a fixed rule (every k-th shard), so the sample is not chosen by a model",
+      "lang": "js",
+      "source": "export default function main({ shards, n }) {\n  const k = Math.max(1, Math.floor(shards.length / n));\n  return { sample: shards.filter((_, i) => i % k === 0).slice(0, n) };\n}",
+      "args": {
+        "shards": {
+          "$ref": "nodes.partition.shards"
+        },
+        "n": {
+          "$ref": "input.sampleShards"
+        }
+      },
+      "returns": {
+        "type": "object",
+        "required": [
+          "sample"
+        ],
+        "properties": {
+          "sample": {
+            "type": "array"
+          }
+        }
+      },
+      "timeoutMs": 10000
+    },
+    {
+      "id": "second",
+      "kind": "map",
+      "needs": [
+        "pick",
+        "audit"
+      ],
+      "description": "A different model re-audits the sampled shards blind to the first reader's findings",
+      "items": {
+        "$ref": "nodes.pick.sample"
+      },
+      "maxItems": 64,
+      "concurrency": 4,
+      "body": {
+        "nodes": [
+          {
+            "id": "reread",
+            "kind": "agent",
+            "needs": [],
+            "description": "Independent second reading of one sampled shard",
+            "role": "extract",
+            "instructions": "Audit each unit listed in the shard against the question. Return every unit id you read and every finding with unit, location and reason.",
+            "context": {
+              "inputs": [
+                {
+                  "name": "question",
+                  "ref": "input.question"
+                },
+                {
+                  "name": "shard",
+                  "ref": "item"
+                }
+              ]
+            },
+            "returns": {
+              "type": "object",
+              "required": [
+                "read",
+                "findings"
+              ],
+              "properties": {
+                "read": {
+                  "type": "array"
+                },
+                "findings": {
+                  "type": "array"
+                }
+              }
+            },
+            "model": {
+              "class": "M",
+              "justification": "The second reader must be a different, stronger model than the first so that their misses are less correlated; this is the one place a larger class is spent."
+            }
+          }
+        ],
+        "acceptance": [
+          {
+            "op": "exists",
+            "value": {
+              "$ref": "nodes.reread.read"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "agreement",
+      "kind": "verify",
+      "needs": [
+        "second",
+        "reconcile"
+      ],
+      "description": "Code estimates the first reader's miss rate on the sample: findings the second reader made that the first did not, per unit",
+      "method": "code",
+      "lang": "js",
+      "source": "export default function main({ subject: { second, first, maxMissRate } }) {\n  const key = f => f.unit + '|' + f.location;\n  const have = new Set(first.map(key)); let extra = 0, units = 0;\n  for (const r of second) { if (!r || r.$error) continue; units += r.reread.read.length; extra += r.reread.findings.filter(f => !have.has(key(f))).length; }\n  const rate = units ? extra / units : 1;\n  return { pass: rate <= maxMissRate, missRatePerUnit: rate, unitsSampled: units };\n}",
+      "subject": {
+        "second": {
+          "$ref": "nodes.second.items"
+        },
+        "first": {
+          "$ref": "nodes.reconcile.findings"
+        },
+        "maxMissRate": 0.02
+      },
+      "independence": "execution",
+      "gate": true
+    }
+  ],
+  "acceptance": [
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.reconcile.covered"
+      },
+      "right": {
+        "$ref": "nodes.reconcile.unitCount"
+      }
+    },
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.audit.failed"
+      },
+      "right": 0
+    },
+    {
+      "op": "eq",
+      "left": {
+        "$ref": "nodes.agreement.pass"
+      },
+      "right": true
+    }
+  ]
+}

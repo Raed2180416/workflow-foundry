@@ -130,3 +130,20 @@ $0 probe and deleted.
 No install, clone or data download. One $0 power simulation in the scratchpad (`breadth/plan/pool_power.py`, importing the
 methodology sweep's `tools-meth/portfolio_sim.py`). Disk at writing: 3.5 GB free (`df`). Read-only reads of the pinned,
 already-present `corpus/tau2-bench` (split and task files, registry, CHANGELOG) with `python3 -I`.
+
+## PLAN.md and PREREG revision 2 author (2026-10-21, late evening)
+
+No install, clone or data download. Two $0 calculations in the scratchpad (`breadth/plan2/cost2.py`,
+`breadth/plan2/graph_power.py`, the second importing `tools-meth/portfolio_sim.py`), outputs beside them. Read-only reads
+of the pinned `corpus/tau2-bench` with `python3 -I` and `grep` (telecom `tasks.json` ids and one task, `split_tasks.json`,
+solo-mode code paths in `src/tau2/domains/*/environment.py` and `src/tau2/agent/llm_agent.py`). Disk at writing: 3.0 GB
+free (`df -h /`).
+
+## PLAN.md and PREREG revision 3 author (2026-10-21, night)
+
+No install, clone or data download; nothing published. Three $0 calculations in the scratchpad (`breadth/plan3/power3.py`,
+`breadth/plan3/cost4.py`, `breadth/plan3/harm_guard.py`, outputs beside them; the first and third import the methodology
+sweep's `tools-meth/portfolio_sim.py`). Read-only reads of repository files (REGISTER.md, PREREG-AB-v1 AM-9, decisions,
+R0-RUNBOOK, executor and sandbox sources, `policy/models.json`) and of the three critiques' scratchpad scripts. The rev-2
+author's private claude.ai artifact of PLAN.md was not opened, updated, republished or deleted (PLAN §11 OD-0). Disk during
+writing: 2.8–3.7 GB free (`df -h /`), `/var/tmp/foundry-work` 3.7 GB (other tracks).

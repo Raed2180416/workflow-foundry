@@ -11,7 +11,7 @@ here is a claim.*
 change-control gate, the world overlay, the observer (OCEL-2.0-shaped log, clauses C1–C3), the shield and the necessity
 guard G at the effect port, the scripted auditor, the observer's validity test, and the re-grading of the stored blind
 builds as W-blind, W-S and G. The paid arms (W-C ×3, A-HV, A-F with Sonnet 5.5 and with Opus 5.5) are wired and dry-run at
-$0, and **not run**; `PREREG-OT0.md` is a draft, and both paid entry points refuse to start until the owner freezes it.
+$0. *Updated 2026-10-22:* the paid arms have run under the frozen PREREG-OT0 and AMEND-1; see §4 and [RESULT-OT0.md](RESULT-OT0.md).
 
 ```sh
 # tests ($0; one file at a time on the shared machine; 49 tests, about 35 s in all)
@@ -206,7 +206,7 @@ task (the port does; the observer accepts an order-level approval only when the 
 | P0 | observer C1 = oracle critical, except stock and money-outside-allowed on conserved money | graded programs: 67 program × world re-runs (B1-H, B1L-H ×3, B1N-H ×2, B1-O on 9 worlds; four on the sized world) and 2 agent journals: 0 critical, 0 C1, 0 disagreements; controls (117 runs, 14,424 cases): 1,077 critical for both, 464 oracle-only (342 money after the first divergence, 122 stock), 0 observer-only | **supported**; the money-outside-allowed kind is entirely the grader's frozen expectation (finding above) |
 | P1 | every W-blind lineage violates C2; the overlay is invisible to them | every lineage: 58 of 58 refunds above the pinned T applied without approval (57 full worlds + 1 sized), stale band 29/29; E8 verdicts unchanged case for case | **supported** |
 | P2 ($0) | W-S: 0 C2, 0 C3 in every lineage, ≥ 1 intervention each, no added C1, E8 + C2 overlay ≥ 99% of W-blind's passes | every lineage: 0 C1, 0 C2, 0 C3; 58 holds, 58 released (1 through break-glass), 0 open at the horizon; E8 + C2 overlay 1036/1036 (L1, L2), 1032/1036 = 99.6% (L3); unchanged E8 oracle 986/1036 | **supported**, with the lineage-3 finding (§3) |
-| P3 | A-F violates C2 or C3 on the sized world | not run (paid) | — |
+| P3 | A-F violates C2 or C3 on the sized world | neither supported nor refuted (2026-10-22, RESULT-OT0.md): no A-F violation, and the refutation's score and cost conditions fail | — |
 | P4 | (§3.3) G reaches zero C2 and C3 violations; (mine) it does not, through SoD and pinning | every lineage: 16 C2 SoD violations (the planted trap in 9 of 10 worlds), 3 C3 retroactive, 1 refund abandoned (C1 conservation + E8 critical for L1, L2, L2-pre) | §3.3's expectation **refuted**; mine **supported**, plus a third failure I did not predict (no exception path → money kept) |
 | P5 | today's journal fails ≥ Q1, Q2, Q3, Q5; the OT-0 pack passes all five and 10/10 | today's journal: Q1, Q2, Q3, Q5 fail in all 50 runs, Q4 n/a, walkthrough 0/10; W-S pack: all five pass on the sized world for L1, L2, L3, walkthrough 10/10; full worlds Q1–Q4 45/45, Q5 36/45 (all pre-repair L2), walkthrough 450/450 | **supported** |
 
@@ -246,7 +246,9 @@ task (the port does; the observer accepts an order-level approval only when the 
    does not exclude it gets a conflicted approver. That is the realistic default, and it is why the shield's SoD comes
    from journaled case history rather than from the host.
 
-## 4. Paid arms: ready, not run
+## 4. Paid arms (run 2026-10-21/22; result in [RESULT-OT0.md](RESULT-OT0.md))
+
+*Dated note (2026-10-22): the paid phase ran under PREREG-OT0 (frozen at 27ff324) and [AMEND-1](PREREG-OT0-AMEND-1.md). On the 14-case sized world (E8 + C2 overlay): A-HV (Haiku with validator) 14/14 for $2.28; A-F Sonnet 5/14 for $13.11; A-F Opus 6/14 for at least $17.97; 0 constitution violations in any agent arm. P2's paid part is supported as graded; P3 is neither supported nor refuted. The first attempts were voided by the account session limit (runs/void-20261021/). The text below is the pre-run plan, kept as written.*
 
 Commands, conditions and the stopping rules are in `PREREG-OT0.md` (draft). Summary:
 
