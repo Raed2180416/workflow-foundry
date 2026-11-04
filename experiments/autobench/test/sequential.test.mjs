@@ -22,6 +22,7 @@ import { listSha256, loadSplit } from '../split.mjs';
 import { REPO, sha256 } from '../lib.mjs';
 import { obrienFlemingBoundary, pairedPermutation } from '../../lib/stats.mjs';
 import { rng } from '../../../beds/lib/rng.mjs';
+import { ALLOWED_MANIFEST_CHANGES, MANIFEST_BASE, allowanceProblems } from './manifest-allowances.mjs';
 
 const split = checkedSplit();
 const exposureFile = JSON.parse(readFileSync(EXPOSURE, 'utf8'));
@@ -53,23 +54,14 @@ test('devCheck guard: the split\'s devCheck list carries PREREG-AB-v1\'s hash; a
 });
 
 // Harness-manifest files (harness/codeowned.mjs and harness/foundry.mjs manifestFiles()) changed since e6a23ca by a
-// recorded, allowed change: the commit, the file's sha256 before (at e6a23ca) and after, why it is allowed, and where it
-// is recorded. Any other change, or any further change to one of these files, fails the manifest test.
-const MANIFEST_BASE = 'e6a23ca';
-const ALLOWED_MANIFEST_CHANGES = Object.freeze({
-  'experiments/autobench/bridge.py': Object.freeze({
-    commit: '2f02281b0bceb9c964a7347de763b8a341a10667',
-    before: '285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a',
-    after: 'caf3ddd6d1dc653b63d76a297225f762234b3cf050f2d40312cc6ef10e2c75f7',
-    reason: 'pin_timezone (the AutomationBench families workflow): the serve/replay process takes its time zone from the input row\'s info.tz before the shim is installed. Only abr-* family rows carry info.tz; no official task does, so official tasks are served as before. The A1-C arms (and a0-look2, a1s-look2) run from the pinned checkout (tag a1c-v1-look2 on a1c-v1, aada200), whose bridge.py is still e6a23ca\'s.',
-    recordedIn: Object.freeze(['research/automationbench-20261014/PREREG-VL1.md', 'research/mercury-20261021/A1C-MERCURY-PARTIAL.md']),
-  }),
-});
+// recorded, allowed change (test/manifest-allowances.mjs: the commits, the file's sha256 before and after, why it is
+// allowed, and where it is recorded). Any other change, or any further change to one of these files, fails the manifest
+// test. The pin, where the frozen candidates run, takes no allowance.
 // The pinned checkout of the frozen A1-C (and A1) candidates for look 2: tag a1c-v1-look2 (b1e16e03) on tag a1c-v1 (aada200).
 const PIN = Object.freeze({ tag: 'a1c-v1-look2', base: 'a1c-v1', worktree: path.join(mainTree(REPO), '.claude', 'worktrees', 'a1c-v1-pin') });
 const shaBuf = b => createHash('sha256').update(b).digest('hex');
 
-test('harness manifests (PREREG-AB-v1 §5, §6.1): run.mjs and every manifest file are e6a23ca\'s bytes except recorded changes (bridge.py at 2f02281); in the pinned checkout every manifest file is e6a23ca\'s', async t => {
+test('harness manifests (PREREG-AB-v1 §5, §6.1): every manifest file is e6a23ca\'s bytes or carries exactly a recorded change (manifest-allowances.mjs); in the pinned checkout every manifest file is e6a23ca\'s, with no allowance', async t => {
   const git = (...a) => spawnSync('git', ['-C', REPO, ...a], { encoding: 'buffer', maxBuffer: 64 << 20 });
   const blob = (rev, f) => { const r = git('cat-file', '-p', `${rev}:${f}`); return r.status === 0 ? shaBuf(r.stdout) : null; };
   const hasRev = rev => git('rev-parse', '--verify', '-q', `${rev}^{commit}`).status === 0;
@@ -78,22 +70,18 @@ test('harness manifests (PREREG-AB-v1 §5, §6.1): run.mjs and every manifest fi
   for (const h of ['codeowned', 'foundry']) for (const f of (await import(`../harness/${h}.mjs`)).manifestFiles()) files.add(f);
   assert.ok(files.has('experiments/autobench/run.mjs'), 'run.mjs is in the manifests (why it may not change)');
   assert.ok(!files.has('experiments/autobench/sequential.mjs'), 'the sequential design is outside both manifests');
-  assert.ok(!('experiments/autobench/run.mjs' in ALLOWED_MANIFEST_CHANGES), 'run.mjs has no allowance: it stays e6a23ca\'s');
   // (1) This tree: every manifest file is e6a23ca's, or carries exactly the bytes of a recorded change.
   const changed = [...files].filter(f => blob(MANIFEST_BASE, f) !== shaBuf(readFileSync(path.join(REPO, f)))).sort();
   const unrecorded = changed.filter(f => !Object.hasOwn(ALLOWED_MANIFEST_CHANGES, f));
   assert.deepEqual(unrecorded, [], `harness-manifest files changed since ${MANIFEST_BASE} without a recorded allowance: ${unrecorded.join(', ')} (PREREG-AB-v1 §5, §6.1: a frozen candidate's hash would no longer recompute)`);
+  const readDoc = r => { try { return readFileSync(path.join(REPO, r), 'utf8'); } catch { return null; } };
   for (const f of changed) {
-    const c = ALLOWED_MANIFEST_CHANGES[f];
-    assert.equal(blob(MANIFEST_BASE, f), c.before, `${f} at ${MANIFEST_BASE}`);
-    assert.equal(shaBuf(readFileSync(path.join(REPO, f))), c.after, `${f} changed again after ${c.commit.slice(0, 7)}: that change is not recorded`);
-    if (hasRev(c.commit)) {
-      assert.equal(blob(`${c.commit}^`, f), c.before, `${c.commit.slice(0, 7)}'s parent holds e6a23ca's ${f}`);
-      assert.equal(blob(c.commit, f), c.after, `${c.commit.slice(0, 7)} made exactly the recorded change`);
-    }
-    assert.ok(c.reason.length > 40);
-    for (const r of c.recordedIn) assert.match(readFileSync(path.join(REPO, r), 'utf8'), /pin_timezone/, `${r} records the ${f} change`);
+    const problems = allowanceProblems(f, ALLOWED_MANIFEST_CHANGES[f], { git, blob, hasRev, current: shaBuf(readFileSync(path.join(REPO, f))), readDoc });
+    assert.deepEqual(problems, [], f);
   }
+  // A recorded allowance for a file that is back to e6a23ca's bytes, or no longer in a manifest, is stale.
+  const stale = Object.keys(ALLOWED_MANIFEST_CHANGES).filter(f => !changed.includes(f));
+  assert.deepEqual(stale, [], `allowances for files that are unchanged or outside the manifests: ${stale.join(', ')}`);
   t.diagnostic(`manifest files: ${files.size}; changed since ${MANIFEST_BASE} under a recorded allowance: ${changed.join(', ') || 'none'}`);
   // (2) The pin, where the frozen candidates run: no allowance; every manifest file is e6a23ca's.
   if (!hasRev(PIN.tag)) { t.diagnostic(`tag ${PIN.tag} is not in this checkout: the pin is not checked`); return; }
