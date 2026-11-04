@@ -1,0 +1,123 @@
+{
+  "measurement": "mem-0c/1",
+  "bed": "gameqa (dev split)",
+  "seeds": 30,
+  "cost": {
+    "usd": 0,
+    "modelCalls": 0
+  },
+  "lowerBound": "transcripts are planner-minimal reproductions; real exploration is longer",
+  "byDifficulty": {
+    "d3": {
+      "tasks": 30,
+      "explorersK": 3,
+      "poolTokensPerRead": {
+        "n": 30,
+        "mean": 24963.95555555556,
+        "p10": 11740.466666666667,
+        "median": 23392.666666666664,
+        "p90": 42611.066666666666
+      },
+      "boardTokensPerRead": {
+        "n": 30,
+        "mean": 228.36666666666665,
+        "p10": 163.46666666666667,
+        "median": 215.16666666666666,
+        "p90": 323.06666666666666
+      },
+      "ratioOfMeans": 109.31523378582204,
+      "ratioPerTask": {
+        "n": 30,
+        "mean": 103.16504340415395,
+        "p10": 67.62738472041208,
+        "median": 107.44646580583452,
+        "p90": 136.56894085377095
+      },
+      "untrustedEvidenceTokens": {
+        "n": 30,
+        "mean": 2521.1,
+        "p10": 2343.5,
+        "median": 2477,
+        "p90": 2803.3
+      },
+      "usdPer1000Reads": {
+        "pool": 2.496395555555556,
+        "board": 0.02283666666666667
+      }
+    },
+    "d4": {
+      "tasks": 30,
+      "explorersK": 4,
+      "poolTokensPerRead": {
+        "n": 30,
+        "mean": 40587.55,
+        "p10": 21060.15,
+        "median": 39650.625,
+        "p90": 64488.6
+      },
+      "boardTokensPerRead": {
+        "n": 30,
+        "mean": 349.95,
+        "p10": 271.075,
+        "median": 343.125,
+        "p90": 438.85
+      },
+      "ratioOfMeans": 115.98099728532648,
+      "ratioPerTask": {
+        "n": 30,
+        "mean": 111.91727311775352,
+        "p10": 80.73845143067666,
+        "median": 113.85490651709708,
+        "p90": 143.16551033463818
+      },
+      "untrustedEvidenceTokens": {
+        "n": 30,
+        "mean": 3379.2,
+        "p10": 3148.8,
+        "median": 3365,
+        "p90": 3676.8
+      },
+      "usdPer1000Reads": {
+        "pool": 4.058755,
+        "board": 0.034995
+      }
+    },
+    "d5": {
+      "tasks": 30,
+      "explorersK": 5,
+      "poolTokensPerRead": {
+        "n": 30,
+        "mean": 92642.61333333334,
+        "p10": 52391.36,
+        "median": 74356.4,
+        "p90": 146552.08000000002
+      },
+      "boardTokensPerRead": {
+        "n": 30,
+        "mean": 603.5066666666667,
+        "p10": 437.1,
+        "median": 552.7,
+        "p90": 832.44
+      },
+      "ratioOfMeans": 153.50719130415573,
+      "ratioPerTask": {
+        "n": 30,
+        "mean": 145.4751897526877,
+        "p10": 117.13197750106346,
+        "median": 142.49228796499997,
+        "p90": 175.91058536928753
+      },
+      "untrustedEvidenceTokens": {
+        "n": 30,
+        "mean": 4327.733333333334,
+        "p10": 3966.5,
+        "median": 4373.5,
+        "p90": 4695.6
+      },
+      "usdPer1000Reads": {
+        "pool": 9.264261333333334,
+        "board": 0.060350666666666664
+      }
+    }
+  }
+}

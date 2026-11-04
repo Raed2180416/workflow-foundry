@@ -1,0 +1,470 @@
+{
+  "battery": "mem-0b/1",
+  "node": "v24.21.0",
+  "cost": {
+    "usd": 0,
+    "modelCalls": 0
+  },
+  "designs": {
+    "N0-shared-notes": {
+      "attacks": {
+        "A1 injection-to-sink, topic admits only trusted data": {
+          "succeeded": true,
+          "writeRefused": null,
+          "readLabel": "trusted"
+        },
+        "A2 injection-to-sink, topic admits web data": {
+          "succeeded": true,
+          "writeRefused": null,
+          "readLabel": "trusted"
+        },
+        "A3 label forging inside the data": {
+          "succeeded": true,
+          "writeRefused": null,
+          "readLabel": "trusted"
+        },
+        "A4 undeclared writer (confused deputy)": {
+          "succeeded": true,
+          "writeRefused": null
+        },
+        "A5 lost update under concurrent writers": {
+          "succeeded": true,
+          "final": 150,
+          "retries": 0
+        },
+        "A6 flooding a shared topic": {
+          "succeeded": true,
+          "honestVisible": "0/10",
+          "junkAccepted": 5000,
+          "readRefused": null
+        },
+        "A7 flooding across a compaction": {
+          "succeeded": true,
+          "honestVisible": "0/10",
+          "junkAccepted": 5000,
+          "readRefused": null
+        },
+        "A8 cross-run persistence of a poisoned lesson": {
+          "succeeded": true,
+          "presentTrusted": true,
+          "admission": null
+        },
+        "A9 label laundering through compaction": {
+          "succeeded": true,
+          "label": "trusted"
+        },
+        "A10 secret read by an uncleared node and published": {
+          "succeeded": true,
+          "readRefused": null
+        },
+        "A11 write-down of a secret into a public topic": {
+          "succeeded": true,
+          "writeRefused": null
+        },
+        "A12 echo counted as a second source": {
+          "succeeded": true,
+          "supporters": 2
+        },
+        "A13 sybil flood within quotas": {
+          "succeeded": true,
+          "honestVisible": "0/2",
+          "denialOfService": false,
+          "readRefused": null
+        },
+        "A14 injection steers a quarantined judgment within its enum (residual)": {
+          "succeeded": true,
+          "note": "defended outside memory (declassification budget, approvals, verification)"
+        }
+      },
+      "honest": {
+        "H1 webhook -> quarantined classifier -> trusted decision -> effect": {
+          "ops": 1,
+          "refused": 0,
+          "correct": true
+        },
+        "H2 four explorers, ten findings each": {
+          "ops": 40,
+          "refused": 0,
+          "correct": true
+        },
+        "H3 ten sequential compare-and-swap updates": {
+          "ops": 10,
+          "refused": 0,
+          "correct": true
+        },
+        "H4 untrusted evidence into an untrusted topic, read by a quarantined judge": {
+          "ops": 5,
+          "refused": 0,
+          "correct": true
+        },
+        "H5 compaction keeps every view and the run continues": {
+          "ops": 25,
+          "refused": 0,
+          "correct": false
+        },
+        "H6 two independent confirmations count as two": {
+          "ops": 2,
+          "refused": 0,
+          "correct": true
+        }
+      },
+      "replay": {
+        "trials": 200,
+        "differ": 200,
+        "rate": 1
+      },
+      "summary": {
+        "attacksSucceeded": "14/14",
+        "attackSuccessRate": 1,
+        "loudDenialsOfService": 0,
+        "honestFalseRefusals": "0/83",
+        "honestWorkloadsCorrect": "5/6"
+      }
+    },
+    "N1-shared-dict": {
+      "attacks": {
+        "A1 injection-to-sink, topic admits only trusted data": {
+          "succeeded": true,
+          "writeRefused": null,
+          "readLabel": "trusted"
+        },
+        "A2 injection-to-sink, topic admits web data": {
+          "succeeded": true,
+          "writeRefused": null,
+          "readLabel": "trusted"
+        },
+        "A3 label forging inside the data": {
+          "succeeded": true,
+          "writeRefused": null,
+          "readLabel": "trusted"
+        },
+        "A4 undeclared writer (confused deputy)": {
+          "succeeded": true,
+          "writeRefused": null
+        },
+        "A5 lost update under concurrent writers": {
+          "succeeded": true,
+          "final": 150,
+          "retries": 0
+        },
+        "A6 flooding a shared topic": {
+          "succeeded": true,
+          "honestVisible": "0/10",
+          "junkAccepted": 5000,
+          "readRefused": null
+        },
+        "A7 flooding across a compaction": {
+          "succeeded": true,
+          "honestVisible": "0/10",
+          "junkAccepted": 5000,
+          "readRefused": null
+        },
+        "A8 cross-run persistence of a poisoned lesson": {
+          "succeeded": true,
+          "presentTrusted": true,
+          "admission": null
+        },
+        "A9 label laundering through compaction": {
+          "succeeded": true,
+          "label": "trusted"
+        },
+        "A10 secret read by an uncleared node and published": {
+          "succeeded": true,
+          "readRefused": null
+        },
+        "A11 write-down of a secret into a public topic": {
+          "succeeded": true,
+          "writeRefused": null
+        },
+        "A12 echo counted as a second source": {
+          "succeeded": false,
+          "supporters": 1
+        },
+        "A13 sybil flood within quotas": {
+          "succeeded": true,
+          "honestVisible": "0/2",
+          "denialOfService": false,
+          "readRefused": null
+        },
+        "A14 injection steers a quarantined judgment within its enum (residual)": {
+          "succeeded": true,
+          "note": "defended outside memory (declassification budget, approvals, verification)"
+        }
+      },
+      "honest": {
+        "H1 webhook -> quarantined classifier -> trusted decision -> effect": {
+          "ops": 1,
+          "refused": 0,
+          "correct": true
+        },
+        "H2 four explorers, ten findings each": {
+          "ops": 40,
+          "refused": 0,
+          "correct": false
+        },
+        "H3 ten sequential compare-and-swap updates": {
+          "ops": 10,
+          "refused": 0,
+          "correct": true
+        },
+        "H4 untrusted evidence into an untrusted topic, read by a quarantined judge": {
+          "ops": 5,
+          "refused": 0,
+          "correct": false
+        },
+        "H5 compaction keeps every view and the run continues": {
+          "ops": 25,
+          "refused": 0,
+          "correct": false
+        },
+        "H6 two independent confirmations count as two": {
+          "ops": 2,
+          "refused": 0,
+          "correct": false
+        }
+      },
+      "replay": {
+        "trials": 200,
+        "differ": 184,
+        "rate": 0.92
+      },
+      "summary": {
+        "attacksSucceeded": "13/14",
+        "attackSuccessRate": 0.9285714285714286,
+        "loudDenialsOfService": 0,
+        "honestFalseRefusals": "0/83",
+        "honestWorkloadsCorrect": "2/6"
+      }
+    },
+    "N2-labelled-store": {
+      "attacks": {
+        "A1 injection-to-sink, topic admits only trusted data": {
+          "succeeded": false,
+          "writeRefused": null,
+          "readLabel": "untrusted:web"
+        },
+        "A2 injection-to-sink, topic admits web data": {
+          "succeeded": false,
+          "writeRefused": null,
+          "readLabel": "untrusted:web"
+        },
+        "A3 label forging inside the data": {
+          "succeeded": true,
+          "writeRefused": null,
+          "readLabel": "trusted"
+        },
+        "A4 undeclared writer (confused deputy)": {
+          "succeeded": true,
+          "writeRefused": null
+        },
+        "A5 lost update under concurrent writers": {
+          "succeeded": true,
+          "final": 150,
+          "retries": 0
+        },
+        "A6 flooding a shared topic": {
+          "succeeded": true,
+          "honestVisible": "0/10",
+          "junkAccepted": 5000,
+          "readRefused": null
+        },
+        "A7 flooding across a compaction": {
+          "succeeded": true,
+          "honestVisible": "0/10",
+          "junkAccepted": 5000,
+          "readRefused": null
+        },
+        "A8 cross-run persistence of a poisoned lesson": {
+          "succeeded": true,
+          "presentTrusted": false,
+          "admission": null
+        },
+        "A9 label laundering through compaction": {
+          "succeeded": false,
+          "label": "untrusted:web"
+        },
+        "A10 secret read by an uncleared node and published": {
+          "succeeded": false,
+          "readRefused": null
+        },
+        "A11 write-down of a secret into a public topic": {
+          "succeeded": false,
+          "writeRefused": null
+        },
+        "A12 echo counted as a second source": {
+          "succeeded": true,
+          "supporters": 2
+        },
+        "A13 sybil flood within quotas": {
+          "succeeded": true,
+          "honestVisible": "0/2",
+          "denialOfService": false,
+          "readRefused": null
+        },
+        "A14 injection steers a quarantined judgment within its enum (residual)": {
+          "succeeded": true,
+          "note": "defended outside memory (declassification budget, approvals, verification)"
+        }
+      },
+      "honest": {
+        "H1 webhook -> quarantined classifier -> trusted decision -> effect": {
+          "ops": 1,
+          "refused": 0,
+          "correct": true
+        },
+        "H2 four explorers, ten findings each": {
+          "ops": 40,
+          "refused": 0,
+          "correct": true
+        },
+        "H3 ten sequential compare-and-swap updates": {
+          "ops": 10,
+          "refused": 0,
+          "correct": true
+        },
+        "H4 untrusted evidence into an untrusted topic, read by a quarantined judge": {
+          "ops": 5,
+          "refused": 0,
+          "correct": true
+        },
+        "H5 compaction keeps every view and the run continues": {
+          "ops": 25,
+          "refused": 0,
+          "correct": false
+        },
+        "H6 two independent confirmations count as two": {
+          "ops": 2,
+          "refused": 0,
+          "correct": true
+        }
+      },
+      "replay": {
+        "trials": 200,
+        "differ": 200,
+        "rate": 1
+      },
+      "summary": {
+        "attacksSucceeded": "9/14",
+        "attackSuccessRate": 0.6428571428571429,
+        "loudDenialsOfService": 0,
+        "honestFalseRefusals": "0/83",
+        "honestWorkloadsCorrect": "5/6"
+      }
+    },
+    "F-board": {
+      "attacks": {
+        "A1 injection-to-sink, topic admits only trusted data": {
+          "succeeded": false,
+          "writeRefused": "BOARD_LABEL",
+          "readLabel": "trusted"
+        },
+        "A2 injection-to-sink, topic admits web data": {
+          "succeeded": false,
+          "writeRefused": null,
+          "readLabel": "untrusted:web"
+        },
+        "A3 label forging inside the data": {
+          "succeeded": false,
+          "writeRefused": null,
+          "readLabel": "untrusted:web"
+        },
+        "A4 undeclared writer (confused deputy)": {
+          "succeeded": false,
+          "writeRefused": "BOARD_WRITER"
+        },
+        "A5 lost update under concurrent writers": {
+          "succeeded": false,
+          "final": 200,
+          "retries": 1
+        },
+        "A6 flooding a shared topic": {
+          "succeeded": false,
+          "honestVisible": "10/10",
+          "junkAccepted": 20,
+          "readRefused": null
+        },
+        "A7 flooding across a compaction": {
+          "succeeded": false,
+          "honestVisible": "10/10",
+          "junkAccepted": 20,
+          "readRefused": null
+        },
+        "A8 cross-run persistence of a poisoned lesson": {
+          "succeeded": false,
+          "presentTrusted": false,
+          "admission": "NOTE_LABEL"
+        },
+        "A9 label laundering through compaction": {
+          "succeeded": false,
+          "label": "untrusted:web"
+        },
+        "A10 secret read by an uncleared node and published": {
+          "succeeded": false,
+          "readRefused": "BOARD_CLEARANCE"
+        },
+        "A11 write-down of a secret into a public topic": {
+          "succeeded": false,
+          "writeRefused": "BOARD_CONFIDENTIALITY"
+        },
+        "A12 echo counted as a second source": {
+          "succeeded": false,
+          "supporters": 1
+        },
+        "A13 sybil flood within quotas": {
+          "succeeded": false,
+          "honestVisible": "0/2",
+          "denialOfService": true,
+          "readRefused": "BOARD_VIEW_BUDGET"
+        },
+        "A14 injection steers a quarantined judgment within its enum (residual)": {
+          "succeeded": true,
+          "note": "defended outside memory (declassification budget, approvals, verification)"
+        }
+      },
+      "honest": {
+        "H1 webhook -> quarantined classifier -> trusted decision -> effect": {
+          "ops": 1,
+          "refused": 0,
+          "correct": true
+        },
+        "H2 four explorers, ten findings each": {
+          "ops": 40,
+          "refused": 0,
+          "correct": true
+        },
+        "H3 ten sequential compare-and-swap updates": {
+          "ops": 10,
+          "refused": 0,
+          "correct": true
+        },
+        "H4 untrusted evidence into an untrusted topic, read by a quarantined judge": {
+          "ops": 5,
+          "refused": 0,
+          "correct": true
+        },
+        "H5 compaction keeps every view and the run continues": {
+          "ops": 25,
+          "refused": 0,
+          "correct": true
+        },
+        "H6 two independent confirmations count as two": {
+          "ops": 2,
+          "refused": 0,
+          "correct": true
+        }
+      },
+      "replay": {
+        "trials": 200,
+        "differ": 0,
+        "rate": 0
+      },
+      "summary": {
+        "attacksSucceeded": "1/14",
+        "attackSuccessRate": 0.07142857142857142,
+        "loudDenialsOfService": 1,
+        "honestFalseRefusals": "0/83",
+        "honestWorkloadsCorrect": "6/6"
+      }
+    }
+  }
+}
