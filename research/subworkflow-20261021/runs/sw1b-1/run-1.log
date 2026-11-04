@@ -1,0 +1,22 @@
+12:42:13 SW-1 sw1b-1: 32 units (8 tasks x A0,A1F,A2OF,A2F), 0 already done, cap $4.85, spent so far $4.040402
+12:44:29 A0:golive:test:d4:201+blocks complete pass=false nodes=s+d b+d s+d b-d $0.030122 136s
+12:44:59 A1F:golive:test:d4:201+blocks complete pass=true nodes=s+d b+s s+d b+s $0.029849 165s
+12:47:59 A2F:golive:test:d4:201+blocks complete pass=false nodes=s+d b-f s+d b-f $0.050666 179s
+12:48:31 A2OF:golive:test:d4:201+blocks complete pass=true nodes=s+d b+s s+d b+s $0.06503 242s
+12:49:38 A0:golive:test:d4:202+blocks complete pass=false nodes=s+d b+d s+d b-d $0.029383 99s
+12:50:48 A1F:golive:test:d4:202+blocks complete pass=true nodes=s+d b+s s+d b+s $0.023329 136s
+12:54:06 A2OF:golive:test:d4:202+blocks complete pass=true nodes=s+d b+s s+d b+s $0.061 268s
+12:54:14 A2F:golive:test:d4:202+blocks complete pass=false nodes=s+d b-f s+d b-f $0.056333 206s
+12:55:46 A0:golive:test:d4:203+blocks complete pass=false nodes=s+d s+d b-d b-d $0.032655 100s
+12:56:42 A1F:golive:test:d4:203+blocks complete pass=true nodes=s+d s+d b+s b+s $0.027656 148s
+12:59:43 A2OF:golive:test:d4:203+blocks complete pass=false nodes=s+d s+d b-s b+s $0.055889 236s
+13:00:26 A2F:golive:test:d4:203+blocks complete pass=false nodes=s+d s+d b-f b-f $0.06844 224s
+13:01:32 A0:golive:test:d4:204+blocks complete pass=false nodes=b-d s+d b-d s+d $0.032707 109s
+13:02:42 A1F:golive:test:d4:204+blocks complete pass=true nodes=b+s s+d b+s s+d $0.024795 136s
+13:05:19 A2OF:golive:test:d4:204+blocks complete pass=true nodes=b+s s+d b+s s+d $0.051053 227s
+13:06:02 A2F:golive:test:d4:204+blocks complete pass=false nodes=b-f s+d b+f s+d $0.054066 200s
+13:07:02 A0:golive:test:d4:205+blocks complete pass=false nodes=s+d b-d s+d b+d $0.03403 103s
+13:08:33 A1F:golive:test:d4:205+blocks complete pass=true nodes=s+d b+s s+d b+s $0.03033 151s
+13:10:55 A2OF:golive:test:d4:205+blocks complete pass=false nodes=s+d b-s s+d b+s $0.057979 233s
+13:12:32 A2F:golive:test:d4:205+blocks complete pass=false nodes=s+d b-f s+d b+f $0.060368 239s
+13:12:32 SW-1 sw1b-1: stopped: cap reached ($4.883659 >= $4.85); spent over all runs $4.916084

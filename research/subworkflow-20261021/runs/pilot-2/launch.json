@@ -1,0 +1,32 @@
+{
+ "at": "2026-10-22T04:02:42.446Z",
+ "argv": [
+  "--run-dir",
+  "research/subworkflow-20261021/runs/pilot-2",
+  "--split",
+  "dev",
+  "--seeds",
+  "12",
+  "--difficulties",
+  "3",
+  "--arms",
+  "A0,A1,A2,A1F,A1TF,A2F",
+  "--concurrency",
+  "3",
+  "--cap-usd",
+  "1.5"
+ ],
+ "arms": [
+  "A0",
+  "A1",
+  "A2",
+  "A1F",
+  "A1TF",
+  "A2F"
+ ],
+ "tasks": 1,
+ "capUsd": 1.5,
+ "concurrency": 3,
+ "policyHash": "b77dd19c53ba78aa5954bf5a3c7d8683ed4587dc39dde64a4c1ee38d4fa5add0",
+ "pid": 9041
+}

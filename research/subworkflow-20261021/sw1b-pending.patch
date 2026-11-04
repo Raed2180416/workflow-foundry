@@ -1,0 +1,144 @@
+--- experiments/subworkflow/node.mjs	2026-10-22 04:27:24.687654068 +0000
++++ /tmp/claude-0/-home-user-workflow-foundry/d3c9fb19-46ab-5a0c-bfdd-4f8b7871088a/scratchpad/wt/experiments/subworkflow/node.mjs	2026-10-28 18:14:37.367120754 +0000
+@@ -4,6 +4,9 @@
+ //   A1T  the node decides; on "subworkflow" it picks and fills a library template itself, in its own context (ablation).
+ //   A2   the node decides; on "subworkflow" it sends a typed request (goal, inputs, returns, budget) to the governing
+ //        builder: a fresh Haiku that selects and fills a library template from the request alone.
++//   A2O  (SW-1b, added after eval-1) as A2, with the open governing builder: when the library stage ends without a
++//        passing sub-workflow (the builder picks "none" or the template never passes), a fresh Haiku writes the
++//        sub-workflow free-form from the same request view (prompts-open.mjs). The node sees exactly A2's prompts.
+ // Whoever builds, code owns the rest, identically: the envelope check (checkSpec: structure, then authority; a widening
+ // is refused and recorded as a proposal for the owner, never run), a $0 practice run on the node's own input with every
+ // judgment stubbed, binding by content hash through the flow-v3 call host (depth, recursion, effects 'none', budget tree),
+@@ -14,6 +17,7 @@
+ import { createNodeBinding, practiceRun, gateProblems } from './bind.mjs';
+ import { compileDataSchema } from '../../src/validate.mjs';
+ import * as P from './prompts.mjs';
++import * as PO from './prompts-open.mjs';
+ 
+ // route: who builds a sub-workflow (null: nobody); directive: 'decide' (the node chooses: answer or sub-workflow) or
+ // 'subworkflow' (the parent directs a sub-workflow for this node; the runner applies it to legacy-export nodes only).
+@@ -21,7 +25,11 @@
+   A0: { route: null, directive: 'answer' },
+   A1: { route: 'self', directive: 'decide' }, A1T: { route: 'template', directive: 'decide' }, A2: { route: 'governing', directive: 'decide' },
+   A1F: { route: 'self', directive: 'subworkflow' }, A1TF: { route: 'template', directive: 'subworkflow' }, A2F: { route: 'governing', directive: 'subworkflow' },
++  // SW-1b (after eval-1): the open governing builder. Appended, so the SW-1 arms keep their order in ARMS.
++  A2O: { route: 'governing-open', directive: 'decide' }, A2OF: { route: 'governing-open', directive: 'subworkflow' },
+ });
++// The node-facing side of a route: the open governing route shows the node exactly the governing route's prompts.
++const nodeRoute = route => (route === 'governing-open' ? 'governing' : route);
+ export const ARMS = Object.freeze(Object.keys(ARM_CONFIG));
+ export const NODE_MODEL = 'claude-haiku-5-5';
+ export const NODE_DECODING = Object.freeze({ reasoning: 'medium' });
+@@ -37,7 +45,7 @@
+  */
+ export async function runNode({ port, arm, input, runId, answerSchema, directive = ARM_CONFIG[arm]?.directive, budgetUsd = NODE_BUDGET_USD, maxRepairs = MAX_REPAIRS, maxDepth = MAX_DEPTH }) {
+   if (!ARMS.includes(arm)) throw new Error(`unknown arm ${arm}`);
+-  const { route } = ARM_CONFIG[arm];
++  const { route } = ARM_CONFIG[arm], nodeSide = nodeRoute(route);
+   const ch = input.channel;
+   const binding = createNodeBinding({ port, budgetUsd, maxDepth, arm, taskKey: ch, runId, outputSchema: answerSchema });
+   const rec = { arm, route, directive, channel: ch, path: null, decision: null, reason: null, calls: [], proposals: [], rounds: [], fallback: null, sub: null, error: null,
+@@ -150,7 +158,7 @@
+     const maxUsd = carvable();
+     let d;
+     if (directive === 'decide') {
+-      d = await typed('decide', P.NODE_SYSTEM, P.decidePrompt(route, input, maxUsd), P.decideSchema(route, answerSchema), NODE_DECODING);
++      d = await typed('decide', P.NODE_SYSTEM, P.decidePrompt(nodeSide, input, maxUsd), P.decideSchema(nodeSide, answerSchema), NODE_DECODING);
+       rec.decision = d.decision; rec.reason = String(d.reason ?? '').slice(0, 300);
+       if (d.decision === 'answer') {
+         rec.path = 'direct';
+@@ -160,11 +168,11 @@
+     } else {
+       // Parent-directed: the node does not choose. On the governing route it still writes its own typed request.
+       rec.decision = 'directed';
+-      d = route === 'governing' ? await typed('request', P.NODE_SYSTEM, P.requestPrompt(input, maxUsd), P.requestSchema(), NODE_DECODING) : {};
++      d = nodeSide === 'governing' ? await typed('request', P.NODE_SYSTEM, P.requestPrompt(input, maxUsd), P.requestSchema(), NODE_DECODING) : {};
+       rec.reason = d.reason ? String(d.reason).slice(0, 300) : null;
+     }
+     const why = directive === 'decide' ? rec.reason : null;
+-    rec.sub = { builder: route === 'governing' ? 'governing' : 'self', route };
++    rec.sub = { builder: nodeSide === 'governing' ? 'governing' : 'self', route };
+     let loop;
+     if (route === 'self') {
+       const envelope = envelopeOf();
+@@ -194,6 +202,19 @@
+         const context = P.requestContext({ ...req, inputs }, input, granted, answerSchema);
+         loop = await constructLoop(templatePropose({ context, selectSystem: P.BUILDER_SELECT_SYSTEM, fillSystem: P.BUILDER_FILL_SYSTEM, keyPrefix: 'builder', budget: () => Math.min(granted, carvable()) }),
+           envelopeOf(inputs));
++        // A2O / A2OF: the library missed. A fresh builder writes the sub-workflow free-form from the same request view (never
++        // the node's context), through the same loop: envelope check, practice run, binding by hash, real run, gate.
++        if (!loop.ok && route === 'governing-open' && loop.why !== 'node budget') {
++          rec.sub.open = { after: String(loop.why).slice(0, 300), fromRound: rec.rounds.length };
++          const envelope = envelopeOf(inputs);
++          let previous = null;
++          loop = await constructLoop(async (round, feedback) => {
++            const spec = await typed(`builder.open.r${round}`, PO.BUILDER_OPEN_SYSTEM, PO.openBuildPrompt(context, { envelope: { ...envelope, budgetUsd: carvable() }, why: rec.sub.open.after, feedback, previous }),
++              P.SELF_BUILD_SCHEMA, BUILDER_DECODING);
++            previous = spec;
++            return { spec };
++          }, envelope);
++        }
+       }
+     }
+     rec.sub.ok = loop.ok; rec.sub.why = loop.why ?? null; rec.sub.round = loop.round ?? null; rec.sub.hash = loop.hash ?? null;
+--- experiments/subworkflow/run.mjs	2026-10-22 04:27:31.922280607 +0000
++++ /tmp/claude-0/-home-user-workflow-foundry/d3c9fb19-46ab-5a0c-bfdd-4f8b7871088a/scratchpad/wt/experiments/subworkflow/run.mjs	2026-10-28 18:16:35.689195324 +0000
+@@ -9,12 +9,15 @@
+ //        [--arms A0,A1,A1T,A2] [--concurrency 3 (units)] [--model-concurrency N (model calls; default = concurrency)] [--cap-usd 5]
+ //        [--runs-root research/subworkflow-20261021/runs]
+ //   node experiments/subworkflow/run.mjs --run-dir ... --split dev --seeds 11,12 --difficulties 2,3   (pilot)
++//   --layout blocks (SW-1b, added after eval-1): the backlog exports in the 'blocks' layout (beds/golive/layouts.mjs); a
++//   manifest task's own "layout" wins. 'delimited' (the default) generates exactly the eval-1 tasks.
+ import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+ import path from 'node:path';
+ import { DatabaseSync } from 'node:sqlite';
+ import { createModelPort } from '../lib/models.mjs';
+ import { ENV_FAULTS } from '../lib/runner.mjs';
+ import * as bed from '../../beds/golive/index.mjs';
++import * as layouts from '../../beds/golive/layouts.mjs';
+ import { runNode, ARMS, ARM_CONFIG, NODE_MODEL } from './node.mjs';
+ 
+ const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, all) => (x.startsWith('--') ? [...a, [x.slice(2), all[i + 1]?.startsWith('--') || all[i + 1] === undefined ? 'true' : all[i + 1]]] : a), []));
+@@ -25,18 +28,20 @@
+ for (const a of arms) if (!ARMS.includes(a)) { console.error(`unknown arm ${a}`); process.exit(2); }
+ const concurrency = Number(args.concurrency ?? 3), capUsd = Number(args['cap-usd'] ?? 5), modelConcurrency = Number(args['model-concurrency'] ?? concurrency);
+ const tag = args.tag ?? path.basename(runDir);
++const layout = args.layout ?? 'delimited';
++if (!layouts.LAYOUTS.includes(layout)) { console.error(`unknown layout ${layout}`); process.exit(2); }
+ mkdirSync(runDir, { recursive: true });
+ 
+ let tasks;
+-if (args.tasks) tasks = JSON.parse(readFileSync(args.tasks, 'utf8')).tasks.map(t => ({ seed: t.seed, split: t.split, difficulty: t.difficulty }));
+-else tasks = (args.seeds ?? '').split(',').filter(Boolean).flatMap(s => (args.difficulties ?? '2').split(',').map(d => ({ seed: Number(s), split: args.split ?? 'dev', difficulty: Number(d) })));
++if (args.tasks) tasks = JSON.parse(readFileSync(args.tasks, 'utf8')).tasks.map(t => ({ seed: t.seed, split: t.split, difficulty: t.difficulty, layout: t.layout ?? layout }));
++else tasks = (args.seeds ?? '').split(',').filter(Boolean).flatMap(s => (args.difficulties ?? '2').split(',').map(d => ({ seed: Number(s), split: args.split ?? 'dev', difficulty: Number(d), layout })));
+ if (!tasks.length) { console.error('no tasks'); process.exit(2); }
+ 
+ const resultsFile = path.join(runDir, 'results.jsonl');
+ const done = new Set(existsSync(resultsFile) ? readFileSync(resultsFile, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).filter(r => r.status === 'complete').map(r => r.unit) : []);
+ const { port, policyHash, db } = createModelPort({ journalFile: path.join(runDir, 'journal.sqlite'), allowedModels: [NODE_MODEL], maxBudgetUsdPerCall: 0.25, timeoutMs: 300000,
+   concurrency: { [NODE_MODEL]: modelConcurrency } });
+-writeFileSync(path.join(runDir, 'launch.json'), JSON.stringify({ at: new Date().toISOString(), argv: process.argv.slice(2), arms, tasks: tasks.length, capUsd, concurrency, modelConcurrency, policyHash, pid: process.pid }, null, 1));
++writeFileSync(path.join(runDir, 'launch.json'), JSON.stringify({ at: new Date().toISOString(), argv: process.argv.slice(2), arms, tasks: tasks.length, layout, capUsd, concurrency, modelConcurrency, policyHash, pid: process.pid }, null, 1));
+ 
+ // Spend over every journal under the runs root (each run dir's journal.sqlite).
+ function spendAll() {
+@@ -59,7 +64,7 @@
+ async function worker() {
+   while (queue.length && !stopped) {
+     const { arm, t } = queue.shift();
+-    const task = bed.generate(t), unit = `${arm}:${task.id}`;
++    const task = layouts.generate(t), unit = `${arm}:${task.id}`;
+     if (done.has(unit)) continue;
+     const spent = spendAll();
+     if (spent >= capUsd) { stopped = `cap reached ($${spent} >= $${capUsd})`; break; }
+@@ -72,7 +77,7 @@
+       const group = { orders: answers.reduce((s, a) => s + a.totals.orders, 0), usd_cents: answers.reduce((s, a) => s + a.totals.usd_cents, 0) };
+       const out = { channels: answers, group };
+       const o = bed.oracle(task, out);
+-      const row = { unit, status: envFault ? 'env-fault' : 'complete', envFault, arm, runId, taskId: task.id, seed: task.seed, split: task.split, difficulty: task.difficulty,
++      const row = { unit, status: envFault ? 'env-fault' : 'complete', envFault, arm, runId, taskId: task.id, seed: task.seed, split: task.split, difficulty: task.difficulty, layout: task.layout ?? 'delimited',
+         pass: o.pass, score: o.score, groupOk: o.details?.groupOk ?? null, costUsd: Math.round(nodes.reduce((s, n) => s + n.costUsd, 0) * 1e6) / 1e6, wallMs: Date.now() - started,
+         at: new Date().toISOString(), nodes: nodes.map(({ answer, ...n }) => ({ ...n, answer })) };
+       appendFileSync(resultsFile, JSON.stringify(row) + '\n');

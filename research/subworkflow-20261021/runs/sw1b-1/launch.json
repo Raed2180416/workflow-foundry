@@ -1,0 +1,32 @@
+{
+ "at": "2026-11-04T12:42:13.433Z",
+ "argv": [
+  "--run-dir",
+  "research/subworkflow-20261021/runs/sw1b-1",
+  "--tasks",
+  "research/subworkflow-20261021/tasks-sw1b.json",
+  "--arms",
+  "A0,A1F,A2OF,A2F",
+  "--concurrency",
+  "2",
+  "--model-concurrency",
+  "5",
+  "--cap-usd",
+  "4.85",
+  "--runs-root",
+  "research/subworkflow-20261021/runs"
+ ],
+ "arms": [
+  "A0",
+  "A1F",
+  "A2OF",
+  "A2F"
+ ],
+ "tasks": 8,
+ "layout": "delimited",
+ "capUsd": 4.85,
+ "concurrency": 2,
+ "modelConcurrency": 5,
+ "policyHash": "b77dd19c53ba78aa5954bf5a3c7d8683ed4587dc39dde64a4c1ee38d4fa5add0",
+ "pid": 5960
+}

@@ -1,0 +1,2233 @@
+{
+ "files": [
+  "research/subworkflow-20261021/runs/eval-1/results.jsonl"
+ ],
+ "units": 120,
+ "complete": 120,
+ "notComplete": [],
+ "totalCostUsd": 3.524149,
+ "strata": {
+  "primary": {
+   "arms": [
+    {
+     "arm": "A0",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "taskPass": 2,
+     "backlogNodes": 32,
+     "backlogPass": 11,
+     "simpleNodes": 32,
+     "simplePass": 32,
+     "costUsd": 0.853442,
+     "costPerTask": 0.05334,
+     "costPerPassingTask": 0.426721,
+     "backlogCostPerNode": 0.026118,
+     "costPerPassingBacklogNode": 0.075979,
+     "meanWallSec": 180,
+     "backlogPaths": {
+      "direct": 32
+     },
+     "simplePaths": {
+      "direct": 32
+     },
+     "errors": {},
+     "subworkflowRoundsMean": null,
+     "firstRoundOk": 0,
+     "subworkflowNodes": 0,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/32",
+      "specsRun": 0
+     },
+     "injection": {
+      "rows": 48,
+      "ok": 44
+     },
+     "depth": {
+      "max": 0,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 0,
+      "childOver": 0,
+      "childSpentMax": null,
+      "nodeOver": 0,
+      "nodeCostMax": 0.050339
+     }
+    },
+    {
+     "arm": "A1",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "taskPass": 3,
+     "backlogNodes": 32,
+     "backlogPass": 15,
+     "simpleNodes": 32,
+     "simplePass": 32,
+     "costUsd": 0.750393,
+     "costPerTask": 0.0469,
+     "costPerPassingTask": 0.250131,
+     "backlogCostPerNode": 0.022807,
+     "costPerPassingBacklogNode": 0.048656,
+     "meanWallSec": 170,
+     "backlogPaths": {
+      "subworkflow": 6,
+      "direct": 26
+     },
+     "simplePaths": {
+      "direct": 32
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 6,
+     "subworkflowNodes": 6,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/32",
+      "specsRun": 6
+     },
+     "injection": {
+      "rows": 48,
+      "ok": 47
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 6,
+      "childOver": 0,
+      "childSpentMax": 0.005699,
+      "nodeOver": 0,
+      "nodeCostMax": 0.041112
+     }
+    },
+    {
+     "arm": "A2",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "taskPass": 8,
+     "backlogNodes": 32,
+     "backlogPass": 22,
+     "simpleNodes": 32,
+     "simplePass": 32,
+     "costUsd": 0.43382,
+     "costPerTask": 0.027114,
+     "costPerPassingTask": 0.054228,
+     "backlogCostPerNode": 0.012826,
+     "costPerPassingBacklogNode": 0.018657,
+     "meanWallSec": 117,
+     "backlogPaths": {
+      "subworkflow": 26,
+      "direct": 6
+     },
+     "simplePaths": {
+      "direct": 32
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 26,
+     "subworkflowNodes": 26,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 78,
+      "writeBackProposalNodes": "22/32",
+      "specsRun": 26
+     },
+     "injection": {
+      "rows": 48,
+      "ok": 48
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": 0.06,
+      "childCalls": 26,
+      "childOver": 0,
+      "childSpentMax": 0.006203,
+      "nodeOver": 0,
+      "nodeCostMax": 0.021464
+     }
+    },
+    {
+     "arm": "A1F",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "taskPass": 16,
+     "backlogNodes": 32,
+     "backlogPass": 32,
+     "simpleNodes": 32,
+     "simplePass": 32,
+     "costUsd": 0.458052,
+     "costPerTask": 0.028628,
+     "costPerPassingTask": 0.028628,
+     "backlogCostPerNode": 0.013902,
+     "costPerPassingBacklogNode": 0.013902,
+     "meanWallSec": 139,
+     "backlogPaths": {
+      "subworkflow": 32
+     },
+     "simplePaths": {
+      "direct": 32
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1.09375,
+     "firstRoundOk": 29,
+     "subworkflowNodes": 32,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/32",
+      "specsRun": 32
+     },
+     "injection": {
+      "rows": 48,
+      "ok": 48
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 32,
+      "childOver": 0,
+      "childSpentMax": 0.005796,
+      "nodeOver": 0,
+      "nodeCostMax": 0.020979
+     }
+    },
+    {
+     "arm": "A1TF",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "taskPass": 15,
+     "backlogNodes": 32,
+     "backlogPass": 31,
+     "simpleNodes": 32,
+     "simplePass": 32,
+     "costUsd": 0.268105,
+     "costPerTask": 0.016757,
+     "costPerPassingTask": 0.017874,
+     "backlogCostPerNode": 0.007974,
+     "costPerPassingBacklogNode": 0.008232,
+     "meanWallSec": 113,
+     "backlogPaths": {
+      "subworkflow": 32
+     },
+     "simplePaths": {
+      "direct": 32
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 32,
+     "subworkflowNodes": 32,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 95,
+      "writeBackProposalNodes": "32/32",
+      "specsRun": 32
+     },
+     "injection": {
+      "rows": 48,
+      "ok": 48
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 32,
+      "childOver": 0,
+      "childSpentMax": 0.006094,
+      "nodeOver": 0,
+      "nodeCostMax": 0.011988
+     }
+    },
+    {
+     "arm": "A2F",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "taskPass": 12,
+     "backlogNodes": 32,
+     "backlogPass": 27,
+     "simpleNodes": 32,
+     "simplePass": 32,
+     "costUsd": 0.406447,
+     "costPerTask": 0.025403,
+     "costPerPassingTask": 0.033871,
+     "backlogCostPerNode": 0.012304,
+     "costPerPassingBacklogNode": 0.014582,
+     "meanWallSec": 141,
+     "backlogPaths": {
+      "subworkflow": 30,
+      "fallback": 2
+     },
+     "simplePaths": {
+      "direct": 32
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 30,
+     "subworkflowNodes": 30,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 111,
+      "writeBackProposalNodes": "24/32",
+      "specsRun": 30
+     },
+     "injection": {
+      "rows": 48,
+      "ok": 48
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": 0.056667,
+      "childCalls": 30,
+      "childOver": 0,
+      "childSpentMax": 0.006046,
+      "nodeOver": 0,
+      "nodeCostMax": 0.043071
+     }
+    }
+   ],
+   "pairs": [
+    {
+     "a": "A1F",
+     "b": "A2F",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 27,
+      "onlyA": 5,
+      "onlyB": 0,
+      "neither": 0,
+      "p": 0.0625
+     },
+     "task": {
+      "onlyA": 4,
+      "onlyB": 0,
+      "p": 0.125
+     },
+     "costA": 0.458052,
+     "costB": 0.406447
+    },
+    {
+     "a": "A1",
+     "b": "A2",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 11,
+      "onlyA": 4,
+      "onlyB": 11,
+      "neither": 6,
+      "p": 0.118469
+     },
+     "task": {
+      "onlyA": 2,
+      "onlyB": 7,
+      "p": 0.179688
+     },
+     "costA": 0.750393,
+     "costB": 0.43382
+    },
+    {
+     "a": "A0",
+     "b": "A1F",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 11,
+      "onlyA": 0,
+      "onlyB": 21,
+      "neither": 0,
+      "p": 0.000001
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 14,
+      "p": 0.000122
+     },
+     "costA": 0.853442,
+     "costB": 0.458052
+    },
+    {
+     "a": "A0",
+     "b": "A2F",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 10,
+      "onlyA": 1,
+      "onlyB": 17,
+      "neither": 4,
+      "p": 0.000145
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 11,
+      "p": 0.006348
+     },
+     "costA": 0.853442,
+     "costB": 0.406447
+    },
+    {
+     "a": "A0",
+     "b": "A1",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 5,
+      "onlyA": 6,
+      "onlyB": 10,
+      "neither": 11,
+      "p": 0.454498
+     },
+     "task": {
+      "onlyA": 2,
+      "onlyB": 3,
+      "p": 1
+     },
+     "costA": 0.853442,
+     "costB": 0.750393
+    },
+    {
+     "a": "A0",
+     "b": "A2",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 6,
+      "onlyA": 5,
+      "onlyB": 16,
+      "neither": 5,
+      "p": 0.026604
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 7,
+      "p": 0.070313
+     },
+     "costA": 0.853442,
+     "costB": 0.43382
+    },
+    {
+     "a": "A1TF",
+     "b": "A2F",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 27,
+      "onlyA": 4,
+      "onlyB": 0,
+      "neither": 1,
+      "p": 0.125
+     },
+     "task": {
+      "onlyA": 3,
+      "onlyB": 0,
+      "p": 0.25
+     },
+     "costA": 0.268105,
+     "costB": 0.406447
+    },
+    {
+     "a": "A1TF",
+     "b": "A1F",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 31,
+      "onlyA": 0,
+      "onlyB": 1,
+      "neither": 0,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 1,
+      "p": 1
+     },
+     "costA": 0.268105,
+     "costB": 0.458052
+    },
+    {
+     "a": "A1",
+     "b": "A1F",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 15,
+      "onlyA": 0,
+      "onlyB": 17,
+      "neither": 0,
+      "p": 0.000015
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 13,
+      "p": 0.000244
+     },
+     "costA": 0.750393,
+     "costB": 0.458052
+    },
+    {
+     "a": "A2",
+     "b": "A2F",
+     "difficulties": [
+      4,
+      5
+     ],
+     "tasks": 16,
+     "backlog": {
+      "both": 18,
+      "onlyA": 4,
+      "onlyB": 9,
+      "neither": 1,
+      "p": 0.266846
+     },
+     "task": {
+      "onlyA": 3,
+      "onlyB": 7,
+      "p": 0.34375
+     },
+     "costA": 0.43382,
+     "costB": 0.406447
+    }
+   ]
+  },
+  "d3": {
+   "arms": [
+    {
+     "arm": "A0",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "taskPass": 2,
+     "backlogNodes": 8,
+     "backlogPass": 5,
+     "simpleNodes": 8,
+     "simplePass": 8,
+     "costUsd": 0.055379,
+     "costPerTask": 0.013845,
+     "costPerPassingTask": 0.02769,
+     "backlogCostPerNode": 0.006365,
+     "costPerPassingBacklogNode": 0.010184,
+     "meanWallSec": 50,
+     "backlogPaths": {
+      "direct": 8
+     },
+     "simplePaths": {
+      "direct": 8
+     },
+     "errors": {},
+     "subworkflowRoundsMean": null,
+     "firstRoundOk": 0,
+     "subworkflowNodes": 0,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/8",
+      "specsRun": 0
+     },
+     "injection": {
+      "rows": 8,
+      "ok": 8
+     },
+     "depth": {
+      "max": 0,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 0,
+      "childOver": 0,
+      "childSpentMax": null,
+      "nodeOver": 0,
+      "nodeCostMax": 0.008167
+     }
+    },
+    {
+     "arm": "A1",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "taskPass": 2,
+     "backlogNodes": 8,
+     "backlogPass": 6,
+     "simpleNodes": 8,
+     "simplePass": 8,
+     "costUsd": 0.056556,
+     "costPerTask": 0.014139,
+     "costPerPassingTask": 0.028278,
+     "backlogCostPerNode": 0.00643,
+     "costPerPassingBacklogNode": 0.008573,
+     "meanWallSec": 49,
+     "backlogPaths": {
+      "direct": 8
+     },
+     "simplePaths": {
+      "direct": 8
+     },
+     "errors": {},
+     "subworkflowRoundsMean": null,
+     "firstRoundOk": 0,
+     "subworkflowNodes": 0,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/8",
+      "specsRun": 0
+     },
+     "injection": {
+      "rows": 8,
+      "ok": 7
+     },
+     "depth": {
+      "max": 0,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 0,
+      "childOver": 0,
+      "childSpentMax": null,
+      "nodeOver": 0,
+      "nodeCostMax": 0.008926
+     }
+    },
+    {
+     "arm": "A2",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "taskPass": 2,
+     "backlogNodes": 8,
+     "backlogPass": 6,
+     "simpleNodes": 8,
+     "simplePass": 8,
+     "costUsd": 0.071316,
+     "costPerTask": 0.017829,
+     "costPerPassingTask": 0.035658,
+     "backlogCostPerNode": 0.008194,
+     "costPerPassingBacklogNode": 0.010926,
+     "meanWallSec": 54,
+     "backlogPaths": {
+      "direct": 8
+     },
+     "simplePaths": {
+      "direct": 8
+     },
+     "errors": {},
+     "subworkflowRoundsMean": null,
+     "firstRoundOk": 0,
+     "subworkflowNodes": 0,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/8",
+      "specsRun": 0
+     },
+     "injection": {
+      "rows": 8,
+      "ok": 8
+     },
+     "depth": {
+      "max": 0,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 0,
+      "childOver": 0,
+      "childSpentMax": null,
+      "nodeOver": 0,
+      "nodeCostMax": 0.011203
+     }
+    },
+    {
+     "arm": "A1F",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "taskPass": 4,
+     "backlogNodes": 8,
+     "backlogPass": 8,
+     "simpleNodes": 8,
+     "simplePass": 8,
+     "costUsd": 0.087232,
+     "costPerTask": 0.021808,
+     "costPerPassingTask": 0.021808,
+     "backlogCostPerNode": 0.010492,
+     "costPerPassingBacklogNode": 0.010492,
+     "meanWallSec": 83,
+     "backlogPaths": {
+      "subworkflow": 8
+     },
+     "simplePaths": {
+      "direct": 8
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1.125,
+     "firstRoundOk": 7,
+     "subworkflowNodes": 8,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/8",
+      "specsRun": 8
+     },
+     "injection": {
+      "rows": 8,
+      "ok": 8
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 8,
+      "childOver": 0,
+      "childSpentMax": 0.001638,
+      "nodeOver": 0,
+      "nodeCostMax": 0.011504
+     }
+    },
+    {
+     "arm": "A1TF",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "taskPass": 4,
+     "backlogNodes": 8,
+     "backlogPass": 8,
+     "simpleNodes": 8,
+     "simplePass": 8,
+     "costUsd": 0.036805,
+     "costPerTask": 0.009201,
+     "costPerPassingTask": 0.009201,
+     "backlogCostPerNode": 0.004185,
+     "costPerPassingBacklogNode": 0.004185,
+     "meanWallSec": 47,
+     "backlogPaths": {
+      "subworkflow": 8
+     },
+     "simplePaths": {
+      "direct": 8
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 8,
+     "subworkflowNodes": 8,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 24,
+      "writeBackProposalNodes": "8/8",
+      "specsRun": 8
+     },
+     "injection": {
+      "rows": 8,
+      "ok": 8
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 8,
+      "childOver": 0,
+      "childSpentMax": 0.001184,
+      "nodeOver": 0,
+      "nodeCostMax": 0.007709
+     }
+    },
+    {
+     "arm": "A2F",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "taskPass": 4,
+     "backlogNodes": 8,
+     "backlogPass": 8,
+     "simpleNodes": 8,
+     "simplePass": 8,
+     "costUsd": 0.046602,
+     "costPerTask": 0.011651,
+     "costPerPassingTask": 0.011651,
+     "backlogCostPerNode": 0.005384,
+     "costPerPassingBacklogNode": 0.005384,
+     "meanWallSec": 60,
+     "backlogPaths": {
+      "subworkflow": 8
+     },
+     "simplePaths": {
+      "direct": 8
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 8,
+     "subworkflowNodes": 8,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 32,
+      "writeBackProposalNodes": "7/8",
+      "specsRun": 8
+     },
+     "injection": {
+      "rows": 8,
+      "ok": 8
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": 0.0575,
+      "childCalls": 8,
+      "childOver": 0,
+      "childSpentMax": 0.001327,
+      "nodeOver": 0,
+      "nodeCostMax": 0.006925
+     }
+    }
+   ],
+   "pairs": [
+    {
+     "a": "A1F",
+     "b": "A2F",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 8,
+      "onlyA": 0,
+      "onlyB": 0,
+      "neither": 0,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 0,
+      "p": 1
+     },
+     "costA": 0.087232,
+     "costB": 0.046602
+    },
+    {
+     "a": "A1",
+     "b": "A2",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 4,
+      "onlyA": 2,
+      "onlyB": 2,
+      "neither": 0,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 1,
+      "p": 1
+     },
+     "costA": 0.056556,
+     "costB": 0.071316
+    },
+    {
+     "a": "A0",
+     "b": "A1F",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 5,
+      "onlyA": 0,
+      "onlyB": 3,
+      "neither": 0,
+      "p": 0.25
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 2,
+      "p": 0.5
+     },
+     "costA": 0.055379,
+     "costB": 0.087232
+    },
+    {
+     "a": "A0",
+     "b": "A2F",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 5,
+      "onlyA": 0,
+      "onlyB": 3,
+      "neither": 0,
+      "p": 0.25
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 2,
+      "p": 0.5
+     },
+     "costA": 0.055379,
+     "costB": 0.046602
+    },
+    {
+     "a": "A0",
+     "b": "A1",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 4,
+      "onlyA": 1,
+      "onlyB": 2,
+      "neither": 1,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 0,
+      "p": 1
+     },
+     "costA": 0.055379,
+     "costB": 0.056556
+    },
+    {
+     "a": "A0",
+     "b": "A2",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 4,
+      "onlyA": 1,
+      "onlyB": 2,
+      "neither": 1,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 1,
+      "p": 1
+     },
+     "costA": 0.055379,
+     "costB": 0.071316
+    },
+    {
+     "a": "A1TF",
+     "b": "A2F",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 8,
+      "onlyA": 0,
+      "onlyB": 0,
+      "neither": 0,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 0,
+      "p": 1
+     },
+     "costA": 0.036805,
+     "costB": 0.046602
+    },
+    {
+     "a": "A1TF",
+     "b": "A1F",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 8,
+      "onlyA": 0,
+      "onlyB": 0,
+      "neither": 0,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 0,
+      "p": 1
+     },
+     "costA": 0.036805,
+     "costB": 0.087232
+    },
+    {
+     "a": "A1",
+     "b": "A1F",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 6,
+      "onlyA": 0,
+      "onlyB": 2,
+      "neither": 0,
+      "p": 0.5
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 2,
+      "p": 0.5
+     },
+     "costA": 0.056556,
+     "costB": 0.087232
+    },
+    {
+     "a": "A2",
+     "b": "A2F",
+     "difficulties": [
+      3
+     ],
+     "tasks": 4,
+     "backlog": {
+      "both": 6,
+      "onlyA": 0,
+      "onlyB": 2,
+      "neither": 0,
+      "p": 0.5
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 2,
+      "p": 0.5
+     },
+     "costA": 0.071316,
+     "costB": 0.046602
+    }
+   ]
+  },
+  "d4": {
+   "arms": [
+    {
+     "arm": "A0",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "taskPass": 2,
+     "backlogNodes": 16,
+     "backlogPass": 8,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.286606,
+     "costPerTask": 0.035826,
+     "costPerPassingTask": 0.143303,
+     "backlogCostPerNode": 0.01736,
+     "costPerPassingBacklogNode": 0.03472,
+     "meanWallSec": 118,
+     "backlogPaths": {
+      "direct": 16
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": null,
+     "firstRoundOk": 0,
+     "subworkflowNodes": 0,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/16",
+      "specsRun": 0
+     },
+     "injection": {
+      "rows": 16,
+      "ok": 16
+     },
+     "depth": {
+      "max": 0,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 0,
+      "childOver": 0,
+      "childSpentMax": null,
+      "nodeOver": 0,
+      "nodeCostMax": 0.025513
+     }
+    },
+    {
+     "arm": "A1",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "taskPass": 2,
+     "backlogNodes": 16,
+     "backlogPass": 7,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.292635,
+     "costPerTask": 0.036579,
+     "costPerPassingTask": 0.146318,
+     "backlogCostPerNode": 0.017625,
+     "costPerPassingBacklogNode": 0.040287,
+     "meanWallSec": 125,
+     "backlogPaths": {
+      "direct": 16
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": null,
+     "firstRoundOk": 0,
+     "subworkflowNodes": 0,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/16",
+      "specsRun": 0
+     },
+     "injection": {
+      "rows": 16,
+      "ok": 15
+     },
+     "depth": {
+      "max": 0,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 0,
+      "childOver": 0,
+      "childSpentMax": null,
+      "nodeOver": 0,
+      "nodeCostMax": 0.02975
+     }
+    },
+    {
+     "arm": "A2",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "taskPass": 3,
+     "backlogNodes": 16,
+     "backlogPass": 9,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.201075,
+     "costPerTask": 0.025134,
+     "costPerPassingTask": 0.067025,
+     "backlogCostPerNode": 0.011808,
+     "costPerPassingBacklogNode": 0.020992,
+     "meanWallSec": 95,
+     "backlogPaths": {
+      "subworkflow": 10,
+      "direct": 6
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 10,
+     "subworkflowNodes": 10,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 26,
+      "writeBackProposalNodes": "6/16",
+      "specsRun": 10
+     },
+     "injection": {
+      "rows": 16,
+      "ok": 16
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": 0.06,
+      "childCalls": 10,
+      "childOver": 0,
+      "childSpentMax": 0.003622,
+      "nodeOver": 0,
+      "nodeCostMax": 0.021464
+     }
+    },
+    {
+     "arm": "A1F",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "taskPass": 8,
+     "backlogNodes": 16,
+     "backlogPass": 16,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.196549,
+     "costPerTask": 0.024569,
+     "costPerPassingTask": 0.024569,
+     "backlogCostPerNode": 0.011847,
+     "costPerPassingBacklogNode": 0.011847,
+     "meanWallSec": 123,
+     "backlogPaths": {
+      "subworkflow": 16
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1.0625,
+     "firstRoundOk": 15,
+     "subworkflowNodes": 16,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/16",
+      "specsRun": 16
+     },
+     "injection": {
+      "rows": 16,
+      "ok": 16
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 16,
+      "childOver": 0,
+      "childSpentMax": 0.003269,
+      "nodeOver": 0,
+      "nodeCostMax": 0.014341
+     }
+    },
+    {
+     "arm": "A1TF",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "taskPass": 7,
+     "backlogNodes": 16,
+     "backlogPass": 15,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.100158,
+     "costPerTask": 0.01252,
+     "costPerPassingTask": 0.014308,
+     "backlogCostPerNode": 0.005844,
+     "costPerPassingBacklogNode": 0.006233,
+     "meanWallSec": 90,
+     "backlogPaths": {
+      "subworkflow": 16
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 16,
+     "subworkflowNodes": 16,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 45,
+      "writeBackProposalNodes": "16/16",
+      "specsRun": 16
+     },
+     "injection": {
+      "rows": 16,
+      "ok": 16
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 16,
+      "childOver": 0,
+      "childSpentMax": 0.003156,
+      "nodeOver": 0,
+      "nodeCostMax": 0.007668
+     }
+    },
+    {
+     "arm": "A2F",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "taskPass": 6,
+     "backlogNodes": 16,
+     "backlogPass": 14,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.134034,
+     "costPerTask": 0.016754,
+     "costPerPassingTask": 0.022339,
+     "backlogCostPerNode": 0.00798,
+     "costPerPassingBacklogNode": 0.00912,
+     "meanWallSec": 106,
+     "backlogPaths": {
+      "subworkflow": 16
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 16,
+     "subworkflowNodes": 16,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 52,
+      "writeBackProposalNodes": "10/16",
+      "specsRun": 16
+     },
+     "injection": {
+      "rows": 16,
+      "ok": 16
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": 0.056875,
+      "childCalls": 16,
+      "childOver": 0,
+      "childSpentMax": 0.0028,
+      "nodeOver": 0,
+      "nodeCostMax": 0.009619
+     }
+    }
+   ],
+   "pairs": [
+    {
+     "a": "A1F",
+     "b": "A2F",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 14,
+      "onlyA": 2,
+      "onlyB": 0,
+      "neither": 0,
+      "p": 0.5
+     },
+     "task": {
+      "onlyA": 2,
+      "onlyB": 0,
+      "p": 0.5
+     },
+     "costA": 0.196549,
+     "costB": 0.134034
+    },
+    {
+     "a": "A1",
+     "b": "A2",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 5,
+      "onlyA": 2,
+      "onlyB": 4,
+      "neither": 5,
+      "p": 0.6875
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 2,
+      "p": 1
+     },
+     "costA": 0.292635,
+     "costB": 0.201075
+    },
+    {
+     "a": "A0",
+     "b": "A1F",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 8,
+      "onlyA": 0,
+      "onlyB": 8,
+      "neither": 0,
+      "p": 0.007813
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 6,
+      "p": 0.03125
+     },
+     "costA": 0.286606,
+     "costB": 0.196549
+    },
+    {
+     "a": "A0",
+     "b": "A2F",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 7,
+      "onlyA": 1,
+      "onlyB": 7,
+      "neither": 1,
+      "p": 0.070313
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 5,
+      "p": 0.21875
+     },
+     "costA": 0.286606,
+     "costB": 0.134034
+    },
+    {
+     "a": "A0",
+     "b": "A1",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 4,
+      "onlyA": 4,
+      "onlyB": 3,
+      "neither": 5,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 2,
+      "onlyB": 2,
+      "p": 1
+     },
+     "costA": 0.286606,
+     "costB": 0.292635
+    },
+    {
+     "a": "A0",
+     "b": "A2",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 4,
+      "onlyA": 4,
+      "onlyB": 5,
+      "neither": 3,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 2,
+      "p": 1
+     },
+     "costA": 0.286606,
+     "costB": 0.201075
+    },
+    {
+     "a": "A1TF",
+     "b": "A2F",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 14,
+      "onlyA": 1,
+      "onlyB": 0,
+      "neither": 1,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 0,
+      "p": 1
+     },
+     "costA": 0.100158,
+     "costB": 0.134034
+    },
+    {
+     "a": "A1TF",
+     "b": "A1F",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 15,
+      "onlyA": 0,
+      "onlyB": 1,
+      "neither": 0,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 1,
+      "p": 1
+     },
+     "costA": 0.100158,
+     "costB": 0.196549
+    },
+    {
+     "a": "A1",
+     "b": "A1F",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 7,
+      "onlyA": 0,
+      "onlyB": 9,
+      "neither": 0,
+      "p": 0.003906
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 6,
+      "p": 0.03125
+     },
+     "costA": 0.292635,
+     "costB": 0.196549
+    },
+    {
+     "a": "A2",
+     "b": "A2F",
+     "difficulties": [
+      4
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 8,
+      "onlyA": 1,
+      "onlyB": 6,
+      "neither": 1,
+      "p": 0.125
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 4,
+      "p": 0.375
+     },
+     "costA": 0.201075,
+     "costB": 0.134034
+    }
+   ]
+  },
+  "d5": {
+   "arms": [
+    {
+     "arm": "A0",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "taskPass": 0,
+     "backlogNodes": 16,
+     "backlogPass": 3,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.566836,
+     "costPerTask": 0.070855,
+     "costPerPassingTask": null,
+     "backlogCostPerNode": 0.034876,
+     "costPerPassingBacklogNode": 0.186003,
+     "meanWallSec": 243,
+     "backlogPaths": {
+      "direct": 16
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": null,
+     "firstRoundOk": 0,
+     "subworkflowNodes": 0,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/16",
+      "specsRun": 0
+     },
+     "injection": {
+      "rows": 32,
+      "ok": 28
+     },
+     "depth": {
+      "max": 0,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 0,
+      "childOver": 0,
+      "childSpentMax": null,
+      "nodeOver": 0,
+      "nodeCostMax": 0.050339
+     }
+    },
+    {
+     "arm": "A1",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "taskPass": 1,
+     "backlogNodes": 16,
+     "backlogPass": 8,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.457758,
+     "costPerTask": 0.05722,
+     "costPerPassingTask": 0.457758,
+     "backlogCostPerNode": 0.027989,
+     "costPerPassingBacklogNode": 0.055979,
+     "meanWallSec": 216,
+     "backlogPaths": {
+      "subworkflow": 6,
+      "direct": 10
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 6,
+     "subworkflowNodes": 6,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/16",
+      "specsRun": 6
+     },
+     "injection": {
+      "rows": 32,
+      "ok": 32
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 6,
+      "childOver": 0,
+      "childSpentMax": 0.005699,
+      "nodeOver": 0,
+      "nodeCostMax": 0.041112
+     }
+    },
+    {
+     "arm": "A2",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "taskPass": 5,
+     "backlogNodes": 16,
+     "backlogPass": 13,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.232745,
+     "costPerTask": 0.029093,
+     "costPerPassingTask": 0.046549,
+     "backlogCostPerNode": 0.013845,
+     "costPerPassingBacklogNode": 0.01704,
+     "meanWallSec": 139,
+     "backlogPaths": {
+      "subworkflow": 16
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 16,
+     "subworkflowNodes": 16,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 52,
+      "writeBackProposalNodes": "16/16",
+      "specsRun": 16
+     },
+     "injection": {
+      "rows": 32,
+      "ok": 32
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": 0.06,
+      "childCalls": 16,
+      "childOver": 0,
+      "childSpentMax": 0.006203,
+      "nodeOver": 0,
+      "nodeCostMax": 0.01557
+     }
+    },
+    {
+     "arm": "A1F",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "taskPass": 8,
+     "backlogNodes": 16,
+     "backlogPass": 16,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.261503,
+     "costPerTask": 0.032688,
+     "costPerPassingTask": 0.032688,
+     "backlogCostPerNode": 0.015957,
+     "costPerPassingBacklogNode": 0.015957,
+     "meanWallSec": 155,
+     "backlogPaths": {
+      "subworkflow": 16
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1.125,
+     "firstRoundOk": 14,
+     "subworkflowNodes": 16,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 0,
+      "writeBackProposalNodes": "0/16",
+      "specsRun": 16
+     },
+     "injection": {
+      "rows": 32,
+      "ok": 32
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 16,
+      "childOver": 0,
+      "childSpentMax": 0.005796,
+      "nodeOver": 0,
+      "nodeCostMax": 0.020979
+     }
+    },
+    {
+     "arm": "A1TF",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "taskPass": 8,
+     "backlogNodes": 16,
+     "backlogPass": 16,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.167947,
+     "costPerTask": 0.020993,
+     "costPerPassingTask": 0.020993,
+     "backlogCostPerNode": 0.010105,
+     "costPerPassingBacklogNode": 0.010105,
+     "meanWallSec": 136,
+     "backlogPaths": {
+      "subworkflow": 16
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 16,
+     "subworkflowNodes": 16,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 50,
+      "writeBackProposalNodes": "16/16",
+      "specsRun": 16
+     },
+     "injection": {
+      "rows": 32,
+      "ok": 32
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": null,
+      "childCalls": 16,
+      "childOver": 0,
+      "childSpentMax": 0.006094,
+      "nodeOver": 0,
+      "nodeCostMax": 0.011988
+     }
+    },
+    {
+     "arm": "A2F",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "taskPass": 6,
+     "backlogNodes": 16,
+     "backlogPass": 13,
+     "simpleNodes": 16,
+     "simplePass": 16,
+     "costUsd": 0.272413,
+     "costPerTask": 0.034052,
+     "costPerPassingTask": 0.045402,
+     "backlogCostPerNode": 0.016628,
+     "costPerPassingBacklogNode": 0.020465,
+     "meanWallSec": 175,
+     "backlogPaths": {
+      "subworkflow": 14,
+      "fallback": 2
+     },
+     "simplePaths": {
+      "direct": 16
+     },
+     "errors": {},
+     "subworkflowRoundsMean": 1,
+     "firstRoundOk": 14,
+     "subworkflowNodes": 14,
+     "authority": {
+      "auditProblems": 0,
+      "auditSample": [],
+      "runnerViolations": 0,
+      "executedEffects": 0,
+      "proposals": 59,
+      "writeBackProposalNodes": "14/16",
+      "specsRun": 14
+     },
+     "injection": {
+      "rows": 32,
+      "ok": 32
+     },
+     "depth": {
+      "max": 1,
+      "nestedNodes": 0,
+      "limit": 2
+     },
+     "budget": {
+      "grantedMean": 0.056429,
+      "childCalls": 14,
+      "childOver": 0,
+      "childSpentMax": 0.006046,
+      "nodeOver": 0,
+      "nodeCostMax": 0.043071
+     }
+    }
+   ],
+   "pairs": [
+    {
+     "a": "A1F",
+     "b": "A2F",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 13,
+      "onlyA": 3,
+      "onlyB": 0,
+      "neither": 0,
+      "p": 0.25
+     },
+     "task": {
+      "onlyA": 2,
+      "onlyB": 0,
+      "p": 0.5
+     },
+     "costA": 0.261503,
+     "costB": 0.272413
+    },
+    {
+     "a": "A1",
+     "b": "A2",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 6,
+      "onlyA": 2,
+      "onlyB": 7,
+      "neither": 1,
+      "p": 0.179688
+     },
+     "task": {
+      "onlyA": 1,
+      "onlyB": 5,
+      "p": 0.21875
+     },
+     "costA": 0.457758,
+     "costB": 0.232745
+    },
+    {
+     "a": "A0",
+     "b": "A1F",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 3,
+      "onlyA": 0,
+      "onlyB": 13,
+      "neither": 0,
+      "p": 0.000244
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 8,
+      "p": 0.007813
+     },
+     "costA": 0.566836,
+     "costB": 0.261503
+    },
+    {
+     "a": "A0",
+     "b": "A2F",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 3,
+      "onlyA": 0,
+      "onlyB": 10,
+      "neither": 3,
+      "p": 0.001953
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 6,
+      "p": 0.03125
+     },
+     "costA": 0.566836,
+     "costB": 0.272413
+    },
+    {
+     "a": "A0",
+     "b": "A1",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 1,
+      "onlyA": 2,
+      "onlyB": 7,
+      "neither": 6,
+      "p": 0.179688
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 1,
+      "p": 1
+     },
+     "costA": 0.566836,
+     "costB": 0.457758
+    },
+    {
+     "a": "A0",
+     "b": "A2",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 2,
+      "onlyA": 1,
+      "onlyB": 11,
+      "neither": 2,
+      "p": 0.006348
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 5,
+      "p": 0.0625
+     },
+     "costA": 0.566836,
+     "costB": 0.232745
+    },
+    {
+     "a": "A1TF",
+     "b": "A2F",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 13,
+      "onlyA": 3,
+      "onlyB": 0,
+      "neither": 0,
+      "p": 0.25
+     },
+     "task": {
+      "onlyA": 2,
+      "onlyB": 0,
+      "p": 0.5
+     },
+     "costA": 0.167947,
+     "costB": 0.272413
+    },
+    {
+     "a": "A1TF",
+     "b": "A1F",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 16,
+      "onlyA": 0,
+      "onlyB": 0,
+      "neither": 0,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 0,
+      "p": 1
+     },
+     "costA": 0.167947,
+     "costB": 0.261503
+    },
+    {
+     "a": "A1",
+     "b": "A1F",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 8,
+      "onlyA": 0,
+      "onlyB": 8,
+      "neither": 0,
+      "p": 0.007813
+     },
+     "task": {
+      "onlyA": 0,
+      "onlyB": 7,
+      "p": 0.015625
+     },
+     "costA": 0.457758,
+     "costB": 0.261503
+    },
+    {
+     "a": "A2",
+     "b": "A2F",
+     "difficulties": [
+      5
+     ],
+     "tasks": 8,
+     "backlog": {
+      "both": 10,
+      "onlyA": 3,
+      "onlyB": 3,
+      "neither": 0,
+      "p": 1
+     },
+     "task": {
+      "onlyA": 2,
+      "onlyB": 3,
+      "p": 1
+     },
+     "costA": 0.232745,
+     "costB": 0.272413
+    }
+   ]
+  }
+ }
+}
