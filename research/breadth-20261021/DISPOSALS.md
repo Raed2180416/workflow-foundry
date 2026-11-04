@@ -175,3 +175,11 @@ verdicts (`host-only/parity/`), raw offline init events (`host-only/init-probe/`
 
 **Disk:** 223 MB for WorkBench in all (src 67, venv 121, wheels 29, host-only and work 6), against D16's 500 MB per item;
 breadth benches in total 416 MB (with `agentdojo/` 193 MB) against 1.5 GB. Free disk 2.9 GB at 02:52Z on 10-22 (`df -h /`).
+
+**Addendum 2026-10-28 and 2026-11-04 (T1-1 resume).** No new download, clone or install; the clone, venv and wheels
+above are unchanged (the pinned `uv.lock` and wheel hashes still match). Generated, host-only: regenerated stream
+candidates (`host-only/regen/seed886{0,1,2}-streams.jsonl`, 1.7 MB, 10-28; for the extras rule, not frozen), the full
+$0 gate run's per-row verdicts (`host-only/parity/`, 9 MB, 11-04). Deleted on 11-04: the live worlds of every scripted
+run after grading, superseded 10-22/10-28 intermediate parity inputs (about 0.6 MB) and a stale test task file. Disk on
+11-04: WorkBench 230 MB (src 67, venv 121, wheels 29, host-only 15); breadth benches 797 MB in all (with `agentdojo/`
+193 MB and another item's `appworld/` 374 MB) against 1.5 GB; free disk 2.0 GB at 12:23Z, 0.7 GB at 14:43Z (`df -h /`).

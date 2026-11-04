@@ -136,7 +136,9 @@ export function initExpectation(arm, initProbe) {
   return { cliVersion, model, permissionMode, tools, mcpServers, slashCommands, skills, plugins, agents, outputStyle };
 }
 
-function diskFreeBytes(p) { try { const s = statfsSync(p); return s.bavail * s.bsize; } catch { return null; } }
+/** The runner starts no session below this much free disk at the bench root (a full disk mid-run corrupts journals). */
+export const DISK_FLOOR_BYTES = 1.0e9;
+export function diskFreeBytes(p) { try { const s = statfsSync(p); return s.bavail * s.bsize; } catch { return null; } }
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
@@ -219,7 +221,7 @@ async function main() {
     const key = `${arm.id}|${u.task.id}|${u.k}`;
     if (done.has(key) || stop) return;
     const free = diskFreeBytes(BENCH);
-    if (free !== null && free < 1.0e9) { stop ??= `disk: ${Math.round(free / 1e6)} MB free`; return; }
+    if (free !== null && free < DISK_FLOOR_BYTES) { stop ??= `disk: ${Math.round(free / 1e6)} MB free`; return; }
     const g = gate(lastMeter, { wave: false });
     if (!g.ok) { stop ??= `meter: ${g.reason}`; return; }
     const budget = o.budget ?? (o.probe === 'identity' ? IDENTITY_BUDGET : DEFAULT_BUDGET[arm.id]);
