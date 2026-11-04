@@ -1,0 +1,1346 @@
+{
+ "evidence": "development/diagnostic",
+ "a": {
+  "run": "/var/tmp/foundry-work/autobench/a1c-v1m-look2",
+  "tasks": 60,
+  "missing": [],
+  "totals": {
+   "duplicates": 23,
+   "removals": 34,
+   "extraMessages": 37,
+   "containers": 5,
+   "readFlips": 25
+  },
+  "rows": [
+   {
+    "task": "finance.cash_sweep",
+    "duplicates": 0,
+    "removals": 4,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.expense_reclassification",
+    "duplicates": 0,
+    "removals": 10,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.grant_expense_tracking",
+    "duplicates": 0,
+    "removals": 6,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.intercompany_balance_recon",
+    "duplicates": 0,
+    "removals": 6,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.invoice_aging_followup",
+    "duplicates": 0,
+    "removals": 4,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.qb_customer_balance_review",
+    "duplicates": 0,
+    "removals": 4,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.qb_customer_onboard",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.qb_estimate_conversion",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.sales_tax_remittance",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.xero_expense_claim_review",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.comp_adjustment_batch",
+    "duplicates": 8,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.intern_program_coordination",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.jira_it_onboarding",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.job_posting_refresh",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 3,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.offer_letter_generation",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 1,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.payroll_bonus_processing",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.probation_review_reminder",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.recognition_nominations",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.rto_compliance_check",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.zoom_all_hands_setup",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.budget_reallocation",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.hashtag_performance",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.market_trend",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.partner_comarketing",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 3,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.partner_commission_calculation",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.social_crisis_response",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 3,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.social_roi",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.tam_analysis",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 1,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.topic_cluster",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.video_repurpose",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.asana_fire_drill",
+    "duplicates": 3,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.asana_slack_sheets_audit",
+    "duplicates": 2,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.chatgpt_feedback_analysis",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 4,
+    "containers": 0,
+    "readFlips": 10,
+    "flips": [
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     }
+    ]
+   },
+   {
+    "task": "operations.drive_notion_lease_archive",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.facebook_roas_monitoring",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 1,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.hazmat_shipping_compliance",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.holiday_coverage_planning",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.monday_calendar_emergency_drill",
+    "duplicates": 1,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.notion_gmail_checklist_update",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.zoom_project_kickoff",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 1,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.calendly_sequential_meetings",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.chatgpt_email_sentiment_routing",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 15,
+    "flips": [
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 12,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 12,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 12,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 12,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 12,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 16,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 16,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 16,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 16,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 16,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     }
+    ]
+   },
+   {
+    "task": "sales.cold_email_personalization",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.dependency_chain",
+    "duplicates": 1,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.docusign_compliance_template",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.docusign_conditional_template_selection",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.linkedin_sales_prospecting",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.milestone_celebration",
+    "duplicates": 2,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.priority_selection",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.sheets_multi_channel_campaign_router",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.gorgias_loyalty_program",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 9,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.helpscout_customer_merge",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.helpscout_health_sync",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.helpscout_response_audit",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.intercom_sf_opportunity_alerts",
+    "duplicates": 4,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.reamaze_intercom_sync",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 4,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.zendesk_cross_org_merge",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.zendesk_intercom_company_sync",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.zendesk_maintenance_notify",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.zoho_desk_capacity_planning",
+    "duplicates": 2,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   }
+  ]
+ },
+ "b": {
+  "run": "/var/tmp/foundry-work/autobench/a1c-v2m-look2",
+  "tasks": 60,
+  "missing": [],
+  "totals": {
+   "duplicates": 10,
+   "removals": 0,
+   "extraMessages": 25,
+   "containers": 5,
+   "readFlips": 15
+  },
+  "rows": [
+   {
+    "task": "finance.cash_sweep",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.expense_reclassification",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.grant_expense_tracking",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.intercompany_balance_recon",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.invoice_aging_followup",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.qb_customer_balance_review",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.qb_customer_onboard",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.qb_estimate_conversion",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.sales_tax_remittance",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "finance.xero_expense_claim_review",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.comp_adjustment_batch",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.intern_program_coordination",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.jira_it_onboarding",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.job_posting_refresh",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 3,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.offer_letter_generation",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 1,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.payroll_bonus_processing",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.probation_review_reminder",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.recognition_nominations",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.rto_compliance_check",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "hr.zoom_all_hands_setup",
+    "duplicates": 8,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.budget_reallocation",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.hashtag_performance",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.market_trend",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.partner_comarketing",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.partner_commission_calculation",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.social_crisis_response",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 3,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.social_roi",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.tam_analysis",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.topic_cluster",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "marketing.video_repurpose",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.asana_fire_drill",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.asana_slack_sheets_audit",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.chatgpt_feedback_analysis",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 4,
+    "containers": 0,
+    "readFlips": 10,
+    "flips": [
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     }
+    ]
+   },
+   {
+    "task": "operations.drive_notion_lease_archive",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.facebook_roas_monitoring",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 1,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.hazmat_shipping_compliance",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.holiday_coverage_planning",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.monday_calendar_emergency_drill",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.notion_gmail_checklist_update",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "operations.zoom_project_kickoff",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 1,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.calendly_sequential_meetings",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.chatgpt_email_sentiment_routing",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 1,
+    "containers": 0,
+    "readFlips": 5,
+    "flips": [
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 5,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     },
+     {
+      "step": 7,
+      "op": "gmail.users.messages.modify",
+      "add": false
+     }
+    ]
+   },
+   {
+    "task": "sales.cold_email_personalization",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.dependency_chain",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.docusign_compliance_template",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.docusign_conditional_template_selection",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.linkedin_sales_prospecting",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.milestone_celebration",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.priority_selection",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "sales.sheets_multi_channel_campaign_router",
+    "duplicates": 2,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.gorgias_loyalty_program",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.helpscout_customer_merge",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.helpscout_health_sync",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.helpscout_response_audit",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.intercom_sf_opportunity_alerts",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.reamaze_intercom_sync",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 4,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.zendesk_cross_org_merge",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 1,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.zendesk_intercom_company_sync",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 1,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.zendesk_maintenance_notify",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 2,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   },
+   {
+    "task": "support.zoho_desk_capacity_planning",
+    "duplicates": 0,
+    "removals": 0,
+    "extraMessages": 0,
+    "containers": 0,
+    "readFlips": 0,
+    "flips": []
+   }
+  ]
+ },
+ "paired": {
+  "paired": 60,
+  "comparable": true,
+  "missing": {
+   "a": [],
+   "b": [],
+   "onlyInA": [],
+   "onlyInB": []
+  },
+  "a": {
+   "duplicates": 23,
+   "removals": 34,
+   "extraMessages": 37,
+   "containers": 5,
+   "readFlips": 25
+  },
+  "b": {
+   "duplicates": 10,
+   "removals": 0,
+   "extraMessages": 25,
+   "containers": 5,
+   "readFlips": 15
+  },
+  "bNotWorseThanA": {
+   "duplicates": true,
+   "removals": true,
+   "extraMessages": true,
+   "containers": true,
+   "readFlips": true
+  }
+ }
+}

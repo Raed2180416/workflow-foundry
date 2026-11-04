@@ -39,10 +39,13 @@ export const ALLOWED_MANIFEST_CHANGES = Object.freeze({
     reason: ENGINE + 'Compromise C2: the launch records the Claude CLI {version, sha256, pinned}, and a resume on other CLI bytes is refused.',
   }),
   'experiments/autobench/run.mjs': entry({
-    commits: ['2f40700da704be655383ff274aae1cebb734263f'],
+    commits: ['2f40700da704be655383ff274aae1cebb734263f', '5a59cbb9ccaabe4b656bb0437a9ddd82ac684bd8', '6e7bba756e0e871844a5cd61a9284c995a765baf'],
     before: 'ea1dca70628a80262430b0d693d013fab456aebccefaac9e48db9713d4c87c5f',
-    after: '3d2c69c006f3558c3f12903c5626fb1183ef1bd37e4ab9d3e45fd0cd5b3ca276',
-    reason: ENGINE + 'Compromise C2: the launch records the Claude CLI {version, sha256, pinned}, and a resume on other CLI bytes is refused.',
+    after: '6705073d2fc70fad60dbd755f2011fc59f0430eff82d06d45bc700ac4ff9e17c',
+    merge: Object.freeze({ base: 'e6a23ca', ours: '2f40700da704be655383ff274aae1cebb734263f', theirs: '6e7bba756e0e871844a5cd61a9284c995a765baf' }),
+    reason: ENGINE + 'Compromise C2 (2f40700d): the launch records the Claude CLI {version, sha256, pinned}, and a resume on other CLI bytes is refused. ' +
+      'Merged with the A1-C v2 registration (5a59cbb9, 6e7bba75 on worktree-wf_3674d3bc-0a7-12): --harness codeowned-v2 and EXECUTOR_PIPELINES; ' +
+      'for --harness codeowned every guard decides as before (codeowned-v2.test.mjs test 20 checks the registration lines).',
   }),
   'experiments/lib/results.mjs': entry({
     commits: ['8b00b4a400d2cb033284ed3da9ed43e8ca693df2'],

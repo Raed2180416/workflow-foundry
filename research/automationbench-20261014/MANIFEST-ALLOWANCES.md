@@ -38,7 +38,7 @@ PREREG-VL1 and A1C-MERCURY-PARTIAL.
 | File | sha256 before (`e6a23ca`) | sha256 after | Commits | Change |
 |---|---|---|---|---|
 | `experiments/autobench/harness/foundry.mjs` | `5b5a7bb653d6` | `a31d66719778` | `2f40700d` | Compromise C2: the launch records the Claude CLI {version, sha256, pinned}, and a resume on other CLI bytes is refused. |
-| `experiments/autobench/run.mjs` | `ea1dca70628a` | `3d2c69c006f3` | `2f40700d` | Compromise C2: the launch records the Claude CLI {version, sha256, pinned}, and a resume on other CLI bytes is refused. |
+| `experiments/autobench/run.mjs` | `ea1dca70628a` | `6705073d2fc7` (the clean merge of `2f40700d` and `6e7bba75` over `e6a23ca`) | `2f40700d`, `5a59cbb9`, `6e7bba75` | Compromise C2: the launch records the Claude CLI {version, sha256, pinned}; a resume on other CLI bytes is refused. Then the A1-C v2 merge (2026-11-04) added the `codeowned-v2` registration and `EXECUTOR_PIPELINES` (test 20 in `codeowned-v2.test.mjs`); `--harness codeowned` behaves as before. |
 | `experiments/lib/results.mjs` | `e9cb94d14c3b` | `645c7800b0f8` | `8b00b4a4` | Orchestration patches 01-09 (research/orch-20261021). |
 | `experiments/lib/runner.mjs` | `cbc4b19741f8` | `ea84709699cb` | `8b00b4a4`, `ebc81908` | Orchestration patches 01-09, then one runner per workdir (an exclusive lock; gap rank 12, chaos F1). |
 | `src/children.mjs` | `68a763b3e9f9` | `f81dc9035711` | `8b00b4a4`, `6203fb69` | Orchestration patches 01-09 and their follow-ups (patches 05 and 09). The A1-C v1 manifest lists it since the executor imports it; at a1c-v1 it was not imported. |

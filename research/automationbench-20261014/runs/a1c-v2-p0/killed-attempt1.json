@@ -1,0 +1,10 @@
+{
+ "at": "2026-10-22T03:19:25.395Z",
+ "why": "P0 attempt 1 (start 03:08:16Z) was killed by the container restart at about 03:11Z; 3 tasks were in flight with no row.json. Their spend is booked at the ledger rule: reported cost for the 2 calls whose transcripts hold a result, the 0.075 reservation for the 7 calls with no transcript (upper bound). Recorded as a fault (not scored) so --resume re-runs them and carries this spend against --cap.",
+ "tasks": {
+  "marketing.customer_feedback_aggregation": 0.22499999999999998,
+  "marketing.engagement_optimization": 0.082519,
+  "marketing.social_contest": 0.22499999999999998
+ },
+ "totalUsd": 0.532519
+}
