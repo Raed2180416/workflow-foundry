@@ -67,8 +67,15 @@ HARMLESS_GMAIL = {"is_read", "label_ids"}
 HIDDEN_LABELS = {"TRASH", "SPAM"}
 
 
-def canon(obj) -> str:
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+import sys as _b0_sys  # B0: experiments/autobench on the path for the shared abr.lib
+from pathlib import Path as _B0Path
+if str(_B0Path(__file__).resolve().parents[2]) not in _b0_sys.path:
+    _b0_sys.path.append(str(_B0Path(__file__).resolve().parents[2]))
+from abr.lib import common as _abr_common  # noqa: E402
+from abr.lib import host as _abr_host  # noqa: E402
+
+
+canon = _abr_common.canon
 
 
 def subject_key(s) -> str:
@@ -184,8 +191,7 @@ def ledger(before: dict, after: dict) -> list[dict]:
     return out
 
 
-def _chan_id(world: dict, name: str):
-    return next((c["id"] for c in world.get("slack", {}).get("channels", []) if c.get("name") == name), None)
+_chan_id = _abr_common._chan_id
 
 
 def sheet_ids(world: dict, row: dict) -> tuple[str, str]:
@@ -210,8 +216,7 @@ def recipients(m: dict) -> list[str]:
     return sorted(addr(x) for x in (m.get("to") or []) + (m.get("cc") or []) + (m.get("bcc") or []))
 
 
-def is_sent(m: dict) -> bool:
-    return "SENT" in (m.get("label_ids") or [])
+is_sent = _abr_common.is_sent
 
 
 def is_live_sent(m: dict) -> bool:

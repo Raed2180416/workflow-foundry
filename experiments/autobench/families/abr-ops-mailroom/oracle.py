@@ -38,8 +38,15 @@ MAILROOM, REVIEW = "mailroom", "automation-review"
 MAILROOM_NUMBER = "+15550100200"          # POLICY.md section 2: every SMS goes out from this number
 
 
-def canon(obj) -> str:
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+import sys as _b0_sys  # B0: experiments/autobench on the path for the shared abr.lib
+from pathlib import Path as _B0Path
+if str(_B0Path(__file__).resolve().parents[2]) not in _b0_sys.path:
+    _b0_sys.path.append(str(_B0Path(__file__).resolve().parents[2]))
+from abr.lib import common as _abr_common  # noqa: E402
+from abr.lib import host as _abr_host  # noqa: E402
+
+
+canon = _abr_common.canon
 
 
 def text_key(s) -> str:
@@ -102,8 +109,7 @@ def ledger(before: dict, after: dict) -> list[dict]:
     return out
 
 
-def _chan_id(world: dict, name: str):
-    return next((c["id"] for c in world.get("slack", {}).get("channels", []) if c.get("name") == name), None)
+_chan_id = _abr_common._chan_id
 
 
 def _sheet_ids(world: dict, row: dict) -> tuple[str, str]:

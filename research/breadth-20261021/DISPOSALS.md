@@ -236,3 +236,18 @@ only, no test content). It includes the superseded upstream battery of the first
 
 **Not adopted, nothing fetched:** AppWorld `experiment-outputs-0.1.0.bundle` (other agents' outputs; not needed), the
 `private-appworld` repository (access-gated), the leaderboard repository.
+
+## Family factory, node V (T1-4), 2026-11-04
+
+Rule: D16. Location `/var/tmp/foundry-work/benches/factory/` (record: `factory/ACQUISITION.md`). Disk at the start check:
+1.9 GB free (`df -h /`); 0.93-1.5 GB during the work with other tracks writing; this item's peak about 60 MB.
+
+| Item | Size | Disposition |
+|---|---|---|
+| UCI 498 `incident_event_log.csv` (from the zip, sha256 `6294e29a…d1d6`) | 46,212,397 B | **deleted** 17:26Z after `params/extract_uci.py` wrote aggregates only (`factory/params/uci-498-params.json`) |
+| UCI 498 zip | 2,400,214 B | kept (adopted: re-extraction) |
+| ProcureChange `procurechange.jsonocel.gz` (Zenodo 22079246, sha256 `6ace1648…ebd8`) + SHA256SUMS | 7,396,672 B | kept (adopted: parameters only, `factory/params/procurechange-p2p-params.json`); no other file of the 1,158 MB record fetched |
+| venv: holidays 0.107, hypothesis 6.170.5, python-dateutil 2.9.0.post0, six 1.17.0, sortedcontainers 2.4.0 (hash-pinned wheels) | 7.5 MB | kept (adopted: holiday-table golden, property tests) |
+| uv download cache | 16 MB | **deleted** after the install |
+| 24 sealed V streams (host-only, mode 0600) | 4.4 MB | kept until PREREG-V-1's sealed runs; never committed |
+| B0 scratch copies of experiments/autobench (before / after) and partial gate outputs | 9.6 MB, session scratchpad | not data; partial gate outputs discarded unread (B0.md) |

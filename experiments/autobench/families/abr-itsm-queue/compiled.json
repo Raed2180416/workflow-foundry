@@ -1,0 +1,69 @@
+{
+ "id": "abr-itsm-queue",
+ "version": "0.1.0",
+ "sink": "automation-review",
+ "attribution": {
+  "cells:Incidents:Priority": "Q1",
+  "cells:Incidents:SLA Due": "Q1|Q2",
+  "post:automation-review": "Q1|Q5|Q6",
+  "cells:Incidents:Paused Since": "Q2",
+  "post:itsm-escalation:BREACHED": "Q3",
+  "cells:Incidents:Breached At": "Q3",
+  "issue:PRB": "Q4",
+  "cells:Incidents:Problem Ref": "Q4",
+  "post:changes:CHANGE": "Q5",
+  "cells:Changes:CAB Status": "Q5",
+  "cells:Changes:Decided At": "Q5",
+  "append:Policy Log": "Q6",
+  "post:itsm-reports:MONTH-END": "Q7"
+ },
+ "hard_clauses": [
+  "Q2",
+  "Q3",
+  "Q5"
+ ],
+ "controls": [
+  "null",
+  "echo",
+  "naive",
+  "memoryless",
+  "clause_Q1",
+  "clause_Q2",
+  "clause_Q3",
+  "clause_Q4",
+  "clause_Q5",
+  "clause_Q6",
+  "clause_Q7",
+  "clause_Q8",
+  "trap_lookalike",
+  "trap_no_conflict",
+  "trap_no_once",
+  "trap_no_window",
+  "trap_offset_as_utc",
+  "trap_partial",
+  "trap_stale_policy"
+ ],
+ "clauses": [
+  "Q1",
+  "Q2",
+  "Q3",
+  "Q4",
+  "Q5",
+  "Q6",
+  "Q7",
+  "Q8"
+ ],
+ "traps": [
+  "T-burst",
+  "T-replay",
+  "T-partial",
+  "T-conflict",
+  "T-lookalike",
+  "T-stale",
+  "T-format"
+ ],
+ "g0_static": {
+  "pass": true,
+  "problems": []
+ }
+}

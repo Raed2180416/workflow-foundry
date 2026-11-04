@@ -1,0 +1,348 @@
+{
+ "family": "abr-p2p-audit",
+ "version": "0.1.1",
+ "seeds": "2113-2116",
+ "practice": "2101-2104",
+ "python_has_automationbench": true,
+ "secs": 238,
+ "pass_run_gates": false,
+ "pending": [
+  "G8",
+  "G9",
+  "G11"
+ ],
+ "gates": {
+  "G0": {
+   "pass": true,
+   "problems": [],
+   "clause_counts": {
+    "A1": 103,
+    "A3": 28,
+    "A2": 7,
+    "A5": 4,
+    "A4": 6
+   }
+  },
+  "G1": {
+   "pass": true,
+   "problems": [],
+   "round_trip": "ok"
+  },
+  "G2": {
+   "pass": true,
+   "per_stream": {
+    "2101": "112/112",
+    "2102": "123/123",
+    "2103": "101/101",
+    "2104": "104/104",
+    "2113": "107/107",
+    "2114": "105/105",
+    "2115": "115/115",
+    "2116": "94/94"
+   },
+   "failing": {}
+  },
+  "G3": {
+   "pass": true,
+   "problems": [],
+   "effect_drop_killed": "191/191"
+  },
+  "G4": {
+   "pass": true,
+   "agreement": "421/421",
+   "effect_signatures": {
+    "append:A3": 91,
+    "append:A4": 4,
+    "cells:A1": 103,
+    "cells:A2": 7,
+    "cells:A3": 91,
+    "mail:A1": 8,
+    "mail:A5": 4,
+    "post:A1": 36,
+    "post:A2": 7,
+    "post:A3": 28,
+    "post:A4": 2,
+    "post:A5": 4
+   }
+  },
+  "G5": {
+   "pass": false,
+   "problems": [
+    "bar missed: naive < 0.60 per trigger"
+   ],
+   "noop_share": 0.639,
+   "bars": {
+    "null == no-op share": true,
+    "echo == 0": true,
+    "naive < 0.60 per trigger": false,
+    "naive keeps no clean stream": true,
+    "memoryless < 0.90 and no clean week": true
+   },
+   "info": {
+    "naive_acting_pass_rate": 0.5811,
+    "proposed_bar_OD-F1": "naive < 0.60 on acting triggers and zero clean weeks",
+    "proposed_bar_met": true
+   },
+   "controls": {
+    "null": {
+     "pass_rate": 0.639,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.0,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 593
+    },
+    "echo": {
+     "pass_rate": 0.0,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.0,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 593
+    },
+    "naive": {
+     "pass_rate": 0.8385,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.5811,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 230
+    },
+    "memoryless": {
+     "pass_rate": 0.8907,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.7432,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 1324
+    },
+    "clause_A1": {
+     "pass_rate": 0.6532,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.0405,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 509
+    },
+    "clause_A2": {
+     "pass_rate": 0.9501,
+     "clean_weeks": "5/16",
+     "acting_pass_rate": 0.8851,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 53
+    },
+    "clause_A3": {
+     "pass_rate": 0.924,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.8108,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 396
+    },
+    "clause_A4": {
+     "pass_rate": 0.9667,
+     "clean_weeks": "8/16",
+     "acting_pass_rate": 0.9324,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 11
+    },
+    "clause_A5": {
+     "pass_rate": 0.9905,
+     "clean_weeks": "12/16",
+     "acting_pass_rate": 0.973,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 0
+    },
+    "clause_A6": {
+     "pass_rate": 0.848,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.8108,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 345
+    },
+    "trap_lookalike": {
+     "pass_rate": 0.943,
+     "clean_weeks": "3/16",
+     "acting_pass_rate": 0.8919,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 35
+    },
+    "trap_no_dedupe": {
+     "pass_rate": 0.9667,
+     "clean_weeks": "6/16",
+     "acting_pass_rate": 0.9324,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 40
+    },
+    "trap_no_release": {
+     "pass_rate": 0.9501,
+     "clean_weeks": "5/16",
+     "acting_pass_rate": 0.8851,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 53
+    },
+    "trap_no_sod": {
+     "pass_rate": 0.9454,
+     "clean_weeks": "2/16",
+     "acting_pass_rate": 0.8784,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 66
+    },
+    "trap_no_tolerance": {
+     "pass_rate": 0.9667,
+     "clean_weeks": "5/16",
+     "acting_pass_rate": 0.9324,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 30
+    },
+    "trap_stale_policy": {
+     "pass_rate": 0.981,
+     "clean_weeks": "13/16",
+     "acting_pass_rate": 0.9595,
+     "clean_streams": 2,
+     "detected": true,
+     "hard_violations": 19
+    },
+    "trap_naive_money": {
+     "pass_rate": 0.8385,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.5676,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 318
+    }
+   }
+  },
+  "G6": {
+   "pass": true,
+   "problems": [],
+   "traps": {
+    "T-lookalike": {
+     "exposed": 8,
+     "control": "trap_lookalike",
+     "control_fails_on_exposed": 8,
+     "control_fails_anywhere": 24,
+     "reference_passes_exposed": true
+    },
+    "T-replay": {
+     "exposed": 8,
+     "control": "trap_no_dedupe",
+     "control_fails_on_exposed": 8,
+     "control_fails_anywhere": 14,
+     "reference_passes_exposed": true
+    },
+    "T-conflict": {
+     "exposed": 15,
+     "control": "trap_no_release",
+     "control_fails_on_exposed": 7,
+     "control_fails_anywhere": 21,
+     "reference_passes_exposed": true
+    },
+    "T-sod": {
+     "exposed": 8,
+     "control": "trap_no_sod",
+     "control_fails_on_exposed": 8,
+     "control_fails_anywhere": 23,
+     "reference_passes_exposed": true
+    },
+    "T-match": {
+     "exposed": 20,
+     "control": "trap_no_tolerance",
+     "control_fails_on_exposed": 4,
+     "control_fails_anywhere": 14,
+     "reference_passes_exposed": true
+    },
+    "T-stale": {
+     "exposed": 14,
+     "control": "trap_stale_policy",
+     "control_fails_on_exposed": 3,
+     "control_fails_anywhere": 8,
+     "reference_passes_exposed": true
+    },
+    "T-format": {
+     "exposed": 105,
+     "control": "trap_naive_money",
+     "control_fails_on_exposed": 55,
+     "control_fails_anywhere": 68,
+     "reference_passes_exposed": true
+    }
+   }
+  },
+  "G7": {
+   "pass": true,
+   "problems": [],
+   "variants": {
+    "rename/2113": "107/107",
+    "rename/2114": "105/105",
+    "shift+7d/2113": "107/107",
+    "shift+7d/2114": "100/100",
+    "shift+364d/2113": "107/107",
+    "shift+364d/2114": "105/105",
+    "permute": "not implemented: same-instant independent events are rare in these streams (gap)"
+   }
+  },
+  "G8": {
+   "pass": null,
+   "status": "pending: paid or needs another session; not run here ($0 rule)",
+   "command": "NOT BUILT: run.mjs mode blind refuses (no tools may be given); needs a no-tool Haiku session per sampled dev trigger of abr-p2p-audit, about $0.05-0.15 for 200 triggers; bar: pass rate below the no-op share + 0.15"
+  },
+  "G9": {
+   "pass": null,
+   "status": "pending: paid or needs another session; not run here ($0 rule)",
+   "command": "MANUAL: a session that did not write abr-p2p-audit reads POLICY.md and practice worlds (seeds 2101-2104) and writes the effects of 20 sampled triggers; compare host-side with the truth; about $1"
+  },
+  "G10": {
+   "pass": true,
+   "problems": [],
+   "mutation_score": 0.9988,
+   "killed": "862/863",
+   "neutral_accepted": "139/139",
+   "ab_disagree": 0,
+   "by_operator": {
+    "alter-cell": "100/100",
+    "alter-post-text": "38/39",
+    "alter-subject": "6/6",
+    "delete-old-post": "56/56",
+    "drop-append": "46/46",
+    "drop-cell-write": "100/100",
+    "drop-mail": "6/6",
+    "drop-post": "39/39",
+    "duplicate-post": "39/39",
+    "extra-cell": "100/100",
+    "extra-recipient": "6/6",
+    "stray-post": "30/30",
+    "touch-other-row": "212/212",
+    "wrong-channel": "39/39",
+    "wrong-recipient": "6/6",
+    "wrong-time": "39/39"
+   }
+  },
+  "G11": {
+   "pass": null,
+   "status": "pending: paid or needs another session; not run here ($0 rule)",
+   "command": "node experiments/breadth/factory/run.mjs --arm A-H --family abr-p2p-audit --seeds 2113 --cap 2 ; node experiments/breadth/factory/run.mjs --arm A-S --family abr-p2p-audit --seeds 2113 --cap 25 (flag if A-H beats A-S by more than 0.10 in clean-week share); $5-24"
+  },
+  "G12": {
+   "pass": true,
+   "problems": [],
+   "parity": {
+    "streams": [
+     2113,
+     2114
+    ],
+    "triggers_compared": 212,
+    "differences": [],
+    "n_differences": 0
+   }
+  }
+ }
+}

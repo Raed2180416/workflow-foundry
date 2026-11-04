@@ -1,0 +1,124 @@
+{
+ "schema": "factory-v-split/1",
+ "rule": "v1 (experiments/breadth/factory/split.py docstring)",
+ "salt": "78f90d085a83ef324b4be42b697d6595b8c6e0e4",
+ "salt_is": "repository HEAD at seed registration (2026-11-04), before any V generator existed",
+ "ledger": "research/jit-20261008/SEED-LEDGER.json ranges factory-v-dev, factory-v-sealed, factory-heldout",
+ "practice": [
+  2101,
+  2112
+ ],
+ "dev": [
+  2113,
+  2160
+ ],
+ "sealed": [
+  8850,
+  8873
+ ],
+ "sealed_by_family": {
+  "abr-itsm-queue": [
+   {
+    "seed": 8851,
+    "intake": "messy"
+   },
+   {
+    "seed": 8853,
+    "intake": "messy"
+   },
+   {
+    "seed": 8855,
+    "intake": "policy"
+   },
+   {
+    "seed": 8859,
+    "intake": "policy"
+   },
+   {
+    "seed": 8860,
+    "intake": "policy"
+   },
+   {
+    "seed": 8864,
+    "intake": "messy"
+   },
+   {
+    "seed": 8868,
+    "intake": "messy"
+   },
+   {
+    "seed": 8873,
+    "intake": "policy"
+   }
+  ],
+  "abr-p2p-audit": [
+   {
+    "seed": 8854,
+    "intake": "messy"
+   },
+   {
+    "seed": 8856,
+    "intake": "messy"
+   },
+   {
+    "seed": 8865,
+    "intake": "policy"
+   },
+   {
+    "seed": 8866,
+    "intake": "policy"
+   },
+   {
+    "seed": 8867,
+    "intake": "policy"
+   },
+   {
+    "seed": 8869,
+    "intake": "messy"
+   },
+   {
+    "seed": 8871,
+    "intake": "policy"
+   },
+   {
+    "seed": 8872,
+    "intake": "messy"
+   }
+  ],
+  "abr-reg-incident-clock": [
+   {
+    "seed": 8850,
+    "intake": "messy"
+   },
+   {
+    "seed": 8852,
+    "intake": "policy"
+   },
+   {
+    "seed": 8857,
+    "intake": "policy"
+   },
+   {
+    "seed": 8858,
+    "intake": "messy"
+   },
+   {
+    "seed": 8861,
+    "intake": "policy"
+   },
+   {
+    "seed": 8862,
+    "intake": "messy"
+   },
+   {
+    "seed": 8863,
+    "intake": "messy"
+   },
+   {
+    "seed": 8870,
+    "intake": "policy"
+   }
+  ]
+ },
+ "sealed_policy": "generated host-only under /var/tmp/foundry-work/benches/factory/sealed/ (never committed); per-stream sha256 in SEALED-HASHES.json; read only by the PREREG-V-1 runner"
+}

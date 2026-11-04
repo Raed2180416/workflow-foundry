@@ -1,0 +1,388 @@
+{
+ "family": "abr-reg-incident-clock",
+ "version": "0.1.0",
+ "seeds": "2113-2116",
+ "practice": "2101-2104",
+ "python_has_automationbench": true,
+ "secs": 280,
+ "pass_run_gates": false,
+ "pending": [
+  "G8",
+  "G9",
+  "G11"
+ ],
+ "gates": {
+  "G0": {
+   "pass": true,
+   "problems": [],
+   "clause_counts": {
+    "R3": 20,
+    "R1": 42,
+    "R2": 20,
+    "R4": 12,
+    "R5": 6,
+    "R6": 4
+   }
+  },
+  "G1": {
+   "pass": true,
+   "problems": [],
+   "round_trip": "ok"
+  },
+  "G2": {
+   "pass": true,
+   "per_stream": {
+    "2101": "95/95",
+    "2102": "87/87",
+    "2103": "98/98",
+    "2104": "95/95",
+    "2113": "99/99",
+    "2114": "92/92",
+    "2115": "95/95",
+    "2116": "93/93"
+   },
+   "failing": {}
+  },
+  "G3": {
+   "pass": true,
+   "problems": [],
+   "effect_drop_killed": "125/125"
+  },
+  "G4": {
+   "pass": true,
+   "agreement": "379/379",
+   "effect_signatures": {
+    "append:R5": 4,
+    "cells:R1": 58,
+    "cells:R2": 13,
+    "cells:R3": 14,
+    "cells:R4": 8,
+    "mail:R3": 20,
+    "mail:R4": 6,
+    "post:R1": 64,
+    "post:R2": 22,
+    "post:R3": 20,
+    "post:R4": 12,
+    "post:R5": 2,
+    "post:R6": 4
+   }
+  },
+  "G5": {
+   "pass": false,
+   "problems": [
+    "bar missed: naive < 0.60 per trigger"
+   ],
+   "noop_share": 0.7757,
+   "bars": {
+    "null == no-op share": true,
+    "echo == 0": true,
+    "naive < 0.60 per trigger": false,
+    "naive keeps no clean stream": true,
+    "memoryless < 0.90 and no clean week": true
+   },
+   "info": {
+    "naive_acting_pass_rate": 0.0,
+    "proposed_bar_OD-F1": "naive < 0.60 on acting triggers and zero clean weeks",
+    "proposed_bar_met": true
+   },
+   "controls": {
+    "null": {
+     "pass_rate": 0.7757,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.0,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 326
+    },
+    "echo": {
+     "pass_rate": 0.0,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.0,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 326
+    },
+    "naive": {
+     "pass_rate": 0.7652,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.0,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 325
+    },
+    "memoryless": {
+     "pass_rate": 0.3826,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.2222,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 549
+    },
+    "clause_R1": {
+     "pass_rate": 0.8443,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.321,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 260
+    },
+    "clause_R2": {
+     "pass_rate": 0.9367,
+     "clean_weeks": "2/16",
+     "acting_pass_rate": 0.7531,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 26
+    },
+    "clause_R3": {
+     "pass_rate": 0.9288,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.716,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 94
+    },
+    "clause_R4": {
+     "pass_rate": 0.9208,
+     "clean_weeks": "4/16",
+     "acting_pass_rate": 0.8148,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 62
+    },
+    "clause_R5": {
+     "pass_rate": 0.9604,
+     "clean_weeks": "8/16",
+     "acting_pass_rate": 0.8765,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 10
+    },
+    "clause_R6": {
+     "pass_rate": 0.9894,
+     "clean_weeks": "12/16",
+     "acting_pass_rate": 0.9506,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 0
+    },
+    "clause_R7": {
+     "pass_rate": 0.686,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.4568,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 287
+    },
+    "trap_fixed_offset": {
+     "pass_rate": 0.9314,
+     "clean_weeks": "2/16",
+     "acting_pass_rate": 0.7284,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 110
+    },
+    "trap_thirty_days": {
+     "pass_rate": 0.9472,
+     "clean_weeks": "6/16",
+     "acting_pass_rate": 0.8025,
+     "clean_streams": 1,
+     "detected": true,
+     "hard_violations": 65
+    },
+    "trap_no_roll": {
+     "pass_rate": 0.9578,
+     "clean_weeks": "5/16",
+     "acting_pass_rate": 0.8519,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 49
+    },
+    "trap_offset_as_utc": {
+     "pass_rate": 0.9208,
+     "clean_weeks": "3/16",
+     "acting_pass_rate": 0.7407,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 112
+    },
+    "trap_no_authority": {
+     "pass_rate": 0.9472,
+     "clean_weeks": "3/16",
+     "acting_pass_rate": 0.8519,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 28
+    },
+    "trap_lookalike": {
+     "pass_rate": 0.9683,
+     "clean_weeks": "7/16",
+     "acting_pass_rate": 0.9012,
+     "clean_streams": 1,
+     "detected": true,
+     "hard_violations": 22
+    },
+    "trap_stale_policy": {
+     "pass_rate": 0.9789,
+     "clean_weeks": "10/16",
+     "acting_pass_rate": 0.9506,
+     "clean_streams": 1,
+     "detected": true,
+     "hard_violations": 10
+    },
+    "trap_no_once": {
+     "pass_rate": 0.4274,
+     "clean_weeks": "0/16",
+     "acting_pass_rate": 0.4198,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 452
+    },
+    "trap_no_compensation": {
+     "pass_rate": 0.9842,
+     "clean_weeks": "10/16",
+     "acting_pass_rate": 0.9259,
+     "clean_streams": 0,
+     "detected": true,
+     "hard_violations": 6
+    }
+   }
+  },
+  "G6": {
+   "pass": true,
+   "problems": [],
+   "traps": {
+    "T-clock:dst": {
+     "exposed": 26,
+     "control": "trap_fixed_offset",
+     "control_fails_on_exposed": 22,
+     "control_fails_anywhere": 26,
+     "reference_passes_exposed": true
+    },
+    "T-clock:month-end": {
+     "exposed": 17,
+     "control": "trap_thirty_days",
+     "control_fails_on_exposed": 12,
+     "control_fails_anywhere": 20,
+     "reference_passes_exposed": true
+    },
+    "T-clock:roll": {
+     "exposed": 13,
+     "control": "trap_no_roll",
+     "control_fails_on_exposed": 12,
+     "control_fails_anywhere": 16,
+     "reference_passes_exposed": true
+    },
+    "T-clock:offset": {
+     "exposed": 24,
+     "control": "trap_offset_as_utc",
+     "control_fails_on_exposed": 21,
+     "control_fails_anywhere": 30,
+     "reference_passes_exposed": true
+    },
+    "T-authority": {
+     "exposed": 10,
+     "control": "trap_no_authority",
+     "control_fails_on_exposed": 8,
+     "control_fails_anywhere": 20,
+     "reference_passes_exposed": true
+    },
+    "T-lookalike": {
+     "exposed": 10,
+     "control": "trap_lookalike",
+     "control_fails_on_exposed": 4,
+     "control_fails_anywhere": 12,
+     "reference_passes_exposed": true
+    },
+    "T-stale": {
+     "exposed": 24,
+     "control": "trap_stale_policy",
+     "control_fails_on_exposed": 4,
+     "control_fails_anywhere": 8,
+     "reference_passes_exposed": true
+    },
+    "T-repeat": {
+     "exposed": 217,
+     "control": "trap_no_once",
+     "control_fails_on_exposed": 217,
+     "control_fails_anywhere": 217,
+     "reference_passes_exposed": true
+    },
+    "T-retract": {
+     "exposed": 8,
+     "control": "trap_no_compensation",
+     "control_fails_on_exposed": 6,
+     "control_fails_anywhere": 6,
+     "reference_passes_exposed": true
+    }
+   }
+  },
+  "G7": {
+   "pass": true,
+   "problems": [],
+   "variants": {
+    "rename/2113": "99/99",
+    "rename/2114": "92/92",
+    "shift+7d/2113": "99/99",
+    "shift+7d/2114": "95/95",
+    "shift+364d/2113": "93/93",
+    "shift+364d/2114": "89/89",
+    "permute": "not implemented: same-instant independent events are rare in these streams (gap)"
+   }
+  },
+  "G8": {
+   "pass": null,
+   "status": "pending: paid or needs another session; not run here ($0 rule)",
+   "command": "NOT BUILT: run.mjs mode blind refuses (no tools may be given); needs a no-tool Haiku session per sampled dev trigger of abr-reg-incident-clock, about $0.05-0.15 for 200 triggers; bar: pass rate below the no-op share + 0.15"
+  },
+  "G9": {
+   "pass": null,
+   "status": "pending: paid or needs another session; not run here ($0 rule)",
+   "command": "MANUAL: a session that did not write abr-reg-incident-clock reads POLICY.md and practice worlds (seeds 2101-2104) and writes the effects of 20 sampled triggers; compare host-side with the truth; about $1"
+  },
+  "G10": {
+   "pass": true,
+   "problems": [],
+   "mutation_score": 0.9962,
+   "killed": "777/780",
+   "neutral_accepted": "110/110",
+   "ab_disagree": 0,
+   "by_operator": {
+    "alter-cell": "48/48",
+    "alter-post-text": "59/62",
+    "alter-subject": "13/13",
+    "delete-old-post": "59/59",
+    "drop-append": "2/2",
+    "drop-cell-write": "48/48",
+    "drop-mail": "13/13",
+    "drop-post": "62/62",
+    "duplicate-post": "62/62",
+    "extra-cell": "48/48",
+    "extra-recipient": "13/13",
+    "stray-post": "22/22",
+    "touch-other-row": "191/191",
+    "wrong-channel": "62/62",
+    "wrong-recipient": "13/13",
+    "wrong-time": "62/62"
+   }
+  },
+  "G11": {
+   "pass": null,
+   "status": "pending: paid or needs another session; not run here ($0 rule)",
+   "command": "node experiments/breadth/factory/run.mjs --arm A-H --family abr-reg-incident-clock --seeds 2113 --cap 2 ; node experiments/breadth/factory/run.mjs --arm A-S --family abr-reg-incident-clock --seeds 2113 --cap 25 (flag if A-H beats A-S by more than 0.10 in clean-week share); $5-24"
+  },
+  "G12": {
+   "pass": true,
+   "problems": [],
+   "parity": {
+    "streams": [
+     2113,
+     2114
+    ],
+    "triggers_compared": 191,
+    "differences": [],
+    "n_differences": 0
+   }
+  }
+ }
+}

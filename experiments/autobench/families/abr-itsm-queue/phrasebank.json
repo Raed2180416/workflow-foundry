@@ -1,0 +1,23 @@
+{
+ "about": "Messy-intake phrasings for abr-itsm-queue (spec author Opus 5.5, 2026-11-04). One {v} per phrase; $0 lint plus paid 3-model panel (intake.py). Status: panel pending.",
+ "open": ["Hi! Can we get the service desk queue automated? Rough requirements:", "Following the ITSM review, this is what the queue bot should do (draft)",
+          "ok so the incident queue keeps slipping, here's the ask"],
+ "close": ["Thanks - Ruth", "Shout if something contradicts itself.", "That's everything for now."],
+ "noise": ["The CMDB export is a week stale, don't rely on it.", "(Night shift will still triage by hand sometimes.)",
+           "We might move to a new ticketing tool next year, ignore that for now.", "Reassignments happen a lot; they don't change anything for the bot."],
+ "slots": {
+  "params.targets.P1": {"ask": "P1 resolution target in hours", "phrases": ["P1 must be resolved within {v} hours", "critical (P1) target: {v}h"]},
+  "params.targets.P2": {"ask": "P2 resolution target in hours", "phrases": ["P2 gets {v} hours", "high priority (P2) target is {v}h"]},
+  "params.targets.P3": {"ask": "P3 resolution target in hours", "phrases": ["P3 has {v} hours (that's what the old log says we actually hit)", "moderate (P3) target = {v}h"]},
+  "params.targets.P4": {"ask": "P4 resolution target in hours", "phrases": ["P4 can take {v} hours", "low (P4) target: {v}h, basically two weeks"]},
+  "org.cab": {"ask": "the only address whose CAB decisions count", "phrases": ["CAB decisions only count from {v} (the chair)", "only the CAB chair, {v}, can approve or reject a change"]},
+  "org.owner": {"ask": "the address that may change SLA targets", "phrases": ["SLA target changes come from the service owner at {v} only", "SLA targets may be amended by {v} alone"]},
+  "channels.escalation": {"ask": "Slack channel for breaches", "phrases": ["breaches go in #{v} on Slack", "post BREACHED lines to the #{v} channel"]},
+  "channels.changes": {"ask": "Slack channel for CAB outcomes", "phrases": ["change outcomes are announced in #{v} please", "CAB results go to the #{v} channel"]},
+  "channels.reports": {"ask": "Slack channel for the month-end line", "phrases": ["month-end summary in #{v} on the last working day", "the month-end line goes to the #{v} channel"]},
+  "channels.sink": {"ask": "Slack channel for anything the bot cannot apply", "phrases": ["anything it can't apply goes to #{v} instead", "flag weird stuff in #{v} and change nothing"]},
+  "calendar.checks_utc": {"ask": "scheduled check times", "phrases": ["check the queue at {v} UTC on working days", "run at {v} UTC, weekdays, skipping English bank holidays"]},
+  "params.problem_min": {"ask": "how many incidents on one CI open a problem record", "phrases": ["if {v} or more incidents hit the same CI within the window, open a problem in PRB", "a problem record once {v} incidents share a CI"]},
+  "params.problem_window_hours": {"ask": "problem detection window in hours", "phrases": ["the problem window is the last {v} hours by Opened At", "count incidents opened in the past {v} hours"]}
+ }
+}

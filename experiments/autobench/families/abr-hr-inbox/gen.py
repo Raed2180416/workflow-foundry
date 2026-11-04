@@ -278,24 +278,28 @@ UNKNOWN_SEVERITY = ["", "TBD", "Pending review"]
 # ---------------------------------------------------------------------------------------------------------------
 # helpers (shared with nothing: the reference and the oracle have their own)
 # ---------------------------------------------------------------------------------------------------------------
-def canon(obj) -> str:
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+import sys as _b0_sys  # B0: experiments/autobench on the path for the shared abr.lib
+from pathlib import Path as _B0Path
+if str(_B0Path(__file__).resolve().parents[2]) not in _b0_sys.path:
+    _b0_sys.path.append(str(_B0Path(__file__).resolve().parents[2]))
+from abr.lib import common as _abr_common  # noqa: E402
+from abr.lib import host as _abr_host  # noqa: E402
 
 
-def sha(obj) -> str:
-    return hashlib.sha256((obj if isinstance(obj, str) else canon(obj)).encode("utf-8")).hexdigest()
+canon = _abr_common.canon
 
 
-def iso_z(dt: datetime) -> str:
-    return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+sha = _abr_common.sha
+
+
+iso_z = _abr_common.iso_z
 
 
 def naive(dt: datetime) -> str:
     return dt.astimezone(UTC).replace(tzinfo=None).isoformat()
 
 
-def ms(dt: datetime) -> int:
-    return int(dt.timestamp() * 1000)
+ms = _abr_common.ms
 
 
 def wsk(s) -> str:
@@ -368,8 +372,7 @@ def count_lines(counts: dict) -> str:
     return "\n".join(f"{k}: {counts.get(k, 0)}" for k in COUNT_LABELS)
 
 
-class PlanError(RuntimeError):
-    pass
+PlanError = _abr_common.PlanError
 
 
 # ---------------------------------------------------------------------------------------------------------------

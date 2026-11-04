@@ -63,8 +63,15 @@ EMAIL_LINE = re.compile(r"^(?:[^:$]+: \$\d+\.\d{2}|pending pre-approval: \d+)$")
 HARMLESS_MAIL = {"is_read", "label_ids"}
 
 
-def canon(obj) -> str:
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+import sys as _b0_sys  # B0: experiments/autobench on the path for the shared abr.lib
+from pathlib import Path as _B0Path
+if str(_B0Path(__file__).resolve().parents[2]) not in _b0_sys.path:
+    _b0_sys.path.append(str(_B0Path(__file__).resolve().parents[2]))
+from abr.lib import common as _abr_common  # noqa: E402
+from abr.lib import host as _abr_host  # noqa: E402
+
+
+canon = _abr_common.canon
 
 
 def norm(s) -> str:

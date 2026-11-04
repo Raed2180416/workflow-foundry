@@ -1,0 +1,77 @@
+{
+ "id": "abr-reg-incident-clock",
+ "version": "0.1.0",
+ "sink": "automation-review",
+ "attribution": {
+  "post:reg-reporting:CLOCK": "R1",
+  "cells:Incidents:EW Due": "R1",
+  "cells:Incidents:Notification Due": "R1",
+  "cells:Incidents:Final Due": "R1",
+  "post:reg-reporting:DUE": "R2",
+  "cells:Incidents:EW Reminded": "R2",
+  "cells:Incidents:Notification Reminded": "R2",
+  "cells:Incidents:Final Reminded": "R2",
+  "post:reg-reporting:OVERDUE": "R3",
+  "mail:OVERDUE": "R3",
+  "cells:Incidents:EW Overdue": "R3",
+  "cells:Incidents:Notification Overdue": "R3",
+  "cells:Incidents:Final Overdue": "R3",
+  "post:reg-reporting:RETRACT": "R4",
+  "mail:RETRACTION": "R4",
+  "cells:Incidents:Retracted At": "R4",
+  "append:Policy Log": "R5",
+  "post:reg-reporting:MONTH-END": "R6",
+  "post:automation-review": "R4|R5"
+ },
+ "hard_clauses": [
+  "R1",
+  "R3",
+  "R4"
+ ],
+ "controls": [
+  "null",
+  "echo",
+  "naive",
+  "memoryless",
+  "clause_R1",
+  "clause_R2",
+  "clause_R3",
+  "clause_R4",
+  "clause_R5",
+  "clause_R6",
+  "clause_R7",
+  "trap_fixed_offset",
+  "trap_lookalike",
+  "trap_no_authority",
+  "trap_no_compensation",
+  "trap_no_once",
+  "trap_no_roll",
+  "trap_offset_as_utc",
+  "trap_stale_policy",
+  "trap_thirty_days"
+ ],
+ "clauses": [
+  "R1",
+  "R2",
+  "R3",
+  "R4",
+  "R5",
+  "R6",
+  "R7"
+ ],
+ "traps": [
+  "T-clock:dst",
+  "T-clock:month-end",
+  "T-clock:roll",
+  "T-clock:offset",
+  "T-authority",
+  "T-lookalike",
+  "T-stale",
+  "T-repeat",
+  "T-retract"
+ ],
+ "g0_static": {
+  "pass": true,
+  "problems": []
+ }
+}
