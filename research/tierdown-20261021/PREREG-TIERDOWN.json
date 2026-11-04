@@ -1,0 +1,63 @@
+{
+ "id": "tierdown-20261021-p1",
+ "frozenAt": "2026-11-04",
+ "author": "Claude Opus 5.5 (workflow subagent wf_6d3b90c9-c30-9), before any paid call of this item",
+ "evidence": "development: archived dev streams of research/jit-20261008/runs (dev split, seeds 201-248). H is held out from every choice this item makes (tiers, rules, order, thresholds); it is NOT sealed and NOT a fresh draw.",
+ "experiments": ["jit-dev-records-1", "jit-dev-kinetics-1", "jit-r0-records", "jit-r0-kinetics"],
+ "units": "an archived compiled answer (one arm's run of one task, solver version in force) whose $0 replay is faithful (leverage.mjs fidelity gate: 88 of 88)",
+ "split": {
+  "rule": "H iff parseInt(sha256('tierdown-20261021/split\\0' + taskKey)[0], 16) >= 8, else C (experiments/tierdown/tier-replay.mjs sliceOf); every arm's run of a task is in the same slice",
+  "counts": { "records": { "C": { "runs": 36, "tasks": 16 }, "H": { "runs": 28, "tasks": 14 } }, "kinetics": { "C": { "runs": 10, "tasks": 8 }, "H": { "runs": 14, "tasks": 8 } } }
+ },
+ "screen": {
+  "tool": "experiments/tierdown/leverage.mjs --per-decision 4 --max-decisions 60",
+  "classesFrom": "C rows only (experiments/tierdown/classes.mjs); low < 0.05 <= mid < 0.20 <= high; unmeasured = high"
+ },
+ "sites": [
+  { "site": "records/rules", "reference": "claude-opus-5-5", "tiers": ["claude-haiku-5-5", "mercury-3", "memo"], "class": "high", "delta": 0.02 },
+  { "site": "records/source-rules", "reference": "claude-haiku-5-5 (escalating to sonnet/opus)", "tiers": ["claude-haiku-5-5", "mercury-3", "memo"], "class": "mid", "delta": 0.05 },
+  { "site": "kinetics/well-events", "reference": "claude-opus-5-5", "tiers": ["claude-haiku-5-5", "mercury-3", "memo"], "class": "high", "delta": 0.02 },
+  { "site": "kinetics/prose-events-a", "reference": "claude-haiku-5-5 / claude-opus-5-5", "tiers": ["claude-haiku-5-5", "memo"], "class": "high", "delta": 0.02 },
+  { "site": "kinetics/extract:*", "reference": "claude-sonnet-5-5 / claude-haiku-5-5", "tiers": ["claude-haiku-5-5", "memo"], "class": "mid", "delta": 0.05 },
+  { "site": "records/date-order", "reference": "claude-haiku-5-5 x5 vote", "tiers": ["mercury-3", "rule", "memo"], "class": "high", "delta": 0.02 },
+  { "site": "records/void-values", "reference": "claude-haiku-5-5 x5 vote", "tiers": ["mercury-3", "memo"], "class": "high", "delta": 0.02 },
+  { "site": "records/vendex-entries", "reference": "claude-haiku-5-5", "tiers": ["mercury-3", "memo"], "class": "low", "delta": 0.10 },
+  { "site": "records/country-names", "reference": "claude-haiku-5-5", "tiers": ["mercury-3", "rule", "memo"], "class": "low", "delta": 0.10 },
+  { "site": "records/countries", "reference": "claude-haiku-5-5", "tiers": ["mercury-3", "rule", "memo"], "class": "low", "delta": 0.10 }
+ ],
+ "tiers": {
+  "claude-haiku-5-5": "policy/models.json models[] (class M), via ModelPort, decoding {reasoning: none}, one answer per decision (K = 1)",
+  "mercury-3": "policy/models.json executorModels[], ModelPort by explicit id (portModelById), strict json_schema, run token cap",
+  "rule": "experiments/tierdown/rules/index.mjs, written by the frontier author from C requests only, abstains on anything it does not recognise; frozen by sha256 in the amendment before any H call",
+  "memo": "an identical delivery request (system, prompt, schema) from another arm's run in the archive answers at $0; otherwise abstains",
+  "jev-1.13.0": "listed for enum leaves, REFUSED in this session: FOUNDRY_SYSTEMONE_API_KEY is not provisioned (recorded as a blocker, not a result)"
+ },
+ "agreement": "tolerant decision-leaf agreement with the archived reference answer (tierdown.mjs decisionAgreement, compare.mjs tolerance relTol 0.01; evidence keys stripped); exact = identical decision leaves",
+ "injection": "experiments/tierdown/inject.mjs: tier answers served end to end through the override, every other judge at its archived answer (strict memo); missing, invalid or abstained answers and answers the solver's own check rejects fall back to the reference (cascade [tier, reference]) and are charged both; deopt/crash charged the arm's mean interpreter cost; unmeasured (replay miss) excluded and reported",
+ "selection": {
+  "perSite": "on C: the cheapest tier (rule = memo = mercury-3 < claude-haiku-5-5 by listed price; ties by higher mean agreement) that passes Bound 2 on C and has zero pass->fail injected flips on C",
+  "order": "sites with a selected tier, in descending C-slice judge saving per unit (reference USD - tier USD incl. fallbacks); computed mechanically from C results and frozen (with the rules sha256) in AMENDMENT-1 before any H call"
+ },
+ "promotion": {
+  "bound1": "one-sided 95% Clopper-Pearson upper bound on the H pass->fail flip rate over the site's H units <= delta(class) (0 flips need 29 / 59 / 149 units)",
+  "bound2": "mean decision-leaf disagreement on H <= 0.05, and usable-answer rate >= 0.95 (a rule tier: >= 1 usable answer, abstentions fall back)",
+  "testing": "fixed sequence in the frozen order at alpha 0.05 each; stop at the first site that fails",
+  "prediction": "Bound 1 cannot hold for any site here: the largest per-site H unit count in the archive is 16 (records/country-names) < 29. The primary policy is therefore expected to equal the reference everywhere (cost saved 0); the item reports how many units each site would need."
+ },
+ "secondary": {
+  "label": "exploratory, NOT a promotion: provisional tier-down",
+  "rule": "a selected (site, tier) is kept provisionally on H when it has zero pass->fail flips on its H units and passes Bound 2 on H; the combined provisional policy is injected on all H units at once"
+ },
+ "equalAccuracy": "paired H units, policy vs all-reference: exact McNemar (two-sided p) and non-inferiority at a 3-point margin (one-sided 95% CP upper bound on the loss rate minus the observed gain rate < 0.03); flips in both directions reported",
+ "capability": "cost saved at equal accuracy = 1 - C_policy / C_ref, judge USD per unit at delivery time on H (archived list-price costs for reference answers, measured costs for tier answers, k-sample votes charged k times for a model tier), plus p50/p95 judge latency; build-time (compile + check) spend reported separately",
+ "baselines": {
+  "B-ref": "every site at its reference answer (the solvers as compiled)",
+  "B-screen": "the existing tierdown.mjs rule without leverage: per site the cheapest tier whose C mean leaf agreement >= 0.98",
+  "B-all-haiku": "every site that has Haiku answers at Haiku",
+  "B-all-mercury": "every site that has Mercury answers at Mercury",
+  "B-sink": "frontier/reference kept on the global readers (records/rules, records/source-rules, kinetics/well-events, kinetics/prose-events-a), cheapest measured tier everywhere else",
+  "B-memo": "memo only"
+ },
+ "budget": { "haikuUsdCap": 3, "mercuryRunTokenCap": 450000, "totalUsdCap": 5, "jev": "none (refused)" },
+ "faults": "environment faults (rate or session limit, timeout, unavailable, token cap) are never answers and never scored; 5 consecutive faults stop the run (exit 75), the driver waits 30 minutes and resumes from the answers file"
+}

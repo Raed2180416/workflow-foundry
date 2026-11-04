@@ -83,7 +83,7 @@ export async function replayRow({ arm, row, flowPath, overrideData = {}, work, k
     // through the port record with the same prompt hash.
     const judges = (run.trace ?? []).filter(e => e.kind === 'judge').map(e => {
       const key = e.truncated ? (port.calls.find(c => c.promptSha === e.promptSha256)?.key ?? null) : requestKeyOf({ system: e.system, prompt: e.prompt, schema: e.schema });
-      return { name: e.name, key, value: e.value, tier: e.tier ?? null, tiersTried: e.tiersTried ?? [], samples: e.samples ?? null,
+      return { name: e.name, key, ok: e.ok !== false, value: e.value, tier: e.tier ?? null, tiersTried: e.tiersTried ?? [], samples: e.samples ?? null,
         overridden: e.overridden ?? 0, error: e.error ?? null, schema: e.schema ?? null };
     });
     return { status: run.status, output: run.output, pass: sc ? !!sc.pass : false, score: sc ? sc.score : null, deopt: run.deopt ?? null, error: run.error ?? null,

@@ -36,6 +36,9 @@ import { siteIdOf, pool } from './leverage.mjs';
 import { decisionAgreement, stripEvidence } from '../jit/tierdown.mjs';
 import { tolerance } from '../jit/compare.mjs';
 import { phaseOf } from './archive.mjs';
+import { REPLAYABLE_ERRORS } from '../../src/journal.mjs';
+
+export const MAX_CONSECUTIVE_FAULTS = 5;
 
 export const MODEL_TIERS = Object.freeze(['claude-haiku-5-5', 'mercury-3']);
 export const ALL_TIERS = Object.freeze([...MODEL_TIERS, 'rule', 'memo', 'jev-1.13.0']);
@@ -73,6 +76,17 @@ export function memoAnswer(index, key, { exclude }) {
   return hit ? { ok: true, value: hit.value } : { abstain: 'no identical earlier request' };
 }
 
+// What the answers files already spent: Haiku USD and Mercury tokens (input + output + cache reads).
+export function ledgerUse(files) {
+  let haikuUsd = 0, mercuryTokens = 0;
+  for (const f of files) for (const l of (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean) : [])) {
+    const a = JSON.parse(l);
+    if (a.tier === 'claude-haiku-5-5') haikuUsd += a.costUsd ?? 0;
+    if (a.tier === 'mercury-3') mercuryTokens += (a.inputTokens ?? 0) + (a.outputTokens ?? 0) + (a.cacheReadTokens ?? 0);
+  }
+  return { haikuUsd, mercuryTokens };
+}
+
 const done = file => new Set((existsSync(file) ? readFileSync(file, 'utf8').split('\n').filter(Boolean) : []).map(l => { const r = JSON.parse(l); return `${r.row}\0${r.key}\0${r.tier}`; }));
 
 async function main() {
@@ -83,7 +97,13 @@ async function main() {
   for (const t of tiers) if (!ALL_TIERS.includes(t)) throw new Error(`unknown tier ${t}`);
   if (tiers.includes('jev-1.13.0') && !process.env.FOUNDRY_SYSTEMONE_API_KEY) throw new Error('tier jev-1.13.0 refused: FOUNDRY_SYSTEMONE_API_KEY is not provisioned in this session');
   const sites = (opt('--sites') ?? prereg.sites.map(s => s.site).join(',')).split(',');
-  const out = opt('--out'), capUsd = Number(opt('--cap-usd', 2)), mercuryTokens = Number(opt('--mercury-tokens', 400000)), concurrency = Number(opt('--concurrency', 2));
+  const out = opt('--out'), concurrency = Number(opt('--concurrency', 2));
+  // The caps are for the whole item, not one process: what earlier runs spent (every answers file in --ledger, this
+  // run's --out included) is taken off before anything is asked.
+  const used = ledgerUse([...new Set([out, ...(opt('--ledger') ?? '').split(',').filter(Boolean)])]);
+  const capUsd = Math.max(0, Number(opt('--cap-usd', 2)) - used.haikuUsd), mercuryTokens = Math.max(0, Number(opt('--mercury-tokens', 400000)) - used.mercuryTokens);
+  console.error(`ledger: Haiku $${used.haikuUsd.toFixed(4)} and Mercury ${used.mercuryTokens} tokens already used; left $${capUsd.toFixed(4)} and ${mercuryTokens} tokens`);
+  if (tiers.includes('mercury-3') && mercuryTokens < 20000) throw new Error('mercury-3: the item token cap is spent');
   const lev = JSON.parse(readFileSync(opt('--leverage'), 'utf8'));
   const faithful = new Set(lev.rows.filter(r => r.status === 'screened').map(r => r.id));
   const arms = listArms({ runs: opt('--runs', DEFAULT_RUNS), experiments: prereg.experiments });
@@ -97,10 +117,11 @@ async function main() {
   if (modelTiers.length && !flag('--dry')) {
     const { createModelPort } = await import('../lib/models.mjs');
     mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
-    ({ port, db, tokens } = createModelPort({ journalFile: path.resolve(out).replace(/\.jsonl$/, '') + '.journal.sqlite', allowedModels: modelTiers,
+    ({ port, db, tokens } = createModelPort({ journalFile: opt('--journal') ?? path.resolve(out).replace(/\.jsonl$/, '') + '.journal.sqlite', allowedModels: modelTiers,
       ...(modelTiers.includes('mercury-3') ? { tokenCap: mercuryTokens } : {}), timeoutMs: 300000 }));
   }
-  let spent = 0, calls = 0, refusedByCap = 0;
+  let spent = 0, calls = 0, refusedByCap = 0, consecutiveFaults = 0;
+  const faults = [];
   const work = mkdtempSync(path.join(os.tmpdir(), 'tierdown-tr-')), indexes = new Map();
   const indexOf = arm => { if (!indexes.has(arm.dir)) indexes.set(arm.dir, requestIndex(arm)); return indexes.get(arm.dir); };
   // memo: the family's delivery requests of OTHER tasks (any arm), earlier by seed.
@@ -120,9 +141,13 @@ async function main() {
         seen.add(j.key);
         const req = indexOf(arm).get(j.key);
         const refCalls = base.calls.filter(c => c.key === j.key);
-        const common = { row: id, taskKey: row.taskKey, slice, site, name: j.name, key: j.key, refModels: [...new Set(refCalls.map(c => c.modelId))], refCostUsd: refCalls.reduce((s, c) => s + (c.origCostUsd ?? 0), 0),
+        // samples: the judge's k-sample vote. One answer per tier is asked here (K = 1); inject.mjs charges a model tier k
+        // times (a deployed k-sample vote), a rule or memo tier once.
+        const common = { row: id, taskKey: row.taskKey, slice, site, name: j.name, key: j.key, samples: j.samples ?? 1, refModels: [...new Set(refCalls.map(c => c.modelId))], refCostUsd: refCalls.reduce((s, c) => s + (c.origCostUsd ?? 0), 0),
           refLatencyMs: refCalls.reduce((s, c) => s + (c.origLatencyMs ?? 0), 0) };
-        for (const tier of tiers) {
+        // Only the tiers the preregistration lists for this site (and this run's --tiers).
+        const siteTiers = prereg.sites.find(s => s.site === site)?.tiers ?? [];
+        for (const tier of tiers.filter(t => siteTiers.includes(t))) {
           if (already.has(`${id}\0${j.key}\0${tier}`)) continue;
           let rec;
           if (!req) rec = { ok: false, error: 'request not in the arm journal' };
@@ -142,6 +167,14 @@ async function main() {
             const r = await port.call({ runId: `tierdown:${prereg.id}:${slice}`, nodeKey: `tier-replay/${site}/${tier}/${id}/${j.key.slice(0, 16)}`, attempt: 0, modelId: tier,
               system: req.system, prompt: req.prompt, schema: req.schema, decoding: { reasoning: 'none' } }).catch(e => ({ ok: false, error: { code: e.code ?? 'ERROR', message: String(e.message ?? e).slice(0, 300) } }));
             spent += r.costUsd ?? 0;
+            // An environment fault (rate or session limit, timeout, unavailable, a token cap) is never an answer: it is not
+            // written, so a resumed run asks again, and it is never scored. Model outcomes (schema, truncation, refusal) are.
+            if (!r.ok && !REPLAYABLE_ERRORS.includes(r.error?.code)) {
+              faults.push({ row: id, site, tier, code: r.error?.code ?? 'ERROR', message: String(r.error?.message ?? '').slice(0, 200) });
+              if (++consecutiveFaults >= MAX_CONSECUTIVE_FAULTS) throw Object.assign(new Error(`${consecutiveFaults} consecutive environment faults (last ${r.error?.code}): stopping for a resume`), { code: 'ENV_FAULT' });
+              continue;
+            }
+            consecutiveFaults = 0;
             rec = { ok: !!r.ok, value: r.ok ? r.value : undefined, error: r.ok ? null : r.error, costUsd: r.costUsd ?? 0, latencyMs: r.latencyMs ?? null,
               inputTokens: r.usage?.inputTokens ?? null, outputTokens: r.usage?.outputTokens ?? null, cacheReadTokens: r.usage?.cacheReadTokens ?? null };
           }
@@ -152,8 +185,10 @@ async function main() {
     });
   } finally {
     db?.close(); rmSync(work, { recursive: true, force: true });
+    const summary = { prereg: sha, slice, tiers, rows: jobs.length, calls, spentUsd: Math.round(spent * 1e6) / 1e6, capUsd, refusedByCap, faults: faults.length, faultCodes: [...new Set(faults.map(f => f.code))], tokens: tokens(), at: new Date().toISOString() };
+    appendFileSync(path.resolve(out).replace(/\.jsonl$/, '') + '.runs.jsonl', JSON.stringify(summary) + '\n');
+    console.log(JSON.stringify(summary));
   }
-  console.log(JSON.stringify({ prereg: sha, slice, rows: jobs.length, calls, spentUsd: Math.round(spent * 1e6) / 1e6, capUsd, refusedByCap, tokens: tokens() }));
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main().catch(e => { console.error(e.stack ?? e); process.exit(1); });
+if (import.meta.url === `file://${process.argv[1]}`) main().catch(e => { console.error(e.stack ?? e); process.exit(e.code === 'ENV_FAULT' ? 75 : 1); });
