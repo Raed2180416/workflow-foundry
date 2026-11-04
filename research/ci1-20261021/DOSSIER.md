@@ -90,7 +90,8 @@ slice); power (35-40 test items detect >= 25-point gaps only); memorisation (pre
 template coverage; over-specified descriptions (translation, not construction); retrieval can hurt (extra effects fail); untrusted
 corpus text (describer sees it as data, sticky notes stripped, exemplars rendered from structure only); running corpus Code-node
 JavaScript in the sandbox (owner's call; alternative is transliteration); the account e-mail leak on the `claude -p` route (keep the
-grounding guard, scrub records); licensing (raw items, worlds and transliterations stay local; git gets digests); Mercury <= 0.5M
+grounding guard, scrub records; *2026-11-04 review: neither was built for the first runs, RESULT-CI1.md D20; the review runner
+isolates the CLI and scrubs, §11.1*); licensing (raw items, worlds and transliterations stay local; git gets digests); Mercury <= 0.5M
 tokens.
 
 ## 6. Plan

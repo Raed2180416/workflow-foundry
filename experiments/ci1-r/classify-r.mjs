@@ -8,6 +8,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { scrubAddresses } from '../ci1/run-arm.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SUM = path.join(here, '../../research/ci1-20261021/runs');
@@ -20,7 +21,7 @@ export const RULES = Object.freeze([
   ['builder: no valid workflow (build_failed / refused / questions)', (t, r) => ['build_failed', 'unsupported', 'too_many_questions', 'error'].includes(r.outcome)],
   ['builder: 18281 phone with < 7 digits not listed as missing', (t, r) => r.item === '18281' && /missing/.test(t)],
   ['builder: 17878 skips an unpaid invoice (unstated filter)', (t, r) => r.item === '17878' && /talia|0 sent, expected 1/i.test(t)],
-  ['builder: 19014 placeholders written into Start Date / Notes', (t, r) => r.item === '19014' && /Start Date|Notes/.test(t)],
+  ['builder: 19014 placeholders written into Start Date / Notes', (t, r) => r.item === '19014' && /Start Date|Notes|sheet projects: no row matches/.test(t)],
   ['builder: 18797 writes reminder columns not asked for', (t, r) => r.item === '18797' && /Reminder Count|Last Reminder Date|writes columns/.test(t)],
   ['read: count of messages or rows differs', (t) => /sent, expected|rows, expected|responses: \d+, expected/.test(t)],
   ['read: a message lacks facts', (t) => /carries the facts|missing facts|misses \[/.test(t)],
@@ -60,5 +61,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   for (const c of classes) console.log(`| ${c} | ${arms.map(a => byArm[a][c] ?? 0).join(' | ')} |`);
   console.log(`| failing builds (corrected oracle) | ${arms.map(a => Object.values(byArm[a]).reduce((s, n) => s + n, 0)).join(' | ')} |`);
   for (const f of all.filter(x => x.cls.startsWith('read'))) console.log(`  read: ${f.label} ${f.item} k${f.k}: ${f.text.slice(0, 220)}`);
-  if (json) writeFileSync(json, `${JSON.stringify({ failures: all }, null, 1)}\n`);
+  if (json) writeFileSync(json, `${scrubAddresses(JSON.stringify({ failures: all }, null, 1))}\n`);
 }

@@ -1,0 +1,76 @@
+{
+ "oracle": "v2",
+ "exclude": [],
+ "arms": {
+  "A0": {
+   "builds": 84,
+   "verified": 57,
+   "pass1": 0.6785714285714286,
+   "medianWallS": 40.1785,
+   "meanWallS": 47.09186904761905,
+   "wallPerVerifiedS": 69.39854385964912,
+   "usdPerBuild": 0.006502285714285713,
+   "usdPerVerified": 0.009582315789473682
+  },
+  "A1c": {
+   "builds": 84,
+   "verified": 58,
+   "pass1": 0.6904761904761905,
+   "medianWallS": 40.7755,
+   "meanWallS": 51.475964285714284,
+   "wallPerVerifiedS": 74.55139655172414,
+   "usdPerBuild": 0.009955142857142855,
+   "usdPerVerified": 0.014417793103448274
+  },
+  "A2": {
+   "builds": 84,
+   "verified": 64,
+   "pass1": 0.7619047619047619,
+   "medianWallS": 42.0095,
+   "meanWallS": 52.68167857142857,
+   "wallPerVerifiedS": 69.144703125,
+   "usdPerBuild": 0.010082869047619045,
+   "usdPerVerified": 0.013233765624999998
+  },
+  "A2i": {
+   "builds": 84,
+   "verified": 59,
+   "pass1": 0.7023809523809523,
+   "medianWallS": 35.6775,
+   "meanWallS": 42.45609523809524,
+   "wallPerVerifiedS": 60.445966101694914,
+   "usdPerBuild": 0.009254583333333333,
+   "usdPerVerified": 0.013176016949152542
+  },
+  "A2b": {
+   "builds": 84,
+   "verified": 61,
+   "pass1": 0.7261904761904762,
+   "medianWallS": 37.1295,
+   "meanWallS": 44.891059523809524,
+   "wallPerVerifiedS": 61.817196721311475,
+   "usdPerBuild": 0.009463630952380954,
+   "usdPerVerified": 0.013031885245901641
+  },
+  "A1cH": {
+   "builds": 84,
+   "verified": 62,
+   "pass1": 0.7380952380952381,
+   "medianWallS": 38.352000000000004,
+   "meanWallS": 46.35267857142857,
+   "wallPerVerifiedS": 62.800403225806456,
+   "usdPerBuild": 0.010297702380952376,
+   "usdPerVerified": 0.013951725806451605
+  },
+  "A0p": {
+   "builds": 84,
+   "verified": 64,
+   "pass1": 0.7619047619047619,
+   "medianWallS": 35.7235,
+   "meanWallS": 39.72263095238095,
+   "wallPerVerifiedS": 52.135953125,
+   "usdPerBuild": 0.006052023809523809,
+   "usdPerVerified": 0.00794328125
+  }
+ }
+}

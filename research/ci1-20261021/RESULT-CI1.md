@@ -1,6 +1,7 @@
 # CI-1 result: building real corpus workflows from a description, checked by running them
 
-*2026-10-22 (bed, freeze, test runs) and 2026-11-04 (every failure root-caused, post hoc oracle v2, attribution, wave 2). Owner asks
+*2026-10-22 (bed, freeze, test runs) and 2026-11-04 (every failure root-caused, post hoc oracle v2, attribution, wave 2; then the
+review response, §11: validity framing, freeze gates, account isolation, preregistered review arms). Owner asks
 E6 ("corpus-based construction tests: build X from a description, check by execution") and A8 ("give the builder templates and the
 hardest enterprise patterns from the corpus"). Plan: [DOSSIER.md](DOSSIER.md). Preregistration: [PREREG-CI1.md](PREREG-CI1.md), frozen
 by [MANIFEST.json](MANIFEST.json) (sha256 `39bf40bd…`, commit `b41910d7`) before the first test-split builder call; attribution addendum
@@ -10,45 +11,131 @@ summaries: `runs/<label>/summary.json` and `rescore-v2.json` (records with built
 
 ## 0. Result
 
-**Capability table** (wave 1 test split: 19 held-out n8n.io items × K = 3 builds per arm, Haiku 5.5 unless stated; pass = the built
-workflow's effects equal the reference's in every hidden world; 95% item-bootstrap intervals):
+**Read this first.** These are the review's corrections of 2026-11-04 (§11).
 
-| Arm | What | pass@1, oracle v1 (preregistered) | pass@1, oracle v2 (post hoc, §4) | pass^3 (v2) | $ / build | $ / verified build (v2) |
+- **The evaluator failed its own validity check on both waves.** Root-causing every failure showed how many were false:
+
+  | Wave | Oracle | False failures |
+  |---|---|---|
+  | 1 | v1 (preregistered) | 25 of 64 (39%) |
+  | 2 | v2 (frozen) | 40 of 62 (65%), counting oracle and description artefacts |
+
+  The project rule is "An invalid evaluator blocks claims" (AGENTS.md).
+- **The frozen numbers are reported for the record only, as invalid-evaluator results.** This covers wave 1 under v1 and wave 2 under
+  v2. They are not capability claims.
+- **Every number under a corrected oracle is development evidence.** This covers:
+  - wave 1 under v2;
+  - wave 2 under w2x;
+  - the pooled figures.
+
+  All of these corrections were written after the failures were seen. The items are held out from builder development but are **not
+  sealed**: one author wrote the bed and the descriptions.
+- **E6 stands at D (development evidence), not P.**
+- **A8 is not answered.** No "hardest enterprise pattern" (payments, Jira, approvals, compensation) is in the bed. The patterns were
+  never used as a robustness critic inside the repair loop. See §11.6.
+
+**Capability table, wave 1** (19 held-out n8n.io items, K = 3 builds per arm, Haiku 5.5 unless stated):
+
+- A build passes when its effects equal the reference's in every hidden world.
+- Intervals are 95% item-bootstrap intervals.
+- Wall time is the builder's time per build on a shared, loaded host, so it is an upper bound.
+
+| Arm | What | pass@1, oracle v1 (preregistered; **invalid evaluator**) | pass@1, oracle v2 (post hoc; dev evidence) | pass^3 (v2) | $ / build | $ / verified build (v2) |
 |---|---|---|---|---|---|---|
 | **A0** | one-shot (the simple baseline) | 64.9% (45.6–82.5) | 80.7% (63.2–94.7) | 73.7% | $0.0052 | $0.0064 |
 | A0t | one-shot, thinking on | 73.7% (57.9–87.7) | 80.7% (68.4–91.2) | 57.9% | $0.0061 | $0.0075 |
 | A1 | BUILDER-1 templates, frozen | 0.0% | 0.0% | 0.0% | $0.0004 | – |
 | A1c | compose path: worked examples, practice run, self-review, ≤ 3 repairs | 73.7% (57.9–87.7) | 82.5% (66.7–96.5) | 73.7% | $0.0091 | $0.0111 |
-| **A2** | A1c + leave-one-out corpus pattern retrieval | **80.7% (63.2–94.7)** | **93.0% (80.7–100)** | 89.5% | $0.0089 | $0.0095 |
-| A2-M | A2 on Mercury 3 (5 items × 1, exploratory) | 2/5 | 3/5 | – | $0 (listed free) | – |
+| **A2** | A1c + leave-one-out corpus pattern retrieval | 80.7% (63.2–94.7) | 93.0% (80.7–100) | 89.5% | $0.0089 | $0.0095 |
+| A2-M | A2 on Mercury 3 (exploratory, K = 1, 5 items: **not a comparison**) | 2/5 | 3/5 | – | $0 (listed free) | – |
 
-- **Primary test (preregistered, v1): A2 − A0 = +15.8 points (95% CI 0.0 to 31.6), A2 better on 7 items, A0 on 1, sign test p = 0.07.**
-  Retrieval, A2 − A1c: +7.0 (0.0 to 14.0); the park rule (≤ 3 points and upper bound < 10) does not trigger. All five preregistered
-  predictions held (A1 ≤ 5%: 0%; A0 45–70%: 64.9%; A1c 60–85%: 73.7%; A2 − A1c in −5..+10: +7.0; A2 − A0 in +5..+25: +15.8).
-- **The preregistered oracle was wrong on 25 of the 64 failing builds (39%)**, all false failures, in five defect classes found by
-  root-causing every failure (§4, §5). Post hoc oracle v2 corrects exactly those five; every one of the 25 flips is explained by one of
-  them; a label audit of the oracle's known blind spot found 0 false passes in 21 builds. Under v2: A2 − A0 = +12.3 (1.8 to 26.3,
-  +4/−0 items, p = 0.125); A2 − A1c = +10.5 (1.8 to 22.8).
-- **Wave 1's items are near ceiling.** Two descriptions turned out ambiguous (§5); without them (17 items, v2) one-shot Haiku passes 90.2% and
-  A2 passes **51 of 51 builds**. Under v2, A2 had **no** builder failure in 57 builds; A0 had 5, all one class (a reference to the output
-  of a branch that was skipped), which a practice run catches. The descriptions are complete specifications, so these items test
-  translation of a stated procedure, not intent recovery: the gain left to measure here is a few items wide.
-- **Templates do not transfer:** no BUILDER-1 template's data contract can bind any of the 33 admitted items (0/24 and 0/9, measured
-  at $0 before any call), so A1 refuses 54 of 57 builds and its 3 others send nothing. BUILDER-1's 18/21 was on items made for its
-  templates.
-- **Which retrieved patterns helped** (§6): on one item (17878), the cards carried the effect (A2 3/3; exemplars without cards 1/3;
-  A1c 0/3), P42 "cross-run state" most (1/3 without it); every other gain is within one build in three. 18 attribution builds, $0.32.
-- **Thinking buys nothing** (A0t − A0 = 0.0 under v2) and brings new failures (double-escaped code, invalid workflows after repair).
-- **Mercury 3** in the A2 harness: 3/5 against Haiku A2's 14/15 on the same 5 items (v2): not competitive in this harness.
-- **Wave 2** (§9; 9 larger, newer items, preregistered with oracle v2 frozen as primary): A0, A1c and A2 all **40.7%**, A0t 48.1%;
-  **A2 − A0 = 0.0 (−22.2 to 22.2)**. Two predictions missed (A0 and A2 lower than predicted). Root-causing all 62 failing builds found
-  40 that fail only on new oracle defects or ambiguous descriptions; with those neutralised post hoc (w2x): A0 70.4%, A1c 81.5%, A2
-  85.2%, A2 − A0 = +14.8 (0.0 to 29.6).
-- **Pooled, 28 items, oracle v2 (the number to quote): A2 76.2% vs A0 67.9%, A2 − A0 = +8.3 points (−2.4 to 19.0), 5 items vs 1,
-  p = 0.22; retrieval A2 − A1c = +7.1 (0.0 to 16.7).** With every root-caused oracle and description artefact removed (post hoc, 26
-  items): A2 94.9% vs A0 83.3%, +11.5 (3.8 to 21.8), 6 items vs 0, p = 0.031.
-- **Cost:** the whole item spent **$3.43** of Haiku (cap $10: dev $0.18, wave-1 test $1.69, attribution $0.32, wave 2 $1.24) and about
-  0.34M Mercury tokens (cap 0.5M). A2 costs about 1.4–1.7× A0 per build.
+**Pooled, both waves, 28 items** (development evidence, §9.3; `experiments/ci1-r/walltime.mjs`). The oracle is v2: post hoc on wave 1,
+frozen on wave 2. The corrected column is v2 on wave 1 without its two ambiguous items, plus w2x on wave 2 (26 items), and it is post
+hoc twice over.
+
+| | A0 one-shot | A0t | A1c compose | A2 compose + retrieval |
+|---|---|---|---|---|
+| pass@1, v2 (28 items) | 67.9% | 70.2% | 69.0% | 76.2% |
+| pass@1, corrected (26 items) | 83.3% | 83.3% | 87.2% | 94.9% |
+| $ / verified build, v2 (corrected) | $0.0096 ($0.0079) | $0.0114 ($0.0098) | $0.0144 ($0.0115) | $0.0132 ($0.0108) |
+| builder seconds per build, median (mean) | 40 (47) | 53 (62) | 41 (51) | 42 (53) |
+| builder seconds per verified build, v2 (corrected) | 69 (57) | 88 (75) | 75 (57) | 69 (55) |
+
+**What the development evidence says:**
+
+- **Retrieval on its own (A2 − A1c, the contrast that isolates retrieval)** under v2 (post hoc on wave 1, frozen on wave 2):
+
+  | Items | Points (95% CI) |
+  |---|---|
+  | 28 | **+7.1 (0.0 to 16.7)** |
+  | 26, corrected | +7.7 (1.3 to 16.7) |
+  | preregistered wave 2 | **0.0** |
+
+  The gain sits on a handful of items.
+- **Compose loop plus retrieval against one-shot (A2 − A0):**
+
+  | Items | Points (95% CI) | Items better / worse | Sign test p |
+  |---|---|---|---|
+  | 28, v2 | +8.3 (−2.4 to 19.0) | 5 / 1 | p = 0.22 |
+  | 26, corrected | +11.5 (3.8 to 21.8) | 6 / 0 | p = 0.031 |
+
+  The corrected reading is the most favourable one, and **the earlier A2 run was a high draw.** The same A2 code rerun in the
+  review (A2i, §11.4) scores 89.7% corrected against the earlier 94.9%:
+
+  | Contrast | Points (95% CI) |
+  |---|---|
+  | A2i − A0 | +6.4 (−3.8 to 17.9) |
+  | A2i − A1c (retrieval alone) | +2.6 |
+
+  So retrieval's gain over the compose loop is a few points at most.
+- **The earlier gain costs about 37% more per verified build:** $0.0132 against $0.0096 under v2, and $0.0108 against $0.0079 corrected.
+  Builder time per verified build is about the same (55 to 69 s).
+- **The pattern cards were not shown to carry test knowledge, and the card attribution did not replicate** (§11.3, §11.4;
+  preregistered review arms; every prediction held).
+  - Cards from one fresh Opus call that never saw the bed do as well as the original cards: A2b − A2i = +1.3 (−2.6 to 5.1).
+  - The P42 effect on 17878 does not replicate: the rerun of A2 passes it 1 time in 3.
+  - 17878's failure (inventing a validity filter) is induced by the compose path's worked examples. Both one-shot arms pass it 6 of 6.
+- **Retrieving cards is no better than putting all 16 in every prompt:** A1cH − A2b = −1.3 (−6.4 to 2.6). The preregistered rule
+  triggers: a static card block (no index, no BM25) is the recommendation for this slice.
+- **The cheapest good builder is one-shot plus a practice run (A0p).**
+
+  | Measure | A0p | A1c |
+  |---|---|---|
+  | pass@1, corrected | 87.2% | 87.2% |
+  | $ per verified build | **$0.0070** | $0.0115 |
+  | builder seconds per verified build | **46** | 57 |
+  | pass@1, v2, 28 items | 76.2% | 69.0% |
+  | pass@1, frozen wave-2 oracle | 48.1% | 40.7% |
+
+  - A0p is level with A2 on v2 (76.2%) and highest of all seven arms on the frozen wave-2 oracle.
+  - The worked examples and the self-review add cost, not capability.
+  - The practice run gives most of the compose path's gain: A0p − A0 is +3.8 corrected and +8.3 on v2.
+  - These are cross-session contrasts.
+- **Most genuine builder errors are a $0 validator rule:** reading the output of a skipped branch. This was 10 of 19 genuine wave-1
+  failures. Replayed over all 339 recorded ready builds, the rule catches 12 of 12 such failures (§11.5).
+- **Templates do not transfer:** they bind 0 of 33 items, so BUILDER-1's 18/21 does not carry over to real corpus workflows.
+- **Thinking adds nothing** (A0t − A0 = 0.0 under v2 on wave 1).
+- **Mercury 3:** an exploratory look at K = 1 on 5 items, 3/5 against Haiku A2's 14/15 on the same items. It is **not a
+  comparison**.
+- **Freeze gates that would have caught the evaluator defects now exist, at $0** (§11.2):
+  - a false-negative probe, which flags 4 of 5 wave-1 oracle defect classes against v1 and 3 of 4 wave-2 classes against v2, before any
+    build;
+  - a two-build ambiguity probe.
+- **Cost:**
+
+  | Item | Spend |
+  |---|---|
+  | Haiku: dev, wave-1 test, attribution, wave 2 | $3.43 (cap $10) |
+  | Review: account probe, blind cards, dev smoke, 4 review arms (§11.7) | about $3.12 (arms' cap $4.5) |
+  | CI-1 item total | about $6.55 of $10 |
+  | Mercury | about 0.34M tokens (cap 0.5M) |
+
+**The preregistered results (invalid evaluator; record only):**
+
+| Wave | Contrast | Points (95% CI) | Items better / worse | Sign test p | Predictions |
+|---|---|---|---|---|---|
+| 1 (v1) | A2 − A0 | +15.8 (0.0 to 31.6) | 7 / 1 | p = 0.07 | all five held |
+| 2 (v2 frozen) | A2 − A0 | 0.0 (−22.2 to 22.2) | – | – | two missed |
 
 ## 1. What was built
 
@@ -153,6 +240,9 @@ exemplar slots are other bed items (the bed is a dense slice of the same corpus)
 
 ## 3. Preregistered results (oracle v1, test split)
 
+*These are invalid-evaluator results (§0, §4): oracle v1 was wrong on 25 of the 64 builds it failed. They are kept for the
+record and for the audit trail of the freeze. They are not capability claims.*
+
 ### 3.1 Capability
 
 `node experiments/ci1/report.mjs test-A0 test-A0t test-A1 test-A1c test-A2 test-A2M --pairs ...` (10,000 item resamples, seed 20261022):
@@ -244,7 +334,8 @@ above). A rerun that times out is retried twice.
 | A1c − A0 | +1.8 (−14.0 to 14.0), +4/−2 | 0.0 (−15.7 to 13.7), +3/−2 |
 | A0t − A0 | 0.0 (−12.3 to 15.8), +2/−5 | – |
 
-v2 was written after seeing the test failures, so these numbers are post hoc; the preregistered ones (§3) stand as the primary result.
+v2 was written after seeing the test failures, so these numbers are post hoc (development evidence). The preregistered ones (§3) are
+the frozen record, but their evaluator failed (§0), so neither column is a held-out capability claim.
 v2's direction is fixed (it only removes false failures), so it raises every arm; it raises A0 most (+15.8 points) because A0's
 messages more often greeted by name and paraphrased "already paid".
 
@@ -354,17 +445,29 @@ self-review for more fix rounds and used 2–3× the tokens of the original A2 b
   strongest single-item signal in the experiment, and it is still one item.
 - **11679, 16904:** with all cards removed A2 still passes 3/3, as predicted: the cards are not what these items' gains came from (A1c's
   failures there were one dropped e-mail and one skipped-branch reference, each 1 in 3, within noise).
-- **Answer to "which retrieved patterns helped":** on this bed, one card (P42, with P36 and P08 contributing) on one item (17878), by
-  steering the model away from inventing a validity filter; nothing else is distinguishable from noise. Retrieval's measured gain is
-  small, real in sign under every oracle, and concentrated.
+- **Answer to "which retrieved patterns helped":**
+  - On this bed, one card (P42, with P36 and P08 contributing) helped on one item (17878), by steering the model away from inventing a
+    validity filter. Nothing else is distinguishable from noise.
+  - Retrieval's measured gain is small, positive under every oracle, and concentrated on a few items.
+- **Qualification (review finding 4, §11.3).** The cards' file says they were written "not from any bed item". But the same session had
+  already written every item description: `bed/items/17878/description.md` is dated 2026-10-21 22:53Z, and the cards were committed
+  2026-10-22 02:50Z.
+  - The hint that carried 17878 ("skip rows whose marker column (status, last-sent date …) says it was already done") fits that item's
+    LastReminderDate column closely.
+  - The wave-2 descriptions were written by an author who knew the retrieval cue words.
+  - So this attribution may measure card text written with knowledge of the bed, not corpus patterns.
+  - **Review result (§11.4):** blind cards do as well as the original cards. The 17878 effect does not replicate: the A2 rerun
+    passes it 1 time in 3. The filter it "undid" is induced by the compose path's worked examples. Treat this section as superseded
+    by §11.4.
 
 ## 7. Mercury 3 (A2-M, exploratory)
 
 A2 on `mercury-3`, K = 1, on the first 5 test items in SPLIT order (PREREG §3): 2/5 under v1, 3/5 under v2 (16364, 17878, 14177 pass;
 17342 fails on a skipped-branch reference, 17545 on the ambiguous count). On the same 5 items Haiku A2 passes 14/15 (v2). Tokens:
 209,337 for 5 builds (41.9K per build; Haiku A2 used 85K per build on those items); dev used about 130K (PREREG);
-the item total stays under its 0.5M allowance. Mercury is listed free in `policy/models.json`, so its dollar cost reads $0. Not
-competitive in this harness on this evidence (5 builds).
+the item total stays under its 0.5M allowance. Mercury is listed free in `policy/models.json`, so its dollar cost reads $0.
+**Exploratory, K = 1, 5 items: not a comparison.** These 5 single builds cannot separate Mercury from Haiku: the operating principles
+rule out K = 1 comparative proof. A Mercury comparison needs K ≥ 3 on the same items under a preregistration.
 
 ## 8. Deviations from the dossier and the preregistration
 
@@ -388,7 +491,9 @@ competitive in this harness on this evidence (5 builds).
 | D16 | Pattern attribution, the label audit and the root-causing used the local run records; the committed summaries do not carry built workflows | records hold built workflows (corpus-derived content stays local); every number in this document is recomputable from them with the scripts named |
 | D17 | Wave-2 post hoc sensitivity (w2x, eight transforms) instead of a third oracle version; wave-1 ambiguous items were dropped in v2x, wave-2 ambiguities neutralised field by field | the wave-2 artefacts are field-specific; dropping whole items would discard their correct parts; both readings are labelled post hoc and the frozen v2 numbers stay primary |
 | D18 | During the wave-2 runs a frozen file (`manifest-w2.mjs`) was edited for about two minutes and restored byte-identical before any run started or resumed (A0/A2 had passed the check at 13:16, A1c/A0t passed it at 13:35) | an analysis helper was added to the frozen tree by mistake; it now lives in `experiments/ci1-posthoc/` |
-| D19 | Disk fell to about 0.9 GB free (shared machine) during the last wave-2 arm; no new heavy step was started after it crossed 1.2 GB (only $0 rescoring, documents and commits) | the A0t arm was already running; stopping it would have saved a few MB and lost a preregistered arm |
+| D19 | Disk fell to about 0.9 GB free (shared machine) during the last wave-2 arm; no new heavy step was started after it crossed 1.2 GB (only $0 rescoring, documents and commits) | the A0t arm was already running. **This broke the owner rule "stop and report below 1.2 GB"** (review finding 10). From the review on, the runner checks `df` before each build and exits 75 so it can resume (`experiments/ci1-r/env-guard.mjs` `diskStop`, used by `run-r.mjs`; §11.7 records it working) |
+| D20 | **Host-context exposure (review finding 6).** Every Claude CLI builder in every earlier CI-1 arm ran with the session account's e-mail address in its context: `claude -p` reads it from its configuration directory (§11.1, `r/ACCOUNT-PROBE.md`). DOSSIER.md:92 planned "keep the grounding guard, scrub records", but no grounding guard was built, and raw records and journals were written unscrubbed (`run-arm.mjs:164`, `run-w2.mjs:146`) | It surfaced once: dev build 18832-k0 named it in `envelope.risks`. **0 test or wave-2 effects used it** (checked over every record). The two local files that held it (`runs/dev1-A0/records/18832-k0.json` and `runs/dev1-A0/journal.sqlite`, outside git) were scrubbed on 2026-11-04: the address was replaced by `requester@example.test`, which has the same length, and the journal was VACUUMed. Both files' hashes therefore differ from any earlier copy; neither is in a manifest. No committed file on the branch ever held the address (checked over every commit). The review runner isolates the CLI and scrubs before it writes |
+| D21 | Review arms (§11.4, `r/PREREG-CI1-R.md`, frozen by `r/MANIFEST-R.json` before the first review-arm build) run under account isolation; the earlier arms did not | The account address in context is a possible confound. A2i (the frozen A2 rerun under isolation) measures its effect on A2 |
 
 ## 9. Wave 2: nine larger items, oracle v2 frozen as primary
 
@@ -461,8 +566,15 @@ Under w2x: A2 − A0 = +14.8 (0.0 to 29.6), +3/−0 items (17175, 18797, 20090);
 | A1c − A0 (compose loop) | +1.2 (−10.7 to 11.9) | +3.8 (−9.0 to 15.4) |
 | A0t − A0 (thinking) | +2.4 (−8.3 to 14.3) | 0.0 (−9.0 to 9.0) |
 
-Park rule on the pooled items: A2 − A1c = 7.1 > 3, so retrieval is not parked. The corrected column is post hoc twice over (both
-oracle corrections were written after seeing failures) and is the most favourable reading; the v2 column is the one to quote.
+Park rule on the pooled items: A2 − A1c = 7.1 > 3, so retrieval is not parked.
+
+The columns are post hoc to different degrees:
+
+- The corrected column is post hoc twice over (both oracle corrections were written after seeing failures), so it is the most
+  favourable reading.
+- The v2 column is post hoc on wave 1 and frozen on wave 2.
+
+Both are development evidence (§0). Quote the v2 column with that label, and lead with A2 − A1c for the retrieval claim.
 
 ### 9.4 What wave 2 adds
 
@@ -479,13 +591,21 @@ oracle corrections were written after seeing failures) and is the most favourabl
 
 ## 10. What this means
 
-**For the owner's asks.** E6 ("build X from a description, check by execution") now exists as a working, reusable measurement:
+**For the owner's asks.** E6 ("build X from a description, check by execution") now exists as a working, reusable measurement, at
+the level of development evidence (D, not P: §0):
 real n8n.io corpus workflows, run as references in a sandboxed n8n interpreter, admitted only when an independent Foundry
 transliteration agrees on 32 worlds, scored by effects on mutation-adequate hidden worlds, never by text similarity. It covers the
 deterministic, model-free slice of the corpus (54 to 86 of the 594 local n8n.io templates by the dossier's census); agent workflows
 (74%) are out of reach until model nodes can be replayed. A8 ("give the builder templates and the hardest enterprise patterns"): templates bind none of the 33 admitted
-items; corpus patterns retrieved leave-one-out help a little and on one item demonstrably; the "hardest enterprise patterns"
-(fallbacks, approvals, compensation) are rare in n8n templates and none was retrieved for these items.
+items; corpus patterns retrieved leave-one-out help a little, and the one item where they seemed to help did not replicate (§11.4).
+The "hardest enterprise patterns" (fallbacks, approvals, compensation) are rare in n8n templates, and none was retrieved for these
+items. **A8 is not answered** (§11.6).
+
+*The review of 2026-11-04 (§11) supersedes points 3 and 4 below where they differ:*
+
+- the practice run's value now has its own arm: one-shot plus a practice run (A0p) is the cheapest good builder;
+- retrieval as selection is no better than a static card block;
+- the worked examples induce an error class of their own.
 
 **What the evidence supports.**
 1. A cheap model builds most described corpus workflows correctly in one shot when the description is complete and the workflow is
@@ -515,3 +635,368 @@ items; corpus patterns retrieved leave-one-out help a little and on one item dem
 3. Harder items: descriptions with deliberate gaps and answer keys (questions become necessary), and agent-node items with recorded
    model responses, so the bed measures intent recovery and not translation.
 4. A sealed subset described by a separate session that never sees builder code or results.
+
+## 11. Review response (2026-11-04)
+
+The CI-1 review (12 findings: 6 major, 6 minor) and what was done about each. The new code is in `experiments/ci1-r/` and the new
+files are in `research/ci1-20261021/r/`. No frozen file changed. All three manifests (`MANIFEST.json`, `w2/MANIFEST-W2.json` and
+`r/MANIFEST-R.json`) still match.
+
+| # | Finding | Response | Where |
+|---|---|---|---|
+| 1 | Major: the oracle was invalid on both waves, but the doc still made claims from the frozen numbers | §0 now leads with the validity failure. Frozen numbers are labelled invalid-evaluator results and corrected numbers development evidence. E6 is set to D in `REQUIREMENTS-COVERAGE-20261021.md` | §0, §3, §4.3, §9.3 |
+| 2 | Major: wave 2 was frozen without a false-failure check | $0 freeze gates built and replayed on both waves. Oracle v3 (address case, categorical name words, declared settings sheets) is offered for future freezes only | §11.2 |
+| 3 | Major: A8 is not answered | Agreed. A8 stays ⚠. Build time per build and per verified build is now reported. An enterprise-pattern bed with pattern-as-critic arms is planned | §0, §11.6 |
+| 4 | Major: the pattern cards may carry test knowledge | Claim qualified (§6). Blind cards were written by one fresh Opus call that saw only the pre-bed catalog. A2 was rebuilt with them on all 28 items | §11.3, §11.4 |
+| 5 | Major: cheaper arms were missing | All-cards-static (A1cH) and one-shot plus practice (A0p), preregistered at K = 3. The validator rule was replayed at $0 | §11.4, §11.5 |
+| 6 | Major: the host-context exposure was not disclosed or mitigated | Root-caused: the address comes from the CLI configuration directory, not the environment variable. The two local files were scrubbed. The isolated, scrubbing runner is used for every review arm, and a deviation row was added | §11.1, D20 |
+| 7 | Minor: the headline wording | §0 labels which pooled half is post hoc and leads with A2 − A1c | §0 |
+| 8 | Minor: cost per verified build is missing from the headline | Added, with wall time per verified build | §0 |
+| 9 | Minor: Mercury from single builds | Now "exploratory, K = 1, not a comparison" wherever it is stated | §0, §7 |
+| 10 | Minor: the disk rule was broken | The runner checks before each build and exits 75 so it can resume. It fired during the review runs (§11.7) | D19, `env-guard.mjs` |
+| 11 | Minor: key tests skip silently without the local bed | A synthetic first-party fixture item (`experiments/ci1-w2/test/fixture-item.mjs`) runs the scorer-teeth test on a fresh clone. The freeze test, which needs the bed's hashes, now skips instead of failing without it | `w2.test.mjs`, `ci1-r/test/probe.test.mjs` |
+| 12 | Minor: the corpus and node_modules symlinks are not ignored | `corpus` and `node_modules` added to `.gitignore` without the trailing slash | `.gitignore` |
+
+### 11.1 Where the account address comes from (`r/ACCOUNT-PROBE.md`, $0.001)
+
+Haiku was asked through the policy's claude-cli route to copy any e-mail address it saw outside the message:
+
+| Condition | Calls listing the account address |
+|---|---|
+| Environment as inherited (every earlier arm) | 2 of 2 |
+| `CLAUDE_CODE_USER_EMAIL` and the two account UUID variables removed | 2 of 2 |
+| Those removed, plus an empty, throwaway `CLAUDE_CONFIG_DIR` | **0 of 2** |
+
+Authentication and cost were unchanged in every condition.
+
+- **The variable is not the route; the CLI's configuration directory is.** The provider does not scrub the variable either.
+- **Fix in CI-1, with no `src/` edit:**
+  - `experiments/ci1-r/env-guard.mjs` and `run-r.mjs` remove the variables and give the CLI an empty configuration directory;
+  - records are scrubbed of non-fixture addresses before they are written;
+  - the journal is checked for the account address at the end and scrubbed in place.
+- **Handed to the engine:** the same two lines in the claude-cli provider close compromise C7 for every track.
+
+### 11.2 Freeze gates at $0 (finding 2)
+
+**Oracle false-negative probe** (`experiments/ci1-r/fn-probe.mjs`, results in `r/fn-probe.json`).
+
+- **Method.** For every hidden world, the reference's own effects are rewritten the way a correct build may legitimately differ. Each
+  rewrite is judged against the unmodified reference.
+  - Rewrites:
+    - greet the addressee by name;
+    - add a legend of a category's values;
+    - write dates as d/m/y;
+    - put a comma after a number;
+    - write a list as prose;
+    - change the letter case of an address in a sheet cell;
+    - add a courtesy line.
+  - A further "settings-mention" rewrite is reported separately, because it can be legitimately strict.
+  - The probe is two-sided. Five **must-fail** mutations must still fail, so an oracle cannot pass by accepting everything:
+    - a dropped message;
+    - a wrong recipient;
+    - a changed number fact;
+    - every row dumped into each message;
+    - a changed sheet cell.
+- **Retrospective:** run before each freeze, at $0, the probe flags these defect classes (`r/freeze-gates-replay.json`):
+
+  | Wave (oracle frozen then) | Defect classes found by root-causing | Flagged by the probe before any build | Not flagged |
+  |---|---|---|---|
+  | 1 (v1) | 5 | **4**: greeting by name (on 16364), category word (on 17878 and 12 more), d/m/y dates (on 6 items, not on 17811 itself), number + comma (on 17807 and 6 more) | change 3, 14177's optional spans: description-specific, no generic rewrite |
+  | 2 (v2) | 4 | **3**: address case (on 17771 and 5 more), categorical name word (on 18797), settings value (on 19014, among 3 to read) | 20090's appointment ID: description-specific |
+
+  The address-case class was already present on 14 wave-1 items under v1 and v2. The probe would have exposed it before wave 2 was
+  frozen.
+- **Teeth.** v1, v2 and v3 catch the same must-fail mutations:
+  - every dropped message (119 of 119 worlds);
+  - every wrong recipient (93/93);
+  - every changed number fact (85/85);
+  - every changed sheet cell (150/150);
+  - 93 of 95 row dumps. The two misses are items whose reference message already names the rows.
+- **Oracle v3** (`experiments/ci1-r/oracle-v3.mjs`). Candidate for future freezes; it changes no reported number. It is v2 plus the
+  three general wave-2 corrections:
+  - whole-address cells and answer values compared case-insensitively. This is the review's normCell fix, done on both canonical
+    sides, so the frozen `canon.mjs` is untouched;
+  - words of categorical cells no longer identify other rows;
+  - settings sheets the bed author declares are not data rows. An automatic one-row rule was tried and rejected: it matches no real
+    settings sheet here, and it would exempt data sheets that happen to hold one row.
+
+  On the probe, v3 passes every must-pass rewrite except two kinds of failure that are correct to keep:
+  - a legend of supplier names on 11679, which does disclose other suppliers;
+  - the settings-mention rewrite on sheets that are data.
+
+**Ambiguity probe** (two cheap builds per item before the freeze; flag an item when both fail the same way). It was replayed with the
+A0 builds k0 and k1 as each wave's frozen oracle scored them. Before the freeze it would cost about $0.012 per item.
+
+| Wave | Artefact items flagged | Missed | Also flagged |
+|---|---|---|---|
+| 1 | 4 of 7: 16312, 16364, 17545, 17878 | 14177, 17807, 17811: only one of the two builds hit them | 16904, a genuine shared error (a skipped-branch read) |
+| 2 | 3 of 6: 17771, 19014, 19187 | – | 18281, the genuine phone-rule error, worth reading too |
+
+**Together, at the class level, the two gates would have surfaced every wave-2 artefact class before the freeze except one: 20090's
+answer message.** The review's prescription holds. Both gates now exist and are tested on a synthetic fixture item
+(`experiments/ci1-r/test/probe.test.mjs`).
+
+### 11.3 The pattern cards and test knowledge (finding 4)
+
+- **Agreed that the risk is real.** The original 16 hints were written in the same session as every test description (§6). Their cue
+  words were also known to the author of the wave-2 descriptions.
+- **Blind cards** (`experiments/ci1-r/library/pattern-hints-blind.json`, $0.14) came from ONE fresh `claude -p` call (claude-opus-5-5,
+  reasoning high, isolated configuration) that saw only:
+  - the 16 catalog entries as committed on 2026-10-14, before the bed existed;
+  - the IR rules and the capability list every arm sees.
+
+  It never saw a bed item, a description, a run or the original hints (`write-blind-cards.mjs`).
+- **They differ in substance.** The blind P42 says "keep the seen ids … in a state sheet", not "skip rows whose marker column says it
+  was already done". On 17878, the blind cues retrieve P60, P36 and P08 instead of P42, P36 and P08.
+- **A residual dependency remains:**
+  - the choice of the same 16 catalog ids was made by the bed-aware session;
+  - the IR rules, which every arm sees, were written by it too.
+
+### 11.4 Review arms (PREREG-CI1-R, frozen by MANIFEST-R before the first build)
+
+`r/PREREG-CI1-R.md` and `r/MANIFEST-R.json` (sha256 `02ac8144…`) were committed in `c49a53f1` at 19:19:36Z. The first review-arm
+build ran at 19:19:44Z. Analysis output is in `r/analysis-R.txt`, from `experiments/ci1-r/r-analysis.sh`.
+
+- **Arms:** Haiku 5.5, K = 3, all 28 items of both waves, every arm under account isolation.
+- **Evidence level:** development evidence. The oracle failed its validity check (§0). The items are not sealed.
+- **Primary oracle:** the corrected oracle on 26 items (v2 on wave 1 without 16312 and 17545, plus w2x on wave 2). It was fixed before
+  these builds.
+- **Earlier arms:** A0, A1c and A2 are repeated from §9.3 for comparison. They ran in another session, with the account address in
+  context.
+
+| Arm | What | pass@1, corrected, 26 items (95% CI) | pass^3 | pass@1, v2, 28 items | pass@1, wave 2 alone (v2 frozen) | $ / verified build (corrected) | builder s / verified build | tokens / build |
+|---|---|---|---|---|---|---|---|---|
+| A0 (earlier) | one-shot | 83.3% (70.5–93.6) | 69.2% | 67.9% | 40.7% | $0.0079 | 57 | 28,934 |
+| A1c (earlier) | compose: worked examples, practice, self-review | 87.2% (74.4–97.4) | 80.8% | 69.0% | 40.7% | $0.0115 | 57 | 75,353 |
+| A2 (earlier) | A1c + retrieval, original cards | 94.9% (85.9–100) | 92.3% | 76.2% | 40.7% | $0.0108 | 55 | 74,956 |
+| **A2i** | the same A2 code, rerun now | 89.7% (79.5–97.4) | 80.8% | 70.2% | 33.3% | $0.0104 | 48 | 68,731 |
+| **A2b** | A2 with **blind** cards | 91.0% (82.1–97.4) | 80.8% | 72.6% | 37.0% | $0.0105 | 49 | 69,314 |
+| **A1cH** | A1c + all 16 blind cards, nothing retrieved | 89.7% (79.5–97.4) | 80.8% | 73.8% | 40.7% | $0.0115 | 52 | 74,444 |
+| **A0p** | one-shot + practice run, no review, no examples | 87.2% (76.9–96.2) | 76.9% | **76.2%** | **48.1%** | **$0.0070** | **46** | 29,486 |
+
+**Preregistered contrasts** (corrected oracle, paired by item). **Every prediction held.**
+
+| # | Contrast | Points (95% CI) | Items better / worse | Prediction | Decision rule |
+|---|---|---|---|---|---|
+| C1 | A2b − A2i (blind vs original cards, same session) | **+1.3 (−2.6 to 5.1)** | +2/−1 | −8 to +3 ✓; 17878: A2b 2/3 ✓ (≤ 2/3) | Not triggered (C1 > −5 and 17878 > 1/3): the original cards are **not shown to carry test knowledge** in the measured effect |
+| C2 | A1cH − A2b (all cards vs retrieved) | **−1.3 (−6.4 to 2.6)** | +1/−2 | −5 to +5 ✓ | **Triggered** (≥ −2): retrieval as selection is not supported over a static card block on this slice. The static block needs no index or BM25 |
+| C3 | A0p − A0 (practice run vs one-shot; cross-session) | **+3.8 (−2.6 to 11.5)** | +4/−2 | +3 to +12 ✓ | – |
+| C4 | A1c − A0p (worked examples + self-review over a practice run; cross-session) | **0.0 (−10.3 to 9.0)** | +3/−2 | −5 to +5 ✓ | **Triggered:** A0p ≥ A1c − 2 and A0p's $ per verified build is lower ($0.0070 against $0.0115). **One-shot plus a practice run is the recommended cheap builder for this slice** |
+| C5 | A2i − A2 (rerun vs earlier run; cross-session) | **−5.1 (−11.5 to 0.0)** | 0/−3 | −6 to +6 ✓ | \|C5\| ≤ 6, so C3 and C4 are reported, but close to the bound |
+
+Cost predictions also held:
+
+- A0p's $ per verified build is the lowest of all seven arms.
+- A1cH uses more tokens per build than A2b: 74,444 against 69,314.
+
+On the secondary oracle (v2, 28 items) the order is the same: C1 +2.4, C2 +1.2, C3 **+8.3 (0.0 to 17.9)**, C4 −7.1 and C5 −6.0.
+
+**What the review arms change in the earlier reading:**
+
+- **The A2 headline was a high draw.** The unchanged A2 code, rerun now, scores 89.7%, not 94.9%. The three items it lost (17749,
+  17878, 18797) are one build each; none is a new class. Against the one-shot baseline:
+
+  | Contrast | Points (95% CI) |
+  |---|---|
+  | A2i − A0 | +6.4 (−3.8 to 17.9) |
+  | A2b − A0 | +7.7 (0.0 to 17.9) |
+  | Earlier A2 − A0 | +11.5 |
+
+  Retrieval over the compose loop:
+
+  | Contrast | Points |
+  |---|---|
+  | A2i − A1c | +2.6 |
+  | A2b − A1c | +3.8 |
+  | Earlier | +7.7 |
+
+  It is small at best.
+- **The 17878 attribution (§6) does not replicate.**
+  - Over all v2 builds of 17878, the one-shot arms pass 6 of 6 (A0 3/3, A0p 3/3).
+  - The compose arms fail by inventing a validity filter:
+
+    | Arm | Passes |
+    |---|---|
+    | A1c, no cards | 0/3 |
+    | A2 | 3/3 |
+    | A2i | 1/3 |
+    | A2b | 2/3 |
+    | A1cH | 2/3 |
+
+    That error is induced by the compose path's worked examples. Cards of either origin partly undo it: 8 of 12 with cards against 0
+    of 3 without. The original card text does no better than the blind text (A2 + A2i 4/6, A2b + A1cH 4/6).
+  - The cheapest fix is not to induce the error. A0p, which has no worked examples, never makes it.
+- **One-shot plus a practice run is the cost-efficient builder here.** It reaches A1c's pass rate at 61% of A1c's cost per verified
+  build. It is the fastest arm per verified build (46 s). It has the highest pass rate on the frozen wave-2 oracle (48.1%).
+  - The worked examples and the self-review add cost, not capability.
+  - The practice run alone gives most of the compose path's gain over one-shot: A0p − A0 is +3.8 corrected and +8.3 on v2.
+  - These are cross-session contrasts, so C5 bounds their reliability.
+- **The account address made no measurable difference** (C5 within its predicted range). Its main cost was privacy, not capability.
+
+**Every failing review-arm build was root-caused** (`r/failure-classes-R.json`, `classify-r.mjs`). Eleven were not named by the rules
+and were read by hand with a world-by-world sheet diff.
+
+| Class (all genuine builder errors; **no new oracle defect class**) | A2i | A2b | A1cH | A0p |
+|---|---|---|---|---|
+| 18281: a phone with < 7 digits not listed as missing (every arm, every build: §9.4) | 3 | 3 | 3 | 3 |
+| 19014: "Not provided" written into the Start Date column (the description puts the placeholder in the summary only) | 1 | 1 | 2 | 2 |
+| 17878: skips an unpaid invoice with an empty cell (an unstated filter, induced by the worked examples) | 2 | 1 | 1 | 0 |
+| reads the output of a skipped branch (MISSING_REFERENCE; the public world never took the branch; the §11.5 rule catches each) | 1 | 1 | 0 | 1 |
+| 18797: writes the reminder columns it was not asked to write | 1 | 1 | 0 | 0 |
+| 18797: Days Overdue −3 where the description says 0 when not yet overdue | – | – | – | 1 |
+| 18797: its own acceptance failed after the effects | – | – | 1 | – |
+| 19446: exceptionReason duplicated ("Vendor mismatch, Vendor mismatch") | – | – | 1 | – |
+| 19446: did not read the form's Invoice Date (A0t's class) / passed a wrong argument type to outbox.send | – | – | – | 2 |
+| 20090: updated the wrong appointment row | – | – | – | 1 |
+| Failing builds under the corrected oracle | 8 | 7 | 8 | 10 |
+
+**Privacy (D20, finding 6):**
+
+- 0 journal cells held the account address in any review run.
+- No review-run file under the local run directory contains it (checked with `grep -F`).
+- Five records had a non-fixture address redacted before they were written. All are example address patterns in a workflow's own
+  text (for example "must look like <address>") or a public-world row in repair feedback. All of those builds passed or were not
+  rerun, so no verdict depends on the redaction.
+
+**Disk floor (D19, finding 10).** Free disk fell to about 1.1 GB at 19:26Z, during the wave-1 A2 and A2b runs. The other workflows
+sharing the machine caused the drop; the review runs use about 45 MB in all. Both runners stopped launching builds and exited 75,
+with 24 builds of 57 done. The wrapper waited 30 minutes and resumed at 19:57Z, when the disk was at 1.6 GB. No build was lost or
+scored twice.
+
+### 11.5 The skipped-read validator rule, replayed at $0 (finding 5)
+
+`experiments/ci1-r/skip-ref-rule.mjs`. Results are in `r/skip-ref-rule-w1.json` and `r/skip-ref-rule-w2.json`. Tests are in
+`ci1-r/test/probe.test.mjs`. `src/validate.mjs` is not touched, because it belongs to the engine v2 series.
+
+**Engine semantics.** In `src/runtime.mjs`:
+
+- A node with the default join `all_success` is skipped when a node it needs did not complete.
+- A node with any other join runs regardless; only its own `when` skips it.
+- So ordinary nodes never read a skipped output. The reads that can are acceptance conditions (top level and map bodies) and nodes with
+  a non-default join.
+- `exists` catches a missing read. `any` and `all` short-circuit, and so does the runtime's `acceptance.every`.
+
+Three variants were replayed over all 339 ready builds of the 9 earlier test and wave-2 arms. Twelve of those builds failed a hidden
+world on a skipped read (`MISSING_REFERENCE`). Every build the rule flagged that passed its hidden worlds was then run in the item's
+first 32 generated worlds, from the bed's own generator, to see whether any input reaches the read.
+
+| Variant | What counts as protected | Failing builds caught | Builds flagged | Flagged builds with no hidden failure | Of those, a skipped read in 32 generated worlds |
+|---|---|---|---|---|---|
+| strict | `default`, `exists` | **12 of 12** | 79 | 67 | not run (superseded) |
+| guarded (heuristic) | also any earlier sibling that reads only never-skipped nodes | 9 of 12 | 11 | 2 | 0 |
+| **model-checked** | an exhaustive check over a small value model; see the notes below | **12 of 12** | **18** | **6** | **0** |
+
+**How the model-checked variant works:**
+
+- Each ref gets the constants it is compared with (numbers also ±1), plus one unmatched value.
+- Skip states follow from the `when`s and the join rule, and acceptance is evaluated with short-circuiting.
+- Two assumptions favour the rule:
+  - a ref compared only with non-negative numbers is a count;
+  - a ref compared only with true or false is a boolean.
+
+**Reading the variants:**
+
+- **The strict rule over-blocks.** 67 of the 327 good or otherwise-failing builds would need a repair round they do not need.
+- **The guard heuristic misses the real bug.** Builds 15238 k0 and 20090 k1 check mutually exclusive branches in one disjunction
+  (`kind == "none" OR urgent.posted OR warning.posted`). With kind "warning", the skipped urgent node is read first.
+- **The model-checked rule catches all 12 and flags 6 others (1.8% of the 327 builds without such a failure).** None of the 6 reaches
+  a skipped read in 32 generated worlds. They come from correlations that live inside code, such as `hasInvoices == false` together
+  with `overdueCount == 1`, so a run cannot produce them. Each costs at most one repair round that adds a `default`, about $0.002.
+
+This is the rule to hand to the engine series. It is a $0 check at validation time. In wave 1 it covers 10 of the 19 genuine builder
+failures, and in wave 2 it covers 2 of the 22. Whether every caught build would then pass was not measured: that needs the repair
+round to run.
+
+### 11.6 A8: what is not answered, and the plan
+
+The owner asked in [67]:
+
+> give it the ability to see all these enterprise grade patterns of workflows, it allows it to compare how robust system is against
+> these and keep working on it … with flows payment etc, jira tickets
+
+The owner also asked how long it takes to build accurate workflows cheaply.
+
+**What CI-1 measured:**
+
+- Templates do not bind real corpus workflows.
+- Pattern cards plus corpus exemplars retrieved for small, deterministic n8n items add a few points.
+- Build time is about 40 to 55 s per build and 55 to 90 s per verified build on a loaded host, at $0.008 to $0.014 per verified
+  build (§0).
+
+**What it did not measure:**
+
+- **Hard patterns.** The items have a median of 8 nodes on wave 1 and 17 on wave 2. They contain no payments, ticket lifecycle,
+  approvals or compensation. No "hardest" card was retrieved.
+- **The corpus cannot supply these patterns.** The catalog's corpus support is **0** for P30 (saga), P58 (decision table), P59 (saga
+  planner) and P60 (SLA clock). Those cards were authored from outside sources. Giving the builder "this massive dataset" does not
+  supply them.
+- **Patterns as a critic.** "Compare how robust the system is against these and keep working on it" means using patterns as a
+  robustness critic inside the repair loop. That was never built.
+
+**Plan** (not run here; preregister before any paid call):
+
+1. **Bed:** E-bed items with the hard patterns. E8 (order saga) and E7 (ITSM incidents and SLA engine) exist under `beds/ebed/`. Add
+   item variants that each carry several of the following:
+   - P26 retry and backoff;
+   - P27 error route;
+   - P28 fallback;
+   - P30 or P59 saga with compensation;
+   - P32 approval gate with timeout routing;
+   - P33 wait for a signal;
+   - P60 SLA clock.
+
+   Score by effects under fault injection (duplicate events, timeouts, a failing step, a late approval), so robustness is what is
+   measured.
+2. **Arms (K = 3, Haiku):**
+   - A0, one-shot;
+   - A0p, one-shot plus practice;
+   - A2, cards retrieved;
+   - **A2-critic**: after a successful practice run, each applicable card's invariants run as executable checks over the draft, for
+     example:
+     - every irreversible effect carries an idempotency key;
+     - every approval has a timeout route;
+     - every saga step has a compensation that runs in reverse order;
+     - every SLA timer pauses while waiting on the customer.
+
+     A failing check goes back as repair feedback, at most 3 rounds.
+   - Optionally an Opus one-shot arm as the frontier reference.
+3. **Report:**
+   - pass@1 and pass^3 under faults;
+   - $ and seconds per verified build;
+   - which invariant checks caught real defects.
+
+   The freeze gates of §11.2 run first.
+
+### 11.7 Cost and tests (review session)
+
+**Cost, Haiku and Opus via the claude-cli route.** The account probe cost $0.002 (10 calls in two runs) and the blind cards $0.143 (1
+Opus call). The dev smoke cost $0.031, plus one crashed smoke process whose cost was not recorded, at most about $0.02. The review
+arms cost:
+
+| Wave | A2i | A2b | A1cH | A0p | Total |
+|---|---|---|---|---|---|
+| 1 | $0.459 | $0.482 | $0.523 | $0.281 | $1.745 |
+| 2 | $0.319 | $0.313 | $0.342 | $0.227 | $1.201 |
+
+- Review total: **about $3.12.** The arms' cap was $4.5.
+- CI-1 item total: **about $6.55 of the $10 cap.**
+- Mercury: no use in the review.
+
+**Tests (run one file at a time, `nice -n 15 node --test --test-concurrency=1`):**
+
+| File | Without the local bed (fresh clone) | With the bed |
+|---|---|---|
+| `experiments/ci1-r/test/r.test.mjs` | 7 pass | 7 pass |
+| `experiments/ci1-r/test/probe.test.mjs` | 7 pass | 7 pass |
+| `experiments/ci1-w2/test/w2.test.mjs` | 4 pass, 3 skip (bed-only) | 7 pass, 0 skip |
+
+The new synthetic-fixture scorer test runs in both cases. The earlier files are unchanged and still pass with the bed:
+
+- simulator 6;
+- oracle 4;
+- report 6;
+- builders 12;
+- effects-only 3;
+- oracle v2 7;
+- wave-2 corrections 5;
+- n8n importer 8.
