@@ -9,7 +9,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, rea
 import { worldsOf, STREAM_IDS, REHEARSAL, T0_MS, DAY_MS, CHANGES } from './schedule.mjs';
 import { buildBundle, loadSealed, ROOT, WORK } from './changes.mjs';
 import { referencePools, gradeRun } from './oracle.mjs';
-import { programVersion, versionOfSpec, LINEAGES, REF_SOLVERS, controlVersion } from './arms.mjs';
+import { programVersion, versionOfSpec, LINEAGES, REF_SOLVERS, controlVersion, runBundle } from './arms.mjs';
 import { runStream, ContractOwner } from './stream.mjs';
 import { HAIKU_PATCH, OPUS_PATCH, spendOf, LIMITS } from './heal-adapter.mjs';
 import { CO_SESSION, stubCO } from './contracts-owner.mjs';
@@ -373,7 +373,7 @@ export async function advSetStage({ log = () => {}, sealed = undefined } = {}) {
   for (const rec of readRecords(path.join(RUNS, 'heal'))) { const v = (await versionsOf(rec)).get(rec.final.digest); if (v) arms.push(['MH-H.final', rec.label, v]); }
   for (const [arm, id, v] of arms) for (const w of frozen) {
     const e = await evaluate(`adv-${id}`, v, w.vector, { sealed: sl });
-    cross.push({ arm, target: id, source: w.source, key: e.key, valid: e.valid, n: e.n, failing: e.failing, silent: e.silent, silentCritical: e.silentCritical });
+    cross.push({ arm, target: id, source: w.source, world: JSON.stringify(w.vector), vector: w.vector, key: e.key, valid: e.valid, n: e.n, failing: e.failing, silent: e.silent, silentCritical: e.silentCritical });
   }
   writeFileSync(path.join(RUNS, 'ADV-CROSS.json'), JSON.stringify(cross, null, 1));
   log(`ADV-SET: ${frozen.length} worlds x ${arms.length} arm units`);
@@ -389,6 +389,43 @@ function redAndAdv() {
   const { adv } = advInputs(cross);
   const redTeam = best.filter(b => b.kind === 'opus').map(b => ({ target: `${b.id}:${b.target}`, redTeamBest: b.best, blindBest: b.blindBest ?? 0 }));
   return { adv, redTeam: redTeam.length ? redTeam : null };
+}
+
+/**
+ * The A-H red-team windows of P7 (prereg §7): on the two top valid ADV-SET worlds (ranked by the S-H* t0 versions' silent
+ * failing cases, median lineage; ties to the lowest salt), the <= 8 cases the median lineage fails, routed to A-H. This
+ * favours the agent ("is the agent also broken where we are worst?"), declared. Descriptive.
+ */
+export async function rtWindowsStage({ log = () => {}, meterOf = label => ledgerMeter({ scope: label, row: 'P7' }), runner = null, sealed = undefined } = {}) {
+  const sl = sealed === undefined ? loadRunSealed() : sealed;
+  const cross = JSON.parse(readFileSync(path.join(RUNS, 'ADV-CROSS.json'), 'utf8')).filter(x => x.arm === 'S-H*' && x.valid);
+  const byWorld = new Map();
+  for (const x of cross) { if (!byWorld.has(x.world)) byWorld.set(x.world, []); byWorld.get(x.world).push(x); }
+  const ranked = [...byWorld.entries()].map(([key, rows0]) => {
+    const rows = [...rows0].sort((a, b) => a.silent - b.silent || (a.target < b.target ? -1 : 1));
+    return { key, med: rows[Math.floor((rows.length - 1) / 2)], vector: rows[0].vector };
+  }).sort((a, b) => b.med.silent - a.med.silent || a.vector.salt - b.vector.salt).slice(0, 2);
+  const { vectorBundle } = await import('./knobs.mjs');
+  const out = [];
+  for (const [i, r] of ranked.entries()) {
+    const label = `A-H-RT.${i + 1}`;
+    const f = path.join(RUNS, 'rtwindows', `${label}.window.json`);
+    if (existsSync(f)) { out.push(JSON.parse(readFileSync(f, 'utf8'))); continue; }
+    const b = await vectorBundle(`rtw-${r.med.target}`, r.vector, { sealed: sl });
+    const ref = await referencePools(b);
+    const median = await runBundle(b, { version: programVersion(LINEAGES[r.med.target], { id: r.med.target }) });
+    const gm = gradeRun(b, median.rows, ref.pools);
+    const cases = gm.cases.filter(c => c.graded && !c.pass).map(c => c.case).sort().slice(0, 8);
+    if (!cases.length) { log(`${label}: the median lineage fails no case of ${r.key}`); continue; }
+    const w = await runWindow({ bundle: b, cases, kind: 'A-H', label, meter: meterOf(label), ...(runner ? { runner } : {}) });
+    if (w.status !== 'complete') throw Object.assign(new Error(`DUR1_ENV_FAULT: ${label} stopped (${w.status})`), { code: rowRoom('P7') < AGENT['A-H'].budgetUsdPerTick ? 'DUR1_BUDGET' : 'DUR1_ENV_FAULT' });
+    const g = gradeRun(b, w.rows, ref.pools);
+    const rec = { label, world: r.key, medianLineage: r.med.target, cases, agentPass: g.cases.filter(c => cases.includes(c.case) && c.pass).length, n: cases.length, costUsd: w.costUsd };
+    mkdirSync(path.dirname(f), { recursive: true });
+    writeFileSync(f, JSON.stringify(rec, null, 1));
+    out.push(rec);
+  }
+  return out;
 }
 
 /** D-5 (b) and D-11 inputs from the ADV cross-run and the red-team records. */

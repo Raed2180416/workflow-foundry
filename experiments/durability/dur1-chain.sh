@@ -67,6 +67,7 @@ step P6-refm $R refm --paid
 step P7-redteam $R redteam --paid
 step wc1-end $R wc1 --when end
 step advset $R advset
+step P7-rtwindows $R rtwindows --paid
 step P8-aox $R windows --paid --kind A-Ox
 step P9-forks $R forks --paid
 step analysis $R analyze

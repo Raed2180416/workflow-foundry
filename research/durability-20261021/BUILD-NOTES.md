@@ -70,8 +70,8 @@ the bed). Every DUR-1 file is new under `experiments/durability/` and `research/
 2. **MH-stale forks at W3 t0** with MH-H's W3 starting version (not at R1's publication, W3 d2 09:00), and keeps s1's W1 in
    its regression set (`regressionW1`). A promotion on W3 d1-d2 would be missed by the fork; reported if it happens.
 3. **MH-H->O is not in the chain** (B-tier, dropped first per BUILD-PLAN §4); the code path exists (`heal.opusAfter` in
-   `stream.mjs`). The A-H red-team windows of P7 (two top ADV-SET worlds) are also not wired yet: `windowRecord` needs a
-   vector-bundle variant. Both are listed for the Fix phase.
+   `stream.mjs`), listed for the Fix phase. The A-H red-team windows of P7 are wired (`run.mjs rtwindows --paid`, after
+   `advset`): the two top valid ADV-SET worlds by the median starting version's silent failures, <= 8 of its failing cases.
 4. **A-Ox stop rule per case**: each A-Ox case is one routed run of its world (the code arms' world is unchanged), so the
    "stop if 1.5 x mean $/case > remaining P8" check runs before every case, as written.
 5. **The harm shield refuses (drops) effects** instead of `port.mjs`'s hold-for-approval (E8's actors never answer
@@ -85,6 +85,14 @@ the bed). Every DUR-1 file is new under `experiments/durability/` and `research/
    +0.05: 0.97 (prereg 0.96); at alpha 0.05: 0.71 / 0.983 at gaps 0 / +0.05 (prereg 0.73 / 0.99); 8 windows at +0.05:
    0.893 (prereg 0.82). The size at the margin is 0.028 (prereg 0.025). The prereg's §11 and banner must be corrected to
    the script's numbers before F-B (BUILD-PLAN row 20 rule); the conclusion (D-3 likely inconclusive at a tie) stands.
+
+8. **A bed finding met while testing WC-1 (not a DUR-1 defect, reported):** the bed's own MR11 `injectFailures`
+   (`beds/ebed/e8/metamorphic.mjs:424`) on world `generateWorld({ seed: 1302, split: 'fuzz-dur1-adv-b1lh-5', difficulty:
+   4, mix: 'tail', size: 12 })` makes the **earliest** reference timing emit an `inventory.reserve` outside the oracle's
+   allowed set on case o0014 (an `f6-reserve` with ordinal 2 on a two-fulfilment order); the latest timing passes. WC-1
+   and the J2 gate class such worlds as bed findings and exclude them, as designed. L1 uses the same per-kind edits at
+   15%, so Stage Z's V-1 on the real stream worlds decides whether it bites there; if it does, L1 skips `f6-reserve` on
+   multi-fulfilment orders (recorded before F-B, BUILD-PLAN §6 risk rule).
 
 ## 5. Validity gates: where each stands
 

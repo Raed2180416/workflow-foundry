@@ -42,7 +42,7 @@ import { armVersion } from './arms.mjs';
 
 const sha = s => createHash('sha256').update(s).digest('hex');
 export const RES = path.join(ROOT, 'research/durability-20261021');
-export const RUNS = path.join(RES, 'runs');
+export const RUNS = process.env.DUR1_RUNS ?? path.join(RES, 'runs');   // tests point DUR1_RUNS at a scratch directory
 export const SPEND = path.join(RUNS, 'spend.jsonl');
 export const TOTAL_CAP = 80;
 /** Prereg §12: priority order, per-row caps (USD). A session starts only if total spent + its cap <= $80. */
@@ -326,6 +326,7 @@ async function main() {
     return;
   }
   if (cmd === 'wc1') { const { wc1Stage } = await import('./paid.mjs'); const r = await wc1Stage({ when: opt('when', 't0'), log }); console.log(JSON.stringify({ when: r.when, targets: Object.keys(r.targets).length, transfer: r.transfer.length })); return; }
+  if (cmd === 'rtwindows') { await guardPaid('rtwindows', 'P7'); const { rtWindowsStage } = await import('./paid.mjs'); const r = await rtWindowsStage({ log }); console.log(JSON.stringify(r.map(x => ({ label: x.label, agentPass: `${x.agentPass}/${x.n}`, costUsd: x.costUsd })))); return; }
   if (cmd === 'advset') { const { advSetStage } = await import('./paid.mjs'); const r = await advSetStage({ log }); console.log(JSON.stringify({ worlds: r.set.length, cross: r.cross.length })); return; }
   if (cmd === 'analyze') { const { analyzeRuns } = await import('./paid.mjs'); const r = await analyzeRuns({ log }); console.log(renderReport(r)); return; }
   console.error('usage: run.mjs dry|stagez|author|p0|heal|windows|refm|redteam|forks|analyze (see the header)');
