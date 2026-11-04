@@ -7,27 +7,41 @@ trigger; a sensitivity slider; Jev for it. Preregistration: [router1/PREREG-ROUT
 Data: [router1/SET.jsonl](router1/SET.jsonl), 319 requests with gold labels written before any router code (`72785e5`),
 split by a hash rule into dev 126 / test 193. Rubric: [router1/RUBRIC.md](router1/RUBRIC.md).
 
+*Amended 2026-11-04 after an adversarial review: the freeze-ordering record was wrong (v1.1 is development evidence on every
+slice), test wording had leaked into the rubric, and several shipped statements were not held-out claims. Corrections are marked
+in place and collected in [Review addendum](#review-addendum-2026-11-04); the preregistered v1 numbers did not change.*
+
 ## Verdict
 
 1. **The preregistered code router fails the owner's never-trigger requirement on held-out requests.** At the default slider it
    wrongly suggested a workflow for 9 of 132 test requests that do not need one (6.8%; 95% upper bound 12.6%). It caught 41 of
    61 that do (recall 0.67). On dev, where it was tuned, it had 0 false triggers and caught every positive: the fit did not
    transfer. Claim C1 is **not met**.
-2. **Asking Haiku directly is far better and costs almost nothing.** 5 false triggers out of 132, recall 0.97, F1 0.944, AUROC
-   0.996, at $0.00026 and 4.3 s per decision. Its 7 errors are all on requests the labeller had marked as ambiguous. On the 160
-   unambiguous test requests it makes no error at all. The code router does not match it: ΔF1 −0.205 [−0.306, −0.121], McNemar
-   4 vs 26, p < 0.001. Claim C2 is **not met**.
-3. **Mercury 3 matches Haiku when it answers** (F1 0.947 on 180 answers), at a listed price of $0 and 1.3 s. But 13 of 193 test
-   calls (6.7%) gave no answer: 11 used the whole 1,000-token output budget on hidden reasoning, 1 hit a content filter on a
-   benign request, and 1 returned non-JSON. Counting those as "no workflow", F1 is 0.900.
+2. **Asking Haiku directly is far better and costs almost nothing, but it fails the never-trigger requirement too.** 5 false
+   triggers out of 132 at its default (95% upper bound 8.6%), recall 0.97, F1 0.944, AUROC 0.996, at $0.00026 and 4.3 s per
+   decision. Its 7 errors are all on requests the labeller had marked as ambiguous; on the 160 unambiguous test requests it makes
+   none (also on the 145 left after removing the leaked items, addendum §B). That agreement is with a rubric it was shown, written
+   by the author of the labels. The code router does not match it: ΔF1 −0.205 [−0.306, −0.121], McNemar 4 vs 26, p < 0.001
+   (the F1s are at two different operating points; threshold-free, AUROC 0.915 vs 0.996, and at Haiku's 5 false triggers the
+   router would catch 0.62). Claim C2 is **not met**.
+3. **Mercury 3 as a system: F1 0.900** (13 of 193 test calls gave no answer, counted as "no"; 5/132 false triggers, recall 0.885).
+   On its 180 answers alone F1 is 0.947. Root cause of the faults (addendum §C): 11 calls spent the whole 1,000-token output cap
+   on hidden reasoning; re-asked at 4,000 tokens on 2026-11-04 all 13 answered (largest 1,275 tokens), and the content-filter
+   and non-JSON faults did not recur. With those answers Mercury is at 6/132, recall 0.934 (diagnostic: two caps, two dates).
 4. **Jev was not measured.** This session has no Jev credential, and the documented launch path was refused by the sandbox
    (deviation D1). So Jev is not wired. Claim C3: "not measured".
 5. **What the code is good for (post-hoc, diagnostic):** as a free pre-filter in front of the model judge. Clearing code p < 0.05
    skipped Haiku on 23% of test requests with identical decisions. The code's primitives are also the explanation shown to the
-   user. The product now does exactly this, and says how reliable each answer is.
+   user. The product does this when the host plugs in a judge; without one it answers with the code alone, labelled a hint with
+   its measured operating point.
+6. **A $0 learned baseline ranks as well as the hand-written lexicon** (post-hoc, frozen on dev before its test read): character
+   n-gram logistic regression trained on the same 126 dev items has test AUROC 0.918 against the router's 0.915. At its
+   out-of-fold never-trigger threshold it makes 1/132 false triggers but catches only 0.30. Neither $0 classifier reaches the
+   bar at this data size; the lexicon's 8 detectors buy explanations, not accuracy.
 
-The router is a negative result on the preregistered question and is preserved as such. The capability that exists today is
-"ask a cheap model the typed question, with a free code pre-filter and a slider on the model's percent".
+The router is a negative result on the preregistered question and is preserved as such. No system tested meets "never
+trigger" at its default. The capability that exists today is "ask a cheap model the typed question, with a free code
+pre-filter and a slider on the model's percent", post-hoc and awaiting a sealed check by another labeller.
 
 ## Capability table (test split, n = 193: 132 do not need a workflow, 61 do)
 
@@ -38,10 +52,12 @@ The router is a negative result on the preregistered question and is preserved a
 | length (baseline, dev-tuned at 131 chars) | 57 (0.521) | 0.885 | 0.486 | 0.628 | 0.757 | 0.492 | 0 | 0 |
 | keyword (baseline, 15 words) | 27 (0.283) | 0.705 | 0.614 | 0.656 | 0.750 | 0.580 | 0 | 0 |
 | **router v1 (preregistered, frozen `f9641ff9`)** | **9 (0.126)** | **0.672** | 0.820 | **0.739** | **0.915** | 0.808 | **0** | **0.43 ms / 9.9 ms** |
-| router v1.1 (deviation D4, ships in `src/need/`) | 8 (0.116) | 0.705 | 0.843 | 0.768 | 0.928 | 0.829 | 0 | 0.34 ms / 5.1 ms |
+| router v1.1 (D4, ships in `src/need/`; **development evidence**: frozen after test judge rows existed) | 8 (0.116) | 0.705 | 0.843 | 0.768 | 0.928 | 0.829 | 0 | 0.34 ms / 5.1 ms |
+| n-gram logistic regression ($0 learned baseline; post-hoc, frozen on dev before its test read) | 1 (0.042) | 0.295 | 0.947 | 0.450 | 0.918 | n/a | 0 | 381 ms fit + score, all 193 |
 | **ask Haiku 5.5 directly** | **5 (0.086)** | **0.967** | 0.922 | **0.944** | **0.996** | 0.953 | **$2.6e-4** | **4.3 s / 5.7 s** |
-| ask Mercury 3 directly (180 answered; 13 faults) | 5/125 (0.091) | 0.982 | 0.915 | 0.947 | 0.974 | 0.950 | $0 listed (1,140 tokens) | 1.3 s / 2.8 s |
-| ask Mercury 3, faults counted as "no" | 5 | 0.885 | 0.915 | 0.900 | n/a | n/a | same | same |
+| **ask Mercury 3 directly (system: 13 faults counted as "no")** | **5 (0.086)** | **0.885** | 0.915 | **0.900** | 0.914 | n/a | $0 listed (1,140 tokens) | 1.3 s / 2.8 s |
+| ask Mercury 3, the 180 answered only | 5/125 (0.091) | 0.982 | 0.915 | 0.947 | 0.974 | 0.950 | same | same |
+| ask Mercury 3, the 13 faults re-asked at a 4,000-token cap (2026-11-04, diagnostic) | 6 (0.096) | 0.934 | 0.905 | 0.919 | 0.968 | n/a | same | |
 | ask Jev directly | not run (D1) | | | | | | | |
 | router + judge in the middle band (prereg step 4) | = router v1: the dev rule chose δ = 0, code only (below) | | | | | | | |
 
@@ -149,15 +165,17 @@ authors (Mercury-written requests, AutomationBench prompts, anchor beds) recall 
 process", which a lexicon of this size does not reach. **Testing found this, and dev did not:** 5-fold dev cross-validation
 predicted 1 false trigger in 84 and recall 0.95.
 
-## v1.1 (deviation D4): what changed and why it is not clean evidence
+## v1.1 (deviation D4): what changed and why it is development evidence
 
 A product test written for the integration exposed a v1 defect: "Every Monday at 9, pull last week's signups ..." was routed to
 none, because the retrospective scope ("last week") switched off the schedule. Thirty-six synthetic probes found 6 such defects.
-v1.1 fixed them and was refitted on dev. It was frozen before any test output existed. On test it improves slightly: 8 false
-triggers (from 9), recall 0.705, F1 0.768, AUROC 0.928. **It is not clean held-out evidence for the authored slice.** The probes
-were written by the same model that authored the set's items, and five of them closely paraphrase authored test items (token
-Jaccard 0.30-0.41, above the dev-to-test p90 of 0.33; one is au-rp02). On the independent-text slice, v1.1 has 7/72 false
-triggers and recall 0.66, against v1's 8/72 and 0.61.
+v1.1 fixed them and was refitted on dev. On test it improves slightly: 8 false triggers (from 9), recall 0.705, F1 0.768, AUROC
+0.928. **It is development evidence on every slice.** *[Corrected 2026-11-04: this section said v1.1 "was frozen before any test
+output existed". It was not: when v1.1 was committed (21:43:37Z) all 193 Mercury test rows and 342 of 386 Haiku test rows
+existed (PREREG §9 C1).]* The probes were written by the same model that authored the set's items, and five of them closely
+paraphrase authored test items (token Jaccard 0.30-0.41, above the dev-to-test p90 of 0.33; one is au-rp02); the new cues
+`program-stages` and `w3-program` fire on no dev item and on exactly one test item, au-rp02. On the independent-text slice, v1.1
+has 7/72 false triggers and recall 0.66, against v1's 8/72 and 0.61.
 
 ## Post-hoc analyses (after the test was read; rules chosen on dev; diagnostic only): `router1/results/POSTHOC-test.md`
 
@@ -185,15 +203,29 @@ triggers and recall 0.66, against v1's 8/72 and 0.61.
   - `modelJudge(port, modelId)`: the typed question over a ModelPort, for Haiku or Mercury.
 
   `params.json` is fitted on dev only and carries a detector-version guard.
-- `src/need/advice.mjs` (re-exported by `app/core/need.mjs`) gives a plain-words answer plus a **reliability statement**. The
-  code-only statement reads "caught 67-70% ... wrongly suggested one for 6-7% ... treat it as a hint". The judged statement
-  reads "asking Haiku directly caught 97% and wrongly suggested a workflow for 4% (all on ambiguous requests)".
+- `src/need/advice.mjs` (re-exported by `app/core/need.mjs`) gives a plain-words answer plus the **measured operating point of
+  the decider that produced it, at the sensitivity it was asked with**, from `src/need/reliability.json` (generated by
+  `router1/addendum.mjs` from the committed rows), with its evidence grade: code only (v1.1, development evidence), the Haiku
+  cascade and the Mercury cascade (post-hoc), each at s = 0, 0.25, 0.5, 0.75 and 1; any other sensitivity says "uncalibrated".
+  A code-only answer starts "Code-only hint" and ends "Treat it as a hint". Every answer carries `score` (the deciding score and
+  its bar: the judge's percent and bar when a judge decided) beside the code's p. *[Changed 2026-11-04: the first version gave
+  one statement for every decider, Haiku's numbers to a Mercury judge, the code's label to requests the cascade cleared, mixed
+  v1 and v1.1, and called post-hoc numbers held-out (review M4).]*
+- **The slider ends are hard in every path** (s = 0 never, s = 1 always, no judge call), and raising s never removes a trigger.
+  *[Fixed 2026-11-04: in the cascade a 100% judge answer triggered at s = 0 and the 0.05 clearing bar blocked triggers at s = 1
+  (review M2).]*
 - **Surfaces:**
-  - app MCP tool `need_check`: read-only and $0.
-  - Every `propose_flow` result carries a `need` field, and its reply notes when a request may not need a workflow.
-  - engine MCP tool `foundry_need_check`.
-  - CLI `node app/cli.mjs need "REQUEST" [--sensitivity s] [--judge haiku|mercury]`. With `--judge`, Haiku is asked unless the
-    code clears the request, through the repo's Claude CLI ModelPort with a $0.05 per-call cap.
+  - app MCP tool `need_check`: read-only. Without a host judge it is a $0 code-only hint and its description says so with the
+    preregistered operating point (67% caught, 7% false triggers). With `node app/cli.mjs mcp --need-judge haiku|mercury
+    [--need-cap-usd 0.5]` it runs the cascade with a capped judge (`cappedJudge`: $0.05 per call, the cap per server process;
+    past it the judge refuses with JUDGE_BUDGET and the answer is the code's, recorded as a judge fault).
+  - Every `propose_flow` result carries a `need` field. Its reply adds "No workflow needed" only when a judged (cascade) decision
+    says so. *[Changed 2026-11-04: it was added on the code-only answer, which misses a third of the requests that need a
+    workflow (review M3).]*
+  - engine MCP tool `foundry_need_check`: code-only hint, same description; a host-judge hook there is left until after the
+    engine v2 merge (patch 0011 edits the same lines of `src/mcp.mjs`).
+  - CLI `node app/cli.mjs need "REQUEST" [--sensitivity s] [--judge haiku|mercury]`. With `--judge`, the model is asked unless
+    the code clears the request, through the repo's ModelPort ($0.05 per call; Mercury with a 4,000-token output cap).
 - The frozen v1 router stays runnable in `experiments/need-router/router1/frozen-v1/`.
 
 ## Budget
@@ -201,7 +233,7 @@ triggers and recall 0.66, against v1's 8/72 and 0.61.
 | item | cap | spent |
 |---|---|---|
 | Haiku | $3 | **$0.146** (638 judge calls $0.1455, plus a smoke call and 2 CLI checks) |
-| Mercury | 0.5M tokens | **≈ 385K** (author pass ≈ 15K, smoke 0.7K, dev 148.6K, test 220.0K; meter totals) |
+| Mercury | 0.5M tokens | **≈ 402K** (author pass ≈ 15K, smoke 0.7K, dev 148.6K, test 220.0K; meter totals; plus 17.7K on 2026-11-04 to re-ask the 13 faulted test calls at a 4,000-token cap) |
 | Jev | policy budget | 0 (not run, D1) |
 
 ## Evidence grade and caveats
@@ -212,7 +244,13 @@ triggers and recall 0.66, against v1's 8/72 and 0.61.
   workflow" in the counterfactual sense (whether a workflow raises success or lowers cost: DESIGN.md §2, not measured here).
 - **Each judge read each item once** (Haiku twice; flips 1%). This is classification agreement, not a K=1 claim about task
   success.
-- **v1.1 is contaminated on the authored slice** (above). The cascade and Haiku-slider numbers are post-hoc.
+- **v1.1 is development evidence on every slice** (above; PREREG §9 C1). The cascade and Haiku-slider numbers are post-hoc.
+- **Test wording leaked into the rubric, the judge prompt and the detectors** (PREREG §9 C2; addendum §B). Re-scored without the
+  6 quoted test items, the 2 that share their pattern and the 18 hit by v1 cues that fire on no dev item, no system's false
+  triggers change and recall moves by at most 0.03; the shared author of rubric, labels and prompt remains.
+- **Mercury-written requests are not cluster-held-out:** all 14 generation calls put requests on both sides of the split
+  (addendum §F). On the cluster-clean slice (AutomationBench prompts, anchor beds, policies, specs; 46 items) router v1 has
+  3/22 false triggers and recall 0.75, Haiku 2/22 and 0.96.
 - **What the router author saw before step 5.**
   - All 126 dev items were read, with long texts truncated.
   - From the test split, only one item was seen: au-q02, in the first 1,500 bytes of SET.jsonl, read while orienting.
@@ -220,16 +258,16 @@ triggers and recall 0.66, against v1's 8/72 and 0.61.
   - The anchor bed definitions were deliberately not read during tuning.
   - The prior session's author, the same model, wrote the authored and Mercury-prompted items. That shared phrasing is the
     risk the authored-vs-independent slices expose.
-- **Integration slips** in `f13864a5`: a wrong `execute` index in `app/mcp/server.mjs`, and a missing comma in `src/mcp.mjs`
-  that made the engine tool list throw. Both were caught by the new tests and fixed in `297a303e`.
+- **Integration slips** in `f13864a5`, a commit labelled FROZEN: a wrong `execute` index in `app/mcp/server.mjs`, and a missing
+  comma in `src/mcp.mjs` that made the engine tool list throw. Both were caught by the new tests and fixed in `297a303e`; the
+  tests had not been run before the freeze commit (PREREG §9 C4). The position-based patch is now a lookup by name.
 
 ## Next
 
-1. **Sealed confirmation with an independent labeller:**
-   - 60 to 100 requests written and labelled by someone other than the ROUTER-1 author. The owner's own requests are best (the
-     DESIGN.md ask).
-   - Read three things on it: Haiku-direct at the 0.5 and 0.8 slider points, the cascade at L = 0.05, and Mercury with a larger
-     output budget.
+1. **Sealed confirmation with an independent labeller:** [router2/PROTOCOL-ROUTER-2.md](router2/PROTOCOL-ROUTER-2.md) (draft).
+   Rubric and prompt frozen first, then the owner writes and labels the requests; primary system Haiku-direct at a percent bar
+   of 0.80 chosen on all 319 ROUTER-1 requests (pooled 2/216 false triggers, recall 0.93); "never trigger" read as a target
+   false-trigger rate with a Clopper-Pearson bound, which needs at least 72 negatives for 5%.
 2. **Jev:** run `judges.mjs --judge jev --split dev|test` (1,116 requests, under the 1,200 cap) once the owner maps the key.
    Then compare Jev against Haiku on the same items, and against the cascade cost.
 3. **If a code-only path is still wanted** (offline, $0), stop extending the lexicon.
@@ -239,6 +277,35 @@ triggers and recall 0.66, against v1's 8/72 and 0.61.
 4. **The counterfactual question** (does the workflow actually help on these requests) is still open. It is the label factory in
    DESIGN.md.
 
+## Review addendum (2026-11-04)
+
+An adversarial review (verdict: the negative result stands; the record and the product surface did not) raised 1 blocker, 6 major and 12 minor findings. The $0 re-analyses are in
+[router1/results/ADDENDUM-REVIEW.md](router1/results/ADDENDUM-REVIEW.md) (generated by `router1/addendum.mjs`; everything except
+its §A is post-hoc and diagnostic). One paid diagnostic ran: the 13 faulted Mercury test calls re-asked at a 4,000-token cap
+(17.7K Mercury tokens, $0 listed). Haiku: $0.
+
+| finding | disposition |
+|---|---|
+| **B1** freeze-ordering record false | **Fixed in the record**: PREREG §8 annotated in place and §9 C1 added; the commit/row timeline is addendum §A. Confirmed exactly: 68 dev rows (28 Haiku, 40 Mercury) existed at the D1/D2 commit; 193/193 Mercury and 342/386 Haiku test rows at the v1.1 commit; D3's and D4's times were wrong. v1.1 is development evidence on every slice. |
+| **M1** test wording leaked into rubric, prompt, detectors | **Disclosed and re-scored** (PREREG §9 C2; addendum §B). 6 quoted test items, 2 with the same pattern, 6 v1 cues firing on 18 test items and no dev item. **Partly disagree on size:** excluding all of them changes no system's false-trigger count and moves recall by at most 0.03; Haiku's 0 errors on high-confidence labels holds on the 145 that remain. The indirect dependence (one author for rubric, labels and prompt) cannot be re-scored away; ROUTER-2 freezes rubric and prompt before another person writes the items. |
+| **M2** slider broken at the ends in the judge path | **Fixed** (`src/need/router.mjs`) with tests that fail on the old code: hard ends in `needCascade` and `needDecide`, clearing bar only for 0 < s < 1, monotone in s. |
+| **M3** product ships the failed router by default, described falsely | **Fixed**: code-only answers are labelled hints with the preregistered operating point; the tool description no longer claims "tuned so ... do not trigger"; the `propose_flow` note needs a judged decision; the host can plug in a capped Haiku or Mercury judge (`mcp --need-judge`). The default stays code-only because no model may be called without the host choosing one. |
+| **M4** reliability statements not held-out claims | **Fixed**: one measured statement per (decider, sensitivity) from `reliability.json`, graded "development evidence" or "post-hoc, sealed confirmation pending"; unmeasured sensitivities say "uncalibrated" (as ROADMAP §2.8 asks); Mercury has its own numbers; a test replays the Haiku rows through the shipped cascade and must reproduce the file. |
+| **M5** protocol could not test the requirement or the band | **Agreed and examined post-hoc** (PREREG §9 C3; addendum §E). The E1 = 0 rule passes with probability ≈ 84/216 = 0.39 for any exchangeable score. Out-of-fold, v1 makes 1/84 dev false triggers (recall 0.95), so a band can now be chosen; the post-hoc OOF rule picks Mercury, one-sided, δ = 0.1, which on test gives 10/132 and recall 0.72: **a one-sided band (the judge may only raise) cannot remove the code's false triggers**, which sit above the threshold. A two-sided band (the judge decides near the threshold) reaches 3/132 and recall 0.85-0.90 with Haiku at δ 0.2-0.3 on test, but 84 dev negatives cannot tell it apart from the one-sided choice. "Never trigger" is restated as a target rate with a Clopper-Pearson bound in ROUTER-2: zero false triggers in 72 / 183 / 368 negatives bound the rate at 5% / 2% / 1%. |
+| **M6** ask not closed at its core | **Agreed; kept visible** (README, coverage matrix ⚠). Not done: launching a workflow from the decision, the counterfactual value of a workflow on these requests, Jev, and requests that are "the most realistic hardest" (median 167 characters; most written by the label author or from rubric-like prompts). |
+| m1 Mercury generation calls straddle the split | **Disclosed** (all 14 of 14; addendum §F, cluster-clean slice reported); `build-set.mjs` has `generationCluster` for future sets; the frozen split is unchanged. |
+| m2 generic key wrapper used before it was recorded | **Fixed**: `with-inception.sh` runs only the Mercury judge pass; PREREG D2 annotated. |
+| m3 FROZEN commit with broken wiring | **Recorded** (PREREG §9 C4); rule: run the touched tests before a FROZEN commit. |
+| m4 judged answers reported the code's p | **Fixed**: `score {by, p, threshold}` of the decider; the CLI prints both. |
+| m5 `defs[0]` patched by position | **Fixed**: by name. |
+| m6 tests without teeth | **Fixed**: `router1-stats.test.mjs` checks the statistics against independent closed forms; params shas pinned; context-never-lowers on every feature; CLI `need`; host-judge MCP path. |
+| m7 Mercury headline on survivors | **Fixed**: the table leads with the system number (F1 0.900). |
+| m8 `closeCall` never fires | **Removed.** |
+| m9 unrecorded conflict with ROADMAP §2.8 | **Recorded here.** ROADMAP §2.8: code guards only add structure, typed judgments do not pick the mode, and a router is built only after the RX1 headroom sweep. ROUTER-1 follows the owner's later ask [74] (primitives, a formula, a threshold, a slider) instead: the cascade's judge decides the side, can overrule a code trigger, and its mode is used; RX1 was not run. Keeping the code as must-trigger guards (review "cheaper" #2) was not adopted: the lexical recurrence and wait cues fire on quoted material (the rota anchor, the approval-policy question), so as guards they would force false triggers. **This needs the owner's decision.** |
+| m10 efficiency | **Partly fixed**: Mercury's product cap is 4,000 (the re-ask answered 13 of 13). Not changed: the rubric stays in the user turn of the measured prompt (moving it changes the measured system; allowed in ROUTER-2 before its freeze); the 4.3 s median is the Claude CLI's per-call overhead. |
+| m11 no $0 learned baseline | **Added** (`baseline-ngram.mjs`, frozen on dev in `1f8e27c0` before its test read): AUROC 0.918 vs the router's 0.915; 1/132 false triggers and recall 0.30 at its out-of-fold never-trigger threshold. |
+| m12 "nearly meets the bar" | **Fixed**: Haiku fails never-trigger at its default too (Verdict 2). |
+
 ## Reproduce
 
 ```
@@ -246,5 +313,9 @@ node experiments/need-router/router1/fit.mjs --diag            # dev features an
 node experiments/need-router/router1/eval-router1.mjs --split test --router v1      # preregistered primary
 node experiments/need-router/router1/eval-router1.mjs --split test --router v1.1
 node experiments/need-router/router1/posthoc.mjs               # post-hoc (a) and (b)
-node --test tests/need-router.test.mjs app/test/need.test.mjs experiments/need-router/test/router1-judges.test.mjs
+node experiments/need-router/router1/baseline-ngram.mjs --split dev|test            # $0 learned baseline (review m11)
+node experiments/need-router/router1/addendum.mjs              # review addendum A-H, writes src/need/reliability.json
+set -a; . /root/.config/foundry/inception.env; set +a; node experiments/need-router/router1/mercury-refault.mjs   # paid: Mercury tokens
+node --test --test-concurrency=1 tests/need-router.test.mjs     # then app/test/need.test.mjs, experiments/need-router/test/router1-judges.test.mjs,
+                                                                #  experiments/need-router/test/router1-stats.test.mjs, one at a time
 ```

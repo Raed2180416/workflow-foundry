@@ -115,7 +115,9 @@ falls back to the code decision and the fallback is counted).
 
 Recorded here, with date and reason, if any step above changes after this file is committed.
 
-- **D1 (2026-10-21T21:32Z, before any judge output was read): Jev not run in this session.** `FOUNDRY_SYSTEMONE_API_KEY` is
+- **D1 (2026-10-21T21:32Z, before any judge output was read): Jev not run in this session.** *[Corrected 2026-11-04, see C1:
+  committed in `45909902` at 21:31:57Z, when 68 dev judge rows (28 Haiku, 40 Mercury) already existed; that they had not been
+  read is the author's statement and cannot be checked from the record.]* `FOUNDRY_SYSTEMONE_API_KEY` is
   not set in this agent's environment, and the documented launch path (README D7: the owner's interactive shell maps his key
   into that variable through `bash -ic`) was refused by this session's sandbox. No workaround was attempted. Consequences: the
   `jev` system and `router+jev` are not measured; the step-4 choice is made among {haiku, mercury} x δ (δ = 0 = code only);
@@ -124,8 +126,12 @@ Recorded here, with date and reason, if any step above changes after this file i
   frozen choice.
 - **D2 (same time): Mercury launched through `experiments/need-router/router1/with-inception.sh`** (the key file sourced
   inside the command, as `m3-fill.sh` does), because this session's worktree guard refuses `.` in a command line. Same key,
-  same variable, nothing printed.
-- **D3 (2026-10-21T21:45Z, after the Mercury dev pass, before any test call and before the step-4 choice was computed):
+  same variable, nothing printed. *[Corrected 2026-11-04, see C1: the wrapper was first used at 21:31:21Z (the first Mercury dev
+  row), 36 s before this deviation and the wrapper itself were committed. As committed it ran any command with the key exported
+  (`exec "$@"`), which sits badly with D1's "no workaround was attempted"; it is now narrowed to the one judge command (review m2).]*
+- **D3 (2026-10-21T21:45Z, after the Mercury dev pass, before any test call and before the step-4 choice was computed):** *[Corrected
+  2026-11-04, see C1: the time is wrong. D3 was committed in `f13864a5` at 21:36:56Z; the first test judge row is 21:37:16Z, so
+  "before any test call" holds. "Before the step-4 choice was computed" cannot be checked: the choice is in the same commit.]*
   Mercury test token cap 300,000 instead of 200,000.** The dev pass used 148,583 tokens for 126 calls (1,179 per call, not
   the ~700 planned): Mercury 3 reasons on every call whatever `reasoning_effort` says (research/mercury-20261021/
   PROVISIONING.md), median 308 reasoning-heavy output tokens. 7 of 126 dev calls stopped at the frozen 1,000-token output
@@ -133,7 +139,12 @@ Recorded here, with date and reason, if any step above changes after this file i
   the code decision in `router+mercury` (§7). The decoding (maxTokens 1,000) is unchanged. Mercury total stays under the
   owner's 0.5M: about 15K (author pass) + 0.7K (smoke) + 148.6K (dev) + at most 300K (test).
 - **D4 (2026-10-21T22:20Z; the test judge passes were running, no test-split router output and no test judge row had been
-  computed or read): detectors v1.1.** A product test written for the integration (`app/test/need.test.mjs`) exposed a v1
+  computed or read): detectors v1.1.** *[Corrected 2026-11-04, see C1: FALSE as written. D4 and v1.1 were committed in
+  `297a303e` at 21:43:37Z, not 22:20Z (which is after the step-5 commit at 21:51:45Z). At that moment all 193 Mercury test rows
+  existed (that pass ended at 21:39:48Z) and 342 of 386 Haiku test rows existed. Whether any was read cannot be checked; that
+  they existed is in the record. Two of the v1.1 cues (`program-stages`, `w3-program`) fire on no dev item and on exactly one
+  test item, au-rp02, which one probe paraphrases. v1.1 is therefore DEVELOPMENT evidence on every slice, not only the
+  authored one; only v1 is the preregistered held-out system.]* A product test written for the integration (`app/test/need.test.mjs`) exposed a v1
   defect: in "Every Monday at 9, pull last week's signups ...", the retrospective scope ("last week") switched off the schedule
   in the same sentence. 36 requests written after the freeze to look for defects of this kind (`probes.mjs`, labelled by the
   rubric, tuning data, never evidence) found 6 binary errors in v1. Changes (`need-primitives/1.1`): the retrospective scope
@@ -147,3 +158,35 @@ Recorded here, with date and reason, if any step above changes after this file i
   tuning in the same sense (no test output existed when it was frozen) but had one more author pass, over synthetic requests.
 - **Diagnostic added (no change to any rule):** a 5-fold dev cluster cross-validation of the fit and threshold rule
   (`fit.mjs --cv`), reported as development evidence only.
+
+## 9. Corrections (review of 2026-11-04; recorded after the fact, in a new commit, nothing above deleted)
+
+- **C1. Freeze-ordering record.** The row timestamps (`runs/*.jsonl`, field `at`) and the commit times show (table:
+  `results/ADDENDUM-REVIEW.md` §A):
+
+  | commit | what | committed (UTC) | judge rows that existed then |
+  |---|---|---|---|
+  | `f9641ff9` | router v1 frozen (step 3) | 21:30:26 | none |
+  | `45909902` | D1, D2 | 21:31:57 | 28/252 Haiku dev, 40/126 Mercury dev |
+  | `f13864a5` | step 4 frozen, D3 | 21:36:56 | all dev rows; no test row |
+  | `297a303e` | v1.1 frozen, D4 | 21:43:37 | all dev rows; 342/386 Haiku test, 193/193 Mercury test |
+  | `2fd70d02` | step 5 results | 21:51:45 | all |
+
+  What holds: the set, the prereg and router v1 were frozen before any judge row; the step-4 choice (δ = 0) was committed
+  before any test judge row. What does not: D1/D2's "before any judge output" (rows existed; reading is unverifiable), D3's
+  and D4's times, D4's "no test judge row had been computed", and RESULT's "v1.1 was frozen before any test output existed".
+  Consequence: **v1.1 is development evidence on every slice**; the preregistered claims rest on v1 only, as before.
+- **C2. Wording leaked from the item pool into the rubric, the judge prompt and the detectors** (review M1). RUBRIC.md was
+  written with the items, before the split, and quotes or closely paraphrases 6 test items (`results/ADDENDUM-REVIEW.md` §B);
+  the judge prompt carries two of those phrases; 6 v1 cues fire on test items and on no dev item. Re-scored without them, every
+  system moves by at most 0.03 recall and no false-trigger count changes (§B). The deeper dependence, one author for rubric,
+  labels and prompt, is not removed by any exclusion; only the sealed set (independent author, rubric and prompt frozen first)
+  removes it.
+- **C3. The protocol could not test the requirement or the band** (review M5). E1 = 0 with the threshold at the highest of 84
+  dev negatives passes with probability about 84/216 = 0.39 for any score whose negatives are exchangeable across splits; the
+  band, chosen in-sample where the router had 0 false triggers and recall 1.0, could only add errors. Out-of-fold, the band is
+  re-examined post-hoc in §E of the addendum. A future protocol states "never trigger" as a target false-trigger rate with a
+  Clopper-Pearson bound and calibrates on out-of-fold scores (`../router2/PROTOCOL-ROUTER-2.md`).
+- **C4. `f13864a5` was labelled FROZEN with wiring that threw** (`src/mcp.mjs` tool listing; fixed in `297a303e`; review m3).
+  The frozen router itself was unaffected (frozen-v1 is byte-identical to `f9641ff9` plus the δ = 0 record). Rule kept from
+  here: run the touched test files before any commit labelled FROZEN.
