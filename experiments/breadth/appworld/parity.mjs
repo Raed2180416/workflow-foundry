@@ -11,7 +11,8 @@
 // evaluate` runs) over OUR gold and null snapshots; determinism (a second run in fresh processes, identical digest);
 // side-effect mutants (BG-3); and the run.mjs per-unit path (one fresh serve process per unit) for the $0 baselines.
 //
-//   nice -n 15 node experiments/breadth/appworld/parity.mjs [--concurrency 3] [--limit N] [--out research/breadth-20261021/appworld/parity.json]
+//   nice -n 15 node experiments/breadth/appworld/parity.mjs [--concurrency 3] [--baseline-concurrency 2] [--limit N] [--out research/breadth-20261021/appworld/parity.json]
+// (the three run.mjs baselines run side by side, each with --baseline-concurrency workers, beside the batteries)
 // Batteries are cached host-only under a key of the code hashes; a rerun with the same code re-renders parity.json.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, linkSync, readdirSync, statSync } from 'node:fs';
 import { spawn } from 'node:child_process';
@@ -191,7 +192,7 @@ async function evaluateDir(rows, ids, policy, dir) {
   return { n: use.length, aggregate: ev.aggregate, upstreamSuccess: Object.values(ev.perTaskSuccess).filter(Boolean).length, agreeWithOurGrader: agree };
 }
 
-export async function runParity({ concurrency = 2, limit = null, out = path.join(RESEARCH, 'parity.json'), log = m => process.stderr.write(m + '\n') } = {}) {
+export async function runParity({ concurrency = 2, baselineConcurrency = null, limit = null, out = path.join(RESEARCH, 'parity.json'), log = m => process.stderr.write(m + '\n') } = {}) {
   const t0 = Date.now();
   const split = loadSplit();
   let ids = [...split.roles.devTrain, ...split.roles.devCheck];
@@ -223,19 +224,19 @@ export async function runParity({ concurrency = 2, limit = null, out = path.join
   // the batteries, so it runs beside them (each run resumes from its own results file).
   const runBaselines = async () => {
   const baselines = {};
-  for (const policy of ['null', 'docs', 'gold']) {
+  await Promise.all(['null', 'docs', 'gold'].map(async policy => {
     const runId = `parity-${code.slice(0, 10)}-${policy}${limit ? `-l${limit}` : ''}`;
     const prior = readJsonl(path.join(HOST_ROOT, 'runs', runId, 'results.jsonl'));
     let res;
     if (prior.length === ids.length) res = prior;
-    else res = (await runUnits({ ids, policy, profile: 'arm', runId, concurrency, maxTurns: 0, maxExecutes: 1e9, timeoutMin: 30, resume: prior.length > 0, outDir: null, log })).results;
+    else res = (await runUnits({ ids, policy, profile: 'arm', runId, concurrency: baselineConcurrency ?? concurrency, maxTurns: 0, maxExecutes: 1e9, timeoutMin: 30, resume: prior.length > 0, outDir: null, log })).results;
     const rows = new Map(res.map(r => [`${r.taskId}/${policy}@arm`, { key: `${r.taskId}/${policy}@arm`, success: r.verdict?.success, passCount: r.verdict?.passCount, failCount: r.verdict?.failCount,
       passSha256: r.verdict?.passSha256, failSha256: r.verdict?.failSha256, post: r.verdict?.gradedPostDigest, servePost: r.postDigest, outcome: r.outcome }]));
     baselines[policy] = { runId, rows, tgc: count(rows, [...rows.keys()], r => r.success === true), n: rows.size,
       sgc: (() => { const by = new Map(); for (const r of res) { const s = scenarioOf(r.taskId); by.set(s, (by.get(s) ?? true) && r.verdict?.success === true); } return [...by.values()].filter(Boolean).length; })(),
       scenarios: new Set(res.map(r => scenarioOf(r.taskId))).size, collateral: res.filter(r => r.outcome?.collateral).length };
     log(`[parity] run.mjs ${policy}: ${baselines[policy].tgc}/${baselines[policy].n} (${Math.round((Date.now() - t0) / 1000)} s)`);
-  }
+  }));
   return baselines;
   };
   const baselinesP = runBaselines();
@@ -304,6 +305,6 @@ export async function runParity({ concurrency = 2, limit = null, out = path.join
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const a = Object.fromEntries(process.argv.slice(2).reduce((acc, x, i, xs) => (x.startsWith('--') ? [...acc, [x.slice(2), xs[i + 1]?.startsWith('--') || xs[i + 1] === undefined ? true : xs[i + 1]]] : acc), []));
-  const res = await runParity({ concurrency: Number(a.concurrency ?? 2), limit: a.limit ? Number(a.limit) : null, out: a.out === 'none' ? null : (a.out ?? path.join(RESEARCH, 'parity.json')) });
+  const res = await runParity({ concurrency: Number(a.concurrency ?? 2), baselineConcurrency: a['baseline-concurrency'] ? Number(a['baseline-concurrency']) : null, limit: a.limit ? Number(a.limit) : null, out: a.out === 'none' ? null : (a.out ?? path.join(RESEARCH, 'parity.json')) });
   process.stdout.write(JSON.stringify({ pass: res.pass, checks: res.checks, bg1: res.bg1, bg2: res.bg2, bg3: { score: res.bg3.score, killed: res.bg3.killed, scored: res.bg3.scored }, bg4: res.bg4.equal, durationSec: res.durationSec }, null, 1) + '\n');
 }
