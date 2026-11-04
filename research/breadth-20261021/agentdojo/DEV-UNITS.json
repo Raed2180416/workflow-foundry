@@ -1,0 +1,954 @@
+{
+ "kind": "agentdojo-dev-units",
+ "version": 1,
+ "splitSha256": "773039a658ea9e6b5e98fb9f1e1c4feda818db457aaf0e8ce65c0a9b715cb3dc",
+ "rule": "split-rule.mjs pickInjections over upstream injection tasks that pass fail-to-pass on the pairing",
+ "evidence": "development: public user tasks and public upstream injection tasks",
+ "counts": {
+  "userTasks": 39,
+  "units": 117,
+  "pairingsChecked": 379,
+  "eligiblePairings": 377
+ },
+ "shortfall": [],
+ "units": [
+  {
+   "id": "banking/user_task_3/benign",
+   "suite": "banking",
+   "userTask": "user_task_3",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "banking/user_task_3/inj-a",
+   "suite": "banking",
+   "userTask": "user_task_3",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_2",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_3/inj-b",
+   "suite": "banking",
+   "userTask": "user_task_3",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_7",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_4/benign",
+   "suite": "banking",
+   "userTask": "user_task_4",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "banking/user_task_4/inj-a",
+   "suite": "banking",
+   "userTask": "user_task_4",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_8",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_4/inj-b",
+   "suite": "banking",
+   "userTask": "user_task_4",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_2",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_7/benign",
+   "suite": "banking",
+   "userTask": "user_task_7",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "banking/user_task_7/inj-a",
+   "suite": "banking",
+   "userTask": "user_task_7",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_7",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_7/inj-b",
+   "suite": "banking",
+   "userTask": "user_task_7",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_4",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_8/benign",
+   "suite": "banking",
+   "userTask": "user_task_8",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "banking/user_task_8/inj-a",
+   "suite": "banking",
+   "userTask": "user_task_8",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_6",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_8/inj-b",
+   "suite": "banking",
+   "userTask": "user_task_8",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_10/benign",
+   "suite": "banking",
+   "userTask": "user_task_10",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "banking/user_task_10/inj-a",
+   "suite": "banking",
+   "userTask": "user_task_10",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_1",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_10/inj-b",
+   "suite": "banking",
+   "userTask": "user_task_10",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_14/benign",
+   "suite": "banking",
+   "userTask": "user_task_14",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "banking/user_task_14/inj-a",
+   "suite": "banking",
+   "userTask": "user_task_14",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_7",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "banking/user_task_14/inj-b",
+   "suite": "banking",
+   "userTask": "user_task_14",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_1/benign",
+   "suite": "slack",
+   "userTask": "user_task_1",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "slack/user_task_1/inj-a",
+   "suite": "slack",
+   "userTask": "user_task_1",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_1/inj-b",
+   "suite": "slack",
+   "userTask": "user_task_1",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_2",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_2/benign",
+   "suite": "slack",
+   "userTask": "user_task_2",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "slack/user_task_2/inj-a",
+   "suite": "slack",
+   "userTask": "user_task_2",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_2",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_2/inj-b",
+   "suite": "slack",
+   "userTask": "user_task_2",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_3/benign",
+   "suite": "slack",
+   "userTask": "user_task_3",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "slack/user_task_3/inj-a",
+   "suite": "slack",
+   "userTask": "user_task_3",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_2",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_3/inj-b",
+   "suite": "slack",
+   "userTask": "user_task_3",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_4/benign",
+   "suite": "slack",
+   "userTask": "user_task_4",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "slack/user_task_4/inj-a",
+   "suite": "slack",
+   "userTask": "user_task_4",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_1",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_4/inj-b",
+   "suite": "slack",
+   "userTask": "user_task_4",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_7/benign",
+   "suite": "slack",
+   "userTask": "user_task_7",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "slack/user_task_7/inj-a",
+   "suite": "slack",
+   "userTask": "user_task_7",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_4",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_7/inj-b",
+   "suite": "slack",
+   "userTask": "user_task_7",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_8/benign",
+   "suite": "slack",
+   "userTask": "user_task_8",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "slack/user_task_8/inj-a",
+   "suite": "slack",
+   "userTask": "user_task_8",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_1",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_8/inj-b",
+   "suite": "slack",
+   "userTask": "user_task_8",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_4",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_10/benign",
+   "suite": "slack",
+   "userTask": "user_task_10",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "slack/user_task_10/inj-a",
+   "suite": "slack",
+   "userTask": "user_task_10",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_2",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_10/inj-b",
+   "suite": "slack",
+   "userTask": "user_task_10",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_15/benign",
+   "suite": "slack",
+   "userTask": "user_task_15",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "slack/user_task_15/inj-a",
+   "suite": "slack",
+   "userTask": "user_task_15",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_15/inj-b",
+   "suite": "slack",
+   "userTask": "user_task_15",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_18/benign",
+   "suite": "slack",
+   "userTask": "user_task_18",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "slack/user_task_18/inj-a",
+   "suite": "slack",
+   "userTask": "user_task_18",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "slack/user_task_18/inj-b",
+   "suite": "slack",
+   "userTask": "user_task_18",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_0/benign",
+   "suite": "travel",
+   "userTask": "user_task_0",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "travel/user_task_0/inj-a",
+   "suite": "travel",
+   "userTask": "user_task_0",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_2",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_0/inj-b",
+   "suite": "travel",
+   "userTask": "user_task_0",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_1/benign",
+   "suite": "travel",
+   "userTask": "user_task_1",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "travel/user_task_1/inj-a",
+   "suite": "travel",
+   "userTask": "user_task_1",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_1",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_1/inj-b",
+   "suite": "travel",
+   "userTask": "user_task_1",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_6",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_2/benign",
+   "suite": "travel",
+   "userTask": "user_task_2",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "travel/user_task_2/inj-a",
+   "suite": "travel",
+   "userTask": "user_task_2",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_2/inj-b",
+   "suite": "travel",
+   "userTask": "user_task_2",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_1",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_3/benign",
+   "suite": "travel",
+   "userTask": "user_task_3",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "travel/user_task_3/inj-a",
+   "suite": "travel",
+   "userTask": "user_task_3",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_4",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_3/inj-b",
+   "suite": "travel",
+   "userTask": "user_task_3",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_9/benign",
+   "suite": "travel",
+   "userTask": "user_task_9",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "travel/user_task_9/inj-a",
+   "suite": "travel",
+   "userTask": "user_task_9",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_4",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_9/inj-b",
+   "suite": "travel",
+   "userTask": "user_task_9",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_12/benign",
+   "suite": "travel",
+   "userTask": "user_task_12",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "travel/user_task_12/inj-a",
+   "suite": "travel",
+   "userTask": "user_task_12",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_12/inj-b",
+   "suite": "travel",
+   "userTask": "user_task_12",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_2",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_18/benign",
+   "suite": "travel",
+   "userTask": "user_task_18",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "travel/user_task_18/inj-a",
+   "suite": "travel",
+   "userTask": "user_task_18",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_2",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_18/inj-b",
+   "suite": "travel",
+   "userTask": "user_task_18",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_19/benign",
+   "suite": "travel",
+   "userTask": "user_task_19",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "travel/user_task_19/inj-a",
+   "suite": "travel",
+   "userTask": "user_task_19",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_4",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "travel/user_task_19/inj-b",
+   "suite": "travel",
+   "userTask": "user_task_19",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_0",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_0/benign",
+   "suite": "workspace",
+   "userTask": "user_task_0",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_0/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_0",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_0/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_0",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_13",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_1/benign",
+   "suite": "workspace",
+   "userTask": "user_task_1",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_1/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_1",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_9",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_1/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_1",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_4/benign",
+   "suite": "workspace",
+   "userTask": "user_task_4",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_4/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_4",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_12",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_4/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_4",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_0",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_5/benign",
+   "suite": "workspace",
+   "userTask": "user_task_5",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_5/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_5",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_5/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_5",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_4",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_8/benign",
+   "suite": "workspace",
+   "userTask": "user_task_8",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_8/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_8",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_6",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_8/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_8",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_11",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_11/benign",
+   "suite": "workspace",
+   "userTask": "user_task_11",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_11/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_11",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_4",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_11/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_11",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_6",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_12/benign",
+   "suite": "workspace",
+   "userTask": "user_task_12",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_12/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_12",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_13",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_12/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_12",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_11",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_15/benign",
+   "suite": "workspace",
+   "userTask": "user_task_15",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_15/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_15",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_15/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_15",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_13",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_16/benign",
+   "suite": "workspace",
+   "userTask": "user_task_16",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_16/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_16",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_6",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_16/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_16",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_10",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_26/benign",
+   "suite": "workspace",
+   "userTask": "user_task_26",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_26/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_26",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_26/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_26",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_8",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_27/benign",
+   "suite": "workspace",
+   "userTask": "user_task_27",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_27/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_27",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_27/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_27",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_6",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_28/benign",
+   "suite": "workspace",
+   "userTask": "user_task_28",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_28/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_28",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_3",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_28/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_28",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_4",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_30/benign",
+   "suite": "workspace",
+   "userTask": "user_task_30",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_30/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_30",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_0",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_30/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_30",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_9",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_35/benign",
+   "suite": "workspace",
+   "userTask": "user_task_35",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_35/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_35",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_9",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_35/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_35",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_8",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_37/benign",
+   "suite": "workspace",
+   "userTask": "user_task_37",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_37/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_37",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_1",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_37/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_37",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_9",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_38/benign",
+   "suite": "workspace",
+   "userTask": "user_task_38",
+   "condition": "benign",
+   "injectionTask": null,
+   "injectionSource": null
+  },
+  {
+   "id": "workspace/user_task_38/inj-a",
+   "suite": "workspace",
+   "userTask": "user_task_38",
+   "condition": "inj-a",
+   "injectionTask": "injection_task_12",
+   "injectionSource": "upstream"
+  },
+  {
+   "id": "workspace/user_task_38/inj-b",
+   "suite": "workspace",
+   "userTask": "user_task_38",
+   "condition": "inj-b",
+   "injectionTask": "injection_task_5",
+   "injectionSource": "upstream"
+  }
+ ],
+ "unitsSha256": "524d733d6c367f3e2e795ffc124ebbf0cb016242a5ea18c1d148abea48c55e8b",
+ "createdAt": "2026-10-28T18:15:41.858Z"
+}

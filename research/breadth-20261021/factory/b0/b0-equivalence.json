@@ -1,0 +1,134 @@
+{
+ "families": 12,
+ "identical": 12,
+ "results": {
+  "abr-fin-apintake": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  },
+  "abr-fin-receipts": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  },
+  "abr-hr-inbox": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  },
+  "abr-hr-referral": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  },
+  "abr-mkt-reviews": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  },
+  "abr-mkt-suppression": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle"
+   ]
+  },
+  "abr-ops-mailroom": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  },
+  "abr-ops-slawatch": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  },
+  "abr-sales-dealdesk": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle"
+   ]
+  },
+  "abr-sales-noshow": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  },
+  "abr-sup-gdpr": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  },
+  "abr-sup-routing": {
+   "identical": true,
+   "checked": [
+    "gen",
+    "hashes",
+    "meta",
+    "oracle",
+    "seeds",
+    "solvers"
+   ]
+  }
+ }
+}

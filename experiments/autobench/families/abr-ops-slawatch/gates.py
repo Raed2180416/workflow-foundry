@@ -70,8 +70,15 @@ def stream(seed: int) -> dict:
 # ---------------------------------------------------------------------------------------------------------------------
 # determinism and round trip
 # ---------------------------------------------------------------------------------------------------------------------
-def stream_hashes(out: dict) -> dict:
-    return {k: gen.sha(out[k]) for k in ("world0", "payloads", "triggers", "truth", "end")}
+import sys as _b0_sys  # B0: experiments/autobench on the path for the shared abr.lib
+from pathlib import Path as _B0Path
+if str(_B0Path(__file__).resolve().parents[2]) not in _b0_sys.path:
+    _b0_sys.path.append(str(_B0Path(__file__).resolve().parents[2]))
+from abr.lib import common as _abr_common  # noqa: E402
+from abr.lib import host as _abr_host  # noqa: E402
+
+
+stream_hashes = _abr_common.make_stream_hashes(gen.sha)
 
 
 def gate_determinism(seeds: list[int]) -> dict:

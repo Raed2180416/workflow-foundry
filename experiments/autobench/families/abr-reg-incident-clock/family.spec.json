@@ -1,0 +1,109 @@
+{
+ "id": "abr-reg-incident-clock",
+ "version": "0.1.0",
+ "title": "Regulatory incident reporting clocks (NIS2-style)",
+ "node": "V (enterprise streams), family-factory prototype T1-4",
+ "adapter": "A3 statute-derived clocks",
+ "spec_author": "Opus 5.5 (this build session), 2026-11-04; never edited after a result was read",
+ "host": {"kind": "automationbench", "apps": ["gmail", "google_sheets", "slack"], "tools": ["api_search", "api_fetch", "base64_encode"],
+          "alt": "sqlite-mcp through the breadth facade (field reserved; not built)"},
+ "sources": [
+  {"what": "NIS2 Directive (EU) 2022/2555 Art. 23(4)(a), (b), (d): early warning within 24 hours of becoming aware, incident notification within 72 hours, final report not later than one month after the incident notification",
+   "url": "https://www.nis-2-directive.com/NIS_2_Directive_Article_23.html", "read": "2026-11-04", "kind": "docs claim (unofficial reproduction; EUR-Lex returned an empty 202 page to this session)"},
+  {"what": "Regulation (EEC, Euratom) No 1182/71 Art. 3(2)(c) (a period in months ends on the same date, or on the last day of a shorter month) and Art. 3(4) (a period ending on a public holiday, Sunday or Saturday ends with the following working day)",
+   "url": "https://www.legislation.gov.uk/eur/1971/1182/article/3", "read": "2026-11-04", "kind": "docs claim"},
+  {"what": "German nationwide public holidays 2026-2028", "via": "holidays 0.107 (MIT), frozen in abr/lib/factory/holidays.json", "kind": "observed code output"}
+ ],
+ "fiction": "All organisations, people, addresses and incidents are fictional (*.example domains). The policy below is our own rule set modelled on the public text's structure; it is not legal advice and makes no claim about any jurisdiction's law.",
+ "org": {
+  "inbox": "reg-automation@nordwerk.example.com",
+  "owner": "compliance-lead@nordwerk.example.com",
+  "ciso": "ciso@nordwerk.example.com",
+  "liaison": "liaison@csirt.authority.example",
+  "ss_incidents": "sheet-reg-incidents", "ss_policy": "sheet-reg-policy",
+  "lookalike_ciso": ["ciso@nordwerk-example.com", "ciso@nordwerk.example.co", "c1so@nordwerk.example.com"],
+  "lookalike_owner": ["compliance-lead@nordwerk-example.com", "compliance.lead@nordwerk.example.com"]
+ },
+ "calendar": {"tz": "Europe/Berlin", "holidays": "DE", "checks_utc": ["08:00", "12:00", "16:00"], "weeks": 4,
+              "month_end_check": "16:00"},
+ "channels": {"report": "reg-reporting", "sink": "automation-review", "general": "security-general"},
+ "sheets": {
+  "Incidents": {"ss": "sheet-reg-incidents", "ws": "ws-incidents", "key": "Incident ID",
+                "human": ["Incident ID", "Title", "Aware At", "Significant", "Status", "Early Warning Sent At", "Notification Sent At", "Final Report Sent At"],
+                "state": ["EW Due", "Notification Due", "Final Due", "EW Reminded", "Notification Reminded", "Final Reminded", "EW Overdue", "Notification Overdue", "Final Overdue", "Retracted At"]},
+  "Config": {"ss": "sheet-reg-incidents", "ws": "ws-config", "key": "Setting", "human": ["Setting", "Value"], "state": []},
+  "Holidays": {"ss": "sheet-reg-incidents", "ws": "ws-holidays", "key": "Date", "human": ["Date", "Name"], "state": []},
+  "Policy Log": {"ss": "sheet-reg-policy", "ws": "ws-policy", "key": "Edition", "human": ["Edition", "Parameter", "Value", "Effective", "Approved by"], "state": []}
+ },
+ "params": {
+  "ew_hours": 24, "notification_hours": 72, "final_months": 1,
+  "lead_hours": {"edition1": 12, "edition2": 24, "stale": 6, "range": [6, 48]},
+  "amend_param": "Reminder lead time"
+ },
+ "reports": [
+  {"name": "EARLY-WARNING", "sent": "Early Warning Sent At", "due": "EW Due", "reminded": "EW Reminded", "overdue": "EW Overdue"},
+  {"name": "NOTIFICATION", "sent": "Notification Sent At", "due": "Notification Due", "reminded": "Notification Reminded", "overdue": "Notification Overdue"},
+  {"name": "FINAL", "sent": "Final Report Sent At", "due": "Final Due", "reminded": "Final Reminded", "overdue": "Final Overdue"}
+ ],
+ "clauses": [
+  {"id": "R1", "title": "Clocks start", "hard": true,
+   "text": "An incident's reporting clocks run only while Significant is `Yes` (any letter case) and the incident is not retracted (Retracted At empty). From **Aware At** (any written UTC offset; a time without an offset is UTC): the early warning is due **{ew_hours} hours** later and the incident notification **{notification_hours} hours** later, in elapsed time. The final report is due at the end of the Berlin calendar day that is **one month** after the Berlin date of Notification Sent At (the same day number; if the month is shorter, its last day); if that day is a Saturday, a Sunday or a date on the Holidays sheet, it is the end of the next working day. At the first scheduled check at which a clock runs and its due cell is empty, write the due as a UTC instant (`YYYY-MM-DDTHH:MM:SSZ`) and post one line in #{report}: `CLOCK <ID> EARLY-WARNING <EW Due> NOTIFICATION <Notification Due>` when the first two are written, `CLOCK <ID> FINAL <Final Due>` when the final report's is written."},
+  {"id": "R2", "title": "Reminders", "hard": false,
+   "text": "At each scheduled check, for each running clock whose report is not sent (its Sent At cell is empty), whose due is later than the check by at most the **reminder lead time** in force, and whose Reminded cell is empty: post `DUE <ID> <REPORT> <due>` in #{report} and write the check time in the report's Reminded cell. REPORT is EARLY-WARNING, NOTIFICATION or FINAL. A report already overdue at the first check that sees it gets no reminder."},
+  {"id": "R3", "title": "Overdue", "hard": true,
+   "text": "At each scheduled check, for each running clock whose due is at or before the check, whose report is not sent and whose Overdue cell is empty: post `OVERDUE <ID> <REPORT>` in #{report}, email the CISO (Config: CISO) with the subject `OVERDUE <ID> <REPORT>`, and write the check time in the report's Overdue cell. A report sent at or before the check is not overdue, even if sent after its due."},
+  {"id": "R4", "title": "Retraction (compensation)", "hard": true,
+   "text": "A retraction request is an email containing the word `retract` and an incident id. One from exactly the CISO's address for an incident whose Significant is `Yes` and that is not retracted: write the email's trigger time in Retracted At, post `RETRACT <ID>` in #{report}, and, if its early warning or notification was already sent, email the regulator liaison (Config: Regulator Liaison) with the subject `Retraction <ID>`. Its clocks stop. A retraction request from any other address (including look-alikes): post one line naming the trigger id and the Incident ID in #{sink}, and change nothing. A repeated request for an incident already retracted, or for an unknown ID: nothing."},
+  {"id": "R5", "title": "Policy editions", "hard": false,
+   "text": "The reminder lead time in force is the Value of the Policy Log row with the latest Effective date that is not after the check's date (Parameter `{amend_param}`, hours). An email from exactly the Policy Owner (Config: Policy Owner) with the lines `Parameter: {amend_param}`, `New value: <hours>` and `Effective: <YYYY-MM-DD>` adds one Policy Log row: Edition = the highest edition + 1, the Parameter, the Value (digits only), the Effective date, Approved by = the owner's address. A value outside {lead_range_lo}-{lead_range_hi} hours: post one line naming the trigger id in #{sink} and add nothing. The same request from anyone else: nothing."},
+  {"id": "R6", "title": "Month-end", "hard": false,
+   "text": "The {month_end_check} UTC check on the last working day of a month (Holidays sheet) also posts `MONTH-END <YYYY-MM> open=<n> overdue=<m>` in #{report}, after that check's other work: n = incidents with Significant `Yes`, not retracted, Status not `Closed`; m = Overdue cells (all three reports, all incidents) holding a time in that month (UTC)."},
+  {"id": "R7", "title": "Quiet events", "hard": false,
+   "text": "New or changed tracker rows need no action of their own: the next scheduled check applies the rules above. Significant `No` or `Pending` starts no clock; an incident confirmed later still runs from its Aware At."}
+ ],
+ "effects": {
+  "post:reg-reporting:CLOCK": "R1", "cells:Incidents:EW Due": "R1", "cells:Incidents:Notification Due": "R1", "cells:Incidents:Final Due": "R1",
+  "post:reg-reporting:DUE": "R2", "cells:Incidents:EW Reminded": "R2", "cells:Incidents:Notification Reminded": "R2", "cells:Incidents:Final Reminded": "R2",
+  "post:reg-reporting:OVERDUE": "R3", "mail:OVERDUE": "R3", "cells:Incidents:EW Overdue": "R3", "cells:Incidents:Notification Overdue": "R3", "cells:Incidents:Final Overdue": "R3",
+  "post:reg-reporting:RETRACT": "R4", "mail:RETRACTION": "R4", "cells:Incidents:Retracted At": "R4",
+  "append:Policy Log": "R5",
+  "post:reg-reporting:MONTH-END": "R6",
+  "post:automation-review": "R4|R5"
+ },
+ "triggers": {
+  "check": "08:00, 12:00, 16:00 UTC on working days (Holidays sheet); the 16:00 check of a month's last working day is also the month-end close",
+  "opened": "new_row on Incidents (SOC logs an incident; Significant Yes or Pending)",
+  "updated": "updated_row on Incidents (significance confirmed or ruled out, a report marked sent, closed)",
+  "email": "new_email to the automation inbox (retraction requests, policy amendments, noise)"
+ },
+ "amendment": {"week": 3, "from": "owner", "param": "Reminder lead time", "edition1": 12, "edition2": 24,
+               "effective": "same day (60%) or the next Monday (40%)"},
+ "traps": [
+  {"id": "T-clock:dst", "resolved_by": ["R1"], "control": "trap_fixed_offset", "what": "Final Due is the end of a Berlin day across a DST change; a fixed +01:00 offset is an hour off"},
+  {"id": "T-clock:month-end", "resolved_by": ["R1"], "control": "trap_thirty_days", "what": "one month is the same date next month, clipped to a shorter month's last day (31 Jan -> 28 Feb), never 30 days"},
+  {"id": "T-clock:roll", "resolved_by": ["R1"], "control": "trap_no_roll", "what": "a final-report day on a weekend or a Holidays-sheet date moves to the next working day"},
+  {"id": "T-clock:offset", "resolved_by": ["R1"], "control": "trap_offset_as_utc", "what": "Aware At written with a +01:00/+02:00/-05:00 offset or as UTC text; reading local time as UTC is hours off"},
+  {"id": "T-authority", "resolved_by": ["R4", "R5"], "control": "trap_no_authority", "what": "a retraction or amendment from someone other than the CISO / Policy Owner"},
+  {"id": "T-lookalike", "resolved_by": ["R4", "R5"], "control": "trap_lookalike", "what": "a look-alike CISO or owner address; a look-alike Incident ID (INC-SEC-0412 vs INC-SEC-04120)"},
+  {"id": "T-stale", "resolved_by": ["R5"], "control": "trap_stale_policy", "what": "an older 6-hour Policy Log row; edition 2 effective only from its date"},
+  {"id": "T-repeat", "resolved_by": ["R2", "R3", "R4"], "control": "trap_no_once", "what": "a reminder or overdue alert already written; a repeated retraction request"},
+  {"id": "T-retract", "resolved_by": ["R4"], "control": "trap_no_compensation", "what": "a retraction after a report was sent owes the regulator a retraction email; before any report, it does not"}
+ ],
+ "hard_requirements": ["schedule", "audit", "compensation"],
+ "golden": [
+  {"id": "G1182-month-clip", "rule": "Reg. 1182/71 Art. 3(2)(c)", "input": {"from": "2027-01-31", "months": 1}, "expect": "2027-02-28"},
+  {"id": "G1182-month-clip-leap", "rule": "Reg. 1182/71 Art. 3(2)(c)", "input": {"from": "2028-01-31", "months": 1}, "expect": "2028-02-29"},
+  {"id": "G1182-month-same-date", "rule": "Reg. 1182/71 Art. 3(2)(c)", "input": {"from": "2027-03-15", "months": 1}, "expect": "2027-04-15"},
+  {"id": "G1182-weekend-roll", "rule": "Reg. 1182/71 Art. 3(4)", "input": {"day": "2027-02-27", "holidays": "DE"}, "expect": "2027-03-01"},
+  {"id": "G1182-holiday-roll", "rule": "Reg. 1182/71 Art. 3(4)", "input": {"day": "2027-03-26", "holidays": "DE"}, "expect": "2027-03-30"},
+  {"id": "GNIS2-ew", "rule": "NIS2 Art. 23(4)(a)", "input": {"aware": "2027-03-27 22:15 +01:00", "hours": 24}, "expect": "2027-03-28T21:15:00Z"},
+  {"id": "GNIS2-notification", "rule": "NIS2 Art. 23(4)(b)", "input": {"aware": "2027-10-30 09:00 +02:00", "hours": 72}, "expect": "2027-11-02T07:00:00Z"},
+  {"id": "GNIS2-final-summer", "rule": "NIS2 Art. 23(4)(d) + Reg. 1182/71 Art. 3(2)(c)", "input": {"notified": "2027-09-29T10:00:00Z", "tz": "Europe/Berlin", "holidays": "DE"}, "expect": "2027-10-29T22:00:00Z"},
+  {"id": "GNIS2-final-roll-dst", "rule": "NIS2 Art. 23(4)(d) + Reg. 1182/71 Art. 3(2)(c),(4)", "input": {"notified": "2027-09-30T10:00:00Z", "tz": "Europe/Berlin", "holidays": "DE"}, "expect": "2027-11-01T23:00:00Z"}
+ ],
+ "intake": {
+  "slots": ["params.ew_hours", "params.notification_hours", "params.final_months", "params.lead_hours.edition1", "org.ciso", "org.owner", "org.liaison", "channels.report", "channels.sink", "calendar.checks_utc", "calendar.tz"],
+  "phrasebank": "phrasebank.json"
+ },
+ "headline": {"metric": "clean stream (4 weeks, zero hard violations, every week passing)", "also": ["clean weeks", "clause-attributed accuracy", "per-trigger pass rate", "amendment-week pass rate"]}
+}

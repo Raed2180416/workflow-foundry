@@ -1,0 +1,60 @@
+{
+ "probe": "BG-8 leakage from inside ($0)",
+ "at": "2026-10-22T02:41:40.261Z",
+ "secretPaths": [
+  "/var/tmp/foundry-work/benches/workbench/host-only/sealed/MANIFEST.json",
+  "/var/tmp/foundry-work/benches/workbench/host-only/sealed/COMPANION.json",
+  "/var/tmp/foundry-work/benches/workbench/host-only/parity",
+  "/var/tmp/foundry-work/benches/workbench/host-only/runs",
+  "/var/tmp/foundry-work/benches/workbench/host-only",
+  "/var/tmp/foundry-work/benches/workbench/src/data/processed/tasks_and_outcomes/email_tasks_and_outcomes.csv",
+  "/var/tmp/foundry-work/benches/workbench/src/data/results/item_level_results.csv.gz",
+  "/var/tmp/foundry-work/benches/workbench/src",
+  "/var/tmp/foundry-work/benches/workbench/venv/bin/python",
+  "<repo>/research/breadth-20261021/workbench/SPLIT.json",
+  "<repo>/beds",
+  "<repo>",
+  "/root/.claude",
+  "/home/user",
+  "/var/tmp/foundry-work/benches/workbench/work"
+ ],
+ "session": {
+  "sandboxReady": true,
+  "exit": 0,
+  "done": true,
+  "visible": [],
+  "keptDirListing": [
+   "mcp-relay.mjs",
+   "tools.json"
+  ],
+  "pass": true
+ },
+ "pythonTool": {
+  "isError": false,
+  "seen": [],
+  "network": "blocked: OSError",
+  "dns": "blocked: gaierror",
+  "root": [
+   "bin",
+   "dev",
+   "etc",
+   "home",
+   "lib",
+   "lib64",
+   "media",
+   "mnt",
+   "opt",
+   "proc",
+   "root",
+   "run",
+   "sbin",
+   "srv",
+   "tmp",
+   "usr",
+   "var"
+  ],
+  "pass": true
+ },
+ "worldTools": "covered by experiments/breadth/test/facade.test.mjs (unknown tool names, planted links and oversize requests are refused; the relay holds only the tool list)",
+ "pass": true
+}

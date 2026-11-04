@@ -1,0 +1,200 @@
+{
+ "actor_roles_by_event": {
+  "Goods Receipt Posted": {
+   "WAREHOUSE": 3176
+  },
+  "Invoice Blocked": {
+   "AP": 600
+  },
+  "Invoice Changed": {
+   "AP": 375
+  },
+  "Invoice Parked": {
+   "AP": 500
+  },
+  "Invoice Posted": {
+   "AP": 3000
+  },
+  "Invoice Received": {
+   "AP": 3000
+  },
+  "Invoice Unblocked": {
+   "AP": 600
+  },
+  "PO Released": {
+   "APPROVER": 3000
+  },
+  "Payment Executed": {
+   "TREASURY": 3096
+  },
+  "Payment Proposal Approved": {
+   "TREASURY": 3000
+  },
+  "Payment Proposal Created": {
+   "TREASURY": 3000
+  },
+  "Payment Reversed": {
+   "TREASURY": 96
+  },
+  "Purchase Order Created": {
+   "BUYER": 3000
+  },
+  "Three-Way Match Failed": {
+   "AP": 600
+  },
+  "Three-Way Match Passed": {
+   "AP": 3000
+  }
+ },
+ "counts": {
+  "invoices": 3000,
+  "purchase_orders": 3000,
+  "suppliers": 150
+ },
+ "event_type_counts": {
+  "Accounting Document Created": 3000,
+  "Advance Shipping Notice Received": 3000,
+  "Contract Referenced": 1000,
+  "Credit Memo Posted": 130,
+  "Delivery Date Changed": 333,
+  "Goods Receipt Posted": 3176,
+  "Goods Receipt Reversed": 176,
+  "Invoice Blocked": 600,
+  "Invoice Changed": 375,
+  "Invoice Parked": 500,
+  "Invoice Posted": 3000,
+  "Invoice Received": 3000,
+  "Invoice Unblocked": 600,
+  "PO Item Added": 3000,
+  "PO Item Deleted": 103,
+  "PO Item Delivery Completed": 3000,
+  "PO Item Final-Invoiced": 3000,
+  "PO Price Changed": 428,
+  "PO Quantity Changed": 600,
+  "PO Rejected": 230,
+  "PO Released": 3000,
+  "PO Sent to Supplier": 3000,
+  "PO Submitted for Approval": 3230,
+  "Partial Receipt Posted": 750,
+  "Payment Executed": 3096,
+  "Payment Proposal Approved": 3000,
+  "Payment Proposal Created": 3000,
+  "Payment Reversed": 96,
+  "Purchase Order Closed": 3000,
+  "Purchase Order Created": 3000,
+  "Purchase Requisition Created": 3000,
+  "Quality Inspection Failed": 600,
+  "Quality Inspection Passed": 2400,
+  "Quality Inspection Started": 3000,
+  "Quotation Evaluated": 3000,
+  "Quotation Revised": 428,
+  "RFQ Created": 3000,
+  "RFQ Sent": 3000,
+  "Requisition Converted to PO": 3000,
+  "Requisition Item Added": 3000,
+  "Requisition Item Changed": 772,
+  "Requisition Rejected": 272,
+  "Requisition Released": 3000,
+  "Requisition Submitted": 3272,
+  "Return to Supplier Posted": 300,
+  "Source Selected": 3000,
+  "Stock Placed in Blocked Stock": 600,
+  "Stock Released from Blocked Stock": 300,
+  "Supplier Blocked": 81,
+  "Supplier Confirmation Changed": 375,
+  "Supplier Confirmation Received": 3000,
+  "Supplier Quotation Received": 3000,
+  "Supplier Unblocked": 81,
+  "Three-Way Match Failed": 600,
+  "Three-Way Match Passed": 3000
+ },
+ "exception_flagged_events": {
+  "Goods Receipt Reversed": 176,
+  "Invoice Blocked": 600,
+  "PO Item Deleted": 103,
+  "PO Rejected": 230,
+  "Payment Reversed": 96,
+  "Quality Inspection Failed": 600,
+  "Requisition Rejected": 272,
+  "Stock Placed in Blocked Stock": 600,
+  "Supplier Blocked": 81,
+  "Three-Way Match Failed": 600
+ },
+ "invoice_event_rates": {
+  "Credit Memo Posted": 0.0433,
+  "Invoice Blocked": 0.2,
+  "Invoice Changed": 0.125,
+  "Invoice Parked": 0.1667,
+  "Invoice Unblocked": 0.2,
+  "Payment Executed": 1.0,
+  "Payment Reversed": 0.032,
+  "Three-Way Match Failed": 0.2,
+  "Three-Way Match Passed": 1.0
+ },
+ "invoices_per_po": {
+  "1": 3000
+ },
+ "invoices_received_per_week": {
+  "p10": 27.2,
+  "p50": 33.0,
+  "p90": 38.0,
+  "weeks": 93
+ },
+ "lag_days": {
+  "Goods Receipt Posted -> Invoice Received": {
+   "n": 3000,
+   "p25": 4.23,
+   "p50": 6.04,
+   "p75": 7.96,
+   "p90": 10.0
+  },
+  "Invoice Received -> Invoice Posted": {
+   "n": 3000,
+   "p25": 0.96,
+   "p50": 1.13,
+   "p75": 2.13,
+   "p90": 3.04
+  },
+  "PO Released -> Goods Receipt Posted": {
+   "n": 3000,
+   "p25": 4.28,
+   "p50": 6.04,
+   "p75": 7.68,
+   "p90": 9.63
+  },
+  "Purchase Order Created -> PO Released": {
+   "n": 3000,
+   "p25": 3.0,
+   "p50": 5.03,
+   "p75": 6.43,
+   "p90": 7.32
+  }
+ },
+ "note": "aggregates only; no identifier, business key or actor id is kept (THESIS D10). The OCEL carries no amounts, so amounts and tolerances in abr-p2p-audit are fictional policy values",
+ "po_event_rates": {
+  "Goods Receipt Reversed": 0.0587,
+  "PO Item Deleted": 0.0343,
+  "PO Price Changed": 0.1427,
+  "PO Quantity Changed": 0.2,
+  "PO Rejected": 0.0767,
+  "Partial Receipt Posted": 0.25,
+  "Quality Inspection Failed": 0.0,
+  "Return to Supplier Posted": 0.0
+ },
+ "sod_same_actor_rate": {
+  "PO Released & Purchase Order Created": 0.0,
+  "Purchase Order Created & Goods Receipt Posted": 0.0,
+  "Purchase Order Created & Invoice Posted": 0.0
+ },
+ "source": {
+  "bytes": 7393340,
+  "doi": "10.5281/zenodo.22079246",
+  "events": 100504,
+  "file": "procurechange.jsonocel.gz",
+  "licence": "CC BY 4.0",
+  "objects": 46353,
+  "record": "Zenodo 22079246 (Berti, A., Synthetic relational databases and reference OCELs, 2026-08-24)",
+  "sha256": "6ace16482a80393854b5075f8255326f8cbf0f1463ada1d43601e9d9a980ebd8",
+  "url": "https://zenodo.org/api/records/22079246/files/procurechange.jsonocel.gz/content"
+ }
+}

@@ -1,0 +1,141 @@
+{
+ "arrivals": {
+  "business_hours_share_mon_fri_9_18": 0.7286,
+  "incidents_per_week_mean": 494.1,
+  "observed_weeks": 50.4,
+  "weekday_hour_share": {
+   "0": 0.0085,
+   "1": 0.0073,
+   "2": 0.0049,
+   "3": 0.004,
+   "4": 0.0042,
+   "5": 0.0043,
+   "6": 0.011,
+   "7": 0.0222,
+   "8": 0.1035,
+   "9": 0.1243,
+   "10": 0.1176,
+   "11": 0.1015,
+   "12": 0.0547,
+   "13": 0.0673,
+   "14": 0.0927,
+   "15": 0.0877,
+   "16": 0.0761,
+   "17": 0.0436,
+   "18": 0.0178,
+   "19": 0.0108,
+   "20": 0.0084,
+   "21": 0.0138,
+   "22": 0.0084,
+   "23": 0.0055
+  },
+  "weekday_share": {
+   "0": 0.2387,
+   "1": 0.1987,
+   "2": 0.196,
+   "3": 0.1647,
+   "4": 0.1537,
+   "5": 0.0256,
+   "6": 0.0226
+  }
+ },
+ "awaiting_pause_episodes": {
+  "0": 0.7662,
+  "1": 0.219,
+  "2": 0.0132,
+  "3+": 0.0016
+ },
+ "change_linked_share": 0.0071,
+ "contact_type_share": {
+  "Direct opening": 0.0002,
+  "Email": 0.0024,
+  "IVR": 0.0004,
+  "Phone": 0.9908,
+  "Self service": 0.0063
+ },
+ "ever_paused_share": 0.2338,
+ "made_sla_rate": 0.6342,
+ "note": "aggregates only; no row, identifier or free text is kept (THESIS D10)",
+ "priority": {
+  "1 - Critical": {
+   "made_sla_rate": 0.0185,
+   "mined_sla_threshold_hours": 0.0,
+   "mined_threshold_accuracy": 0.9815,
+   "n_resolved": 270,
+   "resolve_hours_q": {
+    "p10": 2.6,
+    "p25": 17.38,
+    "p50": 80.24,
+    "p75": 274.51,
+    "p90": 616.44
+   },
+   "share": 0.0108
+  },
+  "2 - High": {
+   "made_sla_rate": 0.0049,
+   "mined_sla_threshold_hours": 0.0,
+   "mined_threshold_accuracy": 0.9951,
+   "n_resolved": 408,
+   "resolve_hours_q": {
+    "p10": 1.23,
+    "p25": 5.17,
+    "p50": 38.23,
+    "p75": 200.72,
+    "p90": 381.57
+   },
+   "share": 0.0164
+  },
+  "3 - Moderate": {
+   "made_sla_rate": 0.6454,
+   "mined_sla_threshold_hours": 91.68,
+   "mined_threshold_accuracy": 0.9096,
+   "n_resolved": 22010,
+   "resolve_hours_q": {
+    "p10": 0.1,
+    "p25": 0.4,
+    "p50": 21.55,
+    "p75": 146.68,
+    "p90": 374.61
+   },
+   "share": 0.9417
+  },
+  "4 - Low": {
+   "made_sla_rate": 0.8411,
+   "mined_sla_threshold_hours": 328.53,
+   "mined_threshold_accuracy": 0.951,
+   "n_resolved": 674,
+   "resolve_hours_q": {
+    "p10": 0.03,
+    "p25": 0.15,
+    "p50": 5.02,
+    "p75": 162.8,
+    "p90": 502.3
+   },
+   "share": 0.0311
+  }
+ },
+ "problem_linked_share": 0.0153,
+ "reassignment_count": {
+  "0": 0.5437,
+  "1": 0.2503,
+  "2": 0.0916,
+  "3": 0.0495,
+  "4": 0.0279,
+  "5+": 0.0369
+ },
+ "reopen_count": {
+  "0": 0.989,
+  "1": 0.0098,
+  "2+": 0.0012
+ },
+ "source": {
+  "attribution": "Amaral, C., Fantinato, M., & Peres, S. (2018). Incident management process enriched event log [Dataset]. UCI Machine Learning Repository.",
+  "dataset": "UCI Machine Learning Repository, ID 498: Incident management process enriched event log",
+  "doi": "10.24432/C57S4H",
+  "incidents": 24918,
+  "licence": "CC BY 4.0",
+  "rows_read": 141712,
+  "url": "https://archive.ics.uci.edu/static/public/498/incident+management+process+enriched+event+log.zip",
+  "zip_sha256": "6294e29a311647306bfdfc85783f7df66517c197b9cd49aa5ee36ba9c525d1d6"
+ }
+}

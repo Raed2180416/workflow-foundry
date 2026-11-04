@@ -1,0 +1,166 @@
+{
+ "kept_variant": {
+  "abr-hr-referral": [
+   "harness.py:load_solver"
+  ]
+ },
+ "lines_removed": 311,
+ "replaced": {
+  "abr-fin-apintake": [
+   "gates.py:stream_hashes",
+   "gates.py:_chan",
+   "gen.py:canon",
+   "gen.py:sha",
+   "gen.py:iso_z",
+   "gen.py:ms",
+   "gen.py:PlanError",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:load_solver",
+   "harness.py:trigger_seed",
+   "oracle.py:canon",
+   "oracle.py:_chan_id",
+   "oracle.py:is_sent",
+   "oracle.py:body_of"
+  ],
+  "abr-fin-receipts": [
+   "gates.py:stream_hashes",
+   "gates.py:_chan",
+   "gen.py:canon",
+   "gen.py:sha",
+   "gen.py:iso_z",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:load_solver",
+   "harness.py:trigger_seed",
+   "oracle.py:canon"
+  ],
+  "abr-hr-inbox": [
+   "gates.py:stream_hashes",
+   "gates.py:_chan",
+   "gen.py:canon",
+   "gen.py:sha",
+   "gen.py:iso_z",
+   "gen.py:ms",
+   "gen.py:PlanError",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:load_solver",
+   "harness.py:trigger_seed",
+   "oracle.py:canon",
+   "oracle.py:_chan_id",
+   "oracle.py:is_sent",
+   "oracle.py:body_of"
+  ],
+  "abr-hr-referral": [
+   "gates.py:stream_hashes",
+   "gates.py:_chan",
+   "gen.py:canon",
+   "gen.py:sha",
+   "gen.py:iso_z",
+   "gen.py:ms",
+   "gen.py:PlanError",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:trigger_seed",
+   "oracle.py:canon",
+   "oracle.py:_chan_id",
+   "oracle.py:is_sent",
+   "oracle.py:body_of"
+  ],
+  "abr-mkt-reviews": [
+   "gates.py:stream_hashes",
+   "gates.py:_chan",
+   "gen.py:iso_z",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:load_solver",
+   "harness.py:trigger_seed",
+   "lib.py:canon",
+   "oracle.py:is_sent",
+   "oracle.py:_chan_id"
+  ],
+  "abr-mkt-suppression": [
+   "lib.py:canon",
+   "oracle.py:body_of"
+  ],
+  "abr-ops-mailroom": [
+   "gates.py:stream_hashes",
+   "gates.py:_chan",
+   "gen.py:canon",
+   "gen.py:sha",
+   "gen.py:iso_z",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:load_solver",
+   "harness.py:trigger_seed",
+   "oracle.py:canon",
+   "oracle.py:_chan_id"
+  ],
+  "abr-ops-slawatch": [
+   "gates.py:stream_hashes",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:load_solver",
+   "harness.py:trigger_seed",
+   "lib.py:canon",
+   "oracle.py:_chan_id"
+  ],
+  "abr-sales-dealdesk": [
+   "lib.py:canon"
+  ],
+  "abr-sales-noshow": [
+   "gates.py:stream_hashes",
+   "gates.py:_chan",
+   "gen.py:canon",
+   "gen.py:sha",
+   "gen.py:iso_z",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:load_solver",
+   "harness.py:trigger_seed",
+   "oracle.py:canon",
+   "oracle.py:_chan_id"
+  ],
+  "abr-sup-gdpr": [
+   "gates.py:stream_hashes",
+   "gates.py:_chan",
+   "gen.py:canon",
+   "gen.py:sha",
+   "gen.py:iso_z",
+   "gen.py:ms",
+   "gen.py:PlanError",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:load_solver",
+   "harness.py:trigger_seed",
+   "oracle.py:canon",
+   "oracle.py:_chan_id",
+   "oracle.py:is_sent"
+  ],
+  "abr-sup-routing": [
+   "gates.py:stream_hashes",
+   "gates.py:_chan",
+   "gen.py:canon",
+   "gen.py:sha",
+   "gen.py:iso_z",
+   "harness.py:bridge",
+   "harness.py:StepBudgetExceeded",
+   "harness.py:Ctx",
+   "harness.py:load_solver",
+   "harness.py:trigger_seed",
+   "oracle.py:canon",
+   "oracle.py:_chan_id"
+  ]
+ },
+ "sha256_of_targets": "a176dffcb3278f4cab82213423698eeb74a16323baa8175a30ab67f782326e5c"
+}

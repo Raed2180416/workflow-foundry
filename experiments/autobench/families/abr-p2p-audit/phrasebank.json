@@ -1,0 +1,19 @@
+{
+ "about": "Messy-intake phrasings for abr-p2p-audit (spec author Opus 5.5, 2026-11-04). One {v} per phrase; $0 lint plus paid 3-model panel (intake.py). Status: panel pending.",
+ "open": ["Hello, AP here. We'd like the invoice checks automated; notes below.", "Requirements for the AP bot (first pass, sorry it's messy):",
+          "So audit flagged our three-way match again. Here's what we want automated."],
+ "close": ["Thanks, Mira", "Let me know if you need the supplier master too.", "That's all."],
+ "noise": ["Statements from suppliers are just noise for the bot.", "(Quarter-end is busy, but nothing changes for the rules.)",
+           "Credit notes are handled manually for now.", "Some suppliers put a $ sign in front of amounts, some don't."],
+ "slots": {
+  "params.tolerance.edition1": {"ask": "price tolerance in percent", "phrases": ["price can be up to {v} percent over the PO price", "tolerance is {v}% on unit price (round the limit to cents)"]},
+  "org.controller": {"ask": "the address that may change the tolerance", "phrases": ["only the AP controller at {v} can change the tolerance", "tolerance changes come from {v} and nobody else"]},
+  "org.audit": {"ask": "address to email on separation-of-duties holds", "phrases": ["SoD holds get emailed to {v} too", "tell internal audit ({v} ) about every SOD hold"]},
+  "channels.holds": {"ask": "Slack channel for holds and releases", "phrases": ["holds and releases go in #{v} on Slack", "post HOLD and RELEASE lines to the #{v} channel"]},
+  "channels.payments": {"ask": "Slack channel for payment runs", "phrases": ["payment run summary in #{v} please", "the run line goes to the #{v} channel"]},
+  "channels.reports": {"ask": "Slack channel for month-end", "phrases": ["month-end numbers in #{v} on the last working day", "month-end line goes to the #{v} channel"]},
+  "channels.sink": {"ask": "Slack channel for anything the bot cannot apply", "phrases": ["anything it can't apply goes to #{v} instead", "flag oddities in #{v} and change nothing"]},
+  "calendar.payment_time": {"ask": "payment run time", "phrases": ["payment runs are Tuesdays and Thursdays at {v} UTC", "we pay twice a week, Tue and Thu, {v} UTC (not on US federal holidays)"]},
+  "calendar.close_time": {"ask": "daily close time", "phrases": ["daily close is {v} UTC", "the end-of-day close runs at {v} UTC on working days"]}
+ }
+}

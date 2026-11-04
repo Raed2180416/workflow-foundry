@@ -1,6 +1,6 @@
 {
  "schema": "seed-ledger/1",
- "updated": "2026-10-15",
+ "updated": "2026-11-04",
  "about": "Per-(bed, split) seed ledger (BLOCKER-SYNTHESIS S0-5). Checked by experiments/jit/seeds.mjs assertSeedsAllowed (stream.mjs config validation) and by experiments/kev-data/lib/registry.mjs (the Kev factory refuses every range here that another owner holds as reserved or fresh). A seed range applies to every difficulty. beds ['*'] means every bed. allow: the purposes that may use the range (null: any purpose); a purpose with fresh: true also refuses ranges whose status is used or burned. Edit this file when a run consumes a range (status fresh -> used), in the same commit as the run's config.",
  "rules": {
   "heldoutMinSeed": 8001,
@@ -83,6 +83,21 @@
    "fresh": true,
    "heldout": true,
    "about": "need router: held-out label tasks, used once after the router freeze"
+  },
+  "factory-v-dev": {
+   "split": "dev",
+   "fresh": false,
+   "about": "family-factory node V families: practice and dev streams (gates G0-G12, scripted baselines, dev looks). research/breadth-20261021/factory/SPLIT.json"
+  },
+  "factory-v-sealed": {
+   "split": "test",
+   "fresh": true,
+   "about": "node V sealed streams (PLAN §6.6): 24 streams on 8850-8873, generated host-only, hashed in SPLIT.json; read only by the PREREG-V-1 runner"
+  },
+  "factory-heldout": {
+   "split": "test",
+   "fresh": true,
+   "about": "factory and AB-R held-out seed block (PLAN §6.4, OD-10); nothing generated yet"
   }
  },
  "ranges": [
@@ -1545,6 +1560,60 @@
    ],
    "use": "need router held-out label tasks (used once, after the freeze)",
    "source": "research/need-router-20261014/DESIGN.md section 4 and section 9 decision 8; DECISIONS-ADOPTED.md (2026-10-14)"
+  },
+  {
+   "id": "factory-v-dev",
+   "beds": [
+    "abr-itsm-queue",
+    "abr-p2p-audit",
+    "abr-reg-incident-clock",
+    "abr-erp-dunning"
+   ],
+   "split": "dev",
+   "from": 2101,
+   "to": 2160,
+   "status": "fresh",
+   "owner": "breadth-factory",
+   "allow": [
+    "factory-v-dev"
+   ],
+   "use": "2101-2112 practice (G9 second reader, builder-kit examples), 2113-2160 dev (gates, baselines, dev looks)",
+   "source": "research/breadth-20261021/factory/SPLIT.json; registered 2026-11-04 before any V generation"
+  },
+  {
+   "id": "factory-v-sealed",
+   "beds": [
+    "abr-itsm-queue",
+    "abr-p2p-audit",
+    "abr-reg-incident-clock",
+    "abr-erp-dunning"
+   ],
+   "split": "test",
+   "from": 8850,
+   "to": 8873,
+   "status": "reserved",
+   "owner": "breadth-factory",
+   "allow": [
+    "factory-v-sealed"
+   ],
+   "use": "node V sealed streams: family and messy-intake flag per seed by the hash rule in SPLIT.json (8 per family, 12 of 24 messy)",
+   "source": "research/breadth-20261021/PLAN.md §6.4-6.6 (OD-10); registered 2026-11-04 before any V generation"
+  },
+  {
+   "id": "factory-heldout",
+   "beds": [
+    "*"
+   ],
+   "split": "test",
+   "from": 8874,
+   "to": 8999,
+   "status": "reserved",
+   "owner": "breadth-factory",
+   "allow": [
+    "factory-heldout"
+   ],
+   "use": "factory and AB-R held-out block (OD-10: the AB-R README's 8801+ collides with need-heldout 8801-8848)",
+   "source": "research/breadth-20261021/PLAN.md §6.4; registered 2026-11-04"
   }
  ]
 }
