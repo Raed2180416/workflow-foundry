@@ -215,8 +215,8 @@ test('R1-M18: the C-O session of an announced change sees the spec as published,
   assert.match(n, new RegExp(`Change notice ${PUBLIC_ID.R1}`));
   assert.doesNotMatch(n, /\bR1\b|R2s/, 'no harness id');
   let seen = null;
-  const co = new ContractOwner({ session: () => ({ kind: 'stub', fn: async ({ workdir }) => { seen = { change: readFileSync(path.join(workdir, 'CHANGE.md'), 'utf8'), spec: readFileSync(path.join(workdir, 'SPEC-E.md'), 'utf8'), prev: readFileSync(path.join(workdir, 'SPEC-E.previous.md'), 'utf8') }; return { costUsd: 0 }; } }), runDir: path.join(scratch, 'co18'), practice: PRACTICE.slice(0, 1) });
+  const co = new ContractOwner({ session: () => ({ kind: 'stub', fn: async ({ workdir }) => { if (!seen) seen = { change: readFileSync(path.join(workdir, 'CHANGE.md'), 'utf8'), spec: readFileSync(path.join(workdir, 'SPEC-E.md'), 'utf8'), prev: readFileSync(path.join(workdir, 'SPEC-E.previous.md'), 'utf8') }; return { costUsd: 0 }; } }), runDir: path.join(scratch, 'co18'), practice: PRACTICE.slice(0, 1) });
   await co.forAnnounced('R1', b, pub);
-  assert.equal(seen.change, n);
+  assert.equal(seen.change, n, 'the first session sees the notice only (the revision adds the disagreement list)');
   assert.ok(seen.spec.includes(n) && !seen.prev.includes(n));
 });

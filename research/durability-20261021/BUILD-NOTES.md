@@ -126,12 +126,18 @@ Every command runs from the root of this worktree (or of main once this branch i
 detached from the chain script file, never typed inline. All spend goes to one ledger,
 `research/durability-20261021/runs/spend.jsonl`; rows and caps are prereg §12 (`run.mjs` `PRIORITY`).
 
-**Fix phase, before any money ($0): done 2026-11-04 (§9).** Prereg §11 corrected to `POWER.json`; the review fixes
-applied; the seed claim CLAIMED; the prereg FROZEN with every executed file's sha256 in its Appendix D; F-A written and
-committed (`FREEZE-A.json`). Superseded by §9 and the prereg's §13.1 as amended: the order below is the current one.
+**Fix phase, before any money ($0): done 2026-11-04 (§9, §10).** Prereg §11 corrected to `POWER.json`; both reviews
+applied; the seed claim CLAIMED; the tests and the $0 dry run re-run (§7, §8); the prereg FROZEN with every executed
+file's sha256 in its Appendix D; F-A written and committed (`FREEZE-A.json`). The order below is the current one (the
+prereg's §13.1 as amended).
+
+Before the first launch (the log directory must exist for the redirect):
+
+    mkdir -p research/durability-20261021/runs
 
 **P1, the sealed author (Opus 5.5 xhigh, $2 and 60 min per session, one revision; row cap $4).** The author phase first
-runs the $0 dry run on the frozen code (`run.mjs dry --light`, ~35 min; the chain stops if it fails), then P1:
+runs the $0 dry run on the frozen code (`run.mjs dry --light`, ~35-50 min; the chain stops if it fails), then P1. A
+failed author is terminal (exit 5, `SEALED.json` status `failed`; a re-run needs a dated amendment):
 
     setsid nohup sh experiments/durability/dur1-chain.sh author > research/durability-20261021/runs/chain-author.log 2>&1 &
 
@@ -156,52 +162,48 @@ The chain runs, in prereg §13.1 order, each as `nice -n 15 node experiments/dur
 | P5 | `heal --paid --streams s3`, `windows --paid --streams s3 --kind A-H` (skipped by K-4) | <= $13 |
 | P6 | `refm --paid` (S1-S3 maintained by Opus 5.5 xhigh on s1) | <= $6 |
 | P7 | `redteam --paid` (RT-O1, RT-O2 Opus xhigh, RT-H Haiku; blind baselines) | <= $8 |
-| WC-1 end, ADV-SET | `wc1 --when end`, `advset` | $0 |
+| WC-1 end, ADV-SET | `wc1 --when end`, `advset` (readings in force at stream end; sealed overlays in the end pass) | $0 |
+| P7 windows | `rtwindows --paid` (A-H on the two top ADV-SET worlds; inside P7's cap) | (P7) |
 | P8 | `windows --paid --kind A-Ox` (<= 6 cases, stop rule before each) | <= $7 |
-| P9 | `forks --paid` (MH-stale on s1, LD-H x 6) | <= $5 |
+| P9 | `forks --paid` (MH-stale on s1, LD-H x 6, MH-H->O last) | <= $5 |
 | analysis | `analyze` (writes runs/REPORT.json; owner table first) | $0 |
 
 Exit codes: 3 stops the chain (freeze changed or `--paid` missing; never a budget), 4 budget-stops a row and moves on,
-5 stops the chain (a stop rule: V-1, V-2, V-3, V-11, K-1, V-6, a missing K-0), 75 is an environment fault (wait 30
+5 stops the chain (a stop rule: V-1, V-2, V-3, V-11, K-1, V-6, a missing K-0, a failed or repeated sealed author), 75 is
+an environment fault, also K-5 low disk at a world start (wait 30
 minutes, resume the same step), anything else is retried once and then excluded and reported (the dry run and Stage Z:
 the chain stops). K-0 needs `runs/stagez/K0.json` with `"kill": false`.
 Resume after a restart: the same `setsid nohup sh ... after-author` line (finished steps leave `runs/.done-<step>`).
 
 ## 7. The $0 dry run (plumbing, never evidence)
 
-`DUR1_WORK=/var/tmp/foundry-work/dur1-dry2 nice -n 15 node experiments/durability/run.mjs dry --light --lineages
-b1lh-e8-1,ch-e8-1 --out /var/tmp/foundry-work/dur1-dry2/out` (34.7 min on the shared machine at load 15-38): **all 18
-steps ran** (seeds, author gates, Stage Z gates, exposure, static comparators, MH-H, MH-stale, attribution,
-certification, routed agent window, LD-H, WC-1, red team, sweep, +SH, m6, power, report). What it showed:
+**Re-run 2026-11-04 after both review batches** (code of commit `249d77f7` plus the VB-prefix stamp and the R1-M18 test
+fix): `DUR1_WORK=/var/tmp/foundry-work/dur1-dry nice -n 15 node experiments/durability/run.mjs dry --light` (lineages
+`b1lh-e8-1`, `ch-e8-1`; 58.9 min at load average about 30 on the shared machine). **All 20 steps ran** (the 18 of the
+first dry run plus `m6-analysis`, the real analysis's m6 path, and the report's new rules). Free disk 1.52 GB at the
+start, 1.2-1.3 GB at the end (other runs); DUR-1's own temp use was 3.9 MB, deleted.
 
 | Step | Output |
 |---|---|
-| seeds | every scheduled seed accepted; 8/8 probes in untouched or unclaimed ranges refused |
-| author (stub bundle) | count-only gates on 1223 at size 24: reference ok, controls fail; floors **not met** at that size (R2s 2/10, E2s 9/10, U1s 0/6), so the author step correctly refuses to seal |
-| Stage Z gates | V-1 ok on both worlds (30 and 29 completed); V-2: noop and charge-twice fail both; exposure counted per change |
-| static arms (W1, W2 passed/completed) | S-H* b1lh 23/29, 15/27; ch-e8-1 23/29, 14/27; REF-S S1 23/29, 24/27; R-static 23/29, 24/27; R-maint(2) and R-ceil 29/29, 26/27 |
-| MH-H (stub patcher) | b1lh: 6 sessions, 1 promotion (the API patch for the stub E2s notify rename, shadow canary passed, CAS promotion, re-run with byte-identical prefix), W2 15/27 -> 23/27; ch-e8-1: 10 sessions, 0 promotions (the scripted stub only patches monoliths) |
-| MH-stale fork | 1 promotion, same W2 as MH-H (the stale contracts did not matter for this patch) |
-| attribution | e.g. S-H* b1lh W2: E2s 9, R2s 2, L1 2, ADV 2 induced; after the heal MH-H b1lh: E2s 1 |
-| certification | the one promotion: `reject (partial-fix)` (fresh cases in the failing strata still fail: the compressed W2 stacks R2s, U1s and L1 on the same notice rules) |
-| windows | 4 cases selected, 8 pairs; the routed-tick count read 0 under F: defect 8 of §3, fixed after this run |
-| LD-H ld-k0 (stub revert, 1 manifest world) | healed, durable, 0 regressions, 0 false-complaint harm, 1 promotion |
-| WC-1 | 0 of 2 evaluations at the toy pool (fixed: a smaller pool for the dry run) |
-| red team (stub) | 2 probes, 2 scenarios, 2 valid, 0 bed findings; blind baseline 2 probes |
-| +SH | shielded 1/27 vs 15/27 with 38 refusals: defect 7 of §3, fixed after this run |
-| m6 | calibration 71 practice instances, 80 stream instances, 3 alarms in W2 (where the changes are) |
-| report | owner table first; K-0 pass, D-1 INCONCLUSIVE (n = 2 lineages), D-3 SUPPORTED against a do-nothing agent, D-5 YES, D-6 FAIL, D-4 / D-7 NOT RUN, D-8 NOT SHOWN (1 of 6 defects), D-11 NO VALUE SHOWN; 10 heal-requiring cells, durable 4/8, certified-durable 0/8; root-cause ledger 42 records |
+| seeds | 44 scheduled seeds accepted; 8/8 probes outside the claimed ranges refused |
+| author (stub bundle) | reference ok, controls fail; floors not met at size 24 (R2s 2/10, E2s 9/10, U1s 0/6), so the gate correctly refuses to seal; the stub's R2s world operator ran in the sandboxed worker |
+| Stage Z gates | V-1 ok (30 and 29 completed); V-2: noop and charge-twice fail both worlds |
+| static arms (W1, W2) | S-H* b1lh 23/29, 15/27; ch-e8-1 23/29, 14/27; REF-S S1 23/29, 24/27; R-static 23/29, 24/27; R-maint(2), R-ceil 29/29, 26/27 |
+| MH-H (stub patcher) | b1lh: 10 sessions, 1 promotion (the API patch), W2 15/27 -> 23/27, every re-run's prefix identical; ch-e8-1: 12 sessions, 0 promotions |
+| MH-stale fork | W2 23/27 |
+| attribution | e.g. S-H* b1lh W2: E2s 9, R2s 2, L1 2, ADV 2 induced; MH-H b1lh after its heal: E2s 1 |
+| certification | the one promotion: `reject (partial-fix)` |
+| windows (stub agent) | 4 cases, 6 ticks, all routed, 8 pairs |
+| LD-H ld-k0 | healed, durable, 0 regressions, 0 false-complaint harm |
+| WC-1 (toy pool) | 4/4 evaluations; Hajek failure estimate 0.098 (HT 0.220 with N = the pool); the top vector recurred on 2 of the 2 toy fresh salts, not confirmed (confirmation needs 3) |
+| red team (stub) | 2 probes, 2 valid scenarios, 0 bed findings |
+| +SH | shielded 15/27 = base 15/27, 0 refusals |
+| m6 | 10 onsets judged, 0 alarms (W1 0); with the light run's ONE practice world the cross-conformal calibration is degenerate, so these m6 numbers say nothing (the real analysis calibrates on three) |
+| report | owner table first; K-0 pass (R1 6/12 = 0.50, L1 4/5, E2s 18/18; E1 no induced failure); D-5 PARTIAL with (b), (c), (d) NOT EVALUATED (fail closed: no ADV-SET, REF-M or routed-window full-monitor fields in a dry run); D-6 FAIL in every variant; m6 N; root-cause ledger 36 records, INCOMPLETE (0 analyst-reviewed), so Q7 says no result text |
 
 None of these numbers is a DUR-1 result: two lineages, two 24-order worlds with every change stacked, designer-written
-stand-ins for the sealed changes and scripted patchers.
-
-**Not re-run after the last fixes.** Defects 7-9 were fixed after this dry run. The disk then fell below the 1.2 GB
-stop line (838 MB, then 794 MB free at 14:2xZ, used by other runs; DUR-1's own temp use was under 5 MB and is deleted),
-so the dry run was not repeated. Coverage of those fixes: 7 by `loop.test.mjs` (the shielded reference passes, no
-refusal, with and without F); 9 by `analysis.test.mjs`; 8 by a scratch check only (two routed cases under F: 2 ticks,
-both routed, both failed by the do-nothing agent) and the WC-1 toy-pool change not at all. First thing in the Fix
-phase, with disk above 1.2 GB: `DUR1_WORK=/var/tmp/foundry-work/dur1-dry nice -n 15 node experiments/durability/run.mjs
-dry --light`, then delete `/var/tmp/foundry-work/dur1-dry`.
+stand-ins for the sealed changes and scripted patchers. The first dry run (2026-11-04 morning, before the reviews) is
+summarised in the git history of this file (`a9b97e29`).
 
 ## 8. Tests (run one file at a time: `nice -n 15 node --test --test-concurrency=1 <file>`)
 
@@ -209,21 +211,24 @@ dry --light`, then delete `/var/tmp/foundry-work/dur1-dry`.
 |---|---|---|
 | `test/schedule.test.mjs` | 4 | schedule == prereg §4.1 (one-cell edits on either side fail); untouched seed ranges refused |
 | `test/units.test.mjs` | 6 | registry CAS / self-approval / tamper; complaint draws arm-independent; m6 null false alarms <= 0.10 and 4-vs-3; sealed hash; author bundle bounds; ledger rows, flow-down and meter; freeze change blocks; effort required |
-| `test/analysis.test.mjs` | 14 | TTD golden; sign-flip 1/512 and 2/512; Holm; two-way vs window-only bootstrap and the unit refusal; 3-point floor; certification partial-fix; zero-event bound; D-6 bands; R-maint/R-ceil timelines; model/report; HT unbiasedness; shield policy; power SD 0.0433 and D-3 size |
+| `test/analysis.test.mjs` | 15 | TTD golden; sign-flip 1/512 and 2/512; Holm; two-way vs window-only bootstrap and the unit refusal; 3-point floor; certification partial-fix; zero-event bound; D-6 bands; R-maint/R-ceil timelines; model/report; HT unbiasedness; shield policy; power SD 0.0433 and D-3 size; review batch 2 (false VB incidents, induced-only detection, U1s loudness, attribution ties, transient F, m6 rule, root-cause completeness, per-class D-6 power) |
 | `test/world.test.mjs` | 11 | V-1/V-2/determinism; effectiveFrom golden (p >= eff); R1 == drift D1; stacked anchors; E1r; critical-at-first; monitor rules; no signal on a correct deployment; V-6 prefix identity and hidden randomness; twins; C-O certification accepts the analyst reading and rejects the stale one |
 | `test/loop.test.mjs` | 6 | V-7 import walk; raw error payload in FAILURES.md and hygiene refusals; red-team firewall; the gate accepts the API patch and rejects the notice-dropping one; V-10 routing identity; shield on the reference |
-| `test/cli.test.mjs` | 3 | paid stages refuse without --paid and without the freeze, writing no ledger row |
+| `test/cli.test.mjs` | 3 | paid stages refuse without --paid and without the freeze, writing no ledger row; a scratch ledger and an EMPTY freeze directory, so no test can pass a freeze check once the real freezes exist |
 | `test/stages.test.mjs` | 2 | WC-1 pass with resume; ADV-SET cross-run on all 12 t0 code arms; A-H red-team window on the metered ledger |
+| `test/fixes.test.mjs` | 14 | both reviews: one world per vector; carried effective dates; budget vs freeze stops; metered end rows; reclaimable locks; one VB session per stream with per-lineage acceptance; contract patches and sealed world operators out of process (escape cannot write, hang times out, empty env); transition token guard; per-case canary findings; every world-day monitored after a promotion; harmful stubs never promoted; budget stops never end a stream; C-O sees the published spec and notice only |
 
-46 tests pass (about 8 minutes in all on the shared machine). Also run once after the imports: Move 0's
-`experiments/lib/certify.test.mjs` 20/20 and `gauntlet.test.mjs` 46/46; the seed ledger test 6/6.
+61 tests pass (2026-11-04, after both review batches; about 11 minutes in all on the shared machine): schedule 4,
+units 6, cli 3, fixes 14, world 11, loop 6, stages 2, analysis 15. The seed ledger test (`experiments/lib/ebed-seed-ledger.test.mjs`)
+6/6 after the claim. Move 0's `experiments/lib/certify.test.mjs` 20/20 and `gauntlet.test.mjs` 46/46 (run after the
+imports; unchanged since).
 
 ## 9. Fix phase (2026-11-04): the two build reviews of `a9b97e29`, applied
 
 Two reviews of the build (8 blockers, 23 majors, 13 minors; 5 blockers, 12 majors, 10 minors) reached this phase
-**truncated**: review 1 after its M10, review 2 after its M7. Every blocker and every major that was readable is applied
-below or disagreed with, with the reason; review 1's M11-M23, review 2's M8-M12 and both reviews' minors were not
-available to this phase and are **not addressed** (they must be read from the reviewers' outputs before any paid step).
+truncated: review 1 after its M10, review 2 after its M7. Every blocker and every major that was readable is applied
+below or disagreed with, with the reason. The rest (review 1's M11-M23 and minors, review 2's M8-M12 and minors) was
+recovered from the reviewers' own transcripts and is handled in §10.
 
 | Finding | What changed | Test |
 |---|---|---|
@@ -263,5 +268,65 @@ equals the prereg's Appendix D.
 
 **Not done in this phase (open):** V-9 (payload-derived case index); a stubbed rehearsal of the whole chain (R2-M7);
 a stream-level rollback test (the per-case comparison is tested as a function); finer resume than the lineage-stream;
-the MR11 `f6-reserve` check on the real L1 worlds (Stage Z's V-1 decides it and stops the chain if it bites); the
-truncated review items above.
+the MR11 `f6-reserve` check on the real L1 worlds (Stage Z's V-1 decides it and stops the chain if it bites). The
+truncated review items: §10.
+
+## 10. Fix phase, second batch (2026-11-04): the rest of both reviews
+
+The two reviews' full texts were recovered from the reviewer sessions' transcripts (the workflow had relayed them
+truncated). Every remaining blocker and major is applied or disagreed with below; cheap minors are applied, the others
+disclosed (prereg §15 items 17-19). Tests named in the last column are in `test/analysis.test.mjs` (`review batch 2`)
+and `test/fixes.test.mjs`.
+
+| Finding | What changed | Test |
+|---|---|---|
+| R1-M11 D-5(d) unequal monitors | the agent window is scored under m1-m3 with the readings in force at the world's end (`windowRecord` `silentFull`); D-5(d) decides on MH-H vs A-H both under m1-m3 without complaints; the m1-only pair is printed beside it | by reading (needs a paid window) |
+| R1-M12 D-5 without complaints | `D5noComplaints` beside the binding D-5 (with complaints, §4.3) | report |
+| R1-M13 D-6 | a detection only on a change-INDUCED failing case; `announcedFired` from m4 within a day of the onset; D-6 with/without m5 and with/without m2; m6 computed on the reference journals of each stream (`m6Analysis`) with the adoption rule (`m6Rule`) | `analysis` batch 2 |
+| R1-M14 D-10 U1s | loud = an incident tied to U1s (VB complaints naming a U1s-induced case, or a defect incident holding one), delay 0 when opened before the complaint; lineage-streams without such a complaint excluded and listed | `analysis` batch 2 |
+| R1-M15 D-2 cost | marginal $ per lineage-stream from the ledger (every attempt) + C-O share; VB C-O $ charged to U1s's cells of its stream | by reading |
+| R1-M16 attribution ties | count, then non-P1, then the smaller exposure set, then the id | `analysis` batch 2 |
+| R1-M17 D-7 | A-Ox windows read and paired with MH-H on the same cases; all-in $/case = FH-1 build + commissioning ($1.174 per lineage, RESULT-FH1.md:343) + stream marginal | by reading |
+| R1-M18 / R2-M9 C-O inputs | the announced C-O session runs on the spec at publication + 1 ms, the spec just before, and CHANGE.md = the in-world notice (never the sealed label or t0 spec) | `fixes` R1-M18 |
+| R1-M19 VB conversion | days 1..d re-judged under the accepted reading; only the m2 findings it ADDS are ingested | by reading; B2 stream test still passes |
+| R1-M20 | = R2-M4 (first batch: per-attempt scope) | - |
+| R1-M21 false incidents | a VB incident is false iff every complained case passes for the arm; practice evidence left out | `analysis` batch 2 |
+| R1-M22 D-8 | the indirect path (false complaint -> accepted VB reading -> later promotion) counts; harm stays a regression against the incumbent (the incumbent is a latent-defect mutant; the prereg text now says so) | by reading |
+| R1-M23 root-cause ledger | grade tuple carries the first-divergence rule (`g[7]`); key rule x change class x arm with silent counts; complete only when `runs/ROOT-CAUSE-REVIEW.json` reviews every record | `analysis` batch 2 |
+| R1-M23 D-6 power | `recallClassOC`: per class (3 stream clusters x 9 lineages), all classes must pass; prereg restated (0.62 at a true 0.97 with 4 classes, was "1.00") | `analysis` batch 2; POWER.json |
+| R1-M23 visible config | preregistered as built (§6.3): rulebook editions and API schema renames published by the alarm are visible configuration (m4), applied to practice from its start | prereg |
+| R2-M8 freeze closure | F-A = its roots plus their import closure (113 files); F-B = every executed module's closure + read files (134 in Appendix D) | `freeze.mjs digests` |
+| R2-M10 P0 k | first batch (P0 counts its sessions and always writes P0.json) | - |
+| R2-M11 author | a failed author is terminal (exit 5); SEALED.json of any status refuses a re-run; attempts already on the ledger count (never more than one session + one revision) | by reading |
+| R2-M12 world-operator VM | sealed world operators run in `worldop-worker.mjs` under Node's permission model (no writes, no children, empty env), with a time limit on definition AND call; cached per input digest; output identical to the old VM on the stub | `fixes` R2-M12 |
+| R2-M7 rehearsal | **not built** (prereg §15 item 18): Stage Z alone is 8-12 CPU-h; P0 (<= $2) is the first paid exercise | - |
+| R1-mi1 HT | every included index evaluated; Hájek ratio over valid worlds (HT kept as `ht`) | `analysis` HT |
+| R1-mi2 end pass | end-of-stream WC-1 and ADV-SET judge every arm with the readings in force at stream end; sealed overlays (R2s d4, U1s d3, E2s d5) in the end pass | by reading |
+| R1-mi3 transient F | F cells out of every durable share; damage and first clean day reported | `analysis` batch 2 |
+| R1-mi4 W6 falsifier | U1s's exposed cases dropped on both sides | by reading |
+| R1-mi5 D-9 | R1's exposure only, W3-W6 | by reading |
+| R1-mi6 boundary certification | evidence, history replay and regression set from the gating world (k-1) for boundary and deferred promotions (`deferred: true` recorded) | by reading |
+| R1-mi7 C-O revision list | not adopted (§6.4 specifies it; practice cases are certification fixtures) | - |
+| R1-mi8 leaks | in-world ids CN-1 (R1), CN-2 (R2s), ed-2026-3 (P1) in the spec notice, CHANGE.md and the heal notice list; AUTHOR-BRIEF tells the author its R2s label is published | `fixes` R1-M18 |
+| R1-mi9 reference pools in the gate | not adopted (§15 item 18) | - |
+| R1-mi10 VB acceptance | journal up to the alarm; others = cases judged in the rule's 3-day window | by reading |
+| R1-mi11 V-9 text | monitor header corrected | - |
+| R1-mi12 m6 calibration | cross-conformal p over the three leave-one-world-out folds | by reading |
+| R1-mi13 power MC error | SEs printed; size at the margin re-simulated with 4,000 replications: 0.020 (SE 0.002) | POWER.json |
+| R1-mi14 K-0 | L1 and E2s added to K-0; D-4 names R-maint(2) "not a human" | by reading |
+| R2 minor 1 stale freeze | every paid session re-hashes the frozen files (`checkFilesSync`) | by reading |
+| R2 minor 2 ledger race | check + start row under one ledger lock (`withLedgerLock`; the agent meter too); a stop in a background P3 worker already reached the chain (first batch) | by reading |
+| R2 minor 3 disk | K-5 checked at every world start in `runStream` (exit 75) | by reading |
+| R2 minor 4 Opus wait | P1, P6-P9; at most 4 x 30 min | `sh -n` |
+| R2 minor 5 model ids | not adopted (§15 item 19): ids are checked against the policy in every preflight | - |
+| R2 minor 6 CLI tests | scratch DUR1_RUNS and an EMPTY `DUR1_FREEZE_DIR` (test hook): after the freeze, no test can pass a freeze check and spend; the real ledger is asserted untouched | `cli` |
+| R2 minor 7 orphans | disclosed (§15 item 18) | - |
+| R2 minor 8 temp dirs | the CLI and stages tests remove `/var/tmp/foundry-work/dur1-test` | - |
+| R2 minor 9 Stage Z resume | disclosed | - |
+| R2 minor 10 shared files | run from this worktree only (the freeze pins files live workflows edit on main) | - |
+
+**Found while fixing (not in either review).** A reading that becomes visible during a world (an announced change's
+certified reading at publication, an accepted verifier-blind reading) reached the later days' m2 only at the next re-run:
+the day signals had been computed at the world's start. If no heal landed, the rest of the world was judged by the stale
+contracts (silent R1/R2s failures). `stream.mjs` `refreshAfter` now re-judges the days after d whenever the readings
+change (prereg §6.3 "Readings in force").
