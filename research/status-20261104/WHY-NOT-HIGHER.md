@@ -29,13 +29,52 @@ Source: `P1-RESULT-HEADLINE.md`, including its failure anatomy, reproducible wit
 
 | Root cause | Share of v2's 31 failures | Evidence |
 |---|---|---|
-| **Hard for everyone** (task difficulty or benchmark defects; not yet split) | 17 | Failed by every arm, Opus 5.5 xhigh included |
+| **Hard for everyone**, and mostly not defects (§1a) | 17 | Failed by every arm, Opus 5.5 xhigh included. 15 have an assertion no arm ever passed; 12 of those include a forbidden effect |
 | **The checker knew, but there is no second pass** | 19 (hard-fail 7, hard-undecided 6, advisory-fail 6) | v2 is single-pass by design. Other arms solved 7 of these 19. VL-1's ungated repair fixed 0 and broke 2 |
 | **Silent misses: a requirement was never stated**, so no check tested it | 12 | All of v2's checks passed and the grader failed the run. By kind: content 4, forbidden effects 4, mixed 4. v2-M (Mercury as reader) solved 6 of the 12, which suggests variance between readers rather than a fixed blind spot |
 | **Exact details in messages** | assertion families | `gmail…body_contains` in 9 failures; Slack must-exist or must-be-in-channel in 9; "must not send, post or create" in 11 |
 | Near misses | 10 failures miss exactly one assertion; 13 have partial credit ≥ 0.8 | — |
 
-The ideological gaps behind these, with what fits each:
+### 1a. The audit of the 17 tasks every arm failed ($0, 2026-11-04)
+
+Reproduce with `python3 -I experiments/autobench/replay/look2_blocking.py`; the output is `runs/look2-blocking.json`.
+
+- **15 of the 17 have a blocking assertion** that no arm, Opus included, ever passed. In the other 2, every assertion was
+  passed by some arm, but no arm passed them all at once.
+- **12 of the 15 include a forbidden-effect assertion** ("must not send, create or post").
+- **13 of the 17 worlds hold explicit directive or policy text.** This is a keyword count, so it is indicative only.
+- **I read 6 of these worlds by hand.** In every one, the rule that decides the task is in the world, and every system
+  followed the literal request instead:
+  - `hr.zoom_all_hands_setup`: the request asks for an executive session. An email from the EA says "IMPORTANT: The
+    executive session ... is organized and managed EXCLUSIVELY by the Executive Assistant. Please do NOT set up any
+    executive meetings." Every arm created one.
+  - `marketing.partner_commission_calculation`: a partner's tier is "Churned", rate 0%. Every arm emailed it a
+    statement.
+  - `operations.asana_fire_drill`: a policy sheet says emails containing "DRAFT" or "DO NOT ACTION" are not actioned.
+    Every arm created the forbidden task.
+  - `sales.priority_selection`: an "Advisory Routing Guidelines" email says to send to the most senior executive and
+    break ties by tenure. Every arm sent to the SVP of Sales.
+  - `hr.probation_review_reminder`: an HR-director policy email and the probation sheet decide who gets a reminder.
+    Every arm reminded a manager who should not be reminded.
+  - `support.intercom_sf_opportunity_alerts`: notes and exclusions follow from the CRM state. Every arm missed them.
+- **Reading:** in the sample I read, these are not benchmark defects. They test **source authority**: guidance in the
+  world (a policy, a later or more authoritative message, an eligibility field) narrows or overrides the literal
+  request. The system prompt says as much ("an authoritative workflow"). Frontier and cheap models alike follow the
+  request.
+
+**The gap, and why it is ideological for Foundry in particular.** Foundry's security rule is that task documents are
+untrusted data, never instructions. A harness that simply obeyed emails would be prompt-injectable. The benchmark rewards
+obeying them. The resolution keeps the rule. **Data may restrict, never authorise:**
+- a rule found in the world may **veto** an effect, or **choose among candidates the request already authorises** (which
+  Apex executive, which partners);
+- it may never **add** an effect, a recipient outside the request's scope, or a capability.
+
+That is a declassification in the safe direction only, and it fits the taint model. In A1-C, it would be a
+policy-discovery step in the inventory (policy sheets, guidance emails, "latest" and "UPDATED" messages, eligibility
+fields) that produces typed constraints with provenance (veto, select-among, supersede-within-scope). These would be
+enforced in code before any effect fires. It is the same missing object as Δ\*, made concrete: the forbidden part of the
+expected final state.
+
 
 1. **No closed-world model of the expected end state (Δ\*).** The ledger lists what to do; nothing in code states what
    the world must and must not look like afterwards. That is the root of the silent misses: forbidden effects and exact
@@ -170,6 +209,8 @@ high-leverage reads), not to tier everything down.
 
 ## 13. The recurring gaps, ranked by how many beds they explain
 
+0. **Source authority.** Guidance in the world overrides the literal request (§1a). It explains most of the 17
+   AutomationBench tasks no system solves, Opus included. The safe fix: data may restrict, never authorise.
 1. **Verification precision is the binding constraint.** AutomationBench, VL-1, C0, the tracker and FH-1. Own checks
    are near chance, and judges correlate. Only independent paths help: code against model, another model family, a
    probe of the world, Δ\*. Fixing this raises every other number, because selection, repair, healing and reuse all
@@ -191,6 +232,9 @@ high-leverage reads), not to tier everything down.
 
 ## 14. What would move AutomationBench most, for little money (hypotheses for a fresh, preregistered look)
 
+0. **Policy discovery with restrict-only constraints** (§1a): veto and select-among rules from policy sheets, guidance
+   emails and eligibility fields, enforced before any effect. It targets the 15 tasks that are currently unsolved by
+   every system, so it is the only lever here that can raise the ceiling (43) rather than our position under it.
 1. **A union of two readers' ledgers (Haiku and Mercury).** v2-M solved 6 of the 12 silent misses. Mercury is listed at
    $0 under the allowance.
 2. **A gated single repair round on hard-fail and hard-undecided runs (19 of 31).** Promote the repair only if no check
