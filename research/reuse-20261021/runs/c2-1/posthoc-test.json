@@ -1,6 +1,6 @@
 {
  "kind": "c2-posthoc",
- "note": "POST-HOC, not preregistered: consumer-side conformance on B's labelled history before reuse",
+ "note": "POST-HOC, not preregistered: consumer-side conformance on B's labelled history before reuse. m3.supplierExact* added 2026-11-04 (review finding 1): the admission unit is the supplier.",
  "set": "test",
  "perSource": {
   "S0": {
@@ -64,12 +64,32 @@
     "parentExact": {
      "decision": "serve",
      "upper": 0.035948038697271534,
-     "nEff": 81.82806324110672
+     "n": 91,
+     "nEff": 81.82806324110672,
+     "deff": 1.1120879120879121
     },
     "crossedExact": {
      "decision": "no-decision",
      "upper": 0.28315188720266116,
-     "nEff": 8.99913062377744
+     "n": 91,
+     "nEff": 8.99913062377744,
+     "deff": 10.112087912087912
+    },
+    "supplierExact": {
+     "decision": "no-decision",
+     "upper": 0.08614025507891548,
+     "n": 91,
+     "nEff": 33.257028112449795,
+     "deff": 2.7362637362637363,
+     "suppliers": 5,
+     "wrongSuppliers": 0
+    },
+    "supplierExactRho1": {
+     "decision": "no-decision",
+     "upper": 0.45365274029843616,
+     "n": 91,
+     "nEff": 4.955715140634351,
+     "deff": 18.36263736263736
     }
    },
    "bySource": {
@@ -146,12 +166,32 @@
     "parentExact": {
      "decision": "serve",
      "upper": 0.04495735413143681,
-     "nEff": 65.12562814070351
+     "n": 72,
+     "nEff": 65.12562814070351,
+     "deff": 1.1055555555555556
     },
     "crossedExact": {
      "decision": "no-decision",
      "upper": 0.289233825828498,
-     "nEff": 8.77454299255247
+     "n": 72,
+     "nEff": 8.77454299255247,
+     "deff": 8.205555555555556
+    },
+    "supplierExact": {
+     "decision": "no-decision",
+     "upper": 0.1069824030725251,
+     "n": 72,
+     "nEff": 26.475995914198165,
+     "deff": 2.719444444444444,
+     "suppliers": 4,
+     "wrongSuppliers": 0
+    },
+    "supplierExactRho1": {
+     "decision": "no-decision",
+     "upper": 0.530939440784383,
+     "n": 72,
+     "nEff": 3.957251908396947,
+     "deff": 18.194444444444443
     }
    },
    "bySource": {
@@ -228,12 +268,32 @@
     "parentExact": {
      "decision": "kill",
      "upper": 0.3943135273517461,
-     "nEff": 62.34907706195461
+     "n": 112,
+     "nEff": 62.34907706195461,
+     "deff": 1.796337737104089
     },
     "crossedExact": {
      "decision": "kill",
      "upper": 0.6178740781923662,
-     "nEff": 8.684636079106744
+     "n": 112,
+     "nEff": 8.684636079106744,
+     "deff": 12.89633773710409
+    },
+    "supplierExact": {
+     "decision": "kill",
+     "upper": 0.6366549211141024,
+     "n": 112,
+     "nEff": 7.847887323943663,
+     "deff": 14.271356783919597,
+     "suppliers": 7,
+     "wrongSuppliers": 3
+    },
+    "supplierExactRho1": {
+     "decision": "no-decision",
+     "upper": 0.6741655968942435,
+     "n": 112,
+     "nEff": 6.479338842975207,
+     "deff": 17.285714285714285
     }
    },
    "bySource": {
