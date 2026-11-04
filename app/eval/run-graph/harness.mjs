@@ -8,9 +8,18 @@
 //   B0   app/dashboard today: run status words, explainRun's failed step (top level only), inbox approvals of runs whose status is awaiting_approval
 //   C+   the oracle itself (must score 100%: checks the scorer)
 //   C-   T with its states, waiting list and cause blanked (must score far below T: checks the scorer has teeth)
+// Arms added after the held-out look (review 2026-11-04, M1, M2, m3; post-hoc, never part of the frozen look; they add answers and change no
+// other arm's):
+//   B1-leaf  B1 with T's failing-step rule (failingOf) applied to B1's unmodified reducer: whether the prototype holds the failing item
+//   B1-cf    B1 with its 'checkfailed' state read as a problem instead of as working (the other reading of an ambiguous state)
+//   T-chain  T at the final moment without the journal: cost from the chain alone, scored against the journal (the independent cost check)
 // Questions (the persona tasks of the plan, as data): Q-state (what is each step doing), Q-run (what is the run doing), Q-wait (what waits
 // for me), Q-fail (which step failed and with what code), Q-cost (what did each step cost), Q-line (does the one-line summary name the
 // failing step and the cost).
+// Independence (review M2): state, wait*, fail and failDeep compare T's reading of the chain with the checkpoint rows. run, cost (with the
+// journal) and line are consistency checks: T and the oracle get the same status and owner flag (run), the same journal rows (cost), and
+// line was checked against T's own failing label. The independent versions are T-chain's cost, lineStep (the line names the oracle's
+// failing step) and lineCost (the line states the journal's total within its printed precision).
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -81,7 +90,13 @@ function recordCrash(dir, sc) {
 }
 
 // ------------------------------------------------------------------------------------------------------------- the oracle
-const statusesOf = cp => Real.checkpointStatuses(cp);
+// Node status per node key from the checkpoint (root nodes and every frame), written here, not imported from the system under test (M2).
+export function statusesOf(cp) {
+  const out = new Map();
+  for (const [id, n] of Object.entries(cp.nodes ?? {})) out.set(`root/${id}`, n);
+  for (const [frame, f] of Object.entries(cp.frames ?? {})) for (const [id, n] of Object.entries(f.nodes ?? {})) out.set(`${frame}/${id}`, n);
+  return out;
+}
 const defOf = (workflow, key) => C.defOf(workflow, key);
 const approvedFor = (cp, key) => Object.values(cp.approvals ?? {}).some(a => a.nodeKey === key && a.status === 'approved');
 function ownTruth(cp, workflow, key, st, executing) {
@@ -133,6 +148,9 @@ export function truthCost(journal, id) {
 
 // ------------------------------------------------------------------------------------------------------------- the arms
 const B1_USER = { idle: 'idle', skipped: 'idle', cancelled: 'idle', queued: 'working', calling: 'working', running: 'working', retrying: 'working', escalated: 'working', checkfailed: 'working', waiting: 'working', needsyou: 'needs_you', failed: 'problem', envfault: 'problem', uncertain: 'problem', done: 'done', handled: 'done' };
+// m3: the prototype labels 'checkfailed' "Check failed" with a warning glyph and animates it (it is also the state while a step resamples), so
+// it can be read either way; B1-cf reads it as a problem.
+const B1_USER_CF = { ...B1_USER, checkfailed: 'problem' };
 const STATUS_USER = { succeeded: 'done', failed: 'problem', uncertain: 'problem', cancelled: 'idle', awaiting_human: 'needs_you', awaiting_approval: 'needs_you', running: 'working', waiting: 'working', ready: 'idle' };
 
 /** Every arm's answers at one moment. `G` is the run-graph module (the real one, or a mutant). */
@@ -151,6 +169,10 @@ export function answers(G, { workflow, cp, events, model, b1Model = model, execu
     waiting: [...model.insts.values()].filter(i => ['awaiting_human', 'awaiting_approval'].includes(i.status) && !RUN_TERMINAL.has(model.run.status)).map(i => `${i.status === 'awaiting_human' ? 'question' : 'approval'}:${i.key}`).sort(),
     failing: ['failed', 'uncertain'].includes(cp.status) ? (red ? { nodeKey: `root/${red}`, code: inst(red).error?.code ?? null } : null) : null,
     cost: Object.fromEntries(ids.map(id => [id, inst(id)?.agg.costUsd ?? 0])), line: null };
+  // B1-leaf (M1): the same reducer state, with T's rule for the failing step (the deepest failed instance, earliest first).
+  const leaf = ['failed', 'uncertain'].includes(cp.status) ? Real.failingOf(model, workflow, cp) : null;
+  out['B1-leaf'] = { ...out.B1, failing: ['failed', 'uncertain'].includes(cp.status) ? { nodeKey: leaf?.nodeKey ?? null, code: leaf?.code ?? null } : null };
+  out['B1-cf'] = { ...out.B1, nodes: Object.fromEntries(ids.map(id => [id, B1_USER_CF[inst(id)?.state ?? 'idle']])) };
   const ex = explainRun(cp, workflow), failedId = Object.entries(cp.nodes ?? {}).find(([, s]) => ['failed', 'uncertain'].includes(s.status))?.[0] ?? null;
   out.B0 = { nodes: null, run: STATUS_USER[cp.status] ?? 'idle',
     waiting: cp.status === 'awaiting_approval' ? ex.pendingApprovals.map(a => `approval:${cp.approvals[a.approvalId].nodeKey}`).sort() : [],
@@ -162,7 +184,17 @@ export function answers(G, { workflow, cp, events, model, b1Model = model, execu
 // ------------------------------------------------------------------------------------------------------------- scoring
 const newTally = () => ({ n: 0, ok: 0 });
 const bump = (t, ok) => { t.n++; if (ok) t.ok++; };
-export function newScore() { return { state: newTally(), stateLive: newTally(), run: newTally(), wait: newTally(), waitFalseAlarm: newTally(), waitMissed: newTally(), fail: newTally(), failDeep: newTally(), cost: newTally(), costAll: newTally(), line: newTally(), na: {} }; }
+export function newScore() { return { state: newTally(), stateLive: newTally(), run: newTally(), wait: newTally(), waitFalseAlarm: newTally(), waitMissed: newTally(), fail: newTally(), failDeep: newTally(), cost: newTally(), costAll: newTally(), line: newTally(), lineStep: newTally(), lineCost: newTally(), na: {} }; }
+// lineCost: the first dollar amount in the line, read back, equals the journal's total within the precision it is printed with.
+export function lineStatesCost(line, total) {
+  if (/under \$0\.00001/.test(line)) return total > 0 && total < 0.00001;
+  const m = /\$(\d+(?:\.\d+)?)/.exec(line);
+  if (!m) return false;
+  const value = Number(m[1]), decimals = (m[1].split('.')[1] ?? '').length;
+  if (decimals === 0 && value === 0) return Math.abs(total) < 1e-12;
+  return Math.abs(value - total) <= 0.5 * 10 ** -decimals + 1e-12;
+}
+const labelOfKey = k => C.humanize(k.split('/').at(-1).replace(/:\d+$/, ''));
 const failingRight = (ans, truth) => {
   if (!truth) return ans === null;
   if (!ans) return false;
@@ -195,18 +227,21 @@ export function score(sc, arm, a, truth, { final }) {
     if (truth.failing?.leaves.size) needs.push(a.failingLabel && a.line.includes(a.failingLabel));
     needs.push(/\$|under \$/.test(a.line));
     bump(sc.line, needs.every(Boolean));
-  } else sc.na.line = true;
+    // The independent versions (M2): the oracle's failing step by name, and the journal's total.
+    if (truth.failing?.leaves.size) bump(sc.lineStep, [...truth.failing.leaves.keys()].some(k => a.line.includes(labelOfKey(k))));
+    bump(sc.lineCost, lineStatesCost(a.line, truth.costTotal));
+  } else { sc.na.line = true; sc.na.lineStep = true; sc.na.lineCost = true; }
 }
 export function truthAt(workflow, cp, journal, executing) {
   const ids = workflow.nodes.map(n => n.id), statuses = statusesOf(cp);
   return { nodes: Object.fromEntries(ids.map(id => [id, truthNode(cp, workflow, id, executing, statuses)])), run: truthRun(cp, executing), waiting: truthWaiting(cp),
-    failing: truthFailing(cp), cost: Object.fromEntries(ids.map(id => [id, truthCost(journal, id)])) };
+    failing: truthFailing(cp), cost: Object.fromEntries(ids.map(id => [id, truthCost(journal, id)])), costTotal: journal.reduce((s, r) => s + (r.costUsd ?? 0), 0) };
 }
 const oracleArm = (truth) => {
   const key = truth.failing?.leaves.size ? [...truth.failing.leaves.keys()][0] : null, label = key ? C.humanize(key.split('/').at(-1).replace(/:\d+$/, '')) : null;
   return { nodes: truth.nodes, run: truth.run, waiting: truth.waiting,
     failing: truth.failing ? (key ? { nodeKey: key, code: truth.failing.leaves.get(key) } : { nodeKey: null, code: truth.failing.runCode }) : null,
-    cost: truth.cost, line: `${label ?? ''} $`, failingLabel: label };
+    cost: truth.cost, line: `${label ?? ''} $${truth.costTotal}`, failingLabel: label };
 };
 const blankArm = (a) => ({ ...a, nodes: Object.fromEntries(Object.keys(a.nodes).map(k => [k, 'done'])), run: 'done', waiting: [], failing: null, cost: Object.fromEntries(Object.keys(a.cost).map(k => [k, 0])), line: 'nothing' });
 
@@ -225,7 +260,9 @@ export function evaluateRecording(rec, { scores, mutants = {}, perRun = null, on
     // The journal is read with the run at the end (the server reads it with the run); during the run T reads the chain only.
     const prefix = events.slice(0, c.seq), truth = truthAt(workflow, c.run, journal, c.executing), j = final ? journal : null;
     const base = answers(Real, { workflow, cp: c.run, events: prefix, model: models.T, b1Model: models.B1, executing: c.executing, journal: j });
-    const arms = { T: base.T, B1: base.B1, B0: base.B0, 'C+': oracleArm(truth), 'C-': blankArm(base.T) };
+    const arms = { T: base.T, B1: base.B1, B0: base.B0, 'C+': oracleArm(truth), 'C-': blankArm(base.T), 'B1-leaf': base['B1-leaf'], 'B1-cf': base['B1-cf'],
+      // T-chain: before the final moment T reads no journal anyway, so it equals T there; at the end, T without the journal.
+      'T-chain': final ? answers(Real, { workflow, cp: c.run, events: prefix, model: models.T, executing: c.executing, journal: null, only: 'T' }).T : base.T };
     for (const [k, G] of Object.entries(mutants)) arms[k] = answers(G, { workflow, cp: c.run, events: prefix, model: models[k], executing: c.executing, journal: j, only: 'T' }).T;
     for (const [arm, a] of Object.entries(arms)) { scores[arm] ??= newScore(); score(scores[arm], arm, a, truth, { final }); }
     if (onMoment) onMoment({ seq: c.seq, status: c.run.status, executing: c.executing, truth, arms, final });

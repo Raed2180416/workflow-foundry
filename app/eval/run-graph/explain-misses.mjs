@@ -7,13 +7,13 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { NAMED, randomScenario } from './scenarios.mjs';
-import { record, answers, truthAt } from './harness.mjs';
+import { record, answers, truthAt, statusesOf } from './harness.mjs';
 import * as Real from '../../core/run-graph.mjs';
 
 const C = globalThis.RunViewCore;
 const STOPPED = new Set(['succeeded', 'failed', 'cancelled', 'uncertain']);
 function classifyNode(arm, id, said, truth, cp, workflow, executing) {
-  const key = `root/${id}`, def = workflow.nodes.find(n => n.id === id), st = Real.checkpointStatuses(cp).get(key);
+  const key = `root/${id}`, def = workflow.nodes.find(n => n.id === id), st = statusesOf(cp).get(key);
   if (Object.values(cp.approvals ?? {}).some(a => a.nodeKey === key && a.status === 'rejected') && said === 'needs_you') return 'refused action still shown as needing you (approval.decided has no nodeKey)';
   if (STOPPED.has(cp.status) && ['needs_you', 'working'].includes(said) && truth === 'idle') return 'run stopped, step still shown as waiting or working';
   if (def?.kind === 'verify' && st?.status === 'completed' && said === 'working' && truth === 'problem') return 'independent check disagreed, shown as still working';

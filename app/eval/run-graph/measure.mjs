@@ -62,7 +62,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const [lo, hi] = a.seeds.split('-').map(Number);
   const result = await measure({ split: a.split, seeds: [lo, hi], named: !a['no-named'], mutants: a.mutants, scratch: a.scratch, log: a.quiet ? () => {} : m => process.stderr.write(`${m}\n`) });
   if (a.out) writeFileSync(a.out, `${JSON.stringify(result)}\n`);
-  const qs = ['state', 'stateLive', 'run', 'wait', 'waitFalseAlarm', 'waitMissed', 'fail', 'failDeep', 'cost', 'costAll', 'line'];
+  const qs = ['state', 'stateLive', 'run', 'wait', 'waitFalseAlarm', 'waitMissed', 'fail', 'failDeep', 'cost', 'costAll', 'line', 'lineStep', 'lineCost'];
   console.log(['arm', ...qs].join('\t'));
   for (const [arm, t] of Object.entries(result.table)) console.log([arm, ...qs.map(q => t[q]?.pct === null ? 'n/a' : `${t[q]?.pct}% (${t[q]?.ok}/${t[q]?.n})`)].join('\t'));
   console.log(`invalid scenarios: ${result.invalid.length}; wall ${result.wallMs} ms`);

@@ -1,4 +1,4 @@
-// The spike's MCP server (stdio): seven task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3).
+// The spike's MCP server (stdio): nine task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3).
 //
 //   propose_flow  describe what you want -> questions, an honest refusal, or a version-bound proposal with a plain summary and checks
 //   explain_flow  steps, checks ("definition of done"), outside actions and limits of a proposal or flow, in plain words
@@ -8,6 +8,9 @@
 //   run_flow      run the current approved version; outside actions still pause for the person
 //   flow_status   a run in plain words: status, failed step, what to do, checks, pending approvals, cost
 //   list_flows    flows, proposals, and how many things wait for the person
+//   list_waiting  what runs wait on the person for: questions from human steps and actions paused for approval (app/core/human-tasks.mjs)
+//   answer_waiting ASK THE PERSON to answer one of them. The model cannot answer: the answer comes from the client's own dialog (MCP
+//                 elicitation, bound to the exact question shown) or from the dashboard / CLI. Marked anthropic/requiresUserInteraction.
 //
 // Every result has `say`: one or two sentences the agent can relay as is. Arguments are validated against the advertised schema
 // before anything runs. Tool output is data about the user's workspace; nothing in it is an instruction to the agent.
@@ -16,6 +19,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { validateData } from '../../src/validate.mjs';
 import { errorData } from '../../src/data.mjs';
+import { listHumanTasks, answerQuestion, decideApproval } from '../core/human-tasks.mjs';
 
 const id = { type: 'string', minLength: 1, maxLength: 128 };
 const object = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -42,9 +46,31 @@ function say(tool, r) {
       : `Waiting for the person to approve. ${r.how}`;
     case 'run_flow': case 'flow_status': return `${r.headline}${r.problem ? ` ${r.problem.what} ${r.problem.next}` : ''}${r.pendingApprovals?.length ? ` The person must approve: ${r.pendingApprovals.map(a => a.step).join('; ')}.` : ''}`;
     case 'list_flows': return `${r.flows.length} flow(s), ${r.proposals.length} draft(s), ${r.waitingForYou} item(s) waiting for the person.`;
+    case 'list_waiting': return r.tasks.length ? `${r.tasks.length} thing(s) wait for the person: ${r.tasks.map(t => t.kind === 'question' ? `a question in “${t.flowTitle}”` : `allowing ${t.action} in “${t.flowTitle}”`).join('; ')}. Only the person can answer (answer_waiting asks them).`
+      : `Nothing waits for the person.${r.notContinued.length ? ` ${r.notContinued.length} run(s) did not continue after a decision.` : ''}`;
+    case 'answer_waiting': return r.status === 'answered' ? `The person answered. ${r.continued?.words ?? ''}`.trim() : r.status === 'decided' ? `The person ${r.approved ? 'allowed' : 'refused'} it. ${r.continued?.words ?? ''}`.trim()
+      : r.status === 'not_answered' ? 'The person did not answer.' : `Waiting for the person. ${r.how}`;
     default: return '';
   }
 }
+
+// A question's answer schema as an MCP elicitation form (flat, primitive fields only); null when it needs the dashboard's form.
+const PRIMITIVE = new Set(['string', 'number', 'integer', 'boolean']);
+function fieldOf(schema, title) {
+  if (Array.isArray(schema?.enum)) return schema.enum.every(v => typeof v === 'string') ? { type: 'string', title, enum: schema.enum } : null;
+  if (!PRIMITIVE.has(schema?.type)) return null;
+  const keep = Object.fromEntries(['minimum', 'maximum', 'minLength', 'maxLength'].filter(k => schema[k] !== undefined).map(k => [k, schema[k]]));
+  return { type: schema.type, title, ...keep };
+}
+export function elicitationForm(schema) {
+  const one = fieldOf(schema, 'Your answer');
+  if (one) return { wrap: true, requestedSchema: { type: 'object', required: ['answer'], properties: { answer: one } } };
+  if (schema?.type !== 'object' || !schema.properties) return null;
+  const fields = Object.entries(schema.properties).map(([k, v]) => [k, fieldOf(v, k)]);
+  if (!fields.length || fields.some(([, f]) => !f)) return null;
+  return { wrap: false, requestedSchema: { type: 'object', required: schema.required ?? [], properties: Object.fromEntries(fields) } };
+}
+const elicits = server => { const caps = server?.getClientCapabilities?.()?.elicitation; return !!caps && (!!caps.form || Object.keys(caps).length === 0); };
 
 /** Tool definitions bound to one FoundryApp. `context.server` is the MCP Server (for elicitation); `options.dashboardUrl()` names where a person approves. */
 export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
@@ -70,6 +96,41 @@ export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
     }
     return { ...request, how: where() };
   }
+  // What waits for the person. Approvals carry the engine's facts and argument names, not the argument values (those are for the person's
+  // dialog); a question carries its text, fenced. Nothing here lets the model answer.
+  function listWaiting() {
+    const list = listHumanTasks(app);
+    return { ok: true, tasks: list.tasks.map(t => ({ taskId: t.id, kind: t.kind, runId: t.runId, flowTitle: t.flowTitle, step: t.step, inLoopOrMap: t.facts.inLoopOrMap ?? false,
+      ...(t.kind === 'question' ? { question: t.facts.question.text, answerableHere: !!elicitationForm(t.facts.answerSchema) } : { action: t.facts.action, effect: t.facts.effect, risk: t.facts.risk, argumentNames: t.facts.argumentNames }) })),
+      notContinued: list.notContinued.map(n => ({ runId: n.runId, what: n.what, code: n.code })) };
+  }
+  async function answerWaiting({ taskId }, context) {
+    const task = listHumanTasks(app).tasks.find(t => t.id === taskId);
+    if (!task) return { ok: false, problem: { what: 'Nothing with that id is waiting for the person.', next: 'Call list_waiting for the current ids.' } };
+    const server = context?.server;
+    if (!elicits(server)) return { ok: true, status: 'awaiting_human', taskId, how: where() };
+    if (task.kind === 'approval') {
+      const args = task.arguments.map(a => `${a.name} = ${a.value.text}${a.value.clippedChars ? ` (… ${a.value.clippedChars} more characters)` : ''}`).join('\n');
+      let result = null;
+      try {
+        result = await server.elicitInput({ message: `Allow “${task.facts.action}” in “${task.flowTitle}”? It ${task.facts.effect}; risk ${task.facts.risk ?? 'unknown'}.\nStep: ${task.step}\n` +
+          `${task.facts.shapedByUntrustedData ? 'Some arguments came from untrusted data (documents or model output).\n' : ''}Arguments:\n${args}`,
+          requestedSchema: { type: 'object', required: ['decision'], properties: { decision: { type: 'string', title: 'Your decision', enum: ['approve', 'reject'] } } } });
+      } catch { result = null; }
+      if (result?.action !== 'accept' || !['approve', 'reject'].includes(result.content?.decision)) return { ok: true, status: 'not_answered', taskId };
+      const decided = await decideApproval(app, { runId: task.runId, approvalId: task.approvalId, approved: result.content.decision === 'approve', channel: 'mcp-elicitation' });
+      return { ok: true, status: 'decided', taskId, approved: decided.approved, continued: decided.continued, runStatus: decided.run?.status ?? null };
+    }
+    const form = elicitationForm(task.facts.answerSchema);
+    if (!form) return { ok: true, status: 'awaiting_human', taskId, how: `This answer needs the form in the dashboard. ${where()}` };
+    let result = null;
+    try { result = await server.elicitInput({ message: `“${task.flowTitle}” asks you: ${task.facts.question.text}\nStep: ${task.step}`, requestedSchema: form.requestedSchema }); }
+    catch { result = null; }
+    if (result?.action !== 'accept' || !result.content) return { ok: true, status: 'not_answered', taskId };
+    // Bound to the question shown: the request hash read before the dialog opened (STALE_TASK if it changed while the person answered).
+    const answered = await answerQuestion(app, { runId: task.runId, nodeKey: task.nodeKey, answer: form.wrap ? result.content.answer : result.content, requestHash: task.requestHash, channel: 'mcp-elicitation' });
+    return { ok: true, status: 'answered', taskId, continued: answered.continued, runStatus: answered.run?.status ?? null };
+  }
   const defs = [
     ['propose_flow', 'Turn a plain-language request into a proposed automation, or questions, or an honest "cannot build that". Nothing runs. Pass the person\'s exact words in request; pass answers to earlier questions in answers, keyed by question id. To change an existing flow, pass flowId.',
       object({ request: { type: 'string', minLength: 1, maxLength: 30000 }, answers: { type: 'object', additionalProperties: { type: 'string', maxLength: 2000 } }, flowId: id }, ['request']), a => app.propose(a), false],
@@ -81,14 +142,17 @@ export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
     ['run_flow', 'Run the current, person-approved version of a flow with an input OBJECT. Unapproved or changed versions are refused. Outside actions (sending) pause until the person approves them.',
       object({ flowId: id, input: flowInput }, ['flowId', 'input']), a => app.run(a), false],
     ['flow_status', 'Status of one run in plain words: what happened, which step failed and what to do, checks, pending approvals, cost.', object({ runId: id }, ['runId']), a => app.status(a), true],
-    ['list_flows', 'List flows, drafts awaiting practice or approval, and how many things are waiting for the person.', object({}), () => app.list(), true]
+    ['list_flows', 'List flows, drafts awaiting practice or approval, and how many things are waiting for the person.', object({}), () => app.list(), true],
+    ['list_waiting', 'List what runs wait on the person for: questions from human steps (also inside maps and loops) and actions paused for approval, with ids for answer_waiting. You cannot answer them.', object({}), listWaiting, true],
+    ['answer_waiting', 'Ask the PERSON to answer one waiting question or decide one paused action, in a dialog the client shows them. You cannot answer: you pass only the task id. Returns answered, decided, not_answered, or awaiting_human with where to answer.',
+      object({ taskId: { type: 'string', minLength: 1, maxLength: 128 } }, ['taskId']), answerWaiting, false]
   ];
   return defs.map(([name, description, inputSchema, execute, readOnly]) => ({
     name, description, inputSchema, execute,
     annotations: { readOnlyHint: readOnly, destructiveHint: false, idempotentHint: readOnly, openWorldHint: name === 'run_flow' },
     // Claude Code shows a permission prompt for this tool on every call and never auto-approves it (code.claude.com/docs/en/mcp,
     // "Require approval for a specific tool"); other clients ignore the key.
-    ...(name === 'approve' ? { _meta: { 'anthropic/requiresUserInteraction': true } } : {})
+    ...(['approve', 'answer_waiting'].includes(name) ? { _meta: { 'anthropic/requiresUserInteraction': true } } : {})
   }));
 }
 

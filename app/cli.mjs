@@ -8,6 +8,9 @@
 //   node app/cli.mjs doctor  [--workspace DIR]                          what works here and what does not, in plain words
 //   node app/cli.mjs connect [--workspace DIR]                          the exact command or config for each coding agent (prints only)
 //   node app/cli.mjs approve APPROVAL_ID [--workspace DIR]              approve in this terminal (asks you to type yes; needs a real terminal)
+//   node app/cli.mjs tasks   [--workspace DIR]                          what runs wait on you for: questions and paused actions (with ids)
+//   node app/cli.mjs answer TASK_ID [--workspace DIR]                   answer one of them in this terminal (needs a real terminal; bound to
+//                                                                        the question shown, app/core/human-tasks.mjs, channel 'cli')
 //
 // Safe defaults: the workspace is a private directory (0700) under the user's home; nothing listens beyond 127.0.0.1; no config file of any
 // coding agent is written (connect prints what to paste); no model is called unless --builder names one; nothing is sent beyond the
@@ -20,6 +23,7 @@ import { createInterface } from 'node:readline/promises';
 import { accessSync, constants, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { FoundryApp } from './core/service.mjs';
+import { listHumanTasks, answerQuestion, decideApproval } from './core/human-tasks.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // Builder choice: model ids come from the owner policy only (policy/models.json); the stub calls no model.
@@ -78,7 +82,7 @@ async function main() {
   const [command = 'help', item] = positionals;
   const workspace = path.resolve(args.workspace ?? defaultWorkspace());
   const print = value => process.stdout.write(`${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}\n`);
-  if (command === 'help' || args.help) return print('Usage: node app/cli.mjs start | mcp | doctor | connect | approve APPROVAL_ID  [--workspace DIR]');
+  if (command === 'help' || args.help) return print('Usage: node app/cli.mjs start | mcp | doctor | connect | approve APPROVAL_ID | tasks | answer TASK_ID  [--workspace DIR]');
   if (command === 'doctor') { const report = doctor({ workspace }); for (const i of report.items) print(`${i.ok ? 'ok ' : i.optional ? 'note' : 'NO '}  ${i.say}`); process.exitCode = report.ok ? 0 : 1; return; }
   if (command === 'connect') return print(connectInstructions(workspace));
   if (command === 'start') {
@@ -127,6 +131,45 @@ async function main() {
       const answer = (await rl.question('Type yes to turn it on, anything else to refuse: ')).trim().toLowerCase();
       rl.close();
       print(app.decideActivation(item, answer === 'yes', { channel: 'cli' }).status);
+    } finally { await app.close(); }
+    return;
+  }
+  if (command === 'tasks') {
+    const app = new FoundryApp({ workspace });
+    try {
+      const list = listHumanTasks(app);
+      if (!list.tasks.length) print('Nothing waits for you.');
+      for (const t of list.tasks) print(t.kind === 'question' ? `${t.id.slice(0, 16)}  question  “${t.flowTitle}”, ${t.step}: ${t.facts.question.text}`
+        : `${t.id.slice(0, 16)}  approval  “${t.flowTitle}”, ${t.step}: ${t.facts.action} (${t.facts.effect}; risk ${t.facts.risk ?? 'unknown'})`);
+      for (const n of list.notContinued) print(`not continued  run ${n.runId}: ${n.what} ${n.next}`);
+    } finally { await app.close(); }
+    return;
+  }
+  if (command === 'answer') {
+    if (!process.stdin.isTTY || !process.stdout.isTTY) { process.stderr.write('answer needs a real terminal: type it yourself, not through an agent.\n'); process.exitCode = 2; return; }
+    const app = new FoundryApp({ workspace });
+    try {
+      const task = listHumanTasks(app).tasks.find(t => t.id === item || (typeof item === 'string' && item.length >= 8 && t.id.startsWith(item)));
+      if (!task) { print('Nothing with that id is waiting for you (node app/cli.mjs tasks lists them).'); process.exitCode = 1; return; }
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      // A run another live process holds is left to it (it usually takes the decision itself); a free run continues here, in this terminal.
+      const waitMs = task.runBusy ? 0 : Infinity;
+      try {
+        if (task.kind === 'approval') {
+          print(`Allow “${task.facts.action}” in “${task.flowTitle}”? It ${task.facts.effect}; risk ${task.facts.risk ?? 'unknown'}.\nStep: ${task.step}`);
+          for (const a of task.arguments) print(`  ${a.name} = ${a.value.text}${a.value.clippedChars ? ` (… ${a.value.clippedChars} more characters)` : ''}`);
+          const yes = (await rl.question('Type yes to allow it, anything else to refuse: ')).trim().toLowerCase() === 'yes';
+          const r = await decideApproval(app, { runId: task.runId, approvalId: task.approvalId, approved: yes, channel: 'cli', waitMs });
+          print(r.continued.words);
+        } else {
+          print(`“${task.flowTitle}” asks you: ${task.facts.question.text}\nStep: ${task.step}`);
+          const schema = task.facts.answerSchema;
+          const text = (await rl.question(schema?.type === 'boolean' ? 'Type yes or no: ' : `Type the answer as JSON (${JSON.stringify(schema).slice(0, 200)}): `)).trim();
+          const answer = schema?.type === 'boolean' ? /^y(es)?$/i.test(text) : JSON.parse(text);
+          const r = await answerQuestion(app, { runId: task.runId, nodeKey: task.nodeKey, answer, requestHash: task.requestHash, channel: 'cli', waitMs });
+          print(r.continued.words);
+        }
+      } finally { rl.close(); }
     } finally { await app.close(); }
     return;
   }

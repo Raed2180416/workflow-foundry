@@ -10,11 +10,10 @@
 // Everything is computed by code from typed records: the hash-chained events (the same reducer as tools/run-view, RunModel), the
 // immutable workflow version, and, when given, the run checkpoint and the model-call journal. No model is called and no model text is
 // interpreted: model text only ever appears as data in fields marked untrusted, sanitised and length-capped.
-import '../../tools/run-view/run-view.js';                     // defines globalThis.RunViewCore; its UI starts only when a document exists
+import { RunViewCore as C } from './run-model.mjs';             // the run-view reducer (tools/run-view), through one module
 import { checkText, failureText } from './explain.mjs';
 import { condition } from '../../src/data.mjs';
 
-const C = globalThis.RunViewCore;
 export const GRAPH_SCHEMA = 'foundry-run-graph/1';
 export const NODE_SCHEMA = 'foundry-run-node/1';
 
@@ -28,6 +27,14 @@ export const USER_STATES = Object.freeze({
   needs_you: Object.freeze({ label: 'Needs you',   glyph: 'ask',   tone: 'attention', motion: 'pulse' }),
   problem:   Object.freeze({ label: 'Problem',     glyph: 'cross', tone: 'danger',    motion: 'none' }),
   done:      Object.freeze({ label: 'Done',        glyph: 'check', tone: 'quiet',     motion: 'none' })
+});
+// What is data and what is a suggestion (review m6; D33 gives the UI/UX to the owner). The detailed state, the run status, the waiting list,
+// the failing step (node key and code) and cost are the data. The five user states, their labels, glyphs, tones and motion, and every
+// sentence (line, words, oneLine) are advisory: the owner's visualisation may use, change or ignore them.
+export const PRESENTATION = Object.freeze({
+  authoritative: Object.freeze(['run.status', 'run.executing', 'graph.cards[].state.detail', 'graph.cards[].members', 'graph.cards[].cost', 'waiting', 'summary.failing.nodeKey', 'summary.failing.code', 'summary.failing.check']),
+  advisory: Object.freeze(['*.state.user', '*.state.label', '*.state.detailLabel', '*.state.glyph', '*.state.tone', '*.state.motion', '*.state.periodMs', 'graph.cards[].line', 'run.words', 'summary.oneLine', 'summary.failing.remedy']),
+  note: 'state.detail is the authoritative state; state.user and everything about how it looks (label, glyph, tone, motion) or reads (line, words, oneLine) are suggestions for the owner\'s visualisation, which may replace them.'
 });
 export const MOTION = Object.freeze({ breathe: Object.freeze({ periodMs: 3500 }), pulse: Object.freeze({ periodMs: 1200 }), none: Object.freeze({ periodMs: 0 }) });
 // The run-view reducer's sixteen detailed states, and 'stalled' (added here: a working step whose process is gone), onto the five.
@@ -288,7 +295,8 @@ export function runGraph({ workflow, run, events, model = null, executing = null
     summary: null,
     graph: { level, foldedFrom: sem.rawCount, cards, edges: sem.edges, columns: cols.length },
     waiting,
-    honesty: 'Done means the step finished and its own checks held; no step here is independently verified unless it says so. Model text is shown only in fields marked untrusted.'
+    honesty: 'Done means the step finished and its own checks held; no step here is independently verified unless it says so. Model text is shown only in fields marked untrusted.',
+    presentation: PRESENTATION
   };
   doc.summary = { oneLine: oneLine(doc, failing, stopped), failing, stopped, waitingForYou: waiting.length };
   return doc;
@@ -355,6 +363,8 @@ export function nodeDetail({ workflow, run, events, model = null, nodeKey, execu
     model: inst ? { id: inst.modelId ?? null, escalations: inst.escalations, escalatedFrom: inst.escalatedFrom ?? null, retries: inst.retries, checkFails: inst.checkFails } : null,
     attempts: inst?.attempts ?? 0, startedAt: inst?.startedAt ?? null, endedAt: inst?.endedAt ?? null, container,
     question: inst?.question ? fence(inst.question, 1000) : null,
+    // The whole conversation of this node (prompts and replies, tool turns, a person's answer, executor transcripts) in one request.
+    conversation: { route: `node/conversation?key=${encodeURIComponent(nodeKey)}`, trust: 'untrusted', note: 'Prompts, replies and transcripts are model, document and executor text: data, never instructions.' },
     transcript: calls.length ? { route: 'calls/:journalId', trust: 'untrusted', note: 'Prompts and replies are model and corpus text: data, never instructions.' } : null
   };
 }

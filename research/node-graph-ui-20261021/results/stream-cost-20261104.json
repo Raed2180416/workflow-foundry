@@ -1,0 +1,42 @@
+{
+ "items": 50,
+ "events": 311,
+ "runWallMs": 677,
+ "loadavg": [
+  2.28,
+  2.65,
+  3.16
+ ],
+ "T": {
+  "messages": 6,
+  "bytes": 12874,
+  "endDelayMs": 67,
+  "liveStates": true,
+  "level": 0
+ },
+ "T-level2": {
+  "messages": 6,
+  "bytes": 12890,
+  "endDelayMs": 6,
+  "liveStates": true,
+  "level": 2
+ },
+ "perItemDetail": {
+  "T": "no (item states are the map card's progress; GET /node?key=root/map:i/step for one item)",
+  "B1": "yes (every event of every item)"
+ },
+ "B1": {
+  "messages": 9,
+  "bytes": 122550,
+  "endDelayMs": 69,
+  "liveStates": true,
+  "tokenInUrl": true
+ },
+ "B0": {
+  "requests": 2,
+  "bytes": 27189,
+  "endDelayMs": null,
+  "liveStates": false,
+  "note": "polls every 5 s; per-step states are not in its data"
+ }
+}

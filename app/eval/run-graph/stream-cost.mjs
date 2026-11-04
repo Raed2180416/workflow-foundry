@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // What it costs to watch one live run, three ways ($0, loopback): the same 50-item map run watched at once by
 //   B1  tools/run-view/serve.mjs: EventSource-style SSE of every chain event (slim), folded in the page (token in the URL query)
-//   T   app/dashboard live.mjs: SSE over fetch of the folded document (snapshot, then coalesced patches; token in a header)
+//   T   app/dashboard live.mjs: SSE over fetch of the folded document (snapshot, then coalesced patches; token in a header), at level 0
+//       (at most 24 folded cards) and, since the review (m4, 2026-11-04), also at level 2 (one card per top-level step). Neither level
+//       streams per-item detail: a map's items are its card's progress; one item's detail is a /node request. B1 streams every event.
 //   B0  app/dashboard today: GET /api/overview every 5 s (the page's poll) plus GET /api/runs/:id when a person opens the run
 // Reported: messages, bytes, and the delay from the terminal event's commit to its arrival. One machine, shared load: indicative only.
 //   node app/eval/run-graph/stream-cost.mjs [--items 50] [--out FILE]
@@ -47,6 +49,7 @@ export async function streamCost({ items = 50 } = {}) {
     const run = app.foundry.createRun(sc.workflow.id, sc.input);
     let done = false;
     const tStream = count(`http://127.0.0.1:${port}/api/runs/${run.id}/graph/stream`, { 'x-foundry-token': dash.token }, () => done);
+    const t2Stream = count(`http://127.0.0.1:${port}/api/runs/${run.id}/graph/stream?level=2`, { 'x-foundry-token': dash.token }, () => done);
     const bStream = count(`${rv.origin}/api/runs/${run.id}/stream?t=${rv.token}`, {}, () => done);
     // B0: the page polls the overview every 5 s while it is open; a person opens the run once at the end.
     const poll = { requests: 0, bytes: 0 };
@@ -57,11 +60,13 @@ export async function streamCost({ items = 50 } = {}) {
     const t0 = Date.now();
     await app.foundry.startRun(run.id).catch(() => {});
     const committedAt = Date.now(), wallMs = committedAt - t0;
-    const [t, b] = await Promise.all([tStream, bStream]); done = true; clearInterval(timer);
+    const [t, t2, b] = await Promise.all([tStream, t2Stream, bStream]); done = true; clearInterval(timer);
     const detail = await fetch(`http://127.0.0.1:${port}/api/runs/${run.id}`, { headers: { 'x-foundry-token': dash.token } }); poll.requests++; poll.bytes += (await detail.text()).length;
     const events = app.foundry.store.events(run.id).length;
     return { items, events, runWallMs: wallMs, loadavg: loadavg().map(x => Math.round(x * 100) / 100),
-      T: { messages: t.messages, bytes: t.bytes, endDelayMs: t.endAt - committedAt, liveStates: true },
+      T: { messages: t.messages, bytes: t.bytes, endDelayMs: t.endAt - committedAt, liveStates: true, level: 0 },
+      'T-level2': { messages: t2.messages, bytes: t2.bytes, endDelayMs: t2.endAt - committedAt, liveStates: true, level: 2 },
+      perItemDetail: { T: 'no (item states are the map card\'s progress; GET /node?key=root/map:i/step for one item)', B1: 'yes (every event of every item)' },
       B1: { messages: b.messages, bytes: b.bytes, endDelayMs: b.endAt - committedAt, liveStates: true, tokenInUrl: true },
       B0: { requests: poll.requests, bytes: poll.bytes, endDelayMs: null, liveStates: false, note: 'polls every 5 s; per-step states are not in its data' } };
   } finally { await rv.close(); await dash.close(); await app.close(); rmSync(dir, { recursive: true, force: true }); }

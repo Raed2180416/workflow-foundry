@@ -1,0 +1,226 @@
+{
+ "generatedAt": "2026-11-04T20:47:08.390Z",
+ "evidence": "development (one run of each task, scripted client)",
+ "rows": [
+  {
+   "task": "T1 why did S1b fail",
+   "B0": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 1776,
+    "ms": 46,
+    "note": "Grade the essay [tag:grade] / NODE_CHECK_FAILED"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 4069,
+    "ms": 15,
+    "note": "Grade / NODE_CHECK_FAILED"
+   }
+  },
+  {
+   "task": "T1 why did S7 fail",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 3089,
+    "ms": 6,
+    "note": "Check each invoice / NODE_CHECK_FAILED"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 4758,
+    "ms": 14,
+    "note": "Read / NODE_CHECK_FAILED"
+   }
+  },
+  {
+   "task": "T1 why did S12 fail",
+   "B0": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 1778,
+    "ms": 9,
+    "note": "Translate the page [tag:translate] / MODEL_RATE_LIMIT"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 4000,
+    "ms": 13,
+    "note": "Translate / MODEL_RATE_LIMIT"
+   }
+  },
+  {
+   "task": "T3 what did step A cost",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 2916,
+    "ms": 9,
+    "note": "run total only: $0.0141"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 4839,
+    "ms": 14,
+    "note": "$0.0115"
+   }
+  },
+  {
+   "task": "T5 which recent run failed and why (list)",
+   "B0": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 2793,
+    "ms": 12,
+    "note": "S12Env: Stopped with code MODEL_RATE_LIMIT."
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 1987,
+    "ms": 36,
+    "note": "Translate the page: Problem at “Translate”: The model service failed (for example a rate limit or an outage); this is not the workflow's fault. 0 of 2 steps, $0, 1 model call, 12 ms."
+   }
+  },
+  {
+   "task": "T6a nothing waiting: say no",
+   "B0": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 2793,
+    "ms": 13,
+    "note": null
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 128,
+    "ms": 5,
+    "note": null
+   }
+  },
+  {
+   "task": "T6b two questions wait (in a map): say yes, 2",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 3301,
+    "ms": 11,
+    "note": "count 0"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 3196,
+    "ms": 8,
+    "note": "count 2"
+   }
+  },
+  {
+   "task": "T4 answer the refund question",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 3799,
+    "ms": 7,
+    "note": "no route answers a human-node question"
+   },
+   "T": {
+    "ok": true,
+    "requests": 2,
+    "bytes": 7477,
+    "ms": 25,
+    "note": "answer returned \"ran\""
+   }
+  },
+  {
+   "task": "T2 approve the waiting send",
+   "B0": {
+    "ok": true,
+    "requests": 2,
+    "bytes": 8965,
+    "ms": 28,
+    "note": null
+   },
+   "T": {
+    "ok": true,
+    "requests": 2,
+    "bytes": 6905,
+    "ms": 21,
+    "note": null
+   }
+  },
+  {
+   "task": "T7a open the failing step's conversation",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 1776,
+    "ms": 5,
+    "note": "timeline of 9 events; the step's description, no prompt text or reply"
+   },
+   "T-before": {
+    "ok": true,
+    "requests": 2,
+    "bytes": 3608,
+    "ms": 11,
+    "note": "node + 1 call request(s)"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 2748,
+    "ms": 6,
+    "note": "5 turns"
+   }
+  },
+  {
+   "task": "T7b read the executor transcript of a step",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 1871,
+    "ms": 4,
+    "note": "the timeline names executor.finished; no route serves the transcript"
+   },
+   "T-before": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 1818,
+    "ms": 4,
+    "note": "no route serves the transcript"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 3355,
+    "ms": 6,
+    "note": "verified true"
+   }
+  }
+ ],
+ "total": {
+  "B0": {
+   "success": 5,
+   "of": 11,
+   "requests": 12,
+   "bytes": 34857
+  },
+  "T": {
+   "success": 11,
+   "of": 11,
+   "requests": 13,
+   "bytes": 43462
+  }
+ },
+ "conversationBeforeFix": {
+  "tasks": 2,
+  "success": 1,
+  "requests": 3
+ }
+}

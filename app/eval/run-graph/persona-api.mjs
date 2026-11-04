@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // The plan's persona tasks, done through the dashboard's HTTP API by a scripted client, in two arms ($0, loopback):
 //   B0  only the routes that existed before this work (/api/overview, /api/runs/:id, /api/decide)
-//   T   the routes added here (/api/runs/:id/graph, /node, /calls, /api/history, /api/tasks, /api/tasks/answer|decide)
+//   T   the routes added here (/api/runs/:id/graph, /node, /node/conversation, /calls, /api/history, /api/tasks, /api/tasks/answer|decide)
+// T7 (added for review M5, 2026-11-04) opens a node's conversation; it also reports the routes T had before the fix (/node, then /calls per
+// call) as "T-before", so the change is measured.
 // Each task's answer is checked against the store and journal (not against either arm). Reported per task: success, requests, bytes read.
 // What it is: the data-level analogue of "steps" for a UI built on each arm. What it is not: a user study, or a measurement of any UI.
 //   node app/eval/run-graph/persona-api.mjs [--out FILE]
@@ -35,7 +37,7 @@ async function workspace(script) {
     return JSON.parse(text);
   };
   const start = async (wf, input = {}) => { app.foundry.store.saveWorkflow(wf); const r = app.foundry.createRun(wf.id, input); await app.foundry.startRun(r.id).catch(() => {}); return r.id; };
-  return { app, call, counter, start, close: async () => { await dash.close(); await app.close(); rmSync(dir, { recursive: true, force: true }); } };
+  return { app, dir, call, counter, start, close: async () => { await dash.close(); await app.close(); rmSync(dir, { recursive: true, force: true }); } };
 }
 const measured = async (counter, fn) => { const before = { ...counter }, t0 = performance.now(); let ok = false, note = null; try { ({ ok, note = null } = await fn()); } catch (error) { note = `error: ${error.message}`; } return { ok, requests: counter.requests - before.requests, bytes: counter.bytes - before.bytes, ms: Math.round(performance.now() - t0), note }; };
 const leafOf = (store, runId) => { const run = store.run(runId); const all = [...Object.entries(run.nodes).map(([id, n]) => [`root/${id}`, n]), ...Object.entries(run.frames ?? {}).flatMap(([f, fr]) => Object.entries(fr.nodes).map(([id, n]) => [`${f}/${id}`, n]))];
@@ -73,22 +75,45 @@ export async function personaApi() {
     const s3 = await start(NAMED['S3-question']().workflow);
     rows.push({ task: 'T4 answer the refund question', B0: await measured(counter, async () => { await call('/api/overview'); return { ok: false, note: 'no route answers a human-node question' }; }),
       T: await measured(counter, async () => { const t = await call('/api/tasks'), q = t.tasks.find(x => x.runId === s3); const r = await call('/api/tasks/answer', { runId: s3, nodeKey: q.nodeKey, requestHash: q.requestHash, answer: { approve: true, note: 'ok' } });
-        return { ok: r.run?.status === 'succeeded' && store.events(s3).filter(e => e.type === 'human.answered').length === 1 }; }) });
+        // The POST returns within about a second (review M3); a client that wants the end reads the graph until the run has stopped.
+        let status = r.run?.status;
+        for (let i = 0; i < 50 && !['succeeded', 'failed', 'cancelled', 'uncertain'].includes(status); i++) { await new Promise(res => setTimeout(res, 100)); status = (await call(`/api/runs/${s3}/graph`)).run.status; }
+        return { ok: status === 'succeeded' && store.events(s3).filter(e => e.type === 'human.answered').length === 1, note: `answer returned "${r.continued?.outcome}"` }; }) });
     // T2: approve the waiting send (two separate workspaces' worth of runs: one per arm).
     const sendB0 = await start({ ...NAMED['S2-approval']().workflow, id: 'SendB0' }), sendT = await start({ ...NAMED['S2-approval']().workflow, id: 'SendT' });
     const decided = id => store.events(id).filter(e => e.type === 'approval.decided' && e.approved === true).length === 1 && store.run(id).status === 'succeeded';
     rows.push({ task: 'T2 approve the waiting send', B0: await measured(counter, async () => { const o = await call('/api/overview'); const a = o.inbox.actions.find(x => x.runId === sendB0); await call('/api/decide', { kind: 'action', runId: sendB0, approvalId: a.approvalId, decision: 'approve' }); return { ok: decided(sendB0) }; }),
       T: await measured(counter, async () => { const t = await call('/api/tasks'); const a = t.tasks.find(x => x.runId === sendT); await call('/api/tasks/decide', { runId: sendT, approvalId: a.approvalId, decision: 'approve' }); return { ok: decided(sendT) }; }) });
+    // T7a: open the failing step's conversation (what was asked, what the model answered, why it failed), checked against the journal row.
+    const gradeRows = new Journal(store).forRun(failed.S1b).filter(r => r.nodeKey === 'root/grade');
+    const convOk = (prompts, replies) => prompts.length === gradeRows.length && prompts.every(p => /\[tag:grade\]/.test(p)) && replies.length === gradeRows.length && replies.every(v => /"confidence":0\.2/.test(v));
+    rows.push({ task: 'T7a open the failing step\'s conversation', B0: await measured(counter, async () => { const d = await call(`/api/runs/${failed.S1b}`), text = JSON.stringify(d);
+        // The tag is also in the step's description, which the run detail shows: the reply is what only a conversation holds.
+        const has = text.includes('[tag:grade]') && /\\?"confidence\\?":0\.2/.test(text); return { ok: has, note: has ? 'prompt and reply in the run detail' : `timeline of ${d.timeline?.length} events; the step's description, no prompt text or reply` }; }),
+      'T-before': await measured(counter, async () => { const n = await call(`/api/runs/${failed.S1b}/node?key=root/grade`); const cs = []; for (const c of n.calls) cs.push(await call(`/api/runs/${failed.S1b}/calls/${c.journalId}`));
+        return { ok: convOk(cs.map(c => c.prompt ?? ''), cs.map(c => JSON.stringify(c.value ?? null))) && n.checks.some(c => c.status === 'failed'), note: `node + ${cs.length} call request(s)` }; }),
+      T: await measured(counter, async () => { const c = await call(`/api/runs/${failed.S1b}/node/conversation?key=root/grade`);
+        return { ok: convOk(c.turns.filter(t => t.kind === 'prompt').map(t => t.prompt?.text ?? ''), c.turns.filter(t => t.kind === 'reply').map(t => t.value?.text ?? '')) && c.turns.some(t => t.kind === 'error' && t.code === 'NODE_CHECK_FAILED'), note: `${c.turns.length} turns` }; }) });
+    // T7b: an executor's transcript bound to the run (an executor binds it with store.bindTranscript), read and checked against the chain's hash.
+    const transcript = path.join(ws.dir, 'executor-transcript.jsonl');
+    writeFileSync(transcript, [{ role: 'user', content: 'Grade the essay' }, { role: 'assistant', content: 'Graded: 0.2, the essay misses the brief.' }].map(x => JSON.stringify(x)).join('\n'));
+    store.bindTranscript(failed.S1b, { nodeKey: 'root/grade', file: transcript, label: 'executor' });
+    rows.push({ task: 'T7b read the executor transcript of a step', B0: await measured(counter, async () => { const d = await call(`/api/runs/${failed.S1b}`); return { ok: JSON.stringify(d).includes('misses the brief'), note: 'the timeline names executor.finished; no route serves the transcript' }; }),
+      'T-before': await measured(counter, async () => { const n = await call(`/api/runs/${failed.S1b}/node?key=root/grade`); return { ok: JSON.stringify(n).includes('misses the brief'), note: 'no route serves the transcript' }; }),
+      T: await measured(counter, async () => { const c = await call(`/api/runs/${failed.S1b}/node/conversation?key=root/grade`); const x = c.turns.find(t => t.kind === 'transcript');
+        return { ok: x?.verified === true && x.entries.some(e => /misses the brief/.test(e.text.text)), note: `verified ${x?.verified}` }; }) });
     void s9;
   } finally { await ws.close(); }
   const sum = arm => ({ success: rows.filter(r => r[arm].ok).length, of: rows.length, requests: rows.reduce((s, r) => s + r[arm].requests, 0), bytes: rows.reduce((s, r) => s + r[arm].bytes, 0) });
-  return { generatedAt: new Date().toISOString(), rows, total: { B0: sum('B0'), T: sum('T') } };
+  const before = rows.filter(r => r['T-before']);
+  return { generatedAt: new Date().toISOString(), evidence: 'development (one run of each task, scripted client)', rows, total: { B0: sum('B0'), T: sum('T') },
+    conversationBeforeFix: { tasks: before.length, success: before.filter(r => r['T-before'].ok).length, requests: before.reduce((s, r) => s + r['T-before'].requests, 0) } };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { values: a } = parseArgs({ options: { out: { type: 'string' } } });
   const r = await personaApi();
   if (a.out) writeFileSync(a.out, `${JSON.stringify(r, null, 1)}\n`);
-  for (const row of r.rows) console.log(`${row.task}\tB0 ${row.B0.ok ? 'ok' : 'FAIL'} ${row.B0.requests} req ${row.B0.bytes} B${row.B0.note ? ` (${row.B0.note})` : ''}\tT ${row.T.ok ? 'ok' : 'FAIL'} ${row.T.requests} req ${row.T.bytes} B${row.T.note ? ` (${row.T.note})` : ''}`);
-  console.log(JSON.stringify(r.total));
+  for (const row of r.rows) console.log(`${row.task}\tB0 ${row.B0.ok ? 'ok' : 'FAIL'} ${row.B0.requests} req ${row.B0.bytes} B${row.B0.note ? ` (${row.B0.note})` : ''}${row['T-before'] ? `\tT-before ${row['T-before'].ok ? 'ok' : 'FAIL'} ${row['T-before'].requests} req` : ''}\tT ${row.T.ok ? 'ok' : 'FAIL'} ${row.T.requests} req ${row.T.bytes} B${row.T.note ? ` (${row.T.note})` : ''}`);
+  console.log(JSON.stringify(r.total), JSON.stringify(r.conversationBeforeFix));
 }

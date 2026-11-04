@@ -33,12 +33,12 @@ async function withWorkspace(fn) {
   try { await fn(app, dir); } finally { await app.close(); rmSync(dir, { recursive: true, force: true }); }
 }
 
-test('tools/list: seven typed tools; approve demands a person in Claude Code', async () => withWorkspace(async app => {
+test('tools/list: nine typed tools; approve and answer_waiting demand a person in Claude Code', async () => withWorkspace(async app => {
   const { client } = await connect(app);
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map(t => t.name), ['propose_flow', 'explain_flow', 'dry_run', 'approve', 'run_flow', 'flow_status', 'list_flows']);
-  const approve = tools.find(t => t.name === 'approve');
-  assert.equal(approve._meta['anthropic/requiresUserInteraction'], true);
+  assert.deepEqual(tools.map(t => t.name), ['propose_flow', 'explain_flow', 'dry_run', 'approve', 'run_flow', 'flow_status', 'list_flows', 'list_waiting', 'answer_waiting']);
+  for (const name of ['approve', 'answer_waiting']) assert.equal(tools.find(t => t.name === name)._meta['anthropic/requiresUserInteraction'], true);
+  assert.equal(Object.keys(tools.find(t => t.name === 'answer_waiting').inputSchema.properties).join(), 'taskId', 'the model passes only the task id, never an answer');
   for (const t of tools) { assert.equal(t.inputSchema.type, 'object'); assert.equal(t.inputSchema.additionalProperties, false); }
   await client.close();
 }));
@@ -136,7 +136,7 @@ test('stdio: the real CLI entry serves MCP with a clean stdout', async () => {
   try {
     await client.connect(transport);
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 7);
+    assert.equal(tools.length, 9);
     const r = await client.callTool({ name: 'propose_flow', arguments: { request: 'what is the weather' } });
     assert.equal(JSON.parse(r.content[0].text).status, 'unsupported');
   } finally { await client.close(); rmSync(dir, { recursive: true, force: true }); }

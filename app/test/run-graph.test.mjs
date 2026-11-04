@@ -142,8 +142,12 @@ test('differential: T agrees with the checkpoint/journal oracle at every moment 
     rec.store.close(); rmSync(path.join(dir, job.name), { recursive: true, force: true }); runs++;
   }
   assert.ok(runs >= 70, `${runs} runs recorded`);
-  for (const q of ['state', 'stateLive', 'run', 'wait', 'fail', 'failDeep', 'cost', 'costAll', 'line']) assert.equal(scores.T[q].ok, scores.T[q].n, `T ${q}: ${scores.T[q].ok}/${scores.T[q].n}`);
-  for (const q of ['state', 'run', 'wait', 'fail', 'cost']) assert.equal(scores['C+'][q].ok, scores['C+'][q].n, `the oracle arm scores itself 100% on ${q}`);
+  for (const q of ['state', 'stateLive', 'run', 'wait', 'fail', 'failDeep', 'cost', 'costAll', 'line', 'lineStep', 'lineCost']) assert.equal(scores.T[q].ok, scores.T[q].n, `T ${q}: ${scores.T[q].ok}/${scores.T[q].n}`);
+  for (const q of ['state', 'run', 'wait', 'fail', 'cost', 'lineStep', 'lineCost']) assert.equal(scores['C+'][q].ok, scores['C+'][q].n, `the oracle arm scores itself 100% on ${q}`);
+  // Review M2: cost from the chain alone against the journal (independent of the rows T is handed) misses only the call S13's crash left
+  // out of the chain; review M1: the prototype's reducer holds the failing item (T's rule on it names it), so B1's miss is its summary rule.
+  assert.equal(scores['T-chain'].cost.n - scores['T-chain'].cost.ok, 1, 'T-chain misses exactly the S13 step');
+  assert.equal(scores['B1-leaf'].failDeep.ok, scores['B1-leaf'].failDeep.n);
   assert.ok(scores['C-'].stateLive.ok === 0 && scores['C-'].fail.ok === 0 && scores['C-'].waitMissed.ok === 0, 'the blank control fails what it blanks');
   assert.ok(scores.B1.failDeep.ok < scores.B1.failDeep.n && scores.B0.waitMissed.ok < scores.B0.waitMissed.n, 'the baselines miss what the plan says they miss');
 });
