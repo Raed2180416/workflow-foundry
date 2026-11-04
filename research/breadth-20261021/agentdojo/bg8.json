@@ -1,0 +1,116 @@
+{
+ "kind": "agentdojo-bg8",
+ "version": 2,
+ "at": "2026-11-04T12:28:54.368Z",
+ "sensitive": [
+  "/var/tmp/foundry-work/agentdojo-host",
+  "/var/tmp/foundry-work/agentdojo-host/sealed",
+  "/var/tmp/foundry-work/agentdojo-host/authored",
+  "/var/tmp/foundry-work/agentdojo-host/authoring",
+  "/var/tmp/foundry-work/agentdojo-host/runs",
+  "/var/tmp/foundry-work/benches/agentdojo/venv/lib/python3.12/site-packages/agentdojo/default_suites",
+  "/var/tmp/foundry-work/benches/agentdojo/venv",
+  "/var/tmp/foundry-work/benches/agentdojo",
+  "/var/tmp/foundry-work/agentdojo-live",
+  "/var/tmp/foundry-work/agentdojo/bg8-6031",
+  "/var/tmp/foundry-work/agentdojo/bg8-6031/results.jsonl",
+  "/var/tmp/foundry-work/agentdojo/bg8-6031/launch.json",
+  "/var/tmp/foundry-work/agentdojo/bg8-6031/grade-out-x.jsonl",
+  "/var/tmp/foundry-work/agentdojo/bg8-6031/w/other-unit/note.txt",
+  "/var/tmp/foundry-work/agentdojo-host/runs/bg8-6031/units/u/serve.json",
+  "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-13/research/breadth-20261021/agentdojo/SPLIT.json",
+  "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-13/research/breadth-20261021/agentdojo",
+  "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-13/experiments/breadth/agentdojo/bridge.py",
+  "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-13",
+  "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-13/beds/sealed",
+  "/home/user/workflow-foundry",
+  "/root/.cache/uv",
+  "/root/.cache/pip",
+  "/root/.cache/huggingface",
+  "/root/.claude",
+  "/tmp"
+ ],
+ "planted": {
+  "liveResults": "/var/tmp/foundry-work/agentdojo/bg8-6031/results.jsonl",
+  "liveLaunch": "/var/tmp/foundry-work/agentdojo/bg8-6031/launch.json",
+  "liveGrade": "/var/tmp/foundry-work/agentdojo/bg8-6031/grade-out-x.jsonl",
+  "otherUnit": "/var/tmp/foundry-work/agentdojo/bg8-6031/w/other-unit/note.txt",
+  "hostSnapshot": "/var/tmp/foundry-work/agentdojo-host/runs/bg8-6031/units/u/serve.json"
+ },
+ "pythonTool": {
+  "ok": true,
+  "seen": [
+   "/tmp"
+  ],
+  "leaked": [],
+  "content": {
+   "/tmp": []
+  },
+  "pkg": [],
+  "net": [],
+  "env": [
+   "LC_CTYPE",
+   "PATH"
+  ],
+  "procs": [
+   1
+  ],
+  "uid": 65534
+ },
+ "relayPath": {
+  "ok": true,
+  "seen": [
+   "/tmp"
+  ],
+  "leaked": [],
+  "content": {
+   "/tmp": []
+  },
+  "pkg": [],
+  "net": [],
+  "env": [
+   "LC_CTYPE",
+   "PATH"
+  ],
+  "procs": [
+   1
+  ],
+  "uid": 65534,
+  "unit": "banking/user_task_3/benign",
+  "toolsListed": 12,
+  "extraTools": [],
+  "unknownRejected": true,
+  "facade": {
+   "requests": 1,
+   "pythonRuns": 1,
+   "notesOps": 0,
+   "bridgeError": null,
+   "error": null
+  }
+ },
+ "sessionSandbox": {
+  "ok": true,
+  "leaked": [],
+  "plantedSeen": [],
+  "seen": [
+   "/var/tmp/foundry-work/agentdojo/bg8-6031",
+   "/tmp"
+  ],
+  "content": {
+   "/var/tmp/foundry-work/agentdojo/bg8-6031": [
+    "w"
+   ],
+   "/tmp": []
+  },
+  "hasPkg": [],
+  "cwd": "/var/tmp/foundry-work/agentdojo/bg8-6031/w/unit",
+  "cwdFiles": [
+   ".tools",
+   "probe.mjs"
+  ],
+  "workdirVisible": [
+   "/var/tmp/foundry-work/agentdojo/bg8-6031"
+  ]
+ },
+ "pass": true
+}
