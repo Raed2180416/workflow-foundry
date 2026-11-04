@@ -117,7 +117,7 @@ export function signalTimes(wrec) {
 }
 
 /** modelOf(rec, attribution?) → the analysis model of one (arm, unit, stream). */
-export function modelOf(rec, attribution = null) {
+export function modelOf(rec, attribution = null, exposure = null) {
   const worlds = {};
   for (const w of rec.worlds) {
     const sig = signalTimes(w);
@@ -130,7 +130,7 @@ export function modelOf(rec, attribution = null) {
   const usd = (rec.sessions ?? []).reduce((s, x) => s + (x.session?.costUsd ?? 0), 0);
   // Maintenance $ per change (prereg §9 item 6): a session's $ goes to the change most of its incidents' evidence cases
   // are induced failures of (oracle side), else 'base'.
-  const sessions = (rec.sessions ?? []).map(s => ({ ...s, attributedChange: attribution ? promotionChange({ incidents: s.incidents ?? [] }, rec, attribution) : null }));
+  const sessions = (rec.sessions ?? []).map(s => ({ ...s, attributedChange: attribution ? promotionChange({ incidents: s.incidents ?? [] }, rec, attribution, exposure) : null }));
   return { label: rec.label, arm: rec.arm, stream: rec.stream, worlds, incidents: rec.incidents ?? [], promotions: rec.promotions ?? [], rollbacks: rec.rollbacks ?? [], sessions, usd, budgetStop: rec.budgetStop ?? null };
 }
 
@@ -143,19 +143,24 @@ export function onsetDay(worlds, c) {
   return 14 * (spec.k - 1) + Math.floor((ch.onsetMs - T0_MS) / DAY_MS) + 1;
 }
 
-/** The change a promotion is attributed to: the change holding most of its incidents' evidence cases as c-induced failures. */
-export function promotionChange(p, rec, attribution) {
-  const count = new Map();
-  for (const id of p.incidents ?? []) {
-    const inc = (rec.incidents ?? []).find(i => i.id === id);
-    for (const e of inc?.evidence ?? []) {
-      if (!e.case || e.practice) continue;
-      const ind = attribution?.[e.k]?.induced ?? {};
-      for (const [c, list] of Object.entries(ind)) if (list.includes(e.case)) count.set(c, (count.get(c) ?? 0) + 1);
+/**
+ * The change a promotion (or session) is attributed to: the change holding most of its incidents' evidence cases as
+ * c-induced failures of the delivered run; when none is (a heal can repair the very cases that raised the alarm, so they
+ * pass by the world's end), the change most of them are exposed to (exposure(k) -> { [c]: Set }); else 'base'.
+ */
+export function promotionChange(p, rec, attribution, exposure = null) {
+  const tally = sets => {
+    const count = new Map();
+    for (const id of p.incidents ?? []) {
+      const inc = (rec.incidents ?? []).find(i => i.id === id);
+      for (const e of inc?.evidence ?? []) {
+        if (!e.case || e.practice) continue;
+        for (const [c, s] of Object.entries(sets(e.k) ?? {})) if (s instanceof Set ? s.has(e.case) : s.includes(e.case)) count.set(c, (count.get(c) ?? 0) + 1);
+      }
     }
-  }
-  const best = [...count.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0];
-  return best ? best[0] : 'base';
+    return [...count.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? null;
+  };
+  return tally(k => attribution?.[k]?.induced) ?? (exposure ? tally(exposure) : null) ?? 'base';
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -219,11 +224,11 @@ export async function certifyPromotion({ rec, p, worlds, sealed = null, practice
 }
 
 /** Certify every promotion of a record; returns [{ k, day, from, to, change, verdict, label, reasons }]. */
-export async function certifyRecord({ rec, worlds, sealed = null, attribution = null, practice = PRACTICE }) {
+export async function certifyRecord({ rec, worlds, sealed = null, attribution = null, practice = PRACTICE, exposure = null }) {
   const out = [];
   for (const p of rec.promotions ?? []) {
     const c = await certifyPromotion({ rec, p, worlds, sealed, practice });
-    out.push({ k: p.k, day: p.day, from: p.from, to: p.to, change: promotionChange(p, rec, attribution), verdict: c.verdict, label: c.label, reasons: c.reasons, evidence: c.evidence });
+    out.push({ k: p.k, day: p.day, from: p.from, to: p.to, change: promotionChange(p, rec, attribution, exposure), verdict: c.verdict, label: c.label, reasons: c.reasons, evidence: c.evidence });
   }
   return out;
 }

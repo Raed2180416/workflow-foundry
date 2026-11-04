@@ -149,6 +149,10 @@ test('model and report: induced failures, durable cells and NOT RUN for every pa
   assert.equal(m.worlds[3].cases.x1.signals.m2, day(3, 6) + 5);
   assert.equal(typeof m.worlds[3].cases.x2.placedAt, 'number');
   assert.equal(promotionChange(rec.promotions[0], rec, attribution), 'R1');
+  // A heal that repaired its own evidence cases leaves no induced failure: the exposure decides, never 'base' by default.
+  const healed = { 3: { induced: { R1: [] }, exposedFailing: {}, base: [] } };
+  assert.equal(promotionChange(rec.promotions[0], rec, healed), 'base');
+  assert.equal(promotionChange(rec.promotions[0], rec, healed, k => (k === 3 ? { E2s: new Set(['x1', 'x2']), P1: new Set(['x2']) } : {})), 'E2s');
   assert.equal(m.sessions[0].attributedChange, 'R1');
   assert.deepEqual(signalTimes({ days: { 1: { signals: [{ ch: 'm4', case: null, at: 1 }] } } }), {});
   const r = report({ worlds: { s1: [] }, exposure: {}, arms: {} });
@@ -182,7 +186,7 @@ test('WC-1 Horvitz-Thompson: unbiased over 2,000 Poisson resamples with exact we
 
 test('harm shield: refuses a second charge and a refund above the charge; allows a first charge and an exact refund', () => {
   const tables = { 'billing.charges': [{ fulfilmentId: 'F1', amountMinor: 1000, refundedMinor: 0 }], 'orders.orders': [{ orderId: 'ORD-1', status: 'processing' }], 'notify.notifications': [] };
-  const ctx = { query: (t, f) => (tables[t] ?? []).filter(r => Object.entries(f).every(([k, v]) => r[k] === v)) };
+  const ctx = { query: (t, f) => (tables[t] ?? []).filter(r => Object.entries(f.where ?? {}).every(([k, v]) => r[k] === v)), status: () => 'not-found' };   // the host's query shape: { where }
   assert.match(harmPolicy({ system: 'billing', op: 'charge', args: { orderId: 'ORD-1', fulfilmentId: 'F1' } }, ctx), /second charge/);
   assert.equal(harmPolicy({ system: 'billing', op: 'charge', args: { orderId: 'ORD-1', fulfilmentId: 'F2' } }, ctx), null);
   assert.match(harmPolicy({ system: 'billing', op: 'refund', args: { fulfilmentId: 'F1', amountMinor: 1001 } }, ctx), /above/);

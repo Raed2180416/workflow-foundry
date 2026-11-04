@@ -116,3 +116,18 @@ test('V-10 routing identity: routing to the reference reproduces the plain journ
   assert.ok(changed.length >= 1 && changed.every(c => cases.includes(c)), `only routed cases change (${changed.join(', ')})`);
   assert.ok(specs.length > 0 && specs.every(n => n > 1000), 'the agent sees the spec in force at its tick');
 });
+
+test('+SH shield: the reference passes unchanged under the shield (no refusal of a correct effect), with and without the F fault ramp', async () => {
+  const { harmShield, shieldRefusals } = await import('../shield-harm.mjs');
+  const { makeVersionArm } = await import('../arms.mjs');
+  for (const spec of [W1, W2]) {
+    const b = await buildBundle(spec, { sealed });
+    const pools = await referencePools(b);
+    const ref = referenceVersion({ id: 'reference-earliest', timing: 'earliest' });
+    const shielded = armVersion('reference+SH', ({ bundle, journal }) => harmShield(makeVersionArm(ref, { bundle, journal })));
+    const r = await runBundle(b, { version: shielded });
+    assert.deepEqual(shieldRefusals(r.rows).flatMap(x => x.refused.map(y => `${y.system}.${y.op}: ${y.why}`)).slice(0, 5), [], `${b.key}: no refusal`);
+    const g = gradeRun(b, r.rows, pools.pools);
+    assert.equal(g.passed, g.completed, `${b.key}: the shielded reference still passes every completed case`);
+  }
+});

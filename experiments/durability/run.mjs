@@ -173,7 +173,7 @@ export async function dry({ lineages = ['b1lh-e8-1', 'ch-e8-1'], out = path.join
     return { induced: Object.fromEntries(Object.entries(attr).map(([a, by]) => [a, Object.fromEntries(Object.entries(by).map(([l, x]) => [l, Object.fromEntries(Object.entries(x).map(([k, v]) => [k, Object.fromEntries(Object.entries(v.induced).map(([c, s]) => [c, s.length]))]))]))])) };
   });
   await step('certification', async () => {
-    for (const l of lineages) certs[l] = { r1: await certifyRecord({ rec: healRecs[l], worlds, sealed, attribution: attr['MH-H'][l], practice }) };
+    for (const l of lineages) certs[l] = { r1: await certifyRecord({ rec: healRecs[l], worlds, sealed, attribution: attr['MH-H'][l], practice, exposure: ex.of }) };
     return { verdicts: Object.fromEntries(Object.entries(certs).map(([l, b]) => [l, b.r1.map(c => `${c.k}.${c.day} ${c.change}: ${c.verdict} (${c.label})`)])) };
   });
   let windowPairs = [];
@@ -201,7 +201,7 @@ export async function dry({ lineages = ['b1lh-e8-1', 'ch-e8-1'], out = path.join
   let wc = null;
   await step('wc1-search', async () => {
     const v = programVersion(LINEAGES[lineages[0]], { id: lineages[0] });
-    const s = await search({ targetId: lineages[0], version: v, budget: light ? 2 : 4, poolSize: 20, maxSize: 16, log });
+    const s = await search({ targetId: lineages[0], version: v, budget: light ? 4 : 8, poolSize: light ? 4 : 8, maxSize: 14, log });   // a small pool so the Poisson half samples at a toy budget
     const c = await confirm({ targetId: lineages[0], version: v, top: s.top.slice(0, 1), salts: 2 });
     wc = { search: s, confirm: c };
     return { used: s.used, budget: s.budget, htFailure: s.ht.failure, cvar10: s.cvar10, top: s.top.slice(0, 2).map(t => ({ key: t.key, score: t.score })), confirmed: c.map(x => ({ key: x.key, confirmed: x.confirmed, recur: x.recur })), bedFindings: s.bedFindings.length };
@@ -243,7 +243,7 @@ export async function dry({ lineages = ['b1lh-e8-1', 'ch-e8-1'], out = path.join
   await step('power', async () => { const p = powerReport({ quick: true }); return { sd: p.sd, mde: p.mde, d3: p.d3 }; });
   let rep = null;
   await step('report', async () => {
-    const model = (recs, at) => Object.fromEntries(Object.entries(recs).map(([u, r]) => [u, { r1: modelOf(r, at?.[u] ?? null) }]));
+    const model = (recs, at) => Object.fromEntries(Object.entries(recs).map(([u, r]) => [u, { r1: modelOf(r, at?.[u] ?? null, ex.of) }]));
     const arms = { 'S-H*': model(stat['S-H*'], attr['S-H*']), 'MH-H': model(healRecs, attr['MH-H']), 'MH-stale': model(staleRecs), 'REF-S': model(stat['REF-S']), 'R-static': model(stat['R-static']),
       'R-maint0': model(stat['R-maint0']), 'R-maint2': model(stat['R-maint2']), 'R-maint7': model(stat['R-maint7']), 'R-ceil': model(stat['R-ceil']) };
     // The dry stream is called r1; the rules read s1 for K-0, D-4 and D-9, so the dry report aliases r1 as s1.

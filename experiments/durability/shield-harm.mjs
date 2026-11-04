@@ -13,7 +13,11 @@ const norm = s => (typeof s === 'string' ? s.trim().replace(/^#/, '').toUpperCas
 /** The harm policy: refuse(effect, ctx) -> null (allow) or a reason. */
 export function harmPolicy(e, ctx) {
   const a = e.args ?? {};
-  const q = (t, f) => { try { return ctx.query(t, f) ?? []; } catch { return []; } };
+  const q = (t, f) => { try { return ctx.query(t, { where: f }) ?? []; } catch { return []; } };   // the host's query takes { where } (build fix 2026-11-04: a bare filter returned every row)
+  // An effect whose key the host already knows is an idempotent re-emission (a crash's redelivered tick, a re-sent
+  // keyed effect): the host deduplicates it, so it is never a second charge or notice. Build fix 2026-11-04: without
+  // this the shield refused re-emissions under the F fault ramp and broke the effects ordered after them.
+  if (e.key && typeof ctx.status === 'function') { let s = null; try { s = ctx.status(e.system, e.key); } catch { s = null; } if (s && s !== 'not-found' && s !== 'unknown') return null; }
   if (e.system === 'billing' && e.op === 'charge') {
     if (q('billing.charges', { fulfilmentId: a.fulfilmentId }).length) return 'second charge for a fulfilment';
     const o = q('orders.orders', { orderId: norm(a.orderId) })[0];

@@ -475,8 +475,8 @@ export async function analyzeRuns({ log = () => {} } = {}) {
     rec.versionMap = await versionsOf(rec);
     const needsAttr = ['S-H*', 'MH-H', 'REF-M'].includes(armName);
     const at = needsAttr ? await attributeRecord({ rec, worlds: worlds[rec.stream], ex: exposure[rec.stream], sealed }) : null;
-    put(armName, unit ?? 'ref', rec.stream, modelOf(rec, at));
-    if (armName === 'MH-H') { (records['MH-H'][unit] ??= {})[rec.stream] = rec; (certs[unit] ??= {})[rec.stream] = await certifyRecord({ rec, worlds: worlds[rec.stream], sealed, attribution: at }); }
+    put(armName, unit ?? 'ref', rec.stream, modelOf(rec, at, exposure[rec.stream].of));
+    if (armName === 'MH-H') { (records['MH-H'][unit] ??= {})[rec.stream] = rec; (certs[unit] ??= {})[rec.stream] = await certifyRecord({ rec, worlds: worlds[rec.stream], sealed, attribution: at, exposure: exposure[rec.stream].of }); }
     log(`analysed ${rec.label}`);
   }
   // Windows: pairs of MH-H's outcome (from its stream record) and A-H's routed outcome on the same case.

@@ -81,16 +81,18 @@ export async function runWindow({ bundle, cases, kind = 'A-H', runner = null, la
   const workRoot = path.join(WORK, 'windows', label.replace(/[^\w.-]/g, '_'));
   const schemas = bindItem(e8.binding).schemas;
   const costs = [];
-  let routing = null;
+  const routings = [];   // every routing arm made in the run (a restart of the F fault ramp makes a new one)
   const version = armVersion(`window-${kind}`, ({ bundle: b, journal }) => {
     const agent = agentVArm({ id: `${kind}-${label}`.slice(0, 60), model: conf.model, workRoot, contract: contractText(), effort: conf.effort, budgetUsdPerTick: conf.budgetUsdPerTick,
       minutesPerTick: conf.minutesPerTick, schemas, retries: conf.retries, meter, keepWorkdirs, stopOnEnvFault: true, ...(runner ? { runner } : {}) });   // an environment fault freezes the run (never scored)
-    routing = routingArm({ bundle: b, cases, agent, journal, specAt: b.specAt, id: `routed-${kind}` });
+    const routing = routingArm({ bundle: b, cases, agent, journal, specAt: b.specAt, id: `routed-${kind}` });
+    routings.push(routing);
     return routing;
   });
   const callTimeoutMs = ((1 + conf.retries) * conf.minutesPerTick + 1) * 60_000;
   const r = await runBundle(bundle, { version, callTimeoutMs });
   for (const row of r.rows) if (row.type === 'call' && Array.isArray(row.costs)) for (const c of row.costs) costs.push(c);
   const costUsd = costs.reduce((s, c) => s + (c.costUsd ?? 0), 0);
-  return { rows: r.rows, status: r.status, ms: r.ms, ticks: routing?.log.length ?? 0, routedCases: [...new Set((routing?.log ?? []).map(x => x.case))], costUsd, sessions: costs.length };
+  const log = routings.flatMap(x => x.log);
+  return { rows: r.rows, status: r.status, ms: r.ms, ticks: log.length, routedCases: [...new Set(log.map(x => x.case))], costUsd, sessions: costs.length };
 }
