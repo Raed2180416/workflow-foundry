@@ -74,6 +74,11 @@ Interleaving: arms run interleaved per task on identical environments (order rec
   - **task** (one fixed harness run on many tasks): paired by task at k = 1. More tasks buy more
     power than repeats at the same budget (120 runs per arm: power 0.70 as 120 × k=1 against 0.58
     as 60 × k=2, FIXES A4); use k ≥ 2 only for pass^k claims.
+  - **admission** (a gate that admits or refuses a whole group, such as a supplier, a source or a tenant, and then
+    serves every item of an admitted group): the group is the unit. Its errors are correlated within the group (C2-2 T1:
+    17 of 17 accepted items wrong in one supplier), so an M3 bound clustered on a finer unit (shipment, item) overstates
+    the effective n. Cluster M3 by the admission unit (`experiments/reuse/posthoc.mjs m3Views`;
+    [RESULT-C2-2 §0](reuse-20261021/RESULT-C2-2.md), added 2026-11-04).
   - Family-clustered paired bootstrap (B=10000) only on top of the right unit, never instead of it.
 
 ## 4. Power
