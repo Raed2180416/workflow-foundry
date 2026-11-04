@@ -55,7 +55,7 @@ export function bedCommand(args, { cwd, timeoutMs } = {}) {
 }
 export async function bedJson(args, opts) {
   const r = await bedCommand(args, opts);
-  if (r.code !== 0) throw new Error(`bed ${args[0]} failed (${r.code}): ${r.stderr.slice(-1500)}`);
+  if (r.code !== 0) throw new Error(`bed ${args[0]} failed (${r.code ?? r.signal}${r.timedOut ? ', killed at its time limit' : ''}): ${r.stderr.slice(-1500)}`);
   return r.lines;
 }
 /** World start-up imports pandas and loads seven CSVs: seconds when idle, but over a minute was seen on a loaded host
@@ -130,22 +130,34 @@ export async function gradeTrajectories(rows, { tasksFile, dir, parallel = 1 }) 
   return bedChunked('grade', rows, { tasksFile, dir, parallel });
 }
 
-/** Run a row-wise bed command (grade, replay) over rows in `parallel` contiguous chunks, each in its own bed process;
- * rows are independent, so the verdicts are the same as one process gives, in input order. */
-export async function bedChunked(cmd, rows, { tasksFile, dir, parallel = 1 }) {
+/** Rows per bed process in bedChunked: small enough that one chunk finishes well inside ROW_COMMAND_TIMEOUT_MS on a
+ * loaded host (2026-11-04: at load 47 on 4 cores, three 460-row grade processes were still running at the old 30-minute
+ * cap and were killed; nothing was graded, the run stopped). */
+export const MAX_CHUNK_ROWS = 120;
+export const ROW_COMMAND_TIMEOUT_MS = 3 * 60 * 60_000;
+
+/** Run a row-wise bed command (grade, replay) over rows in contiguous chunks of at most MAX_CHUNK_ROWS, each in its own
+ * bed process, at most `parallel` at a time; rows are independent, so the verdicts are the same as one process gives,
+ * in input order. A chunk killed at the timeout (exit code null) throws: a harness fault, never a verdict. */
+export async function bedChunked(cmd, rows, { tasksFile, dir, parallel = 1, maxRows = MAX_CHUNK_ROWS, timeoutMs = ROW_COMMAND_TIMEOUT_MS }) {
   mkdirSync(dir, { recursive: true });
-  const k = Math.max(1, Math.min(parallel, rows.length));
-  const size = Math.ceil(rows.length / k), tag = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const parts = await Promise.all(Array.from({ length: k }, async (_, i) => {
-    const chunk = rows.slice(i * size, (i + 1) * size);
-    if (!chunk.length) return [];
-    const inFile = path.join(dir, `${cmd}-in-${tag}-${i}.jsonl`), outFile = path.join(dir, `${cmd}-out-${tag}-${i}.jsonl`);
-    writeJsonl(inFile, chunk);
-    await bedJson([cmd, '--tasks', tasksFile, '--in', inFile, '--out', outFile], { cwd: dir });
-    const v = readJsonl(outFile);
-    rmSync(inFile, { force: true }); rmSync(outFile, { force: true });
-    if (v.length !== chunk.length) throw new Error(`bed ${cmd}: ${v.length} verdicts for ${chunk.length} rows`);
-    return v;
+  const size = Math.max(1, Math.min(maxRows, Math.ceil(rows.length / Math.max(1, parallel))));
+  const chunks = [];
+  for (let i = 0; i < rows.length; i += size) chunks.push(rows.slice(i, i + size));
+  const tag = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const parts = new Array(chunks.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(parallel, chunks.length)) }, async () => {
+    while (next < chunks.length) {
+      const i = next++, chunk = chunks[i];
+      const inFile = path.join(dir, `${cmd}-in-${tag}-${i}.jsonl`), outFile = path.join(dir, `${cmd}-out-${tag}-${i}.jsonl`);
+      writeJsonl(inFile, chunk);
+      await bedJson([cmd, '--tasks', tasksFile, '--in', inFile, '--out', outFile], { cwd: dir, timeoutMs });
+      const v = readJsonl(outFile);
+      rmSync(inFile, { force: true }); rmSync(outFile, { force: true });
+      if (v.length !== chunk.length) throw new Error(`bed ${cmd}: ${v.length} verdicts for ${chunk.length} rows`);
+      parts[i] = v;
+    }
   }));
   return parts.flat();
 }

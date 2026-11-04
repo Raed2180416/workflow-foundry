@@ -34,14 +34,15 @@ export function runBedCommand({ python, script, args, cwd, timeoutMs = 30 * 60_0
   return new Promise((resolve, reject) => {
     const c = spawn(argv[0], argv.slice(1), { cwd, env: bedEnv(cwd), stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '', stderr = '';
-    const t = setTimeout(() => c.kill('SIGKILL'), timeoutMs);
+    let timedOut = false;
+    const t = setTimeout(() => { timedOut = true; c.kill('SIGKILL'); }, timeoutMs);
     c.stdout.on('data', d => { stdout += d; });
     c.stderr.on('data', d => { if (stderr.length < 200_000) stderr += d; });
     c.on('error', reject);
-    c.on('close', code => {
+    c.on('close', (code, signal) => {
       clearTimeout(t);
       const lines = stdout.split('\n').filter(l => l.trim().startsWith('{')).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
-      resolve({ code, stdout, stderr, lines });
+      resolve({ code, signal, timedOut, stdout, stderr, lines });
     });
   });
 }

@@ -149,6 +149,23 @@ test('end to end through the facade (pinned bed): gold, do-nothing, a fatal tool
   } finally { cleanup(r.liveRoot); rmSync(tasksFile, { force: true }); }
 });
 
+test('chunked replay (pinned bed): small chunks through a pool give the same verdicts, in input order, as one process', { skip: BED_READY ? false : 'pinned WorkBench bed not installed' }, async () => {
+  const { bedChunked, shippedTasks, HOST_ONLY, writeJsonl } = await import('../workbench/lib.mjs');
+  const tasks = (await shippedTasks()).filter(x => x.outcome.length).slice(0, 7);
+  const dir = path.join(HOST_ONLY, 'test', `chunk-${process.pid}`);
+  const tasksFile = path.join(dir, 'tasks.jsonl');
+  writeJsonl(tasksFile, tasks);
+  const rows = tasks.flatMap(t => [{ id: t.id, key: `${t.id}:g`, actions: t.outcome }, { id: t.id, key: `${t.id}:n`, actions: [] }]);
+  try {
+    const one = await bedChunked('replay', rows, { tasksFile, dir, parallel: 1, maxRows: rows.length });
+    const many = await bedChunked('replay', rows, { tasksFile, dir, parallel: 2, maxRows: 3 }); // 5 chunks, 2 at a time
+    assert.deepEqual(many.map(v => v.key), rows.map(r => r.key));
+    assert.deepEqual(many, one);
+    assert.ok(many.filter(v => v.key.endsWith(':g')).every(v => v.correct));
+    await assert.rejects(bedChunked('replay', rows.slice(0, 2), { tasksFile, dir, timeoutMs: 1 }), /killed at its time limit/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('contamination probes: continuation and slot prompts, scoring, one-sided Fisher test', async () => {
   const { continuationProbe, slotProbe, score, fisherOneSided, firstValue } = await import('../workbench/contam-probe.mjs');
   const t = { id: 'email-000', domain: 'email', task: 'Delete my last email from nadia', outcome: ['email.delete_email.func(email_id="00000479")'],

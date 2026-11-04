@@ -1,0 +1,129 @@
+{
+ "bed": "WorkBench @49c7dfd00c03d384ec59ea57374f50b766aa5613",
+ "at": "2026-11-04T13:11:54.068Z",
+ "concurrency": 3,
+ "limit": null,
+ "path": "scripted MCP client -> mcp-relay.mjs (stdio JSON-RPC) -> mailbox -> host.mjs -> bed.py serve (unshare -rn, python -I) -> live world; graded by bed.py grade (WorkBench is_correct) in a separate process; reference = bed.py replay (evaluator-level, no facade)",
+ "semComparator": "correct_sem / equivalent_sem (bed.py sem_digests): the official view (five mutable tables, case-folded except status/list_name/board, row order ignored) plus: rows created during the task identified by content, not by their generated ID; date-times compared as instants; numbers as numbers; the official chart end-date tolerance. The BG-6 comparator, reported beside is_correct, never in its place",
+ "BG1_gold": {
+  "n": 690,
+  "correct": 690,
+  "correctSem": 690,
+  "parityAgree": 690,
+  "nativeAgree": 690,
+  "liveMatchesReplay": 690,
+  "actionsIdentical": 690,
+  "envFaults": 0,
+  "rejected": 0,
+  "fatal": 0,
+  "byDomain": {
+   "analytics": {
+    "n": 120,
+    "correct": 120
+   },
+   "calendar": {
+    "n": 110,
+    "correct": 110
+   },
+   "customer_relationship_manager": {
+    "n": 80,
+    "correct": 80
+   },
+   "email": {
+    "n": 90,
+    "correct": 90
+   },
+   "multi_domain": {
+    "n": 210,
+    "correct": 210
+   },
+   "project_management": {
+    "n": 80,
+    "correct": 80
+   }
+  },
+  "goldLength": {
+   "min": 0,
+   "max": 12,
+   "mean": 1.37,
+   "histogram": {
+    "0": 122,
+    "1": 416,
+    "2": 88,
+    "3": 23,
+    "4": 14,
+    "5": 2,
+    "6": 5,
+    "7": 3,
+    "8": 4,
+    "9": 3,
+    "10": 2,
+    "11": 6,
+    "12": 2
+   }
+  },
+  "pass": true
+ },
+ "BG2_doNothing": {
+  "n": 690,
+  "correct": 124,
+  "correctSem": 124,
+  "parityAgree": 690,
+  "nativeAgree": 690,
+  "liveMatchesReplay": 690,
+  "actionsIdentical": 690,
+  "envFaults": 0,
+  "rejected": 0,
+  "fatal": 0,
+  "byDomain": {
+   "analytics": {
+    "n": 120,
+    "correct": 40
+   },
+   "calendar": {
+    "n": 110,
+    "correct": 11
+   },
+   "customer_relationship_manager": {
+    "n": 80,
+    "correct": 10
+   },
+   "email": {
+    "n": 90,
+    "correct": 1
+   },
+   "multi_domain": {
+    "n": 210,
+    "correct": 41
+   },
+   "project_management": {
+    "n": 80,
+    "correct": 21
+   }
+  },
+  "stateChanging": 566
+ },
+ "BG4_determinism": {
+  "run1": "f14c78039fc89568587b5ce0810e3912a906a521bed4be24cbc72e8c26a036b9",
+  "run2": "f14c78039fc89568587b5ce0810e3912a906a521bed4be24cbc72e8c26a036b9",
+  "identical": true,
+  "items": 1380,
+  "msPerItem": 1357
+ },
+ "setsRun": {
+  "gold+nothing": "2026-11-04T13:49:39.688Z"
+ },
+ "code": {
+  "gold+nothing": {
+   "bed.py": "ab0520028e13282faa113e666a32a4dc6a568f3cfcc381c50f2b648175797eec",
+   "parity.mjs": "018fae391c6cb91d985ba5451cac1d532e84d029a5d2eb445cacd5f4dd4b01ec",
+   "baselines.mjs": "dc1cc62945b5759cd851b1b5883595787508e6c934b059b6ab7f7611167b607e",
+   "scripted.mjs": "29a3d50ac595db52347744eba2eab68cf576989f396adc289a64caee1119e6b3",
+   "lib.mjs": "c014aad9c0df02b011de4b277f16e6ff7156b995d7a490b2a8a488ae13fdb84b",
+   "host.mjs": "4933de2b702b23ec1ab7ef6a26ebed07ffe8d0affef0f40fe162a5b9145b3438",
+   "mcp-relay.mjs": "0dad835d38b3767f87fafdcf89aa51791a28daff1a5a35dbf257cf03579714b9",
+   "scripted-client.mjs": "48d2169722322bcbb69a3ffc80c468934932b7f9038fdbb79b38062b9fb20707"
+  }
+ },
+ "ms": 2267066
+}
