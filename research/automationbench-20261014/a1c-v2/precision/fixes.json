@@ -1,0 +1,388 @@
+{
+ "fixes": {
+  "E": {
+   "tasks": [
+    "finance.ap_aging_report",
+    "finance.quarterly_tax_estimate",
+    "hr.visa_expiry_tracking",
+    "marketing.community_engagement",
+    "marketing.customer_feedback_aggregation",
+    "marketing.customer_milestone",
+    "marketing.engagement_optimization",
+    "marketing.win_loss_analysis",
+    "operations.docusign_contractor_offboard",
+    "operations.parking_allocation_management",
+    "sales.competitive_displacement_outreach",
+    "sales.partnership_contract",
+    "sales.vendor_review_prep",
+    "support.gorgias_quality_audit",
+    "support.hiver_mailbox_audit",
+    "support.intercom_demo_scheduling",
+    "support.intercom_sentiment_escalation"
+   ],
+   "frhard": [],
+   "fr": [],
+   "fa": [
+    "finance.ap_aging_report",
+    "finance.quarterly_tax_estimate",
+    "hr.visa_expiry_tracking",
+    "marketing.community_engagement",
+    "marketing.customer_milestone",
+    "marketing.engagement_optimization",
+    "marketing.win_loss_analysis",
+    "operations.docusign_contractor_offboard",
+    "operations.parking_allocation_management",
+    "sales.competitive_displacement_outreach",
+    "sales.partnership_contract",
+    "support.gorgias_quality_audit",
+    "support.hiver_mailbox_audit",
+    "support.intercom_demo_scheduling",
+    "support.intercom_sentiment_escalation"
+   ],
+   "miss": [
+    "marketing.customer_feedback_aggregation",
+    "sales.vendor_review_prep"
+   ],
+   "trwr": [],
+   "checks": 21
+  },
+  "F": {
+   "tasks": [
+    "finance.capex_approval",
+    "finance.vendor_1099_prep",
+    "hr.equipment_provisioning",
+    "hr.visa_expiry_tracking",
+    "marketing.engagement_optimization",
+    "marketing.featured_snippet",
+    "operations.loading_dock_scheduling",
+    "sales.advance_opportunity_stage",
+    "sales.partnership_contract",
+    "sales.qualify_lead",
+    "sales.zoom_meeting_followup",
+    "support.helpcrunch_zoho_desk_bridge",
+    "support.intercom_demo_scheduling",
+    "support.intercom_multi_product_routing",
+    "support.intercom_sentiment_escalation"
+   ],
+   "frhard": [
+    "support.intercom_multi_product_routing"
+   ],
+   "fr": [
+    "support.helpcrunch_zoho_desk_bridge",
+    "support.intercom_multi_product_routing",
+    "support.intercom_sentiment_escalation"
+   ],
+   "fa": [
+    "finance.vendor_1099_prep",
+    "hr.visa_expiry_tracking",
+    "marketing.engagement_optimization",
+    "marketing.featured_snippet",
+    "operations.loading_dock_scheduling",
+    "sales.advance_opportunity_stage",
+    "sales.partnership_contract",
+    "sales.qualify_lead",
+    "sales.zoom_meeting_followup",
+    "support.intercom_multi_product_routing"
+   ],
+   "miss": [
+    "finance.capex_approval",
+    "hr.equipment_provisioning",
+    "hr.visa_expiry_tracking",
+    "operations.loading_dock_scheduling",
+    "support.intercom_demo_scheduling",
+    "support.intercom_sentiment_escalation"
+   ],
+   "trwr": [],
+   "checks": 27
+  },
+  "A": {
+   "tasks": [
+    "marketing.linkedin_company_update",
+    "operations.docusign_contractor_offboard",
+    "operations.overtime_threshold_monitoring",
+    "operations.zoom_training_setup",
+    "sales.chatgpt_proposal_customization",
+    "sales.docusign_sequential_signing",
+    "sales.soft_matching",
+    "sales.zoom_meeting_followup",
+    "support.helpcrunch_usage_alerts",
+    "support.intercom_demo_scheduling",
+    "support.intercom_multi_product_routing",
+    "support.intercom_reactivation_campaign",
+    "support.intercom_sentiment_escalation",
+    "support.reamaze_cross_platform_dedup"
+   ],
+   "frhard": [
+    "marketing.linkedin_company_update",
+    "operations.docusign_contractor_offboard",
+    "operations.overtime_threshold_monitoring",
+    "sales.docusign_sequential_signing",
+    "sales.soft_matching",
+    "sales.zoom_meeting_followup",
+    "support.helpcrunch_usage_alerts",
+    "support.intercom_demo_scheduling",
+    "support.intercom_multi_product_routing",
+    "support.intercom_reactivation_campaign",
+    "support.intercom_sentiment_escalation",
+    "support.reamaze_cross_platform_dedup"
+   ],
+   "fr": [
+    "marketing.linkedin_company_update",
+    "operations.docusign_contractor_offboard",
+    "operations.overtime_threshold_monitoring",
+    "operations.zoom_training_setup",
+    "sales.docusign_sequential_signing",
+    "sales.soft_matching",
+    "sales.zoom_meeting_followup",
+    "support.helpcrunch_usage_alerts",
+    "support.intercom_demo_scheduling",
+    "support.intercom_multi_product_routing",
+    "support.intercom_reactivation_campaign",
+    "support.intercom_sentiment_escalation",
+    "support.reamaze_cross_platform_dedup"
+   ],
+   "fa": [],
+   "miss": [],
+   "trwr": [
+    "marketing.linkedin_company_update",
+    "sales.chatgpt_proposal_customization"
+   ],
+   "checks": 68
+  },
+  "C": {
+   "tasks": [
+    "finance.travel_advance_settlement",
+    "finance.vendor_payment_approval",
+    "marketing.customer_milestone",
+    "marketing.engagement_optimization",
+    "marketing.social_content_calendar",
+    "marketing.social_contest",
+    "operations.parking_allocation_management",
+    "operations.zoom_dr_drill",
+    "operations.zoom_training_setup",
+    "sales.docusign_sequential_signing",
+    "support.helpcrunch_usage_alerts",
+    "support.helpcrunch_zoho_desk_bridge",
+    "support.intercom_zoho_customer_360"
+   ],
+   "frhard": [
+    "finance.travel_advance_settlement",
+    "finance.vendor_payment_approval",
+    "marketing.customer_milestone",
+    "marketing.engagement_optimization",
+    "marketing.social_content_calendar",
+    "marketing.social_contest",
+    "operations.parking_allocation_management",
+    "operations.zoom_dr_drill",
+    "operations.zoom_training_setup",
+    "sales.docusign_sequential_signing",
+    "support.helpcrunch_usage_alerts",
+    "support.helpcrunch_zoho_desk_bridge",
+    "support.intercom_zoho_customer_360"
+   ],
+   "fr": [
+    "finance.travel_advance_settlement",
+    "finance.vendor_payment_approval",
+    "marketing.customer_milestone",
+    "marketing.engagement_optimization",
+    "marketing.social_content_calendar",
+    "marketing.social_contest",
+    "operations.parking_allocation_management",
+    "operations.zoom_dr_drill",
+    "operations.zoom_training_setup",
+    "sales.docusign_sequential_signing",
+    "support.helpcrunch_usage_alerts",
+    "support.helpcrunch_zoho_desk_bridge",
+    "support.intercom_zoho_customer_360"
+   ],
+   "fa": [],
+   "miss": [],
+   "trwr": [],
+   "checks": 41
+  },
+  "B": {
+   "tasks": [
+    "hr.equipment_provisioning",
+    "hr.monday_onboarding_pipeline",
+    "operations.asana_safety_walk_log",
+    "operations.calendar_airtable_maintenance",
+    "operations.cross_training_assignment",
+    "operations.docusign_contractor_offboard",
+    "operations.invoice_shipping_trigger",
+    "operations.zoom_dr_drill",
+    "operations.zoom_training_setup",
+    "sales.chatgpt_lead_summary_generator",
+    "support.helpcrunch_usage_alerts"
+   ],
+   "frhard": [
+    "hr.equipment_provisioning",
+    "operations.asana_safety_walk_log",
+    "operations.cross_training_assignment",
+    "operations.docusign_contractor_offboard",
+    "operations.zoom_dr_drill",
+    "operations.zoom_training_setup",
+    "support.helpcrunch_usage_alerts"
+   ],
+   "fr": [
+    "hr.equipment_provisioning",
+    "operations.asana_safety_walk_log",
+    "operations.cross_training_assignment",
+    "operations.docusign_contractor_offboard",
+    "operations.zoom_dr_drill",
+    "operations.zoom_training_setup",
+    "sales.chatgpt_lead_summary_generator",
+    "support.helpcrunch_usage_alerts"
+   ],
+   "fa": [],
+   "miss": [],
+   "trwr": [
+    "hr.monday_onboarding_pipeline",
+    "operations.calendar_airtable_maintenance",
+    "operations.invoice_shipping_trigger",
+    "operations.zoom_dr_drill"
+   ],
+   "checks": 24
+  },
+  "D": {
+   "tasks": [
+    "finance.ap_aging_report",
+    "finance.budget_variance_analysis",
+    "finance.project_profitability",
+    "hr.salary_adjustment_processing",
+    "hr.visa_expiry_tracking",
+    "marketing.customer_feedback_aggregation",
+    "marketing.customer_milestone",
+    "marketing.engagement_optimization",
+    "operations.cross_training_assignment",
+    "sales.vendor_review_prep",
+    "support.intercom_zoho_customer_360"
+   ],
+   "frhard": [
+    "hr.salary_adjustment_processing",
+    "hr.visa_expiry_tracking",
+    "marketing.customer_milestone",
+    "sales.vendor_review_prep"
+   ],
+   "fr": [
+    "hr.salary_adjustment_processing",
+    "hr.visa_expiry_tracking",
+    "marketing.customer_feedback_aggregation",
+    "marketing.customer_milestone",
+    "sales.vendor_review_prep"
+   ],
+   "fa": [
+    "finance.ap_aging_report",
+    "finance.budget_variance_analysis",
+    "finance.project_profitability"
+   ],
+   "miss": [
+    "marketing.engagement_optimization",
+    "operations.cross_training_assignment",
+    "support.intercom_zoho_customer_360"
+   ],
+   "trwr": [],
+   "checks": 16
+  },
+  "J": {
+   "tasks": [
+    "finance.bad_debt_writeoff",
+    "marketing.social_contest",
+    "sales.chatgpt_proposal_customization",
+    "sales.partnership_contract",
+    "support.helpcrunch_zoho_desk_bridge",
+    "support.intercom_demo_scheduling",
+    "support.intercom_sentiment_escalation",
+    "support.intercom_zoho_customer_360"
+   ],
+   "frhard": [],
+   "fr": [],
+   "fa": [],
+   "miss": [
+    "finance.bad_debt_writeoff",
+    "marketing.social_contest",
+    "sales.chatgpt_proposal_customization",
+    "sales.partnership_contract",
+    "support.helpcrunch_zoho_desk_bridge",
+    "support.intercom_demo_scheduling",
+    "support.intercom_sentiment_escalation",
+    "support.intercom_zoho_customer_360"
+   ],
+   "trwr": [],
+   "checks": 0
+  },
+  "G": {
+   "tasks": [
+    "hr.salary_adjustment_processing",
+    "marketing.customer_milestone",
+    "support.helpcrunch_usage_alerts",
+    "support.helpcrunch_zoho_desk_bridge",
+    "support.intercom_sentiment_escalation"
+   ],
+   "frhard": [
+    "support.helpcrunch_usage_alerts"
+   ],
+   "fr": [
+    "hr.salary_adjustment_processing",
+    "marketing.customer_milestone",
+    "support.helpcrunch_usage_alerts",
+    "support.helpcrunch_zoho_desk_bridge",
+    "support.intercom_sentiment_escalation"
+   ],
+   "fa": [],
+   "miss": [],
+   "trwr": [],
+   "checks": 17
+  },
+  "H": {
+   "tasks": [
+    "finance.bad_debt_writeoff",
+    "sales.competitive_displacement_outreach"
+   ],
+   "frhard": [],
+   "fr": [],
+   "fa": [],
+   "miss": [],
+   "trwr": [],
+   "checks": 0
+  },
+  "R": {
+   "tasks": [
+    "marketing.linkedin_company_update"
+   ],
+   "frhard": [],
+   "fr": [],
+   "fa": [],
+   "miss": [
+    "marketing.linkedin_company_update"
+   ],
+   "trwr": [],
+   "checks": 0
+  },
+  "I": {
+   "tasks": [
+    "marketing.customer_story_intake"
+   ],
+   "frhard": [],
+   "fr": [],
+   "fa": [],
+   "miss": [
+    "marketing.customer_story_intake"
+   ],
+   "trwr": [],
+   "checks": 0
+  }
+ },
+ "names": {
+  "A": "effect-typed compile from the API schema (app, record kind, child-of-record, list membership)",
+  "B": "observable checks: read back the written record by id; a blind app is never a hard code check",
+  "C": "literal hygiene: values only (no instruction/rationale/template text); all literals of a check from one item; row vs sheet scope",
+  "D": "negative compile: \"X must not appear\" -> body/row-must-not-contain on the same artifact; excluded-recipient sets minus required recipients",
+  "E": "literal completeness: compile every named value incl. code-computed derived values (sums, counts, day differences) and subject/format words",
+  "F": "ledger scope/precedence: closed-world in/out per entity; newest policy wins; precedent format; one target per selection",
+  "G": "drop or demote requirements no source asks for (ungraded inventions)",
+  "H": "advisory checks with a correct fail verdict are ignored (judged / negative / no-address)",
+  "R": "repair idempotency: an exactly-once effect is not re-created by a repair",
+  "I": "convention: read in full (open) every record a decision rests on",
+  "J": "policy/config recall: every action a policy or config document prescribes becomes a requirement (tag, log event, Jira issue, row update)"
+ }
+}

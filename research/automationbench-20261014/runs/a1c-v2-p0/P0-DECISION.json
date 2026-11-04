@@ -1,0 +1,33 @@
+{
+ "schema": "foundry.autobench.a1c-v2-p0-decision/v1",
+ "evidence": "development/diagnostic, IN-SAMPLE (devTrain dev60, the recorded a1c-dev60-dn run; D21): never a capability claim",
+ "design": "research/automationbench-20261014/A1C-V2-DESIGN.md §5 (P0 rules, frozen before P0) and §0.2 (this result)",
+ "run": { "live": "/var/tmp/foundry-work/autobench/a1c-v2-p0-ledger", "model": "claude-haiku-5-5", "cli": "2.1.307 (Claude Code)", "branchCommit": "69e6a9223379f53e0e6461541f9299cc9b1d8b4b",
+  "attempts": [ { "start": "2026-10-22T03:08:16Z", "end": "killed by the container restart at about 03:11Z", "tasksFinished": 13, "inFlightKilled": 3 },
+                { "start": "2026-10-22T03:19:37Z", "end": "2026-10-22T03:31:43Z", "mode": "--resume", "exit": 0 } ],
+  "killedAttemptBooking": "the 3 tasks in flight at the restart had no row.json: their spend was booked by the ledger rule (reported cost for the 2 calls whose transcripts hold a result, $0.0075; the 0.075 reservation for each of the 7 calls with no transcript, $0.525: an upper bound) into fault rows CONTAINER_RESTART (killed-attempt1.json), so --resume re-ran them and --cap 2.5 stayed a hard total; never scored",
+  "lintReplay": { "command": "replay-gate.mjs --lint --from <live>", "exit": 0, "at": "2026-10-22T03:31:44Z" } },
+ "spend": { "settledUsd": 1.7670, "reportedUsd": 1.2345, "killedUpperBoundUsd": 0.5325, "cap": 2.5, "calls": 181, "unknownCostCalls": 0, "mercuryTokens": 0 },
+ "rules": {
+  "complete": { "value": true, "met": true },
+  "readersParsedAfterReask": { "value": 179, "of": 180, "threshold": 177, "parsedFirstPass": 179, "unparsedCompleted": 1, "timeouts": 0, "reasks": 0, "met": true },
+  "modelViolations": { "value": 0, "seen": ["claude-haiku-5-5"], "met": true },
+  "proxies": { "v1": { "wrongEntity": 158, "wrongValue": 33 }, "v2": { "wrongEntity": 107, "wrongValue": 16 }, "rule": "must not increase", "met": true },
+  "coverageReported": { "failingScored": 121, "v1": { "full": 7, "entity": 61, "literal": 19, "none": 34 }, "v2": { "full": 7, "entity": 62, "literal": 15, "none": 37 }, "note": "reported, no threshold: v2 covers 3 fewer failing assertions at any level than v1 (84 against 87)" },
+  "preSendLint": {
+   "rule": "on only if the lint replay over all 60 tasks yields >= 2 true refusals and <= 1 false refusal, every refusal reviewed by hand against the recorded dev60 grades",
+   "replay": { "tasks": 60, "missing": 0, "tasksWithRules": 16, "rules": 17, "sends": 145, "refusals": 4, "autoTrue": 1, "autoReview": 3 },
+   "review": [
+    { "task": "finance.budget_variance_analysis", "step": 7, "rule": "P1", "literal": "Legal", "auto": "true", "verdict": "TRUE", "why": "the send's body says Legal was excluded; the grader's body_not_contains 'Legal' to the CFO fails, and it is the task's only failing assertion" },
+    { "task": "finance.project_profitability", "step": 6, "rule": "P1", "literal": "Delta Integration", "auto": "review (no assertion names it)", "verdict": "TRUE", "why": "the body ends 'Delta Integration excluded (pro bono engagement)'; the grader's body_not_contains 'Delta' to the CFO fails (the auto rule missed it: the assertion's literal is a substring of the refused one), the task's only failing assertion" },
+    { "task": "finance.quarterly_tax_estimate", "step": 6, "rule": "P1", "literal": "$95,000", "auto": "review (no assertion names it)", "verdict": "FALSE", "why": "the source rule is 'do not deduct from 2026 estimates'; the send mentions the 2025 payment and does not deduct it; no assertion names the amount; the task fails on a different value (body_contains '105,792'), which a resend without the amount would not fix" },
+    { "task": "marketing.customer_feedback_aggregation", "step": 6, "rule": "P2", "literal": "gdpr_consent=False", "auto": "review (no assertion names it)", "verdict": "FALSE", "why": "the source rule excludes records by that field value; the send names the field when reporting '2 EU records excluded' (asked for by the request); no assertion names the literal; the task fails on 'Eligible items: 10', which a resend without the literal would not fix" }
+   ],
+   "trueRefusals": 2, "falseRefusals": 2,
+   "decision": "OFF (preSendLint stays false): 2 true refusals meet the >= 2 condition, 2 false refusals break the <= 1 condition",
+   "pattern": "both false refusals come from an exclusion rule about records or arithmetic ('do not deduct', 'exclude records where') compiled into a do-not-mention literal; recorded for v2.1, not changed here",
+   "smoke": "not run (the lint is off)"
+  }
+ },
+ "decision": "P0 passes its reader, model and proxy rules; preSendLint stays false, so the v2 and v2-M harness hashes are unchanged (716df33d…, 785093f5… at CLI 2.1.307) and no lint smoke runs"
+}
