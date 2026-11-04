@@ -103,3 +103,52 @@ the bed). Every DUR-1 file is new under `experiments/durability/` and `research/
 | V-12 | null false-alarm <= 0.10 over 10^4 streams, 4-vs-3 novel cases (`units.test.mjs`) |
 | V-13 | the author's count-only gates (`author.mjs`), exercised by the dry run with the stub bundle |
 | V-14 | C-O certification (`contracts-owner.mjs`), exercised by the dry run |
+
+## 6. The exact paid commands (none has run; each refuses to spend before its freeze)
+
+Every command runs from the root of this worktree (or of main once this branch is merged); every paid one is launched
+detached from the chain script file, never typed inline. All spend goes to one ledger,
+`research/durability-20261021/runs/spend.jsonl`; rows and caps are prereg §12 (`run.mjs` `PRIORITY`).
+
+**Fix phase, before any money ($0):**
+
+1. Correct prereg §11 and the banner to `POWER.json` (four D-3 cells, §4 item 7 above); review code and prereg; record
+   the decision (proposed D31, prereg §16) and the seed claim.
+2. Freeze F-A and commit it: `node experiments/durability/freeze.mjs write A --commit $(git rev-parse HEAD)`, then
+   `git add research/durability-20261021/FREEZE-A.json` and commit.
+
+**P1, the sealed author (Opus 5.5 xhigh, $2 and 60 min per session, one revision; row cap $4):**
+
+    setsid nohup sh experiments/durability/dur1-chain.sh author > research/durability-20261021/runs/chain-author.log 2>&1 &
+
+It writes the bundle to `/var/tmp/foundry-work/dur1-sealed/bundle.json` (outside the repository) and
+`research/durability-20261021/SEALED.json` (sha256 and counts only); commit `SEALED.json` without reading the bundle.
+
+**F-B, then everything else:**
+
+    node experiments/durability/power.mjs --out research/durability-20261021/POWER.json
+    # prereg status -> FROZEN; commit; then:
+    node experiments/durability/freeze.mjs write B --commit $(git rev-parse HEAD)
+    git add research/durability-20261021/FREEZE.json && git commit (trailers as usual)
+    setsid nohup sh experiments/durability/dur1-chain.sh after-author > research/durability-20261021/runs/chain.log 2>&1 &
+
+The chain runs, in prereg §13.1 order, each as `nice -n 15 node experiments/durability/run.mjs ...`:
+
+| Step | Command | Cost |
+|---|---|---|
+| Stage Z | `stagez` (V-1, V-2, V-3, V-11, exposure, S-H*, REF-S, c-oss, R-static, R-maint(0,2,7), R-ceil on s1-s3; K-0 on s1, stops the chain if it fires) | $0 |
+| WC-1 t0 | `wc1 --when t0` (400 / 150 evaluations per target, confirmation, transfer) | $0 |
+| P0 | `p0 --paid` (2 lineages x 2 rehearsal worlds with R1, <= 3 Haiku sessions; A-H window of 4 cases; sets k) | <= $2 |
+| P2 + P3 | `heal --paid --streams s1,s2 --lineages <half>` twice in parallel (<= 2 paid sessions at once; C-O sessions run inside, one per announced change) | <= $6 + $15 |
+| P4 | `windows --paid --streams s1,s2 --kind A-H` (8 windows + the repeat draw on s1 R2s) | <= $13 |
+| P5 | `heal --paid --streams s3`, `windows --paid --streams s3 --kind A-H` (skipped by K-4) | <= $13 |
+| P6 | `refm --paid` (S1-S3 maintained by Opus 5.5 xhigh on s1) | <= $6 |
+| P7 | `redteam --paid` (RT-O1, RT-O2 Opus xhigh, RT-H Haiku; blind baselines) | <= $8 |
+| WC-1 end, ADV-SET | `wc1 --when end`, `advset` | $0 |
+| P8 | `windows --paid --kind A-Ox` (<= 6 cases, stop rule before each) | <= $7 |
+| P9 | `forks --paid` (MH-stale on s1, LD-H x 6) | <= $5 |
+| analysis | `analyze` (writes runs/REPORT.json; owner table first) | $0 |
+
+Exit codes: 3 stops the chain (freeze changed or `--paid` missing), 4 budget-stops a row and moves on, 75 is an
+environment fault (wait 30 minutes, resume the same step), anything else is retried once and then excluded and reported.
+Resume after a restart: the same `setsid nohup sh ... after-author` line (finished steps leave `runs/.done-<step>`).

@@ -20,6 +20,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const sealed = loadSealed(path.join(here, '../fixtures/sealed-stub.json'));
 const [W1, W2] = dryWorlds();
 const ref = referenceVersion({ id: 'reference-earliest', timing: 'earliest' });
+const noR1Of = b => { const W = structuredClone(b.W); delete W.truth.dur1Eff.R1; return W; };
 const withEff = (b, eff) => { const W = structuredClone(b.W); W.truth.dur1Eff = { ...W.truth.dur1Eff, R1: eff }; return { ...b, W, key: `${b.key}@${eff}`, worldDigest: `${b.worldDigest}-${eff}` }; };
 
 test('V-1 / V-2 / determinism: the reference passes every completed case of a changed world with 0 oracle errors, bad controls fail, the world and journal are reproducible', async () => {
@@ -146,4 +147,40 @@ test('V-6 prefix identity: a swap at T leaves the journal before T byte-identica
   const coin = armVersion('coin', ({ bundle, journal }) => { const inner = referenceArm({ item: bundle.item, world: bundle.W, timing: 'earliest', journal }); return { id: 'coin', tick: (i, c) => (Math.random() < 0.3 ? { decisions: { subject: null }, effects: [], obligations: { upsert: [], cancel: [] }, humanTasks: [], carry: i.carry } : inner.tick(i, c)) }; });
   const a1 = await runBundle(b, { version: coin }), a2 = await runBundle(b, { version: coin });
   assert.equal(samePrefix(a1.rows, a2.rows, T), false, 'a hidden Math.random breaks prefix identity (the re-execution ladder would call it a flake)');
+});
+
+test('twins: excluding a change not in force leaves the world identical; excluding R1 keeps its review load and only shuts its gate; sealed exposure prints counts only', async () => {
+  const { exposureSummary } = await import('../exposure.mjs');
+  const b = await buildBundle(W1, { sealed });
+  const same = await buildBundle(W1, { sealed, exclude: ['L1'] });
+  const behaviour = W => JSON.stringify([W.arrivals, W.faults, W.rulebook, W.truth.cases, W.truth.dur1Eff, W.sor]);
+  assert.equal(behaviour(same.W), behaviour(b.W), 'L1 is not in W1: its twin is W1 itself (only the dur1 bookkeeping label differs)');
+  assert.notEqual(behaviour(noR1Of(b)), behaviour(b.W), 'the teeth: a world without the R1 gate differs');
+  const noR1 = await buildBundle(W1, { sealed, exclude: ['R1'] });
+  assert.equal(noR1.W.truth.dur1Eff.R1, undefined, 'the gate is shut');
+  assert.equal(b.W.truth.dur1Eff.R1, T0_MS + 2 * DAY_MS);
+  for (const c of b.touched.R1) assert.equal(noR1.W.truth.cases[c].class, 'review-timeout', 'the world operator (review load) is kept');
+  const ex = { changes: { R1: { exposed: new Set(['a', 'b']), completed: new Set(['a']), floor: 10, meets: false }, U1s: { exposed: new Set(['x']), completed: new Set(['x']), floor: 6, meets: false } } };
+  const s = exposureSummary(ex);
+  assert.deepEqual(s.R1.cases, ['a']);
+  assert.equal('cases' in s.U1s, false, 'a sealed change prints no case id');
+  assert.ok(!JSON.stringify(s.U1s).includes('"x"'));
+});
+
+test('C-O certification: the analyst reading of R1 is certified on a practice world; the base reading is not (it flags the drifted reference)', async () => {
+  const { certifyReadings, reading, withReading, verifierBlindAccept, ANALYST_READINGS } = await import('../contracts-owner.mjs');
+  const { evidenceBundle } = await import('../changes.mjs');
+  const { BASE_READINGS } = await import('../monitor.mjs');
+  const { PRACTICE } = await import('../schedule.mjs');
+  const pb = await evidenceBundle(PRACTICE[0], { rules: [{ id: 'R1', effMs: T0_MS }], editions: [], renames: [] });
+  const stale = W => { const w = structuredClone(W); delete w.truth.dur1Eff.R1; return w; };
+  const good = await certifyReadings({ readings: withReading(BASE_READINGS, reading({ id: 'R1', fromMs: -Infinity, rules: ANALYST_READINGS.R1 })), bundles: [pb], stale });
+  assert.equal(good.ok, true, JSON.stringify(good).slice(0, 300));
+  const bad = await certifyReadings({ readings: BASE_READINGS, bundles: [pb], stale });
+  assert.equal(bad.ok, false);
+  assert.ok(bad.driftedFlags > 0, 'the stale reading flags a correct (drifted) deployment');
+  // Verifier-blind acceptance: >= 50% of the complained cases and <= 1% of the others.
+  const others = new Set(Array.from({ length: 200 }, (_, i) => `o${i}`));
+  assert.equal(verifierBlindAccept({ flaggedCases: ['c1', 'o1', 'o2'], complainedCases: new Set(['c1', 'c2']), otherCases: others }).accept, true);
+  assert.equal(verifierBlindAccept({ flaggedCases: ['c1', 'o1', 'o2', 'o3'], complainedCases: new Set(['c1', 'c2']), otherCases: others }).accept, false, 'flags everything: fails the 1% rule');
 });

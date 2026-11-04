@@ -12,7 +12,7 @@ import { referencePools, gradeRun } from './oracle.mjs';
 import { programVersion, versionOfSpec, LINEAGES, REF_SOLVERS, controlVersion } from './arms.mjs';
 import { runStream, ContractOwner } from './stream.mjs';
 import { HAIKU_PATCH, OPUS_PATCH, spendOf, LIMITS } from './heal-adapter.mjs';
-import { CO_SESSION } from './contracts-owner.mjs';
+import { CO_SESSION, stubCO } from './contracts-owner.mjs';
 import { streamExposure, attributeRecord, modelOf, certifyRecord } from './model.mjs';
 import { report } from './report.mjs';
 import { selectWindow, runWindow, WINDOW_CHANGES, K_DEFAULT, K_FALLBACK, AGENT } from './windows.mjs';
@@ -181,7 +181,8 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
     const dir = path.join(RUNS, 'p0');
     mkdirSync(dir, { recursive: true });
     const worlds = rehearsalWorlds();
-    const p0co = new ContractOwner({ session: id => paidSession(CO_SESSION, { scope: `P0-co-${id}`, row: 'P0', freeze: fz }), runDir: dir, log });
+    // P0 rehearses the heal loop and the agent window, not C-O: the analyst's R1 reading stands in ($0), as for K-0.
+    const p0co = new ContractOwner({ session: () => stubCO('analyst-R1'), runDir: dir, log });
     let sessions = 0;
     for (const l of ['b1lh-e8-1', 'ch-e8-1']) {
       const label = `P0.MH-H.${l}`;
