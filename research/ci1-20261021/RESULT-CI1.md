@@ -412,7 +412,7 @@ sampled (17771 at 0/1 days; 19187's fifth validity condition). Generators were e
 
 **A2 − A0 = 0.0 points (−22.2 to 22.2)**, 1 item each way. A2 − A1c 0.0; A1c − A0 0.0; A0t − A0 +7.4 (−7.4 to 22.2). Predictions:
 A0 45–80% → **40.7% (missed, lower)**; A2 60–95% → **40.7% (missed)**; A2 − A0 in 0..+25 → 0.0 (edge); A2 − A1c in −5..+15 → 0.0;
-A0t − A0 in −10..+10 → +7.4. Per item (v2): every arm passes 17902 and 18534 3/3; every arm fails 17771, 18281 and 19187 3/3.
+A0t − A0 in −10..+10 → +7.4. Per item (v2): every arm passes 17902 and 18534 on every build; all 12 builds fail 17771, 19014 and 19187, and 11 of 12 fail 18281.
 
 ### 9.2 Every wave-2 failure root-caused
 
@@ -482,8 +482,8 @@ oracle corrections were written after seeing failures) and is the most favourabl
 **For the owner's asks.** E6 ("build X from a description, check by execution") now exists as a working, reusable measurement:
 real n8n.io corpus workflows, run as references in a sandboxed n8n interpreter, admitted only when an independent Foundry
 transliteration agrees on 32 worlds, scored by effects on mutation-adequate hidden worlds, never by text similarity. It covers the
-deterministic, model-free slice of the corpus (54 to 86 of the 594 local n8n.io templates by the dossier's census); agent workflows (74%) are out of reach until model
-nodes can be replayed. A8 ("give the builder templates and the hardest enterprise patterns"): templates bind none of the 33 admitted
+deterministic, model-free slice of the corpus (54 to 86 of the 594 local n8n.io templates by the dossier's census); agent workflows
+(74%) are out of reach until model nodes can be replayed. A8 ("give the builder templates and the hardest enterprise patterns"): templates bind none of the 33 admitted
 items; corpus patterns retrieved leave-one-out help a little and on one item demonstrably; the "hardest enterprise patterns"
 (fallbacks, approvals, compensation) are rare in n8n templates and none was retrieved for these items.
 
@@ -492,18 +492,25 @@ items; corpus patterns retrieved leave-one-out help a little and on one item dem
    small (wave 1, v2: 80.7%; 90.2% on unambiguous items). On larger items it does not (wave 2: 40.7% on the frozen oracle, 70.4% with
    oracle and description artefacts removed). Over all 28 items the harness (A2) adds about 8 points on the frozen oracle and 11.5 on
    the corrected one, never losing an item under the corrected reading: real, modest, and concentrated in a few error classes.
-2. The remaining genuine errors are mostly one engine-semantics class (reading a skipped branch's output). The cheapest fix is a $0
-   static validator rule, not retrieval, templates or thinking. Handed to the engine v2 series (`src/validate.mjs` is theirs).
+2. In wave 1 the genuine errors were mostly one engine-semantics class (reading a skipped branch's output; 10 of 19), whose cheapest
+   fix is a $0 static validator rule, not retrieval, templates or thinking (handed to the engine v2 series: `src/validate.mjs` is
+   theirs). In wave 2 the largest genuine class is a definition stated once and misapplied (18281, 11 builds across all arms), which no
+   arm's machinery catches because the public world does not exercise it: a reason to generate practice worlds from the description's
+   own conditions.
 3. The practice run in a public world is the part of the compose loop that earns its cost; the self-review does not.
 4. Retrieval: kept, not parked (the preregistered park rule does not trigger), but its effect here is a few items wide; the larger
    attributable effect was undoing an error class the worked examples may have introduced.
 5. **The oracle is the weakest link, and root-causing every failure is what exposed it**: 39% of the preregistered oracle's failures
-   were false in wave 1, and with five corrections frozen in, 65% (40 of 62) were still oracle or description artefacts in wave 2. A $0 guard belongs in every future bed freeze: a false-negative probe that rewords each reference message (greeting
-   by name, list vs prose, date and number formats, punctuation) and requires the oracle to pass every rewording before the freeze.
+   were false in wave 1, and with five corrections frozen in, 65% (40 of 62) were still oracle or description artefacts in wave 2.
+   A guard belongs in every future bed freeze: a false-negative probe that rewords each reference effect (greeting by name, list vs
+   prose, date and number formats, letter case, punctuation, extra harmless detail) and requires the oracle to pass every rewording,
+   plus an ambiguity probe (two independent cheap builds per item before the freeze; a field where both disagree with the reference
+   the same way is read against the description).
 
 **Next steps, ranked by capability per cost.**
 1. Validator rule: a `$ref` to a node that has (or sits downstream of) a `when`, read by a node not guarded by the same condition and
-   without `default`, is a validation error; parse Code steps at validation. $0; would have prevented 10 of 19 genuine failures.
+   without `default`, is a validation error; parse Code steps at validation. $0; covers 10 of 19 genuine failures in wave 1 and 3 of
+   22 in wave 2.
 2. Oracle false-negative probe at freeze (above). $0 to a few cents with a cheap rewording model.
 3. Harder items: descriptions with deliberate gaps and answer keys (questions become necessary), and agent-node items with recorded
    model responses, so the bed measures intent recovery and not translation.
