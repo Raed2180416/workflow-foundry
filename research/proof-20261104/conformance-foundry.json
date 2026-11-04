@@ -1,0 +1,198 @@
+{
+ "schema": "foundry.conformance.result/1",
+ "system": "foundry",
+ "rows": [
+  {
+   "id": "P1",
+   "name": "A model-buildable workflow artifact that the engine can reject when it cannot fail",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/acceptance-lint.test.mjs",
+     "name": "acceptance: presence predicates are not gates",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  },
+  {
+   "id": "P2",
+   "name": "Bounded execution enforced by the engine",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/runtime-scheduler.test.mjs",
+     "name": "in-flight nodes never exceed the smaller of the run policy and the workflow budget",
+     "pass": 5,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    },
+    {
+     "file": "tests/runtime-map-parallel.test.mjs",
+     "name": "map: collect never hides a run-wide stop",
+     "pass": 3,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  },
+  {
+   "id": "P3",
+   "name": "No duplicated side effect after a crash",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/control-audit.test.mjs",
+     "name": "actual worker process loss does not duplicate an idempotent simulator effect",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": "Idempotent effects only on main; non-idempotent exactly-once (runtime2, effect registry) is on an unmerged branch."
+  },
+  {
+   "id": "P4",
+   "name": "Resume after a crash from a durable journal, only under identical semantics",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/engine-binding.test.mjs",
+     "name": "an actual second process with changed engine source rejects a pending run while identical source resumes",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  },
+  {
+   "id": "P5",
+   "name": "Tamper-evident record of what ran",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/hash-chain.test.mjs",
+     "name": "anchors outside the database expose a consistent rewrite and a truncation",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  },
+  {
+   "id": "P6",
+   "name": "Verification independent of the producer",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/runtime-code-verify.test.mjs",
+     "name": "different-model independence picks another family and is enforced statically and at runtime",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  },
+  {
+   "id": "P7",
+   "name": "Proof that a fan-out covered its inventory",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/verify-ledger.test.mjs",
+     "name": "a reader that drops a unit fails the gated run",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    },
+    {
+     "file": "tests/verify-ledger.test.mjs",
+     "name": "a failed shard (failure collect) fails the ledger",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  },
+  {
+   "id": "P8",
+   "name": "Approval by role, with segregation of duties",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/principals.test.mjs",
+     "name": "runtime: role, delegation of authority and segregation of duties are enforced on answers",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  },
+  {
+   "id": "P9",
+   "name": "Refusal without silent fallback",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/cli-provider-selection.test.mjs",
+     "name": "CLI does not use an unknown agent or silently fall back",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  },
+  {
+   "id": "P10",
+   "name": "Untrusted data cannot drive an effect without a gate (information-flow control)",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/control-taint.test.mjs",
+     "name": "probe A.3 case A (control): untrusted data in the effect arguments is rejected",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  },
+  {
+   "id": "P11",
+   "name": "The engine's identity covers every module that decides a run",
+   "ok": true,
+   "tests": [
+    {
+     "file": "tests/engine-identity-closure.test.mjs",
+     "name": "every src module the runtime, validator, store and engine import is part of the engine identity",
+     "pass": 1,
+     "fail": 0,
+     "skipped": 0,
+     "ok": true
+    }
+   ],
+   "limits": null
+  }
+ ]
+}
