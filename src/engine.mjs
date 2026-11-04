@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 // the lineage that declares which earlier engines' runs this one may resume.
 const paths = ['engine.mjs', 'runtime.mjs', 'store.mjs', 'run-rows.mjs', 'data.mjs', 'dataflow.mjs', 'validate.mjs', 'lint.mjs', 'acceptance.mjs', 'capabilities.mjs',
   'context.mjs', 'verdict.mjs', 'audit.mjs', 'sandbox.mjs', 'children.mjs', 'schema-subset.mjs', 'models/port.mjs', 'models/policy.mjs', 'journal.mjs', 'state.mjs',
-  'signals.mjs', 'principals.mjs', '../schemas/workflow.schema.json', '../schemas/identity.schema.json', '../schemas/decision.schema.json', 'engine-lineage.json'];
+  'signals.mjs', 'principals.mjs', 'ledger.mjs', '../schemas/workflow.schema.json', '../schemas/identity.schema.json', '../schemas/decision.schema.json', 'engine-lineage.json'];
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 const files = Object.fromEntries(paths.map(name => [name, sha256(readFileSync(new URL(name, import.meta.url)))]));
 const ajv = JSON.parse(readFileSync(require.resolve('ajv/package.json'), 'utf8'));
