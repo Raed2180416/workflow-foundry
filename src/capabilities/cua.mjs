@@ -27,7 +27,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { approxTokens, fail, FoundryError, sha256 } from './common.mjs';
 import { memberRecord } from './members.mjs';
-import { resolveCredential, ScrubSet } from './credentials.mjs';
+import { credentialLike, MIN_SECRET, resolveCredential, ScrubSet } from './credentials.mjs';
 import { readZip, writeZip } from './zipfile.mjs';
 
 const CANDIDATES = ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
@@ -48,15 +48,33 @@ export function parseSnapshotLine(line) {
   return LINE.exec(line);
 }
 export const NAME_MAX = 60, VALUE_MAX = 120;
+/** What a person is shown of a held request body in full (fix round security N2); a body beyond it is never committed. */
+export const HELD_VIEW = Object.freeze({ fields: 200, key: 200, value: 4000, text: 16000 });
 const DEFAULT_HOLD = ['delete', 'remove', 'logout', 'confirm', 'unsubscribe'];
 const unquote = s => s.replace(/\\(.)/g, '$1');
 const stripRefs = snapshot => snapshot.replace(/ \[ref=[a-z0-9]+\]/g, '').replace(/ \[active\]/g, '').replace(/ \[cursor=pointer\]/g, '');
 const SECRETISH = /password|passcode|secret|token|api[-_ ]?key/i;
-/** An owner path pattern: `*` is one path segment's characters, a trailing `/**` any suffix. */
+/**
+ * An owner safe-GET pattern: a path (`*` one path segment's characters, a trailing `/**` any suffix), optionally followed by `?` and the
+ * query keys a side-effect-free GET of that path may carry (`/?page`, `/search?q&page`), or `?*` for any query. A pattern without `?`
+ * allows no query at all (fix round 2026-11-04, security N1: the allowlist matched the path only, so `/?cancel=1` passed as a safe GET).
+ * Returns { test(url) } over a URL object.
+ */
 export function pathPattern(pattern) {
-  const tail = pattern.endsWith('/**'), body = tail ? pattern.slice(0, -3) : pattern;
+  const at = pattern.indexOf('?'), pathPart = at >= 0 ? pattern.slice(0, at) : pattern, queryPart = at >= 0 ? pattern.slice(at + 1) : null;
+  const tail = pathPart.endsWith('/**'), body = tail ? pathPart.slice(0, -3) : pathPart;
   const source = body.split('*').map(part => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*');
-  return new RegExp(`^${source}${tail ? '(?:/.*)?' : ''}$`);
+  const re = new RegExp(`^${source}${tail ? '(?:/.*)?' : ''}$`), keys = queryPart === null || queryPart === '*' ? null : new Set(queryPart.split('&').filter(Boolean));
+  return {
+    pattern,
+    test(url) {
+      const u = typeof url === 'string' ? new URL(url, 'http://x.invalid') : url;
+      if (!re.test(u.pathname)) return false;
+      if (!u.search || u.search === '?' || queryPart === '*') return true;
+      const present = [...u.searchParams.keys()];
+      return keys !== null && present.length > 0 && present.every(k => keys.has(k));
+    }
+  };
 }
 // The S0 profile's channel closures, run in every frame (Playwright init scripts reach about:blank and srcdoc frames and popups).
 const S0_INIT = `(() => { for (const k of Object.getOwnPropertyNames(window)) if (/^(webkit)?RTC/.test(k)) { try { delete window[k]; } catch {} }
@@ -66,20 +84,34 @@ export const S0_ARGS = Object.freeze(['--force-webrtc-ip-handling-policy=disable
 export class UiSession {
   constructor({ browser, entry, origin, holdPaths, safeGets = null, scrub, maxSteps, observationTokens }) {
     Object.assign(this, { browser, entry, origin, scrub, maxSteps, observationTokens, steps: 0, held: [], pending: new Map(), violations: [], items: [], basis: null, lastUrl: null, tracing: false });
+    // Every cookie and storage value of the session: redacted from the session's trace, whether or not it is credential-like (N3).
+    this.traceScrub = new ScrubSet();
     this.allowed = new Set([new URL(origin).origin]);
     // The origin as shown in held-request descriptors: a development (loopback) entry's port is dropped, as in its pins, so the model and
     // the approver see the same descriptor in every fresh world (replay at $0); held requests are only ever on the allowed origin.
     this.shownOrigin = entry?.dev === true ? (u => { u.port = ''; return u.origin; })(new URL(origin)) : new URL(origin).origin;
     this.hold = new RegExp(`/(${holdPaths.join('|')})(/|$|\\?)`, 'i');
-    this.safe = safeGets ? safeGets.map(pathPattern) : null;
+    this.safe = safeGets ? safeGets.map(p => pathPattern(p)) : null;
   }
-  /** Whether a GET of `pathname` may pass without a commit: on the owner's safe-GET allowlist and not on a hold path (no allowlist: not held). */
-  safeGet(pathname) { return !this.hold.test(pathname) && (this.safe ? this.safe.some(re => re.test(pathname)) : true); }
-  /** Whether the session may navigate on its own (a restore, a reload) to `url`: only to an allowlisted safe GET. */
-  autoNavigable(url) { try { const u = new URL(url); return !!this.safe && this.allowed.has(u.origin) && this.safeGet(u.pathname); } catch { return false; } }
+  /** Whether a GET of `url` (a URL) may pass without a commit: path and query on the owner's safe-GET allowlist and the path not on a hold
+   *  path (no allowlist: not held, because then every navigating member is approval-gated). */
+  safeGet(url) { return !this.hold.test(url.pathname) && (this.safe ? this.safe.some(p => p.test(url)) : true); }
+  /** Whether the session may navigate on its own (a restore, a reload, after a commit) to `url`: only to an allowlisted safe GET, query included. */
+  autoNavigable(url) { try { const u = new URL(url); return !!this.safe && this.allowed.has(u.origin) && this.safeGet(u); } catch { return false; } }
+  /**
+   * Hold the cookie and storage values of the session (fix round 2026-11-04, security N3). Every value is redacted from this session's
+   * trace (the trace set). Only values that can be credentials join the host-wide scrub set, which fails any output that contains them:
+   * an HttpOnly cookie, a cookie or storage key named like a credential, or a random-looking value. A plain word or number (`lang=english`,
+   * `consent=granted`) does not, so ordinary page text and the broker's own answers containing it no longer fail the run.
+   */
   #observeSecrets(state) {
-    for (const cookie of state?.cookies ?? []) this.scrub?.addObserved(cookie.value);
-    for (const origin of state?.origins ?? []) for (const item of origin.localStorage ?? []) this.scrub?.addObserved(item.value);
+    for (const cookie of state?.cookies ?? []) this.#observe(cookie.value, { name: cookie.name, httpOnly: cookie.httpOnly === true });
+    for (const origin of state?.origins ?? []) for (const item of origin.localStorage ?? []) this.#observe(item.value, { name: item.name });
+  }
+  #observe(value, hints) {
+    if (typeof value !== 'string' || value.length < MIN_SECRET) return;
+    this.traceScrub.add(value);
+    if (credentialLike(value, hints)) this.scrub?.addObserved(value);
   }
   async open({ login = null } = {}) {
     this.context = await this.browser.newContext({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block', acceptDownloads: false, javaScriptEnabled: true });
@@ -109,7 +141,7 @@ export class UiSession {
     if (!['http:', 'https:'].includes(url.protocol)) { this.violations.push({ kind: 'scheme', protocol: url.protocol }); return route.abort('blockedbyclient'); }
     if (!this.allowed.has(url.origin)) { this.violations.push({ kind: 'origin', origin: url.origin, path: url.pathname }); return route.abort('blockedbyclient'); }
     const method = request.method();
-    if ((method === 'GET' || method === 'HEAD') && this.safeGet(url.pathname)) return route.continue();
+    if ((method === 'GET' || method === 'HEAD') && this.safeGet(url)) return route.continue();
     const body = request.postDataBuffer() ?? Buffer.alloc(0), headers = await request.allHeaders();
     // Deterministic id (session counter + request hash), so a replayed run shows the model the same transcript.
     const bodyHash = sha256(body), held = { id: `held-${this.held.length + 1}-${sha256(`${method} ${url.pathname}${url.search} ${bodyHash}`).slice(0, 8)}`, method, origin: this.shownOrigin, path: url.pathname + url.search, bodyHash,
@@ -119,17 +151,33 @@ export class UiSession {
     this.pending.set(held.id, { ...held, url: url.toString(), body, contentType: headers['content-type'] ?? null });
     return route.abort('blockedbyclient');
   }
-  /** The host's own rendering of a held request, what a person approves before `commit` (never the model's account of it). */
+  /**
+   * The host's own rendering of a held request, what a person approves before `commit` (never the model's account of it). The rendering
+   * is COMPLETE or it says it is not (fix round 2026-11-04, security N2: it kept the first 50 form fields and 500 characters of each value
+   * without saying so). Within HELD_VIEW every field and every character is shown; beyond it, or for a body that is not text, `complete`
+   * is false and the request cannot be committed (the dispatcher refuses it before any person is asked: a person never approves what
+   * they cannot see). Secret-named fields and held secrets are shown as [redacted], which a person can see.
+   */
   describeHeld(id) {
     const pending = this.pending.get(id);
     if (!pending) return null;
     const type = String(pending.contentType ?? '').toLowerCase(), text = pending.body.toString('utf8'), redact = s => this.scrub ? this.scrub.redact(s) : s;
+    const textual = Buffer.from(text, 'utf8').equals(pending.body) && !/[\u0000-\u0008\u000e-\u001f]/.test(text);
     let body;
-    if (!pending.body.length) body = { kind: 'empty' };
-    else if (type.includes('application/x-www-form-urlencoded')) body = { kind: 'form', fields: [...new URLSearchParams(text)].slice(0, 50).map(([k, v]) => [redact(k).slice(0, 80), SECRETISH.test(k) ? '[redacted]' : redact(v).slice(0, 500)]) };
-    else if (Buffer.from(text, 'utf8').equals(pending.body) && !/[\u0000-\u0008\u000e-\u001f]/.test(text)) body = { kind: 'text', contentType: type.slice(0, 80) || null, text: redact(text).slice(0, 4000), truncated: text.length > 4000 };
-    else body = { kind: 'binary', bytes: pending.body.length };
-    return { id, method: pending.method, origin: pending.origin, path: pending.path, bodyHash: pending.bodyHash, body };
+    if (!pending.body.length) body = { kind: 'empty', complete: true };
+    else if (type.includes('application/x-www-form-urlencoded') && textual) {
+      const fields = [...new URLSearchParams(text)];
+      const complete = fields.length <= HELD_VIEW.fields && fields.every(([k, v]) => k.length <= HELD_VIEW.key && v.length <= HELD_VIEW.value);
+      body = { kind: 'form', complete, fieldCount: fields.length, fields: fields.slice(0, HELD_VIEW.fields).map(([k, v]) => [redact(k).slice(0, HELD_VIEW.key), SECRETISH.test(k) ? '[redacted]' : redact(v).slice(0, HELD_VIEW.value)]) };
+    } else if (textual) body = { kind: 'text', contentType: type.slice(0, 80) || null, complete: text.length <= HELD_VIEW.text, length: text.length, text: redact(text).slice(0, HELD_VIEW.text) };
+    else body = { kind: 'binary', complete: false, bytes: pending.body.length };
+    return { id, method: pending.method, origin: pending.origin, path: pending.path, bodyHash: pending.bodyHash, complete: body.complete, body };
+  }
+  /** The host's own description of a ui.act target (fix round security N6): the element of the current observation, never the model's words. */
+  describeAct({ basis, index, op, value = null } = {}) {
+    const item = this.items.find(x => x.i === index), current = (() => { try { const u = new URL(this.page?.url() ?? ''); return this.allowed.has(u.origin) ? u.pathname + u.search : null; } catch { return null; } })();
+    return { op: String(op ?? '').slice(0, 20), basisCurrent: basis === this.basis, page: current, element: item ? { role: item.role, name: item.name.slice(0, NAME_MAX), nth: item.nth } : null,
+      ...(value !== null && value !== undefined ? { value: String(value).slice(0, 500) } : {}) };
   }
   async #navigate(work) {
     const heldBefore = this.held.length, violationsBefore = this.violations.length, url = this.page.url();
@@ -272,13 +320,17 @@ export class UiSession {
     await this.context.tracing.stop({ path: temp }); this.tracing = false;
     let bytes;
     try {
-      const scrub = this.scrub, entries = readZip(readFileSync(temp)).map(entry => {
+      // The trace is redacted of every held secret AND every value of this session's cookies, storage and credential headers (N3: the
+      // trace set); only credential-like values join the host-wide set.
+      const network = readZip(readFileSync(temp)).map(entry => {
         if (!entry.name.endsWith('.network')) return entry;
         const scrubbed = scrubTraceNetwork(entry.data);
-        for (const value of scrubbed.values) scrub.addObserved(value);
+        for (const { value, ...hints } of scrubbed.found) this.#observe(value, hints);
         return { name: entry.name, data: scrubbed.data };
-      }).map(({ name, data }) => ({ name, data: scrub.redactBuffer(data) }));
-      if (entries.some(e => scrub.containsBuffer(e.data) || scrub.contains(e.name))) fail('SECRET_EXPOSURE', 'A secret remained in the UI trace after redaction; the trace was not exported');
+      });
+      const sets = [this.scrub, this.traceScrub];
+      const entries = network.map(({ name, data }) => ({ name, data: sets.reduce((d, set) => set.redactBuffer(d), data) }));
+      if (entries.some(e => sets.some(set => set.containsBuffer(e.data) || set.contains(e.name)))) fail('SECRET_EXPOSURE', 'A secret remained in the UI trace after redaction; the trace was not exported');
       bytes = writeZip(entries);
     } finally { rmSync(temp, { force: true }); }
     const hash = sha256(bytes), final = path.join(dir, `ui-trace-${hash.slice(0, 16)}.zip`), staged = `${final}.${randomUUID()}.tmp`;
@@ -289,25 +341,33 @@ export class UiSession {
 }
 
 const CREDENTIAL_HEADERS = new Set(['cookie', 'set-cookie', 'authorization', 'proxy-authorization']);
-/** The secret parts of one credential header: each cookie value (cookie, set-cookie, one cookie per line) or the credential after its scheme. */
+// A header whose NAME says it carries a credential (fix round 2026-11-04, security N4: a session token kept in page memory and sent as
+// `X-Auth-Token` was exported unredacted): its whole value is a secret.
+const CREDENTIAL_HEADER_NAME = /auth|token|secret|session|passw|api[-_]?key|csrf|xsrf|cookie|credential|signature/i;
+/** The secret parts of one credential header: each cookie value (cookie, set-cookie, one cookie per line, with its name and HttpOnly) or
+ *  the credential (after its scheme for authorization). */
 function headerSecrets(name, value) {
-  const lower = name.toLowerCase(), pairs = lower === 'cookie' ? value.split(';') : lower === 'set-cookie' ? value.split('\n').map(line => line.split(';')[0]) : null;
-  if (!pairs) return [value, value.replace(/^\S+\s+/, '')];
-  return pairs.map(pair => pair.slice(pair.indexOf('=') + 1).trim()).filter(Boolean);
+  const lower = name.toLowerCase();
+  if (lower === 'cookie') return value.split(';').map(pair => ({ name: pair.slice(0, Math.max(0, pair.indexOf('='))).trim(), value: pair.slice(pair.indexOf('=') + 1).trim() })).filter(c => c.value);
+  if (lower === 'set-cookie') return value.split('\n').map(line => { const [pair, ...attrs] = line.split(';'); return { name: pair.slice(0, Math.max(0, pair.indexOf('='))).trim(), value: pair.slice(pair.indexOf('=') + 1).trim(),
+    httpOnly: attrs.some(a => a.trim().toLowerCase() === 'httponly') }; }).filter(c => c.value);
+  return [{ name: lower, value, credential: true }, { name: lower, value: value.replace(/^\S+\s+/, ''), credential: true }];
 }
 /**
- * Scrub a Playwright trace network log (JSON lines) structurally: every `cookies[].value` and every cookie, set-cookie or authorization
- * header value becomes [redacted], whatever its length. Returns the scrubbed bytes and the values found (the caller scrubs them from the
- * other archive entries too). A line that is not JSON cannot be scanned, so the trace is refused.
+ * Scrub a Playwright trace network log (JSON lines) structurally: every `cookies[].value`, every cookie, set-cookie or authorization header
+ * value, and every header whose name names a credential becomes [redacted], whatever its length. Returns the scrubbed bytes and what was
+ * found ({ value, name, httpOnly, credential }; the caller redacts the values from the other archive entries too). A line that is not
+ * JSON cannot be scanned, so the trace is refused.
  */
 export function scrubTraceNetwork(data) {
-  const found = new Set();
+  const found = [];
   const visit = node => {
     if (Array.isArray(node)) { node.forEach(visit); return; }
     if (!node || typeof node !== 'object') return;
-    if (Array.isArray(node.cookies)) for (const c of node.cookies) if (typeof c?.value === 'string') { if (c.value) found.add(c.value); c.value = '[redacted]'; }
-    if (Array.isArray(node.headers)) for (const h of node.headers) if (typeof h?.name === 'string' && typeof h.value === 'string' && CREDENTIAL_HEADERS.has(h.name.toLowerCase())) {
-      for (const v of headerSecrets(h.name, h.value)) if (v) found.add(v);
+    if (Array.isArray(node.cookies)) for (const c of node.cookies) if (typeof c?.value === 'string') { if (c.value) found.push({ value: c.value, name: String(c.name ?? ''), httpOnly: c.httpOnly === true }); c.value = '[redacted]'; }
+    if (Array.isArray(node.headers)) for (const h of node.headers) if (typeof h?.name === 'string' && typeof h.value === 'string' && (CREDENTIAL_HEADERS.has(h.name.toLowerCase()) || CREDENTIAL_HEADER_NAME.test(h.name))) {
+      const parts = CREDENTIAL_HEADERS.has(h.name.toLowerCase()) ? headerSecrets(h.name, h.value) : [{ name: h.name.toLowerCase(), value: h.value, credential: true }];
+      for (const part of parts) if (part.value) found.push(part);
       h.value = '[redacted]';
     }
     for (const value of Object.values(node)) visit(value);
@@ -319,7 +379,7 @@ export function scrubTraceNetwork(data) {
     visit(parsed);
     return JSON.stringify(parsed);
   });
-  return { data: Buffer.from(lines.join('\n'), 'utf8'), values: [...found] };
+  return { data: Buffer.from(lines.join('\n'), 'utf8'), found, values: [...new Set(found.map(f => f.value))] };
 }
 
 /** Host-owned table of UI sessions keyed by (runId, node). One browser per cua entry, launched lazily, closed with the table. */
@@ -359,6 +419,19 @@ export class UiSessions {
     const session = this.#sessions.get(`${runId}\u0000${node}\u0000${entry.id}`);
     return session ? (await session.catch(() => null))?.describeHeld(id) ?? null : null;
   }
+  /**
+   * The host rendering of a navigating ui.* call a person approves (fix round 2026-11-04, security N6: an entry without a safe-GET
+   * allowlist had `ui.act` approved on `{basis, index, op}` alone): for act, the element of the current observation and the page; for
+   * observe, the URL it will load; for assert, the page it will reload. From host state only (never opens a session).
+   */
+  async describeUi({ runId, node, entry, tool, args = {} }) {
+    const pending = this.#sessions.get(`${runId}\u0000${node}\u0000${entry.id}`), session = pending ? await pending.catch(() => null) : null;
+    const origin = shownOriginOf(entry), page = session ? session.describeAct({}).page : null;
+    if (tool === 'act') return session ? session.describeAct(args) : { op: String(args.op ?? '').slice(0, 20), page: null, element: null };
+    if (tool === 'observe') return { page, navigate: typeof args.path === 'string' ? `${origin}${new URL(args.path, 'http://x.invalid').pathname}${new URL(args.path, 'http://x.invalid').search}` : null };
+    if (tool === 'assert') return { page, reload: args.noReload ? null : page };
+    return { page };
+  }
   async closeNode(runId, node) { for (const [key, s] of this.#sessions) if (key.startsWith(`${runId}\u0000${node}\u0000`)) { this.#sessions.delete(key); await (await s.catch(() => null))?.close(); } }
   async closeRun(runId) { for (const [key, s] of this.#sessions) if (key.startsWith(`${runId}\u0000`)) { this.#sessions.delete(key); await (await s.catch(() => null))?.close(); } }
   async close() {
@@ -391,6 +464,8 @@ const NOT_FOR_TOOL_NODES = new Set(['trace.export', 'assert']);
 // Members that can make the browser issue a GET (navigate, click, reload): effects none only behind an owner safe-GET allowlist.
 const NAVIGATING = new Set(['observe', 'act', 'assert']);
 
+/** The origin as shown to a model or a person: a development (loopback) entry's port is dropped (replay at $0 in a fresh world). */
+const shownOriginOf = entry => entry.dev === true ? (u => { u.port = ''; return u.origin; })(new URL(entry.source.origins[0])) : new URL(entry.source.origins[0]).origin;
 /** Origins as pinned: a development (loopback) entry's port is dropped, as for MCP HTTP sources, so a fresh world keeps the same pins. */
 const pinnedOrigins = entry => entry.dev === true ? entry.source.origins.map(o => { const u = new URL(o); u.port = ''; return u.origin; }) : entry.source.origins;
 /** The effect class of one ui.* member of `entry` (see the header: navigating members are effects none only with a safe-GET allowlist). */

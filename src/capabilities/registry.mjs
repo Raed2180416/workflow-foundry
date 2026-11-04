@@ -11,6 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createDefaultRegistry } from '../capabilities.mjs';
 import { digest, fail, joinLabels, sha256 } from './common.mjs';
+import { envelopeDigest as envelopeDigestOf } from './envelope.mjs';
 import { walkNodes } from './resolve.mjs';
 import { Dispatcher, THRESHOLDS, callSubject, describeTier0Call } from './broker.mjs';
 
@@ -25,8 +26,12 @@ const OPEN = { type: 'object' };
 /** Interim taint rule (b): when a lock binds any untrusted-labelled member, every Tier-0 effect member is compiled approval-gated. */
 export const untrustedLock = lock => Object.values(lock.members).some(m => m.outputLabel !== 'trusted') || Object.keys(lock.nodes).length > 0;
 
-export function compileRegistry({ lock, lockHash, host, envelope, envelopeDigest, ledger = null, mode = 'live', thresholds = THRESHOLDS }) {
+export function compileRegistry({ lock, host, envelope, ledger = null, mode = 'live', thresholds = THRESHOLDS }) {
   if (!['live', 'practice'].includes(mode)) fail('REGISTRY_MODE', 'mode is live or practice');
+  // The envelope's digest is computed from the envelope this registry runs under, never taken from the caller (fix round thesis N1b): a
+  // resume or replay under an edited envelope is another registry, so it fails closed with CAPABILITY_DRIFT. The lock's hash, which every
+  // broker decision and proposal records, is the lock's own. A caller's lockHash or envelopeDigest is ignored.
+  const envelopeDigest = envelopeDigestOf(envelope), lockHash = `sha256:${digest(lock)}`;
   const registry = createDefaultRegistry(), gateEffects = untrustedLock(lock);
   for (const memberId of [...new Set(Object.values(lock.tier0))]) {
     const m = lock.members[memberId], requiresApproval = m.requiresApproval === true || (gateEffects && m.effects !== 'none');
@@ -39,7 +44,9 @@ export function compileRegistry({ lock, lockHash, host, envelope, envelopeDigest
         if (requiresApproval || m.risk === 'high') {
           const header = ctx.store.rows.header(ctx.runId);
           const approvalId = digest({ workflowHash: header.workflowHash, registryHash: header.registryHash, nodeKey: ctx.nodeKey, tool: m.id, args, idempotencyKey: ctx.idempotencyKey });
-          if (ledger?.callDecision(callSubject(approvalId, describeTier0Call({ lock, memberId: m.id, args })))?.approve !== true) fail('APPROVAL_MISSING', `${m.id} runs only after a person approved the host's rendering of this exact call`);
+          const rendering = await describeTier0Call({ lock, memberId: m.id, args, host, runId: ctx.runId, nodeKey: ctx.nodeKey });
+          if (ledger?.callDecision(callSubject(approvalId, rendering))?.approve !== true) fail('APPROVAL_MISSING', `${m.id} runs only after a person approved the host's rendering of this exact call`);
+          if (rendering.held && rendering.held.complete !== true) fail('HELD_UNRENDERABLE', 'The held request is too large to show a person in full; it is never sent');
         }
         return host.invoke(m.id, args, { runId: ctx.runId, node: ctx.nodeKey, signal: ctx.signal, idempotencyKey: ctx.idempotencyKey, artifactsDir: ctx.artifactsDir, practice: mode === 'practice', approved: m });
       } });

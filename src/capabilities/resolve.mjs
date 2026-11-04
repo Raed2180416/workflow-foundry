@@ -104,19 +104,54 @@ export function resolve({ workflow, sidecar, members, catalogDigest, envelope, e
     lock.nodes[id] = { bound, skills, standby, acquire: acquire ? clone(acquire) : null, maxTurns: toolNode.maxTurns, budgetUsd: toolNode.budgetUsd ?? null,
       maxCallsPerMember: toolNode.maxCallsPerMember ?? 20, returns: clone(found.node.returns), instructionsHash: `sha256:${digest({ i: found.node.instructions })}`,
       // The transcript of a tool node carries tool output, so its control is untrusted whatever it binds (interim taint rule (c)).
-      controlLabel: joinLabels([`untrusted:nodecap.${id}`, ...all.map(m => m.outputLabel)]) };
+      controlLabel: joinLabels([`untrusted:nodecap.${id}`, ...all.map(m => m.outputLabel)]),
+      // The owner's declaration of the workflow input's class, kept so lock N+1 recomputes inputClass from the lock alone (fix round M7).
+      declaredInputClass: toolNode.inputClass ?? null };
   }
-  // The class of the data each tool node reads through its inputs (review M6): a reference to an upstream node whose output can be private
-  // (a Tier-0 member, or a tool node that can reach a private member), or to the workflow input (its declared class; private when not
-  // declared). The broker's Rule of Two and lint both count it.
-  const privateNode = id => (lock.tier0[id] && isPrivate(lock.members[lock.tier0[id]].dataClass))
-    || (lock.nodes[id] && [...lock.nodes[id].bound, ...lock.nodes[id].skills, ...lock.nodes[id].standby].some(m => isPrivate(lock.members[m].dataClass)));
-  for (const [id, section] of Object.entries(lock.nodes)) {
-    const node = nodes.get(id).node, refs = references([node.context?.inputs?.map(i => i.ref ? { $ref: i.ref } : null) ?? null, node.input ?? null]);
-    const fromInput = refs.some(r => r.startsWith('input')), fromNodes = refs.filter(r => r.startsWith('nodes.')).map(r => r.split('.')[1]);
-    section.inputClass = fromNodes.some(privateNode) ? 'private' : fromInput ? (spec.nodes[id].inputClass ?? 'private') : null;
-  }
+  for (const [id, cls] of inputClasses(workflow, lock)) lock.nodes[id].inputClass = cls;
   return { lock, lockHash: `sha256:${digest(lock)}`, gaps, ties };
+}
+
+/** Every reference a node makes, its nested bodies and context inputs included (a reference that cannot be parsed counts as the input). */
+function refsOf(node) {
+  const out = [];
+  const visit = n => {
+    const { body, context, ...rest } = n ?? {};
+    try { references(rest, out); } catch { out.push('input'); }
+    for (const i of context?.inputs ?? []) if (typeof i?.ref === 'string') out.push(i.ref);
+    for (const child of body?.nodes ?? []) visit(child);
+  };
+  visit(node);
+  return out;
+}
+/**
+ * The class of the data each tool node reads through its inputs (review M6; fix round 2026-11-04: transitively, and recomputed for every
+ * lock N+1). A node's output carries PRIVATE data when it is a Tier-0 member of a private class, a tool node that can reach a private
+ * member or reads private input, or ANY node (an ordinary agent, a task, a loop) that references such a node, at any distance. It carries
+ * the WORKFLOW INPUT when it references `input` or a node that carries it. A tool node that reads private data has inputClass private; one
+ * that reads the workflow input (directly or through other nodes) has the owner's declared class (sidecar `inputClass`, kept in the lock as
+ * `declaredInputClass`), private when undeclared; otherwise null. The broker's Rule of Two and lint both count it. Pure: workflow + lock.
+ */
+export function inputClasses(workflow, lock) {
+  const all = new Map();
+  walkNodes(workflow.nodes, node => { const prev = all.get(node.id) ?? []; all.set(node.id, [...prev, ...refsOf(node)]); });
+  const refs = new Map([...all].map(([id, list]) => [id, { input: list.some(r => r === 'input' || r.startsWith('input.')), nodes: [...new Set(list.filter(r => r.startsWith('nodes.')).map(r => r.split('.')[1]))] }]));
+  const reach = id => lock.nodes[id] ? [...lock.nodes[id].bound, ...lock.nodes[id].skills, ...lock.nodes[id].standby].map(m => lock.members[m]) : [];
+  const declared = id => lock.nodes[id]?.declaredInputClass ?? 'private';
+  const priv = new Set([...all.keys()].filter(id => (lock.tier0[id] && isPrivate(lock.members[lock.tier0[id]].dataClass)) || reach(id).some(m => isPrivate(m.dataClass))));
+  const carries = new Set([...all.keys()].filter(id => refs.get(id).input));
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const [id, r] of refs) {
+      if (!carries.has(id) && r.nodes.some(n => carries.has(n))) { carries.add(id); changed = true; }
+      // A tool node that reads the workflow input of a private (or undeclared) class passes private data on, like a private member.
+      if (!priv.has(id) && (r.nodes.some(n => priv.has(n)) || (lock.nodes[id] && carries.has(id) && isPrivate(declared(id))))) { priv.add(id); changed = true; }
+    }
+  }
+  return new Map(Object.keys(lock.nodes).map(id => {
+    const r = refs.get(id) ?? { input: false, nodes: [] };
+    return [id, r.nodes.some(n => priv.has(n)) ? 'private' : (r.input || r.nodes.some(n => carries.has(n))) ? declared(id) : null];
+  }));
 }
 /** The member ids a lock can ever reach (Tier-0, bound, skills, standby). */
 export const lockMembers = lock => [...new Set([...Object.values(lock.tier0), ...Object.values(lock.nodes).flatMap(n => [...n.bound, ...n.skills, ...n.standby])])];

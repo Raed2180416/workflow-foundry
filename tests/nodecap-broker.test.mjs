@@ -158,8 +158,9 @@ test('broker: find never widens; a signal cannot grant; grants die with the run 
   const outs = [1, 2].map(i => run.frames[`root/work__loop:${i}`].outputs.do);
   assert.deepEqual([outs[0].code, outs[1].result], ['EFFECT_CLASS_MISMATCH', 'needs-approval'], 'reading it is refused; requesting it points to act and a person');
   const decisions = h.decisions();
-  assert.deepEqual(decisions.map(d => [d.kind, d.action.result, d.action.member ?? null]), [['selection', 'options', null], ['adaptation', 'granted', 'mcp.crm.search_contacts']]);
-  assert.ok(!decisions.some(d => d.action.member === 'mcp.sheets.append_row'), 'no decision ever names the member the signal asked for');
+  // (Since the fix round of 2026-11-04, cost M7, the request's needs-approval answer is a selection decision in the chain too; it grants nothing.)
+  assert.deepEqual(decisions.map(d => [d.kind, d.action.result, d.action.member ?? null]), [['selection', 'options', null], ['selection', 'needs-approval', 'mcp.sheets.append_row'], ['adaptation', 'granted', 'mcp.crm.search_contacts']]);
+  assert.ok(!decisions.some(d => d.action.member === 'mcp.sheets.append_row' && d.action.result === 'granted'), 'no decision ever grants the member the signal asked for');
   assert.equal(decisions[0].action.options[0], 'mcp.crm.search_contacts', 'find ranks the in-lock member the need names first');
   assert.ok(decisions[0].action.options.every(id => id.startsWith('mcp.crm.')), 'find shows only in-lock members of the need');
   assert.deepEqual(ledgerLines(sheetLedger).filter(l => l.appended), [], 'the sheet was never written');

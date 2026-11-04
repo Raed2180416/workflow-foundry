@@ -12,13 +12,14 @@
 import { clone } from '../data.mjs';
 import { digest, fail, joinLabels } from './common.mjs';
 import { stateNodes } from '../validate.mjs';
-import { denyListed } from './envelope.mjs';
+import { denyListed, envelopeDigest as envelopeDigestOf } from './envelope.mjs';
 import { lint } from './lint.mjs';
-import { lockMembers } from './resolve.mjs';
+import { inputClasses, lockMembers } from './resolve.mjs';
+import { catalogDigest as catalogDigestOf } from './catalog.mjs';
 import { lowerWorkflow } from './lower.mjs';
 import { renderBody } from './skills.mjs';
 import { nodecapDecisions } from './journal.mjs';
-import { executeRun, runtimeFor, subjectOf } from './launcher.mjs';
+import { checkConstruction, executeRun, runtimeFor, snapshotFor, subjectOf } from './launcher.mjs';
 
 export function decideProposal(ledger, id, { person, expectedRev, choice = null }) { return ledger.decideProposal(id, { person, expectedRev, choice }); }
 
@@ -74,6 +75,13 @@ export function applyBind({ ledger, proposalId, lock, members, envelope, workflo
   next.members[id] = clone(member);
   if (section.bound.length > envelope.limits.boundPerNode) fail('TOOLSET_TOO_LARGE', `Binding would give ${proposal.node} ${section.bound.length} tools`);
   section.controlLabel = joinLabels([section.controlLabel, ...section.bound.map(m => next.members[m].outputLabel)]);
+  // The class of what every tool node reads is recomputed for lock N+1 (fix round M7): a private member bound into one node makes every
+  // node downstream of it read private data, which lock N's copied inputClass did not say.
+  for (const [nodeId, cls] of inputClasses(workflow, next)) next.nodes[nodeId].inputClass = cls;
+  // Lock N+1 names the catalog and the envelope it is constructed under NOW (fix round thesis N7), never lock N's: the person approves
+  // lock N+1 under what is current.
+  if (catalog) next.catalogDigest = catalogDigestOf(catalog);
+  next.envelopeDigest = envelopeDigestOf(envelope);
   // Lock N+1 is held to the same rules as lock N (review M7): deny list, Rule of Two, effect ceilings, schemas, toolset sizes.
   const report = lint({ workflow, lock: next, envelope, types, skills, catalog });
   if (report.errors.length) fail('NODECAP_LINT', `Lint refused lock N+1: ${report.errors.map(f => f.code).join(', ')}`, { findings: report.errors });
@@ -95,7 +103,7 @@ export async function nextConstruction({ ledger, proposalId, construction, host,
   const skillBodies = Object.fromEntries(Object.values(next.lock.nodes).flatMap(n => n.skills).map(id => [id, renderBody(host.skills.get(next.lock.members[id].entryId))]));
   const lowered = lowerWorkflow({ ...workflow, version }, next.lock, { skillBodies });
   const result = { ...construction, lock: next.lock, lockHash: next.lockHash, lowered, workflowHash: digest(lowered), lint: next.lint, proposalId: proposal.id,
-    from: { workflowHash: construction.workflowHash, lockHash: construction.lockHash } };
+    envelopeDigest: next.lock.envelopeDigest, catalogDigest: next.lock.catalogDigest, from: { workflowHash: construction.workflowHash, lockHash: construction.lockHash } };
   ledger.markApplied(proposal.id, { expectedRev: proposal.rev, lockHash: result.lockHash, workflowHash: result.workflowHash });
   return result;
 }
@@ -115,8 +123,10 @@ export function completedEffects(events) {
  * version to this one (a flow that moved on since the gap is not continued), and the run is created with `modelMode: 'replay-or-live'` and
  * the prior run's sample salt. Returns { runtime, registry, run, execute } as launch does.
  */
-export async function continueRun({ store, ledger, host, construction, envelope, priorRunId, models = null, modelPolicy = null, mode = 'live', maxCost = null, input = undefined, options = {} }) {
-  if (!ledger || !host || !construction || !envelope) fail('CONTINUATION_PREFLIGHT', 'A continuation runs every launch check: pass the ledger, the host, the construction of version N+1 and the envelope');
+export async function continueRun({ store, ledger, host, construction: given, envelope: givenEnvelope, priorRunId, models = null, modelPolicy = null, mode = 'live', maxCost = null, input = undefined, options = {} }) {
+  if (!ledger || !host || !given || !givenEnvelope) fail('CONTINUATION_PREFLIGHT', 'A continuation runs every launch check: pass the ledger, the host, the construction of version N+1 and the envelope');
+  // Frozen copies, checked and run (fix round thesis N1): an edit of the caller's objects after this call started changes nothing that runs.
+  const { construction, envelope } = snapshotFor(given, givenEnvelope);
   const prior = store.rows.header(priorRunId), priorRun = store.run(priorRunId), { workflow: priorWorkflow } = store.workflow(prior.workflowHash);
   if (priorRun.status === 'succeeded') fail('CONTINUATION_NOT_GAP', 'Only a run that ended on a capability gap is continued');
   const proposal = ledger.proposal(construction.proposalId);
@@ -129,9 +139,10 @@ export async function continueRun({ store, ledger, host, construction, envelope,
   if (stateNodes(priorWorkflow).length || stateNodes(construction.lowered).length) fail('CONTINUATION_STATEFUL', 'A workflow with cross-run state is not continued; start a new run');
   const effects = completedEffects(store.events(priorRunId));
   if (effects.length) fail('CONTINUATION_AFTER_EFFECT', 'An effect completed before the gap; the continuation would repeat or reorder it', { nodeKeys: effects.slice(0, 10) });
-  // The launch checks, in the launch's order.
+  // The launch checks, in the launch's order. What runs is recomputed from the objects themselves (the lock, the lowered workflow, the
+  // envelope, the catalog), never taken from the construction's stated hashes (fix round thesis N1).
   if (construction.lint.errors.length) fail('NODECAP_LINT', `Lint refused the version: ${construction.lint.errors.map(f => f.code).join(', ')}`, { findings: construction.lint.errors });
-  if (digest(construction.lowered) !== construction.workflowHash) fail('WORKFLOW_HASH', 'The lowered workflow differs from the constructed one');
+  checkConstruction({ construction, envelope, host });
   const lock = construction.lock;
   await host.qualify({ only: [...new Set(lockMembers(lock).map(id => lock.members[id].entryId))] });
   const preflight = await host.preflight(lockMembers(lock), lock);

@@ -16,11 +16,17 @@ import { attestationHashOf, memberRecord } from './members.mjs';
 import { programMember, invokeProgram } from './program.mjs';
 import { lockMembers } from './resolve.mjs';
 
-/** How an approved member record differs from a live one: null, DEFINITION_CHANGED (pins moved) or LOCK_STALE (view/attestation only). */
+/**
+ * How an approved member record differs from a live one: null, DEFINITION_CHANGED (pins moved) or LOCK_STALE (anything else). The WHOLE
+ * record is compared, not its `implementation` string (fix round 2026-11-04, thesis N1a): a lock record edited after the approval (its
+ * effects, label, trust or schema changed, its stated hashes kept) no longer equals the record that qualified, so the call is not sent.
+ */
 export function memberDrift(approved, live) {
-  if (approved.implementation === live.implementation) return null;
+  if (approved.implementation === live.implementation && digest(approved) === digest(live)) return null;
   const fields = [...(digest(approved.pins) !== digest(live.pins) ? ['pins'] : []), ...(approved.viewHash !== live.viewHash ? ['view'] : []), ...(approved.attestationHash !== live.attestationHash ? ['attestation'] : [])];
-  return { code: fields.includes('pins') ? 'DEFINITION_CHANGED' : 'LOCK_STALE', fields: fields.length ? fields : ['implementation'] };
+  if (!fields.length && approved.implementation !== live.implementation) fields.push('implementation');
+  if (!fields.length) fields.push('record');
+  return { code: fields.includes('pins') ? 'DEFINITION_CHANGED' : 'LOCK_STALE', fields };
 }
 
 export class NodecapHost {
@@ -170,6 +176,11 @@ export class NodecapHost {
   async heldRequest({ runId, node, entryId, id }) {
     const entry = this.entry(entryId);
     return this.sessions && entry && typeof id === 'string' ? this.sessions.held({ runId, node, entry, id }) : null;
+  }
+  /** The host's rendering of a navigating ui.* call (act, observe, assert) of an existing session, what a person approves (security N6). */
+  async uiCall({ runId, node, entryId, tool, args }) {
+    const entry = this.entry(entryId);
+    return this.sessions && entry ? this.sessions.describeUi({ runId, node, entry, tool, args }) : null;
   }
   async closeRun(runId) { await this.sessions?.closeRun(runId); }
   async close() { await this.sessions?.close(); await this.pool.close(); }

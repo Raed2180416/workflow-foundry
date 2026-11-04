@@ -75,9 +75,13 @@ export class NodecapLedger {
   currentStatus(entryId, { catalog = null } = {}) {
     const current = this.status(entryId);
     if (current) return { status: current.status, rev: current.rev };
-    const entry = catalog?.entries?.find(e => e.id === entryId) ?? null;
-    if (catalog && !entry) fail('LEDGER_ENTRY_UNKNOWN', `${entryId} is not an entry of the catalog`);
-    return { status: entry?.status ?? 'imported', rev: 0 };
+    // An entry the ledger has not recorded moves from the status its OWNER wrote, so the catalog is required (fix round 2026-11-04, thesis
+    // N4: without one an owner-revoked entry was treated as `imported`, moved to `qualified`, and then shown to a person as "qualified ->
+    // active", the revocation never shown).
+    if (!catalog) fail('LEDGER_CATALOG_REQUIRED', `${entryId} has no ledger record: pass the owner catalog, whose status it moves from`);
+    const entry = catalog.entries?.find(e => e.id === entryId) ?? null;
+    if (!entry) fail('LEDGER_ENTRY_UNKNOWN', `${entryId} is not an entry of the catalog`);
+    return { status: entry.status ?? 'imported', rev: 0 };
   }
   /**
    * Move an entry along the status machine (CAS on its revision: `expectedRev` is required, 0 for an entry the ledger has not recorded).
@@ -174,8 +178,21 @@ export class NodecapLedger {
   approveLock(parts, { person }) {
     const subject = NodecapLedger.subject(parts), decided = acceptPerson(person, subject, { channels: this.channels });
     if (!decided.approve) fail('PERSON_DECLINED', 'The person declined this version');
-    this.db.prepare('INSERT INTO lock_approvals VALUES(?,?) ON CONFLICT(subject) DO NOTHING').run(subject, json({ ...parts, channel: decided.channel, principal: decided.principal, at: decided.at }));
+    this.#upsert('lock_approvals', subject, json({ ...parts, channel: decided.channel, principal: decided.principal, at: decided.at }));
     return subject;
+  }
+  /**
+   * Record a person's decision for a subject. A record already there on a channel THIS ledger accepts stands (one decision per subject);
+   * one on a channel it does not accept (a bed's scripted record in the same file) is replaced, never left to swallow a real decision
+   * (fix round 2026-11-04, security N7: INSERT ... DO NOTHING kept the scripted record, which this ledger then ignored).
+   */
+  #upsert(table, subject, body) {
+    this.tx(() => {
+      const existing = parse(this.db.prepare(`SELECT body FROM ${table} WHERE subject=?`).get(subject));
+      if (existing && this.#accepted(existing)) return;
+      if (existing) this.db.prepare(`UPDATE ${table} SET body=? WHERE subject=?`).run(body, subject);
+      else this.db.prepare(`INSERT INTO ${table} VALUES(?,?)`).run(subject, body);
+    });
   }
   /** The approval of one version, if a person approved it on a channel THIS ledger accepts (a bed's scripted approval in the same file
    *  does not count for a production ledger). */
@@ -245,7 +262,7 @@ export class NodecapLedger {
   // ---- per-call person decisions (L2): the decision for one effect call, bound to the host's rendering of that call ----
   recordCallDecision(subject, person) {
     const decided = acceptPerson(person, subject, { channels: this.channels });
-    this.db.prepare('INSERT INTO person_decisions VALUES(?,?) ON CONFLICT(subject) DO NOTHING').run(subject, json({ subject, ...decided }));
+    this.#upsert('person_decisions', subject, json({ subject, ...decided }));
     return this.callDecision(subject);
   }
   callDecision(subject) { return this.#accepted(parse(this.db.prepare('SELECT body FROM person_decisions WHERE subject=?').get(subject))); }

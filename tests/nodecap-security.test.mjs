@@ -179,7 +179,8 @@ test('M2: a continuation runs the launch preflight (a lock N+1 whose server drif
   const next = await nextConstruction({ ledger: h.ledger, proposalId: proposal.id, construction: h.construction, host: h.host, envelope, workflow: toolWorkflow(), types, version: 2 });
   approveVersion(h.ledger, next);
   const runsBefore = h.store.runs().length;
-  const drifted = { qualify: async () => ({ members: [], failures: [] }), preflight: async () => ({ ok: false, problems: [{ entry: 'tickets', code: 'DEFINITION_CHANGED' }] }) };
+  // (The same catalog in a later process: since the fix round of 2026-11-04 the continuation checks the catalog it runs under.)
+  const drifted = { catalog: h.host.catalog, qualify: async () => ({ members: [], failures: [] }), preflight: async () => ({ ok: false, problems: [{ entry: 'tickets', code: 'DEFINITION_CHANGED' }] }) };
   await assert.rejects(async () => continueRun({ store: h.store, ledger: h.ledger, host: drifted, construction: next, envelope, priorRunId: gap.id }), code('PREFLIGHT_FAILED'));
   assert.equal(h.store.runs().length, runsBefore, 'no continuation run was created');
 });
@@ -526,7 +527,7 @@ test('B3: ui.commit takes the held request id only; what is sent (and shown to t
   const pay = await session.act({ basis: fill.observation.basis, index: fill.observation.items.find(i => i.name === 'Pay').i, op: 'click' });
   assert.equal(pay.code, 'COMMIT_REQUIRED');
   const shown = session.describeHeld(pay.pending[0].id);
-  assert.deepEqual([shown.method, shown.path, shown.body], ['POST', '/pay', { kind: 'form', fields: [['amount', '99999']] }], 'the person sees the real body');
+  assert.deepEqual([shown.method, shown.path, shown.body], ['POST', '/pay', { kind: 'form', complete: true, fieldCount: 1, fields: [['amount', '99999']] }], 'the person sees the real body, all of it');
   assert.deepEqual(state.effects, []);
   await session.commit({ id: pay.pending[0].id });
   assert.deepEqual(state.effects, ['pay amount=99999'], 'exactly the request that was shown was sent, once');

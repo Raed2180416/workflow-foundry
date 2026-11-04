@@ -162,7 +162,10 @@ test('thesis #4: a request for a change never grants a read-only tool: it answer
 test('thesis #4: a single viable candidate below the score threshold is offered, never granted', async t => {
   const h = await setup(t, { entries: [sheetsEntry()], sidecar: sidecarFor(SHEETS), script: [request({ kind: 'tool', verb: 'list', object: 'row', system: 'sheets', why: 'quarterly' }), stuck()] });
   const run = await h.execute();
-  assert.equal(turn(run, 0).do.result, 'options', JSON.stringify(turn(run, 0).do));
+  // (Since the fix round of 2026-11-04, cost N1: a candidate whose text score is under τ is weak evidence, for a read as for an effect; it is
+  // shown among the nearest members of a NEED_UNMET answer, and only the same request again asks a person.)
+  assert.equal(turn(run, 0).do.code, 'NEED_UNMET', JSON.stringify(turn(run, 0).do));
+  assert.ok(turn(run, 0).do.nearest.some(v => v.startsWith('sheets_read_range(')), 'the weak candidate is offered');
   assert.deepEqual(h.decisions().filter(d => d.action.result === 'granted'), [], 'nothing was granted');
 });
 

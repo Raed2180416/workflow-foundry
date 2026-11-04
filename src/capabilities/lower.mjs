@@ -104,7 +104,9 @@ export function lowerWorkflow(workflow, lock, { skillBodies = {}, toolText = nul
       ...trustedSkills.map(sk => `### Skill ${sk.name}\n${sk.value}`)].join('\n\n');
     const when = (values) => ({ op: 'in', left: { $ref: 'nodes.step.action' }, right: values });
     const task = (id, tool, args, needs, extra = {}) => ({ id, kind: 'task', needs, description: `nodecap ${tool.split('.')[1]} for ${node.id}`, tool, args, timeoutMs: 120000, retry: { maxAttempts: 1 }, ...extra });
-    const step = { id: 'step', kind: 'agent', needs: [], description: `One tool-use turn of ${node.id}`, role: 'plan',
+    // The node's role is carried onto its step (fix round 2026-11-04, thesis N3: it was dropped; the engine's role checks of the SOURCE node
+    // run in nodecap lint, lint.mjs SOURCE_LINT, since the step sits inside a loop body).
+    const step = { id: 'step', kind: 'agent', needs: [], description: `One tool-use turn of ${node.id}`, role: node.role ?? 'plan',
       instructions: `${node.instructions}\n\n${protocolFor(actions)}\n\n${staticText}`, context: { ...(node.context?.persona ? { persona: node.context.persona } : {}),
         ...(node.context?.recite ? { recite: clone(node.context.recite) } : {}), ...(node.context?.history ? { history: node.context.history } : {}), inputs: contextInputs },
       returns: decisionSchema({ views, returns: node.returns, objects, systems, actions }), model: clone(node.model),

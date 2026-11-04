@@ -71,6 +71,21 @@ export const CASES = [
   { task: 'T12', phrasing: 'typed', need: N('read', 'ticket', 'read ticket 91', { system: 'tickets' }), expect: 'grant:mcp.tickets.get_ticket' }
 ];
 
+/**
+ * The needs the three verifiers of 2026-11-04 sent to the request rule of the cost-fixed code and found answered wrongly (an out-of-lock
+ * effect need sent to an unrelated in-lock effect, a lone verb match granted over a far better text match, a mistyped changing verb, a
+ * classless verb whose words ask for a change), labelled with what a correct broker answers. They shaped the fix round of 2026-11-04, so
+ * they are DEVELOPMENT data like CASES, reported separately so the original split stays comparable across rounds.
+ */
+export const VERIFIER_CASES = [
+  { task: 'T02', phrasing: 'out-of-lock effect', need: N('create', 'other', 'append a row to the team sheet', { system: 'other' }), expect: 'unmet', source: 'cost N1' },
+  { task: 'T06', phrasing: 'out-of-lock effect', need: N('create', 'ticket', 'post a comment on ticket 77'), expect: 'unmet', source: 'cost N1' },
+  { task: 'T02', phrasing: 'mistyped verb', need: N('update', 'ticket', 'post a comment on ticket 42'), expect: 'approval:mcp.tickets.add_comment', source: 'thesis N5' },
+  { task: 'T03', phrasing: 'verb narrowing', need: N('read', 'deal', 'list all open deals in the EU region'), expect: 'grant:mcp.crm.list_deals', source: 'cost B1' },
+  { task: 'T01', phrasing: 'verb narrowing', need: N('read', 'contact', 'find the Analytical Engines contact owner email'), expect: 'grant:mcp.crm.search_contacts', source: 'cost B1' },
+  { task: 'T04', phrasing: 'classless verb', need: N('transform', 'row', 'append one row to the sheet', { system: 'sheets' }), expect: 'unmet', source: 'thesis N6' }
+];
+
 /** The broker's answer to one case under `thresholds` (nothing held yet, the tool node's untrusted control label, no grants so far). */
 export function answer(lock, c, thresholds = THRESHOLDS) {
   const section = lock.nodes.work, held = id => section.bound.includes(id) || section.skills.includes(id);
@@ -102,7 +117,8 @@ export function sweep({ taus = [0.5, 1, 1.5, 2, 3], deltas = [0.25, 0.5, 1] } = 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const i = process.argv.indexOf('--out'), current = score(THRESHOLDS), grid = sweep();
   const report = { schema: 'nodecap-selection-dev/1', date: new Date().toISOString().slice(0, 10), evidence: 'development split written by the builder (knows the gold sets); $0; never held-out',
-    current, grid };
+    current, verifierCases: score(THRESHOLDS, { cases: VERIFIER_CASES }), grid };
   if (i > 0) { const out = path.resolve(ROOT, process.argv[i + 1]); mkdirSync(out, { recursive: true }); writeFileSync(path.join(out, 'selection-dev.json'), `${JSON.stringify(report, null, 2)}\n`); }
-  console.log(JSON.stringify({ current: { ...current, misses: current.misses.map(m => `${m.task}/${m.phrasing}: expected ${m.expect}, got ${m.full}`) }, grid: grid.map(g => JSON.stringify(g)) }, null, 2));
+  const brief = r => ({ ...r, misses: r.misses.map(m => `${m.task}/${m.phrasing}: expected ${m.expect}, got ${m.full}`) });
+  console.log(JSON.stringify({ current: brief(current), verifierCases: brief(report.verifierCases), grid: grid.map(g => JSON.stringify(g)) }, null, 2));
 }

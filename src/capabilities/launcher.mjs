@@ -48,17 +48,48 @@ export async function construct({ workflow, sidecar, host, envelope, types = nul
 
 /** The approval subject a person signs off (dashboard or CLI) for one constructed version. */
 export const subjectOf = (c, dryRunId = null) => ({ workflowHash: c.workflowHash, lockHash: c.lockHash, envelopeDigest: c.envelopeDigest, catalogDigest: c.catalogDigest, dryRunId });
+/**
+ * What a person approved is recomputed from the objects that will run, never taken from a construction's stated hashes (fix round 2026-11-04,
+ * thesis N1): the lock's own hash, the lowered workflow's, the envelope's digest (the object passed now, which the registry also hashes)
+ * and the catalog's (the host's catalog now). A construction object changed after the approval, by any code in the process, is refused here.
+ */
+export function checkConstruction({ construction, envelope, host }) {
+  if (`sha256:${digest(construction.lock)}` !== construction.lockHash) fail('LOCK_HASH', 'The lock differs from the lock whose hash was approved; nothing was run');
+  if (digest(construction.lowered) !== construction.workflowHash) fail('WORKFLOW_HASH', 'The lowered workflow differs from the constructed one');
+  const envelopeDigest = envelopeDigestOf(envelope);
+  if (envelopeDigest !== construction.envelopeDigest || construction.lock.envelopeDigest !== envelopeDigest)
+    fail('ENVELOPE_DIGEST', 'The envelope differs from the one this version was constructed and approved under; construct a new version');
+  if (!host?.catalog) fail('CATALOG_DIGEST_MISMATCH', 'The host holds no catalog to check this version against');
+  const catalogDigest = catalogDigestOf(host.catalog);
+  if (catalogDigest !== construction.catalogDigest || construction.lock.catalogDigest !== catalogDigest)
+    fail('CATALOG_DIGEST_MISMATCH', 'The catalog differs from the one this version was constructed and approved under; construct a new version');
+}
+
+const deepFreeze = value => { if (value && typeof value === 'object' && !Object.isFrozen(value)) { Object.freeze(value); for (const v of Object.values(value)) deepFreeze(v); } return value; };
+/**
+ * The construction and envelope a launch or continuation checks AND runs: frozen copies taken once, before any check (fix round 2026-11-04,
+ * thesis N1). A caller that edits its own construction object or envelope after the call started (during the qualify and preflight awaits)
+ * changes nothing that runs: the registry, the dispatcher and the stored lock all hold the checked copies.
+ */
+export function snapshotFor(construction, envelope) {
+  return { construction: { ...construction, lock: deepFreeze(structuredClone(construction.lock)), lowered: deepFreeze(structuredClone(construction.lowered)) },
+    envelope: deepFreeze(structuredClone(envelope)) };
+}
 
 export function runtimeFor({ store, host, ledger, construction, envelope, models = null, modelPolicy = null, mode = 'live', maxCost = null, thresholds = undefined }) {
-  const registry = compileRegistry({ lock: construction.lock, lockHash: construction.lockHash, host, envelope, envelopeDigest: construction.envelopeDigest, ledger, mode, thresholds });
+  // The registry hashes the envelope object it runs under and the lock's own hash (recomputed), so a resume under another envelope or an
+  // edited lock is CAPABILITY_DRIFT (fix round thesis N1b).
+  const registry = compileRegistry({ lock: construction.lock, host, envelope, ledger, mode, thresholds });
   const allowed = allowedCapabilities(registry, construction.lowered);
   const budget = construction.lowered.budget.maxCost ?? 0, nodeBudgets = Object.values(construction.lock.nodes).map(n => n.budgetUsd).filter(v => typeof v === 'number');
   const cap = maxCost ?? (nodeBudgets.length ? Math.min(budget, nodeBudgets.reduce((a, b) => a + b, 0)) : budget);
   return { registry, runtime: new Runtime(store, registry, { allowedCapabilities: allowed, maxCost: cap }, { models, modelPolicy }) };
 }
 
-export async function launch({ store, ledger, host, construction, envelope, models = null, modelPolicy = null, input = {}, runOptions = {}, dryRunId = null, mode = 'live', maxCost = null }) {
+export async function launch({ store, ledger, host, construction: given, envelope: givenEnvelope, models = null, modelPolicy = null, input = {}, runOptions = {}, dryRunId = null, mode = 'live', maxCost = null }) {
+  const { construction, envelope } = snapshotFor(given, givenEnvelope);
   if (construction.lint.errors.length) fail('NODECAP_LINT', `Lint refused the version: ${construction.lint.errors.map(f => f.code).join(', ')}`, { findings: construction.lint.errors });
+  checkConstruction({ construction, envelope, host });
   // In a later process nothing has qualified yet: qualify exactly the lock's entries (no other server is spawned), then check the pins.
   await host.qualify({ only: [...new Set(lockMembers(construction.lock).map(id => construction.lock.members[id].entryId))] });
   const preflight = await host.preflight(lockMembers(construction.lock), construction.lock);

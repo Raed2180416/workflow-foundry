@@ -8,13 +8,27 @@ const STOP = new Set(('a an and are as at be by can do does each for from has ha
   + 'that the then this to was what when where which with without would should their there these those than so such any all '
   + 'only also more most other some same than very via per p v ev slots tier').split(' '));
 export const tokenize = text => (String(text ?? '').toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).filter(w => w.length > 1 && !STOP.has(w) && !/^\d+$/.test(w));
+/**
+ * A light English suffix stemmer for need ranking (fix round 2026-11-04, review-cost B1: "deals" did not match "deal", nor "refunded"
+ * "refund", so a typed object pointing at the wrong member won the ranking). Plural -s/-es/-ies, past -ed, gerund -ing; nothing else.
+ * Used only where a need is ranked (stem: true); the library-parity index and the standby cap keep the plain tokenizer.
+ */
+export function stem(w) {
+  if (w.length > 4 && w.endsWith('ies')) return `${w.slice(0, -3)}y`;
+  if (w.length > 4 && /(?:sses|xes|ches|shes)$/.test(w)) return w.slice(0, -2);
+  if (w.length > 3 && w.endsWith('s') && !/(?:ss|us|is)$/.test(w)) return w.slice(0, -1);
+  if (w.length > 5 && w.endsWith('ed')) return w.slice(0, -2);
+  if (w.length > 6 && w.endsWith('ing')) return w.slice(0, -3);
+  return w;
+}
 
-/** docs: [{id, fields: {name, system, intents, summary, args}}] (each field a string). */
-export function bm25fIndex(docs, { weights = FIELD_WEIGHTS, k1 = BM25_PARAMS.k1, b = BM25_PARAMS.b } = {}) {
+/** docs: [{id, fields: {name, system, intents, summary, args}}] (each field a string). `stem`: rank on stemmed tokens (need ranking). */
+export function bm25fIndex(docs, { weights = FIELD_WEIGHTS, k1 = BM25_PARAMS.k1, b = BM25_PARAMS.b, stem: stemmed = false } = {}) {
+  const toks = text => stemmed ? tokenize(text).map(stem) : tokenize(text);
   const tf = docs.map(d => {
     const m = new Map();
     let len = 0;
-    for (const [field, weight] of Object.entries(weights)) for (const w of tokenize(d.fields[field])) { m.set(w, (m.get(w) ?? 0) + weight); len += weight; }
+    for (const [field, weight] of Object.entries(weights)) for (const w of toks(d.fields[field])) { m.set(w, (m.get(w) ?? 0) + weight); len += weight; }
     return { id: d.id, m, len };
   });
   const N = tf.length, avgdl = tf.reduce((a, d) => a + d.len, 0) / Math.max(1, N), df = new Map();
@@ -23,7 +37,7 @@ export function bm25fIndex(docs, { weights = FIELD_WEIGHTS, k1 = BM25_PARAMS.k1,
   return {
     n: N, avgdl,
     score(query) {
-      const q = [...new Set(tokenize(query))].filter(w => df.has(w)), out = new Map();
+      const q = [...new Set(toks(query))].filter(w => df.has(w)), out = new Map();
       for (const d of tf) {
         let s = 0;
         for (const w of q) { const f = d.m.get(w); if (f) s += idf(w) * (f * (k1 + 1)) / (f + k1 * (1 - b + b * d.len / avgdl)); }

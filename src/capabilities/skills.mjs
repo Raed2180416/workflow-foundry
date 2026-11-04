@@ -124,11 +124,15 @@ export function skillMembers(entry, skill, { maxTokens = entry.maxTokens ?? 1200
   const label = entry.label ?? (entry.trust === 'T0' ? 'trusted' : `untrusted:skill.${entry.id}`);
   if (entry.trust !== 'T0' && label === 'trusted') fail('SKILL_LABEL', `Skill ${entry.id} is not an owner skill; its output is untrusted`);
   const references = skill.files.map(f => f.path).filter(p => p !== 'SKILL.md' && !p.startsWith('scripts/'));
+  // The view a model sees is Foundry text: an owner (trusted) skill lists its reference files by name; an untrusted skill's file names are
+  // the package's own text, so they never enter the view (fix round 2026-11-04, cost N2: a file name reached the system prompt through the
+  // standby signature). Its model learns them from the body it reads (untrusted output, labelled); readReference checks the manifest.
+  const reference = label === 'trusted' ? { enum: references } : { type: 'string', maxLength: 200 };
   const base = { type: entry.type, system: entry.system, verbs: entry.verbs ?? ['read'], objects: entry.objects ?? ['procedure'], intents: entry.intents ?? [],
     effects: 'none', risk: 'low', requiresApproval: false, dataClass: 'internal', egress: 'local', maxTimeoutMs: 10000, cost: 0, outputMode: 'structured' };
   const members = [memberRecord({ entry, name: entry.id, id: `skill.${entry.id}`, adapter: 'nodecap-skill/1', pins: { manifest: skill.manifest, derivative: skill.derivative },
     attestation: { ...base, outputLabel: label, outputSchema: { type: 'object', required: ['skill', 'text'], properties: { skill: { type: 'string' }, text: { type: 'string' }, reference: { type: 'string' } } },
-      view: { name: entry.view.name, summary: entry.view.summary, inputSchema: { type: 'object', additionalProperties: false, properties: references.length ? { reference: { enum: references } } : {} } } },
+      view: { name: entry.view.name, summary: entry.view.summary, inputSchema: { type: 'object', additionalProperties: false, properties: references.length ? { reference } : {} } } },
     extra: { skillMaxTokens: maxTokens } })];
   for (const [name, script] of Object.entries(entry.scripts ?? {})) {
     if (!skill.scripts.includes(script.path)) fail('SKILL_SCRIPT', `Script ${script.path} is not in the skill`);

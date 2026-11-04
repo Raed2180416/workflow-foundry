@@ -105,9 +105,10 @@ const sourceSchemas = {
   cua: { type: 'object', additionalProperties: false, required: ['backend', 'origins', 'profile'], properties: {
     backend: { const: 'playwright-local' }, executablePath: { type: 'string', maxLength: 4096 }, origins: { type: 'array', minItems: 1, maxItems: 10, items: { type: 'string', maxLength: 200 } },
     profile: { enum: ['S0'] }, holdPaths: { type: 'array', maxItems: 20, items: { type: 'string', pattern: '^[a-z][a-z0-9-]{0,40}$' } },
-    // owner attestation: GET on these paths has no side effect (`*` one segment, a trailing `/**` any suffix). Without it every navigating
-    // ui.* member (observe, act, assert) is an approval-gated effect.
-    safeGets: { type: 'array', minItems: 1, maxItems: 50, uniqueItems: true, items: { type: 'string', pattern: '^/[A-Za-z0-9._~/*-]{0,200}$' } } } },
+    // owner attestation: GET on these paths has no side effect (`*` one segment, a trailing `/**` any suffix), with the query keys it may
+    // carry after `?` (`/?page`, `/search?q&page`; `?*` any query; no `?`: no query at all, fix round 2026-11-04 security N1). Without it
+    // every navigating ui.* member (observe, act, assert) is an approval-gated effect.
+    safeGets: { type: 'array', minItems: 1, maxItems: 50, uniqueItems: true, items: { type: 'string', pattern: '^/[A-Za-z0-9._~/*-]{0,200}(?:\\?(?:\\*|[A-Za-z0-9._~-]{1,40}(?:&[A-Za-z0-9._~-]{1,40}){0,19}))?$' } } } },
   connection: { type: 'object', additionalProperties: false, properties: {} },
   program: { type: 'object', additionalProperties: false, required: ['lang', 'file', 'sha256'], properties: {
     lang: { const: 'js' }, file: { type: 'string', minLength: 1, maxLength: 4096 }, sha256: { type: 'string', pattern: '^[0-9a-f]{64}$' } } },

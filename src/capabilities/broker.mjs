@@ -38,6 +38,17 @@ const TRANSCRIPT_BYTES = 24 * 1024;
 // read; any other verb (transform, compute, observe, navigate) leaves the class to the ranking: the top match decides (review-cost B1).
 const CHANGING_VERBS = new Set(['create', 'update', 'delete', 'send']);
 const READ_VERBS = new Set(['read', 'search', 'list']);
+// Changing words in a need's own words: a need whose verb names no class (transform, compute, observe, navigate) and that states no effect
+// takes the effect class from them (fix round 2026-11-04, thesis N6: "append one row" with verb transform was granted a read). Closed list
+// of unambiguous verbs, whole words only; a typed read or changing verb always wins over the words.
+const CHANGING_WORDS = /\b(append|add|insert|create|post|send|submit|write|update|change|edit|modify|delete|remove|cancel|publish|upload|assign|rename|reply|pay|transfer|set)\b/i;
+/** The effect class a need asks for: 'effect', 'read', or null (no class stated: the ranking decides). */
+export function needClass(need) {
+  if (need?.effect) return need.effect === 'none' ? 'read' : 'effect';
+  if (CHANGING_VERBS.has(need?.verb)) return 'effect';
+  if (READ_VERBS.has(need?.verb)) return 'read';
+  return typeof need?.why === 'string' && CHANGING_WORDS.test(need.why) ? 'effect' : null;
+}
 /** Ranking boosts of a need's typed fields (review-cost B2): they order the whole lock section, never filter it. A grant still needs text
  *  evidence (score ≥ τ): typed fields alone never grant. Development defaults, like THRESHOLDS. */
 export const NEED_BOOSTS = Object.freeze({ verb: 0.5, object: 0.5, system: 0.5, kind: 0.25 });
@@ -53,7 +64,7 @@ const round3 = x => Math.round(x * 1000) / 1000;
  */
 export function rankNeed(members, need) {
   const query = ['verb', 'object', 'system', 'why'].map(k => need?.[k]).filter(v => typeof v === 'string').join(' ');
-  const text = members.length ? new Map(indexMembers(members).rank(query, members.length).map(r => [r.id, r.score])) : new Map();
+  const text = members.length ? new Map(indexMembers(members, { stem: true }).rank(query, members.length).map(r => [r.id, r.score])) : new Map();
   return members.map(m => {
     const score = text.get(m.id) ?? 0;
     const match = score + (need?.verb && (m.verbs ?? []).includes(need.verb) ? NEED_BOOSTS.verb : 0) + (need?.object && m.objects.includes(need.object) ? NEED_BOOSTS.object : 0)
@@ -63,18 +74,18 @@ export function rankNeed(members, need) {
 }
 /**
  * The request rule, pure (I10: recomputable from the lock, the need and the named tool). `named`: the member the decision's `tool` names
- * in this node's index (review-cost B1: a request that names a tool asks for that tool). Otherwise the candidates are the members with
- * any match, of the need's effect class when the need states one (an explicit effect, or a changing or read verb), narrowed to the
- * members with the need's verb when any has it. No candidate: nothing in reach meets the need (L3).
+ * in this node's index (review-cost B1: a request that names a tool asks for that tool; it needs no need, fix round cost N5). Otherwise
+ * the candidates are the members with TEXT evidence for the need (BM25F score > 0: a typed boost alone never makes a candidate), of the
+ * need's effect class when it states one (needClass), in rank order. There is no verb narrowing any more (fix round 2026-11-04, cost B1):
+ * the verb is a ranking boost, so a lone member that shares the verb no longer wins over a far better text match of the same class.
  */
 export function selectForNeed(lock, node, need, { tool = null } = {}) {
   const section = lock.nodes[node], ranked = rankNeed([...section.bound, ...section.skills, ...section.standby].map(id => lock.members[id]), need);
   const named = tool && tool !== 'none' ? viewIndex(lock, node).get(tool) ?? null : null;
   if (named) return { named, cls: null, ranked, candidates: [ranked.find(r => r.id === named)] };
-  const cls = need.effect ? (need.effect === 'none' ? 'read' : 'effect') : CHANGING_VERBS.has(need.verb) ? 'effect' : READ_VERBS.has(need.verb) ? 'read' : null;
-  const sameClass = ranked.filter(r => r.match > 0 && (cls === null || (lock.members[r.id].effects !== 'none') === (cls === 'effect')));
-  const byVerb = need.verb ? sameClass.filter(r => (lock.members[r.id].verbs ?? []).includes(need.verb)) : [];
-  return { named: null, cls, ranked, candidates: byVerb.length ? byVerb : sameClass };
+  const cls = needClass(need);
+  const candidates = ranked.filter(r => r.score > 0 && (cls === null || (lock.members[r.id].effects !== 'none') === (cls === 'effect')));
+  return { named: null, cls, ranked, candidates };
 }
 /** Whether the first candidate is a decisive text match: its score clears τ and leads every other candidate's text score by δ. */
 export function decisiveMatch(candidates, { tau, delta }) {
@@ -83,23 +94,31 @@ export function decisiveMatch(candidates, { tau, delta }) {
 }
 /**
  * The decision of one typed request, pure (I10; the dispatcher records it, the selection dev split replays it). `held(id)`: the member is
- * bound or already granted to the node; `verdictOf(id)`: decideMember for it as a request. Outcomes: unmet (nothing in reach matches),
- * bound, needs-approval (an effectful top: never granted by a request), granted (an L1 read: named, or a decisive match), options (a
- * closed choice among usable candidates), refused (with the broker's code).
+ * bound or already granted to the node; `verdictOf(id)`: decideMember for it as a request. Outcomes:
+ *   unmet           no candidate, or none whose text score clears τ (nothing in reach matches well: NEED_UNMET, then L3 on confirmation)
+ *   bound           the top candidate is already held
+ *   needs-approval  the named member, or a decisive top candidate, is effectful (never granted by a request: the model is pointed at act)
+ *   granted         an L1 read: named, or a decisive top candidate
+ *   options         a closed choice among usable candidates (held, L1-grantable reads, effects a person could approve), at most three
+ *   refused         with the broker's code
+ * The same evidence rule holds for effects as for reads (fix round 2026-11-04, cost N1): an effectful member with no text evidence for the
+ * need is never offered, so an out-of-lock effect need reaches L3 instead of an unrelated in-lock effect.
  */
 export function decideRequest({ lock, node, need, tool = null, thresholds = THRESHOLDS, held = () => false, verdictOf }) {
   const selection = selectForNeed(lock, node, need, { tool }), { candidates } = selection;
   if (!candidates.length) return { outcome: 'unmet', selection };
-  const [top] = candidates, member = lock.members[top.id];
+  const [top] = candidates, member = lock.members[top.id], named = selection.named !== null;
+  if (!named && top.score < thresholds.tau) return { outcome: 'unmet', selection };
   if (held(top.id)) return { outcome: 'bound', member: top.id, selection };
+  const decisive = named || decisiveMatch(candidates, thresholds);
+  const approvable = id => ['NEED_UNTRUSTED_EFFECT', 'NEED_EFFECTFUL'].includes(verdictOf(id).code);
+  const usable = r => held(r.id) || (lock.members[r.id].effects === 'none' ? verdictOf(r.id).result === 'granted' : approvable(r.id));
   const verdict = verdictOf(top.id);
   if (member.effects !== 'none') {
-    if (verdict.code === 'NEED_UNTRUSTED_EFFECT' || verdict.code === 'NEED_EFFECTFUL') return { outcome: 'needs-approval', member: top.id, selection };
-    return { outcome: 'refused', member: top.id, code: verdict.code, selection };
-  }
-  // A named member needs no score (the model asked for exactly it, as a read of it would); a ranked one must be a decisive match.
-  if (verdict.result === 'granted' && (selection.named !== null || decisiveMatch(candidates, thresholds))) return { outcome: 'granted', member: top.id, selection };
-  const options = candidates.filter(r => held(r.id) || verdictOf(r.id).result === 'granted').slice(0, 3);
+    if (!approvable(top.id)) return { outcome: 'refused', member: top.id, code: verdict.code, selection };
+    if (decisive) return { outcome: 'needs-approval', member: top.id, selection };
+  } else if (verdict.result === 'granted' && decisive) return { outcome: 'granted', member: top.id, selection };
+  const options = candidates.filter(usable).slice(0, 3);
   if (!options.length) return { outcome: 'refused', member: top.id, code: verdict.code ?? 'NEED_UNDECIDED', selection };
   return { outcome: 'options', member: top.id, options, selection };
 }
@@ -267,6 +286,7 @@ export class Dispatcher {
     const rendering = await describeCall({ host: this.host, lock: this.lock, runId: ctx.runId, nodeKey: ctx.nodeKey, decision });
     if (this.ledger?.callDecision(callSubject(approvalId, rendering))?.approve !== true)
       fail('APPROVAL_MISSING', 'nodecap.act runs only after a person approved the host\'s rendering of this exact call');
+    if (rendering.held && rendering.held.complete !== true) fail('HELD_UNRENDERABLE', 'The held request is too large to show a person in full; it is never sent');
     const memberId = viewIndex(this.lock, node).get(decision.tool);
     if (!memberId) return this.#out(ctx, refusal('TOOL_ABSENT'));
     const member = this.lock.members[memberId];
@@ -286,8 +306,13 @@ export class Dispatcher {
     if ((state.calls.get(member.id) ?? 0) >= this.lock.nodes[node].maxCallsPerMember) return this.#out(ctx, refusal('BUDGET_EXHAUSTED', { tool: member.view.name }));
     try { validateData(member.view.inputSchema, decision.args ?? {}, `${member.id} arguments`); }
     catch (error) { if (!(error instanceof FoundryError)) throw error; return this.#out(ctx, refusal('ARGS_INVALID', { tool: member.view.name, signature: renderView(member) })); }
-    if (member.kind === 'cua' && member.tool === 'commit' && !(await this.host.heldRequest({ runId: ctx.runId, node, entryId: member.entryId, id: decision.args?.id })))
-      return this.#out(ctx, refusal('HELD_UNKNOWN', { tool: member.view.name, hint: 'commit names the id of a request the page holds (pending)' }));
+    if (member.kind === 'cua' && member.tool === 'commit') {
+      const held = await this.host.heldRequest({ runId: ctx.runId, node, entryId: member.entryId, id: decision.args?.id });
+      if (!held) return this.#out(ctx, refusal('HELD_UNKNOWN', { tool: member.view.name, hint: 'commit names the id of a request the page holds (pending)' }));
+      // A person never approves a request they cannot see in full (fix round security N2): a body beyond the host's complete rendering is
+      // refused here, before anyone is asked.
+      if (held.complete !== true) return this.#out(ctx, refusal('HELD_UNRENDERABLE', { tool: member.view.name, hint: 'This request is too large to show a person in full; it cannot be sent' }));
+    }
     return this.#out(ctx, { ok: true, action: 'act', ready: true, tool: member.view.name, note: 'A person decides this call.' });
   }
   /**
@@ -299,22 +324,29 @@ export class Dispatcher {
    * comes back as a CAPABILITY_GAP refusal (the node continues; review-thesis #5).
    */
   async #request(ctx, node, decision, state) {
-    const need = decision.need, section = this.lock.nodes[node];
-    if (!isNeed(need)) return this.#out(ctx, refusal('NEED_REQUIRED', needHelp(this.lock, node)));
+    const section = this.lock.nodes[node], named = decision.tool && decision.tool !== 'none' && viewIndex(this.lock, node).has(decision.tool);
+    // A request that names a listed tool asks for exactly it and needs no need (fix round 2026-11-04, cost N5); any other request does.
+    const need = isNeed(decision.need) ? decision.need : null;
+    if (!need && !named) return this.#out(ctx, refusal('NEED_REQUIRED', needHelp(this.lock, node)));
     const held = id => section.bound.includes(id) || section.skills.includes(id) || state.nodeGrants.has(id);
     const verdictOf = id => decideMember(this.features(ctx, node, id, state, { via: 'request' }), this.lock.members[id], this.envelope);
-    const r = decideRequest({ lock: this.lock, node, need, tool: decision.tool, thresholds: this.thresholds, held, verdictOf });
+    const r = decideRequest({ lock: this.lock, node, need: need ?? {}, tool: decision.tool, thresholds: this.thresholds, held, verdictOf });
     if (r.outcome === 'unmet') return this.#unmet(ctx, node, need, r.selection, state);
     const member = this.lock.members[r.member], view = renderView(member);
+    // Every answer to a request is a decision in the run's chain, the ones that grant nothing included (fix round 2026-11-04, cost M7):
+    // the record shows what each need was answered with, not only the grants and refusals.
+    const answered = result => this.decide(ctx, 'selection', { node, nodeKey: ctx.nodeKey, lockHash: this.lockHash, envelopeDigest: this.envelopeDigest, via: 'request', named: !!r.selection.named,
+      scores: r.selection.candidates.slice(0, 3).map(c => round3(c.score)) }, { result, member: r.member }, { need, rationale: `request answered ${result}: ${r.member}` });
     switch (r.outcome) {
-      case 'bound': return this.#out(ctx, { ok: true, action: 'request', result: 'bound', tool: member.view.name, ...(r.selection.named ? {} : { view }) });
+      case 'bound': answered('bound'); return this.#out(ctx, { ok: true, action: 'request', result: 'bound', tool: member.view.name, ...(r.selection.named ? {} : { view }) });
       // An effect is never granted by a request: the model is pointed at act, where a person decides the exact call.
-      case 'needs-approval': return this.#out(ctx, { ok: true, action: 'request', result: 'needs-approval', tool: member.view.name, view, hint: 'Use action act with this tool; a person approves the call.' });
+      case 'needs-approval': answered('needs-approval'); return this.#out(ctx, { ok: true, action: 'request', result: 'needs-approval', tool: member.view.name, view, hint: 'Use action act with this tool; a person approves the call.' });
       case 'refused':
         this.decide(ctx, 'adaptation', this.features(ctx, node, r.member, state, { via: 'request' }), { result: 'refused', member: r.member, code: r.code }, { need, rationale: `refused ${r.member}: ${r.code}` });
         return this.#out(ctx, refusal(r.code));
       case 'options':
-        // A closed choice among the candidates this node could actually use (held, or grantable by L1); the model picks by reading one.
+        // A closed choice among the candidates this node could actually use (held, grantable by L1, or an effect a person could approve);
+        // the model picks by reading one, or by acting on an effect ([effect] in its view).
         this.decide(ctx, 'selection', { node, nodeKey: ctx.nodeKey, lockHash: this.lockHash, envelopeDigest: this.envelopeDigest, via: 'request', scores: r.options.map(o => round3(o.score)) },
           { result: 'options', options: r.options.map(o => o.id) }, { need, rationale: 'no decisive standby member: a closed choice' });
         return this.#out(ctx, { ok: true, action: 'request', result: 'options', options: r.options.map(o => renderView(this.lock.members[o.id])) });
@@ -403,10 +435,12 @@ export class Dispatcher {
   }
   #out(ctx, value) { this.host.scrub.assertClean(value, 'a node output'); return value; }
   /**
-   * nodecap.log: append the turn to the bounded transcript (the need included, review-cost M4). The same call refused with the same code a
-   * second time gets a hint in its entry; a third time ends the node as stuck with the typed reason REPEATED_REFUSAL instead of spending its
-   * remaining turns (the T02 loop of the NC-1 Haiku run sent one refused request ten times). "The same call": action, tool and need, plus
-   * the arguments of a read or act.
+   * nodecap.log: append the turn to the bounded transcript (the need included, review-cost M4). A call that repeats an earlier call of the
+   * node and gets the same answer is no progress: the second time its entry carries a hint, the third time the node ends stuck instead of
+   * spending its remaining turns. "The same call": action, tool and need, plus the arguments of a read or act. "The same answer": a refusal
+   * with the same code (REPEATED_REFUSAL; the T02 loop of the NC-1 Haiku run sent one refused request ten times), or an identical ok answer
+   * (REPEATED_CALL; fix round 2026-11-04, cost M4: the same request answered needs-approval, options or bound, the same find, the same read
+   * with the same result). A read whose result changed (a page after an action) is progress and is not counted.
    */
   log(args) {
     const { decision, result, effect, previous } = args, turns = (previous?.turns ?? 0) + 1;
@@ -416,13 +450,16 @@ export class Dispatcher {
       ...(decision.need ? { need: decision.need } : {}), result: outcome };
     const repeats = { ...(previous?.repeats ?? {}) };
     let stuckReason = null;
-    if (outcome && typeof outcome === 'object' && outcome.ok === false && typeof outcome.code === 'string') {
-      const key = digest({ action: decision.action, tool: decision.tool ?? null, need: decision.need ?? null, args: ['read', 'act'].includes(decision.action) ? decision.args ?? {} : null, code: outcome.code }).slice(0, 16);
+    if (outcome && typeof outcome === 'object' && !['done', 'stuck'].includes(decision.action)) {
+      const refused = outcome.ok === false && typeof outcome.code === 'string';
+      const key = digest({ action: decision.action, tool: decision.tool ?? null, need: decision.need ?? null, args: ['read', 'act'].includes(decision.action) ? decision.args ?? {} : null,
+        answer: refused ? { code: outcome.code } : outcome }).slice(0, 16);
       const n = (repeats[key] ?? 0) + 1;
       delete repeats[key]; repeats[key] = n;
       for (const k of Object.keys(repeats).slice(0, Math.max(0, Object.keys(repeats).length - 32))) delete repeats[k];
-      if (n === 2) entry.repeat = { count: n, hint: 'This exact call was refused before with the same code. Change the call, use another tool, or answer stuck.' };
-      if (n >= 3) { entry.repeat = { count: n }; stuckReason = 'REPEATED_REFUSAL'; }
+      if (n === 2) entry.repeat = { count: n, hint: refused ? 'This exact call was refused before with the same code. Change the call, use another tool, or answer stuck.'
+        : 'This exact call got this same answer before. Act on the answer (for needs-approval: action act with that tool), use another tool, or answer stuck.' };
+      if (n >= 3) { entry.repeat = { count: n }; stuckReason = refused ? 'REPEATED_REFUSAL' : 'REPEATED_CALL'; }
     }
     const transcript = [...(previous?.transcript ?? []), entry];
     let dropped = previous?.dropped ?? 0;
@@ -468,21 +505,30 @@ export async function describeCall({ host, lock, runId, nodeKey, decision }) {
   if (!memberId) return { known: false, tool: String(decision?.tool ?? '').slice(0, 64) };
   const member = lock.members[memberId];
   const rendering = { known: true, member: member.id, entry: member.entryId, effects: member.effects, risk: member.risk, view: renderView(member), args: decision.args ?? {} };
-  if (member.kind === 'cua' && member.tool === 'commit') rendering.held = await host.heldRequest({ runId, node, entryId: member.entryId, id: decision.args?.id });
+  await addUiRendering(rendering, { host, member, runId, node, args: decision.args });
   return rendering;
 }
-/** The host rendering of a Tier-0 effect call (a task node naming an effectful member directly). */
-export function describeTier0Call({ lock, memberId, args }) {
+/** The host's own account of a computer-use call: the held request for commit (security B3, N2), the element or page for a navigating
+ *  member that is an effect (security N6). */
+async function addUiRendering(rendering, { host, member, runId, node, args }) {
+  if (member.kind !== 'cua') return;
+  if (member.tool === 'commit') rendering.held = await host.heldRequest({ runId, node, entryId: member.entryId, id: args?.id });
+  else if (['act', 'observe', 'assert'].includes(member.tool) && member.effects !== 'none') rendering.ui = await host.uiCall?.({ runId, node, entryId: member.entryId, tool: member.tool, args: args ?? {} }) ?? null;
+}
+/** The host rendering of a Tier-0 effect call (a task node naming an effectful member directly; its UI session is keyed by its node key). */
+export async function describeTier0Call({ lock, memberId, args, host = null, runId = null, nodeKey = null }) {
   const member = lock.members[memberId];
   if (!member || !Object.values(lock.tier0 ?? {}).includes(memberId)) return { known: false, tool: String(memberId ?? '').slice(0, 64) };
-  return { known: true, tier0: true, member: member.id, entry: member.entryId, effects: member.effects, risk: member.risk, view: renderView(member), args: args ?? {} };
+  const rendering = { known: true, tier0: true, member: member.id, entry: member.entryId, effects: member.effects, risk: member.risk, view: renderView(member), args: args ?? {} };
+  if (host) await addUiRendering(rendering, { host, member, runId, node: nodeKey, args });
+  return rendering;
 }
 /** The host rendering of a pending engine approval of a run under `lock` (what a person channel shows before asking for a decision). */
 export async function describeApproval({ host, lock, run, approvalId }) {
   const approval = run.approvals?.[approvalId];
   if (!approval) return { known: false, tool: null };
   if (approval.tool === 'nodecap.act') return describeCall({ host, lock, runId: run.id, nodeKey: approval.nodeKey, decision: approval.args?.decision ?? {} });
-  return describeTier0Call({ lock, memberId: approval.tool, args: approval.args });
+  return describeTier0Call({ lock, memberId: approval.tool, args: approval.args, host, runId: run.id, nodeKey: approval.nodeKey });
 }
 /** The subject a person decides for one effect call: the engine's approval id (workflow, registry, node, arguments) and the host rendering. */
 export const callSubject = (approvalId, rendering) => subjectOf({ kind: 'call', approvalId, rendering });
@@ -491,8 +537,18 @@ export function renderCall(rendering) {
   if (!rendering.known) return `Unknown tool ${rendering.tool}: decline.`;
   const lines = [`Effect: ${rendering.view}`, `Member: ${rendering.member} (${rendering.effects}, risk ${rendering.risk})`, `Arguments (untrusted, shaped by tool output): ${JSON.stringify(rendering.args)}`];
   if (rendering.member.startsWith('ui.') && rendering.member.endsWith('.commit')) {
-    if (rendering.held) lines.push(`Request that will be sent: ${rendering.held.method} ${rendering.held.origin}${rendering.held.path}`, `Body (untrusted): ${JSON.stringify(rendering.held.body)}`);
-    else lines.push('No such held request: decline.');
+    if (rendering.held) {
+      lines.push(`Request that will be sent: ${rendering.held.method} ${rendering.held.origin}${rendering.held.path}`, `Body (untrusted): ${JSON.stringify(rendering.held.body)}`);
+      if (rendering.held.complete !== true) lines.push('This body is NOT shown in full (too large, or not text): decline. It cannot be sent.');
+    } else lines.push('No such held request: decline.');
+  }
+  if (rendering.ui) {
+    const ui = rendering.ui, el = ui.element;
+    lines.push(`Page now: ${ui.page ?? '(none)'}`);
+    if (ui.navigate !== undefined) lines.push(`Will load: ${ui.navigate ?? '(nothing)'}`);
+    if (ui.reload !== undefined) lines.push(`Will reload: ${ui.reload ?? '(nothing)'}`);
+    if (ui.op !== undefined) lines.push(`Action: ${ui.op} on ${el ? `${el.role} "${el.name}" (#${el.nth + 1} of that name; untrusted page text)` : 'no element of the current page: decline'}${ui.value !== undefined ? ` with value ${JSON.stringify(ui.value)}` : ''}`);
+    if (ui.basisCurrent === false) lines.push('The model saw an older version of this page: decline.');
   }
   return lines.join('\n');
 }

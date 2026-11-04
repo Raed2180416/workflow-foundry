@@ -108,7 +108,7 @@ test('B2: a need nothing in reach matches first answers NEED_UNMET with the near
 
 // ================================== M2: no view is named like a protocol action ==================================
 
-test('M2: computer-use views are not named like protocol actions, and lint refuses a view that is', () => {
+test('M2: computer-use views are not named like protocol actions, and lint warns about a view that is', () => {
   const entry = { id: 'stockroom-ui', kind: 'cua', trust: 'T0', status: 'active', source: { backend: 'playwright-local', origins: ['http://127.0.0.1:9'], profile: 'S0', safeGets: ['/'] } };
   const names = uiMembers(entry).map(m => m.view.name);
   for (const n of names) assert.ok(!['read', 'act', 'find', 'request', 'done', 'stuck'].includes(n.split('_').at(-1)), `${n} collides with a protocol action`);
@@ -116,7 +116,10 @@ test('M2: computer-use views are not named like protocol actions, and lint refus
     effects: 'none', risk: 'low', outputLabel: 'untrusted:mcp.books', dataClass: 'internal', egress: 'local', view: { name: 'books_act', summary: 'Search books.', inputSchema: { type: 'object' } } } });
   const workflow = flow([work()]), sidecar = { schema: 'foundry-nodecap-toolnodes/1', nodes: { work: { requires: [{ as: 'b', type: 'contact.search' }], maxTurns: 4 } } };
   const { lock } = resolve({ workflow, sidecar, members: [bad], catalogDigest: 'sha256:c', envelope, envelopeDigest: 'sha256:e', types });
-  assert.ok(lint({ workflow, lock, envelope, types }).errors.some(f => f.code === 'VIEW_NAME_PROTOCOL'), 'a view named x_act is refused before launch');
+  // A warning since the fix round of 2026-11-04 (cost N4: as an error it refused ordinary owner names; routing follows the tool's effects).
+  const report = lint({ workflow, lock, envelope, types });
+  assert.ok(report.warnings.some(f => f.code === 'VIEW_NAME_PROTOCOL'), 'a view named x_act is reported before launch');
+  assert.ok(!report.errors.some(f => f.code === 'VIEW_NAME_PROTOCOL'), 'and is not refused');
 });
 
 // ================================== M3: standby members as full views; no member the task cannot use ==================================

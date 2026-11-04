@@ -1,12 +1,12 @@
 # Node capabilities: final architecture and the $0 spike
 
-Date: 2026-10-21; security fixes 2026-10-28 (§8). Branch `worktree-wf_c56a08f8-048-15`, built on base commit `e6a23ca`. Research:
+Date: 2026-10-21; security fixes 2026-10-28 (§8); thesis and cost fixes 2026-11-04 (§9, §10); closing pass of the review fix round 2026-11-04 (§11). Branch `worktree-wf_c56a08f8-048-15`, built on base commit `e6a23ca`. Research:
 [SOTA.md](SOTA.md). Scripted bed results: [RESULTS-SCRIPTED.md](RESULTS-SCRIPTED.md).
 
 **What is built.** The owner asked for nodes that get the MCP servers, skills, computer use and connections they need, and for adaptivity
 when a node finds mid-task that it lacks one. This document fixes the design and records the spike that implements it at $0:
 
-- development tests in 17 files, all passing (each file run alone with `nice -n 15 node --test --test-concurrency=1`); since 2026-10-28
+- development tests in 20 files, all passing (each file run alone with `nice -n 15 node --test --test-concurrency=1`; counts in §11); since 2026-10-28
   they include `nodecap-security` (one or more tests per finding of the security review, each failing on the pre-fix code) and
   `nodecap-person` (the person channel, on a real pseudo-terminal);
 - an NC-1 scripted bed with four arms, including an executed "raw MCP config" baseline (arm B), and a $0 replay of every Foundry-arm
@@ -217,11 +217,13 @@ effect); without one they are non-idempotent, high risk and approval-gated, so t
 session starts blank instead of loading `/`. `find` and `extract` are effects none.
 
 **Network gate.**
-- A GET or HEAD passes only when its path is on `safeGets` and not on a hold path. Every other request on the allowed origin is aborted
-  and recorded as `COMMIT_REQUIRED {id, method, origin, path, bodyHash, bodyPreview≤512B}`. Off-allowlist origins and non-http(s)
+- A GET or HEAD passes only when its path **and query keys** are on `safeGets` and its path is not on a hold path (a pattern names the
+  query keys it allows, `/?page`, or `?*` for any; a pattern without `?` allows no query: §11, security N1). Every other request on the
+  allowed origin is aborted and recorded as `COMMIT_REQUIRED {id, method, origin, path, bodyHash, bodyPreview≤512B}` (the model's view;
+  a person decides on the host's `describeHeld`, below). Off-allowlist origins and non-http(s)
   schemes are blocked (data: and blob: subresources stay inside the browser).
 - `commit` takes **only the held id**. A person approves the host's own record of the request (`describeHeld`: method, origin, path and
-  the decoded, redacted body), never the model's account of it; the dispatcher re-renders that record and checks the person's decision
+  the decoded, redacted body, complete or marked incomplete; an incomplete one is never sent, §11 security N2), never the model's account of it; the dispatcher re-renders that record and checks the person's decision
   for it before sending. `commit` sends **exactly that request once**, through the context's request API. A second commit gives
   `COMMIT_UNKNOWN`.
 - Held ids are deterministic, and a dev entry's held `origin` is shown without its port (as in its pins), so a GUI run replays on a fresh
@@ -278,7 +280,7 @@ a route handler misses [B]. A restore re-navigates only to an allowlisted safe G
 | Requirements | Exact type beats subtype. Then custody C0<C1<C2, then cost, then trust, then id. A true tie is flagged (`ties`). |
 | Requirements: trust | Code binds only members of the envelope's auto-bind trust tiers (T0, T1). An untrusted (T2) member reaches a lock only through a proposal a person decides, flagged T2. |
 | Standby | Filtered by acquire, trust and deny list. Capped at 20, with BM25F over the node's own instructions when over the cap. Every standby member is in the lock. |
-| `inputClass` | Per tool node, the class of the data it reads through its inputs: private when it references an upstream node that can reach private data, or the workflow input (its declared `inputClass`, private when undeclared). Lint's Rule of Two and the broker count it. |
+| `inputClass` | Per tool node, the class of the data it reads through its inputs, followed through any node at any distance (`inputClasses`; §11, security M6): private when it references, directly or through other nodes, a node that can reach or read private data; the workflow input's declared class (`inputClass`, kept as `declaredInputClass`; private when undeclared) when the input reaches it; recomputed for every lock N+1. Lint's Rule of Two and the broker count it. |
 | `controlLabel` | Always untrusted for a tool node (interim taint rule (c)) |
 
 **`rank.mjs`** is a BM25F port of `experiments/library/retrieve.mjs`. With one unit field it is exactly equal to the library's
@@ -414,15 +416,20 @@ and so the engine's approval, only when `nodecap.do` answered `ready`. `nodecap.
 - Out-of-lock candidates (qualified members outside the section, and catalog tools that did not qualify) are host records for a
   proposal. The model learns only **how many** exist, never their ids or names.
 
-**`request(need)`** (since 2026-11-04, §9 #4 and #5):
-- candidates: the in-lock matches of the need's effect class (`effect`, else a changing verb means an effect), narrowed to the need's
-  `verb` when any candidate has it;
+**`request(need)`** (§9 #4 and #5, §10 B1 and B2; as of the closing pass, §11):
+- a request whose `tool` names a view in the node's index asks for exactly that member, and needs no need;
+- otherwise candidates: the in-lock members with **text evidence** for the need (BM25F score above 0, stemmed; typed fields only boost),
+  of the need's effect class (`effect`; else a changing or read verb; else changing words in the need's own text), in rank order. There
+  is no verb narrowing;
+- no candidate, or a top candidate under τ → `NEED_UNMET` with the three nearest members, and **L3** when the same request comes again:
+  a `capability.bind`/`admit` proposal and a `CAPABILITY_GAP` refusal to the node, which may still finish with what it holds; if it ends
+  without an answer, `nodecap.close` ends the run with `CAPABILITY_GAP` (the proposal id in its details);
 - top held → bound;
-- top effectful → `needs-approval` with its authored view (use `act`; a person decides the exact call). A request never grants an effect;
-- top grantable by L1 with score ≥ τ and margin ≥ δ over the next candidate (one candidate included) → grant the TOP candidate only;
-- otherwise → a closed choice (up to 3) among the candidates the node could use;
-- none → **L3**: a `capability.bind`/`admit` proposal and a `CAPABILITY_GAP` refusal to the node, which may still finish with what it
-  holds; if it ends without an answer, `nodecap.close` ends the run with `CAPABILITY_GAP` (the proposal id in its details).
+- top effectful and decisive (score ≥ τ, margin ≥ δ) or named → `needs-approval` with its authored view (use `act`; a person decides the
+  exact call). A request never grants an effect;
+- top grantable by L1 and decisive, or named → grant the TOP candidate only;
+- otherwise → a closed choice (up to 3) among the candidates the node could use, effects a person could approve included.
+Every answer is a `selection` or `adaptation` decision in the run's chain, with the need, the scores and the outcome.
 
 Proposal handling:
 - Deny-listed candidates are flagged in `riskSummary` and never offered in `diff.added`.
@@ -640,7 +647,9 @@ defects the scripted bed could not (an unreachable L2 path under `request`, and 
   command wires it to proposals, versions, connects and effect approvals yet, and the dashboard channel is not built. Until then only
   the beds' scripted person, recorded as `scripted`, decides anything.
 - **The stdio sandbox's platform.** It needs Linux unprivileged user namespaces and `unshare(1)`; elsewhere stdio servers are refused.
-  A server whose members attest a non-local egress gets the host network inside the sandbox (no per-host egress filter yet).
+  A server whose members attest a non-local egress gets the host network inside the sandbox (no per-host egress filter yet), so it can
+  also reach services listening on the host's loopback and, inferred, the host's abstract unix sockets (security verifier N8, open:
+  §11).
 - **Ranking at scale.** The thresholds τ/δ are untuned. BM25F quality on real catalogues is unmeasured.
 - **Real authorization servers.** The OAuth path was exercised only against the loopback fixture AS. Real ASes differ in metadata,
   refresh rotation and error behaviour.
@@ -721,7 +730,7 @@ and the new interface together where they differ (`applyBind`, `nextConstruction
 | 12 | one arm-B "success" was a failed run | `analyze.mjs` reports `successStrict` (oracle AND run succeeded; T11: ended without an answer) beside the frozen count, and the R2/R4 readings under it; RESULT addendum | thesis #12 | (evaluation) no such reading |
 | 13 | "1.7% of B's tool tokens" true by construction | the bed records tool text per model call (sections plus views delivered by find, request and ARGS_INVALID); `analyze.mjs` reports it; RESULT addendum | thesis #13 | (new measure) |
 | 14 | arm A's acquire clauses were written knowing the answers | disclosed in the RESULT addendum; the next preregistration generates them blind to the gold set or per task family | (evaluation) | |
-| 15 | the model blamed for broker-caused losses | RESULT addendum: at least 3, likely 4, of A's 6 losses involve Foundry design; 2 of the 14 L1 grants were unwanted and 1 enabled a substitution | (evaluation) | |
+| 15 | the model blamed for broker-caused losses | RESULT addendum: 4 of A's 6 losses involve Foundry design (first written "at least 3, likely 4"; corrected in §11, the record supports 4); 2 of the 14 L1 grants were unwanted and 1 enabled a substitution | (evaluation) | |
 | 16 | T11 not the same task in every arm | RESULT addendum (C's only success is T11's stuck) | (evaluation) | |
 | 17 | V2 proved nothing for world-only oracles | V2: each oracle accepts the correct outcome and rejects three mutations of it, world mutations for effect tasks | `nodecap-bed` V2 test | the old check could not tell an oracle that ignores the output from one that checks it |
 | 18 | step-up and definition-changed proposals were not chained decisions | every proposal a call raises is also an adaptation decision in the run's chain (they already counted against `proposalsPerRun` since §8 M8) | thesis #18 | the definition-changed proposal had no decision in the chain |
@@ -793,7 +802,7 @@ of 18 under a cap of 20), and the selection-split test fails on the missing `dec
 - M1's "one `call` action instead of read and act" is not done: routing already follows the tool's effects (§9 #6), so the label no longer
   decides anything; collapsing the two would change every recorded plan for no change in authority.
 - The selection split's two misses (a `read` verb narrowing to `crm_get_contact` for a deals need; "refunded" not matching "refund"
-  without stemming) are reported, not tuned away: τ and δ between 0.5 and 2 give the same 23/25 on this split, so the thresholds are not
+  without stemming; both fixed in §11 by removing verb narrowing and stemming need ranking, not by tuning τ or δ) are reported, not tuned away: τ and δ between 0.5 and 2 give the same 23/25 on this split, so the thresholds are not
   the binding constraint; verb narrowing and the tokenizer are.
 
 **Behaviour that changed.** The scripted bed's plans confirm an unmatched request by sending it again (the model the protocol now asks
@@ -801,3 +810,119 @@ for); the adversary does the same. An unmatched request costs one more turn befo
 rendering, the prompt layout and the request rule all change the prompt and the decisions, so the paid NODECAP-1 numbers are unchanged and
 a rerun needs a new preregistration.
 
+## 11. Review fix round 2026-10-22: closing pass (2026-11-04), every finding and its final state
+
+The three reviews of 2026-10-22 were fixed in §8, §9 and §10. Three verifiers then checked those fixes at HEAD `a9b97eeb`, each with
+probes of its own ($0, loopback). They found five findings not closed: the thesis blocker, two security majors (M6, M7), and two cost
+findings (blocker B1, major M4). They also found 19 new defects that the fixes introduced or left: 1 blocker, 6 majors (security N5 is
+security M7 again) and 12 minors. This closing pass fixes everything they marked not closed, every new blocker and major, and every new
+minor but one (security N8, below).
+
+Each fix has a test in `tests/nodecap-fixround.test.mjs`. A test drives the surface the finding named and checks what happened: a run
+created, a call sent, a grant made, a value shown or scrubbed. A few fixes change what an older test expects; those tests are updated in
+the file named in the table. **All 26 tests in the new file fail on the pre-fix code** (HEAD `a9b97eeb`, with the new test file and the new
+hostile fixture copied onto a `git archive` of it). 24 fail by an assertion about what happened. The other two are the security N3 pair.
+The browser test's allowlist uses the query syntax this round added, which the pre-fix schema refuses; run there with the plain
+allowlist `['/']`, it fails by assertion ("english" is page vocabulary). The rule test fails because `credentialLike` is new. Per-test
+record:
+[runs/fixround-prefix-2026-11-04/prefix-results.json](runs/fixround-prefix-2026-11-04/prefix-results.json).
+
+**Tests at the end of this pass**, each file run alone with `nice -n 15 node --test --test-concurrency=1`: 169 tests in 20 files, 0
+failures. The new file `nodecap-fixround` 26; `nodecap-security` 34, `-thesis` 21, `-cost` 18, `-resolve` 8, `-broker` 7, `-cua` 7, `-bed`
+7, `-catalog` 6, `-mcp-stdio` 6, `-oauth` 5, `-person` 4, `-program` 4, `-skills` 4, `-mcp-http` 3, `-probes` 3, `-journal-replay` 2,
+`-secrets` 2, `-drift` 1, `-e2e` 1.
+
+### 11.1 Not closed at `a9b97eeb`, now fixed
+
+| Finding (verifier) | What was still possible | Fix | Test (`nodecap-fixround`) |
+|---|---|---|---|
+| thesis #1 / N1a (blocker; the lock) | A lock edited after the person approved it, with `construction.lockHash` kept, was continued. With `effects: 'none'` set on `sheets.append_row`, a row was appended with no person asked. | `checkConstruction` (`launcher.mjs:56`) recomputes the lock's hash, the lowered workflow's hash, the envelope digest and the catalog digest from the objects that will run, in both `launch` and `continueRun` (`proposals.mjs:145`). `snapshotFor` (`launcher.mjs:74`) freezes copies before any check, so an edit made while launch awaits its preflight changes nothing that runs. `memberDrift` (`host.mjs:24`) compares the whole approved member record, not only its `implementation` string. | thesis N1a ×2; thesis N1 (an edit during launch) |
+| thesis N1b (major; the envelope) | Launch accepted an envelope other than the approved one. The registry hashed the stated digest, so a resume under an edited envelope was not `CAPABILITY_DRIFT`. | `compileRegistry` computes the envelope digest from the envelope it runs under, and the lock hash from the lock (`registry.mjs:34`); a caller's values are ignored. Launch refuses a different envelope (`ENVELOPE_DIGEST`). | thesis N1b |
+| security M6 (major) | Private data one hop away was not counted: a tool node reading `nodes.prep`, where `prep` was an ordinary agent reading `input.customer`, got `inputClass: null`. Its third-party fetch was granted at L1. When the references were to nodes, an owner's `inputClass` declaration was also ignored. | `inputClasses` (`resolve.mjs:135`) follows references to a fixed point, through any node (agent, task, loop, nested bodies, context inputs). A node passes on private data if it is a private Tier-0 member, can reach a private member, reads private input, or references such a node. The workflow input reaching a tool node through other nodes takes that node's declared class (kept in the lock as `declaredInputClass`), private when undeclared. | security M6 |
+| security M7 / N5 (major) | `applyBind` linted lock N+1 with `inputClass` copied from lock N. Binding a private member into node A left node B, which reads `nodes.A` and holds a third-party fetch, at `null`, so the fetch was granted. | `applyBind` recomputes `inputClasses` for lock N+1 before lint (`proposals.mjs:80`). | security M7 (N5) |
+| cost B1 (blocker, partly closed) | Verb narrowing kept the single-viable shortcut. `{read, deal, "list all open deals in the EU region"}` got an L1 grant of `crm.get_contact` (score 1.09) over `crm.list_deals` (7.66). | No verb narrowing. A candidate needs text evidence (BM25F score above 0); typed fields only boost. The effect class comes from `effect`, the verb, or else the need's own words (`needClass`, `broker.mjs:46`). Need ranking uses a light suffix stemmer (`rank.mjs:16`; plurals, -ed, -ing), so "deals" matches "deal" and "refunded" matches "refund". | cost B1 (and the selection split, below) |
+| cost M4 (major) | Only refusals counted as repeats. The T02 need sent 12 times got 12 `needs-approval` answers and ran to `LOOP_EXHAUSTED`. | A call that repeats an earlier call of the node and gets the same answer is counted, refusal or not. It gets a hint the second time; the third time the node ends stuck with `REPEATED_CALL` (`broker.mjs:462`). A read whose result changed is progress and is not counted. | cost M4 ×2 |
+
+### 11.2 New defects found by the verifiers
+
+| Finding | Severity | Fix | Test |
+|---|---|---|---|
+| cost N2: an untrusted skill's reference **file names** reached the system prompt as Foundry text, through the standby view's argument signature | blocker | An untrusted skill's view takes `reference` as a bounded string, not an enum of its file names (`skills.mjs:130`); `readReference` still checks the manifest. Owner (trusted) skills still list theirs. The hostile fixture `fast-refunds` now carries a poisoned file name. The bed's poison check looks for that name in the tool context the model is shown, in every arm (`POISON_DEF.skillFileName`). | cost N2 |
+| cost N1: an effectful top match answered `needs-approval` at any score, so an out-of-lock effect need went to an unrelated in-lock effect: "append a row to the team sheet" on T02 went to `tickets_add_comment`, with text score 0. L3 never fired. | major | The same evidence rule applies to effects and reads. A candidate below τ is `unmet` (`NEED_UNMET` with the nearest members, then L3 when the request is repeated). An effect is `needs-approval` only when it is decisive (τ and δ) or named. Otherwise the answer is a closed choice among usable candidates, effects a person could approve included. | cost N1; thesis #4 (updated) |
+| security N1: the safe-GET allowlist matched the path only. A GET of `/?cancel=1` passed as effects none, and the session re-sent it on its own after a held navigation, on reload and after every commit. One model GET produced 5 side effects. | major | A safe-GET pattern names the query keys it allows: `/?page`, `/search?q&page`, or `?*` for any. A pattern without `?` allows no query (`cua.mjs:63`; catalog schema). Automatic navigation (restore, reload, after a commit) uses the same test, query included. The bed's Stockroom entry lists `/?page`. | security N1 (browser) |
+| security N2: the approval view of a held form kept the first 50 fields and 500 characters of each value, and said nothing. A 571-character note hid its injected tail; 52 fields hid `amount2=777777`. | major | `describeHeld` (`cua.mjs:161`) shows every field and every character up to `HELD_VIEW` (200 fields, 4,000 characters a value, 16,000 of text), with `complete` and `fieldCount`. Beyond that, or for a binary body, `complete` is false. Such a request is refused `HELD_UNRENDERABLE` before anyone is asked (`broker.mjs:314`), is never sent (`broker.mjs:289`, `registry.mjs`), and `renderCall` prints that it is not shown in full. | security N2 |
+| security N3: every cookie and storage value of 6 or more characters joined the host-wide scrub set. `lang=english` failed any later output containing "english", including the broker's own `result: 'granted'`. A page with "Switch to english" failed the run with `SECRET_EXPOSURE`. | major (availability) | Every session value is still redacted from that session's trace (`traceScrub`). Only credential-like values join the host-wide set (`credentialLike`, `credentials.mjs:103`). Always included: a credential header's value, an HttpOnly cookie, and a value under a credential-like name. Otherwise a plain word, a short number or a boolean is page vocabulary, and anything random-looking counts. | security N3 ×2 |
+| thesis N1a, N1b | major | (§11.1) | |
+| security N5 | major | = security M7 (§11.1) | |
+| security N4: a token sent in a custom header (`X-Auth-Token`) was exported in the trace | minor | Any header whose name names a credential (`auth`, `token`, `session`, `api-key`, `csrf`…) is redacted whole, and its value is scrubbed from the other archive entries (`cua.mjs:346`). | security N4 |
+| security N6: without an allowlist, a person approved `ui.act` on `{basis, index, op}` alone | minor | `describeCall` adds the host's own rendering of a navigating `ui.*` call (`addUiRendering`, `broker.mjs:513`; `UiSessions.describeUi`). For `act`: the element of the current observation (role, name, its index among same-named elements) and the page. For `observe`: the URL it will load. For `assert`: the page it reloads. A basis the model saw on an older page is marked "decline". Tier-0 renderings get the same. | security N6 (browser) |
+| security N7: `ON CONFLICT DO NOTHING` let a bed's scripted record swallow a later real approval of the same subject, with no error | minor | A record on a channel this ledger does not accept is replaced; one it accepts stands (`ledger.mjs:189`). | security N7 (real pty) |
+| security N8: a stdio server with attested non-local egress runs in the host's network namespace and can reach host loopback services | minor (by design) | **Not fixed.** Real egress from a separate namespace needs `pasta` or `slirp4netns` (not installed here), or veth and NAT set up on the host (a host change this spike does not make). It is disclosed in §7. The fix is an owner decision: an egress proxy on a bound unix socket, or a user-mode network stack. | |
+| thesis N2: the per-call tool-text measure skipped the nearest views of a `NEED_UNMET` answer | minor | `toolTextPerCall` counts `nearest` (`episode.mjs:456`) | thesis N2 |
+| thesis N3: lowering dropped the agent node's `role`, so the engine's read-role checks skipped the step | minor | The role is carried onto the step (`lower.mjs:109`). Nodecap lint runs the engine's lint (`src/lint.mjs` `lintWorkflow`) on the source workflow and reports its findings at tool nodes as `SOURCE_LINT`, keeping the engine's severity (`lint.mjs:98`). | thesis N3 |
+| thesis N4: `setStatus` without a catalog treated an unrecorded entry as `imported`, so an owner-revoked entry could be moved and then activated on a decision that read "qualified -> active" | minor | Without a ledger record, the catalog is required (`LEDGER_CATALOG_REQUIRED`). The move starts from the owner's status (`ledger.mjs:81`). | thesis N4; `nodecap-catalog` (updated) |
+| thesis N5 (also the security verifier's "outside" note): verb narrowing picked the wrong effect (`update` + "post a comment" → `set_label`) | minor | No verb narrowing (cost B1 fix) | thesis N5 / security |
+| thesis N6: a need with a classless verb (`transform`) and the words "append one row" was granted a read | minor | `needClass` takes the class from the need's words when the verb names none. The words are matched against a closed list of changing verbs, whole words only. | thesis N6 |
+| thesis N7: `nextConstruction` kept version N's catalog and envelope digests | minor | Lock N+1 and its construction name the catalog and envelope current when it is built (`proposals.mjs:83-84`) | thesis N7 |
+| cost N4: `VIEW_NAME_PROTOCOL` refused ordinary names (`inbox_mark_read`, `github_create_pull_request`) | minor | Now a warning. Routing follows the tool's effects, so a model that confuses a view with an action can recover. | cost N4; `nodecap-cost` M2 (updated) |
+| cost N5: a request that named a listed tool but carried no need was refused `NEED_REQUIRED` | minor | A request that names a tool in the node's index needs no need (`broker.mjs` `#request`) | cost N5 and M7 |
+| cost M7 caveat 2: `needs-approval` and `bound` answers recorded no chain decision | (caveat) | Every answer to a request is a `selection` decision in the chain, with the need, the scores and the outcome | cost N5 and M7; `nodecap-broker` signal test (updated) |
+| cost M7 caveat 1: the selection split had no out-of-lock effect need on a lock that holds an effect | (caveat) | `selection-dev.mjs` adds the verifiers' six needs (`VERIFIER_CASES`) and reports them apart from the original 25. Both sets are development data; the verifier cases shaped this fix. | cost B1 test |
+| thesis #15 nit: "at least three, likely four" of A's losses involve Foundry design, where the record supports four | (doc) | Corrected in the RESULT (closing-pass section) and in §9's row 15 | |
+
+### 11.3 Final state of every finding of the three reviews
+
+"Verified" means the verifier at `a9b97eeb` reproduced the original finding and found it refused. "Fixed now" means this pass (§11.1,
+§11.2).
+
+| Review | Finding | Final state |
+|---|---|---|
+| security | B1 | closed (verified); residuals N1 and N6 fixed now |
+| security | B2 | closed (verified); residual N4 and regression N3 fixed now |
+| security | B3 | closed (verified); residual N2 fixed now |
+| security | M1 | closed (verified). No production person channel is wired yet: the CLI channel is a primitive and the dashboard does not exist (§7) |
+| security | M2, M4, M8, M9 | closed (verified). M4 is as good as the owner's type attestation |
+| security | M3 | closed (verified); residual N8 open (minor, by design) |
+| security | M5 | closed (verified). A capped injected link name still reaches the model, labelled untrusted; this is by design |
+| security | M6, M7 | not closed at `a9b97eeb`; fixed now (§11.1) |
+| security | m1-m7 | closed in §8; not re-verified one by one; their tests pass (`nodecap-security` 34/34) |
+| security | N1, N2, N3, N4, N5, N6, N7 | fixed now (§11.2) |
+| security | N8 | **open** (minor; an owner decision, §11.2) |
+| thesis | #1 (blocker) | not closed at `a9b97eeb` (N1a); fixed now (§11.1) |
+| thesis | #2 | closed (verified; the disputed part accepted); residual N4 fixed now |
+| thesis | #3, #5, #6, #7, #8, #9, #12, #14, #16, #18, #19, #21, #22, #23, #25 | closed (verified) |
+| thesis | #4 | closed for the repro (verified); residuals N5 and N6 fixed now |
+| thesis | #10 | closed (verified); residual N1b fixed now |
+| thesis | #11 | closed (verified); residual N3 fixed now |
+| thesis | #13 | closed (verified); residual N2 fixed now |
+| thesis | #15 | closed (verified); the "three" nit corrected now |
+| thesis | #17 | closed (judged from the bed test; the verifier did not mutate the oracles itself) |
+| thesis | #20 | closed (verified); residual N7 fixed now |
+| thesis | #24 | disputed; the verifier accepted the dispute |
+| thesis | N1 (a, b), N2-N7 | fixed now |
+| cost | B1 | partly closed at `a9b97eeb`; fixed now (§11.1) |
+| cost | B2 | closed (verified); the regression it caused (N1) fixed now |
+| cost | M1, M5, M6, M8 | closed (verified). M8's scale result comes from scripts that name tools: it shows the cap keeps the gold members, not that selection works at scale |
+| cost | M2 | closed (verified); its over-broad rule (N4) fixed now |
+| cost | M3 | closed (verified); with M5 it caused N2, fixed now |
+| cost | M4 | not closed at `a9b97eeb`; fixed now (§11.1) |
+| cost | M7 | closed (verified); both caveats addressed now |
+| cost | m1, m2, m3, m6, m7, m8 | closed (verified) |
+| cost | m4 | **open** (deferral accepted by the verifier: needs a multi-turn context compiler, §10) |
+| cost | m5 | disputed; the verifier accepted the dispute |
+| cost | N1, N2, N4, N5 | fixed now (§11.2) |
+
+**Open after this pass:** security N8 (stdio egress in the host's network namespace), cost m4 (the transcript is rewritten every turn),
+and the production person channels (no `foundry` command wires the CLI channel; no dashboard). The paid NODECAP-1 numbers are unchanged.
+A rerun needs a new preregistration, because the request rule, the repeat rule, the scrub rule and the safe-GET patterns all changed.
+
+**Behaviour that changed.**
+- The request rule (§2.8) has no verb narrowing. A ranked candidate needs text evidence, and a weak top candidate, read or effect, is
+  `NEED_UNMET` with the nearest members. The scripted bed's plans already name their tools or send typed needs; T04 and T11 still raise
+  L3 on the repeated request.
+- A node that sends the same call three times and gets the same answer ends stuck, whatever the answer.
+- An untrusted skill's view no longer lists its reference files; the model learns their names from the body it reads, which is labelled.
+- A held request too large to show in full is never sent.
+- A safe-GET pattern without `?` refuses every query.
+- Ordinary cookie values no longer join the host-wide scrub set; the session's own trace still redacts them.
+- Launch and continuation run frozen copies of the construction and the envelope.

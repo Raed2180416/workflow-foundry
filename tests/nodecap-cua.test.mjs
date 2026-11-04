@@ -21,7 +21,7 @@ const env = { STOCKROOM_USER: 'ops@stockroom.test', STOCKROOM_PASSWORD: PASSWORD
 let chromium, sessions, scrub;
 
 // The owner's safe-GET allowlist for the Stockroom pages (GET has no side effect there); every other request is held.
-const SAFE = ['/', '/vendors/*', '/invoices/*', '/settings'];
+const SAFE = ['/?page', '/vendors/*', '/invoices/*', '/settings'];
 function cuaEntry(origin, { safeGets = SAFE } = {}) {
   return checkCatalog(catalogOf({ id: 'stockroom-ui', kind: 'cua', trust: 'T0', status: 'active', dev: true,
     source: { backend: 'playwright-local', origins: [origin], profile: 'S0', ...(safeGets ? { safeGets } : {}) },
@@ -112,7 +112,7 @@ test('cua: every non-GET is held (COMMIT_REQUIRED) and the server ledger is unch
   assert.equal(app.ledger.logouts, 0);
   // The host's own record of the held request (what a person approves): method, path and the decoded body.
   const shown = session.describeHeld(addr.pending[0].id);
-  assert.deepEqual([shown.method, shown.path, shown.body], ['POST', '/vendors/V-9/address', { kind: 'form', fields: [['street', '7 New Street'], ['city', 'Leeds']] }]);
+  assert.deepEqual([shown.method, shown.path, shown.body], ['POST', '/vendors/V-9/address', { kind: 'form', complete: true, fieldCount: 2, fields: [['street', '7 New Street'], ['city', 'Leeds']] }]);
   // Commit replays exactly the held request, once, named by its id; a second commit of the same id is refused.
   const committed = await session.commit({ id: addr.pending[0].id });
   assert.equal(committed.committed, true);

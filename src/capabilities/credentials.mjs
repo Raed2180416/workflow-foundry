@@ -87,6 +87,28 @@ export class ScrubSet {
   assertClean(text, where) { if (this.contains(text)) fail('SECRET_EXPOSURE', `A credential value would have reached ${where}; refused`); return text; }
 }
 const REDACTED = Buffer.from('[redacted]', 'utf8');
+// Names under which a site keeps a credential (a cookie, a storage key, a header).
+const CREDENTIAL_NAME = /sess|sid|auth|token|jwt|csrf|xsrf|secret|key|passw|login|remember|bearer|credential|signature/i;
+// A plain word or words: each all lower case, Capitalised or all capitals, at most 20 letters (a random mixed-case string is not one).
+const WORD = '(?:[a-z]{1,20}|[A-Z][a-z]{1,19}|[A-Z]{1,20})', PLAIN_WORDS = new RegExp(`^${WORD}(?:[ _.,:-]${WORD})*$`);
+/**
+ * Whether a value observed in a browser session (a cookie, a storage value, a header) can be a credential, so that it joins the host-wide
+ * scrub set (fix round 2026-11-04, security N3: every cookie of 6 characters or more joined it, so `lang=english` failed any later output
+ * containing "english", the broker's own "granted" included). Fails closed where a credential is likely: always for a value a credential
+ * header carried (`credential`), and for an HttpOnly cookie or a cookie or storage key named like a credential (unless the value is a
+ * boolean word). Otherwise a plain word or words or a short number is page vocabulary, not a credential; anything else counts when it looks
+ * random (16+ characters, or 8+ with a digit and another character class). Every value is still redacted from the session's own trace
+ * (cua.mjs traceScrub), credential-like or not.
+ */
+export function credentialLike(value, { name = '', httpOnly = false, credential = false } = {}) {
+  if (typeof value !== 'string' || value.length < MIN_SECRET) return false;
+  if (credential) return true;
+  if (/^(?:true|false|null|undefined|yes|no|on|off)$/i.test(value)) return false;
+  if (httpOnly || CREDENTIAL_NAME.test(String(name))) return true;
+  if (PLAIN_WORDS.test(value) || /^\d{1,13}$/.test(value)) return false;
+  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter(re => re.test(value)).length;
+  return value.length >= 16 || (value.length >= 8 && classes >= 2 && /[0-9]/.test(value));
+}
 
 /**
  * Resolve one credential reference ({env} or {keychain}) for a call. `custody` is the entry's custody class; `scrub` receives the value.

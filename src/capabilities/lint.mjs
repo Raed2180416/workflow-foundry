@@ -9,11 +9,17 @@
 //   TOOLSET_TOO_LARGE          more than 5 bound tools, 3 skills or 20 standby members on one node
 //   SKILL_BUDGET / SKILL_REQUIRES_EXCEEDS_GRANT  a bound skill too long, or requiring what the node does not hold
 //   VERIFY_SAME_SURFACE        a verify node checks an effect with the very tool that produced it
-//   VIEW_NAME_PROTOCOL         a tool node's view whose last name segment is a tool-protocol action (`x_act`, `x_find`): a model reads it
-//                              as the action (review-cost M2)
+//   VIEW_NAME_PROTOCOL (warning) a tool node's view whose last name segment is a tool-protocol action (`x_act`, `x_find`): a model may read
+//                              it as the action (review-cost M2). A warning since the fix round of 2026-11-04 (cost N4: as an error it refused
+//                              ordinary names such as `inbox_mark_read` and `github_create_pull_request`; routing follows the tool's effects,
+//                              so a confused action is recoverable)
+//   SOURCE_LINT                the engine's strict lint (src/lint.mjs) on the SOURCE workflow, for findings at a tool node: lowering moves the
+//                              node's model call into a loop body, where the engine's top-level rules (the read-role checks) no longer see
+//                              it (fix round 2026-11-04, thesis N3). The engine's severity is kept.
 //   ACQUIRE_AFTER_EFFECT (warning)       a tool node that can act may also acquire later (a mid-run gap after its effect cannot continue)
 //   CONTINUATION_AFTER_EFFECT (warning)  an effect upstream of a tool node that acquires: a gap there ends the run with no continuation
 import { portableSchemaViolations } from '../schema-subset.mjs';
+import { lintWorkflow } from '../lint.mjs';
 import { references } from '../data.mjs';
 import { approxTokens, effectRank, isPrivate } from './common.mjs';
 import { denyListed } from './envelope.mjs';
@@ -43,7 +49,7 @@ export function lint({ workflow, lock, envelope, types = null, gaps = [], skills
     for (const m of reach) if (portableSchemaViolations(m.view.inputSchema).length) add('SCHEMA_PROFILE_UNSUPPORTED', id, `${m.id} view schema is outside the subset`);
     if (portableSchemaViolations(section.returns).length) add('SCHEMA_PROFILE_UNSUPPORTED', id, 'the answer schema is outside the portable subset');
     for (const m of reach) if (denyListed(envelope, m)) add('BROKER_SELF_PROVISIONING', id, `${m.id} manages connections or provisions tools`);
-    for (const m of reach) if (ACTIONS.includes(m.view.name.split(/[_.-]/).at(-1).toLowerCase())) add('VIEW_NAME_PROTOCOL', id, `${m.view.name} ends with a tool-protocol action; rename the view`);
+    for (const m of reach) if (ACTIONS.includes(m.view.name.split(/[_.-]/).at(-1).toLowerCase())) add('VIEW_NAME_PROTOCOL', id, `${m.view.name} ends with a tool-protocol action; consider renaming the view`, 'warning');
     // Rule of Two (egress-aware): untrusted input + private data + a third-party egress reachable without a person.
     // (Untrusted input is always present: a tool node's transcript carries tool output.) Private data counts whether it comes from a
     // member the node can reach or through the node's inputs (resolve records their class as inputClass).
@@ -86,5 +92,9 @@ export function lint({ workflow, lock, envelope, types = null, gaps = [], skills
   const effectNodes = new Set(Object.entries(lock.tier0).filter(([, m]) => member(m).effects !== 'none').map(([n]) => n));
   const upstream = id => { const seen = new Set(), stack = [...(all.get(id)?.needs ?? [])]; while (stack.length) { const n = stack.pop(); if (!seen.has(n)) { seen.add(n); stack.push(...(all.get(n)?.needs ?? [])); } } return seen; };
   for (const [id, section] of Object.entries(lock.nodes)) if (section.acquire && [...upstream(id)].some(n => effectNodes.has(n))) add('CONTINUATION_AFTER_EFFECT', id, 'an effect runs before this node; a gap here cannot be continued', 'warning');
+  // The engine's own checks of each tool node as written (the source workflow), which the lowered loop hides from its top-level rules.
+  let source = null;
+  try { source = lintWorkflow(workflow); } catch { source = null; }
+  for (const f of source?.findings ?? []) if (f.node && lock.nodes[f.node]) add('SOURCE_LINT', f.node, `${f.code}: ${String(f.message).slice(0, 300)}`, f.severity === 'error' ? 'error' : 'warning');
   return { findings, errors: findings.filter(f => f.severity === 'error'), warnings: findings.filter(f => f.severity === 'warning') };
 }

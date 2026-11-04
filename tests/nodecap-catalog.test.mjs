@@ -72,9 +72,12 @@ test('catalog: T3 entries are never bindable; status comes from the ledger once 
 test('ledger: the status machine allows only its transitions, with compare-and-swap; a move to active needs a person', t => {
   const ledger = openLedger(workspace(t)); t.after(() => ledger.close());
   const activate = (rev, status) => person(NodecapLedger.statusSubject({ entryId: 'x', status, to: 'active', rev }), true);
-  // An entry the ledger has not recorded starts where the machine starts (imported); the caller never says where it moves from.
-  assert.throws(() => ledger.setStatus('x', { to: 'active', expectedRev: 0 }), code('LEDGER_TRANSITION'));
-  assert.equal(ledger.setStatus('x', { to: 'qualified', expectedRev: 0 }).rev, 1);
+  // An entry the ledger has not recorded moves from the status its owner wrote in the catalog (here none: imported, where the machine
+  // starts); the caller never says where it moves from, and without the catalog nothing moves (fix round 2026-11-04, thesis N4).
+  const catalog = { entries: [{ id: 'x' }] };
+  assert.throws(() => ledger.setStatus('x', { to: 'qualified', expectedRev: 0 }), code('LEDGER_CATALOG_REQUIRED'));
+  assert.throws(() => ledger.setStatus('x', { to: 'active', expectedRev: 0, catalog }), code('LEDGER_TRANSITION'));
+  assert.equal(ledger.setStatus('x', { to: 'qualified', expectedRev: 0, catalog }).rev, 1);
   assert.throws(() => ledger.setStatus('x', { to: 'active', expectedRev: 0 }), code('CONFLICT'));
   assert.throws(() => ledger.setStatus('x', { to: 'active', expectedRev: 1, actor: 'owner' }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
   assert.equal(ledger.setStatus('x', { to: 'active', expectedRev: 1, person: activate(1, 'qualified') }).status, 'active');
