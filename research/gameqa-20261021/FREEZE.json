@@ -34,5 +34,30 @@
    "policy/models.json": "cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69",
    "research/gameqa-20261021/PREREG-GQA-1.md": "62ab24f02e758ea55479faa7faa492532dc45093cbe123acca0a557a9b135fae"
   }
- }
+ },
+ "amendments": [
+  {
+   "id": "A1",
+   "at": "2026-11-04T12:39:08.966Z",
+   "gitHead": "650c5e58",
+   "sha256": "f38bb8c2df2b47f6e5785f51c2e93dc5927292b56ac3fa744de49ea2d1335467",
+   "files": {
+    "experiments/gameqa-web/arms.mjs": "3c55efcaf2108dd05e111443919234cbcd17624a1399c9f1e7384d81cf52a333",
+    "experiments/gameqa-web/qa-lib.mjs": "b62e1e1190497f2279e3505eb9d650225f600851a886c5a7788c8f007595afe0",
+    "experiments/gameqa-web/expr.mjs": "9c742e2f6d729f8ab823d1ecd9fc8eda8539b406557987463d2adcccbf82a12d",
+    "experiments/gameqa-web/prompts.mjs": "2f4990fcab95510b9d7866903f83a04d0afc5e0fd31a1cdbab62976332806ad2",
+    "experiments/gameqa-web/template.json": "2838c42033481c6343167909e648ae0185a2ab0aabbac93e4229fc95b12efd4f",
+    "experiments/gameqa-web/run.mjs": "c70b1aae7ec69a0ca8e9243776605dd89f55f8c2c14410ec93a94d3e1b1bd6e1",
+    "experiments/gameqa-web/reference-checks.json": "8584cd23e3270d8a58f6ae4b53743e13af68c92ba1f46d03be35a702c45ede59",
+    "experiments/gameqa-web/funnel.mjs": "05518a01e192873596743c0ae8c55b70a2a20f08d1fcd7eface71a2ab0e5e177",
+    "experiments/gameqa-web/analyze.mjs": "ae9fb67550ff777ecc91fe06450b1c13e4945f0d2f8e9c406f34f076fecc2b5d",
+    "experiments/gameqa-web/chain.sh": "2f5287915c1bd72f051fd9fae6146f7efe43c654a0f8b0cc67d59ade8f417a95",
+    "experiments/gameqa-web/regress.mjs": "6216ce79e5d5428f18778fbc9524ad0198bb48f7fe62f861abdc67a74628d3a4",
+    "experiments/lib/models.mjs": "d868e7d95c442b35fca25fac5e6e81b548f7f02f85e714d3303a94317d23b4d9",
+    "policy/models.json": "cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69",
+    "experiments/gameqa-web/transport.mjs": "1a716c69960ba624622da6ce420bae6295bbb8f04a11d12a44cdc11a431b6717",
+    "research/gameqa-20261021/PREREG-GQA-1.md": "2c6a50d747e4d51287422c09cef20959d33e3134efb1515b9c7f8f71d166b2e7"
+   }
+  }
+ ]
 }
