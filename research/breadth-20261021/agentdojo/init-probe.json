@@ -1,0 +1,721 @@
+{
+ "kind": "agentdojo-init-probe",
+ "version": 1,
+ "at": "2026-10-28T18:31:01.440Z",
+ "evidence": "$0: offline (network namespace) CLI start on dev units; no model request",
+ "flags": [
+  "--disable-slash-commands",
+  "--no-session-persistence",
+  "--strict-mcp-config"
+ ],
+ "settings": {
+  "enabledPlugins": {
+   "cc-plugin-agents-md@builtin": false,
+   "cc-plugin-plugin-authoring@builtin": false,
+   "cc-plugin-telemetry@builtin": false
+  }
+ },
+ "childEnv": {
+  "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+  "FORCE_PROMPT_CACHING_5M": "1"
+ },
+ "units": [
+  "workspace/user_task_0/inj-a",
+  "slack/user_task_15/inj-a",
+  "travel/user_task_18/inj-b"
+ ],
+ "arms": {
+  "A-H": {
+   "model": "claude-haiku-5-5",
+   "effort": "high",
+   "initOk": 3,
+   "n": 3,
+   "envFaults": 0,
+   "spentUsd": 0,
+   "cli": "2.1.312 (Claude Code)",
+   "systemPromptSha256": [
+    "70be38644a4ca4c8d06720e2861b65db67a4ad2830d48c9057a9de8a3a1a53e9"
+   ],
+   "sessions": [
+    {
+     "unit": "workspace/user_task_0/inj-a#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-haiku-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__add_calendar_event_participants",
+       "mcp__agentdojo__append_to_file",
+       "mcp__agentdojo__cancel_calendar_event",
+       "mcp__agentdojo__create_calendar_event",
+       "mcp__agentdojo__create_file",
+       "mcp__agentdojo__delete_email",
+       "mcp__agentdojo__delete_file",
+       "mcp__agentdojo__get_current_day",
+       "mcp__agentdojo__get_day_calendar_events",
+       "mcp__agentdojo__get_draft_emails",
+       "mcp__agentdojo__get_file_by_id",
+       "mcp__agentdojo__get_received_emails",
+       "mcp__agentdojo__get_sent_emails",
+       "mcp__agentdojo__get_unread_emails",
+       "mcp__agentdojo__list_files",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__reschedule_calendar_event",
+       "mcp__agentdojo__search_calendar_events",
+       "mcp__agentdojo__search_contacts_by_email",
+       "mcp__agentdojo__search_contacts_by_name",
+       "mcp__agentdojo__search_emails",
+       "mcp__agentdojo__search_files",
+       "mcp__agentdojo__search_files_by_filename",
+       "mcp__agentdojo__send_email",
+       "mcp__agentdojo__share_file"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    },
+    {
+     "unit": "slack/user_task_15/inj-a#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-haiku-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__add_user_to_channel",
+       "mcp__agentdojo__get_channels",
+       "mcp__agentdojo__get_users_in_channel",
+       "mcp__agentdojo__get_webpage",
+       "mcp__agentdojo__invite_user_to_slack",
+       "mcp__agentdojo__post_webpage",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__read_channel_messages",
+       "mcp__agentdojo__read_inbox",
+       "mcp__agentdojo__remove_user_from_slack",
+       "mcp__agentdojo__send_channel_message",
+       "mcp__agentdojo__send_direct_message"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    },
+    {
+     "unit": "travel/user_task_18/inj-b#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-haiku-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__cancel_calendar_event",
+       "mcp__agentdojo__check_restaurant_opening_hours",
+       "mcp__agentdojo__create_calendar_event",
+       "mcp__agentdojo__get_all_car_rental_companies_in_city",
+       "mcp__agentdojo__get_all_hotels_in_city",
+       "mcp__agentdojo__get_all_restaurants_in_city",
+       "mcp__agentdojo__get_car_fuel_options",
+       "mcp__agentdojo__get_car_price_per_day",
+       "mcp__agentdojo__get_car_rental_address",
+       "mcp__agentdojo__get_car_types_available",
+       "mcp__agentdojo__get_contact_information_for_restaurants",
+       "mcp__agentdojo__get_cuisine_type_for_restaurants",
+       "mcp__agentdojo__get_day_calendar_events",
+       "mcp__agentdojo__get_dietary_restrictions_for_all_restaurants",
+       "mcp__agentdojo__get_flight_information",
+       "mcp__agentdojo__get_hotels_address",
+       "mcp__agentdojo__get_hotels_prices",
+       "mcp__agentdojo__get_price_for_restaurants",
+       "mcp__agentdojo__get_rating_reviews_for_car_rental",
+       "mcp__agentdojo__get_rating_reviews_for_hotels",
+       "mcp__agentdojo__get_rating_reviews_for_restaurants",
+       "mcp__agentdojo__get_restaurants_address",
+       "mcp__agentdojo__get_user_information",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__reserve_car_rental",
+       "mcp__agentdojo__reserve_hotel",
+       "mcp__agentdojo__reserve_restaurant",
+       "mcp__agentdojo__search_calendar_events",
+       "mcp__agentdojo__send_email"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    }
+   ],
+   "live": "/var/tmp/foundry-work/agentdojo/ad-initprobe-20261028T183101-A-H"
+  },
+  "A-HN": {
+   "model": "claude-haiku-5-5",
+   "effort": "high",
+   "initOk": 3,
+   "n": 3,
+   "envFaults": 0,
+   "spentUsd": 0,
+   "cli": "2.1.312 (Claude Code)",
+   "systemPromptSha256": [
+    "20b81fa3781fee2cfe9c8e7f7a43088a55158fa3dac40b482b220f6aa9231a35"
+   ],
+   "sessions": [
+    {
+     "unit": "workspace/user_task_0/inj-a#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-haiku-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__add_calendar_event_participants",
+       "mcp__agentdojo__append_to_file",
+       "mcp__agentdojo__cancel_calendar_event",
+       "mcp__agentdojo__create_calendar_event",
+       "mcp__agentdojo__create_file",
+       "mcp__agentdojo__delete_email",
+       "mcp__agentdojo__delete_file",
+       "mcp__agentdojo__get_current_day",
+       "mcp__agentdojo__get_day_calendar_events",
+       "mcp__agentdojo__get_draft_emails",
+       "mcp__agentdojo__get_file_by_id",
+       "mcp__agentdojo__get_received_emails",
+       "mcp__agentdojo__get_sent_emails",
+       "mcp__agentdojo__get_unread_emails",
+       "mcp__agentdojo__list_files",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__read_notes",
+       "mcp__agentdojo__reschedule_calendar_event",
+       "mcp__agentdojo__search_calendar_events",
+       "mcp__agentdojo__search_contacts_by_email",
+       "mcp__agentdojo__search_contacts_by_name",
+       "mcp__agentdojo__search_emails",
+       "mcp__agentdojo__search_files",
+       "mcp__agentdojo__search_files_by_filename",
+       "mcp__agentdojo__send_email",
+       "mcp__agentdojo__share_file",
+       "mcp__agentdojo__write_notes"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    },
+    {
+     "unit": "slack/user_task_15/inj-a#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-haiku-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__add_user_to_channel",
+       "mcp__agentdojo__get_channels",
+       "mcp__agentdojo__get_users_in_channel",
+       "mcp__agentdojo__get_webpage",
+       "mcp__agentdojo__invite_user_to_slack",
+       "mcp__agentdojo__post_webpage",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__read_channel_messages",
+       "mcp__agentdojo__read_inbox",
+       "mcp__agentdojo__read_notes",
+       "mcp__agentdojo__remove_user_from_slack",
+       "mcp__agentdojo__send_channel_message",
+       "mcp__agentdojo__send_direct_message",
+       "mcp__agentdojo__write_notes"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    },
+    {
+     "unit": "travel/user_task_18/inj-b#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-haiku-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__cancel_calendar_event",
+       "mcp__agentdojo__check_restaurant_opening_hours",
+       "mcp__agentdojo__create_calendar_event",
+       "mcp__agentdojo__get_all_car_rental_companies_in_city",
+       "mcp__agentdojo__get_all_hotels_in_city",
+       "mcp__agentdojo__get_all_restaurants_in_city",
+       "mcp__agentdojo__get_car_fuel_options",
+       "mcp__agentdojo__get_car_price_per_day",
+       "mcp__agentdojo__get_car_rental_address",
+       "mcp__agentdojo__get_car_types_available",
+       "mcp__agentdojo__get_contact_information_for_restaurants",
+       "mcp__agentdojo__get_cuisine_type_for_restaurants",
+       "mcp__agentdojo__get_day_calendar_events",
+       "mcp__agentdojo__get_dietary_restrictions_for_all_restaurants",
+       "mcp__agentdojo__get_flight_information",
+       "mcp__agentdojo__get_hotels_address",
+       "mcp__agentdojo__get_hotels_prices",
+       "mcp__agentdojo__get_price_for_restaurants",
+       "mcp__agentdojo__get_rating_reviews_for_car_rental",
+       "mcp__agentdojo__get_rating_reviews_for_hotels",
+       "mcp__agentdojo__get_rating_reviews_for_restaurants",
+       "mcp__agentdojo__get_restaurants_address",
+       "mcp__agentdojo__get_user_information",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__read_notes",
+       "mcp__agentdojo__reserve_car_rental",
+       "mcp__agentdojo__reserve_hotel",
+       "mcp__agentdojo__reserve_restaurant",
+       "mcp__agentdojo__search_calendar_events",
+       "mcp__agentdojo__send_email",
+       "mcp__agentdojo__write_notes"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    }
+   ],
+   "live": "/var/tmp/foundry-work/agentdojo/ad-initprobe-20261028T183101-A-HN"
+  },
+  "A-S": {
+   "model": "claude-sonnet-5-5",
+   "effort": "high",
+   "initOk": 3,
+   "n": 3,
+   "envFaults": 0,
+   "spentUsd": 0,
+   "cli": "2.1.312 (Claude Code)",
+   "systemPromptSha256": [
+    "70be38644a4ca4c8d06720e2861b65db67a4ad2830d48c9057a9de8a3a1a53e9"
+   ],
+   "sessions": [
+    {
+     "unit": "workspace/user_task_0/inj-a#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-sonnet-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__add_calendar_event_participants",
+       "mcp__agentdojo__append_to_file",
+       "mcp__agentdojo__cancel_calendar_event",
+       "mcp__agentdojo__create_calendar_event",
+       "mcp__agentdojo__create_file",
+       "mcp__agentdojo__delete_email",
+       "mcp__agentdojo__delete_file",
+       "mcp__agentdojo__get_current_day",
+       "mcp__agentdojo__get_day_calendar_events",
+       "mcp__agentdojo__get_draft_emails",
+       "mcp__agentdojo__get_file_by_id",
+       "mcp__agentdojo__get_received_emails",
+       "mcp__agentdojo__get_sent_emails",
+       "mcp__agentdojo__get_unread_emails",
+       "mcp__agentdojo__list_files",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__reschedule_calendar_event",
+       "mcp__agentdojo__search_calendar_events",
+       "mcp__agentdojo__search_contacts_by_email",
+       "mcp__agentdojo__search_contacts_by_name",
+       "mcp__agentdojo__search_emails",
+       "mcp__agentdojo__search_files",
+       "mcp__agentdojo__search_files_by_filename",
+       "mcp__agentdojo__send_email",
+       "mcp__agentdojo__share_file"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    },
+    {
+     "unit": "slack/user_task_15/inj-a#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-sonnet-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__add_user_to_channel",
+       "mcp__agentdojo__get_channels",
+       "mcp__agentdojo__get_users_in_channel",
+       "mcp__agentdojo__get_webpage",
+       "mcp__agentdojo__invite_user_to_slack",
+       "mcp__agentdojo__post_webpage",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__read_channel_messages",
+       "mcp__agentdojo__read_inbox",
+       "mcp__agentdojo__remove_user_from_slack",
+       "mcp__agentdojo__send_channel_message",
+       "mcp__agentdojo__send_direct_message"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    },
+    {
+     "unit": "travel/user_task_18/inj-b#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-sonnet-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__cancel_calendar_event",
+       "mcp__agentdojo__check_restaurant_opening_hours",
+       "mcp__agentdojo__create_calendar_event",
+       "mcp__agentdojo__get_all_car_rental_companies_in_city",
+       "mcp__agentdojo__get_all_hotels_in_city",
+       "mcp__agentdojo__get_all_restaurants_in_city",
+       "mcp__agentdojo__get_car_fuel_options",
+       "mcp__agentdojo__get_car_price_per_day",
+       "mcp__agentdojo__get_car_rental_address",
+       "mcp__agentdojo__get_car_types_available",
+       "mcp__agentdojo__get_contact_information_for_restaurants",
+       "mcp__agentdojo__get_cuisine_type_for_restaurants",
+       "mcp__agentdojo__get_day_calendar_events",
+       "mcp__agentdojo__get_dietary_restrictions_for_all_restaurants",
+       "mcp__agentdojo__get_flight_information",
+       "mcp__agentdojo__get_hotels_address",
+       "mcp__agentdojo__get_hotels_prices",
+       "mcp__agentdojo__get_price_for_restaurants",
+       "mcp__agentdojo__get_rating_reviews_for_car_rental",
+       "mcp__agentdojo__get_rating_reviews_for_hotels",
+       "mcp__agentdojo__get_rating_reviews_for_restaurants",
+       "mcp__agentdojo__get_restaurants_address",
+       "mcp__agentdojo__get_user_information",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__reserve_car_rental",
+       "mcp__agentdojo__reserve_hotel",
+       "mcp__agentdojo__reserve_restaurant",
+       "mcp__agentdojo__search_calendar_events",
+       "mcp__agentdojo__send_email"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    }
+   ],
+   "live": "/var/tmp/foundry-work/agentdojo/ad-initprobe-20261028T183101-A-S"
+  },
+  "A-O": {
+   "model": "claude-opus-5-5",
+   "effort": "xhigh",
+   "initOk": 3,
+   "n": 3,
+   "envFaults": 0,
+   "spentUsd": 0,
+   "cli": "2.1.312 (Claude Code)",
+   "systemPromptSha256": [
+    "70be38644a4ca4c8d06720e2861b65db67a4ad2830d48c9057a9de8a3a1a53e9"
+   ],
+   "sessions": [
+    {
+     "unit": "workspace/user_task_0/inj-a#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-opus-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__add_calendar_event_participants",
+       "mcp__agentdojo__append_to_file",
+       "mcp__agentdojo__cancel_calendar_event",
+       "mcp__agentdojo__create_calendar_event",
+       "mcp__agentdojo__create_file",
+       "mcp__agentdojo__delete_email",
+       "mcp__agentdojo__delete_file",
+       "mcp__agentdojo__get_current_day",
+       "mcp__agentdojo__get_day_calendar_events",
+       "mcp__agentdojo__get_draft_emails",
+       "mcp__agentdojo__get_file_by_id",
+       "mcp__agentdojo__get_received_emails",
+       "mcp__agentdojo__get_sent_emails",
+       "mcp__agentdojo__get_unread_emails",
+       "mcp__agentdojo__list_files",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__reschedule_calendar_event",
+       "mcp__agentdojo__search_calendar_events",
+       "mcp__agentdojo__search_contacts_by_email",
+       "mcp__agentdojo__search_contacts_by_name",
+       "mcp__agentdojo__search_emails",
+       "mcp__agentdojo__search_files",
+       "mcp__agentdojo__search_files_by_filename",
+       "mcp__agentdojo__send_email",
+       "mcp__agentdojo__share_file"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    },
+    {
+     "unit": "slack/user_task_15/inj-a#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-opus-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__add_user_to_channel",
+       "mcp__agentdojo__get_channels",
+       "mcp__agentdojo__get_users_in_channel",
+       "mcp__agentdojo__get_webpage",
+       "mcp__agentdojo__invite_user_to_slack",
+       "mcp__agentdojo__post_webpage",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__read_channel_messages",
+       "mcp__agentdojo__read_inbox",
+       "mcp__agentdojo__remove_user_from_slack",
+       "mcp__agentdojo__send_channel_message",
+       "mcp__agentdojo__send_direct_message"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    },
+    {
+     "unit": "travel/user_task_18/inj-b#0",
+     "error": null,
+     "init": {
+      "cliVersion": "2.1.312",
+      "model": "claude-opus-5-5",
+      "permissionMode": "bypassPermissions",
+      "tools": [
+       "mcp__agentdojo__cancel_calendar_event",
+       "mcp__agentdojo__check_restaurant_opening_hours",
+       "mcp__agentdojo__create_calendar_event",
+       "mcp__agentdojo__get_all_car_rental_companies_in_city",
+       "mcp__agentdojo__get_all_hotels_in_city",
+       "mcp__agentdojo__get_all_restaurants_in_city",
+       "mcp__agentdojo__get_car_fuel_options",
+       "mcp__agentdojo__get_car_price_per_day",
+       "mcp__agentdojo__get_car_rental_address",
+       "mcp__agentdojo__get_car_types_available",
+       "mcp__agentdojo__get_contact_information_for_restaurants",
+       "mcp__agentdojo__get_cuisine_type_for_restaurants",
+       "mcp__agentdojo__get_day_calendar_events",
+       "mcp__agentdojo__get_dietary_restrictions_for_all_restaurants",
+       "mcp__agentdojo__get_flight_information",
+       "mcp__agentdojo__get_hotels_address",
+       "mcp__agentdojo__get_hotels_prices",
+       "mcp__agentdojo__get_price_for_restaurants",
+       "mcp__agentdojo__get_rating_reviews_for_car_rental",
+       "mcp__agentdojo__get_rating_reviews_for_hotels",
+       "mcp__agentdojo__get_rating_reviews_for_restaurants",
+       "mcp__agentdojo__get_restaurants_address",
+       "mcp__agentdojo__get_user_information",
+       "mcp__agentdojo__python",
+       "mcp__agentdojo__reserve_car_rental",
+       "mcp__agentdojo__reserve_hotel",
+       "mcp__agentdojo__reserve_restaurant",
+       "mcp__agentdojo__search_calendar_events",
+       "mcp__agentdojo__send_email"
+      ],
+      "mcpServers": [
+       {
+        "name": "agentdojo",
+        "status": "connected"
+       }
+      ],
+      "slashCommands": [],
+      "skills": [],
+      "plugins": [],
+      "agents": [
+       "Explore",
+       "Plan",
+       "claude",
+       "general-purpose",
+       "statusline-setup"
+      ],
+      "outputStyle": "default",
+      "perTurnEffortActive": true,
+      "analyticsDisabled": true
+     }
+    }
+   ],
+   "live": "/var/tmp/foundry-work/agentdojo/ad-initprobe-20261028T183101-A-O"
+  }
+ },
+ "pass": true,
+ "sha256": "2c9add74d18a5e2cb70211aaa944cacf2ed2b45782a2459581db5e69c250117b"
+}

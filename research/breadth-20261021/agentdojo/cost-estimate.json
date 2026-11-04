@@ -1,0 +1,139 @@
+{
+ "kind": "agentdojo-cost-estimate",
+ "version": 1,
+ "evidence": "[inf] model of a gold-following agent with exploration factors; the dev pilot measures the real cost",
+ "run": "ad-dev-scripted-gold-20261104",
+ "assumptions": {
+  "charsPerToken": 4,
+  "cliOverheadTokens": 2000,
+  "answerTokens": 150,
+  "cacheRead": 0.1,
+  "cacheWrite": 1.25,
+  "outPerTurn": {
+   "A-H": 400,
+   "A-HN": 450,
+   "A-S": 500,
+   "A-O": 1200
+  },
+  "turnFactor": {
+   "low": 1.2,
+   "mid": 1.8,
+   "high": 3
+  },
+  "plan": {
+   "dev": {
+    "A-H": {
+     "units": 117,
+     "repeat": 1
+    },
+    "A-S": {
+     "units": 30,
+     "repeat": 1
+    },
+    "A-O": {
+     "units": 30,
+     "repeat": 1
+    }
+   },
+   "sealed": {
+    "A-H": {
+     "units": 174,
+     "repeat": 2
+    },
+    "A-S": {
+     "units": 61,
+     "repeat": 2
+    },
+    "A-O": {
+     "units": 20,
+     "repeat": 2
+    },
+    "A-HN": {
+     "units": 174,
+     "repeat": 1
+    }
+   }
+  }
+ },
+ "catalogTokens": {
+  "workspace": 2993,
+  "travel": 3580,
+  "banking": 1142,
+  "slack": 918
+ },
+ "systemPromptTokens": 248,
+ "units": 117,
+ "perUnitUsd": {
+  "A-H": {
+   "low": 0.0024457264957264955,
+   "mid": 0.0035113457264957268,
+   "high": 0.005809370256410259
+  },
+  "A-HN": {
+   "low": 0.0026567329059829056,
+   "mid": 0.003818800854700855,
+   "high": 0.006329812564102561
+  },
+  "A-S": {
+   "low": 0.05535940170940169,
+   "mid": 0.08022819658119658,
+   "high": 0.13409278974358976
+  },
+  "A-O": {
+   "low": 0.20094700854700873,
+   "mid": 0.30047434188034183,
+   "high": 0.5188609641025641
+  }
+ },
+ "plans": {
+  "dev": {
+   "A-H": {
+    "low": 0.29,
+    "mid": 0.41,
+    "high": 0.68
+   },
+   "A-S": {
+    "low": 1.66,
+    "mid": 2.41,
+    "high": 4.02
+   },
+   "A-O": {
+    "low": 6.03,
+    "mid": 9.01,
+    "high": 15.57
+   },
+   "total": {
+    "low": 7.98,
+    "mid": 11.83,
+    "high": 20.27
+   }
+  },
+  "sealed": {
+   "A-H": {
+    "low": 0.85,
+    "mid": 1.22,
+    "high": 2.02
+   },
+   "A-S": {
+    "low": 6.75,
+    "mid": 9.79,
+    "high": 16.36
+   },
+   "A-O": {
+    "low": 8.04,
+    "mid": 12.02,
+    "high": 20.75
+   },
+   "A-HN": {
+    "low": 0.46,
+    "mid": 0.66,
+    "high": 1.1
+   },
+   "total": {
+    "low": 16.1,
+    "mid": 23.69,
+    "high": 40.23
+   }
+  }
+ }
+}

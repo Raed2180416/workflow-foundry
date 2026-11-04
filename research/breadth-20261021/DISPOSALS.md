@@ -138,3 +138,23 @@ No install, clone or data download. Two $0 calculations in the scratchpad (`brea
 of the pinned `corpus/tau2-bench` with `python3 -I` and `grep` (telecom `tasks.json` ids and one task, `split_tasks.json`,
 solo-mode code paths in `src/tau2/domains/*/environment.py` and `src/tau2/agent/llm_agent.py`). Disk at writing: 3.0 GB
 free (`df -h /`).
+
+## Tier-1 bed 2: AgentDojo adoption (2026-10-21 install, 2026-10-28 adapter)
+
+Rule: D16. Acquisition record: `research/breadth-20261021/agentdojo/ACQUISITION.md`.
+
+| Item | Size | Disposition |
+|---|---|---|
+| agentdojo 0.1.35 + 71 dependency wheels, installed into `/var/tmp/foundry-work/benches/agentdojo/venv` (uv 0.11.32, `--require-hashes --no-index`) | 41,368,378 B downloaded; venv 155 MiB apparent, 193 MB on disk | **adopted** (bed 2); every installed file checked against its wheel RECORD on 2026-10-28 (`verify_install.py`) |
+| the downloaded `wheels/` directory (the 72 files listed with URL, sha256, size and licence in `/var/tmp/foundry-work/benches/agentdojo/downloads.json`) | 41,368,378 B | **deleted** after the install by the 2026-10-21 session (observed absent on 2026-10-28; no record of the exact time) |
+| `downloads.json`, `requirements.lock.txt` (also in git) | 42,939 B, 142,875 B | kept |
+
+Nothing else was downloaded for this bed; no clone, sdist, data file or image. To be deleted after the bed's sealed run and
+analysis: the venv (then recorded here). Scratch run data stays outside the repo under `/var/tmp/foundry-work/agentdojo-live/`
+(parity and seal scratch; batteries' snapshots are removed as soon as they are graded) and host-only data under
+`/var/tmp/foundry-work/agentdojo-host/` (PLAN §5.6).
+
+2026-11-04 (completion session): nothing downloaded or installed. Deleted scratch of the 10-22 development session under
+`/var/tmp/foundry-work/agentdojo-live/` (`mutall`, `mutall2`, `mutall3`, `mut1`, `smoke`: per-unit snapshots of early
+mutation and smoke batteries, about 126 MB on disk; superseded by `parity.json`, which recomputes every battery). Disk free
+before: 2.0 GB (`df -h /`); after: 2.1 GB.

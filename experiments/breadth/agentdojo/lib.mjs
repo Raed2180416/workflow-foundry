@@ -6,7 +6,7 @@
 // a neutral working directory, inside a user+network namespace (`unshare --user --map-root-user --net`: no network), and is
 // reached only from this host process. Agents reach the suite tools through tool.mjs -> a file mailbox -> the host
 // facade (facade.mjs) -> the bridge; the shared python tool runs host-side under src/sandbox.mjs.
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -29,6 +29,15 @@ export const PIN = Object.freeze({ package: 'agentdojo', version: '0.1.35', benc
   wheelSha256: '364bea4219716b716bf639f504d195943f7f6a5535d312ca41d7098704a2affd' });
 export const SUITES = Object.freeze(['banking', 'slack', 'travel', 'workspace']);
 export const MAX_STEPS = 15;
+
+export const DOWNLOADS = path.join(BENCH_ROOT, 'downloads.json');
+export const SITE_PACKAGES = path.join(BENCH_ROOT, 'venv/lib/python3.12/site-packages');
+/** The install check (BG-0): every pinned distribution at its version, every installed file equal to its wheel RECORD.
+ * Runs the system interpreter isolated (-I) on verify_install.py; reads files only. */
+export function verifyInstall({ downloads = DOWNLOADS, site = SITE_PACKAGES } = {}) {
+  const out = execFileSync('/usr/bin/python3', ['-I', path.join(HERE, 'verify_install.py'), downloads, site], { encoding: 'utf8', env: { PATH: '/usr/bin:/bin', LANG: 'C.UTF-8' }, timeout: 300_000 });
+  return JSON.parse(out.trim().split('\n').pop());
+}
 
 export const sha256 = s => createHash('sha256').update(s).digest('hex');
 export const readJson = p => JSON.parse(readFileSync(p, 'utf8'));
@@ -80,14 +89,15 @@ export async function bridgeOk(args, opts) {
 }
 
 /**
- * A long-lived `bridge.py serve` process. request(op) sends one JSON line and resolves with the matching reply (by
+ * A long-lived `bridge.py serve` process (or, with cmd 'grade-serve', the separate grader process). request(op) sends one JSON line and resolves with the matching reply (by
  * handle; requests on one handle are answered in order). Every unit of a run shares the process.
  */
 export class BridgeServer {
-  constructor({ liveDir, authored = null, onExit = null }) {
+  constructor({ liveDir, authored = null, onExit = null, cmd = 'serve' }) {
     if (!existsSync(VENV_PY)) throw new Error(`AgentDojo venv missing: ${VENV_PY}`);
     mkdirSync(path.join(liveDir, 'home'), { recursive: true });
-    const [bin, argv] = bridgeArgv(['serve', ...(authored ? ['--authored', authored] : [])]);
+    if (!['serve', 'grade-serve'].includes(cmd)) throw new Error(`unknown bridge server command ${cmd}`);
+    const [bin, argv] = bridgeArgv([cmd, ...(authored ? ['--authored', authored] : [])]);
     this.proc = spawn(bin, argv, { cwd: liveDir, env: bridgeEnv(liveDir), stdio: ['pipe', 'pipe', 'pipe'] });
     this.buf = ''; this.stderr = ''; this.waiting = []; this.closed = false; this.seq = 0;
     this.hello = new Promise((res, rej) => { this.waiting.push({ handle: undefined, kinds: ['hello'], res, rej }); });
@@ -124,6 +134,8 @@ export class BridgeServer {
   calls(handle, calls) { return this.request({ op: 'calls', handle, calls }, ['results']); }
   close(handle, final) { return this.request({ op: 'close', handle, final }, ['closed']); }
   plan(unit, policy, mutant = null) { const handle = this.handle('p'); return this.request({ op: 'plan', handle, unit, policy, mutant }, ['plan']); }
+  /** grade-serve only: one unit's host-only verdict row. */
+  async grade(id, hostDir) { return (await this.request({ op: 'grade', handle: this.handle('g'), id, hostDir }, ['graded'])).row; }
   mutants(suite, userTask) { const handle = this.handle('m'); return this.request({ op: 'mutants', handle, suite, userTask }, ['mutants']); }
   async quit() {
     if (this.closed) return;
