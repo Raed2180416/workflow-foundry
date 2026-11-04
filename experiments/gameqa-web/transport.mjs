@@ -11,20 +11,51 @@
 // 2. Rate limits. An HTTP 429 from the CLI made the construct call of workflow r3-r5 fail, so those runs ended with no
 //    model output (100% of calls failed for a non-model reason). withRateLimitRetry() retries a MODEL_RATE_LIMIT result
 //    after a wait (60 s, then 180 s) and logs every retry; any other outcome is returned unchanged.
+//
+// Amendment A2 (2026-11-04, review finding m2: "nothing falls back silently"). omitCliBudgetFlag() used to return the
+// port unchanged when it had no claude-cli provider, and to pass the args through when the flag was not there, so a run
+// labelled `nb` could still carry the budget line (or a provider change in the engine v2 series could make `nb` and `cli`
+// the same thing) without anyone seeing it. It now throws in both cases, and auditCliArgs() logs, for every CLI call, a
+// digest of the argument list and whether it holds the budget flag, so each run's calls.jsonl shows which transport its
+// calls really had.
+import { createHash } from 'node:crypto';
+
 const BUDGET_FLAG = '--max-budget-usd';
 
-/** Make the claude-cli provider of `port` stop passing --max-budget-usd (the CLI then adds no "USD budget" line). */
+/** Make the claude-cli provider of `port` stop passing --max-budget-usd (the CLI then adds no "USD budget" line).
+ *  Throws when the port has no claude-cli provider, and (per call) when the provider's arguments no longer hold the flag:
+ *  either way the `nb` label could not be told apart from `cli` (A2, finding m2). */
 export function omitCliBudgetFlag(port) {
   const provider = port?.providers?.['claude-cli'];
-  if (!provider) return port;
+  if (!provider || typeof provider.args !== 'function') throw new Error('omitCliBudgetFlag: the port has no claude-cli provider, so --transport nb cannot drop the CLI budget line');
   if (provider.budgetLineOmitted) return port;
   const args = provider.args.bind(provider);
   provider.args = input => {
     const a = args(input), i = a.indexOf(BUDGET_FLAG);
-    if (i >= 0) a.splice(i, 2);
+    if (i < 0) throw new Error(`omitCliBudgetFlag: the claude-cli provider no longer passes ${BUDGET_FLAG}; the nb transport is undefined (re-check the provider before running nb arms)`);
+    a.splice(i, 2);
     return a;
   };
   provider.budgetLineOmitted = true;
+  return port;
+}
+
+/** Log, for every claude-cli call of `port`, whether its argument list holds the budget flag and a digest of the list
+ *  (the system prompt is replaced by its length before hashing). Wrap after omitCliBudgetFlag so the final arguments are
+ *  seen. The rows have no `ok` field, so the analysis scripts that count model calls ignore them. */
+export function auditCliArgs(port, log) {
+  const provider = port?.providers?.['claude-cli'];
+  if (!provider || typeof provider.args !== 'function') return port;
+  if (provider.argsAudited) return port;
+  const args = provider.args.bind(provider);
+  provider.args = input => {
+    const a = args(input);
+    const shown = a.map(x => (x === input?.system ? `<system ${String(x).length} chars>` : x));
+    log({ transport: 'cli-args', budgetFlag: a.includes(BUDGET_FLAG), budgetUsd: a.includes(BUDGET_FLAG) ? a[a.indexOf(BUDGET_FLAG) + 1] : null,
+      argsSha: createHash('sha256').update(JSON.stringify(shown)).digest('hex').slice(0, 16) });
+    return a;
+  };
+  provider.argsAudited = true;
   return port;
 }
 

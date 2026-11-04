@@ -1,0 +1,371 @@
+{
+ "note": "Claude CLI engine version per GQA-1 run, copied from the local model journals (engine_version column only).",
+ "byVersion": {
+  "claude-code 2.1.312": [
+   "_harness-fault/gqa1-workflow-r3",
+   "_harness-fault/gqa1-workflow-r4",
+   "_harness-fault/gqa1-workflow-r5",
+   "_harness-fault/gqa1-workflow-random-r2",
+   "gqa1-agent-r1",
+   "gqa1-agent-r2",
+   "gqa1-agent-r3",
+   "gqa1-agent-r4",
+   "gqa1-agent-r5",
+   "gqa1-workflow-r1",
+   "gqa1-workflow-r2",
+   "gqa1-workflow-random-r1"
+  ],
+  "claude-code 2.1.318": [
+   "gqa1-workflow-r3",
+   "gqa1-workflow-r4",
+   "gqa1-workflow-r5",
+   "gqa1-workflow-random-r2",
+   "gqa1-workflow-random-r3",
+   "gqa1-workflow-random-r4",
+   "gqa1-workflow-random-r5",
+   "gqa1nb-agent-persist-r1",
+   "gqa1nb-agent-persist-r2",
+   "gqa1nb-agent-persist-r3",
+   "gqa1nb-agent-persist-r4",
+   "gqa1nb-agent-persist-r5",
+   "gqa1nb-agent-r1",
+   "gqa1nb-agent-r2",
+   "gqa1nb-agent-r3",
+   "gqa1nb-agent-r4",
+   "gqa1nb-agent-r5"
+  ]
+ },
+ "runs": [
+  {
+   "run": "_harness-fault/gqa1-workflow-r3",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 1,
+     "first": "2026-10-28T19:07:03.030Z",
+     "last": "2026-10-28T19:07:03.030Z"
+    }
+   ]
+  },
+  {
+   "run": "_harness-fault/gqa1-workflow-r4",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 1,
+     "first": "2026-10-28T19:07:21.683Z",
+     "last": "2026-10-28T19:07:21.683Z"
+    }
+   ]
+  },
+  {
+   "run": "_harness-fault/gqa1-workflow-r5",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 1,
+     "first": "2026-10-28T19:07:37.762Z",
+     "last": "2026-10-28T19:07:37.762Z"
+    }
+   ]
+  },
+  {
+   "run": "_harness-fault/gqa1-workflow-random-r2",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 3,
+     "first": "2026-10-28T19:06:37.892Z",
+     "last": "2026-10-28T19:06:49.717Z"
+    }
+   ]
+  },
+  {
+   "run": "_harness-fault/gqa1-workflow-random-r3",
+   "versions": []
+  },
+  {
+   "run": "_harness-fault/gqa1-workflow-random-r4",
+   "versions": []
+  },
+  {
+   "run": "_harness-fault/gqa1-workflow-random-r5",
+   "versions": []
+  },
+  {
+   "run": "gqa1-agent-r1",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 6,
+     "first": "2026-10-28T18:47:22.324Z",
+     "last": "2026-10-28T18:48:12.372Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-agent-r2",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 4,
+     "first": "2026-10-28T18:56:58.586Z",
+     "last": "2026-10-28T18:57:30.935Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-agent-r3",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 4,
+     "first": "2026-10-28T18:58:01.171Z",
+     "last": "2026-10-28T18:58:45.539Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-agent-r4",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 5,
+     "first": "2026-10-28T18:59:26.840Z",
+     "last": "2026-10-28T19:00:12.434Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-agent-r5",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 5,
+     "first": "2026-10-28T19:00:34.255Z",
+     "last": "2026-10-28T19:01:19.026Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-r1",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 22,
+     "first": "2026-10-28T18:48:31.944Z",
+     "last": "2026-10-28T18:51:01.188Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-r2",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 22,
+     "first": "2026-10-28T18:57:35.468Z",
+     "last": "2026-10-28T19:01:38.876Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-r3",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 21,
+     "first": "2026-11-04T12:40:09.134Z",
+     "last": "2026-11-04T12:43:31.478Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-r4",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 21,
+     "first": "2026-11-04T12:47:29.527Z",
+     "last": "2026-11-04T12:50:20.919Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-r5",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 21,
+     "first": "2026-11-04T12:56:19.811Z",
+     "last": "2026-11-04T12:59:54.060Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-random-r1",
+   "versions": [
+    {
+     "version": "claude-code 2.1.312",
+     "calls": 3,
+     "first": "2026-10-28T18:55:28.197Z",
+     "last": "2026-10-28T18:56:07.408Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-random-r2",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 3,
+     "first": "2026-11-04T13:12:56.973Z",
+     "last": "2026-11-04T13:13:24.076Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-random-r3",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 2,
+     "first": "2026-11-04T12:46:15.007Z",
+     "last": "2026-11-04T12:46:28.164Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-random-r4",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 2,
+     "first": "2026-11-04T12:54:40.512Z",
+     "last": "2026-11-04T12:54:58.190Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1-workflow-random-r5",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 4,
+     "first": "2026-11-04T13:07:52.573Z",
+     "last": "2026-11-04T13:08:52.112Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-persist-r1",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 40,
+     "first": "2026-11-04T12:44:53.907Z",
+     "last": "2026-11-04T12:52:57.263Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-persist-r2",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 40,
+     "first": "2026-11-04T12:53:25.371Z",
+     "last": "2026-11-04T13:02:00.184Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-persist-r3",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 40,
+     "first": "2026-11-04T13:02:28.179Z",
+     "last": "2026-11-04T13:09:45.040Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-persist-r4",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 40,
+     "first": "2026-11-04T13:10:06.206Z",
+     "last": "2026-11-04T13:17:08.263Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-persist-r5",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 40,
+     "first": "2026-11-04T13:17:17.955Z",
+     "last": "2026-11-04T13:22:24.882Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-r1",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 5,
+     "first": "2026-11-04T12:39:37.767Z",
+     "last": "2026-11-04T12:40:22.104Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-r2",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 4,
+     "first": "2026-11-04T12:40:38.300Z",
+     "last": "2026-11-04T12:41:18.347Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-r3",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 6,
+     "first": "2026-11-04T12:41:36.999Z",
+     "last": "2026-11-04T12:42:32.378Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-r4",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 5,
+     "first": "2026-11-04T12:42:52.605Z",
+     "last": "2026-11-04T12:43:50.527Z"
+    }
+   ]
+  },
+  {
+   "run": "gqa1nb-agent-r5",
+   "versions": [
+    {
+     "version": "claude-code 2.1.318",
+     "calls": 3,
+     "first": "2026-11-04T12:44:11.897Z",
+     "last": "2026-11-04T12:44:33.957Z"
+    }
+   ]
+  }
+ ]
+}

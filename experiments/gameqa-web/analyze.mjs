@@ -7,6 +7,11 @@
 // exception, or (amendment A1) at least 50% of the run's model calls failed for a non-model reason (rate limit, CLI
 // unavailable or crashed, timeout, the per-call cap): the frozen script checked only the first, so three rate-limited
 // workflow runs with no model output would have entered as foundMin 0.
+// Amendment A2 (2026-11-04, review finding M5): the non-model codes are narrowed to MODEL_RATE_LIMIT and MODEL_UNAVAILABLE.
+// A1 also listed MODEL_PROTOCOL, MODEL_TIMEOUT, MODEL_BUDGET and ERROR, but a timeout or a per-call budget hit can be the
+// model's own doing (a very long answer), and ERROR is any exception. Only MODEL_RATE_LIMIT ever occurred in GQA-1 (5 calls),
+// so no exclusion changes (the A1 rule is kept as A1_NON_MODEL_FAILURES and the test shows both). A2 also adds its
+// comparisons (R*, C*, P1, S2v), and pooled keys ('gqa1+gqa1v/workflow': both series' valid runs, unpaired).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,15 +42,16 @@ const sd = xs => { if (xs.length < 2) return null; const m = mean(xs); return Ma
 const r3 = x => (x === null || x === undefined ? null : Math.round(x * 1000) / 1000);
 
 // Failure codes that are not the model's doing (src/models/providers/claude-cli.mjs, experiments/gameqa-web/arms.mjs makeCaller).
-export const NON_MODEL_FAILURES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_PROTOCOL', 'MODEL_TIMEOUT', 'MODEL_BUDGET', 'ERROR']);
-export function transportFailures(dir) {
+export const A1_NON_MODEL_FAILURES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'MODEL_PROTOCOL', 'MODEL_TIMEOUT', 'MODEL_BUDGET', 'ERROR']);
+export const NON_MODEL_FAILURES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE']);
+export function transportFailures(dir, codes = NON_MODEL_FAILURES) {
   const f = path.join(dir, 'calls.jsonl');
   if (!existsSync(f)) return { calls: 0, nonModel: 0 };
   const rows = readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).filter(r => typeof r.ok === 'boolean');
-  return { calls: rows.length, nonModel: rows.filter(r => !r.ok && NON_MODEL_FAILURES.includes(r.error)).length };
+  return { calls: rows.length, nonModel: rows.filter(r => !r.ok && codes.includes(r.error)).length };
 }
 
-export function loadRuns(dir) {
+export function loadRuns(dir, { codes = NON_MODEL_FAILURES } = {}) {
   if (!existsSync(dir)) return [];
   const freeze = existsSync(path.join(ROOT, 'research/gameqa-20261021/FREEZE.json')) ? read(path.join(ROOT, 'research/gameqa-20261021/FREEZE.json')) : null;
   const out = [];
@@ -53,7 +59,7 @@ export function loadRuns(dir) {
     const d = path.join(dir, name);
     if (!existsSync(path.join(d, 'meta.json')) || !existsSync(path.join(d, 'score.json'))) continue;
     const meta = read(path.join(d, 'meta.json')), score = read(path.join(d, 'score.json'));
-    const tf = transportFailures(d);
+    const tf = transportFailures(d, codes);
     const excluded = meta.dev ? 'dev run' : meta.error ? 'harness fault (runner exception)'
       : tf.calls && tf.nonModel / tf.calls >= 0.5 ? `harness fault (${tf.nonModel} of ${tf.calls} model calls failed for a non-model reason)`
         : freeze && meta.bed !== freeze.bed?.sha256 ? 'bed hash differs from the freeze' : null;
@@ -105,14 +111,31 @@ export const COMPARISONS = Object.freeze([
   ['gqa1nb/agent', 'gqa1/agent', 'two-sided', 'S2 (A1, secondary): does removing the CLI budget line change the agent?'],
   ['gqa1/workflow', 'gqa1nb/agent-persist', 'greater', 'S3 (A1, secondary): H1 against the agent with no budget line whose early finish is refused'],
   ['gqa1nb/agent-persist', 'gqa1nb/agent', 'two-sided', 'S4 (A1, secondary): does refusing the early finish change the agent?'],
+  // Amendment A2 (2026-11-04), decided before the gqa1v and gqa2 runs (review findings M2, M3, M5, m10).
+  ['gqa1v/workflow', 'gqa1v/agent', 'greater', 'R1 (A2): H1 replicated on one CLI version, all reps run on the same day'],
+  ['gqa1v/workflow', 'gqa1/monkey', 'greater', 'R2 (A2): H2 with the replication workflow runs'],
+  ['gqa1v/workflow', 'gqa1v/workflow-random', 'two-sided', 'R4 (A2): H4 replicated'],
+  ['gqa1v/workflow', 'gqa2/agent-matched', 'greater', 'C1 (A2): the workflow vs the agent with the persona prompt wording, append-only reports and restarts up to the workflow\'s dollars'],
+  ['gqa1v/workflow-random', 'gqa2/agent-matched', 'greater', 'C2 (A2): the cheaper random-exploration workflow vs the same matched agent'],
+  ['gqa2/agent-matched', 'gqa1v/agent', 'two-sided', 'C3 (A2): does matching (prompt, report log, restarts, dollars) change the agent?'],
+  ['gqa1v/agent', 'gqa1nb/agent', 'two-sided', 'S2v (A2): the budget line on one CLI version (S2 compared 2.1.312 with the line against 2.1.318 without it)'],
+  ['gqa1+gqa1v/workflow', 'gqa1+gqa1v/agent', 'greater', 'P1 (A2, secondary): H1 pooled over both series (K = 10 vs 10, unpaired)'],
 ]);
+// A pooled key ('gqa1+gqa1v/workflow') stands for the valid runs of every listed series, unpaired.
+function armOf(arms, key) {
+  const [tags, name] = key.split('/');
+  if (!tags.includes('+')) return arms[key];
+  const parts = tags.split('+').map(t => arms[`${t}/${name}`]);
+  if (parts.some(x => !x)) return undefined;
+  return { tag: tags, arm: name, pooled: true, reps: parts.flatMap((x, i) => x.reps.map(r => `${tags.split('+')[i]}:${r}`)), foundMin: parts.flatMap(x => x.foundMin) };
+}
 export function compare(arms, { completeRepsOnly = true } = {}) {
   return COMPARISONS.map(([ka, kb, alt, role]) => {
-    const A = arms[ka], B = arms[kb];
+    const A = armOf(arms, ka), B = armOf(arms, kb);
     if (!A || !B) return { a: ka, b: kb, role, missing: true };
     // complete rep indices only, for the two paid/paired arms; the $0 monkey keeps all its reps
     // (S1/S2 pair arms of two series: their reps are independent runs, not paired, so all valid reps of both enter)
-    const crossSeries = ka.split('/')[0] !== kb.split('/')[0];
+    const crossSeries = ka.split('/')[0] !== kb.split('/')[0] || A.pooled || B.pooled;
     const reps = completeRepsOnly && !kb.endsWith('/monkey') && !crossSeries ? A.reps.filter(r => B.reps.includes(r)) : A.reps;
     const a = A.reps.map((r, i) => [r, A.foundMin[i]]).filter(([r]) => reps.includes(r)).map(([, x]) => x);
     const b = kb.endsWith('/monkey') || crossSeries ? B.foundMin : B.reps.map((r, i) => [r, B.foundMin[i]]).filter(([r]) => reps.includes(r)).map(([, x]) => x);

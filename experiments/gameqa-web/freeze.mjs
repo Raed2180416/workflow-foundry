@@ -22,6 +22,8 @@ export const ARM_FILES = Object.freeze(['experiments/gameqa-web/arms.mjs', 'expe
   'experiments/gameqa-web/prompts.mjs', 'experiments/gameqa-web/template.json', 'experiments/gameqa-web/run.mjs',
   'experiments/gameqa-web/reference-checks.json', 'experiments/gameqa-web/funnel.mjs', 'experiments/gameqa-web/analyze.mjs', 'experiments/gameqa-web/chain.sh', 'experiments/gameqa-web/regress.mjs', 'experiments/lib/models.mjs', 'policy/models.json',
   'experiments/gameqa-web/transport.mjs',
+  // amendment A2: the report-log re-score and the cost-matched restart analysis (fixed before the A2 runs)
+  'experiments/gameqa-web/rescore-union.mjs', 'experiments/gameqa-web/cost-matched.mjs',
   'research/gameqa-20261021/PREREG-GQA-1.md']);
 const sha = buf => createHash('sha256').update(buf).digest('hex');
 

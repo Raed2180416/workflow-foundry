@@ -207,3 +207,87 @@ stop is a result), and two **secondary** arms are added to measure the confound 
   r1-r5 in a second lane; monkeys in a third. Spend stop unchanged ($2.50, now counting the harness-faulted runs and the
   diagnostic). Expected new spend about $0.9 (`agent-persist` up to $0.10 a run).
 - The Mercury E1 secondary is dropped from this session (time); stated in the result.
+
+### A2 (2026-11-04, after the independent review of RESULT-GQA-1; written before any run it governs; frozen as `amendments[1]` of FREEZE.json)
+
+**Why.** An independent review of the A1 result (2026-11-04) confirmed H1/H2 from the frozen data and found no blocker,
+but six major and ten minor defects. Four of them change what the runs can show: the agent's report list replaced itself
+every turn, so bugs it found and dropped were lost (M1); the agent's prompt asked for "short, focused runs" and never named
+`goto`, while the persona prompt did (M2); H1 is not cost-matched (the workflow spends 18.6× the agent per run) (M3); and A1
+re-ran only the faulted reps instead of restarting at rep 1, which mixed two CLI versions into H1 (M5). A2 records the
+deviations, adds the disclosures, and runs two new series to answer M2, M3 and M5 with data instead of words.
+
+**Deviations from §6 and A1, recorded (they change no earlier decision):**
+- **D1 (M5).** §6 says that after a harness fault "the paid reps restart at 1". A1 re-ran only the faulted reps (`workflow`
+  r3-r5, `workflow-random` r2-r5) under the same run ids, after `workflow` r1-r2 (8, 8) and the agent's 1 × 5 were known. That
+  departs from §6's text and put two CLI versions into H1: 2.1.312 for `workflow` r1-r2, `agent` r1-r5 and `workflow-random`
+  r1; 2.1.318 for the rest (`analysis/cli-versions.json`, read from the local model journals). Answered by the replication
+  series `gqa1v` below (all primary arms, reps 1-5, one CLI version).
+- **D2 (M5).** A1's exclusion codes also listed `MODEL_PROTOCOL`, `MODEL_TIMEOUT`, `MODEL_BUDGET` and `ERROR`; a timeout or a
+  per-call budget hit can be the model's own doing. From A2 the harness-fault codes are `MODEL_RATE_LIMIT` and
+  `MODEL_UNAVAILABLE` only. Only `MODEL_RATE_LIMIT` ever occurred in GQA-1 (5 calls), so no exclusion changes; `analyze.mjs`
+  output for the A1 runs is unchanged apart from the new comparison rows.
+- **D3 (m10).** S2 compared `gqa1/agent` (2.1.312, with the budget line) with `gqa1nb/agent` (2.1.318, without), so the line
+  and the CLI version are confounded. S2v below compares the line on one version.
+- **D4 (m1).** `meta.json` did not record the CLI version; the A1 runs' versions are recovered from the journals (D1). A2 runs
+  record it at the start and end of each run (`meta.cli`).
+
+**Disclosures added to §8 (M4).** The threat section named only the heuristics. In addition: (a) every one of the 12 faults
+has a normative sentence in the public spec from which a check can be written (`analysis/leakage-map.json`: DESIGN.md lines
+33, 35, 51, 53, 71, 77, 81, 82, 97, 98, 101), all written by the same session after the faults, for example "including keys
+picked up in the same tick" and "**or** swapping tiles with an enemy"; (b) the report class enum given to every arm is exactly
+the six injected classes; (c) the template's three check examples have the shapes cap/range, frozen-while-in-a-mode and
+display-vs-state, and the three bugs no workflow run found (GQ01, GQ02, GQ06) are exactly the three shapes with no example
+(transition, disjunction, conservation). The spec leaks the fault set to every arm equally, so the comparisons still vary
+structure; the absolute counts are not evidence of what a cheap-built workflow finds on an unseen build. The leakage tests
+check only literal flags, ids and titles (m5); they cannot detect a paraphrase, and the spec paraphrases every fault by design.
+
+**Code changes for the governed runs** (frozen as `amendments[1]`):
+- `arms.mjs`: new `runAgentMatched` (below); a stale triage comment corrected (m7). `runAgent`, `runWorkflow` and `runMonkey`
+  are unchanged (their scripted-model tests pass unchanged).
+- `prompts.mjs`: new `AGENT_MATCHED_SYSTEM` and `agentMatchedTurnPrompt`; every frozen prompt's digest is unchanged.
+- `transport.mjs`: `--transport nb` throws when there is no claude-cli provider or the provider no longer passes the flag
+  (it used to do nothing, silently: m2); `auditCliArgs` logs per call whether the CLI got the budget flag (`cli-args` rows).
+- `run.mjs`: arm `agent-matched`; `meta.cli` {start, end}; a transport preflight that refuses to start when the flag's
+  presence does not match the transport label; the audit rows; a per-run `TMPDIR`, deleted at the end, so Playwright leaves no
+  `playwright-tracing-*` folders (m8).
+- `analyze.mjs`: D2's codes; the comparisons below; pooled keys. `chain.sh`: `TAG`, the `agent-matched` lane, and the exit
+  status it logs (it logged the status of `$(date)`, always 0).
+- New analyses fixed before the runs: `rescore-union.mjs` (every report an agent ever listed, scored; post hoc for the A1
+  runs) and `cost-matched.mjs` (the restart curve; post hoc).
+
+**Governed runs (Haiku 5.5, all on CLI 2.1.318; a run whose `meta.cli` start and end differ is reported separately):**
+1. **Replication `gqa1v` (D1, D3).** `workflow` r1-r5, `workflow-random` r1-r5 (paired with `gqa1v/workflow` rN's
+   construction) and `agent` r1-r5: the frozen arms, unchanged (transport `cli`, budgets as in §2). New run ids, so new rng
+   streams and fresh model samples.
+2. **Matched agent `gqa2/agent-matched` r1-r5 (M1, M2, M3).** The solo agent with (a) the persona prompt's exploration wording
+   ("Plan runs that reach new areas and states, and set up situations where a rule could break ... goto:x,y is a convenient
+   way to walk") in place of "prefer short, focused runs"; (b) append-only reports: every report it files is kept,
+   deduplicated by seed and tokens, and cannot be withdrawn; (c) restarts: when it finishes, or a session reaches 40 turns, a
+   fresh session starts with no notes but with the list of filed reports, until the run has spent **$0.067** (the measured
+   mean of the five frozen `gqa1/workflow` runs, $0.335 / 5), used 8,000 ticks, or made 100 calls. Transport `nb` (no budget
+   line, as the A1 secondary arms). It gets the workflow's dollars and ticks, and code owns the stop decision as in the
+   workflow; it still plays, detects, replays and minimizes by itself. Everything else is the frozen agent (same tester API,
+   spec, heuristics, schema shape, trace rendering).
+
+**Tests (dev evidence; the §5 rule: exact Mann-Whitney on per-run foundMin, one-sided tests supported iff p ≤ 0.05 and the
+mean difference ≥ 1; two-sided at 0.05):**
+- **R1** `gqa1v/workflow` > `gqa1v/agent` (paired complete reps). **R2** `gqa1v/workflow` > `gqa1/monkey`. **R4**
+  `gqa1v/workflow` vs `gqa1v/workflow-random` (two-sided).
+- **C1** `gqa1v/workflow` > `gqa2/agent-matched`. **C2** `gqa1v/workflow-random` > `gqa2/agent-matched` (the $0.016 pipeline
+  against an agent with about four times its dollars). **C3** `gqa2/agent-matched` vs `gqa1v/agent` (two-sided).
+- **S2v** `gqa1v/agent` vs `gqa1nb/agent` (two-sided: the budget line on one CLI version).
+- **P1** (secondary) `gqa1+gqa1v/workflow` > `gqa1+gqa1v/agent`, all valid runs of both series, unpaired (K = 10 vs 10).
+- Secondary metric **foundMinEver** (`rescore-union.mjs`): foundMin over every report an agent-type run ever listed. **C3e**:
+  C3 on foundMinEver for `gqa1v/agent` (agent-matched's filed reports are already its log).
+- Reading fixed now: if C1 is supported, the workflow's gain survives an agent matched on prompt, report log, stop rule and
+  dollars; if C1 is not supported, the RESULT attributes H1's gap, at least in part, to those confounds and says so in the
+  bottom line. If R1 is not supported, H1 is reported as not replicated.
+
+**Budget and order.** Expected spend: `gqa1v` workflow 5 × $0.067, workflow-random 5 × $0.008, agent 5 × $0.004;
+agent-matched 5 × ≤ $0.069; about $0.76 in all, so about $1.37 for GQA-1. The spend stop ($2.50) and cap ($3.00) are
+unchanged. Lane 1: `TAG=gqa1v chain.sh workflow 1 5`. Lane 2: `TAG=gqa1v chain.sh agent 1 5`, then `chain.sh agent-matched 1 5`.
+No new monkey runs (R2 reuses `gqa1/monkey`, which is $0 and makes no model call).
+- **E1 (m9).** The preregistered Mercury exploratory secondary (§2), dropped in A1 "for time", runs in a third lane after the
+  Haiku lanes start: `MODEL=mercury-3 chain.sh agent 1 3`, then `MODEL=mercury-3 chain.sh workflow 1 3` (tag `gqa1m3`, $0
+  listed, hard token caps as in §2). Descriptive only; never a comparative claim.

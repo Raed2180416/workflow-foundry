@@ -9,8 +9,8 @@ import path from 'node:path';
 import { loadPolicy } from '../../src/models/policy.mjs';
 import { ClaudeCliProvider } from '../../src/models/providers/claude-cli.mjs';
 import { subsetPolicy } from '../lib/models.mjs';
-import { omitCliBudgetFlag, withRateLimitRetry } from './transport.mjs';
-import { loadRuns, transportFailures, compare, summarize } from './analyze.mjs';
+import { omitCliBudgetFlag, withRateLimitRetry, auditCliArgs } from './transport.mjs';
+import { loadRuns, transportFailures, compare, summarize, A1_NON_MODEL_FAILURES } from './analyze.mjs';
 import { readFileSync } from 'node:fs';
 const FROZEN_BED = JSON.parse(readFileSync(new URL('../../research/gameqa-20261021/FREEZE.json', import.meta.url), 'utf8')).bed.sha256;
 
@@ -32,6 +32,31 @@ test('omitCliBudgetFlag drops --max-budget-usd and its value, and nothing else',
   assert.deepEqual(after, [...before.slice(0, i), ...before.slice(i + 2)]);
   // a second provider of the same class is untouched (instance hook, not a class change)
   assert.ok(argsOf(new ClaudeCliProvider({ policy, maxBudgetUsd: 0.25 })).includes('--max-budget-usd'));
+});
+
+test('A2 (m2): the nb transport fails loudly instead of silently doing nothing', () => {
+  assert.throws(() => omitCliBudgetFlag({ providers: {} }), /no claude-cli provider/);
+  assert.throws(() => omitCliBudgetFlag(null), /no claude-cli provider/);
+  // a provider that no longer passes the flag (e.g. an engine change): every call's argument build throws
+  const changed = { args: () => ['-p', '--model', 'm'] };
+  omitCliBudgetFlag({ providers: { 'claude-cli': changed } });
+  assert.throws(() => changed.args({}), /no longer passes --max-budget-usd/);
+});
+
+test('A2 (m2): auditCliArgs logs, per call, whether the CLI got the budget flag, after the nb hook', () => {
+  const logs = [];
+  const cliProvider = new ClaudeCliProvider({ policy, maxBudgetUsd: 0.25 });
+  auditCliArgs({ providers: { 'claude-cli': cliProvider } }, e => logs.push(e));
+  argsOf(cliProvider); argsOf(cliProvider);
+  const nbProvider = new ClaudeCliProvider({ policy, maxBudgetUsd: 0.25 });
+  const nb = { providers: { 'claude-cli': nbProvider } };
+  omitCliBudgetFlag(nb); auditCliArgs(nb, e => logs.push(e)); auditCliArgs(nb, e => logs.push(e));   // idempotent
+  argsOf(nbProvider);
+  assert.equal(logs.length, 3);
+  assert.deepEqual(logs.map(l => [l.transport, l.budgetFlag, l.budgetUsd]), [['cli-args', true, '0.25'], ['cli-args', true, '0.25'], ['cli-args', false, null]]);
+  assert.equal(logs[0].argsSha, logs[1].argsSha, 'same input, same digest');
+  assert.notEqual(logs[0].argsSha, logs[2].argsSha);
+  assert.ok(logs.every(l => !('ok' in l)), 'audit rows carry no ok field, so call counts ignore them');
 });
 
 test('withRateLimitRetry retries returned and thrown rate limits, carries their spend, and gives up after the waits', async () => {
@@ -78,23 +103,38 @@ test('analysis: a run whose model calls failed for non-model reasons is a harnes
     mk('gqa1-workflow-r2', 'workflow', 2, [{ nodeKey: 'construct', ok: false, error: 'MODEL_RATE_LIMIT' }], 0);
     mk('gqa1-workflow-r3', 'workflow', 3, [{ nodeKey: 'a', ok: false, error: 'MODEL_SCHEMA' }, { nodeKey: 'a', ok: false, error: 'MODEL_SCHEMA' }], 0);
     mk('gqa1-workflow-r4', 'workflow', 4, [{ nodeKey: 'a', ok: true }, { nodeKey: 'b', ok: false, error: 'MODEL_RATE_LIMIT' }, { nodeKey: 'c', ok: true },
-      { transport: 'rate-limit-retry', nodeKey: 'b' }], 7);
+      { transport: 'rate-limit-retry', nodeKey: 'b' }, { transport: 'cli-args', budgetFlag: true }], 7);
+    // A2 (M5): a timeout can be the model's own doing (a very long answer): no longer a harness fault
+    mk('gqa1-workflow-r5', 'workflow', 5, [{ nodeKey: 'a', ok: false, error: 'MODEL_TIMEOUT' }, { nodeKey: 'b', ok: false, error: 'ERROR' }], 0);
     assert.deepEqual(transportFailures(path.join(dir, 'gqa1-workflow-r4')), { calls: 3, nonModel: 1 });
     const runs = loadRuns(dir), by = Object.fromEntries(runs.map(r => [r.name, r.excluded]));
     assert.equal(by['gqa1-workflow-r1'], null);
     assert.match(by['gqa1-workflow-r2'], /harness fault \(1 of 1 model calls failed for a non-model reason\)/);
     assert.equal(by['gqa1-workflow-r3'], null, 'schema failures are the model\'s: a result, not a harness fault');
     assert.equal(by['gqa1-workflow-r4'], null, 'one rate limit in three calls stays under the 50% rule');
-    assert.deepEqual(summarize(runs)['gqa1/workflow'].foundMin, [8, 0, 7]);
+    assert.equal(by['gqa1-workflow-r5'], null, 'A2: MODEL_TIMEOUT and ERROR are results');
+    assert.match(loadRuns(dir, { codes: A1_NON_MODEL_FAILURES }).find(r => r.name === 'gqa1-workflow-r5').excluded, /harness fault \(2 of 2/, 'under the A1 codes it was excluded');
+    assert.deepEqual(summarize(runs)['gqa1/workflow'].foundMin, [8, 0, 7, 0]);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('analysis: S1/S2 compare two series with all valid reps (independent runs, not paired by rep)', () => {
   const arm = (tag, name, reps, foundMin) => ({ tag, arm: name, reps, foundMin });
   const arms = { 'gqa1/workflow': arm('gqa1', 'workflow', [1, 2, 3], [8, 8, 7]), 'gqa1nb/agent': arm('gqa1nb', 'agent', [4, 5], [2, 1]), 'gqa1/agent': arm('gqa1', 'agent', [1, 2, 3, 4, 5], [1, 1, 1, 1, 1]) };
-  const t = Object.fromEntries(compare(arms).map(x => [x.role.slice(0, 2), x]));
+  const t = Object.fromEntries(compare(arms).map(x => [x.role.split(' ')[0], x]));
   assert.equal(t.S1.nA, 3); assert.equal(t.S1.nB, 2);
   assert.equal(t.S2.nA, 2); assert.equal(t.S2.nB, 5);
   assert.equal(t.H1.nA, 3, 'H1 stays paired on complete reps of one series');
   assert.equal(t.H1.nB, 3);
+});
+
+test('analysis (A2): pooled keys take every valid run of each series, unpaired; R1 pairs within gqa1v', () => {
+  const arm = (tag, name, reps, foundMin) => ({ tag, arm: name, reps, foundMin });
+  const arms = { 'gqa1/workflow': arm('gqa1', 'workflow', [1, 2, 3, 4, 5], [8, 8, 6, 5, 5]), 'gqa1/agent': arm('gqa1', 'agent', [1, 2, 3, 4, 5], [1, 1, 1, 1, 1]),
+    'gqa1v/workflow': arm('gqa1v', 'workflow', [1, 2, 4], [6, 7, 5]), 'gqa1v/agent': arm('gqa1v', 'agent', [1, 2, 3, 4], [1, 2, 1, 1]) };
+  const t = Object.fromEntries(compare(arms).map(x => [x.role.split(' ')[0], x]));
+  assert.equal(t.R1.nA, 3); assert.equal(t.R1.nB, 3, 'R1 pairs the complete reps of gqa1v');
+  assert.equal(t.P1.nA, 8); assert.equal(t.P1.nB, 9);
+  assert.equal(t.P1.meanA, 6.25);
+  assert.ok(t.C1.missing, 'no gqa2 runs yet');
 });

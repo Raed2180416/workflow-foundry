@@ -161,6 +161,54 @@ export async function runAgent({ session, caller, budgets }) {
   return { reports, stats: { exploreTicks: ticks, runs: history.length, finished, notes, ...(persist ? { refusedFinishes } : {}), played: history.map(h => ({ seed: h.seed, steps: h.steps })) } };
 }
 
+// ------------------------------------------------------------------------------------------------ matched agent (amendment A2)
+// The strongest solo-agent baseline we could define without giving it the workflow's machinery (review findings M1-M3):
+//   prompt    the persona prompt's exploration wording (reach new areas, goto is a convenient way to walk), not "prefer
+//             short, focused runs" (prompts.mjs AGENT_MATCHED_SYSTEM)
+//   reports   append-only: every report the agent files is kept (deduplicated by seed + tokens); it cannot drop one
+//   restarts  when it finishes (or a session reaches maxTurns) a fresh session starts, with no notes but with the list of
+//             filed reports, until the run has spent usdPerRun (set to the measured mean spend of a GQA-1 workflow run),
+//             used its ticks, or made maxTotalTurns calls. So it gets the workflow's dollars and ticks, and code owns the
+//             stop decision, as in the workflow; it still plays, detects, replays and minimizes by itself.
+export async function runAgentMatched({ session, caller, budgets }) {
+  const { maxTurns = 40, maxTotalTurns = 100, exploreTicks = 8000, maxStepsShown = 120, maxFiled = 100 } = budgets;
+  const filed = [], keys = new Set(), played = [], sessions = [];
+  let ticks = 0, totalTurns = 0, stop = null;
+  for (let s = 1; !stop; s++) {
+    let notes = '', lastRun = null, lastError = null, finished = false, calls = 0;
+    const history = [];
+    for (let turn = 1; turn <= maxTurns; turn++) {
+      if (totalTurns >= maxTotalTurns) { stop = 'turns'; break; }
+      if (ticks >= exploreTicks) { stop = 'ticks'; break; }
+      const prompt = P.agentMatchedTurnPrompt({ session: s, turn, maxTurns, ticksLeft: Math.max(0, exploreTicks - ticks), notes, history, lastRun, lastError, filed });
+      lastError = null; totalTurns++; calls++;
+      const r = await caller.call(`s${s}-turn-${turn}`, { system: P.AGENT_MATCHED_SYSTEM, prompt, schema: P.AGENT_MATCHED_SCHEMA });
+      // a call refused by the run's dollar cap is not a turn (no model call was made)
+      if (!r.ok) { if (r.error?.code === 'RUN_BUDGET') { stop = 'usd'; totalTurns--; calls--; break; } lastError = `the model call failed (${r.error?.code})`; continue; }
+      const v = r.value;
+      notes = v.notes;
+      for (const rep of v.reports) {
+        const k = `${rep.seed}|${rep.steps.join(' ')}`;
+        if (keys.has(k) || filed.length >= maxFiled) continue;
+        keys.add(k); filed.push({ ...rep, _at: { session: s, turn } });
+      }
+      if (v.action === 'finish') { finished = true; break; }
+      const bad = v.steps.length ? v.steps.map(tokenError).find(Boolean) : 'steps is empty';
+      if (bad) { lastError = `invalid steps (${bad}); nothing was run`; lastRun = null; continue; }
+      const start = await session.reset(v.seed);
+      const run = await session.run(v.steps, { detail: 'each' });
+      ticks += run.primitives;
+      lastRun = { seed: v.seed, text: renderRun(run, { start, maxSteps: maxStepsShown }), map: renderMap(run.final) };
+      history.push({ n: history.length + 1, seed: v.seed, steps: v.steps, tokens: v.steps.length, outcome: outcomeOf(run) });
+      played.push({ seed: v.seed, steps: v.steps, session: s });
+    }
+    if (calls) sessions.push({ session: s, turns: calls, finished, runs: history.length, notes });
+    if (!stop && caller.stats.spent >= (budgets.usdPerRun ?? Infinity)) stop = 'usd';
+  }
+  return { reports: filed.map(({ _at, ...r }) => r),
+    stats: { exploreTicks: ticks, runs: played.length, turns: totalTurns, sessions, stop, filedAt: filed.map(f => f._at), played } };
+}
+
 // ------------------------------------------------------------------------------------------------ cheap-built workflow
 export async function construct({ caller }) {
   const r = await caller.call('construct', { system: P.CONSTRUCT_SYSTEM, prompt: 'Write the personas and the checks for this game.', schema: P.CONSTRUCT_SCHEMA });
@@ -231,7 +279,8 @@ export async function runWorkflow({ session, caller, rng, budgets, explore = 'pe
     }
     coverage = coverageOf(allRuns);
   }
-  // 3. triage: one candidate per violated check (checks that errored during exploration are dropped)
+  // 3. triage: one candidate per (check, screen) signature, breadth first across checks (template 1.1.0; checks that errored
+  //    during exploration are dropped)
   const triaged = triageOrder([...cands.values()].filter(c => !evalErrors.has(c.checkId))).slice(0, B.maxCandidates);
   // 4-5. repro + minimize (code)
   const minimized = [];

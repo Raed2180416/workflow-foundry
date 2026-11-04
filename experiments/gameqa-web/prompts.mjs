@@ -58,6 +58,44 @@ export function agentTurnPrompt({ turn, maxTurns, ticksLeft, notes, history, las
   return lines.join('\n');
 }
 
+// ------------------------------------------------------------------------------------------------ amendment A2: matched agent
+// The solo agent with (1) the persona prompt's exploration wording instead of "prefer short, focused runs" (review finding
+// M2: the frozen agent prompt never mentions goto and asks for short runs, the persona prompt says "reach new areas and
+// states ... goto:x,y is a convenient way to walk"), (2) an append-only report log (finding M1: the frozen protocol let the
+// agent drop a bug it had found by rewriting its list), and (3) restarts until it has spent what a workflow run costs
+// (finding M3, run by arms.mjs runAgentMatched). The frozen AGENT_SYSTEM above is unchanged (its digest is in old metas).
+export const AGENT_MATCHED_SYSTEM = `You are a game QA tester working alone on a build of a browser game. Your job: find as many distinct bugs as you can, and report each one with the shortest token list that reproduces it from a fresh game.
+
+The design document below says how the game is meant to work; anything the build does differently is a bug. You interact only through the test harness described in its section 9: each turn you may run one list of tokens from a fresh game with a seed of your choice, and you get back the observation after every tick. You keep your own notes between turns.
+
+Plan runs that reach new areas and states, and set up situations where a rule could break. A run holds at most 120 tokens; goto:x,y is a convenient way to walk. Different seeds change the enemies' timing.
+
+QA practice (general, not specific to this game):
+${HEURISTICS}
+
+Protocol, every turn, answer with JSON:
+- notes: your working memory for the next turn (what you tried, what looked wrong, what to try next). It replaces your previous notes. At most 3000 characters.
+- action: "run" to play the tokens in steps from a fresh game with seed, or "finish" when you are done with this session.
+- seed, steps: the run to play (ignored for finish).
+- reports: the bug reports to file this turn: new bugs, or a shorter repro of a bug you filed. Every report you file is kept, and none can be withdrawn, so file only what you have replayed. Each report: bug_class, title, observed, expected, seed, steps (the shortest tokens that reproduce the bug from a fresh game with that seed: replay it and cut it down before filing). Leave the list empty when you have nothing new to file.
+
+=== DESIGN DOCUMENT ===
+${SPEC}`;
+export const AGENT_MATCHED_SCHEMA = AGENT_SCHEMA;
+
+export function agentMatchedTurnPrompt({ session, turn, maxTurns, ticksLeft, notes, history, lastRun, lastError, filed }) {
+  const lines = [`Session ${session}, turn ${turn} of ${maxTurns}. Tick budget left: ${ticksLeft}.${turn === maxTurns ? ' This is the last turn of this session: file anything you have not filed yet.' : ''}`];
+  if (session > 1 && turn === 1) lines.push('This is a fresh session: your earlier sessions ended and their notes are gone. The bugs filed so far are listed below; look for other bugs.');
+  lines.push(`\nYour notes from the last turn:\n${notes || '(none yet)'}`);
+  lines.push(`\nRuns so far in this session (${history.length}):`);
+  for (const h of history.slice(-12)) lines.push(`- run ${h.n}: seed ${h.seed}, ${h.tokens} tokens [${h.steps.slice(0, 30).join(' ')}${h.steps.length > 30 ? ' ...' : ''}] -> ${h.outcome}`);
+  if (history.length > 12) lines.push(`(${history.length - 12} earlier runs not listed)`);
+  if (lastError) lines.push(`\nYour last answer could not be run: ${lastError}`);
+  if (lastRun) lines.push(`\nTrace of your last run (seed ${lastRun.seed}; one line per tick: token -> state after the tick):\n${lastRun.text}\n\nMap after the run (@ = player, e = enemy):\n${lastRun.map}`);
+  lines.push(`\nReports filed so far (${filed.length}): ${filed.length ? JSON.stringify(filed.map(r => ({ bug_class: r.bug_class, title: r.title, seed: r.seed, steps: r.steps }))) : 'none'}`);
+  return lines.join('\n');
+}
+
 // ------------------------------------------------------------------------------------------------ A2: workflow
 export const CONSTRUCT_SYSTEM = `You build the test plan for an automated QA workflow for a browser game. Code will play the plans and evaluate your checks on every tick; you never see the game directly in this step.
 
@@ -134,5 +172,5 @@ export const JUDGE_SCHEMA = {
 };
 export const judgePrompt = cands => cands.map(c => `--- candidate ${c.n} ---\n${c.checks.map(k => `Check: ${k.id}: ${k.rule}\n${k.when ? `  when: ${k.when}\n` : ''}${k.expect ? `  expect: ${k.expect}\n` : ''}  violated at tick ${k.step}`).join('\n')}\nMinimized repro: seed ${c.seed}, tokens ${JSON.stringify(c.steps)}\nTrace of the replay:\n${c.trace}`).join('\n\n') + '\n\nAnswer with one verdict per candidate.';
 
-export const promptDigests = () => ({ agentSystem: sha(AGENT_SYSTEM), constructSystem: sha(CONSTRUCT_SYSTEM), judgeSystem: sha(JUDGE_SYSTEM),
+export const promptDigests = () => ({ agentSystem: sha(AGENT_SYSTEM), agentMatchedSystem: sha(AGENT_MATCHED_SYSTEM), constructSystem: sha(CONSTRUCT_SYSTEM), judgeSystem: sha(JUDGE_SYSTEM),
   exploreSystem: sha(exploreSystem({ name: '', goal: '', style: '' })), spec: sha(SPEC), template: sha(JSON.stringify(TEMPLATE)) });

@@ -14,7 +14,7 @@ import { loadTruth, scoreReports } from '../../beds/gameqa-web/oracle.mjs';
 import { parse, compile, evaluate, ExprError } from './expr.mjs';
 import { ddmin, compileChecks } from './qa-lib.mjs';
 import { mannWhitney } from './analyze.mjs';
-import { runAgent, runWorkflow, runMonkey, makeCaller, mulberry32 } from './arms.mjs';
+import { runAgent, runAgentMatched, runWorkflow, runMonkey, makeCaller, mulberry32 } from './arms.mjs';
 import * as P from './prompts.mjs';
 
 const HAIKU = 'claude-haiku-5-5', truth = loadTruth();
@@ -160,6 +160,49 @@ bt('agent-persist (amendment A1): an early finish is refused and the agent keeps
   await s2.close();
   assert.equal(p2.provider.calls.length, 2); assert.equal(r2.stats.refusedFinishes, undefined);
   assertNoTruth(provider.calls);
+});
+
+bt('agent-matched (amendment A2): append-only filing, restarts with the filed list, and the dollar cap ends the run', async () => {
+  const twoMoves = { bug_class: 'input_race', title: 'two moves', observed: 'o', expected: 'e', seed: 1, steps: ['right+right'] };
+  const spikes = { bug_class: 'score_overflow', title: 'spike wrap', observed: 'o', expected: 'e', seed: 1, steps: ['goto:3,3'] };
+  const turns = [
+    // session 1: run, file a bug, then "rewrite" the list without it (the frozen protocol would have lost it), then finish
+    { notes: 's1', action: 'run', seed: 1, steps: ['right+right'], reports: [twoMoves] },
+    { notes: 's1 b', action: 'run', seed: 1, steps: ['goto:3,3'], reports: [] },
+    { notes: 's1 done', action: 'finish', seed: 1, steps: [], reports: [spikes, spikes] },
+    // session 2: fresh notes, sees the filed list; files a duplicate (ignored) and finishes
+    { notes: 's2', action: 'finish', seed: 1, steps: [], reports: [twoMoves] },
+    // session 3: one call, then the dollar cap is reached
+    { notes: 's3', action: 'run', seed: 5, steps: ['down'], reports: [] },
+    { notes: 'never served', action: 'finish', seed: 1, steps: [], reports: [] },
+  ];
+  const { port, provider } = portWith(turns.map(v => ({ value: v, costUsd: 0.01 })));
+  const session = await openSession(browser, { flags: truth.build.flags });
+  const caller = makeCaller({ port, runId: 't-agent-matched', modelId: HAIKU, usdCap: 0.05 });
+  const r = await runAgentMatched({ session, caller, budgets: { maxTurns: 3, maxTotalTurns: 10, exploreTicks: 1000, usdPerRun: 0.05 } });
+  await session.close();
+  assert.equal(provider.calls.length, 5, 'the sixth call is refused by the run cap');
+  assert.equal(r.stats.stop, 'usd');
+  assert.deepEqual(r.stats.sessions.map(x => [x.session, x.turns, x.finished]), [[1, 3, true], [2, 1, true], [3, 1, false]]);
+  assert.equal(r.reports.length, 2, 'filed reports are kept and deduplicated by seed + tokens');
+  assert.deepEqual(r.stats.filedAt, [{ session: 1, turn: 1 }, { session: 1, turn: 3 }]);
+  assert.equal(r.stats.runs, 3); assert.equal(r.stats.played.length, 3);
+  assert.equal(provider.calls[0].system, P.AGENT_MATCHED_SYSTEM);
+  assert.match(P.AGENT_MATCHED_SYSTEM, /goto:x,y is a convenient way to walk/); assert.doesNotMatch(P.AGENT_MATCHED_SYSTEM, /prefer short/);
+  assert.match(provider.calls[3].prompt, /^Session 2, turn 1 of 3\./);
+  assert.match(provider.calls[3].prompt, /This is a fresh session/);
+  assert.match(provider.calls[3].prompt, /Your notes from the last turn:\n\(none yet\)/, 'no notes carried across sessions');
+  assert.match(provider.calls[3].prompt, /Reports filed so far \(2\)/);
+  assert.match(provider.calls[2].prompt, /This is the last turn of this session/);
+  const s = await scoreReports(browser, r.reports, { truth });
+  assert.deepEqual(Object.entries(s.perBug).filter(([, b]) => b.foundMin).map(([id]) => id).sort(), ['GQ10', 'GQ12']);
+  assertNoTruth(provider.calls);
+  // the tick budget also ends a run
+  const p2 = portWith(Array(5).fill({ value: { notes: 'n', action: 'run', seed: 2, steps: Array(60).fill('wait'), reports: [] } }));
+  const s2 = await openSession(browser, { flags: truth.build.flags });
+  const r2 = await runAgentMatched({ session: s2, caller: makeCaller({ port: p2.port, runId: 't-am-ticks', modelId: HAIKU, usdCap: 1 }), budgets: { maxTurns: 40, maxTotalTurns: 10, exploreTicks: 100, usdPerRun: 1 } });
+  await s2.close();
+  assert.equal(r2.stats.stop, 'ticks'); assert.equal(p2.provider.calls.length, 2); assert.equal(r2.stats.exploreTicks, 120);
 });
 
 bt('monkey arm is deterministic for a given rng seed', async () => {
