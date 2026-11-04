@@ -1,0 +1,47 @@
+{
+ "b1lh-e8-1": {
+  "oracle": "1022/1022",
+  "ok": true,
+  "digest": "837f2255e912809d"
+ },
+ "b1lh-e8-2": {
+  "oracle": "1022/1022",
+  "ok": true,
+  "digest": "f7fc00743543c30b"
+ },
+ "b1lh-e8-3": {
+  "oracle": "1022/1022",
+  "ok": true,
+  "digest": "1de6418ec11cd0d8"
+ },
+ "ch-e8-1": {
+  "oracle": "1022/1022",
+  "ok": true,
+  "digest": "51c858a0ed7b189e"
+ },
+ "ch-e8-2": {
+  "oracle": "1022/1022",
+  "ok": true,
+  "digest": "43514494acb836be"
+ },
+ "ch-e8-3": {
+  "oracle": "1022/1022",
+  "ok": true,
+  "digest": "9f44d0546979025b"
+ },
+ "cht-e8-1": {
+  "oracle": "1022/1022",
+  "ok": true,
+  "digest": "bb0842f6205d6f02"
+ },
+ "cht-e8-2": {
+  "oracle": "1022/1022",
+  "ok": true,
+  "digest": "3dcafd0e151ee9fc"
+ },
+ "cht-e8-3": {
+  "oracle": "1022/1022",
+  "ok": true,
+  "digest": "1c4e09ebad1ebf6b"
+ }
+}

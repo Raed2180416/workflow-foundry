@@ -1,0 +1,778 @@
+{
+ "label": "DUR-1 $0 DRY RUN (rehearsal seeds 1207-1208, size 24, stub sealed bundle, stub sessions): plumbing only, never evidence",
+ "steps": {
+  "seeds": {
+   "ok": true,
+   "scheduled": 44,
+   "refusedOutside": "8/8",
+   "ms": 6
+  },
+  "author-stub": {
+   "ok": true,
+   "sealedOk": false,
+   "sha256": null,
+   "worlds": [
+    {
+     "seed": 1223,
+     "referenceOk": true,
+     "exposure": {
+      "R2s": {
+       "completed": 2,
+       "floor": 10,
+       "undriftedFails": 2
+      },
+      "E2s": {
+       "completed": 9,
+       "floor": 10
+      },
+      "U1s": {
+       "completed": 0,
+       "floor": 6,
+       "undriftedFails": 0
+      }
+     },
+     "controls": {
+      "noop": "fails",
+      "charge-twice": "fails"
+     }
+    }
+   ],
+   "ms": 14089
+  },
+  "stagez-gates": {
+   "ok": true,
+   "worlds": [
+    {
+     "key": "r1-W1",
+     "world": "eaee5401a61a973b",
+     "completed": 30,
+     "v1": true,
+     "v1Problems": [],
+     "v2": {
+      "noop": "fails",
+      "charge-twice": "fails"
+     },
+     "v3": {
+      "P1": {
+       "exposed": 18,
+       "completed": 18,
+       "floor": 10,
+       "meets": true,
+       "cases": [
+        "o0012",
+        "o0013",
+        "o0014",
+        "o0015",
+        "o0016",
+        "o0017",
+        "o0018",
+        "o0019",
+        "o0020",
+        "o0021",
+        "o0022",
+        "o0023",
+        "o0024",
+        "o0025",
+        "o0026",
+        "o0027",
+        "o0028",
+        "o0029"
+       ]
+      },
+      "E1": {
+       "exposed": 9,
+       "completed": 9,
+       "floor": 10,
+       "meets": false,
+       "cases": [
+        "o0017",
+        "o0018",
+        "o0019",
+        "o0022",
+        "o0023",
+        "o0024",
+        "o0025",
+        "o0026",
+        "o0027"
+       ]
+      },
+      "R1": {
+       "exposed": 6,
+       "completed": 6,
+       "floor": 10,
+       "meets": false,
+       "cases": [
+        "o0011",
+        "o0012",
+        "o0013",
+        "o0014",
+        "o0017",
+        "o0019"
+       ]
+      }
+     }
+    },
+    {
+     "key": "r1-W2",
+     "world": "d6ebd0083d71aebc",
+     "completed": 29,
+     "v1": true,
+     "v1Problems": [],
+     "v2": {
+      "noop": "fails",
+      "charge-twice": "fails"
+     },
+     "v3": {
+      "P1": {
+       "exposed": 18,
+       "completed": 17,
+       "floor": null,
+       "meets": true,
+       "cases": [
+        "o0012",
+        "o0013",
+        "o0014",
+        "o0015",
+        "o0016",
+        "o0017",
+        "o0018",
+        "o0019",
+        "o0020",
+        "o0021",
+        "o0022",
+        "o0023",
+        "o0024",
+        "o0025",
+        "o0027",
+        "o0028",
+        "o0029"
+       ]
+      },
+      "R1": {
+       "exposed": 1,
+       "completed": 1,
+       "floor": null,
+       "meets": true,
+       "cases": [
+        "o0016"
+       ]
+      },
+      "R2s": {
+       "exposed": 2,
+       "completed": 2,
+       "floor": 10,
+       "meets": false
+      },
+      "L1": {
+       "exposed": 5,
+       "completed": 5,
+       "floor": 8,
+       "meets": false,
+       "cases": [
+        "o0006",
+        "o0007",
+        "o0011",
+        "o0025",
+        "o0029"
+       ]
+      },
+      "F": {
+       "exposed": 7,
+       "completed": 7,
+       "floor": null,
+       "meets": true,
+       "cases": [
+        "o0010",
+        "o0012",
+        "o0017",
+        "o0020",
+        "o0021",
+        "o0023",
+        "o0025"
+       ]
+      },
+      "E2s": {
+       "exposed": 13,
+       "completed": 13,
+       "floor": 10,
+       "meets": true
+      },
+      "ADV": {
+       "exposed": 24,
+       "completed": 23,
+       "floor": null,
+       "meets": true,
+       "cases": [
+        "o0006",
+        "o0007",
+        "o0008",
+        "o0009",
+        "o0010",
+        "o0011",
+        "o0012",
+        "o0013",
+        "o0014",
+        "o0015",
+        "o0016",
+        "o0017",
+        "o0018",
+        "o0019",
+        "o0020",
+        "o0021",
+        "o0022",
+        "o0023",
+        "o0024",
+        "o0025",
+        "o0027",
+        "o0028",
+        "o0029"
+       ]
+      },
+      "E1r": {
+       "exposed": 21,
+       "completed": 20,
+       "floor": 10,
+       "meets": true,
+       "cases": [
+        "o0001",
+        "o0004",
+        "o0007",
+        "o0008",
+        "o0009",
+        "o0010",
+        "o0011",
+        "o0012",
+        "o0013",
+        "o0015",
+        "o0016",
+        "o0017",
+        "o0019",
+        "o0020",
+        "o0021",
+        "o0022",
+        "o0023",
+        "o0025",
+        "o0027",
+        "o0028"
+       ]
+      },
+      "U1s": {
+       "exposed": 1,
+       "completed": 1,
+       "floor": 6,
+       "meets": false
+      }
+     }
+    }
+   ],
+   "ms": 19236
+  },
+  "exposure": {
+   "ok": true,
+   "floors": {
+    "1": {
+     "P1": {
+      "completed": 18,
+      "exposed": 18,
+      "floor": 10,
+      "meets": true,
+      "startsHere": true
+     },
+     "E1": {
+      "completed": 9,
+      "exposed": 9,
+      "floor": 10,
+      "meets": false,
+      "startsHere": true
+     },
+     "R1": {
+      "completed": 6,
+      "exposed": 6,
+      "floor": 10,
+      "meets": false,
+      "startsHere": true
+     }
+    },
+    "2": {
+     "P1": {
+      "completed": 17,
+      "exposed": 18,
+      "floor": null,
+      "meets": true,
+      "startsHere": false
+     },
+     "R1": {
+      "completed": 1,
+      "exposed": 1,
+      "floor": null,
+      "meets": true,
+      "startsHere": false
+     },
+     "R2s": {
+      "completed": 2,
+      "exposed": 2,
+      "floor": 10,
+      "meets": false,
+      "startsHere": true
+     },
+     "L1": {
+      "completed": 5,
+      "exposed": 5,
+      "floor": 8,
+      "meets": false,
+      "startsHere": true
+     },
+     "F": {
+      "completed": 7,
+      "exposed": 7,
+      "floor": null,
+      "meets": true,
+      "startsHere": true
+     },
+     "E2s": {
+      "completed": 13,
+      "exposed": 13,
+      "floor": 10,
+      "meets": true,
+      "startsHere": true
+     },
+     "ADV": {
+      "completed": 23,
+      "exposed": 24,
+      "floor": null,
+      "meets": true,
+      "startsHere": true
+     },
+     "E1r": {
+      "completed": 20,
+      "exposed": 21,
+      "floor": 10,
+      "meets": true,
+      "startsHere": true
+     },
+     "U1s": {
+      "completed": 1,
+      "exposed": 1,
+      "floor": 6,
+      "meets": false,
+      "startsHere": true
+     }
+    }
+   },
+   "ms": 1066
+  },
+  "static-arms": {
+   "ok": true,
+   "ruleTimes": {
+    "knowable": {
+     "R1": 32400000,
+     "R2s": 1328400000,
+     "U1s": 2191669439
+    },
+    "firstFailure": {
+     "R1": 320101000,
+     "R2s": 1665660000,
+     "U1s": 2133960000
+    },
+    "how": {
+     "R1": "publication",
+     "R2s": "publication",
+     "U1s": "first m5 on an exposed case (W2)"
+    }
+   },
+   "worlds": {
+    "S-H*/b1lh-e8-1": [
+     "23/29",
+     "15/27"
+    ],
+    "S-H*/ch-e8-1": [
+     "23/29",
+     "14/27"
+    ],
+    "REF-S/S1": [
+     "23/29",
+     "24/27"
+    ],
+    "R-static/ref": [
+     "23/29",
+     "24/27"
+    ],
+    "R-maint2/ref": [
+     "29/29",
+     "26/27"
+    ],
+    "R-ceil/ref": [
+     "29/29",
+     "26/27"
+    ]
+   },
+   "ms": 70581
+  },
+  "heal-arm": {
+   "ok": true,
+   "lineages": {
+    "b1lh-e8-1": {
+     "worlds": [
+      "23/29",
+      "23/27"
+     ],
+     "sessions": 10,
+     "promotions": 1,
+     "rollbacks": 0,
+     "incidents": 20,
+     "prefixIdentical": true
+    },
+    "ch-e8-1": {
+     "worlds": [
+      "23/29",
+      "14/27"
+     ],
+     "sessions": 12,
+     "promotions": 0,
+     "rollbacks": 0,
+     "incidents": 24,
+     "prefixIdentical": true
+    }
+   },
+   "ms": 121994
+  },
+  "mh-stale-fork": {
+   "ok": true,
+   "lineage": "b1lh-e8-1",
+   "worlds": [
+    "23/29",
+    "23/27"
+   ],
+   "ms": 70657
+  },
+  "attribution": {
+   "ok": true,
+   "induced": {
+    "S-H*": {
+     "b1lh-e8-1": {
+      "1": {
+       "P1": 0,
+       "E1": 0,
+       "R1": 6
+      },
+      "2": {
+       "P1": 0,
+       "R1": 0,
+       "R2s": 2,
+       "L1": 2,
+       "F": 0,
+       "E2s": 9,
+       "ADV": 2,
+       "E1r": 0,
+       "U1s": 0
+      }
+     },
+     "ch-e8-1": {
+      "1": {
+       "P1": 0,
+       "E1": 0,
+       "R1": 6
+      },
+      "2": {
+       "P1": 0,
+       "R1": 0,
+       "R2s": 2,
+       "L1": 3,
+       "F": 0,
+       "E2s": 9,
+       "ADV": 3,
+       "E1r": 0,
+       "U1s": 0
+      }
+     }
+    },
+    "MH-H": {
+     "b1lh-e8-1": {
+      "1": {
+       "P1": 0,
+       "E1": 0,
+       "R1": 6
+      },
+      "2": {
+       "P1": 0,
+       "R1": 0,
+       "R2s": 2,
+       "L1": 1,
+       "F": 0,
+       "E2s": 1,
+       "ADV": 1,
+       "E1r": 0,
+       "U1s": 1
+      }
+     },
+     "ch-e8-1": {
+      "1": {
+       "P1": 0,
+       "E1": 0,
+       "R1": 6
+      },
+      "2": {
+       "P1": 0,
+       "R1": 0,
+       "R2s": 2,
+       "L1": 3,
+       "F": 0,
+       "E2s": 9,
+       "ADV": 3,
+       "E1r": 0,
+       "U1s": 0
+      }
+     }
+    }
+   },
+   "ms": 368070
+  },
+  "certification": {
+   "ok": true,
+   "verdicts": {
+    "b1lh-e8-1": [
+     "2.4 base: reject (partial-fix)"
+    ],
+    "ch-e8-1": []
+   },
+   "ms": 44638
+  },
+  "windows-stub-agent": {
+   "ok": true,
+   "selected": 4,
+   "ticks": 6,
+   "routedCases": 4,
+   "costUsd": 0,
+   "status": "complete",
+   "pairs": 8,
+   "ms": 585
+  },
+  "ld-h-stub": {
+   "ok": true,
+   "id": "ld-k0",
+   "healed": true,
+   "durable": true,
+   "regressions": 0,
+   "falseComplaintHarm": 0,
+   "promotions": 1,
+   "ms": 55773
+  },
+  "wc1-search": {
+   "ok": true,
+   "used": 4,
+   "budget": 4,
+   "htFailure": {
+    "estimate": 0.0976608187134503,
+    "ht": 0.21973684210526317,
+    "hajek": 0.0976608187134503,
+    "se": 0.16369640897739948,
+    "ess": 3.6,
+    "n": 4,
+    "estimator": "hajek"
+   },
+   "cvar10": 0.26666666666666666,
+   "top": [
+    {
+     "key": "wc1-b1lh-e8-1-1304-8849-d2n14-MR2+MR5-delayed-actions-none-R1+L1",
+     "score": 16
+    },
+    {
+     "key": "wc1-b1lh-e8-1-1302-6334-d5n13-none-restart-L1",
+     "score": 4
+    }
+   ],
+   "confirmed": [
+    {
+     "key": "wc1-b1lh-e8-1-1304-8849-d2n14-MR2+MR5-delayed-actions-none-R1+L1",
+     "confirmed": false,
+     "recur": 2
+    }
+   ],
+   "bedFindings": 0,
+   "ms": 23040
+  },
+  "redteam-stub": {
+   "ok": true,
+   "probes": 2,
+   "scenarios": 2,
+   "valid": 2,
+   "bedFindings": 0,
+   "blindUsed": 2,
+   "ms": 11945
+  },
+  "sweep": {
+   "ok": true,
+   "promotions": 1,
+   "pooled": {
+    "marked": 0,
+    "truth": 0,
+    "tp": 0,
+    "precision": null,
+    "recall": null
+   },
+   "ms": 32838
+  },
+  "shield-ablation": {
+   "ok": true,
+   "base": "15/27 critical 0",
+   "shielded": "15/27 critical 0",
+   "refusals": 0,
+   "ms": 30112
+  },
+  "m6-analysis": {
+   "ok": true,
+   "onsets": [
+    "P1 novel 0.50 delay null",
+    "E1 novel 0.64 delay null",
+    "R1 novel 0.57 delay null",
+    "R2s novel 1.00 delay null",
+    "L1 novel 0.83 delay null",
+    "F novel 0.88 delay null",
+    "E2s novel 0.64 delay null",
+    "ADV novel 0.73 delay null",
+    "E1r novel 0.74 delay null",
+    "U1s novel 0.67 delay null"
+   ],
+   "w1Alarms": {
+    "s1": 0
+   },
+   "ms": 1950
+  },
+  "m6-detector": {
+   "ok": true,
+   "calibration": 71,
+   "instances": 80,
+   "alarms": [],
+   "ms": 19508
+  },
+  "power": {
+   "ok": true,
+   "sd": {
+    "rates": [
+     1,
+     0.9932,
+     0.9814,
+     0.953,
+     0.953,
+     0.953,
+     0.9344,
+     0.9002,
+     0.8669
+    ],
+    "mean": 0.9484,
+    "sd": 0.0433,
+    "lo": 0.0292,
+    "hi": 0.0829
+   },
+   "d3": {
+    "W12_gap-0.05": {
+     "a025": 0.15,
+     "a05": 0.167,
+     "se025": 0.0461,
+     "se05": 0.0482
+    },
+    "W12_gap0": {
+     "a025": 0.45,
+     "a05": 0.617,
+     "se025": 0.0642,
+     "se05": 0.0628
+    },
+    "W12_gap0.05": {
+     "a025": 0.967,
+     "a05": 0.983,
+     "se025": 0.0231,
+     "se05": 0.0167
+    },
+    "W8_gap-0.05": {
+     "a025": 0.083,
+     "a05": 0.183,
+     "se025": 0.0356,
+     "se05": 0.0499
+    },
+    "W8_gap0": {
+     "a025": 0.433,
+     "a05": 0.533,
+     "se025": 0.064,
+     "se05": 0.0644
+    },
+    "W8_gap0.05": {
+     "a025": 0.85,
+     "a05": 0.967,
+     "se025": 0.0461,
+     "se05": 0.0231
+    },
+    "W12_k4_gap0": 0.3,
+    "sizeAtMargin": 0.025,
+    "sizeAtMarginSe": 0.0078,
+    "reps": {
+     "cells": 60,
+     "sizeAtMargin": 400
+    }
+   },
+   "ms": 4657
+  },
+  "report": {
+   "ok": true,
+   "owner": [
+    {
+     "q": "Q1 good enough in the worst case?",
+     "rule": "D-5, D-11",
+     "verdict": "PARTIAL"
+    },
+    {
+     "q": "Q2 adapts and heals as it does real work?",
+     "rule": "D-1 (primary), D-6, D-10",
+     "verdict": "FALSIFIED; detection FAIL; unknown NOT SHOWN"
+    },
+    {
+     "q": "Q3 performance tested as it changes?",
+     "rule": "reported",
+     "verdict": "curves per arm (see below)"
+    },
+    {
+     "q": "Q4 durable state >= a human's?",
+     "rule": "D-4",
+     "verdict": "NOT RUN"
+    },
+    {
+     "q": "Q5 versus a per-tick agent; beat Opus at a fraction of the cost?",
+     "rule": "D-3 (primary), D-2, D-7",
+     "verdict": "SUPPORTED; cost PASS"
+    },
+    {
+     "q": "Q6 runs expose flaws in a hand-crafted workflow?",
+     "rule": "D-8",
+     "verdict": "NOT SHOWN"
+    },
+    {
+     "q": "Q7 every failure figured out?",
+     "rule": "§14.3",
+     "verdict": "LEDGER INCOMPLETE (0/36 records analyst-reviewed): no result text"
+    }
+   ],
+   "rules": {
+    "K0": "pass",
+    "D1": "FALSIFIED",
+    "D3": "SUPPORTED",
+    "holm": null,
+    "D2": "PASS",
+    "D4": "NOT RUN",
+    "D5": "PARTIAL",
+    "D5noComplaints": "PARTIAL",
+    "D6": "FAIL",
+    "D6noComplaints": "FAIL",
+    "D6noM2": "FAIL",
+    "D6noM2noComplaints": "FAIL",
+    "m6": "N",
+    "D7": "NOT RUN",
+    "D8": "NOT SHOWN",
+    "D9": "descriptive",
+    "D10": "NOT SHOWN",
+    "D11": "NO VALUE SHOWN"
+   },
+   "ms": 90
+  }
+ },
+ "ms": 890836,
+ "allStepsOk": true
+}
