@@ -17,7 +17,7 @@ import { exposureOf } from './exposure.mjs';
 import { runBundle, controlVersion, BAD_CONTROLS } from './arms.mjs';
 import { ruleVersion } from './rmaint.mjs';
 import { AUTHOR_VALIDATION, CHANGES, T0_MS, DAY_MS, assertDurSeeds } from './schedule.mjs';
-import { spendOf, EffortMissing, throwIfEnvFault } from './heal-adapter.mjs';
+import { spendOf, EffortMissing, throwIfEnvFault, preflight, meteredRun } from './heal-adapter.mjs';
 import { specE } from '../../beds/ebed/e8/index.mjs';
 
 const sha = s => createHash('sha256').update(s).digest('hex');
@@ -31,7 +31,7 @@ export function validationSpec(seed, bundle, { size = 80 } = {}) {
   const at = (d, t = '00:00') => { const [h, m] = t.split(':').map(Number); return T0_MS + (d - 1) * DAY_MS + (h * 60 + m) * 60_000; };
   const ch = id => bundle.changes[id];
   return { stream: 'author', k: 4, seed, size, difficulty: 3, mix: 'tail', changes: [
-    { id: 'R1', cls: 'CHG-A', kind: 'rule', startsHere: false, onsetMs: T0_MS, publishMs: null },
+    { id: 'R1', cls: 'CHG-A', kind: 'rule', startsHere: false, onsetMs: T0_MS, effMs: at(5), publishMs: null },   // carried: R1's published effective date (W3 d5), as in the streams (B7)
     { id: 'R2s', cls: 'CHG-A', kind: 'rule', startsHere: true, onsetMs: at(ch('R2s').onset.day), publishMs: ch('R2s').publish ? at(ch('R2s').publish.day, ch('R2s').publish.time ?? '09:00') : null },
     { id: 'E2s', cls: 'CHG-U', kind: 'env', startsHere: true, onsetMs: at(ch('E2s').onset.day), publishMs: null },
     { id: 'U1s', cls: 'CHG-U', kind: 'rule', startsHere: true, onsetMs: at(ch('U1s').onset.day), publishMs: null },
@@ -190,15 +190,9 @@ export async function runAuthor({ session, sealedDir = SEALED_DIR, sealedJson = 
     try {
       if (session.kind === 'stub') r = await session.fn({ workdir, attempt, feedback });
       else {
-        if (!session.effort) throw new EffortMissing('sealed author: no effort');
-        if (session.checkFreeze) { const fz = await session.checkFreeze(); if (!fz.ok) throw Object.assign(new Error(`DUR1_FREEZE A: ${JSON.stringify(fz).slice(0, 300)}`), { code: 'DUR1_FREEZE' }); }
-        const s = spendOf(session.spend.file);
-        if (s.upperUsd + session.budgetUsd > session.spend.totalCap) throw Object.assign(new Error('DUR1_BUDGET: author'), { code: 'DUR1_BUDGET' });
-        const id = `author-a${attempt}@${new Date().toISOString()}`;
-        appendFileSync(session.spend.file, JSON.stringify({ id, phase: 'start', label: `author-a${attempt}`, scope: 'P1', model: session.model, effort: session.effort, capUsd: session.budgetUsd, at: new Date().toISOString() }) + '\n');
+        preflight(session, `author-a${attempt}`);   // freeze F-A (FreezeError: exit 3), row P1, total
         const prompt = `Read AUTHOR-BRIEF.md and API.md first, then write bundle.json and run \`node check.mjs\` until every gate passes.${feedback ? ' GATES.txt holds the gate output of your previous attempt.' : ''}`;
-        r = await runClaudeCode({ model: session.model, prompt, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort });
-        appendFileSync(session.spend.file, JSON.stringify({ id, phase: 'end', label: `author-a${attempt}`, scope: 'P1', model: session.model, effort: session.effort, capUsd: session.budgetUsd, costUsd: r.costUsd ?? null, error: r.error?.code ?? null, at: new Date().toISOString() }) + '\n');
+        r = await meteredRun(session, { label: `author-a${attempt}`, run: () => runClaudeCode({ model: session.model, prompt, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort }) });
         throwIfEnvFault(r, `author-a${attempt}`);
       }
     } finally { await box.stop(); }

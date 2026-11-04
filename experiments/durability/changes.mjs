@@ -32,7 +32,7 @@ import { generateWorld, collectionRuns, minutesOf, CARRIER_CODES } from '../../b
 import { actors as baseActors } from '../../beds/ebed/e8/actors.mjs';
 import { rng } from '../../beds/lib/rng.mjs';
 import { DRIFTS } from '../compose/drift.mjs';
-import { CHANGES, CHANGE_IDS, T0_MS, MIN, DAY_MS, dayStart, dayOf, isoLocal, dateLocal } from './schedule.mjs';
+import { CHANGES, CHANGE_IDS, T0_MS, MIN, DAY_MS, dayStart, dayOf, isoLocal, dateLocal, effOf } from './schedule.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(here, '..', '..');
@@ -89,7 +89,7 @@ export async function itemFor(edits) {
   const file = path.join(scratchDir(), `transition-dur1-${digest.slice(0, 16)}.mjs`);
   writeFileSync(file, src);
   const mod = await import(pathToFileURL(file).href);
-  const item = Object.freeze({ ...e8.oracleItem, referenceTransition: mod.referenceTransition, canonicalArgs: mod.canonicalArgs, recordsOf: mod.recordsOf, dur1Digest: digest });
+  const item = Object.freeze({ ...e8.oracleItem, referenceTransition: mod.referenceTransition, canonicalArgs: mod.canonicalArgs, recordsOf: mod.recordsOf, dur1Digest: digest, dur1File: file });
   itemCache.set(digest, item);
   return item;
 }
@@ -414,7 +414,7 @@ export async function buildBundle(spec, { sealed = null, exclude = [], base = fa
     const S = sealed.change(id);
     if (S.worldOp) { const before = W; W = runWorldOp(S.worldOp, W, { id, salt, eff: ch(id).onsetMs }); touched[id] = changedCases(before, W); }
   }
-  for (const id of ['R1', 'R2s', 'U1s']) if (want(id)) W.truth.dur1Eff[id] = ch(id).onsetMs;
+  for (const id of ['R1', 'R2s', 'U1s']) if (want(id)) W.truth.dur1Eff[id] = effOf(ch(id));   // a carried rule keeps its published effective date (B7)
   for (const id of ['R1', 'R2s']) {
     const c = ch(id);
     if (!c || base || exclude.includes(id)) continue;
@@ -423,13 +423,13 @@ export async function buildBundle(spec, { sealed = null, exclude = [], base = fa
     const edits = id === 'R1' ? D1.spec : (sealed.change(id).spec ?? []);
     const summary = id === 'R1' ? 'R2.2 changes: a fraud review with no usable answer by its deadline no longer cancels the order; the order is cleared just after the deadline.'
       : (sealed.change(id).label ?? 'a rule changes, as written below.');
-    specChanges.push({ id, publishMs, effMs: Math.max(c.onsetMs, T0_MS), edits, summary });
+    specChanges.push({ id, publishMs, effMs: Math.max(effOf(c), T0_MS), edits, summary });
     if (c.startsHere) announcements.push({ id, kind: 'spec', at: publishMs, effectiveAt: c.onsetMs });
   }
   // Data changes.
   if (want('P1')) {
     const c = ch('P1');
-    W = addEdition(W, { ...P1_EDITION, fromMs: c.onsetMs, publishMs: c.startsHere ? c.publishMs : T0_MS - 30 * DAY_MS });
+    W = addEdition(W, { ...P1_EDITION, fromMs: effOf(c), publishMs: c.startsHere ? c.publishMs : T0_MS - 30 * DAY_MS });
     if (c.startsHere) announcements.push({ id: 'P1', kind: 'rulebook', at: c.publishMs, effectiveAt: c.onsetMs });
   }
   if (want('E2s')) {
@@ -437,7 +437,7 @@ export async function buildBundle(spec, { sealed = null, exclude = [], base = fa
     if (S.edition) {
       // Unannounced: the edition is published at its onset (no notice); carried, it was published before the world.
       W = addEdition(W, { id: S.edition.id ?? 'ed-2026-4', policy: S.edition.policy ?? null, feeDelta: S.edition.feeDelta ?? 0, codeRenames: S.edition.codeRenames ?? {},
-        fromMs: c.startsHere ? dayStart(dayOf(c.onsetMs)) : T0_MS, publishMs: c.startsHere ? dayStart(dayOf(c.onsetMs)) : T0_MS - 30 * DAY_MS });
+        fromMs: dayStart(dayOf(effOf(c))), publishMs: c.startsHere ? dayStart(dayOf(c.onsetMs)) : T0_MS - 30 * DAY_MS });
     }
     for (const r of S.renames ?? []) W = addRename(W, { ...r, atMs: c.onsetMs });
   }
@@ -489,7 +489,7 @@ export function visibleConfig(bundle, atMs) {
   const rules = (bundle.announcements ?? []).filter(a => a.kind === 'spec' && a.at <= atMs).map(a => ({ id: a.id, effMs: a.effectiveAt }));
   for (const id of ['R1', 'R2s']) {      // carried announced rule changes were published before the world
     const c = bundle.spec.changes.find(x => x.id === id);
-    if (c && !c.startsHere && bundle.W.truth.dur1Eff[id] !== undefined && !rules.some(r => r.id === id)) rules.push({ id, effMs: T0_MS });
+    if (c && !c.startsHere && bundle.W.truth.dur1Eff[id] !== undefined && !rules.some(r => r.id === id)) rules.push({ id, effMs: bundle.W.truth.dur1Eff[id] });   // its published effective date (B7)
   }
   const editions = bundle.W.rulebook.editions.filter(e => e.published && Date.parse(e.published) <= atMs && !['ed-2026-1', 'ed-2026-2'].includes(e.id)).map(e => clone(e));
   const renames = (bundle.W.faults ?? []).filter(f => f.kind === 'F5' && Date.parse(f.at) <= atMs).map(f => ({ system: f.system, op: f.op, from: f.params.from, to: f.params.to }));

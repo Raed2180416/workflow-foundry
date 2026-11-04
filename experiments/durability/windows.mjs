@@ -27,6 +27,8 @@ export const AGENT = Object.freeze({
   'A-Ox': Object.freeze({ model: 'claude-opus-5-5', effort: 'xhigh', budgetUsdPerTick: 1.0, minutesPerTick: 8, retries: 1 }),
 });
 export const K_DEFAULT = 6, K_FALLBACK = 4, CONTROLS = 2;
+/** A routed window's world time limit: 12 ticks per case at the per-tick limit (at least 30 min). */
+export const windowTimeoutMs = (nCases, conf) => Math.max(30, nCases * 12 * conf.minutesPerTick) * 60_000;
 
 /**
  * selectWindow({ stream, change, exposure (Set of completed exposed cases), pools, W, onsetMs, k }) → { exposed: [case],
@@ -90,7 +92,10 @@ export async function runWindow({ bundle, cases, kind = 'A-H', runner = null, la
     return routing;
   });
   const callTimeoutMs = ((1 + conf.retries) * conf.minutesPerTick + 1) * 60_000;
-  const r = await runBundle(bundle, { version, callTimeoutMs });
+  // The world's time limit is a hang guard sized to the routed work (review R2-B4: runBundle's default 900 s cut every
+  // paid window short; the stop was then taken for an environment fault and the window re-paid until the row was empty).
+  const worldTimeoutMs = windowTimeoutMs(cases.length, conf);
+  const r = await runBundle(bundle, { version, callTimeoutMs, worldTimeoutMs });
   for (const row of r.rows) if (row.type === 'call' && Array.isArray(row.costs)) for (const c of row.costs) costs.push(c);
   const costUsd = costs.reduce((s, c) => s + (c.costUsd ?? 0), 0);
   const log = routings.flatMap(x => x.log);

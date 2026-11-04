@@ -76,12 +76,12 @@ export const stubLD = (mode, m) => ({ kind: 'stub', mode: `ld-${mode}`, fn: asyn
  * runLD({ id, heal, co, runDir, maxWorlds, log, spendFile }) → { record (stream), analysis }. `heal` is stream.mjs's
  * heal config ({ session(kind, { scope }) }); `co` the contract owner (rule 4).
  */
-export async function runLD({ id, heal, co = null, runDir, maxWorlds = Infinity, log = () => {}, spendFile = null, practice = undefined }) {
+export async function runLD({ id, heal, co = null, runDir, maxWorlds = Infinity, log = () => {}, spendFile = null, practice = undefined, streamOpts = {} }) {
   const m = manifestOf(id);
   const specs = ldWorlds(m).slice(0, maxWorlds);
   mkdirSync(runDir, { recursive: true });
   const start = await mutantVersion(m);
-  const record = await runStream({ arm: "heal", label: `LD-H.${id}`, start, worlds: specs, heal, co, runDir, log, spendFile, ...(practice ? { practice } : {}),
+  const record = await runStream({ arm: "heal", label: `LD-H.${id}`, start, worlds: specs, heal, co, runDir, log, spendFile, ...(practice ? { practice } : {}), ...streamOpts,
     complaintsFor: ({ spec, bundle }) => manifestComplaints(spec.world, bundle) });
   const analysis = await analyzeLD({ m, specs, record, start });
   writeFileSync(path.join(runDir, `LD-H.${id}.analysis.json`), JSON.stringify(analysis, null, 1));

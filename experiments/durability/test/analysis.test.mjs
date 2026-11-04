@@ -7,8 +7,9 @@ import assert from 'node:assert/strict';
 import { ttd, signFlipOneSided, primaryLevels, twoWayBootstrap, windowOnly, d1, d3, d5, d6, durableShare, cellDurability, healRequiringCells, certEvidence, certify,
   zeroEventBound, silent, silentLoud, VISIBLE, assertEfforts, envInvalid, k0, RULES } from '../analyze.mjs';
 import { switchTimeline, ruleTimes, maintSwitches, ceilSwitches, ruleVersion, streamMs } from '../rmaint.mjs';
-import { modelOf, promotionChange, signalTimes } from '../model.mjs';
-import { report, finalWeek, classOfCase } from '../report.mjs';
+import { modelOf, promotionChange, signalTimes, critRegressionDays } from '../model.mjs';
+import { report, finalWeek, classOfCase, critRegressionsOf, perClassWorstOf, healRequiringCellsStrict } from '../report.mjs';
+import { advInputs, unitOfLabel } from '../paid.mjs';
 import { horvitzThompson, poissonSample, counter } from '../wc-search.mjs';
 import { checkVector, KnobError } from '../knobs.mjs';
 import { buildSd, signFlipP, d3Power } from '../power.mjs';
@@ -40,11 +41,17 @@ test('exact sign-flip: 9 of 9 positive gives p = 1/512; 8 of 9 with the smallest
   assert.equal(signFlipP([1, 2, 3, 4, 5, 6, 7, 8, 9]), 1 / 512);
 });
 
-test('Holm over the primary family: (0.01, 0.04) supports both; (0.03, 0.04) supports neither', () => {
+test('Holm step-down over the primary family: (0.01, 0.04) supports both; (0.03, 0.04) supports neither; the second gets level 0 when the first fails', () => {
   const a = primaryLevels(0.01, 0.04);
   assert.ok(0.01 <= a.D1 && 0.04 <= a.D3);
   const b = primaryLevels(0.03, 0.04);
-  assert.ok(!(0.03 <= b.D1) && !(0.04 <= b.D3 && 0.03 <= b.D1), 'the smaller p fails its level 0.025, so Holm stops');
+  assert.equal(b.D1, 0.025); assert.equal(b.D3, 0, 'the smaller p (0.03) fails 0.025: Holm stops, D-3 gets no level (review M1)');
+  assert.equal(primaryLevels(0.04, 0.03).D1, 0);
+  // Through d3 itself: a level of 0 never supports, even with a bootstrap p of 0.
+  const pairs = [];
+  for (let l = 0; l < 3; l++) for (let w = 0; w < 3; w++) for (let c = 0; c < 4; c++) pairs.push({ lineage: `L${l}`, window: `W${w}`, case: `W${w}c${c}`, heal: 1, agent: 1 });
+  assert.equal(d3({ pairs, medianTtd: 0, holmLevel: 0 }).verdict, 'INCONCLUSIVE');
+  assert.equal(d3({ pairs, medianTtd: 0, holmLevel: 0.05 }).verdict, 'SUPPORTED');
 });
 
 test('D-3 unit teeth: one lineage that fails every routed case widens the two-way interval below the window-only one', () => {
@@ -66,12 +73,17 @@ test('D-1: a 2.9-point mean difference is never SUPPORTED (3-point floor), even 
   const stat = {}, heal = {};
   for (let l = 0; l < 9; l++) { stat[`L${l}`] = { s1: mk(0.5, 1000) }; heal[`L${l}`] = { s1: mk(0.529 - l * 0.0001, 1000) }; }
   const cellRows = Array.from({ length: 9 }, (_, l) => ({ lineage: `L${l}`, status: 'durable', durable: true, certified: 'accept', certifiedDurable: true }));
-  const r = d1({ heal, stat, exposure, cellRows, holmLevel: 0.025 });
+  const r = d1({ heal, stat, exposure, cellRows, critRegressions: {}, holmLevel: 0.025 });
   assert.equal(r.p, 1 / 512);
   assert.ok(r.meanDiff < 0.03);
   assert.notEqual(r.verdict, 'SUPPORTED');
   const heal4 = Object.fromEntries(Object.keys(heal).map(l => [l, { s1: mk(0.54, 1000) }]));
-  assert.equal(d1({ heal: heal4, stat, exposure, cellRows, holmLevel: 0.025 }).verdict, 'SUPPORTED');
+  assert.equal(d1({ heal: heal4, stat, exposure, cellRows, critRegressions: {}, holmLevel: 0.025 }).verdict, 'SUPPORTED');
+  // B8: the critical-regression clause fails closed (missing input: never SUPPORTED) and has teeth (> 2 days in force).
+  assert.equal(d1({ heal: heal4, stat, exposure, cellRows, holmLevel: 0.025 }).verdict, 'INCONCLUSIVE', 'critRegressions not evaluated');
+  assert.equal(d1({ heal: heal4, stat, exposure, cellRows, critRegressions: { L0: 3 }, holmLevel: 0.025 }).verdict, 'INCONCLUSIVE');
+  assert.equal(d1({ heal: heal4, stat, exposure, cellRows, critRegressions: { L0: 2 }, holmLevel: 0.025 }).verdict, 'SUPPORTED', 'in force 2 days is within the rule');
+  assert.equal(d1({ heal: heal4, stat, exposure, cellRows, critRegressions: { L0: 5, L1: 3 }, holmLevel: 0.025 }).verdict, 'FALSIFIED', '>= 2 lineages with lasting critical regressions');
   // Durable share below 0.5 falsifies.
   const bad = cellRows.map((c, i) => ({ ...c, certifiedDurable: i < 4, durable: i < 4, status: i < 4 ? 'durable' : 'not-durable' }));
   assert.equal(d1({ heal: heal4, stat, exposure, cellRows: bad, holmLevel: 0.025 }).verdict, 'FALSIFIED');
@@ -94,15 +106,28 @@ test('certification: a partial fix of a fresh failing stratum is rejected; a cod
 
 test('zero-event bound in (lineage x world) units; D-5 is NO on any silent critical case and names missed clauses', () => {
   assert.equal(zeroEventBound(162), 3 / 162);
-  const units = Array.from({ length: 162 }, (_, i) => ({ lineage: `L${i % 9}`, world: `s1/W${(i % 6) + 1}`, cls: 'IP', silentCritical: 0 }));
-  const ok = d5({ units });
+  const units = Array.from({ length: 162 }, (_, i) => ({ lineage: `L${i % 9}`, world: `s${(Math.floor(i / 54)) + 1}/W${(i % 6) + 1}`, cls: 'IP', silentCritical: 0 }));
+  const all = { adv: { silentCritical: 0, perWorld: [{ world: 'v1', healMax: 2, refsMax: 1, n: 50 }] }, perClassWorst: [], routedSilent: { mean: -0.01, hi95: 0.02 }, w1FalseIncidents: [0, 1] };
+  const ok = d5({ units, ...all, unitsEvaluated: 162 });
   assert.equal(ok.verdict, 'YES'); assert.equal(ok.bound.rateUpper, 3 / 162);
-  assert.equal(d5({ units: units.map((u, i) => (i === 7 ? { ...u, silentCritical: 1 } : u)) }).verdict, 'NO');
-  assert.equal(d5({ units, w1FalseIncidents: [0, 2] }).verdict, 'PARTIAL');
+  assert.equal(d5({ units: units.map((u, i) => (i === 7 ? { ...u, silentCritical: 1 } : u)), ...all }).verdict, 'NO');
+  assert.equal(d5({ units, ...all, w1FalseIncidents: [0, 2] }).verdict, 'PARTIAL');
+  // Every clause must be evaluated (review M6): a missing input is PARTIAL, never a silent pass.
+  for (const k of ['adv', 'perClassWorst', 'routedSilent', 'w1FalseIncidents']) assert.equal(d5({ units, ...all, [k]: null }).verdict, 'PARTIAL', `${k} missing`);
+  // (b) per world (review M7): one world above its own REF-S maximum + delta fails even when the global maxima agree.
+  const perWorld = [{ world: 'v1', healMax: 5, refsMax: 1, n: 50 }, { world: 'v2', healMax: 1, refsMax: 6, n: 50 }];
+  assert.equal(d5({ units, ...all, adv: { silentCritical: 0, perWorld } }).verdict, 'PARTIAL');
+  const cross = [{ arm: 'MH-H.final', world: 'a', key: 'a', valid: true, silent: 5, n: 50 }, { arm: 'REF-S', world: 'a', valid: true, silent: 1 }, { arm: 'MH-H.final', world: 'b', key: 'b', valid: true, silent: 1, n: 50 }, { arm: 'REF-S', world: 'b', valid: true, silent: 6 }];
+  assert.deepEqual(advInputs(cross).adv.perWorld.map(w => [w.world, w.healMax, w.refsMax]), [['a', 5, 1], ['b', 1, 6]]);
+  // M9: N is the lineage-worlds evaluated, not the rows that hold a failure.
+  assert.equal(d5({ units: units.slice(0, 3), ...all, unitsEvaluated: 162 }).bound.units, 162);
   // silent: a failing case with no visible signal before its last effect + 1 day.
   assert.equal(silent({ firstAt: 0, signals: {} }, VISIBLE.heal), true);
   assert.equal(silent({ firstAt: 0, signals: { m5: DAY_MS / 2 } }, VISIBLE.heal), false);
   assert.equal(silent({ firstAt: 0, signals: { m5: DAY_MS / 2 } }, VISIBLE.healNoComplaints), true, 'complaints excluded');
+  // M10: the deadline is the LAST effect + 1 day; a case with no time at all uses its world's end (never 1970 + 1 day).
+  assert.equal(silent({ firstAt: day(1, 2), lastAt: day(1, 6), signals: { m2: day(1, 6) + DAY_MS / 2 } }, VISIBLE.heal), false, 'a signal after the first divergence + 1 day but before the last effect + 1 day');
+  assert.equal(silent({ firstAt: null, lastAt: null, signals: { m2: day(1, 14) } }, VISIBLE.heal), false, 'a stuck order flagged at the world end is loud');
 });
 
 test('D-6 recall per unannounced class with the pass, fail and middle bands; announced onsets are not detections', () => {
@@ -157,8 +182,27 @@ test('model and report: induced failures, durable cells and NOT RUN for every pa
   assert.deepEqual(signalTimes({ days: { 1: { signals: [{ ch: 'm4', case: null, at: 1 }] } } }), {});
   const r = report({ worlds: { s1: [] }, exposure: {}, arms: {} });
   for (const k of ['K0', 'D1', 'D3', 'D4', 'D5', 'D6', 'D8', 'D10', 'D11']) assert.equal(r.rules[k].verdict, 'NOT RUN', k);
+  // M4: a cell whose static program is itself durable (one induced failure inside the TTD tolerance) is not heal-requiring.
+  const ex = (s, k, c) => (c === 'R1' ? new Set(Array.from({ length: 60 }, (_, i) => `y${i}`)) : new Set());
+  const mkS = bad => ({ worlds: { 3: { cases: Object.fromEntries(Array.from({ length: 60 }, (_, i) => [`y${i}`, { graded: true, pass: i >= bad, placedAt: day(3, 1 + (i % 12)) }])), induced: { R1: Array.from({ length: bad }, (_, i) => `y${i}`) } } } });
+  const strict = healRequiringCellsStrict({ stat: { A: { s1: mkS(1) }, B: { s1: mkS(30) } }, exposureOf: ex, onsetOf: () => 29 });
+  assert.equal(strict.any.length, 2);
+  assert.deepEqual(strict.cells.map(c => c.lineage), ['B'], 'A has one induced failure and a finite static TTD');
   assert.ok(Number.isNaN(finalWeek({ worlds: {} })));
-  assert.equal(classOfCase(() => ({ R1: new Set(['x1']), E1: new Set(['x1']) }))(3, 'x1'), 'CHG-U', 'first scheduled change: E1 before R1');
+  // M5: classes by attribution (multi-label), else the first exposure with P1 LAST.
+  assert.deepEqual(classOfCase(() => ({ R1: new Set(['x1']), E1: new Set(['x1']) }))(3, 'x1'), ['CHG-U'], 'exposure fallback: E1 before R1');
+  assert.deepEqual(classOfCase(() => ({ P1: new Set(['x1']), L1: new Set(['x1']) }))(4, 'x1'), ['CHG-U'], 'P1 is last: L1 wins');
+  assert.deepEqual(classOfCase(() => ({ P1: new Set(['x1']), L1: new Set(['x1']) }), () => ({ P1: ['x1'], F: ['x1'] }))(5, 'x1').sort(), ['CHG-A', 'FLT'], 'attribution, multi-label');
+  // R2-M6: single-unit arms map to 'ref' (D-4 read NOT RUN on real records).
+  assert.deepEqual(unitOfLabel('R-maint2.s1'), { arm: 'R-maint2', unit: 'ref' });
+  assert.deepEqual(unitOfLabel('S-Hstar.ch-e8-1.s2'), { arm: 'S-H*', unit: 'ch-e8-1' });
+  assert.deepEqual(unitOfLabel('c-oss.s3'), { arm: 'c-oss', unit: 'ref' });
+  // B8: days in force of a critically regressing promotion, from the record (to the next promotion, rollback or stream end).
+  const rr = { worlds: [1, 2, 3, 4, 5, 6].map(k => ({ k })), promotions: [{ k: 3, day: 7, to: 'b' }, { k: 3, day: 12, to: 'c' }], rollbacks: [] };
+  assert.equal(critRegressionDays(rr, [{ k: 3, day: 7, critRegression: { n: 2 } }, { k: 3, day: 12, critRegression: { n: 0 } }]), 5);
+  assert.equal(critRegressionDays(rr, [{ k: 3, day: 7, critRegression: { n: 0 } }, { k: 3, day: 12, critRegression: { n: 1 } }]), 85 - (28 + 12));
+  assert.equal(critRegressionsOf({ L: { s1: rr } }, { L: { s1: [{ k: 3, day: 7, critRegression: { n: 0 } }] } }), null, 'a promotion without its certification: not evaluated');
+  assert.deepEqual(critRegressionsOf({ L: { s1: rr } }, { L: { s1: [{ k: 3, day: 7, critRegression: { n: 1 } }, { k: 3, day: 12, critRegression: { n: 0 } }] } }), { L: 5 });
 });
 
 test('WC-1 Horvitz-Thompson: unbiased over 2,000 Poisson resamples with exact weights (dropping 1/pi fails); ESS = n for equal weights', () => {

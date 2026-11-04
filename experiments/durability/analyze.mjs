@@ -39,6 +39,9 @@ const sdayOf = (k, ms) => 14 * (k - 1) + Math.floor((ms - T0_MS) / DAY_MS) + 1; 
 // incidents, promotions, sessions, usd }. Case = { graded, pass, critical, placedAt, firstAt, lastAt, topic, class,
 // epoch, signals: { m1?, m2?, m3?, m5? } (first attributable signal time per channel) }.
 
+/** A p passes its Holm level; level 0 (the step-down stopped before this hypothesis) never passes. */
+export const passesLevel = (p, level) => level > 0 && p <= level;
+
 /** One-sided exact sign-flip p (prereg §10 D-1): p/2 when the mean difference is positive, else 1 - p/2. */
 export function signFlipOneSided(diffs) {
   const r = pairedPermutation(diffs, diffs.map(() => 0));
@@ -152,7 +155,7 @@ export function k0(staticS1, { rules = RULES.K0 } = {}) {
  * D-1 heals, against static (primary). heal/stat: { [lineage]: { [stream]: StreamResult } }; exposure(stream) -> { [k]:
  * { [change]: Set } }. cellRows from cellDurability (certified when available). Returns the verdict and its parts.
  */
-export function d1({ heal, stat, exposure, cellRows, critRegressions = {}, holmLevel = 0.025, rules = RULES.D1, w6Except = ['U1s'] }) {
+export function d1({ heal, stat, exposure, cellRows, critRegressions = null, holmLevel = 0.025, rules = RULES.D1, w6Except = ['U1s'] }) {
   const lineages = Object.keys(stat).filter(l => heal[l]).sort();
   const per = lineages.map(l => {
     let hn = 0, hp = 0, sn = 0, sp = 0;
@@ -172,12 +175,15 @@ export function d1({ heal, stat, exposure, cellRows, critRegressions = {}, holmL
   const ds = durableShare(cellRows, { certified });
   const w6Drop = per.filter(x => Number.isFinite(x.w6) && Number.isFinite(x.w1) && x.w6 < x.w1 - rules.w6Tolerance).map(x => x.lineage);
   const w6Worse = per.filter(x => Number.isFinite(x.w6Heal) && Number.isFinite(x.w6Static) && x.w6Heal < x.w6Static - rules.w6Tolerance).map(x => x.lineage);
-  const lastingCrit = Object.entries(critRegressions).filter(([, days]) => days > rules.critRegressionDays).map(([l]) => l);
-  const supported = test.pOne <= holmLevel && test.meanDiff >= rules.floor && ds.share >= rules.durableSupport && !w6Drop.length && !lastingCrit.length;
+  // Heal-caused critical regressions (version matrix, model.mjs critRegressionDays): { lineage: max days in force }. Missing
+  // input (null) is NOT EVALUATED: D-1 can then not be supported (review B8: the clause was silently always met).
+  const critEvaluated = critRegressions !== null && critRegressions !== undefined;
+  const lastingCrit = critEvaluated ? Object.entries(critRegressions).filter(([, days]) => days > rules.critRegressionDays).map(([l]) => l) : [];
+  const supported = critEvaluated && passesLevel(test.pOne, holmLevel) && test.meanDiff >= rules.floor && ds.share >= rules.durableSupport && !w6Drop.length && !lastingCrit.length;
   const falsified = ds.share < rules.durableFalsify || w6Worse.length >= rules.w6FalsifyLineages || lastingCrit.length >= rules.critRegressionFalsifyLineages;
   const noCht = per.filter(x => !x.lineage.startsWith('cht')).map(x => x.diff).filter(Number.isFinite);
   return { verdict: supported ? 'SUPPORTED' : falsified ? 'FALSIFIED' : 'INCONCLUSIVE', p: test.pOne, meanDiff: test.meanDiff, wilcoxonP: wil?.p ?? null, perLineage: per,
-    durable: { ...ds, certified }, w6Drop, w6Worse, lastingCrit, sensitivityNoCht: noCht.length ? signFlipOneSided(noCht).pOne : null, holmLevel };
+    durable: { ...ds, certified }, w6Drop, w6Worse, lastingCrit, critRegressionsEvaluated: critEvaluated, sensitivityNoCht: noCht.length ? signFlipOneSided(noCht).pOne : null, holmLevel };
 }
 
 /**
@@ -224,16 +230,22 @@ export function windowOnly(pairs, { B = 2000, seed = 'dur1/d3-window-only' } = {
 export function d3({ pairs, medianTtd, holmLevel = 0.05, sDropped = false }) {
   if (!pairs.length) return { verdict: 'NOT RUN', p: 1 };
   const bt = twoWayBootstrap(pairs);
-  const supported = bt.pNI <= holmLevel;
+  const supported = passesLevel(bt.pNI, holmLevel);
   const falsified = bt.hi95 < 0 && medianTtd > RULES.D3.medianTtdFalsify;
   return { verdict: sDropped ? `DIRECTIONAL (${supported ? 'supported' : falsified ? 'falsified' : 'inconclusive'})` : supported ? 'SUPPORTED' : falsified ? 'FALSIFIED' : 'INCONCLUSIVE', p: bt.pNI, ...bt, windowOnly: windowOnly(pairs), holmLevel };
 }
 
-/** Holm over the primary family (D-1, D-3) at family-wise one-sided alpha 0.05: the smaller p at 0.025, the other at 0.05. */
+/**
+ * Holm STEP-DOWN over the primary family (D-1, D-3) at family-wise one-sided alpha 0.05 (review M1): the smaller p is tested
+ * at alpha/2; only if it is rejected is the other tested at alpha; otherwise the other gets level 0 (no rejection). The
+ * level returned for each hypothesis is the one its own p is compared with in d1 / d3.
+ */
 export function primaryLevels(pD1, pD3, alpha = RULES.ALPHA) {
   const h = holm({ D1: pD1, D3: pD3 }, { alpha });
-  const first = pD1 <= pD3 ? 'D1' : 'D3';
-  return { D1: first === 'D1' ? alpha / 2 : alpha, D3: first === 'D3' ? alpha / 2 : alpha, holm: h };
+  const first = pD1 <= pD3 ? 'D1' : 'D3', second = first === 'D1' ? 'D3' : 'D1';
+  const pFirst = first === 'D1' ? pD1 : pD3;
+  const firstRejected = pFirst <= alpha / 2;
+  return { [first]: alpha / 2, [second]: firstRejected ? alpha : 0, firstRejected, order: [first, second], holm: h };
 }
 
 /** D-2 cheap: median maintenance $ per heal-requiring cell and MH-H's marginal $ per lineage-stream against A-H's projection. */
@@ -263,16 +275,26 @@ export function d4({ healFW, rmaint2FW, rstaticFW, refmFW = null, healS1Median =
  * adv: { silentCritical, maxSilentPerWorld, refsMax }; perClassWorst: [{ cls, healWorst, refWorst, n }]; routed: d-pairs of
  * silent failures; w1FalseIncidents: [count per lineage-world].
  */
-export function d5({ units, adv = null, perClassWorst = [], routedSilent = null, w1FalseIncidents = [], rules = RULES.D5 }) {
+export function d5({ units, adv = null, perClassWorst = null, routedSilent = null, w1FalseIncidents = null, unitsEvaluated = null, rules = RULES.D5 }) {
   const sc = units.filter(u => u.silentCritical > 0);
   const missing = [];
-  if (adv && (adv.silentCritical > 0)) missing.push('(b) ADV-SET silent critical');
-  if (adv && adv.maxSilentPerWorld > adv.refsMax + Math.max(rules.minCaseDelta, Math.ceil(rules.deltaShare * (adv.n ?? 0)))) missing.push('(b) ADV-SET silent max above REF-S + delta');
-  for (const c of perClassWorst) if (c.healWorst > c.refWorst + Math.max(rules.minCaseDelta / Math.max(1, c.n), rules.deltaShare)) missing.push(`(c) class ${c.cls}`);
-  if (routedSilent && !(routedSilent.mean <= 0 && routedSilent.hi95 <= 0.05)) missing.push('(d) routed silent failures above the agent');
-  if (w1FalseIncidents.some(x => x > rules.w1FalseIncidents)) missing.push('(e) alarm flood on W1');
-  const N = units.length;
-  const bound = { units: N, events: sc.length, rateUpper: sc.length === 0 ? (N ? 3 / N : null) : clopperPearson(new Set(sc.map(u => `${u.lineage}|${u.world}`)).size, N, 'upper').upper };
+  // (b) per ADV-SET world (review M7): the MH-H finals' maximum silent failing cases <= REF-S's on the SAME world + delta_c.
+  if (!adv) missing.push('(b) not evaluated (no ADV-SET cross-run)');
+  else {
+    if (adv.silentCritical > 0) missing.push('(b) ADV-SET silent critical');
+    for (const w of adv.perWorld ?? []) if (w.healMax > w.refsMax + Math.max(rules.minCaseDelta, Math.ceil(rules.deltaShare * (w.n ?? 0)))) { missing.push(`(b) ADV-SET world ${w.world}: silent max ${w.healMax} above REF-S ${w.refsMax} + delta`); break; }
+  }
+  // (c) per class: worst-lineage silent failing rate <= worst REF-M (REF-S off s1) + delta_c (review M6: never a silent pass).
+  if (!perClassWorst) missing.push('(c) not evaluated (no REF-M / REF-S models)');
+  else for (const c of perClassWorst) if (c.healWorst > c.refWorst + Math.max(rules.minCaseDelta / Math.max(1, c.n), rules.deltaShare)) missing.push(`(c) class ${c.cls} (${c.stream})`);
+  if (!routedSilent) missing.push('(d) not evaluated (no routed windows)');
+  else if (!(routedSilent.mean <= 0 && routedSilent.hi95 <= 0.05)) missing.push('(d) routed silent failures above the agent');
+  if (!w1FalseIncidents) missing.push('(e) not evaluated');
+  else if (w1FalseIncidents.some(x => x > rules.w1FalseIncidents)) missing.push('(e) alarm flood on W1');
+  // Zero-event bound in (lineage x world) units (review M9): N = the lineage-worlds evaluated, not rows with failures.
+  const N = unitsEvaluated ?? new Set(units.map(u => `${u.lineage}|${u.world}`)).size;
+  const scUnits = new Set(sc.map(u => `${u.lineage}|${u.world}`)).size;
+  const bound = { units: N, events: scUnits, rateUpper: scUnits === 0 ? (N ? 3 / N : null) : clopperPearson(scUnits, N, 'upper').upper };
   return { verdict: sc.length ? 'NO' : missing.length ? 'PARTIAL' : 'YES', silentCriticalUnits: sc.slice(0, 20), missing, bound,
     wording: 'the worst observed over the stated search (N worlds, M probes), with monitor M; never "worst-case correctness"' };
 }
@@ -316,26 +338,38 @@ export const zeroEventBound = N => (N > 0 ? 3 / N : null);
 // ---------------------------------------------------------------------------------------------------------------------
 // Silent, loud, false incidents
 
-/** Is a failing case silent for an arm? (no visible attributable signal before its last effect + 1 world-day) */
+/**
+ * The silent rule's deadline (prereg §9 item 2; review M10): the case's last effect + 1 world-day; a case with no effect
+ * time uses its first divergence; a case with neither (nothing was done for it) uses its world's end + 1 world-day, so a
+ * signal any time in its world counts (m2 judges unsettled orders at the world's end). Never 1970 + 1 day.
+ */
+export const WORLD_END_MS = T0_MS + HORIZON_DAYS * DAY_MS;
+export const silentDeadline = c => (c.lastAt ?? c.firstAt ?? WORLD_END_MS) + DAY_MS;
+/** Is a failing case silent for an arm? (no visible attributable signal before its deadline) */
 export function silent(c, channels) {
-  const deadline = (c.lastAt ?? c.firstAt ?? 0) + DAY_MS;
+  const deadline = silentDeadline(c);
   return !channels.some(ch => typeof c.signals?.[ch] === 'number' && c.signals[ch] <= deadline);
 }
 export const VISIBLE = Object.freeze({ heal: ['m1', 'm2', 'm3', 'm5'], healNoComplaints: ['m1', 'm2', 'm3'], static: ['m1'], agent: ['m1'] });
 
-/** Silent and loud failing cases per world and class of one stream result. */
+/**
+ * Silent and loud failing cases per world and class of one stream result. classOf may return one class or several (a case
+ * attributed to two changes counts in both classes; review M5).
+ */
 export function silentLoud(sr, channels, classOf = () => 'all') {
   const out = [];
+  const many = x => (Array.isArray(x) ? x : [x]);
   for (const [k, w] of Object.entries(sr.worlds)) {
     const by = new Map();
     for (const [c, v] of gradedOf(w)) {
       if (v.pass) continue;
-      const cls = classOf(Number(k), c, v);
-      if (!by.has(cls)) by.set(cls, { world: Number(k), cls, failing: 0, silent: 0, loud: 0, silentCritical: 0, n: 0 });
-      const b = by.get(cls); b.failing += 1;
-      if (silent(v, channels)) { b.silent += 1; if (v.critical) b.silentCritical += 1; } else b.loud += 1;
+      for (const cls of many(classOf(Number(k), c, v))) {
+        if (!by.has(cls)) by.set(cls, { world: Number(k), cls, failing: 0, silent: 0, loud: 0, silentCritical: 0, n: 0 });
+        const b = by.get(cls); b.failing += 1;
+        if (silent(v, channels)) { b.silent += 1; if (v.critical) b.silentCritical += 1; } else b.loud += 1;
+      }
     }
-    for (const [c, v] of gradedOf(w)) { const cls = classOf(Number(k), c, v); if (by.has(cls)) by.get(cls).n += 1; }   // n per class: every graded case of the class
+    for (const [c, v] of gradedOf(w)) for (const cls of many(classOf(Number(k), c, v))) if (by.has(cls)) by.get(cls).n += 1;   // n per class: every graded case of the class
     out.push(...by.values());
   }
   return out;

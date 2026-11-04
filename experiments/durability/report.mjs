@@ -14,29 +14,44 @@
 // }
 import { RULES, k0, d1, d2, d3, d4, d5, d6, d8 as d8Rule, d10, d11, primaryLevels, healRequiringCells, cellDurability, durableShare, curves, exposedPass,
   silentLoud, VISIBLE, falseIncidents, rootCauseScaffold, ownerTable, ttd } from './analyze.mjs';
-import { onsetDay, certifiedOfCells } from './model.mjs';
+import { onsetDay, certifiedOfCells, critRegressionDays } from './model.mjs';
 import { CHANGES, CHANGE_IDS, UNANNOUNCED, T0_MS, DAY_MS } from './schedule.mjs';
 
 const median = xs => { if (!xs.length) return NaN; const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 const sday = (k, ms) => 14 * (k - 1) + Math.floor((ms - T0_MS) / DAY_MS) + 1;
+/** The changes whose windows are routed (prereg §7): D-3's falsifier median is over these. */
+export const WINDOWED = Object.freeze(['E1', 'R1', 'R2s', 'E2s']);
+/** Exposure order for the class of an unattributed case: P1 LAST (P1 exposes nearly every order after W2 d6; review M5). */
+export const CLASS_ORDER = Object.freeze([...CHANGE_IDS.filter(c => c !== 'P1'), 'P1']);
 
-/** The scenario class of a case (§8.1): the class of the first scheduled change it is exposed to, else IP. */
-export function classOfCase(exposureK) {
+/**
+ * The scenario classes of a case (§8.1; review M5): by ATTRIBUTION first, multi-label: the classes of every change whose
+ * incremental twin repairs the case (inducedOf(k) -> { [change]: [case] }); otherwise the class of the first change it is
+ * exposed to in CLASS_ORDER (P1 last); otherwise IP. Returns an array.
+ */
+export function classOfCase(exposureK, inducedOf = null) {
   return (k, c) => {
-    if (c === null) return null;
-    for (const id of CHANGE_IDS) if (exposureK(k)?.[id]?.has(c)) return CHANGES[id].cls;
-    return 'IP';
+    if (c === null) return [];
+    const ind = inducedOf ? inducedOf(k) ?? {} : {};
+    const byAttr = [...new Set(Object.entries(ind).filter(([, list]) => (list instanceof Set ? list.has(c) : list?.includes?.(c))).map(([ch]) => CHANGES[ch]?.cls).filter(Boolean))];
+    if (byAttr.length) return byAttr;
+    for (const id of CLASS_ORDER) if (exposureK(k)?.[id]?.has(c)) return [CHANGES[id].cls];
+    return ['IP'];
   };
 }
 
-/** Final-week success (cases placed W6 d8-d14) of one model. */
-export function finalWeek(model) {
-  const w = model.worlds[6];
-  if (!w) return NaN;
+/** Final-week cases (placed W6 d8-d14) of one model: { n, pass }. */
+export function finalWeekCases(model) {
+  const w = model?.worlds?.[6];
+  if (!w) return { n: 0, pass: 0 };
   const lo = T0_MS + 7 * DAY_MS;
   const xs = Object.values(w.cases).filter(c => c.graded && c.placedAt >= lo);
-  return xs.length ? xs.filter(c => c.pass).length / xs.length : NaN;
+  return { n: xs.length, pass: xs.filter(c => c.pass).length };
 }
+/** Final-week success of one model. */
+export function finalWeek(model) { const f = finalWeekCases(model); return f.n ? f.pass / f.n : NaN; }
+/** Final-week success pooled over a unit's streams (review M3: a median over streams hid the worst stream). */
+export const finalWeekPooled = byStream => { let n = 0, p = 0; for (const m of Object.values(byStream ?? {})) { const f = finalWeekCases(m); n += f.n; p += f.pass; } return n ? p / n : NaN; };
 
 /** Detection onsets of unannounced changes for one arm: per (unit, stream, change) the first attributable signal on an exposed case after the onset. */
 export function detectionOnsets(armModels, worldsOf, exposureOf, { channels = ['m1', 'm2', 'm3', 'm5'] } = {}) {
@@ -80,14 +95,64 @@ export function u1sLoud(healRecords, exposureOf, worldsOf) {
   return out;
 }
 
+/** Heal-requiring cells (review M4): S-H* has >= 1 c-induced failure AND S-H*'s own TTD for the cell is infinite. */
+export function healRequiringCellsStrict({ stat, exposureOf, onsetOf }) {
+  const any = healRequiringCells(stat);
+  const staticRows = cellDurability({ cells: any, armModel: stat, exposureOf, onsetOf });
+  const cells = staticRows.filter(r => r.status === 'not-durable').map(({ lineage, stream, change }) => ({ lineage, stream, change }));
+  return { cells, any, staticRows };
+}
+
+/**
+ * Per class worst-lineage silent failing rate (D-5 c; review M6): per stream and class, MH-H's worst lineage against the
+ * worst reference unit (REF-M on s1, REF-S off s1). Returns null when a reference is missing (fail closed).
+ */
+export function perClassWorstOf({ heal, refm, refs, classOfFor }) {
+  const out = [];
+  const rateOf = (byUnit, s, channels) => {
+    const per = {};
+    for (const [u, b] of Object.entries(byUnit ?? {})) {
+      const m = b[s]; if (!m) continue;
+      for (const row of silentLoud(m, channels, classOfFor(s, m))) { const x = ((per[row.cls] ??= {})[u] ??= { silent: 0, n: 0 }); x.silent += row.silent; x.n += row.n; }
+    }
+    return per;
+  };
+  const streams = new Set(Object.values(heal).flatMap(b => Object.keys(b)));
+  for (const s of streams) {
+    const ref = s === 's1' ? refm : refs;
+    if (!ref || !Object.values(ref).some(b => b[s])) return null;
+    const h = rateOf(heal, s, VISIBLE.heal), r = rateOf(ref, s, s === 's1' ? VISIBLE.heal : VISIBLE.static);
+    for (const [cls, byU] of Object.entries(h)) {
+      const worst = Math.max(...Object.values(byU).map(x => (x.n ? x.silent / x.n : 0)));
+      const rr = Object.values(r[cls] ?? {});
+      const refWorst = rr.length ? Math.max(...rr.map(x => (x.n ? x.silent / x.n : 0))) : 0;
+      out.push({ stream: s, cls, healWorst: worst, refWorst, n: Math.max(...Object.values(byU).map(x => x.n)), ref: s === 's1' ? 'REF-M' : 'REF-S' });
+    }
+  }
+  return out;
+}
+
+/** D-1's critical-regression input from the certifications (null if any promoted lineage-stream lacks them: fail closed). */
+export function critRegressionsOf(records, certs) {
+  const out = {};
+  for (const [l, by] of Object.entries(records ?? {})) for (const [s, rec] of Object.entries(by)) {
+    if (!(rec.promotions ?? []).length) continue;
+    const cs = certs?.[l]?.[s];
+    if (!cs || cs.length !== rec.promotions.length || cs.some(c => !c.critRegression)) return null;
+    const days = critRegressionDays(rec, cs);
+    if (days > 0) out[l] = Math.max(out[l] ?? 0, days);
+  }
+  return out;
+}
+
 /** The whole report. */
 export function report(results) {
-  const { worlds, exposure, arms, certs = {}, windows = null, ld = null, adv = null, redTeam = null, costs = {}, sDropped = false, m6 = null, records = {} } = results;
+  const { worlds, exposure, arms, certs = {}, windows = null, ld = null, adv = null, redTeam = null, costs = {}, sDropped = false, m6 = null, records = {}, invalid = [] } = results;
   const worldsOf = s => worlds[s] ?? [];
   const exposureOf = s => k => exposure[s]?.of(k) ?? {};
   const exposureBy = s => Object.fromEntries((worlds[s] ?? []).map(w => [w.k, exposure[s]?.of(w.k) ?? {}]));
   const stat = arms['S-H*'] ?? {}, heal = arms['MH-H'] ?? {};
-  const out = { label: 'PREREG-DUR-1 report (development evidence)', curves: {}, rules: {} };
+  const out = { label: 'PREREG-DUR-1 report (development evidence)', curves: {}, rules: {}, invalid };
   for (const [arm, byUnit] of Object.entries(arms)) {
     out.curves[arm] = {};
     for (const [u, byStream] of Object.entries(byUnit)) for (const [s, m] of Object.entries(byStream)) out.curves[arm][`${u}/${s}`] = curves(m).worlds.map(x => [x.k, x.pass, x.n]);
@@ -96,23 +161,28 @@ export function report(results) {
   const s1Static = Object.fromEntries(Object.entries(stat).filter(([, b]) => b.s1).map(([l, b]) => [l, b.s1]));
   const k0r = Object.keys(s1Static).length ? k0(s1Static) : null;
   out.rules.K0 = k0r ?? { verdict: 'NOT RUN' };
-  // Cells and durability.
-  const cells = healRequiringCells(stat);
-  const cellRows = Object.keys(heal).length ? cellDurability({ cells, armModel: heal, exposureOf: (s, k, c) => exposureOf(s)(k)?.[c], onsetOf: (s, c) => onsetDay(worldsOf(s), c),
-    certifiedOf: Object.keys(certs).length ? certifiedOfCells(certs) : null }) : [];
-  // D-1 and D-3 with Holm.
-  const d1pre = Object.keys(heal).length ? d1({ heal, stat, exposure: exposureBy, cellRows, holmLevel: 1 }) : null;
+  // Cells and durability (heal-requiring: S-H* has an induced failure AND S-H* itself is not durable on the cell; review M4).
+  const exOf = (s, k, c) => exposureOf(s)(k)?.[c];
+  const onsetOf = (s, c) => onsetDay(worldsOf(s), c);
+  const hr = Object.keys(stat).length ? healRequiringCellsStrict({ stat, exposureOf: exOf, onsetOf }) : { cells: [], any: [], staticRows: [] };
+  const cells = hr.cells;
+  const cellRows = Object.keys(heal).length ? cellDurability({ cells, armModel: heal, exposureOf: exOf, onsetOf, certifiedOf: Object.keys(certs).length ? certifiedOfCells(certs) : null }) : [];
+  // D-1 and D-3 with Holm step-down.
+  const critRegressions = critRegressionsOf(records['MH-H'], certs);
+  const d1pre = Object.keys(heal).length ? d1({ heal, stat, exposure: exposureBy, cellRows, critRegressions, holmLevel: 1 }) : null;
   const pairs = windows?.pairs ?? [];
-  const ttds = cellRows.filter(r => Number.isFinite(r.ttd)).map(r => r.ttd);
-  const medTtd = ttds.length ? median(ttds) : Infinity;
-  const d3pre = pairs.length ? d3({ pairs, medianTtd: medTtd, holmLevel: 1, sDropped }) : null;
+  // D-3's falsifier: the median MH-H TTD over the WINDOWED changes' cells, infinite cells included (review M2).
+  const windowedTtds = cellRows.filter(r => WINDOWED.includes(r.change) && ['durable', 'not-durable'].includes(r.status)).map(r => r.ttd);
+  const medTtdWindowed = windowedTtds.length ? median(windowedTtds) : Infinity;
+  const d3pre = pairs.length ? d3({ pairs, medianTtd: medTtdWindowed, holmLevel: 1, sDropped }) : null;
   const levels = primaryLevels(d1pre?.p ?? 1, d3pre?.p ?? 1);
-  const d1r = d1pre ? d1({ heal, stat, exposure: exposureBy, cellRows, holmLevel: levels.D1 }) : null;
-  const d3r = d3pre ? d3({ pairs, medianTtd: medTtd, holmLevel: levels.D3, sDropped }) : null;
+  const d1r = d1pre ? d1({ heal, stat, exposure: exposureBy, cellRows, critRegressions, holmLevel: levels.D1 }) : null;
+  const d3r = d3pre ? d3({ pairs, medianTtd: medTtdWindowed, holmLevel: levels.D3, sDropped }) : null;
   out.rules.D1 = d1r ?? { verdict: 'NOT RUN' };
-  out.rules.D3 = d3r ?? { verdict: 'NOT RUN' };
+  out.rules.D3 = d3r ? { ...d3r, medianTtdWindowed: medTtdWindowed } : { verdict: 'NOT RUN' };
   out.rules.holm = levels;
-  out.cells = { n: cells.length, rows: cellRows.map(r => ({ lineage: r.lineage, stream: r.stream, change: r.change, status: r.status, ttd: r.ttd, certified: r.certified })), share: durableShare(cellRows), certifiedShare: durableShare(cellRows, { certified: true }) };
+  out.cells = { n: cells.length, withInducedFailure: hr.any.length, staticDurableOnThose: durableShare(hr.staticRows),
+    rows: cellRows.map(r => ({ lineage: r.lineage, stream: r.stream, change: r.change, status: r.status, ttd: r.ttd, certified: r.certified })), share: durableShare(cellRows), certifiedShare: durableShare(cellRows, { certified: true }) };
   // D-2 cheap.
   const cellCosts = [];
   for (const cell of cells) {
@@ -124,43 +194,59 @@ export function report(results) {
   }
   const healMarginal = Object.entries(heal).flatMap(([l, b]) => Object.entries(b).map(([s, m]) => ({ lineage: l, stream: s, usd: m.usd })));
   out.rules.D2 = costs.agentProjected && Object.keys(heal).length ? d2({ cellCosts, healMarginal, agentProjected: costs.agentProjected }) : { verdict: 'NOT RUN', medianCellUsd: median(cellCosts) };
-  // D-4.
-  const fw = (arm, u, s) => (arms[arm]?.[u]?.[s] ? finalWeek(arms[arm][u][s]) : NaN);
-  const healFW = Object.fromEntries(Object.keys(heal).map(l => [l, median(Object.keys(heal[l]).map(s => fw('MH-H', l, s)).filter(Number.isFinite))]));
-  const rm2 = median(Object.keys(arms['R-maint2']?.ref ?? {}).map(s => fw('R-maint2', 'ref', s)).filter(Number.isFinite));
-  const rst = median(Object.keys(arms['R-static']?.ref ?? {}).map(s => fw('R-static', 'ref', s)).filter(Number.isFinite));
+  // D-4: final week pooled over streams per lineage; TTD on s1 cells against REF-M's s1 cells (review M2, M3).
+  const healFW = Object.fromEntries(Object.keys(heal).map(l => [l, finalWeekPooled(heal[l])]).filter(([, v]) => Number.isFinite(v)));
+  const rm2 = finalWeekPooled(arms['R-maint2']?.ref);
+  const rst = finalWeekPooled(arms['R-static']?.ref);
   const refm = arms['REF-M'] ? Object.fromEntries(Object.entries(arms['REF-M']).filter(([, b]) => b.s1).map(([u, b]) => [u, finalWeek(b.s1)])) : null;
-  const healS1 = median(Object.keys(heal).filter(l => heal[l].s1).map(l => fw('MH-H', l, 's1')).filter(Number.isFinite));
+  const healS1 = median(Object.keys(heal).filter(l => heal[l].s1).map(l => finalWeek(heal[l].s1)).filter(Number.isFinite));
+  const s1Ttds = cellRows.filter(r => r.stream === 's1' && ['durable', 'not-durable'].includes(r.status)).map(r => r.ttd);
+  let refmTtds = [];
+  const refsStat = arms['REF-S'] ?? {}, refmArm = arms['REF-M'] ?? {};
+  if (Object.keys(refmArm).length && Object.keys(refsStat).length) {
+    const refCells = healRequiringCellsStrict({ stat: Object.fromEntries(Object.entries(refsStat).filter(([u]) => refmArm[u]).map(([u, b]) => [u, { s1: b.s1 }]).filter(([, b]) => b.s1)), exposureOf: exOf, onsetOf }).cells;
+    const refRows = cellDurability({ cells: refCells, armModel: refmArm, exposureOf: exOf, onsetOf });
+    out.refmCells = refRows.map(r => ({ solver: r.lineage, change: r.change, status: r.status, ttd: r.ttd }));
+    refmTtds = refRows.filter(r => ['durable', 'not-durable'].includes(r.status)).map(r => r.ttd);
+  }
   out.rules.D4 = Object.keys(heal).length && Number.isFinite(rm2) ? d4({ healFW, rmaint2FW: rm2, rstaticFW: rst, refmFW: refm && Object.keys(refm).length ? refm : null, healS1Median: Number.isFinite(healS1) ? healS1 : null,
-    ttdHeal: ttds.length ? median(ttds) : null, ttdRefm: results.refmTtd ?? null }) : { verdict: 'NOT RUN' };
+    ttdHeal: s1Ttds.length ? median(s1Ttds) : null, ttdRefm: refmTtds.length ? median(refmTtds) : null }) : { verdict: 'NOT RUN' };
   out.finalWeek = { 'MH-H': healFW, 'R-maint2': rm2, 'R-static': rst, 'REF-M': refm };
-  // D-5 worst case: units (lineage x world x class), silent critical outside the U1s carve-out.
+  // D-5 worst case: units (lineage x world x class); silent critical outside the U1s carve-out.
   const units = [];
-  // U1s carve-out (D-5 a): U1s is silent by design until the world complains, so its exposed cases placed before its first
-  // true complaint + 2 world-days form their own class, 'U1s-silent-exposure', reported and not counted against (a).
-  const u1Recs = results.records?.['MH-H'] ?? {};
-  const carveOf = (l, s) => {
+  // U1s carve-out (D-5 a; review M8): only U1s-INDUCED failing cases placed up to its first true complaint + 2 world-days are
+  // its silent exposure; a case another change also breaks still counts in that change's class.
+  const u1Recs = records?.['MH-H'] ?? {};
+  const carveOf = (l, s, m) => {
     const rec = u1Recs[l]?.[s];
     const spec = worldsOf(s).find(w => w.changes.some(x => x.id === 'U1s' && x.startsHere));
     if (!rec || !spec) return () => false;
     const ex = exposureOf(s)(spec.k)?.U1s ?? new Set();
     const first = (rec.worlds.find(w => w.k === spec.k)?.complaints ?? []).filter(c => c.kind === 'true' && ex.has(c.case)).sort((a, b) => a.at - b.at)[0];
     const limit = first ? first.at + 2 * DAY_MS : Infinity;
-    return (k, c, v) => k === spec.k && ex.has(c) && (v?.placedAt ?? 0) <= limit;
+    const induced = new Set(m.worlds?.[spec.k]?.induced?.U1s ?? []);
+    return (k, c, v) => k === spec.k && induced.has(c) && (v?.placedAt ?? 0) <= limit;
   };
+  const classOfFor = (s, m) => { const base = classOfCase(exposureOf(s), k => m.worlds?.[k]?.induced ?? {}); return (k, c) => base(k, c); };
+  let unitsEvaluated = 0;
   for (const [l, b] of Object.entries(heal)) for (const [s, m] of Object.entries(b)) {
-    const cls = classOfCase(exposureOf(s)), carve = carveOf(l, s);
-    for (const row of silentLoud(m, VISIBLE.heal, (k, c, v) => (carve(k, c, v) ? 'U1s-silent-exposure' : cls(k, c) ?? 'IP'))) {
-      units.push({ lineage: l, world: `${s}/W${row.world}`, cls: row.cls, silentCritical: row.cls === 'U1s-silent-exposure' ? 0 : row.silentCritical, silentExposure: row.cls === 'U1s-silent-exposure' ? row.silentCritical : 0, silent: row.silent, failing: row.failing });
+    unitsEvaluated += Object.values(m.worlds).filter(w => Object.values(w.cases).some(c => c.graded)).length;
+    const cls = classOfFor(s, m), carve = carveOf(l, s, m);
+    const classes = (k, c, v) => { const list = cls(k, c); if (!carve(k, c, v)) return list; const ind = m.worlds?.[k]?.induced ?? {}; const others = Object.entries(ind).filter(([ch, xs]) => ch !== 'U1s' && xs.includes(c)).map(([ch]) => CHANGES[ch].cls); return ['U1s-silent-exposure', ...new Set(others)]; };
+    for (const row of silentLoud(m, VISIBLE.heal, classes)) {
+      const carved = row.cls === 'U1s-silent-exposure';
+      units.push({ lineage: l, world: `${s}/W${row.world}`, cls: row.cls, silentCritical: carved ? 0 : row.silentCritical, silentExposure: carved ? row.silentCritical : 0, silent: row.silent, failing: row.failing, n: row.n });
     }
   }
   const w1False = [];
-  for (const [l, b] of Object.entries(heal)) for (const [s, m] of Object.entries(b)) {
+  for (const [, b] of Object.entries(heal)) for (const [, m] of Object.entries(b)) {
     const pass = (k, c) => m.worlds[k]?.cases?.[c]?.pass ?? null;
     w1False.push(falseIncidents((m.incidents ?? []).filter(i => i.opened?.k === 1), (w, c) => pass(1, c)).length);
   }
   const routedSilent = pairs.length && pairs.every(p => p.healSilent !== undefined) ? (() => { const r = d3({ pairs: pairs.map(p => ({ ...p, heal: p.healSilent, agent: p.agentSilent })), medianTtd: 0 }); return { mean: r.mean, hi95: r.hi95 }; })() : null;
-  out.rules.D5 = Object.keys(heal).length ? d5({ units, adv, perClassWorst: results.perClassWorst ?? [], routedSilent, w1FalseIncidents: w1False }) : { verdict: 'NOT RUN' };
+  const perClassWorst = Object.keys(heal).length ? perClassWorstOf({ heal, refm: arms['REF-M'] ?? null, refs: arms['REF-S'] ?? null, classOfFor }) : null;
+  out.rules.D5 = Object.keys(heal).length ? d5({ units, adv, perClassWorst, routedSilent, w1FalseIncidents: Object.keys(heal).length ? w1False : null, unitsEvaluated }) : { verdict: 'NOT RUN' };
+  out.rules.D5.perClassWorst = perClassWorst;
   // D-6 detection (unannounced), with and without complaints.
   out.rules.D6 = Object.keys(heal).length ? d6({ onsets: detectionOnsets(heal, worldsOf, exposureOf), w1FalseIncidents: w1False, m6 }) : { verdict: 'NOT RUN' };
   out.rules.D6noComplaints = Object.keys(heal).length ? d6({ onsets: detectionOnsets(heal, worldsOf, exposureOf, { channels: ['m1', 'm2', 'm3'] }), w1FalseIncidents: w1False }) : { verdict: 'NOT RUN' };
@@ -170,10 +256,10 @@ export function report(results) {
   out.rules.D8 = ld?.length ? d8Rule(ld.map(a => ({ defect: a.id, healed: a.healed, durable: a.durable, regressions: a.regressions, falseComplaintHarm: a.falseComplaintHarm > 0 }))) : { verdict: 'NOT RUN' };
   // D-9 stale verifier (descriptive).
   const stale = arms['MH-stale'] ?? null;
-  out.rules.D9 = stale ? { verdict: 'descriptive', perLineage: Object.fromEntries(Object.entries(stale).map(([l, b]) => [l, { stale: exposedPass(b.s1, exposureBy('s1')).rate, heal: heal[l]?.s1 ? exposedPass(heal[l].s1, exposureBy('s1')).rate : null }])) } : { verdict: 'NOT RUN' };
+  out.rules.D9 = stale ? { verdict: 'descriptive', perLineage: Object.fromEntries(Object.entries(stale).filter(([, b]) => b.s1).map(([l, b]) => [l, { stale: exposedPass(b.s1, exposureBy('s1')).rate, heal: heal[l]?.s1 ? exposedPass(heal[l].s1, exposureBy('s1')).rate : null }])) } : { verdict: 'NOT RUN' };
   // D-10 the unknown.
   const e2sCells = cellRows.filter(r => r.change === 'E2s');
-  const u1 = results.records?.['MH-H'] ? u1sLoud(results.records['MH-H'], exposureOf, worldsOf) : [];
+  const u1 = records?.['MH-H'] ? u1sLoud(records['MH-H'], exposureOf, worldsOf) : [];
   out.rules.D10 = Object.keys(heal).length ? { ...d10({ e2sCells, u1sLoud: u1 }), u1s: u1 } : { verdict: 'NOT RUN' };
   // D-11 red team.
   out.rules.D11 = redTeam?.length ? d11(redTeam) : { verdict: 'NOT RUN' };
@@ -182,12 +268,14 @@ export function report(results) {
   for (const [arm, byUnit] of Object.entries(arms)) {
     const by = new Map();
     for (const [, b] of Object.entries(byUnit)) for (const [s, m] of Object.entries(b)) {
-      const cls = classOfCase(exposureOf(s));
+      const cls = classOfFor(s, m);
       for (const [k, w] of Object.entries(m.worlds)) for (const [c, v] of Object.entries(w.cases)) {
         if (v.pass) continue;
-        const key = `${v.class ?? '?'}|${cls(Number(k), c)}`;
-        if (!by.has(key)) by.set(key, { rule: v.class, changeClass: cls(Number(k), c), n: 0, silent: false, examples: [] });
-        const e = by.get(key); e.n += 1; if (e.examples.length < 3) e.examples.push(`${s}/W${k}/${c}`);
+        for (const cc of cls(Number(k), c)) {
+          const key = `${v.class ?? '?'}|${cc}`;
+          if (!by.has(key)) by.set(key, { rule: v.class, changeClass: cc, n: 0, silent: false, examples: [] });
+          const e = by.get(key); e.n += 1; if (e.examples.length < 3) e.examples.push(`${s}/W${k}/${c}`);
+        }
       }
     }
     failing.push(...[...by.values()].map(f => ({ ...f, arm })));

@@ -21,7 +21,7 @@ import { runBundle, referenceVersion } from './arms.mjs';
 import { referencePools, gradeRun } from './oracle.mjs';
 import { contractsFor, BASE_READINGS } from './monitor.mjs';
 import { ROOT, WORK } from './changes.mjs';
-import { spendOf, EffortMissing, throwIfEnvFault } from './heal-adapter.mjs';
+import { spendOf, EffortMissing, throwIfEnvFault, preflight, meteredRun } from './heal-adapter.mjs';
 
 const sha = s => createHash('sha256').update(s).digest('hex');
 export const CO_SESSION = Object.freeze({ model: 'claude-opus-5-5', effort: 'xhigh', budgetUsd: 1.5, minutes: 30, role: 'contract-owner' });
@@ -56,6 +56,10 @@ export function saveContractPatch(source, { dir = path.join(WORK, 'readings'), l
  * precision, disagreements }.
  */
 export async function certifyReadings({ readings, bundles, stale }) {
+  try { return await certifyReadings0({ readings, bundles, stale }); }
+  catch (e) { if (e?.code !== 'DUR1_CONTRACT_MODULE') throw e; return { ok: false, error: e.message.slice(0, 400), driftedFlags: NaN, exposed: 0, exposedFlagged: 0, exposedShare: 0, flagged: 0, precision: 0, disagreements: [] }; }   // a module that errors or hangs in the sandbox is not certified
+}
+async function certifyReadings0({ readings, bundles, stale }) {
   let driftedFlags = 0, exposed = 0, exposedFlagged = 0, flagged = 0, flaggedTrue = 0;
   const disagreements = [];
   for (const b of bundles) {
@@ -123,13 +127,8 @@ export async function coSession({ label, kind, change = null, complaints = null,
   let r;
   if (session.kind === 'stub') r = await session.fn({ workdir, kind });
   else {
-    if (!session.effort) throw new EffortMissing(`${label}: no effort`);
-    const s = spendOf(session.spend.file);
-    if (s.upperUsd + session.budgetUsd > session.spend.totalCap) throw Object.assign(new Error(`DUR1_BUDGET: ${label}`), { code: 'DUR1_BUDGET' });
-    const id = `${label}@${new Date().toISOString()}`;
-    appendFileSync(session.spend.file, JSON.stringify({ id, phase: 'start', label, scope: session.spend.scope, model: session.model, effort: session.effort, capUsd: session.budgetUsd, at: new Date().toISOString() }) + '\n');
-    r = await runClaudeCode({ model: session.model, prompt: `${task}\nRead TASK.md and the files it names first.`, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort });
-    appendFileSync(session.spend.file, JSON.stringify({ id, phase: 'end', label, scope: session.spend.scope, model: session.model, effort: session.effort, capUsd: session.budgetUsd, costUsd: r.costUsd ?? null, error: r.error?.code ?? null, at: new Date().toISOString() }) + '\n');
+    try { preflight(session, label); } catch (e) { rmSync(workdir, { recursive: true, force: true }); throw e; }   // FreezeError stops the chain; BudgetStop: the caller quarantines (announced) or escalates (verifier-blind)
+    r = await meteredRun(session, { label, run: () => runClaudeCode({ model: session.model, prompt: `${task}\nRead TASK.md and the files it names first.`, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort }) });
   }
   throwIfEnvFault(r, label);   // never scored as a quarantine: the chain waits and resumes
   rec.session = { kind: session.kind ?? 'paid', model: session.model ?? null, effort: session.effort ?? null, costUsd: r?.costUsd ?? 0, error: r?.error ?? null };

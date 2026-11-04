@@ -22,7 +22,7 @@ import { buildBundle, loadSealed, evidenceBundle, ROOT, WORK } from './changes.m
 import { referencePools, gradeRun } from './oracle.mjs';
 import { runBundle, programVersion, controlVersion, BAD_CONTROLS, LINEAGES, AS_DELIVERED, REF_SOLVERS } from './arms.mjs';
 import { runStream, ContractOwner } from './stream.mjs';
-import { stubSession, HAIKU_PATCH, OPUS_PATCH, spendOf } from './heal-adapter.mjs';
+import { stubSession, HAIKU_PATCH, OPUS_PATCH, spendOf, StopError } from './heal-adapter.mjs';
 import { stubCO, CO_SESSION } from './contracts-owner.mjs';
 import { streamExposure, attributeRecord, modelOf, certifyRecord } from './model.mjs';
 import { report, renderReport } from './report.mjs';
@@ -61,16 +61,47 @@ export const PRIORITY = Object.freeze([
 ]);
 export const capOf = row => PRIORITY.find(p => p.row === row)?.cap ?? 0;
 
+/** The prereg §12 row of a ledger scope (attempt suffixes `#a<n>` keep their row). */
+export function rowOf(scope) {
+  const s = String(scope);
+  if (/^P0|^p0/.test(s)) return 'P0';
+  if (/^P1$|^author/.test(s)) return 'P1';
+  if (/^co-/.test(s)) return 'P2';
+  if (/^MH-H\.[^.]+\.s3/.test(s) || /^A-H\..*s3/.test(s)) return 'P5';
+  if (/^MH-H\./.test(s)) return 'P3';
+  if (/^A-H\./.test(s)) return 'P4';
+  if (/^REF-M\./.test(s)) return 'P6';
+  if (/^J2|^RT-|^A-H-RT/.test(s)) return 'P7';
+  if (/^A-Ox/.test(s)) return 'P8';
+  if (/^MH-stale|^LD-H|^MH-HO/.test(s)) return 'P9';
+  return 'reserve';
+}
+
+/** Room left in a row: cumulative caps through it minus committed spend (upper: open sessions at their cap) through it. */
+export function rowRoom(row, ledger = SPEND) {
+  const order = PRIORITY.map(p => p.row);
+  const i = order.indexOf(row);
+  if (i < 0) return 0;
+  const s = spendOf(ledger);
+  const capThrough = PRIORITY.slice(0, i + 1).reduce((a, p) => a + p.cap, 0);
+  const spentThrough = Object.entries(s.byScope).filter(([sc]) => order.indexOf(rowOf(sc)) <= i).reduce((a, [, v]) => a + v, 0);
+  return Math.min(capThrough - spentThrough, TOTAL_CAP - s.upperUsd);
+}
+
 const argv = process.argv.slice(2);
 const opt = (name, dflt = null) => { const i = argv.indexOf(`--${name}`); return i >= 0 ? argv[i + 1] : dflt; };
 const flag = name => argv.includes(`--${name}`);
 const list = (name, dflt) => (opt(name) ? opt(name).split(',').filter(Boolean) : dflt);
 const stamp = () => new Date().toISOString().slice(11, 19);
 
-/** A paid session config (model, effort, caps from the frozen constants) with the spend ledger and the freeze gate. */
-export function paidSession(conf, { scope, row, freeze }) {
+/**
+ * A paid session config (model, effort, caps from the frozen constants) with the spend ledger, the freeze gate and the row
+ * room gate, kept apart (review B4/R2-B1): a failed freeze stops the chain (exit 3); no room in the row is a budget stop.
+ */
+export function paidSession(conf, { scope, row, freeze, scopeCap = capOf(row) }) {
   if (!conf.effort) throw new Error(`DUR1_EFFORT: ${conf.role ?? conf.model} has no effort (D28 (4))`);
-  return { kind: 'paid', ...conf, spend: { file: SPEND, scope, totalCap: TOTAL_CAP, scopeCap: capOf(row) }, checkFreeze: () => freeze };
+  return { kind: 'paid', ...conf, spend: { file: SPEND, scope, totalCap: TOTAL_CAP, scopeCap }, checkFreeze: () => freeze,
+    checkRoom: () => { const room = rowRoom(row); return room + 1e-9 >= conf.budgetUsd ? { ok: true } : { ok: false, reason: `row ${row} has $${room.toFixed(2)} left, session cap $${conf.budgetUsd}` }; } };
 }
 
 /** Refuse a paid stage unless --paid, the freeze holds and the ledger has room for the row's cap. */
@@ -248,7 +279,7 @@ export async function dry({ lineages = ['b1lh-e8-1', 'ch-e8-1'], out = path.join
       'R-maint0': model(stat['R-maint0']), 'R-maint2': model(stat['R-maint2']), 'R-maint7': model(stat['R-maint7']), 'R-ceil': model(stat['R-ceil']) };
     // The dry stream is called r1; the rules read s1 for K-0, D-4 and D-9, so the dry report aliases r1 as s1.
     const alias = a => Object.fromEntries(Object.entries(a).map(([arm, by]) => [arm, Object.fromEntries(Object.entries(by).map(([u, b]) => [u, { s1: b.r1 }]))]));
-    const results = { worlds: { s1: worlds }, exposure: { s1: ex }, arms: alias(arms), certs: Object.fromEntries(Object.entries(certs).map(([l, b]) => [l, { s1: b.r1 }])),
+    const results = { worlds: { s1: worlds }, exposure: { s1: ex }, arms: alias(arms), certs: Object.fromEntries(Object.entries(certs).map(([l, b]) => [l, { s1: b.r1 }])),   // certs carry critRegression (D-1's clause)
       windows: windowPairs.length ? { pairs: windowPairs } : null, ld: ldA, redTeam: rt, costs: { agentProjected: { s1: 1 }, coUsd: {} }, m6,
       records: { 'MH-H': Object.fromEntries(Object.entries(healRecs).map(([l, r]) => [l, { s1: r }])) } };
     rep = report(results);
@@ -263,12 +294,25 @@ export async function dry({ lineages = ['b1lh-e8-1', 'ch-e8-1'], out = path.join
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Stage Z ($0, after the sealed bundle exists): gates, exposure, static comparators, K-0 on s1.
+// Stage Z ($0, after the sealed bundle exists): gates, exposure, static comparators, K-0 on s1. FAIL CLOSED (review
+// B6/R2-B3): V-11, V-1 (a reference timing below 100% or an oracle error), V-2 (a bad control passes a changed world),
+// V-3 (an exposure floor not met) and K-1 (runStream) write runs/stagez/STOP.json and exit 5; the chain stops. K-0's
+// verdict is written to K0.json; the chain refuses every paid step without K0.json saying "kill": false.
+
+/** The Stage Z gate failures of one world's gates (V-1, V-2, V-3). */
+export function gateFailures(g) {
+  const out = [];
+  if (!g.v1) out.push(`V-1 ${g.key}: ${(g.v1Problems ?? []).join('; ').slice(0, 300)}`);
+  for (const [c, v] of Object.entries(g.v2 ?? {})) if (v !== 'fails') out.push(`V-2 ${g.key}: bad control ${c} ${v}`);
+  for (const [c, e] of Object.entries(g.v3 ?? {})) if (e.floor !== null && e.floor !== undefined && !e.meets) out.push(`V-3 ${g.key}: ${c} ${e.completed} completed exposed < floor ${e.floor}`);
+  return out;
+}
 
 export async function stageZ({ streams = STREAM_IDS, lineages = Object.keys(LINEAGES), out = path.join(RUNS, 'stagez'), log }) {
   const sealedMeta = JSON.parse(readFileSync(path.join(RES, 'SEALED.json'), 'utf8'));
   const sealed = loadSealed(sealedMeta.file ?? path.join(SEALED_DIR, 'bundle.json'), { sha256: sealedMeta.sha256 });
   mkdirSync(out, { recursive: true });
+  const stop = why => { writeFileSync(path.join(out, 'STOP.json'), JSON.stringify({ at: new Date().toISOString(), why }, null, 1)); throw new StopError(`Stage Z: ${why}`); };
   const co = new ContractOwner({ session: id => (id === 'R1' ? stubCO('analyst-R1') : stubCO('none')), runDir: out, sealed, log });   // K-0: the analyst's R1 reading stands in for C-O
   const res = { streams: {} };
   // V-11: the nine starting versions reproduce 1,022/1,022 on the FH-1 grading worlds (1232-1234 x d2, d3, d5), FH-1's own grader.
@@ -280,13 +324,17 @@ export async function stageZ({ streams = STREAM_IDS, lineages = Object.keys(LINE
     writeFileSync(v11File, JSON.stringify(v11, null, 1));
   }
   res.v11 = JSON.parse(readFileSync(v11File, 'utf8'));
-  if (Object.values(res.v11).some(x => !x.ok)) { log(`V-11 FAILS: ${JSON.stringify(res.v11)}; stop and investigate`); return res; }
+  const v11Bad = Object.entries(res.v11).filter(([, x]) => !x.ok).map(([l, x]) => `${l} ${x.oracle}`);
+  if (v11Bad.length) stop(`V-11 fails: ${v11Bad.join(', ')}`);
   for (const s of streams) {
     const worlds = worldsOf(s, { sealedOnsets: sealed.onsets() });
     const gates = [];
     for (const w of worlds) gates.push(await gatesOfWorld(w, { sealed }));
+    writeFileSync(path.join(out, `${s}.gates.json`), JSON.stringify({ gates }, null, 1));
+    const bad = gates.flatMap(gateFailures);
+    if (bad.length) stop(bad.slice(0, 12).join(' | '));
     const ex = await streamExposure(worlds, { sealed });
-    const stat = await staticArms({ stream: s, worlds, sealed, lineages, exposure: ex, co, runDir: path.join(out, s), log });
+    const stat = await staticArms({ stream: s, worlds, sealed, lineages, exposure: ex, co, runDir: path.join(out, s), log });   // K-1 inside runStream throws StopError
     res.streams[s] = { gates, floors: ex.floors, ruleTimes: stat.ruleTimes };
     writeFileSync(path.join(out, `${s}.gates.json`), JSON.stringify(res.streams[s], null, 1));
     if (s === 's1') {
@@ -299,6 +347,7 @@ export async function stageZ({ streams = STREAM_IDS, lineages = Object.keys(LINE
       log(`K-0: ${res.k0.verdict} ${JSON.stringify(res.k0.perChange)}`);
     }
   }
+  if (!res.k0) stop('K-0 was not computed (stream s1 not in this Stage Z run)');
   return res;
 }
 
@@ -313,7 +362,7 @@ async function main() {
     console.log(JSON.stringify({ allStepsOk: r.summary.allStepsOk, ms: r.summary.ms, steps: Object.fromEntries(Object.entries(r.summary.steps).map(([k, v]) => [k, v.ok ? 'ok' : `FAILED: ${v.error.slice(0, 200)}`])), owner: r.report?.owner ?? null }, null, 1));
     process.exit(r.summary.allStepsOk ? 0 : 1);
   }
-  if (cmd === 'stagez') { const r = await stageZ({ streams: list('streams', STREAM_IDS), lineages: list('lineages', Object.keys(LINEAGES)), log }); console.log(JSON.stringify({ k0: r.k0?.verdict ?? null })); return; }
+  if (cmd === 'stagez') { const r = await stageZ({ streams: list('streams', STREAM_IDS), lineages: list('lineages', Object.keys(LINEAGES)), log }); console.log(JSON.stringify({ k0: r.k0?.verdict ?? null, kill: r.k0?.kill ?? null })); return; }
   if (cmd === 'author') {
     const fz = await guardPaid('author', 'P1');
     const r = await runAuthor({ session: paidSession(AUTHOR_SESSION, { scope: 'P1', row: 'P1', freeze: fz }), log });
@@ -333,6 +382,10 @@ async function main() {
   process.exit(2);
 }
 
-/** Exit codes the chain (dur1-chain.sh) acts on: 3 refused (freeze, --paid), 4 budget (row or total cap), 75 environment fault. */
-export const EXIT = Object.freeze({ DUR1_UNPAID: 3, DUR1_FREEZE: 3, DUR1_BUDGET: 4, DUR1_SCOPE_BUDGET: 4, DUR1_ENV_FAULT: 75 });
+/**
+ * Exit codes the chain (dur1-chain.sh) acts on: 3 refused (a changed freeze or --paid missing; never a budget), 4 budget (a
+ * row or the total is out of room before the stage could do anything), 5 a stop rule fired (K-1, V-1, V-2, V-3, V-6,
+ * V-11, a missing K-0 input: the chain stops), 75 environment fault (wait 30 minutes and resume), 1 harness error.
+ */
+export const EXIT = Object.freeze({ DUR1_UNPAID: 3, DUR1_FREEZE: 3, DUR1_BUDGET: 4, DUR1_BUDGET_STOP: 4, DUR1_STOP: 5, DUR1_ENV_FAULT: 75, DUR1_HARNESS: 1 });
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(e => { console.error(String(e?.stack ?? e)); process.exit(EXIT[e?.code] ?? 1); });

@@ -41,6 +41,53 @@ export const ENV_FAULTS = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE'
 export class EnvFault extends Error { constructor(label, code) { super(`DUR1_ENV_FAULT: ${label}: ${code}`); this.code = 'DUR1_ENV_FAULT'; this.fault = code; } }
 export const throwIfEnvFault = (r, label) => { const c = r?.error?.code ?? null; if (c && ENV_FAULTS.includes(c)) throw new EnvFault(label, c); return r; };
 export const ENV_WAIT_MS = Number(process.env.DUR1_ENV_WAIT_MS ?? 30 * 60_000);
+/**
+ * A budget stop (prereg §6.3, §12, K-3): the session would exceed its lineage-stream cap ('scope'), its row's room ('row')
+ * or the $80 total ('total'). Never a freeze failure (review B4/R2-B1): the stream marks its open incidents `budget-stop`
+ * and goes on; a stage exits 4 only when a whole row is out of room before it starts.
+ */
+export class BudgetStop extends Error { constructor(m, why = 'row') { super(`DUR1_BUDGET_STOP (${why}): ${m}`); this.code = 'DUR1_BUDGET_STOP'; this.why = why; } }
+/** A stop rule (K-1, V-1, V-2, V-3, V-6, V-11, K-0 input missing): exit 5; the chain stops (prereg §13.2). */
+export class StopError extends Error { constructor(m) { super(`DUR1_STOP: ${m}`); this.code = 'DUR1_STOP'; } }
+export class FreezeError extends Error { constructor(m) { super(`DUR1_FREEZE: ${m}`); this.code = 'DUR1_FREEZE'; } }
+
+/**
+ * Pre-session checks of a paid session config (shared by heal, C-O, red-team and author sessions): the model is in the
+ * owner policy, effort is set (D28 (4)), the freeze holds (else FreezeError: the chain stops), and the session's cap fits
+ * its row (checkRoom), the $80 total and its scope cap (else BudgetStop).
+ */
+export function preflight(session, label) {
+  if (!POLICY.models.some(m => m.id === session.model)) throw new Error(`model not in the owner policy: ${session.model}`);
+  if (!session.effort) throw new EffortMissing(`${label}: no effort`);
+  if (session.checkFreeze) { const fz = session.checkFreeze(); if (!fz?.ok) throw new FreezeError(`${label}: ${JSON.stringify(fz).slice(0, 300)}`); }
+  if (session.checkRoom) { const rm = session.checkRoom(); if (!rm.ok) throw new BudgetStop(`${label}: ${rm.reason}`, 'row'); }
+  const s = spendOf(session.spend.file);
+  if (s.upperUsd + session.budgetUsd > session.spend.totalCap + 1e-9) throw new BudgetStop(`${label}: committed $${s.upperUsd.toFixed(3)} + cap $${session.budgetUsd} > $${session.spend.totalCap}`, 'total');
+  if (session.spend.scopeCap !== undefined && session.spend.scopeCap !== null && (s.byScope[session.spend.scope] ?? 0) + session.budgetUsd > session.spend.scopeCap + 1e-9) throw new BudgetStop(`${label}: scope ${session.spend.scope} at $${(s.byScope[session.spend.scope] ?? 0).toFixed(3)} + cap $${session.budgetUsd} > $${session.spend.scopeCap}`, 'scope');
+}
+
+/**
+ * One metered model session (the FH-1 start/end pattern): a start row reserves the cap; the end row carries the CLI's cost.
+ * A run that THROWS still gets its end row (review R2-M4: runClaudeCode throws SANDBOX_UNAVAILABLE after the start row);
+ * an environment fault (thrown or returned) comes back as { error: { code } } and is never scored.
+ */
+export async function meteredRun(session, { label, run }) {
+  const id = `${label}@${new Date().toISOString()}`;
+  const base = { id, label, scope: session.spend.scope, model: session.model, effort: session.effort, capUsd: session.budgetUsd };
+  appendFileSync(session.spend.file, JSON.stringify({ ...base, phase: 'start', at: new Date().toISOString() }) + '\n');
+  let r;
+  try { r = await run(); } catch (e) {
+    const code = e?.code ?? 'THROWN';
+    const env = ENV_FAULTS.includes(code);
+    // SANDBOX_UNAVAILABLE is thrown before any model call: nothing was spent. Anything else is counted at its cap.
+    appendFileSync(session.spend.file, JSON.stringify({ ...base, phase: 'end', costUsd: code === 'SANDBOX_UNAVAILABLE' ? 0 : null, costUpperUsd: code === 'SANDBOX_UNAVAILABLE' ? null : session.budgetUsd, error: code, thrown: true, at: new Date().toISOString() }) + '\n');
+    if (env) return { costUsd: code === 'SANDBOX_UNAVAILABLE' ? 0 : null, costUpperUsd: session.budgetUsd, error: { code, message: String(e?.message ?? e).slice(0, 200) } };
+    throw e;
+  }
+  appendFileSync(session.spend.file, JSON.stringify({ ...base, phase: 'end', costUsd: r?.costUsd ?? null, costUpperUsd: r?.costUpperUsd ?? null, turns: r?.turns ?? null, error: r?.error?.code ?? null, at: new Date().toISOString() }) + '\n');
+  return r;
+}
+
 export class RedTeamLeak extends Error { constructor(k) { super(`DUR1_REDTEAM: red-team or WC-1 world ${k} may never enter an evidence or regression set`); this.code = 'DUR1_REDTEAM'; } }
 export class EffortMissing extends Error { constructor(m) { super(`DUR1_EFFORT: ${m} (D28 (4): a paid session with effort unset is refused)`); this.code = 'DUR1_EFFORT'; } }
 
@@ -69,10 +116,10 @@ export async function evidenceRun(version, b, { readings = BASE_READINGS, only =
   checkNotRedTeam(b);
   const key = `${version.digest}|${b.key}|${b.worldDigest}|${JSON.stringify(readings.map(r => [r.id, r.fromMs]))}|${only ? [...only].sort().join(',') : ''}`;
   if (runCache.has(key)) return runCache.get(key);
-  const { pools, ends } = await referencePools(b);
-  const r = await runBundle(b, { version });
+  const { pools, ends, subjects } = await referencePools(b);
+  const r = await runBundle(b, { version, worldTimeoutMs: 30 * 60_000 });
   const f = await journalFindings(b, r.rows, { pools, readings, only });
-  const out = { key: b.key, status: r.status, rows: r.rows, armErrors: f.armErrors, findings: f.byOrder, contracts: f.contracts, completed: f.completed, pools, ends };
+  const out = { key: b.key, status: r.status, rows: r.rows, armErrors: f.armErrors, findings: f.byOrder, contracts: f.contracts, completed: f.completed, pools, ends, subjects };
   runCache.set(key, out);
   return out;
 }
@@ -191,6 +238,7 @@ export function spendOf(file) {
  */
 export async function patchSession({ label, incumbent, incidents, bundle, rows, rowsByWorld = {}, alarmAt, sets, readings, session, runDir, announced = null, log = () => {} }) {
   const kind = incumbent.programKind;
+  if (session.kind !== 'stub') preflight(session, label);   // before any workspace: FreezeError stops the chain; BudgetStop budget-stops the lineage-stream
   const settled = new Set([...orderState(rows, alarmAt).entries()].filter(([, s]) => s.settledAt !== null).map(([o]) => o));
   const failures = failuresText({ incidents, rows, rowsByWorld, alarmAt, settled, worldLabel: `world ${bundle.key}` });
   const workdir = path.join(WORK, 'sessions', label.replace(/[^\w.-]/g, '_'));
@@ -208,17 +256,9 @@ export async function patchSession({ label, incumbent, incidents, bundle, rows, 
   try {
     if (session.kind === 'stub') r = await session.fn({ workdir, kind, failures: failures.text, incidents });
     else {
-      if (!POLICY.models.some(m => m.id === session.model)) throw new Error(`model not in the owner policy: ${session.model}`);
-      if (!session.effort) throw new EffortMissing(`${label}: no effort`);
-      if (session.checkFreeze) { const fz = session.checkFreeze(); if (!fz.ok) throw Object.assign(new Error(`DUR1_FREEZE: ${JSON.stringify(fz).slice(0, 300)}`), { code: 'DUR1_FREEZE' }); }
-      const s = spendOf(session.spend.file);
-      if (s.upperUsd + session.budgetUsd > session.spend.totalCap) throw Object.assign(new Error(`DUR1_BUDGET: spent ${s.upperUsd.toFixed(3)} + cap ${session.budgetUsd} > ${session.spend.totalCap}`), { code: 'DUR1_BUDGET' });
-      if ((s.byScope[session.spend.scope] ?? 0) + session.budgetUsd > session.spend.scopeCap) throw Object.assign(new Error(`DUR1_SCOPE_BUDGET: ${session.spend.scope}`), { code: 'DUR1_SCOPE_BUDGET' });
-      const id = `${label}@${new Date().toISOString()}`;
-      appendFileSync(session.spend.file, JSON.stringify({ id, phase: 'start', label, scope: session.spend.scope, model: session.model, effort: session.effort, capUsd: session.budgetUsd, at: new Date().toISOString() }) + '\n');
+      preflight(session, label);    // again just before the spend (another worker may have spent in between)
       const prompt = `${files['TASK.md']}\nRead TASK.md, SPEC-E.md, FAILURES.md${announced ? ', CHANGE.md' : ''} and your program first.`;
-      r = await runClaudeCode({ model: session.model, prompt, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort });
-      appendFileSync(session.spend.file, JSON.stringify({ id, phase: 'end', label, scope: session.spend.scope, model: session.model, effort: session.effort, capUsd: session.budgetUsd, costUsd: r.costUsd ?? null, costUpperUsd: r.costUpperUsd ?? null, turns: r.turns ?? null, error: r.error?.code ?? null, at: new Date().toISOString() }) + '\n');
+      r = await meteredRun(session, { label, run: () => runClaudeCode({ model: session.model, prompt, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort }) });
     }
   } finally { rec.smokeRuns = await box.stop(); }
   if (existsSync(path.join(workdir, '.executor-transcript.jsonl'))) copyFileSync(path.join(workdir, '.executor-transcript.jsonl'), path.join(out, 'transcript.jsonl'));
@@ -239,6 +279,8 @@ export async function patchSession({ label, incumbent, incidents, bundle, rows, 
 // The gate
 
 const flagged = (findings, order, cls) => !!findings.get(order)?.has(cls);
+/** The incumbent's evidence runs must complete (a harness error otherwise; never a rejection of the candidate). */
+const incumbentRun = r => { if (r.status !== 'complete') throw Object.assign(new Error(`DUR1_HARNESS: the incumbent's evidence run on ${r.key} did not complete (${String(r.status).slice(0, 120)})`), { code: 'DUR1_HARNESS' }); return r; };
 /**
  * gate({ incumbent, candidate, incidents, sets, readings, proactive }) → { accept, reason, fixed, stillFlagged, regressions }.
  * incidents carry evidence orders and classes; `proactive` (an announcement canary): the classes are the canary's.
@@ -247,8 +289,9 @@ export async function gate({ incumbent, candidate, incidents, sets, readings, pr
   if (!candidate || candidate.problems?.length) return { accept: false, reason: 'does not load' };
   if (candidate.digest === incumbent.digest) return { accept: false, reason: 'program unchanged' };
   const T = sets.alarmAt;
-  const histB = await evidenceRun(incumbent, sets.history, { readings });
+  const histB = incumbentRun(await evidenceRun(incumbent, sets.history, { readings }));
   const histC = await evidenceRun(candidate, sets.history, { readings });
+  if (histC.status !== 'complete') return { accept: false, reason: `the candidate's replay did not complete (${String(histC.status).slice(0, 120)})` };
   if (histC.armErrors > histB.armErrors) return { accept: false, reason: `arm errors on the replay ${histB.armErrors} -> ${histC.armErrors}` };
   // Corrective: flagged orders and classes of the incidents, on the replay (or on practice for a proactive canary).
   const targets = incidents.flatMap(i => i.evidence.filter(e => e.order && e.at < T).map(e => ({ order: e.order, cls: i.kind === 'verifier-blind' ? null : e.cls, inc: i.id })));
@@ -267,19 +310,30 @@ export async function gate({ incumbent, candidate, incidents, sets, readings, pr
     }
   }
   if (!fixed.length) return { accept: false, reason: proactive ? 'clears none of the canary\'s contract failures' : 'fixes no flagged order on the replay', fixed, stillFlagged };
-  // Regression: 0 new contract failures on practice, the replay's last 3 world-days and W1.
+  // Regression: 0 new contract failures, 0 new m1 and m3 findings (per order) and no new arm errors on practice, the
+  // replay's last 3 world-days and W1 (review R2-M1: m1/m3 and arm errors were checked on the replay only, or not at all).
+  // W1 is judged under the readings in force at the alarm: the worlds replay one calendar fortnight, so W1's orders carry
+  // the same dates as the current world's (PREREG-DUR-1 §6.3 as amended 2026-11-04).
   const regressions = [];
   const contractNew = (b, c, label, onlyCases = null) => {
+    if (c.status !== 'complete') { regressions.push({ set: label, run: `did not complete (${String(c.status).slice(0, 80)})` }); return; }
+    if (!onlyCases && c.armErrors > b.armErrors) regressions.push({ set: label, armErrors: `${b.armErrors} -> ${c.armErrors}` });
     for (const [cs, vB] of b.contracts) {
       if (onlyCases && !onlyCases.has(cs)) continue;
       const vC = c.contracts.get(cs);
       if (vB.pass && vC && !vC.pass) regressions.push({ set: label, case: cs, failed: vC.failed });
     }
+    const orders = onlyCases ? new Set([...onlyCases].map(cs => c.subjects?.[cs]).filter(Boolean)) : null;
+    for (const [o, setC] of c.findings) {
+      if (orders && !orders.has(o)) continue;
+      const setB = b.findings.get(o) ?? new Set();
+      for (const cls of setC) if (/^m[13]\|/.test(cls) && !setB.has(cls)) regressions.push({ set: label, order: o, cls });
+    }
   };
-  for (const b of sets.practice) contractNew(await evidenceRun(incumbent, b, { readings }), await evidenceRun(candidate, b, { readings }), b.key);
+  for (const b of sets.practice) contractNew(incumbentRun(await evidenceRun(incumbent, b, { readings })), await evidenceRun(candidate, b, { readings }), b.key);
   const recent = new Set(Object.entries(histB.ends ?? {}).filter(([, e]) => e !== null && e >= T - 3 * DAY_MS && e < T).map(([c]) => c));
   contractNew(histB, histC, 'replay (last 3 world-days)', recent);
-  if (sets.w1) contractNew(await evidenceRun(incumbent, sets.w1, { readings }), await evidenceRun(candidate, sets.w1, { readings }), 'W1');
+  if (sets.w1) contractNew(incumbentRun(await evidenceRun(incumbent, sets.w1, { readings })), await evidenceRun(candidate, sets.w1, { readings }), 'W1');
   if (regressions.length) return { accept: false, reason: `${regressions.length} new contract failures on the regression set (${[...new Set(regressions.map(r => r.set))].join(', ')})`, fixed, stillFlagged, regressions: regressions.slice(0, 20) };
   return { accept: true, reason: `${fixed.length} flagged order-classes fixed, ${stillFlagged.length} still flagged, 0 regressions`, fixed, stillFlagged, regressions: [], clean: stillFlagged.length === 0 };
 }

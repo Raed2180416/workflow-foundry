@@ -123,7 +123,7 @@ export function modelOf(rec, attribution = null, exposure = null) {
     const sig = signalTimes(w);
     const cases = {};
     for (const [c, g] of Object.entries(w.grade ?? {})) {
-      cases[c] = { graded: true, pass: g[0] === 1, critical: g[1] === 1, firstAt: g[2], placedAt: toMs(g[3]), class: g[4], epoch: g[5], signals: sig[c] ?? {} };
+      cases[c] = { graded: true, pass: g[0] === 1, critical: g[1] === 1, firstAt: g[2], placedAt: toMs(g[3]), class: g[4], epoch: g[5], lastAt: g[6] ?? null, signals: sig[c] ?? {} };
     }
     worlds[w.k] = { cases, induced: attribution?.[w.k]?.induced ?? {}, exposedFailing: attribution?.[w.k]?.exposedFailing ?? {}, base: attribution?.[w.k]?.base ?? [] };
   }
@@ -131,7 +131,7 @@ export function modelOf(rec, attribution = null, exposure = null) {
   // Maintenance $ per change (prereg §9 item 6): a session's $ goes to the change most of its incidents' evidence cases
   // are induced failures of (oracle side), else 'base'.
   const sessions = (rec.sessions ?? []).map(s => ({ ...s, attributedChange: attribution ? promotionChange({ incidents: s.incidents ?? [] }, rec, attribution, exposure) : null }));
-  return { label: rec.label, arm: rec.arm, stream: rec.stream, worlds, incidents: rec.incidents ?? [], promotions: rec.promotions ?? [], rollbacks: rec.rollbacks ?? [], sessions, usd, budgetStop: rec.budgetStop ?? null };
+  return { label: rec.label, arm: rec.arm, stream: rec.stream, worlds, incidents: rec.incidents ?? [], promotions: rec.promotions ?? [], rollbacks: rec.rollbacks ?? [], sessions, usd, budgetStop: rec.budgetStop ?? null, envFaults: rec.envFaults ?? 0 };
 }
 
 /** Stream day of the onset of change c (fractional days ignored: the onset's world-day), or null. */
@@ -174,7 +174,7 @@ async function gradeVersion(bundle, version) { return gradeTimeline(bundle, [{ f
 export async function certifyPromotion({ rec, p, worlds, sealed = null, practice = PRACTICE }) {
   const versions = rec.versionMap;
   const inc = versions.get(p.from), cand = versions.get(p.to);
-  if (!inc || !cand) return { verdict: 'inconclusive', label: 'missing-version', reasons: ['a version of the promotion is not in the record'] };
+  if (!inc || !cand) return { verdict: 'inconclusive', label: 'missing-version', reasons: ['a version of the promotion is not in the record'], critRegression: null };
   const spec = worlds.find(w => w.k === p.k);
   const bundle = await buildBundle(spec, { sealed });
   const alarm = dayStart(Math.max(1, p.day - (p.boundary ? 0 : 1)));
@@ -212,15 +212,41 @@ export async function certifyPromotion({ rec, p, worlds, sealed = null, practice
   const fresh = [];
   for (const c of gI.cases.filter(x => x.graded && toMs(x.placedAt) >= promotedAt && !evid.has(x.case))) fresh.push({ case: `${p.k}/${c.case}`, rule: c.pass ? 'pass' : (c.first?.rule ?? c.first?.code ?? 'unknown'), incumbentPass: c.pass, candidatePass: !!passC.get(c.case)?.pass });
   const next = worlds.find(w => w.k === p.k + 1);
+  let nextGrades = null;
   if (next) {
     const bn = await buildBundle(next, { sealed });
     const a = await gradeVersion(bn, inc), b = await gradeVersion(bn, cand);
+    nextGrades = { a, b: { critical: new Set(b.cases.filter(c => c.graded && !c.pass && c.critical).map(c => c.case)) } };
     const m = new Map(b.cases.filter(c => c.graded).map(c => [c.case, c.pass]));
     for (const c of a.cases.filter(x => x.graded)) fresh.push({ case: `${p.k + 1}/${c.case}`, rule: c.pass ? 'pass' : (c.first?.rule ?? c.first?.code ?? 'unknown'), incumbentPass: c.pass, candidatePass: !!m.get(c.case) });
   }
   const evidence = certEvidence({ replays, failing, regressions, fresh, incidentRules: rules.size ? [...rules] : null });
   const v = certify(evidence);
-  return { ...v, evidence: { determinism: evidence.determinism, failing: evidence.failing, regressions: evidence.regressions, fresh: evidence.fresh.map(s => ({ stratum: s.stratum, failing: s.failing, base: s.base, cand: s.cand })) } };
+  // Heal-caused CRITICAL regressions (prereg §9 item 5, version matrix; D-1's clause, review B8): cases the candidate gets
+  // critically wrong (first divergence critical) that the incumbent passes, among the cases it acted on (world k placed from
+  // the promotion on, and world k + 1). The days the candidate stays in force come from the record (critRegressionDays).
+  const critCases = [];
+  for (const c of gI.cases.filter(x => x.graded && x.pass && toMs(x.placedAt) >= promotedAt)) if (passC.get(c.case)?.critical) critCases.push(`${p.k}/${c.case}`);
+  if (nextGrades) for (const c of nextGrades.a.cases.filter(x => x.graded && x.pass)) if (nextGrades.b.critical.has(c.case)) critCases.push(`${p.k + 1}/${c.case}`);
+  return { ...v, critRegression: { n: critCases.length, examples: critCases.slice(0, 5) }, evidence: { determinism: evidence.determinism, failing: evidence.failing, regressions: evidence.regressions, fresh: evidence.fresh.map(s => ({ stratum: s.stratum, failing: s.failing, base: s.base, cand: s.cand })) } };
+}
+
+/**
+ * Days each promotion with a heal-caused critical regression stayed in force (stream days, until the next promotion or
+ * rollback of the lineage-stream or the stream's end). certs: certifyRecord's output for the record. Returns the maximum
+ * (0 when no promotion regressed critically): D-1's "no heal-caused critical regression stays in force > 2 world-days".
+ */
+export function critRegressionDays(rec, certs) {
+  const events = [...(rec.promotions ?? []).map(p => ({ at: 14 * (p.k - 1) + p.day, to: p.to })), ...(rec.rollbacks ?? []).map(r => ({ at: 14 * (r.k - 1) + r.day, to: r.to }))].sort((a, b) => a.at - b.at);
+  const end = 14 * (rec.worlds?.length ?? 6) + 1;
+  let max = 0;
+  for (const c of certs ?? []) {
+    if (!(c.critRegression?.n > 0)) continue;
+    const at = 14 * (c.k - 1) + c.day;
+    const next = events.find(e => e.at > at);
+    max = Math.max(max, (next ? next.at : end) - at);
+  }
+  return max;
 }
 
 /** Certify every promotion of a record; returns [{ k, day, from, to, change, verdict, label, reasons }]. */
@@ -228,7 +254,7 @@ export async function certifyRecord({ rec, worlds, sealed = null, attribution = 
   const out = [];
   for (const p of rec.promotions ?? []) {
     const c = await certifyPromotion({ rec, p, worlds, sealed, practice });
-    out.push({ k: p.k, day: p.day, from: p.from, to: p.to, change: promotionChange(p, rec, attribution, exposure), verdict: c.verdict, label: c.label, reasons: c.reasons, evidence: c.evidence });
+    out.push({ k: p.k, day: p.day, from: p.from, to: p.to, change: promotionChange(p, rec, attribution, exposure), verdict: c.verdict, label: c.label, reasons: c.reasons, critRegression: c.critRegression ?? null, evidence: c.evidence });
   }
   return out;
 }

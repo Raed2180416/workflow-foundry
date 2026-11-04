@@ -38,12 +38,27 @@ export const referenceVersion = ({ id = 'reference', timing = 'earliest', armWor
 
 const transitionCache = new Map();
 /**
+ * Capability tokens a transition module never needs (beds/ebed/e8/transition.mjs has none of them and no import): a
+ * candidate that names one is refused before it is imported (review R2-B5). LD-H's transition candidates are reference
+ * mutants that by construction read the world, so they run in the harness process; this static guard keeps model-written
+ * code from reaching the process, the file system, the network, globals or prototypes by name. It does not stop an
+ * obfuscated escape (disclosed, PREREG-DUR-1 §15); LD-H sessions get no untrusted text (the manifests' designer-written
+ * complaints), unlike C-O, whose model-written contract patches run out of process (contract-sandbox.mjs).
+ */
+export const UNSAFE_TOKENS = Object.freeze(['import', 'require', 'process', 'globalThis', 'global', 'Function', 'eval', 'constructor', 'prototype', '__proto__', 'Reflect', 'Proxy',
+  'Atomics', 'SharedArrayBuffer', 'WebAssembly', 'fetch', 'setTimeout', 'setInterval', 'setImmediate', 'queueMicrotask', 'Buffer', 'defineProperty', 'defineProperties', 'setPrototypeOf',
+  'getPrototypeOf', 'Symbol', 'Worker', 'child_process', 'XMLHttpRequest', 'WebSocket']);
+export const unsafeTokens = source => UNSAFE_TOKENS.filter(t => new RegExp(`(^|[^\\w$])${t.replace(/\$/g, '\\$')}([^\\w$]|$)`).test(String(source).replace(/^\s*\/\/.*$/gm, '')));
+/**
  * A version whose program is a transition module (LD-H: the reference policy driven by an edited copy of
- * beds/ebed/e8/transition.mjs, the file a patcher edits). The source is written under WORK/transition/ and imported.
+ * beds/ebed/e8/transition.mjs, the file a patcher edits). The source is checked (unsafeTokens), written under
+ * WORK/transition/ and imported.
  */
 export async function transitionVersion(source, { id }) {
   const digest = sha(source).slice(0, 16);
   if (transitionCache.has(digest)) return Object.freeze({ ...transitionCache.get(digest), id });
+  const bad = unsafeTokens(source);
+  if (bad.length) throw Object.assign(new Error(`DUR1_UNSAFE_TRANSITION: the transition names ${bad.join(', ')} (refused before import)`), { code: 'DUR1_UNSAFE_TRANSITION' });
   const dir = path.join(WORK, 'transition');
   mkdirSync(dir, { recursive: true });
   const file = path.join(dir, `transition-${digest}.mjs`);

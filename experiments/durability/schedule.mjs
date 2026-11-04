@@ -64,10 +64,21 @@ export function inForce(c, k) {
 }
 
 /**
- * The change schedule of world k: [{ id, onsetMs, publishMs, startsHere }] in a fixed order. A change that started in an
- * earlier world is in force from the world's t0 (onsetMs = T0_MS): every order arriving in the world; the few go-live
- * backlog orders placed before t0 keep the rules and fees their migrated records were made under (consistent records). Sealed
- * onsets come from `sealedOnsets` ({ R2s: { day, publishDay? }, ... }); without them a sealed change has onsetMs null.
+ * Changes with an effective PLACEMENT date (a rule or a rulebook edition that applies to orders placed on or after a date).
+ * Every world replays the same calendar fortnight (the generator's fixed t0), so such a change keeps, in every later world,
+ * the effective date it was published with (truth, notice, contract readings, practice overlays): a heal that encodes the
+ * published date stays correct in later worlds (fix 2026-11-04, review B7; with the date moved to the later world's t0, a
+ * W3 heal that faithfully encoded R1's 2026-03-06 failed every W4-W6 order placed 03-02..03-05). API renames, loads,
+ * faults and documents stay in force from the world start.
+ */
+export const DATED = Object.freeze(['P1', 'R1', 'R2s', 'E2s', 'U1s']);
+
+/**
+ * The change schedule of world k: [{ id, onsetMs, effMs, publishMs, startsHere }] in a fixed order. A change that started
+ * in an earlier world is in force from the world's t0 (onsetMs = T0_MS), except that a DATED change applies to orders
+ * placed on or after its original effective date (effMs, the start world's onset on the replayed calendar); the few
+ * go-live backlog orders placed before t0 keep the rules and fees their migrated records were made under. Sealed onsets
+ * come from `sealedOnsets` ({ R2s: { day, publishDay? }, ... }); without them a sealed change has onsetMs null.
  */
 export function changesOf(k, { sealedOnsets = null } = {}) {
   const out = [];
@@ -75,17 +86,21 @@ export function changesOf(k, { sealedOnsets = null } = {}) {
     if (!inForce(c, k)) continue;
     const C = CHANGES[c];
     const here = C.world === k;
+    const on = C.onset ?? sealedOnsets?.[c] ?? null;
+    const startOnset = on ? at(on.day, on.time ?? '00:00') : null;
     let onsetMs = T0_MS, publishMs = null;
     if (here) {
-      const on = C.onset ?? sealedOnsets?.[c] ?? null;
-      onsetMs = on ? at(on.day, on.time ?? '00:00') : null;
+      onsetMs = startOnset;
       const pub = C.publish ?? (C.sealed && C.announced && sealedOnsets?.[c]?.publishDay ? { day: sealedOnsets[c].publishDay, time: sealedOnsets[c].publishTime ?? '09:00' } : null);
       publishMs = pub ? at(pub.day, pub.time) : null;
     }
-    out.push({ id: c, cls: C.cls, kind: C.kind, startsHere: here, onsetMs, publishMs });
+    const effMs = here ? onsetMs : DATED.includes(c) ? startOnset : T0_MS;
+    out.push({ id: c, cls: C.cls, kind: C.kind, startsHere: here, onsetMs, effMs, publishMs });
   }
   return out;
 }
+/** The effective placement time of a scheduled change entry (older specs without effMs: the onset). */
+export const effOf = c => (c?.effMs ?? c?.onsetMs ?? null);
 
 /** The six worlds of a stream: [{ stream, k, seed, size, changes }]. */
 export function worldsOf(stream, opts = {}) {
@@ -164,9 +179,9 @@ export function dryWorlds() {
     for (const c of carried) {
       if (CHANGES[c.id].transient) continue;
       if (w.adds.some(a => CHANGES[a.id].reverts === c.id)) continue;
-      changes.push({ id: c.id, cls: CHANGES[c.id].cls, kind: CHANGES[c.id].kind, startsHere: false, onsetMs: T0_MS, publishMs: null });
+      changes.push({ id: c.id, cls: CHANGES[c.id].cls, kind: CHANGES[c.id].kind, startsHere: false, onsetMs: T0_MS, effMs: DATED.includes(c.id) ? at(c.onset.day, c.onset.time ?? '00:00') : T0_MS, publishMs: null });
     }
-    for (const a of w.adds) changes.push({ id: a.id, cls: CHANGES[a.id].cls, kind: CHANGES[a.id].kind, startsHere: true, onsetMs: at(a.onset.day, a.onset.time ?? '00:00'), publishMs: a.publish ? at(a.publish.day, a.publish.time) : null });
+    for (const a of w.adds) { const on = at(a.onset.day, a.onset.time ?? '00:00'); changes.push({ id: a.id, cls: CHANGES[a.id].cls, kind: CHANGES[a.id].kind, startsHere: true, onsetMs: on, effMs: on, publishMs: a.publish ? at(a.publish.day, a.publish.time) : null }); }
     for (const a of w.adds) if (!CHANGES[a.id].transient && !CHANGES[a.id].reverts) carried.push(a);
     out.push({ stream: DRY.stream, k: w.k, seed: DRY.seeds[w.k - 1], size: DRY.size, difficulty: DIFFICULTY, mix: MIX, dry: true,
       changes: changes.sort((a, b) => CHANGE_IDS.indexOf(a.id) - CHANGE_IDS.indexOf(b.id)) });

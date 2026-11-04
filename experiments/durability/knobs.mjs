@@ -59,10 +59,14 @@ export function ldfiPair(W, r) {
 /**
  * The bundle of a knob vector (red-team flagged: never in any evidence or regression set). Returns { key, W, item,
  * binding, wrapArm, redTeam: true, ooc, specAt, configAt, announcements, worldDigest, itemDigest }.
+ * The WORLD depends on the vector alone (fix 2026-11-04, review B1): the generator split, the MR11 and overlay salts and the
+ * LDFI draw are keyed on (base, salt), never on the target, so one vector is one world for every target, stage and arm
+ * (red-team probe, validation, D-11 score, WC-1 transfer, ADV-SET cross-run, red-team windows). The target id stays in
+ * the key only (registration and caches).
  */
 export async function vectorBundle(target, v, { sealed = null } = {}) {
   const { ooc } = checkVector(v);
-  const split = `fuzz-dur1-${target}-${v.salt}`;
+  const split = `fuzz-dur1-${v.base}-${v.salt}`;
   let W = generateWorld({ seed: v.base, split, difficulty: v.difficulty, mix: v.mix, size: v.size, injection: (v.overlays ?? []).includes('ADV') });
   W.truth.dur1Eff = {};
   W.truth.dur1 = { stream: 'wc1', k: 0, active: [...(v.overlays ?? [])], exclude: [] };
@@ -75,12 +79,12 @@ export async function vectorBundle(target, v, { sealed = null } = {}) {
     else if (t.startsWith('MR5-')) { const r = duplicateInbound(W, MR5_VARIANTS[t.slice(4)]); W = r.Wt; if (r.B?.actors) actors = r.B.actors; }
     else if (t === 'MR7') W = addUnrelatedCases(W, 2).Wt;
     else if (t === 'MR9') { const r = addLateEdition(W); W = r.Wt ?? r; }
-    else if (t === 'MR11') W = failureLoad(W, { share: 1, salt: `wc1/${target}` }).W;
+    else if (t === 'MR11') W = failureLoad(W, { share: 1, salt: `wc1/${v.base}/${v.salt}` }).W;
     else if (t === 'MR12') W = injectDocs(W);
   }
-  const r = rng('dur1/wc1', target, v.base, v.salt);
+  const r = rng('dur1/wc1', v.base, v.salt);
   if (v.fault === 'ldfi-pair') W = ldfiPair(W, r).W;
-  const salt = `wc1/${target}/${v.base}/${v.salt}`;
+  const salt = `wc1/${v.base}/${v.salt}`;
   for (const o of v.overlays ?? []) {
     if (o === 'P1') W = addEdition(W, { ...P1_EDITION, fromMs: T0_MS + 3 * DAY_MS, publishMs: T0_MS + DAY_MS });
     if (o === 'E1') W = addRename(W, { system: 'carrier', op: 'create', from: 'location', to: 'site', atMs: T0_MS + 4 * DAY_MS });

@@ -15,7 +15,7 @@ import { serveProbes, PROBE_CLIENT, MAX_PROBES, MAX_SCENARIOS, MAX_ORDERS } from
 import { validateScenario } from './validate.mjs';
 import { evaluate, search } from '../wc-search.mjs';
 import { WORK } from '../changes.mjs';
-import { spendOf, EffortMissing, throwIfEnvFault } from '../heal-adapter.mjs';
+import { spendOf, EffortMissing, throwIfEnvFault, preflight, meteredRun } from '../heal-adapter.mjs';
 
 export const RT_SESSIONS = Object.freeze({
   'RT-O1': Object.freeze({ target: 'b1lh-e8-1', model: 'claude-opus-5-5', effort: 'xhigh', budgetUsd: 3, minutes: 30 }),
@@ -68,13 +68,8 @@ export async function redTeamSession({ id, targetId, version, session, runDir, s
   try {
     if (session.kind === 'stub') r = await session.fn({ workdir, box });
     else {
-      if (!session.effort) throw new EffortMissing(`${id}: no effort`);
-      const s = spendOf(session.spend.file);
-      if (s.upperUsd + session.budgetUsd > session.spend.totalCap) throw Object.assign(new Error(`DUR1_BUDGET: ${id}`), { code: 'DUR1_BUDGET' });
-      const sid = `${id}@${new Date().toISOString()}`;
-      appendFileSync(session.spend.file, JSON.stringify({ id: sid, phase: 'start', label: id, scope: 'J2', model: session.model, effort: session.effort, capUsd: session.budgetUsd, at: new Date().toISOString() }) + '\n');
-      r = await runClaudeCode({ model: session.model, prompt: `${files['TASK.md']}\nRead TASK.md, DSL.md and target/ first.`, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort });
-      appendFileSync(session.spend.file, JSON.stringify({ id: sid, phase: 'end', label: id, scope: 'J2', model: session.model, effort: session.effort, capUsd: session.budgetUsd, costUsd: r.costUsd ?? null, error: r.error?.code ?? null, at: new Date().toISOString() }) + '\n');
+      preflight(session, id);
+      r = await meteredRun(session, { label: id, run: () => runClaudeCode({ model: session.model, prompt: `${files['TASK.md']}\nRead TASK.md, DSL.md and target/ first.`, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort }) });
     }
   } finally { rec.probes = await box.stop(); }
   throwIfEnvFault(r, id);

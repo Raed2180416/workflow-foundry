@@ -18,6 +18,7 @@ import { evaluateCapabilities, DEFAULT_RULES } from '../compose/capabilities.mjs
 import { observe } from '../constitution/observer.mjs';
 import { buildRegistry } from '../constitution/registry.mjs';
 import { prefixRows } from './arms.mjs';
+import { evaluateSandboxed } from './contract-sandbox.mjs';
 import { dayStart, HORIZON_DAYS, DAY_MS } from './schedule.mjs';
 
 export const BENIGN_ERRORS = Object.freeze([{ code: 402 }, { code: 'permanent' }, { code: 409, reason: 'already-collected' }, { code: 409, reason: 'not-cancellable' }]);
@@ -32,14 +33,8 @@ export const normFinding = s => String(s).replace(/ORD-\d+-\d+(-F\d+)?/g, 'ORD-â
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Contracts under rule readings (C-O): [{ fromMs, rules, module? }] sorted by fromMs; the reading for an order is the last
-// whose fromMs <= its placement. `module`: a patched copy of capabilities.mjs (contracts-owner.mjs) imported from disk.
-
-const capsCache = new Map();
-async function capsOf(module) {
-  if (!module) return { evaluateCapabilities };
-  if (!capsCache.has(module)) capsCache.set(module, await import(pathToFileURL(module).href));
-  return capsCache.get(module);
-}
+// whose fromMs <= its placement. `module`: a patched copy of capabilities.mjs (contracts-owner.mjs), model-written: it is
+// evaluated OUT OF PROCESS (contract-sandbox.mjs; review R2-B5), never imported into the harness.
 export const BASE_READINGS = Object.freeze([Object.freeze({ fromMs: -Infinity, rules: DEFAULT_RULES, module: null, id: 'base' })]);
 const readingOf = (readings, pMs) => { let r = readings[0]; for (const x of readings) if (x.fromMs <= pMs) r = x; return r; };
 const subWorld = (W, ids) => ({ ...W, truth: { ...W.truth, cases: Object.fromEntries(ids.map(c => [c, W.truth.cases[c]])) } });
@@ -52,8 +47,12 @@ export async function contractsFor(bundle, rows, { pools = null, readings = BASE
   for (const c of ids) { const r = readingOf(readings, Date.parse(W.truth.cases[c].placedAt)); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(c); }
   const out = new Map();
   for (const [r, list] of groups) {
-    const { evaluateCapabilities: ev } = await capsOf(r.module);
-    const res = ev(subWorld(W, list), rows, { pools, rules: r.rules, canonicalArgs: bundle.item.canonicalArgs });
+    if (r.module) {
+      const cases = await evaluateSandboxed({ module: r.module, itemFile: bundle.item.dur1File ?? null, worldKey: `${bundle.key}|${bundle.worldDigest}`, W, cases: list, rows, pools, rules: r.rules });
+      for (const c of cases) out.set(c.case, { ...c, reading: r.id ?? null });
+      continue;
+    }
+    const res = evaluateCapabilities(subWorld(W, list), rows, { pools, rules: r.rules, canonicalArgs: bundle.item.canonicalArgs });
     for (const c of res.cases) out.set(c.case, { ...c, reading: r.id ?? null });
   }
   return out;
@@ -285,8 +284,11 @@ export class IncidentBook {
     for (const s of signals.filter(x => x.ch === 'm4')) m4.push(s);
     for (const s of signals.filter(x => x.ch === 'm5')) {
       const c = s.complaint;
-      // Rule 3: a complaint on an order with an open defect incident joins it (corroborated).
-      const inc = this.incidents.find(i => ['open', 'healing', 'needs-human', 'budget-stop'].includes(i.status) && i.kind !== 'verifier-blind' && s.order && i.evidence.some(e => e.order === s.order));
+      // Rule 3: a complaint on an order that ANY defect incident holds (any status: open, healing, healed, needs-human,
+      // budget-stop, flake), i.e. an order with an m1-m3 signal, is corroborated and joins the newest such incident (review
+      // B5: late true complaints about orders whose incident was already healed went uncorroborated and fed rule 4).
+      const holders = s.order ? this.incidents.filter(i => i.kind !== 'verifier-blind' && i.evidence.some(e => e.order === s.order)) : [];
+      const inc = holders.find(i => ['open', 'healing', 'needs-human', 'budget-stop'].includes(i.status)) ?? holders.at(-1);
       if (inc) { inc.complaints.push({ ...c, corroborated: true, streamDay }); continue; }
       this.uncorroborated.push({ ...c, streamDay, used: false });
     }

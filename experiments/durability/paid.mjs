@@ -5,15 +5,16 @@
 // lineage-stream; a stage resumes by skipping every unit whose record exists (a unit killed mid-way is re-run from its
 // start: its spend so far stays on the ledger, disclosed).
 import path from 'node:path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { hostname } from 'node:os';
 import { worldsOf, STREAM_IDS, REHEARSAL, T0_MS, DAY_MS, CHANGES } from './schedule.mjs';
 import { buildBundle, loadSealed, ROOT, WORK } from './changes.mjs';
 import { referencePools, gradeRun } from './oracle.mjs';
 import { programVersion, versionOfSpec, LINEAGES, REF_SOLVERS, controlVersion, runBundle } from './arms.mjs';
-import { runStream, ContractOwner } from './stream.mjs';
-import { HAIKU_PATCH, OPUS_PATCH, spendOf, LIMITS } from './heal-adapter.mjs';
+import { runStream, ContractOwner, lastEffectAt } from './stream.mjs';
+import { HAIKU_PATCH, OPUS_PATCH, spendOf, LIMITS, BudgetStop, StopError } from './heal-adapter.mjs';
 import { CO_SESSION, stubCO } from './contracts-owner.mjs';
-import { streamExposure, attributeRecord, modelOf, certifyRecord } from './model.mjs';
+import { streamExposure, attributeRecord, modelOf, certifyRecord, critRegressionDays } from './model.mjs';
 import { report } from './report.mjs';
 import { selectWindow, runWindow, WINDOW_CHANGES, K_DEFAULT, K_FALLBACK, AGENT } from './windows.mjs';
 import { runLD, LATENT } from './ld.mjs';
@@ -21,42 +22,10 @@ import { search, confirm, evaluate, BUDGET, GROUP_A } from './wc-search.mjs';
 import { redTeamSession, blindBaseline, RT_SESSIONS } from './redteam/session.mjs';
 import { ruleVersion } from './rmaint.mjs';
 import { signalsOfRun } from './monitor.mjs';
-import { RES, RUNS, SPEND, TOTAL_CAP, PRIORITY, capOf } from './run.mjs';
+import { envInvalid, silentDeadline, silent, VISIBLE } from './analyze.mjs';
+import { RES, RUNS, SPEND, TOTAL_CAP, PRIORITY, capOf, rowOf, rowRoom } from './run.mjs';
+export { rowOf, rowRoom };
 import { SEALED_DIR } from './author.mjs';
-
-/** The prereg §12 row of a ledger scope. */
-export function rowOf(scope) {
-  const s = String(scope);
-  if (/^P0|^p0/.test(s)) return 'P0';
-  if (/^P1$|^author/.test(s)) return 'P1';
-  if (/^co-/.test(s)) return 'P2';
-  if (/^MH-H\.[^.]+\.s3/.test(s) || /^A-H\..*s3/.test(s)) return 'P5';
-  if (/^MH-H\./.test(s)) return 'P3';
-  if (/^A-H\./.test(s)) return 'P4';
-  if (/^REF-M\./.test(s)) return 'P6';
-  if (/^J2|^RT-|^A-H-RT/.test(s)) return 'P7';
-  if (/^A-Ox/.test(s)) return 'P8';
-  if (/^MH-stale|^LD-H|^MH-HO/.test(s)) return 'P9';
-  return 'reserve';
-}
-
-/** Room left in a row: cumulative caps through it minus committed spend (upper: open sessions at their cap) through it. */
-export function rowRoom(row, ledger = SPEND) {
-  const order = PRIORITY.map(p => p.row);
-  const i = order.indexOf(row);
-  if (i < 0) return 0;
-  const s = spendOf(ledger);
-  const capThrough = PRIORITY.slice(0, i + 1).reduce((a, p) => a + p.cap, 0);
-  const spentThrough = Object.entries(s.byScope).filter(([sc]) => order.indexOf(rowOf(sc)) <= i).reduce((a, [, v]) => a + v, 0);
-  return Math.min(capThrough - spentThrough, TOTAL_CAP - s.upperUsd);
-}
-
-/** A per-session gate: freeze still holds and the row has room for this session's cap. */
-const sessionGate = (freeze, row, capUsd) => () => {
-  if (!freeze?.ok) return { ok: false, reason: 'freeze' };
-  const room = rowRoom(row);
-  return room >= capUsd ? { ok: true } : { ok: false, reason: `row ${row} has $${room.toFixed(2)} left, session cap $${capUsd}` };
-};
 
 /** The ledger meter for per-tick agents (agentVArm's meter interface: before reserves, after settles). */
 export function ledgerMeter({ scope, row, file = SPEND }) {
@@ -77,44 +46,91 @@ export function ledgerMeter({ scope, row, file = SPEND }) {
   };
 }
 
-/** A contract owner whose certified readings persist across processes (resume) and are shared by every stage. */
+/** Is a process alive (signal 0)? */
+const pidAlive = pid => { try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+export const LOCK_MAX_AGE_MS = 4 * 3_600_000;   // a C-O critical section is <= 2 sessions x 30 min + certification
+/**
+ * A directory lock owned by (host, pid, time). Held by another live process on this host: wait. Held by a process that is
+ * gone (a container restart, a killed worker) or older than LOCK_MAX_AGE_MS: reclaimed (review R2-M3: a stale lock made the
+ * next run wait 2 h, then exit 75 forever). `done()` is checked before every attempt and again inside the lock, so a
+ * worker that arrives after another finished never pays a second session.
+ */
+export async function underLock(lockDir, { done, run, pollMs = 15_000, log = () => {} }) {
+  for (;;) {
+    const have = done();
+    if (have) return have;
+    let mine = false;
+    try { mkdirSync(lockDir); mine = true; } catch (e) { if (e.code !== 'EEXIST') throw e; }
+    if (mine) {
+      writeFileSync(path.join(lockDir, 'owner.json'), JSON.stringify({ host: hostname(), pid: process.pid, at: Date.now() }));
+      try { return done() ?? await run(); } finally { rmSync(lockDir, { recursive: true, force: true }); }
+    }
+    let owner = null;
+    try { owner = JSON.parse(readFileSync(path.join(lockDir, 'owner.json'), 'utf8')); } catch { /* being written */ }
+    let age = 0;
+    try { age = Date.now() - (owner?.at ?? statSync(lockDir).mtimeMs); } catch { continue; }
+    const dead = owner ? (owner.host === hostname() && !pidAlive(owner.pid)) : age > 120_000;
+    if (dead || age > LOCK_MAX_AGE_MS) { log(`reclaiming the stale lock ${path.basename(lockDir)} (${owner ? `pid ${owner.pid}` : 'no owner'}, ${Math.round(age / 60_000)} min)`); rmSync(lockDir, { recursive: true, force: true }); continue; }
+    await new Promise(r => setTimeout(r, pollMs));
+  }
+}
+
+/** A contract owner whose readings persist across processes (resume) and are shared by every stage and worker. */
 export class PersistentContractOwner extends ContractOwner {
   constructor(opts) {
     super(opts);
-    this.dir = path.join(RUNS, 'co');
+    this.dir = opts.dir ?? path.join(RUNS, 'co');
     mkdirSync(this.dir, { recursive: true });
+    this.load();
+  }
+  load() {
     for (const f of readdirSync(this.dir).filter(x => x.endsWith('.reading.json'))) {
       const r = JSON.parse(readFileSync(path.join(this.dir, f), 'utf8'));
-      if (r.kind === 'announced') this.announced.set(r.id, r.rec); else this.vb.set(r.key, r.rec);
+      if (r.kind === 'announced') this.announced.set(r.id, r.rec); else if (r.kind === 'vb') this.vb.set(r.key, r.rec);
     }
   }
   async forAnnounced(id, bundle, atMs) {
     if (this.announced.has(id)) return this.announced.get(id);
-    // One C-O session per announced change across parallel workers: the first takes a directory lock, the others wait for
-    // its reading file (a paid session is never run twice for one change).
-    const file = path.join(this.dir, `announced-${id}.reading.json`), lock = path.join(this.dir, `announced-${id}.lock`);
-    let mine = false;
-    try { mkdirSync(lock); mine = true; } catch { /* another worker holds it */ }
-    if (!mine) {
-      for (let i = 0; i < 480 && !existsSync(file); i++) await new Promise(r => setTimeout(r, 15_000));
-      if (!existsSync(file)) throw Object.assign(new Error(`DUR1_ENV_FAULT: C-O ${id} lock held for 2 h without a reading`), { code: 'DUR1_ENV_FAULT' });
-      const rec = JSON.parse(readFileSync(file, 'utf8')).rec;
-      this.announced.set(id, rec);
-      return rec;
-    }
-    try {
-      const rec = await super.forAnnounced(id, bundle, atMs);
-      writeFileSync(file, JSON.stringify({ kind: 'announced', id, rec }, null, 1));
-      return rec;
-    } finally { rmSync(lock, { recursive: true, force: true }); }
-  }
-  async forVerifierBlind(args) {
-    const key = `${args.stream}|${args.k}|${args.topic}`;
-    const had = this.vb.has(key);
-    const rec = await super.forVerifierBlind(args);
-    if (!had) writeFileSync(path.join(this.dir, `vb-${key.replace(/\|/g, '_')}.reading.json`), JSON.stringify({ kind: 'vb', key, rec: { ...rec, reused: undefined } }, null, 1));
+    // One C-O session per announced change across parallel workers and restarts.
+    const file = path.join(this.dir, `announced-${id}.reading.json`);
+    const read = () => (existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')).rec : null);
+    const rec = await underLock(path.join(this.dir, `announced-${id}.lock`), { done: read, log: this.log, run: async () => {
+      const r = await super.forAnnounced(id, bundle, atMs);
+      writeFileSync(file, JSON.stringify({ kind: 'announced', id, rec: r }, null, 1));
+      return r;
+    } });
+    this.announced.set(id, rec);
     return rec;
   }
+  async vbSessionOf(args) {
+    const key = args.stream;
+    if (this.vb.has(key)) return { ...this.vb.get(key), fresh: false };
+    // The stream's one verifier-blind session, across workers and restarts (review R2-M2: the verifier-blind path had no lock).
+    const file = path.join(this.dir, `vb-${key}.reading.json`);
+    const read = () => (existsSync(file) ? { ...JSON.parse(readFileSync(file, 'utf8')).rec, fresh: false } : null);
+    const rec = await underLock(path.join(this.dir, `vb-${key}.lock`), { done: read, log: this.log, run: async () => {
+      const r = await super.vbSessionOf(args);
+      const { fresh, ...keep } = r;
+      writeFileSync(file, JSON.stringify({ kind: 'vb', key, rec: keep }, null, 1));
+      return r;
+    } });
+    const { fresh, ...keep } = rec;
+    this.vb.set(key, keep);
+    return rec;
+  }
+}
+
+/**
+ * The ledger scope of this attempt of a lineage-stream (review R2-M4): a stream that an environment fault stopped is re-run
+ * as a new attempt with its own scope `<label>#a<n>`, so the faulted attempt's spend stays on the ledger and in the row and
+ * total, but never counts against the restarted stream's $1.50 cap. Attempt n's sessions live under sessions/a<n>.
+ */
+export function attemptOf(dir, label) {
+  mkdirSync(dir, { recursive: true });
+  const f = path.join(dir, `${label.replace(/[^\w.-]/g, '_')}.attempts`);
+  const n = (existsSync(f) ? Number(readFileSync(f, 'utf8')) || 0 : 0) + 1;
+  writeFileSync(f, String(n));
+  return { n, scope: n === 1 ? label : `${label}#a${n}` };
 }
 
 /** The run's sealed bundle (hash-checked against SEALED.json). */
@@ -129,39 +145,61 @@ export function rehearsalWorlds() {
   const at = (d, h = 0) => T0_MS + (d - 1) * DAY_MS + h * 3_600_000;
   return [
     { stream: 'p0', k: 1, seed: REHEARSAL.miniStream[0], size: 80, difficulty: 3, mix: 'tail', changes: [{ id: 'R1', cls: 'CHG-A', kind: 'rule', startsHere: true, onsetMs: at(5), publishMs: at(2, 9) }] },
-    { stream: 'p0', k: 2, seed: REHEARSAL.miniStream[1], size: 80, difficulty: 3, mix: 'tail', changes: [{ id: 'R1', cls: 'CHG-A', kind: 'rule', startsHere: false, onsetMs: T0_MS, publishMs: null }] },
+    { stream: 'p0', k: 2, seed: REHEARSAL.miniStream[1], size: 80, difficulty: 3, mix: 'tail', changes: [{ id: 'R1', cls: 'CHG-A', kind: 'rule', startsHere: false, onsetMs: T0_MS, effMs: at(5), publishMs: null }] },
   ];
 }
 
 const recFile = (dir, label) => path.join(dir, `${label.replace(/[^\w.-]/g, '_')}.stream.json`);
+/** P6 over its three solvers. */
+export const REFM_USD_PER_SOLVER = 2.0;
+/** The ledger's rows. */
+const readLedger = f => (existsSync(f) ? readFileSync(f, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
 
 /** Window k from the P0 measurement (prereg §12 row 0: if A-H $/case x 8 x 12 > $19, k = 4). */
 export function windowK() {
   const f = path.join(RUNS, 'p0', 'P0.json');
-  if (!existsSync(f)) return K_DEFAULT;
-  return JSON.parse(readFileSync(f, 'utf8')).k ?? K_DEFAULT;
+  if (!existsSync(f)) throw new StopError('window k: P0.json is missing (P0 sets k; review B4: a silent default of 6 is refused)');
+  const k = JSON.parse(readFileSync(f, 'utf8')).k;
+  if (![K_DEFAULT, K_FALLBACK].includes(k)) throw new StopError(`window k: P0.json has k = ${k}`);
+  return k;
 }
 
 /** One routed window run; returns the window record (agent per-case pass, silent, cost). */
+export const WINDOW_ENV_ATTEMPTS = 3;
 async function windowRecord({ spec, change, sealed, ex, kind, label, cases = null, k = windowK(), dir, meter }) {
+  mkdirSync(dir, { recursive: true });
+  // Environment-fault restarts are capped (review R2-B4): each faulted attempt re-pays its ticks; after 3 the window is
+  // recorded as invalid (prereg §13.2 ENV_FAULT_LIMIT) and excluded from pairing, so the chain moves on.
+  const attF = path.join(dir, `${label}.attempts.json`);
+  const att = existsSync(attF) ? JSON.parse(readFileSync(attF, 'utf8')) : { envFaults: 0, harness: 0 };
+  if (att.envFaults >= WINDOW_ENV_ATTEMPTS) {
+    const rec = { label, kind, stream: spec.stream, k: spec.k, change, status: 'invalid-env', envFaults: att.envFaults, cases: [] };
+    writeFileSync(path.join(dir, `${label}.window.json`), JSON.stringify(rec, null, 1));
+    return rec;
+  }
   const b = await buildBundle(spec, { sealed });
   const ref = await referencePools(b);
   const ch = spec.changes.find(c => c.id === change);
   const sel = cases ? { exposed: cases, controls: [] } : selectWindow({ stream: spec.stream, change, exposed: ex.of(spec.k)[change] ?? new Set(), pools: ref.pools, W: b.W, onsetMs: ch.onsetMs, k });
   const ids = [...sel.exposed, ...sel.controls];
   const r = await runWindow({ bundle: b, cases: ids, kind, label, meter });
-  if (r.status !== 'complete') {   // frozen by an environment fault or the budget meter: never scored, no record written
-    const budget = rowRoom(rowOf(label)) < AGENT[kind].budgetUsdPerTick;
-    throw Object.assign(new Error(`${budget ? 'DUR1_BUDGET' : 'DUR1_ENV_FAULT'}: window ${label} stopped (${r.status})`), { code: budget ? 'DUR1_BUDGET' : 'DUR1_ENV_FAULT' });
+  if (r.status !== 'complete') {   // never scored, no record written
+    if (r.status === 'frozen') {   // the budget meter or an environment fault froze the run at its last commit
+      const budget = rowRoom(rowOf(label)) < AGENT[kind].budgetUsdPerTick;
+      if (!budget) { att.envFaults += 1; writeFileSync(attF, JSON.stringify(att)); }
+      throw Object.assign(new Error(`${budget ? 'DUR1_BUDGET' : 'DUR1_ENV_FAULT'}: window ${label} stopped (${r.status})`), { code: budget ? 'DUR1_BUDGET' : 'DUR1_ENV_FAULT' });
+    }
+    att.harness += 1; writeFileSync(attF, JSON.stringify(att));
+    throw Object.assign(new Error(`DUR1_HARNESS: window ${label} did not complete (${String(r.status).slice(0, 160)})`), { code: 'DUR1_HARNESS' });   // a timeout is a harness error, never an environment fault
   }
   const g = gradeRun(b, r.rows, ref.pools);
   const sig = await signalsOfRun({ bundle: b, rows: r.rows, pools: ref.pools });
   const m1 = new Map();
   for (const d of Object.values(sig.days)) for (const s of d) if (s.ch === 'm1' && s.case && !m1.has(s.case)) m1.set(s.case, s.at);
+  const last = lastEffectAt(b, r.rows);
   const cases_ = g.cases.filter(c => ids.includes(c.case)).map(c => ({ case: c.case, pass: c.pass ? 1 : 0, critical: c.critical ? 1 : 0, exposed: sel.exposed.includes(c.case),
-    silent: !c.pass && !(m1.has(c.case) && m1.get(c.case) <= (c.firstAt ?? Infinity) + DAY_MS) ? 1 : 0 }));
-  const rec = { label, kind, stream: spec.stream, k: spec.k, change, selected: sel, cases: cases_, ticks: r.ticks, costUsd: r.costUsd, sessions: r.sessions, status: r.status };
-  mkdirSync(dir, { recursive: true });
+    silent: !c.pass && !(m1.has(c.case) && m1.get(c.case) <= silentDeadline({ lastAt: last.get(c.case) ?? null, firstAt: c.firstAt ?? null })) ? 1 : 0 }));
+  const rec = { label, kind, stream: spec.stream, k: spec.k, change, selected: sel, cases: cases_, ticks: r.ticks, costUsd: r.costUsd, sessions: r.sessions, status: r.status, envFaultAttempts: att.envFaults };
   writeFileSync(path.join(dir, `${label}.window.json`), JSON.stringify(rec, null, 1));
   return rec;
 }
@@ -170,12 +208,11 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
   const ROW = { p0: 'P0', heal: 'P3', windows: 'P4', refm: 'P6', redteam: 'P7', forks: 'P9' };
   const fz = await guardPaid(cmd, ROW[cmd]);
   const sealed = cmd === 'p0' ? null : loadRunSealed();
-  const coSession = id => { const g = sessionGate(fz, 'P2', CO_SESSION.budgetUsd)(); if (!g.ok) throw Object.assign(new Error(`DUR1_BUDGET: C-O ${id}: ${g.reason}`), { code: 'DUR1_BUDGET' }); return paidSession(CO_SESSION, { scope: `co-${id}`, row: 'P2', freeze: fz }); };
+  // C-O: row P2; no room is a BudgetStop the contract owner turns into a quarantine (announced) or a needs-human (VB).
+  const coSession = id => paidSession(CO_SESSION, { scope: `co-${id}`, row: 'P2', freeze: fz });
   const co = new PersistentContractOwner({ session: coSession, runDir: path.join(RUNS, 'co'), sealed, log });
-  const healSession = (row, label, conf = HAIKU_PATCH) => (kind) => {
-    const c = kind === 'opus' ? OPUS_PATCH : conf;
-    return { ...paidSession(c, { scope: label, row, freeze: fz }), spend: { file: SPEND, scope: label, totalCap: TOTAL_CAP, scopeCap: LIMITS.usdPerLineageStream }, checkFreeze: sessionGate(fz, row, c.budgetUsd) };
-  };
+  // Heal sessions: freeze and row room checked apart (preflight); the per-lineage-stream cap is the stream's own rule.
+  const healSession = (row, scope, conf = HAIKU_PATCH, usdCap = LIMITS.usdPerLineageStream) => (kind) => paidSession(kind === 'opus' ? OPUS_PATCH : conf, { scope, row, freeze: fz, scopeCap: usdCap });
   const lineages = list('lineages', Object.keys(LINEAGES));
   if (cmd === 'p0') {
     const dir = path.join(RUNS, 'p0');
@@ -183,27 +220,33 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
     const worlds = rehearsalWorlds();
     // P0 rehearses the heal loop and the agent window, not C-O: the analyst's R1 reading stands in ($0), as for K-0.
     const p0co = new ContractOwner({ session: () => stubCO('analyst-R1'), runDir: dir, log });
-    let sessions = 0;
+    // <= 3 Haiku sessions over P0 (counted on the ledger, so a restart cannot re-spend them); a 4th is a BudgetStop the
+    // stream records as budget-stop, and P0 still measures k (review B4: the old throw left P0.json unwritten).
+    const p0Sessions = () => readLedger(SPEND).filter(l => l.phase === 'start' && /^P0\.MH-H\./.test(l.scope)).length;
     for (const l of ['b1lh-e8-1', 'ch-e8-1']) {
       const label = `P0.MH-H.${l}`;
       if (existsSync(recFile(dir, label))) continue;
-      const mk = healSession('P0', label);
-      await runStream({ arm: 'heal', label, start: programVersion(LINEAGES[l], { id: l }), worlds, heal: { session: kind => { if (++sessions > 3) throw Object.assign(new Error('DUR1_P0: <= 3 Haiku sessions'), { code: 'DUR1_BUDGET' }); return mk(kind); } }, co: p0co, runDir: dir, log, spendFile: SPEND });
+      const { scope } = attemptOf(dir, label);
+      const mk = healSession('P0', scope);
+      await runStream({ arm: 'heal', label, scope, start: programVersion(LINEAGES[l], { id: l }), worlds, heal: { session: kind => { if (p0Sessions() >= 3) throw new BudgetStop('P0: <= 3 Haiku sessions', 'row'); return mk(kind); } }, co: p0co, runDir: dir, log, spendFile: SPEND });
     }
-    const wSpec = { stream: 'p0', k: 1, seed: REHEARSAL.agentWindow, size: 80, difficulty: 3, mix: 'tail', changes: [{ id: 'R1', cls: 'CHG-A', kind: 'rule', startsHere: true, onsetMs: T0_MS + 4 * DAY_MS, publishMs: T0_MS + DAY_MS + 9 * 3_600_000 }] };
+    const wSpec = { stream: 'p0', k: 1, seed: REHEARSAL.agentWindow, size: 80, difficulty: 3, mix: 'tail', changes: [{ id: 'R1', cls: 'CHG-A', kind: 'rule', startsHere: true, onsetMs: T0_MS + 4 * DAY_MS, effMs: T0_MS + 4 * DAY_MS, publishMs: T0_MS + DAY_MS + 9 * 3_600_000 }] };
     const ex = await streamExposure([wSpec]);
-    const w = await windowRecord({ spec: wSpec, change: 'R1', sealed: null, ex, kind: 'A-H', label: 'P0.A-H.R1', k: 2, dir, meter: ledgerMeter({ scope: 'P0.A-H', row: 'P0' }) });
-    const perCase = w.cases.length ? w.costUsd / w.cases.length : null;
-    const k = perCase !== null && perCase * 8 * 12 > 19 ? K_FALLBACK : K_DEFAULT;
-    writeFileSync(path.join(dir, 'P0.json'), JSON.stringify({ agentUsdPerCase: perCase, k, rule: 'prereg §12 P0: if A-H $/case x 8 x 12 > $19 then k = 4', window: { cases: w.cases.length, costUsd: w.costUsd } }, null, 1));
-    log(`P0: A-H $/case ${perCase?.toFixed(3)}; k = ${k}`);
+    let w = null, why = null;
+    try { w = await windowRecord({ spec: wSpec, change: 'R1', sealed: null, ex, kind: 'A-H', label: 'P0.A-H.R1', k: 2, dir, meter: ledgerMeter({ scope: 'P0.A-H', row: 'P0' }) }); }
+    catch (e) { if (e?.code !== 'DUR1_BUDGET') throw e; why = e.message; }
+    const perCase = w?.cases?.length ? w.costUsd / w.cases.length : null;
+    // Unmeasured (P0 out of room): the budget-safe k = 4, disclosed.
+    const k = perCase === null ? K_FALLBACK : perCase * 8 * 12 > 19 ? K_FALLBACK : K_DEFAULT;
+    writeFileSync(path.join(dir, 'P0.json'), JSON.stringify({ agentUsdPerCase: perCase, k, measured: perCase !== null, why, rule: 'prereg §12 P0: if A-H $/case x 8 x 12 > $19 then k = 4 (unmeasured: k = 4)', window: w ? { cases: w.cases.length, costUsd: w.costUsd } : null }, null, 1));
+    log(`P0: A-H $/case ${perCase?.toFixed(3) ?? 'not measured'}; k = ${k}`);
     return;
   }
   if (cmd === 'heal') {
     const streams = list('streams', ['s1', 's2']);
     for (const s of streams) {
       if (s === 's3') {
-        const s1 = Object.entries(spendOf(SPEND).byScope).filter(([sc]) => /^MH-H\.[^.]+\.s1$/.test(sc)).reduce((a, [, v]) => a + v, 0);
+        const s1 = Object.entries(spendOf(SPEND).byScope).filter(([sc]) => /^MH-H\.[^.]+\.s1(#a\d+)?$/.test(sc)).reduce((a, [, v]) => a + v, 0);
         if (s1 > 8) { log(`K-4: MH-H spent $${s1.toFixed(2)} on s1 (> $8): s3 is dropped for MH-H and A-H; D-3 is directional`); writeFileSync(path.join(RUNS, 'K4.json'), JSON.stringify({ fired: true, s1Usd: s1 })); return; }
       }
       const dir = path.join(RUNS, 'heal', s);
@@ -211,7 +254,8 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
       for (const l of lineages) {
         const label = `MH-H.${l}.${s}`;
         if (existsSync(recFile(dir, label))) { log(`${label}: record exists, skipped`); continue; }
-        await runStream({ arm: 'heal', label, start: programVersion(LINEAGES[l], { id: l }), worlds, sealed, heal: { session: healSession(s === 's3' ? 'P5' : 'P3', label) }, co, runDir: dir, log, spendFile: SPEND });
+        const { scope, n } = attemptOf(dir, label);
+        await runStream({ arm: 'heal', label, scope, start: programVersion(LINEAGES[l], { id: l }), worlds, sealed, heal: { session: healSession(s === 's3' ? 'P5' : 'P3', scope) }, co, runDir: path.join(dir, n === 1 ? '' : `a${n}`), recordDir: dir, log, spendFile: SPEND });
       }
     }
     return;
@@ -263,7 +307,11 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
     for (const sv of Object.keys(REF_SOLVERS)) {
       const label = `REF-M.${sv}.s1`;
       if (existsSync(recFile(dir, label))) continue;
-      await runStream({ arm: 'heal', label, start: programVersion(REF_SOLVERS[sv], { id: sv }), worlds, sealed, heal: { session: healSession('P6', label, OPUS_PATCH) }, co, runDir: dir, log, spendFile: SPEND });
+      const { scope, n } = attemptOf(dir, label);
+      // REF-M's cap per solver-stream is P6's cap over the three solvers ($2.00; review B4: it inherited MH-H's $1.50 and
+      // its $1.00 Opus sessions threw at the second session).
+      const usdCap = REFM_USD_PER_SOLVER;
+      await runStream({ arm: 'heal', label, scope, usdCap, start: programVersion(REF_SOLVERS[sv], { id: sv }), worlds, sealed, heal: { session: healSession('P6', scope, OPUS_PATCH, usdCap) }, co, runDir: path.join(dir, n === 1 ? '' : `a${n}`), recordDir: dir, log, spendFile: SPEND });
     }
     return;
   }
@@ -273,10 +321,10 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
     for (const [id, t, kind] of targets) {
       if (existsSync(path.join(dir, `${id}.record.json`))) continue;
       const conf = RT_SESSIONS[kind];
-      const g = sessionGate(fz, 'P7', conf.budgetUsd)();
-      if (!g.ok) { log(`${id}: ${g.reason}`); continue; }
       const version = programVersion(LINEAGES[t], { id: t });
-      const r = await redTeamSession({ id, targetId: t, version, session: paidSession(conf, { scope: `J2.${id}`, row: 'P7', freeze: fz }), runDir: dir, sealed, log });
+      let r;
+      try { r = await redTeamSession({ id, targetId: t, version, session: paidSession(conf, { scope: `J2.${id}`, row: 'P7', freeze: fz }), runDir: dir, sealed, log }); }
+      catch (e) { if (!(e instanceof BudgetStop)) throw e; log(`${id}: ${e.message}`); writeFileSync(path.join(dir, `${id}.budget-stop.json`), JSON.stringify({ id, why: e.message })); continue; }
       // D-11: the most silent failing cases of a valid red-team world on its target, against blind search with the same 25 probes.
       let best = 0;
       for (const v of r.validated.filter(x => x.valid)) best = Math.max(best, (await evaluate(t, version, v.vector, { sealed })).silent ?? 0);
@@ -299,11 +347,13 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
       const startDigest = w3?.timeline?.[0]?.digest ?? rec.start.digest;
       const v = rec.versions.find(x => x.digest === startDigest);
       const start = v?.spec ? await versionOfSpec(v.spec, { id: v.id }) : programVersion(LINEAGES[l], { id: l });
-      await runStream({ arm: 'heal', label, start, worlds: worlds.filter(w => w.k >= 3), sealed, heal: { session: healSession('P9', label), stale: ['R1', 'vb'] }, co, runDir: dir, log, spendFile: SPEND, regressionW1: worlds[0] });
+      const { scope, n } = attemptOf(dir, label);
+      await runStream({ arm: 'heal', label, scope, start, worlds: worlds.filter(w => w.k >= 3), sealed, heal: { session: healSession('P9', scope), stale: ['R1', 'vb'] }, co, runDir: path.join(dir, n === 1 ? '' : `a${n}`), recordDir: dir, log, spendFile: SPEND, regressionW1: worlds[0] });
     }
     for (const id of LATENT) {
       if (existsSync(path.join(dir, `LD-H.${id}.analysis.json`))) continue;
-      await runLD({ id, heal: { session: healSession('P9', `LD-H.${id}`) }, co, runDir: dir, log, spendFile: SPEND });
+      const { scope } = attemptOf(dir, `LD-H.${id}`);
+      await runLD({ id, heal: { session: healSession('P9', scope) }, co, runDir: dir, log, spendFile: SPEND, streamOpts: { scope } });
     }
     // MH-H->O (B-tier, last): s1 re-run with one Opus xhigh patch after two rejected Haiku sessions on an incident, for the
     // lineages whose MH-H s1 record left an incident at needs-human (the fork point is the stream start: disclosed).
@@ -313,7 +363,9 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
       const hf = recFile(path.join(RUNS, 'heal', 's1'), `MH-H.${l}.s1`);
       if (!existsSync(hf) || !JSON.parse(readFileSync(hf, 'utf8')).incidents.some(i => i.status === 'needs-human')) continue;
       if (rowRoom('P9') < OPUS_PATCH.budgetUsd) { log(`${label}: P9 has no room for an Opus patch`); break; }
-      await runStream({ arm: 'heal', label, start: programVersion(LINEAGES[l], { id: l }), worlds, sealed, heal: { session: healSession('P9', label), opusAfter: true }, co, runDir: dir, log, spendFile: SPEND });
+      const { scope, n } = attemptOf(dir, label);
+      const usdCap = LIMITS.usdPerLineageStream + OPUS_PATCH.budgetUsd;   // the Haiku cap plus the one Opus patch
+      await runStream({ arm: 'heal', label, scope, usdCap, start: programVersion(LINEAGES[l], { id: l }), worlds, sealed, heal: { session: healSession('P9', scope, HAIKU_PATCH, usdCap), opusAfter: true }, co, runDir: path.join(dir, n === 1 ? '' : `a${n}`), recordDir: dir, log, spendFile: SPEND });
     }
     return;
   }
@@ -438,11 +490,18 @@ export async function rtWindowsStage({ log = () => {}, meterOf = label => ledger
   return out;
 }
 
-/** D-5 (b) and D-11 inputs from the ADV cross-run and the red-team records. */
+/**
+ * D-5 (b) and D-11 inputs from the ADV cross-run and the red-team records. (b) is judged PER WORLD (review M7): on each valid
+ * ADV-SET world, the MH-H finals' maximum silent failing cases against REF-S's maximum on the same world (one vector is one
+ * world for every arm since the B1 fix in knobs.mjs).
+ */
 export function advInputs(cross, redRecords = [], blind = {}) {
   const heal = cross.filter(x => x.arm === 'MH-H.final' && x.valid), refs = cross.filter(x => x.arm === 'REF-S' && x.valid);
   const maxBy = (rows, k) => rows.reduce((m, r) => Math.max(m, r[k] ?? 0), 0);
-  const adv = heal.length ? { silentCritical: heal.reduce((a, r) => a + (r.silentCritical ?? 0), 0), maxSilentPerWorld: maxBy(heal, 'silent'), refsMax: maxBy(refs, 'silent'), n: Math.max(0, ...heal.map(r => r.n ?? 0)) } : null;
+  const worldsH = [...new Set(heal.map(r => r.world))];
+  const perWorld = worldsH.map(w => { const h = heal.filter(r => r.world === w), rf = refs.filter(r => r.world === w); return { world: h[0]?.key ?? w, healMax: maxBy(h, 'silent'), refsMax: rf.length ? maxBy(rf, 'silent') : null, n: Math.max(0, ...h.map(r => r.n ?? 0)) }; })
+    .map(x => ({ ...x, refsMax: x.refsMax ?? 0, refMissing: x.refsMax === null }));
+  const adv = heal.length ? { silentCritical: heal.reduce((a, r) => a + (r.silentCritical ?? 0), 0), perWorld, maxSilentPerWorld: maxBy(heal, 'silent'), refsMax: maxBy(refs, 'silent'), n: Math.max(0, ...heal.map(r => r.n ?? 0)) } : null;
   const redTeam = redRecords.filter(r => r.kind === 'opus').map(r => ({ target: r.target, redTeamBest: r.best, blindBest: blind[r.id] ?? 0 }));
   return { adv, redTeam };
 }
@@ -458,6 +517,17 @@ export async function versionsOf(rec) {
   return m;
 }
 
+/**
+ * Arm and unit of a record label (review R2-M6): `<arm>.<unit>.<stream>` for lineage and solver arms; single-unit arms
+ * (`R-static.s1`, `R-maint2.s1`, `R-ceil.s1`, `c-oss.s1`) are the unit 'ref' (they were filed under the stream id, so D-4
+ * read NOT RUN). Attempt suffixes never reach a label.
+ */
+export function unitOfLabel(label) {
+  const parts = String(label).split('.');
+  const arm = parts[0] === 'S-Hstar' ? 'S-H*' : parts[0];
+  return parts.length >= 3 ? { arm, unit: parts[1] } : { arm, unit: 'ref' };
+}
+
 const readRecords = dir => (existsSync(dir) ? readdirSync(dir, { recursive: true }).filter(f => String(f).endsWith('.stream.json')).map(f => JSON.parse(readFileSync(path.join(dir, String(f)), 'utf8'))) : []);
 
 /** The analysis of the real run (prereg §9-§10, §14): reads every record under runs/, writes REPORT.json. */
@@ -466,17 +536,19 @@ export async function analyzeRuns({ log = () => {} } = {}) {
   const worlds = Object.fromEntries(STREAM_IDS.map(s => [s, worldsOf(s, { sealedOnsets: sealed.onsets() })]));
   const exposure = {};
   for (const s of STREAM_IDS) exposure[s] = await streamExposure(worlds[s], { sealed });
-  const arms = {}, certs = {}, records = { 'MH-H': {} };
+  const arms = {}, certs = {}, records = { 'MH-H': {}, 'REF-M': {} }, invalid = [];
   const put = (arm, unit, stream, m) => { ((arms[arm] ??= {})[unit] ??= {})[stream] = m; };
   for (const rec of [...readRecords(path.join(RUNS, 'stagez')), ...readRecords(path.join(RUNS, 'heal')), ...readRecords(path.join(RUNS, 'refm')), ...readRecords(path.join(RUNS, 'forks'))]) {
-    const [arm, unit] = rec.label.split('.');
-    const armName = arm === 'S-Hstar' ? 'S-H*' : arm;
+    const { arm: armName, unit } = unitOfLabel(rec.label);
     if (!worlds[rec.stream]) continue;
+    // ENV_FAULT_LIMIT (prereg §13.2; review R2-M4): an arm unit with > 25% of its sessions impaired by environment faults is invalid.
+    if (envInvalid(rec.envFaults ?? 0, (rec.sessions?.length ?? 0))) { invalid.push({ label: rec.label, envFaults: rec.envFaults, sessions: rec.sessions?.length ?? 0, why: 'ENV_FAULT_LIMIT' }); log(`${rec.label}: invalid (environment faults)`); continue; }
     rec.versionMap = await versionsOf(rec);
-    const needsAttr = ['S-H*', 'MH-H', 'REF-M'].includes(armName);
+    const needsAttr = ['S-H*', 'MH-H', 'REF-M', 'REF-S'].includes(armName);
     const at = needsAttr ? await attributeRecord({ rec, worlds: worlds[rec.stream], ex: exposure[rec.stream], sealed }) : null;
-    put(armName, unit ?? 'ref', rec.stream, modelOf(rec, at, exposure[rec.stream].of));
+    put(armName, unit, rec.stream, modelOf(rec, at, exposure[rec.stream].of));
     if (armName === 'MH-H') { (records['MH-H'][unit] ??= {})[rec.stream] = rec; (certs[unit] ??= {})[rec.stream] = await certifyRecord({ rec, worlds: worlds[rec.stream], sealed, attribution: at, exposure: exposure[rec.stream].of }); }
+    if (armName === 'REF-M') (records['REF-M'][unit] ??= {})[rec.stream] = rec;
     log(`analysed ${rec.label}`);
   }
   // Windows: pairs of MH-H's outcome (from its stream record) and A-H's routed outcome on the same case.
@@ -485,12 +557,14 @@ export async function analyzeRuns({ log = () => {} } = {}) {
   let agentUsd = 0, agentCases = 0;
   if (existsSync(wdir)) for (const f of readdirSync(wdir).filter(x => x.endsWith('.window.json') && !x.includes('.rep.'))) {
     const w = JSON.parse(readFileSync(path.join(wdir, f), 'utf8'));
+    if (w.status !== 'complete') { invalid.push({ label: w.label, why: w.status }); continue; }   // invalid-env windows are excluded from pairing
     agentUsd += w.costUsd; agentCases += w.cases.length;
     for (const [l, by] of Object.entries(records['MH-H'])) {
       const g = by[w.stream]?.worlds.find(x => x.k === w.k)?.grade ?? {};
       const hm = arms['MH-H']?.[l]?.[w.stream]?.worlds?.[w.k]?.cases ?? {};
+      // The same silent rule on both sides (review M10): last effect + 1 world-day; MH-H sees m1-m3 and m5.
       for (const c of w.cases) if (g[c.case]) pairs.push({ lineage: l, window: `${w.stream}-${w.change}`, case: c.case, heal: g[c.case][0], agent: c.pass,
-        healSilent: g[c.case][0] ? 0 : (Object.values(hm[c.case]?.signals ?? {}).some(t => t <= (hm[c.case]?.firstAt ?? 0) + DAY_MS) ? 0 : 1), agentSilent: c.silent });
+        healSilent: g[c.case][0] ? 0 : (hm[c.case] && silent(hm[c.case], VISIBLE.heal) ? 1 : 0), agentSilent: c.silent });
     }
   }
   const perCase = agentCases ? agentUsd / agentCases : null;
@@ -499,7 +573,7 @@ export async function analyzeRuns({ log = () => {} } = {}) {
   const coUsd = {};
   for (const [sc, v] of Object.entries(spendOf(SPEND).byScope)) if (sc.startsWith('co-')) { const id = sc.slice(3).split('-a')[0]; coUsd[id] = (coUsd[id] ?? 0) + v; }
   const r = report({ worlds, exposure, arms, certs, windows: pairs.length ? { pairs, agentUsdPerCase: perCase } : null, ld: ld?.length ? ld : null, costs: { agentProjected, coUsd },
-    sDropped: existsSync(path.join(RUNS, 'K4.json')), records, ...redAndAdv() });
+    sDropped: existsSync(path.join(RUNS, 'K4.json')), records, invalid, ...redAndAdv() });
   writeFileSync(path.join(RUNS, 'REPORT.json'), JSON.stringify(r, (k, v) => (v instanceof Set ? [...v] : v === Infinity ? 'Infinity' : v), 1));
   return r;
 }
