@@ -52,7 +52,9 @@ export function bound1({ flips, units, delta, level = 1 - ALPHA }) {
 // Bound 2: mean decision-leaf disagreement and usable-answer rate.
 export function bound2({ disagreement, usable, answered, epsilon = EPSILON, minUsable = MIN_USABLE, rule = false }) {
   const usableRate = answered ? usable / answered : 0;
-  const okDisagreement = disagreement != null && disagreement <= epsilon;
+  // 1e-12: a mean agreement of exactly 0.95 is a disagreement of 0.05, not 0.05000000000000004 (found on the C data
+  // before AMENDMENT-1 was frozen: records/date-order at Mercury, 19 of 20 leaves).
+  const okDisagreement = disagreement != null && disagreement <= epsilon + 1e-12;
   const okUsable = rule ? usable > 0 : usableRate >= minUsable;
   return { disagreement, usableRate, epsilon, minUsable: rule ? null : minUsable, holds: okDisagreement && okUsable };
 }

@@ -86,14 +86,17 @@ export function selectOnC({ prereg, nodes, inj, classes }) {
 }
 
 // The baselines' assignments (frozen with AMENDMENT-1).
-export function baselineAssignments({ prereg, selection }) {
+// B-sink's "cheapest measured tier" is the cheapest tier with at least one usable C answer (AMENDMENT-1 reading: memo,
+// which never answered at delivery time, is not a measured tier, so it cannot stand in for a cheap model).
+export function baselineAssignments({ prereg, selection, nodes = null }) {
   const has = tier => Object.fromEntries(prereg.sites.filter(s => s.tiers.includes(tier)).map(s => [s.site, tier]));
-  const cheapest = s => [...s.tiers].sort((a, b) => TIER_ORDER.indexOf(a) - TIER_ORDER.indexOf(b))[0];
+  const measured = (site, tier) => !nodes || nodes.some(n => n.site === site && n.tier === tier && n.usable > 0);
+  const cheapest = s => [...s.tiers].sort((a, b) => TIER_ORDER.indexOf(a) - TIER_ORDER.indexOf(b)).find(t => measured(s.site, t));
   return {
     'B-screen': selection.screen,
     'B-all-haiku': has('claude-haiku-5-5'),
     'B-all-mercury': has('mercury-3'),
-    'B-sink': Object.fromEntries(prereg.sites.filter(s => !GLOBAL_READERS.includes(s.site)).map(s => [s.site, cheapest(s)])),
+    'B-sink': Object.fromEntries(prereg.sites.filter(s => !GLOBAL_READERS.includes(s.site)).map(s => [s.site, cheapest(s)]).filter(([, t]) => t)),
     'B-memo': has('memo'),
   };
 }
@@ -121,18 +124,21 @@ export function evaluateOnH({ selection, nodes, inj, unitsAll }) {
 // reference cost and outcome): accuracy, cost saved, flips, NI and McNemar, latency.
 export function capabilityRow(name, rows, allUnits) {
   const byRow = new Map(rows.filter(r => r.assignment === name).map(r => [r.row, r]));
-  let pass = 0, refPass = 0, cost = 0, refCost = 0, b = 0, c = 0, n = 0, unmeasured = 0, deopts = 0;
+  let pass = 0, refPass = 0, cost = 0, refCost = 0, b = 0, c = 0, n = 0, unmeasured = 0, deopts = 0, incomplete = 0;
   const lat = [], refLat = [];
   for (const u of allUnits) {
     const r = byRow.get(u.row);
     if (r?.status === 'measured' && r.outcome === 'unmeasured') { unmeasured++; continue; }
+    // A unit whose assigned tier has no answer for some decision (a token cap, never asked) is not a reference unit:
+    // it is left out of the comparison and counted, so an incomplete baseline is never scored as the reference.
+    if (r?.status === 'incomplete') { incomplete++; continue; }
     n++; refPass += u.basePass ? 1 : 0; refCost += u.refUsd;
     if (r?.status === 'measured') {
       pass += r.pass ? 1 : 0; cost += r.judgeUsd + r.deoptUsd; lat.push(r.latencyMs); refLat.push(r.refLatencyMs);
       if (r.direction === 'pass->fail') b++; if (r.direction === 'fail->pass') c++; if (r.outcome === 'deopt' || r.outcome === 'crash') deopts++;
     } else { pass += u.basePass ? 1 : 0; cost += u.refUsd; lat.push(u.refLatencyMs); refLat.push(u.refLatencyMs); }
   }
-  return { name, units: n, unmeasured, pass, refPass, accuracy: n ? pass / n : null, refAccuracy: n ? refPass / n : null, passFail: b, failPass: c, deopts,
+  return { name, units: n, unmeasured, incomplete, pass, refPass, accuracy: n ? pass / n : null, refAccuracy: n ? refPass / n : null, passFail: b, failPass: c, deopts,
     judgeUsdPerUnit: n ? cost / n : null, refUsdPerUnit: n ? refCost / n : null, costSaved: costSaved(cost, refCost), ni: nonInferior({ b, c, n }),
     latencyP50: quantile(lat, 0.5), latencyP95: quantile(lat, 0.95), refLatencyP50: quantile(refLat, 0.5), refLatencyP95: quantile(refLat, 0.95) };
 }
@@ -145,7 +151,7 @@ function main() {
   if (cmd === 'select') {
     const classes = JSON.parse(readFileSync(opt('--classes'), 'utf8'));
     const selection = selectOnC({ prereg, nodes, inj, classes });
-    const baselines = baselineAssignments({ prereg, selection });
+    const baselines = baselineAssignments({ prereg, selection, nodes });
     const res = { slice: 'C', evidence: 'development (calibration slice)', nodes, inject: inj, selection, baselines,
       assignSpecs: { policy: assignSpec('policy', Object.fromEntries(selection.order.map(o => [o.site, o.tier]))), ...Object.fromEntries(Object.entries(baselines).map(([k, v]) => [k, assignSpec(k, v)])) } };
     writeFileSync(opt('--out'), JSON.stringify(res, null, 1));

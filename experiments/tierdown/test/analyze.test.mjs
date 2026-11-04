@@ -6,6 +6,9 @@ import { nodeTable, injectTable, selectOnC, baselineAssignments, evaluateOnH, ca
 import { parseAssign, rejectedKeys } from '../inject.mjs';
 import { sliceOf, ledgerUse } from '../tier-replay.mjs';
 import { classesOf } from '../classes.mjs';
+import { bound2 } from '../policy.mjs';
+
+const bound2Of = meanAgreement => bound2({ disagreement: 1 - meanAgreement, usable: 20, answered: 20 }).holds;
 
 const ans = (site, tier, ok, agreement, extra = {}) => ({ site, tier, ok, agreement: ok ? agreement : undefined, exact: ok && agreement === 1, costUsd: 0.001, refCostUsd: 0.01, latencyMs: 100, refLatencyMs: 1000, samples: 1, ...extra });
 
@@ -47,6 +50,10 @@ test('selectOnC: cheapest eligible tier; a C pass->fail flip or a failed Bound 2
   assert.deepEqual(sel.screen, { x: 'rule', y: 'claude-haiku-5-5', z: 'mercury-3' }, 'B-screen ignores flips and leverage');
   const b = baselineAssignments({ prereg: { sites: [{ site: 'records/rules', tiers: ['claude-haiku-5-5', 'mercury-3', 'memo'] }, { site: 'records/countries', tiers: ['mercury-3', 'rule', 'memo'] }] }, selection: sel });
   assert.deepEqual(b['B-sink'], { 'records/countries': 'rule' }, 'global readers keep the reference, the rest go cheapest');
+  const b2 = baselineAssignments({ prereg: { sites: [{ site: 'records/countries', tiers: ['mercury-3', 'rule', 'memo'] }] }, selection: sel,
+    nodes: nodeTable([ans('records/countries', 'memo', false, 0, { abstain: 'none' }), ans('records/countries', 'rule', false, 0, { abstain: 'x' }), ans('records/countries', 'mercury-3', true, 1)]) });
+  assert.deepEqual(b2['B-sink'], { 'records/countries': 'mercury-3' }, 'the cheapest tier with a usable C answer, never a tier that only abstained');
+  assert.equal(bound2Of(0.95), true, 'a mean agreement of exactly 0.95 meets epsilon 0.05 (floating point)');
   assert.deepEqual(b['B-all-haiku'], { 'records/rules': 'claude-haiku-5-5' });
   assert.deepEqual(parseAssign(assignSpec('p', { 'kinetics/extract:*': 'claude-haiku-5-5', 'records/countries': 'rule' })), [{ name: 'p', map: { 'kinetics/extract:*': 'claude-haiku-5-5', 'records/countries': 'rule' } }]);
 });
@@ -70,6 +77,8 @@ test('capabilityRow: untouched units keep reference cost and outcome; NI and fli
   assert.equal(c.units, 4); assert.equal(c.refPass, 3); assert.equal(c.pass, 3); assert.equal(c.passFail, 1); assert.equal(c.failPass, 1);
   assert.ok(Math.abs(c.costSaved - (1 - (3 * 0.002 + 0.01) / 0.04)) < 1e-12);
   assert.equal(c.ni.holds, false, 'four units cannot show non-inferiority');
+  const d = capabilityRow('q', [{ assignment: 'q', row: 1, status: 'incomplete' }, inj('q', 2, 'same', true)], units);
+  assert.equal(d.incomplete, 1); assert.equal(d.units, 3, 'an incomplete unit is left out, never scored as the reference');
 });
 
 test('split, ledger and classes helpers', () => {

@@ -13,7 +13,7 @@ RUNS="${TIERDOWN_RUNS:-research/jit-20261008/runs}"
 if [ -f /root/.config/foundry/inception.env ]; then set -a; . /root/.config/foundry/inception.env; set +a; fi
 for attempt in 1 2 3 4; do
   nice -n 15 node experiments/tierdown/tier-replay.mjs --prereg "$PREREG" --expect-sha "$SHA" --slice "$SLICE" --tiers "$TIERS" \
-    --leverage "$LEV" --out "$OUT" --ledger "$LEDGER" --journal "$JOURNAL" --runs "$RUNS" --cap-usd 3 --mercury-tokens 450000 --concurrency 2
+    --leverage "$LEV" --out "$OUT" --ledger "$LEDGER" --journal "$JOURNAL" --runs "$RUNS" --cap-usd 3 --mercury-tokens "${MERCURY_TOKENS:-450000}" --concurrency 2 ${SITES:+--sites "$SITES"}
   code=$?
   echo "tier-replay exit $code (attempt $attempt) at $(date -u +%FT%TZ)"
   [ "$code" -ne 75 ] && exit "$code"

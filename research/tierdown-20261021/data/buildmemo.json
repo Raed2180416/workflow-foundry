@@ -1,0 +1,154 @@
+{
+ "byPhase": {
+  "compile": {
+   "usd": 37.79984910999998,
+   "calls": 5205,
+   "firstUsd": 17.478946930000024,
+   "firstCalls": 1283,
+   "same-run-repeatUsd": 4.939222875000003,
+   "same-run-repeatCalls": 1643,
+   "cross-run-repeatUsd": 15.381679304999974,
+   "cross-run-repeatCalls": 2279
+  },
+  "check": {
+   "usd": 19.978285289999977,
+   "calls": 2235,
+   "cross-run-repeatUsd": 10.882285570000004,
+   "cross-run-repeatCalls": 1805,
+   "firstUsd": 8.718347819999998,
+   "firstCalls": 417,
+   "same-run-repeatUsd": 0.37765190000000004,
+   "same-run-repeatCalls": 13
+  },
+  "delivery": {
+   "usd": 6.458775479999998,
+   "calls": 852,
+   "firstUsd": 5.603592845000001,
+   "firstCalls": 557,
+   "cross-run-repeatUsd": 0.001929935,
+   "cross-run-repeatCalls": 21,
+   "same-run-repeatUsd": 0.8532526999999999,
+   "same-run-repeatCalls": 274
+  }
+ },
+ "byExperiment": {
+  "jit-dev-kinetics-1": {
+   "compile": {
+    "usd": 21.671290844999973,
+    "calls": 1964,
+    "firstUsd": 11.950258865000011,
+    "firstCalls": 738,
+    "same-run-repeatUsd": 2.223004605000001,
+    "same-run-repeatCalls": 695,
+    "cross-run-repeatUsd": 7.498027375000007,
+    "cross-run-repeatCalls": 531
+   },
+   "check": {
+    "usd": 11.545059225000015,
+    "calls": 975,
+    "cross-run-repeatUsd": 3.0392575099999966,
+    "cross-run-repeatCalls": 594,
+    "firstUsd": 8.505801714999999,
+    "firstCalls": 379,
+    "same-run-repeatUsd": 0,
+    "same-run-repeatCalls": 2
+   },
+   "delivery": {
+    "usd": 3.32152284,
+    "calls": 169,
+    "firstUsd": 2.9948633399999998,
+    "firstCalls": 146,
+    "cross-run-repeatUsd": 0,
+    "cross-run-repeatCalls": 8,
+    "same-run-repeatUsd": 0.32665950000000005,
+    "same-run-repeatCalls": 15
+   }
+  },
+  "jit-dev-records-1": {
+   "compile": {
+    "usd": 5.200165554999999,
+    "calls": 1427,
+    "firstUsd": 1.922942015,
+    "firstCalls": 161,
+    "same-run-repeatUsd": 1.584731425000001,
+    "same-run-repeatCalls": 545,
+    "cross-run-repeatUsd": 1.6924921149999985,
+    "cross-run-repeatCalls": 721
+   },
+   "check": {
+    "usd": 1.4260118450000014,
+    "calls": 447,
+    "cross-run-repeatUsd": 0.8880022949999992,
+    "cross-run-repeatCalls": 422,
+    "firstUsd": 0.16035765,
+    "firstCalls": 14,
+    "same-run-repeatUsd": 0.37765190000000004,
+    "same-run-repeatCalls": 11
+   },
+   "delivery": {
+    "usd": 1.9380718000000008,
+    "calls": 489,
+    "firstUsd": 1.4709895750000008,
+    "firstCalls": 296,
+    "cross-run-repeatUsd": 0.00101526,
+    "cross-run-repeatCalls": 9,
+    "same-run-repeatUsd": 0.46606696500000006,
+    "same-run-repeatCalls": 184
+   }
+  },
+  "jit-r0-kinetics": {
+   "compile": {
+    "usd": 10.302514789999996,
+    "calls": 1047,
+    "firstUsd": 3.4902271900000006,
+    "firstCalls": 346,
+    "same-run-repeatUsd": 0.9515506349999998,
+    "same-run-repeatCalls": 195,
+    "cross-run-repeatUsd": 5.860736965000001,
+    "cross-run-repeatCalls": 506
+   },
+   "check": {
+    "usd": 6.855720105000005,
+    "calls": 571,
+    "cross-run-repeatUsd": 6.8035316500000045,
+    "cross-run-repeatCalls": 547,
+    "firstUsd": 0.05218845500000001,
+    "firstCalls": 24
+   },
+   "delivery": {
+    "usd": 1.0272691050000002,
+    "calls": 49,
+    "firstUsd": 1.0272691050000002,
+    "firstCalls": 49
+   }
+  },
+  "jit-r0-records": {
+   "compile": {
+    "usd": 0.6258779200000001,
+    "calls": 767,
+    "firstUsd": 0.11551886000000003,
+    "firstCalls": 38,
+    "same-run-repeatUsd": 0.17993620999999993,
+    "same-run-repeatCalls": 208,
+    "cross-run-repeatUsd": 0.33042285,
+    "cross-run-repeatCalls": 521
+   },
+   "check": {
+    "usd": 0.1514941150000001,
+    "calls": 242,
+    "cross-run-repeatUsd": 0.1514941150000001,
+    "cross-run-repeatCalls": 242
+   },
+   "delivery": {
+    "usd": 0.17191173499999995,
+    "calls": 145,
+    "firstUsd": 0.11047082500000004,
+    "firstCalls": 66,
+    "same-run-repeatUsd": 0.06052623499999999,
+    "same-run-repeatCalls": 75,
+    "cross-run-repeatUsd": 0.000914675,
+    "cross-run-repeatCalls": 4
+   }
+  }
+ }
+}

@@ -120,8 +120,8 @@ async function main() {
     ({ port, db, tokens } = createModelPort({ journalFile: opt('--journal') ?? path.resolve(out).replace(/\.jsonl$/, '') + '.journal.sqlite', allowedModels: modelTiers,
       ...(modelTiers.includes('mercury-3') ? { tokenCap: mercuryTokens } : {}), timeoutMs: 300000 }));
   }
-  let spent = 0, calls = 0, refusedByCap = 0, consecutiveFaults = 0;
-  const faults = [];
+  let spent = 0, calls = 0, refusedByCap = 0, consecutiveFaults = 0, capRefused = 0;
+  const faults = [], exhausted = new Set();
   const work = mkdtempSync(path.join(os.tmpdir(), 'tierdown-tr-')), indexes = new Map();
   const indexOf = arm => { if (!indexes.has(arm.dir)) indexes.set(arm.dir, requestIndex(arm)); return indexes.get(arm.dir); };
   // memo: the family's delivery requests of OTHER tasks (any arm), earlier by seed.
@@ -161,7 +161,7 @@ async function main() {
             const r = memoAnswer(familyIndex.get(arm.family), j.key, { exclude: x => x.arm === arm.slug });
             rec = r.abstain ? { ok: false, abstain: r.abstain, costUsd: 0, latencyMs: 0 } : { ok: true, value: r.value, costUsd: 0, latencyMs: 0 };
           } else if (flag('--dry')) rec = { ok: false, error: 'dry run' };
-          else if (tier === 'claude-haiku-5-5' && spent >= capUsd) { refusedByCap++; continue; }
+          else if ((tier === 'claude-haiku-5-5' && spent >= capUsd) || exhausted.has(tier)) { refusedByCap++; continue; }
           else {
             calls++;
             const r = await port.call({ runId: `tierdown:${prereg.id}:${slice}`, nodeKey: `tier-replay/${site}/${tier}/${id}/${j.key.slice(0, 16)}`, attempt: 0, modelId: tier,
@@ -169,6 +169,8 @@ async function main() {
             spent += r.costUsd ?? 0;
             // An environment fault (rate or session limit, timeout, unavailable, a token cap) is never an answer: it is not
             // written, so a resumed run asks again, and it is never scored. Model outcomes (schema, truncation, refusal) are.
+            // The item's token cap for this tier is spent: not a fault and not an answer; stop asking this tier.
+            if (!r.ok && r.error?.code === 'MODEL_BUDGET') { exhausted.add(tier); capRefused++; continue; }
             if (!r.ok && !REPLAYABLE_ERRORS.includes(r.error?.code)) {
               faults.push({ row: id, site, tier, code: r.error?.code ?? 'ERROR', message: String(r.error?.message ?? '').slice(0, 200) });
               if (++consecutiveFaults >= MAX_CONSECUTIVE_FAULTS) throw Object.assign(new Error(`${consecutiveFaults} consecutive environment faults (last ${r.error?.code}): stopping for a resume`), { code: 'ENV_FAULT' });
