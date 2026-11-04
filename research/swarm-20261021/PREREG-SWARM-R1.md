@@ -174,4 +174,35 @@ $0.50/$2.50 above 100K-token prompts; cache reads at a tenth). No Opus, Sonnet o
 
 ## Amendments
 
-(none)
+FROZEN-R1.json holds the sha256 of this file as frozen (before any amendment); the rung-1 chain checked it before every
+stage and ran unchanged. Amendments below are appended after the rung-1 chain ended (2026-11-04 18:44Z: 7 complete
+held-out blocks, seeds 9301–9307, the §6.3 guard stopped before 9308 with $1.16 left; ledger $6.84).
+
+### Amendment 1 (2026-11-04, after the rung-1 held-out stage ended, before any rung-1b call): rung 1b, exploratory
+
+**Why.** In rung 1 the swarm lead never started a worker: 0 workers on the dev calibration task and on all 7 held-out
+tasks (K1, serial collapse, on every S trial; the CLI's `subagent_stats.spawned` = 0). Its own closing text says it "did
+the work myself with a script rather than delegating". So rung 1 compares A with "A plus an unused `Agent` tool and a
+preamble"; it cannot say what a Haiku swarm does when it does swarm. Kimi K2.5 trains its orchestrator with a
+parallelism reward precisely against this "serial collapse"; an untrained lead with a neutral preamble shows it.
+
+**What.** One exploratory arm, S-F: arm S with one change, a fan-out rule appended to the lead preamble
+(`experiments/swarm/run-r1b.mjs` `FANOUT_RULE`: split into 4–8 independent parts, start one worker per part in one
+message before doing any work, the lead's own work is the split, the merge and conflicts; task-agnostic, no R6 word).
+Same model, tools, subagent knobs, caps ($1.00, 30 min), archive and analysis code (coordination codes, root cause).
+
+**Where and how much.** On the first k complete rung-1 held-out tasks in seed order, one trial each, k = min(4, complete
+blocks, ⌊(8.00 − spent − 0.20) / (1.25 × S's largest held-out cost)⌋), under the same $8 ledger (rung 1 counted). With
+$6.84 spent and S's largest cost $0.54 this gives k = 1 (seed 9301). Live data `/var/tmp/foundry-work/swarm-r1b`.
+
+**Status.** Exploratory and anecdotal (one trial), not part of the preregistered comparison. The task is a rung-1
+held-out task whose rung-1 outcomes were seen before this arm was written (the fan-out rule was not tuned on it: it was
+written from the K1 code alone and is task-agnostic). Reported beside rung 1 with its failure root-caused by the frozen
+tools; no capability claim is made from it. Its purpose is to exercise the coordination coder on a real swarm trace and
+to see which coordination failures a forced Haiku swarm produces on this bed.
+
+**Analysis code added after the freeze (post-hoc, labelled in the result):** `experiments/swarm/locus2.mjs` (an evidence
+test that also sees script-printed sentences; the frozen `seenDocs` only sees document headers and paths, and the
+calibration showed both sessions reading through scripts) and `experiments/swarm/report-r1.mjs` (the frozen analysis
+plus the post-hoc checks: evidence, W's relative-date and ranking-policy checks, rung 1b). The frozen analysis is
+reported as preregistered.
