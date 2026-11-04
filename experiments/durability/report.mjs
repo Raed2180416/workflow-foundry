@@ -13,7 +13,7 @@
 //   sDropped: bool, m6: {...} | null,
 // }
 import { RULES, k0, d1, d2, d3, d4, d5, d6, d8 as d8Rule, d10, d11, primaryLevels, healRequiringCells, cellDurability, durableShare, curves, exposedPass,
-  silentLoud, VISIBLE, falseIncidents, rootCauseScaffold, ownerTable, ttd } from './analyze.mjs';
+  silentLoud, silent, VISIBLE, falseIncidents, rootCauseScaffold, ownerTable, ttd, transientCells, m6Rule } from './analyze.mjs';
 import { onsetDay, certifiedOfCells, critRegressionDays } from './model.mjs';
 import { CHANGES, CHANGE_IDS, UNANNOUNCED, T0_MS, DAY_MS } from './schedule.mjs';
 
@@ -53,7 +53,13 @@ export function finalWeek(model) { const f = finalWeekCases(model); return f.n ?
 /** Final-week success pooled over a unit's streams (review M3: a median over streams hid the worst stream). */
 export const finalWeekPooled = byStream => { let n = 0, p = 0; for (const m of Object.values(byStream ?? {})) { const f = finalWeekCases(m); n += f.n; p += f.pass; } return n ? p / n : NaN; };
 
-/** Detection onsets of unannounced changes for one arm: per (unit, stream, change) the first attributable signal on an exposed case after the onset. */
+/**
+ * Detection onsets of unannounced changes for one arm (D-6; review M13): per (unit, stream, change) the first signal of the
+ * given channels on a case the change INDUCED to fail (exposure alone counted, e.g., E1r's errors on U1s-exposed cases
+ * "detected" U1s), at or after the onset. An onset with no induced failure is no detection opportunity (left out, listed).
+ * announcedFired: an m4 signal (announcement or config digest) within one world-day of the onset; D-6 then leaves the
+ * onset out of "detects" (it supports "maintains on announcement"; prereg §10 D-6).
+ */
 export function detectionOnsets(armModels, worldsOf, exposureOf, { channels = ['m1', 'm2', 'm3', 'm5'] } = {}) {
   const out = [];
   for (const [unit, byStream] of Object.entries(armModels)) for (const [stream, m] of Object.entries(byStream)) {
@@ -63,34 +69,39 @@ export function detectionOnsets(armModels, worldsOf, exposureOf, { channels = ['
       if (!spec) continue;
       const onsetMs = spec.changes.find(x => x.id === c).onsetMs;
       if (onsetMs === null) continue;
-      const ex = exposureOf(stream)(spec.k)?.[c] ?? new Set();
-      if (!ex.size) continue;
       const w = m.worlds[spec.k];
+      const induced = (w?.induced?.[c] ?? []).filter(x => w.cases?.[x]?.graded);
+      const announcedFired = (w?.m4 ?? []).some(s => s.at >= onsetMs - DAY_MS && s.at <= onsetMs + DAY_MS);
+      if (!induced.length) { out.push({ change: c, lineage: unit, stream, detectedDelayDays: null, announcedFired, noInducedFailure: true }); continue; }
       let first = null;
-      for (const x of ex) { const s = w?.cases?.[x]?.signals ?? {}; for (const ch of channels) if (typeof s[ch] === 'number' && s[ch] >= onsetMs && (first === null || s[ch] < first)) first = s[ch]; }
-      out.push({ change: c, lineage: unit, stream, detectedDelayDays: first === null ? null : (first - onsetMs) / DAY_MS, announcedFired: false });
+      for (const x of induced) { const s = w.cases[x].signals ?? {}; for (const ch of channels) if (typeof s[ch] === 'number' && s[ch] >= onsetMs && (first === null || s[ch] < first)) first = s[ch]; }
+      out.push({ change: c, lineage: unit, stream, detectedDelayDays: first === null ? null : (first - onsetMs) / DAY_MS, announcedFired, induced: induced.length });
     }
   }
   return out;
 }
 
 /**
- * U1s loudness (D-10): per lineage-stream, the delay from the first true complaint about a U1s-exposed case to an incident
- * that opened or escalated (verifier-blind or a defect incident holding a U1s-exposed case), in world-days.
+ * U1s loudness (D-10; review M14): per lineage-stream, the delay from the first true complaint about a U1s-INDUCED failing
+ * case to the first incident tied to U1s: a verifier-blind incident whose complaints name a U1s-induced case, or a defect
+ * incident holding one as evidence (an incident opened BEFORE the complaint counts, delay 0). A lineage-stream with no
+ * such complaint is excluded from the share and listed (it was counted as a failure).
  */
-export function u1sLoud(healRecords, exposureOf, worldsOf) {
+export function u1sLoud(healRecords, exposureOf, worldsOf, healModels = {}) {
   const out = [];
   for (const [unit, byStream] of Object.entries(healRecords)) for (const [stream, rec] of Object.entries(byStream)) {
     const worlds = worldsOf(stream);
     const spec = worlds.find(w => w.changes.some(x => x.id === 'U1s' && x.startsHere));
     if (!spec) continue;
     const ex = exposureOf(stream)(spec.k)?.U1s ?? new Set();
+    const ind = healModels?.[unit]?.[stream]?.worlds?.[spec.k]?.induced?.U1s;
+    const tied = new Set(ind ? ind : [...ex]);
     const w = rec.worlds.find(x => x.k === spec.k);
-    const firstTrue = (w?.complaints ?? []).filter(c => c.kind === 'true' && ex.has(c.case)).sort((a, b) => a.at - b.at)[0];
-    if (!firstTrue) { out.push({ lineage: unit, stream, firstComplaint: null, loudWithinDays: null, note: 'no true complaint about a U1s-exposed case' }); continue; }
-    const loud = (rec.incidents ?? []).filter(i => i.opened.k === spec.k && (i.kind === 'verifier-blind' || i.evidence?.some(e => e.k === spec.k && ex.has(e.case))))
-      .map(i => i.opened.at).filter(t => t >= firstTrue.at).sort((a, b) => a - b)[0];
-    out.push({ lineage: unit, stream, firstComplaint: firstTrue.at, loudWithinDays: loud === undefined ? null : (loud - firstTrue.at) / DAY_MS });
+    const firstTrue = (w?.complaints ?? []).filter(c => c.kind === 'true' && tied.has(c.case)).sort((a, b) => a.at - b.at)[0];
+    if (!firstTrue) { out.push({ lineage: unit, stream, firstComplaint: null, loudWithinDays: null, excluded: true, note: 'no true complaint about a U1s-induced case' }); continue; }
+    const loud = (rec.incidents ?? []).filter(i => i.opened.k === spec.k && (i.kind === 'verifier-blind' ? (i.complaints ?? []).some(c => tied.has(c.case)) : i.evidence?.some(e => e.k === spec.k && tied.has(e.case))))
+      .map(i => i.opened.at).sort((a, b) => a - b)[0];
+    out.push({ lineage: unit, stream, firstComplaint: firstTrue.at, loudWithinDays: loud === undefined ? null : Math.max(0, (loud - firstTrue.at) / DAY_MS) });
   }
   return out;
 }
@@ -165,7 +176,10 @@ export function report(results) {
   const exOf = (s, k, c) => exposureOf(s)(k)?.[c];
   const onsetOf = (s, c) => onsetDay(worldsOf(s), c);
   const hr = Object.keys(stat).length ? healRequiringCellsStrict({ stat, exposureOf: exOf, onsetOf }) : { cells: [], any: [], staticRows: [] };
-  const cells = hr.cells;
+  // The transient F is judged by its own rule (damage in W5, first clean day) and never enters a durable share (review mi3).
+  const cells = hr.cells.filter(c => c.change !== 'F');
+  out.transient = Object.keys(heal).length ? transientCells({ cells: hr.any.filter(c => c.change === 'F'), armModel: heal, onsetOf }) : [];
+  out.transientStatic = transientCells({ cells: hr.any.filter(c => c.change === 'F'), armModel: stat, onsetOf });
   const cellRows = Object.keys(heal).length ? cellDurability({ cells, armModel: heal, exposureOf: exOf, onsetOf, certifiedOf: Object.keys(certs).length ? certifiedOfCells(certs) : null }) : [];
   // D-1 and D-3 with Holm step-down.
   const critRegressions = critRegressionsOf(records['MH-H'], certs);
@@ -181,18 +195,26 @@ export function report(results) {
   out.rules.D1 = d1r ?? { verdict: 'NOT RUN' };
   out.rules.D3 = d3r ? { ...d3r, medianTtdWindowed: medTtdWindowed } : { verdict: 'NOT RUN' };
   out.rules.holm = levels;
-  out.cells = { n: cells.length, withInducedFailure: hr.any.length, staticDurableOnThose: durableShare(hr.staticRows),
+  out.cells = { n: cells.length, withInducedFailure: hr.any.filter(c => c.change !== 'F').length, staticDurableOnThose: durableShare(hr.staticRows.filter(r => r.change !== 'F')),
     rows: cellRows.map(r => ({ lineage: r.lineage, stream: r.stream, change: r.change, status: r.status, ttd: r.ttd, certified: r.certified })), share: durableShare(cellRows), certifiedShare: durableShare(cellRows, { certified: true }) };
   // D-2 cheap.
+  // C-O $ is charged to the changes it served (review M15): an announced change's sessions over every lineage-stream that ran
+  // under it (MH-H and REF-M); a stream's verifier-blind session to U1s's cells of that stream (the unknown change rule 4
+  // exists for), over that stream's lineage-streams. Marginal $ per lineage-stream comes from the LEDGER (every attempt,
+  // env-faulted ones included) plus its share of C-O $ when analyzeRuns supplies it.
+  const lsAll = [...Object.entries(heal), ...Object.entries(arms['REF-M'] ?? {})].flatMap(([u, b]) => Object.keys(b).map(s => `${u}|${s}`));
+  const coShare = (change, stream) => {
+    if (change === 'U1s' && costs.coUsd?.[`vb:${stream}`]) return costs.coUsd[`vb:${stream}`] / Math.max(1, lsAll.filter(x => x.endsWith(`|${stream}`)).length);
+    return costs.coUsd?.[change] ? costs.coUsd[change] / Math.max(1, lsAll.length) : 0;
+  };
   const cellCosts = [];
   for (const cell of cells) {
     const m = heal[cell.lineage]?.[cell.stream];
     if (!m) continue;
     const sessionsUsd = (m.sessions ?? []).filter(s => (s.attributedChange ?? null) === cell.change).reduce((a, s) => a + (s.session?.costUsd ?? 0), 0);
-    const share = costs.coUsd?.[cell.change] ? costs.coUsd[cell.change] / Math.max(1, cells.filter(c => c.change === cell.change).length) : 0;
-    cellCosts.push(sessionsUsd + share);
+    cellCosts.push(sessionsUsd + coShare(cell.change, cell.stream));
   }
-  const healMarginal = Object.entries(heal).flatMap(([l, b]) => Object.entries(b).map(([s, m]) => ({ lineage: l, stream: s, usd: m.usd })));
+  const healMarginal = costs.healMarginal ?? Object.entries(heal).flatMap(([l, b]) => Object.entries(b).map(([s, m]) => ({ lineage: l, stream: s, usd: m.usd, source: 'record (no ledger supplied)' })));
   out.rules.D2 = costs.agentProjected && Object.keys(heal).length ? d2({ cellCosts, healMarginal, agentProjected: costs.agentProjected }) : { verdict: 'NOT RUN', medianCellUsd: median(cellCosts) };
   // D-4: final week pooled over streams per lineage; TTD on s1 cells against REF-M's s1 cells (review M2, M3).
   const healFW = Object.fromEntries(Object.keys(heal).map(l => [l, finalWeekPooled(heal[l])]).filter(([, v]) => Number.isFinite(v)));
@@ -212,8 +234,9 @@ export function report(results) {
   out.rules.D4 = Object.keys(heal).length && Number.isFinite(rm2) ? d4({ healFW, rmaint2FW: rm2, rstaticFW: rst, refmFW: refm && Object.keys(refm).length ? refm : null, healS1Median: Number.isFinite(healS1) ? healS1 : null,
     ttdHeal: s1Ttds.length ? median(s1Ttds) : null, ttdRefm: refmTtds.length ? median(refmTtds) : null }) : { verdict: 'NOT RUN' };
   out.finalWeek = { 'MH-H': healFW, 'R-maint2': rm2, 'R-static': rst, 'REF-M': refm };
-  // D-5 worst case: units (lineage x world x class); silent critical outside the U1s carve-out.
-  const units = [];
+  if (out.rules.D4.verdict !== 'NOT RUN') out.rules.D4.comparators = 'R-maint(2): scheduled oracle-timed rule switches, zero lag on 6 of 9 changes, "knowable" from oracle exposure (rmaint.mjs) - a conservative comparator, not a human; REF-M: Opus 5.5 xhigh maintainer (the expert proxy)';
+  // D-5 worst case: units (lineage x world x class); silent critical outside the U1s carve-out. Computed with complaints
+  // (binding, §4.3: m5 is a maintainer channel) and without them (review M12).
   // U1s carve-out (D-5 a; review M8): only U1s-INDUCED failing cases placed up to its first true complaint + 2 world-days are
   // its silent exposure; a case another change also breaks still counts in that change's class.
   const u1Recs = records?.['MH-H'] ?? {};
@@ -228,61 +251,86 @@ export function report(results) {
     return (k, c, v) => k === spec.k && induced.has(c) && (v?.placedAt ?? 0) <= limit;
   };
   const classOfFor = (s, m) => { const base = classOfCase(exposureOf(s), k => m.worlds?.[k]?.induced ?? {}); return (k, c) => base(k, c); };
+  const d5Units = channels => {
+  const units = [];
   let unitsEvaluated = 0;
   for (const [l, b] of Object.entries(heal)) for (const [s, m] of Object.entries(b)) {
     unitsEvaluated += Object.values(m.worlds).filter(w => Object.values(w.cases).some(c => c.graded)).length;
     const cls = classOfFor(s, m), carve = carveOf(l, s, m);
     const classes = (k, c, v) => { const list = cls(k, c); if (!carve(k, c, v)) return list; const ind = m.worlds?.[k]?.induced ?? {}; const others = Object.entries(ind).filter(([ch, xs]) => ch !== 'U1s' && xs.includes(c)).map(([ch]) => CHANGES[ch].cls); return ['U1s-silent-exposure', ...new Set(others)]; };
-    for (const row of silentLoud(m, VISIBLE.heal, classes)) {
+    for (const row of silentLoud(m, channels, classes)) {
       const carved = row.cls === 'U1s-silent-exposure';
       units.push({ lineage: l, world: `${s}/W${row.world}`, cls: row.cls, silentCritical: carved ? 0 : row.silentCritical, silentExposure: carved ? row.silentCritical : 0, silent: row.silent, failing: row.failing, n: row.n });
     }
   }
+  return { units, unitsEvaluated };
+  };
   const w1False = [];
   for (const [, b] of Object.entries(heal)) for (const [, m] of Object.entries(b)) {
     const pass = (k, c) => m.worlds[k]?.cases?.[c]?.pass ?? null;
     w1False.push(falseIncidents((m.incidents ?? []).filter(i => i.opened?.k === 1), (w, c) => pass(1, c)).length);
   }
-  const routedSilent = pairs.length && pairs.every(p => p.healSilent !== undefined) ? (() => { const r = d3({ pairs: pairs.map(p => ({ ...p, heal: p.healSilent, agent: p.agentSilent })), medianTtd: 0 }); return { mean: r.mean, hi95: r.hi95 }; })() : null;
+  // (d) like for like (review M11): both sides under the full monitor without complaints (m1-m3 on their own journals,
+  // the readings in force); the m1-only comparison is printed beside it.
+  const routedOf = (h, a) => (pairs.length && pairs.every(p => p[h] !== undefined && p[a] !== undefined) ? (() => { const r = d3({ pairs: pairs.map(p => ({ ...p, heal: p[h], agent: p[a] })), medianTtd: 0 }); return { mean: r.mean, hi95: r.hi95, lo95: r.lo95 }; })() : null);
+  const routedSilent = routedOf('healSilentFull', 'agentSilentFull');
+  const routedSilentM1 = routedOf('healSilentM1', 'agentSilentM1');
   const perClassWorst = Object.keys(heal).length ? perClassWorstOf({ heal, refm: arms['REF-M'] ?? null, refs: arms['REF-S'] ?? null, classOfFor }) : null;
-  out.rules.D5 = Object.keys(heal).length ? d5({ units, adv, perClassWorst, routedSilent, w1FalseIncidents: Object.keys(heal).length ? w1False : null, unitsEvaluated }) : { verdict: 'NOT RUN' };
+  if (Object.keys(heal).length) {
+    const a = d5Units(VISIBLE.heal), b = d5Units(VISIBLE.healNoComplaints);
+    out.rules.D5 = { ...d5({ units: a.units, adv, perClassWorst, routedSilent, w1FalseIncidents: w1False, unitsEvaluated: a.unitsEvaluated }), binding: 'with complaints (m1-m3, m5)', routedSilentM1 };
+    out.rules.D5noComplaints = { ...d5({ units: b.units, adv, perClassWorst, routedSilent, w1FalseIncidents: w1False, unitsEvaluated: b.unitsEvaluated }), binding: false };
+  } else { out.rules.D5 = { verdict: 'NOT RUN' }; out.rules.D5noComplaints = { verdict: 'NOT RUN' }; }
   out.rules.D5.perClassWorst = perClassWorst;
-  // D-6 detection (unannounced), with and without complaints.
-  out.rules.D6 = Object.keys(heal).length ? d6({ onsets: detectionOnsets(heal, worldsOf, exposureOf), w1FalseIncidents: w1False, m6 }) : { verdict: 'NOT RUN' };
-  out.rules.D6noComplaints = Object.keys(heal).length ? d6({ onsets: detectionOnsets(heal, worldsOf, exposureOf, { channels: ['m1', 'm2', 'm3'] }), w1FalseIncidents: w1False }) : { verdict: 'NOT RUN' };
+  // Every D-6 number with and without complaints, and without m2 (V-9, the payload-derived case index, is not built, so the
+  // truth-indexed m2 attribution is also reported away; BUILD-PLAN; review M13). The m6 rule is computed (null: NOT RUN).
+  const m6r = m6 ? m6Rule(m6) : { verdict: 'NOT RUN' };
+  const d6Of = channels => (Object.keys(heal).length ? d6({ onsets: detectionOnsets(heal, worldsOf, exposureOf, { channels }), w1FalseIncidents: w1False, m6: m6r }) : { verdict: 'NOT RUN' });
+  out.rules.D6 = d6Of(['m1', 'm2', 'm3', 'm5']);
+  out.rules.D6noComplaints = d6Of(['m1', 'm2', 'm3']);
+  out.rules.D6noM2 = d6Of(['m1', 'm3', 'm5']);
+  out.rules.D6noM2noComplaints = d6Of(['m1', 'm3']);
+  out.rules.D6.onsets = Object.keys(heal).length ? detectionOnsets(heal, worldsOf, exposureOf) : [];
+  out.rules.m6 = m6r;
   // D-7 frontier (descriptive).
   out.rules.D7 = windows?.aox ? { verdict: windows.aox.healRate >= windows.aox.aoxRate - RULES.D7.margin && windows.aox.healUsdPerCase <= RULES.D7.costShare * windows.aox.aoxUsdPerCase ? 'MATCHES OPUS PER TICK AT <= 1/20 COST (descriptive)' : 'NOT SHOWN (descriptive)', ...windows.aox } : { verdict: 'NOT RUN' };
   // D-8 LD-H.
   out.rules.D8 = ld?.length ? d8Rule(ld.map(a => ({ defect: a.id, healed: a.healed, durable: a.durable, regressions: a.regressions, falseComplaintHarm: a.falseComplaintHarm > 0 }))) : { verdict: 'NOT RUN' };
   // D-9 stale verifier (descriptive).
   const stale = arms['MH-stale'] ?? null;
-  out.rules.D9 = stale ? { verdict: 'descriptive', perLineage: Object.fromEntries(Object.entries(stale).filter(([, b]) => b.s1).map(([l, b]) => [l, { stale: exposedPass(b.s1, exposureBy('s1')).rate, heal: heal[l]?.s1 ? exposedPass(heal[l].s1, exposureBy('s1')).rate : null }])) } : { verdict: 'NOT RUN' };
+  // On R1's exposed cases only (review mi5: it used every change's exposure).
+  const r1Only = Object.fromEntries(Object.entries(exposureBy('s1')).map(([k, ex]) => [k, { R1: ex.R1 ?? new Set() }]));
+  out.rules.D9 = stale ? { verdict: 'descriptive', perLineage: Object.fromEntries(Object.entries(stale).filter(([, b]) => b.s1).map(([l, b]) => [l, { stale: exposedPass(b.s1, r1Only, { worlds: [3, 4, 5, 6] }).rate, heal: heal[l]?.s1 ? exposedPass(heal[l].s1, r1Only, { worlds: [3, 4, 5, 6] }).rate : null }])) } : { verdict: 'NOT RUN' };
   // D-10 the unknown.
   const e2sCells = cellRows.filter(r => r.change === 'E2s');
-  const u1 = records?.['MH-H'] ? u1sLoud(records['MH-H'], exposureOf, worldsOf) : [];
+  const u1 = records?.['MH-H'] ? u1sLoud(records['MH-H'], exposureOf, worldsOf, heal) : [];
   out.rules.D10 = Object.keys(heal).length ? { ...d10({ e2sCells, u1sLoud: u1 }), u1s: u1 } : { verdict: 'NOT RUN' };
   // D-11 red team.
   out.rules.D11 = redTeam?.length ? d11(redTeam) : { verdict: 'NOT RUN' };
   // Root-cause scaffold (Q7): failing classes per arm and unhealed cells.
+  // Keyed by the FIRST-DIVERGENCE RULE x attributed change class x arm, with the silent and silent-critical counts under the
+  // channels the arm sees (review M23: the key was the case's truth class and `silent` was always false).
   const failing = [];
   for (const [arm, byUnit] of Object.entries(arms)) {
     const by = new Map();
+    const channels = ['MH-H', 'REF-M', 'MH-stale', 'MH-HO'].includes(arm) ? VISIBLE.heal : VISIBLE.static;
     for (const [, b] of Object.entries(byUnit)) for (const [s, m] of Object.entries(b)) {
       const cls = classOfFor(s, m);
       for (const [k, w] of Object.entries(m.worlds)) for (const [c, v] of Object.entries(w.cases)) {
-        if (v.pass) continue;
+        if (!v.graded || v.pass) continue;
+        const sil = silent(v, channels);
         for (const cc of cls(Number(k), c)) {
-          const key = `${v.class ?? '?'}|${cc}`;
-          if (!by.has(key)) by.set(key, { rule: v.class, changeClass: cc, n: 0, silent: false, examples: [] });
-          const e = by.get(key); e.n += 1; if (e.examples.length < 3) e.examples.push(`${s}/W${k}/${c}`);
+          const key = `${v.rule ?? 'unknown'}|${cc}`;
+          if (!by.has(key)) by.set(key, { rule: v.rule ?? 'unknown', changeClass: cc, n: 0, silent: 0, silentCritical: 0, examples: [] });
+          const e = by.get(key); e.n += 1; if (sil) { e.silent += 1; if (v.critical) e.silentCritical += 1; } if (e.examples.length < 3) e.examples.push(`${s}/W${k}/${c}`);
         }
       }
     }
     failing.push(...[...by.values()].map(f => ({ ...f, arm })));
   }
   const unhealed = cellRows.filter(r => r.status !== 'durable').map(r => ({ change: r.change, lineage: r.lineage, stream: r.stream, reason: r.status === 'not-durable' ? 'not durable' : r.status }));
-  const rc = rootCauseScaffold({ arm: 'all', failing, unhealed });
-  out.rootCause = { records: rc.records.length, complete: rc.complete, sample: rc.records.slice(0, 12) };
+  const rc = rootCauseScaffold({ arm: 'all', failing, unhealed, review: results.rcReview ?? null });
+  out.rootCause = { records: rc.records.length, reviewed: rc.reviewed, complete: rc.complete, sample: rc.records.slice(0, 12), all: rc.records };
   out.owner = ownerTable({ k0r, d1r, d3r, d2r: out.rules.D2, d4r: out.rules.D4, d5r: out.rules.D5, d6r: out.rules.D6, d8r: out.rules.D8, d10r: out.rules.D10, rc });
   return out;
 }
@@ -294,7 +342,7 @@ export function renderReport(r) {
   lines.push('', '## Rules');
   for (const [k, v] of Object.entries(r.rules)) if (k !== 'holm') lines.push(`- ${k}: ${v.verdict ?? JSON.stringify(v).slice(0, 120)}${v.p !== undefined ? ` (p ${Number(v.p).toFixed(4)})` : ''}`);
   lines.push('', `Cells: ${r.cells.n} heal-requiring; durable ${r.cells.share.durable}/${r.cells.share.judged}; certified-durable ${r.cells.certifiedShare.durable}/${r.cells.certifiedShare.judged}`);
-  lines.push(`Root-cause ledger: ${r.rootCause.records} records (${r.rootCause.complete ? 'every record categorised' : 'INCOMPLETE'}; analyst review pending)`);
+  lines.push(`Root-cause ledger: ${r.rootCause.records} records (${r.rootCause.complete ? 'every record analyst-reviewed' : `INCOMPLETE: ${r.rootCause.reviewed}/${r.rootCause.records} analyst-reviewed`})`);
   return lines.join('\n');
 }
 

@@ -33,12 +33,14 @@ step() {
   name=$1; shift
   if stopped; then log "skip $name (the chain is stopped: $(head -c 300 "$RUNS/STOP-chain"))"; exit 3; fi
   if [ -f "$RUNS/.done-$name" ]; then log "skip $name (done)"; return 0; fi
-  tries=0
+  tries=0; opus_waits=0
   while :; do
     avail=$(df -Pk / | awk 'NR==2 {print $4}')
     if [ "$avail" -lt "$MIN_KB" ]; then log "K-5: disk ${avail} KB < ${MIN_KB} KB; pausing 30 min"; sleep "$WAIT"; continue; fi
+    # Another Opus chain draws on the same session limit: wait (at most 4 x 30 min, then go on; review minor 4: no maximum,
+    # and the P2* pattern matched no step). P3's C-O sessions are short and run inside the heal workers: not waited for.
     case "$name" in
-      P1*|P2*|P6*|P7*|P8*) if other_opus; then log "$name: another Opus chain is drawing on the session limit; waiting 30 min"; sleep "$WAIT"; continue; fi ;;
+      P1*|P6*|P7*|P8*|P9*) if [ "${opus_waits:-0}" -lt 4 ] && other_opus; then opus_waits=$(( ${opus_waits:-0} + 1 )); log "$name: another Opus chain is drawing on the session limit; waiting 30 min ($opus_waits/4)"; sleep "$WAIT"; continue; fi ;;
     esac
     log "start $name: $*"
     nice -n 15 "$@"; rc=$?

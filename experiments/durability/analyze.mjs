@@ -15,13 +15,13 @@ import { rng } from '../../beds/lib/rng.mjs';
 import { DAY_MS, T0_MS, HORIZON_DAYS, UNANNOUNCED, CHANGES } from './schedule.mjs';
 
 export const RULES = Object.freeze({
-  K0: { minFlagShare: 0.5, withinDays: 1, changes: ['R1', 'E1'] },
+  K0: { minFlagShare: 0.5, withinDays: 1, changes: ['R1', 'E1', 'L1', 'E2s'] },   // L1 and E2s added 2026-11-04 (review mi14: R1 and E1 alone could not see a monitor blind to an unannounced load or rename)
   D1: { floor: FLOOR, durableSupport: 0.80, durableFalsify: 0.50, w6Tolerance: 0.03, w6FalsifyLineages: 3, critRegressionDays: 2, critRegressionFalsifyLineages: 2 },
   D2: { cellPass: 0.50, cellFail: 1.50, shareOfAgentPass: 0.10, shareOfAgentFail: 0.25 },
   D3: { margin: NI_MARGIN, B: 10_000, seed: 'dur1/d3', medianTtdFalsify: 2 },
   D4: { tolerance: 0.03, lineagesEqual: 7, falsifyLineages: 5, floor: FLOOR, ttdSlack: 1 },
   D5: { carveoutDays: 2, minCaseDelta: 1, deltaShare: 0.01, w1FalseIncidents: 1 },
-  D6: { recallPass: 0.9, recallFail: 0.5, withinDays: 1, w1FalseIncidents: 1, m6Delay: 4 },
+  D6: { recallPass: 0.9, recallFail: 0.5, withinDays: 1, w1FalseIncidents: 1, m6Delay: 4, m6NovelShare: 0.5, m6W1FalseAlarms: 1 },
   D7: { margin: 0.10, costShare: 0.05 },
   D8: { minHealed: 5, of: 6 },
   D10: { e2sDurable: 2 / 3, u1sLoudShare: 0.8, u1sLoudDays: 2 },
@@ -124,6 +124,24 @@ export function cellDurability({ cells, armModel, exposureOf, onsetOf, certified
   });
 }
 
+/**
+ * The transient change F (prereg §9 item 3; review mi3): its cells are not judged by the TTD rule (F is gone after W5, so a
+ * finite TTD is trivial) and are left out of every durable share. Per cell: the damage (F-induced failing cases during
+ * W5) and the first clean day (the first W5 world-day from F's onset after which no F-induced failure was placed).
+ */
+export function transientCells({ cells, armModel, onsetOf, change = 'F', world = 5 }) {
+  return cells.filter(c => c.change === change).map(cell => {
+    const w = armModel[cell.lineage]?.[cell.stream]?.worlds?.[world];
+    if (!w) return { ...cell, status: 'missing' };
+    const ind = (w.induced?.[change] ?? []).map(c => w.cases[c]).filter(v => v?.graded);
+    const days = ind.map(v => Math.floor((v.placedAt - T0_MS) / DAY_MS) + 1);
+    const onset = onsetOf(cell.stream, change);
+    const onsetWorldDay = onset === null ? 1 : onset - 14 * (world - 1);
+    const firstClean = days.length ? Math.max(...days) + 1 : onsetWorldDay;
+    return { ...cell, status: 'transient', damage: ind.length, damageCritical: ind.filter(v => v.critical).length, firstCleanDay: firstClean > HORIZON_DAYS ? null : firstClean };
+  });
+}
+
 /** Durable share over heal-requiring cells (unjudgeable and missing cells are reported, not counted). */
 export function durableShare(rows, { certified = false } = {}) {
   const judged = rows.filter(r => ['durable', 'not-durable'].includes(r.status));
@@ -165,7 +183,8 @@ export function d1({ heal, stat, exposure, cellRows, critRegressions = null, hol
       hn += a.n; hp += a.pass; sn += b.n; sp += b.pass;
     }
     const w = k => { let n = 0, p = 0; for (const s of Object.keys(heal[l])) { const ex = exposure(s); const skip = new Set(Object.entries(ex?.[k] ?? {}).filter(([c]) => w6Except.includes(c)).flatMap(([, x]) => [...x])); for (const [c, v] of gradedOf(heal[l][s].worlds[k])) { if (skip.has(c)) continue; n += 1; if (v.pass) p += 1; } } return rate(p, n); };
-    const w6s = k => { let n = 0, p = 0; for (const s of Object.keys(stat[l])) for (const [, v] of gradedOf(stat[l][s].worlds[k])) { n += 1; if (v.pass) p += 1; } return rate(p, n); };
+    // The static side drops the same U1s-exposed cases as the heal side (review mi4: only the heal side dropped them).
+    const w6s = k => { let n = 0, p = 0; for (const s of Object.keys(stat[l])) { const ex = exposure(s); const skip = new Set(Object.entries(ex?.[k] ?? {}).filter(([c]) => w6Except.includes(c)).flatMap(([, x]) => [...x])); for (const [c, v] of gradedOf(stat[l][s].worlds[k])) { if (skip.has(c)) continue; n += 1; if (v.pass) p += 1; } } return rate(p, n); };
     return { lineage: l, heal: rate(hp, hn), static: rate(sp, sn), diff: rate(hp, hn) - rate(sp, sn), nHeal: hn, nStatic: sn, w1: w(1), w6: w(6), w6Static: w6s(6), w6Heal: w(6) };
   });
   const diffs = per.map(x => x.diff).filter(Number.isFinite);
@@ -312,6 +331,19 @@ export function d6({ onsets, w1FalseIncidents = [], m6 = null, rules = RULES.D6 
   return { verdict: pass ? 'PASS' : fail ? 'FAIL' : 'DETECTS MOST, NOT ALL', recall, flood, m6: m6 ?? null };
 }
 
+/**
+ * The m6 adoption rule (prereg §10 D-6): adopted for watch mode iff at EVERY onset that changes inputs (>= 50% of its exposed
+ * cases novel to the frozen profile) on every stream its delay is <= 4 exposed cases, and every stream's W1 segment has
+ * <= 1 false alarm. onsets: [{ stream, change, novelShare, delayCases (null = no alarm) }]; w1Alarms: { [stream]: n }.
+ */
+export function m6Rule({ onsets, w1Alarms, rules = RULES.D6 }) {
+  const inputs = onsets.filter(o => o.novelShare >= rules.m6NovelShare);
+  const late = inputs.filter(o => o.delayCases === null || o.delayCases > rules.m6Delay);
+  const flood = Object.entries(w1Alarms ?? {}).filter(([, n]) => n > rules.m6W1FalseAlarms).map(([s]) => s);
+  const adopted = inputs.length > 0 && !late.length && !flood.length;
+  return { verdict: adopted ? 'ADOPTED for watch mode (Y)' : 'N', onsetsThatChangeInputs: inputs.length, late: late.map(o => `${o.stream}/${o.change}`), w1Flood: flood, onsets, w1Alarms };
+}
+
 /** D-8 runs expose flaws (LD-H): ld = [{ defect, healed, durable, regressions, falseComplaintHarm }]. */
 export function d8(ld, rules = RULES.D8) {
   const healed = ld.filter(x => x.healed && x.durable && x.regressions === 0).length;
@@ -322,8 +354,10 @@ export function d8(ld, rules = RULES.D8) {
 /** D-10 the unknown: E2s durable in >= 2/3 of its cells; U1s loud within 2 world-days of its first true complaint in >= 80%. */
 export function d10({ e2sCells, u1sLoud, rules = RULES.D10 }) {
   const e = durableShare(e2sCells);
-  const l = u1sLoud.length ? u1sLoud.filter(x => x.loudWithinDays !== null && x.loudWithinDays <= rules.u1sLoudDays).length / u1sLoud.length : NaN;
-  return { e2s: e, u1sLoudShare: l, verdict: (e.share >= rules.e2sDurable && l >= rules.u1sLoudShare) ? 'DETECTS AND HEALS UNKNOWN CHANGE (dev)' : 'NOT SHOWN' };
+  // Lineage-streams with no true complaint about a U1s-induced case are excluded (review M14), listed in the report.
+  const rows = u1sLoud.filter(x => !x.excluded);
+  const l = rows.length ? rows.filter(x => x.loudWithinDays !== null && x.loudWithinDays <= rules.u1sLoudDays).length / rows.length : NaN;
+  return { e2s: e, u1sLoudShare: l, u1sJudged: rows.length, u1sExcluded: u1sLoud.length - rows.length, verdict: (e.share >= rules.e2sDurable && l >= rules.u1sLoudShare) ? 'DETECTS AND HEALS UNKNOWN CHANGE (dev)' : 'NOT SHOWN' };
 }
 
 /** D-11 red team adds value: for >= 1 of 2 Opus targets, a valid world with strictly more silent failing cases than blind search. */
@@ -375,9 +409,18 @@ export function silentLoud(sr, channels, classOf = () => 'all') {
   return out;
 }
 
-/** Incidents whose evidence cases all pass (oracle) = false incidents. */
+/**
+ * False incidents (oracle): a defect incident whose evidence cases all pass; a verifier-blind incident whose complained
+ * cases all pass for the arm (review M21: verifier-blind incidents raised by false complaints were never counted, so the
+ * W1 alarm-flood guard could not see them). Practice evidence is not a case of the stream and is left out; an incident
+ * with no stream case to judge is not counted either way.
+ */
 export function falseIncidents(incidents, passOf) {
-  return incidents.filter(i => i.kind !== 'verifier-blind' && i.evidence?.length && i.evidence.every(e => e.case && passOf(e.world, e.case) === true));
+  return incidents.filter(i => {
+    const xs = i.kind === 'verifier-blind' ? (i.complaints ?? []).filter(c => c.case).map(c => ({ world: c.world ?? null, case: c.case, k: i.opened?.k }))
+      : (i.evidence ?? []).filter(e => e.case && !e.practice).map(e => ({ world: e.world, case: e.case, k: e.k }));
+    return xs.length > 0 && xs.every(x => passOf(x.world, x.case, x.k) === true);
+  });
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -427,11 +470,20 @@ export const envInvalid = (impaired, planned) => planned > 0 && impaired / plann
 export const RC_CATEGORIES = Object.freeze(['spec misreading', 'hard-coded value', 'generic mechanism missing', 'fault handling', 'version migration', 'heal regression',
   'stale verifier', 'detection miss', 'misclassification', 'evidence insufficient', 'patch wrong', 'gate rejected a good patch', 'gate accepted a bad patch',
   'injection', 'budget or time cap', 'environment', 'bed or oracle defect']);
-export function rootCauseScaffold({ arm, failing, unhealed }) {
+/**
+ * One record per (first-divergence rule x attributed change class x arm) of failing cases, and per unhealed cell (review
+ * M23: the ledger was keyed by the case's truth class, `silent` was always false and "complete" was trivially true). The
+ * automatic category is a first pass only; the ledger is COMPLETE only when an analyst review (`review`: { [record key]:
+ * { category, note } }, runs/ROOT-CAUSE-REVIEW.json) gives every record a category from RC_CATEGORIES.
+ */
+export function rootCauseScaffold({ arm, failing, unhealed, review = null }) {
   const recs = [];
-  for (const f of failing) recs.push({ arm, key: `${f.rule ?? f.code}|${f.changeClass ?? 'base'}`, n: f.n, category: f.silent ? 'detection miss' : f.changeClass === 'FLT' ? 'fault handling' : f.changeClass ? 'generic mechanism missing' : 'spec misreading', status: 'automatic first pass; analyst review pending', examples: f.examples ?? [] });
+  for (const f of failing) recs.push({ arm: f.arm ?? arm, key: `${f.arm ?? arm}|${f.rule ?? f.code ?? 'unknown'}|${f.changeClass ?? 'base'}`, n: f.n, silent: f.silent ?? 0, silentCritical: f.silentCritical ?? 0,
+    category: f.silent ? 'detection miss' : f.changeClass === 'FLT' ? 'fault handling' : f.changeClass && f.changeClass !== 'IP' ? 'generic mechanism missing' : 'spec misreading', status: 'automatic first pass; analyst review pending', examples: f.examples ?? [] });
   for (const u of unhealed) recs.push({ arm, key: `unhealed|${u.change}|${u.lineage}|${u.stream}`, category: u.reason === 'budget-stop' ? 'budget or time cap' : u.reason === 'needs-human' ? 'patch wrong' : u.reason === 'not detected' ? 'detection miss' : 'evidence insufficient', status: 'automatic first pass; analyst review pending', detail: u });
-  return { records: recs, complete: recs.every(r => RC_CATEGORIES.includes(r.category)) };
+  for (const r of recs) { const rv = review?.[r.key]; if (rv && RC_CATEGORIES.includes(rv.category)) { r.category = rv.category; r.status = 'analyst reviewed'; r.note = rv.note ?? null; } }
+  const reviewed = recs.filter(r => r.status === 'analyst reviewed').length;
+  return { records: recs, reviewed, complete: recs.length > 0 && reviewed === recs.length };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -445,6 +497,6 @@ export function ownerTable({ k0r, d1r, d3r, d2r, d4r, d5r, d6r, d8r, d10r, rc })
     { q: 'Q4 durable state >= a human\'s?', rule: 'D-4', verdict: d4r?.verdict ?? 'NOT RUN' },
     { q: 'Q5 versus a per-tick agent; beat Opus at a fraction of the cost?', rule: 'D-3 (primary), D-2, D-7', verdict: `${d3r?.verdict ?? 'NOT RUN'}; cost ${d2r?.verdict ?? 'NOT RUN'}` },
     { q: 'Q6 runs expose flaws in a hand-crafted workflow?', rule: 'D-8', verdict: d8r?.verdict ?? 'NOT RUN' },
-    { q: 'Q7 every failure figured out?', rule: '§14.3', verdict: rc ? (rc.complete ? `ledger complete (${rc.records.length} records, analyst review pending)` : 'LEDGER INCOMPLETE: no result text') : 'NOT RUN' },
+    { q: 'Q7 every failure figured out?', rule: '§14.3', verdict: rc ? (rc.complete ? `ledger complete (${rc.records.length} records, every one analyst-reviewed)` : `LEDGER INCOMPLETE (${rc.reviewed ?? 0}/${rc.records.length} records analyst-reviewed): no result text`) : 'NOT RUN' },
   ];
 }

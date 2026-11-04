@@ -17,7 +17,7 @@ const { loadSealed } = await import('../changes.mjs');
 const { stubAgentRunner } = await import('../run.mjs');
 const sealed = loadSealed(path.join(here, '../fixtures/sealed-stub.json'));
 
-test.after(() => rmSync(runs, { recursive: true, force: true }));
+test.after(() => { rmSync(runs, { recursive: true, force: true }); if (process.env.DUR1_WORK === '/var/tmp/foundry-work/dur1-test') rmSync(process.env.DUR1_WORK, { recursive: true, force: true }); });   // review minor 8
 
 test('WC-1 t0 pass at a toy budget: per-target records, the budget is respected, the pass resumes from its files', async () => {
   const r = await wc1Stage({ when: 't0', sealed, budgets: { groupA: 2, groupB: 2 }, only: ['b1lh-e8-1', 'ch-e8-2'], poolSize: 8, maxSize: 14, salts: 1 });

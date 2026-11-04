@@ -1,7 +1,8 @@
 // DUR-1 monitor: channels m1-m5 per world-day on an arm's own journal, and the incident rules (PREREG-DUR-1 §6.1, §6.2;
 // BUILD-PLAN row 7). $0. ORACLE-FREE except where noted: it reads the arm's journal, the capability contracts
 // (experiments/compose/capabilities.mjs, the FH-1 verifier; they index cases with the bed's truth-side event map, the
-// V-9 caveat, so the per-case attribution of m2 is truth-indexed and is also checked against a payload-derived index),
+// V-9 caveat, so the per-case attribution of m2 is truth-indexed; the payload-derived cross-check V-9 was NOT built, so
+// every D-6 number is also reported without m2; review mi11),
 // the OT-0 observer's clause C1 (oracle-free, experiments/constitution/observer.mjs), config digests, announcements and
 // delivered complaints. m6 (edetector.mjs) never opens an incident.
 //   m1  arm errors (a call that did not return a valid output, arm.error rows) and effect errors not followed by a success

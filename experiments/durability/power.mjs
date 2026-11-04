@@ -78,6 +78,30 @@ export function recallOC(pt, { R = 4000, seed = 12345 } = {}) {
   for (let r = 0; r < R; r++) { let x = 0, n = 0; for (let o = 0; o < 18; o++) { const po = E(L(pt) + 0.8 * norm()); for (let l = 0; l < 9; l++) { n++; if (rnd() < po) x++; } } const rc = x / n; if (rc >= 0.9) pass++; if (rc < 0.5) fail++; }
   return { pPass: r3(pass / R), pFail: r3(fail / R) };
 }
+/**
+ * D-6 per class (review M23: the pooled simulation above treats 18 onsets x 9 lineages as one recall, but the rule is per
+ * unannounced class and must hold in EVERY class). Per class: 3 stream onsets (one per stream), each a cluster with a
+ * logit-scale effect of SD 0.8 shared by the 9 lineages; class recall = hits / 27; pass iff every one of `classes` classes
+ * has recall >= 0.9; fail iff any class is below 0.5.
+ */
+export function recallClassOC(pt, { classes = 4, streams = 3, lineages = 9, sd = 0.8, R = 4000, seed = 12345 } = {}) {
+  const rnd = lcg(seed + 2), norm = normalOf(rnd);
+  let pass = 0, fail = 0;
+  for (let r = 0; r < R; r++) {
+    let all = true, any = false;
+    for (let c = 0; c < classes; c++) {
+      let x = 0, n = 0;
+      for (let s = 0; s < streams; s++) { const po = E(L(pt) + sd * norm()); for (let l = 0; l < lineages; l++) { n++; if (rnd() < po) x++; } }
+      const rc = x / n;
+      if (rc < 0.9) all = false;
+      if (rc < 0.5) any = true;
+    }
+    if (all) pass++; if (any) fail++;
+  }
+  return { pPass: r3(pass / R), pFail: r3(fail / R) };
+}
+/** Monte Carlo standard error of a simulated share (review mi13). */
+export const mcSe = (p, reps) => r4(Math.sqrt(Math.max(0, p * (1 - p)) / reps));
 const binomGE = (n, p, k) => { let t = 0; const c = (n, r) => { let x = 1; for (let i = 0; i < r; i++) x = x * (n - i) / (i + 1); return x; }; for (let j = k; j <= n; j++) t += c(n, j) * p ** j * (1 - p) ** (n - j); return t; };
 
 export function powerReport({ quick = false } = {}) {
@@ -87,11 +111,16 @@ export function powerReport({ quick = false } = {}) {
   out.signFlip = { minP9: r4(signFlipP([1, 2, 3, 4, 5, 6, 7, 8, 9])), p8of9SmallestNegative: r4(signFlipP([-1, 2, 3, 4, 5, 6, 7, 8, 9])),
     mde: Object.fromEntries([0.029, 0.043, 0.083].map(s => [s, { a025: signFlipMde(s, 0.025, 9, { reps: Math.round(1500 / q) }), a05: signFlipMde(s, 0.05, 9, { reps: Math.round(1500 / q) }), n6a025: signFlipMde(s, 0.025, 6, { reps: Math.round(1500 / q) }) }])) };
   out.d3 = {};
-  for (const W of [12, 8]) for (const gap of [-0.05, 0, 0.05]) out.d3[`W${W}_gap${gap}`] = { a025: d3Power({ W, gap, reps: Math.round(600 / q) }), a05: d3Power({ W, gap, alpha: 0.05, reps: Math.round(600 / q) }) };
-  out.d3.W12_k4_gap0 = d3Power({ W: 12, k: 4, gap: 0, reps: Math.round(600 / q) });
-  out.d3.sizeAtMargin = d3Power({ W: 12, gap: -0.10, reps: Math.round(600 / q) });
+  const reps = Math.round(600 / q), sizeReps = Math.round(4000 / q);
+  for (const W of [12, 8]) for (const gap of [-0.05, 0, 0.05]) { const a025 = d3Power({ W, gap, reps }), a05 = d3Power({ W, gap, alpha: 0.05, reps }); out.d3[`W${W}_gap${gap}`] = { a025, a05, se025: mcSe(a025, reps), se05: mcSe(a05, reps) }; }
+  out.d3.W12_k4_gap0 = d3Power({ W: 12, k: 4, gap: 0, reps });
+  // The size at the margin with 4,000 replications (review mi13: 600 left 0.028 within Monte Carlo error of 0.025).
+  out.d3.sizeAtMargin = d3Power({ W: 12, gap: -0.10, reps: sizeReps });
+  out.d3.sizeAtMarginSe = mcSe(out.d3.sizeAtMargin, sizeReps);
+  out.d3.reps = { cells: reps, sizeAtMargin: sizeReps };
   out.durable = Object.fromEntries([0.9, 0.85, 0.75, 0.6, 0.4].map(p => [p, durableOC(p, { R: Math.round(4000 / q) })]));
   out.recall = Object.fromEntries([0.97, 0.93, 0.9, 0.85, 0.6].map(p => [p, recallOC(p, { R: Math.round(4000 / q) })]));
+  out.recallPerClass = Object.fromEntries([4, 6].map(k => [`classes${k}`, Object.fromEntries([0.99, 0.97, 0.95, 0.93, 0.9, 0.85, 0.6].map(p => [p, recallClassOC(p, { classes: k, R: Math.round(4000 / q) })]))]));
   out.d4 = Object.fromEntries([0.95, 0.9, 0.8, 0.7].map(p => [p, r3(binomGE(9, p, 7))]));
   out.d5 = { units: 162, zeroEventBound: r4(3 / 162) };
   out.d6 = { onsetsPerLineage: 18, wilsonLower18of18: r3(18 / (18 + 1.96 ** 2) - 0) };

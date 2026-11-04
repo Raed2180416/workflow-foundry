@@ -222,7 +222,7 @@ case is therefore re-measured in P0 before the window size k is fixed (§12). Ev
 | m3 | OT-0 observer clause C1, conservation and exactly-once (`experiments/constitution/observer.mjs:321`) | yes |
 | m4 | announcements; digests of the spec text, rulebook files and API schemas in force | no (stream-level) |
 | m5 | complaints (§4.3) | yes |
-| m6 | input-profile e-detector: `experiments/jit/profile.mjs` PARAMS unchanged over each case's inbound messages and documents (config digests excluded); score = number of profile findings; smoothed conformal rank p-value against the **fixed** calibration of the completed cases of practice worlds 1235–1237; power bet e = ε·p^(ε−1), ε = 0.3; e-CUSUM Mₜ = max(1, Mₜ₋₁)·eₜ, alarm at Mₜ ≥ 10,000; reset after an alarm | no; **never opens a heal** |
+| m6 | input-profile e-detector: `experiments/jit/profile.mjs` PARAMS unchanged over each case's inbound messages and documents (config digests excluded); score = number of profile findings; conformal rank p-value against the **fixed** calibration of the completed cases of practice worlds 1235–1237, **cross-conformal** over the three leave-one-world-out folds (each fold's calibration scores against the stream instance's score under that fold's profile; ties in full) (amended 2026-11-04, second review batch, review mi12: the stream was scored against the all-practice profile while the calibration was leave-one-out); power bet e = ε·p^(ε−1), ε = 0.3; e-CUSUM Mₜ = max(1, Mₜ₋₁)·eₜ, alarm at Mₜ ≥ 10,000; reset after an alarm | no; **never opens a heal** |
 
 ### 6.2 Incidents (frozen rules)
 
@@ -240,8 +240,10 @@ case is therefore re-measured in P0 before the window size k is fixed (§12). Ev
    untrusted data, SPEC-E and the contracts) runs at the stream's first such incident; every verifier-blind incident of
    the stream, in every lineage and REF-M, is then judged with that reading **on its own journal** (amended 2026-11-04,
    review B3: a reused reading reached only the first lineage). Accepted iff the updated contracts flag ≥ 50% of the
-   incident's complained cases and ≤ 1% of the arm's other completed cases of the same days; then rule 1 applies under the
-   updated contracts. Rejected, no reading, or no room in P2 → the incident is "needs human" (a loud failure). *Expected
+   incident's complained cases and ≤ 1% of the arm's other completed cases of the same days (judged on the journal up to
+   the alarm; "the same days" = the rule's 3-world-day window; (amended 2026-11-04, second review batch, mi10); then rule 1 applies under the
+   updated contracts: the days so far are re-judged and only the m2 findings the update ADDS are ingested (M19: re-ingesting
+   every earlier m1/m3 signal reopened healed classes), and the rest of the world is judged under it. Rejected, no reading, or no room in P2 → the incident is "needs human" (a loud failure). *Expected
    consequence, computed at $0 from the frozen false-complaint draws before the freeze:* false complaints alone open a
    verifier-blind incident before W6 on every stream (s1 and s2 in W3, s3 in W1; 2, 1 and 5 incidents), so each stream's
    session is expected to be spent on a false alarm and U1s's incidents to end "needs human" (loud; D-10's loudness clause
@@ -283,8 +285,15 @@ case is therefore re-measured in P0 before the window size k is fixed (§12). Ev
   shadow over the same days lacks, rolls it back at the next day boundary and reopens the incident.
 - **Information hygiene (checked by V-7):** heal and C-O inputs come only from the arm's journal up to the alarm,
   cases completed by then, complaints delivered by then, the spec, rulebook and API files in force or announced, and
-  practice worlds with announced overlays. Never: truth, grades, exposure tags, change labels, the sealed bundle,
-  another arm's results or adversarial worlds.
+  practice worlds with announced overlays **and the visible configuration**: rulebook editions and API schema renames
+  published by the alarm (the m4 config digests of §4.3; an unannounced rename or edition is unannounced in the sense of
+  "no notice", not invisible), applied to practice from its start (amended 2026-11-04, second review batch, review M23: preregistered as
+  built rather than removed; it is why E2s, an API-file change, can be healed from practice; D-10 reports it). Never:
+  truth, grades, exposure tags, change labels, the sealed bundle, another arm's results or adversarial worlds. Announced
+  changes appear under in-world names (`CN-1`, `CN-2`, the edition id), never harness ids (mi8).
+- **Readings in force:** a certified reading that becomes visible during a world (at its publication) and an accepted
+  verifier-blind reading apply from then on to every later day of that world (fix found in the second review batch: the
+  later days' m2 had been computed at the world's start and reached the new reading only at the next re-run).
 
 ### 6.4 Contract owner (C-O) certification ($0, before the update gates anything)
 
@@ -293,6 +302,12 @@ model-written code: it is evaluated **out of process** (`experiments/durability/
 review R2-B5) in a child process under Node's permission model (reads limited to the code it imports, its readings
 directory and the transition item; no writes, child processes, workers or addons; an empty environment). A module that
 errors or hangs there is not certified (announced) or not accepted (verifier-blind).
+
+The session for an announced change sees SPEC-E as published (at publication + 1 ms), SPEC-E just before publication
+and CHANGE.md = the in-world change notice, nothing else of the change (amended 2026-11-04, second review batch, review M18 / R2-M9: it had
+the t0 spec and the sealed bundle's label). The revision's list of disagreeing practice cases (order, journal, flag or
+miss) is kept as written in this section: practice worlds are certification fixtures, not stream cases, and the list
+holds no grade of any stream case (review mi7, not adopted).
 
 For an announced rule change: the updated contracts must flag 0 cases of the **drifted** reference's journals on
 practice worlds with the overlay, flag ≥ 90% of the exposed cases of the **undrifted** reference's journals, and keep
@@ -348,9 +363,12 @@ review M5: the first change in schedule order put almost every case in CHG-A).
 - **Space:** a typed knob DSL that only produces generator-made worlds: base from fuzz bases 1301–1310 with derived
   salts; difficulty 2–5; mix; size 12–200 or the scale tier; ≤ 2 in-spec transforms; one fault or an LDFI fault pair;
   the designer-known change overlays (P1, E1, R1, L1, F, ADV; sealed ones only in the end-of-stream pass, after
-  unsealing).
+  unsealing, at fixed offsets: U1s day 3, R2s day 4, E2s day 5). The end-of-stream pass and the ADV-SET cross-run judge
+  every arm with the contract readings in force at stream end (certified readings from each overlay's effective time)
+  (amended 2026-11-04, second review batch, mi2: base contracts and no sealed overlays had been built).
 - **Search:** half the budget is Poisson sampling from a generated pool with inclusion probabilities πᵢ set by class
-  composition (min 0.01), giving Horvitz–Thompson estimates of the natural failure and silent-failure rates with exact
+  composition (min 0.01; every included index is evaluated, and the estimate is the Hájek ratio form over valid worlds,
+  worlds the reference fails being bed findings, not zeros; (amended 2026-11-04, second review batch, mi1), giving Horvitz–Thompson estimates of the natural failure and silent-failure rates with exact
   weights, the effective sample size and CVaR10% of world failure rates; half is local search with successive halving
   on the top 10 vectors (neighbouring salts, one transform or fault). Objective:
   10·(silent critical cases) + 3·(silent failing cases) + (failing cases).
@@ -408,14 +426,17 @@ launch manifest (a paid run with effort unset is refused). Gaps under 3 points a
    divergence + 1 world-day; with neither: its world's end + 1 world-day; the same rule for code arms and agents; amended
    2026-11-04, review M10). Reported with **loud failures**,
    **false incidents** (incidents whose evidence cases all pass), and **escalations** ("needs human"). Silent critical
-   cases separately. Agents are also scored with the full monitor applied to their journals.
+   cases separately. Agents are also scored with the full monitor applied to their journals (m1–m3 under the readings in
+   force at the world's end); D-5 (d) compares MH-H and A-H **like for like** under m1–m3 without complaints, the m1-only
+   comparison printed beside it (amended 2026-11-04, second review batch, M11).
 3. **TTD per change** (oracle view): with E the exposed cases of c on the stream placed at or after the onset, TTD_c
    is the first world-day t (counted from the onset) such that, among E's n completed cases placed on or after t, at
    most max(1, ⌊0.02·n⌋) are **c-induced failures** (fail in the world, pass in twin(W, c) under the same timeline)
    through the end of the stream, and at least 3 world-days with an E case remain; ∞ if none; *unjudgeable* if fewer
    than 3 such days remain. Failures caused by other changes do not count against c. **Durable** = finite TTD.
    **System-view TTD**: the same with "an attributable signal" in place of "a c-induced failure"; the silent gap is
-   the difference. For F (transient): damage during W5 and the first clean day after it.
+   the difference. For F (transient): damage during W5 and the first clean day after it; F's cells are reported by this
+   rule and never enter a durable share (amended 2026-11-04, second review batch, mi3).
 4. **Worst-case pass rate under the red team:** per arm, the minimum and mean world pass rate over ADV-SET, at t0 and
    at stream end; max silent critical per world.
 5. **Regressions and forgetting:** version matrix (every promoted version of a lineage-stream on every world of the
@@ -424,7 +445,8 @@ launch manifest (a paid run with effort unset is refused). Gaps under 3 points a
    next world), in force from the promotion to the lineage-stream's next promotion or rollback or the stream's end; collateral = new failures on unexposed cases within 2
    world-days of a promotion; forgetting = exposed cases of an earlier healed change failing after a later promotion,
    and E1r's exposed cases.
-6. **Maintenance $ per change:** session $ of incidents attributed to c (the change for which most of the incident's
+6. **Maintenance $ per change** (ties between changes go to the one with the smaller exposure set in the incident's
+   worlds, P1 only when nothing else applies; (amended 2026-11-04, second review batch, M16)**:** session $ of incidents attributed to c (the change for which most of the incident's
    evidence cases are c-induced failures, oracle-side; else "base") + C-O $ for c divided by the lineage-streams
    sharing it.
 7. **Total $ and $ per success:** per arm and stream, marginal (stream only) and all-in (build + FH-1 commissioning +
@@ -440,7 +462,9 @@ point); sweep precision and recall; adversarial-induced promotions (must be 0); 
 ## 10. Decision rules (written before any data)
 
 **K-0 (kill, $0, Stage Z).** On stream s1, if m1–m3 (with the analyst's R1 rule reading standing in for C-O) flag
-< 50% of S-H\*'s change-induced failing cases of R1 or of E1 within 1 world-day of first divergence: stop before any
+< 50% of S-H\*'s change-induced failing cases of R1, E1, L1 or E2s within 1 world-day of first divergence (L1 and E2s
+added 2026-11-04, review mi14: R1 and E1 alone could not see a monitor blind to an unannounced load or rename; a change
+with no induced failure on s1 is not judged): stop before any
 paid heal; report "the monitor is blind" with the per-channel table. *Rationale:* below one half most damage is silent,
 so a monitor-driven heal loop cannot reach durability and paid heals would measure the monitor.
 
@@ -453,7 +477,8 @@ the exact Wilcoxon signed-rank p (`wilcoxonExact`, `experiments/lib/stats-ebed.m
 its interval are printed beside it. **Supported** iff p ≤ its Holm level, **and** the mean difference ≥ 3 points,
 **and** the durable share of heal-requiring cells ≥ 0.80 (certified-durable when `certify.mjs` is available, see
 *Certification* below), **and** no lineage's W6 pass rate (excluding U1s's exposed cases, judged under D-10) is more
-than 3 points below its own W1 rate, **and** no heal-caused critical regression (§9 item 5) stays in force > 2 world-days;
+than 3 points below its own W1 rate (U1s's exposed cases are left out on both sides of every W6 comparison, the static
+one too; (amended 2026-11-04, second review batch, mi4), **and** no heal-caused critical regression (§9 item 5) stays in force > 2 world-days;
 if that clause cannot be evaluated (a promotion without its certification), D-1 is not supported (fail closed; review B8).
 **Falsified** iff the durable share < 0.50, **or** MH-H is more than 3 points below S-H\* on W6 in ≥ 3 lineages,
 **or** heal-caused critical regressions stay > 2 world-days in ≥ 2 lineages. Otherwise inconclusive. Sensitivity:
@@ -490,7 +515,9 @@ iff MH-H's final week is more than 3 points below R-static's in ≥ 5 of 9 linea
 lineage independently meets the R-maint(2) clause with probability p, "≥ 7 of 9" holds with probability 0.99 at
 p = 0.95, 0.95 at 0.90, 0.74 at 0.80 and 0.46 at 0.70.
 
-**D-5 worst case (Q1).** **YES** only if MH-H has: (a) 0 silent critical cases on every IP, OOP-S, CHG-A, CHG-U and FLT
+**D-5 worst case (Q1).** Binding with complaints (m5 is a maintainer channel, §4.3); D-5 without complaints is reported
+beside it with its own verdict; a verifier-blind incident is a *false incident* iff every complained case passes for the
+arm (amended 2026-11-04, second review batch, M12, M21). **YES** only if MH-H has: (a) 0 silent critical cases on every IP, OOP-S, CHG-A, CHG-U and FLT
 world in every lineage, with one carve-out: U1s is silent by design until the world complains, so for U1s clause (a)
 reads "0 silent critical cases placed more than 2 world-days after its first true complaint reached the maintainer";
 the silent critical **U1s-induced** cases before that point are reported as its *silent exposure* (a case another change
@@ -505,31 +532,47 @@ missed **or not evaluated** (a missing input never passes; review M6) → **PART
 (lineage × world) unit, never cases: 0 events in N evaluated lineage-worlds → rate ≤ 3/N per world. Wording: "the worst observed over the stated search (N worlds, M probes), with monitor M"; never
 "worst-case correctness".
 
-**D-6 detection.** Recall within 1 world-day and delay per change class. "Detects" is claimed only for unannounced
+**D-6 detection.** A detection is the first attributable signal, at or after the onset, on a case the change
+**induced** to fail (exposure alone is not enough: another change's errors on an exposed case are not a detection); an
+onset with no induced failure is no detection opportunity; "an announcement fired" = an m4 signal (announcement or config
+digest) within 1 world-day of the onset. D-6 is computed with and without m5 and with and without m2 (V-9, the
+payload-derived case index, was not built). m6 is computed on the reference journals of each stream (inputs are
+arm-independent) against the frozen calibration (amended 2026-11-04, second review batch, M13). Recall within 1 world-day and delay per change class. "Detects" is claimed only for unannounced
 changes (E1, L1, F, E2s, E1r, U1s) and only where no announcement fired; announced changes support "maintains on
 announcement". **Pass** iff recall ≥ 0.9 in every unannounced class (pooled over lineages and streams) and ≤ 1 false
 incident per lineage-world on W1; **fail** iff recall < 0.5. **m6** is adopted for watch mode iff its delay is ≤ 4
 exposed cases at every onset that changes inputs (≥ 50% of exposed cases novel to the frozen profile, computed at $0
 before the run) on every stream, with ≤ 1 false alarm per W1 segment; otherwise N. Everything with and without m5.
-*Operating characteristics:* with a class's onsets clustered (18 onsets × 9 lineages, logit-scale onset SD 0.8), the
-pooled 0.90 rule holds with probability 1.00 at a true recall of 0.97, 0.71 at 0.93, 0.29 at 0.90 and 0.02 at 0.85: in
-practice "pass" needs a true recall of about 0.93 or more in every class. This is deliberate (the owner's bar is no
+*Operating characteristics* (restated 2026-11-04, review M23: the draft pooled 18 onsets × 9 lineages into one recall;
+the rule is per class and must hold in every class): per class 3 stream onsets, each a cluster of the 9 lineages with a
+logit-scale onset SD 0.8; with the 4 classes expected to be judged (L1, F, E1r, U1s; E1 and E2s fire config digests),
+"pass" holds with probability 0.97 at a true recall of 0.99, 0.62 at 0.97, 0.28 at 0.95, 0.11 at 0.93 and 0.02 at 0.90
+(6 classes: 0.96, 0.49, 0.15, 0.03, 0.004; `POWER.json` `recallPerClass`, 4,000 replications): in practice "pass" needs a
+true recall of about 0.97 or more in every class. This is deliberate (the owner's bar is no
 silent damage); a miss between 0.5 and 0.9 is reported as "detects most, not all".
 
 **D-7 frontier (descriptive).** "Matches Opus 5.5 xhigh per tick at ≤ 1/20 of the cost" may be written only if MH-H's
-success on the A-Ox cases ≥ A-Ox − 0.10 **and** MH-H's all-in $/case ≤ 0.05 × A-Ox's $/case, labelled descriptive
+success on the A-Ox cases ≥ A-Ox − 0.10 **and** MH-H's all-in $/case ≤ 0.05 × A-Ox's $/case (all-in = FH-1's build and
+commissioning $ per lineage, (8.25 + 1.14) / 8 = $1.174, `research/heal-20261021/RESULT-FH1.md:343`, plus the lineage's
+marginal stream $ with its C-O share, over its graded cases; the median lineage; (amended 2026-11-04, second review batch, M17: it was never
+computed), labelled descriptive
 (K ≤ 2 windows). REF-M (K = 3, one stream): final week, TTD and maintenance $ reported beside MH-H.
 
 **D-8 runs expose flaws (LD-H).** **Pass** iff ≥ 5 of 6 defects are healed durably with 0 regressions **and** 0 of 16
-false complaints lead to a promoted change that fails any oracle case. **Falsified** iff a false complaint promotes a
-harmful change. Sweep precision and recall against the manifests' `before` sets are reported.
+false complaints lead to a promoted change that fails any oracle case its incumbent passed (on every manifest world; the
+incumbent is a latent-defect mutant that fails cases by construction, so "fails any oracle case" means a regression).
+"Lead to" covers the direct path (a false complaint joined one of the promotion's incidents) and the indirect one (a
+false complaint fed a verifier-blind incident whose reading was accepted at or before the promotion) (amended 2026-11-04, second review batch,
+M22). **Falsified** iff a false complaint promotes a harmful change. Sweep precision and recall against the manifests' `before` sets are reported.
 
-**D-9 stale verifier (descriptive).** MH-H − MH-stale on R1's exposed cases (s1), TTD, false incidents, rejected-good
+**D-9 stale verifier (descriptive).** MH-H − MH-stale on R1's exposed cases (s1, W3–W6; R1's exposure only, (amended 2026-11-04, second review batch, mi5), TTD, false incidents, rejected-good
 patches.
 
 **D-10 the unknown.** "Detects and heals unknown change" may cite only E2s and U1s: E2s durable in ≥ 2/3 of its
-heal-requiring cells; U1s loud (an incident opened or escalated) within 2 world-days of its first true complaint in
-≥ 80% of lineage-streams; U1s heal outcomes reported. R2s supports only "maintains under an unseen announced rule
+heal-requiring cells; U1s loud (an incident tied to U1s opened or escalated: a verifier-blind incident whose complaints
+name a U1s-induced case, or a defect incident holding one; one opened before the complaint counts at delay 0) within 2
+world-days of its first true complaint about a U1s-induced case in ≥ 80% of the lineage-streams that have such a
+complaint (the others are listed apart) (amended 2026-11-04, second review batch, M14); U1s heal outcomes reported. R2s supports only "maintains under an unseen announced rule
 change".
 
 **D-11 red team (descriptive).** J2 adds value iff, for ≥ 1 of 2 Opus targets, it finds a valid world with strictly
@@ -547,7 +590,8 @@ mapping (`MOVE0-CERTIFY.md` §3.2):
 - *fresh strata*: the stream's cases placed after the promotion and never shown to the patcher, grouped by
   first-divergence rule of the incident's failure classes (a stratum is *failing* when the incumbent fails some of
   its cases in the twin replay).
-A cell is **certified-durable** iff it is durable (finite TTD) and the last promotion attributed to its change has
+A promotion at a world boundary or after a deferred canary is certified on the evidence of the world it was gated in
+(the previous world) (amended 2026-11-04, second review batch, mi6). A cell is **certified-durable** iff it is durable (finite TTD) and the last promotion attributed to its change has
 verdict `accept`. D-1's "supported" uses the certified-durable share; D-4, D-8 and D-10 report both. Move 0's rule that
 own-gate accepts are not evidence applies: the code gate's acceptances are reported, never counted as heals. If
 `certify.mjs` is not on main at F-B, the build imports it read-only from `d3bd7acf` (BUILD-PLAN §1) with its tests; if
@@ -574,10 +618,12 @@ All numbers in this section were computed at $0 before any DUR-1 data, by the sc
   bootstrap rule (lineage SD 0.4, window SD 0.6 and case SD 1.0 on the logit scale; agent pass rate 0.85; `power.mjs` at
   the frozen seeds, `POWER.json`, corrected 2026-11-04 from the draft's hand figures): at Holm level 0.025, **0.59** at a
   true difference of 0, 0.97 at +0.05, 0.14 at −0.05; at 0.05, 0.71 / 0.983 / 0.22. Without s3 (8 windows): 0.49 / 0.89
-  at 0.025. With k = 4 (the P0 fallback): 0.36 at a true difference of 0. The size at the margin (true −0.10) is 0.028
-  (simulation error around the designed 0.025). So a D-3 "inconclusive" at a true tie is likely, and is stated now.
+  at 0.025. With k = 4 (the P0 fallback): 0.36 at a true difference of 0. Monte Carlo standard errors at 600
+  replications are 0.005–0.02 (`POWER.json` `se025`, `se05`). The size at the margin (true −0.10), re-simulated with
+  4,000 replications, is 0.020 (SE 0.002), at or below the designed 0.025 (review mi13: 0.028 at 600 replications was
+  within simulation error). So a D-3 "inconclusive" at a true tie is likely, and is stated now.
 - **D-6.** 6 unannounced onsets × 3 streams = 18 onsets per lineage; 18/18 has a Wilson lower bound of 0.82; operating
-  characteristics under D-6.
+  characteristics per class under D-6 (restated 2026-11-04).
 - **D-5.** Silent-critical bounds per world unit: 9 lineages × 18 worlds = 162 units; 0 events → ≤ 1.9% of worlds.
 - **Agents:** one draw per case, a second draw on one window; A-Ox and REF-M are descriptive (K ≤ 2 windows; K = 3 on
   one stream).
@@ -595,7 +641,7 @@ FH-1 reservation rule). Spend is the CLI-reported list price, an open session co
 |---|---|---|---|---|
 | — | Stage Z, $0: gates V-1…V-12; S-H, S-H\*, W-M0, R-static, R-maint, R-ceil, REF-S, c-oss on all streams; twins and exposure; K-0; WC-1 at t0 | $0 | $0 | CPU |
 | 0 | Rehearsal (1207–1210): MH-H loop on a 2-world mini-stream with R1 for 2 lineages (≤ 3 Haiku sessions); A-H routed window of 4 cases. Sets k (§7): if measured A-H $/case × 8 × 12 > $19, k = 4 | $2 | $1.5 | FH-1 sessions; OT-0 A-HV $0.163/case |
-| 1 | Sealed author (Opus xhigh): R2s, E2s, U1s bundle, 1 revision | $4 | $3 | 2 sessions ≤ $2 |
+| 1 | Sealed author (Opus xhigh): R2s, E2s, U1s bundle, 1 revision; one session and one revision in all, counted on the ledger; gates failing after the revision stop the chain (terminal; a re-run needs a dated amendment; review R2-M11) | $4 | $3 | 2 sessions ≤ $2 |
 | 2 | C-O (Opus xhigh): R1, R2s; ≤ 1 verifier-blind session per change per stream | $6 | $4.5 | ~$1–1.5 per session |
 | 3 | MH-H streams s1–s2 (18 lineage-streams) | $15 | $13 | ~7 sessions per lineage-stream: announced patches ~$0.05 (COMP-1), others ~$0.143 (FH-1 mean) |
 | 4 | A-H routed windows s1–s2 (8 windows) + 1 repeat draw | $13 | $11 | ~72 cases × $0.15–0.18 |
@@ -669,6 +715,8 @@ frozen code (`dur1-chain.sh author`); no money is spent before it passes.*
 | Stage Z: V-1, V-2, V-3 (an exposure floor) or V-11 fails; K-1 or V-6 anywhere; K0.json missing | stop (exit 5, `runs/stagez/STOP.json`); a dated amendment before any paid step |
 | A world run that does not complete (time limit, wake-up limit) | never graded: a harness error |
 | A routed window frozen by environment faults 3 times | recorded invalid (ENV_FAULT_LIMIT), excluded from pairing |
+| The sealed author's gates fail after its revision, or SEALED.json already exists | stop (exit 5) |
+| Free disk < 1.2 GB at a world start (K-5, checked per world, not only per step) | environment fault (exit 75): wait 30 minutes, resume |
 
 ### 13.3 Deviations
 
@@ -686,7 +734,11 @@ labelled where they appear. Negative and void results are kept.
    handling; version migration; heal regression; stale verifier; detection miss; misclassification; evidence
    insufficient; patch wrong; gate rejected a good patch; gate accepted a bad patch; injection; budget or time cap;
    environment; bed or oracle defect. A first pass is automatic from the logs; analyst sessions review it. **No result
-   text is written until every record exists.**
+   text is written until every record exists.** The record's key is the case's first-divergence rule (stored with every
+   graded case), its attributed change class and the arm, with its silent and silent-critical counts under the channels
+   that arm sees; the ledger is *complete* only when an analyst review (`runs/ROOT-CAUSE-REVIEW.json`) has given every
+   record a category from the list (amended 2026-11-04, review M23: the key was the truth class, `silent` was always
+   false and "complete" was trivially true).
 
 ## 15. Threats to validity
 
@@ -719,6 +771,18 @@ labelled where they appear. Negative and void results are kept.
     oracle-side (trusted, gated by the author's checks).
 16. If the bed's own MR11 `f6-reserve` behaviour (BUILD-NOTES §4 item 8) makes V-1 fail on a real stream world, Stage Z
     stops and L1 needs a dated amendment (skip `f6-reserve` on multi-fulfilment orders) before any paid step.
+17. Sealed world operators (model-written by the sealed author) run out of process under Node's permission model (no
+    writes, no child processes, an empty environment, a time limit on the call; review R2-M12); network is not
+    restricted and the child can read code. Their output is a world (JSON), checked by the author's gates.
+18. Not built (disclosed, review R2-M7 and minors): a stubbed rehearsal of the whole paid chain (Stage Z alone is 8–12
+    CPU-hours on the shared machine); the paid plumbing is covered by unit and stream tests, and P0 (≤ $2) is the first
+    paid exercise of the heal and window paths. The gate's case selection uses the reference's completion pools, as the
+    FH-1 verifier does (review mi9, not adopted: changing the gate alone would make it and m2 disagree on what is
+    judged). A timed-out world run does not cancel in-flight agent processes (orphans are possible). Stage Z re-runs
+    its static streams from the start on a resume.
+19. Model ids are the constants of each session type, checked against `policy/models.json` in every paid preflight; the
+    policy has no DUR-1 roles and is a shared file pinned by live experiments, so no role lookup was added (review minor
+    5, not adopted).
 
 ## 16. Proposed decision text (for `research/decisions-20261021.md`, next free number)
 

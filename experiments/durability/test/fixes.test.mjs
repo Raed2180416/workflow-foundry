@@ -186,3 +186,37 @@ test('B4: a row out of room or a lineage-stream at its cap budget-stops the inci
   assert.equal(r2.sessions.length, 0, 'no session started: $1.20 + $0.50 > $1.50');
   assert.equal(Object.keys(r2.worlds[0].days).length, 14);
 });
+
+test('R2-M12: a sealed world operator runs out of process: same world as before, an escape cannot write, a hang times out', async () => {
+  const { runWorldOp } = await import('../changes.mjs');
+  const { generateWorld } = await import('../../../beds/ebed/e8/world.mjs');
+  const W = generateWorld({ seed: 1207, difficulty: 3, mix: 'tail', size: 20 });
+  W.truth.dur1Eff = {}; W.truth.dur1 = { stream: 't', k: 1, active: [], exclude: [] };
+  const stub = JSON.parse(readFileSync(path.join(here, '../fixtures/sealed-stub.json'), 'utf8'));
+  const a = runWorldOp(stub.changes.R2s.worldOp, W, { id: 'R2s', salt: 's', eff: T0_MS + DAY_MS });
+  const b = runWorldOp(stub.changes.R2s.worldOp, W, { id: 'R2s', salt: 's', eff: T0_MS + DAY_MS });
+  assert.equal(JSON.stringify(a), JSON.stringify(b), 'deterministic (and cached)');
+  assert.ok(a.truth && a.arrivals.length === W.arrivals.length);
+  const target = path.join(scratch, 'escaped.txt');
+  assert.throws(() => runWorldOp(`function (W, api) { const p = api.rng.constructor('return process')(); p.getBuiltinModule('node:fs').writeFileSync(${JSON.stringify(target)}, 'x'); return W; }`, W, { id: 'X', salt: 'e', eff: 0 }), /restricted|ERR_ACCESS_DENIED|allow-fs-write/);
+  assert.equal(existsSync(target), false);
+  const env = runWorldOp(`function (W, api) { const p = api.rng.constructor('return process')(); W.truth.envKeys = Object.keys(p.env).length; return W; }`, W, { id: 'X', salt: 'v', eff: 0 });
+  assert.equal(env.truth.envKeys, 0, 'no credentials in the child');
+  assert.throws(() => runWorldOp('function (W) { for (;;) {} }', W, { id: 'X', salt: 'h', eff: 0 }), /timed out/);
+});
+
+test('R1-M18: the C-O session of an announced change sees the spec as published, the spec just before and the in-world notice only', async () => {
+  const { noticeOf, PUBLIC_ID } = await import('../changes.mjs');
+  const spec = { stream: 's1', k: 3, seed: 1173, size: 30, difficulty: 3, mix: 'tail', changes: [{ id: 'R1', cls: 'CHG-A', kind: 'rule', startsHere: true, onsetMs: T0_MS + 4 * DAY_MS, effMs: T0_MS + 4 * DAY_MS, publishMs: T0_MS + DAY_MS + 9 * 3_600_000 }] };
+  const b = await buildBundle(spec);
+  const pub = spec.changes[0].publishMs;
+  assert.equal(noticeOf(b.specAt(pub - 1), 'R1'), null, 'not in the spec before publication');
+  const n = noticeOf(b.specAt(pub + 1), 'R1');
+  assert.match(n, new RegExp(`Change notice ${PUBLIC_ID.R1}`));
+  assert.doesNotMatch(n, /\bR1\b|R2s/, 'no harness id');
+  let seen = null;
+  const co = new ContractOwner({ session: () => ({ kind: 'stub', fn: async ({ workdir }) => { seen = { change: readFileSync(path.join(workdir, 'CHANGE.md'), 'utf8'), spec: readFileSync(path.join(workdir, 'SPEC-E.md'), 'utf8'), prev: readFileSync(path.join(workdir, 'SPEC-E.previous.md'), 'utf8') }; return { costUsd: 0 }; } }), runDir: path.join(scratch, 'co18'), practice: PRACTICE.slice(0, 1) });
+  await co.forAnnounced('R1', b, pub);
+  assert.equal(seen.change, n);
+  assert.ok(seen.spec.includes(n) && !seen.prev.includes(n));
+});

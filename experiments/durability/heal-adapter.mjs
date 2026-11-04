@@ -15,7 +15,7 @@
 // regression set (practice, the history replay's orders finished in the last 3 world-days, W1), each case judged under
 // the rule reading in force at its placement. The approver is the code gate; the proposer is the session; never the same.
 import path from 'node:path';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, copyFileSync, rmSync, readdirSync, renameSync, appendFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, copyFileSync, rmSync, readdirSync, renameSync, appendFileSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import * as e8 from '../../beds/ebed/e8/index.mjs';
 import { MockSystem } from '../../beds/ebed/host/mocks.mjs';
@@ -74,7 +74,12 @@ export function preflight(session, label) {
 export async function meteredRun(session, { label, run }) {
   const id = `${label}@${new Date().toISOString()}`;
   const base = { id, label, scope: session.spend.scope, model: session.model, effort: session.effort, capUsd: session.budgetUsd };
-  appendFileSync(session.spend.file, JSON.stringify({ ...base, phase: 'start', at: new Date().toISOString() }) + '\n');
+  // Check and reserve under one ledger lock (review minor 2: two P3 workers could both pass the room check and overshoot a
+  // row or the total by a session cap): the budget checks run again inside the lock, then the start row is appended.
+  await withLedgerLock(session.spend.file, () => {
+    if (session.kind !== 'stub') preflight(session, label);
+    appendFileSync(session.spend.file, JSON.stringify({ ...base, phase: 'start', at: new Date().toISOString() }) + '\n');
+  });
   let r;
   try { r = await run(); } catch (e) {
     const code = e?.code ?? 'THROWN';
@@ -86,6 +91,21 @@ export async function meteredRun(session, { label, run }) {
   }
   appendFileSync(session.spend.file, JSON.stringify({ ...base, phase: 'end', costUsd: r?.costUsd ?? null, costUpperUsd: r?.costUpperUsd ?? null, turns: r?.turns ?? null, error: r?.error?.code ?? null, at: new Date().toISOString() }) + '\n');
   return r;
+}
+
+/** A short mkdir lock beside the ledger (stale after 60 s: the critical section is a check and one append). */
+export async function withLedgerLock(file, fn) {
+  const dir = `${file}.lock`;
+  mkdirSync(path.dirname(file), { recursive: true });
+  for (let i = 0; ; i++) {
+    try { mkdirSync(dir); break; } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      let age = 0; try { age = Date.now() - statSync(dir).mtimeMs; } catch { continue; }
+      if (age > 60_000) { rmSync(dir, { recursive: true, force: true }); continue; }
+      await new Promise(r => setTimeout(r, 100 + Math.floor(Math.random() * 100)));
+    }
+  }
+  try { return fn(); } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
 export class RedTeamLeak extends Error { constructor(k) { super(`DUR1_REDTEAM: red-team or WC-1 world ${k} may never enter an evidence or regression set`); this.code = 'DUR1_REDTEAM'; } }

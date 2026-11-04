@@ -24,7 +24,7 @@
 // and only its gate is off (effective date +Infinity), so twin(W, R) isolates the rule from the load it brings.
 import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, existsSync, rmSync } from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import * as e8 from '../../beds/ebed/e8/index.mjs';
@@ -350,15 +350,31 @@ export function loadSealed(file, { sha256: expect = null } = {}) {
       renames: b.changes[id].renames?.length ?? 0, edition: !!b.changes[id].edition, worldOp: !!b.changes[id].worldOp, complaintTemplates: b.changes[id].complaintTemplates?.length ?? 0 }])) });
 }
 
-/** Run a sealed world operator (function source) in a fresh VM context: no require, process or import; a seeded rng. */
+/**
+ * Run a sealed world operator (function source, written by the sealed-author model session) OUT OF PROCESS (review R2-M12:
+ * the in-process VM exposed host objects, so `clone.constructor('return process')()` reached the harness, and the call
+ * itself had no time limit). worldop-worker.mjs runs it in a child under Node's permission model (reads limited to the
+ * code it imports; no writes, child processes, workers or addons; an empty environment), inside a VM context whose
+ * helpers are the child's own, with a time limit on the definition AND the call; the world goes in and out as JSON.
+ * Results are cached per (source, world, id, salt, eff) digest, so a world built many times pays one child.
+ */
+export const WORLDOP_TIMEOUT_MS = 20_000;
+const WORLDOP_WORKER = path.join(path.dirname(fileURLToPath(import.meta.url)), 'worldop-worker.mjs');
+const worldOpCache = new Map();
 export function runWorldOp(source, W, { id, salt, eff }) {
-  const ctx = vm.createContext(Object.freeze({
-    clone: x => structuredClone(x), JSON, Math: Object.freeze(Object.create(Math)), Date,
-    api: Object.freeze({ rng: (...p) => rng('dur1/sealed', id, salt, W.id, ...p), minutesOf, isoLocal, dayStart, collectionRuns, eff }),
-  }));
-  const fn = vm.runInContext(`(${source})`, ctx, { timeout: 2000 });
-  if (typeof fn !== 'function') throw new Error(`sealed ${id}: worldOp is not a function`);
-  const out = fn(structuredClone(W), ctx.api);
+  const input = JSON.stringify({ source, W, id, salt, eff, timeoutMs: WORLDOP_TIMEOUT_MS });
+  const key = sha(input);
+  if (!worldOpCache.has(key)) {
+    const allow = ['experiments', 'beds/ebed', 'beds/lib', 'src'].map(d => `--allow-fs-read=${path.join(ROOT, d)}`);
+    const r = spawnSync(process.execPath, ['--permission', ...allow, WORLDOP_WORKER], { input, env: {}, encoding: 'utf8', timeout: WORLDOP_TIMEOUT_MS + 15_000, maxBuffer: 1 << 30, killSignal: 'SIGKILL' });
+    if (r.error || r.status !== 0) throw new Error(`sealed ${id}: worldOp failed in its sandbox (${r.error?.code ?? `exit ${r.status}`}): ${String(r.stderr ?? '').slice(0, 400)}`);
+    let out;
+    try { out = JSON.parse(r.stdout); } catch { throw new Error(`sealed ${id}: worldOp sandbox returned no JSON`); }
+    if (!out.ok) throw new Error(`sealed ${id}: ${out.error}`);
+    if (worldOpCache.size > 64) worldOpCache.delete(worldOpCache.keys().next().value);
+    worldOpCache.set(key, JSON.stringify(out.W));
+  }
+  const out = JSON.parse(worldOpCache.get(key));
   if (!out || typeof out !== 'object' || !out.truth) throw new Error(`sealed ${id}: worldOp must return a world`);
   return out;
 }
@@ -367,8 +383,22 @@ export function runWorldOp(source, W, { id, salt, eff }) {
 // Spec text
 
 const BASE_SPEC = e8.specE.text;
-const notice = (id, publishMs, effMs, body) => `> **Change notice ${id}** (published ${isoLocal(publishMs)}): ${body} Orders placed on or after ${isoLocal(effMs)}
+/**
+ * The in-world names of announced changes (review mi8: the spec notice, CHANGE.md and the heal session's notice list
+ * showed the harness ids, e.g. "R2s", whose suffix marks a sealed change). Arms and sessions only ever see these.
+ */
+export const PUBLIC_ID = Object.freeze({ R1: 'CN-1', R2s: 'CN-2', P1: 'ed-2026-3' });
+const notice = (id, publishMs, effMs, body) => `> **Change notice ${PUBLIC_ID[id] ?? id}** (published ${isoLocal(publishMs)}): ${body} Orders placed on or after ${isoLocal(effMs)}
 > follow the rule as written below; orders placed earlier keep the previous reading${id === 'R1' ? ' (a fraud review with no usable answer by its deadline cancels the order, R2.2 before this notice)' : ''}.\n\n`;
+
+/** The in-world change notice of an announced spec change as it reads in a spec text (null if not there). */
+export function noticeOf(text, id) {
+  const head = `> **Change notice ${PUBLIC_ID[id] ?? id}**`;
+  const i = text.indexOf(head);
+  if (i < 0) return null;
+  const j = text.indexOf('\n\n', i);
+  return text.slice(i, j < 0 ? undefined : j).trim();
+}
 
 /** The spec text in force at `ms` for a bundle's announced spec changes (published at or before ms). */
 export function specText(specChanges, ms) {
@@ -424,13 +454,13 @@ export async function buildBundle(spec, { sealed = null, exclude = [], base = fa
     const summary = id === 'R1' ? 'R2.2 changes: a fraud review with no usable answer by its deadline no longer cancels the order; the order is cleared just after the deadline.'
       : (sealed.change(id).label ?? 'a rule changes, as written below.');
     specChanges.push({ id, publishMs, effMs: Math.max(effOf(c), T0_MS), edits, summary });
-    if (c.startsHere) announcements.push({ id, kind: 'spec', at: publishMs, effectiveAt: c.onsetMs });
+    if (c.startsHere) announcements.push({ id, publicId: PUBLIC_ID[id], kind: 'spec', at: publishMs, effectiveAt: c.onsetMs });
   }
   // Data changes.
   if (want('P1')) {
     const c = ch('P1');
     W = addEdition(W, { ...P1_EDITION, fromMs: effOf(c), publishMs: c.startsHere ? c.publishMs : T0_MS - 30 * DAY_MS });
-    if (c.startsHere) announcements.push({ id: 'P1', kind: 'rulebook', at: c.publishMs, effectiveAt: c.onsetMs });
+    if (c.startsHere) announcements.push({ id: 'P1', publicId: PUBLIC_ID.P1, kind: 'rulebook', at: c.publishMs, effectiveAt: c.onsetMs });
   }
   if (want('E2s')) {
     const c = ch('E2s'), S = sealed.change('E2s');

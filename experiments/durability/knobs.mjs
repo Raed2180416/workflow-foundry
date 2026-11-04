@@ -8,7 +8,7 @@ import { generateWorld } from '../../beds/ebed/e8/world.mjs';
 import { actors as baseActors } from '../../beds/ebed/e8/actors.mjs';
 import { MRS, MR5_VARIANTS, duplicateInbound, injectDocs, addUnrelatedCases, permuteInstants, transformWorld, adaptActors, renaming, amountScale, addLateEdition } from '../../beds/ebed/e8/metamorphic.mjs';
 import { rng } from '../../beds/lib/rng.mjs';
-import { addEdition, addRename, reviewLoad, failureLoad, duplicatePlacements, duplicateReports, withFaultRamp, withFaultRamp as _wfr, editionCarriers, needsEditionCarriers, itemFor, ruleEdits, P1_EDITION, WORK } from './changes.mjs';
+import { addEdition, addRename, reviewLoad, failureLoad, duplicatePlacements, duplicateReports, withFaultRamp, withFaultRamp as _wfr, editionCarriers, needsEditionCarriers, itemFor, ruleEdits, P1_EDITION, WORK, runWorldOp } from './changes.mjs';
 import { T0_MS, DAY_MS, FUZZ_BASES, isoLocal } from './schedule.mjs';
 import { createHash } from 'node:crypto';
 
@@ -19,13 +19,15 @@ export const TRANSFORMS = Object.freeze(['MR1', 'MR2', 'MR4', 'MR5-same', 'MR5-d
 export const OOC = Object.freeze(['MR5-same-review-placement']);
 export const FAULTS = Object.freeze(['none', 'restart', 'crash', 'ldfi-pair']);
 export const OVERLAYS = Object.freeze(['P1', 'E1', 'R1', 'L1', 'F', 'ADV']);
+/** Sealed overlays: only in the end-of-stream pass, after unsealing (prereg §8.2; review mi2: they were missing). */
+export const SEALED_OVERLAYS = Object.freeze(['R2s', 'E2s', 'U1s']);
 export const DIFFICULTIES = Object.freeze([2, 3, 4, 5]);
 export const SIZE = Object.freeze({ min: 12, max: 200 });
 
 export class KnobError extends Error { constructor(m) { super(`DUR1_KNOB: ${m}`); this.code = 'DUR1_KNOB'; } }
 
 /** Validate a knob vector: { base, salt, difficulty, mix, size, transforms: [], fault, overlays: [] }. Returns { ooc }. */
-export function checkVector(v) {
+export function checkVector(v, { sealedOk = false } = {}) {
   if (!FUZZ_BASES.includes(v.base)) throw new KnobError(`base ${v.base} is not a fuzz base (1301-1310)`);
   if (!Number.isInteger(v.salt) || v.salt < 0 || v.salt >= 10_000) throw new KnobError('salt must be an integer in [0, 10^4)');
   if (!DIFFICULTIES.includes(v.difficulty)) throw new KnobError('difficulty 2-5');
@@ -34,7 +36,7 @@ export function checkVector(v) {
   if ((v.transforms ?? []).length > 2) throw new KnobError('at most two transforms');
   for (const t of v.transforms ?? []) if (!TRANSFORMS.includes(t) && !OOC.includes(t)) throw new KnobError(`transform ${t} is not in the in-spec list (out-of-spec transforms are refused)`);
   if (!FAULTS.includes(v.fault ?? 'none')) throw new KnobError(`fault ${v.fault}`);
-  for (const o of v.overlays ?? []) if (!OVERLAYS.includes(o)) throw new KnobError(`overlay ${o} is not designer-known`);
+  for (const o of v.overlays ?? []) if (!OVERLAYS.includes(o) && !(sealedOk && SEALED_OVERLAYS.includes(o))) throw new KnobError(`overlay ${o} is not designer-known${SEALED_OVERLAYS.includes(o) ? ' (sealed overlays: end-of-stream pass only)' : ''}`);
   return { ooc: (v.transforms ?? []).some(t => OOC.includes(t)) };
 }
 
@@ -65,7 +67,7 @@ export function ldfiPair(W, r) {
  * the key only (registration and caches).
  */
 export async function vectorBundle(target, v, { sealed = null } = {}) {
-  const { ooc } = checkVector(v);
+  const { ooc } = checkVector(v, { sealedOk: !!sealed && (v.overlays ?? []).some(o => SEALED_OVERLAYS.includes(o)) });
   const split = `fuzz-dur1-${v.base}-${v.salt}`;
   let W = generateWorld({ seed: v.base, split, difficulty: v.difficulty, mix: v.mix, size: v.size, injection: (v.overlays ?? []).includes('ADV') });
   W.truth.dur1Eff = {};
@@ -91,6 +93,18 @@ export async function vectorBundle(target, v, { sealed = null } = {}) {
     if (o === 'R1') { W = reviewLoad(W, { n: 6, fromMs: T0_MS + 2 * DAY_MS, toMs: T0_MS + 7 * DAY_MS, salt }).W; W.truth.dur1Eff.R1 = T0_MS + 2 * DAY_MS; }
     if (o === 'L1') W = failureLoad(W, { share: 0.15, salt }).W;
     if (o === 'F') { W = duplicatePlacements(W, { share: 0.1, salt }).W; actors = duplicateReports(actors, { share: 0.1, salt }); }
+    // Sealed overlays (end-of-stream pass): the sealed change's world operator (sandboxed) and its gate, or its renames
+    // and edition, from fixed offsets like the designer-known ones.
+    if ((o === 'R2s' || o === 'U1s') && sealed) {
+      const S = sealed.change(o), eff = T0_MS + (o === 'R2s' ? 3 : 2) * DAY_MS;
+      if (S?.worldOp) W = runWorldOp(S.worldOp, W, { id: o, salt, eff });
+      W.truth.dur1Eff[o] = eff;
+    }
+    if (o === 'E2s' && sealed) {
+      const S = sealed.change('E2s'), at = T0_MS + 4 * DAY_MS;
+      if (S?.edition) W = addEdition(W, { id: S.edition.id ?? 'ed-2026-4', policy: S.edition.policy ?? null, feeDelta: S.edition.feeDelta ?? 0, codeRenames: S.edition.codeRenames ?? {}, fromMs: at, publishMs: at });
+      for (const r0 of S?.renames ?? []) W = addRename(W, { ...r0, atMs: at });
+    }
   }
   if (needsEditionCarriers(W)) actors = editionCarriers(actors);
   const wantF = (v.overlays ?? []).includes('F') || v.fault === 'crash' || v.fault === 'restart';
@@ -106,11 +120,11 @@ export async function vectorBundle(target, v, { sealed = null } = {}) {
 }
 
 /** A random knob vector (the pool generator) and its class (for inclusion probabilities). */
-export function randomVector(r, { target, maxSize = SIZE.max } = {}) {
+export function randomVector(r, { target, maxSize = SIZE.max, sealedOverlays = false } = {}) {
   const n = r.int(0, 2);
   const transforms = r.sample(TRANSFORMS, n);
   const v = { base: r.pick(FUZZ_BASES), salt: r.int(0, 9_999), difficulty: r.pick(DIFFICULTIES), mix: r.pick(['natural', 'tail']), size: r.int(SIZE.min, Math.min(maxSize, SIZE.max)),
-    transforms, fault: r.pick(FAULTS), overlays: r.sample(OVERLAYS, r.int(0, 2)) };
+    transforms, fault: r.pick(FAULTS), overlays: r.sample(sealedOverlays ? [...OVERLAYS, ...SEALED_OVERLAYS] : OVERLAYS, r.int(0, 2)) };
   return v;
 }
 export const vectorClass = v => `${v.fault}|${v.transforms.length}|${v.overlays.length ? 'overlay' : 'plain'}`;

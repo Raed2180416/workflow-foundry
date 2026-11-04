@@ -30,11 +30,14 @@ export async function evaluate(targetId, version, v, { sealed = null, readings =
   count?.take();
   const b = await vectorBundle(targetId, v, { sealed });
   registerRedTeam(b.key);
+  // `readings` may be a function of the bundle: the end-of-stream pass and the ADV-SET cross-run judge with the readings in
+  // force at stream end, gated by each overlay's effective time in that world (review mi2: always the base contracts).
+  const rs = typeof readings === 'function' ? readings(b) : readings;
   const ref = await referencePools(b);
   if (!ref.control.ok) return { key: b.key, vector: v, valid: false, bedFinding: true, problems: ref.control.problems.slice(0, 3), score: -1 };
   const r = await runBundle(b, { version });
   const g = gradeRun(b, r.rows, ref.pools);
-  const sig = await signalsOfRun({ bundle: b, rows: r.rows, pools: ref.pools, readings });
+  const sig = await signalsOfRun({ bundle: b, rows: r.rows, pools: ref.pools, readings: rs });
   const first = firstSignals(sig.days, ['m1', 'm2', 'm3']);
   let failing = 0, sil = 0, silCrit = 0, n = 0;
   const classes = new Set();
@@ -54,14 +57,20 @@ export async function evaluate(targetId, version, v, { sealed = null, readings =
 /** Poisson sampling with inclusion probabilities pi (exact): returns the included indices. */
 export function poissonSample(pis, r) { return pis.map((p, i) => (r.next() < p ? i : -1)).filter(i => i >= 0); }
 
-/** Horvitz-Thompson mean of y over a population of N from a Poisson sample [{ y, pi }]; ESS = (sum w)^2 / sum w^2. */
+/**
+ * Horvitz-Thompson mean of y over a population of N from a Poisson sample [{ y, pi }]; ESS = (sum w)^2 / sum w^2. Also the
+ * Hajek (ratio) estimate sum(y/pi) / sum(1/pi), which is what the report uses (review mi1: worlds the reference fails are
+ * bed findings, not zeros, and the valid population's size is unknown, so dividing by the whole pool biased the HT mean).
+ */
 export function horvitzThompson(sample, N) {
   const w = sample.map(s => 1 / s.pi);
   const est = sample.reduce((a, s, i) => a + s.y * w[i], 0) / N;
+  const sw0 = w.reduce((a, b) => a + b, 0);
+  const hajek = sw0 ? sample.reduce((a, s, i) => a + s.y * w[i], 0) / sw0 : null;
   const sw = w.reduce((a, b) => a + b, 0), sw2 = w.reduce((a, b) => a + b * b, 0);
   // variance of the HT total under Poisson sampling: sum (1 - pi) y^2 / pi^2
   const v = sample.reduce((a, s) => a + ((1 - s.pi) * s.y * s.y) / (s.pi * s.pi), 0) / (N * N);
-  return { estimate: est, se: Math.sqrt(v), ess: sw2 ? (sw * sw) / sw2 : 0, n: sample.length };
+  return { estimate: hajek ?? est, ht: est, hajek, se: Math.sqrt(v), ess: sw2 ? (sw * sw) / sw2 : 0, n: sample.length, estimator: 'hajek' };
 }
 
 /** Weighted CVaR at level alpha (mean of the worst alpha share of world failure rates, weights 1/pi). */
@@ -77,10 +86,10 @@ export function cvar(sample, alpha = 0.1) {
  * search({ targetId, version, budget, seed, poolSize }) → { evaluated, ht, cvar10, top, bedFindings }. Half the budget
  * importance sampling, half local search (successive halving over the top 10).
  */
-export async function search({ targetId, version, budget, seed = 'dur1/wc1', poolSize = 400, sealed = null, readings = BASE_READINGS, maxSize = 200, log = () => {} }) {
+export async function search({ targetId, version, budget, seed = 'dur1/wc1', poolSize = 400, sealed = null, readings = BASE_READINGS, maxSize = 200, sealedOverlays = false, log = () => {} }) {
   const count = counter(budget);
   const r = rng(seed, targetId);
-  const pool = Array.from({ length: poolSize }, () => randomVector(r, { target: targetId, maxSize }));
+  const pool = Array.from({ length: poolSize }, () => randomVector(r, { target: targetId, maxSize, sealedOverlays }));
   const cls = pool.map(vectorClass);
   const share = new Map(); for (const c of cls) share.set(c, (share.get(c) ?? 0) + 1);
   // Class composition: equal expected draws per class (rare classes up-weighted), scaled to half the budget, floor MIN_PI.
@@ -89,13 +98,16 @@ export async function search({ targetId, version, budget, seed = 'dur1/wc1', poo
   const pis = cls.map(c => Math.min(1, Math.max(MIN_PI, perClass / share.get(c))));
   const idx = poissonSample(pis, r);
   const evaluated = [], bed = [];
+  // Every included index is evaluated (review mi1: truncating the Poisson draw at half the budget, in index order, biased the
+  // estimate); only a draw larger than the whole budget (toy budgets) is cut, and the estimate is then marked truncated.
+  const truncated = idx.length > budget;
   for (const i of idx) {
-    if (count.used >= half) break;
+    if (count.used >= budget) break;
     const e = await evaluate(targetId, version, pool[i], { sealed, readings, count });
     if (!e.valid) { bed.push(e); continue; }
     evaluated.push({ ...e, pi: pis[i], phase: 'importance' });
   }
-  const ht = { failure: horvitzThompson(evaluated.map(e => ({ y: e.failRate, pi: e.pi })), poolSize), silent: horvitzThompson(evaluated.map(e => ({ y: e.silentRate, pi: e.pi })), poolSize) };
+  const ht = { failure: horvitzThompson(evaluated.map(e => ({ y: e.failRate, pi: e.pi })), poolSize), silent: horvitzThompson(evaluated.map(e => ({ y: e.silentRate, pi: e.pi })), poolSize), truncated, invalid: bed.length };
   const cvar10 = cvar(evaluated.map(e => ({ y: e.failRate, pi: e.pi })), 0.1);
   // Local search: successive halving over the top 10 by score.
   let front = [...evaluated].sort((a, b) => b.score - a.score).slice(0, 10).map(e => e.vector);

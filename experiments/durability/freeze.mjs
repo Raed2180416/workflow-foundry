@@ -17,7 +17,10 @@ import { bedDigest } from '../fh/grade.mjs';
 
 const sha = b => createHash('sha256').update(b).digest('hex');
 const RES = 'research/durability-20261021';
-export const FREEZE_FILES = Object.freeze({ A: path.join(ROOT, RES, 'FREEZE-A.json'), B: path.join(ROOT, RES, 'FREEZE.json') });
+// DUR1_FREEZE_DIR is a TEST hook only (the CLI tests point it at an empty scratch directory, so a paid stage can never pass
+// the freeze check from a test once the real freezes exist; review minor 6). The chain never sets it.
+const FREEZE_DIR = process.env.DUR1_FREEZE_DIR ?? path.join(ROOT, RES);
+export const FREEZE_FILES = Object.freeze({ A: path.join(FREEZE_DIR, 'FREEZE-A.json'), B: path.join(FREEZE_DIR, 'FREEZE.json') });
 export const SEALED_HASH_FILE = path.join(ROOT, RES, 'SEALED.json');      // { sha256, at } written after P1 (V-13)
 export const POWER_FILE = path.join(ROOT, RES, 'POWER.json');             // power.mjs output (prereg §11)
 
@@ -35,11 +38,13 @@ export const PREREG = `${RES}/PREREG-DUR-1.md`;
  * preregistration itself: since 2026-11-04 the prereg is FROZEN before P1 (§13.1 as amended), so the author cannot run on
  * a changed prereg.
  */
-export const FROZEN_A = Object.freeze([
+const FROZEN_A_ROOTS = Object.freeze([
   `${RES}/AUTHOR-BRIEF.md`, PREREG, 'experiments/durability/author.mjs', 'experiments/durability/changes.mjs', 'experiments/durability/schedule.mjs',
-  'experiments/durability/run.mjs', 'experiments/durability/heal-adapter.mjs', 'experiments/durability/dur1-chain.sh',
-  'experiments/durability/fixtures/author-api.md', 'experiments/compose/drift.mjs', 'policy/models.json', 'src/executors/claude-code.mjs',
+  'experiments/durability/run.mjs', 'experiments/durability/heal-adapter.mjs', 'experiments/durability/dur1-chain.sh', 'experiments/durability/worldop-worker.mjs',
+  'experiments/durability/fixtures/author-api.md', 'experiments/durability/fixtures/sealed-stub.json', 'experiments/compose/drift.mjs', 'policy/models.json', 'src/executors/claude-code.mjs',
 ]);
+/** F-A: the roots above plus the import closure of every module among them (review R2-M8: the author gate's imports were left out). */
+export const FROZEN_A = Object.freeze([...new Set([...FROZEN_A_ROOTS, ...FROZEN_A_ROOTS.filter(f => /\.m?js$/.test(f)).flatMap(f => closureOf(f))])].sort());
 
 /**
  * Every repository module the paid run executes: the static import closure (relative specifiers of `from '...'` and of
@@ -47,6 +52,20 @@ export const FROZEN_A = Object.freeze([
  * run.mjs, paid.mjs and the contract worker. Files written at run time (transition copies, contract readings, candidate
  * programs) are not repository files; the bed is pinned by its digest, the programs by theirs.
  */
+function closureOf(entry) {
+  const seen = new Set();
+  const visit = rel => {
+    if (seen.has(rel)) return;
+    const abs = path.join(ROOT, rel);
+    if (!existsSync(abs) || !statSync(abs).isFile()) return;
+    seen.add(rel);
+    if (!/\.m?js$/.test(rel)) return;
+    const src = readFileSync(abs, 'utf8');
+    for (const m of src.matchAll(/(?:from\s+|import\s*\(\s*)['"](\.{1,2}\/[^'"]+)['"]/g)) visit(path.relative(ROOT, path.resolve(path.dirname(abs), m[1])));
+  };
+  visit(entry);
+  return [...seen];
+}
 export function executedFiles() {
   const seen = new Set();
   const visit = rel => {
@@ -152,6 +171,17 @@ export async function checkFreeze(stage, { file = FREEZE_FILES[stage] } = {}) {
 
 /** A synchronous gate for paid sessions (heal-adapter's checkFreeze hook): the result of the last async check, refreshed per step. */
 export function freezeGate(result) { return () => result; }
+
+/**
+ * The frozen FILES re-hashed now (synchronous; review minor 1: a session's freeze check reused the result taken at the
+ * stage's start). The bed, program and sealed digests are checked at the stage's start (checkFreeze).
+ */
+export function checkFilesSync(stage, { file = FREEZE_FILES[stage] } = {}) {
+  if (!existsSync(file)) return { ok: false, reason: `FREEZE ${stage} missing` };
+  const want = JSON.parse(readFileSync(file, 'utf8'));
+  const changed = Object.keys(want.files).filter(f => !existsSync(path.join(ROOT, f)) || sha(readFileSync(path.join(ROOT, f))) !== want.files[f]);
+  return { ok: !changed.length, changed };
+}
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [mode, stage = 'B'] = process.argv.slice(2);

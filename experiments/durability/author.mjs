@@ -178,7 +178,12 @@ export async function runAuthor({ session, sealedDir = SEALED_DIR, sealedJson = 
   mkdirSync(sealedDir, { recursive: true });
   const records = [];
   let gates = null, feedback = null;
-  for (let attempt = 1; attempt <= 1 + AUTHOR_SESSION.revisions; attempt++) {
+  // Attempts already on the ledger (a crash after a paid attempt) count: the author never gets more than one session and one
+  // revision in all (review R2-M11).
+  const prior = session.kind === 'stub' || !session.spend?.file || !existsSync(session.spend.file) ? 0
+    : readFileSync(session.spend.file, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(l => l?.phase === 'start' && /^author-a\d+$/.test(l.label ?? '')).length;
+  if (prior >= 1 + AUTHOR_SESSION.revisions) { writeFileSync(sealedJson, JSON.stringify({ status: 'failed', at: new Date().toISOString(), records, reason: `${prior} author attempts already on the ledger` }, null, 1) + '\n'); return { ok: false, records, counts: null }; }
+  for (let attempt = prior + 1; attempt <= 1 + AUTHOR_SESSION.revisions; attempt++) {
     const workdir = path.join(WORK, 'author', `a${attempt}`);
     rmSync(workdir, { recursive: true, force: true });
     mkdirSync(workdir, { recursive: true });

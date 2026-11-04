@@ -34,7 +34,10 @@ and you must not try to find them. Your workspace holds everything you may use:
    customer would complain: the symptom and what the customer expected, never the rule. Name the complaint topic
    (`complaintTopic`: charge, refund, notice, status or delivery).
 
-Each change needs a one-line `label` and your `prediction` of what will break.
+Each change needs a one-line `label` and your `prediction` of what will break. R2s's `label` is published, word for
+word, as the in-world change notice that deployments read ("Change notice CN-2 (published ...): <label> Orders placed on
+or after ... follow the rule as written below"), so write it as a notice to the operators, never naming the harness or
+the test. The labels of E2s and U1s are never shown to anyone in the world.
 
 ## Your gates (all must pass; `node check.mjs`)
 

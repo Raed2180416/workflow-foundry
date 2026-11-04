@@ -7,13 +7,14 @@
 import path from 'node:path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { hostname } from 'node:os';
-import { worldsOf, STREAM_IDS, REHEARSAL, T0_MS, DAY_MS, CHANGES } from './schedule.mjs';
-import { buildBundle, loadSealed, ROOT, WORK } from './changes.mjs';
+import { worldsOf, STREAM_IDS, REHEARSAL, T0_MS, DAY_MS, CHANGES, CHANGE_IDS, dayStart, HORIZON_DAYS, PRACTICE } from './schedule.mjs';
+import { buildBundle, loadSealed, evidenceBundle, ROOT, WORK } from './changes.mjs';
 import { referencePools, gradeRun } from './oracle.mjs';
 import { programVersion, versionOfSpec, LINEAGES, REF_SOLVERS, controlVersion, runBundle } from './arms.mjs';
-import { runStream, ContractOwner, lastEffectAt } from './stream.mjs';
+import { runStream, ContractOwner, lastEffectAt, readingsFor } from './stream.mjs';
 import { HAIKU_PATCH, OPUS_PATCH, spendOf, LIMITS, BudgetStop, StopError } from './heal-adapter.mjs';
-import { CO_SESSION, stubCO } from './contracts-owner.mjs';
+import { CO_SESSION, stubCO, withReading, reading as mkReading } from './contracts-owner.mjs';
+import { calibrate, runDetector, instanceTasks } from './edetector.mjs';
 import { streamExposure, attributeRecord, modelOf, certifyRecord, critRegressionDays } from './model.mjs';
 import { report } from './report.mjs';
 import { selectWindow, runWindow, WINDOW_CHANGES, K_DEFAULT, K_FALLBACK, AGENT } from './windows.mjs';
@@ -21,7 +22,7 @@ import { runLD, LATENT } from './ld.mjs';
 import { search, confirm, evaluate, BUDGET, GROUP_A } from './wc-search.mjs';
 import { redTeamSession, blindBaseline, RT_SESSIONS } from './redteam/session.mjs';
 import { ruleVersion } from './rmaint.mjs';
-import { signalsOfRun } from './monitor.mjs';
+import { signalsOfRun, BASE_READINGS } from './monitor.mjs';
 import { envInvalid, silentDeadline, silent, VISIBLE } from './analyze.mjs';
 import { RES, RUNS, SPEND, TOTAL_CAP, PRIORITY, capOf, rowOf, rowRoom } from './run.mjs';
 export { rowOf, rowRoom };
@@ -32,11 +33,16 @@ export function ledgerMeter({ scope, row, file = SPEND }) {
   let n = 0;
   return {
     before({ model, bound }) {
-      const room = rowRoom(row, file);
-      if (room < bound || spendOf(file).upperUsd + bound > TOTAL_CAP) throw Object.assign(new Error(`DUR1_BUDGET: ${scope} (row ${row} room $${room.toFixed(2)})`), { code: 'DUR1_BUDGET', quota: true });   // quota: the host freezes the run at its last commit instead of scoring an arm error
-      const id = `${scope}#${++n}@${new Date().toISOString()}`;
-      appendFileSync(file, JSON.stringify({ id, phase: 'start', label: scope, scope, model, capUsd: bound, at: new Date().toISOString() }) + '\n');
-      return { id, model, bound };
+      // Synchronous (agentVArm's meter interface): the same lock directory as meteredRun, taken with a short spin.
+      const lock = `${file}.lock`;
+      for (let i = 0; ; i++) { try { mkdirSync(lock); break; } catch (e) { if (e.code !== 'EEXIST') throw e; let age = 0; try { age = Date.now() - statSync(lock).mtimeMs; } catch { continue; } if (age > 60_000) { rmSync(lock, { recursive: true, force: true }); continue; } const t = Date.now() + 100; while (Date.now() < t) { /* spin */ } } }
+      try {
+        const room = rowRoom(row, file);
+        if (room < bound || spendOf(file).upperUsd + bound > TOTAL_CAP) throw Object.assign(new Error(`DUR1_BUDGET: ${scope} (row ${row} room $${room.toFixed(2)})`), { code: 'DUR1_BUDGET', quota: true });   // quota: the host freezes the run at its last commit instead of scoring an arm error
+        const id = `${scope}#${++n}@${new Date().toISOString()}`;
+        appendFileSync(file, JSON.stringify({ id, phase: 'start', label: scope, scope, model, capUsd: bound, at: new Date().toISOString() }) + '\n');
+        return { id, model, bound };
+      } finally { rmSync(lock, { recursive: true, force: true }); }
     },
     after(tok, r) {
       if (!tok) return null;
@@ -166,7 +172,7 @@ export function windowK() {
 
 /** One routed window run; returns the window record (agent per-case pass, silent, cost). */
 export const WINDOW_ENV_ATTEMPTS = 3;
-async function windowRecord({ spec, change, sealed, ex, kind, label, cases = null, k = windowK(), dir, meter }) {
+async function windowRecord({ spec, change, sealed, ex, kind, label, cases = null, k = windowK(), dir, meter, readingsOf = () => BASE_READINGS }) {
   mkdirSync(dir, { recursive: true });
   // Environment-fault restarts are capped (review R2-B4): each faulted attempt re-pays its ticks; after 3 the window is
   // recorded as invalid (prereg §13.2 ENV_FAULT_LIMIT) and excluded from pairing, so the chain moves on.
@@ -193,12 +199,17 @@ async function windowRecord({ spec, change, sealed, ex, kind, label, cases = nul
     throw Object.assign(new Error(`DUR1_HARNESS: window ${label} did not complete (${String(r.status).slice(0, 160)})`), { code: 'DUR1_HARNESS' });   // a timeout is a harness error, never an environment fault
   }
   const g = gradeRun(b, r.rows, ref.pools);
-  const sig = await signalsOfRun({ bundle: b, rows: r.rows, pools: ref.pools });
-  const m1 = new Map();
-  for (const d of Object.values(sig.days)) for (const s of d) if (s.ch === 'm1' && s.case && !m1.has(s.case)) m1.set(s.case, s.at);
+  // The agent's journal under the FULL monitor too (m1-m3 with the readings in force at the world's end; review M11): D-5 (d)
+  // compares like with like; `silent` keeps the prereg's agent view (m1 only).
+  const sig = await signalsOfRun({ bundle: b, rows: r.rows, pools: ref.pools, readings: readingsOf(b) });
+  const first = new Map();
+  for (const d of Object.values(sig.days)) for (const s of d) if (['m1', 'm2', 'm3'].includes(s.ch) && s.case) { const o = first.get(s.case) ?? {}; if (o[s.ch] === undefined || s.at < o[s.ch]) o[s.ch] = s.at; first.set(s.case, o); }
   const last = lastEffectAt(b, r.rows);
-  const cases_ = g.cases.filter(c => ids.includes(c.case)).map(c => ({ case: c.case, pass: c.pass ? 1 : 0, critical: c.critical ? 1 : 0, exposed: sel.exposed.includes(c.case),
-    silent: !c.pass && !(m1.has(c.case) && m1.get(c.case) <= silentDeadline({ lastAt: last.get(c.case) ?? null, firstAt: c.firstAt ?? null })) ? 1 : 0 }));
+  const cases_ = g.cases.filter(c => ids.includes(c.case)).map(c => {
+    const v = { lastAt: last.get(c.case) ?? null, firstAt: c.firstAt ?? null, signals: first.get(c.case) ?? {} };
+    return { case: c.case, pass: c.pass ? 1 : 0, critical: c.critical ? 1 : 0, exposed: sel.exposed.includes(c.case), signals: v.signals, lastAt: v.lastAt, firstAt: v.firstAt,
+      silent: !c.pass && silent(v, ['m1']) ? 1 : 0, silentFull: !c.pass && silent(v, ['m1', 'm2', 'm3']) ? 1 : 0 };
+  });
   const rec = { label, kind, stream: spec.stream, k: spec.k, change, selected: sel, cases: cases_, ticks: r.ticks, costUsd: r.costUsd, sessions: r.sessions, status: r.status, envFaultAttempts: att.envFaults };
   writeFileSync(path.join(dir, `${label}.window.json`), JSON.stringify(rec, null, 1));
   return rec;
@@ -233,7 +244,7 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
     const wSpec = { stream: 'p0', k: 1, seed: REHEARSAL.agentWindow, size: 80, difficulty: 3, mix: 'tail', changes: [{ id: 'R1', cls: 'CHG-A', kind: 'rule', startsHere: true, onsetMs: T0_MS + 4 * DAY_MS, effMs: T0_MS + 4 * DAY_MS, publishMs: T0_MS + DAY_MS + 9 * 3_600_000 }] };
     const ex = await streamExposure([wSpec]);
     let w = null, why = null;
-    try { w = await windowRecord({ spec: wSpec, change: 'R1', sealed: null, ex, kind: 'A-H', label: 'P0.A-H.R1', k: 2, dir, meter: ledgerMeter({ scope: 'P0.A-H', row: 'P0' }) }); }
+    try { w = await windowRecord({ spec: wSpec, change: 'R1', sealed: null, ex, kind: 'A-H', label: 'P0.A-H.R1', k: 2, dir, meter: ledgerMeter({ scope: 'P0.A-H', row: 'P0' }), readingsOf: b => readingsFor(b, dayStart(HORIZON_DAYS + 1), { co: p0co }) }); }
     catch (e) { if (e?.code !== 'DUR1_BUDGET') throw e; why = e.message; }
     const perCase = w?.cases?.length ? w.costUsd / w.cases.length : null;
     // Unmeasured (P0 out of room): the budget-safe k = 4, disclosed.
@@ -280,7 +291,7 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
         if (existsSync(path.join(RUNS, 'aox', `${label}.window.json`))) continue;
         const mean = costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : AGENT['A-Ox'].budgetUsdPerTick;
         if (1.5 * mean > rowRoom('P8')) { log(`A-Ox stop rule: 1.5 x $${mean.toFixed(2)} > P8 room $${rowRoom('P8').toFixed(2)}`); break; }
-        const w = await windowRecord({ spec: sel[c].spec, change: c, sealed, ex, kind: 'A-Ox', label, cases: [x], dir: path.join(RUNS, 'aox'), meter: ledgerMeter({ scope: label, row: 'P8' }) });
+        const w = await windowRecord({ spec: sel[c].spec, change: c, sealed, ex, kind: 'A-Ox', label, cases: [x], dir: path.join(RUNS, 'aox'), meter: ledgerMeter({ scope: label, row: 'P8' }), readingsOf: b => readingsFor(b, dayStart(HORIZON_DAYS + 1), { co }) });
         costs.push(w.costUsd);
       }
       return;
@@ -295,7 +306,7 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
         for (const rep of s === 's1' && c === 'R2s' ? ['', '.rep'] : ['']) {
           const label = `A-H.${s}.${c}${rep}`;
           if (existsSync(path.join(RUNS, 'windows', `${label}.window.json`))) { log(`${label}: exists, skipped`); continue; }
-          await windowRecord({ spec, change: c, sealed, ex, kind: 'A-H', label, dir: path.join(RUNS, 'windows'), meter: ledgerMeter({ scope: label, row }) });
+          await windowRecord({ spec, change: c, sealed, ex, kind: 'A-H', label, dir: path.join(RUNS, 'windows'), meter: ledgerMeter({ scope: label, row }), readingsOf: b => readingsFor(b, dayStart(HORIZON_DAYS + 1), { co }) });
         }
       }
     }
@@ -376,6 +387,23 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
 // $0 stages that read the paid records: WC-1 passes and the analysis.
 
 /**
+ * The readings in force at stream end for a knob-vector world (review mi2): the base contracts plus every certified
+ * announced reading (runs/co), each from its overlay's effective time in that world (W.truth.dur1Eff); a world without the
+ * overlay keeps the base reading.
+ */
+export function endReadings(sealed) {
+  const co = new PersistentContractOwner({ session: () => { throw new Error('DUR1: no C-O session at $0'); }, runDir: path.join(RUNS, 'co'), sealed });
+  return b => {
+    let rs = [...BASE_READINGS];
+    for (const id of ['R1', 'R2s']) {
+      const a = co.announced.get(id), eff = b?.W?.truth?.dur1Eff?.[id];
+      if (a?.status === 'certified' && eff !== undefined) rs = withReading(rs, mkReading({ id, fromMs: eff, rules: a.reading.rules, module: a.reading.module, base: rs }));
+    }
+    return rs;
+  };
+}
+
+/**
  * WC-1 pass ($0, prereg §8.2). when 't0': the starting versions of the nine lineages and S1-S3; 'end': each MH-H
  * lineage-stream's final version and REF-M's finals. Budget 400 per group-A target, 150 per group-B target; top 10
  * re-drawn on 5 fresh salts; confirmed vectors found on group A are run on group B and vice versa (transfer). Resumes per
@@ -400,8 +428,10 @@ export async function wc1Stage({ when = 't0', log = () => {}, sealed = undefined
   for (const t of targets.filter(x => !only || only.includes(x.id))) {
     const f = path.join(dir, `${t.id}.json`);
     if (existsSync(f)) { out.targets[t.id] = JSON.parse(readFileSync(f, 'utf8')); continue; }
-    const s = await search({ targetId: t.id, version: t.version, budget: t.group === 'A' ? budgets.groupA : budgets.groupB, sealed: sl, poolSize, maxSize, log });
-    const c = await confirm({ targetId: t.id, version: t.version, top: s.top, sealed: sl, ...(salts ? { salts } : {}) });
+    // The end pass judges with the readings in force at stream end and samples the sealed overlays too (§8.2; review mi2).
+    const readings = when === 'end' && sl ? endReadings(sl) : BASE_READINGS;
+    const s = await search({ targetId: t.id, version: t.version, budget: t.group === 'A' ? budgets.groupA : budgets.groupB, sealed: sl, poolSize, maxSize, log, readings, sealedOverlays: when === 'end' && !!sl });
+    const c = await confirm({ targetId: t.id, version: t.version, top: s.top, sealed: sl, readings, ...(salts ? { salts } : {}) });
     const rec = { id: t.id, group: t.group, used: s.used, budget: s.budget, ht: s.ht, cvar10: s.cvar10, bedFindings: s.bedFindings.length, top: s.top.map(x => ({ key: x.key, vector: x.vector, score: x.score, silent: x.silent, silentCritical: x.silentCritical, classes: x.classes })), confirmed: c };
     writeFileSync(f, JSON.stringify(rec, null, 1));
     out.targets[t.id] = rec;
@@ -409,7 +439,7 @@ export async function wc1Stage({ when = 't0', log = () => {}, sealed = undefined
   // Transfer (selection-bias guard): confirmed vectors of group A on group B targets and vice versa.
   const conf = g => Object.values(out.targets).filter(x => x.group === g).flatMap(x => x.confirmed.filter(c => c.confirmed).map(c => ({ from: x.id, vector: c.vector })));
   for (const t of targets.filter(x => !only || only.includes(x.id))) for (const c of conf(t.group === 'A' ? 'B' : 'A')) {
-    const e = await evaluate(t.id, t.version, c.vector, { sealed: sl });
+    const e = await evaluate(t.id, t.version, c.vector, { sealed: sl, readings: when === 'end' && sl ? endReadings(sl) : BASE_READINGS });
     out.transfer.push({ target: t.id, from: c.from, key: e.key, valid: e.valid, failing: e.failing, silent: e.silent, silentCritical: e.silentCritical });
   }
   writeFileSync(path.join(dir, 'TRANSFER.json'), JSON.stringify(out.transfer, null, 1));
@@ -433,8 +463,10 @@ export async function advSetStage({ log = () => {}, sealed = undefined } = {}) {
   const cross = [];
   const arms = [...Object.entries(LINEAGES).map(([id, s]) => ['S-H*', id, programVersion(s, { id })]), ...Object.entries(REF_SOLVERS).map(([id, s]) => ['REF-S', id, programVersion(s, { id })])];
   for (const rec of readRecords(path.join(RUNS, 'heal'))) { const v = (await versionsOf(rec)).get(rec.final.digest); if (v) arms.push(['MH-H.final', rec.label, v]); }
+  // Every arm on the same worlds under the same readings (those in force at stream end; review mi2 / M7: like for like).
+  const rsEnd = sl ? endReadings(sl) : BASE_READINGS;
   for (const [arm, id, v] of arms) for (const w of frozen) {
-    const e = await evaluate(`adv-${id}`, v, w.vector, { sealed: sl });
+    const e = await evaluate(`adv-${id}`, v, w.vector, { sealed: sl, readings: rsEnd });
     cross.push({ arm, target: id, source: w.source, world: JSON.stringify(w.vector), vector: w.vector, key: e.key, valid: e.valid, n: e.n, failing: e.failing, silent: e.silent, silentCritical: e.silentCritical });
   }
   writeFileSync(path.join(RUNS, 'ADV-CROSS.json'), JSON.stringify(cross, null, 1));
@@ -528,6 +560,46 @@ export function unitOfLabel(label) {
   return parts.length >= 3 ? { arm, unit: parts[1] } : { arm, unit: 'ref' };
 }
 
+/** FH-1's build + commissioning $ per lineage: 8 programs built for $8.25 and healed for $1.14 (RESULT-FH1.md:343). */
+export const FH1_ALLIN_USD_PER_LINEAGE = (8.25 + 1.14) / 8;
+
+/**
+ * m6 (prereg §6.1, §10 D-6; review M13: it was never computed in the real analysis). Arm-neutral: the input profile reads
+ * inbound messages and documents, so each stream is scored on the reference's journals of its worlds, W1 to W6 in order,
+ * against the frozen calibration of practice 1235-1237. Per onset: the share of its exposed cases novel to the frozen
+ * profile (score > 0) and the delay in exposed cases from the onset to the first alarm; per stream: W1's alarms.
+ */
+export async function m6Analysis({ worlds, exposure, sealed, log = () => {}, practice = PRACTICE }) {
+  const cal0 = [];
+  for (const p of practice) { const b = await evidenceBundle(p, { rules: [], editions: [], renames: [] }, { sealed }); const ref = await referencePools(b, { keepRows: true }); cal0.push({ rows: ref.rows.earliest, world: b.W }); }
+  const cal = calibrate(cal0);
+  const onsets = [], w1Alarms = {};
+  for (const [st, specs] of Object.entries(worlds)) {
+    const tasks = [];
+    for (const spec of specs) {
+      const b = await buildBundle(spec, { sealed });
+      const ref = await referencePools(b, { keepRows: true });
+      const caseOfInst = new Map();
+      for (const r of ref.rows.earliest) if (r.type === 'deliver' && r.instance && r.event?.id && !caseOfInst.has(r.instance)) { const c = b.W.truth.eventCase?.[r.event.id]; if (c) caseOfInst.set(r.instance, c); }
+      tasks.push(...instanceTasks(ref.rows.earliest, b.W).map(t => ({ ...t, world: spec.k, case: caseOfInst.get(t.instance) ?? null })));
+    }
+    const det = runDetector(cal, tasks);
+    w1Alarms[st] = det.alarms.filter(a => a.world === 1).length;
+    const trace = det.trace.map((t, i) => ({ ...t, case: tasks[i].case }));
+    for (const spec of specs) for (const ch of spec.changes.filter(c => c.startsHere && c.onsetMs !== null)) {
+      const ex = exposure[st].of(spec.k)?.[ch.id] ?? new Set();
+      const after = trace.filter(t => t.world === spec.k && t.at >= ch.onsetMs && t.case && ex.has(t.case));
+      if (!after.length) continue;
+      const novel = after.filter(t => t.score > 0).length / after.length;
+      const alarmIdx = trace.findIndex(t => t.alarm && (t.world > spec.k || (t.world === spec.k && t.at >= ch.onsetMs)));
+      const delayCases = alarmIdx < 0 ? null : trace.slice(0, alarmIdx + 1).filter(t => t.world === spec.k && t.at >= ch.onsetMs && t.case && ex.has(t.case)).length;
+      onsets.push({ stream: st, change: ch.id, world: spec.k, novelShare: novel, delayCases, exposed: after.length });
+    }
+    log(`m6 ${st}: ${det.alarms.length} alarms (W1 ${w1Alarms[st]})`);
+  }
+  return { onsets, w1Alarms, calibration: cal.n };
+}
+
 const readRecords = dir => (existsSync(dir) ? readdirSync(dir, { recursive: true }).filter(f => String(f).endsWith('.stream.json')).map(f => JSON.parse(readFileSync(path.join(dir, String(f)), 'utf8'))) : []);
 
 /** The analysis of the real run (prereg §9-§10, §14): reads every record under runs/, writes REPORT.json. */
@@ -563,17 +635,48 @@ export async function analyzeRuns({ log = () => {} } = {}) {
       const g = by[w.stream]?.worlds.find(x => x.k === w.k)?.grade ?? {};
       const hm = arms['MH-H']?.[l]?.[w.stream]?.worlds?.[w.k]?.cases ?? {};
       // The same silent rule on both sides (review M10): last effect + 1 world-day; MH-H sees m1-m3 and m5.
-      for (const c of w.cases) if (g[c.case]) pairs.push({ lineage: l, window: `${w.stream}-${w.change}`, case: c.case, heal: g[c.case][0], agent: c.pass,
-        healSilent: g[c.case][0] ? 0 : (hm[c.case] && silent(hm[c.case], VISIBLE.heal) ? 1 : 0), agentSilent: c.silent });
+      // D-5 (d) like for like (review M11): both sides under m1-m3 (the full monitor without complaints) and under m1 only.
+      for (const c of w.cases) if (g[c.case]) {
+        const hs = chs => (g[c.case][0] ? 0 : (hm[c.case] && silent(hm[c.case], chs) ? 1 : 0));
+        pairs.push({ lineage: l, window: `${w.stream}-${w.change}`, case: c.case, heal: g[c.case][0], agent: c.pass,
+          healSilent: hs(VISIBLE.heal), agentSilent: c.silent, healSilentFull: hs(VISIBLE.healNoComplaints), agentSilentFull: c.silentFull ?? null, healSilentM1: hs(['m1']), agentSilentM1: c.silent });
+      }
     }
   }
   const perCase = agentCases ? agentUsd / agentCases : null;
   const agentProjected = perCase === null ? null : Object.fromEntries(STREAM_IDS.map(s => [s, perCase * (arms['S-H*'] ? Object.values(Object.values(arms['S-H*'])[0]?.[s]?.worlds ?? {}).reduce((a, w) => a + Object.keys(w.cases).length, 0) : 0)]));
   const ld = existsSync(path.join(RUNS, 'forks')) ? readdirSync(path.join(RUNS, 'forks')).filter(f => f.endsWith('.analysis.json')).map(f => JSON.parse(readFileSync(path.join(RUNS, 'forks', f), 'utf8'))) : null;
+  const ledger = spendOf(SPEND).byScope;
   const coUsd = {};
-  for (const [sc, v] of Object.entries(spendOf(SPEND).byScope)) if (sc.startsWith('co-')) { const id = sc.slice(3).split('-a')[0]; coUsd[id] = (coUsd[id] ?? 0) + v; }
-  const r = report({ worlds, exposure, arms, certs, windows: pairs.length ? { pairs, agentUsdPerCase: perCase } : null, ld: ld?.length ? ld : null, costs: { agentProjected, coUsd },
-    sDropped: existsSync(path.join(RUNS, 'K4.json')), records, invalid, ...redAndAdv() });
+  for (const [sc, v] of Object.entries(ledger)) if (sc.startsWith('co-')) { const id = sc.slice(3).split('-a')[0]; coUsd[id] = (coUsd[id] ?? 0) + v; }
+  // Marginal $ per MH-H lineage-stream from the LEDGER (every attempt, env-faulted ones included) plus its share of C-O $
+  // (announced: over every MH-H and REF-M lineage-stream; verifier-blind: over the stream's lineage-streams). Review M15.
+  const lsAll = [...Object.entries(records['MH-H']), ...Object.entries(records['REF-M'])].flatMap(([u, b]) => Object.keys(b).map(st => ({ u, st })));
+  const announcedCo = Object.entries(coUsd).filter(([id]) => !id.startsWith('vb:')).reduce((a, [, v]) => a + v, 0);
+  const scopeUsd = label => Object.entries(ledger).filter(([sc]) => sc === label || sc.startsWith(`${label}#a`)).reduce((a, [, v]) => a + v, 0);
+  const healMarginal = Object.entries(records['MH-H']).flatMap(([l, b]) => Object.keys(b).map(st => ({ lineage: l, stream: st,
+    usd: scopeUsd(`MH-H.${l}.${st}`) + announcedCo / Math.max(1, lsAll.length) + (coUsd[`vb:${st}`] ?? 0) / Math.max(1, lsAll.filter(x => x.st === st).length), source: 'ledger + C-O share' })));
+  // D-7 (review M17): the A-Ox cases against MH-H on the same cases (s1), all-in $/case.
+  const aoxDir = path.join(RUNS, 'aox');
+  const aoxW = existsSync(aoxDir) ? readdirSync(aoxDir).filter(f => f.endsWith('.window.json')).map(f => JSON.parse(readFileSync(path.join(aoxDir, f), 'utf8'))).filter(w => w.status === 'complete') : [];
+  let aox = null;
+  if (aoxW.length && Object.keys(records['MH-H']).length) {
+    const cs = aoxW.flatMap(w => w.cases.map(c => ({ ...c, k: w.k, stream: w.stream })));
+    const healOn = cs.map(c => { const xs = Object.values(records['MH-H']).map(b => b[c.stream]?.worlds.find(x => x.k === c.k)?.grade?.[c.case]?.[0]).filter(x => x === 0 || x === 1); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; }).filter(x => x !== null);
+    const allIn = Object.entries(records['MH-H']).map(([l, b]) => {
+      let usd = FH1_ALLIN_USD_PER_LINEAGE, n = 0;
+      for (const [st, rec] of Object.entries(b)) { usd += healMarginal.find(x => x.lineage === l && x.stream === st)?.usd ?? 0; for (const w of rec.worlds) n += Object.keys(w.grade ?? {}).length; }
+      return n ? usd / n : null;
+    }).filter(x => x !== null).sort((a, b) => a - b);
+    aox = { n: cs.length, aoxRate: cs.reduce((a, c) => a + c.pass, 0) / cs.length, healRate: healOn.length ? healOn.reduce((a, b) => a + b, 0) / healOn.length : NaN,
+      aoxUsdPerCase: aoxW.reduce((a, w) => a + (w.costUsd ?? 0), 0) / cs.length, healUsdPerCase: allIn.length ? allIn[Math.floor((allIn.length - 1) / 2)] : NaN,
+      allIn: `median over lineages of (FH-1 build + commissioning $${FH1_ALLIN_USD_PER_LINEAGE.toFixed(3)} + stream marginal incl. C-O share) / graded cases; RESULT-FH1.md:343` };
+  }
+  const m6 = await m6Analysis({ worlds, exposure, sealed, log });
+  const rcf = path.join(RUNS, 'ROOT-CAUSE-REVIEW.json');
+  const rcReview = existsSync(rcf) ? JSON.parse(readFileSync(rcf, 'utf8')) : null;
+  const r = report({ worlds, exposure, arms, certs, windows: pairs.length || aox ? { pairs, agentUsdPerCase: perCase, ...(aox ? { aox } : {}) } : null, ld: ld?.length ? ld : null, costs: { agentProjected, coUsd, healMarginal },
+    sDropped: existsSync(path.join(RUNS, 'K4.json')), records, invalid, m6, rcReview, ...redAndAdv() });
   writeFileSync(path.join(RUNS, 'REPORT.json'), JSON.stringify(r, (k, v) => (v instanceof Set ? [...v] : v === Infinity ? 'Infinity' : v), 1));
   return r;
 }

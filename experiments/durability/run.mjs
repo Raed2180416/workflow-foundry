@@ -36,7 +36,7 @@ import { harmShield, shieldRefusals } from './shield-harm.mjs';
 import { calibrate, runDetector, instanceTasks } from './edetector.mjs';
 import { powerReport } from './power.mjs';
 import { runAuthor, authorGates, stubAuthor, AUTHOR_SESSION, SEALED_DIR } from './author.mjs';
-import { checkFreeze } from './freeze.mjs';
+import { checkFreeze, checkFilesSync } from './freeze.mjs';
 import { exposureSummary, exposureOf } from './exposure.mjs';
 import { armVersion } from './arms.mjs';
 
@@ -100,7 +100,10 @@ const stamp = () => new Date().toISOString().slice(11, 19);
  */
 export function paidSession(conf, { scope, row, freeze, scopeCap = capOf(row) }) {
   if (!conf.effort) throw new Error(`DUR1_EFFORT: ${conf.role ?? conf.model} has no effort (D28 (4))`);
-  return { kind: 'paid', ...conf, spend: { file: SPEND, scope, totalCap: TOTAL_CAP, scopeCap }, checkFreeze: () => freeze,
+  // The freeze is re-checked before EVERY session (the frozen files re-hashed; review minor 1), not only at the stage's start.
+  const stageOf = row === 'P1' ? 'A' : 'B';
+  const checkNow = () => { if (!freeze?.ok) return freeze; const c = checkFilesSync(stageOf); return c.ok ? freeze : { ok: false, changed: c.changed, reason: c.reason ?? 'a frozen file changed during the stage' }; };
+  return { kind: 'paid', ...conf, spend: { file: SPEND, scope, totalCap: TOTAL_CAP, scopeCap }, checkFreeze: checkNow,
     checkRoom: () => { const room = rowRoom(row); return room + 1e-9 >= conf.budgetUsd ? { ok: true } : { ok: false, reason: `row ${row} has $${room.toFixed(2)} left, session cap $${conf.budgetUsd}` }; } };
 }
 
@@ -261,6 +264,12 @@ export async function dry({ lineages = ['b1lh-e8-1', 'ch-e8-1'], out = path.join
     return { base: `${a.passed}/${a.completed} critical ${a.critical}`, shielded: `${g.passed}/${g.completed} critical ${g.critical}`, refusals: shieldRefusals(r.rows).length };
   });
   let m6 = null;
+  await step('m6-analysis', async () => {
+    // The real analysis's m6 path (paid.mjs m6Analysis: reference journals, onsets, W1 alarms, the adoption rule's inputs).
+    const { m6Analysis } = await import('./paid.mjs');
+    m6 = await m6Analysis({ worlds: { s1: worlds }, exposure: { s1: ex }, sealed, log, practice: PRACTICE.slice(0, light ? 1 : 3) });
+    return { onsets: m6.onsets.map(o => `${o.change} novel ${o.novelShare.toFixed(2)} delay ${o.delayCases}`), w1Alarms: m6.w1Alarms };
+  });
   await step('m6-detector', async () => {
     const cal0 = [];
     for (const p of PRACTICE.slice(0, light ? 1 : 3)) { const b = await evidenceBundle(p, { rules: [], editions: [], renames: [] }); const run = await runBundle(b, { version: programVersion(LINEAGES[lineages[0]], { id: lineages[0] }) }); cal0.push({ rows: run.rows, world: b.W }); }
@@ -268,7 +277,6 @@ export async function dry({ lineages = ['b1lh-e8-1', 'ch-e8-1'], out = path.join
     const tasks = [];
     for (const spec of worlds) { const b = await buildBundle(spec, { sealed }); const run = await runBundle(b, { version: programVersion(LINEAGES[lineages[0]], { id: lineages[0] }) }); tasks.push(...instanceTasks(run.rows, b.W).map(t => ({ ...t, world: spec.k }))); }
     const r = runDetector(cal, tasks);
-    m6 = { alarms: r.alarms.length, calibration: cal.n };
     return { calibration: cal.n, instances: tasks.length, alarms: r.alarms.map(a => ({ world: a.world, at: a.at })).slice(0, 5) };
   });
   await step('power', async () => { const p = powerReport({ quick: true }); return { sd: p.sd, mde: p.mde, d3: p.d3 }; });
@@ -364,10 +372,15 @@ async function main() {
   }
   if (cmd === 'stagez') { const r = await stageZ({ streams: list('streams', STREAM_IDS), lineages: list('lineages', Object.keys(LINEAGES)), log }); console.log(JSON.stringify({ k0: r.k0?.verdict ?? null, kill: r.k0?.kill ?? null })); return; }
   if (cmd === 'author') {
+    // One author session and one revision (prereg §12 P1; review R2-M11: a failed author exited 1, the chain retried the
+    // whole step with a fresh author, up to $8 against P1's $4). A SEALED.json of any status means the author ran: refused.
     const fz = await guardPaid('author', 'P1');
+    const sj = path.join(RES, 'SEALED.json');
+    if (existsSync(sj)) throw new StopError(`the sealed author already ran (SEALED.json status ${JSON.parse(readFileSync(sj, 'utf8')).status}); a re-run needs a dated amendment`);
     const r = await runAuthor({ session: paidSession(AUTHOR_SESSION, { scope: 'P1', row: 'P1', freeze: fz }), log });
     console.log(JSON.stringify({ ok: r.ok, sha256: r.sha256 ?? null, counts: r.counts }, null, 1));
-    process.exit(r.ok ? 0 : 1);
+    if (!r.ok) throw new StopError(`the sealed author's gates failed after its revision (SEALED.json status failed): terminal, the chain stops (K-2 for the author)`);
+    process.exit(0);
   }
   if (['p0', 'heal', 'windows', 'refm', 'redteam', 'forks'].includes(cmd)) {
     const { paidStage } = await import('./paid.mjs');

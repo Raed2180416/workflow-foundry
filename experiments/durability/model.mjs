@@ -123,9 +123,12 @@ export function modelOf(rec, attribution = null, exposure = null) {
     const sig = signalTimes(w);
     const cases = {};
     for (const [c, g] of Object.entries(w.grade ?? {})) {
-      cases[c] = { graded: true, pass: g[0] === 1, critical: g[1] === 1, firstAt: g[2], placedAt: toMs(g[3]), class: g[4], epoch: g[5], lastAt: g[6] ?? null, signals: sig[c] ?? {} };
+      // g[7]: the first-divergence rule (or code) of a failing case (root-cause key; review M23).
+      cases[c] = { graded: true, pass: g[0] === 1, critical: g[1] === 1, firstAt: g[2], placedAt: toMs(g[3]), class: g[4], epoch: g[5], lastAt: g[6] ?? null, rule: g[7] ?? null, signals: sig[c] ?? {} };
     }
-    worlds[w.k] = { cases, induced: attribution?.[w.k]?.induced ?? {}, exposedFailing: attribution?.[w.k]?.exposedFailing ?? {}, base: attribution?.[w.k]?.base ?? [] };
+    // m4 (announcements, config digests) per world: D-6 leaves out an onset where an announcement fired (review M13).
+    const m4 = Object.values(w.days ?? {}).flatMap(d => (d.signals ?? []).filter(x => x.ch === 'm4').map(x => ({ at: x.at, cls: x.cls })));
+    worlds[w.k] = { cases, m4, induced: attribution?.[w.k]?.induced ?? {}, exposedFailing: attribution?.[w.k]?.exposedFailing ?? {}, base: attribution?.[w.k]?.base ?? [] };
   }
   const usd = (rec.sessions ?? []).reduce((s, x) => s + (x.session?.costUsd ?? 0), 0);
   // Maintenance $ per change (prereg §9 item 6): a session's $ goes to the change most of its incidents' evidence cases
@@ -149,16 +152,23 @@ export function onsetDay(worlds, c) {
  * pass by the world's end), the change most of them are exposed to (exposure(k) -> { [c]: Set }); else 'base'.
  */
 export function promotionChange(p, rec, attribution, exposure = null) {
+  // Ties (review M16: they went alphabetically, so R1, R2s and U1s fell to P1 and their cells stayed uncertified): the change
+  // with the SMALLER exposure set in the incident's worlds wins (the more specific explanation), P1 only when nothing else
+  // applies, then the id.
+  const size = new Map();
   const tally = sets => {
     const count = new Map();
+    const ks = new Set();
     for (const id of p.incidents ?? []) {
       const inc = (rec.incidents ?? []).find(i => i.id === id);
       for (const e of inc?.evidence ?? []) {
         if (!e.case || e.practice) continue;
+        ks.add(e.k);
         for (const [c, s] of Object.entries(sets(e.k) ?? {})) if (s instanceof Set ? s.has(e.case) : s.includes(e.case)) count.set(c, (count.get(c) ?? 0) + 1);
       }
     }
-    return [...count.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? null;
+    const sizeOf = c => { if (!size.has(c)) { let n = 0; for (const k of ks) { const x = exposure?.(k)?.[c]; n += x ? (x.size ?? x.length ?? 0) : 0; } size.set(c, n || Infinity); } return size.get(c); };
+    return [...count.entries()].sort((a, b) => b[1] - a[1] || (a[0] === 'P1') - (b[0] === 'P1') || sizeOf(a[0]) - sizeOf(b[0]) || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? null;
   };
   return tally(k => attribution?.[k]?.induced) ?? (exposure ? tally(exposure) : null) ?? 'base';
 }
@@ -177,22 +187,28 @@ export async function certifyPromotion({ rec, p, worlds, sealed = null, practice
   if (!inc || !cand) return { verdict: 'inconclusive', label: 'missing-version', reasons: ['a version of the promotion is not in the record'], critRegression: null };
   const spec = worlds.find(w => w.k === p.k);
   const bundle = await buildBundle(spec, { sealed });
-  const alarm = dayStart(Math.max(1, p.day - (p.boundary ? 0 : 1)));
+  // A promotion at a world boundary or after a deferred canary was gated on the PREVIOUS world's evidence (review mi6: its
+  // evidence was filtered to this world, so it could never be certified).
+  const kE = p.boundary || p.deferred ? p.k - 1 : p.k;
+  const bundleE = kE === p.k ? bundle : await buildBundle(worlds.find(w => w.k === kE), { sealed });
+  const alarm = kE !== p.k ? dayStart(HORIZON_DAYS + 1) : dayStart(Math.max(1, p.day - 1));
   // Determinism: 3 replays of the incumbent on the history replay at the alarm.
-  const hist = historyBundle(bundle, alarm);
+  const hist = historyBundle(bundleE, alarm);
   const replays = [];
   for (let i = 0; i < 3; i++) replays.push(journalDigest((await runBundle(hist, { version: inc })).rows));
   const gI = await gradeVersion(bundle, inc), gC = await gradeVersion(bundle, cand);
   const passI = new Map(gI.cases.filter(c => c.graded).map(c => [c.case, c])), passC = new Map(gC.cases.filter(c => c.graded).map(c => [c.case, c]));
+  const gIE = kE === p.k ? gI : await gradeVersion(bundleE, inc), gCE = kE === p.k ? gC : await gradeVersion(bundleE, cand);
+  const passIE = new Map(gIE.cases.filter(c => c.graded).map(c => [c.case, c])), passCE = new Map(gCE.cases.filter(c => c.graded).map(c => [c.case, c]));
   // Failing: the incidents' evidence cases (this world, not practice) that fail under the incumbent.
   const evid = new Set();
   const rules = new Set();
-  for (const id of p.incidents ?? []) for (const e of (rec.incidents ?? []).find(i => i.id === id)?.evidence ?? []) if (e.case && !e.practice && e.k === p.k) evid.add(e.case);
-  const failing = [...evid].filter(c => passI.get(c) && !passI.get(c).pass).map(c => { rules.add(passI.get(c).first?.rule ?? passI.get(c).first?.code ?? 'unknown'); return { case: c, incumbentPass: false, candidatePass: !!passC.get(c)?.pass }; });
+  for (const id of p.incidents ?? []) for (const e of (rec.incidents ?? []).find(i => i.id === id)?.evidence ?? []) if (e.case && !e.practice && e.k === kE) evid.add(e.case);
+  const failing = [...evid].filter(c => passIE.get(c) && !passIE.get(c).pass).map(c => { rules.add(passIE.get(c).first?.rule ?? passIE.get(c).first?.code ?? 'unknown'); return { case: c, incumbentPass: false, candidatePass: !!passCE.get(c)?.pass }; });
   // Regressions: cases of the regression set passing under the incumbent.
-  const ref = await referencePools(bundle);
+  const ref = await referencePools(bundleE);
   const recent = Object.entries(ref.ends).filter(([, e]) => e !== null && e >= alarm - 3 * DAY_MS && e < alarm).map(([c]) => c);
-  const regressions = recent.filter(c => passI.get(c)?.pass).map(c => ({ case: `${p.k}/${c}`, incumbentPass: true, candidatePass: !!passC.get(c)?.pass }));
+  const regressions = recent.filter(c => passIE.get(c)?.pass).map(c => ({ case: `${kE}/${c}`, incumbentPass: true, candidatePass: !!passCE.get(c)?.pass }));
   const w1 = worlds.find(w => w.k === 1);
   if (w1 && p.k !== 1) {
     const b1 = await buildBundle(w1, { sealed });
@@ -200,7 +216,7 @@ export async function certifyPromotion({ rec, p, worlds, sealed = null, practice
     const pb = new Map(b.cases.filter(c => c.graded).map(c => [c.case, c.pass]));
     for (const c of a.cases.filter(x => x.graded && x.pass)) regressions.push({ case: `1/${c.case}`, incumbentPass: true, candidatePass: !!pb.get(c.case) });
   }
-  const cfg = visibleConfig(bundle, alarm);
+  const cfg = visibleConfig(bundleE, alarm);
   for (const pr of practice) {
     const pb = await evidenceBundle(pr, cfg, { sealed });
     const a = await gradeVersion(pb, inc), b = await gradeVersion(pb, cand);
@@ -210,7 +226,7 @@ export async function certifyPromotion({ rec, p, worlds, sealed = null, practice
   // Fresh strata: cases placed after the promotion (rest of world k) and every case of world k + 1, never shown.
   const promotedAt = p.boundary ? T0_MS : dayStart(p.day);
   const fresh = [];
-  for (const c of gI.cases.filter(x => x.graded && toMs(x.placedAt) >= promotedAt && !evid.has(x.case))) fresh.push({ case: `${p.k}/${c.case}`, rule: c.pass ? 'pass' : (c.first?.rule ?? c.first?.code ?? 'unknown'), incumbentPass: c.pass, candidatePass: !!passC.get(c.case)?.pass });
+  for (const c of gI.cases.filter(x => x.graded && toMs(x.placedAt) >= promotedAt && !(kE === p.k && evid.has(x.case)))) fresh.push({ case: `${p.k}/${c.case}`, rule: c.pass ? 'pass' : (c.first?.rule ?? c.first?.code ?? 'unknown'), incumbentPass: c.pass, candidatePass: !!passC.get(c.case)?.pass });
   const next = worlds.find(w => w.k === p.k + 1);
   let nextGrades = null;
   if (next) {

@@ -4,15 +4,15 @@
 // zero-event bounds in world units; R-maint switch timelines; the report on a synthetic model; the power numbers of §11.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ttd, signFlipOneSided, primaryLevels, twoWayBootstrap, windowOnly, d1, d3, d5, d6, durableShare, cellDurability, healRequiringCells, certEvidence, certify,
-  zeroEventBound, silent, silentLoud, VISIBLE, assertEfforts, envInvalid, k0, RULES } from '../analyze.mjs';
+import { ttd, signFlipOneSided, primaryLevels, twoWayBootstrap, windowOnly, d1, d3, d5, d6, d10, durableShare, cellDurability, healRequiringCells, certEvidence, certify,
+  zeroEventBound, silent, silentLoud, VISIBLE, assertEfforts, envInvalid, k0, RULES, falseIncidents, m6Rule, rootCauseScaffold, transientCells } from '../analyze.mjs';
 import { switchTimeline, ruleTimes, maintSwitches, ceilSwitches, ruleVersion, streamMs } from '../rmaint.mjs';
 import { modelOf, promotionChange, signalTimes, critRegressionDays } from '../model.mjs';
-import { report, finalWeek, classOfCase, critRegressionsOf, perClassWorstOf, healRequiringCellsStrict } from '../report.mjs';
+import { report, finalWeek, classOfCase, critRegressionsOf, perClassWorstOf, healRequiringCellsStrict, detectionOnsets, u1sLoud } from '../report.mjs';
 import { advInputs, unitOfLabel } from '../paid.mjs';
 import { horvitzThompson, poissonSample, counter } from '../wc-search.mjs';
 import { checkVector, KnobError } from '../knobs.mjs';
-import { buildSd, signFlipP, d3Power } from '../power.mjs';
+import { buildSd, signFlipP, d3Power, recallClassOC, mcSe } from '../power.mjs';
 import { harmPolicy } from '../shield-harm.mjs';
 import { rng } from '../../../beds/lib/rng.mjs';
 import { T0_MS, DAY_MS } from '../schedule.mjs';
@@ -213,7 +213,7 @@ test('WC-1 Horvitz-Thompson: unbiased over 2,000 Poisson resamples with exact we
   const ests = [], naive = [];
   for (let b = 0; b < 2000; b++) {
     const idx = poissonSample(pis, r);
-    ests.push(horvitzThompson(idx.map(i => ({ y: y[i], pi: pis[i] })), N).estimate);
+    ests.push(horvitzThompson(idx.map(i => ({ y: y[i], pi: pis[i] })), N).ht);
     naive.push(idx.length ? idx.reduce((a, i) => a + y[i], 0) / idx.length : 0);
   }
   const mean = xs => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -244,4 +244,52 @@ test('power (§11): the build SD is 0.0433 for the FH-1 failing counts; the D-3 
   const size = d3Power({ W: 12, gap: -0.10, reps: 400, B: 400 });
   assert.ok(Math.abs(size - 0.025) <= 0.02, `size at the margin ${size}`);
   assert.equal(d3Power({ W: 12, gap: -0.10, reps: 50, B: 200 }), d3Power({ W: 12, gap: -0.10, reps: 50, B: 200 }), 'same seed, same number');
+});
+
+test('review batch 2 (2026-11-04): false VB incidents, detection on induced cases only, U1s loudness, attribution ties, the transient F, the m6 rule, the root-cause ledger', () => {
+  // M21: a verifier-blind incident whose complained cases all pass is a false incident; one with a failing complained case is not.
+  const pass = (w, c) => ({ a: true, b: true, c: false })[c] ?? null;
+  const vbF = { kind: 'verifier-blind', complaints: [{ case: 'a' }, { case: 'b' }] }, vbT = { kind: 'verifier-blind', complaints: [{ case: 'a' }, { case: 'c' }] };
+  const def = { kind: 'defect', evidence: [{ case: 'a', world: 'w' }, { practice: true, case: 'p9' }] };
+  assert.deepEqual(falseIncidents([vbF, vbT, def], pass), [vbF, def]);
+  // M13: a signal on an exposed-but-not-induced case is no detection; an m4 within a day of the onset marks it announced.
+  const onset = day(2, 4);
+  const worlds = { s1: [{ k: 2, changes: [{ id: 'L1', startsHere: true, onsetMs: onset }, { id: 'E1', startsHere: true, onsetMs: onset }] }] };
+  const model = { L: { s1: { worlds: { 2: { m4: [{ at: onset + 3_600_000, cls: 'm4|config|api' }], induced: { L1: ['x1'], E1: ['x2'] }, cases: {
+    x1: { graded: true, pass: false, signals: {} }, x2: { graded: true, pass: false, signals: { m1: onset + 60_000 } }, x3: { graded: true, pass: false, signals: { m1: onset + 1000 } } } } } } } };
+  const on = detectionOnsets(model, s => worlds[s], () => () => ({ L1: new Set(['x1', 'x3']), E1: new Set(['x2']) }));
+  const L1 = on.find(o => o.change === 'L1'), E1 = on.find(o => o.change === 'E1');
+  assert.equal(L1.detectedDelayDays, null, 'x3 is exposed, not induced: its m1 is no detection of L1');
+  assert.equal(E1.announcedFired, true);
+  assert.equal(d6({ onsets: on }).recall.E1, undefined, 'an announced onset is left out of D-6');
+  // M14: an incident opened before the first true complaint counts (delay 0); a lineage-stream without one is excluded.
+  const recs = { L: { s1: { worlds: [{ k: 2, complaints: [{ kind: 'true', case: 'u1', at: day(2, 6) }] }], incidents: [{ kind: 'defect', opened: { k: 2, at: day(2, 5) }, evidence: [{ k: 2, case: 'u1' }] }] } },
+    M: { s1: { worlds: [{ k: 2, complaints: [] }], incidents: [] } } };
+  const u = u1sLoud(recs, () => () => ({ U1s: new Set(['u1']) }), () => [{ k: 2, changes: [{ id: 'U1s', startsHere: true }] }], { L: { s1: { worlds: { 2: { induced: { U1s: ['u1'] } } } } } });
+  assert.equal(u.find(x => x.lineage === 'L').loudWithinDays, 0);
+  assert.equal(u.find(x => x.lineage === 'M').excluded, true);
+  const r10 = d10({ e2sCells: [], u1sLoud: u });
+  assert.equal(r10.u1sLoudShare, 1); assert.equal(r10.u1sExcluded, 1);
+  // M16: ties never fall to P1 when another change applies; the smaller exposure set wins.
+  const rec = { incidents: [{ id: 'i', evidence: [{ k: 3, case: 'x1' }, { k: 3, case: 'x2' }] }] };
+  assert.equal(promotionChange({ incidents: ['i'] }, rec, { 3: { induced: { P1: ['x1'], R1: ['x2'] } } }, k => ({ P1: new Set(['x1', 'x2', 'y', 'z']), R1: new Set(['x2']) })), 'R1');
+  assert.equal(promotionChange({ incidents: ['i'] }, rec, { 3: { induced: { U1s: ['x1'], R2s: ['x2'] } } }, k => ({ U1s: new Set(['x1']), R2s: new Set(['x2', 'y']) })), 'U1s');
+  // mi3: the transient F: damage in W5 and the first clean day; never a durable cell.
+  const fm = { L: { s1: { worlds: { 5: { induced: { F: ['f1', 'f2'] }, cases: { f1: { graded: true, critical: true, placedAt: day(5, 3) }, f2: { graded: true, placedAt: day(5, 6) } } } } } } };
+  const tc = transientCells({ cells: [{ lineage: 'L', stream: 's1', change: 'F' }], armModel: fm, onsetOf: () => 57 });
+  assert.deepEqual([tc[0].status, tc[0].damage, tc[0].damageCritical, tc[0].firstCleanDay], ['transient', 2, 1, 7]);
+  // M13: the m6 rule: every onset that changes inputs within 4 exposed cases, <= 1 false alarm on W1.
+  assert.match(m6Rule({ onsets: [{ stream: 's1', change: 'E1', novelShare: 0.8, delayCases: 3 }, { stream: 's1', change: 'R1', novelShare: 0.1, delayCases: null }], w1Alarms: { s1: 1 } }).verdict, /ADOPTED/);
+  assert.equal(m6Rule({ onsets: [{ stream: 's1', change: 'E1', novelShare: 0.8, delayCases: 5 }], w1Alarms: { s1: 0 } }).verdict, 'N');
+  assert.equal(m6Rule({ onsets: [{ stream: 's1', change: 'E1', novelShare: 0.8, delayCases: 1 }], w1Alarms: { s1: 2 } }).verdict, 'N');
+  // M23: complete only when an analyst reviewed every record; the key is the first-divergence rule x class x arm.
+  const failing = [{ arm: 'MH-H', rule: 'R6', changeClass: 'CHG-A', n: 3, silent: 1, silentCritical: 1 }];
+  const a = rootCauseScaffold({ arm: 'all', failing, unhealed: [] });
+  assert.equal(a.complete, false); assert.equal(a.records[0].key, 'MH-H|R6|CHG-A'); assert.equal(a.records[0].silent, 1);
+  assert.equal(rootCauseScaffold({ arm: 'all', failing, unhealed: [], review: { 'MH-H|R6|CHG-A': { category: 'stale verifier' } } }).complete, true);
+  assert.equal(rootCauseScaffold({ arm: 'all', failing, unhealed: [], review: { 'MH-H|R6|CHG-A': { category: 'made up' } } }).complete, false);
+  // M23 / mi13: D-6 power per class with the all-class conjunction is below the pooled figure; MC standard errors.
+  const pooledLike = recallClassOC(0.97, { classes: 1, R: 400 }).pPass, four = recallClassOC(0.97, { classes: 4, R: 400 }).pPass;
+  assert.ok(four < pooledLike, `4 classes ${four} < 1 class ${pooledLike}`);
+  assert.equal(mcSe(0.5, 100), 0.05);
 });

@@ -121,11 +121,20 @@ export async function analyzeLD({ m, specs, record, start }) {
   const healed = changed && target > 0 && targetPass === target && regressions === 0;
   const lastP = record.promotions.at(-1);
   const durable = healed && !record.rollbacks.some(r => lastP && (r.k > lastP.k || (r.k === lastP.k && r.day > lastP.day)));
-  // False-complaint harm: a promotion led (in part) by a false complaint whose version fails a case its incumbent passed.
+  // False-complaint harm (prereg §10 D-8): a promotion led (in part) by a false complaint whose version fails an oracle case
+  // its incumbent passed, on any manifest world. "Led by" covers the DIRECT path (a false complaint joined one of its
+  // incidents) and the INDIRECT one (review M22): a false complaint fed a verifier-blind incident whose C-O reading was
+  // accepted ("converted"), and the promotion came at or after that conversion (the updated contracts then open defect
+  // incidents of their own). The harm test is a regression against the incumbent, never "the promoted version fails some
+  // case": the incumbent is a latent-defect mutant that fails cases by construction (prereg §10 D-8 as amended 2026-11-04).
   const incidents = new Map(record.incidents.map(i => [i.id, i]));
+  const vbFalse = record.incidents.filter(i => i.kind === 'verifier-blind' && i.status === 'converted' && (i.complaints ?? []).some(c => c.kind === 'false'))
+    .map(i => ({ at: 14 * (i.opened.k - 1) + i.opened.day, ids: i.complaints.filter(c => c.kind === 'false').map(c => c.id) }));
   const promotions = [];
   for (const p of record.promotions) {
-    const falseIds = p.incidents.flatMap(id => (incidents.get(id)?.complaints ?? []).filter(c => c.kind === 'false').map(c => c.id));
+    const pAt = 14 * (p.k - 1) + p.day;
+    const falseIds = [...new Set([...p.incidents.flatMap(id => (incidents.get(id)?.complaints ?? []).filter(c => c.kind === 'false').map(c => c.id)),
+      ...vbFalse.filter(v => v.at <= pAt).flatMap(v => v.ids)])];
     let harm = false;
     if (falseIds.length) {
       const from = versions.get(p.from), to = versions.get(p.to);

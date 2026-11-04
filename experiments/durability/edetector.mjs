@@ -12,6 +12,10 @@
 //              reset after an alarm.
 // Calibration: the profile is learned on the reference journals of practice worlds 1235-1237; calibration scores are
 // leave-one-world-out (each world's instances scored against the profile of the other two), so they are out of sample.
+// A stream instance is scored the SAME way (review mi12: it was scored against the all-practice profile while the
+// calibration was leave-one-out, a mismatch that made p super-uniform and cost power): the cross-conformal p-value pools,
+// over the three folds, the fold's calibration scores at or above the instance's score under that fold's profile.
+// `score` (reported, and the m6 novelty share) stays the all-practice profile's.
 import { learnProfile, checkProfile, PARAMS } from '../jit/profile.mjs';
 
 export const EPS = 0.3;
@@ -68,8 +72,17 @@ export function calibrate(practice) {
     const prof = learnProfile(tasksBy.filter((_, j) => j !== i).flat(), PARAMS);
     for (const t of tasksBy[i]) cal.push(scoreOf(prof, t));
   }
+  const folds = tasksBy.map((ts, i) => { const prof = learnProfile(tasksBy.filter((_, j) => j !== i).flat(), PARAMS); return Object.freeze({ profile: prof, cal: Object.freeze(ts.map(t => scoreOf(prof, t))) }); });
   const profile = learnProfile(tasksBy.flat(), PARAMS);
-  return Object.freeze({ profile, cal: Object.freeze([...cal]), n: cal.length });
+  return Object.freeze({ profile, folds: Object.freeze(folds), cal: Object.freeze([...cal]), n: cal.length });
+}
+
+/** Cross-conformal p of one task (ties in full): (#{fold i, c in cal_i : c >= score_i(task)} + 1) / (n + 1). */
+export function crossConformalP(calib, task) {
+  if (!calib.folds) return conformalP(scoreOf(calib.profile, task), calib.cal);
+  let ge = 0;
+  for (const f of calib.folds) { const s = scoreOf(f.profile, task); for (const c of f.cal) if (c >= s) ge += 1; }
+  return (ge + 1) / (calib.n + 1);
 }
 
 /** Run the detector over a stream's instances (in order); returns the alarm list with times and instances. */
@@ -77,7 +90,7 @@ export function runDetector(calib, tasks, { detector = new ECusum() } = {}) {
   const trace = [];
   for (const t of tasks) {
     const s = scoreOf(calib.profile, t.task);
-    const p = conformalP(s, calib.cal);
+    const p = crossConformalP(calib, t.task);
     const r = detector.step(p, { at: t.firstAt, instance: t.instance, world: t.world ?? null, score: s });
     trace.push({ at: t.firstAt, instance: t.instance, world: t.world ?? null, score: s, p, M: r.M, alarm: r.alarm });
   }

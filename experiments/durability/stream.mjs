@@ -10,12 +10,12 @@
 // for every arm). Everything a session sees is built from the arm's own journal, delivered complaints, the spec and
 // rulebook and API files in force or announced, and practice worlds under the visible configuration (heal-adapter.mjs).
 import path from 'node:path';
-import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync, readFileSync, statfsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { buildBundle, visibleConfig, evidenceBundle } from './changes.mjs';
+import { buildBundle, visibleConfig, evidenceBundle, noticeOf } from './changes.mjs';
 import { referencePools, gradeRun } from './oracle.mjs';
-import { runBundle, samePrefix, journalDigest, programVersion, referenceVersion } from './arms.mjs';
-import { signalsOfRun, IncidentBook, contractsFor, BASE_READINGS, orderState, journalFindings, orderOfArgs } from './monitor.mjs';
+import { runBundle, samePrefix, journalDigest, programVersion, referenceVersion, prefixRows } from './arms.mjs';
+import { signalsOfRun, IncidentBook, contractsFor, BASE_READINGS, orderState, journalFindings, orderOfArgs, VERIFIER_BLIND } from './monitor.mjs';
 import { trueComplaints, falseComplaints, adversarialComplaint } from './complaints.mjs';
 import { exposedTo } from './exposure.mjs';
 import { VersionRegistry } from './registry.mjs';
@@ -41,9 +41,11 @@ export class ContractOwner {
   /** The certified reading of an announced rule change (or a quarantine record: K-2, or no room in P2). */
   async forAnnounced(id, bundle, atMs) {
     if (this.announced.has(id)) return this.announced.get(id);
-    const S = id === 'R1' ? null : this.sealed?.change(id);
-    const change = id === 'R1' ? 'R2.2: a fraud review with no usable answer by its deadline no longer cancels the order; it is cleared just after the deadline (orders placed on or after the effective time).'
-      : `${S?.label ?? id}`;
+    // What the session sees (review R1-M18 / R2-M9): the spec as published, the spec just before, and the in-world notice
+    // (never the sealed bundle's fields, the harness id or the t0 spec).
+    const spec = bundle.specAt(atMs + 1), previousSpec = bundle.specAt(atMs - 1);
+    const change = noticeOf(spec, id);
+    if (!change) throw new Error(`C-O ${id}: no published notice in the spec at ${atMs} (the session would have to guess the change)`);
     const certBundles = [];
     for (const p of this.practice) certBundles.push(await evidenceBundle(p, { rules: [{ id, effMs: T0_MS }], editions: [], renames: [] }, { sealed: this.sealed }));
     const stale = W => { const w = structuredClone(W); delete w.truth.dur1Eff[id]; return w; };
@@ -52,7 +54,7 @@ export class ContractOwner {
       let out;
       try {
         out = await coSession({ label: `co-${id}-a${attempt}`, kind: 'announced', change: attempt === 1 ? change : `${change}\n\nYour first update was not certified; disagreeing practice cases: ${JSON.stringify(rec?.cert?.disagreements?.slice(0, 12) ?? [])}`,
-          spec: bundle.specAt(atMs + 1), previousSpec: bundle.specAt(T0_MS - 31 * DAY_MS), session: this.session(id), runDir: this.runDir, log: this.log });
+          spec, previousSpec, session: this.session(id), runDir: this.runDir, log: this.log });
       } catch (e) {
         if (!(e instanceof BudgetStop)) throw e;
         rec = { id, status: 'quarantined', reason: `budget-stop: ${e.message}`, attempt, budgetStop: true };   // no room in P2: the change runs without a C-O update (reported)
@@ -120,6 +122,13 @@ export const findingsOnDay = (signals, d) => new Set((signals.days[d] ?? []).fil
 export const newFindings = (cand, inc, d) => { const a = findingsOnDay(inc, d); return [...findingsOnDay(cand, d)].filter(x => !a.has(x)); };
 const judgedUpTo = (judgedAt, d) => new Set([...judgedAt].filter(([, day]) => day <= d).map(([c]) => c));
 const serial = (k, v) => (k === 'rows' ? undefined : v === Infinity ? 'Infinity' : v === -Infinity ? '-Infinity' : v);
+/** K-5: free disk below 1.2 GB is an environment fault (exit 75: the chain waits 30 minutes and resumes; never scored). */
+export const MIN_FREE_BYTES = Number(process.env.DUR1_MIN_DISK_BYTES ?? 1.2 * 1024 ** 3);
+export function diskGuard(where) {
+  let free = Infinity;
+  try { const st = statfsSync('/'); free = st.bavail * st.bsize; } catch { /* unknown: go on */ }
+  if (free < MIN_FREE_BYTES) throw Object.assign(new Error(`DUR1_ENV_FAULT: K-5 at ${where}: ${(free / 1024 ** 3).toFixed(2)} GB free < ${(MIN_FREE_BYTES / 1024 ** 3).toFixed(2)} GB`), { code: 'DUR1_ENV_FAULT' });
+}
 /** World run time limit (a hang guard, sized to the world: 30 min per 80 arriving orders). */
 export const worldTimeoutMs = b => 30 * 60_000 * Math.max(1, Math.ceil((b?.spec?.size ?? 80) / 80));
 /** A world run that did not complete is never graded (review R2-M5): a harness error (exit 1; the chain retries once). */
@@ -155,6 +164,8 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
   let healStopped = null;   // a budget stop of the row or the total ends every later session of this stream
   const runW = async (b, opts, what) => mustComplete(await runBundle(b, { ...opts, worldTimeoutMs: worldTimeoutMs(b) }), `${label} ${b.key} ${what}`);
   for (const spec of worlds) {
+    // K-5 per world (review minor 3: the chain checked disk only when a step started, and a stream runs for hours).
+    diskGuard(`${label} W${spec.k}`);
     const bundle = await buildBundle(spec, { sealed });
     if (spec.k === 1) w1 = bundle;
     else if (!w1 && regressionW1) w1 = await buildBundle(regressionW1, { sealed });   // a fork that starts after W1 (MH-stale) keeps W1 in its regression set
@@ -162,7 +173,13 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
     // K-1 (prereg §13.2): a control failing on a world it is used on stops everything; never a warning (review B6/R2-B3).
     if (!ref.control.ok) throw new StopError(`K-1 ${bundle.key}: ${ref.control.problems.slice(0, 3).join('; ')}`);
     // C-O for this world's announced rule changes runs once (shared); readingsFor uses it only once it is visible.
-    if (co) for (const id of ['R1', 'R2s']) if (spec.changes.some(c => c.id === id) && !stale.includes(id)) await co.forAnnounced(id, bundle, T0_MS);
+    // Its session sees the spec as published (specAt(publish + 1)), the spec just before (specAt(publish - 1)) and the in-world
+    // notice only (review R1-M18 / R2-M9: it was given the t0 spec, without the change, and the sealed label).
+    if (co) for (const id of ['R1', 'R2s']) {
+      const c = spec.changes.find(x => x.id === id);
+      if (!c || stale.includes(id)) continue;
+      await co.forAnnounced(id, bundle, c.startsHere && Number.isFinite(c.publishMs) ? c.publishMs : T0_MS - 30 * DAY_MS);
+    }
     const wrec = { key: bundle.key, k: spec.k, seed: spec.seed, worldDigest: bundle.worldDigest, itemDigest: bundle.itemDigest, runs: [], timeline: null, days: {}, control: ref.control, prefixChecks: [] };
     const frozen = carried.map(c => ({ ...c }));
     carried = [];
@@ -215,6 +232,18 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
       for (let d = 1; d < fromDay; d++) if (prevRun.signals.days[d] && !signals.days[d]) signals.days[d] = prevRun.signals.days[d];
       for (const [c, d] of signals.judgedAt) judgedAt.set(c, d);
     };
+    // A reading that becomes visible during the world (an announced change's certified reading at its publication, a
+    // verifier-blind reading at its acceptance) applies from then on: the days after d are re-judged under it (fix
+    // 2026-11-04: the signals of later days were computed at the world's start, so a published reading reached them only
+    // after the next re-run; a heal that did not land left the rest of the world judged by the stale contracts).
+    const readingsKey = rs => JSON.stringify(rs.map(r => [r.id ?? null, r.fromMs === -Infinity ? '-inf' : r.fromMs, r.rules ?? null, r.module ?? null]));
+    const refreshAfter = async d => {
+      if (d >= HORIZON_DAYS) return;
+      const fut = await evalSignals(run.rows, d + 1, HORIZON_DAYS, cmp.all, judgedUpTo(judgedAt, d));
+      for (let dd = d + 1; dd <= HORIZON_DAYS; dd++) { if (fut.days[dd]) signals.days[dd] = fut.days[dd]; else delete signals.days[dd]; }
+      for (const [c, dd] of [...judgedAt]) if (dd > d) judgedAt.delete(c);
+      for (const [c, dd] of fut.judgedAt) judgedAt.set(c, dd);
+    };
     // A candidate gated at the previous world's last day: its canary is this world's day 1, its promotion day 2.
     let canaryFirst = pending && !pending.canaried ? pending : null;
     if (pending && pending.canaried) {
@@ -257,7 +286,7 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
       out.canaries.push({ k: spec.k, day: 1, kind: 'shadow (deferred)', candidate: canaryFirst.cand.digest, newFindings: fresh.slice(0, 5), pass: !fresh.length });
       if (!fresh.length) {
         registry.promote({ expectHead: registry.head().hash, version: canaryFirst.cand, proposer: canaryFirst.session, approver: 'code-gate', at: isoLocal(dayStart(2)), reason: 'deferred canary passed' });
-        out.promotions.push({ k: spec.k, day: 2, from: current.digest, to: canaryFirst.cand.digest, incidents: canaryFirst.incidents });
+        out.promotions.push({ k: spec.k, day: 2, from: current.digest, to: canaryFirst.cand.digest, incidents: canaryFirst.incidents, deferred: true });
         for (const i of incs) { i.status = 'healed'; i.promotions.push({ k: spec.k, day: 2, to: canaryFirst.cand.digest }); }
         promotedAt.push({ day: 2, incumbent: current, incidents: canaryFirst.incidents });
         timeline = [...timeline, { fromMs: dayStart(2), version: canaryFirst.cand }];
@@ -302,13 +331,17 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
         // an accepted reading re-judges the complained orders (rule 1).
         for (const inc of res.verifierBlind) {
           if (!co || stale.includes('vb')) { inc.status = 'needs-human'; inc.note = 'verifier-blind; no contract owner in this arm'; continue; }
+          // Acceptance on the arm's journal up to the alarm and on the other completed cases of the same days (the rule's
+          // 3-world-day window; review mi10: it read the whole journal and every day so far).
           const complained = new Set(inc.complaints.map(c => c.case).filter(Boolean));
-          const others = new Set(Object.keys(bundle.W.truth.cases).filter(c => ref.pools[c] === 'completed' && bundle.W.truth.cases[c].subject && !complained.has(c) && (judgedAt.get(c) ?? 99) <= d));
+          const lo = d - VERIFIER_BLIND.windowDays + 1;
+          const others = new Set(Object.keys(bundle.W.truth.cases).filter(c => ref.pools[c] === 'completed' && bundle.W.truth.cases[c].subject && !complained.has(c) && (judgedAt.get(c) ?? 99) <= d && (judgedAt.get(c) ?? 99) >= lo));
+          const pre = prefixRows(run.rows, T, { stamp: true });   // as the monitor judges a day (monitor.mjs signalsOfRun)
           const r = await co.forVerifierBlind({ stream, k: spec.k, topic: inc.topic, complaints: inc.complaints, bundle, atMs: T,
             check: async rd => {
               const rs = withReading(newReadings, mkReading({ id: `vb-${stream}`, fromMs: -Infinity, rules: rd.rules, module: rd.module, base: newReadings }));
               let cv;
-              try { cv = await contractsFor(bundle, run.rows, { pools: ref.pools, readings: rs, cases: [...complained, ...others] }); }
+              try { cv = await contractsFor(bundle, pre, { pools: ref.pools, readings: rs, cases: [...complained, ...others] }); }
               catch (e) { if (e?.code !== 'DUR1_CONTRACT_MODULE') throw e; return { accept: false, error: e.message.slice(0, 300) }; }   // the sandboxed module failed: not accepted
               return verifierBlindAccept({ flaggedCases: [...cv.entries()].filter(([, v]) => !v.pass).map(([c]) => c), complainedCases: complained, otherCases: others });
             } });
@@ -317,10 +350,15 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
           if (!vbReadings.some(v => v.id === `vb-${stream}`)) vbReadings.push({ id: `vb-${stream}`, rules: r.reading.rules, module: r.reading.module });
           inc.status = 'converted'; inc.note = `C-O update ${r.reused ? 'reused and ' : ''}accepted on this journal; rule 1 applies under the updated contracts`;
           readings = readingsFor(bundle, T, { co, vbReadings, stale });
+          // Re-judge days 1..d under the updated reading and ingest only the m2 findings it ADDS (review M19: re-ingesting
+          // every m1/m3 signal of days 1..d reopened classes already healed, wasting sessions on false needs-human).
+          const seen = new Set();
+          for (let dd = 1; dd <= d; dd++) for (const s0 of signals.days[dd] ?? []) seen.add(`${s0.case ?? s0.order ?? '?'}|${s0.cls}`);
           const again = await evalSignals(run.rows, 1, d, [], new Set());
-          for (const list of Object.values(again.days)) book.ingest(list.filter(s => s.ch !== 'm5'), { k: spec.k, day: d, worldKey: bundle.key, streamDay: streamDay(spec.k, d) });
+          const added = Object.values(again.days).flat().filter(s0 => s0.ch === 'm2' && !seen.has(`${s0.case ?? s0.order ?? '?'}|${s0.cls}`));
+          if (added.length) book.ingest(added, { k: spec.k, day: d, worldKey: bundle.key, streamDay: streamDay(spec.k, d) });
         }
-        readings = readingsFor(bundle, T, { co, vbReadings, stale });
+        { const nr = readingsFor(bundle, T, { co, vbReadings, stale }); if (readingsKey(nr) !== readingsKey(readings) || res.verifierBlind.some(i => i.status === 'converted')) { readings = nr; await refreshAfter(d); } }
         // Rollback: a promotion within ROLLBACK_DAYS that shows a finding (per case; m1, m2, m3) the incumbent's shadow lacks.
         const lastP = promotedAt.at(-1);
         if (lastP && prevRun && d >= lastP.day && d < lastP.day + ROLLBACK_DAYS && d + 1 <= HORIZON_DAYS) {
@@ -352,7 +390,7 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
         if (spentHere() + sessionCap(conf0) > usdCap + 1e-9) { stopFor(`lineage-stream cap $${usdCap}: spent $${spentHere().toFixed(3)} + session cap $${sessionCap(conf0)}`); continue; }
         const sets = await evidenceSets({ bundle, alarmAt: T, w1, sealed, practice });
         const proactive = open.every(i => i.kind === 'canary');
-        const announced = (bundle.announcements ?? []).filter(a => a.at < T).map(a => `- ${a.id} (${a.kind}) published ${isoLocal(a.at)}, effective for orders placed from ${isoLocal(a.effectiveAt)}`).join('\n') || null;
+        const announced = (bundle.announcements ?? []).filter(a => a.at < T).map(a => `- ${a.publicId ?? a.kind} (${a.kind}) published ${isoLocal(a.at)}, effective for orders placed from ${isoLocal(a.effectiveAt)}`).join('\n') || null;
         const rowsByWorld = {};
         if (open.some(i => i.evidence.some(e => e.practice))) for (const b of sets.practice) rowsByWorld[b.key] = (await evidenceRun(current, b, { readings })).rows;
         const nSessions = useOpus ? 1 : Math.max(0, LIMITS.sessionsPerIncident - Math.max(...open.map(i => i.sessions)));
@@ -401,10 +439,11 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
       break;
     }
     carried = cmp.carriedNext.map(c => ({ ...c, carriedFrom: bundle.key }));
-    // The delivered run's per-case outcomes (analysis only; never seen by the loop): [pass, critical, firstAt, placedAt, class, epoch, lastAt].
+    // The delivered run's per-case outcomes (analysis only; never seen by the loop): [pass, critical, firstAt, placedAt, class, epoch, lastAt,
+    // first-divergence rule (root-cause key, review M23)].
     const g = gradeRun(bundle, run.rows, ref.pools);
     const lastAt = lastEffectAt(bundle, run.rows);
-    wrec.grade = Object.fromEntries(g.cases.filter(c => c.graded).map(c => [c.case, [c.pass ? 1 : 0, c.critical ? 1 : 0, c.firstAt ?? null, c.placedAt ?? null, c.class ?? null, c.epoch ?? null, lastAt.get(c.case) ?? null]]));
+    wrec.grade = Object.fromEntries(g.cases.filter(c => c.graded).map(c => [c.case, [c.pass ? 1 : 0, c.critical ? 1 : 0, c.firstAt ?? null, c.placedAt ?? null, c.class ?? null, c.epoch ?? null, lastAt.get(c.case) ?? null, c.pass ? null : (c.first?.rule ?? c.first?.code ?? null)]]));
     wrec.gradeSummary = { completed: g.completed, passed: g.passed, critical: g.critical, oracleErrors: g.oracleErrors };
     wrec.timeline = timeline.map(e => ({ fromMs: e.fromMs, version: e.version.id, digest: e.version.digest }));
     wrec.final = { status: run.status, digest: journalDigest(run.rows) };
