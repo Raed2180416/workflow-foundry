@@ -22,7 +22,7 @@ const REF = compileChecks(JSON.parse(readFileSync(path.join(ROOT, 'experiments/g
 const GENERIC_CLASS = { 'generic:frozen': 'softlock', 'generic:page-error': 'softlock' };
 const found = s => Object.entries(s.perBug).filter(([, b]) => b.foundMin).map(([id]) => id).sort();
 
-async function creditedCandidates(browser, dir, truth) {
+export async function creditedCandidates(browser, dir, truth) {
   const stats = read(dir, 'stats.json'), meta = read(dir, 'meta.json');
   const specs = meta.arm === 'monkey-ref' ? JSON.parse(readFileSync(path.join(ROOT, 'experiments/gameqa-web/reference-checks.json'), 'utf8')).checks : (read(dir, 'constructed.json')?.specs ?? []);
   const cands = (stats?.minimized ?? []).filter(m => m.confirmed);
@@ -32,7 +32,7 @@ async function creditedCandidates(browser, dir, truth) {
   return { candidates: cands.length, foundMinByCandidates: found(s), perCandidate: s.perReport.map((r, i) => ({ checkId: cands[i].checkId, ctx: cands[i].ctx, bug: r.bug ?? null, minimal: r.minimal ?? null, verdict: r.verdict })) };
 }
 
-async function exploreWithPerfectChecks(browser, dir, truth) {
+export async function exploreWithPerfectChecks(browser, dir, truth) {
   const stats = read(dir, 'stats.json');
   const played = stats?.stats?.played ?? [];
   if (!played.length) return null;

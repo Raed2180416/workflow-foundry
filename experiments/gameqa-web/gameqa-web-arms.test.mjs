@@ -2,6 +2,9 @@
 // build with a scripted model (no paid call). Also asserts that no prompt carries the hidden truth.
 //   nice -n 15 node --test --test-concurrency=1 experiments/gameqa-web/gameqa-web-arms.test.mjs
 import { test, before, after } from 'node:test';
+import { mkdtempSync, rmSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { loadPolicy } from '../../src/models/policy.mjs';
@@ -19,8 +22,18 @@ import * as P from './prompts.mjs';
 
 const HAIKU = 'claude-haiku-5-5', truth = loadTruth();
 let browser = null, why = null;
-before(async () => { try { browser = await launchBrowser(); } catch (e) { why = `chromium unavailable: ${e.message.split('\n')[0]}`; } });
-after(async () => { await browser?.close(); });
+// Playwright's temp folders go to a short-lived folder of this test file, removed in after() (GQA-1 review finding m8;
+// a short path: Chromium fails to launch when TMPDIR is long)
+let tmpRoot = null, prevTmp;
+before(async () => {
+  prevTmp = process.env.TMPDIR; tmpRoot = mkdtempSync(path.join(os.tmpdir(), 'gqa-test-')); process.env.TMPDIR = tmpRoot;
+  try { browser = await launchBrowser(); } catch (e) { why = `chromium unavailable: ${e.message.split('\n')[0]}`; }
+});
+after(async () => {
+  await browser?.close();
+  if (prevTmp === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = prevTmp;
+  rmSync(tmpRoot, { recursive: true, force: true });
+});
 const bt = (name, fn) => test(name, async ctx => { if (why) return ctx.skip(why); await fn(); });
 const portWith = script => {
   const provider = new ScriptedProvider(script);
