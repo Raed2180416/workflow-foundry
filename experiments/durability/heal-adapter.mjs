@@ -88,8 +88,10 @@ export async function smokeReport(workdir, kind, { sets, readings }) {
     const results = {};
     for (const row of r.rows) if (row.type === 'ledger') { const k = `${row.system}.${row.op} ${row.committed ? 'ok' : `error ${row.error?.code ?? ''} ${row.error?.reason ?? ''}`.trimEnd()}`; results[k] = (results[k] ?? 0) + 1; }
     const failing = [...r.findings.entries()].filter(([, s]) => s.size);
+    const finished = new Set(r.completed.map(c => b.W.truth.cases[c].subject));
+    const finishedFailing = failing.filter(([o]) => finished.has(o)).length;
     lines.push(`== ${label}: ${r.status}; arm errors ${r.armErrors}`, 'effect results your program received:', ...Object.keys(results).sort().map(k => `   ${String(results[k]).padStart(5)}  ${k}`),
-      `finished orders passing every check: ${r.completed.length - failing.length}/${r.completed.length}`, ...failing.slice(0, 8).map(([o, s]) => `   ${o}: ${[...s][0]}`), '');
+      `finished orders passing every check: ${r.completed.length - finishedFailing}/${r.completed.length}`, ...failing.slice(0, 8).map(([o, s]) => `   ${o}${finished.has(o) ? '' : ' (not finished yet)'}: ${[...s][0]}`), '');
     summary.worlds.push({ key: b.key, armErrors: r.armErrors, completed: r.completed.length, failing: failing.length });
   }
   return { text: lines.join('\n'), summary };

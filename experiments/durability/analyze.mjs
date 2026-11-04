@@ -185,6 +185,8 @@ export function d1({ heal, stat, exposure, cellRows, critRegressions = {}, holmL
  * lineages and windows (B, seed fixed). pairs: [{ lineage, window, case, heal: 0|1, agent: 0|1 }].
  */
 export function twoWayBootstrap(pairs, { B = RULES.D3.B, seed = RULES.D3.seed, margin = RULES.D3.margin } = {}) {
+  // The unit rule (template B7): every pair names its lineage (build) and its window (case cluster); a flat case list is refused.
+  for (const p of pairs) if (!p.lineage || !p.window || !p.case || ![0, 1].includes(Number(p.heal)) || ![0, 1].includes(Number(p.agent))) throw new Error(`DUR1_UNIT: a D-3 pair needs lineage, window, case and 0/1 outcomes (got ${JSON.stringify(p).slice(0, 120)})`);
   const lineages = [...new Set(pairs.map(p => p.lineage))].sort(), windows = [...new Set(pairs.map(p => p.window))].sort();
   const cell = new Map();
   for (const p of pairs) { const k = `${p.lineage}|${p.window}`; if (!cell.has(k)) cell.set(k, { s: 0, n: 0 }); const c = cell.get(k); c.s += p.heal - p.agent; c.n += 1; }
@@ -201,11 +203,23 @@ export function twoWayBootstrap(pairs, { B = RULES.D3.B, seed = RULES.D3.seed, m
   return { mean: obs, lo95: q(0.025), hi95: q(0.975), pNI: boots.filter(v => v <= -margin).length / boots.length, lineages: lineages.length, windows: windows.length, B: boots.length };
 }
 /** The window-only bootstrap (lineages averaged first; nonInferiority of stats-ebed), printed beside D-3, never deciding. */
-export function windowOnly(pairs) {
+export function windowOnly(pairs, { B = 2000, seed = 'dur1/d3-window-only' } = {}) {
+  // Lineages are averaged first (one number per case), then windows are resampled: the build spread is hidden, which is
+  // exactly why it is printed beside D-3 and never decides (stats-ebed nonInferiority needs 0/1 outcomes per side, and a
+  // lineage-averaged MH-H outcome is a fraction, so the window-cluster bootstrap is written out here).
   const byCase = new Map();
   for (const p of pairs) { const k = `${p.window}|${p.case}`; if (!byCase.has(k)) byCase.set(k, { window: p.window, h: [], a: p.agent }); byCase.get(k).h.push(p.heal); }
-  const ps = [...byCase.values()].map(v => ({ world: v.window, x: mean(v.h), y: v.a }));
-  return ps.length ? nonInferiority(ps, RULES.D3.margin, { iterations: 2000, minWorlds: 1 }) : null;
+  const byWin = new Map();
+  for (const v of byCase.values()) { if (!byWin.has(v.window)) byWin.set(v.window, []); byWin.get(v.window).push(mean(v.h) - v.a); }
+  const wins = [...byWin.values()];
+  if (!wins.length) return null;
+  const all = wins.flat(), est = mean(all);
+  const r = rng(seed, wins.length);
+  const boots = [];
+  for (let b = 0; b < B; b++) { let s = 0, n = 0; for (let j = 0; j < wins.length; j++) { const w = wins[Math.floor(r.next() * wins.length)]; for (const d of w) { s += d; n += 1; } } boots.push(s / n); }
+  boots.sort((a, c) => a - c);
+  const q = x => boots[Math.min(boots.length - 1, Math.max(0, Math.floor(x * boots.length)))];
+  return { estimate: est, lower: q(0.025), upper: q(0.975), windows: wins.length, cases: all.length, pNI: boots.filter(v => v <= -RULES.D3.margin).length / boots.length, decides: false };
 }
 export function d3({ pairs, medianTtd, holmLevel = 0.05, sDropped = false }) {
   if (!pairs.length) return { verdict: 'NOT RUN', p: 1 };

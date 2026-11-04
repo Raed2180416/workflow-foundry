@@ -32,7 +32,7 @@ export const CANARY_DAYS = 1, ROLLBACK_DAYS = 2;
 // deployment, so this is the oracle-free stand-in for "per change per stream").
 
 export class ContractOwner {
-  constructor({ session, runDir, sealed = null, log = () => {} }) { this.session = session; this.runDir = runDir; this.sealed = sealed; this.log = log; this.announced = new Map(); this.vb = new Map(); this.sessions = []; }
+  constructor({ session, runDir, sealed = null, log = () => {}, practice = PRACTICE }) { this.practice = practice; this.session = session; this.runDir = runDir; this.sealed = sealed; this.log = log; this.announced = new Map(); this.vb = new Map(); this.sessions = []; }
   /** The certified reading of an announced rule change (or a quarantine record, K-2). */
   async forAnnounced(id, bundle, atMs) {
     if (this.announced.has(id)) return this.announced.get(id);
@@ -40,7 +40,7 @@ export class ContractOwner {
     const change = id === 'R1' ? 'R2.2: a fraud review with no usable answer by its deadline no longer cancels the order; it is cleared just after the deadline (orders placed on or after the effective time).'
       : `${S?.label ?? id}`;
     const certBundles = [];
-    for (const p of PRACTICE) certBundles.push(await evidenceBundle(p, { rules: [{ id, effMs: T0_MS }], editions: [], renames: [] }, { sealed: this.sealed }));
+    for (const p of this.practice) certBundles.push(await evidenceBundle(p, { rules: [{ id, effMs: T0_MS }], editions: [], renames: [] }, { sealed: this.sealed }));
     const stale = W => { const w = structuredClone(W); delete w.truth.dur1Eff[id]; return w; };
     let rec = null;
     for (let attempt = 1; attempt <= 2; attempt++) {
@@ -95,7 +95,7 @@ const serial = (k, v) => (k === 'rows' ? undefined : v === Infinity ? 'Infinity'
  * sealed, heal: { session(kind, { scope }) → session config, opusAfter?: true, stale?: ['R1', 'vb'] }, co (ContractOwner),
  * runDir, log, keepRows?, spendFile?, complaintsFor?({ spec, bundle, ref }) → fixed complaints of a world (LD-H) }.
  */
-export async function runStream({ arm, label, start, worlds, sealed = null, heal = null, co = null, runDir, log = () => {}, keepRows = false, spendFile = null, complaintsFor = null }) {
+export async function runStream({ arm, label, start, worlds, sealed = null, heal = null, co = null, runDir, log = () => {}, keepRows = false, spendFile = null, complaintsFor = null, timelineFor = null, regressionW1 = null, practice = PRACTICE }) {
   assertDurSeeds(worlds.map(w => w.seed));
   mkdirSync(runDir, { recursive: true });
   const stream = worlds[0].stream;
@@ -111,6 +111,7 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
   for (const spec of worlds) {
     const bundle = await buildBundle(spec, { sealed });
     if (spec.k === 1) w1 = bundle;
+    else if (!w1 && regressionW1) w1 = await buildBundle(regressionW1, { sealed });   // a fork that starts after W1 (MH-stale) keeps W1 in its regression set
     const ref = await referencePools(bundle);
     if (!ref.control.ok) log(`K-1 WARNING ${bundle.key}: ${ref.control.problems.slice(0, 3).join('; ')}`);
     // C-O for this world's announced rule changes runs once (shared); readingsFor uses it only once it is visible.
@@ -138,7 +139,9 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
         complaints, fromDay, toDay, judgedBefore: extraJudged ?? judgedUpTo(judgedAt, fromDay - 1) });
       return s;
     };
-    let timeline = [{ fromMs: -Infinity, version: current }];
+    // Static comparators with scheduled switches (R-maint(L), R-ceil: rmaint.mjs) pass timelineFor; nothing else does.
+    let timeline = timelineFor && arm === 'static' ? await timelineFor(spec, bundle) : [{ fromMs: -Infinity, version: current }];
+    for (const e of timeline) versions.set(e.version.digest, e.version);
     let run = await runBundle(bundle, { timeline });
     const pushRun = () => wrec.runs.push({ timeline: timeline.map(e => [e.fromMs, e.version.digest]), status: run.status, digest: journalDigest(run.rows), ms: run.ms });
     pushRun();
@@ -230,7 +233,7 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
         // Rule 2: announcements and config changes -> the $0 canary on practice under the visible configuration.
         const newReadings = readingsFor(bundle, T, { co, vbReadings, stale });
         if (res.m4.length) {
-          const sets = await evidenceSets({ bundle, alarmAt: T, w1, sealed });
+          const sets = await evidenceSets({ bundle, alarmAt: T, w1, sealed, practice });
           const failing = [];
           for (const b of sets.practice) {
             const r = await evidenceRun(current, b, { readings: newReadings });
@@ -282,7 +285,7 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
         const open = book.openIncidents().filter(i => i.sessions < cap);
         if (!open.length || !heal) continue;
         if (spentHere() >= LIMITS.usdPerLineageStream) { for (const i of open) i.status = 'budget-stop'; out.budgetStop ??= { k: spec.k, day: d }; continue; }
-        const sets = await evidenceSets({ bundle, alarmAt: T, w1, sealed });
+        const sets = await evidenceSets({ bundle, alarmAt: T, w1, sealed, practice });
         const proactive = open.every(i => i.kind === 'canary');
         const announced = (bundle.announcements ?? []).filter(a => a.at < T).map(a => `- ${a.id} (${a.kind}) published ${isoLocal(a.at)}, effective for orders placed from ${isoLocal(a.effectiveAt)}`).join('\n') || null;
         const rowsByWorld = {};

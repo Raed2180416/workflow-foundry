@@ -215,8 +215,12 @@ export async function journalFindings(bundle, rows, { pools, readings = BASE_REA
   const byOrder = new Map();
   const add = (o, cls) => { if (!byOrder.has(o)) byOrder.set(o, new Set()); byOrder.get(o).add(cls); };
   for (const c of completed) for (const k of contractClassesOf(contracts.get(c))) add(W.truth.cases[c].subject, k.key);
+  // m1 and m3 findings are kept for every order of the world, finished or not: an effect error or a conservation breach
+  // is deployment-visible when it happens (on a history replay every row is before the alarm), whereas the contracts
+  // judge only finished orders. (Build fix 2026-11-04: with completed orders only, the gate could never see a heal of an
+  // m1 incident whose orders were still in flight at the alarm, and rejected the dry run's correct API patch.)
   const m1 = m1Findings(rows);
-  const keep = new Set(completed.map(c => W.truth.cases[c].subject));
+  const keep = only ? new Set(completed.map(c => W.truth.cases[c].subject)) : new Set(Object.values(W.truth.cases).map(t => t.subject).filter(Boolean));
   for (const [o, set] of m1.byOrder) if (keep.has(o)) for (const cls of set) add(o, cls);
   for (const [o, codes] of c1ByOrder(bundle, rows)) if (keep.has(o)) for (const code of codes) add(o, `m3|C1|${code}`);
   return { byOrder, contracts, armErrors: m1.armErrors, completed };
