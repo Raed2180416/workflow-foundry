@@ -1,0 +1,417 @@
+{
+  "schema": "foundry-onboarding-forms/1",
+  "note": "weak: keywords too common to name a card on their own ('approval', 'remind'): a request that matches only weak words gets 'these might be close', never 'this sounds like' (P3 walkthrough B1: 'refunds over $500 need my approval' was told it sounds like expense approvals). field: a plain input the person may fill, not a question (the e-mail signature). How the site presents each frontier-written template (app/core/templates/*.json) as a card and a form. Presentation only: the template's slots, defaults, questions and the question policy stay the authority (app/core/library.mjs resolveSlots). kind: setting = a visible default the person can change; ask = a question whose wrong guess is harmful (harm comes from the template's `ask`); list = rows the person types. siteDefault replaces the template default only to show a question the person can switch off (e.g. the invoice summary). `skip` says what happens if the person does not answer.",
+  "order": [
+    "invoice-chase",
+    "expense-approval",
+    "weekly-report",
+    "lead-triage",
+    "support-deflection",
+    "oncall-digest",
+    "contact-sync"
+  ],
+  "templates": {
+    "invoice-chase": {
+      "card": "Chase unpaid invoices",
+      "summary": "Polite reminders to customers who are late, firmer later. You see every e-mail first.",
+      "keywords": [
+        "invoice",
+        "invoices",
+        "unpaid",
+        "overdue",
+        "late payment",
+        "late payments",
+        "payment",
+        "payments",
+        "remind",
+        "reminder",
+        "reminders",
+        "chase",
+        "dunning",
+        "owe",
+        "owes",
+        "owed",
+        "debtor",
+        "debtors",
+        "collect",
+        "customers who haven't paid",
+        "outstanding",
+        "haven't paid",
+        "have not paid",
+        "not paid",
+        "didn't pay",
+        "late payers"
+      ],
+      "noun": "customers",
+      "effectNoun": {
+        "send": "reminder"
+      },
+      "sheet": "invoices",
+      "slots": {
+        "firstAfterDays": {
+          "kind": "setting",
+          "label": "First reminder",
+          "unit": "days after the due date"
+        },
+        "secondAfterDays": {
+          "kind": "setting",
+          "label": "Second reminder",
+          "unit": "days after the due date (0 means none)"
+        },
+        "finalAfterDays": {
+          "kind": "setting",
+          "label": "Final notice",
+          "unit": "days after the due date (0 means none)"
+        },
+        "signature": {
+          "kind": "field",
+          "label": "How should the e-mails be signed?",
+          "placeholder": "e.g. Sam, Lark & Fern Florist",
+          "help": "If you leave it, they are signed \u201cAccounts team\u201d."
+        },
+        "sendSummary": {
+          "kind": "toggle",
+          "label": "Send me a summary",
+          "siteDefault": true,
+          "offLabel": "No summary"
+        },
+        "summaryTo": {
+          "kind": "ask",
+          "skip": "No summary is sent.",
+          "inputType": "email",
+          "placeholder": "you@yourbusiness.com"
+        }
+      },
+      "notKeywords": [
+        "pay my",
+        "pay our",
+        "pay suppliers",
+        "pay contractors",
+        "pay the",
+        "send invoices",
+        "create invoices",
+        "make invoices",
+        "issue invoices",
+        "charge card",
+        "charge cards",
+        "refund"
+      ],
+      "weak": ["payment", "payments", "remind", "reminder", "reminders", "collect", "outstanding"]
+    },
+    "expense-approval": {
+      "card": "Approve small expenses",
+      "summary": "Approves claims under your limit. Sends the rest to the person who decides.",
+      "keywords": [
+        "expense",
+        "expenses",
+        "claim",
+        "claims",
+        "reimburse",
+        "reimbursement",
+        "receipt",
+        "receipts",
+        "approve",
+        "approval",
+        "spend",
+        "petty cash"
+      ],
+      "noun": "claims",
+      "sheet": "expenses",
+      "decider": "approver",
+      "slots": {
+        "autoApproveUpTo": {
+          "kind": "ask",
+          "label": "Up to what amount should it approve on its own?",
+          "skip": "Nothing is built until you choose a limit.",
+          "inputType": "number",
+          "placeholder": "for example 100"
+        },
+        "approver": {
+          "kind": "ask",
+          "label": "Who decides claims over your limit? (their e-mail)",
+          "skip": "Nothing is built: the bigger claims have to go to someone.",
+          "inputType": "email",
+          "placeholder": "name@yourbusiness.com"
+        },
+        "requireReceipt": {
+          "kind": "setting",
+          "label": "Needs a receipt to be approved on its own"
+        },
+        "notifyEmployees": {
+          "kind": "setting",
+          "label": "Tell people when their claim is approved"
+        }
+      },
+      "notKeywords": [
+        "pay employees",
+        "payroll",
+        "refund",
+        "refunds",
+        "customer refund",
+        "chargeback"
+      ],
+      "weak": ["approve", "approval", "spend"]
+    },
+    "weekly-report": {
+      "card": "Weekly progress report",
+      "summary": "Counts what's done, open and blocked, and e-mails one person.",
+      "keywords": [
+        "weekly",
+        "week",
+        "report",
+        "status report",
+        "progress",
+        "progress report",
+        "what we finished",
+        "tracker",
+        "jira",
+        "linear",
+        "asana",
+        "standup",
+        "team update"
+      ],
+      "noun": "items",
+      "sheet": "tracker",
+      "slots": {
+        "team": {
+          "kind": "setting",
+          "label": "Team name"
+        },
+        "recipient": {
+          "kind": "ask",
+          "skip": "Nothing is built: the report has to go to someone.",
+          "inputType": "email",
+          "placeholder": "name@yourbusiness.com"
+        },
+        "listOpen": {
+          "kind": "setting",
+          "label": "List the items still open"
+        },
+        "listBlocked": {
+          "kind": "setting",
+          "label": "List the blocked items"
+        }
+      },
+      "notKeywords": [
+        "weather",
+        "stock price"
+      ],
+      "weak": ["week", "weekly", "report", "progress", "tracker"]
+    },
+    "lead-triage": {
+      "card": "Route new leads",
+      "summary": "Sends each new lead to the right salesperson.",
+      "keywords": [
+        "lead",
+        "leads",
+        "prospect",
+        "prospects",
+        "sales",
+        "salesperson",
+        "salespeople",
+        "route",
+        "assign",
+        "inquiry",
+        "inquiries",
+        "enquiry",
+        "web form",
+        "contact form"
+      ],
+      "noun": "leads",
+      "sheet": "leads",
+      "slots": {
+        "rules": {
+          "kind": "list",
+          "label": "Who gets which leads (optional)",
+          "help": "Each row sends matching leads to one person. Leads no row covers go to the address below.",
+          "addLabel": "Add a rule",
+          "fields": {
+            "field": {
+              "label": "When",
+              "choices": {
+                "region": "the region is",
+                "country": "the country is",
+                "source": "the source is",
+                "companySize": "the company size is at least",
+                "budget": "the budget is at least"
+              }
+            },
+            "op": {
+              "hidden": true
+            },
+            "value": {
+              "label": "this"
+            },
+            "assignTo": {
+              "label": "send it to (e-mail)",
+              "ask": true
+            }
+          }
+        },
+        "defaultAssignee": {
+          "kind": "ask",
+          "skip": "Nothing is built: every lead has to go to someone.",
+          "inputType": "email",
+          "placeholder": "sales@yourbusiness.com"
+        }
+      },
+      "notKeywords": [
+        "buy leads",
+        "scrape",
+        "find leads",
+        "cold email",
+        "cold e-mail"
+      ],
+      "weak": ["route", "assign", "sales"]
+    },
+    "support-deflection": {
+      "card": "Answer common support questions",
+      "summary": "Replies with your own answers. Sends the rest to a person.",
+      "keywords": [
+        "support",
+        "ticket",
+        "tickets",
+        "helpdesk",
+        "help desk",
+        "faq",
+        "question",
+        "questions",
+        "answer",
+        "reply",
+        "replies",
+        "customer service",
+        "deflect",
+        "zendesk"
+      ],
+      "noun": "tickets",
+      "sheet": "tickets",
+      "slots": {
+        "answers": {
+          "kind": "list",
+          "label": "Your answers (optional)",
+          "help": "When a ticket mentions the word, the customer gets your reply. Urgent tickets always go to a person.",
+          "addLabel": "Add an answer",
+          "fields": {
+            "keyword": {
+              "label": "When a ticket mentions"
+            },
+            "reply": {
+              "label": "reply with",
+              "multiline": true
+            }
+          }
+        },
+        "escalateTo": {
+          "kind": "ask",
+          "skip": "Nothing is built: the other tickets have to go to someone.",
+          "inputType": "email",
+          "placeholder": "support@yourbusiness.com"
+        },
+        "signature": {
+          "kind": "setting",
+          "label": "Signed"
+        }
+      },
+      "notKeywords": [
+        "write answers with ai",
+        "translate"
+      ],
+      "weak": ["question", "questions", "answer", "reply", "replies"]
+    },
+    "oncall-digest": {
+      "card": "On-call alert digest",
+      "summary": "One summary of unresolved alerts to a chat channel.",
+      "keywords": [
+        "alert",
+        "alerts",
+        "on-call",
+        "oncall",
+        "incident",
+        "incidents",
+        "pager",
+        "monitoring",
+        "digest",
+        "outage",
+        "slack channel",
+        "ops"
+      ],
+      "noun": "alerts",
+      "sheet": "alerts",
+      "slots": {
+        "channel": {
+          "kind": "ask",
+          "skip": "Nothing is built: the digest has to go to a channel.",
+          "inputType": "text",
+          "placeholder": "#ops"
+        },
+        "windowHours": {
+          "kind": "setting",
+          "label": "Look back",
+          "unit": "hours"
+        },
+        "minSeverity": {
+          "kind": "setting",
+          "label": "Lowest severity to include"
+        },
+        "page": {
+          "kind": "setting",
+          "label": "E-mail someone about critical alerts nobody acknowledged"
+        },
+        "pageTo": {
+          "kind": "ask",
+          "skip": "Nobody is e-mailed.",
+          "inputType": "email",
+          "placeholder": "oncall@yourbusiness.com"
+        }
+      },
+      "notKeywords": [
+        "restart",
+        "fix the server",
+        "reboot"
+      ],
+      "weak": ["digest", "ops", "monitoring"]
+    },
+    "contact-sync": {
+      "card": "Keep the newsletter list in step",
+      "summary": "Finds contacts missing from your list and tells you.",
+      "keywords": [
+        "newsletter",
+        "mailing list",
+        "contacts",
+        "crm",
+        "subscribers",
+        "sync",
+        "in sync",
+        "in step",
+        "mailchimp",
+        "audience",
+        "missing contacts"
+      ],
+      "noun": "contacts",
+      "sheet": "crm",
+      "slots": {
+        "onlyTag": {
+          "kind": "setting",
+          "label": "Only contacts tagged",
+          "emptyLabel": "all contacts"
+        },
+        "addMissing": {
+          "kind": "setting",
+          "label": "Add the missing contacts to the list (otherwise only report them)"
+        },
+        "reportTo": {
+          "kind": "ask",
+          "skip": "Nothing is built: the report has to go to someone.",
+          "inputType": "email",
+          "placeholder": "you@yourbusiness.com"
+        }
+      },
+      "notKeywords": [
+        "send the newsletter",
+        "write the newsletter",
+        "post on"
+      ],
+      "weak": ["contacts", "sync", "crm", "audience"]
+    }
+  }
+}

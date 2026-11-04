@@ -490,6 +490,18 @@ node bin/foundry.mjs generate --task "$(cat examples/batch-task.md)" --domain so
   --suite examples/batch-suite.json --rounds 3 --workspace /tmp/fdemo
 ```
 
+The onboarding app (cards, the local page and the coding-agent connection; development build in this
+branch, see [research/onboarding-20261021/DESIGN.md](research/onboarding-20261021/DESIGN.md)) has
+its own entry point, `app/cli.mjs`. Nothing in it calls a model unless `--builder` names one.
+
+```sh
+npm ci --ignore-scripts --no-audit --no-fund   # the agent connection needs @modelcontextprotocol/sdk
+node app/cli.mjs open                  # starts the page (or opens the one already running) on 127.0.0.1
+node app/cli.mjs connect               # prints the one line for Claude Code, Codex or Cursor
+node app/cli.mjs doctor                # what works on this computer, in plain words
+node app/cli.mjs check-evidence FILE   # re-checks an evidence file's chains on its own
+```
+
 Run `node bin/foundry.mjs help` for the full CLI, which also covers trials,
 repair requests, `outcome-*` commands, `construct-*` experiments, evaluate,
 propose/apply and export. The repair walkthrough is in

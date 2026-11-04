@@ -1,0 +1,223 @@
+/* Foundry onboarding site. Tokens from research/onboarding-20261021/SPEC.md §13 (contrast checked by app/site/test/tokens-contrast.test.mjs).
+   No web fonts, no images, no inline styles (CSP style-src 'self'). Status is never colour alone: a word and a mark go with it. */
+:root {
+  --bg: #fbfbfa; --surface: #ffffff; --surface-2: #f2f1ec; --fg: #1d1d1b; --muted: #5c5a54; --line: #dcd9d2; --line-strong: #858279;
+  --accent: #2a56c6; --on-accent: #ffffff; --ok: #1f7a3d; --bad: #b42318; --wait: #855600; --paid: #5b3fb5; --practice: #0b6870; --focus: #2a56c6;
+  --radius: 10px; --radius-control: 8px; --gutter: 16px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --surface: #20201e; --surface-2: #2a2a27; --fg: #ecebe6; --muted: #a9a7a0; --line: #3a3936; --line-strong: #85827a;
+    --accent: #8fb0ff; --on-accent: #10131a; --ok: #5cc37f; --bad: #ff8a7e; --wait: #e2b04a; --paid: #b9a6ff; --practice: #5fd0d6; --focus: #8fb0ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161615; --surface: #20201e; --surface-2: #2a2a27; --fg: #ecebe6; --muted: #a9a7a0; --line: #3a3936; --line-strong: #85827a;
+  --accent: #8fb0ff; --on-accent: #10131a; --ok: #5cc37f; --bad: #ff8a7e; --wait: #e2b04a; --paid: #b9a6ff; --practice: #5fd0d6; --focus: #8fb0ff;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; overflow-wrap: break-word; }
+h1, h2, h3 { line-height: 1.25; margin: 0 0 8px; }
+h1 { font-size: 32px; letter-spacing: -0.01em; margin-top: 8px; }
+h2 { font-size: 24px; margin-top: 32px; }
+h3, .h3 { font-size: 20px; }
+h2.h3 { margin-top: 0; }
+/* Focus moves to the page heading on every route change (screen readers start there); a heading is not a control, so no ring. */
+h1[tabindex="-1"]:focus, h1[tabindex="-1"]:focus-visible { outline: none; }
+p, ul, ol { margin: 0 0 12px; }
+/* Line length at most 68 characters (SPEC §13.2; UX review m21): running text, wherever it sits. Tables, code and the grids of cards keep
+   the page's width; a card's own text is narrower than this anyway. */
+main p, main li, main dd, main dt, main legend, main label, main summary, .notice p { max-width: 68ch; }
+ul, ol { padding-left: 24px; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+code, pre, kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 15px; }
+pre { white-space: pre-wrap; word-break: break-word; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-control); padding: 12px; margin: 8px 0 12px; max-width: 100%; overflow-x: auto; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { .fade { animation: fade 150ms ease-out; } @keyframes fade { from { opacity: 0; } to { opacity: 1; } } }
+
+/* ---------- shell ---------- */
+.skip { position: absolute; left: 8px; top: -60px; background: var(--surface); color: var(--accent); padding: 10px 14px; border-radius: var(--radius-control); border: 2px solid var(--accent); z-index: 10; }
+.skip:focus { top: 8px; }
+.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+.top-inner { max-width: 1040px; margin: 0 auto; padding: 10px var(--gutter); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand { font-weight: 700; font-size: 20px; color: var(--fg); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+.brand-mark { display: inline-block; width: 22px; height: 22px; border-radius: 6px; background: var(--accent); }
+.nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+.nav a { color: var(--fg); text-decoration: none; padding: 8px 10px; border-radius: var(--radius-control); min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+.nav a:hover { background: var(--surface-2); }
+.nav a[aria-current="page"] { background: var(--surface-2); font-weight: 600; box-shadow: inset 0 -3px 0 var(--accent); }
+.count { display: inline-block; min-width: 24px; padding: 0 7px; border-radius: 999px; background: var(--wait); color: var(--bg); font-size: 14px; font-weight: 700; text-align: center; line-height: 24px; }
+.menu-button { display: none; margin-left: auto; }
+.help-link { font-weight: 600; }
+main { max-width: 1040px; margin: 0 auto; padding: 16px var(--gutter) 64px; min-height: 60vh; }
+main.narrow > * { max-width: 720px; }
+main.narrow > .wide { max-width: none; }
+footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 15px; }
+.footer-inner { max-width: 1040px; margin: 0 auto; padding: 16px var(--gutter) 32px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.footer-inner a { min-height: 24px; display: inline-flex; align-items: center; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 767px) {
+  h1 { font-size: 26px; }
+  h2 { font-size: 21px; }
+  .menu-button { display: inline-flex; }
+  .nav { display: none; width: 100%; flex-direction: column; align-items: stretch; margin-left: 0; }
+  .nav.open { display: flex; }
+  .nav a { width: 100%; }
+}
+
+/* ---------- text helpers ---------- */
+.lead { font-size: 20px; color: var(--fg); max-width: 68ch; }
+.muted { color: var(--muted); }
+.small { font-size: 15px; }
+.prose { max-width: 68ch; }
+.ok-text { color: var(--ok); } .bad-text { color: var(--bad); } .wait-text { color: var(--wait); } .practice-text { color: var(--practice); }
+
+/* ---------- controls ---------- */
+button, .button { font: inherit; font-size: 17px; min-height: 44px; min-width: 44px; padding: 9px 18px; border-radius: var(--radius-control); border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--fg); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; line-height: 1.3; }
+button:hover, .button:hover { background: var(--surface-2); }
+button.primary, .button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+button.primary:hover, .button.primary:hover { filter: brightness(1.08); background: var(--accent); }
+button.link { background: none; border: none; color: var(--accent); text-decoration: underline; padding: 4px 6px; min-height: 24px; min-width: 24px; }
+button.small, .button.small { min-height: 32px; padding: 4px 12px; font-size: 15px; }
+button[disabled], button[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
+button[aria-busy="true"] { cursor: progress; }
+/* Working: a visible mark next to the label, not only a cursor (UX review m9). It turns where motion is welcome and stays still otherwise. */
+button[aria-busy="true"]::after, .button[aria-busy="true"]::after { content: ""; width: 0.9em; height: 0.9em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; flex: none; }
+@media (prefers-reduced-motion: no-preference) { button[aria-busy="true"]::after, .button[aria-busy="true"]::after { animation: spin 0.8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } } }
+.loading { max-width: 1040px; margin: 8px auto 0; padding: 0 var(--gutter); color: var(--muted); font-weight: 600; }
+.loading:focus { outline: none; } /* it holds the focus while a page loads; it is not a control */
+main[aria-busy="true"] { opacity: 0.55; }
+.actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 16px 0; }
+@media (max-width: 767px) { .actions.stack > button, .actions.stack > .button { width: 100%; } }
+label { font-weight: 600; display: block; margin-bottom: 4px; }
+input[type="text"], input[type="email"], input[type="number"], input[type="password"], input[type="search"], select, textarea {
+  font: inherit; font-size: 17px; width: 100%; max-width: 32rem; padding: 10px 12px; min-height: 44px; border-radius: var(--radius-control);
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--fg); }
+textarea { min-height: 88px; max-width: 40rem; }
+input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; flex: none; }
+input[aria-invalid="true"] { border-color: var(--bad); border-width: 2px; }
+.check-row { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; margin: 8px 0; min-height: 24px; }
+.check-row > span { padding-top: 0; }
+fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px 8px; margin: 16px 0; }
+legend { font-weight: 600; padding: 0 6px; }
+.field { margin: 16px 0 20px; }
+.field-help { color: var(--muted); font-size: 15px; margin: 6px 0 0; max-width: 68ch; }
+.field-help b { color: var(--fg); font-weight: 600; }
+.field-error { color: var(--bad); font-weight: 600; margin: 6px 0 0; }
+
+/* ---------- surfaces ---------- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin: 12px 0; }
+.card h3 { margin-bottom: 4px; }
+.card.emph { border-color: var(--line-strong); border-width: 2px; }
+.card.practice { border-left: 6px solid var(--practice); }
+.card.waiting { border-left: 6px solid var(--wait); }
+.card.done { border-left: 6px solid var(--ok); }
+.card.problem { border-left: 6px solid var(--bad); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.grid > .card, .grid > li > .card { margin: 0; display: flex; flex-direction: column; }
+.grid > .card .actions, .grid > li > .card .actions { margin-top: auto; padding-top: 8px; margin-bottom: 0; }
+ul.grid { list-style: none; padding: 0; margin: 0 0 12px; }
+ul.grid > li { display: flex; flex-direction: column; max-width: none; }
+ul.grid > li > .card { flex: 1; }
+.inset { background: var(--surface-2); border-radius: var(--radius); padding: 12px 16px; margin: 12px 0; }
+.strip { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); margin: 16px 0; }
+.strip p { margin: 0; }
+.banner { padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--surface); margin: 12px 0; }
+.banner.ok { border-color: var(--ok); }
+.banner.wait { border-color: var(--wait); }
+.banner.bad { border-color: var(--bad); }
+.box-limit { border: 2px dashed var(--line-strong); border-radius: var(--radius); padding: 12px 16px; margin: 16px 0; }
+.split { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 900px) { .split { grid-template-columns: 3fr 2fr; } }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 12px 0; }
+.facts dt { font-weight: 600; } .facts dd { margin: 0; }
+@media (max-width: 480px) { .facts { grid-template-columns: 1fr; } .facts dd { margin-bottom: 6px; } }
+.kv { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; }
+.table-wrap { width: 100%; overflow-x: auto; }
+details { margin: 8px 0; }
+/* display:flex removes the browser's disclosure triangle, so the summary draws its own: a collapsed section never looks like plain text
+   (P2 and P3 walkthroughs: "It won't:" looked like an empty heading). */
+details > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "▸"; display: inline-block; width: 1em; transition: transform 120ms ease-out; }
+details[open] > summary::before { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { details > summary::before { transition: none; } }
+
+/* ---------- chips and marks ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; padding: 0; list-style: none; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 2px 10px; font-size: 15px; background: var(--surface); color: var(--fg); }
+.status { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 10px; font-size: 14px; font-weight: 600; border: 1px solid currentColor; white-space: nowrap; }
+.status[data-chip="works"] { color: var(--ok); }
+.status[data-chip="preview"] { color: var(--wait); }
+.status[data-chip="planned"] { color: var(--muted); }
+.status[data-chip="undecided"] { color: var(--paid); }
+.status[data-chip="decided"] { color: var(--ok); }
+.status[data-chip="limit"] { color: var(--bad); }
+.status[data-chip="notRetested"] { color: var(--wait); }
+.status[data-chip="research"], .status[data-chip="literature"] { color: var(--muted); }
+.mark-ok { color: var(--ok); font-weight: 700; } .mark-bad { color: var(--bad); font-weight: 700; } .mark-wait { color: var(--wait); font-weight: 700; }
+.checks { list-style: none; padding: 0; margin: 8px 0 12px; }
+.checks li { display: grid; grid-template-columns: 28px 1fr; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.checks li:last-child { border-bottom: none; }
+.checks .how { grid-column: 2; color: var(--muted); font-size: 15px; }
+.paid { display: inline-flex; align-items: center; gap: 4px; color: var(--paid); border: 1px solid var(--paid); background: var(--surface); border-radius: 999px; padding: 2px 10px; font-size: 14px; font-weight: 600; min-height: 28px; cursor: pointer; }
+.paid:hover { background: var(--surface-2); }
+.paid-note { border-left: 4px solid var(--paid); padding: 8px 12px; margin: 8px 0; background: var(--surface-2); border-radius: 0 var(--radius-control) var(--radius-control) 0; }
+.pretend { color: var(--practice); font-weight: 600; }
+
+/* ---------- step marker ---------- */
+.stepper { display: flex; flex-wrap: wrap; gap: 6px 14px; list-style: none; padding: 0; margin: 4px 0 12px; font-size: 15px; color: var(--muted); }
+.stepper li { display: inline-flex; align-items: center; gap: 6px; }
+.stepper li[aria-current="step"] { color: var(--fg); font-weight: 700; }
+.stepper li.done { color: var(--ok); }
+
+/* ---------- items to approve ---------- */
+.items { list-style: none; padding: 0; margin: 12px 0; counter-reset: item; }
+.items > li { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin: 10px 0; background: var(--surface); }
+.items > li .head { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 16px; }
+.items > li pre { max-height: none; }
+.decision { position: static; }
+
+/* ---------- drop zone ---------- */
+.drop { border: 2px dashed var(--line-strong); border-radius: var(--radius); padding: 18px; background: var(--surface); margin: 12px 0; }
+.drop.over { border-color: var(--accent); background: var(--surface-2); }
+.drop input[type="file"] { font: inherit; font-size: 16px; max-width: 100%; }
+.drop input[type="file"]::file-selector-button { font: inherit; min-height: 44px; padding: 8px 16px; border-radius: var(--radius-control); border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); margin-right: 12px; cursor: pointer; }
+.mapper { display: grid; grid-template-columns: 1fr; gap: 4px 16px; }
+.mapper .samples { color: var(--muted); font-size: 15px; margin: 2px 0 12px; }
+
+/* ---------- snippet ---------- */
+.snippet { position: relative; }
+.snippet pre { padding-right: 12px; }
+.snippet .actions { margin: 4px 0 16px; }
+
+/* ---------- error panel ---------- */
+.error-panel { border: 2px solid var(--bad); border-radius: var(--radius); padding: 12px 16px; background: var(--surface); margin: 16px 0; }
+.error-panel h2, .error-panel h3 { color: var(--bad); font-size: 20px; margin-top: 0; }
+.error-panel dl { margin: 0; } .error-panel dt { font-weight: 700; margin-top: 8px; } .error-panel dd { margin: 0; }
+
+/* ---------- notice (something waits for you) ---------- */
+.notice { max-width: 1040px; margin: 8px auto 0; padding: 0 var(--gutter); }
+.notice p { border: 1px solid var(--wait); border-left: 6px solid var(--wait); border-radius: var(--radius); padding: 10px 14px; background: var(--surface); margin: 0; }
+.copy-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rows-table td, .rows-table th { font-size: 15px; }
+
+/* ---------- toast ---------- */
+.toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: var(--radius-control); font-weight: 600; z-index: 20; max-width: calc(100% - 32px); pointer-events: none; }
+/* When the toast would cover the focused control, it sits at the top instead (UX review m20; WCAG 2.4.11). */
+.toast.top { bottom: auto; top: 16px; }
+.toast[hidden] { display: none; }
+
+@media print { .top, footer, .actions { display: none; } }

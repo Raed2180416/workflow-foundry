@@ -1,0 +1,179 @@
+{
+  "journey": "p2-own-data",
+  "persona": "p2-own-data",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Start",
+      "steps": 1,
+      "asks": 0,
+      "tabs": 9,
+      "screens": 0,
+      "ms": 879
+    },
+    {
+      "action": "fill",
+      "ask": true,
+      "decision": false,
+      "target": "Which e-mail address should get the summary?",
+      "steps": 2,
+      "asks": 1,
+      "tabs": 18,
+      "screens": 0.01,
+      "ms": 1297
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Test it with pretend customers",
+      "steps": 3,
+      "asks": 1,
+      "tabs": 24,
+      "screens": 0.74,
+      "ms": 1631
+    },
+    {
+      "n": 1,
+      "shot": "01-checked-pretend.jpg",
+      "slug": "checked-pretend",
+      "note": null,
+      "steps": 3,
+      "asks": 1,
+      "ms": 3370,
+      "route": "#/checked/d677117d-727f-425d-be2a-ecb19a46c1bf",
+      "h1": "Test passed. Nothing real was made or sent.",
+      "focus": "h1 Test passed. Nothing real was made or sent.",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Test passed. Nothing real was made or sent.\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: On pretend data it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.\n  - paragraph: \"Next: turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.\"\n  - link \"Go to Turn it on\":\n    - /url: \"#/checked/d677117d-727f-425d-be2a-ecb19a46c1bf\"\n  - link \"Change settings\":\n    - /url: \"#/make/invoice-chase\"\n  - paragraph: \"Tested on: pretend customers that come with this automation.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - group: ▸ Show all 4 in full\n  - region \"Try it on your real list first (optional)\":\n    - heading \"Try it on your real list first (optional)\" [level=2]\n    - paragraph: Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.\n    - button \"Test with my own list\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n  - article \"Turn on 'Chase unpaid invoices' (version 1)?\":\n    - heading \"Turn on 'Chase unpaid invoices' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read your invoice list and pick the invoices still open (not paid, not disputed)\n      - listitem: Write a friendly reminder once an invoice is 7 days late\n      - listitem: Write a firmer reminder once it is 14 days late\n      - listitem: Write a last reminder once it is 30 days late\n      - listitem: \"Make each kind of reminder at most once per invoice: it remembers what it already made\"\n      - listitem: Write a summary for me@example.com of the invoices that are late\n      - listitem: Show you every e-mail in full before any is made. You send them yourself, from your own mail app\n      - listitem: Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change your invoice list\n      - listitem: \"Send anything: it writes drafts, and you send them\"\n      - listitem: Write to anyone except the address on each invoice and the summary address you gave (me@example.com)\n      - listitem: \"Run by itself: you start each run\"\n    - heading \"How you'll know it worked\" [level=3]\n    - list:\n      - listitem: \"Passed: Every late, open invoice got the reminder its lateness calls for, or already had it\"\n      - listitem: \"Passed: Exactly the planned reminders were drafted, word for word (checked by re-reading the drafts)\"\n      - listitem: \"Passed: The summary for me@example.com was drafted\"\n      - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written this run, word for word\"\n    - group: ▸ How Foundry checks\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 4 of 4 checks\n    - term: \"Who decides:\"\n    - definition: you\n    - term: \"What it needs to go live:\"\n    - definition: your invoice list\n    - button \"Turn it on\"\n    - link \"Change settings\":\n      - /url: \"#/make/invoice-chase\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens.\n  - paragraph: \"Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.\"\n  - button \"Remove this draft\""
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Test with my own list",
+      "steps": 4,
+      "asks": 1,
+      "tabs": 36,
+      "screens": 0.74,
+      "ms": 3594
+    },
+    {
+      "n": 2,
+      "shot": "02-own-list-open.jpg",
+      "slug": "own-list-open",
+      "note": null,
+      "steps": 4,
+      "asks": 1,
+      "ms": 4318,
+      "route": "#/checked/d677117d-727f-425d-be2a-ecb19a46c1bf",
+      "h1": "Test passed. Nothing real was made or sent.",
+      "focus": "input#file-12 ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Test passed. Nothing real was made or sent.\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: On pretend data it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.\n  - paragraph: \"Next: turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.\"\n  - link \"Go to Turn it on\":\n    - /url: \"#/checked/d677117d-727f-425d-be2a-ecb19a46c1bf\"\n  - link \"Change settings\":\n    - /url: \"#/make/invoice-chase\"\n  - paragraph: \"Tested on: pretend customers that come with this automation.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - group: ▸ Show all 4 in full\n  - region \"Try it on your real list first (optional)\":\n    - heading \"Try it on your real list first (optional)\" [level=2]\n    - paragraph: Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.\n    - button \"Test with my own list\" [expanded]\n    - heading \"Your invoice list\" [level=3]\n    - text: Choose your invoice list (a CSV file)\n    - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n    - button \"Choose your invoice list (a CSV file)\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n  - article \"Turn on 'Chase unpaid invoices' (version 1)?\":\n    - heading \"Turn on 'Chase unpaid invoices' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read your invoice list and pick the invoices still open (not paid, not disputed)\n      - listitem: Write a friendly reminder once an invoice is 7 days late\n      - listitem: Write a firmer reminder once it is 14 days late\n      - listitem: Write a last reminder once it is 30 days late\n      - listitem: \"Make each kind of reminder at most once per invoice: it remembers what it already made\"\n      - listitem: Write a summary for me@example.com of the invoices that are late\n      - listitem: Show you every e-mail in full before any is made. You send them yourself, from your own mail app\n      - listitem: Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change your invoice list\n      - listitem: \"Send anything: it writes drafts, and you send them\"\n      - listitem: Write to anyone except the address on each invoice and the summary address you gave (me@example.com)\n      - listitem: \"Run by itself: you start each run\"\n    - heading \"How you'll know it worked\" [level=3]\n    - list:\n      - listitem: \"Passed: Every late, open invoice got the reminder its lateness calls for, or already had it\"\n      - listitem: \"Passed: Exactly the planned reminders were drafted, word for word (checked by re-reading the drafts)\"\n      - listitem: \"Passed: The summary for me@example.com was drafted\"\n      - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written this run, word for word\"\n    - group: ▸ How Foundry checks\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 4 of 4 checks\n    - term: \"Who decides:\"\n    - definition: you\n    - term: \"What it needs to go live:\"\n    - definition: your invoice list\n    - button \"Turn it on\"\n    - link \"Change settings\":\n      - /url: \"#/make/invoice-chase\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens.\n  - paragraph: \"Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.\"\n  - button \"Remove this draft\""
+    },
+    {
+      "action": "upload",
+      "ask": true,
+      "decision": false,
+      "target": "Choose your invoice list (a CSV file)",
+      "steps": 5,
+      "asks": 2,
+      "tabs": 37,
+      "screens": 0.76,
+      "ms": 4452
+    },
+    {
+      "n": 3,
+      "shot": "03-own-columns.jpg",
+      "slug": "own-columns",
+      "note": null,
+      "steps": 5,
+      "asks": 2,
+      "ms": 4944,
+      "route": "#/checked/d677117d-727f-425d-be2a-ecb19a46c1bf",
+      "h1": "Test passed. Nothing real was made or sent.",
+      "focus": "input#file-12 ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Test passed. Nothing real was made or sent.\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: On pretend data it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.\n  - paragraph: \"Next: turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.\"\n  - link \"Go to Turn it on\":\n    - /url: \"#/checked/d677117d-727f-425d-be2a-ecb19a46c1bf\"\n  - link \"Change settings\":\n    - /url: \"#/make/invoice-chase\"\n  - paragraph: \"Tested on: pretend customers that come with this automation.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - group: ▸ Show all 4 in full\n  - region \"Try it on your real list first (optional)\":\n    - heading \"Try it on your real list first (optional)\" [level=2]\n    - paragraph: Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.\n    - button \"Test with my own list\" [expanded]\n    - heading \"Your invoice list\" [level=3]\n    - text: Choose your invoice list (a CSV file)\n    - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n    - button \"Choose your invoice list (a CSV file)\"\n    - paragraph: Found 6 invoices.\n    - text: Which column is the invoice number?\n    - combobox \"Which column is the invoice number?\":\n      - option \"Invoice No.\" [selected]\n      - option \"Client\"\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\"\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: INV-2041, INV-2042, INV-2043\"\n    - text: Which column is the customer name?\n    - combobox \"Which column is the customer name?\":\n      - option \"Invoice No.\"\n      - option \"Client\" [selected]\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\"\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: Bramble Cafe, Northfield Gym, Lark & Fern Florist\"\n    - text: Which column is the customer's e-mail address?\n    - combobox \"Which column is the customer's e-mail address?\":\n      - option \"Invoice No.\"\n      - option \"Client\"\n      - option \"Contact email\" [selected]\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\"\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: accounts@bramble-cafe.example, billing@northfield-gym.example, hello@larkfern.example\"\n    - text: Which column is the amount still owed?\n    - combobox \"Which column is the amount still owed?\":\n      - option \"Invoice No.\"\n      - option \"Client\"\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\" [selected]\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: 1,240.00, 480.00, 75.50\"\n    - text: Which column is the due date?\n    - combobox \"Which column is the due date?\":\n      - option \"Invoice No.\"\n      - option \"Client\"\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\" [selected]\n      - option \"Amount due (EUR)\"\n      - option \"Status\"\n      - option \"Notes\"\n    - paragraph: \"For example: 03/10/2026, 10/10/2026, 01/09/2026\"\n    - text: Which column is the status?\n    - combobox \"Which column is the status?\":\n      - option \"Invoice No.\"\n      - option \"Client\"\n      - option \"Contact email\"\n      - option \"Issued\"\n      - option \"Due date\"\n      - option \"Amount due (EUR)\"\n      - option \"Status\" [selected]\n      - option \"Notes\"\n    - paragraph: \"For example: Open, Open, Open\"\n    - paragraph: \"Foundry keeps only the columns above. It leaves out: Issued, Notes.\"\n    - group \"Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\":\n      - text: Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\n      - paragraph: \"Why Foundry asks: Your file writes dates both ways round, so the due date could be wrong by months. Foundry will not guess it. If you skip: Nothing is imported until you choose.\"\n      - radio \"The 3rd of October 2026 (day first)\"\n      - text: The 3rd of October 2026 (day first)\n      - radio \"March 10th, 2026 (month first)\"\n      - text: March 10th, 2026 (month first)\n    - button \"Test with this list\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n  - article \"Turn on 'Chase unpaid invoices' (version 1)?\":\n    - heading \"Turn on 'Chase unpaid invoices' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read your invoice list and pick the invoices still open (not paid, not disputed)\n      - listitem: Write a friendly reminder once an invoice is 7 days late\n      - listitem: Write a firmer reminder once it is 14 days late\n      - listitem: Write a last reminder once it is 30 days late\n      - listitem: \"Make each kind of reminder at most once per invoice: it remembers what it already made\"\n      - listitem: Write a summary for me@example.com of the invoices that are late\n      - listitem: Show you every e-mail in full before any is made. You send them yourself, from your own mail app\n      - listitem: Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change your invoice list\n      - listitem: \"Send anything: it writes drafts, and you send them\"\n      - listitem: Write to anyone except the address on each invoice and the summary address you gave (me@example.com)\n      - listitem"
+    },
+    {
+      "action": "choose",
+      "ask": true,
+      "decision": false,
+      "target": "The 3rd of October 2026 (day first)",
+      "steps": 6,
+      "asks": 3,
+      "tabs": 44,
+      "screens": 2.07,
+      "ms": 5105
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Test with this list",
+      "steps": 7,
+      "asks": 3,
+      "tabs": 46,
+      "screens": 2.2,
+      "ms": 5311
+    },
+    {
+      "n": 4,
+      "shot": "04-tested-on-yours.jpg",
+      "slug": "tested-on-yours",
+      "note": null,
+      "steps": 7,
+      "asks": 3,
+      "ms": 6963,
+      "route": "#/checked/d677117d-727f-425d-be2a-ecb19a46c1bf",
+      "h1": "Test passed. Nothing real was made or sent.",
+      "focus": "h1 Test passed. Nothing real was made or sent.",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Test passed. Nothing real was made or sent.\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: On your own list it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.\n  - paragraph: \"Next: turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.\"\n  - link \"Go to Turn it on\":\n    - /url: \"#/checked/d677117d-727f-425d-be2a-ecb19a46c1bf\"\n  - link \"Change settings\":\n    - /url: \"#/make/invoice-chase\"\n  - paragraph: \"Tested on: your own list.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - group: ▸ Show all 4 in full\n  - region \"Try it on your real list first (optional)\":\n    - heading \"Try it on your real list first (optional)\" [level=2]\n    - paragraph: Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.\n    - button \"Test with my own list\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n  - article \"Turn on 'Chase unpaid invoices' (version 1)?\":\n    - heading \"Turn on 'Chase unpaid invoices' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read your invoice list and pick the invoices still open (not paid, not disputed)\n      - listitem: Write a friendly reminder once an invoice is 7 days late\n      - listitem: Write a firmer reminder once it is 14 days late\n      - listitem: Write a last reminder once it is 30 days late\n      - listitem: \"Make each kind of reminder at most once per invoice: it remembers what it already made\"\n      - listitem: Write a summary for me@example.com of the invoices that are late\n      - listitem: Show you every e-mail in full before any is made. You send them yourself, from your own mail app\n      - listitem: Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change your invoice list\n      - listitem: \"Send anything: it writes drafts, and you send them\"\n      - listitem: Write to anyone except the address on each invoice and the summary address you gave (me@example.com)\n      - listitem: \"Run by itself: you start each run\"\n    - heading \"How you'll know it worked\" [level=3]\n    - list:\n      - listitem: \"Passed: Every late, open invoice got the reminder its lateness calls for, or already had it\"\n      - listitem: \"Passed: Exactly the planned reminders were drafted, word for word (checked by re-reading the drafts)\"\n      - listitem: \"Passed: The summary for me@example.com was drafted\"\n      - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written this run, word for word\"\n    - group: ▸ How Foundry checks\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: your own list, passed 4 of 4 checks\n    - term: \"Who decides:\"\n    - definition: you\n    - term: \"What it needs to go live:\"\n    - definition: your invoice list\n    - button \"Turn it on\"\n    - link \"Change settings\":\n      - /url: \"#/make/invoice-chase\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens.\n  - paragraph: \"Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.\"\n  - button \"Remove this draft\""
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {
+    "ownTested": {
+      "steps": 7,
+      "asks": 3,
+      "tabs": 46,
+      "screens": 2.2,
+      "decisions": 0,
+      "ms": 6515
+    }
+  },
+  "a11y": [],
+  "refusals": [],
+  "focusLost": [],
+  "totalSteps": 7,
+  "totalAsks": 3,
+  "totalTabs": 46,
+  "totalScreens": 2.2,
+  "totalDecisions": 0,
+  "ms": 6963,
+  "shots": [
+    "01-checked-pretend.jpg",
+    "02-own-list-open.jpg",
+    "03-own-columns.jpg",
+    "04-tested-on-yours.jpg"
+  ],
+  "budgets": {
+    "ownTested": {
+      "steps": 7,
+      "asks": 3
+    }
+  },
+  "passed": true
+}

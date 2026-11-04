@@ -199,3 +199,16 @@ node experiments/surface/run-builder-eval.mjs --arm B-H --label <new-label>     
 set -a; . /root/.config/foundry/inception.env; set +a; node experiments/surface/run-builder-eval.mjs --arm B-M --label <new-label> --token-cap 150000
 node experiments/surface/report.mjs b-h-1 b-m-1 b0-h-1 b-h-fix-1 b-m-fix-1           # the tables above
 ```
+
+## 9. Amendment 2026-11-04: engine v2 merged after the freeze
+
+The engine v2 series was merged into the main branch at `78f90d08` (see `research/engine-20261021/series/README.md`). Its merge preconditions held: the SOP-Bench sealed summary was written and the OT-0 chain had finished. The merge changed 2 of the 23 files this experiment froze. The other 21 are byte-identical to `eval/MANIFEST-fix.json`.
+
+- **`experiments/lib/models.mjs`** (series commit `a81447eb`): a model subset that lists only executor models, such as Mercury alone, now carries an empty `models[]` and the flag `executorOnly`. Nothing in such a subset resolves by class, and every call must name its model.
+- **`policy/models.json`** (series commit `83d9e713`, policy `2026-10-21.3`): `claude-cli.childEnv` also sets `DISABLE_AUTOUPDATER=1` and `DISABLE_UPDATES=1`.
+
+Every number in §§2–5 was measured on the frozen files and stands as recorded. The run records name their engine. A re-run on the merged engine is a new measurement:
+- The Haiku arms should be unaffected, because the environment change only switches off the CLI updater.
+- A re-run of the Mercury builder arm (B-M) goes through the executor-only subset, so it may differ; it has not been re-run.
+
+`eval/MANIFEST-fix.json` stays as the record of the post-hoc fix runs. `eval/MANIFEST-engine-v2.json` records the merged state. The site's freeze test (`app/site/test/fix-round.test.mjs`, honesty new defect 7) now checks the merged state against it, so any further unannounced change to these files still fails it.

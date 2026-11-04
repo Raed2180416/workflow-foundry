@@ -1,0 +1,5 @@
+Invoice,Customer,Email,Due,Balance,State
+A-101,Quay Books,books@quay.example,2026-10-01,120.00,Overdue
+A-102,Pine Physio,desk@pine-physio.example,2026-09-20,480.00,Part paid
+A-103,Ember Bikes,shop@ember-bikes.example,2026-09-01,75.00,Paid
+A-104,Tide Yoga,hi@tide-yoga.example,2026-10-12,60.00,Sent

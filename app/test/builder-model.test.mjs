@@ -137,7 +137,7 @@ test('MCP propose_flow and dry_run work unchanged over a model-built library flo
     const p = await call('propose_flow', { request: 'every morning post the unresolved alerts in #ops' });
     assert.equal(p.status, 'proposed'); assert.match(p.say, /It will not/);
     const d = await call('dry_run', { proposalId: p.proposalId });
-    assert.equal(d.passed, true); assert.match(d.say, /posted to #ops/);
+    assert.equal(d.passed, true); assert.match(d.say, /post for #ops/);
     const r = await call('run_flow', { flowId: p.flowId, input: { now: '2026-10-21T09:00:00Z' } });
     assert.equal(r.problem.code, 'NOT_APPROVED');
   } finally { await client.close(); await app.close(); rmSync(dir, { recursive: true, force: true }); }

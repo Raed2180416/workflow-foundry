@@ -1,0 +1,11 @@
+{
+  "_note": "Synthetic stand-in for an organisation's Claude Code managed settings (written for Foundry's IT-persona test, 2026-10-21). Foundry stats this folder; with consent it reads only allowedMcpServers, deniedMcpServers and allowManagedMcpServersOnly.",
+  "allowedMcpServers": [
+    { "serverName": "github" },
+    { "serverCommand": ["npx", "-y", "@example/approved-server"] }
+  ],
+  "deniedMcpServers": [
+    { "serverName": "filesystem" }
+  ],
+  "permissions": { "defaultMode": "default" }
+}

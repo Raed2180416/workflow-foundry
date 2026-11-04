@@ -1,0 +1,4 @@
+Invoice,Customer,Email,Due,Amount,Status
+P-1,Quay Books,books@quay.example,2026-09-01,120.00,Paid
+P-2,Pine Physio,desk@pine-physio.example,2026-09-20,480.00,Paid
+P-3,Ember Bikes,shop@ember-bikes.example,2026-10-01,75.00,Paid

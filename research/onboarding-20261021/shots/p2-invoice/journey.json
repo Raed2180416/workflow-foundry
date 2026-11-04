@@ -1,0 +1,361 @@
+{
+  "journey": "p2-invoice",
+  "persona": "p2-invoice",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "action": "precondition",
+      "target": "Foundry is installed (Node 24) and started, today by someone technical (Quickstart: \"I don't code\"); not counted",
+      "steps": 0,
+      "asks": 0,
+      "ms": 665
+    },
+    {
+      "n": 1,
+      "shot": "01-home.jpg",
+      "slug": "home",
+      "note": "cards first; nothing asked yet",
+      "steps": 0,
+      "asks": 0,
+      "ms": 1287,
+      "route": "#/",
+      "h1": "Let Foundry prepare the jobs you do every week.",
+      "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Let Foundry prepare the jobs you do every week.\" [level=1]\n  - paragraph: Pick one below. Foundry tests it with pretend data first, then shows you everything it would make, in full. You check it, and you send it yourself. Nothing real happens until you say yes.\n  - heading \"Foundry can make these today\" [level=2]\n  - paragraph: These cards follow fixed steps, written and checked in advance. No AI reads your data.\n  - list \"Foundry can make these today\":\n    - listitem:\n      - article \"Chase unpaid invoices\":\n        - heading \"Chase unpaid invoices\" [level=3]\n        - paragraph: Polite reminders to customers who are late, firmer later. You see every e-mail first.\n        - list \"About this automation\":\n          - listitem: \"Uses AI: no\"\n          - listitem: \"Needs: your invoice list (a CSV file; Excel can save one)\"\n        - link \"Start\":\n          - /url: \"#/make/invoice-chase\"\n    - listitem:\n      - article \"Approve small expenses\":\n        - heading \"Approve small expenses\" [level=3]\n        - paragraph: Approves claims under your limit. Sends the rest to the person who decides.\n        - list \"About this automation\":\n          - listitem: \"Uses AI: no\"\n          - listitem: \"Needs: your expense claims (a CSV file; Excel can save one)\"\n        - link \"Start\":\n          - /url: \"#/make/expense-approval\"\n    - listitem:\n      - article \"Weekly progress report\":\n        - heading \"Weekly progress report\" [level=3]\n        - paragraph: Counts what's done, open and blocked, and e-mails one person.\n        - list \"About this automation\":\n          - listitem: \"Uses AI: no\"\n          - listitem: \"Needs: your tracker export (a CSV file; Excel can save one)\"\n        - link \"Start\":\n          - /url: \"#/make/weekly-report\"\n    - listitem:\n      - article \"Route new leads\":\n        - heading \"Route new leads\" [level=3]\n        - paragraph: Sends each new lead to the right salesperson.\n        - list \"About this automation\":\n          - listitem: \"Uses AI: no\"\n          - listitem: \"Needs: your leads list (a CSV file; Excel can save one)\"\n        - link \"Start\":\n          - /url: \"#/make/lead-triage\"\n    - listitem:\n      - article \"Answer common support questions\":\n        - heading \"Answer common support questions\" [level=3]\n        - paragraph: Replies with your own answers. Sends the rest to a person.\n        - list \"About this automation\":\n          - listitem: \"Uses AI: no\"\n          - listitem: \"Needs: your ticket export (a CSV file; Excel can save one)\"\n        - link \"Start\":\n          - /url: \"#/make/support-deflection\"\n    - listitem:\n      - article \"On-call alert digest\":\n        - heading \"On-call alert digest\" [level=3]\n        - paragraph: One summary of unresolved alerts to a chat channel.\n        - list \"About this automation\":\n          - listitem: \"Uses AI: no\"\n          - listitem: \"Needs: your alerts export (a CSV file; Excel can save one)\"\n        - link \"Start\":\n          - /url: \"#/make/oncall-digest\"\n    - listitem:\n      - article \"Keep the newsletter list in step\":\n        - heading \"Keep the newsletter list in step\" [level=3]\n        - paragraph: Finds contacts missing from your list and tells you.\n        - list \"About this automation\":\n          - listitem: \"Uses AI: no\"\n          - listitem: \"Needs: your customer list (CRM export) and newsletter list (a CSV file; Excel can save one)\"\n        - link \"Start\":\n          - /url: \"#/make/contact-sync\"\n  - search \"Or describe it in your own words\":\n    - text: Or describe it in your own words\n    - textbox \"Or describe it in your own words\":\n      - /placeholder: e.g. remind customers who haven't paid after a week\n    - button \"Find a match\"\n    - paragraph: Without an AI key, Foundry matches your words to the list above. Nothing leaves this computer.\n  - paragraph:\n    - text: \"Runs on this computer. No account. One limit: an AI coding tool on this computer could press yes for you, and so could any other program running as you.\"\n    - link \"How this is kept safe\":\n      - /url: \"#/trust\"\n  - paragraph:\n    - text: Not ready to install on your own yet. Today someone technical has to install Foundry and start it again each time this computer restarts. It has been tested on Linux only; Windows and Mac are untested.\n    - link \"What that involves\":\n      - /url: \"#/docs\"\n  - paragraph:\n    - text: Setting this up for a team?\n    - link \"Write down who approves what\":\n      - /url: \"#/org\"\n  - paragraph:\n    - text: Use Claude Code, Cursor or Codex?\n    - link \"Connect it with one line\":\n      - /url: \"#/connect-agent\"\n  - paragraph: \"Already use n8n? Drop an exported workflow to see what it does and which of its steps Foundry could translate. Foundry can't run an imported workflow yet. Zapier and Make: later.\"\n  - text: Preview\n  - link \"Bring in an n8n workflow\":\n    - /url: \"#/import\""
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Start",
+      "steps": 1,
+      "asks": 0,
+      "tabs": 9,
+      "screens": 0,
+      "ms": 1569
+    },
+    {
+      "n": 2,
+      "shot": "02-make.jpg",
+      "slug": "make",
+      "note": "the restatement, the defaults as chips, one question",
+      "steps": 1,
+      "asks": 0,
+      "ms": 2231,
+      "route": "#/make/invoice-chase",
+      "h1": "Chase unpaid invoices",
+      "focus": "h1 Chase unpaid invoices",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Chase unpaid invoices\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - region \"Foundry will:\":\n    - heading \"Foundry will:\" [level=2]\n    - list:\n      - listitem: Read your invoice list and pick the invoices still open (not paid, not disputed)\n      - listitem: Write a friendly reminder once an invoice is 7 days late\n      - listitem: Write a firmer reminder once it is 14 days late\n      - listitem: Write a last reminder once it is 30 days late\n      - listitem: \"Make each kind of reminder at most once per invoice: it remembers what it already made\"\n      - listitem: Write a summary for the address you give of the invoices that are late\n      - listitem: Show you every e-mail in full before any is made. You send them yourself, from your own mail app\n      - listitem: Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change your invoice list\n      - listitem: \"Send anything: it writes drafts, and you send them\"\n      - listitem: Write to anyone except the address on each invoice and the summary address you gave (the address you give)\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"One question\" [level=2]\n  - text: Which e-mail address should get the summary?\n  - textbox \"Which e-mail address should get the summary?\":\n    - /placeholder: you@yourbusiness.com\n  - paragraph: \"Why Foundry asks: The summary lists your customers and what they owe; I will not guess where it goes. If you skip: No summary is sent.\"\n  - checkbox \"No summary\"\n  - text: No summary How should the e-mails be signed?\n  - textbox \"How should the e-mails be signed?\":\n    - /placeholder: e.g. Sam, Lark & Fern Florist\n  - paragraph: If you leave it, they are signed “Accounts team”.\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"First reminder: 7 days after the due date\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Second reminder: 14 days after the due date (0 means none)\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Final notice: 30 days after the due date (0 means none)\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status\n  - button \"Test it with pretend customers\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent."
+    },
+    {
+      "action": "fill",
+      "ask": true,
+      "decision": false,
+      "target": "Which e-mail address should get the summary?",
+      "steps": 2,
+      "asks": 1,
+      "tabs": 18,
+      "screens": 0.01,
+      "ms": 2345
+    },
+    {
+      "n": 3,
+      "shot": "03-summary-address.jpg",
+      "slug": "summary-address",
+      "note": null,
+      "steps": 2,
+      "asks": 1,
+      "ms": 2863,
+      "route": "#/make/invoice-chase",
+      "h1": "Chase unpaid invoices",
+      "focus": "input#ask-summaryTo-9 ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Chase unpaid invoices\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - region \"Foundry will:\":\n    - heading \"Foundry will:\" [level=2]\n    - list:\n      - listitem: Read your invoice list and pick the invoices still open (not paid, not disputed)\n      - listitem: Write a friendly reminder once an invoice is 7 days late\n      - listitem: Write a firmer reminder once it is 14 days late\n      - listitem: Write a last reminder once it is 30 days late\n      - listitem: \"Make each kind of reminder at most once per invoice: it remembers what it already made\"\n      - listitem: Write a summary for me@example.com of the invoices that are late\n      - listitem: Show you every e-mail in full before any is made. You send them yourself, from your own mail app\n      - listitem: Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change your invoice list\n      - listitem: \"Send anything: it writes drafts, and you send them\"\n      - listitem: Write to anyone except the address on each invoice and the summary address you gave (me@example.com)\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"One question\" [level=2]\n  - text: Which e-mail address should get the summary?\n  - textbox \"Which e-mail address should get the summary?\":\n    - /placeholder: you@yourbusiness.com\n    - text: me@example.com\n  - paragraph: \"Why Foundry asks: The summary lists your customers and what they owe; I will not guess where it goes. If you skip: No summary is sent.\"\n  - checkbox \"No summary\"\n  - text: No summary How should the e-mails be signed?\n  - textbox \"How should the e-mails be signed?\":\n    - /placeholder: e.g. Sam, Lark & Fern Florist\n  - paragraph: If you leave it, they are signed “Accounts team”.\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"First reminder: 7 days after the due date\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Second reminder: 14 days after the due date (0 means none)\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Final notice: 30 days after the due date (0 means none)\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status\n  - button \"Test it with pretend customers\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent."
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Test it with pretend customers",
+      "steps": 3,
+      "asks": 1,
+      "tabs": 24,
+      "screens": 0.74,
+      "ms": 3201
+    },
+    {
+      "n": 4,
+      "shot": "04-checked.jpg",
+      "slug": "checked",
+      "note": "first verified",
+      "steps": 3,
+      "asks": 1,
+      "ms": 4776,
+      "route": "#/checked/a2e5c87c-71ea-4103-a177-c522cfbf4688",
+      "h1": "Test passed. Nothing real was made or sent.",
+      "focus": "h1 Test passed. Nothing real was made or sent.",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Test passed. Nothing real was made or sent.\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: On pretend data it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.\n  - paragraph: \"Next: turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.\"\n  - link \"Go to Turn it on\":\n    - /url: \"#/checked/a2e5c87c-71ea-4103-a177-c522cfbf4688\"\n  - link \"Change settings\":\n    - /url: \"#/make/invoice-chase\"\n  - paragraph: \"Tested on: pretend customers that come with this automation.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - group: ▸ Show all 4 in full\n  - region \"Try it on your real list first (optional)\":\n    - heading \"Try it on your real list first (optional)\" [level=2]\n    - paragraph: Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.\n    - button \"Test with my own list\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n  - article \"Turn on 'Chase unpaid invoices' (version 1)?\":\n    - heading \"Turn on 'Chase unpaid invoices' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read your invoice list and pick the invoices still open (not paid, not disputed)\n      - listitem: Write a friendly reminder once an invoice is 7 days late\n      - listitem: Write a firmer reminder once it is 14 days late\n      - listitem: Write a last reminder once it is 30 days late\n      - listitem: \"Make each kind of reminder at most once per invoice: it remembers what it already made\"\n      - listitem: Write a summary for me@example.com of the invoices that are late\n      - listitem: Show you every e-mail in full before any is made. You send them yourself, from your own mail app\n      - listitem: Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change your invoice list\n      - listitem: \"Send anything: it writes drafts, and you send them\"\n      - listitem: Write to anyone except the address on each invoice and the summary address you gave (me@example.com)\n      - listitem: \"Run by itself: you start each run\"\n    - heading \"How you'll know it worked\" [level=3]\n    - list:\n      - listitem: \"Passed: Every late, open invoice got the reminder its lateness calls for, or already had it\"\n      - listitem: \"Passed: Exactly the planned reminders were drafted, word for word (checked by re-reading the drafts)\"\n      - listitem: \"Passed: The summary for me@example.com was drafted\"\n      - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written this run, word for word\"\n    - group: ▸ How Foundry checks\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 4 of 4 checks\n    - term: \"Who decides:\"\n    - definition: you\n    - term: \"What it needs to go live:\"\n    - definition: your invoice list\n    - button \"Turn it on\"\n    - link \"Change settings\":\n      - /url: \"#/make/invoice-chase\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens.\n  - paragraph: \"Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.\"\n  - button \"Remove this draft\""
+    },
+    {
+      "n": 5,
+      "shot": "05-turn-on-card.jpg",
+      "slug": "turn-on-card",
+      "note": null,
+      "steps": 3,
+      "asks": 1,
+      "ms": 5076,
+      "route": "#/checked/a2e5c87c-71ea-4103-a177-c522cfbf4688",
+      "h1": "Test passed. Nothing real was made or sent.",
+      "focus": "h1 Test passed. Nothing real was made or sent.",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Test passed. Nothing real was made or sent.\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: On pretend data it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.\n  - paragraph: \"Next: turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.\"\n  - link \"Go to Turn it on\":\n    - /url: \"#/checked/a2e5c87c-71ea-4103-a177-c522cfbf4688\"\n  - link \"Change settings\":\n    - /url: \"#/make/invoice-chase\"\n  - paragraph: \"Tested on: pretend customers that come with this automation.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - group: ▸ Show all 4 in full\n  - region \"Try it on your real list first (optional)\":\n    - heading \"Try it on your real list first (optional)\" [level=2]\n    - paragraph: Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.\n    - button \"Test with my own list\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n  - article \"Turn on 'Chase unpaid invoices' (version 1)?\":\n    - heading \"Turn on 'Chase unpaid invoices' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read your invoice list and pick the invoices still open (not paid, not disputed)\n      - listitem: Write a friendly reminder once an invoice is 7 days late\n      - listitem: Write a firmer reminder once it is 14 days late\n      - listitem: Write a last reminder once it is 30 days late\n      - listitem: \"Make each kind of reminder at most once per invoice: it remembers what it already made\"\n      - listitem: Write a summary for me@example.com of the invoices that are late\n      - listitem: Show you every e-mail in full before any is made. You send them yourself, from your own mail app\n      - listitem: Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Remind customers whose invoice is paid or disputed\n      - listitem: Take payments, charge cards or change your invoice list\n      - listitem: \"Send anything: it writes drafts, and you send them\"\n      - listitem: Write to anyone except the address on each invoice and the summary address you gave (me@example.com)\n      - listitem: \"Run by itself: you start each run\"\n    - heading \"How you'll know it worked\" [level=3]\n    - list:\n      - listitem: \"Passed: Every late, open invoice got the reminder its lateness calls for, or already had it\"\n      - listitem: \"Passed: Exactly the planned reminders were drafted, word for word (checked by re-reading the drafts)\"\n      - listitem: \"Passed: The summary for me@example.com was drafted\"\n      - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written this run, word for word\"\n    - group: ▸ How Foundry checks\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 4 of 4 checks\n    - term: \"Who decides:\"\n    - definition: you\n    - term: \"What it needs to go live:\"\n    - definition: your invoice list\n    - button \"Turn it on\"\n    - link \"Change settings\":\n      - /url: \"#/make/invoice-chase\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens.\n  - paragraph: \"Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.\"\n  - button \"Remove this draft\""
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": true,
+      "target": "Turn it on",
+      "steps": 4,
+      "asks": 1,
+      "tabs": 38,
+      "screens": 1.97,
+      "ms": 5237
+    },
+    {
+      "n": 6,
+      "shot": "06-on.jpg",
+      "slug": "on",
+      "note": null,
+      "steps": 4,
+      "asks": 1,
+      "ms": 5808,
+      "route": "#/go-live/invoice-chase?on=1",
+      "h1": "Add your invoice list",
+      "focus": "h1 Add your invoice list",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Add your invoice list\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: \"On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your invoice list (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your invoice list (a CSV file)\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+    },
+    {
+      "action": "upload",
+      "ask": true,
+      "decision": false,
+      "target": "Choose your invoice list (a CSV file)",
+      "steps": 5,
+      "asks": 2,
+      "tabs": 47,
+      "screens": 1.97,
+      "ms": 5928
+    },
+    {
+      "n": 7,
+      "shot": "07-columns.jpg",
+      "slug": "columns",
+      "note": "columns matched by name, with sample values; the date order is asked, not guessed",
+      "steps": 5,
+      "asks": 2,
+      "ms": 6433,
+      "route": "#/go-live/invoice-chase?on=1",
+      "h1": "Add your invoice list",
+      "focus": "h1 Add your invoice list",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Add your invoice list\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: \"On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your invoice list (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your invoice list (a CSV file)\"\n  - paragraph: Found 6 invoices.\n  - heading \"Which column is which?\" [level=3]\n  - text: Which column is the invoice number?\n  - combobox \"Which column is the invoice number?\":\n    - option \"Invoice No.\" [selected]\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: INV-2041, INV-2042, INV-2043\"\n  - text: Which column is the customer name?\n  - combobox \"Which column is the customer name?\":\n    - option \"Invoice No.\"\n    - option \"Client\" [selected]\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: Bramble Cafe, Northfield Gym, Lark & Fern Florist\"\n  - text: Which column is the customer's e-mail address?\n  - combobox \"Which column is the customer's e-mail address?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\" [selected]\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: accounts@bramble-cafe.example, billing@northfield-gym.example, hello@larkfern.example\"\n  - text: Which column is the amount still owed?\n  - combobox \"Which column is the amount still owed?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\" [selected]\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: 1,240.00, 480.00, 75.50\"\n  - text: Which column is the due date?\n  - combobox \"Which column is the due date?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\" [selected]\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: 03/10/2026, 10/10/2026, 01/09/2026\"\n  - text: Which column is the status?\n  - combobox \"Which column is the status?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\" [selected]\n    - option \"Notes\"\n  - paragraph: \"For example: Open, Open, Open\"\n  - paragraph: \"Foundry keeps only the columns above. It leaves out: Issued, Notes.\"\n  - heading \"Before Foundry reads your list\" [level=3]\n  - group \"Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\":\n    - text: Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\n    - paragraph: \"Why Foundry asks: Your file writes dates both ways round, so the due date could be wrong by months. Foundry will not guess it. If you skip: Nothing is imported until you choose.\"\n    - radio \"The 3rd of October 2026 (day first)\"\n    - text: The 3rd of October 2026 (day first)\n    - radio \"March 10th, 2026 (month first)\"\n    - text: March 10th, 2026 (month first)\n  - button \"Use these columns and test\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+    },
+    {
+      "action": "choose",
+      "ask": true,
+      "decision": false,
+      "target": "The 3rd of October 2026 (day first)",
+      "steps": 6,
+      "asks": 3,
+      "tabs": 63,
+      "screens": 2.92,
+      "ms": 6635
+    },
+    {
+      "n": 8,
+      "shot": "08-date-order.jpg",
+      "slug": "date-order",
+      "note": null,
+      "steps": 6,
+      "asks": 3,
+      "ms": 7181,
+      "route": "#/go-live/invoice-chase?on=1",
+      "h1": "Add your invoice list",
+      "focus": "input ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Add your invoice list\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: \"On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your invoice list (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your invoice list (a CSV file)\"\n  - paragraph: Found 6 invoices.\n  - heading \"Which column is which?\" [level=3]\n  - text: Which column is the invoice number?\n  - combobox \"Which column is the invoice number?\":\n    - option \"Invoice No.\" [selected]\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: INV-2041, INV-2042, INV-2043\"\n  - text: Which column is the customer name?\n  - combobox \"Which column is the customer name?\":\n    - option \"Invoice No.\"\n    - option \"Client\" [selected]\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: Bramble Cafe, Northfield Gym, Lark & Fern Florist\"\n  - text: Which column is the customer's e-mail address?\n  - combobox \"Which column is the customer's e-mail address?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\" [selected]\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: accounts@bramble-cafe.example, billing@northfield-gym.example, hello@larkfern.example\"\n  - text: Which column is the amount still owed?\n  - combobox \"Which column is the amount still owed?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\" [selected]\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: 1,240.00, 480.00, 75.50\"\n  - text: Which column is the due date?\n  - combobox \"Which column is the due date?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\" [selected]\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: 03/10/2026, 10/10/2026, 01/09/2026\"\n  - text: Which column is the status?\n  - combobox \"Which column is the status?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\" [selected]\n    - option \"Notes\"\n  - paragraph: \"For example: Open, Open, Open\"\n  - paragraph: \"Foundry keeps only the columns above. It leaves out: Issued, Notes.\"\n  - heading \"Before Foundry reads your list\" [level=3]\n  - group \"Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\":\n    - text: Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\n    - paragraph: \"Why Foundry asks: Your file writes dates both ways round, so the due date could be wrong by months. Foundry will not guess it. If you skip: Nothing is imported until you choose.\"\n    - radio \"The 3rd of October 2026 (day first)\" [checked]\n    - text: The 3rd of October 2026 (day first)\n    - radio \"March 10th, 2026 (month first)\"\n    - text: March 10th, 2026 (month first)\n  - button \"Use these columns and test\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Use these columns and test",
+      "steps": 7,
+      "asks": 3,
+      "tabs": 65,
+      "screens": 3.05,
+      "ms": 7343
+    },
+    {
+      "n": 9,
+      "shot": "09-exact-list.jpg",
+      "slug": "exact-list",
+      "note": "every item in full before the yes",
+      "steps": 7,
+      "asks": 3,
+      "ms": 9016,
+      "route": "#/go-live/invoice-chase?on=1",
+      "h1": "Add your invoice list",
+      "focus": "h2#batch-23 Make these 4 drafts?",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Add your invoice list\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: \"On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your invoice list (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your invoice list (a CSV file)\"\n  - status: Saved 6 invoices.\n  - article \"Make these 4 drafts?\":\n    - heading \"Make these 4 drafts?\" [level=2]\n    - paragraph: This is everything the real run would make (version 1, as of 21 Oct 2026), in full. Read it before you say yes.\n    - paragraph: \"Before you say yes Foundry has never reminded these customers, but their invoices are already late enough for a firmer reminder: INV-2041 (accounts@bramble-cafe.example), INV-2043 (hello@larkfern.example). Make these only if you have already reminded them yourself.\"\n    - list:\n      - listitem: \"To: hello@larkfern.example Subject: Payment overdue, action needed: invoice INV-2043 Hello Lark & Fern Florist, This invoice is now long overdue. Please pay it now. Invoice INV-2043 for €75.50 was due on 2026-09-01 (50 days ago) and we have not received payment yet. Please pay using the details on your invoice. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: accounts@bramble-cafe.example Subject: Payment overdue: invoice INV-2041 Hello Bramble Cafe, This invoice is now well past its due date. Invoice INV-2041 for €1,240.00 was due on 2026-10-03 (18 days ago) and we have not received payment yet. Please pay using the details on your invoice. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: billing@northfield-gym.example Subject: Payment reminder: invoice INV-2042 Hello Northfield Gym, Just a friendly reminder. Invoice INV-2042 for €480.00 was due on 2026-10-10 (11 days ago) and we have not received payment yet. Please pay using the details on your invoice. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - listitem: \"To: me@example.com Subject: Invoice reminders: summary Unpaid late invoices, with the reminder their lateness calls for (3): - INV-2041 Bramble Cafe: €1,240.00, 18 days late (second reminder) - INV-2042 Northfield Gym: €480.00, 11 days late (reminder) - INV-2043 Lark & Fern Florist: €75.50, 50 days late (final notice) Reminder drafts made this run: 3 (you send them yourself). Paid and disputed invoices were left alone.\"\n    - paragraph: If the real run wants to make anything that isn't on this list, it stops and asks you.\n    - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again. Send it, or copy it, from the Drafts page.\"\n    - 'button \"I''ve reminded them before: make 4 drafts\"'\n    - 'button \"I haven''t: don''t make any yet\"'\n    - status\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+    },
+    {
+      "action": "click",
+      "ask": true,
+      "decision": true,
+      "target": "I've reminded them before: make 4 drafts",
+      "steps": 8,
+      "asks": 4,
+      "tabs": 75,
+      "screens": 3.71,
+      "ms": 9978
+    },
+    {
+      "n": 10,
+      "shot": "10-drafts.jpg",
+      "slug": "drafts",
+      "note": "first live: drafts the person sends",
+      "steps": 8,
+      "asks": 4,
+      "ms": 10522,
+      "route": "#/drafts?run=7a77df5e-68fd-4946-afdb-aeec8446c9e8",
+      "h1": "4 drafts ready. Foundry didn't send anything.",
+      "focus": "h1 4 drafts ready. Foundry didn't send anything.",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"4 drafts ready. Foundry didn't send anything.\" [level=1]\n  - paragraph: Open each one in your mail app and send it yourself.\n  - paragraph: Use Gmail or Outlook in your browser? Copy the address, the subject and the text into a new e-mail.\n  - list:\n    - listitem:\n      - text: \"To: me@example.com Subject: Invoice reminders: summary 4 Nov 2026, 14:38 UTC Unpaid late invoices, with the reminder their lateness calls for (3): - INV-2041 Bramble Cafe: €1,240.00, 18 days late (second reminder) - INV-2042 Northfield Gym: €480.00, 11 days late (reminder) - INV-2043 Lark & Fern Florist: €75.50, 50 days late (final notice) Reminder drafts made this run: 3 (you send them yourself). Paid and disputed invoices were left alone.\"\n      - link \"Open in your mail app\":\n        - /url: mailto:me@example.com?subject=Invoice%20reminders%3A%20summary&body=Unpaid%20late%20invoices%2C%20with%20the%20reminder%20their%20lateness%20calls%20for%20(3)%3A%0A-%20INV-2041%20Bramble%20Cafe%3A%20%E2%82%AC1%2C240.00%2C%2018%20days%20late%20(second%20reminder)%0A-%20INV-2042%20Northfield%20Gym%3A%20%E2%82%AC480.00%2C%2011%20days%20late%20(reminder)%0A-%20INV-2043%20Lark%20%26%20Fern%20Florist%3A%20%E2%82%AC75.50%2C%2050%20days%20late%20(final%20notice)%0A%0AReminder%20drafts%20made%20this%20run%3A%203%20(you%20send%20them%20yourself).%20Paid%20and%20disputed%20invoices%20were%20left%20alone.\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n    - listitem:\n      - text: \"To: hello@larkfern.example Subject: Payment overdue, action needed: invoice INV-2043 4 Nov 2026, 14:38 UTC Hello Lark & Fern Florist, This invoice is now long overdue. Please pay it now. Invoice INV-2043 for €75.50 was due on 2026-09-01 (50 days ago) and we have not received payment yet. Please pay using the details on your invoice. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - link \"Open in your mail app\":\n        - /url: mailto:hello@larkfern.example?subject=Payment%20overdue%2C%20action%20needed%3A%20invoice%20INV-2043&body=Hello%20Lark%20%26%20Fern%20Florist%2C%0A%0AThis%20invoice%20is%20now%20long%20overdue.%20Please%20pay%20it%20now.%20Invoice%20INV-2043%20for%20%E2%82%AC75.50%20was%20due%20on%202026-09-01%20(50%20days%20ago)%20and%20we%20have%20not%20received%20payment%20yet.%20Please%20pay%20using%20the%20details%20on%20your%20invoice.%0A%0AIf%20you%20have%20already%20paid%2C%20please%20ignore%20this%20message.%20If%20something%20about%20the%20invoice%20is%20wrong%2C%20just%20reply%20and%20we%20will%20sort%20it%20out.%0A%0AThank%20you%2C%0AAccounts%20team\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n    - listitem:\n      - text: \"To: billing@northfield-gym.example Subject: Payment reminder: invoice INV-2042 4 Nov 2026, 14:38 UTC Hello Northfield Gym, Just a friendly reminder. Invoice INV-2042 for €480.00 was due on 2026-10-10 (11 days ago) and we have not received payment yet. Please pay using the details on your invoice. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - link \"Open in your mail app\":\n        - /url: mailto:billing@northfield-gym.example?subject=Payment%20reminder%3A%20invoice%20INV-2042&body=Hello%20Northfield%20Gym%2C%0A%0AJust%20a%20friendly%20reminder.%20Invoice%20INV-2042%20for%20%E2%82%AC480.00%20was%20due%20on%202026-10-10%20(11%20days%20ago)%20and%20we%20have%20not%20received%20payment%20yet.%20Please%20pay%20using%20the%20details%20on%20your%20invoice.%0A%0AIf%20you%20have%20already%20paid%2C%20please%20ignore%20this%20message.%20If%20something%20about%20the%20invoice%20is%20wrong%2C%20just%20reply%20and%20we%20will%20sort%20it%20out.%0A%0AThank%20you%2C%0AAccounts%20team\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n    - listitem:\n      - text: \"To: accounts@bramble-cafe.example Subject: Payment overdue: invoice INV-2041 4 Nov 2026, 14:38 UTC Hello Bramble Cafe, This invoice is now well past its due date. Invoice INV-2041 for €1,240.00 was due on 2026-10-03 (18 days ago) and we have not received payment yet. Please pay using the details on your invoice. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - link \"Open in your mail app\":\n        - /url: mailto:accounts@bramble-cafe.example?subject=Payment%20overdue%3A%20invoice%20INV-2041&body=Hello%20Bramble%20Cafe%2C%0A%0AThis%20invoice%20is%20now%20well%20past%20its%20due%20date.%20Invoice%20INV-2041%20for%20%E2%82%AC1%2C240.00%20was%20due%20on%202026-10-03%20(18%20days%20ago)%20and%20we%20have%20not%20received%20payment%20yet.%20Please%20pay%20using%20the%20details%20on%20your%20invoice.%0A%0AIf%20you%20have%20already%20paid%2C%20please%20ignore%20this%20message.%20If%20something%20about%20the%20invoice%20is%20wrong%2C%20just%20reply%20and%20we%20will%20sort%20it%20out.%0A%0AThank%20you%2C%0AAccounts%20team\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n  - status\n  - paragraph: \"\\\"I sent it\\\" is your own note, kept in your Foundry folder. Foundry can't see your mail.\"\n  - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again, even if you never send it.\"\n  - link \"Your automatio"
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Download a copy for Outlook or Apple Mail",
+      "steps": 9,
+      "asks": 4,
+      "tabs": 85,
+      "screens": 3.71,
+      "ms": 10736
+    },
+    {
+      "n": 11,
+      "shot": "11-eml-downloaded.jpg",
+      "slug": "eml-downloaded",
+      "note": null,
+      "steps": 9,
+      "asks": 4,
+      "ms": 11335,
+      "route": "#/drafts?run=7a77df5e-68fd-4946-afdb-aeec8446c9e8",
+      "h1": "4 drafts ready. Foundry didn't send anything.",
+      "focus": "button Download a copy for Outlook or Apple Mail",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"4 drafts ready. Foundry didn't send anything.\" [level=1]\n  - paragraph: Open each one in your mail app and send it yourself.\n  - paragraph: Use Gmail or Outlook in your browser? Copy the address, the subject and the text into a new e-mail.\n  - list:\n    - listitem:\n      - text: \"To: me@example.com Subject: Invoice reminders: summary 4 Nov 2026, 14:38 UTC Unpaid late invoices, with the reminder their lateness calls for (3): - INV-2041 Bramble Cafe: €1,240.00, 18 days late (second reminder) - INV-2042 Northfield Gym: €480.00, 11 days late (reminder) - INV-2043 Lark & Fern Florist: €75.50, 50 days late (final notice) Reminder drafts made this run: 3 (you send them yourself). Paid and disputed invoices were left alone.\"\n      - link \"Open in your mail app\":\n        - /url: mailto:me@example.com?subject=Invoice%20reminders%3A%20summary&body=Unpaid%20late%20invoices%2C%20with%20the%20reminder%20their%20lateness%20calls%20for%20(3)%3A%0A-%20INV-2041%20Bramble%20Cafe%3A%20%E2%82%AC1%2C240.00%2C%2018%20days%20late%20(second%20reminder)%0A-%20INV-2042%20Northfield%20Gym%3A%20%E2%82%AC480.00%2C%2011%20days%20late%20(reminder)%0A-%20INV-2043%20Lark%20%26%20Fern%20Florist%3A%20%E2%82%AC75.50%2C%2050%20days%20late%20(final%20notice)%0A%0AReminder%20drafts%20made%20this%20run%3A%203%20(you%20send%20them%20yourself).%20Paid%20and%20disputed%20invoices%20were%20left%20alone.\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n    - listitem:\n      - text: \"To: hello@larkfern.example Subject: Payment overdue, action needed: invoice INV-2043 4 Nov 2026, 14:38 UTC Hello Lark & Fern Florist, This invoice is now long overdue. Please pay it now. Invoice INV-2043 for €75.50 was due on 2026-09-01 (50 days ago) and we have not received payment yet. Please pay using the details on your invoice. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - link \"Open in your mail app\":\n        - /url: mailto:hello@larkfern.example?subject=Payment%20overdue%2C%20action%20needed%3A%20invoice%20INV-2043&body=Hello%20Lark%20%26%20Fern%20Florist%2C%0A%0AThis%20invoice%20is%20now%20long%20overdue.%20Please%20pay%20it%20now.%20Invoice%20INV-2043%20for%20%E2%82%AC75.50%20was%20due%20on%202026-09-01%20(50%20days%20ago)%20and%20we%20have%20not%20received%20payment%20yet.%20Please%20pay%20using%20the%20details%20on%20your%20invoice.%0A%0AIf%20you%20have%20already%20paid%2C%20please%20ignore%20this%20message.%20If%20something%20about%20the%20invoice%20is%20wrong%2C%20just%20reply%20and%20we%20will%20sort%20it%20out.%0A%0AThank%20you%2C%0AAccounts%20team\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n    - listitem:\n      - text: \"To: billing@northfield-gym.example Subject: Payment reminder: invoice INV-2042 4 Nov 2026, 14:38 UTC Hello Northfield Gym, Just a friendly reminder. Invoice INV-2042 for €480.00 was due on 2026-10-10 (11 days ago) and we have not received payment yet. Please pay using the details on your invoice. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - link \"Open in your mail app\":\n        - /url: mailto:billing@northfield-gym.example?subject=Payment%20reminder%3A%20invoice%20INV-2042&body=Hello%20Northfield%20Gym%2C%0A%0AJust%20a%20friendly%20reminder.%20Invoice%20INV-2042%20for%20%E2%82%AC480.00%20was%20due%20on%202026-10-10%20(11%20days%20ago)%20and%20we%20have%20not%20received%20payment%20yet.%20Please%20pay%20using%20the%20details%20on%20your%20invoice.%0A%0AIf%20you%20have%20already%20paid%2C%20please%20ignore%20this%20message.%20If%20something%20about%20the%20invoice%20is%20wrong%2C%20just%20reply%20and%20we%20will%20sort%20it%20out.%0A%0AThank%20you%2C%0AAccounts%20team\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n    - listitem:\n      - text: \"To: accounts@bramble-cafe.example Subject: Payment overdue: invoice INV-2041 4 Nov 2026, 14:38 UTC Hello Bramble Cafe, This invoice is now well past its due date. Invoice INV-2041 for €1,240.00 was due on 2026-10-03 (18 days ago) and we have not received payment yet. Please pay using the details on your invoice. If you have already paid, please ignore this message. If something about the invoice is wrong, just reply and we will sort it out. Thank you, Accounts team\"\n      - link \"Open in your mail app\":\n        - /url: mailto:accounts@bramble-cafe.example?subject=Payment%20overdue%3A%20invoice%20INV-2041&body=Hello%20Bramble%20Cafe%2C%0A%0AThis%20invoice%20is%20now%20well%20past%20its%20due%20date.%20Invoice%20INV-2041%20for%20%E2%82%AC1%2C240.00%20was%20due%20on%202026-10-03%20(18%20days%20ago)%20and%20we%20have%20not%20received%20payment%20yet.%20Please%20pay%20using%20the%20details%20on%20your%20invoice.%0A%0AIf%20you%20have%20already%20paid%2C%20please%20ignore%20this%20message.%20If%20something%20about%20the%20invoice%20is%20wrong%2C%20just%20reply%20and%20we%20will%20sort%20it%20out.%0A%0AThank%20you%2C%0AAccounts%20team\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n  - status: Saved to your Downloads folder. Double-click it to open it in Outlook or Apple Mail.\n  - paragraph: \"\\\"I sent it\\\" is your own note, kept in your Foundry folder. Foundry can't see your mail.\"\n  - paragraph: \"Foundry counts a draft as done once it's ma"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {
+    "firstVerified": {
+      "steps": 3,
+      "asks": 1,
+      "tabs": 24,
+      "screens": 0.74,
+      "decisions": 0,
+      "ms": 4274,
+      "accounts": 0,
+      "keys": 0,
+      "connections": 0
+    },
+    "firstLive": {
+      "steps": 8,
+      "asks": 4,
+      "tabs": 75,
+      "screens": 3.71,
+      "decisions": 2,
+      "ms": 10170,
+      "accounts": 0,
+      "keys": 0,
+      "connections": 0
+    }
+  },
+  "a11y": [],
+  "refusals": [],
+  "focusLost": [],
+  "checks": {
+    "restatement": "Read your invoice list and pick the invoices still open (not paid, not disputed)Write a friendly reminder once an invoice is 7 days lateWrite a firmer reminder once it is 14 days lateWrite a last reminder once it is 30 days lateMake each kind of reminder at most once per invoice: it remembers what it already madeWrite a summary for the address you give of the invoices that are lateShow you every e-mail in full before any is made. You send them yourself, from your own mail appCheck afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word",
+    "checked": "On pretend data it would have made 3 e-mails to customers and 1 e-mail to me@example.com. Nothing real was made or sent.",
+    "on": "On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.",
+    "mapping": {
+      "invoice": "Invoice No.",
+      "customer": "Client",
+      "email": "Contact email",
+      "amount": "Amount due (EUR)",
+      "due": "Due date",
+      "status": "Status"
+    },
+    "exactList": [
+      "To: hello@larkfern.exampleSubject: Payment overdue, action needed: invoice INV-2043",
+      "To: accounts@bramble-cafe.exampleSubject: Payment overdue: invoice INV-2041",
+      "To: billing@northfield-gym.exampleSubject: Payment reminder: invoice INV-2042",
+      "To: me@example.comSubject: Invoice reminders: summary"
+    ],
+    "drafts": "4 drafts ready. Foundry didn't send anything.",
+    "eml": {
+      "file": "draft-dcc06a76.eml",
+      "xUnsent": true,
+      "to": "me@example.com",
+      "subject": "me@example.com"
+    },
+    "keysSaved": 0
+  },
+  "preconditions": [
+    "Foundry is installed (Node 24) and started, today by someone technical (Quickstart: \"I don't code\"); not counted"
+  ],
+  "totalSteps": 9,
+  "totalAsks": 4,
+  "totalTabs": 85,
+  "totalScreens": 3.71,
+  "totalDecisions": 2,
+  "ms": 11363,
+  "shots": [
+    "01-home.jpg",
+    "02-make.jpg",
+    "03-summary-address.jpg",
+    "04-checked.jpg",
+    "05-turn-on-card.jpg",
+    "06-on.jpg",
+    "07-columns.jpg",
+    "08-date-order.jpg",
+    "09-exact-list.jpg",
+    "10-drafts.jpg",
+    "11-eml-downloaded.jpg"
+  ],
+  "budgets": {
+    "firstVerified": {
+      "steps": 3,
+      "asks": 1
+    },
+    "firstLive": {
+      "steps": 8,
+      "asks": 4
+    }
+  },
+  "passed": true
+}

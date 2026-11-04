@@ -1,0 +1,130 @@
+{
+  "schema": "foundry-site-claims/2",
+  "note": "The site's measured results, comparisons, limits and decisions are these claims; a page uses one as {claim:Cxx} and shows it with its status and qualifier. What a page says Foundry does is held by the site's tests (app/site/test), not registered here, and text other modules write (the n8n import report, the IT brief, the coding agent's replies, card wording) is linted for overclaiming phrases (app/site/test/copy-lint.test.mjs), not registered. app/site/test/claims.test.mjs checks that each source file exists under research/, that each claim cites lines and a short verbatim quote found in them (source.lines, source.quote; source.also for a second file), that every number in a claim's text and qualifier appears within those lines, and that each status and evidence word is one of the lists below. Status words: Works now, Preview, Not re-tested, Planned, Not decided, Decided, Limit, Research result (a result from our research test beds, not something this product does), Literature (published research or vendor data). Evidence words: development (our own tests, not sealed), design, decided, documentation, literature.",
+  "claims": {
+    "C01": {
+      "text": "Nothing real is made or sent until you say yes. Tests on pretend data and new versions are made without asking you. The limit: a coding agent that can run commands as you on this computer could do what you can do, including say yes.",
+      "short": "Nothing real happens until you say yes (with one honest limit)",
+      "qualifier": "Our own tests of this site and its tools. Not covered: any program running as you on this computer.",
+      "status": "Works now",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/onboarding-20261021/DESIGN.md", "anchor": "§5, the Turn on and Going live rows; §6, the same-user limit", "lines": [[188, 189], [199, 199]], "quote": "exact-list approval" }
+    },
+    "C02": {
+      "text": "In our tests, 10 of 10 attempts to get around your yes were refused.",
+      "short": "Ways around your yes are refused",
+      "qualifier": "Tested on the earlier prototype's tools and page, before the exact-list approval and the one-time links were added; that set of attempts has not been re-run against them. The ways around your yes found in the security review of 2026-10-21 (a printed link read by an agent, a hook answering the dialog, a list changed after you saw it) have their own tests now. Not covered: an agent using your terminal, or a hook Foundry can't see.",
+      "status": "Not re-tested",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/surface-20261021/DESIGN.md", "anchor": "§8.3 Bypass attempts refused", "lines": [[382, 382]], "quote": "Bypass attempts refused | **10/10**" }
+    },
+    "C03": {
+      "text": "A test uses pretend data, or your own list if you drop one, and a pretend inbox. Nothing real is made or sent during a test.",
+      "short": "Tests make and send nothing real",
+      "status": "Works now",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/onboarding-20261021/DESIGN.md", "anchor": "§5, the Test row", "lines": [[187, 187]], "quote": "a test on the person's own list" }
+    },
+    "C04": {
+      "text": "In our own tests, a low-cost AI that practised first built a 14-case order process with 14 of 14 right, for $0.39. A top AI that built it in one go got 5 of 14, for $7.63.",
+      "short": "Practising first: 14 of 14 versus 5 of 14",
+      "status": "Research result",
+      "evidence": "development",
+      "date": "2026-10-14",
+      "qualifier": "A research test bed, not something this product does: its cards call no AI. One task family we wrote, on one sized-down world of 14 cases, with a complete, correct specification given to both builders; the top AI was run once and made 11 arm errors. Not a promise about your work.",
+      "source": { "path": "research/enterprise-20261014/B1-E8-DEV.md", "anchor": "lines 170-176", "lines": [[170, 176]], "quote": "5/14 (11 arm errors)" }
+    },
+    "C05": {
+      "text": "On 60 public development tasks, a low-cost AI with Foundry's procedure passed 18 of 60 for $0.94; a stronger AI alone passed 20 of 60 for $6.03.",
+      "short": "A low-cost AI with a procedure, at about a sixth of the cost",
+      "status": "Research result",
+      "evidence": "development",
+      "date": "2026-10-14",
+      "qualifier": "A research harness, not something this product does: its cards call no AI. One run each on public development tasks; the frozen test run has not been done.",
+      "source": { "path": "research/automationbench-20261014/runs/DEV60-A0-A1.md", "anchor": "lines 107-110, 124", "lines": [[113, 116], [130, 130]], "quote": "Haiku + harness | 18/60" }
+    },
+    "C06": {
+      "text": "Of 10 sample n8n files, 2 translated into Foundry steps without errors and 8 were refused with reasons. Calling all 10 in place, in n8n, is designed but not built. 0 were run.",
+      "short": "n8n import: what translates, and what doesn't run yet",
+      "status": "Preview",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "qualifier": "A small, skewed sample of open-licence files. Nothing was executed, and translating a workflow does not show it behaves as it did in n8n: running one needs connectors Foundry doesn't have yet.",
+      "source": { "path": "research/surface-20261021/n8n-import-results.json", "anchor": "summary", "lines": [[6, 13]], "quote": "\"executed\": 0" }
+    },
+    "C07": {
+      "text": "In a simulated company, builds that passed their process check still applied 57 of 57 large refunds without approval. With the rule layer, 0 did, but the process check then passed 973 of 1022 cases instead of all of them. A scripted auditor answered four of its five questions in 45 of 45 runs, and the fifth in 36 of 45.",
+      "short": "Rules that hold at run time (test bed only)",
+      "status": "Research result",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "qualifier": "A test bed we built; this rule layer is not in the product.",
+      "source": { "path": "research/org-20261021/README.md", "anchor": "§2 results; P1", "lines": [[103, 104], [178, 178]], "quote": "Q5 in 36/45" }
+    },
+    "C08": {
+      "text": "Free while one person decides, at any size, with single sign-on included. Paid: the control a second person's yes or a rule owner needs, and verified packs for one outcome each.",
+      "short": "Where the paid line is",
+      "qualifier": "Decision D2, taken under the owner's general permission: reversible, and the owner may overturn it. No price is set, and no buyer has been asked about it yet.",
+      "status": "Decided",
+      "evidence": "decided",
+      "date": "2026-10-21",
+      "source": { "path": "research/decisions-20261021.md", "anchor": "D2", "lines": [[9, 9], [16, 16]], "quote": "**Free:** one authority, any complexity, SSO included",
+        "also": [{ "path": "research/onboarding-20261021/sweeps/repo-surface.md", "anchor": "§6 item 8", "lines": [[385, 385]], "quote": "a pricing hypothesis, no buyer interview done" }] }
+    },
+    "C09": {
+      "text": "Foundry runs only on this computer. Nothing is published or hosted.",
+      "short": "Local only",
+      "status": "Decided",
+      "evidence": "decided",
+      "date": "2026-10-21",
+      "source": { "path": "research/decisions-20261021.md", "anchor": "D10, D13", "lines": [[29, 29], [32, 32]], "quote": "**Local-first free product now.**" }
+    },
+    "C10": {
+      "text": "Bringing your own AI key is free, and the key goes into your computer's keychain, never into files or logs.",
+      "short": "Your key, your keychain",
+      "qualifier": "A keychain keeps the key from other users of this computer, not from programs running as you. On a Mac, Foundry saves the key without naming which programs may read it, so any program running as you can read it back through the security command without a prompt (how that command's access lists work, as we understand them: not checked against Apple's documentation in this pass, and not tried on a Mac). On Linux, any program running as you can read it while the keyring is unlocked.",
+      "status": "Preview",
+      "evidence": "decided",
+      "date": "2026-10-21",
+      "source": { "path": "research/decisions-20261021.md", "anchor": "D11", "lines": [[30, 30]], "quote": "keys in the OS keychain and never in the repo or logs" }
+    },
+    "C11": {
+      "text": "People approve almost every single prompt (97% in one vendor's data) but reject whole plans far more often (39% versus 3%).",
+      "short": "Why Foundry asks once, about the whole plan",
+      "status": "Literature",
+      "evidence": "literature",
+      "date": "2026-10-21",
+      "qualifier": "Vendor-published numbers, not a controlled study of Foundry.",
+      "source": { "path": "research/onboarding-20261021/sweeps/research-literature.md", "anchor": "§1 findings 3 and 4", "lines": [[36, 37]], "quote": "plan approvals rejected 39% vs 3%" }
+    },
+    "C12": {
+      "text": "The earlier prototype went from request to first live run in 3 person actions.",
+      "short": "Three actions in the earlier prototype",
+      "qualifier": "Measured once on the earlier prototype's weekly report, by a test that plays the person. This site's own journeys count their steps separately, and this number has not been re-measured on it.",
+      "status": "Not re-tested",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/surface-20261021/DESIGN.md", "anchor": "§8.3", "lines": [[380, 380]], "quote": "**3 person actions**" }
+    },
+    "C13": {
+      "text": "Tested on Linux only; macOS and Windows are untested. Steps that run code need a Linux sandbox, so on macOS and Windows they should be refused; that has not been tried there.",
+      "short": "What has been tested",
+      "status": "Limit",
+      "evidence": "design",
+      "date": "2026-10-21",
+      "source": { "path": "research/surface-20261021/DESIGN.md", "anchor": "§6.3", "lines": [[294, 294]], "quote": "everything except `code` nodes" }
+    },
+    "C14": {
+      "text": "Your decisions are kept in their own chained log, not inside a run's chained record; an AI builder's transcripts are in neither; and neither record's latest link is kept outside this computer unless you copy it there yourself.",
+      "short": "Known gaps in the record",
+      "status": "Limit",
+      "evidence": "development",
+      "date": "2026-10-21",
+      "source": { "path": "research/onboarding-20261021/sweeps/repo-surface.md", "anchor": "§6 item 9", "lines": [[386, 388]], "quote": "decisions and transcripts are not yet bound into the chain",
+        "also": [{ "path": "research/onboarding-20261021/WALKTHROUGH.md", "anchor": "P5, row B3", "lines": [[262, 262]], "quote": "comparing both latest links with copies kept elsewhere" }] }
+    }
+  }
+}

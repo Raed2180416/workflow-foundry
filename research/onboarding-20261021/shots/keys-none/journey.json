@@ -1,0 +1,46 @@
+{
+  "journey": "keys-none",
+  "persona": "keys-none",
+  "variant": "light-1280",
+  "theme": "light",
+  "width": 1280,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "n": 1,
+      "shot": "01-no-keychain.jpg",
+      "slug": "no-keychain",
+      "note": null,
+      "steps": 0,
+      "asks": 0,
+      "ms": 1099,
+      "route": "#/keys",
+      "h1": "AI keys",
+      "focus": "h1 AI keys",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - status:\n    - paragraph: This computer has no keychain Foundry can use, so a key can't be saved.\n    - paragraph: You can set INCEPTION_API_KEY in your own terminal before starting Foundry instead. Foundry never writes a key to a file.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - paragraph: Allowed AI in Settings doesn't include this provider, so Foundry won't send it your key, not even to check it. Choose Mercury 3 under Allowed AI first.\n  - paragraph:\n    - link \"Open Settings\":\n      - /url: \"#/settings\"\n  - text: Paste your Inception (Mercury 3) key\n  - textbox \"Paste your Inception (Mercury 3) key\"\n  - paragraph: Checking sends one request to the provider with your key, and only if Allowed AI in Settings includes that provider. The key then goes into your keychain, and this page never sees it again.\n  - button \"Check and save\" [disabled]\n  - paragraph: Each build from your words stops after 200,000 tokens (the provider's unit of text), a limit set when Foundry starts. There is no daily limit.\n  - status\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {},
+  "a11y": [],
+  "refusals": [],
+  "focusLost": [],
+  "checks": {
+    "refusal": "This computer has no keychain Foundry can use, so a key can't be saved.You can set INCEPTION_API_KEY in your own terminal before starting Foundry instead. Foundry never writes a key to a file."
+  },
+  "totalSteps": 0,
+  "totalAsks": 0,
+  "totalTabs": 0,
+  "totalScreens": 0,
+  "totalDecisions": 0,
+  "ms": 1099,
+  "shots": [
+    "01-no-keychain.jpg"
+  ],
+  "budgets": null,
+  "passed": true
+}

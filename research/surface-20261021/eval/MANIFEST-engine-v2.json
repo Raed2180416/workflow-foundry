@@ -1,0 +1,33 @@
+{
+ "schema": "builder-1-manifest/1",
+ "frozenAt": "2026-11-04T17:27:14.114Z",
+ "gitHead": "db93e8e311cb5db154adb30f11a7acfc31d2d153",
+ "srcUncommittedChanges": "none",
+ "claudeCli": "2.1.318 (Claude Code)",
+ "node": "24.21.0",
+ "files": {
+  "research/surface-20261021/eval/cases.json": "ee852fb05277fe526f77e93e5f67860919a7109f892582cbf75c55d782d25006",
+  "experiments/surface/oracle.mjs": "35393cf7cec58b125261c17bb820fb9a08d7677a60035cf39857d690685277ce",
+  "experiments/surface/person.mjs": "6a409b01a55562cb49f660a38a143e6cea9a291dc30e4da6205f6a5ed3ee134c",
+  "experiments/surface/metrics.mjs": "91bfc1f9412ab4204ba307408b64b050b6257927cb6263c6ac52a948c14fbdd1",
+  "experiments/surface/run-builder-eval.mjs": "aeaeaa648c96992306d34c5f893c8a775549a30812b2c1fad423573179f0fb73",
+  "experiments/surface/b0.mjs": "7062ddcfa83b4b772ed503552dfb43ad0ae7e22012b02e4079c552da2d95117d",
+  "experiments/surface/test/oracle-validity.test.mjs": "8056b475444abbb9ccda3306f4aa768650d82436f070d3f61b8ecaae2dbda2ca",
+  "experiments/surface/test/harness.test.mjs": "38ec24b00785b9c686a2ce4584810849aa310c010b9e67446b5b088b96c467df",
+  "app/core/builder-model.mjs": "cc6595988da37e637cc6f903814a4ba7039861b471fa4b6f05e8714ee75bb29a",
+  "app/core/library.mjs": "c7e65d927274cc8b1ee882ebdda56980910805f8e9dc2c7b8bf6dde9a19a71e9",
+  "app/core/practice.mjs": "daec150c38825efd8e7c446795199912aa586442178a5d2bbbc05af04f7fa677",
+  "app/core/stand-ins.mjs": "7468ec90c372f75d9f6693b8ec1b9a0ce717cc3d7cb0a9d3c03c21be74e110e2",
+  "app/core/capabilities.mjs": "593e3970bfade469ea89594f181969cca65885752d13ec67a9eca1970a136b8f",
+  "app/core/explain.mjs": "6ded0cfa0c500a1047f3674b27f5ceefc4059dbde3ebf4e6af742d8b8301bc5d",
+  "app/core/templates/contact-sync.json": "b99310445082cbea826beecda22160443f0300fad6d9839da3132b148a458ddf",
+  "app/core/templates/expense-approval.json": "dcd2d030fc9425d3b1dbc12250c33e1735b3776c08311321e0e11fea3c135697",
+  "app/core/templates/invoice-chase.json": "5333af87fefe7f248573ddf4f040aea9456693557c0819e4819178db4396f737",
+  "app/core/templates/lead-triage.json": "a281f1ea7bbbacd4dead5c702a7d496fbf97d5103f78fda4e767a598f099c702",
+  "app/core/templates/oncall-digest.json": "afa75d3e3383ace11cd449670ddd50672249841a86722860e8b6f293b7930486",
+  "app/core/templates/support-deflection.json": "7e88accdc703f34dcbaefe750df6f1c7a0c0d2a719ab29bef9a3528c259188ac",
+  "app/core/templates/weekly-report.json": "dc550375f5f2deae2ca5529652feca574e2ba87d0f285ac8a2176da24ff902bb",
+  "experiments/lib/models.mjs": "22d8476ff7dfd6cfd4c0453e193c6745cdbb691a3efc09033625fa15de5b33a7",
+  "policy/models.json": "6ec7b51bccf3369fc6631b97f83d11059e0a1db7c822aabe611d8dba4583bba3"
+ }
+}

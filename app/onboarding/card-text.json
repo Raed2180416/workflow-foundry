@@ -1,0 +1,236 @@
+{
+  "schema": "foundry-card-text/1",
+  "revision": "card-text r2 (2026-10-21, persona walkthrough fixes)",
+  "note": "Wording revisions the site's form builder applies to a card's workflow and promises. The frontier-written templates (app/core/templates/*.json) are frozen by the BUILDER-1 manifest (research/surface-20261021/eval/MANIFEST-fix.json), so the revisions live here: words only, never a step, a check, a capability, a state key or a stage value. Why: a live run makes DRAFTS the person sends from their own mail app, so 'sent', 'delivered' and 'went out' were false (walkthroughs P1-M7, P2-M5, P4-M11, P5-M2); the first reminder a customer got could say 'This is our second reminder' (P2-B4); acceptance checks with no plain sentence showed the machine text 'the delivered of ... equals true' (P2-M6, P1-M6). Every `replace` pair must match at least once (app/onboarding/test/card-text.test.mjs), so a template change cannot silently skip a revision. Text in [[name]] is the slot value (or the template's derived text); an entry {\"if\": slot, \"text\"} is kept only when the slot is set (\"!slot\": when it is not).",
+  "all": {
+    "replace": [
+      ["Delivery is a local outbox file standing in for e-mail; nothing leaves this machine", "Each e-mail is a draft written on this computer; the person sends it from their own mail app. Nothing leaves this computer by Foundry"]
+    ],
+    "strip": [" (asks you first)"]
+  },
+  "templates": {
+    "invoice-chase": {
+      "willDo": [
+        "Read your invoice list and pick the invoices still open (not paid, not disputed)",
+        "Write a friendly reminder once an invoice is [[firstAfterDays]] days late",
+        { "if": "secondAfterDays", "text": "Write a firmer reminder once it is [[secondAfterDays]] days late" },
+        { "if": "finalAfterDays", "text": "Write a last reminder once it is [[finalAfterDays]] days late" },
+        "Make each kind of reminder at most once per invoice: it remembers what it already made",
+        { "if": "sendSummary", "text": "Write a summary for [[summaryTo]] of the invoices that are late" },
+        "Show you every e-mail in full before any is made. You send them yourself, from your own mail app",
+        "Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word"
+      ],
+      "willNotDo": [
+        "Remind customers whose invoice is paid or disputed",
+        "Take payments, charge cards or change your invoice list",
+        "Send anything: it writes drafts, and you send them",
+        { "if": "sendSummary", "text": "Write to anyone except the address on each invoice and the summary address you gave ([[summaryTo]])" },
+        { "if": "!sendSummary", "text": "Write to anyone except the address on each invoice" },
+        "Run by itself: you start each run"
+      ],
+      "successCriteria": [
+        "Every late, open invoice got the reminder its lateness calls for, or already had it",
+        "Exactly the planned reminders were drafted, word for word (checked by re-reading the drafts)",
+        { "if": "sendSummary", "text": "The summary for [[summaryTo]] was drafted" }
+      ],
+      "replace": [
+        ["e-mail every customer whose open invoice is overdue", "draft an e-mail to every customer whose open invoice is overdue"],
+        ["after a person approves each send", "after a person approves the full list"],
+        ["Final notice", "Payment overdue, action needed"],
+        ["This is a final notice.", "This invoice is now long overdue. Please pay it now."],
+        ["Second reminder", "Payment overdue"],
+        ["This is our second reminder.", "This invoice is now well past its due date."],
+        ["Friendly reminder", "Payment reminder"],
+        ["and we have not received payment yet.\n\nIf you have already paid", "and we have not received payment yet. Please pay using the details on your invoice.\n\nIf you have already paid"],
+        ["New reminders sent this run: {{sent}}.", "Reminder drafts made this run: {{sent}} (you send them yourself)."],
+        ["Unpaid invoices due for a reminder ({{count}}):", "Unpaid late invoices, with the reminder their lateness calls for ({{count}}):"],
+        ["Remember this reminder; skip it if it was sent before", "Remember this reminder; skip it if it was made before"],
+        ["E-mail the reminder to the customer", "Draft the reminder to the customer"],
+        ["List the reminders this run actually sent", "List the reminder drafts this run made"],
+        ["Who should have received a reminder this run", "Who should get a reminder draft this run"],
+        ["Re-read the outbox: exactly the planned e-mails went out this run, each intact", "Re-read the drafts: exactly the planned e-mails were written this run, word for word"]
+      ],
+      "replaceIf": { "sendSummary": [["E-mail the summary to ", "Draft the summary to "]] }
+    },
+    "expense-approval": {
+      "willDo": [
+        "Read the claims still waiting for a decision",
+        { "if": "requireReceipt", "text": "Approve on its own each claim up to [[autoApproveUpTo]] that has a receipt" },
+        { "if": "!requireReceipt", "text": "Approve on its own each claim up to [[autoApproveUpTo]]" },
+        "Note every decision in a decisions list on this computer",
+        "Draft an e-mail to [[approver]] listing the claims they need to decide. You see it first, and you send it",
+        { "if": "notifyEmployees", "text": "Draft a note to each person whose claim was approved on its own" },
+        "Check that nothing over the limit was approved, and re-read the drafts and the decisions list"
+      ],
+      "willNotDo": [
+        "Pay or reimburse anyone",
+        "Approve anything over [[autoApproveUpTo]]",
+        "Change your list of claims",
+        "See the approver's reply: you record their answer in Foundry",
+        "Run by itself: you start each run"
+      ],
+      "successCriteria": [
+        { "if": "requireReceipt", "text": "Every claim approved on its own is within the limit of [[autoApproveUpTo]] and has a receipt" },
+        { "if": "!requireReceipt", "text": "Every claim approved on its own is within the limit of [[autoApproveUpTo]]" },
+        "The e-mail to [[approver]] was drafted",
+        "Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)",
+        "Every claim is in the decisions list once (checked by re-reading it)",
+        { "if": "notifyEmployees", "text": "Everyone whose claim was approved on its own got a note drafted" }
+      ],
+      "replace": [
+        ["Reply to approve or reject the waiting ones. This flow never pays anything.", "Please reply with your decision on each waiting claim. Your reply goes to the person who sent this, who records it in Foundry. Nothing has been paid."],
+        ["Approved automatically (up to ", "Approved on their own, not paid yet (up to "],
+        ["E-mail the employee", "Draft a note to the employee"],
+        ["Tell each employee their claim was approved", "Draft a note to each person whose claim was approved on its own"],
+        ["Record every decision in the expense-decisions sheet", "Note every decision in the decisions list on this computer"],
+        ["Re-read the outbox: exactly the planned e-mails went out, each intact", "Re-read the drafts: exactly the planned e-mails were written, word for word"],
+        ["Re-read the decisions sheet: one row per submitted claim", "Re-read the decisions list: one line per claim"],
+        ["after a person approves the send", "after a person approves the list"],
+        [") was approved.", ") was approved. It has not been paid yet."]
+      ],
+      "replaceRe": [
+        ["^E-mail (\\S+) the claims that need a decision$", "Draft an e-mail to $1 with the claims that need a decision"],
+        [", and e-mail (\\S+) the claims that need a decision", ", and draft an e-mail to $1 with the claims that need a decision"]
+      ]
+    },
+    "weekly-report": {
+      "willDo": [
+        "Read your tracker list and count the finished, open and blocked items",
+        "List the finished items in the report",
+        { "if": "listOpen", "text": "List the items that are still open" },
+        { "if": "listBlocked", "text": "List the blocked items" },
+        "Save the report on this computer",
+        "Draft it as an e-mail to [[recipient]] only. You see it first, and you send it",
+        "Check that the draft is exactly the saved report"
+      ],
+      "willNotDo": [
+        "Write to anyone else, or more than one e-mail per run",
+        "Read Jira, Linear or Asana directly: it reads the tracker list you give it",
+        "Run by itself: you start each run",
+        "Use AI: this automation has no AI step"
+      ],
+      "successCriteria": [
+        "Every item has a status the report counts (done, open or blocked)",
+        "The report is saved",
+        "The report was drafted to the one person you named",
+        "The draft is exactly the saved report (checked by re-reading it)"
+      ],
+      "replace": [
+        ["and e-mail it to [[recipient]] after a person approves the send", "and draft it as an e-mail to [[recipient]] after a person approves it"],
+        ["Re-read what was delivered and compare it with the saved report", "Re-read the draft and compare it with the saved report"]
+      ],
+      "replaceRe": [["^Send the report to (\\S+)$", "Draft the report to $1"]]
+    },
+    "lead-triage": {
+      "willDo": [
+        "Read your leads list and take the leads marked new",
+        "Pick the person for each one ([[rulesText]]); everything else goes to [[defaultAssignee]]",
+        "Draft one e-mail per lead to that person, with the lead's details. You see the full list first, and you send them",
+        "Note who got which lead in a lead log on this computer",
+        "Check, by re-reading the drafts and the log, that every lead went to exactly one person"
+      ],
+      "willNotDo": [
+        "Write to the leads themselves",
+        "Change your leads list or mark leads as contacted",
+        "Touch leads marked spam or already contacted",
+        "Run by itself: you start each run"
+      ],
+      "successCriteria": [
+        "Every new lead got exactly one person",
+        "Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)",
+        "Every assignment is in the lead log (checked by re-reading it)"
+      ],
+      "replace": [
+        ["one e-mail per lead after a person approves it", "one e-mail draft per lead after a person approves the list"],
+        ["E-mail each lead to its person", "Draft an e-mail about each lead to its person"],
+        ["E-mail the lead to its person", "Draft the e-mail about the lead to its person"],
+        ["Who should have received a lead e-mail", "Who should get a lead e-mail"],
+        ["Re-read the outbox: one e-mail per lead to its person, each intact", "Re-read the drafts: one e-mail per lead to its person, word for word"]
+      ]
+    },
+    "support-deflection": {
+      "willDo": [
+        "Read the open tickets",
+        "Answer a ticket only when it mentions one of your keywords ([[keywordsText]]) and is not urgent, with your reply for that keyword",
+        "Put every other ticket, including every urgent one, in one digest for [[escalateTo]]",
+        "Draft every e-mail; you see the full list first, and you send them",
+        "Check, by re-reading the drafts, that exactly the planned e-mails were made"
+      ],
+      "willNotDo": [
+        "Answer urgent tickets on its own",
+        "Write new answers: it only uses the replies you gave",
+        "Close, edit or tag tickets",
+        "Run by itself: you start each run"
+      ],
+      "successCriteria": [
+        "Every open ticket with a known answer got that answer drafted",
+        "No urgent ticket was answered on its own",
+        "The digest for the person was drafted",
+        "Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)"
+      ],
+      "replace": [
+        ["after a person approves each e-mail", "after a person approves the list"],
+        ["Send each known answer", "Draft each known answer"],
+        ["E-mail the answer to the customer", "Draft the answer to the customer"],
+        ["Which customers should have received an answer", "Which customers should get an answer"],
+        ["Re-read the outbox: one answer per matched ticket plus one digest, each intact", "Re-read the drafts: one answer per matched ticket plus one digest, word for word"]
+      ],
+      "replaceRe": [["^E-mail the digest to (\\S+)$", "Draft the digest to $1"], [", and send every other open ticket to ", ", and put every other open ticket in one digest for "], [" in one digest, after", ", after"]]
+    },
+    "oncall-digest": {
+      "willDo": [
+        "Read the alerts and keep the unresolved ones from the last [[windowHours]] hours at [[minSeverity]] or above",
+        "Write one digest for [[channel]]. You see it first; you paste it into the channel yourself",
+        { "if": "page", "text": "Draft an e-mail to [[pageTo]] about each critical alert nobody acknowledged" },
+        "Check, by re-reading what it wrote, that exactly the planned messages were made"
+      ],
+      "willNotDo": [
+        "Restart, fix or silence anything",
+        { "if": "!page", "text": "Page or e-mail anyone" },
+        "Post to Slack or any chat for you: the digest is a draft you paste",
+        "Run by itself: you start each run"
+      ],
+      "successCriteria": [
+        "One digest was written for the channel you named",
+        "The digest is exactly the planned one (checked by re-reading it)",
+        "Exactly the planned e-mails were drafted (none when paging is off)",
+        { "if": "page", "text": "Every critical alert nobody acknowledged got an e-mail drafted" }
+      ],
+      "replace": [
+        ["Re-read the channel: exactly one digest from this run, intact", "Re-read the digest: exactly one from this run, word for word"],
+        ["Re-read the outbox: only the planned pages went out (none when paging is off)", "Re-read the drafts: only the planned e-mails were written (none when paging is off)"],
+        ["E-mail the page", "Draft the e-mail"],
+        ["after a person approves the post", "after a person approves it"]
+      ],
+      "replaceRe": [["^Post the digest to (\\S+)$", "Write the digest for $1"], ["^Page (\\S+) about each one$", "Draft an e-mail to $1 about each one"]]
+    },
+    "contact-sync": {
+      "willDo": [
+        "Read your customer list and your newsletter list",
+        "Compare them by e-mail address ([[scopeText]])",
+        { "if": "addMissing", "text": "Add the missing contacts to the newsletter list on this computer" },
+        { "if": "!addMissing", "text": "Only report the contacts missing from the newsletter list; add nothing" },
+        "Draft a report for [[reportTo]] of what was missing and which names differ. You see it first, and you send it",
+        "Check that no unsubscribed contact was added, and re-read the list and the draft"
+      ],
+      "willNotDo": [
+        "Add anyone who unsubscribed",
+        "Delete or change anyone already on the newsletter list",
+        "Send the newsletter or write to any contact",
+        "Change your customer list",
+        "Run by itself: you start each run"
+      ],
+      "successCriteria": [
+        "No unsubscribed contact was added",
+        "The report for the one address you named was drafted",
+        "Exactly the planned e-mail was drafted, word for word (checked by re-reading it)",
+        "Exactly the missing contacts were added (or none, in report-only mode)"
+      ],
+      "replace": [
+        ["Re-read the outbox: only the report went out, intact", "Re-read the draft: only the report was written, word for word"],
+        ["after a person approves the send", "after a person approves it"]
+      ],
+      "replaceRe": [["^E-mail the report to (\\S+)$", "Draft the report to $1"], [", and e-mail (\\S+) a report", ", and draft a report for $1"]]
+    }
+  }
+}

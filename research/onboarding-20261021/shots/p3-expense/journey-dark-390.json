@@ -1,0 +1,253 @@
+{
+  "journey": "p3-expense",
+  "persona": "p3-expense",
+  "variant": "-dark-390",
+  "theme": "dark",
+  "width": 390,
+  "keyboard": false,
+  "label": "development, scripted, no users",
+  "steps": [
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Start",
+      "steps": 1,
+      "asks": 0,
+      "tabs": 5,
+      "screens": 0.29,
+      "ms": 475
+    },
+    {
+      "n": 1,
+      "shot": "01-make-dark-390.jpg",
+      "slug": "make",
+      "note": "two questions; \"who decides\" sits right below the second",
+      "steps": 1,
+      "asks": 0,
+      "ms": 951,
+      "route": "#/make/expense-approval",
+      "h1": "Approve small expenses",
+      "focus": "h1 Approve small expenses",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Approve small expenses\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - region \"Foundry will:\":\n    - heading \"Foundry will:\" [level=2]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to the amount you choose that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to the address you give listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over the amount you choose\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - spinbutton \"Up to what amount should it approve on its own?\"\n  - paragraph: \"Why Foundry asks: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - text: Who decides claims over your limit? (their e-mail)\n  - textbox \"Who decides claims over your limit? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n  - paragraph: \"Why Foundry asks: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"How is their decision recorded?\":\n    - text: How is their decision recorded?\n    - radio \"The person you named gets an e-mail. They reply, and you record their answer here. Free\" [checked]\n    - text: The person you named gets an e-mail. They reply, and you record their answer here. Free\n    - radio \"The person you named signs in and decides, and their yes is recorded as theirs\"\n    - text: The person you named signs in and decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent."
+    },
+    {
+      "action": "fill",
+      "ask": true,
+      "decision": false,
+      "target": "Up to what amount should it approve on its own?",
+      "steps": 2,
+      "asks": 1,
+      "tabs": 9,
+      "screens": 0.48,
+      "ms": 1088
+    },
+    {
+      "action": "fill",
+      "ask": true,
+      "decision": false,
+      "target": "Who decides claims over your limit? (their e-mail)",
+      "steps": 3,
+      "asks": 2,
+      "tabs": 10,
+      "screens": 0.74,
+      "ms": 1308
+    },
+    {
+      "n": 2,
+      "shot": "02-answered-dark-390.jpg",
+      "slug": "answered",
+      "note": null,
+      "steps": 3,
+      "asks": 2,
+      "ms": 1783,
+      "route": "#/make/expense-approval",
+      "h1": "Approve small expenses",
+      "focus": "input#ask-approver-10 ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Approve small expenses\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - region \"Foundry will:\":\n    - heading \"Foundry will:\" [level=2]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 100 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to maria@example.com listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 100\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - spinbutton \"Up to what amount should it approve on its own?\": \"100\"\n  - paragraph: \"Why Foundry asks: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - text: Who decides claims over your limit? (their e-mail)\n  - textbox \"Who decides claims over your limit? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n    - text: maria@example.com\n  - paragraph: \"Why Foundry asks: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"How is their decision recorded?\":\n    - text: How is their decision recorded?\n    - radio \"maria@example.com gets an e-mail. They reply, and you record their answer here. Free\" [checked]\n    - text: maria@example.com gets an e-mail. They reply, and you record their answer here. Free\n    - radio \"maria@example.com signs in and decides, and their yes is recorded as theirs\"\n    - text: maria@example.com signs in and decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent."
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": false,
+      "target": "Test it with pretend claims",
+      "steps": 4,
+      "asks": 2,
+      "tabs": 16,
+      "screens": 1.84,
+      "ms": 1952
+    },
+    {
+      "n": 3,
+      "shot": "03-checked-dark-390.jpg",
+      "slug": "checked",
+      "note": "first verified; \"Who decides: maria, by replying to an e-mail; you record their answer here\"",
+      "steps": 4,
+      "asks": 2,
+      "ms": 3102,
+      "route": "#/checked/715b9cb3-788f-4c18-89f5-22eab9a4658e",
+      "h1": "Test passed. Nothing real was made or sent.",
+      "focus": "h1 Test passed. Nothing real was made or sent.",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Test passed. Nothing real was made or sent.\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: On pretend data it would have made 1 e-mail to maria@example.com and 3 rows added to expense-decisions on this computer. Nothing real was made or sent.\n  - paragraph: \"Next: turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.\"\n  - link \"Go to Turn it on\":\n    - /url: \"#/checked/715b9cb3-788f-4c18-89f5-22eab9a4658e\"\n  - link \"Change settings\":\n    - /url: \"#/make/expense-approval\"\n  - paragraph: \"Tested on: pretend claims that come with this automation.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - group: ▸ Show all 2 in full\n  - region \"Try it on your real list first (optional)\":\n    - heading \"Try it on your real list first (optional)\" [level=2]\n    - paragraph: Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.\n    - button \"Test with my own list\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n  - article \"Turn on 'Approve small expenses' (version 1)?\":\n    - heading \"Turn on 'Approve small expenses' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 100 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to maria@example.com listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 100\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n    - heading \"How you'll know it worked\" [level=3]\n    - list:\n      - listitem: \"Passed: Every claim approved on its own is within the limit of 100 and has a receipt\"\n      - listitem: \"Passed: The e-mail to maria@example.com was drafted\"\n      - listitem: \"Passed: Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)\"\n      - listitem: \"Passed: Every claim is in the decisions list once (checked by re-reading it)\"\n      - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written, word for word\"\n      - listitem: \"Passed: Re-read the decisions list: one line per claim\"\n    - group: ▸ How Foundry checks\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 6 of 6 checks\n    - term: \"Who decides:\"\n    - definition:\n      - text: maria@example.com, by replying to an e-mail; you record their answer here\n      - button \"Change who decides\"\n    - term: \"What it needs to go live:\"\n    - definition: your expense claims\n    - button \"Turn it on\"\n    - link \"Change settings\":\n      - /url: \"#/make/expense-approval\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens.\n  - paragraph: \"Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.\"\n  - button \"Remove this draft\""
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": true,
+      "target": "Change who decides",
+      "steps": 5,
+      "asks": 2,
+      "tabs": 25,
+      "screens": 4.11,
+      "ms": 3169
+    },
+    {
+      "action": "choose",
+      "ask": true,
+      "decision": false,
+      "target": "maria@example.com signs in and decides, and their yes is recorded as theirs",
+      "steps": 6,
+      "asks": 3,
+      "tabs": 27,
+      "screens": 4.43,
+      "ms": 3459
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": true,
+      "target": "Team plan",
+      "steps": 7,
+      "asks": 3,
+      "tabs": 28,
+      "screens": 4.54,
+      "ms": 3707
+    },
+    {
+      "n": 4,
+      "shot": "04-team-plan-disclosure-dark-390.jpg",
+      "slug": "team-plan-disclosure",
+      "note": null,
+      "steps": 7,
+      "asks": 3,
+      "ms": 4182,
+      "route": "#/checked/715b9cb3-788f-4c18-89f5-22eab9a4658e",
+      "h1": "Test passed. Nothing real was made or sent.",
+      "focus": "button Team plan",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Test passed. Nothing real was made or sent.\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: On pretend data it would have made 1 e-mail to maria@example.com and 3 rows added to expense-decisions on this computer. Nothing real was made or sent.\n  - paragraph: \"Next: turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.\"\n  - link \"Go to Turn it on\":\n    - /url: \"#/checked/715b9cb3-788f-4c18-89f5-22eab9a4658e\"\n  - link \"Change settings\":\n    - /url: \"#/make/expense-approval\"\n  - paragraph: \"Tested on: pretend claims that come with this automation.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - group: ▸ Show all 2 in full\n  - region \"Try it on your real list first (optional)\":\n    - heading \"Try it on your real list first (optional)\" [level=2]\n    - paragraph: Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.\n    - button \"Test with my own list\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n  - article \"Turn on 'Approve small expenses' (version 1)?\":\n    - heading \"Turn on 'Approve small expenses' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 100 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to maria@example.com listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 100\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n    - heading \"How you'll know it worked\" [level=3]\n    - list:\n      - listitem: \"Passed: Every claim approved on its own is within the limit of 100 and has a receipt\"\n      - listitem: \"Passed: The e-mail to maria@example.com was drafted\"\n      - listitem: \"Passed: Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)\"\n      - listitem: \"Passed: Every claim is in the decisions list once (checked by re-reading it)\"\n      - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written, word for word\"\n      - listitem: \"Passed: Re-read the decisions list: one line per claim\"\n    - group: ▸ How Foundry checks\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 6 of 6 checks\n    - term: \"Who decides:\"\n    - definition:\n      - text: maria@example.com, once the Team plan exists. Until then you record their answer here\n      - button \"Change who decides\" [expanded]\n    - term: \"What it needs to go live:\"\n    - definition: your expense claims\n    - group \"How is their decision recorded?\":\n      - text: How is their decision recorded?\n      - radio \"maria@example.com gets an e-mail. They reply, and you record their answer here. Free\"\n      - text: maria@example.com gets an e-mail. They reply, and you record their answer here. Free\n      - radio \"maria@example.com signs in and decides, and their yes is recorded as theirs\" [checked]\n      - text: maria@example.com signs in and decides, and their yes is recorded as theirs\n      - button \"Team plan\" [expanded]\n      - text: For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan is planned to do that; it isn't available yet. You can test everything now, with you recording their answer.\n      - link \"What the Team plan does\":\n        - /url: \"#/pricing\"\n    - paragraph: \"Practice only: maria@example.com's own sign-in isn't available yet.\"\n    - button \"Turn it on with you recording decisions\"\n    - button \"Keep it in practice\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens.\n  - paragraph: \"Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.\"\n  - button \"Remove this draft\""
+    },
+    {
+      "action": "choose",
+      "ask": true,
+      "decision": false,
+      "target": "maria@example.com gets an e-mail. They reply, and you record their answer here. ",
+      "steps": 8,
+      "asks": 4,
+      "tabs": 29,
+      "screens": 4.54,
+      "ms": 4338
+    },
+    {
+      "n": 5,
+      "shot": "05-keep-going-free-dark-390.jpg",
+      "slug": "keep-going-free",
+      "note": null,
+      "steps": 8,
+      "asks": 4,
+      "ms": 4711,
+      "route": "#/checked/715b9cb3-788f-4c18-89f5-22eab9a4658e",
+      "h1": "Test passed. Nothing real was made or sent.",
+      "focus": "input ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Test passed. Nothing real was made or sent.\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: On pretend data it would have made 1 e-mail to maria@example.com and 3 rows added to expense-decisions on this computer. Nothing real was made or sent.\n  - paragraph: \"Next: turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.\"\n  - link \"Go to Turn it on\":\n    - /url: \"#/checked/715b9cb3-788f-4c18-89f5-22eab9a4658e\"\n  - link \"Change settings\":\n    - /url: \"#/make/expense-approval\"\n  - paragraph: \"Tested on: pretend claims that come with this automation.\"\n  - region \"What would have happened\":\n    - heading \"What would have happened\" [level=2]\n    - group: ▸ Show all 2 in full\n  - region \"Try it on your real list first (optional)\":\n    - heading \"Try it on your real list first (optional)\" [level=2]\n    - paragraph: Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.\n    - button \"Test with my own list\"\n  - region \"What a test can't prove\":\n    - heading \"What a test can't prove\" [level=2]\n    - paragraph: That your e-mails will arrive, or that your real list looks like the pretend one.\n  - article \"Turn on 'Approve small expenses' (version 1)?\":\n    - heading \"Turn on 'Approve small expenses' (version 1)?\" [level=2]\n    - heading \"It will\" [level=3]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 100 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to maria@example.com listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 100\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n    - heading \"How you'll know it worked\" [level=3]\n    - list:\n      - listitem: \"Passed: Every claim approved on its own is within the limit of 100 and has a receipt\"\n      - listitem: \"Passed: The e-mail to maria@example.com was drafted\"\n      - listitem: \"Passed: Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)\"\n      - listitem: \"Passed: Every claim is in the decisions list once (checked by re-reading it)\"\n      - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written, word for word\"\n      - listitem: \"Passed: Re-read the decisions list: one line per claim\"\n    - group: ▸ How Foundry checks\n    - term: \"Uses AI:\"\n    - definition: \"no\"\n    - term: \"Tested on:\"\n    - definition: pretend data, passed 6 of 6 checks\n    - term: \"Who decides:\"\n    - definition:\n      - text: maria@example.com, by replying to an e-mail; you record their answer here\n      - button \"Change who decides\" [expanded]\n    - term: \"What it needs to go live:\"\n    - definition: your expense claims\n    - group \"How is their decision recorded?\":\n      - text: How is their decision recorded?\n      - radio \"maria@example.com gets an e-mail. They reply, and you record their answer here. Free\" [checked]\n      - text: maria@example.com gets an e-mail. They reply, and you record their answer here. Free\n      - radio \"maria@example.com signs in and decides, and their yes is recorded as theirs\"\n      - text: maria@example.com signs in and decides, and their yes is recorded as theirs\n      - button \"Team plan\" [expanded]\n      - text: For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan is planned to do that; it isn't available yet. You can test everything now, with you recording their answer.\n      - link \"What the Team plan does\":\n        - /url: \"#/pricing\"\n    - button \"Turn it on\"\n    - link \"Change settings\":\n      - /url: \"#/make/expense-approval\"\n    - link \"Not now\":\n      - /url: \"#/automations\"\n    - paragraph: Turning it on doesn't send anything. It lets you run it, and it shows you what it will make before anything happens.\n  - paragraph: \"Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.\"\n  - button \"Remove this draft\""
+    },
+    {
+      "action": "click",
+      "ask": false,
+      "decision": true,
+      "target": "Turn it on",
+      "steps": 9,
+      "asks": 4,
+      "tabs": 33,
+      "screens": 4.95,
+      "ms": 4814
+    },
+    {
+      "n": 6,
+      "shot": "06-on-dark-390.jpg",
+      "slug": "on",
+      "note": null,
+      "steps": 9,
+      "asks": 4,
+      "ms": 5379,
+      "route": "#/go-live/expense-approval?on=1",
+      "h1": "Add your expense claims",
+      "focus": "h1 Add your expense claims",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Add your expense claims\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: \"On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your expense claims (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your expense claims (a CSV file)\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "failed": [],
+  "milestones": {
+    "firstVerified": {
+      "steps": 4,
+      "asks": 2,
+      "tabs": 16,
+      "screens": 1.84,
+      "decisions": 0,
+      "ms": 2818
+    },
+    "turnedOn": {
+      "steps": 9,
+      "asks": 4,
+      "tabs": 33,
+      "screens": 4.95,
+      "decisions": 3,
+      "ms": 5112
+    }
+  },
+  "a11y": [],
+  "refusals": [],
+  "focusLost": [],
+  "checks": {
+    "questions": [
+      "Up to what amount should it approve on its own?",
+      "Who decides claims over your limit? (their e-mail)"
+    ],
+    "paidBadges": 1,
+    "checked": "On pretend data it would have made 1 e-mail to maria@example.com and 3 rows added to expense-decisions on this computer. Nothing real was made or sent.",
+    "who": "Uses AI:noTested on:pretend data, passed 6 of 6 checksWho decides:maria@example.com, by replying to an e-mail; you record their answer here Change who decidesWhat it needs to go live:your expense claims",
+    "disclosure": "For maria@example.com's yes to count as theirs, they need their own sign-in, which this computer can't give them. The Team plan is planned to do that; it isn't available yet. You can test everything now, with you recording their answer. What the Team plan does",
+    "teamButtons": [
+      "Turn it on with you recording decisions",
+      "Keep it in practice"
+    ]
+  },
+  "totalSteps": 9,
+  "totalAsks": 4,
+  "totalTabs": 33,
+  "totalScreens": 4.95,
+  "totalDecisions": 3,
+  "ms": 5382,
+  "shots": [
+    "01-make-dark-390.jpg",
+    "02-answered-dark-390.jpg",
+    "03-checked-dark-390.jpg",
+    "04-team-plan-disclosure-dark-390.jpg",
+    "05-keep-going-free-dark-390.jpg",
+    "06-on-dark-390.jpg"
+  ],
+  "budgets": {
+    "firstVerified": {
+      "steps": 4,
+      "asks": 2
+    }
+  },
+  "passed": true
+}

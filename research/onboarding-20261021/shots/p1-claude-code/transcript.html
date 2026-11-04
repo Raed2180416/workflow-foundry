@@ -1,0 +1,40 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Claude Code (stand-in) — foundry connected</title><style>
+body{font:15px/1.45 system-ui,sans-serif;background:#111418;color:#e8eaed;margin:0;padding:24px;max-width:1100px}
+h1{font-size:18px;margin:0 0 4px}.label{color:#f2c94c;margin:0 0 18px}
+div{border-radius:8px;padding:10px 14px;margin:0 0 10px}.person{background:#1f3a5f}.agent{background:#22262c}.tool{background:#181b1f;border:1px solid #333}
+.dialog{background:#2b2240;border:2px solid #a78bfa}.choice{color:#a7f3d0;font-weight:600}
+pre{white-space:pre-wrap;margin:6px 0 0;font:13px/1.4 ui-monospace,monospace;color:#cfd3d8}code{color:#9cdcfe;font-size:13px;word-break:break-all}p{margin:4px 0 0}
+</style></head><body><h1>Claude Code (stand-in) — foundry connected</h1><p class="label">Scripted agent transcript: a stand-in for the coding agent's terminal, written by the journey harness. No model was called.</p><div class="person"><b>You</b><p>use Foundry to chase my unpaid invoices, summary to me@example.com</p></div>
+<div class="tool"><code>foundry · list_templates({})</code><pre>7 cards: contact-sync, expense-approval, invoice-chase, lead-triage, oncall-digest, support-deflection, weekly-report</pre></div>
+<div class="tool"><code>foundry · propose_flow({&quot;request&quot;:&quot;use Foundry to chase my unpaid invoices, summary to me@example.com&quot;,&quot;template&quot;:&quot;invoice-chase&quot;,&quot;settings&quot;:{&quot;summaryTo&quot;:&quot;me@example.com&quot;}})</code><pre>{
+ &quot;status&quot;: &quot;proposed&quot;,
+ &quot;say&quot;: &quot;I drafted “Invoice reminders” (version 1). It will: Read your invoice list and pick the invoices still open (not paid, not disputed); Write a friendly reminder once an invoice is 7 days late; Write a firmer reminder once it is 14 days late; Write a last reminder once it is 30 days late; Make each kind of reminder at most once per invoice: it remembers what it already made; Write a summary for me@example.com of the invoices that are late; Show you every e-mail in full before any is made. You send them yourself, from your own mail app; Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word. It will not: Remind customers whose invoice is paid or disputed; Take payments, charge cards or change your invoice list; Send anything: it writes drafts, and you send them; Write to anyone except the address on each invoice and the summary address you gave (me@example.com); Run by itself: you start each run. Nothing is running. Next: test it on pretend data (dry_run).&quot;
+}</pre></div>
+<div class="tool"><code>foundry · dry_run({&quot;proposalId&quot;:&quot;d0b84b4d-0728-4c94-bd7a-ccf0e5f6f33b&quot;})</code><pre>{
+ &quot;say&quot;: &quot;Practice run passed all 4 checks. On pretend data it would have drafted “Payment overdue, action needed: invoice PR-103” to practice-florist@example.org; drafted “Invoice reminders: summary” to me@example.com; drafted “Payment reminder: invoice PR-101” to practice-cafe@example.org; drafted “Payment overdue: invoice PR-102” to practice-gym@example.org. Nothing real was sent: a real run makes drafts the person sends themselves.&quot;
+}</pre></div>
+<div class="agent"><b>Agent</b><p>Practice run passed all 4 checks. On pretend data it would have drafted “Payment overdue, action needed: invoice PR-103” to practice-florist@example.org; drafted “Invoice reminders: summary” to me@example.com; drafted “Payment reminder: invoice PR-101” to practice-cafe@example.org; drafted “Payment overdue: invoice PR-102” to practice-gym@example.org. Nothing real was sent: a real run makes drafts the person sends themselves.</p></div>
+<div class="dialog"><b>Foundry asks you (shown by the client, not the model)</b><pre>Turn on “Chase unpaid invoices”, version 1?
+
+Practice run on pretend data: passed 4 of 4 checks. Turning it on makes and sends nothing.
+
+Each time you run it, it will:
+- Read your invoice list and pick the invoices still open (not paid, not disputed)
+- Write a friendly reminder once an invoice is 7 days late
+- Write a firmer reminder once it is 14 days late
+- Write a last reminder once it is 30 days late
+- Make each kind of reminder at most once per invoice: it remembers what it already made
+- Write a summary for me@example.com of the invoices that are late
+- Show you every e-mail in full before any is made. You send them yourself, from your own mail app
+- Check afterwards, by re-reading what it wrote, that exactly the planned e-mails were made, word for word</pre><p class="choice">You chose: approve</p></div>
+<div class="tool"><code>foundry · ask_person_to_turn_on({&quot;proposalId&quot;:&quot;d0b84b4d-0728-4c94-bd7a-ccf0e5f6f33b&quot;})</code><pre>{
+ &quot;status&quot;: &quot;approved&quot;,
+ &quot;say&quot;: &quot;The person turned on version 1 (8f2a9baa). Before each run makes anything, they see the full list and approve it once.&quot;
+}</pre></div>
+<div class="agent"><b>Agent</b><p>The person turned on version 1 (8f2a9baa). Before each run makes anything, they see the full list and approve it once.</p></div>
+<div class="tool"><code>foundry · run_flow({&quot;flowId&quot;:&quot;invoice-chase&quot;,&quot;input&quot;:{}})</code><pre>{
+ &quot;status&quot;: &quot;awaiting_human&quot;,
+ &quot;say&quot;: &quot;The person is checking the exact list of what this run would make (4 e-mail draft(s)) as of 2026-10-21, in the Foundry page that opened in their browser (if none opened, they run node \&quot;/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\&quot; open --workspace \&quot;/tmp/journey-p1-claude-code-Qzpuo3\&quot; in their own terminal, not through you). Nothing is made until they approve it there. When they have, tell them the drafts are on the Drafts page and that they send them themselves.&quot;,
+ &quot;where&quot;: &quot;the Foundry page that opened in their browser (if none opened, they run node \&quot;/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\&quot; open --workspace \&quot;/tmp/journey-p1-claude-code-Qzpuo3\&quot; in their own terminal, not through you)&quot;
+}</pre></div>
+<div class="agent"><b>Agent</b><p>The person is checking the exact list of what this run would make (4 e-mail draft(s)) as of 2026-10-21, in the Foundry page that opened in their browser (if none opened, they run node &quot;/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs&quot; open --workspace &quot;/tmp/journey-p1-claude-code-Qzpuo3&quot; in their own terminal, not through you). Nothing is made until they approve it there. When they have, tell them the drafts are on the Drafts page and that they send them themselves.</p></div></body></html>
