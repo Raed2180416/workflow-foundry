@@ -5,11 +5,13 @@
 //   node app/cli.mjs mcp     [--workspace DIR] [--dashboard]            stdio MCP server for Claude Code, Codex, Cursor, ...
 //        [--builder stub|haiku|mercury] [--token-cap N]                    who builds flows: the $0 stub (default), or a cheap model over
 //                                                                           the template library (BUILDER-1); Mercury needs a token cap
+//        [--need-judge haiku|mercury] [--need-cap-usd 0.5]                 need_check asks a cheap model unless the code clears the request
+//                                                                           (capped per call and per server process); default: code-only hint
 //   node app/cli.mjs doctor  [--workspace DIR]                          what works here and what does not, in plain words
 //   node app/cli.mjs connect [--workspace DIR]                          the exact command or config for each coding agent (prints only)
 //   node app/cli.mjs approve APPROVAL_ID [--workspace DIR]              approve in this terminal (asks you to type yes; needs a real terminal)
-//   node app/cli.mjs need "REQUEST" [--sensitivity 0.5] [--judge haiku|mercury]   does this request need a workflow at all? (code only and $0 by
-//                                                                           default; --judge asks a cheap model unless the code clears it; ROUTER-1)
+//   node app/cli.mjs need "REQUEST" [--sensitivity 0.5] [--judge haiku|mercury]   does this request need a workflow at all? (a code-only hint and $0
+//                                                                           by default; --judge asks a cheap model unless the code clears it; ROUTER-1)
 //
 // Safe defaults: the workspace is a private directory (0700) under the user's home; nothing listens beyond 127.0.0.1; no config file of any
 // coding agent is written (connect prints what to paste); no model is called unless --builder names one; nothing is sent beyond the
@@ -32,6 +34,23 @@ export async function makeBuilder(name = 'stub', { workspace, tokenCap = 200000 
   const { ModelBuilder, createBuilderPort } = await import('./core/builder-model.mjs');
   const { port } = await createBuilderPort({ model: BUILDERS[name], journalFile: path.join(workspace, 'builder-journal.sqlite'), ...(name === 'mercury' ? { tokenCap } : {}) });
   return new ModelBuilder({ port, model: BUILDERS[name] });
+}
+// The need judge (ROUTER-1 cascade): a policy model over the builder's ModelPort, $0.05 per call at most and maxUsd per process.
+// Output caps per model (reliability.json judgeOutputCap). Mercury 3 reasons on every call: at 1,000 tokens 13 of 193 ROUTER-1 test
+// calls were cut off with no answer; re-asked at 4,000 all 13 answered (largest answer 1,275 tokens; RESULT-ROUTER-1 addendum C).
+export const NEED_JUDGE_MAX_TOKENS = Object.freeze({ 'claude-haiku-5-5': 1000, 'mercury-3': 4000 });
+export async function makeNeedJudge(name, { workspace, tokenCap = 20000, maxUsd = 0.5 } = {}) {
+  if (!['haiku', 'mercury'].includes(name)) throw Object.assign(new Error('the need judge is haiku or mercury'), { code: 'NEED_JUDGE_CHOICE' });
+  const [{ createBuilderPort }, { modelJudge, cappedJudge }] = await Promise.all([import('./core/builder-model.mjs'), import('../src/need/router.mjs')]);
+  mkdirSync(workspace, { recursive: true, mode: 0o700 });
+  const model = BUILDERS[name];
+  const { port } = await createBuilderPort({ model, journalFile: path.join(workspace, 'need-journal.sqlite'), maxBudgetUsdPerCall: 0.05, ...(name === 'mercury' ? { tokenCap } : {}) });
+  return cappedJudge(modelJudge({ port, modelId: model, runId: `need-${Date.now()}`, maxTokens: NEED_JUDGE_MAX_TOKENS[model] }), { maxUsd, perCallUsd: 0.05 });
+}
+export function needLine(a) {
+  const judged = a.scoreBy !== 'code';
+  return `${a.mode.toUpperCase()}  decided by ${a.decidedBy} at sensitivity ${a.sensitivity}: ${judged ? `judge ${Math.round(a.probability * 100)}% against a bar of ${Math.round(a.threshold * 100)}% (code p=${a.codeProbability}, threshold ${a.codeThreshold.toFixed(3)})`
+    : `code p=${a.codeProbability} against ${a.basis === 'slider' ? 'the slider end' : `threshold ${a.threshold.toFixed(3)}`}`}\n${a.say}\n${a.why}\nReliability: ${a.reliability}`;
 }
 export function defaultWorkspace(env = process.env, os = platform()) {
   if (env.FOUNDRY_HOME) return path.resolve(env.FOUNDRY_HOME);
@@ -76,7 +95,8 @@ export function browserOpener(os = platform()) {
 
 async function main() {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { workspace: { type: 'string' }, port: { type: 'string' }, 'no-open': { type: 'boolean' }, dashboard: { type: 'boolean' },
-    builder: { type: 'string' }, 'token-cap': { type: 'string' }, sensitivity: { type: 'string' }, judge: { type: 'string' }, help: { type: 'boolean', short: 'h' } } });
+    builder: { type: 'string' }, 'token-cap': { type: 'string' }, sensitivity: { type: 'string' }, judge: { type: 'string' }, 'need-judge': { type: 'string' }, 'need-cap-usd': { type: 'string' },
+    help: { type: 'boolean', short: 'h' } } });
   const [command = 'help', item] = positionals;
   const workspace = path.resolve(args.workspace ?? defaultWorkspace());
   const print = value => process.stdout.write(`${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}\n`);
@@ -89,14 +109,10 @@ async function main() {
     let judge = null;
     if (args.judge) {
       if (!['haiku', 'mercury'].includes(args.judge)) { process.stderr.write('need: --judge is haiku or mercury\n'); process.exitCode = 2; return; }
-      const [{ createBuilderPort }, { modelJudge }] = await Promise.all([import('./core/builder-model.mjs'), import('../src/need/router.mjs')]);
-      mkdirSync(workspace, { recursive: true, mode: 0o700 });
-      const { port } = await createBuilderPort({ model: BUILDERS[args.judge], journalFile: path.join(workspace, 'need-journal.sqlite'), maxBudgetUsdPerCall: 0.05,
-        ...(args.judge === 'mercury' ? { tokenCap: args['token-cap'] ? Number(args['token-cap']) : 20000 } : {}) });
-      judge = modelJudge({ port, modelId: BUILDERS[args.judge], runId: `need-cli-${Date.now()}` });
+      judge = await makeNeedJudge(args.judge, { workspace, ...(args['token-cap'] ? { tokenCap: Number(args['token-cap']) } : {}), maxUsd: 0.05 });
     }
     const a = await needAdvice({ request: positionals.slice(1).join(' '), ...(s === undefined ? {} : { sensitivity: s }), judge });
-    print(`${a.mode.toUpperCase()}  p=${a.probability} (threshold ${a.threshold.toFixed(3)} at sensitivity ${a.sensitivity}); decided by ${a.decidedBy}\n${a.say}\n${a.why}\nReliability: ${a.reliability}`);
+    print(needLine(a));
     return;
   }
   if (command === 'doctor') { const report = doctor({ workspace }); for (const i of report.items) print(`${i.ok ? 'ok ' : i.optional ? 'note' : 'NO '}  ${i.say}`); process.exitCode = report.ok ? 0 : 1; return; }
@@ -133,7 +149,11 @@ async function main() {
       }
       return 'the Foundry page that opened in your browser (if none opened, run "node app/cli.mjs start" in your own terminal)';
     } : () => null;
-    await serveAppMcp(app, { dashboardUrl });
+    // --need-judge: need_check (and propose_flow's need field) use the cascade with a capped cheap model; without it, a code-only hint.
+    if (args['need-judge'] && !['haiku', 'mercury'].includes(args['need-judge'])) { process.stderr.write('--need-judge is haiku or mercury\n'); process.exitCode = 2; await app.close(); return; }
+    const needJudge = args['need-judge'] ? await makeNeedJudge(args['need-judge'], { workspace, ...(args['token-cap'] ? { tokenCap: Number(args['token-cap']) } : {}),
+      maxUsd: args['need-cap-usd'] ? Number(args['need-cap-usd']) : 0.5 }) : null;
+    await serveAppMcp(app, { dashboardUrl, needJudge });
     return;
   }
   if (command === 'approve') {

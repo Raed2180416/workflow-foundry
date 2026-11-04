@@ -16,6 +16,7 @@
     "src/models/*.mjs",
     "src/need/*.mjs",
     "src/need/params.json",
+    "src/need/reliability.json",
     "src/models/providers/*.mjs",
     "src/executors/*.mjs",
     "schemas/workflow.schema.json",

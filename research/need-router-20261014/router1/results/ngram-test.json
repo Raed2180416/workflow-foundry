@@ -1,0 +1,858 @@
+{
+ "config": {
+  "schema": "foundry.need-router.ngram-baseline/1",
+  "lambdas": [
+   0.01,
+   0.03,
+   0.1,
+   0.3,
+   1,
+   3,
+   10
+  ],
+  "ngrams": [
+   3,
+   4,
+   5
+  ],
+  "minDf": 2,
+  "margin": 0.02,
+  "clip": 8000,
+  "iters": 3000,
+  "folds": 5
+ },
+ "choice": {
+  "lambda": 1,
+  "threshold": 0.457064,
+  "oofNegMax": 0.4370638513139236,
+  "grid": [
+   {
+    "lambda": 0.01,
+    "oofAuroc": 0.8909
+   },
+   {
+    "lambda": 0.03,
+    "oofAuroc": 0.8923
+   },
+   {
+    "lambda": 0.1,
+    "oofAuroc": 0.8951
+   },
+   {
+    "lambda": 0.3,
+    "oofAuroc": 0.8971
+   },
+   {
+    "lambda": 1,
+    "oofAuroc": 0.9025
+   },
+   {
+    "lambda": 3,
+    "oofAuroc": 0.8934
+   },
+   {
+    "lambda": 10,
+    "oofAuroc": 0.7795
+   }
+  ],
+  "devOof": {
+   "tp": 10,
+   "fp": 0,
+   "fn": 32,
+   "tn": 84,
+   "precision": 1,
+   "recall": 0.2381,
+   "f1": 0.3846,
+   "accuracy": 0.746,
+   "auroc": 0.9025
+  }
+ },
+ "test": {
+  "tp": 18,
+  "fp": 1,
+  "fn": 43,
+  "tn": 131,
+  "precision": 0.9474,
+  "recall": 0.2951,
+  "f1": 0.45,
+  "accuracy": 0.772,
+  "negatives": 132,
+  "fpRateUpper95": 0.0415,
+  "auroc": 0.9179,
+  "msTotalFitAndScore": 381
+ },
+ "rows": [
+  {
+   "id": "au-q02",
+   "p": 0.282607
+  },
+  {
+   "id": "au-q05",
+   "p": 0.243256
+  },
+  {
+   "id": "au-q06",
+   "p": 0.273286
+  },
+  {
+   "id": "au-q08",
+   "p": 0.261641
+  },
+  {
+   "id": "au-q10",
+   "p": 0.271494
+  },
+  {
+   "id": "au-q11",
+   "p": 0.306746
+  },
+  {
+   "id": "au-q14",
+   "p": 0.223049
+  },
+  {
+   "id": "au-rc01",
+   "p": 0.280025
+  },
+  {
+   "id": "au-rc02",
+   "p": 0.271151
+  },
+  {
+   "id": "au-rc06",
+   "p": 0.299003
+  },
+  {
+   "id": "au-rc07",
+   "p": 0.235572
+  },
+  {
+   "id": "au-rc08",
+   "p": 0.319904
+  },
+  {
+   "id": "au-rc09",
+   "p": 0.29359
+  },
+  {
+   "id": "au-rc10",
+   "p": 0.247908
+  },
+  {
+   "id": "au-rc11",
+   "p": 0.228107
+  },
+  {
+   "id": "au-rc13",
+   "p": 0.302529
+  },
+  {
+   "id": "au-rc14",
+   "p": 0.214425
+  },
+  {
+   "id": "au-rc15",
+   "p": 0.22439
+  },
+  {
+   "id": "au-rc16",
+   "p": 0.311642
+  },
+  {
+   "id": "au-hc06",
+   "p": 0.257602
+  },
+  {
+   "id": "au-hc08",
+   "p": 0.291399
+  },
+  {
+   "id": "au-hc10",
+   "p": 0.327494
+  },
+  {
+   "id": "au-hc12",
+   "p": 0.308852
+  },
+  {
+   "id": "au-hc14",
+   "p": 0.303588
+  },
+  {
+   "id": "au-hc15",
+   "p": 0.308147
+  },
+  {
+   "id": "au-hc16",
+   "p": 0.276352
+  },
+  {
+   "id": "au-ci01",
+   "p": 0.244786
+  },
+  {
+   "id": "au-ci03",
+   "p": 0.397358
+  },
+  {
+   "id": "au-ci05",
+   "p": 0.353872
+  },
+  {
+   "id": "au-ci06",
+   "p": 0.293593
+  },
+  {
+   "id": "au-ci07",
+   "p": 0.276323
+  },
+  {
+   "id": "au-ci09",
+   "p": 0.345621
+  },
+  {
+   "id": "au-ci10",
+   "p": 0.306173
+  },
+  {
+   "id": "au-ci13",
+   "p": 0.310863
+  },
+  {
+   "id": "au-ci14",
+   "p": 0.346548
+  },
+  {
+   "id": "au-oss02",
+   "p": 0.254609
+  },
+  {
+   "id": "au-oss03",
+   "p": 0.354343
+  },
+  {
+   "id": "au-oss04",
+   "p": 0.288918
+  },
+  {
+   "id": "au-oss05",
+   "p": 0.293999
+  },
+  {
+   "id": "au-oss06",
+   "p": 0.343497
+  },
+  {
+   "id": "au-oss07",
+   "p": 0.268816
+  },
+  {
+   "id": "au-oss08",
+   "p": 0.29237
+  },
+  {
+   "id": "au-oss09",
+   "p": 0.366657
+  },
+  {
+   "id": "au-oss10",
+   "p": 0.287148
+  },
+  {
+   "id": "au-oss11",
+   "p": 0.372489
+  },
+  {
+   "id": "au-oss12",
+   "p": 0.364564
+  },
+  {
+   "id": "au-rp02",
+   "p": 0.362748
+  },
+  {
+   "id": "au-rp03",
+   "p": 0.32378
+  },
+  {
+   "id": "au-rp05",
+   "p": 0.267078
+  },
+  {
+   "id": "au-rp07",
+   "p": 0.260922
+  },
+  {
+   "id": "au-rp11",
+   "p": 0.280349
+  },
+  {
+   "id": "au-biz01",
+   "p": 0.315669
+  },
+  {
+   "id": "au-biz02",
+   "p": 0.291209
+  },
+  {
+   "id": "au-biz04",
+   "p": 0.358677
+  },
+  {
+   "id": "au-biz05",
+   "p": 0.33893
+  },
+  {
+   "id": "au-biz07",
+   "p": 0.328594
+  },
+  {
+   "id": "au-biz08",
+   "p": 0.350782
+  },
+  {
+   "id": "au-biz09",
+   "p": 0.36192
+  },
+  {
+   "id": "au-biz11",
+   "p": 0.290101
+  },
+  {
+   "id": "au-biz12",
+   "p": 0.395168
+  },
+  {
+   "id": "au-biz13",
+   "p": 0.243155
+  },
+  {
+   "id": "au-biz14",
+   "p": 0.383492
+  },
+  {
+   "id": "au-biz16",
+   "p": 0.365108
+  },
+  {
+   "id": "au-adv03",
+   "p": 0.292333
+  },
+  {
+   "id": "au-adv04",
+   "p": 0.300657
+  },
+  {
+   "id": "au-adv08",
+   "p": 0.242546
+  },
+  {
+   "id": "au-adv11",
+   "p": 0.293636
+  },
+  {
+   "id": "au-adv12",
+   "p": 0.287532
+  },
+  {
+   "id": "au-adv13",
+   "p": 0.294078
+  },
+  {
+   "id": "au-adv14",
+   "p": 0.353207
+  },
+  {
+   "id": "au-adv15",
+   "p": 0.292003
+  },
+  {
+   "id": "au-adv17",
+   "p": 0.280827
+  },
+  {
+   "id": "au-adv18",
+   "p": 0.279925
+  },
+  {
+   "id": "au-adv19",
+   "p": 0.3063
+  },
+  {
+   "id": "au-adv20",
+   "p": 0.29021
+  },
+  {
+   "id": "au-adv23",
+   "p": 0.296346
+  },
+  {
+   "id": "au-per01",
+   "p": 0.285406
+  },
+  {
+   "id": "au-per02",
+   "p": 0.285406
+  },
+  {
+   "id": "au-per03",
+   "p": 0.267623
+  },
+  {
+   "id": "au-per05",
+   "p": 0.393273
+  },
+  {
+   "id": "me-m-code-1",
+   "p": 0.254519
+  },
+  {
+   "id": "me-m-code-3",
+   "p": 0.284515
+  },
+  {
+   "id": "me-m-code-5",
+   "p": 0.267206
+  },
+  {
+   "id": "me-m-code-7",
+   "p": 0.281556
+  },
+  {
+   "id": "me-m-code-8",
+   "p": 0.262038
+  },
+  {
+   "id": "me-m-bigcode-1",
+   "p": 0.275039
+  },
+  {
+   "id": "me-m-bigcode-2",
+   "p": 0.294103
+  },
+  {
+   "id": "me-m-bigcode-3",
+   "p": 0.285463
+  },
+  {
+   "id": "me-m-bigcode-6",
+   "p": 0.353425
+  },
+  {
+   "id": "me-m-bigcode-7",
+   "p": 0.325117
+  },
+  {
+   "id": "me-m-bigcode-8",
+   "p": 0.355685
+  },
+  {
+   "id": "me-m-devops-1",
+   "p": 0.268002
+  },
+  {
+   "id": "me-m-devops-4",
+   "p": 0.366378
+  },
+  {
+   "id": "me-m-devops-7",
+   "p": 0.333809
+  },
+  {
+   "id": "me-m-devops-8",
+   "p": 0.348141
+  },
+  {
+   "id": "me-m-oss-1",
+   "p": 0.291177
+  },
+  {
+   "id": "me-m-oss-2",
+   "p": 0.277988
+  },
+  {
+   "id": "me-m-oss-4",
+   "p": 0.292222
+  },
+  {
+   "id": "me-m-oss-5",
+   "p": 0.304996
+  },
+  {
+   "id": "me-m-oss-7",
+   "p": 0.342177
+  },
+  {
+   "id": "me-m-research-4",
+   "p": 0.301562
+  },
+  {
+   "id": "me-m-research-5",
+   "p": 0.272211
+  },
+  {
+   "id": "me-m-research-6",
+   "p": 0.292648
+  },
+  {
+   "id": "me-m-research-7",
+   "p": 0.270656
+  },
+  {
+   "id": "me-m-research-8",
+   "p": 0.311202
+  },
+  {
+   "id": "me-m-question-2",
+   "p": 0.308997
+  },
+  {
+   "id": "me-m-question-8",
+   "p": 0.294422
+  },
+  {
+   "id": "me-m-bizauto-2",
+   "p": 0.318703
+  },
+  {
+   "id": "me-m-bizauto-4",
+   "p": 0.38336
+  },
+  {
+   "id": "me-m-bizauto-5",
+   "p": 0.333979
+  },
+  {
+   "id": "me-m-bizauto-6",
+   "p": 0.353944
+  },
+  {
+   "id": "me-m-bizauto-8",
+   "p": 0.314938
+  },
+  {
+   "id": "me-m-bizone-1",
+   "p": 0.310163
+  },
+  {
+   "id": "me-m-bizone-2",
+   "p": 0.351082
+  },
+  {
+   "id": "me-m-bizone-4",
+   "p": 0.282916
+  },
+  {
+   "id": "me-m-bizone-5",
+   "p": 0.296058
+  },
+  {
+   "id": "me-m-bizone-6",
+   "p": 0.343942
+  },
+  {
+   "id": "me-m-bizone-7",
+   "p": 0.277544
+  },
+  {
+   "id": "me-m-tricky-1",
+   "p": 0.282978
+  },
+  {
+   "id": "me-m-tricky-2",
+   "p": 0.281289
+  },
+  {
+   "id": "me-m-tricky-3",
+   "p": 0.287862
+  },
+  {
+   "id": "me-m-tricky-5",
+   "p": 0.281111
+  },
+  {
+   "id": "me-m-tricky-7",
+   "p": 0.299799
+  },
+  {
+   "id": "me-m-tricky-8",
+   "p": 0.339178
+  },
+  {
+   "id": "me-m-casual-2",
+   "p": 0.299583
+  },
+  {
+   "id": "me-m-casual-4",
+   "p": 0.28623
+  },
+  {
+   "id": "me-m-casual-5",
+   "p": 0.234154
+  },
+  {
+   "id": "me-m-casual-7",
+   "p": 0.289383
+  },
+  {
+   "id": "me-m-casual-8",
+   "p": 0.342676
+  },
+  {
+   "id": "me-m2-ongoing-2",
+   "p": 0.361839
+  },
+  {
+   "id": "me-m2-ongoing-4",
+   "p": 0.388371
+  },
+  {
+   "id": "me-m2-ongoing-5",
+   "p": 0.428481
+  },
+  {
+   "id": "me-m2-ongoing-8",
+   "p": 0.339497
+  },
+  {
+   "id": "me-m2-process-1",
+   "p": 0.309144
+  },
+  {
+   "id": "me-m2-process-2",
+   "p": 0.355053
+  },
+  {
+   "id": "me-m2-process-6",
+   "p": 0.396352
+  },
+  {
+   "id": "me-m2-process-7",
+   "p": 0.360752
+  },
+  {
+   "id": "me-m2-process-8",
+   "p": 0.398322
+  },
+  {
+   "id": "me-m2-program-2",
+   "p": 0.374181
+  },
+  {
+   "id": "me-m2-program-4",
+   "p": 0.384606
+  },
+  {
+   "id": "me-m2-program-5",
+   "p": 0.348113
+  },
+  {
+   "id": "me-m2-program-6",
+   "p": 0.348398
+  },
+  {
+   "id": "me-m2-program-7",
+   "p": 0.421307
+  },
+  {
+   "id": "me-m2-casual-2",
+   "p": 0.366803
+  },
+  {
+   "id": "me-m2-casual-4",
+   "p": 0.306481
+  },
+  {
+   "id": "me-m2-casual-5",
+   "p": 0.401958
+  },
+  {
+   "id": "me-m2-casual-8",
+   "p": 0.347386
+  },
+  {
+   "id": "ab-finance.bad_debt_writeoff",
+   "p": 0.6042
+  },
+  {
+   "id": "ab-finance.commission_calculation",
+   "p": 0.541615
+  },
+  {
+   "id": "ab-finance.qb_estimate_conversion",
+   "p": 0.569223
+  },
+  {
+   "id": "ab-finance.revenue_recognition",
+   "p": 0.521764
+  },
+  {
+   "id": "ab-hr.airtable_learning_path_assignment",
+   "p": 0.513036
+  },
+  {
+   "id": "ab-hr.anniversary_recognition",
+   "p": 0.471459
+  },
+  {
+   "id": "ab-hr.recognition_nominations",
+   "p": 0.435776
+  },
+  {
+   "id": "ab-hr.slack_benefits_inquiry",
+   "p": 0.591112
+  },
+  {
+   "id": "ab-marketing.newsletter_unsubscribe_processing",
+   "p": 0.310892
+  },
+  {
+   "id": "ab-marketing.utm_audit_and_fix",
+   "p": 0.567679
+  },
+  {
+   "id": "ab-marketing.win_loss_analysis",
+   "p": 0.588618
+  },
+  {
+   "id": "ab-operations.contract_renewal_pipeline",
+   "p": 0.355742
+  },
+  {
+   "id": "ab-operations.cross_training_assignment",
+   "p": 0.383047
+  },
+  {
+   "id": "ab-sales.competitive_displacement_outreach",
+   "p": 0.340989
+  },
+  {
+   "id": "ab-sales.dependency_chain",
+   "p": 0.41525
+  },
+  {
+   "id": "ab-sales.historical_context_pipeline_report",
+   "p": 0.427413
+  },
+  {
+   "id": "ab-simple.email_airtable_project",
+   "p": 0.373836
+  },
+  {
+   "id": "ab-simple.gmail_demo_followup",
+   "p": 0.356298
+  },
+  {
+   "id": "ab-simple.hs_create_deal",
+   "p": 0.290559
+  },
+  {
+   "id": "ab-simple.jira_legacy_data_migration",
+   "p": 0.274143
+  },
+  {
+   "id": "ab-simple.sf_create_case",
+   "p": 0.299504
+  },
+  {
+   "id": "ab-simple.zoom_client_demo",
+   "p": 0.317412
+  },
+  {
+   "id": "ab-support.helpscout_customer_merge",
+   "p": 0.462369
+  },
+  {
+   "id": "ab-support.hiver_csat_analysis",
+   "p": 0.481036
+  },
+  {
+   "id": "an-need-qa-s601",
+   "p": 0.338752
+  },
+  {
+   "id": "an-need-qa-s602",
+   "p": 0.306428
+  },
+  {
+   "id": "an-need-qa-s603",
+   "p": 0.353807
+  },
+  {
+   "id": "an-need-constraint-s601",
+   "p": 0.356929
+  },
+  {
+   "id": "an-need-constraint-s602",
+   "p": 0.344464
+  },
+  {
+   "id": "an-need-constraint-s603",
+   "p": 0.405435
+  },
+  {
+   "id": "an-need-stage-s601",
+   "p": 0.339698
+  },
+  {
+   "id": "an-need-stage-s602",
+   "p": 0.346932
+  },
+  {
+   "id": "an-need-stage-s603",
+   "p": 0.424451
+  },
+  {
+   "id": "an-need-stage-s604",
+   "p": 0.379701
+  },
+  {
+   "id": "an-need-r3mini-s601",
+   "p": 0.29151
+  },
+  {
+   "id": "an-need-r3mini-s602",
+   "p": 0.291396
+  },
+  {
+   "id": "an-need-codefix-noverifier-s601",
+   "p": 0.311626
+  },
+  {
+   "id": "an-need-codefix-noverifier-s602",
+   "p": 0.31492
+  },
+  {
+   "id": "abr-abr-mkt-reviews",
+   "p": 0.569285
+  },
+  {
+   "id": "abr-abr-mkt-suppression",
+   "p": 0.567681
+  },
+  {
+   "id": "abr-abr-ops-slawatch",
+   "p": 0.620173
+  },
+  {
+   "id": "abr-abr-sales-dealdesk",
+   "p": 0.57247
+  },
+  {
+   "id": "abr-abr-sales-noshow",
+   "p": 0.551241
+  },
+  {
+   "id": "abr-abr-sup-gdpr",
+   "p": 0.616196
+  },
+  {
+   "id": "abr-abr-sup-routing",
+   "p": 0.609967
+  },
+  {
+   "id": "eb-e8",
+   "p": 0.539743
+  }
+ ]
+}

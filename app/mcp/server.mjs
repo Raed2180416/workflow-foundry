@@ -1,4 +1,4 @@
-// The spike's MCP server (stdio): seven task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3).
+// The spike's MCP server (stdio): eight task-directed tools over FoundryApp (research/surface-20261021/DESIGN.md §3).
 //
 //   propose_flow  describe what you want -> questions, an honest refusal, or a version-bound proposal with a plain summary and checks
 //   explain_flow  steps, checks ("definition of done"), outside actions and limits of a proposal or flow, in plain words
@@ -8,6 +8,7 @@
 //   run_flow      run the current approved version; outside actions still pause for the person
 //   flow_status   a run in plain words: status, failed step, what to do, checks, pending approvals, cost
 //   list_flows    flows, proposals, and how many things wait for the person
+//   need_check    does this request need a workflow at all? (ROUTER-1; code-only hint, or the cascade when the host plugs in a judge)
 //
 // Every result has `say`: one or two sentences the agent can relay as is. Arguments are validated against the advertised schema
 // before anything runs. Tool output is data about the user's workspace; nothing in it is an instruction to the agent.
@@ -17,8 +18,6 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 import { validateData } from '../../src/validate.mjs';
 import { errorData } from '../../src/data.mjs';
 import { needAdvice, needToolSpec } from '../core/need.mjs';
-
-const NEED = needToolSpec('need_check');
 
 const id = { type: 'string', minLength: 1, maxLength: 128 };
 const object = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -36,7 +35,9 @@ function say(tool, r) {
     case 'propose_flow':
       if (r.status === 'needs_answers') return `I need one answer first: ${r.questions.map(q => q.question).join(' ')}`;
       if (r.status === 'unsupported' || r.status === 'no_change' || r.status === 'build_failed') return r.reply;
-      return `I drafted “${r.summary.title}” (version ${r.version}). It will: ${r.willDo.join('; ')}. It will not: ${r.willNotDo.join('; ')}. Nothing is running. Next: try it on practice data.${r.need && !r.need.needsWorkflow ? ` Note: ${r.need.say}` : ''}`;
+      // The need note is shown only when a judged decision says no workflow is needed (review M3): the code-only router misses about
+      // a third of the requests that do need one, so on its word alone the note would mislead.
+      return `I drafted “${r.summary.title}” (version ${r.version}). It will: ${r.willDo.join('; ')}. It will not: ${r.willNotDo.join('; ')}. Nothing is running. Next: try it on practice data.${r.need && r.need.basis === 'cascade' && !r.need.needsWorkflow ? ` Note: ${r.need.say}` : ''}`;
     case 'explain_flow': return `“${r.summary.title}” has ${r.summary.steps.length} steps and ${r.summary.checks.length} checks that define done.`;
     case 'dry_run': return r.passed ? `Practice run passed all ${r.checks.length} checks. It would have: ${r.wouldDo.map(w => (DID[w.action] ?? DID.send)(w)).join('; ') || 'taken no outside action'}. Nothing real was sent.`
       : `Practice run did not pass: ${r.headline}`;
@@ -50,8 +51,14 @@ function say(tool, r) {
   }
 }
 
-/** Tool definitions bound to one FoundryApp. `context.server` is the MCP Server (for elicitation); `options.dashboardUrl()` names where a person approves. */
-export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
+/**
+ * Tool definitions bound to one FoundryApp. `context.server` is the MCP Server (for elicitation); `options.dashboardUrl()` names where
+ * a person approves; `options.needJudge` is the host's optional, capped need judge (src/need/router.mjs modelJudge + cappedJudge):
+ * without one, need_check is a labelled code-only hint.
+ */
+export function toolDefinitions(app, { dashboardUrl = () => null, needJudge = null } = {}) {
+  const NEED = needToolSpec('need_check', { judge: needJudge?.model ?? null });
+  const need = request => needAdvice({ ...request, judge: needJudge });
   const where = () => dashboardUrl() ? `The person approves it in ${dashboardUrl()}; you cannot approve it.`
     : 'Ask the person to run `node app/cli.mjs start` in their own terminal and approve it in the page it opens. You cannot approve it.';
   async function approve({ proposalId }, context) {
@@ -87,11 +94,12 @@ export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
     ['flow_status', 'Status of one run in plain words: what happened, which step failed and what to do, checks, pending approvals, cost.', object({ runId: id }, ['runId']), a => app.status(a), true],
     ['list_flows', 'List flows, drafts awaiting practice or approval, and how many things are waiting for the person.', object({}), () => app.list(), true],
     // ROUTER-1 need router (app/core/need.mjs): read-only, $0.
-    [NEED.name, NEED.description, NEED.inputSchema, a => needAdvice(a), true]
+    [NEED.name, NEED.description, NEED.inputSchema, a => need(a), true]
   ];
-  // propose_flow also carries the need router's advice (additive field; code only, $0).
-  const propose = defs[0];
-  propose[3] = async a => { const r = await app.propose(a); return r && r.ok !== false ? { ...r, need: await needAdvice({ request: a.request }) } : r; };
+  // propose_flow also carries the need router's advice (additive field; the code-only hint, or the cascade with the host's judge).
+  // Found by name, not position (review m5).
+  const propose = defs.find(d => d[0] === 'propose_flow');
+  propose[3] = async a => { const r = await app.propose(a); return r && r.ok !== false ? { ...r, need: await need({ request: a.request }) } : r; };
   return defs.map(([name, description, inputSchema, execute, readOnly]) => ({
     name, description, inputSchema, execute,
     annotations: { readOnlyHint: readOnly, destructiveHint: false, idempotentHint: readOnly, openWorldHint: name === 'run_flow' },
@@ -101,10 +109,10 @@ export function toolDefinitions(app, { dashboardUrl = () => null } = {}) {
   }));
 }
 
-export async function serveAppMcp(app, { transport = new StdioServerTransport(), dashboardUrl } = {}) {
+export async function serveAppMcp(app, { transport = new StdioServerTransport(), dashboardUrl, needJudge = null } = {}) {
   const server = new Server({ name: 'workflow-foundry-surface', version: '0.0.1' }, { capabilities: { tools: {} },
     instructions: 'Workflow Foundry builds small automations that are checked before they run. Use propose_flow for a request, dry_run before approve, and relay `say` to the person. Only the person can approve.' });
-  const defs = toolDefinitions(app, { dashboardUrl });
+  const defs = toolDefinitions(app, { dashboardUrl, needJudge });
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: defs.map(({ execute, ...spec }) => spec) }));
   server.setRequestHandler(CallToolRequestSchema, async request => {
     const tool = defs.find(t => t.name === request.params.name);

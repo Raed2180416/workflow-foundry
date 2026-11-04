@@ -1,0 +1,453 @@
+{
+ "schema": "foundry.need-reliability/1",
+ "generatedBy": "experiments/need-router/router1/addendum.mjs",
+ "paramsSha": "102928b5ef8493dce79939e45c42949c1850d095c3d9e7dcaa8b04c736881e58",
+ "detector": "need-primitives/1.1",
+ "cascadeClearBelow": 0.05,
+ "judgeOutputCap": {
+  "claude-haiku-5-5": 1000,
+  "mercury-3": 4000
+ },
+ "preregisteredV1AtDefault": {
+  "fp": 9,
+  "negatives": 132,
+  "tp": 41,
+  "positives": 61,
+  "recall": 0.6721,
+  "fpUpper95": 0.1255
+ },
+ "measuredOn": "ROUTER-1 test split (193 requests: 132 do not need a workflow, 61 do; one author wrote the rubric and every label)",
+ "grade": {
+  "code": "development evidence: the shipped detectors (v1.1) were frozen after test judge rows existed and tuned on probes that paraphrase test items (RESULT-ROUTER-1, review B1); the preregistered v1 scored 9/132 false triggers and recall 0.67 at 0.5",
+  "cascade:claude-haiku-5-5": "post-hoc: the cascade and its 0.05 clearing bar were chosen after the test split was read; sealed confirmation pending",
+  "cascade:mercury-3": "post-hoc, as the Haiku cascade; the frozen pass used a 1,000-token output cap and 13 of 193 test calls gave no answer, so those 13 were re-asked at the product's 4,000-token cap on 2026-11-04 (all answered) and their answers are used here"
+ },
+ "points": {
+  "code": {
+   "0": {
+    "test": {
+     "n": 193,
+     "fp": 0,
+     "negatives": 132,
+     "tp": 0,
+     "positives": 61,
+     "recall": 0,
+     "precision": null,
+     "fpUpper95": 0.0276,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 0,
+     "negatives": 84,
+     "tp": 0,
+     "positives": 42,
+     "recall": 0,
+     "precision": null,
+     "fpUpper95": 0.043,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "1": {
+    "test": {
+     "n": 193,
+     "fp": 132,
+     "negatives": 132,
+     "tp": 61,
+     "positives": 61,
+     "recall": 1,
+     "precision": 0.3161,
+     "fpUpper95": 1,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 84,
+     "negatives": 84,
+     "tp": 42,
+     "positives": 42,
+     "recall": 1,
+     "precision": 0.3333,
+     "fpUpper95": 1,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "0.25": {
+    "test": {
+     "n": 193,
+     "fp": 0,
+     "negatives": 132,
+     "tp": 26,
+     "positives": 61,
+     "recall": 0.4262,
+     "precision": 1,
+     "fpUpper95": 0.0276,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 0,
+     "negatives": 84,
+     "tp": 34,
+     "positives": 42,
+     "recall": 0.8095,
+     "precision": 1,
+     "fpUpper95": 0.043,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "0.5": {
+    "test": {
+     "n": 193,
+     "fp": 8,
+     "negatives": 132,
+     "tp": 43,
+     "positives": 61,
+     "recall": 0.7049,
+     "precision": 0.8431,
+     "fpUpper95": 0.1159,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 0,
+     "negatives": 84,
+     "tp": 42,
+     "positives": 42,
+     "recall": 1,
+     "precision": 1,
+     "fpUpper95": 0.043,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "0.75": {
+    "test": {
+     "n": 193,
+     "fp": 26,
+     "negatives": 132,
+     "tp": 52,
+     "positives": 61,
+     "recall": 0.8525,
+     "precision": 0.6667,
+     "fpUpper95": 0.2751,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 8,
+     "negatives": 84,
+     "tp": 42,
+     "positives": 42,
+     "recall": 1,
+     "precision": 0.84,
+     "fpUpper95": 0.1791,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    }
+   }
+  },
+  "cascade:claude-haiku-5-5": {
+   "0": {
+    "test": {
+     "n": 193,
+     "fp": 0,
+     "negatives": 132,
+     "tp": 0,
+     "positives": 61,
+     "recall": 0,
+     "precision": null,
+     "fpUpper95": 0.0276,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 0,
+     "negatives": 84,
+     "tp": 0,
+     "positives": 42,
+     "recall": 0,
+     "precision": null,
+     "fpUpper95": 0.043,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "1": {
+    "test": {
+     "n": 193,
+     "fp": 132,
+     "negatives": 132,
+     "tp": 61,
+     "positives": 61,
+     "recall": 1,
+     "precision": 0.3161,
+     "fpUpper95": 1,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 84,
+     "negatives": 84,
+     "tp": 42,
+     "positives": 42,
+     "recall": 1,
+     "precision": 0.3333,
+     "fpUpper95": 1,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "0.25": {
+    "test": {
+     "n": 193,
+     "fp": 2,
+     "negatives": 132,
+     "tp": 58,
+     "positives": 61,
+     "recall": 0.9508,
+     "precision": 0.9667,
+     "fpUpper95": 0.0537,
+     "judgeShare": 0.7668,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0.000208
+    },
+    "dev": {
+     "n": 126,
+     "fp": 2,
+     "negatives": 84,
+     "tp": 39,
+     "positives": 42,
+     "recall": 0.9286,
+     "precision": 0.9512,
+     "fpUpper95": 0.0834,
+     "judgeShare": 0.6825,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0.000191
+    }
+   },
+   "0.5": {
+    "test": {
+     "n": 193,
+     "fp": 5,
+     "negatives": 132,
+     "tp": 59,
+     "positives": 61,
+     "recall": 0.9672,
+     "precision": 0.9219,
+     "fpUpper95": 0.0862,
+     "judgeShare": 0.7668,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0.000208
+    },
+    "dev": {
+     "n": 126,
+     "fp": 2,
+     "negatives": 84,
+     "tp": 41,
+     "positives": 42,
+     "recall": 0.9762,
+     "precision": 0.9535,
+     "fpUpper95": 0.0834,
+     "judgeShare": 0.6825,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0.000191
+    }
+   },
+   "0.75": {
+    "test": {
+     "n": 193,
+     "fp": 9,
+     "negatives": 132,
+     "tp": 61,
+     "positives": 61,
+     "recall": 1,
+     "precision": 0.8714,
+     "fpUpper95": 0.1255,
+     "judgeShare": 0.7668,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0.000208
+    },
+    "dev": {
+     "n": 126,
+     "fp": 5,
+     "negatives": 84,
+     "tp": 41,
+     "positives": 42,
+     "recall": 0.9762,
+     "precision": 0.8913,
+     "fpUpper95": 0.1335,
+     "judgeShare": 0.6825,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0.000191
+    }
+   }
+  },
+  "cascade:mercury-3": {
+   "0": {
+    "test": {
+     "n": 193,
+     "fp": 0,
+     "negatives": 132,
+     "tp": 0,
+     "positives": 61,
+     "recall": 0,
+     "precision": null,
+     "fpUpper95": 0.0276,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 0,
+     "negatives": 84,
+     "tp": 0,
+     "positives": 42,
+     "recall": 0,
+     "precision": null,
+     "fpUpper95": 0.043,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "1": {
+    "test": {
+     "n": 193,
+     "fp": 132,
+     "negatives": 132,
+     "tp": 61,
+     "positives": 61,
+     "recall": 1,
+     "precision": 0.3161,
+     "fpUpper95": 1,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 84,
+     "negatives": 84,
+     "tp": 42,
+     "positives": 42,
+     "recall": 1,
+     "precision": 0.3333,
+     "fpUpper95": 1,
+     "judgeShare": 0,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "0.25": {
+    "test": {
+     "n": 193,
+     "fp": 5,
+     "negatives": 132,
+     "tp": 56,
+     "positives": 61,
+     "recall": 0.918,
+     "precision": 0.918,
+     "fpUpper95": 0.0862,
+     "judgeShare": 0.7668,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 4,
+     "negatives": 84,
+     "tp": 39,
+     "positives": 42,
+     "recall": 0.9286,
+     "precision": 0.907,
+     "fpUpper95": 0.1175,
+     "judgeShare": 0.6825,
+     "judgeFaults": 7,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "0.5": {
+    "test": {
+     "n": 193,
+     "fp": 5,
+     "negatives": 132,
+     "tp": 56,
+     "positives": 61,
+     "recall": 0.918,
+     "precision": 0.918,
+     "fpUpper95": 0.0862,
+     "judgeShare": 0.7668,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 4,
+     "negatives": 84,
+     "tp": 41,
+     "positives": 42,
+     "recall": 0.9762,
+     "precision": 0.9111,
+     "fpUpper95": 0.1175,
+     "judgeShare": 0.6825,
+     "judgeFaults": 7,
+     "costPerDecisionUsd": 0
+    }
+   },
+   "0.75": {
+    "test": {
+     "n": 193,
+     "fp": 5,
+     "negatives": 132,
+     "tp": 56,
+     "positives": 61,
+     "recall": 0.918,
+     "precision": 0.918,
+     "fpUpper95": 0.0862,
+     "judgeShare": 0.7668,
+     "judgeFaults": 0,
+     "costPerDecisionUsd": 0
+    },
+    "dev": {
+     "n": 126,
+     "fp": 4,
+     "negatives": 84,
+     "tp": 41,
+     "positives": 42,
+     "recall": 0.9762,
+     "precision": 0.9111,
+     "fpUpper95": 0.1175,
+     "judgeShare": 0.6825,
+     "judgeFaults": 7,
+     "costPerDecisionUsd": 0
+    }
+   }
+  }
+ }
+}

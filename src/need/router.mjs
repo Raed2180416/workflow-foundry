@@ -3,8 +3,13 @@
 //   needCheck(text, { sensitivity, context })            code only, $0, microseconds: primitives -> calibrated p -> mode
 //   needDecide(text, { sensitivity, context, judge })   the same, and a cheap typed judge ONLY when p falls in the middle
 //                                                       band [t(s) - delta, t(s)); the judge can raise a request into the
-//                                                       workflow class, never lower one (the code's never-trigger guarantee
-//                                                       on its calibration set holds for everything above the band)
+//                                                       workflow class, never lower one (the preregistered design; its band
+//                                                       was chosen as delta = 0, so it is code only as shipped)
+//   needCascade(text, { sensitivity, context, judge })  POST-HOC design: the code clears p < 0.05, the judge decides the rest
+//
+// The slider ends are hard: sensitivity 0 never triggers and 1 always does, whoever decides (review M2, 2026-11-04).
+// Every decision carries `score`: the deciding score and the bar it was compared with (the judge's percent when a judge decided).
+// Measured operating points per (decider, sensitivity) are in reliability.json (advice.mjs reads them).
 //
 // Modes: none (just do it), checklist (one sitting, but a short plan and a verify step: irreversible effect), workflow (a
 // durable, checkable process: waits, policy over items with effects, a rule-bound program, a staged rollout), recurring (a
@@ -59,9 +64,12 @@ export function loadParams() {
   return cached;
 }
 
+/** The slider value actually used: clamped to [0, 1]; anything that is not a finite number means the default. */
+export function clampSensitivity(sensitivity) { return Math.min(1, Math.max(0, Number.isFinite(sensitivity) ? sensitivity : DEFAULT_SENSITIVITY)); }
+
 /** Threshold for a sensitivity s in [0, 1]: t(0) = 1, t(0.5) = tDefault, t(1) = 0, linear in between. */
 export function thresholdAt(sensitivity, tDefault) {
-  const s = Math.min(1, Math.max(0, Number.isFinite(sensitivity) ? sensitivity : DEFAULT_SENSITIVITY));
+  const s = clampSensitivity(sensitivity);
   if (s === 0) return 1;
   if (s === 0.5) return tDefault;            // exact at the anchor points (v1 computed 1 - (1 - t), off by one ulp)
   if (s === 1) return 0;
@@ -91,21 +99,26 @@ function explain(mode, primitives, dampeners) {
 /** Code-only decision. $0; no network. */
 export function needCheck(text, { sensitivity = DEFAULT_SENSITIVITY, context = {}, params = loadParams() } = {}) {
   const t0 = process.hrtime.bigint();
+  sensitivity = clampSensitivity(sensitivity);
   const d = detectPrimitives(text, context);
   const p = scoreFeatures(d.features, params);
   const threshold = thresholdAt(sensitivity, params.tDefault);
   const delta = params.middle?.delta ?? 0;
-  const needsWorkflow = p >= threshold;
+  // The slider ends are exact: s = 0 never triggers (a logistic p is below 1 anyway) and s = 1 always does.
+  const needsWorkflow = sensitivity <= 0 ? false : sensitivity >= 1 ? true : p >= threshold;
   const rules = params.modeRules ?? {};
   const strongDampener = ['question', 'mention', 'hypothetical'].some(k => d.features[k] >= (rules.dampenerMax ?? 0.5));
-  const mode = needsWorkflow ? (d.features.recurrence >= (rules.recurrenceMin ?? 0.5) ? 'recurring' : 'workflow')
-    : (d.irreversible.score >= (rules.irreversibleMin ?? 0.8) && !strongDampener ? 'checklist' : 'none');
+  // The mode for each side of the decision, from the code's signals; a judge that decides the side keeps these as the fallback.
+  const modes = { yes: d.features.recurrence >= (rules.recurrenceMin ?? 0.5) ? 'recurring' : 'workflow',
+    no: d.irreversible.score >= (rules.irreversibleMin ?? 0.8) && !strongDampener ? 'checklist' : 'none' };
+  const mode = needsWorkflow ? modes.yes : modes.no;
   const rank = names => names.map(name => ({ name, score: d.features[name], cues: d.evidence[name].map(h => ({ id: h.id, match: h.match })) }))
     .filter(x => x.score > 0).sort((a, b) => b.score * Math.abs(params.weights[b.name]) - a.score * Math.abs(params.weights[a.name]));
   const primitives = rank(PRIMITIVES), dampeners = rank(DAMPENERS);
   return {
-    schema: DECISION_SCHEMA, needsWorkflow, mode, p: round(p), threshold: round(threshold), sensitivity, band: p >= threshold ? 'above' : p >= threshold - delta ? 'middle' : 'below',
-    decidedBy: 'code', why: explain(mode, primitives, dampeners), primitives, dampeners, irreversible: d.irreversible.hits.map(h => ({ id: h.id, match: h.match })),
+    schema: DECISION_SCHEMA, needsWorkflow, mode, modes, p: round(p), threshold: round(threshold), sensitivity, band: p >= threshold ? 'above' : p >= threshold - delta ? 'middle' : 'below',
+    decidedBy: sensitivity <= 0 || sensitivity >= 1 ? sliderEnd(sensitivity) : 'code', score: { by: 'code', p: round(p), threshold: round(threshold) },
+    why: explain(mode, primitives, dampeners), primitives, dampeners, irreversible: d.irreversible.hits.map(h => ({ id: h.id, match: h.match })),
     features: d.features, router: { detector: d.detector, paramsSha: params.sha ?? paramsSha(params), costUsd: 0, latencyMs: Number(process.hrtime.bigint() - t0) / 1e6 }
   };
 }
@@ -117,7 +130,7 @@ export function needCheck(text, { sensitivity = DEFAULT_SENSITIVITY, context = {
  */
 export async function needDecide(text, { sensitivity = DEFAULT_SENSITIVITY, context = {}, params = loadParams(), judge = null, delta = params.middle?.delta ?? 0 } = {}) {
   const card = needCheck(text, { sensitivity, context, params: { ...params, middle: { ...(params.middle ?? {}), delta } } });
-  if (!judge || !(delta > 0) || card.band !== 'middle') return card;
+  if (!judge || !(delta > 0) || card.band !== 'middle' || card.sensitivity <= 0 || card.sensitivity >= 1) return card;
   let answer = null, fault = null;
   try { answer = await judge(text); } catch (e) { fault = { code: e.code ?? 'JUDGE_ERROR', message: String(e.message ?? e).slice(0, 200) }; }
   const read = answer && MODES.includes(answer.mode) ? answer : null;
@@ -125,38 +138,69 @@ export async function needDecide(text, { sensitivity = DEFAULT_SENSITIVITY, cont
   const judged = NEEDS_WORKFLOW.has(read.mode);
   const out = { ...card, judge: { model: read.model ?? null, mode: read.mode, p: read.p ?? null, costUsd: read.costUsd ?? null, latencyMs: read.latencyMs ?? null } };
   if (!judged) return { ...out, decidedBy: `code (judge agreed: ${read.mode})` };
-  return { ...out, needsWorkflow: true, mode: read.mode, decidedBy: `judge:${read.model ?? 'unnamed'}`, why: `${explain(read.mode, card.primitives, card.dampeners)} (Close call: a cheap judge decided.)` };
+  return { ...out, needsWorkflow: true, mode: read.mode, decidedBy: `judge:${read.model ?? 'unnamed'}`, score: { by: `judge:${read.model ?? 'unnamed'}`, p: read.p ?? null, threshold: null },
+    why: `${explain(read.mode, card.primitives, card.dampeners)} (Close call: a cheap judge decided.)` };
 }
+
+function sliderEnd(s) { return s <= 0 ? 'slider (0: never)' : 'slider (1: always)'; }
 
 // The cascade (ROUTER-1 POST-HOC, results/POSTHOC-test.md (b); not preregistered, confirm on a sealed set): the $0 code router
 // clears requests whose p is below CASCADE_CLEAR_BELOW, and the judge decides everything else. On the ROUTER-1 test split this
-// asked Haiku on 77% of requests with the same decisions as asking Haiku on all of them (FP 5/132, recall 0.967). The slider
-// moves the judge's threshold: t_J(s) = thresholdAt(s, 0.5), so s = 0.5 takes the judge's own boundary (percent >= 50).
+// asked Haiku on 77% of requests with the same decisions as asking Haiku on all of them (FP 5/132, recall 0.967); the 0.05 bar
+// was read off that test frontier. The slider moves the judge's bar: t_J(s) = thresholdAt(s, 0.5), so s = 0.5 takes the judge's
+// own boundary (percent >= 50). The ends are hard (s = 0 never, s = 1 always: no judge call, no clearing), and the clearing bar
+// applies only for 0 < s < 1, so raising s never removes a trigger. A judge fault falls back to the code decision at s, recorded.
+// Measured per sensitivity in reliability.json (experiments/need-router/router1/addendum.mjs, section H).
+//
+// Departure from docs/ROADMAP.md §2.8, recorded in RESULT-ROUTER-1.md: there, code guards can only add structure and typed
+// judgments do not pick the mode; here the judge decides the side (it can overrule a code trigger) and its mode is used.
 export const CASCADE_CLEAR_BELOW = 0.05;
 export async function needCascade(text, { sensitivity = DEFAULT_SENSITIVITY, context = {}, params = loadParams(), judge = null, clearBelow = CASCADE_CLEAR_BELOW } = {}) {
   const card = needCheck(text, { sensitivity, context, params });
   if (!judge) return card;
-  if (card.p < clearBelow) return { ...card, needsWorkflow: false, decidedBy: 'code (cleared below the cascade bar)', cascade: { clearBelow, judged: false } };
+  const cascade = { clearBelow, judged: false, model: judge.model ?? null };
+  if (card.sensitivity <= 0 || card.sensitivity >= 1) return { ...card, cascade };
+  if (card.p < clearBelow) return { ...card, needsWorkflow: false, mode: card.modes.no, decidedBy: 'code (cleared below the cascade bar)', score: { by: 'code', p: card.p, threshold: clearBelow }, cascade };
   let a = null, fault = null;
   try { a = await judge(text); } catch (e) { fault = { code: e.code ?? 'JUDGE_ERROR', message: String(e.message ?? e).slice(0, 200) }; }
-  if (!a || !MODES.includes(a.mode) || !Number.isFinite(a.p)) return { ...card, decidedBy: 'code (judge fault)', judge: { fault: fault ?? { code: 'JUDGE_ANSWER', message: 'unreadable answer' } }, cascade: { clearBelow, judged: false } };
-  const tJ = thresholdAt(sensitivity, 0.5), yes = a.p >= tJ;
-  const mode = yes ? (NEEDS_WORKFLOW.has(a.mode) ? a.mode : (card.features.recurrence >= 0.5 ? 'recurring' : 'workflow'))
-    : (NEEDS_WORKFLOW.has(a.mode) ? (card.mode === 'checklist' ? 'checklist' : 'none') : a.mode);
-  return { ...card, needsWorkflow: yes, mode, decidedBy: `judge:${a.model ?? 'unnamed'}`, why: `${explain(mode, card.primitives, card.dampeners)} (A model judged it; the code signals are shown as reasons.)`,
-    judge: { model: a.model ?? null, mode: a.mode, p: a.p, threshold: round(tJ), costUsd: a.costUsd ?? null, latencyMs: a.latencyMs ?? null }, cascade: { clearBelow, judged: true } };
+  if (!a || !MODES.includes(a.mode) || !Number.isFinite(a.p)) return { ...card, decidedBy: 'code (judge fault)', judge: { model: judge.model ?? null, fault: fault ?? { code: 'JUDGE_ANSWER', message: 'unreadable answer' } }, cascade };
+  const tJ = thresholdAt(card.sensitivity, 0.5), yes = a.p >= tJ;
+  const mode = yes ? (NEEDS_WORKFLOW.has(a.mode) ? a.mode : card.modes.yes) : (NEEDS_WORKFLOW.has(a.mode) ? card.modes.no : a.mode);
+  const by = `judge:${a.model ?? judge.model ?? 'unnamed'}`;
+  return { ...card, needsWorkflow: yes, mode, decidedBy: by, score: { by, p: a.p, threshold: round(tJ) },
+    why: `${explain(mode, card.primitives, card.dampeners)} (A model judged it; the code signals are shown as reasons.)`,
+    judge: { model: a.model ?? null, mode: a.mode, p: a.p, threshold: round(tJ), costUsd: a.costUsd ?? null, latencyMs: a.latencyMs ?? null }, cascade: { ...cascade, judged: true } };
+}
+
+/**
+ * A judge with a spend cap for this process (review M3: a host plugs in a CAPPED judge). Each call reserves `perCallUsd` against
+ * `maxUsd` while in flight and then books its reported cost; once the next call could pass the cap the judge refuses with
+ * JUDGE_BUDGET, which the cascade records as a judge fault and answers with the code decision. Nothing falls back silently.
+ */
+export function cappedJudge(judge, { maxUsd, perCallUsd = 0.05 } = {}) {
+  if (typeof judge !== 'function') throw new TypeError('cappedJudge needs a judge function');
+  if (!(maxUsd > 0)) throw new RangeError('cappedJudge needs maxUsd > 0');
+  let spent = 0, inflight = 0;
+  const capped = async text => {
+    if (spent + (inflight + 1) * perCallUsd > maxUsd + 1e-12) throw Object.assign(new Error(`need judge budget reached: $${spent.toFixed(4)} of $${maxUsd}`), { code: 'JUDGE_BUDGET' });
+    inflight++;
+    try { const a = await judge(text); spent += Number.isFinite(a?.costUsd) ? a.costUsd : perCallUsd; return a; }
+    catch (e) { spent += Number.isFinite(e?.costUsd) ? e.costUsd : 0; throw e; }
+    finally { inflight--; }
+  };
+  return Object.assign(capped, { model: judge.model ?? null, spent: () => spent, maxUsd });
 }
 
 /** A judge over a ModelPort (Haiku via the Claude CLI, or Mercury): the one typed question of judge-prompt.mjs. */
 export function modelJudge({ port, modelId, runId = 'need-router', salt = null, maxTokens = 1000 }) {
   let n = 0;
-  return async text => {
+  return Object.assign(async text => {
     const r = await port.call({ runId, nodeKey: 'need-judge', sampleIndex: 0, attempt: n++, modelId, system: SYSTEM, prompt: judgePrompt(text), schema: JUDGE_SCHEMA,
       decoding: { maxTokens, reasoning: 'none' }, ...(salt ? { salt } : {}) });
     const a = r.ok ? readJudgeAnswer(r.value) : null;
-    if (!a) throw Object.assign(new Error(r.error?.message ?? 'unreadable judge answer'), { code: r.error?.code ?? 'JUDGE_ANSWER' });
+    if (!a) throw Object.assign(new Error(r.error?.message ?? 'unreadable judge answer'), { code: r.error?.code ?? 'JUDGE_ANSWER', costUsd: r.costUsd ?? null });
     return { ...a, model: modelId, costUsd: r.costUsd ?? null, latencyMs: r.latencyMs ?? null };
-  };
+  }, { model: modelId });
 }
 
 function round(x) { return Math.round(x * 1e4) / 1e4; }

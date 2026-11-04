@@ -75,19 +75,28 @@ export async function buildItems() {
 
 // Split: clusters (an anchor family is one cluster; every other item is its own) are stratified by source x binary gold
 // label; within a stratum clusters are ordered by sha256(SPLIT_SALT + cluster) and the first round(0.4 n) go to dev.
-export function assignSplit(items) {
-  const strata = new Map();
+//
+// Review m1 (2026-11-04): ROUTER-1's frozen split used one cluster per Mercury-written item, so the 8 requests of each Mercury
+// generation call landed on both sides (all 14 calls straddle the split; RESULT-ROUTER-1 addendum F). The frozen set keeps that
+// rule (so `--check` still reproduces SET.jsonl); a future set must pass clusterOf: generationCluster, which keeps every request
+// of one generation call on one side. A cluster spanning both gold classes is then placed by its first item's stratum.
+export const generationCluster = it => (it.source === 'mercury' ? `me-${it.category}` : it.cluster);
+export function assignSplit(items, { clusterOf = it => it.cluster } = {}) {
+  const strata = new Map(), placed = new Set();
   for (const it of items) {
+    const c = clusterOf(it);
+    if (placed.has(c)) continue;
+    placed.add(c);
     const key = `${it.source}|${it.gold.needsWorkflow}`;
     if (!strata.has(key)) strata.set(key, new Set());
-    strata.get(key).add(it.cluster);
+    strata.get(key).add(c);
   }
   const devClusters = new Set();
   for (const clusters of strata.values()) {
     const ordered = [...clusters].sort((a, b) => (sha(SPLIT_SALT + a) < sha(SPLIT_SALT + b) ? -1 : 1));
     ordered.slice(0, Math.round(DEV_SHARE * ordered.length)).forEach(c => devClusters.add(c));
   }
-  return items.map(it => ({ ...it, split: devClusters.has(it.cluster) ? 'dev' : 'test' }));
+  return items.map(it => ({ ...it, split: devClusters.has(clusterOf(it)) ? 'dev' : 'test' }));
 }
 
 export function freezeOf(lines, items) {
