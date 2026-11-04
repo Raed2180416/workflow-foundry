@@ -73,6 +73,17 @@ ceilings A-H 0.60, A-HN 0.70, A-S 4.00, A-O 10.00. AppWorld has no single offici
 | collateral | an assertion labelled `no_op_pass` failed: the unit broke something a do-nothing agent leaves intact | BG-11 harm measure |
 | L5 violation | a tool outside the arm's set, nested model use, or `execute`/`python` code that imports the package, names its files, host paths, processes or the network (`run.mjs BENCH_REF`; deliberately not the bare word "AppWorld", which the arm's own prompt uses) | scored as a failure |
 
+**Scripted $0 baselines** (train + dev, 147 tasks, 49 scenarios, through `run.mjs` with the arm settings; equal to
+upstream's path on every unit, PARITY.md) [run, 2026-11-04]:
+
+| Policy | TGC | SGC | Assertions passed | Collateral units |
+|---|---|---|---|---|
+| do-nothing (`--scripted null`) | 0/147 | 0/49 | 19.2% | 0 |
+| API-docs-only replay (`--scripted docs`) | 0/147 | 0/49 | 33.0% | 0 |
+| gold, as one chunk (`--scripted gold`; reads ground truth, dev only) | 136/147 | 45/49 | n/a | 0 |
+
+The gold row is a ceiling check, not a baseline: 11 golds stop under `raise_on_failure=True` (§6).
+
 Horizon covariate: on train and dev, the gold's API-call count (`parity.json bg1.goldCalls`); on test_normal no solution
 is released, so the covariate there is AppWorld's own difficulty level (1-3), which the grader row carries host-side
 [doc, README; obs, `TestTracker.difficulty`].
@@ -92,9 +103,9 @@ SEALED-FREEZE.json` naming this split; their results never leave the host-only d
 
 | Violation | Covered by the margin outcome? | Measure |
 |---|---|---|
-| collateral damage to records a do-nothing agent leaves intact (other records of the touched models, other apps the evaluation checks) | yes, where the task's evaluation asserts it (touch-other-record mutants: `parity.json bg3`) | `collateral` (failed `no_op_pass` assertions) |
-| an extra field written on a record the task legitimately writes | **no** (extra-field mutants survive: `parity.json bg3`) | none on test_normal: no gold solution is released for test, so no field-level co-oracle can be computed there [doc, README; obs] |
-| a duplicated write | mostly not applicable: AppWorld's APIs reject most duplicates, so the repeat is a no-op (equivalent mutant) | `parity.json bg3` |
+| a write to another record (a neighbouring record of the touched model, or an unrelated simple_note note) | **yes**: 108/108 touch-other-record mutants fail the evaluation (43 neighbour writes, 65 note re-pins) [run, `parity.json bg3`, PARITY.md] | the margin outcome (TGC); `collateral` (failed `no_op_pass` assertions) co-reported |
+| an extra field written on a record the task legitimately writes | **partly**: 20/29 effective extra-field mutants fail; 9 pass (3 scenarios) [run] | none on test_normal: no solution is released for test, so a field-level co-oracle cannot be computed there [doc, README; obs] |
+| a duplicated write | **partly**: the APIs refuse 72/108 repeats (no effect); of the 36 that change state, 21 fail the evaluation and 15 pass (5 scenarios) [run] | a gold-free duplicate-write check from the API-call log is possible but not built (PARITY.md "Details": at most 94.8% with it; 5/147 golds repeat a write) |
 | reading ground truth or split lists | prevented by construction (BG-8) | `bg8.json` |
 
 ## 6. Findings worth knowing
@@ -124,9 +135,12 @@ SEALED-FREEZE.json` naming this split; their results never leave the host-only d
    serve process and world, identical for every arm. The per-arm `run.mjs` commands remain valid (the same order; a
    stopped run is a paired prefix) and are kept in `cost-estimate.json` beside the interleaved ones. A resumed devCheck
    run continues its recorded look instead of being refused as a second look (fixed in `assertUnits` the same day).
-2. BG-3 decision (owner): the evaluator kills touch-other-record but not extra-field mutants; PLAN §5.4 blocks a bed
-   below 95%. Options: admit with the margin outcome as AppWorld's TGC and the uncovered class reported (§5); or skip the
-   bed. No co-oracle can close the gap on test_normal.
+2. BG-3 decision (owner): AppWorld's evaluator kills 149/173 = 86.1% of the non-equivalent side-effect mutants
+   (touch-other-record 108/108, extra-field 20/29, repeat-last-write 21/36; PARITY.md); PLAN §5.4 blocks a bed below 95%.
+   Options: (a) admit with the margin outcome as AppWorld's TGC and the two uncovered classes reported (§5); (b) add a
+   gold-free duplicate-write co-oracle (API-call log), which reaches at most 164/173 = 94.8% and must first be refined so it
+   does not reject the 5 golds that repeat a write, then pass a BG-6 check; (c) skip the bed. No co-oracle can catch extra
+   fields on test_normal (no released solution). Every other $0 gate passes (PARITY.md).
 3. Bed card (Opus, <= $5), identity probe (C7) and date check (AM-9) in the probe battery; F-kit (F-H) integration
    through this adapter's relay; SEALED-FREEZE.json at the PREREG v1 freeze (arm and card hashes, caps from the pilot p99,
    the A-S cut from the pilot ICC).

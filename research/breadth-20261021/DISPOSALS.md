@@ -162,11 +162,14 @@ re-unpacked offline), the package-tests cache from `appworld install` (2.1 MB), 
 | Item | Size | When | Why |
 |---|---|---|---|
 | `/var/tmp/foundry-work/benches/appworld/wheels/` (the 80 downloaded wheels) | 33 MB | 2026-11-04 13:56:25Z | installed and verified (`verify_install.py`: 80/80, 10,905 files, 0 mismatches); `downloads.json` keeps every URL and sha256 |
-| scratchpad copy of the appworld wheel, unzipped to read `install.py`, `download.py`, `environment.py`, `evaluator.py`, `requester.py`, `common/safety_guard.py`, `common/path_store.py`, `verify.py`, `cli.py` | 2 MB | at the end of the session | read-only source reading |
-| scratchpad copy of the AppWorld README (`raw.githubusercontent.com/StonyBrookNLP/appworld/main/README.md`, 81,334 B, sha256 `f4049141…7bdd`) | 81 KB | at the end of the session | read for the licence, the agent loop and the experiment config |
+| scratchpad copy of the appworld wheel, unzipped to read `install.py`, `download.py`, `environment.py`, `evaluator.py`, `requester.py`, `common/safety_guard.py`, `common/path_store.py`, `verify.py`, `cli.py` | 1.4 MB | 2026-11-04 19:43Z | read-only source reading |
+| scratchpad copy of the AppWorld README (`raw.githubusercontent.com/StonyBrookNLP/appworld/main/README.md`, 81,334 B, sha256 `f4049141…7bdd`) and its response headers | 163 KB | 2026-11-04 19:43Z | read for the licence, the agent loop and the experiment config |
+| host-only: the 9-task parity cache and its three runner runs (code `3fb69887…`), the partial runner baselines of code `bd79123b…` (superseded by the mutant fix), two diagnostic roots and the smoke root | about 12 MB | 2026-11-04 19:41Z | superseded by the full parity run (`parity.json`, code `070f00e8…`); no unique evidence |
 
-**Host-only, kept until the bed's analysis (PLAN §5.6):** `/var/tmp/foundry-work/appworld-host/` (parity cache,
-snapshots of scripted runs, verdict rows with assertion texts; train and dev only, no test content).
+**Host-only, kept until the bed's analysis (PLAN §5.6):** `/var/tmp/foundry-work/appworld-host/` (83 MB on 2026-11-04
+19:45Z: parity caches, snapshots of scripted runs, verdict rows with assertion texts, the init-probe runs; train and dev
+only, no test content). It includes the superseded upstream battery of the first mutant version
+(`parity/official-7508ee88f604ef5c`, 4.6 MB), kept as the raw record of that negative result (PARITY.md "Details").
 
 **Not adopted, nothing fetched:** AppWorld `experiment-outputs-0.1.0.bundle` (other agents' outputs; not needed), the
 `private-appworld` repository (access-gated), the leaderboard repository.

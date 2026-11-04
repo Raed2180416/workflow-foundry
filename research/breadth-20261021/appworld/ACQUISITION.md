@@ -79,11 +79,13 @@ LANG, a private HOME, APPWORLD_ROOT/APPWORLD_CACHE, PYTHONHASHSEED=0), never wit
 | data bundle (kept) | 34 MB |
 | package-tests cache, logs | 2.2 MB |
 | **bench directory** | **≈ 376 MB** (≤ 500 MB per install) |
-| host-only run data (parity cache, snapshots) | see `PARITY.md` |
+| host-only run data (`/var/tmp/foundry-work/appworld-host`: parity caches and snapshots, runner baselines, probes) | 83 MB after the parity run (2026-11-04 19:45Z) |
 
 Disk free before this session's work: **1.70 GB** (`df -B1 /`, 13:49Z: 1,700,143,104 B, above the 1.5 GB stop line). It
 fell to 1.15 GB at 13:53Z, 0.87 GB at 13:56Z and 0.78–0.82 GB during the parity run while other tracks wrote; this bed's
-own peak is the bench directory plus the host-only parity data [run].
+own peak is the bench directory plus the host-only parity data [run]. The full parity run (2026-11-04 17:18–19:40Z, after a
+host restart) started at 1.9 GB free and saw 0.97–1.75 GB while other tracks wrote; this bed added at most about 100 MB
+of host-only data and live worlds [run].
 
 ## Outcome
 
