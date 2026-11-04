@@ -75,3 +75,16 @@ test('D3 teeth: under crash-and-redeliver a late-undo program compensates health
   assert.ok((m2.envelope.byCode.orphan ?? 0) + (m2.envelope.byCode.surplus ?? 0) > 0);
   assert.ok(m2.oracle.passed > m1.oracle.passed);
 });
+
+test('read-back (reconcile): under crash-and-redeliver orphans are answered by a status read, never a second write; the late-undo mutant stays inert', { skip }, async () => {
+  const m = await run(MONO, { runtime: 2, mutant: 'lateundo', envelopeOptions: { reconcile: true } }, 'crash');
+  assert.ok(m.injected > 0);
+  assert.equal(m.mutantActs, 0, 'the parked result must reach the program once, as the answer to its re-emission');
+  assert.ok((m.envelope.byCode['orphan-parked'] ?? 0) > 0 && (m.envelope.byCode.readback ?? 0) > 0 && (m.envelope.byCode.reconciled ?? 0) > 0);
+  assert.equal(m.exactlyOnce.duplicates, 0);
+  assert.equal(m.exactlyOnce.keyConflicts, 0);
+  // the parked answers reach the program: it passes at least what it passes behind the plain envelope
+  const plain = await run(MONO, { runtime: 2, mutant: 'lateundo' }, 'crash');
+  assert.ok(m.oracle.passed >= plain.oracle.passed, `read-back ${m.oracle.passed} < plain ${plain.oracle.passed}`);
+  assert.equal(m.oracle.critical, 0);
+});

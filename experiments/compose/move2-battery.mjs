@@ -3,7 +3,7 @@
 // evidence, labelled runtime2. PREREG-COMP1 stays frozen: its 16 files are imported unchanged and its numbers are not
 // re-read as a re-run of the prereg. Resumable: a finished (subject, runtime, world, fault) cell is skipped.
 //   nice -n 15 node experiments/compose/move2-battery.mjs [--only <label,...>] [--plan main|fixes|mutants|all]
-//        [--out research/blockers-20261021/move2/runs]
+//        [--out research/blockers-20261021/move2/runs] [--worlds seed:d:size,...] (plans also: readback, fresh)
 import { readFileSync, writeFileSync, mkdirSync, existsSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -54,6 +54,16 @@ export function plan(which = 'all') {
     // the read-back variant (runtime2 option reconcile): fault-free (must equal plain runtime 2) and crash (M4b)
     for (const label of [...COMPOSED, ...MONOLITHS]) out.push({ label: `${label}+readback`, spec: specOf(label), runtime: 2, faults: ['none', 'crash'], envelopeOptions: { reconcile: true } });
   }
+  if (which === 'fresh') {
+    // the out-of-sample check of the read-back option on dev worlds it was not designed on (MOVE2-COMP.md §3.5,
+    // prediction written before the run): one D3 build, the best C-H-T build and one monolith, runtime 1, plain runtime 2
+    // and runtime 2 with read-back, fault-free and crash
+    for (const label of ['ch-e8-2', 'cht-e8-1', 'b1lh-e8-1']) {
+      out.push({ label, spec: specOf(label), runtime: 1, faults: ['none', 'crash'] });
+      out.push({ label, spec: specOf(label), runtime: 2, faults: ['none', 'crash'] });
+      out.push({ label: `${label}+readback`, spec: specOf(label), runtime: 2, faults: ['none', 'crash'], envelopeOptions: { reconcile: true } });
+    }
+  }
   if (which === 'mutants' || which === 'all') {
     for (const base of ['cht-e8-1', 'b1lh-e8-1']) {
       for (const runtime of [1, 2]) out.push({ label: `${base}+mut-splitrefund`, spec: specOf(base), runtime, faults: ['none', 'downstream'], mutant: 'splitrefund' });
@@ -77,7 +87,7 @@ export async function battery({ which = 'all', only = null, outDir, worlds = DEF
     const subject = subjectOf2(job.spec, { runtime: job.runtime, patches: job.patches ?? [], mutant: job.mutant ?? null, label: job.label, envelopeOptions: job.envelopeOptions ?? {} });
     const out = doc ?? { subject: job.label, spec: job.spec, kind: subject.kind, runtime: job.runtime, runtimeLabel: job.runtime === 2 ? 'runtime2 (compose-runtime/2)' : 'runtime1 (frozen compose-runtime/1)',
       envelope: subject.envelope, envelopeOptions: job.envelopeOptions ?? {}, mutant: subject.mutant, patches: job.patches ?? [], gate: subject.gate,
-      evidence: 'development (dev worlds 1161/1162/1164), $0, runtime2 outside the PREREG-COMP1 freeze (D28(3)); not a re-run of the prereg',
+      evidence: `development (dev worlds ${worlds.map(w => w.seed).join('/')}), $0, runtime2 outside the PREREG-COMP1 freeze (D28(3)); not a re-run of the prereg`,
       harness, sourceDigest: createHash('sha256').update(subject.source).digest('hex'), results: [] };
     if (doc && JSON.stringify(doc.harness) !== JSON.stringify(harness)) { out.harnessChanged = [...new Set([...(doc.harnessChanged ?? []), new Date().toISOString()])]; }
     for (const w of worlds) {
@@ -100,5 +110,6 @@ export async function battery({ which = 'all', only = null, outDir, worlds = DEF
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   process.chdir(ROOT);
-  await battery({ which: arg('--plan', 'all'), only: arg('--only', null)?.split(',') ?? null, outDir: path.resolve(ROOT, arg('--out', 'research/blockers-20261021/move2/runs')) });
+  const worlds = arg('--worlds', null)?.split(',').map(x => { const [seed, d, size] = x.split(':').map(Number); return { seed, d, size }; }) ?? DEFAULT_WORLDS;
+  await battery({ which: arg('--plan', 'all'), only: arg('--only', null)?.split(',') ?? null, worlds, outDir: path.resolve(ROOT, arg('--out', 'research/blockers-20261021/move2/runs')) });
 }
