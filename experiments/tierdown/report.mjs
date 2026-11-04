@@ -4,7 +4,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { readJsonl } from './archive.mjs';
-import { nodeTable, injectTable } from './analyze.mjs';
+import { nodeTable, injectTable, mergeInject } from './analyze.mjs';
 
 const dir = process.argv[2] ?? 'research/tierdown-20261021/data';
 const f = (x, d = 3) => (x == null || Number.isNaN(x) ? '—' : Number(x).toFixed(d));
@@ -25,7 +25,8 @@ for (const slice of ['C', 'H']) {
   console.log(`\nMemo: ${memo.reduce((a, n) => a + n.usable, 0)} hits in ${memo.reduce((a, n) => a + n.answered, 0)} delivery decisions.`);
   const injFile = path.join(dir, `inject-${slice}.json`);
   if (!existsSync(injFile)) continue;
-  const inj = injectTable(JSON.parse(readFileSync(injFile, 'utf8')).rows);
+  const extra = path.join(dir, `inject-${slice}-provisional.json`);
+  const inj = injectTable(mergeInject([injFile, ...(existsSync(extra) ? [extra] : [])].map(f => JSON.parse(readFileSync(f, 'utf8')))).rows);
   console.log(`\n### End-to-end injection, slice ${slice} (every other judge at its archived answer)\n`);
   console.log('| assignment | units | pass→fail | fail→pass | deopt/crash | unmeasured | incomplete | judge $ (tier + fallbacks + deopt) | reference $ |');
   console.log('|---|---|---|---|---|---|---|---|---|');

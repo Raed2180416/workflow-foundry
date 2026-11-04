@@ -143,11 +143,53 @@ export function capabilityRow(name, rows, allUnits) {
     latencyP50: quantile(lat, 0.5), latencyP95: quantile(lat, 0.95), refLatencyP50: quantile(refLat, 0.5), refLatencyP95: quantile(refLat, 0.95) };
 }
 
+// Spearman rank correlation with average ranks for ties (null under fewer than 3 pairs or a constant side).
+export function spearman(xs, ys) {
+  if (xs.length !== ys.length || xs.length < 3) return null;
+  const rank = v => { const idx = v.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]), r = new Array(v.length);
+    for (let i = 0; i < idx.length;) { let j = i; while (j + 1 < idx.length && idx[j + 1][0] === idx[i][0]) j++; for (let k = i; k <= j; k++) r[idx[k][1]] = (i + j) / 2 + 1; i = j + 1; } return r; };
+  const rx = rank(xs), ry = rank(ys), n = xs.length, mx = sum(rx) / n, my = sum(ry) / n;
+  const cov = sum(rx.map((x, i) => (x - mx) * (ry[i] - my))), vx = sum(rx.map(x => (x - mx) ** 2)), vy = sum(ry.map(y => (y - my) ** 2));
+  return vx && vy ? cov / Math.sqrt(vx * vy) : null;
+}
+
+// Dossier §5 kill rule: does the synthetic perturbation screen (C-slice flip rate per site) rank sites the way real
+// cheaper-tier answers injected end to end do? Per site, pooled over every model and rule tier and both slices: the rate
+// of measured units whose outcome moved (a flip either way, a deopt or a crash). Below 0.5 the screen is dropped and
+// only injection is used to rank.
+export function leverageCheck(classes, injRows) {
+  const by = new Map();
+  for (const r of injRows) {
+    if (!r.assignment.includes('@') || r.assignment.endsWith('@memo') || r.status !== 'measured' || r.outcome === 'unmeasured') continue;
+    const site = r.assignment.slice(0, r.assignment.lastIndexOf('@')), s = by.get(site) ?? { units: 0, moved: 0, flips: 0 };
+    s.units++; if (r.outcome === 'flip' || r.outcome === 'deopt' || r.outcome === 'crash') s.moved++; if (r.outcome === 'flip') s.flips++;
+    by.set(site, s);
+  }
+  const rows = [...by].filter(([site]) => classes[site]?.flipRate != null).map(([site, s]) => ({ site, screen: classes[site].flipRate, injectedMoved: s.moved / s.units, units: s.units, moved: s.moved, flips: s.flips }));
+  const rho = spearman(rows.map(r => r.screen), rows.map(r => r.injectedMoved));
+  return { rows: rows.sort((a, b) => b.screen - a.screen), rho, keepScreen: rho != null && rho >= 0.5 };
+}
+
+export function mergeInject(files) {
+  if (new Set(files.map(f => f.slice)).size > 1) throw new Error('mergeInject: files of different slices');
+  const seen = new Set(files[0].rows.filter(r => r.assignment !== 'B-ref').map(r => r.assignment)), rows = [...files[0].rows];
+  for (const f of files.slice(1)) {
+    const names = new Set(f.rows.filter(r => r.assignment !== 'B-ref').map(r => r.assignment));
+    for (const n of names) if (seen.has(n)) throw new Error(`mergeInject: assignment ${n} is in two files`);
+    for (const n of names) seen.add(n);
+    rows.push(...f.rows.filter(r => r.assignment !== 'B-ref'));
+  }
+  return { ...files[0], rows };
+}
+
 function main() {
   const [cmd, ...args] = process.argv.slice(2), opt = (n, d = null) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
   const prereg = JSON.parse(readFileSync(opt('--prereg'), 'utf8'));
-  const answers = opt('--answers').split(',').flatMap(f => readJsonl(f));
-  const injFile = JSON.parse(readFileSync(opt('--inject'), 'utf8')), nodes = nodeTable(answers), inj = injectTable(injFile.rows);
+  const answers = (opt('--answers') ?? '').split(',').filter(Boolean).flatMap(f => readJsonl(f));
+  // --inject may name several files (a second $0 pass, e.g. the provisional policy): their rows are merged, and the B-ref
+  // rows (the reference units) come from the first file only, so no unit is counted twice.
+  const injFile = cmd === 'check' ? null : mergeInject(opt('--inject').split(',').map(f => JSON.parse(readFileSync(f, 'utf8'))));
+  const nodes = nodeTable(answers), inj = injFile ? injectTable(injFile.rows) : null;
   if (cmd === 'select') {
     const classes = JSON.parse(readFileSync(opt('--classes'), 'utf8'));
     const selection = selectOnC({ prereg, nodes, inj, classes });
@@ -169,6 +211,11 @@ function main() {
     console.log(JSON.stringify({ primary: primary.map(p => ({ site: p.site, tier: p.tier, verdict: p.verdict, units: p.units, passFail: p.passFail, upper: p.bound1?.upper })),
       provisional: provisional.map(p => ({ site: p.site, tier: p.tier, keep: p.keep, units: p.units, passFail: p.passFail, failPass: p.failPass })),
       capability: capability.map(c => ({ name: c.name, units: c.units, acc: c.accuracy, ref: c.refAccuracy, saved: c.costSaved, pf: c.passFail, fp: c.failPass, ni: c.ni.holds })) }, null, 1));
-  } else throw new Error('usage: analyze.mjs select|evaluate ...');
+  } else if (cmd === 'check') {
+    // node analyze.mjs check --prereg P --answers a --inject C.json,H.json --classes classes-C.json
+    const classes = JSON.parse(readFileSync(opt('--classes'), 'utf8'));
+    const rows = opt('--inject').split(',').flatMap(f => JSON.parse(readFileSync(f, 'utf8')).rows);
+    console.log(JSON.stringify(leverageCheck(classes, rows), null, 1));
+  } else throw new Error('usage: analyze.mjs select|evaluate|check ...');
 }
 if (import.meta.url === `file://${process.argv[1]}`) main();

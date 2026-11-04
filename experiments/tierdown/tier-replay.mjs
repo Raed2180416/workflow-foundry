@@ -46,6 +46,14 @@ export const TOL = tolerance({ relTol: 0.01, absTol: 1e-9 });
 export const agreementOf = (ref, cand) => decisionAgreement(ref, cand, TOL);
 export const exactOf = (ref, cand) => canonical(stripEvidence(ref)) === canonical(stripEvidence(cand));
 
+// Decoding per model tier. Mercury gets an explicit max_tokens equal to the provider's output allowance
+// (providers/openai-chat.mjs DEFAULT_OUTPUT_ALLOWANCE). Without it the provider reserves input + 8,000 tokens against the
+// run cap while the endpoint lets an answer run to ~24K output tokens (RESULT-TIERDOWN.md F2: four records/source-rules
+// answers were truncated at 23.5-23.9K), so one call could spend about 3x its reservation and the item cap overshot by
+// 18,965 tokens. Added after every paid call of this item: no answer in the data files was asked with it.
+export const MERCURY_MAX_TOKENS = 8000;
+export const decodingFor = tier => (tier === 'mercury-3' ? { reasoning: 'none', maxTokens: MERCURY_MAX_TOKENS } : { reasoning: 'none' });
+
 // The preregistered split: a task is in the held-out slice H iff the first hex digit of
 // sha256('tierdown-20261021/split\0' + taskKey) is >= 8 (every arm's run of one task lands in the same slice).
 export const sliceOf = taskKey => (parseInt(sha256(`tierdown-20261021/split\0${taskKey}`)[0], 16) >= 8 ? 'H' : 'C');
@@ -168,7 +176,7 @@ async function main() {
           else {
             calls++;
             const r = await port.call({ runId: `tierdown:${prereg.id}:${slice}`, nodeKey: `tier-replay/${site}/${tier}/${id}/${j.key.slice(0, 16)}`, attempt: 0, modelId: tier,
-              system: req.system, prompt: req.prompt, schema: req.schema, decoding: { reasoning: 'none' } }).catch(e => ({ ok: false, error: { code: e.code ?? 'ERROR', message: String(e.message ?? e).slice(0, 300) } }));
+              system: req.system, prompt: req.prompt, schema: req.schema, decoding: decodingFor(tier) }).catch(e => ({ ok: false, error: { code: e.code ?? 'ERROR', message: String(e.message ?? e).slice(0, 300) } }));
             spent += r.costUsd ?? 0;
             // An environment fault (rate or session limit, timeout, unavailable, a token cap) is never an answer: it is not
             // written, so a resumed run asks again, and it is never scored. Model outcomes (schema, truncation, refusal) are.

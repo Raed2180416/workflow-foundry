@@ -1,0 +1,221 @@
+{
+ "source": "tier-replay journals (journal-C.sqlite, journal-H.sqlite), every call with ok = 0, extracted 2026-11-04 before the scratch journals were deleted",
+ "rows": [
+  {
+   "slice": "C",
+   "nodeKey": "tier-replay/records/source-rules/mercury-3/jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5#3/f2b3391e71bf2a86",
+   "model": "mercury-3",
+   "decoding": {
+    "maxTokens": "provider-default",
+    "reasoning": "none",
+    "temperature": "provider-default"
+   },
+   "error": "MODEL_TRUNCATED",
+   "message": "Generation stopped at the token limit (finish_reason=length)",
+   "finishReason": "length",
+   "inputTokens": 3425,
+   "outputTokens": 23507,
+   "latencyMs": 14253,
+   "meta": {
+    "providerId": "chatcmpl-c351f7c8-5852-48b6-88bd-e91380e2d3da",
+    "reasoningTokens": 1442,
+    "servedModel": "mercury-3",
+    "tokensProjected": 11747,
+    "totalTokens": 26932
+   },
+   "visibleText": "{\"rules\": {\"brightdesk_numeric_dates\": {\"value\": \"MDY\", \"quote\": \"A customer with dob=06/02/1965 was born in June.\"}, \"brightdesk_balance\": {\"value\": \"flip\", \"quote\": \"BRIGHTDESK prints balances the opposite way to\"}, \"ledgr_balance\": {\"value\": \"flip\", \"quote\": \"A positive Saldo is money we owe the account holder; in the master it becomes negative, and a negative Saldo becomes positive.\"}, \"atlas_numeric_dates\": {\"value\": \"DMY\", \"quote\": \"An ATLAS row \"}}}",
+   "visibleChars": 460,
+   "details": null
+  },
+  {
+   "slice": "C",
+   "nodeKey": "tier-replay/records/source-rules/mercury-3/jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5#9/228101fa529682df",
+   "model": "mercury-3",
+   "decoding": {
+    "maxTokens": "provider-default",
+    "reasoning": "none",
+    "temperature": "provider-default"
+   },
+   "error": "MODEL_TRUNCATED",
+   "message": "Generation stopped at the token limit (finish_reason=length)",
+   "finishReason": "length",
+   "inputTokens": 3393,
+   "outputTokens": 23732,
+   "latencyMs": 18768,
+   "meta": {
+    "providerId": "chatcmpl-aa0ac076-f589-47dd-8330-d78cdc5f9dff",
+    "reasoningTokens": 3243,
+    "servedModel": "mercury-3",
+    "tokensProjected": 11687,
+    "totalTokens": 27134
+   },
+   "visibleText": "{\"rules\": {\"brightdesk_numeric_dates\": {\"value\": \"MDY\", \"quote\": \"The instance kept its vendor's American defaults, so the month comes before the day in numeric birth dates; the London office's day-first setup was never applied.\"}, \"brightdesk_balance\": {\"value\": \"flip\", \"quote\": \"Balances change sign in the master.\"}, \"ledgr_balance\": {\"value\": \"flip\", \"quote\": \"Saldo changes sign in the master.\"}, \"atlas_numeric_dates\": {\"value\": \"MDY\", \"quote\": \"ATLAS is a UK ledger, but its birth dates are not day-first: the month comes first.\"}, \"atlas_owed\": {\"value\": \"same\", \"quote\": \"A\"}}}",
+   "visibleChars": 587,
+   "details": null
+  },
+  {
+   "slice": "C",
+   "nodeKey": "tier-replay/records/rules/mercury-3/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5#3/8c1cea6a51a06c9f",
+   "model": "mercury-3",
+   "decoding": {
+    "maxTokens": "provider-default",
+    "reasoning": "none",
+    "temperature": "provider-default"
+   },
+   "error": "MODEL_SCHEMA",
+   "message": "Model output does not satisfy its schema: /void_markers/1 must have required property 'system'",
+   "finishReason": "stop",
+   "inputTokens": 2704,
+   "outputTokens": 4736,
+   "latencyMs": 8884,
+   "meta": {
+    "providerId": "chatcmpl-3c528cfb-8ee9-4761-b057-93182da4fa5b",
+    "reasoningTokens": 4394,
+    "servedModel": "mercury-3",
+    "tokensProjected": 11106,
+    "totalTokens": 7440
+   },
+   "visibleText": "{\"date_order\": {\"BRIGHTDESK\": \"MDY\", \"ATLAS\": \"DMY\", \"VENDEX\": \"DMY\"}, \"flip_balance_sign\": {\"BRIGHTDESK\": true, \"LEDGR\": true, \"ATLAS\": true, \"KOBO\": false}, \"void_markers\": [{\"system\": \"BRIGHTDESK\", \"marker\": \"ZZTEST\", \"quote\": \"QA fixtures are void: a row whose name begins with \"}, {\"marker\": \"ZZTEST\", \"quote\": \"QA fixtures are void: a row whose name begins with \"}, {\"system\": \"LEDGR\", \"marker\": \"storniert\", \"quote\": \"Status \"}, {\"system\": \"ATLAS\", \"marker\": \"DO NOT MIGRATE\", \"quote\": \"A line ending \"}, {\"system\": \"ATLAS\", \"marker\": \"QUERY\", \"quote\": \"Rows marked \"}, {\"system\": \"VENDEX\", \"marker\": \"(Application withdrawn — never onboarded.)\", \"quote\": \"An entry that ends with \"}, {\"system\": \"KOBO\", \"marker\": \"flag: SAMPLE\", \"quote\": \"A row with \"}, {\"system\": \"VERITAS\", \"marker\": \"env\", \"quote\": \"Rows containing \"}], \"unreliable_update_systems\": [\"LEDGR\"]}",
+   "visibleChars": 871,
+   "details": [
+    {
+     "instancePath": "/void_markers/1",
+     "keyword": "required",
+     "message": "must have required property 'system'",
+     "params": {
+      "missingProperty": "system"
+     },
+     "schemaPath": "#/properties/void_markers/items/required"
+    }
+   ]
+  },
+  {
+   "slice": "C",
+   "nodeKey": "tier-replay/records/rules/mercury-3/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5#6/d0b69ec684d012d5",
+   "model": "mercury-3",
+   "decoding": {
+    "maxTokens": "provider-default",
+    "reasoning": "none",
+    "temperature": "provider-default"
+   },
+   "error": "MODEL_SCHEMA",
+   "message": "Model output does not satisfy its schema: /void_markers/1 must have required property 'system'",
+   "finishReason": "stop",
+   "inputTokens": 2703,
+   "outputTokens": 2845,
+   "latencyMs": 5802,
+   "meta": {
+    "providerId": "chatcmpl-43ce67ba-d09d-4508-9f19-e0e698fbc90b",
+    "reasoningTokens": 2654,
+    "servedModel": "mercury-3",
+    "tokensProjected": 11083,
+    "totalTokens": 5557
+   },
+   "visibleText": "{\"date_order\": {\"BRIGHTDESK\": \"MDY\", \"ATLAS\": \"MDY\", \"VENDEX\": \"MDY\"}, \"flip_balance_sign\": {\"BRIGHTDESK\": true, \"LEDGR\": true, \"ATLAS\": true, \"KOBO\": true}, \"void_markers\": [{\"system\": \"BRIGHTDESK\", \"marker\": \"ZZTEST\", \"quote\": \"QA fixtures are void: a row whose name begins with \"}, {\"marker\": \"DO NOT MIGRATE\", \"quote\": \"A line ending \"}, {\"system\": \"VENDEX\", \"marker\": \"(Application withdrawn — never onboarded.)\", \"quote\": \"An entry that ends with \"}], \"unreliable_update_systems\": [\"LEDGR\"]}",
+   "visibleChars": 497,
+   "details": [
+    {
+     "instancePath": "/void_markers/1",
+     "keyword": "required",
+     "message": "must have required property 'system'",
+     "params": {
+      "missingProperty": "system"
+     },
+     "schemaPath": "#/properties/void_markers/items/required"
+    }
+   ]
+  },
+  {
+   "slice": "C",
+   "nodeKey": "tier-replay/records/rules/mercury-3/jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5#9/45ddbc3766ddcdde",
+   "model": "mercury-3",
+   "decoding": {
+    "maxTokens": "provider-default",
+    "reasoning": "none",
+    "temperature": "provider-default"
+   },
+   "error": "MODEL_BUDGET",
+   "message": "token cap: 97309 used + 11043 reserved + 11046 would pass the run cap of 113908",
+   "finishReason": null,
+   "inputTokens": 0,
+   "outputTokens": 0,
+   "latencyMs": 0,
+   "meta": null,
+   "visibleText": null,
+   "visibleChars": 0,
+   "details": null
+  },
+  {
+   "slice": "H",
+   "nodeKey": "tier-replay/records/source-rules/mercury-3/jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5#12/3f44199cd0bc0189",
+   "model": "mercury-3",
+   "decoding": {
+    "maxTokens": "provider-default",
+    "reasoning": "none",
+    "temperature": "provider-default"
+   },
+   "error": "MODEL_TRUNCATED",
+   "message": "Generation stopped at the token limit (finish_reason=length)",
+   "finishReason": "length",
+   "inputTokens": 3972,
+   "outputTokens": 23595,
+   "latencyMs": 18183,
+   "meta": {
+    "providerId": "chatcmpl-40172e1e-80ff-4d2b-a1ec-faa384f35dd7",
+    "reasoningTokens": 4141,
+    "servedModel": "mercury-3",
+    "tokensProjected": 12136,
+    "totalTokens": 27567
+   },
+   "visibleText": "{\"rules\": {\"brightdesk_numeric_dates\": {\"value\": \"MDY\", \"quote\": \"Numeric birth dates are MM/DD/YYYY, as everywhere in the US sales organisation, even for European customers.\"}, \"brightdesk_balance\": {\"value\": \"flip\", \"quote\": \"BRIGHTDESK prints balances the opposite way to the master.\"}, \"ledgr_balance\": \"\", \"atlas_numeric_dates\": {\"value\": \"DMY\", \"quote\": \"ATLAS was configured in UK locale, so numeric birth dates are day/month/year, not month/day/year.\"}, \"atlas_owed\": {\"value\": \"flip\", \"quote\": \"Do not read \"}}}",
+   "visibleChars": 520,
+   "details": null
+  },
+  {
+   "slice": "H",
+   "nodeKey": "tier-replay/records/source-rules/mercury-3/jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5#14/389915d7b35d1d66",
+   "model": "mercury-3",
+   "decoding": {
+    "maxTokens": "provider-default",
+    "reasoning": "none",
+    "temperature": "provider-default"
+   },
+   "error": "MODEL_BUDGET",
+   "message": "token cap: 35309 used + 12097 reserved + 12160 would pass the run cap of 44222",
+   "finishReason": null,
+   "inputTokens": 0,
+   "outputTokens": 0,
+   "latencyMs": 1,
+   "meta": null,
+   "visibleText": null,
+   "visibleChars": 0,
+   "details": null
+  },
+  {
+   "slice": "H",
+   "nodeKey": "tier-replay/records/source-rules/mercury-3/jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5#13/493bcdd877712210",
+   "model": "mercury-3",
+   "decoding": {
+    "maxTokens": "provider-default",
+    "reasoning": "none",
+    "temperature": "provider-default"
+   },
+   "error": "MODEL_TRUNCATED",
+   "message": "Generation stopped at the token limit (finish_reason=length)",
+   "finishReason": "length",
+   "inputTokens": 4007,
+   "outputTokens": 23871,
+   "latencyMs": 17858,
+   "meta": {
+    "providerId": "chatcmpl-bcf9e1b9-78bd-4550-997f-e6eb4ed3e0de",
+    "reasoningTokens": 4483,
+    "servedModel": "mercury-3",
+    "tokensProjected": 12097,
+    "totalTokens": 27878
+   },
+   "visibleText": "{\"rules\": {\"brightdesk_numeric_dates\": {\"value\": \"MDY\", \"quote\": \"For example, dob=03/08/1966 is 8 March 1966.\"}, \"brightdesk_balance\": {\"value\": \"same\", \"quote\": \"BRIGHTDESK prints balances the same way as the master.\"}, \"ledgr_balance\": {\"value\": \"same\", \"quote\": \"Saldo keeps its sign in the master.\"}, \"atlas_numeric_dates\": {\"value\": \"MDY\", \"quote\": \"Unlike the UK installation it was copied from, ATLAS writes the month first in numeric birth dates.\"}, \"atlas_owed\": {\"value\": \"flip\", \"quote\": \"\"}}}",
+   "visibleChars": 505,
+   "details": null
+  }
+ ]
+}

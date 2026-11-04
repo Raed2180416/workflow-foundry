@@ -1,0 +1,128 @@
+
+kinetics/extract:*@claude-haiku-5-5 jit-dev-kinetics-1/jit-claude-haiku-5-5--claude-haiku-5-5#4 (kinetics:dev:d4:s205): flip pass->fail fellBack={"check-failed":1}
+  extract:D1 5a45f7e50e16 agreement 0.971: 106 leaf differences
+    events[]: ref 39 | tier 42
+    events/2/samples[]: ref 1 | tier 0
+    events/22/samples[]: ref 1 | tier 0
+    events/38/samples[]: ref 0 | tier 1
+    events/2/kind: ref "temperature" | tier "dilution"
+    events/2/reading: ref "first" | tier "any"
+    events/2/samples/0: ref "PX-0607" | tier "(absent)"
+    events/2/value_text: ref "41.8 °C" | tier "1 in 500"
+  extract:D6 6870acf6ada8 agreement 0.702: 61 leaf differences
+    events[]: ref 13 | tier 10
+    events/2/samples[]: ref 1 | tier 0
+    events/3/samples[]: ref 0 | tier 1
+    events/4/samples[]: ref 1 | tier 0
+    events/5/samples[]: ref 1 | tier 0
+    events/6/samples[]: ref 1 | tier 0
+    events/7/samples[]: ref 1 | tier 0
+    events/8/samples[]: ref 1 | tier 0
+  extract:D2 3eee52d8c27a agreement 0.899: 53 leaf differences
+    events[]: ref 7 | tier 0
+    events/0/samples[]: ref 1 | tier null
+    events/1/samples[]: ref 1 | tier null
+    events/2/samples[]: ref 0 | tier null
+    events/3/samples[]: ref 0 | tier null
+    events/4/samples[]: ref 1 | tier null
+    events/5/samples[]: ref 0 | tier null
+    events/6/samples[]: ref 0 | tier null
+  extract:D4 ef4703080231 agreement 0.300: 7 leaf differences
+    events[]: ref 0 | tier 1
+    events/0/kind: ref "(absent)" | tier "other"
+    events/0/reading: ref "(absent)" | tier "any"
+    events/0/timing: ref "(absent)" | tier "not_applicable"
+    events/0/applies: ref "(absent)" | tier false
+    events/0/condition_id: ref "(absent)" | tier null
+    events/0/value_text: ref "(absent)" | tier null
+  extract:D5 7336e21e0c49 agreement 0.847: 13 leaf differences
+    events[]: ref 8 | tier 7
+    events/7/samples[]: ref 0 | tier null
+    events/2/value_text: ref "1:500" | tier "standard working dilution"
+    events/4/value_text: ref "1:250" | tier "1:500"
+    events/5/condition_id: ref "C5" | tier "C6"
+    events/6/condition_id: ref "C6" | tier "C7"
+    events/6/value_text: ref "1:500" | tier "standard working dilution"
+    events/7/applies: ref true | tier "(absent)"
+  extract:D7 2deb0db3bd7c agreement 0.998: 1 leaf differences
+    events/1/reading: ref "any" | tier "first"
+  extract:D8 01ea02b78722 agreement 1.000: 0 leaf differences
+  extract:D11 3606530bac7a agreement 1.000: 0 leaf differences
+  extract:D12 8d02fba5695f agreement 0.982: 10 leaf differences
+    events[]: ref 2 | tier 1
+    events/1/samples[]: ref 1 | tier null
+    events/0/condition_id: ref null | tier "C6"
+    events/1/applies: ref true | tier "(absent)"
+    events/1/condition_id: ref null | tier "(absent)"
+    events/1/kind: ref "pipetting" | tier "(absent)"
+    events/1/reading: ref "first" | tier "(absent)"
+    events/1/samples/0: ref "PX-0773" | tier "(absent)"
+  extract:D9 828afbe5bb00 agreement 0.968: 34 leaf differences
+    events[]: ref 8 | tier 6
+    events/4/samples[]: ref 1 | tier 0
+    events/5/samples[]: ref 1 | tier 0
+    events/6/samples[]: ref 1 | tier null
+    events/7/samples[]: ref 0 | tier null
+    events/0/reading: ref "any" | tier "first"
+    events/1/kind: ref "pipetting" | tier "other"
+    events/1/reading: ref "any" | tier "first"
+
+kinetics/well-events@claude-haiku-5-5 jit-r0-kinetics/jit-claude-opus-5-5--claude-haiku-5-5#10 (kinetics:dev:d4:s235): flip pass->fail fellBack={}
+  well-events c3069be10c3d agreement 0.500: 49 leaf differences
+    excluded[]: ref 9 | tier 8
+    relabels[]: ref 1 | tier 4
+    relabels/0/sample_ids[]: ref 9 | tier 7
+    excluded/4/criterion: ref "bubble" | tier "pipetting"
+    excluded/4/sample_id: ref "QD-0772" | tier "QD-0616"
+    excluded/5/sample_id: ref "QD-0616" | tier "QD-0704"
+    excluded/6/criterion: ref "pipetting" | tier "reader_flag"
+    excluded/6/sample_id: ref "QD-0704" | tier "QD-0558"
+
+kinetics/well-events@claude-haiku-5-5 jit-r0-kinetics/jit-claude-opus-5-5--claude-haiku-5-5#9 (kinetics:dev:d4:s234): flip pass->fail fellBack={}
+  well-events 7388ed15a5b7 agreement 0.941: 16 leaf differences
+    excluded[]: ref 10 | tier 11
+    excluded/0/sample_id: ref "MW-0280" | tier "MW-0191"
+    excluded/1/sample_id: ref "MW-0336" | tier "MW-0280"
+    excluded/2/sample_id: ref "MW-0395" | tier "MW-0336"
+    excluded/3/sample_id: ref "MW-0434" | tier "MW-0395"
+    excluded/4/criterion: ref "pipetting" | tier "bubble"
+    excluded/4/sample_id: ref "MW-0361" | tier "MW-0434"
+    excluded/5/sample_id: ref "MW-0449" | tier "MW-0361"
+
+records/date-order@mercury-3 jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#17 (records:dev:d4:s218): flip fail->pass fellBack={}
+  date-order a333ca504400 agreement 0.500: 1 leaf differences
+    BRIGHTDESK: ref "DMY" | tier "MDY"
+
+records/date-order@rule jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#11 (records:dev:d3:s212): flip fail->pass fellBack={}
+  date-order 1ae8063b4ab2 agreement 0.667: 1 leaf differences
+    ATLAS: ref "DMY" | tier "MDY"
+
+records/date-order@rule jit-dev-records-1/jit-claude-opus-5-5--claude-haiku-5-5#17 (records:dev:d4:s218): flip fail->pass fellBack={}
+  date-order a333ca504400 agreement 0.500: 1 leaf differences
+    BRIGHTDESK: ref "DMY" | tier "MDY"
+
+records/rules@claude-haiku-5-5 jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5#11 (records:dev:d3:s212): deopt deopt=invariant fellBack={}
+  rules 0352fdbfce4a agreement 0.955: 1 leaf differences
+    date_order/ATLAS: ref "MDY" | tier "DMY"
+
+records/rules@claude-haiku-5-5 jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5#3 (records:dev:d3:s204): deopt deopt=invariant fellBack={}
+  rules 8c1cea6a51a0 agreement 0.909: 5 leaf differences
+    date_order/ATLAS: ref "DMY" | tier "MDY"
+    void_markers/4/marker: ref "flag: SAMPLE" | tier "\"env\":\"sandbox\""
+    void_markers/4/system: ref "KOBO" | tier "VERITAS"
+    void_markers/5/marker: ref "sandbox" | tier "flag: SAMPLE"
+    void_markers/5/system: ref "VERITAS" | tier "KOBO"
+
+records/rules@claude-haiku-5-5 jit-dev-records-1/jit-claude-sonnet-5-5--claude-haiku-5-5#7 (records:dev:d3:s208): flip pass->fail fellBack={}
+  rules f74491837ca0 agreement 0.864: 7 leaf differences
+    date_order/BRIGHTDESK: ref "MDY" | tier "DMY"
+    void_markers/1/marker: ref "DO NOT MIGRATE" | tier ":: DO NOT MIGRATE"
+    void_markers/3/marker: ref "flag: GUEST" | tier "\"env\":\"sandbox\""
+    void_markers/3/system: ref "KOBO" | tier "VERITAS"
+    void_markers/4/marker: ref "flag: SAMPLE" | tier "flag: GUEST"
+    void_markers/5/marker: ref "sandbox" | tier "flag: SAMPLE"
+    void_markers/5/system: ref "VERITAS" | tier "KOBO"
+
+records/source-rules@claude-haiku-5-5 jit-dev-records-1/jit-claude-haiku-5-5--claude-haiku-5-5#3 (records:dev:d3:s204): deopt deopt=invariant fellBack={}
+  source-rules f2b3391e71bf agreement 0.955: 1 leaf differences
+    rules/atlas_numeric_dates/value: ref "DMY" | tier "MDY"

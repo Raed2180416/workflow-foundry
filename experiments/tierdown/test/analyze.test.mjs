@@ -2,9 +2,11 @@
 // capability row (cost saved, flips both ways, non-inferiority). Synthetic rows; no archive, no model.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nodeTable, injectTable, selectOnC, baselineAssignments, evaluateOnH, capabilityRow, assignSpec } from '../analyze.mjs';
+import { nodeTable, injectTable, selectOnC, baselineAssignments, evaluateOnH, capabilityRow, assignSpec, spearman, leverageCheck, mergeInject } from '../analyze.mjs';
+import { leafDiff } from '../leafdiff.mjs';
 import { parseAssign, rejectedKeys } from '../inject.mjs';
-import { sliceOf, ledgerUse } from '../tier-replay.mjs';
+import { sliceOf, ledgerUse, decodingFor } from '../tier-replay.mjs';
+import { openaiChatDecoding, DEFAULT_OUTPUT_ALLOWANCE } from '../../../src/models/providers/openai-chat.mjs';
 import { classesOf } from '../classes.mjs';
 import { bound2 } from '../policy.mjs';
 
@@ -90,4 +92,49 @@ test('split, ledger and classes helpers', () => {
   const cls = classesOf({ rows: [{ status: 'screened', id: 'r1', taskKey: keys.find(k => sliceOf(k) === 'C'), perturbed: [{ site: 's', outcome: 'flip' }, { site: 's', outcome: 'same' }, { site: 's', outcome: 'unmeasured' }] },
     { status: 'screened', id: 'r2', taskKey: keys.find(k => sliceOf(k) === 'H'), perturbed: [{ site: 's', outcome: 'flip' }] }] });
   assert.equal(cls.s.flipRate, 0.5, 'H rows and unmeasured perturbations are excluded'); assert.equal(cls.s.class, 'high'); assert.equal(cls.s.unmeasured, 1);
+});
+
+test('spearman and the screen-vs-injection kill rule', () => {
+  assert.equal(spearman([1, 2, 3, 4], [10, 20, 30, 40]), 1);
+  assert.equal(spearman([1, 2, 3, 4], [4, 3, 2, 1]), -1);
+  assert.ok(Math.abs(spearman([1, 1, 2, 3], [1, 2, 3, 4]) - 0.9486832980505138) < 1e-12, 'average ranks for ties');
+  assert.equal(spearman([1, 2], [1, 2]), null, 'too few pairs');
+  assert.equal(spearman([1, 1, 1], [1, 2, 3]), null, 'a constant side has no rank order');
+  const classes = { a: { flipRate: 0.4 }, b: { flipRate: 0.2 }, c: { flipRate: 0.0 }, d: { flipRate: null } };
+  const row = (site, tier, outcome, status = 'measured') => ({ assignment: `${site}@${tier}`, status, outcome });
+  const rows = [row('a', 'claude-haiku-5-5', 'flip'), row('a', 'mercury-3', 'deopt'), row('b', 'claude-haiku-5-5', 'flip'), row('b', 'claude-haiku-5-5', 'same'),
+    row('c', 'rule', 'same'), row('c', 'memo', 'flip'), row('c', 'rule', 'unmeasured'), row('d', 'rule', 'flip'), { assignment: 'selected', status: 'measured', outcome: 'flip' }, row('c', 'rule', null, 'incomplete')];
+  const k = leverageCheck(classes, rows);
+  assert.deepEqual(k.rows.map(r => [r.site, r.units, r.moved]), [['a', 2, 2], ['b', 2, 1], ['c', 1, 0]], 'memo, unmeasured, incomplete, combined and unclassed rows are left out; a deopt moves the outcome');
+  assert.equal(k.rho, 1); assert.equal(k.keepScreen, true);
+  const k2 = leverageCheck({ a: { flipRate: 0 }, b: { flipRate: 0.2 }, c: { flipRate: 0.4 } }, rows);
+  assert.equal(k2.rho, -1); assert.equal(k2.keepScreen, false, 'an inverted ranking drops the screen');
+});
+
+test('mergeInject: a second pass adds its assignments; reference units are never doubled; a name in two files is refused', () => {
+  const ref = row => ({ assignment: 'B-ref', row, status: 'reference', basePass: true, rowRefUsd: 0.01, refLatencyMs: 1 });
+  const a = { slice: 'H', rows: [ref(1), ref(2), inj('selected', 1, 'flip', true)] }, b = { slice: 'H', rows: [ref(1), ref(2), inj('provisional', 1, 'same', true)] };
+  const m = mergeInject([a, b]);
+  assert.equal(m.rows.filter(r => r.assignment === 'B-ref').length, 2);
+  assert.deepEqual(Object.keys(injectTable(m.rows)).sort(), ['B-ref', 'provisional', 'selected']);
+  assert.equal(capabilityRow('provisional', m.rows, [1, 2].map(row => ({ row, basePass: true, refUsd: 0.01, refLatencyMs: 1 }))).units, 2);
+  assert.throws(() => mergeInject([a, a]), /in two files/);
+  assert.throws(() => mergeInject([a, { ...b, slice: 'C' }]), /different slices/);
+});
+
+test('leafDiff: decision leaves only, lists as multisets, tolerant numbers, evidence ignored', () => {
+  assert.deepEqual(leafDiff({ a: 'DMY', quote: 'x' }, { a: 'DMY', quote: 'y' }), [], 'an evidence key never counts');
+  assert.deepEqual(leafDiff({ l: [{ s: 'A', m: 1 }, { s: 'B', m: 2 }] }, { l: [{ s: 'B', m: 2 }, { s: 'A', m: 1 }] }), [], 'a reordered list is the same answer');
+  assert.deepEqual(leafDiff({ v: 100 }, { v: 100.5 }), [], 'within relTol 0.01');
+  assert.deepEqual(leafDiff({ date_order: { ATLAS: 'DMY' } }, { date_order: { ATLAS: 'MDY' } }), [{ path: 'date_order/ATLAS', ref: 'DMY', tier: 'MDY' }]);
+  const d = leafDiff({ l: [1, 2, 3] }, { l: [1, 2] });
+  assert.ok(d.some(x => x.path === 'l[]' && x.ref === 3 && x.tier === 2), 'a dropped list item shows as a length change');
+  assert.ok(leafDiff({ k: 'x' }, {}).some(x => x.path === 'k' && x.tier === '(absent)'));
+});
+
+test('decodingFor: a Mercury request carries max_tokens equal to the allowance the provider reserves (F2), Claude tiers unchanged', () => {
+  const m = openaiChatDecoding(decodingFor('mercury-3'));
+  assert.equal(m.maxTokens, DEFAULT_OUTPUT_ALLOWANCE, 'the endpoint is asked for no more output than the run cap reserved for it');
+  assert.equal(openaiChatDecoding({ reasoning: 'none' }).maxTokens, 'provider-default', 'the pre-fix request left the output limit to the endpoint (~24K observed)');
+  assert.deepEqual(decodingFor('claude-haiku-5-5'), { reasoning: 'none' }, 'the Haiku request is the one every H answer was asked with');
 });
