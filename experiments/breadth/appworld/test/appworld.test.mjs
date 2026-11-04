@@ -256,7 +256,7 @@ test('parity.json and bg8.json: produced by the committed code and passing', { s
   const pj = L.readJson(path.join(L.RESEARCH, 'parity.json'));
   assert.equal(pj.codeSha256, P.codeSha256(), 'the code that produced parity.json differs from the committed code: rerun parity.mjs');
   assert.equal(pj.splitSha256, split.splitSha256);
-  for (const k of ['BG-0 install and data pinned', 'BG-1 gold 147/147 on both paths (verify and arm profiles)', 'BG-2 null 0/147 on every path', 'docs-only replay 0/147',
+  for (const k of ['BG-0 install and data pinned', 'BG-1 gold 147/147 on both paths (verify.py settings)', 'gold under the arm settings: run.mjs = upstream', 'BG-2 null 0/147 on every path', 'docs-only replay 0/147',
     'parity: ours = upstream on every compared item', 'upstream evaluate_tasks on our snapshots agrees', 'BG-4 determinism']) assert.equal(pj.checks[k], true, k);
   const bg8 = L.readJson(path.join(L.RESEARCH, 'bg8.json'));
   assert.equal(bg8.pass, true);

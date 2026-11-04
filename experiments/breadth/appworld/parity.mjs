@@ -274,7 +274,11 @@ export async function runParity({ concurrency = 2, baselineConcurrency = null, l
     bg0: { pass: bg0.install.pass && bg0.bundlePresent, ...bg0, install: { ...bg0.install, recordMismatches: undefined, unlistedFiles: undefined } },
     bg1: {
       goldVerifyOfficial: count(official, goldV, r => r.success), goldVerifyOurs: count(ours, goldV, r => r.success), goldArmOfficial: count(official, goldA, r => r.success),
-      goldArmRunner: baselines.gold.tgc, of: ids.length, goldCalls: { min: goldCalls[0], median: goldCalls[Math.floor(goldCalls.length / 2)], max: goldCalls.at(-1), total: goldCalls.reduce((a, b) => a + b, 0) },
+      goldArmRunner: baselines.gold.tgc, of: ids.length,
+      // golds that stop under the arm world settings (raise_on_failure=True: an API failure the gold expects raises); ids are
+      // public train/dev ids
+      goldArmFailIds: goldA.filter(k => official.get(k) && !official.get(k).error && !official.get(k).success).map(k => k.split('/')[0]),
+      goldCalls: { min: goldCalls[0], median: goldCalls[Math.floor(goldCalls.length / 2)], max: goldCalls.at(-1), total: goldCalls.reduce((a, b) => a + b, 0) },
       tasksWithWrites: writesN,
     },
     bg2: {
@@ -290,7 +294,11 @@ export async function runParity({ concurrency = 2, baselineConcurrency = null, l
   const g = res.bg1, f = res.bg2;
   res.checks = {
     'BG-0 install and data pinned': res.bg0.pass,
-    'BG-1 gold 147/147 on both paths (verify and arm profiles)': g.goldVerifyOfficial === ids.length && g.goldVerifyOurs === ids.length && g.goldArmOfficial === ids.length && g.goldArmRunner === ids.length,
+    // BG-1 is upstream's own gold check (verify.py: raise_on_failure=False). Under the arm settings (the experiment configs'
+    // AppWorld defaults, raise_on_failure=True) a gold that expects an API failure stops there; those runs must agree
+    // between run.mjs and upstream (the parity check below), not pass.
+    'BG-1 gold 147/147 on both paths (verify.py settings)': g.goldVerifyOfficial === ids.length && g.goldVerifyOurs === ids.length,
+    'gold under the arm settings: run.mjs = upstream': g.goldArmRunner === g.goldArmOfficial,
     'BG-2 null 0/147 on every path': f.nullOfficial === 0 && f.nullOurs === 0 && f.nullRunner === 0,
     'docs-only replay 0/147': f.docsOfficial === 0 && f.docsRunner === 0,
     'parity: ours = upstream on every compared item': parity.oursVsOfficial.mismatches.length === 0 && parity.oursVsOfficial.missing.length === 0 && parity.runnerVsOfficial.mismatches.length === 0 && parity.runnerVsOfficial.missing.length === 0 && parity.runnerServeVsGraded === 0,

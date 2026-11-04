@@ -105,6 +105,13 @@ SEALED-FREEZE.json` naming this split; their results never leave the host-only d
   sandbox shows the serve process no ground truth, no split lists and no host-only data (positive control: the same chunk
   without the sandbox sees the full data and reads an answer file) [run].
 - `pathlib.Path.read_text` is not on the guard's deny list either [obs, `common/safety_guard.py`].
+- **Some golds need `raise_on_failure=False`.** verify.py checks the golds with `raise_on_failure=False`; the experiment
+  configs leave the package default (`True`), under which "any of the APIs in the code respond[ing] with a non-success
+  status code ... will be treated as a runtime error" [doc, README]. A gold that expects an API failure (train
+  `0d8a4ee_3`: an account lookup by e-mail that answers 422 for a contact without an account) stops there under the arm settings, on
+  upstream's own path as on ours [run, 2026-11-04]. So BG-1 is the verify.py check; gold under the arm settings must
+  agree between paths, not pass (`parity.json` `bg1.goldArmFailIds`). An arm sees the same error text and can recover in
+  its next `execute`; the scripted gold cannot [inf].
 - `appworld` loads a `.env` from the working directory upward at import (`common/path_store.py` `dotenv.load_dotenv()`)
   [obs]; every bridge process starts in its own clean root.
 - The data unpack leaves every split's evaluation programs, answers and test data as plain files [run]; only the
