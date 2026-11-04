@@ -4,7 +4,10 @@ Uses LangGraph's own recommended durability features: the SQLite checkpointer, i
 human steps, recursion_limit for bounds, and Send for fan-out. Each attack mirrors Foundry's attack test for the same
 property, and records what LangGraph does: 'native' (it detects or prevents the attack itself), 'absent' (the attack
 succeeds, so a builder would have to hand-write the guard). Run with the pinned venv:
+  python3 -m venv /var/tmp/foundry-work/conformance-venv   # then, wheels only, from the pinned lock file:
+  /var/tmp/foundry-work/conformance-venv/bin/pip install --only-binary=:all: --no-deps -r experiments/conformance/competitors/langgraph.lock.txt
   /var/tmp/foundry-work/conformance-venv/bin/python -I experiments/conformance/competitors/langgraph_attacks.py OUT.json
+(The venv used on 2026-11-04 was deleted afterwards to free disk; rebuilt this way, it is the same environment.)
 Versions are recorded in the output (langgraph 1.2.19, langgraph-checkpoint-sqlite 3.1.3 when written, 2026-11-04).
 """
 import json, os, sqlite3, subprocess, sys, tempfile, operator

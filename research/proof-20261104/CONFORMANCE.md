@@ -13,7 +13,8 @@ property, its attack and its oracle are in `experiments/conformance/properties.j
   The script is `experiments/conformance/competitors/langgraph_attacks.py`, the result is `conformance-langgraph.json`,
   and the pinned environment is `experiments/conformance/competitors/langgraph.lock.txt`: langgraph 1.2.19,
   langgraph-checkpoint 4.3.1, langgraph-checkpoint-sqlite 3.1.3, langchain-core 1.7.5, wheels only, in a venv outside
-  the repo.
+  the repo. That venv was deleted after the run to free disk; the script's header gives the commands that rebuild it
+  from the lock file.
 
 | Property | Attack | Foundry | LangGraph 1.2.19 |
 |---|---|---|---|
