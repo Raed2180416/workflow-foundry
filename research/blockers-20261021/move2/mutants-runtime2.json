@@ -1,0 +1,365 @@
+{
+ "date": "2026-11-04T18:38:04.524Z",
+ "tests": [
+  "experiments/compose/test/runtime2.test.mjs"
+ ],
+ "runtime2": "cde405e3828f032b6a5db13c692dd9e7fa312afeabfa719d8b85551fc3a6f857",
+ "bundle2": "1e870704e36f12ec77317b42c3dfc17e47db8911e840138958782731cff0da69",
+ "baseline": {
+  "code": 0,
+  "failed": []
+ },
+ "mutants": [
+  {
+   "id": "caller-key-kept",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "outbound: two caller keys of one logical effect leave with one identity key; after/compensates follow; reads untouched",
+    "outbound: `compensates` follows the rewrite within a tick and across ticks; an unknown target is kept",
+    "inbox under a crash: the rolled-back carry drops the lost emission's result (orphan) and the re-emission gets one result",
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed",
+    "identity conflict: same identity, other arguments, is flagged and never merged; a corrected re-emission after an error is not"
+   ]
+  },
+  {
+   "id": "key-less-not-keyed",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "outbound: a key-less write gets its identity key; an unresolvable identity keeps the caller key; batch items per item",
+    "inbox: a key-less write's result comes back with key null; batch items come back under their item keys"
+   ]
+  },
+  {
+   "id": "after-not-rewritten",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "outbound: two caller keys of one logical effect leave with one identity key; after/compensates follow; reads untouched",
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "compensates-not-rewritten",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "outbound: `compensates` follows the rewrite within a tick and across ticks; an unknown target is kept"
+   ]
+  },
+  {
+   "id": "compensates-not-across-ticks",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "outbound: `compensates` follows the rewrite within a tick and across ticks; an unknown target is kept"
+   ]
+  },
+  {
+   "id": "identity-conflict-silenced",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "identity conflict: same identity, other arguments, is flagged and never merged; a corrected re-emission after an error is not"
+   ]
+  },
+  {
+   "id": "digest-kept-after-error",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "identity conflict: same identity, other arguments, is flagged and never merged; a corrected re-emission after an error is not"
+   ]
+  },
+  {
+   "id": "digest-kept-after-rate-limit",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "identity conflict: same identity, other arguments, is flagged and never merged; a corrected re-emission after an error is not"
+   ]
+  },
+  {
+   "id": "digest-reset-after-unknown",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "identity conflict: same identity, other arguments, is flagged and never merged; a corrected re-emission after an error is not"
+   ]
+  },
+  {
+   "id": "unresolved-not-recorded",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: results of reads and unresolved writes are counted under their caller key (a second one is surplus)"
+   ]
+  },
+  {
+   "id": "surplus-by-count (pre-review D1)",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: a surplus is compared with what the solver was told; it is delivered when the solver's view would be wrong",
+    "inbox: results for one identity shared by caller keys are handed out in emission order (A, B, A)"
+   ]
+  },
+  {
+   "id": "surplus-ok-always-delivered",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: a result comes back under the caller key; a surplus answer is dropped; a foreign key passes",
+    "inbox: every emission gets its result, also when two caller keys share an identity or one key is re-emitted",
+    "inbox: a surplus is compared with what the solver was told; it is delivered when the solver's view would be wrong",
+    "inbox: a batch result owed for some items and not others is delivered; only the owed items are counted",
+    "inbox: results of reads and unresolved writes are counted under their caller key (a second one is surplus)"
+   ]
+  },
+  {
+   "id": "surplus-key-conflict-dropped",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: a surplus is compared with what the solver was told; it is delivered when the solver's view would be wrong",
+    "inbox: results for one identity shared by caller keys are handed out in emission order (A, B, A)"
+   ]
+  },
+  {
+   "id": "surplus-after-commit-delivered",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: a surplus is compared with what the solver was told; it is delivered when the solver's view would be wrong"
+   ]
+  },
+  {
+   "id": "surplus-differing-failure-dropped",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: a surplus is compared with what the solver was told; it is delivered when the solver's view would be wrong"
+   ]
+  },
+  {
+   "id": "last-failure-not-recorded",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: a surplus is compared with what the solver was told; it is delivered when the solver's view would be wrong"
+   ]
+  },
+  {
+   "id": "partial-batch-dropped",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: a batch result owed for some items and not others is delivered; only the owed items are counted"
+   ]
+  },
+  {
+   "id": "fifo-off (pre-review D8)",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: results for one identity shared by caller keys are handed out in emission order (A, B, A)"
+   ]
+  },
+  {
+   "id": "fifo-init-empty",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: every emission gets its result, also when two caller keys share an identity or one key is re-emitted",
+    "inbox: results for one identity shared by caller keys are handed out in emission order (A, B, A)"
+   ]
+  },
+  {
+   "id": "latest-emitter-not-tracked",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: results for one identity shared by caller keys are handed out in emission order (A, B, A)"
+   ]
+  },
+  {
+   "id": "timers-filtered",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "inbox: timer and human-task events and key-less results are never filtered"
+   ]
+  },
+  {
+   "id": "ctx-status-not-mapped",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "ctx.status of a caller key reads the identity key; unknown keys read as given"
+   ]
+  },
+  {
+   "id": "unanswered-evicted (pre-review D7)",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "eviction: answered entries go first, unanswered ones stay; the carry stays under the host limit"
+   ]
+  },
+  {
+   "id": "no-fail-loud",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "eviction: answered entries go first, unanswered ones stay; the carry stays under the host limit"
+   ]
+  },
+  {
+   "id": "parks-not-evicted-first",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "eviction: answered entries go first, unanswered ones stay; the carry stays under the host limit"
+   ]
+  },
+  {
+   "id": "read-back-always-on",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "read-back-ignores-after",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "read-back-ignores-own-after (resume finding)",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "read-back-parks-own-reads",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "read-back-no-status-guard",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "read-back-parks-ok (pre-review D2)",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "read-back-ignores-the-read (pre-review D2)",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "read-back-expiry-not-reissued",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "park-never-expires",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed"
+   ]
+  },
+  {
+   "id": "values-not-escaped (pre-review D9)",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "envFill is injective: separators, defaults and number types in values cannot collide (E8 identities unchanged)"
+   ]
+  },
+  {
+   "id": "numbers-untyped",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "envFill is injective: separators, defaults and number types in values cannot collide (E8 identities unchanged)"
+   ]
+  },
+  {
+   "id": "default-spelling-collides",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "envFill is injective: separators, defaults and number types in values cannot collide (E8 identities unchanged)"
+   ]
+  },
+  {
+   "id": "registry-adjacent-slots-allowed",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "envFill is injective: separators, defaults and number types in values cannot collide (E8 identities unchanged)"
+   ]
+  },
+  {
+   "id": "digest-second-pass-zeroed",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "envKey: safe identities verbatim, unsafe or long ones digested; 20,000 distinct identities give distinct keys"
+   ]
+  },
+  {
+   "id": "gate-exact-only",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "single-writer gate: overlapping write kinds of two owners are problems; qualifiers that differ and reads are not"
+   ]
+  },
+  {
+   "id": "gate-reads-conflict",
+   "file": "runtime2.mjs",
+   "killed": true,
+   "failed": [
+    "single-writer gate: overlapping write kinds of two owners are problems; qualifiers that differ and reads are not"
+   ]
+  },
+  {
+   "id": "gate-default-report (pre-review D10)",
+   "file": "bundle2.mjs",
+   "killed": true,
+   "failed": [
+    "bundle2: the envelope is inlined (no imports); the gate refuses a flagged program by default and only reports it on request"
+   ]
+  }
+ ],
+ "killed": 42,
+ "of": 42
+}

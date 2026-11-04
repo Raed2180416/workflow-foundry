@@ -1,0 +1,12842 @@
+{
+ "evidence": "development (dev worlds), $0; pre-review vs post-review runtime2 rows",
+ "summary": {
+  "r2:downstream": {
+   "cells": 33,
+   "compared": 33,
+   "logicalEqual": 33,
+   "passingEqual": 33,
+   "passedOld": 1523,
+   "passedNew": 1523,
+   "conflictingResults": 0,
+   "surplusOld": 0,
+   "surplusNew": 0,
+   "reissued": 0,
+   "armErrors": 37
+  },
+  "r2:none": {
+   "cells": 45,
+   "compared": 45,
+   "logicalEqual": 45,
+   "passingEqual": 45,
+   "passedOld": 2124,
+   "passedNew": 2124,
+   "conflictingResults": 0,
+   "surplusOld": 0,
+   "surplusNew": 0,
+   "reissued": 0,
+   "armErrors": 19
+  },
+  "readback:crash": {
+   "cells": 27,
+   "compared": 27,
+   "logicalEqual": 0,
+   "passingEqual": 27,
+   "passedOld": 1302,
+   "passedNew": 1302,
+   "conflictingResults": 0,
+   "surplusOld": 69,
+   "surplusNew": 69,
+   "reissued": 0,
+   "armErrors": 0
+  },
+  "readback:none": {
+   "cells": 27,
+   "compared": 27,
+   "logicalEqual": 27,
+   "passingEqual": 27,
+   "passedOld": 1302,
+   "passedNew": 1302,
+   "conflictingResults": 0,
+   "surplusOld": 0,
+   "surplusNew": 0,
+   "reissued": 0,
+   "armErrors": 0
+  },
+  "r2:crash": {
+   "cells": 39,
+   "compared": 39,
+   "logicalEqual": 39,
+   "passingEqual": 39,
+   "passedOld": 1834,
+   "passedNew": 1834,
+   "conflictingResults": 0,
+   "surplusOld": 97,
+   "surplusNew": 97,
+   "reissued": 0,
+   "armErrors": 0
+  },
+  "r2:dup-delayed": {
+   "cells": 27,
+   "compared": 27,
+   "logicalEqual": 27,
+   "passingEqual": 27,
+   "passedOld": 1302,
+   "passedNew": 1302,
+   "conflictingResults": 0,
+   "surplusOld": 0,
+   "surplusNew": 0,
+   "reissued": 0,
+   "armErrors": 7
+  },
+  "r2:dup-same": {
+   "cells": 39,
+   "compared": 39,
+   "logicalEqual": 39,
+   "passingEqual": 39,
+   "passedOld": 1578,
+   "passedNew": 1578,
+   "conflictingResults": 0,
+   "surplusOld": 0,
+   "surplusNew": 0,
+   "reissued": 0,
+   "armErrors": 0
+  },
+  "r2:restart": {
+   "cells": 27,
+   "compared": 27,
+   "logicalEqual": 27,
+   "passingEqual": 27,
+   "passedOld": 1302,
+   "passedNew": 1302,
+   "conflictingResults": 0,
+   "surplusOld": 0,
+   "surplusNew": 0,
+   "reissued": 0,
+   "armErrors": 0
+  }
+ },
+ "rows": [
+  {
+   "subject": "b1lh-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    29,
+    29
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    36,
+    36
+   ],
+   "outsideAllowed": [
+    11,
+    11
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    18,
+    18
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 18,
+     "identity-conflict": 18,
+     "host-key-conflict": 18
+    },
+    {
+     "shared-identity": 18,
+     "identity-conflict": 18,
+     "host-key-conflict": 18
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    31,
+    31
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    5,
+    5
+   ],
+   "critical": [
+    44,
+    44
+   ],
+   "outsideAllowed": [
+    14,
+    14
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    22,
+    22
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 22,
+     "identity-conflict": 22,
+     "host-key-conflict": 22
+    },
+    {
+     "shared-identity": 22,
+     "identity-conflict": 22,
+     "host-key-conflict": 22
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    52,
+    52
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    10,
+    10
+   ],
+   "critical": [
+    46,
+    46
+   ],
+   "outsideAllowed": [
+    15,
+    15
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    23,
+    23
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 23,
+     "identity-conflict": 23,
+     "host-key-conflict": 23
+    },
+    {
+     "shared-identity": 23,
+     "identity-conflict": 23,
+     "host-key-conflict": 23
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    16,
+    16
+   ],
+   "outsideAllowed": [
+    6,
+    6
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    8,
+    8
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 8,
+     "identity-conflict": 8,
+     "host-key-conflict": 8
+    },
+    {
+     "shared-identity": 8,
+     "identity-conflict": 8,
+     "host-key-conflict": 8
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    18,
+    18
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    9,
+    9
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 9,
+     "identity-conflict": 9,
+     "host-key-conflict": 9
+    },
+    {
+     "shared-identity": 9,
+     "identity-conflict": 9,
+     "host-key-conflict": 9
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    62,
+    62
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    18,
+    18
+   ],
+   "outsideAllowed": [
+    6,
+    6
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    9,
+    9
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 9,
+     "identity-conflict": 9,
+     "host-key-conflict": 9
+    },
+    {
+     "shared-identity": 9,
+     "identity-conflict": 9,
+     "host-key-conflict": 9
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 101,
+     "readback": 101,
+     "reconciled": 101,
+     "orphan": 13
+    },
+    {
+     "orphan": 112,
+     "orphan-parked": 2,
+     "readback": 2,
+     "reconciled": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 27,
+     "orphan-parked": 133,
+     "readback": 133,
+     "reconciled": 133
+    },
+    {
+     "orphan": 160
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 197,
+     "readback": 197,
+     "reconciled": 200,
+     "orphan": 17,
+     "surplus": 2
+    },
+    {
+     "orphan": 208,
+     "orphan-parked": 6,
+     "readback": 6,
+     "reconciled": 6,
+     "surplus": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 114
+    },
+    {
+     "orphan": 114
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 160
+    },
+    {
+     "orphan": 160
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    66,
+    66
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    2,
+    2
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 214,
+     "surplus": 2
+    },
+    {
+     "orphan": 214,
+     "surplus": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    66,
+    66
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    35,
+    35
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    41,
+    41
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    57,
+    57
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 144,
+     "readback": 144,
+     "reconciled": 144,
+     "orphan": 17
+    },
+    {
+     "orphan": 159,
+     "orphan-parked": 2,
+     "readback": 2,
+     "reconciled": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 26,
+     "orphan-parked": 166,
+     "readback": 166,
+     "reconciled": 166
+    },
+    {
+     "orphan": 192
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 211,
+     "readback": 211,
+     "reconciled": 211,
+     "orphan": 30,
+     "surplus": 6
+    },
+    {
+     "orphan": 235,
+     "surplus": 6,
+     "orphan-parked": 6,
+     "readback": 6,
+     "reconciled": 6
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 161
+    },
+    {
+     "orphan": 161
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 192
+    },
+    {
+     "orphan": 192
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    66,
+    66
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    2,
+    2
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 241,
+     "surplus": 6
+    },
+    {
+     "orphan": 241,
+     "surplus": 6
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    46,
+    46
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    -2,
+    -2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    69,
+    69
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    -1,
+    -1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    35,
+    35
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    41,
+    41
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    58,
+    58
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    10,
+    10
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 127,
+     "readback": 127,
+     "reconciled": 127,
+     "orphan": 17
+    },
+    {
+     "orphan": 144
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 24,
+     "orphan-parked": 148,
+     "readback": 148,
+     "reconciled": 148
+    },
+    {
+     "orphan": 171,
+     "orphan-parked": 1,
+     "readback": 1,
+     "reconciled": 1
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 213,
+     "readback": 213,
+     "reconciled": 213,
+     "orphan": 28,
+     "surplus": 2
+    },
+    {
+     "orphan": 236,
+     "orphan-parked": 5,
+     "readback": 5,
+     "reconciled": 5,
+     "surplus": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 144
+    },
+    {
+     "orphan": 144
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 172
+    },
+    {
+     "orphan": 172
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    66,
+    66
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    2,
+    2
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 241,
+     "surplus": 2
+    },
+    {
+     "orphan": 241,
+     "surplus": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    46,
+    46
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    -2,
+    -2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    69,
+    69
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    -1,
+    -1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    1,
+    1
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    1,
+    1
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    4,
+    4
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    35,
+    35
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    41,
+    41
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    57,
+    57
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    43,
+    43
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "b1nh-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    68,
+    68
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 91,
+     "readback": 91,
+     "reconciled": 92,
+     "orphan": 10
+    },
+    {
+     "orphan": 99,
+     "orphan-parked": 2,
+     "readback": 2,
+     "reconciled": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 110,
+     "readback": 110,
+     "reconciled": 110,
+     "orphan": 14
+    },
+    {
+     "orphan": 124
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 170,
+     "readback": 170,
+     "reconciled": 173,
+     "surplus": 4,
+     "orphan": 35
+    },
+    {
+     "orphan": 201,
+     "surplus": 4,
+     "orphan-parked": 4,
+     "readback": 4,
+     "reconciled": 4
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 101
+    },
+    {
+     "orphan": 101
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 124
+    },
+    {
+     "orphan": 124
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 205,
+     "surplus": 4
+    },
+    {
+     "orphan": 205,
+     "surplus": 4
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    2,
+    2
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    58,
+    58
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    32,
+    32
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+fix-d3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 100
+    },
+    {
+     "orphan": 100
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+fix-d3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 134
+    },
+    {
+     "orphan": 134
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+fix-d3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    58,
+    58
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    2,
+    2
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 202,
+     "surplus": 2
+    },
+    {
+     "orphan": 202,
+     "surplus": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+fix-d3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    32,
+    32
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+fix-d3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    35,
+    35
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 1
+    },
+    {
+     "shared-identity": 1
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+fix-d3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 3
+    },
+    {
+     "shared-identity": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+fix-d3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+fix-d3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+fix-d3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 93,
+     "readback": 93,
+     "reconciled": 93,
+     "orphan": 7
+    },
+    {
+     "orphan": 98,
+     "orphan-parked": 2,
+     "readback": 2,
+     "reconciled": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 115,
+     "readback": 115,
+     "reconciled": 115,
+     "orphan": 19
+    },
+    {
+     "orphan": 134
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 175,
+     "readback": 175,
+     "reconciled": 177,
+     "orphan": 27,
+     "surplus": 2
+    },
+    {
+     "orphan": 197,
+     "orphan-parked": 5,
+     "readback": 5,
+     "reconciled": 5,
+     "surplus": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 100
+    },
+    {
+     "orphan": 100
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 134
+    },
+    {
+     "orphan": 134
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    58,
+    58
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    2,
+    2
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 202,
+     "surplus": 2
+    },
+    {
+     "orphan": 202,
+     "surplus": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    58,
+    58
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    32,
+    32
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    35,
+    35
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 1
+    },
+    {
+     "shared-identity": 1
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 3
+    },
+    {
+     "shared-identity": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    38,
+    38
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 83,
+     "readback": 83,
+     "reconciled": 83,
+     "orphan": 19
+    },
+    {
+     "orphan": 102
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 111,
+     "readback": 111,
+     "reconciled": 111,
+     "orphan": 27
+    },
+    {
+     "orphan": 137,
+     "orphan-parked": 1,
+     "readback": 1,
+     "reconciled": 1
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    56,
+    56
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 133,
+     "readback": 133,
+     "reconciled": 133,
+     "orphan": 34,
+     "surplus": 27
+    },
+    {
+     "orphan": 154,
+     "orphan-parked": 13,
+     "readback": 13,
+     "reconciled": 13,
+     "surplus": 27
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    56,
+    56
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 102
+    },
+    {
+     "orphan": 102
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 138
+    },
+    {
+     "orphan": 138
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    54,
+    54
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    12,
+    12
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 167,
+     "surplus": 27
+    },
+    {
+     "orphan": 167,
+     "surplus": 27
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    41,
+    41
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    -2,
+    -2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    -3,
+    -3
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    56,
+    56
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    34,
+    34
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 1
+    },
+    {
+     "shared-identity": 1
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    46,
+    46
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    10,
+    10
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    20,
+    20
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 3
+    },
+    {
+     "shared-identity": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    56,
+    56
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "ch-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    56,
+    56
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+fix-d2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    41,
+    41
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 95
+    },
+    {
+     "orphan": 95
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+fix-d2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 142,
+     "surplus": 8
+    },
+    {
+     "orphan": 142,
+     "surplus": 8
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+fix-d2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    63,
+    63
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    2,
+    2
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 208,
+     "surplus": 3
+    },
+    {
+     "orphan": 208,
+     "surplus": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+fix-d2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    34,
+    34
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+fix-d2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+fix-d2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    54,
+    54
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+fix-d2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+fix-d2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+fix-d2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    65,
+    65
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    30,
+    30
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    6,
+    6
+   ],
+   "critical": [
+    30,
+    30
+   ],
+   "outsideAllowed": [
+    11,
+    11
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    15,
+    15
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 15,
+     "identity-conflict": 15
+    },
+    {
+     "shared-identity": 15,
+     "identity-conflict": 15
+    }
+   ],
+   "armErrors": [
+    11,
+    11
+   ]
+  },
+  {
+   "subject": "cht-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    31,
+    31
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    40,
+    40
+   ],
+   "outsideAllowed": [
+    13,
+    13
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    20,
+    20
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 20,
+     "identity-conflict": 20
+    },
+    {
+     "shared-identity": 20,
+     "identity-conflict": 20
+    }
+   ],
+   "armErrors": [
+    13,
+    13
+   ]
+  },
+  {
+   "subject": "cht-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    52,
+    52
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    7,
+    7
+   ],
+   "critical": [
+    40,
+    40
+   ],
+   "outsideAllowed": [
+    14,
+    14
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    20,
+    20
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 20,
+     "identity-conflict": 20,
+     "host-key-conflict": 2
+    },
+    {
+     "shared-identity": 20,
+     "identity-conflict": 20,
+     "host-key-conflict": 2
+    }
+   ],
+   "armErrors": [
+    13,
+    13
+   ]
+  },
+  {
+   "subject": "cht-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    16,
+    16
+   ],
+   "outsideAllowed": [
+    6,
+    6
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    8,
+    8
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 8,
+     "identity-conflict": 8
+    },
+    {
+     "shared-identity": 8,
+     "identity-conflict": 8
+    }
+   ],
+   "armErrors": [
+    6,
+    6
+   ]
+  },
+  {
+   "subject": "cht-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    34,
+    34
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    18,
+    18
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    9,
+    9
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 9,
+     "identity-conflict": 9
+    },
+    {
+     "shared-identity": 9,
+     "identity-conflict": 9
+    }
+   ],
+   "armErrors": [
+    8,
+    8
+   ]
+  },
+  {
+   "subject": "cht-e8-1+mut-splitrefund",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    18,
+    18
+   ],
+   "outsideAllowed": [
+    6,
+    6
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    9,
+    9
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 9,
+     "identity-conflict": 9,
+     "host-key-conflict": 2
+    },
+    {
+     "shared-identity": 9,
+     "identity-conflict": 9,
+     "host-key-conflict": 2
+    }
+   ],
+   "armErrors": [
+    5,
+    5
+   ]
+  },
+  {
+   "subject": "cht-e8-1+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 86,
+     "readback": 86,
+     "reconciled": 86,
+     "orphan": 9
+    },
+    {
+     "orphan": 93,
+     "orphan-parked": 2,
+     "readback": 2,
+     "reconciled": 2
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 123,
+     "readback": 123,
+     "reconciled": 123,
+     "orphan": 19,
+     "surplus": 8
+    },
+    {
+     "orphan": 142,
+     "surplus": 8
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    65,
+    65
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 173,
+     "readback": 172,
+     "reconciled": 175,
+     "surplus": 3,
+     "orphan": 35,
+     "park-expired": 1
+    },
+    {
+     "orphan": 202,
+     "surplus": 3,
+     "orphan-parked": 6,
+     "readback": 6,
+     "reconciled": 6
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    65,
+    65
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    41,
+    41
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 95
+    },
+    {
+     "orphan": 95
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 142,
+     "surplus": 8
+    },
+    {
+     "orphan": 142,
+     "surplus": 8
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    63,
+    63
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    2,
+    2
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 208,
+     "surplus": 3
+    },
+    {
+     "orphan": 208,
+     "surplus": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    41,
+    41
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    44,
+    44
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    -2,
+    -2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    66,
+    66
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    -1,
+    -1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    65,
+    65
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    1,
+    1
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    34,
+    34
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 1
+    },
+    {
+     "shared-identity": 1
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    54,
+    54
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 3
+    },
+    {
+     "shared-identity": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    65,
+    65
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    42,
+    42
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    65,
+    65
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+fix-d2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 144
+    },
+    {
+     "orphan": 144
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+fix-d2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 177
+    },
+    {
+     "orphan": 177
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+fix-d2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 227,
+     "surplus": 4
+    },
+    {
+     "orphan": 227,
+     "surplus": 4
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+fix-d2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    32,
+    32
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+fix-d2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+fix-d2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+fix-d2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+fix-d2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+fix-d2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 125,
+     "readback": 125,
+     "reconciled": 125,
+     "orphan": 19
+    },
+    {
+     "orphan": 144
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 155,
+     "readback": 154,
+     "reconciled": 154,
+     "orphan": 22,
+     "park-expired": 1
+    },
+    {
+     "orphan": 177
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 207,
+     "readback": 207,
+     "reconciled": 211,
+     "surplus": 4,
+     "orphan": 20
+    },
+    {
+     "orphan": 223,
+     "surplus": 4,
+     "orphan-parked": 4,
+     "readback": 4,
+     "reconciled": 4
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 144
+    },
+    {
+     "orphan": 144
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 177
+    },
+    {
+     "orphan": 177
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    1,
+    1
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 227,
+     "surplus": 4
+    },
+    {
+     "orphan": 227,
+     "surplus": 4
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    41,
+    41
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    -2,
+    -2
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    61,
+    61
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    -1,
+    -1
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    32,
+    32
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    3,
+    3
+   ],
+   "critical": [
+    2,
+    2
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 1
+    },
+    {
+     "shared-identity": 1
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    49,
+    49
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 3
+    },
+    {
+     "shared-identity": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    40,
+    40
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    39,
+    39
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    60,
+    60
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    0,
+    0
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+fix-d2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 103
+    },
+    {
+     "orphan": 103
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+fix-d2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 125,
+     "surplus": 8
+    },
+    {
+     "orphan": 125,
+     "surplus": 8
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+fix-d2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 216,
+     "surplus": 3
+    },
+    {
+     "orphan": 216,
+     "surplus": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+fix-d2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    29,
+    29
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+fix-d2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    34,
+    34
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+fix-d2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    48,
+    48
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+fix-d2",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+fix-d2",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+fix-d2",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 87,
+     "readback": 87,
+     "reconciled": 87,
+     "orphan": 16
+    },
+    {
+     "orphan": 103
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 105,
+     "readback": 105,
+     "reconciled": 105,
+     "orphan": 20,
+     "surplus": 8
+    },
+    {
+     "orphan": 125,
+     "surplus": 8
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": false,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan-parked": 170,
+     "readback": 170,
+     "reconciled": 173,
+     "orphan": 46,
+     "surplus": 3
+    },
+    {
+     "orphan": 215,
+     "surplus": 3,
+     "orphan-parked": 1,
+     "readback": 1,
+     "reconciled": 1
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+readback",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+readback",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3+readback",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "f24c2783",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 103
+    },
+    {
+     "orphan": 103
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 125,
+     "surplus": 8
+    },
+    {
+     "orphan": 125,
+     "surplus": 8
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "crash",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "orphan": 216,
+     "surplus": 3
+    },
+    {
+     "orphan": 216,
+     "surplus": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    35,
+    35
+   ],
+   "completed": 42,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    16,
+    16
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 46,
+   "lossVsNone": [
+    -1,
+    -1
+   ],
+   "critical": [
+    14,
+    14
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "downstream",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    58,
+    58
+   ],
+   "completed": 70,
+   "lossVsNone": [
+    1,
+    1
+   ],
+   "critical": [
+    14,
+    14
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-delayed",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    29,
+    29
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    8,
+    8
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    8,
+    8
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    34,
+    34
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    2,
+    2
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    3,
+    3
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 1
+    },
+    {
+     "shared-identity": 1
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "dup-same",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    48,
+    48
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    11,
+    11
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    10,
+    10
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {
+     "shared-identity": 3
+    },
+    {
+     "shared-identity": 3
+    }
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "none",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1161,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    37,
+    37
+   ],
+   "completed": 43,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    12,
+    12
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1162,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    36,
+    36
+   ],
+   "completed": 44,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    8,
+    8
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  },
+  {
+   "subject": "cht-e8-3",
+   "runtime": 2,
+   "seed": 1164,
+   "fault": "restart",
+   "runtime2": [
+    "1c4a6398",
+    "cde405e3"
+   ],
+   "passed": [
+    59,
+    59
+   ],
+   "completed": 69,
+   "lossVsNone": [
+    0,
+    0
+   ],
+   "critical": [
+    6,
+    6
+   ],
+   "outsideAllowed": [
+    0,
+    0
+   ],
+   "duplicates": [
+    0,
+    0
+   ],
+   "keyConflicts": [
+    0,
+    0
+   ],
+   "logicalEqual": true,
+   "sorTablesEqual": true,
+   "passingEqual": true,
+   "env": [
+    {},
+    {}
+   ],
+   "armErrors": [
+    0,
+    0
+   ]
+  }
+ ]
+}

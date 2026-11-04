@@ -1,0 +1,412 @@
+{
+ "evidence": "development (dev worlds 1181/1183), $0, runtime2 read-back prediction (move2/READBACK-FRESH-PREDICTION.md)",
+ "runs": [
+  "research/blockers-20261021/move2/runs-fresh",
+  "research/blockers-20261021/move2/runs-fresh-v2"
+ ],
+ "P1": {
+  "readbackEqualsR2": 6,
+  "r2EqualsR1": 6,
+  "of": 6,
+  "holds": true
+ },
+ "P2": {
+  "readbackLeR2": 6,
+  "readbackZero": 6,
+  "of": 6,
+  "holds": true
+ },
+ "P3": {
+  "okCells": 24,
+  "of": 24,
+  "holds": true
+ },
+ "kill": {
+  "crossed": false
+ },
+ "crashLossSums": {
+  "r1": 44,
+  "r2": 1,
+  "readback": 0
+ },
+ "rows": [
+  {
+   "subject": "ch-e8-2",
+   "seed": 1181,
+   "noneRbEqualsR2": true,
+   "noneR2EqualsR1": true,
+   "crashLoss": {
+    "r1": 21,
+    "r2": 0,
+    "readback": 0
+   },
+   "p3": [
+    {
+     "label": "ch-e8-2",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "ch-e8-2",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "ch-e8-2+readback",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "ch-e8-2+readback",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    }
+   ],
+   "provenance": [
+    {
+     "dir": "runs-fresh",
+     "runtime2": null
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    }
+   ]
+  },
+  {
+   "subject": "ch-e8-2",
+   "seed": 1183,
+   "noneRbEqualsR2": true,
+   "noneR2EqualsR1": true,
+   "crashLoss": {
+    "r1": 22,
+    "r2": 0,
+    "readback": 0
+   },
+   "p3": [
+    {
+     "label": "ch-e8-2",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "ch-e8-2",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "ch-e8-2+readback",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "ch-e8-2+readback",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    }
+   ],
+   "provenance": [
+    {
+     "dir": "runs-fresh",
+     "runtime2": null
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    }
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "seed": 1181,
+   "noneRbEqualsR2": true,
+   "noneR2EqualsR1": true,
+   "crashLoss": {
+    "r1": 0,
+    "r2": 1,
+    "readback": 0
+   },
+   "p3": [
+    {
+     "label": "cht-e8-1",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "cht-e8-1",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "cht-e8-1+readback",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "cht-e8-1+readback",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    }
+   ],
+   "provenance": [
+    {
+     "dir": "runs-fresh",
+     "runtime2": null
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    }
+   ]
+  },
+  {
+   "subject": "cht-e8-1",
+   "seed": 1183,
+   "noneRbEqualsR2": true,
+   "noneR2EqualsR1": true,
+   "crashLoss": {
+    "r1": 0,
+    "r2": 0,
+    "readback": 0
+   },
+   "p3": [
+    {
+     "label": "cht-e8-1",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "cht-e8-1",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "cht-e8-1+readback",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "cht-e8-1+readback",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    }
+   ],
+   "provenance": [
+    {
+     "dir": "runs-fresh",
+     "runtime2": null
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    }
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "seed": 1181,
+   "noneRbEqualsR2": true,
+   "noneR2EqualsR1": true,
+   "crashLoss": {
+    "r1": 1,
+    "r2": 0,
+    "readback": 0
+   },
+   "p3": [
+    {
+     "label": "b1lh-e8-1",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "b1lh-e8-1",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "b1lh-e8-1+readback",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "b1lh-e8-1+readback",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    }
+   ],
+   "provenance": [
+    {
+     "dir": "runs-fresh",
+     "runtime2": null
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    }
+   ]
+  },
+  {
+   "subject": "b1lh-e8-1",
+   "seed": 1183,
+   "noneRbEqualsR2": true,
+   "noneR2EqualsR1": true,
+   "crashLoss": {
+    "r1": 0,
+    "r2": 0,
+    "readback": 0
+   },
+   "p3": [
+    {
+     "label": "b1lh-e8-1",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "b1lh-e8-1",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "b1lh-e8-1+readback",
+     "fault": "none",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    },
+    {
+     "label": "b1lh-e8-1+readback",
+     "fault": "crash",
+     "dup": 0,
+     "keyConflicts": 0,
+     "critical": 0,
+     "criticalFaultFree": 0,
+     "ok": true
+    }
+   ],
+   "provenance": [
+    {
+     "dir": "runs-fresh",
+     "runtime2": null
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    },
+    {
+     "dir": "runs-fresh-v2",
+     "runtime2": "cde405e3"
+    }
+   ]
+  }
+ ]
+}

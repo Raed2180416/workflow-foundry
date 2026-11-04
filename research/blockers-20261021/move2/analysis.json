@@ -1,13 +1,18 @@
 {
  "evidence": "development (dev worlds 1161/1162/1164), $0, runtime2 vs frozen runtime1; D28(3)",
+ "runs": [
+  "research/blockers-20261021/move2/runs",
+  "research/blockers-20261021/move2/runs-v2"
+ ],
  "verdicts": {
-  "S1 logical duplicates 0 under M4d outside the universal D4 loss (was 61 in COMP-1)": {
+  "S1 [code: mechanism check, circular by construction] logical duplicates 0 under M4d outside the universal D4 loss (was 61 in COMP-1)": {
    "r1": 61,
    "r1OutsideD4": 20,
    "r2": 0,
    "r2OutsideD4": 0,
    "cells": 18,
-   "holds": true
+   "holds": true,
+   "note": "the registry equals identityOf, the counter uses identityOf, and the host deduplicates any resolved identity: 0 is guaranteed; the non-circular readouts are the band lines and S2"
   },
   "S2 fault-free digests unchanged (logical journal and business rows)": {
    "equal": 18,
@@ -78,55 +83,189 @@
     8
    ]
   },
-  "Move 2 COMP M4b/M4d within the monolith band": {
+  "Move 2 COMP M4b/M4d within the monolith band, like for like (non-circular: oracle case loss)": {
+   "r1": "20/36",
+   "holds_r1": false,
+   "r2": "36/36",
+   "holds_r2": true,
+   "readback": "18/18",
+   "holds_readback": true,
+   "readback_faults": [
+    "crash"
+   ]
+  },
+  "Move 2 COMP M4b/M4d within the monolith band of the frozen runtime (monoliths under r1 only)": {
+   "r1": "20/36",
+   "holds_r1": false,
+   "r2": "33/36",
+   "holds_r2": false,
+   "readback": "18/18",
+   "holds_readback": true,
+   "readback_faults": [
+    "crash"
+   ]
+  },
+  "Move 2 band per cell": {
    "crash:1161": {
-    "monolith": [
-     0,
-     1
-    ],
-    "r1Inside": "5/6",
-    "r2Inside": "6/6"
+    "monolith": {
+     "r1": [
+      0,
+      0
+     ],
+     "r2": [
+      0,
+      1
+     ],
+     "readback": [
+      0,
+      0
+     ]
+    },
+    "likeForLike": {
+     "r1": 2,
+     "r2": 6,
+     "readback": 6
+    },
+    "frozenBand": {
+     "r1": 2,
+     "r2": 3,
+     "readback": 6
+    },
+    "n": 6
    },
    "crash:1162": {
-    "monolith": [
-     0,
-     0
-    ],
-    "r1Inside": "5/6",
-    "r2Inside": "6/6"
+    "monolith": {
+     "r1": [
+      0,
+      0
+     ],
+     "r2": [
+      0,
+      0
+     ],
+     "readback": [
+      0,
+      0
+     ]
+    },
+    "likeForLike": {
+     "r1": 5,
+     "r2": 6,
+     "readback": 6
+    },
+    "frozenBand": {
+     "r1": 5,
+     "r2": 6,
+     "readback": 6
+    },
+    "n": 6
    },
    "crash:1164": {
-    "monolith": [
-     1,
-     2
-    ],
-    "r1Inside": "4/6",
-    "r2Inside": "6/6"
+    "monolith": {
+     "r1": [
+      1,
+      2
+     ],
+     "r2": [
+      2,
+      2
+     ],
+     "readback": [
+      0,
+      0
+     ]
+    },
+    "likeForLike": {
+     "r1": 4,
+     "r2": 6,
+     "readback": 6
+    },
+    "frozenBand": {
+     "r1": 4,
+     "r2": 6,
+     "readback": 6
+    },
+    "n": 6
    },
    "dup-same:1161": {
-    "monolith": [
-     8,
-     8
-    ],
-    "r1Inside": "6/6",
-    "r2Inside": "6/6"
+    "monolith": {
+     "r1": [
+      8,
+      8
+     ],
+     "r2": [
+      8,
+      8
+     ],
+     "readback": null
+    },
+    "likeForLike": {
+     "r1": 6,
+     "r2": 6,
+     "readback": null
+    },
+    "frozenBand": {
+     "r1": 6,
+     "r2": 6,
+     "readback": null
+    },
+    "n": 6
    },
    "dup-same:1162": {
-    "monolith": [
-     3,
-     3
-    ],
-    "r1Inside": "2/6",
-    "r2Inside": "6/6"
+    "monolith": {
+     "r1": [
+      3,
+      3
+     ],
+     "r2": [
+      3,
+      3
+     ],
+     "readback": null
+    },
+    "likeForLike": {
+     "r1": 2,
+     "r2": 6,
+     "readback": null
+    },
+    "frozenBand": {
+     "r1": 2,
+     "r2": 6,
+     "readback": null
+    },
+    "n": 6
    },
    "dup-same:1164": {
-    "monolith": [
-     10,
-     11
-    ],
-    "r1Inside": "1/6",
-    "r2Inside": "6/6"
+    "monolith": {
+     "r1": [
+      10,
+      11
+     ],
+     "r2": [
+      10,
+      11
+     ],
+     "readback": null
+    },
+    "likeForLike": {
+     "r1": 1,
+     "r2": 6,
+     "readback": null
+    },
+    "frozenBand": {
+     "r1": 1,
+     "r2": 6,
+     "readback": null
+    },
+    "n": 6
    }
+  },
+  "ATTACK Move 2 kill lines (> 1 false refusal on passing worlds; an admitted write that Δ* cannot explain)": {
+   "evaluated": false,
+   "why": "they need Move 1's Δ* and the replay gate (A1-C v2.1), neither of which exists yet"
+  },
+  "Composition analogue of a kill line (not ATTACK's): the envelope changes fault-free behaviour, or the gate flags a C-H-T manifest": {
+   "crossed": false
   },
   "M4a restart journal identical under runtime 2": {
    "identical": 27,
@@ -5648,10 +5787,20 @@
  },
  "band": {
   "crash:1161": {
-   "monolith": [
-    0,
-    1
-   ],
+   "monolith": {
+    "r1": [
+     0,
+     0
+    ],
+    "r2": [
+     0,
+     1
+    ],
+    "readback": [
+     0,
+     0
+    ]
+   },
    "composed": {
     "ch-e8-1.r1": 1,
     "ch-e8-1.r2": 1,
@@ -5664,17 +5813,41 @@
     "cht-e8-2.r1": 1,
     "cht-e8-2.r2": 0,
     "cht-e8-3.r1": 0,
-    "cht-e8-3.r2": 0
+    "cht-e8-3.r2": 0,
+    "ch-e8-1+readback.r2": 0,
+    "ch-e8-2+readback.r2": 0,
+    "ch-e8-3+readback.r2": 0,
+    "cht-e8-1+readback.r2": 0,
+    "cht-e8-2+readback.r2": 0,
+    "cht-e8-3+readback.r2": 0
    },
-   "r2Inside": 6,
-   "r1Inside": 5,
-   "n": 6
+   "n": 6,
+   "likeForLike": {
+    "r1": 2,
+    "r2": 6,
+    "readback": 6
+   },
+   "frozenBand": {
+    "r1": 2,
+    "r2": 3,
+    "readback": 6
+   }
   },
   "crash:1162": {
-   "monolith": [
-    0,
-    0
-   ],
+   "monolith": {
+    "r1": [
+     0,
+     0
+    ],
+    "r2": [
+     0,
+     0
+    ],
+    "readback": [
+     0,
+     0
+    ]
+   },
    "composed": {
     "ch-e8-1.r1": 0,
     "ch-e8-1.r2": 0,
@@ -5687,17 +5860,41 @@
     "cht-e8-2.r1": 0,
     "cht-e8-2.r2": 0,
     "cht-e8-3.r1": 0,
-    "cht-e8-3.r2": 0
+    "cht-e8-3.r2": 0,
+    "ch-e8-1+readback.r2": 0,
+    "ch-e8-2+readback.r2": 0,
+    "ch-e8-3+readback.r2": 0,
+    "cht-e8-1+readback.r2": 0,
+    "cht-e8-2+readback.r2": 0,
+    "cht-e8-3+readback.r2": 0
    },
-   "r2Inside": 6,
-   "r1Inside": 5,
-   "n": 6
+   "n": 6,
+   "likeForLike": {
+    "r1": 5,
+    "r2": 6,
+    "readback": 6
+   },
+   "frozenBand": {
+    "r1": 5,
+    "r2": 6,
+    "readback": 6
+   }
   },
   "crash:1164": {
-   "monolith": [
-    1,
-    2
-   ],
+   "monolith": {
+    "r1": [
+     1,
+     2
+    ],
+    "r2": [
+     2,
+     2
+    ],
+    "readback": [
+     0,
+     0
+    ]
+   },
    "composed": {
     "ch-e8-1.r1": 3,
     "ch-e8-1.r2": 1,
@@ -5710,17 +5907,38 @@
     "cht-e8-2.r1": 2,
     "cht-e8-2.r2": 1,
     "cht-e8-3.r1": 0,
-    "cht-e8-3.r2": 0
+    "cht-e8-3.r2": 0,
+    "ch-e8-1+readback.r2": 0,
+    "ch-e8-2+readback.r2": 0,
+    "ch-e8-3+readback.r2": 0,
+    "cht-e8-1+readback.r2": 0,
+    "cht-e8-2+readback.r2": 0,
+    "cht-e8-3+readback.r2": 0
    },
-   "r2Inside": 6,
-   "r1Inside": 4,
-   "n": 6
+   "n": 6,
+   "likeForLike": {
+    "r1": 4,
+    "r2": 6,
+    "readback": 6
+   },
+   "frozenBand": {
+    "r1": 4,
+    "r2": 6,
+    "readback": 6
+   }
   },
   "dup-same:1161": {
-   "monolith": [
-    8,
-    8
-   ],
+   "monolith": {
+    "r1": [
+     8,
+     8
+    ],
+    "r2": [
+     8,
+     8
+    ],
+    "readback": null
+   },
    "composed": {
     "ch-e8-1.r1": 8,
     "ch-e8-1.r2": 8,
@@ -5735,15 +5953,30 @@
     "cht-e8-3.r1": 8,
     "cht-e8-3.r2": 8
    },
-   "r2Inside": 6,
-   "r1Inside": 6,
-   "n": 6
+   "n": 6,
+   "likeForLike": {
+    "r1": 6,
+    "r2": 6,
+    "readback": null
+   },
+   "frozenBand": {
+    "r1": 6,
+    "r2": 6,
+    "readback": null
+   }
   },
   "dup-same:1162": {
-   "monolith": [
-    3,
-    3
-   ],
+   "monolith": {
+    "r1": [
+     3,
+     3
+    ],
+    "r2": [
+     3,
+     3
+    ],
+    "readback": null
+   },
    "composed": {
     "ch-e8-1.r1": 3,
     "ch-e8-1.r2": 3,
@@ -5758,15 +5991,30 @@
     "cht-e8-3.r1": 3,
     "cht-e8-3.r2": 2
    },
-   "r2Inside": 6,
-   "r1Inside": 2,
-   "n": 6
+   "n": 6,
+   "likeForLike": {
+    "r1": 2,
+    "r2": 6,
+    "readback": null
+   },
+   "frozenBand": {
+    "r1": 2,
+    "r2": 6,
+    "readback": null
+   }
   },
   "dup-same:1164": {
-   "monolith": [
-    10,
-    11
-   ],
+   "monolith": {
+    "r1": [
+     10,
+     11
+    ],
+    "r2": [
+     10,
+     11
+    ],
+    "readback": null
+   },
    "composed": {
     "ch-e8-1.r1": 11,
     "ch-e8-1.r2": 11,
@@ -5781,9 +6029,17 @@
     "cht-e8-3.r1": 14,
     "cht-e8-3.r2": 11
    },
-   "r2Inside": 6,
-   "r1Inside": 1,
-   "n": 6
+   "n": 6,
+   "likeForLike": {
+    "r1": 1,
+    "r2": 6,
+    "readback": null
+   },
+   "frozenBand": {
+    "r1": 1,
+    "r2": 6,
+    "readback": null
+   }
   }
  },
  "gate": {
@@ -7159,47 +7415,47 @@
  "carry": {
   "ch-e8-1": {
    "total": 7736,
-   "envelope": 5095,
+   "envelope": 5140,
    "r1Total": 2751
   },
   "ch-e8-2": {
    "total": 8687,
-   "envelope": 5148,
+   "envelope": 5193,
    "r1Total": 3588
   },
   "ch-e8-3": {
    "total": 7370,
-   "envelope": 4695,
+   "envelope": 4740,
    "r1Total": 2730
   },
   "cht-e8-1": {
    "total": 10520,
-   "envelope": 5068,
+   "envelope": 5113,
    "r1Total": 5526
   },
   "cht-e8-2": {
    "total": 11178,
-   "envelope": 5068,
+   "envelope": 5113,
    "r1Total": 6184
   },
   "cht-e8-3": {
    "total": 11293,
-   "envelope": 5068,
+   "envelope": 5113,
    "r1Total": 6299
   },
   "b1lh-e8-1": {
-   "total": 11824,
-   "envelope": 4962,
+   "total": 11869,
+   "envelope": 5007,
    "r1Total": 6528
   },
   "b1nh-e8-2": {
-   "total": 9088,
-   "envelope": 4895,
+   "total": 9133,
+   "envelope": 4940,
    "r1Total": 3901
   },
   "b1nh-e8-3": {
-   "total": 8631,
-   "envelope": 4753,
+   "total": 8649,
+   "envelope": 4798,
    "r1Total": 3978
   }
  },
@@ -7258,10 +7514,10 @@
       0
      ],
      "env": {
-      "orphan-parked": 91,
-      "readback": 91,
-      "reconciled": 92,
-      "orphan": 10
+      "orphan": 99,
+      "orphan-parked": 2,
+      "readback": 2,
+      "reconciled": 2
      }
     },
     {
@@ -7280,10 +7536,7 @@
       0
      ],
      "env": {
-      "orphan-parked": 110,
-      "readback": 110,
-      "reconciled": 110,
-      "orphan": 14
+      "orphan": 124
      }
     },
     {
@@ -7302,11 +7555,11 @@
       0
      ],
      "env": {
-      "orphan-parked": 170,
-      "readback": 170,
-      "reconciled": 173,
+      "orphan": 201,
       "surplus": 4,
-      "orphan": 35
+      "orphan-parked": 4,
+      "readback": 4,
+      "reconciled": 4
      }
     }
    ]
@@ -7334,10 +7587,10 @@
       0
      ],
      "env": {
-      "orphan-parked": 93,
-      "readback": 93,
-      "reconciled": 93,
-      "orphan": 7
+      "orphan": 98,
+      "orphan-parked": 2,
+      "readback": 2,
+      "reconciled": 2
      }
     },
     {
@@ -7356,10 +7609,7 @@
       0
      ],
      "env": {
-      "orphan-parked": 115,
-      "readback": 115,
-      "reconciled": 115,
-      "orphan": 19
+      "orphan": 134
      }
     },
     {
@@ -7378,10 +7628,10 @@
       0
      ],
      "env": {
-      "orphan-parked": 175,
-      "readback": 175,
-      "reconciled": 177,
-      "orphan": 27,
+      "orphan": 197,
+      "orphan-parked": 5,
+      "readback": 5,
+      "reconciled": 5,
       "surplus": 2
      }
     }
@@ -7410,10 +7660,7 @@
       0
      ],
      "env": {
-      "orphan-parked": 83,
-      "readback": 83,
-      "reconciled": 83,
-      "orphan": 19
+      "orphan": 102
      }
     },
     {
@@ -7432,10 +7679,10 @@
       0
      ],
      "env": {
-      "orphan-parked": 111,
-      "readback": 111,
-      "reconciled": 111,
-      "orphan": 27
+      "orphan": 137,
+      "orphan-parked": 1,
+      "readback": 1,
+      "reconciled": 1
      }
     },
     {
@@ -7454,10 +7701,10 @@
       10
      ],
      "env": {
-      "orphan-parked": 133,
-      "readback": 133,
-      "reconciled": 133,
-      "orphan": 34,
+      "orphan": 154,
+      "orphan-parked": 13,
+      "readback": 13,
+      "reconciled": 13,
       "surplus": 27
      }
     }
@@ -7486,10 +7733,10 @@
       0
      ],
      "env": {
-      "orphan-parked": 86,
-      "readback": 86,
-      "reconciled": 86,
-      "orphan": 9
+      "orphan": 93,
+      "orphan-parked": 2,
+      "readback": 2,
+      "reconciled": 2
      }
     },
     {
@@ -7508,10 +7755,7 @@
       0
      ],
      "env": {
-      "orphan-parked": 123,
-      "readback": 123,
-      "reconciled": 123,
-      "orphan": 19,
+      "orphan": 142,
       "surplus": 8
      }
     },
@@ -7531,12 +7775,11 @@
       0
      ],
      "env": {
-      "orphan-parked": 173,
-      "readback": 172,
-      "reconciled": 175,
+      "orphan": 202,
       "surplus": 3,
-      "orphan": 35,
-      "park-expired": 1
+      "orphan-parked": 6,
+      "readback": 6,
+      "reconciled": 6
      }
     }
    ]
@@ -7564,10 +7807,7 @@
       0
      ],
      "env": {
-      "orphan-parked": 125,
-      "readback": 125,
-      "reconciled": 125,
-      "orphan": 19
+      "orphan": 144
      }
     },
     {
@@ -7586,11 +7826,7 @@
       0
      ],
      "env": {
-      "orphan-parked": 155,
-      "readback": 154,
-      "reconciled": 154,
-      "orphan": 22,
-      "park-expired": 1
+      "orphan": 177
      }
     },
     {
@@ -7609,11 +7845,11 @@
       0
      ],
      "env": {
-      "orphan-parked": 207,
-      "readback": 207,
-      "reconciled": 211,
+      "orphan": 223,
       "surplus": 4,
-      "orphan": 20
+      "orphan-parked": 4,
+      "readback": 4,
+      "reconciled": 4
      }
     }
    ]
@@ -7641,10 +7877,7 @@
       0
      ],
      "env": {
-      "orphan-parked": 87,
-      "readback": 87,
-      "reconciled": 87,
-      "orphan": 16
+      "orphan": 103
      }
     },
     {
@@ -7663,10 +7896,7 @@
       0
      ],
      "env": {
-      "orphan-parked": 105,
-      "readback": 105,
-      "reconciled": 105,
-      "orphan": 20,
+      "orphan": 125,
       "surplus": 8
      }
     },
@@ -7686,11 +7916,11 @@
       0
      ],
      "env": {
-      "orphan-parked": 170,
-      "readback": 170,
-      "reconciled": 173,
-      "orphan": 46,
-      "surplus": 3
+      "orphan": 215,
+      "surplus": 3,
+      "orphan-parked": 1,
+      "readback": 1,
+      "reconciled": 1
      }
     }
    ]
@@ -7718,10 +7948,10 @@
       0
      ],
      "env": {
-      "orphan-parked": 101,
-      "readback": 101,
-      "reconciled": 101,
-      "orphan": 13
+      "orphan": 112,
+      "orphan-parked": 2,
+      "readback": 2,
+      "reconciled": 2
      }
     },
     {
@@ -7740,10 +7970,7 @@
       0
      ],
      "env": {
-      "orphan": 27,
-      "orphan-parked": 133,
-      "readback": 133,
-      "reconciled": 133
+      "orphan": 160
      }
     },
     {
@@ -7762,10 +7989,10 @@
       0
      ],
      "env": {
-      "orphan-parked": 197,
-      "readback": 197,
-      "reconciled": 200,
-      "orphan": 17,
+      "orphan": 208,
+      "orphan-parked": 6,
+      "readback": 6,
+      "reconciled": 6,
       "surplus": 2
      }
     }
@@ -7794,10 +8021,10 @@
       0
      ],
      "env": {
-      "orphan-parked": 144,
-      "readback": 144,
-      "reconciled": 144,
-      "orphan": 17
+      "orphan": 159,
+      "orphan-parked": 2,
+      "readback": 2,
+      "reconciled": 2
      }
     },
     {
@@ -7816,10 +8043,7 @@
       0
      ],
      "env": {
-      "orphan": 26,
-      "orphan-parked": 166,
-      "readback": 166,
-      "reconciled": 166
+      "orphan": 192
      }
     },
     {
@@ -7838,11 +8062,11 @@
       0
      ],
      "env": {
-      "orphan-parked": 211,
-      "readback": 211,
-      "reconciled": 211,
-      "orphan": 30,
-      "surplus": 6
+      "orphan": 235,
+      "surplus": 6,
+      "orphan-parked": 6,
+      "readback": 6,
+      "reconciled": 6
      }
     }
    ]
@@ -7870,10 +8094,7 @@
       0
      ],
      "env": {
-      "orphan-parked": 127,
-      "readback": 127,
-      "reconciled": 127,
-      "orphan": 17
+      "orphan": 144
      }
     },
     {
@@ -7892,10 +8113,10 @@
       0
      ],
      "env": {
-      "orphan": 24,
-      "orphan-parked": 148,
-      "readback": 148,
-      "reconciled": 148
+      "orphan": 171,
+      "orphan-parked": 1,
+      "readback": 1,
+      "reconciled": 1
      }
     },
     {
@@ -7914,10 +8135,10 @@
       0
      ],
      "env": {
-      "orphan-parked": 213,
-      "readback": 213,
-      "reconciled": 213,
-      "orphan": 28,
+      "orphan": 236,
+      "orphan-parked": 5,
+      "readback": 5,
+      "reconciled": 5,
       "surplus": 2
      }
     }
