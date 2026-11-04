@@ -26,3 +26,4 @@ Restore one branch: `git fetch research-branches.bundle <branch>:<branch>` (or `
 ## Incremental bundles
 
 - `incr-20261028-1800.bundle`: `worktree-wf_3674d3bc-0a7-12` b43eda6b..a65a3aeb (PREREG-A1CV2-P1 §14 amendment A1, the P1 launch commit). Needs research-branches.bundle first.
+- `incr-20261104.bundle`: 24 commits made 2026-10-28 17:45Z–19:45Z on 10 branches (Δ* v1, compose-runtime/2, Move 8, tracker A7 prereg, GQA-1 prereg, SW-1b prereg, WorkBench/AgentDojo splits, nodecap security fixes, onboarding honesty fixes and journeys, and the new DUR-1 build branch `worktree-wf_bd674a6e-71f-11`). Needs the earlier bundles first.
