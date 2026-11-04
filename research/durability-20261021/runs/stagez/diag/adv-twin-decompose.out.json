@@ -1,0 +1,13 @@
+{
+ "label": "Post hoc $0 diagnostic, 2026-11-04 ~21:16-21:21Z, made after the Stage Z stop for RESULT-DUR-1.md section 4 (R4). Never a DUR-1 result. Reference policy only (oracle side, as Stage Z itself runs); no arm ran on any stream world. Sealed changes (R2s, E2s, U1s) are removed from every world here, so the sealed bundle was not loaded. Each world is built three ways with changes.mjs buildBundle: ON = the frozen world (ADV on, world id '-inj'); OFF = the frozen ADV twin (exclude ADV); IDONLY = OFF with only W.id set to the '-inj' id (moves the bed actors' draws, beds/ebed/e8/actors.mjs:17,34, and the F report draw, changes.mjs:282, but not L1's or F's placement draws, which are made at build time). Counts are completed order cases whose reference signature (exposure.mjs caseSignatures: committed effects, requests as emitted, final expectation) differs. s1-W5 is the full JSON line of adv-twin-decompose.mjs; the other five are its summary lines as printed by the loop in the run command.",
+ "command": "cd <worktree> && DUR1_WORK=<scratch> nice -n 15 node adv-twin-decompose.mjs <stream> <k>",
+ "worlds": [
+  { "world": "s1-W5", "L1touched": { "on": 8, "off": 3 }, "differOnVsOff": 13, "actorsOnly_idOnlyVsOff": 3, "L1Fredraw_onVsIdOnly": 10, "referenceOk": { "on": false, "off": true, "idOnly": true }, "onProblem": "earliest fails o0021 (outside-allowed )" },
+  { "world": "s1-W6", "L1touched": { "on": 11, "off": 14 }, "differOnVsOff": 27, "actorsOnly_idOnlyVsOff": 6, "L1Fredraw_onVsIdOnly": 21, "referenceOk": { "on": true, "off": true, "idOnly": true } },
+  { "world": "s2-W5", "L1touched": { "on": 3, "off": 4 }, "differOnVsOff": 6, "actorsOnly_idOnlyVsOff": 2, "L1Fredraw_onVsIdOnly": 4, "referenceOk": { "on": true, "off": true, "idOnly": true } },
+  { "world": "s2-W6", "L1touched": { "on": 11, "off": 9 }, "differOnVsOff": 20, "actorsOnly_idOnlyVsOff": 4, "L1Fredraw_onVsIdOnly": 16, "referenceOk": { "on": true, "off": true, "idOnly": true } },
+  { "world": "s3-W5", "L1touched": { "on": 2, "off": 7 }, "differOnVsOff": 11, "actorsOnly_idOnlyVsOff": 4, "L1Fredraw_onVsIdOnly": 7, "referenceOk": { "on": true, "off": true, "idOnly": true } },
+  { "world": "s3-W6", "L1touched": { "on": 7, "off": 5 }, "differOnVsOff": 14, "actorsOnly_idOnlyVsOff": 2, "L1Fredraw_onVsIdOnly": 12, "referenceOk": { "on": true, "off": true, "idOnly": true } }
+ ],
+ "totals": { "differOnVsOff": 91, "actorsOnly": 21, "L1Fredraw": 70 }
+}
