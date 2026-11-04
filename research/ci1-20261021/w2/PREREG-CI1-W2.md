@@ -30,7 +30,10 @@ oracle that already contains the corrections, so its numbers are preregistered, 
 - **Survivor audit** (RESULT-CI1.md §9): every mutant no candidate world kills was classified before the freeze: unreachable from the
   item's trigger (another trigger's subgraph in the same corpus file), wording only, value never reaches an effect, bound by the bed,
   n8n semantics (no items: nothing runs), equivalent, or boundary not sampled. Generators were extended where a stated boundary was not
-  sampled (17175: three fixed boundary worlds; 17771: customers straddling each ageing edge; 17902, 18281: earlier session).
+  sampled (17175: four fixed boundary worlds, after which only an equivalent mutant survives; 17771: customers straddling each
+  ageing edge; 17902, 18281: earlier session).
+- **Description gates** (`experiments/ci1/gates.mjs`, $0): 9/9 pass (no source node name, no n8n vocabulary, not the title); word
+  8-gram overlap with the creator's text at most 0.041. Descriptions are 245 to 652 words: complete specifications, as in wave 1.
 - **Scorer:** `scoreBuilt2` with one robustness change made before the freeze: a hidden world whose run ends in `CODE_TIMEOUT` is rerun
   up to twice (wave 1 lost one build to a Code-step wall clock under host load).
 - **Template fit** (`fit-w2.mjs`, $0): no BUILDER-1 template binds any wave-2 item's data (0/9), so A1 is not run (it would refuse).

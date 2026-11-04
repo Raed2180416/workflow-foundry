@@ -21,7 +21,7 @@ const sha = file => createHash('sha256').update(readFileSync(file)).digest('hex'
 const ANALYSIS = new Set(['experiments/ci1/report.mjs', 'experiments/ci1/failures.mjs', 'experiments/ci1/bed-summary.mjs', 'experiments/ci1-w2/report-w2.mjs',
   'experiments/ci1-w2/peek.mjs', 'experiments/ci1-w2/show.mjs', 'experiments/ci1-w2/check-summary.mjs', 'experiments/ci1-w2/check-items.sh',
   'experiments/ci1-w2/survivor-audit.mjs', 'experiments/ci1-w2/show-mutant.mjs', 'experiments/ci1-w2/agree-why.mjs', 'experiments/ci1-w2/retrieval-w2.mjs',
-  'experiments/ci1-w2/fit-w2.mjs']);
+  'experiments/ci1-w2/fit-w2.mjs', 'experiments/ci1-w2/pooled.mjs', 'experiments/ci1-w2/oracle-summary.mjs']);
 const walk = dir => readdirSync(dir).flatMap(f => { const p = path.join(dir, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
 const isTest = p => p.includes(`${path.sep}test${path.sep}`);
 
