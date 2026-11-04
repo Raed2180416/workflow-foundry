@@ -1,6 +1,6 @@
 // Home (#/): show what Foundry can make before asking for words (SPEC §1 fix 1, §9.1). Cards first; the box only suggests a card.
 import { el, t, rich, api, templates, memory, navigate } from '../site.js';
-import { statusChip, errorPanel } from '../components/ui.js';
+import { statusChip, showError, busy } from '../components/ui.js';
 
 export function cardFor(tpl) {
   const sheets = tpl.sheets.map(s => s.plain).join(t('common.and'));
@@ -35,25 +35,31 @@ export async function render() {
   const practiceOnly = doctor?.settings?.mode === 'practice-only';
   // Would the organisation's policy let Foundry's exact command start? Asked only on a click (it reads the managed policy's server keys).
   const admission = el('p', { role: 'status' });
+  const practiceStatus = el('div', {});
   const check = el('button', { type: 'button', class: 'link', dataset: { action: 'check-policy' }, on: { click: async () => {
     try { const d = await api('/api/doctor?consent=1'); const a = d.managed?.admission; admission.textContent = !a ? '' : a.admitted === 'yes' ? t('home.managedYes', { why: a.why }) : a.admitted === 'no' ? t('home.managedNo', { why: a.why }) : t('home.managedUnknown', { why: a.why }); }
-    catch (error) { admission.replaceChildren(errorPanel(error)); }
+    catch (error) { showError(admission, error, { notDone: t('errors.nothingChanged') }); }
   } } }, t('home.managedCheck'));
   const managedCard = managed ? el('section', { class: 'banner wait', 'aria-labelledby': 'managed-h', dataset: { managed: '' } },
     el('h2', { id: 'managed-h' }, t('home.managedTitle')), el('p', {}, t('home.managedBody')),
     el('p', {}, check, ' ', el('span', { class: 'muted small' }, t('home.managedCheckNote'))), admission,
     el('div', { class: 'actions' }, el('a', { class: 'button', href: '#/it-brief' }, t('home.managedBrief')),
       practiceOnly ? el('span', { role: 'status' }, statusChip('works'), ' ', t('home.practiceOnlyOn'))
-        : el('button', { type: 'button', dataset: { action: 'practice-only' }, on: { click: async e => { const b = e.currentTarget; b.disabled = true; try { await api('/api/settings', { mode: 'practice-only' }); navigate('/settings'); } catch (error) { b.disabled = false; b.after(errorPanel(error)); } } } }, t('home.managedPractice')))) : null;
+        : el('button', { type: 'button', dataset: { action: 'practice-only' }, on: { click: async e => {
+          const b = e.currentTarget; if (b.getAttribute('aria-disabled') === 'true') return; busy(b, true);
+          try { await api('/api/settings', { mode: 'practice-only' }); navigate('/settings'); } catch (error) { showError(practiceStatus, error, { notDone: t('home.practiceNotOn') }); } finally { busy(b, false); } } } }, t('home.managedPractice'))), practiceStatus) : null;
+  // UX review m3: the heading comes first (focus starts there), then what needs the person's attention: something waiting, and the
+  // organisation's policy notice (P4's main notice) before the cards.
   return el('div', {},
-    managedCard,
-    waiting ? el('p', { class: 'banner wait', role: 'status' }, t('home.waiting', { n: waiting }), ' ', el('a', { href: '#/waiting' }, t('home.waitingOpen'))) : null,
     el('h1', {}, t('home.h1')),
+    waiting ? el('p', { class: 'banner wait', role: 'status' }, t('home.waiting', { n: waiting }), ' ', el('a', { href: '#/waiting' }, t('home.waitingOpen'))) : null,
+    managedCard,
     el('p', { class: 'lead' }, t('home.lead')),
     flows ? el('p', {}, el('a', { href: '#/automations' }, t('home.yourAutomations', { n: flows }))) : null,
     el('h2', { id: 'cards-h' }, t('home.cardsTitle')),
     el('p', { class: 'muted' }, t('home.aiLine')),
-    el('div', { class: 'grid', role: 'list', 'aria-labelledby': 'cards-h' }, list.map(tpl => { const c = cardFor(tpl); c.setAttribute('role', 'listitem'); return c; })),
+    // A real list of cards (m11: role=listitem is not allowed on <article>).
+    el('ul', { class: 'grid', 'aria-labelledby': 'cards-h' }, list.map(tpl => el('li', {}, cardFor(tpl)))),
     suggestBox(),
     el('div', { class: 'strip' }, el('p', {}, rich('home.trust'))),
     el('div', { class: 'strip', dataset: { notReady: '' } }, el('p', {}, el('b', {}, t('home.notReadyTitle')), ' ', t('home.notReady'), ' ', el('a', { href: '#/docs' }, t('home.notReadyLink')))),

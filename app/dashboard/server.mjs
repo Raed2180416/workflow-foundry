@@ -59,7 +59,9 @@ export function runDetail(app, file, runId) {
   const view = app.status({ runId });
   const calls = raw.journal ? readStore(file, r => r.db.prepare('SELECT model_id AS modelId, input_tokens AS inputTokens, output_tokens AS outputTokens, cost_usd AS costUsd FROM model_calls WHERE run_id=?').all(runId)) : [];
   return { ...view, chain: { verified: raw.chain.ok, events: raw.chain.count, head: raw.chain.head, reason: raw.chain.reason ?? null },
-    timeline: raw.chain.events.map(e => ({ seq: e.seq, at: e.at, type: e.type, step: e.nodeKey ? (raw.workflow?.nodes.find(n => n.id === String(e.nodeKey).split('/').pop())?.description ?? e.nodeKey) : null })),
+    // approved and approvalId (UX review M4): an "approval.decided" event is a yes or a no, and the page says which and whose.
+    timeline: raw.chain.events.map(e => ({ seq: e.seq, at: e.at, type: e.type, step: e.nodeKey ? (raw.workflow?.nodes.find(n => n.id === String(e.nodeKey).split('/').pop())?.description ?? e.nodeKey) : null,
+      ...(e.type === 'approval.decided' ? { approved: e.approved ?? null, approvalId: e.approvalId ?? null } : {}) })),
     modelCalls: { count: calls.length, inputTokens: calls.reduce((s, c) => s + (c.inputTokens ?? 0), 0), outputTokens: calls.reduce((s, c) => s + (c.outputTokens ?? 0), 0),
       costUsd: calls.reduce((s, c) => s + (c.costUsd ?? 0), 0) } };
 }
@@ -67,7 +69,7 @@ export function runDetail(app, file, runId) {
 export function flowDetail(app, file, flowId) {
   const versions = readStore(file, r => r.db.prepare('SELECT hash, version FROM workflows WHERE id=? ORDER BY version').all(flowId).map(v => ({ hash: v.hash, version: v.version, workflow: r.workflow(v.hash).workflow })));
   const proposals = app.foundry.store.proposals().filter(p => p.workflow.id === flowId).reverse();
-  const all = [...versions.map(v => ({ ...v, state: 'version' })), ...proposals.filter(p => p.status === 'proposed').map(p => ({ hash: p.workflowHash, version: p.workflow.version, workflow: p.workflow, state: 'draft', proposalId: p.id }))];
+  const all = [...versions.map(v => ({ ...v, state: 'version' })), ...proposals.filter(p => p.status === 'proposed' && !app.ledger.withdrawn(p.id)).map(p => ({ hash: p.workflowHash, version: p.workflow.version, workflow: p.workflow, state: 'draft', proposalId: p.id }))];
   return { flowId, approvals: app.ledger.forFlow(flowId),
     versions: all.map((v, i) => ({ version: v.version, hash: v.hash, state: v.state, proposalId: v.proposalId ?? null, title: v.workflow?.title ?? null,
       active: !!app.ledger.approvedFor(flowId, v.hash), summary: v.workflow ? describeWorkflow(v.workflow, app.registry) : null,

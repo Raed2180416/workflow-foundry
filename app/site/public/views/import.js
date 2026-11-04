@@ -1,6 +1,6 @@
 // Import (#/import): drop an n8n export, read an honest verdict and a risk card. Foundry runs nothing (SPEC §9.14; Preview).
 import { el, t, api, rich, say } from '../site.js';
-import { dropZone, errorPanel, statusChip } from '../components/ui.js';
+import { dropZone, showError, statusChip } from '../components/ui.js';
 
 export async function render() {
   const out = el('div', {});
@@ -19,7 +19,7 @@ export async function render() {
         el('h3', {}, t('import.riskTitle')),
         el('dl', { class: 'facts' }, r.risk.flatMap(x => [el('dt', {}, x.what), el('dd', {}, x.answer, ' ', el('span', { class: 'chip' }, x.source === 'read' ? t('import.read') : t('import.inferred')))])),
         el('p', { class: 'banner ok' }, rich('import.footer'))));
-    } catch (error) { out.replaceChildren(errorPanel(error, { notDone: t('import.ranNothing'), action: { label: t('import.another'), onClick: () => drop.querySelector('input').focus() } })); }
+    } catch (error) { showError(out, error, { notDone: t('import.ranNothing'), action: { label: t('import.another'), onClick: () => drop.querySelector('input').focus() } }); }
   } });
   return el('div', { dataset: { layout: 'narrow' } },
     el('h1', {}, t('import.h1'), ' ', statusChip('preview')),

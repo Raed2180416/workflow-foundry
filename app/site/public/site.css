@@ -26,10 +26,14 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 syste
 h1, h2, h3 { line-height: 1.25; margin: 0 0 8px; }
 h1 { font-size: 32px; letter-spacing: -0.01em; margin-top: 8px; }
 h2 { font-size: 24px; margin-top: 32px; }
-h3 { font-size: 20px; }
+h3, .h3 { font-size: 20px; }
+h2.h3 { margin-top: 0; }
 /* Focus moves to the page heading on every route change (screen readers start there); a heading is not a control, so no ring. */
 h1[tabindex="-1"]:focus, h1[tabindex="-1"]:focus-visible { outline: none; }
 p, ul, ol { margin: 0 0 12px; }
+/* Line length at most 68 characters (SPEC §13.2; UX review m21): running text, wherever it sits. Tables, code and the grids of cards keep
+   the page's width; a card's own text is narrower than this anyway. */
+main p, main li, main dd, main dt, main legend, main label, main summary, .notice p { max-width: 68ch; }
 ul, ol { padding-left: 24px; }
 a { color: var(--accent); text-underline-offset: 2px; }
 a:hover { text-decoration-thickness: 2px; }
@@ -86,6 +90,12 @@ button.link { background: none; border: none; color: var(--accent); text-decorat
 button.small, .button.small { min-height: 32px; padding: 4px 12px; font-size: 15px; }
 button[disabled], button[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
 button[aria-busy="true"] { cursor: progress; }
+/* Working: a visible mark next to the label, not only a cursor (UX review m9). It turns where motion is welcome and stays still otherwise. */
+button[aria-busy="true"]::after, .button[aria-busy="true"]::after { content: ""; width: 0.9em; height: 0.9em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; flex: none; }
+@media (prefers-reduced-motion: no-preference) { button[aria-busy="true"]::after, .button[aria-busy="true"]::after { animation: spin 0.8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } } }
+.loading { max-width: 1040px; margin: 8px auto 0; padding: 0 var(--gutter); color: var(--muted); font-weight: 600; }
+.loading:focus { outline: none; } /* it holds the focus while a page loads; it is not a control */
+main[aria-busy="true"] { opacity: 0.55; }
 .actions { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 16px 0; }
 @media (max-width: 767px) { .actions.stack > button, .actions.stack > .button { width: 100%; } }
 label { font-weight: 600; display: block; margin-bottom: 4px; }
@@ -113,8 +123,11 @@ legend { font-weight: 600; padding: 0 6px; }
 .card.done { border-left: 6px solid var(--ok); }
 .card.problem { border-left: 6px solid var(--bad); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-.grid > .card { margin: 0; display: flex; flex-direction: column; }
-.grid > .card .actions { margin-top: auto; padding-top: 8px; margin-bottom: 0; }
+.grid > .card, .grid > li > .card { margin: 0; display: flex; flex-direction: column; }
+.grid > .card .actions, .grid > li > .card .actions { margin-top: auto; padding-top: 8px; margin-bottom: 0; }
+ul.grid { list-style: none; padding: 0; margin: 0 0 12px; }
+ul.grid > li { display: flex; flex-direction: column; max-width: none; }
+ul.grid > li > .card { flex: 1; }
 .inset { background: var(--surface-2); border-radius: var(--radius); padding: 12px 16px; margin: 12px 0; }
 .strip { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); margin: 16px 0; }
 .strip p { margin: 0; }
@@ -202,7 +215,9 @@ details[open] > summary::before { transform: rotate(90deg); }
 .rows-table td, .rows-table th { font-size: 15px; }
 
 /* ---------- toast ---------- */
-.toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: var(--radius-control); font-weight: 600; z-index: 20; max-width: calc(100% - 32px); }
+.toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: var(--radius-control); font-weight: 600; z-index: 20; max-width: calc(100% - 32px); pointer-events: none; }
+/* When the toast would cover the focused control, it sits at the top instead (UX review m20; WCAG 2.4.11). */
+.toast.top { bottom: auto; top: 16px; }
 .toast[hidden] { display: none; }
 
 @media print { .top, footer, .actions { display: none; } }

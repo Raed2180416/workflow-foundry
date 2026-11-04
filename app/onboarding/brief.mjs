@@ -109,8 +109,11 @@ export function briefData(app, { flowId = null, connect, date = new Date() }) {
     sections.push({ title: 'Data', lines: [...Object.entries(data).map(([k, v]) => `Reads or writes the "${k}" list on this computer: ${v}`),
       'Writes e-mail drafts to the workspace outbox after the person approves the exact list; the person sends them. This automation sends nothing over the network.'] });
     const decided = facts.approvals.find(a => a.status === 'approved');
+    const off = decided?.turnedOff ?? null;
     sections.push({ title: 'Who decides', lines: [decided ? `Turned on by ${decided.principal} (the name in Settings and this computer's account; not a verified identity) through ${CHANNEL_WORDS[decided.channel] ?? decided.channel} on ${new Date(decided.decidedAt).toISOString()}${decided.note ? ` (note: ${decided.note})` : ''}.` : 'Not turned on yet.',
-      'Before each run makes anything, the person sees the full list and approves it once; anything not on that list stops and asks. A second person\'s own sign-in is planned (Team plan), not available.'] });
+      ...(off ? [`Turned off by ${off.principal} through ${CHANNEL_WORDS[off.channel] ?? off.channel} on ${new Date(off.at).toISOString()}.`] : []),
+      'Before each run makes anything, the person sees the full list and approves it once; anything not on that list stops and asks. A second person\'s own sign-in is planned (Team plan), not available.',
+      'The person can turn this automation off on its page: it then makes no lists and runs nothing, and anything of it still waiting for a yes is cancelled. Turning it on again needs a new yes. This is per automation and per computer; a switch that stops everything everywhere is not decided.'] });
     sections.push({ title: 'Test evidence', lines: facts.dry ? [`Practice run ${facts.dry.passed ? 'passed' : 'did not pass'} on ${facts.dry.body.dataSource === 'your-data' ? 'the person\'s own list' : 'the template\'s pretend data'} (${new Date(facts.dry.at).toISOString()}), bound to this hash.`,
       ...facts.dry.body.checks.map(c => `${c.passed ? 'PASS' : c.passed === false ? 'FAIL' : 'not run'}: ${c.plain ?? c.exact}`)] : ['No practice run of this version yet.'] });
   } else {

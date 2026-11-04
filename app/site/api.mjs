@@ -15,6 +15,7 @@ import { restate } from '../onboarding/form-builder.mjs';
 import { suggest, FORMS } from '../onboarding/suggest.mjs';
 import { COLUMNS, preview as csvPreview, inputSheets } from '../onboarding/csv.mjs';
 import { commit as dataCommit, liveSheets } from '../onboarding/data.mjs';
+import { recallAnswers, rememberAnswers } from '../onboarding/data-answers.mjs';
 import { Batches } from '../onboarding/batch.mjs';
 import { readWorld } from '../core/stand-ins.mjs';
 import { listDrafts, listPosts, draft as oneDraft, markSent } from '../onboarding/drafts.mjs';
@@ -215,16 +216,40 @@ export function createSiteApi(app, options = {}) {
       const lists = batches.decided(flowId).map(b => ({ batchId: b.batchId, decision: b.decision, items: b.items.length, made: b.result?.made ?? null, runId: b.result?.runId ?? null, status: b.status }));
       return ok({ flowId, title: wf.title, card: t ? FORMS.templates[t.id]?.card : wf.title, template: t?.id ?? null, version: h?.workflow.version ?? null, workflowHash: h?.hash ?? null,
         active: h ? !!app.ledger.approvedFor(flowId, h.hash) : false, slots: slotsOf(wf), summary: describeWorkflow(wf, app.registry), promises: t ? cardPromises(t, slotsOf(wf)) : null,
-        drafts: props.filter(x => x.status === 'proposed').map(x => ({ proposalId: x.id, version: x.workflow.version, dryRun: app.ledger.latestDryRun(x.id)?.passed ?? null })),
+        drafts: props.filter(x => x.status === 'proposed' && !app.ledger.withdrawn(x.id)).map(x => ({ proposalId: x.id, version: x.workflow.version, dryRun: app.ledger.latestDryRun(x.id)?.passed ?? null })),
         data: t ? liveSheets(app, t.id) : null, runs, approvals: app.ledger.forFlow(flowId), lastRun: lastRun ? { runId: lastRun.runId, status: lastRun.status, at: lastRun.at, checks: lastChecks } : null,
         lists, decider: deciderOf(flowId), answers: t?.id === 'expense-approval' ? answersToRecord(flowId) : null,
-        activeProposalId: h ? app.ledger.approvedFor(flowId, h.hash)?.proposalId ?? null : null, today: new Date(asOf()).toISOString() });
+        activeProposalId: h ? app.ledger.approvedFor(flowId, h.hash)?.proposalId ?? null : null, today: new Date(asOf()).toISOString(),
+        turnedOff: h && !app.ledger.approvedFor(flowId, h.hash) ? (app.ledger.forFlow(flowId).find(a => a.workflowHash === h.hash && a.status === 'approved' && a.turnedOff)?.turnedOff ?? null) : null });
     }
+    // Turn an automation off, or ask to turn it on again; remove a draft (UX review M7; SPEC §5 A5 "undo: turn off"). Turning off closes its
+    // open lists and cancels anything of it still waiting for a yes; turning on again goes through a new request and a yes on a card.
+    if (method === 'POST' && (m = p.match(/^\/api\/automations\/([A-Za-z][A-Za-z0-9_-]{0,63})\/off$/))) {
+      const r = await app.turnOff({ flowId: m[1], channel: 'dashboard' });
+      if (r.ok === false) return ok(r);
+      return ok({ ...r, listsClosed: batches.closeFor(m[1], 'turned off') });
+    }
+    if (method === 'POST' && (m = p.match(/^\/api\/automations\/([A-Za-z][A-Za-z0-9_-]{0,63})\/on-again$/))) {
+      const h = head(m[1]); if (!h) bad('NOT_FOUND', `No automation named ${m[1]}`);
+      const off = app.ledger.forFlow(m[1]).find(a => a.workflowHash === h.hash && a.status === 'approved' && a.turnedOff);
+      if (!off) bad('NOT_OFF', 'This automation was not turned off');
+      return ok(app.requestApproval({ proposalId: off.proposalId }));
+    }
+    if (method === 'POST' && (m = p.match(/^\/api\/proposals\/([A-Za-z0-9-]{8,64})\/remove$/))) return ok(app.withdraw({ proposalId: m[1], channel: 'dashboard' }));
     // ------------------------------------------------------------------ the person's own data
-    if (method === 'POST' && p === '/api/data/preview') return ok(csvPreview({ template: str(body.template, 'template', 64), sheet: str(body.sheet, 'sheet', 41), text: String(body.csv ?? '') }));
+    // The answers given about the last file of the same kind come back already chosen, and say so (UX review m4: never the same question
+    // every week); the person can change them before anything is imported.
+    if (method === 'POST' && p === '/api/data/preview') {
+      const template = str(body.template, 'template', 64), sheet = str(body.sheet, 'sheet', 41);
+      const pv = csvPreview({ template, sheet, text: String(body.csv ?? '') });
+      return ok({ ...pv, questions: recallAnswers(app.root, { template, sheet, header: pv.columns, questions: pv.questions }) });
+    }
     if (method === 'POST' && p === '/api/data/commit') {
       const target = body.target === 'live' ? 'live' : 'practice';
-      const r = dataCommit(app, { template: str(body.template, 'template', 64), sheet: str(body.sheet, 'sheet', 41), text: String(body.csv ?? ''), mapping: body.mapping, answers: body.answers ?? {}, target });
+      const template = str(body.template, 'template', 64), sheet = str(body.sheet, 'sheet', 41), text = String(body.csv ?? '');
+      const r = dataCommit(app, { template, sheet, text, mapping: body.mapping, answers: body.answers ?? {}, target });
+      try { const pv = csvPreview({ template, sheet, text }); rememberAnswers(app.root, { template, sheet, header: pv.columns, questions: pv.questions, answers: body.answers ?? {}, now }); }
+      catch { /* a convenience for next time; never blocks the import */ }
       if (target === 'practice') {
         const id = randomUUID(), prior = body.practiceDataId ? practiceData.get(body.practiceDataId) : null;
         practiceData.set(id, { sheets: { ...(prior?.sheets ?? {}), [r.sheet]: r.data }, expires: now() + PRACTICE_DATA_TTL });

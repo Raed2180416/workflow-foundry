@@ -52,7 +52,14 @@ export function workspacePrivacy(root) {
 }
 /** Security review 2026-10-21 (L16): the workspace keeps itself out of any git repository it sits in (a .gitignore that ignores all). */
 export function ignoreWorkspace(root) { try { writeFileSync(path.join(root, '.gitignore'), '# Foundry: your lists, drafts, records and decisions. Never commit them.\n*\n', { flag: 'wx', mode: 0o600 }); } catch { /* already there, or not writable */ } }
-const problem = (error, extra = {}) => ({ ok: false, problem: { ...(failureText(errorData(error)) ?? {}), code: error.code ?? 'ERROR', details: errorData(error).message }, ...extra });
+// The service's own codes in plain words (app/core/explain.mjs, which words the engine's codes, is frozen by the BUILDER-1 manifest).
+const APP_FAILURES = {
+  TURNED_OFF: ['This automation is turned off, so it does not run.', 'Turn it on again on its page in Foundry if you want it to run.'],
+  DRAFT_REMOVED: ['This draft was removed, so it cannot be turned on.', 'Make the automation again from its card if you want it.'],
+  NOT_ON: ['This automation is not on.', 'Nothing needed turning off.']
+};
+const plainFailure = data => APP_FAILURES[data.code] ? { code: data.code, what: APP_FAILURES[data.code][0], next: APP_FAILURES[data.code][1] } : failureText(data);
+const problem = (error, extra = {}) => ({ ok: false, problem: { ...(plainFailure(errorData(error)) ?? {}), code: error.code ?? 'ERROR', details: errorData(error).message }, ...extra });
 
 export class FoundryApp {
   constructor({ workspace, now = Date.now, builder = stubBuilder } = {}) {
@@ -176,14 +183,17 @@ export class FoundryApp {
   }
 
   /** Ask a person to turn this exact version on. Returns the open request; it never decides it. */
+  // Since the UX review (M7): a removed draft cannot be asked about; the version that is the current one and was turned off can be asked
+  // about again (turning on again is a new request and a new yes, never the old yes revived).
   requestApproval({ proposalId }) {
     const proposal = this.foundry.store.proposal(proposalId);
+    if (this.ledger.withdrawn(proposalId)) return problem(new FoundryError('DRAFT_REMOVED', 'This draft was removed'));
     const dry = this.ledger.latestDryRun(proposalId);
     if (!dry || !dry.passed || dry.workflowHash !== proposal.workflowHash) return problem(new FoundryError('NEEDS_DRY_RUN', 'Run a passing practice run of this exact version first'));
     if (proposal.status !== 'proposed') {
       const active = this.ledger.approvedFor(proposal.workflow.id, proposal.workflowHash);
       if (active) return { ok: true, status: 'approved', approvalId: active.id, flowId: proposal.workflow.id, workflowHash: proposal.workflowHash };
-      return problem(new FoundryError('PROPOSAL_CLOSED', `This proposal is ${proposal.status}`));
+      if (!this.#turnedOff(proposal)) return problem(new FoundryError('PROPOSAL_CLOSED', `This proposal is ${proposal.status}`));
     }
     const act = this.ledger.requestActivation({ flowId: proposal.workflow.id, proposalId, workflowHash: proposal.workflowHash, dryRunId: dry.id });
     return { ok: true, status: 'awaiting_human', approvalId: act.id, flowId: proposal.workflow.id, version: proposal.workflow.version, workflowHash: proposal.workflowHash,
@@ -198,6 +208,9 @@ export class FoundryApp {
     if (!HUMAN_CHANNELS.includes(channel)) throw new FoundryError('APPROVAL_AUTHORITY', `Approvals come only from a person, not from ${channel}`);
     const act = this.ledger.activation(id), proposal = this.foundry.store.proposal(act.proposalId);
     if (approved && proposal.workflowHash !== act.workflowHash) throw new FoundryError('STALE_APPROVAL', 'The proposal changed after the request was made');
+    if (approved && this.ledger.withdrawn(act.proposalId)) throw new FoundryError('DRAFT_REMOVED', 'This draft was removed, so it cannot be turned on');
+    // Turning an applied version on again (M7): only while it is still the current version.
+    if (approved && proposal.status !== 'proposed' && this.#head(act.flowId)?.hash !== act.workflowHash) throw new FoundryError('STALE_APPROVAL', 'A newer version replaced this one; turn that one on instead');
     const decided = this.ledger.decide(id, approved, { channel, principal, note, expectRev: act.rev });
     // dryRunId (honesty review B1): the practice run this yes rests on, so an evidence file's practice section is tied to a logged line.
     try { this.onDecision?.({ kind: 'turn-on', decision: approved ? 'approved' : 'rejected', channel, principal, flowId: act.flowId, version: proposal.workflow.version, workflowHash: act.workflowHash, approvalId: id, dryRunId: act.dryRunId ?? null, note }); } catch { /* the log is a record, never a gate */ }
@@ -210,6 +223,43 @@ export class FoundryApp {
     return { ok: true, status: 'approved', approvalId: id, flowId: act.flowId, workflowHash: act.workflowHash, channel };
   }
 
+  /** The current version of a proposal's automation, approved and then turned off (so it can be asked about again), or null. */
+  #turnedOff(proposal) {
+    const head = this.#head(proposal.workflow.id);
+    if (!head || head.hash !== proposal.workflowHash) return null;
+    return this.ledger.forFlow(head.workflow.id).find(a => a.workflowHash === head.hash && a.status === 'approved' && a.turnedOff) ?? null;
+  }
+
+  /**
+   * A person turns the current version off (UX review M7; SPEC §5 A5 "undo: turn off"). It stops making lists and runs; anything of it
+   * still waiting for a yes (a paused run) is cancelled; what it already made (drafts, rows) stays. Only a human channel. Returns
+   * { ok, status: 'off', approvalId, cancelled: [runIds] } or a problem (NOT_ON).
+   */
+  async turnOff({ flowId, channel, principal = this.principal?.() ?? 'local-user', note = null }) {
+    if (!HUMAN_CHANNELS.includes(channel)) throw new FoundryError('APPROVAL_AUTHORITY', `Only a person turns an automation off, not ${channel}`);
+    const head = this.#head(flowId);
+    if (!head) return problem(new FoundryError('NOT_FOUND', `No automation named ${flowId}`));
+    const on = this.ledger.approvedFor(flowId, head.hash);
+    if (!on) return problem(new FoundryError('NOT_ON', 'This automation is not on'));
+    this.ledger.turnOff(on.id, { channel, principal, note });
+    const cancelled = [];
+    for (const r of this.foundry.store.runs().filter(x => x.workflowId === flowId && ['awaiting_approval', 'running', 'pending', 'created'].includes(x.status))) {
+      try { await this.foundry.cancel(r.id, { actor: 'user', reason: 'turned off by the person', graceMs: 0 }); cancelled.push(r.id); } catch { /* finished meanwhile */ }
+    }
+    try { this.onDecision?.({ kind: 'turn-off', decision: 'turned off', channel, principal, flowId, version: head.workflow.version, workflowHash: head.hash, approvalId: on.id, cancelledRuns: cancelled, note }); } catch { /* a record, never a gate */ }
+    return { ok: true, status: 'off', flowId, approvalId: on.id, version: head.workflow.version, cancelled };
+  }
+
+  /** A person removes a draft they will not turn on (M7). Its request, if any, stops waiting. A version that was turned on is not a draft. */
+  withdraw({ proposalId, channel, principal = this.principal?.() ?? 'local-user' }) {
+    if (!HUMAN_CHANNELS.includes(channel)) throw new FoundryError('APPROVAL_AUTHORITY', `Only a person removes a draft, not ${channel}`);
+    const proposal = this.foundry.store.proposal(proposalId);
+    if (proposal.status !== 'proposed') return problem(new FoundryError('PROPOSAL_CLOSED', 'This version was turned on, so it is not a draft; turn it off instead'));
+    this.ledger.withdraw(proposalId, { flowId: proposal.workflow.id, channel, principal });
+    try { this.onDecision?.({ kind: 'draft-removed', decision: 'removed', channel, principal, flowId: proposal.workflow.id, version: proposal.workflow.version, workflowHash: proposal.workflowHash, proposalId }); } catch { /* a record, never a gate */ }
+    return { ok: true, status: 'removed', proposalId, flowId: proposal.workflow.id };
+  }
+
   /** Run the current, approved version. Refuses unapproved or stale versions. */
   async run({ flowId, input }) {
     if (this.practiceOnly()) return problem(new FoundryError('PRACTICE_ONLY', 'Practice-only mode is on for this workspace (or its settings.json could not be read)'));
@@ -219,6 +269,7 @@ export class FoundryApp {
       return problem(new FoundryError(proposed ? 'NOT_APPROVED' : 'NOT_FOUND', proposed ? `${flowId} is proposed but not turned on yet` : `No flow named ${flowId}`));
     }
     if (!this.ledger.approvedFor(flowId, head.hash)) {
+      if (this.ledger.forFlow(flowId).some(a => a.workflowHash === head.hash && a.status === 'approved' && a.turnedOff)) return problem(new FoundryError('TURNED_OFF', 'This automation is turned off'));
       const older = this.ledger.forFlow(flowId).find(a => a.status === 'approved');
       return problem(new FoundryError(older ? 'STALE_APPROVAL' : 'NOT_APPROVED', older ? 'The approved version is not the current one' : 'This version has not been approved to run'));
     }
@@ -251,7 +302,7 @@ export class FoundryApp {
         active: !!this.ledger.approvedFor(head.workflow.id, head.hash), runs: runs.length,
         lastRun: runs[0] ? { runId: runs[0].id, status: runs[0].status, at: runs[0].updatedAt } : null };
     });
-    const proposals = this.foundry.store.proposals().filter(p => p.status === 'proposed').map(p => ({ proposalId: p.id, flowId: p.workflow.id, version: p.workflow.version,
+    const proposals = this.foundry.store.proposals().filter(p => p.status === 'proposed' && !this.ledger.withdrawn(p.id)).map(p => ({ proposalId: p.id, flowId: p.workflow.id, version: p.workflow.version,
       workflowHash: p.workflowHash, dryRun: this.ledger.latestDryRun(p.id)?.passed ?? null }));
     return { ok: true, flows, proposals, waitingForYou: this.inbox().count };
   }

@@ -64,6 +64,12 @@ export class Batches {
   /** Open batches (not used, declined or expired), newest first: the batch cards on "Waiting for you". */
   open() { return this.#load().filter(b => b.status === 'open' && this.now() <= Date.parse(b.expiresAt)).reverse().map(b => this.#view(b)); }
   all() { return this.#load().reverse().map(b => this.#view(b)); }
+  /** Close an automation's open lists (it was turned off: UX review M7). A closed list can no longer be approved. Returns how many. */
+  closeFor(flowId, because) {
+    let n = 0;
+    this.#mutate(list => list.map(b => b.flowId === flowId && b.status === 'open' ? (n += 1, { ...b, status: 'closed', closedBecause: because, closedAt: new Date(this.now()).toISOString() }) : b));
+    return n;
+  }
 
   async preview(flowId, { input = null } = {}) {
     const app = this.app;

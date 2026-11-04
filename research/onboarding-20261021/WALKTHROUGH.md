@@ -374,3 +374,49 @@ Existing tests were updated for the new wording:
 - `api.test.mjs`, `builder-model.test.mjs`, `mcp-dashboard.test.mjs` and `copy-lint.test.mjs`.
 
 All unit suites under `app/` pass: 104 tests.
+
+## 7. The UX review of 2026-10-21: every finding
+
+The review (`review:UX`, 9 major and 21 minor findings, no blockers) read every front-end file and probed the site in Chromium at
+1280×900 and 390×844. Every finding is fixed; none is disputed. Each behavioural fix has a test in
+`app/site/test/review-ux.test.mjs` (29 tests) that drives the real site in Chromium over a temporary workspace, $0, loopback only.
+Run against the code before the fix (commit `699f1412`, with only the test file and the new answers module copied in), 28 of the
+29 fail. The one that passes tests `data-answers.mjs` itself, a module that did not exist then; the page-level m4 test fails. The
+journeys hold the rest: every action is now followed by a check that the focus is on something, and the fallback checks run on
+every page. That check found one more case of M1 (below), in the P1 Cursor or Codex journey.
+
+Status: **Fixed** means the finding no longer reproduces in the test named. **Measured** means a cost that cannot be removed without
+changing a frozen budget or an owner decision is now counted and reported, not hidden.
+
+| Finding | Status | What changed | Test |
+|---|---|---|---|
+| M1 Focus dropped to the top of the page | Fixed | Make page: a change updates the shown value in place, so the editor stays open and keeps the focus. "Who decides what": the focus moves to what replaced the button (the people panel, the saved version, the editing lead). A working button stays focusable (`aria-disabled`, never `disabled`) and an error panel takes the focus. When a redraw removes the focused control anyway, the shell moves the focus to the nearest heading still there. A decision that opens another page (the list's yes on Waiting) dropped the focus while that page loaded, because the page being left turns inert; the focus now waits on the "Loading" line, then goes to the new heading. | "M1" ×4; every journey (`focus lost after …` fails it) |
+| M2 "Something waiting" re-announced every 5 s | Fixed | The notice is no longer a live region and changes only when the count does; a new count is said once, politely. | "M2" (no mutation in 11 s, two polls) |
+| M3 "Turn it on" buried | Fixed | A strip under the result: "Next: turn it on" with a link that moves the focus to the turn-on card, and Change settings. Every e-mail in full is folded. The checks are shown once, on the card (they were listed twice). Turn it on is now 1,971 px down at 1280×900 (2.19 screens; was 3.75) and 2,996 px at 390×844 (3.55; was 6.07). | "M3" at both sizes |
+| M4 The timeline shows a no as a yes | Fixed | `approval.decided` reads "Yes applied", "No: not done", or says the record doesn't tell. Only a yes Foundry applied from an approved list is credited to the person who approved the list; a single decision shows its own logged person and channel, or "not recorded". The run detail carries `approved` and `approvalId`. | "M4" |
+| M5 A removed key still shown as saved | Fixed | `navigate('/keys')` redraws the card from the keychain. | "M5" |
+| M6 "(source)" fails Label in Name | Fixed | The link is named "Source: {claim}". The fallback checks now flag any link or button whose name does not contain its visible words. | "M6"; "M8" |
+| M7 Nothing turns an automation off or removes a draft | Fixed | Turn it off and Turn it on again on the automation page; Remove this draft on the drafts list, the automation's versions and the test result. Turning off closes the open list and cancels a run waiting for a yes; turning on again is a new request and a new yes on a card. The ledger keeps the yes and adds the turn-off as its own row; the decision log, the evidence file, `check-evidence`, the IT brief and the Trust page carry it. Only a person's channel can do either. See DESIGN §4.9. | "M7" ×2 (UI; authority, evidence, tamper) |
+| M8 "0 accessibility issues" overstated | Fixed | JOURNEYS.md and JOURNEYS.json report "fallback a11y issues (not axe-core)". The checks now also flag label-not-in-name, a name that repeats itself, a role not allowed on its element, a list item outside a list, a control in a list item named without that item's words, and anything above the h1. Every journey fails on lost focus. axe-core itself is still owner decision O-F. | "M8" (each new check against the defect it missed) |
+| M9 Step counts at the limit and hiding costs | Measured | Beside steps and asks, the harness now counts Tab presses, scrolling (window heights below what the person had already scrolled to; a scroll the script makes is not credited) and decisions (turning on counts there, O-K). Installing and starting Foundry is listed as a P2 precondition. DESIGN §3 says which milestones sit at their limit, and that P1 counted from the start (with the one-time setup) is over the spec's budgets. Weekly use loses the repeated date-order ask (m4). The budgets themselves are the spec's and are not changed. | JOURNEYS.md; DESIGN §3 |
+| m1 Key changed mid-session: generic error | Fixed | `render()` shows the page with the one command whenever the key is gone, also when the view failed because of it. | "m1" |
+| m2 Feedback only in a 4-second toast | Fixed | The toast is a visual echo (`aria-hidden`); its words go to the always-present polite live region. "File too big" stays next to the file button. A refused copy selects the text before saying "press Ctrl+C". | "m2" |
+| m3 Notices above the h1 | Fixed | Home, make, test result and going live start with the h1; the policy notice, the waiting banner and the step marker follow it. The fallback checks flag anything above the h1 on every page. | "m3" |
+| m4 The date order asked every week | Fixed | `app/onboarding/data-answers.mjs` keeps the answers per card, list and set of columns (sorted, so a reordered export matches). The next file's questions come back already chosen with "Already chosen: your answer for the last file like this"; never applied silently; asked afresh when the columns or the values differ. | "m4" ×2; journey `p2-next-day` |
+| m5 Settings confirmations at the bottom; unsaved state shown | Fixed | Each section says saved, or what went wrong, under its own control; a change that was not saved is put back. | "m5, m6" |
+| m6 "What was not done" wrong for Delete my lists | Fixed | "Nothing was deleted." | "m5, m6" |
+| m7 "Nothing was sent." everywhere | Fixed | Every error panel says what was not done for its own action; the default claims nothing. | "m7" (every call site in the page scripts) |
+| m8 Drop zone | Fixed | A file dropped beside the drop zone is refused by the page instead of opened by the browser; the file input is emptied after each pick. | "m8" |
+| m9 No visible busy state; double presses | Fixed | A "Loading" line while a page loads, and the page being left is inert. A busy button shows a mark, refuses a second press, and is never left busy after an error. One decision per card at a time. | "m9" |
+| m10 Toggle changes label and `aria-pressed` | Fixed | One label, "Show every event", and `aria-pressed`. | "m10"; journeys check every pressed toggle |
+| m11 `role=listitem` on `<article>` | Fixed | The cards are a `ul` of `li`. | "m11 …" |
+| m12 Stepper "done" by colour only | Fixed | A visually hidden "(done)". | "m11, m12 …" |
+| m13 Repeated control names | Fixed | Change, I sent it, the copy buttons, Approved and Rejected are described by their item's heading or line. | "m13" |
+| m14 `.h3` undefined | Fixed | Defined (20 px). | "m11 … m14" |
+| m15 Claim links don't scroll to the claim | Fixed | Two causes: the scroll ran before the page was in the document, and, since the security review, `?c=` in a claim link was taken out of the address as a one-time code. Claim links now use `?claim=`; the shell scrolls to and focuses the claim after the page is in place. | "m15" at both sizes |
+| m16 Waiting link named twice | Fixed | Its name is "Waiting for you (1)". | "m11 … m16"; the fallback checks flag a name that repeats itself |
+| m17 Example answer named "Case 1" | Fixed | Each answer is named by its case's own words and "What should happen?". | "m17, m18" |
+| m18 Org form validation and currency | Fixed | An empty name and an address without a domain are said at their field; the currency follows the browser's region (en-IN rupees, ja-JP yen); an unknown region gets no guess and the amount asks for a currency. | "m17, m18" |
+| m19 Stale-list check in UTC days | Fixed | Days are counted where the person is. | "m19" (Pacific/Auckland) |
+| m20 Toast can cover the focused control | Fixed | The toast moves to the top when it would cover the focused control, and never takes clicks. | "m20" (390 wide: Turn it on, full width at the bottom edge, focused; before the fix the toast covered it) |
+| m21 Plain words and line length | Fixed | No address in the footer; "Four ways in"; no "highlighted"; Foundry never says "I" (buttons keep the person's own voice: "I sent it"); the turn-on notes are in the copy file; "How you'll know it worked", "Checked: N entries"; glossary entries for fingerprint, checked, turn off; running text at most 68 characters wide. | "m21" (copy and measured line widths on five pages) |

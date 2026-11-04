@@ -9,7 +9,7 @@
       "status": "Works now",
       "evidence": "development",
       "date": "2026-10-21",
-      "source": { "path": "research/onboarding-20261021/DESIGN.md", "anchor": "§5, the Turn on and Going live rows; §6, the same-user limit", "lines": [[151, 152], [162, 162]], "quote": "exact-list approval" }
+      "source": { "path": "research/onboarding-20261021/DESIGN.md", "anchor": "§5, the Turn on and Going live rows; §6, the same-user limit", "lines": [[188, 189], [199, 199]], "quote": "exact-list approval" }
     },
     "C02": {
       "text": "In our tests, 10 of 10 attempts to get around your yes were refused.",
@@ -26,7 +26,7 @@
       "status": "Works now",
       "evidence": "development",
       "date": "2026-10-21",
-      "source": { "path": "research/onboarding-20261021/DESIGN.md", "anchor": "§5, the Test row", "lines": [[150, 150]], "quote": "a test on the person's own list" }
+      "source": { "path": "research/onboarding-20261021/DESIGN.md", "anchor": "§5, the Test row", "lines": [[187, 187]], "quote": "a test on the person's own list" }
     },
     "C04": {
       "text": "In our own tests, a low-cost AI that practised first built a 14-case order process with 14 of 14 right, for $0.39. A top AI that built it in one go got 5 of 14, for $7.63.",

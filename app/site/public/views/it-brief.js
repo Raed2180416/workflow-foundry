@@ -1,7 +1,7 @@
 // The one-page brief for IT (#/it-brief and #/it-brief/:flowId): generated on this computer from the automation's own record,
 // shown here and downloadable as Markdown or HTML (SPEC §9.11). Nothing is sent anywhere.
 import { el, t, api, download, toast } from '../site.js';
-import { errorPanel, snippet } from '../components/ui.js';
+import { showError, snippet, busy } from '../components/ui.js';
 
 export async function render({ params }) {
   let flowId = params[0] ?? null;
@@ -10,9 +10,10 @@ export async function render({ params }) {
   const status = el('div', {}), saved = el('p', { class: 'muted small', role: 'status' });
   const dl = (ext, label) => el('button', { type: 'button', class: ext === 'md' ? 'primary' : '', dataset: { action: `brief-${ext}` }, on: { click: async e => {
     const button = e.currentTarget; // currentTarget is null once the handler awaits
-    button.setAttribute('aria-busy', 'true');
-    try { await download(`/api/brief${flowId ? `/${flowId}` : ''}.${ext}`, `foundry-it-brief${flowId ? `-${flowId}` : ''}.${ext}`); toast(t('brief.downloaded')); saved.textContent = t('brief.downloaded'); } catch (error) { status.replaceChildren(errorPanel(error)); }
-    button.removeAttribute('aria-busy');
+    if (button.getAttribute('aria-disabled') === 'true') return;
+    busy(button, true);
+    try { await download(`/api/brief${flowId ? `/${flowId}` : ''}.${ext}`, `foundry-it-brief${flowId ? `-${flowId}` : ''}.${ext}`); toast(t('brief.downloaded')); saved.textContent = t('brief.downloaded'); } catch (error) { showError(status, error, { notDone: t('errors.noFile') }); }
+    busy(button, false);
   } } }, label);
   return el('div', { dataset: { layout: 'narrow' } },
     el('h1', {}, b.title),

@@ -50,17 +50,24 @@ const lines = ['# Journey log (development evidence, scripted, no users)', '',
   'a step is any person action (click, fill, choose, upload, key, or an action outside the browser such as pasting a line); an ask',
   'is an action on a control that carries `data-ask` (a question whose wrong answer would harm, or an irreversible yes). Times are',
   'scripted wall-clock on a shared container, not human time. Preconditions are listed, not counted.', '',
+  'What steps and asks leave out is counted beside them (UX review 2026-10-21, M9): **tabs**, the Tab (and arrow) presses a keyboard',
+  'user needs to reach each control (pressed, in keyboard runs; in pointer runs, the controls between the focus and the target);',
+  '**screens**, how far each control was below what the person had already scrolled to on that page, in window heights, summed',
+  '(a scroll the script makes for a screenshot is not credited); **decisions**, presses on a decision card',
+  '(turning on is one, though not an ask: DESIGN §4.1). Installing Node and starting Foundry are preconditions, listed, not counted.', '',
+  'The accessibility column counts the harness\'s own **fallback checks** (`harness.mjs` `a11y()`), not axe-core, which is owner',
+  'decision O-F and not installed. They cannot hear a screen reader. Every journey also fails if the focus is lost after an action.', '',
   `Screenshots: ${summary.run.screenshots} JPEG files, ${(shotBytes / 1048576).toFixed(1)} MB (budget 25 MB).`, '',
-  '## Summary', '', '| Journey | Variant | Passed | Steps | Asks | Milestones (steps / asks / time) | Errors | Refusals shown | A11y issues | Shots |', '|---|---|---|---|---|---|---|---|---|---|'];
+  '## Summary', '', '| Journey | Variant | Passed | Steps | Asks | Tabs | Screens | Decisions | Milestones (steps / asks / tabs / screens / time) | Errors | Refusals shown | Fallback a11y issues (not axe-core) | Shots |', '|---|---|---|---|---|---|---|---|---|---|---|---|---|'];
 for (const [name, j] of Object.entries(summary.journeys)) {
   if (name.startsWith('crawl')) continue;
-  const ms = Object.entries(j.milestones ?? {}).map(([k, m]) => `${k}: ${m.steps} / ${m.asks} / ${fmt(m.ms)}`).join('; ');
-  lines.push(`| ${name.split(' ')[0]} | ${j.variant.replace(/^-/, '')} | ${j.passed ? 'yes' : 'NO'} | ${j.steps} | ${j.asks} | ${ms || '-'} | ${j.errors} | ${j.refusals ?? 0} | ${j.a11yIssues} | ${j.shots} |`);
+  const ms = Object.entries(j.milestones ?? {}).map(([k, m]) => `${k}: ${m.steps} / ${m.asks} / ${m.tabs ?? '-'} / ${m.screens ?? '-'} / ${fmt(m.ms)}`).join('; ');
+  lines.push(`| ${name.split(' ')[0]} | ${j.variant.replace(/^-/, '')} | ${j.passed ? 'yes' : 'NO'} | ${j.steps} | ${j.asks} | ${j.tabs ?? '-'} | ${j.screens ?? '-'} | ${j.decisions ?? '-'} | ${ms || '-'} | ${j.errors} | ${j.refusals ?? 0} | ${j.fallbackA11yIssues ?? j.a11yIssues} | ${j.shots} |`);
 }
 const crawl = Object.entries(summary.journeys).filter(([n]) => n.startsWith('crawl'));
 if (crawl.length) {
-  lines.push('', '## Crawl', '', '| State | Width | Passed | Pages checked | Problems | A11y issues |', '|---|---|---|---|---|---|');
-  for (const [name, j] of crawl) lines.push(`| ${name.split(' ')[0].replace('crawl-', '')} | ${j.variant.split('-').pop()} | ${j.passed ? 'yes' : 'NO'} | ${j.checks?.pages ?? '-'} | ${j.checks?.problems?.length ?? '-'} | ${j.a11yIssues} |`);
+  lines.push('', '## Crawl', '', '| State | Width | Passed | Pages checked | Problems | Fallback a11y issues (not axe-core) |', '|---|---|---|---|---|---|');
+  for (const [name, j] of crawl) lines.push(`| ${name.split(' ')[0].replace('crawl-', '')} | ${j.variant.split('-').pop()} | ${j.passed ? 'yes' : 'NO'} | ${j.checks?.pages ?? '-'} | ${j.checks?.problems?.length ?? '-'} | ${j.fallbackA11yIssues ?? j.a11yIssues} |`);
 }
 for (const dir of readdirSync(OUT).filter(d => d !== 'crawl' && statSync(path.join(OUT, d)).isDirectory()).sort()) {
   for (const file of readdirSync(path.join(OUT, dir)).filter(x => /^journey.*\.json$/.test(x)).sort()) {
@@ -71,7 +78,7 @@ for (const dir of readdirSync(OUT).filter(d => d !== 'crawl' && statSync(path.jo
     let i = 0;
     for (const s of j.steps) {
       i += 1;
-      const what = s.shot ? `screen: ${s.slug}${s.note ? ` (${s.note})` : ''}` : s.action === 'precondition' ? `precondition: ${s.target}` : `${s.action}${s.ask ? ' (ask)' : ''}: ${String(s.target ?? s.key ?? '').replace(/\|/g, '/')}`;
+      const what = s.shot ? `screen: ${s.slug}${s.note ? ` (${s.note})` : ''}` : s.action === 'precondition' ? `precondition: ${s.target}` : `${s.action}${s.ask ? ' (ask)' : ''}${s.decision ? ' (decision)' : ''}: ${String(s.target ?? s.key ?? '').replace(/\|/g, '/')}`;
       lines.push(`| ${i} | ${what.replace(/\n/g, ' ')} | ${s.steps} | ${s.asks} | ${fmt(s.ms)} | ${s.shot ? `[${s.shot}](${rel(path.join(OUT, dir, s.shot))})${s.h1 ? ` · ${s.h1.replace(/\|/g, '/')}` : ''}` : ''} |`);
     }
     if (j.checks) lines.push('', '<details><summary>What the journey asserted and recorded</summary>', '', '```json', JSON.stringify(j.checks, null, 2).slice(0, 4000), '```', '', '</details>');

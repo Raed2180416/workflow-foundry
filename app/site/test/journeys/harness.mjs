@@ -32,12 +32,31 @@ export const browser = () => (browserPromise ??= chromium.launch({ executablePat
   args: ['--no-sandbox', '--disable-background-networking', '--disable-sync', '--disable-component-update', '--no-pings', '--proxy-server=http://127.0.0.1:9', '--disable-features=PushMessaging,OptimizationHints,MediaRouter'] }));
 export async function closeBrowser() { if (browserPromise) { await (await browserPromise).close(); browserPromise = null; } }
 
-/** The fallback accessibility checks (until axe-core is approved, O-F): the six most common WebAIM failures plus page structure. */
+/**
+ * The fallback accessibility checks (until axe-core is approved, O-F). They are not axe-core and say so wherever a count of them is
+ * reported (UX review 2026-10-21, M8). The six most common WebAIM failures plus page structure, and since the UX review the defects it
+ * found that these checks had missed: a link or button whose name does not contain the words it shows (WCAG 2.5.3, M6), a name that says
+ * the same words twice (m16), a role an element may not have (m11), a list item outside a list, a form control inside a list item
+ * whose name says nothing that item shows (m17), and a notice, banner or step marker above the page's h1 (m3). Focus lost after an
+ * action (M1), a pressed button that also changes its words (m10) and a live region that changes while nothing happens (M2) are
+ * checked by the journey around each action and in review-ux.test.mjs.
+ */
 export async function a11y(page) {
   return page.evaluate(() => {
     const issues = [];
     const visible = e => !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length);
     const name = e => (e.getAttribute('aria-label') || e.textContent || e.getAttribute('title') || e.value || '').trim();
+    const words = s => String(s ?? '').toLowerCase().replace(/[^\p{L}\p{N}@.]+/gu, ' ').trim();
+    // An approximation of the accessible name: aria-labelledby, else aria-label, else the text of what is not aria-hidden (a descendant's
+    // aria-label stands for its text).
+    const accName = e => {
+      const by = e.getAttribute('aria-labelledby');
+      if (by) return by.split(/\s+/).map(id => document.getElementById(id)?.textContent ?? '').join(' ');
+      if (e.getAttribute('aria-label')) return e.getAttribute('aria-label');
+      const text = n => n.nodeType === 3 ? n.textContent : n.nodeType !== 1 || n.getAttribute('aria-hidden') === 'true' || n.hidden ? '' : n.getAttribute('aria-label') ? ` ${n.getAttribute('aria-label')} ` : [...n.childNodes].map(text).join(n.matches?.('div, p, li') ? ' ' : '');
+      return text(e);
+    };
+    const shownText = e => { const text = n => n.nodeType === 3 ? n.textContent : n.nodeType !== 1 || n.getAttribute('aria-hidden') === 'true' || n.classList?.contains('sr-only') || !visible(n) ? '' : [...n.childNodes].map(text).join(''); return text(e); };
     if (!document.documentElement.lang) issues.push('missing lang');
     for (const i of document.querySelectorAll('input:not([type=hidden]), select, textarea')) {
       if (!visible(i)) continue;
@@ -55,6 +74,23 @@ export async function a11y(page) {
     if (!document.querySelector('[data-nav="help"]')) issues.push('no help link');
     if (document.documentElement.scrollWidth > document.documentElement.clientWidth + 1) issues.push(`horizontal scroll (${document.documentElement.scrollWidth} > ${document.documentElement.clientWidth})`);
     for (const t of document.querySelectorAll('main button, main a.button')) { const r = t.getBoundingClientRect(); if (visible(t) && (r.width < 24 || r.height < 24)) issues.push(`small target: ${name(t).slice(0, 30)}`); }
+    for (const c of document.querySelectorAll('a[href], button, [role=button], [role=link]')) {
+      if (!visible(c)) continue;
+      const n = words(accName(c)), shown = words(shownText(c));
+      if (shown && c.matches('[aria-label], [aria-labelledby]') && !n.includes(shown)) issues.push(`label not in name: "${shown.slice(0, 30)}" vs "${n.slice(0, 40)}"`);
+      const w = n.split(' ').filter(Boolean);
+      for (let k = 3; k <= Math.floor(w.length / 2); k++) for (let i = 0; i + k <= w.length; i++) { const run = w.slice(i, i + k).join(' '); if (` ${w.slice(i + k).join(' ')} `.includes(` ${run} `)) { issues.push(`name repeats itself: "${n.slice(0, 50)}"`); k = w.length; break; } }
+    }
+    // The page heading comes first (m3): focus starts at the h1, so a notice, a banner or the step marker above it is skipped.
+    const firstMark = document.querySelector('main') && [...document.querySelector('main').querySelectorAll('h1, h2, .stepper, .banner, [data-managed]')].find(visible);
+    if (firstMark && !firstMark.matches('h1')) issues.push(`before the h1: ${firstMark.className || firstMark.tagName.toLowerCase()} "${(firstMark.textContent ?? '').trim().slice(0, 30)}"`);
+    const ARTICLE_ROLES = ['application', 'document', 'feed', 'main', 'none', 'presentation', 'region'];
+    for (const a of document.querySelectorAll('article[role]')) if (!ARTICLE_ROLES.includes(a.getAttribute('role'))) issues.push(`role ${a.getAttribute('role')} not allowed on article`);
+    for (const li of document.querySelectorAll('[role=listitem]')) if (!li.parentElement?.matches('[role=list], ul, ol')) issues.push('list item outside a list');
+    for (const f of document.querySelectorAll('main li select[aria-label], main li input[aria-label]:not([type=checkbox]):not([type=radio])')) {
+      const item = f.closest('li'), own = words(shownText(item).replace(f.textContent ?? '', '')), n = words(accName(f));
+      if (visible(f) && own.length > 12 && !own.split(' ').filter(x => x.length > 3).some(x => n.includes(x))) issues.push(`control named without its item's words: "${n.slice(0, 40)}"`);
+    }
     return issues;
   });
 }
@@ -92,7 +128,12 @@ export async function journey(opts, fn) {
   page.on('requestfailed', r => { if (!r.url().startsWith('blob:') && !/net::ERR_ABORTED/.test(r.failure()?.errorText ?? '')) log.failed.push(`${r.url()} ${r.failure()?.errorText}`); });
   await context.route('**/*', route => { const u = new URL(route.request().url()); if (['blob:', 'data:'].includes(u.protocol) || u.hostname === '127.0.0.1') return route.continue(); log.external.push(u.href); return route.abort(); });
   const started = Date.now();
-  let steps = 0, asks = 0, n = 0;
+  // Since the UX review (M9): what the step counts leave out is counted beside them. tabs: Tab presses a keyboard user needs to reach each
+  // control (pressed in keyboard runs; in pointer runs, the number of controls between the focus and the target); screens: how far
+  // below what the person had already scrolled to on that page each control was (in window heights); decisions: yeses and nos on a
+  // decision card (a turn-on is one, though it is not an ask: DESIGN §4.1).
+  let steps = 0, asks = 0, n = 0, tabs = 0, screens = 0, decisions = 0;
+  log.focusLost = [];
   const shots = [];
   // Settled: the view and every control done being busy. A control still busy after 10 s is a defect (a spinner that never ends).
   const settle = async () => {
@@ -124,21 +165,43 @@ export async function journey(opts, fn) {
     await loc.waitFor({ state: 'visible', timeout: 15000 });
     const isAsk = await asksOf(loc);
     const target = await loc.evaluate(e => (e.getAttribute('aria-label') || (e.matches('input,select,textarea') && e.labels?.[0]?.textContent) || e.textContent || e.name || e.id || e.tagName).replace(/\s+/g, ' ').trim().slice(0, 80)).catch(() => '?');
-    steps += 1; if (isAsk) asks += 1;
-    if (keyboard) await tabTo(loc);
+    const before = await loc.evaluate(e => {
+      const r = e.getBoundingClientRect();
+      const focusable = [...document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea, summary, [tabindex="0"]')].filter(x => !x.disabled && !x.closest('[inert]') && (x.offsetWidth || x.offsetHeight || x.getClientRects().length));
+      const from = focusable.indexOf(document.activeElement), to = focusable.indexOf(e);
+      // Scrolling a person needs: how far below what they have already scrolled to on this page the control is. Counted from the
+      // page's own top, so a scroll the script makes (to take a screenshot) does not hide it. A new page starts at the first screen.
+      const page = location.hash.split('?')[0];
+      if (window.__seenPage !== page) { window.__seenPage = page; window.__seen = innerHeight; }
+      const bottom = r.bottom + scrollY, below = Math.max(0, bottom - window.__seen) / innerHeight;
+      window.__seen = Math.max(window.__seen, bottom);
+      return { below, tabs: to < 0 ? 0 : Math.max(1, to - from), pressed: e.getAttribute('aria-pressed'), text: e.textContent, decision: !!e.closest('[data-decision-card]') && e.matches('button') };
+    }).catch(() => ({ below: 0, tabs: 0, pressed: null, text: null, decision: false }));
+    steps += 1; if (isAsk) asks += 1; if (before.decision) decisions += 1; screens += before.below;
+    if (keyboard) tabs += await tabTo(loc); else tabs += before.tabs;
+    const handle = await loc.elementHandle().catch(() => null);
     await fnAct();
-    log.steps.push({ action: kind, ask: isAsk, target, steps, asks, ms: Date.now() - started });
+    log.steps.push({ action: kind, ask: isAsk, decision: before.decision, target, steps, asks, tabs, screens: Number(screens.toFixed(2)), ms: Date.now() - started });
+    // After the action has settled, the focus is on something (UX review M1), and a pressed toggle kept its words (m10).
+    if (kind === 'upload') return;
+    await settle();
+    const after = await page.evaluate(h => ({ lost: !document.activeElement || document.activeElement === document.body || document.activeElement === document.documentElement,
+      pressed: h?.isConnected ? h.getAttribute('aria-pressed') : null, text: h?.isConnected ? h.textContent : null }), handle).catch(() => ({ lost: false }));
+    if (after.lost) { const what = `focus lost after ${kind} on "${target}"`; log.focusLost.push(what); log.errors.push(what); }
+    if (before.pressed !== null && after.pressed !== null && after.pressed !== before.pressed && after.text !== before.text) log.errors.push(`"${target}": aria-pressed and its words both changed`);
   }
+  /** Tab (and arrow, in a radio group) to the target; returns how many keys it took. */
   async function tabTo(loc) {
     const target = await loc.elementHandle();
+    let pressed = 0;
     for (let i = 0; i < 160; i++) {
       const where = await page.evaluate(t => { const a = document.activeElement; if (a === t) return 'on'; if (t.type === 'radio' && a?.type === 'radio' && a.name === t.name) return 'group'; return 'off'; }, target);
-      if (where === 'on') return;
+      if (where === 'on') return pressed;
       if (where === 'group') { // inside a radio group Tab moves past it; arrows move within it (and select, as a person's arrows would)
-        for (let j = 0; j < 12 && !(await page.evaluate(t => document.activeElement === t, target)); j++) await page.keyboard.press('ArrowDown');
-        return;
+        for (let j = 0; j < 12 && !(await page.evaluate(t => document.activeElement === t, target)); j++) { await page.keyboard.press('ArrowDown'); pressed += 1; }
+        return pressed;
       }
-      await page.keyboard.press('Tab');
+      await page.keyboard.press('Tab'); pressed += 1;
     }
     throw new Error(`keyboard: could not reach ${await loc.evaluate(e => e.outerHTML.slice(0, 120))} with Tab`);
   }
@@ -162,7 +225,7 @@ export async function journey(opts, fn) {
     precondition: (what) => { log.preconditions = [...(log.preconditions ?? []), what]; log.steps.push({ action: 'precondition', target: what, steps, asks, ms: Date.now() - started }); },
     get steps() { return steps; }, get asks() { return asks; }
   };
-  const mark = (milestone, extra = {}) => { log.milestones[milestone] = { steps, asks, ms: Date.now() - started, ...extra }; };
+  const mark = (milestone, extra = {}) => { log.milestones[milestone] = { steps, asks, tabs, screens: Number(screens.toFixed(2)), decisions, ms: Date.now() - started, ...extra }; };
   let failure = null;
   try {
     // Foundry opens the page with a one-time code, as the browser opener would (app/site/gate.mjs).
@@ -174,7 +237,7 @@ export async function journey(opts, fn) {
     log.failure = String(error.stack ?? error).slice(0, 2000);
     await page.screenshot({ path: path.join(outDir, `zz-failure${variant}.jpg`), fullPage: true, type: 'jpeg', quality: 70 }).catch(() => {});
   } finally {
-    log.totalSteps = steps; log.totalAsks = asks; log.ms = Date.now() - started; log.shots = shots;
+    log.totalSteps = steps; log.totalAsks = asks; log.totalTabs = tabs; log.totalScreens = Number(screens.toFixed(2)); log.totalDecisions = decisions; log.ms = Date.now() - started; log.shots = shots;
     log.budgets = opts.budgets ?? null;
     log.passed = !failure && !log.errors.length && !log.external.length;
     writeFileSync(path.join(outDir, `journey${variant}.json`), JSON.stringify(log, null, 2));
@@ -193,9 +256,11 @@ export async function journey(opts, fn) {
 export function record(log) {
   let all = { label: 'development, scripted, no users', note: 'Written by app/site/test/journeys/*.mjs. Steps and asks are counted by the harness; times are scripted wall-clock on a shared machine, not human time.', journeys: {} };
   if (existsSync(SUMMARY)) { try { all = JSON.parse(readFileSync(SUMMARY, 'utf8')); } catch { /* rewrite */ } }
-  all.journeys[`${log.journey}${log.variant === 'light-1280' ? '' : ` (${log.variant})`}`] = { persona: log.persona, variant: log.variant, passed: log.passed, steps: log.totalSteps, asks: log.totalAsks, ms: log.ms,
-    milestones: log.milestones, budgets: log.budgets, preconditions: log.preconditions ?? [], errors: log.errors.length, refusals: log.refusals?.length ?? 0, external: log.external.length, a11yIssues: log.a11y.reduce((s, x) => s + x.issues.length, 0),
-    a11yFirst: log.a11y[0] ?? null, shots: log.shots.length, failure: log.failure ? log.failure.split('\n')[0] : null, checks: log.checks ?? null };
+  all.journeys[`${log.journey}${log.variant === 'light-1280' ? '' : ` (${log.variant})`}`] = { persona: log.persona, variant: log.variant, passed: log.passed, steps: log.totalSteps, asks: log.totalAsks,
+    tabs: log.totalTabs ?? 0, screens: log.totalScreens ?? 0, decisions: log.totalDecisions ?? 0, ms: log.ms,
+    milestones: log.milestones, budgets: log.budgets, preconditions: log.preconditions ?? [], errors: log.errors.length, focusLost: log.focusLost?.length ?? 0, refusals: log.refusals?.length ?? 0, external: log.external.length,
+    // Not axe-core (owner decision O-F): the harness's own checks (a11y() above). Reported under that name, never as "accessibility issues" alone.
+    fallbackA11yIssues: log.a11y.reduce((s, x) => s + x.issues.length, 0), a11yFirst: log.a11y[0] ?? null, shots: log.shots.length, failure: log.failure ? log.failure.split('\n')[0] : null, checks: log.checks ?? null };
   writeFileSync(SUMMARY, `${JSON.stringify(all, null, 2)}\n`);
 }
 

@@ -1,7 +1,8 @@
-// "What I checked" (#/checked/:proposalId): the test result of this exact version, what a test can't prove, an optional test on
+// The test result (#/checked/:proposalId): what the test of this exact version found, what a test can't prove, an optional test on
 // the person's own list (A4), and the turn-on card (SPEC §9.4, §9.5). Turning on doesn't send anything.
 import { el, t, api, templates, memory, navigate, say, decide, refreshBadge } from '../site.js';
-import { checkList, errorPanel, stepper, whoDecides, dropZone, columnMapper, dataQuestions, statusChip, howNote, rowsTable } from '../components/ui.js';
+import { checkList, errorPanel, showError, stepper, whoDecides, dropZone, columnMapper, dataQuestions, statusChip, howNote, rowsTable, busy } from '../components/ui.js';
+import { focusOn } from '../site.js';
 import { plural, replace } from '../components/dom.js';
 
 /** "4 e-mails would have gone out: 3 to customers and 1 to me@example.com" (counts from the test, words from the card). */
@@ -32,9 +33,10 @@ function ownListBranch(view, tpl, onTested) {
         const go = el('button', { type: 'button', class: 'primary', dataset: { action: 'test-own' } }, i + 1 < sheets.length ? t('checked.ownNext') : t('checked.ownTest'));
         const err = el('div', {});
         go.addEventListener('click', async () => {
+          if (go.getAttribute('aria-disabled') === 'true') return;
           err.replaceChildren();
           if (!qs.check()) return; // a question is still open: say so here, send nothing
-          go.setAttribute('aria-busy', 'true');
+          busy(go, true);
           try {
             const c = await api('/api/data/commit', { template: tpl.id, sheet: s.sheet, csv: text, mapping: mapper.mapping(), answers: qs.answers(), target: 'practice', practiceDataId: state.practiceDataId });
             state.practiceDataId = c.practiceDataId;
@@ -42,12 +44,12 @@ function ownListBranch(view, tpl, onTested) {
             say(t('make.testing', { noun: tpl.noun }));
             const d = await api('/api/practice', { proposalId: view.proposalId, practiceDataId: state.practiceDataId });
             memory[`tested:${view.proposalId}`] = d; say(t('make.tested')); onTested();
-          } catch (error) { err.replaceChildren(errorPanel(error, { notDone: t('golive.notImported') })); }
-          go.removeAttribute('aria-busy');
+          } catch (error) { showError(err, error, { notDone: t('golive.notImported') }); }
+          finally { busy(go, false); }
         });
         replace(area, el('p', {}, t('golive.found', { rows: pv.rowCount, noun: s.rowNoun })), mapper.node,
           pv.unused.length ? el('p', { class: 'muted' }, t('golive.keepsOnly', { columns: pv.unused.join(', ') })) : null, qs.node, el('div', { class: 'actions' }, go), err);
-      } catch (error) { area.replaceChildren(errorPanel(error, { notDone: t('golive.notImported') })); }
+      } catch (error) { showError(area, error, { notDone: t('golive.notImported') }); }
     } }), area);
   };
   drawSheet(0);
@@ -64,32 +66,50 @@ export async function render({ params }) {
   const root = el('div', { dataset: { layout: 'narrow' } });
 
   if (!view.dryRun) {
-    const run = el('button', { type: 'button', class: 'primary' }, t('checked.runTest'));
-    run.addEventListener('click', async () => { run.setAttribute('aria-busy', 'true'); say(t('make.testing', { noun })); try { await api('/api/practice', { proposalId }); navigate(`/checked/${proposalId}`); } catch (error) { status.replaceChildren(errorPanel(error)); } });
-    return el('div', { dataset: { layout: 'narrow' } }, stepper('test'), el('h1', {}, t('checked.notTested')), el('div', { class: 'actions' }, run), status);
+    // m9: busy while it tests, and not busy again after an error (the error gets the focus).
+    const run = el('button', { type: 'button', class: 'primary', dataset: { action: 'run-test' } }, t('checked.runTest'));
+    run.addEventListener('click', async () => {
+      if (run.getAttribute('aria-disabled') === 'true') return;
+      busy(run, true); say(t('make.testing', { noun }));
+      try { await api('/api/practice', { proposalId }); navigate(`/checked/${proposalId}`); }
+      catch (error) { showError(status, error, { notDone: t('checked.notTestedNow') }); }
+      finally { busy(run, false); }
+    });
+    return el('div', { dataset: { layout: 'narrow' } }, el('h1', {}, t('checked.notTested')), stepper('test'), el('div', { class: 'actions' }, run), status);
   }
   const d = view.dryRun;
   const passed = d.passed;
   const ownData = d.dataSource === 'your-data';
   const checksPassed = d.checks.filter(c => c.passed === true).length;
-  root.append(stepper(view.active ? 'goLive' : 'test'));
   if (passed) {
-    root.append(el('h1', {}, t('checked.passedTitle')));
+    root.append(el('h1', {}, t('checked.passedTitle')), stepper(view.active ? 'goLive' : 'test'));
     const summary = wouldDoSummary(d.wouldDo, view.slots, noun);
     root.append(el('p', { class: 'lead' }, t(ownData ? 'checked.wouldHaveYours' : 'checked.wouldHave'), ' ', summary.join(t('common.and')), '. ', t('checked.nothingSent')));
     if (ownData && !d.wouldDo.some(w => w.action === 'send' && !Object.values(view.slots ?? {}).includes(w.to))) root.append(el('p', { class: 'banner', role: 'status' }, t('checked.nothingToChase')));
+    // UX review M3: the next step is right under the result, not a few screens down. The yes itself stays on its card below, with what it
+    // will and won't do (SPEC R5: a decision only from its card); this strip takes the person there, or back to the settings.
+    if (!view.active) root.append(el('div', { class: 'strip', dataset: { nextStep: '' } }, el('p', {}, el('b', {}, t('checked.nextTitle')), ' ', t('checked.nextBody')),
+      el('div', { class: 'actions' }, el('a', { class: 'button primary', href: '#turn-on-h', dataset: { action: 'to-turn-on' }, on: { click: e => { e.preventDefault(); const h = document.getElementById('turn-on-h'); focusOn(h, { scroll: false }); h?.closest('[data-turn-on]')?.scrollIntoView({ block: 'start' }); } } }, t('checked.toTurnOn')),
+        el('a', { class: 'button', href: `#/make/${view.template}${view.basedOn ? `?flow=${view.flowId}` : ''}` }, t('turnon.changeSettings')))));
   } else {
-    root.append(el('h1', {}, t('checked.failedTitle')));
+    root.append(el('h1', {}, t('checked.failedTitle')), stepper('test'));
     root.append(errorPanel({ problem: d.problem ?? { what: d.headline } }, { notDone: t('checked.cantTurnOn'), action: { label: t('checked.changeSetting'), href: `#/make/${view.template}${view.basedOn ? `?flow=${view.flowId}` : ''}` } }));
   }
   root.append(el('p', { class: 'pretend' }, ownData ? t('checked.testedOnYours') : t('checked.testedOnPretend', { noun })));
 
-  root.append(el('section', { 'aria-labelledby': 'checks-h' }, el('h2', { id: 'checks-h' }, t('checked.checksTitle')), checkList(d.checks), howNote()));
-  if (d.wouldDo.length) root.append(el('section', { 'aria-labelledby': 'would-h' }, el('h2', { id: 'would-h' }, t('checked.wouldTitle')),
+  // The checks are shown once (UX review M3): on the turn-on card when there is one ("How you'll know it worked", the same ticks), here
+  // otherwise. The card used to repeat this whole list under it, between the result and the yes.
+  const cardShown = passed && !view.active;
+  if (!cardShown) root.append(el('section', { 'aria-labelledby': 'checks-h' }, el('h2', { id: 'checks-h' }, t('checked.checksTitle')), checkList(d.checks), howNote()));
+  // Every message in full, folded (M3): the summary above says how many and to whom; nothing is sent by turning on, and the exact list
+  // is shown again, in full, before anything is made.
+  const wouldCount = d.wouldDo.length;
+  if (wouldCount) root.append(el('section', { 'aria-labelledby': 'would-h' }, el('h2', { id: 'would-h' }, t('checked.wouldTitle')),
+    el('details', { dataset: { wouldDo: '' } }, el('summary', {}, wouldCount === 1 ? t('checked.wouldShowOne') : t('checked.wouldShowMany', { n: wouldCount })),
     el('ol', { class: 'items' }, d.wouldDo.map(w => w.action === 'append'
       ? el('li', {}, el('div', { class: 'head' }, el('b', {}, t('checked.rowsTitle', { n: w.count ?? w.rows?.length ?? '', sheet: w.to }))), w.rows ? rowsTable(w.rows) : el('pre', {}, w.preview))
       : el('li', {}, el('div', { class: 'head' }, el('span', {}, el('b', {}, w.action === 'post' ? t('items.postTo') : t('items.to')), ' ', w.to),
-        w.subject ? el('span', {}, el('b', {}, t('items.subject')), ' ', w.subject) : null), el('pre', {}, w.preview))))));
+        w.subject ? el('span', {}, el('b', {}, t('items.subject')), ' ', w.subject) : null), el('pre', {}, w.preview)))))));
 
   // The optional test on the person's own list (A4), before turning on (P3 walkthrough M15: it was tucked inside "what a test can't prove").
   const own = tpl ? ownListBranch({ proposalId }, tpl, () => navigate(`/checked/${proposalId}`)) : null;
@@ -101,10 +121,29 @@ export async function render({ params }) {
     tpl && !passed ? el('div', { class: 'actions' }, ownButton) : null, tpl && !passed ? own : null));
 
   // The turn-on card.
-  if (passed && !view.active) root.append(turnOnCard(view, tpl, { checksPassed, ownData }));
+  if (cardShown) root.append(turnOnCard(view, tpl, { checksPassed, ownData }));
   if (view.active) root.append(el('div', { class: 'banner ok', role: 'status' }, el('p', {}, statusChip('works'), ' ', t('checked.alreadyOn')), el('a', { class: 'button primary', href: `#/go-live/${view.flowId}` }, t('checked.useOwnList'))));
+  // Removing a draft the person won't use (M7): drafts left by "Not now" no longer pile up.
+  if (!view.active && view.status === 'proposed') root.append(removeDraft(view));
   root.append(status);
   return root;
+}
+
+/** The note a turn-on records about who decides (kept with the yes; worded in the copy file: UX review m21). */
+export const decisionNote = (choice, who) => choice === 'inform' ? t('turnon.noteInform', { who: who ?? t('who.thatPerson') })
+  : choice === 'team' ? t('turnon.noteTeam', { who: who ?? t('who.thatPerson') }) : null;
+
+function removeDraft(view) {
+  const status = el('div', {});
+  const button = el('button', { type: 'button', dataset: { action: 'remove-draft' } }, t('automations.removeDraft'));
+  button.addEventListener('click', async () => {
+    if (button.getAttribute('aria-disabled') === 'true') return;
+    busy(button, true);
+    try { await api(`/api/proposals/${encodeURIComponent(view.proposalId)}/remove`, {}); say(t('automations.removed')); navigate('/automations'); }
+    catch (error) { showError(status, error, { notDone: t('automations.notRemoved') }); }
+    finally { busy(button, false); }
+  });
+  return el('section', { class: 'inset', dataset: { removeDraft: '' } }, el('p', {}, t('automations.removeLead')), el('div', { class: 'actions' }, button), status);
 }
 
 function turnOnCard(view, tpl, { checksPassed, ownData }) {
@@ -123,17 +162,20 @@ function turnOnCard(view, tpl, { checksPassed, ownData }) {
   if (tpl?.decider) whoEditor.append(choice.node);
   drawWho();
   const buttons = el('div', { class: 'actions stack decision' });
+  // The button stays focusable while it works (M1: a disabled button drops the focus to the page); a refusal puts the focus on the error.
   const turnOn = async (e, note) => {
-    const b = e.currentTarget; b.setAttribute('aria-busy', 'true'); b.disabled = true;
+    const b = e.currentTarget;
+    if (b.getAttribute('aria-disabled') === 'true') return;
+    busy(b, true);
     try {
       const req = await api('/api/request-approval', { proposalId: view.proposalId });
       if (req.status !== 'approved') await decide(e, { kind: 'activation', approvalId: req.approvalId, decision: 'approve', note }, b);
       say(t('turnon.done')); refreshBadge();
       navigate(`/go-live/${view.flowId}?on=1`);
-    } catch (error) { status.replaceChildren(errorPanel(error, { notDone: t('turnon.notOn') })); b.disabled = false; }
-    b.removeAttribute('aria-busy');
+    } catch (error) { showError(status, error, { notDone: t('turnon.notOn') }); }
+    finally { busy(b, false); }
   };
-  const noteFor = () => who === 'inform' ? `${whoName ?? 'The person named'} gets an e-mail; you record their answer here` : who === 'team' ? `${whoName ?? 'The person named'} decides once the Team plan exists; until then you record their answer` : null;
+  const noteFor = () => decisionNote(who, whoName);
   function drawButtons() {
     buttons.replaceChildren();
     if (who === 'team') {
@@ -153,7 +195,7 @@ function turnOnCard(view, tpl, { checksPassed, ownData }) {
     view.basedOn ? el('p', { class: 'wait-text' }, t('turnon.replaces', { version: view.basedOn.version })) : null,
     el('h3', {}, t('turnon.will')), el('ul', {}, (view.promises?.willDo ?? []).map(x => el('li', {}, x))),
     el('h3', {}, t('turnon.wont')), el('ul', {}, (view.promises?.willNotDo ?? []).map(x => el('li', {}, x))),
-    el('h3', {}, t('turnon.done_means')), checkList(view.dryRun.checks, { how: false }),
+    el('h3', { id: 'checks-h' }, t('turnon.done_means')), checkList(view.dryRun.checks, { how: false }), howNote(),
     el('dl', { class: 'facts' }, el('dt', {}, t('make.usesAI')), el('dd', {}, view.usesAI ? t('turnon.aiYes') : t('turnon.aiNo')),
       el('dt', {}, t('turnon.testedOn')), el('dd', {}, t(ownData ? 'turnon.testedYours' : 'turnon.testedPretend', { passed: checksPassed, total: view.dryRun.checks.length })),
       el('dt', {}, t('turnon.who')), whoLine,

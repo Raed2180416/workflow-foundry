@@ -9,6 +9,8 @@ import path from 'node:path';
 import { journey, closeBrowser, assertBudget, fixturePath, browser, NOW } from './harness.mjs';
 import { invoiceFlowOn, liveInvoices } from '../../../onboarding/test/helpers.mjs';
 import { Batches, listDigest } from '../../../onboarding/batch.mjs';
+import { rememberAnswers } from '../../../onboarding/data-answers.mjs';
+import { preview as csvPreview } from '../../../onboarding/csv.mjs';
 
 after(closeBrowser);
 
@@ -18,6 +20,8 @@ const text = async (page, sel) => (await page.locator(sel).first().textContent()
 async function invoice(opts) {
   return journey({ name: 'p2-invoice', budgets: BUDGETS, ...opts }, async ({ page, person, shot, mark, app, log }) => {
     const checks = log.checks = {};
+    // A real cost the counts leave out (UX review M9): today someone technical installs Node 24 and starts Foundry (Quickstart, "I don't code").
+    person.precondition('Foundry is installed (Node 24) and started, today by someone technical (Quickstart: "I don\'t code"); not counted');
     await shot('home', { note: 'cards first; nothing asked yet' });
     await person.click(page.locator('[data-template="invoice-chase"] a.button'));
     await page.waitForSelector('[data-action="test"]');
@@ -124,7 +128,7 @@ test('P2 edges at 390 light: no match creates nothing; a suggestion; nothing to 
     // (a) Something Foundry can't make: nothing is created and the cards are right there.
     await person.fill(page.locator('#describe-box'), 'book me a flight to Lisbon');
     await person.key('Enter');
-    await page.waitForSelector('main h1:has-text("I can\'t make that yet")');
+    await page.waitForSelector('main h1:has-text("Foundry can\'t make that yet")');
     checks.noMatch = await text(page, 'main h1');
     assert.equal(await page.locator('main [data-template]').count() >= 5, true, 'every card is offered');
     assert.equal(created(), 0, 'nothing was created');
@@ -184,6 +188,9 @@ test('P2 the next day: the bookmark says the one command, which opens Foundry; y
   await journey({ name: 'p2-next-day', siteOptions: { asOf: () => NOW + DAY, now: () => NOW + DAY },
     before: async app => {
       await invoiceFlowOn(app); liveInvoices(app);
+      // Yesterday's upload went through the page, which keeps the answers given about the file (UX review m4): day first.
+      const pv = csvPreview({ template: 'invoice-chase', sheet: 'invoices', text: readFileSync(fixturePath('invoices-accounting-export.csv'), 'utf8') });
+      rememberAnswers(app.root, { template: 'invoice-chase', sheet: 'invoices', header: pv.columns, questions: pv.questions, answers: { 'dateOrder:due': 'dmy' }, now: () => NOW });
       const yesterday = new Date(NOW); utimesSync(path.join(app.worldDir, 'sheets', 'invoices.json'), yesterday, yesterday);
       const batches = new Batches(app, { now: () => NOW });
       const b = await batches.preview('invoice-chase');
@@ -217,7 +224,10 @@ test('P2 the next day: the bookmark says the one command, which opens Foundry; y
     await person.click(page.locator('[data-action="replace-stale"]'));
     await person.upload(page.locator('[data-sheet="invoices"] input[type=file]'), fixturePath('invoices-accounting-export.csv'));
     await page.waitForSelector('[data-question="dateOrder:due"]');
-    await person.choose(page.locator('[data-question="dateOrder:due"] input[value="dmy"]'));
+    // The same export as yesterday: its date order is already chosen and says so; it is not asked again (UX review m4, WCAG 3.3.7).
+    assert.equal(await page.locator('[data-question="dateOrder:due"] input[value="dmy"]').isChecked(), true, 'yesterday\'s answer is already chosen');
+    checks.remembered = await text(page, '[data-remembered="dateOrder:due"]');
+    await shot('date-order-remembered', { note: 'the date order answered yesterday is already chosen, and the page says so; it can be changed' });
     await person.click(page.locator('[data-action="use-columns"]'));
     await page.waitForSelector('[data-action="batch-approve"]', { timeout: 30000 });
     checks.secondList = await page.locator('[data-decision-card][data-batch] li[data-item]').evaluateAll(li => li.map(x => x.querySelector('.head')?.textContent.replace(/\s+/g, ' ').trim()));

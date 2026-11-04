@@ -2,22 +2,27 @@
 // paused actions, and the approver's answers to record (P3 walkthrough B4: "you record the decision here" had no screen behind it).
 // Only a click on one of these cards decides (SPEC R5).
 import { el, t, rich, api, navigate, say, decide, refreshBadge } from '../site.js';
-import { batchCard, actionCard, checkList, errorPanel } from '../components/ui.js';
-import { when } from '../components/dom.js';
+import { batchCard, actionCard, checkList, showError, busy } from '../components/ui.js';
+import { when, id as uid } from '../components/dom.js';
+import { decisionNote } from './checked.js';
 
 function activationCard(a, decider, rerender) {
   const headId = `act-${a.approvalId}`;
   const status = el('div', {});
-  // The same note the turn-on card records, from the choice kept with the automation (P3 walkthrough B3).
-  const note = decider?.choice === 'team' ? `${decider.who ?? 'The person named'} decides once the Team plan exists; until then you record their answer`
-    : decider?.choice === 'inform' ? `${decider.who ?? 'The person named'} gets an e-mail; you record their answer here` : null;
+  // The same note the turn-on card records, from the choice kept with the automation (P3 walkthrough B3), worded in the copy file (m21).
+  const note = decisionNote(decider?.choice ?? null, decider?.who ?? null);
+  // One press decides (m9): a second press, or the other button while one works, does nothing; busy ends on an error, which gets the focus.
+  let working = false;
   const press = approved => async e => {
-    const b = e.currentTarget; b.setAttribute('aria-busy', 'true');
+    const b = e.currentTarget;
+    if (working) return;
+    working = true; busy(b, true);
     try {
       const r = await decide(e, { kind: 'activation', approvalId: a.approvalId, decision: approved ? 'approve' : 'reject', note }, b);
       say(approved ? t('turnon.done') : t('waiting.notTurnedOn')); refreshBadge();
       if (approved && r.status === 'approved') navigate(`/go-live/${a.flowId}?on=1&agent=1`); else rerender();
-    } catch (error) { status.replaceChildren(errorPanel(error)); b.removeAttribute('aria-busy'); }
+    } catch (error) { showError(status, error, { notDone: t('action.notDecided') }); }
+    finally { working = false; busy(b, false); }
   };
   return el('article', { class: 'card emph waiting', 'aria-labelledby': headId, dataset: { decisionCard: '', activation: a.approvalId } },
     el('h2', { id: headId }, t('turnon.title', { title: a.title, version: a.version })),
@@ -25,7 +30,7 @@ function activationCard(a, decider, rerender) {
     el('h3', {}, t('waiting.steps')), el('ol', {}, a.summary.steps.map(s => el('li', {}, s.text, s.asksFirst ? el('span', { class: 'muted' }, ` ${t('waiting.asksFirst')}`) : ''))),
     el('h3', {}, t('turnon.done_means')), checkList(a.summary.checks.map(c => ({ ...c, passed: a.practice.find(p => p.id === c.id)?.passed ?? null }))),
     el('p', { class: 'muted' }, t('waiting.ticksFromTest')),
-    el('div', { class: 'actions stack decision' }, el('button', { type: 'button', class: 'primary', on: { click: press(true) } }, t('turnon.yes')), el('button', { type: 'button', on: { click: press(false) } }, t('waiting.no'))),
+    el('div', { class: 'actions stack decision' }, el('button', { type: 'button', class: 'primary', dataset: { action: 'activation-yes' }, on: { click: press(true) } }, t('turnon.yes')), el('button', { type: 'button', dataset: { action: 'activation-no' }, on: { click: press(false) } }, t('waiting.no'))),
     status);
 }
 
@@ -34,18 +39,22 @@ function answersCard(view, rerender) {
   const status = el('div', { role: 'status' });
   const headId = `answers-${view.flowId}`;
   const record = (id, answer) => async e => {
-    const b = e.currentTarget; b.setAttribute('aria-busy', 'true');
+    const b = e.currentTarget;
+    if (b.getAttribute('aria-disabled') === 'true') return;
+    busy(b, true);
     try { await api('/api/answers', { flowId: view.flowId, id, answer }); say(t('waiting.recorded', { answer: t(`waiting.${answer}`) })); refreshBadge(); rerender(); }
-    catch (error) { status.replaceChildren(errorPanel(error)); b.removeAttribute('aria-busy'); }
+    catch (error) { showError(status, error, { notDone: t('waiting.notRecorded') }); }
+    finally { busy(b, false); }
   };
   return el('article', { class: 'card', 'aria-labelledby': headId, dataset: { answers: view.flowId } },
     el('h2', { id: headId }, view.card ? t('waiting.answersFor', { card: view.card }) : t('waiting.answersTitle')),
     el('p', {}, t('waiting.answersLead', { who: view.approver ?? t('who.thatPerson') })),
-    el('ul', { class: 'items' }, view.waiting.map(w => el('li', { dataset: { claim: w.id } },
-      el('p', {}, t('waiting.claimLine', { id: w.id, person: w.person ?? '', amount: w.amount ?? '', reason: w.reason ?? '' })),
+    // Each Approved / Rejected is described by its claim's line, so a screen reader hears which claim it records (UX review m13).
+    el('ul', { class: 'items' }, view.waiting.map(w => { const lineId = uid('claim'); return el('li', { dataset: { claim: w.id } },
+      el('p', { id: lineId }, t('waiting.claimLine', { id: w.id, person: w.person ?? '', amount: w.amount ?? '', reason: w.reason ?? '' })),
       w.answer ? el('p', { class: 'ok-text' }, t('waiting.recorded', { answer: t(`waiting.${w.answer.answer}`) }), ' ', el('span', { class: 'muted small' }, when(w.answer.at)))
-        : el('div', { class: 'actions' }, el('button', { type: 'button', dataset: { action: 'answer-approved' }, on: { click: record(w.id, 'approved') } }, t('waiting.approved')),
-          el('button', { type: 'button', dataset: { action: 'answer-rejected' }, on: { click: record(w.id, 'rejected') } }, t('waiting.rejected')))))),
+        : el('div', { class: 'actions' }, el('button', { type: 'button', 'aria-describedby': lineId, dataset: { action: 'answer-approved' }, on: { click: record(w.id, 'approved') } }, t('waiting.approved')),
+          el('button', { type: 'button', 'aria-describedby': lineId, dataset: { action: 'answer-rejected' }, on: { click: record(w.id, 'rejected') } }, t('waiting.rejected')))); })),
     status);
 }
 

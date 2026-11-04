@@ -44,7 +44,9 @@ export function evidenceBundle(app, runId, { batches = null, date = new Date() }
   });
   const view = raw.workflow ? explainRun(app.foundry.publicRun(app.foundry.store.run(runId)), raw.workflow, raw.chain.events) : null;
   const activations = app.ledger.forFlow(raw.header.workflowId).filter(a => a.workflowHash === raw.header.workflowHash);
-  const approved = activations.find(a => a.status === 'approved') ?? null;
+  // The yes in force when the run was made (UX review M7: a version can be turned off and on again, so there can be more than one yes).
+  const yeses = activations.filter(a => a.status === 'approved');
+  const approved = yeses.filter(a => Number.isFinite(a.decidedAt) && a.decidedAt <= raw.header.createdAt).sort((x, y) => y.decidedAt - x.decidedAt)[0] ?? yeses[0] ?? null;
   const proposal = approved ? app.foundry.store.proposal(approved.proposalId) : null;
   const dry = approved ? app.ledger.latestDryRun(approved.proposalId) : null;
   const batch = batches ? batches.all().find(b => b.result?.runId === runId) ?? null : null;
@@ -71,7 +73,8 @@ export function evidenceBundle(app, runId, { batches = null, date = new Date() }
     workflow: { hash: raw.header.workflowHash, version: raw.workflow?.version ?? null, title: raw.workflow?.title ?? null, note: raw.workflowNote, body: raw.workflow },
     turnedOn: approved ? { approvalId: approved.id, by: approved.principal, identityVerified: false, howKnown: HOW_KNOWN[approved.channel] ?? null, channel: approved.channel, channelWords: CHANNEL_WORDS[approved.channel] ?? approved.channel,
       requestedAt: iso(approved.requestedAt), decidedAt: iso(approved.decidedAt), note: approved.note, proposalId: approved.proposalId, proposalStatus: proposal?.status ?? null } : null,
-    ledger: activations.map(a => ({ approvalId: a.id, status: a.status, by: a.principal, channel: a.channel, decidedAt: iso(a.decidedAt), workflowHash: a.workflowHash })),
+    ledger: activations.map(a => ({ approvalId: a.id, status: a.status, by: a.principal, channel: a.channel, decidedAt: iso(a.decidedAt), workflowHash: a.workflowHash,
+      ...(a.turnedOff ? { turnedOff: { at: iso(a.turnedOff.at), by: a.turnedOff.principal, channel: a.turnedOff.channel } } : {}) })),
     practice: dry ? { dryRunId: dry.id, passed: dry.passed, at: iso(dry.at), workflowHash: dry.workflowHash, dataSource: dry.body.dataSource ?? 'template', checks: dry.body.checks } : null,
     actionDecisions: decisions,
     batch: batch ? { batchId: batch.batchId, decision: batch.decision, asOf: batch.input?.now ?? null, createdAt: batch.createdAt, items: batch.items.length, made: batch.result?.made ?? null,
@@ -191,6 +194,17 @@ export function checkEvidence(bundle) {
   }
   for (const l of lines.filter(x => x?.kind === 'turn-on' && x.workflowHash === wf?.hash)) if (!ledger.some(a => a?.approvalId === l.approvalId)) problems.push(`turn-on history: it leaves out the decision in log line ${l.seq}`);
   said(fresh(start), `turn-on history (${ledger.length}): every decision in it matches a logged decision, and none is left out`);
+
+  // Turning off (UX review M7): each turn-off in the history matches its logged line, and no logged turn-off of this version is left out.
+  start = problems.length;
+  const offs = ledger.filter(a => a?.turnedOff);
+  for (const a of offs) {
+    const l = lines.find(x => x?.kind === 'turn-off' && x.approvalId === a.approvalId);
+    if (!l) problems.push(`turn-off history: turning off ${a.approvalId} has no line in the decision log in this file`);
+    else if (!sameLine(l, a.turnedOff, [['principal', 'by'], ['channel', 'channel']]) || l.workflowHash !== a.workflowHash) problems.push(`turn-off history: turning off ${a.approvalId} does not match its line in the decision log`);
+  }
+  for (const l of lines.filter(x => x?.kind === 'turn-off' && x.workflowHash === wf?.hash)) if (!offs.some(a => a?.approvalId === l.approvalId)) problems.push(`turn-off history: it leaves out the turn-off in log line ${l.seq}`);
+  said(fresh(start), `turn-off history (${offs.length}): every turn-off matches a logged one, and none is left out`);
 
   // The list: the person's decision, every item's fingerprint from its text, the fingerprint the page showed, and who started the run.
   start = problems.length;

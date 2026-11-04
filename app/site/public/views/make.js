@@ -1,7 +1,8 @@
 // The make page (#/make/:template): the card's restatement, its visible defaults, and only the questions a wrong guess would make
 // harmful (SPEC §9.3, R2). "Test it" makes a version-bound draft with the form builder ($0, no AI) and tests it on pretend data.
 import { el, t, api, templates, memory, navigate, say } from '../site.js';
-import { askField, errorPanel, stepper, whoDecides, paidBadge, statusChip } from '../components/ui.js';
+import { askField, showError, stepper, whoDecides, busy } from '../components/ui.js';
+import { focusOn } from '../site.js';
 import { id as uid } from '../components/dom.js';
 
 const shown = (slot, v) => slot.type === 'boolean' ? (v ? t('make.yes') : t('make.no')) : v === '' || v === null || v === undefined ? (slot.emptyLabel ?? t('make.none')) : String(v);
@@ -30,7 +31,7 @@ export async function render({ params, query }) {
   const first = await api('/api/restate', { template: tpl.id, settings: { ...base, ...settings() } }).catch(() => null);
   const setBy = Object.fromEntries((first?.setBy ?? []).map(x => [x.slot, x]));
 
-  // ---------------------------------------------------------------- the restatement ("I'll do this"), refreshed as the person edits
+  // ---------------------------------------------------------------- the restatement ("Foundry will:"), refreshed as the person edits
   const willList = el('ul', { id: 'will-do' }), wontList = el('ul', {}), problemsBox = el('div', { role: 'status' });
   let timer = null;
   const restate = () => { clearTimeout(timer); timer = setTimeout(async () => {
@@ -122,31 +123,45 @@ export async function render({ params, query }) {
   }
 
   // ---------------------------------------------------------------- visible defaults (editable chips)
+  // Built once; a change updates the shown value in place and leaves every control, its editor and the focus where they are (UX review
+  // M1: the list used to be rebuilt with every editor closed, which dropped the focus to the top of the page). Each "Change" button is
+  // described by its setting's name, so a screen reader hears which one it changes (m13).
   const defaultsList = el('ul', { class: 'prose' });
+  const valueSpans = {};
   function renderDefaults() {
     defaultsList.replaceChildren(...tpl.slots.filter(s => s.kind === 'setting').map(s => {
-      const editorId = uid(`edit-${s.name}`);
-      const valueSpan = el('span', { class: 'chip' }, shown(s, value(s.name)), s.unit && s.type !== 'boolean' ? ` ${s.unit}` : '');
+      const editorId = uid(`edit-${s.name}`), nameId = uid(`name-${s.name}`);
+      const valueSpan = valueSpans[s.name] = el('span', { class: 'chip', dataset: { value: s.name } });
+      const number = ['integer', 'number'].includes(s.type);
       let editor;
       if (s.type === 'boolean') editor = el('label', { class: 'check-row' }, el('input', { type: 'checkbox', checked: !!value(s.name), on: { change: e => { changed[s.name] = e.target.checked; refresh(); } } }), el('span', {}, s.label));
       else if (s.type === 'enum') editor = el('select', { 'aria-label': s.label, on: { change: e => { changed[s.name] = e.target.value; refresh(); } } }, s.values.map(v => el('option', { value: v, selected: v === value(s.name) }, v)));
-      else editor = el('input', { type: ['integer', 'number'].includes(s.type) ? 'number' : 'text', 'aria-label': s.label, value: value(s.name) ?? '', ...(['integer', 'number'].includes(s.type) ? { min: s.min ?? 0, max: s.max ?? undefined, step: s.type === 'integer' ? 1 : 'any' } : {}),
-        on: { change: e => { changed[s.name] = ['integer', 'number'].includes(s.type) ? (e.target.value === '' ? s.default : Number(e.target.value)) : e.target.value; refresh(); } } });
+      else editor = el('input', { type: number ? 'number' : 'text', 'aria-label': s.label, value: value(s.name) ?? '', ...(number ? { min: s.min ?? 0, max: s.max ?? undefined, step: s.type === 'integer' ? 1 : 'any' } : {}),
+        on: { change: e => { changed[s.name] = number ? (e.target.value === '' ? s.default : Number(e.target.value)) : e.target.value; refresh(); } } });
       const holder = el('div', { id: editorId, hidden: true }, editor);
-      const toggle = el('button', { type: 'button', class: 'link', 'aria-expanded': 'false', 'aria-controls': editorId, on: { click: () => { const open = holder.hidden; holder.hidden = !open; toggle.setAttribute('aria-expanded', String(open)); if (open) (holder.querySelector('input,select'))?.focus(); } } }, t('make.change'));
-      return el('li', { dataset: { setting: s.name } }, el('span', {}, s.label, ': '), valueSpan, ' ', toggle, holder);
+      const toggle = el('button', { type: 'button', class: 'link', 'aria-expanded': 'false', 'aria-controls': editorId, 'aria-describedby': nameId, dataset: { change: s.name },
+        on: { click: () => { const open = holder.hidden; holder.hidden = !open; toggle.setAttribute('aria-expanded', String(open)); if (open) (holder.querySelector('input,select'))?.focus(); } } }, t('make.change'));
+      return el('li', { dataset: { setting: s.name } }, el('span', { id: nameId }, s.label), el('span', {}, ': '), valueSpan, ' ', toggle, holder);
     }));
+    showValues();
   }
-  function refresh() { const focusSetting = document.activeElement?.closest?.('[data-setting]')?.dataset.setting; renderDefaults(); renderAsks(); restate();
-    if (focusSetting) defaultsList.querySelector(`[data-setting="${focusSetting}"] input, [data-setting="${focusSetting}"] select`)?.focus(); }
+  function showValues() {
+    for (const s of tpl.slots.filter(x => x.kind === 'setting')) {
+      const text = `${shown(s, value(s.name))}${s.unit && s.type !== 'boolean' ? ` ${s.unit}` : ''}`;
+      if (valueSpans[s.name] && valueSpans[s.name].textContent !== text) valueSpans[s.name].textContent = text;
+    }
+  }
+  function refresh() { showValues(); renderAsks(); restate(); }
 
   // ---------------------------------------------------------------- test it
   const status = el('div', {});
   const testButton = el('button', { type: 'button', class: 'primary', dataset: { action: 'test' } }, t('make.test', { noun: tpl.noun }));
+  // While it works the button stays focusable and refuses a second press (M1, m9); every outcome puts the focus somewhere useful.
   testButton.addEventListener('click', async () => {
+    if (testButton.getAttribute('aria-disabled') === 'true') return;
     status.replaceChildren();
     for (const n of Object.values(askNodes)) n.showError(null);
-    testButton.setAttribute('aria-busy', 'true'); testButton.disabled = true;
+    busy(testButton, true);
     try {
       const p = await api('/api/propose', { template: tpl.id, settings: settings(), ...(flowId ? { flowId } : {}) });
       if (p.status === 'needs_answers') {
@@ -154,11 +169,11 @@ export async function render({ params, query }) {
         const first = p.questions.map(q => askNodes[q.slot]).find(Boolean);
         first?.querySelector('input')?.focus();
         say(t('make.answerFirstSay', { n: p.questions.length }), { assertive: true });
-        if (!first) status.replaceChildren(errorPanel({ message: p.questions.map(q => q.question).join(' ') }, { notDone: t('make.nothingMade'), action: { label: t('make.fix'), onClick: () => questions.querySelector('input')?.focus() } }));
+        if (!first) showError(status, { message: p.questions.map(q => q.question).join(' ') }, { notDone: t('make.nothingMade'), action: { label: t('make.fix'), onClick: () => questions.querySelector('input')?.focus() } });
         return;
       }
-      if (p.status === 'no_change') { status.replaceChildren(el('div', { class: 'banner', role: 'status' }, el('p', {}, t('make.noChange')), el('a', { href: `#/automations/${p.flowId}` }, t('make.openAutomation')))); return; }
-      if (p.status !== 'proposed') { status.replaceChildren(errorPanel({ message: p.reply ?? t('errors.unknown'), problem: { what: p.reply, next: p.refusals?.length ? t('make.refusedNext') : (p.problems ?? []).filter(x => x !== p.reply).join(' ') || null } }, { notDone: t('make.nothingMade'), action: { label: t('make.fix'), onClick: () => testButton.focus() } })); return; }
+      if (p.status === 'no_change') { status.replaceChildren(el('div', { class: 'banner', role: 'status' }, el('p', {}, t('make.noChange')), el('a', { href: `#/automations/${p.flowId}` }, t('make.openAutomation')))); focusOn(status.querySelector('p')); return; }
+      if (p.status !== 'proposed') { showError(status, { message: p.reply ?? t('errors.unknown'), problem: { what: p.reply, next: p.refusals?.length ? t('make.refusedNext') : (p.problems ?? []).filter(x => x !== p.reply).join(' ') || null } }, { notDone: t('make.nothingMade'), action: { label: t('make.fix'), onClick: () => testButton.focus() } }); return; }
       // "Who decides the bigger ones" is kept with the automation, so a reload or the Waiting page records the same answer (P3 B3).
       if (decider) { memory[`decider:${p.proposalId}`] = { choice: decider.value(), who: value(tpl.decider) }; await api('/api/deciders', { flowId: p.flowId, choice: decider.value(), who: value(tpl.decider) }).catch(() => null); }
       say(t('make.testing', { noun: tpl.noun }));
@@ -167,14 +182,15 @@ export async function render({ params, query }) {
       memory[`tested:${p.proposalId}`] = d;
       navigate(`/checked/${p.proposalId}`);
     } catch (error) {
-      status.replaceChildren(errorPanel(error, { notDone: t('make.nothingMade'), action: { label: t('make.tryAgain'), onClick: () => testButton.click() } }));
-    } finally { testButton.removeAttribute('aria-busy'); testButton.disabled = false; }
+      showError(status, error, { notDone: t('make.nothingMade'), action: { label: t('make.tryAgain'), onClick: () => testButton.click() } });
+    } finally { busy(testButton, false); }
   });
 
   renderDefaults(); renderAsks(); restate();
+  // The heading first, then where the person is (UX review m3: focus starts at the h1, so nothing important may sit above it).
   return el('div', { dataset: { layout: 'narrow' } },
-    stepper('settings'),
     el('h1', {}, tpl.card),
+    stepper('settings'),
     flowId ? el('p', { class: 'banner', role: 'status' }, t('make.changing')) : null,
     el('section', { 'aria-labelledby': 'will-h' }, el('h2', { id: 'will-h' }, t('make.willTitle')), willList,
       el('h3', { id: 'wont-h' }, t('make.wontTitle')), wontList),

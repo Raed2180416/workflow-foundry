@@ -87,7 +87,8 @@ export function claimRef(id) {
   if (!c) return document.createTextNode(id);
   return el('span', { class: 'claim', dataset: { claim: id } }, c.text, ' ', el('span', { class: 'chip', dataset: { claimStatus: c.status ?? '' } }, c.status ?? ''), ' ',
     c.qualifier ? [el('span', { class: 'muted', dataset: { claimQualifier: '' } }, `(${c.qualifier})`), ' '] : null,
-    el('a', { href: `#/claims?c=${id}`, class: 'small', 'aria-label': t('claims.sourceFor', { short: c.short }) }, t('claims.source')));
+    // UX review M6 (WCAG 2.5.3): the link's name starts with the word it shows ("source"), then says which claim.
+    el('a', { href: `#/claims?claim=${id}`, class: 'small', 'aria-label': t('claims.sourceFor', { short: c.short }) }, t('claims.source')));
 }
 export const claims = () => state.claims ?? {};
 
@@ -135,13 +136,59 @@ export function say(message, { assertive = false } = {}) {
   region.textContent = '';
   setTimeout(() => { region.textContent = message; }, 30);
 }
+// The toast is a visual echo only (aria-hidden): what it says is also said in the polite live region, which is always in the page, so a
+// screen reader hears it (UX review m2: a region going from display:none to shown is not reliably announced). It moves to the top of the
+// window when it would cover the control that has the focus (m20, WCAG 2.4.11), and nothing that matters is said only in a toast.
 let toastTimer = null;
+const overlaps = (a, b) => a && b && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+function placeToast() {
+  const node = document.getElementById('toast');
+  if (!node || node.hidden) return;
+  node.classList.remove('top');
+  const focused = document.activeElement && document.activeElement !== document.body ? document.activeElement.getBoundingClientRect() : null;
+  if (overlaps(focused, node.getBoundingClientRect())) node.classList.add('top');
+}
 export function toast(message) {
   const node = document.getElementById('toast');
   node.textContent = message; node.hidden = false;
+  say(message);
+  placeToast();
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { node.hidden = true; }, 4000);
 }
 const clearToast = () => { clearTimeout(toastTimer); const node = document.getElementById('toast'); if (node) node.hidden = true; };
+
+// ------------------------------------------------------------------------------------------------ focus
+/** Move focus to a node (a heading or a region gets tabindex=-1 first). Returns whether it took the focus. */
+export function focusOn(node, { scroll = true } = {}) {
+  if (!node?.isConnected) return false;
+  if (!node.matches('a[href], button, input, select, textarea, summary, [tabindex]')) node.setAttribute('tabindex', '-1');
+  node.focus({ preventScroll: !scroll });
+  return document.activeElement === node;
+}
+// UX review M1 (WCAG 2.4.3): when the control that had the focus disappears (a part of the page is redrawn) or stops being focusable,
+// the focus goes to the nearest heading of the part that still stands, never to the top of the page. Views also move the focus on purpose
+// where they know better; this catches the rest.
+let lastFocus = { node: null, chain: [] };
+function restoreFocus() {
+  const a = document.activeElement;
+  if (a && a !== document.body && a !== document.documentElement) return;
+  const lost = lastFocus.node;
+  if (!lost || (lost.isConnected && !lost.disabled && lost.getClientRects().length)) return;
+  const view = document.getElementById('view');
+  const standing = lastFocus.chain.find(n => n.isConnected && view?.contains(n) && n.getClientRects().length);
+  if (!standing) return;
+  const heading = standing.matches('h1, h2, h3') ? standing : standing.querySelector('h2, h3, h1') ?? standing.closest('section, article')?.querySelector('h2, h3') ?? view.querySelector('h1');
+  focusOn(heading ?? standing, { scroll: false });
+}
+function guardFocus() {
+  document.addEventListener('focusin', e => {
+    const chain = []; for (let n = e.target?.parentElement; n && n.id !== 'view'; n = n.parentElement) chain.push(n);
+    lastFocus = { node: e.target, chain };
+  });
+  const check = () => { setTimeout(restoreFocus, 0); };
+  new MutationObserver(check).observe(document.getElementById('view'), { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'hidden'] });
+  document.addEventListener('focusin', placeToast);
+}
 let waitingCount = 0, pageTitle = 'Foundry';
 function setTitle(title) { pageTitle = title; document.title = `${waitingCount ? `(${waitingCount}) ` : ''}${title} · ${t('shell.brand')}`; }
 
@@ -173,30 +220,47 @@ async function render() {
   document.querySelector('.menu-button')?.setAttribute('aria-expanded', 'false');
   clearToast();
   if (!state.token && !NO_KEY_VIEWS.has(route.view)) { renderNoToken(); return; }
-  node.setAttribute('aria-busy', 'true');
+  // While a page loads (UX review m9): a visible "Loading" line, and the page being left can't be used (inert), so a click on it does
+  // nothing half-way through a change of page. A control in the page that had the focus would lose it to the top of the document when
+  // the page turns inert (M1), so the focus waits on the "Loading" line until the new page's heading takes it.
+  const loading = document.getElementById('loading');
+  if (loading) loading.hidden = false;
+  if (loading && node.contains(document.activeElement)) loading.focus({ preventScroll: true });
+  node.setAttribute('aria-busy', 'true'); node.inert = true;
   let content;
   try {
     const mod = await import(`./views/${route.view}.js`);
     content = await mod.render({ params: route.params, query: route.query, path: route.path });
   } catch (error) {
+    // A key that went out of date while the tab was open (Foundry started again): the page that says the one command, not an error (m1).
+    if (!state.token && !NO_KEY_VIEWS.has(route.view)) { if (myId === state.renderId) { endLoading(node); renderNoToken(); } return; }
     const { errorPanel } = await import('./components/ui.js');
-    content = el('div', {}, el('h1', {}, t('errors.pageTitle')), errorPanel(error, { action: { label: t('common.backHome'), href: '#/' } }));
+    content = el('div', {}, el('h1', {}, t('errors.pageTitle')), errorPanel(error, { notDone: t('errors.nothingChanged'), action: { label: t('common.backHome'), href: '#/' } }));
     console.error(error);
   }
   if (myId !== state.renderId) return; // a newer navigation won
+  if (!state.token && !NO_KEY_VIEWS.has(route.view)) { endLoading(node); renderNoToken(); return; }
   clear(node);
   node.className = content?.dataset?.layout === 'narrow' ? 'narrow' : '';
   append(node, content);
-  node.removeAttribute('aria-busy');
+  endLoading(node);
   const h1 = node.querySelector('h1');
-  if (h1) { h1.setAttribute('tabindex', '-1'); setTitle(h1.textContent.trim()); if (!state.first) h1.focus(); }
+  if (h1) { h1.setAttribute('tabindex', '-1'); setTitle(h1.textContent.trim()); }
+  // A page can ask for a part of it to be shown and focused (a claim linked from another page: UX review m15). The scroll happens after
+  // the page is in the document, never before it.
+  const target = content?.dataset?.focus ? node.querySelector(content.dataset.focus) : null;
+  if (target) { focusOn(target, { scroll: false }); target.scrollIntoView({ block: 'start' }); }
+  else { if (h1 && !state.first) h1.focus(); window.scrollTo(0, 0); }
+  // Never left on nothing after a change of page (the "Loading" line that held the focus is hidden now).
+  if (!state.first && (document.activeElement === document.body || !document.activeElement)) node.focus({ preventScroll: true });
   state.first = false;
-  window.scrollTo(0, 0);
 }
+function endLoading(node) { node.removeAttribute('aria-busy'); node.inert = false; const loading = document.getElementById('loading'); if (loading) loading.hidden = true; }
 // Pages that hold no workspace data and need no key: the way back must never need the key it is about (P2 walkthrough B2).
 const NO_KEY_VIEWS = new Set(['help', 'glossary']);
 function renderNoToken() {
   const node = clear(main());
+  endLoading(node);
   const command = el('pre', {}, 'node app/cli.mjs open');
   // The exact command for this folder (absolute path, this workspace): the only thing the server says without a key.
   fetch('/open-info', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(info => { if (info?.open) command.textContent = info.open; }).catch(() => {});
@@ -204,6 +268,8 @@ function renderNoToken() {
   append(node, el('div', { dataset: { noKey: state.codeProblem ?? (state.staleToken ? 'stale' : 'none') } }, el('h1', { tabindex: '-1' }, t('shell.noTokenTitle')), el('p', { class: 'lead' }, lead),
     command, el('p', {}, t('shell.noTokenOwnTerminal')), el('p', {}, t('shell.noTokenNotRunning')), el('p', {}, el('a', { href: '#/help' }, t('shell.noTokenHelp')))));
   setTitle(t('shell.noTokenTitle'));
+  node.querySelector('h1')?.focus();
+  updateNotice(0);
 }
 
 // ------------------------------------------------------------------------------------------------ badge
@@ -211,20 +277,31 @@ export async function refreshBadge() {
   if (!state.token) return;
   try {
     const [o, b] = await Promise.all([api('/api/overview'), api('/api/batches')]);
+    const before = waitingCount;
     waitingCount = (o.inbox?.count ?? 0) + (b.open?.length ?? 0);
-    const badge = document.getElementById('waiting-count');
-    badge.hidden = !waitingCount; badge.textContent = String(waitingCount);
-    badge.setAttribute('aria-label', t('nav.waitingCount', { n: waitingCount }));
-    // The page follows along when something new waits (a list your coding agent asked for, say): a notice on every page but
-    // Waiting itself and Home (which has its own), so nobody has to know to look (P1 walkthrough M13).
-    const notice = document.getElementById('notice'), route = parse();
-    if (notice) {
-      const show = waitingCount > 0 && !['waiting', 'home'].includes(route.view);
-      notice.hidden = !show;
-      if (show) notice.replaceChildren(el('p', {}, t('shell.waitingNotice', { n: waitingCount }), ' ', el('a', { href: '#/waiting' }, t('shell.waitingNoticeLink'))));
-    }
+    // The link's name is "Waiting for you (2)": the count is said once, inside the name (UX review m16), and only changes when it does.
+    const badge = document.getElementById('waiting-count'), srCount = document.getElementById('waiting-count-sr');
+    if (badge.textContent !== String(waitingCount) || badge.hidden !== !waitingCount) { badge.hidden = !waitingCount; badge.textContent = String(waitingCount); }
+    const sr = waitingCount ? t('nav.waitingCount', { n: waitingCount }) : '';
+    if (srCount && srCount.textContent !== sr) srCount.textContent = sr;
+    updateNotice(waitingCount);
+    // Something new waits: said once, politely, on any page (M2: the notice itself is not a live region, so a poll never repeats it).
+    if (waitingCount > before && !state.firstBadge) say(t('shell.waitingNotice', { n: waitingCount }));
+    state.firstBadge = false;
     setTitle(pageTitle);
   } catch { /* the badge is a convenience; the page keeps working */ }
+}
+// The page follows along when something new waits (a list your coding agent asked for, say): a notice on every page but Waiting itself and
+// Home (which has its own), so nobody has to know to look (P1 walkthrough M13). UX review M2: the notice is changed only when what it says
+// changes, never on every poll.
+function updateNotice(n) {
+  const notice = document.getElementById('notice');
+  if (!notice) return;
+  const route = parse(), show = n > 0 && !!state.token && !['waiting', 'home'].includes(route.view);
+  if (notice.hidden !== !show) notice.hidden = !show;
+  if (!show || notice.dataset.count === String(n)) return;
+  notice.dataset.count = String(n);
+  notice.replaceChildren(el('p', {}, t('shell.waitingNotice', { n }), ' ', el('a', { href: '#/waiting' }, t('shell.waitingNoticeLink'))));
 }
 
 // ------------------------------------------------------------------------------------------------ start
@@ -240,9 +317,10 @@ async function start() {
   window.addEventListener('hashchange', async () => {
     // A link with a one-time code pasted into this tab: trade it and go on, no reload needed (P2 walkthrough B2).
     if (/[?&]c=/.test(location.hash)) { const key = await takeToken(); if (key) { state.token = key; state.staleToken = false; } render(); refreshBadge(); return; }
-    if (location.hash.startsWith('#/') || location.hash === '' || location.hash === '#') render();
+    if (location.hash.startsWith('#/') || location.hash === '' || location.hash === '#') { await render(); updateNotice(waitingCount); }
   });
-  state.first = true;
+  guardFocus();
+  state.first = true; state.firstBadge = true;
   await render();
   refreshBadge();
   setInterval(() => { if (document.visibilityState === 'visible') refreshBadge(); }, 5000);

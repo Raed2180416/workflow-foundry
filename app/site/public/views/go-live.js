@@ -5,28 +5,35 @@
 // the page into a test on the person's list, with a neutral note instead of a red error (P4 M8); a receipt column the file does not
 // have is said plainly (P3 B2); "which of these columns" answers keep the column chooser in step (P2 M2).
 import { el, t, api, templates, navigate, say } from '../site.js';
-import { errorPanel, stepper, dropZone, columnMapper, dataQuestions, batchCard, statusChip, checkList } from '../components/ui.js';
+import { showError, stepper, dropZone, columnMapper, dataQuestions, batchCard, statusChip, checkList, busy } from '../components/ui.js';
 import { when, day, replace } from '../components/dom.js';
+import { focusOn } from '../site.js';
 
-const sameDay = (a, b) => new Date(a).toISOString().slice(0, 10) === new Date(b).toISOString().slice(0, 10);
+// The same calendar day where the person is (UX review m19): the page shows local dates, so "your list is from an earlier day" is
+// counted in local days too, not UTC ones (far from UTC the two disagree for hours each day).
+export const localDay = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+export const sameDay = (a, b) => localDay(a) === localDay(b);
 
 export async function render({ params, query }) {
   const flowId = params[0];
   const [a, list, settings] = await Promise.all([api(`/api/automations/${encodeURIComponent(flowId)}`), templates(), api('/api/settings')]);
   const tpl = list.find(x => x.id === a.template);
   const practiceOnly = settings.mode === 'practice-only';
-  const root = el('div', { dataset: { layout: 'narrow' } }, stepper('goLive'));
-  if (query.get('on') === '1') root.append(el('div', { class: 'banner ok', role: 'status' }, el('p', {}, el('b', {}, t('golive.onTitle')), ' ', query.get('agent') === '1' ? t('golive.onBodyAgent') : t('golive.onBody'))));
-  if (!tpl) { root.append(el('h1', {}, a.title), el('p', {}, t('golive.notCard')), el('a', { class: 'button', href: `#/automations/${flowId}` }, t('common.open'))); return root; }
+  // The heading first, then the step and the "it's on" note (UX review m3).
+  const root = el('div', { dataset: { layout: 'narrow' } });
+  const onBanner = query.get('on') === '1' ? el('div', { class: 'banner ok', role: 'status' }, el('p', {}, el('b', {}, t('golive.onTitle')), ' ', query.get('agent') === '1' ? t('golive.onBodyAgent') : t('golive.onBody'))) : null;
+  if (!tpl) { root.append(el('h1', {}, a.title), onBanner ?? '', el('p', {}, t('golive.notCard')), el('a', { class: 'button', href: `#/automations/${flowId}` }, t('common.open'))); return root; }
   if (!a.active) {
     const draft = a.drafts.find(d => d.dryRun);
-    root.append(el('h1', {}, t('golive.notOnTitle', { card: tpl.card })), el('p', {}, t('golive.notOnBody')),
-      el('div', { class: 'actions' }, draft ? el('a', { class: 'button primary', href: `#/checked/${draft.proposalId}` }, t('golive.toTurnOn')) : el('a', { class: 'button primary', href: `#/make/${tpl.id}` }, t('golive.toMake'))));
+    // Turned off (M7): say so, and the way back is its page (a new yes), not a draft.
+    root.append(el('h1', {}, t(a.turnedOff ? 'golive.offTitle' : 'golive.notOnTitle', { card: tpl.card })), stepper('goLive'), el('p', {}, a.turnedOff ? t('golive.offBody') : t('golive.notOnBody')),
+      el('div', { class: 'actions' }, a.turnedOff ? el('a', { class: 'button primary', href: `#/automations/${flowId}` }, t('golive.toAutomation'))
+        : draft ? el('a', { class: 'button primary', href: `#/checked/${draft.proposalId}` }, t('golive.toTurnOn')) : el('a', { class: 'button primary', href: `#/make/${tpl.id}` }, t('golive.toMake'))));
     return root;
   }
   const sheets = tpl.sheets;
   const plain = sheets.map(s => s.plain).join(t('common.and'));
-  root.append(el('h1', {}, t('golive.title', { plain })), el('p', { class: 'lead' }, t('golive.lead')));
+  root.append(el('h1', {}, t('golive.title', { plain })), stepper('goLive'), onBanner ?? '', el('p', { class: 'lead' }, t('golive.lead')));
   if (practiceOnly) root.append(el('div', { class: 'banner', role: 'note', dataset: { practiceOnly: '' } }, el('p', {}, statusChip('works'), ' ', t('golive.practiceOnly'))));
 
   const batchArea = el('div', {});
@@ -39,8 +46,8 @@ export async function render({ params, query }) {
       if (!a.activeProposalId) throw new Error(t('errors.unknown'));
       await api('/api/practice', { proposalId: a.activeProposalId, ...(practiceDataId ? { practiceDataId } : { useLive: true }) });
       navigate(`/checked/${a.activeProposalId}`);
-    } catch (error) { batchArea.replaceChildren(errorPanel(error, { notDone: t('golive.nothingMade'), action: { label: t('common.tryAgain'), onClick: () => testOnList(button) } })); }
-    finally { button?.removeAttribute('aria-busy'); }
+    } catch (error) { showError(batchArea, error, { notDone: t('golive.nothingMade'), action: { label: t('common.tryAgain'), onClick: () => testOnList(button) } }); }
+    finally { busy(button, false); }
   };
   const makeList = async (button) => {
     if (practiceOnly) return testOnList(button);
@@ -48,22 +55,23 @@ export async function render({ params, query }) {
     say(t('golive.preparing'));
     try {
       const b = await api('/api/batch/preview', { flowId });
-      if (!b.passed) { batchArea.replaceChildren(errorPanel({ problem: { what: t('golive.testFailed', { headline: b.headline }), next: b.problem?.next ?? null } }, { notDone: t('golive.nothingMade'), action: { label: t('checked.changeSetting'), href: `#/make/${tpl.id}?flow=${flowId}` } }), checkList(b.checks)); return; }
+      if (!b.passed) { showError(batchArea, { problem: { what: t('golive.testFailed', { headline: b.headline }), next: b.problem?.next ?? null } }, { notDone: t('golive.nothingMade'), action: { label: t('checked.changeSetting'), href: `#/make/${tpl.id}?flow=${flowId}` } }); batchArea.append(checkList(b.checks)); return; }
       say(t('golive.ready', { n: b.items.length }));
       if (!b.items.length) {
         batchArea.replaceChildren(el('section', { class: 'card done' }, el('h2', {}, t('golive.nothingTitle')), el('p', {}, t('golive.nothingBody', { noun: tpl.noun })),
           checkList(b.checks), el('a', { class: 'button', href: `#/automations/${flowId}` }, t('golive.toAutomation'))));
+        focusOn(batchArea.querySelector('h2'));
         return;
       }
       const card = batchCard(b, { onDone: r => {
-        if (r.declined && r.firmFirst) { batchArea.replaceChildren(el('div', { class: 'banner', role: 'status' }, el('p', {}, t('batch.firmFirstNoAfter')), el('a', { class: 'button', href: `#/make/${tpl.id}?flow=${flowId}` }, t('turnon.changeSettings')))); return; }
+        if (r.declined && r.firmFirst) { batchArea.replaceChildren(el('div', { class: 'banner', role: 'status' }, el('p', {}, t('batch.firmFirstNoAfter')), el('a', { class: 'button', href: `#/make/${tpl.id}?flow=${flowId}` }, t('turnon.changeSettings')))); focusOn(batchArea.querySelector('p')); return; }
         if (r.declined) navigate(`/automations/${flowId}`); else navigate(`/drafts?run=${r.runId ?? ''}`);
       } });
       batchArea.replaceChildren(card);
       card.querySelector('h2')?.setAttribute('tabindex', '-1'); card.querySelector('h2')?.focus();
     } catch (error) {
-      batchArea.replaceChildren(errorPanel(error, { notDone: t('golive.nothingMade'), action: { label: t('common.tryAgain'), onClick: () => makeList(button) } }));
-    } finally { button?.removeAttribute('aria-busy'); }
+      showError(batchArea, error, { notDone: t('golive.nothingMade'), action: { label: t('common.tryAgain'), onClick: () => makeList(button) } });
+    } finally { busy(button, false); }
   };
 
   const sheetSections = sheets.map(s => {
@@ -78,9 +86,10 @@ export async function render({ params, query }) {
         const go = el('button', { type: 'button', class: 'primary', dataset: { action: 'use-columns' } }, practiceOnly && last ? t('golive.practiceOnlyTest') : last ? t('golive.useAndTest') : t('golive.useColumns'));
         const err = el('div', {});
         go.addEventListener('click', async () => {
+          if (go.getAttribute('aria-disabled') === 'true') return;
           err.replaceChildren();
           if (!qs.check()) return; // a question is still open: say so here, send nothing
-          go.setAttribute('aria-busy', 'true');
+          busy(go, true);
           try {
             const target = practiceOnly ? 'practice' : 'live';
             const c = await api('/api/data/commit', { template: tpl.id, sheet: s.sheet, csv: text, mapping: mapper.mapping(), answers: qs.answers(), target, practiceDataId });
@@ -92,10 +101,10 @@ export async function render({ params, query }) {
             replace(area, el('p', { class: 'banner ok', role: 'status' }, t('golive.saved', { rows: c.rows, noun: s.rowNoun }), c.skipped?.unreadable ? ` ${t('golive.skipped', { n: c.skipped.unreadable })}` : '',
               c.skipped?.noEmail ? ` ${t('golive.noEmail', { n: c.skipped.noEmail })}` : ''), noReceipt ? el('p', { class: 'banner wait' }, t('golive.receiptMissing')) : null);
             if (Object.values(have).every(Boolean)) await makeList(go);
-            else go.removeAttribute('aria-busy');
+            else busy(go, false);
           } catch (error) {
-            go.removeAttribute('aria-busy');
-            err.replaceChildren(errorPanel(error, { notDone: t('golive.notImported'), action: { label: t('golive.fixAbove'), onClick: () => area.querySelector('select, input')?.focus() } }));
+            busy(go, false);
+            showError(err, error, { notDone: t('golive.notImported'), action: { label: t('golive.fixAbove'), onClick: () => area.querySelector('select, input')?.focus() } });
           }
         });
         replace(area, el('p', {}, t('golive.found', { rows: pv.rowCount, noun: s.rowNoun })),
@@ -104,7 +113,7 @@ export async function render({ params, query }) {
           pv.questions.length ? el('h3', {}, t('golive.questionsTitle')) : null, qs.node,
           el('div', { class: 'actions' }, go), err);
         area.querySelector('h3')?.setAttribute('tabindex', '-1');
-      } catch (error) { area.replaceChildren(errorPanel(error, { notDone: t('golive.notImported'), action: { label: t('golive.chooseAnother'), onClick: () => drop.querySelector('input')?.focus() } })); }
+      } catch (error) { showError(area, error, { notDone: t('golive.notImported'), action: { label: t('golive.chooseAnother'), onClick: () => drop.querySelector('input')?.focus() } }); }
     } });
     const existing = a.data?.[s.sheet];
     if (existing) {
@@ -120,14 +129,14 @@ export async function render({ params, query }) {
   const lists = sheets.map(s => a.data?.[s.sheet]).filter(Boolean);
   if (practiceOnly && sheets.every(s => a.data?.[s.sheet])) {
     const test = el('button', { type: 'button', class: 'primary', dataset: { action: 'test-on-list' } }, t('golive.practiceOnlyTest'));
-    test.addEventListener('click', () => { test.setAttribute('aria-busy', 'true'); testOnList(test); });
+    test.addEventListener('click', () => { if (test.getAttribute('aria-disabled') === 'true') return; busy(test, true); testOnList(test); });
     root.append(el('div', { class: 'actions' }, test));
   } else if (sheets.every(s => a.data?.[s.sheet])) {
     // A list from an earlier day: replacing it comes first, because it no longer says who paid (P2 walkthrough B3).
     const oldest = lists.map(d => d.updatedAt).sort()[0];
     const stale = oldest && !sameDay(oldest, a.today ?? Date.now()); // the server's day: the one the list's ages are counted from
     const show = el('button', { type: 'button', class: stale ? '' : 'primary', dataset: { action: 'make-list' } }, stale ? t('golive.staleAnyway', { date: day(oldest) }) : t('golive.showList'));
-    show.addEventListener('click', () => { show.setAttribute('aria-busy', 'true'); makeList(show); });
+    show.addEventListener('click', () => { if (show.getAttribute('aria-disabled') === 'true') return; busy(show, true); makeList(show); });
     if (stale) {
       const fresh = el('button', { type: 'button', class: 'primary', dataset: { action: 'replace-stale' }, on: { click: () => { const d = root.querySelector('.drop'); d.hidden = false; d.querySelector('input').focus(); } } }, t('golive.replace'));
       root.append(el('div', { class: 'banner wait', dataset: { stale: '' } }, el('p', {}, el('b', {}, t('golive.staleTitle', { date: day(oldest) })), ' ', t('golive.staleBody')), el('div', { class: 'actions' }, fresh, show)));

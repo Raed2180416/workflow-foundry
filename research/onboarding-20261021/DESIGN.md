@@ -12,10 +12,10 @@ and four doors.
 
 **The path (every persona ends on it):**
 1. Show what Foundry can make before asking for words. The home page has seven plain-word cards, made from frontier-written templates.
-2. Ask only what a wrong guess would make harmful, and say why ("Why I'm asking", "If you skip").
+2. Ask only what a wrong guess would make harmful, and say why ("Why Foundry asks", "If you skip").
 3. Test on pretend data. Nothing real is sent.
-4. Show "What I checked", next to "What a test can't prove".
-5. One yes for this exact version.
+4. Show what Foundry checked, next to "What a test can't prove", with the way to turn it on in the first screen.
+5. One yes for this exact version. It can be turned off on its page; turning it on again is a new yes.
 6. The person's own list, as the CSV export they already have.
 7. One yes for the exact list of what the run would make, every item in full.
 8. Drafts the person sends from their own mail app.
@@ -97,6 +97,27 @@ in [WALKTHROUGH.md](WALKTHROUGH.md).
 - **P2:** "no path without a terminal and MCP". Before this site, an operator had no way in at all.
 - **Other products:** their counts in TEARDOWN §2.1 are documentation readings, not timed runs, so they are not a like-for-like baseline.
 
+**What the counts leave out (UX review of 2026-10-21, M9).** Every budget passes, but most milestones pass exactly at their limit:
+P2 first verified (3 / 1) and first live (8 / 4), the P2 own-list test (7 / 3), P3 first verified (4 / 2), the P4 brief (2) and
+practice-only (1), the P5 evidence file (3), ORG to version 1 (12) and the P1 Cursor or Codex path after setup (5). Steps and asks
+also leave out costs a person still pays. Since the review the journeys measure them beside the counts ([JOURNEYS.md](JOURNEYS.md)):
+
+| Cost | P2 first verified | P2 first live | How it is measured |
+|---|---|---|---|
+| Tab presses (keyboard run, 1280) | 16 | 32 | pressed by the keyboard-only journey; pointer runs report an estimate |
+| Scrolling, in window heights | 0.74 at 1280; 1.66 at 390 | 3.77 at 1280; 7.87 at 390 | how far below what the person had already scrolled to each control was; a scroll the script makes is not credited |
+| Decisions | 0 | 2 (turn on; the exact list) | presses on a decision card; turning on is not an ask (§4.1, O-K); counted as one, first live is 8 / 5, over its ≤ 4 asks |
+
+- **Install and start.** For P2 these are a precondition, done today by someone technical (Quickstart, "I don't code"). They are
+  listed in the journey, not counted.
+- **P1 is counted after the one-time setup** (§4.2). The spec's P1 rows (SPEC §16) do not say "after setup". Counted from the start,
+  P1 Claude Code is 3 / 0 to first verified and 5 / 1 to first live (budgets ≤ 2 / 0 and ≤ 4 / 2), and the Cursor or Codex path is
+  7 / 1 to first live (budget ≤ 5). Counted that way, all three are over budget.
+- **A released Claude Code's own prompts** (its trust prompt for a new server, its permission prompt before `ask_person_to_turn_on`)
+  were not run and are not counted (§6).
+- **Weekly use.** The next week's run (journey `p2-next-day`) is 7 actions, one of them running the open command in a terminal, and
+  1 ask. It was 8 and 2: the date order is no longer asked again for the same export (m4).
+
 ## 4. Departures from the spec, and why
 
 1. **Turning on is a step, not an ask.**
@@ -121,7 +142,7 @@ in [WALKTHROUGH.md](WALKTHROUGH.md).
    - sideways scroll;
    - target size of at least 24 px.
    The colour tokens are checked against WCAG ratios by a unit test.
-6. **The P3 "What I checked" sentence is generic.** It reads "1 e-mail to maria@example.com and 3 row(s) added to expense-decisions", built from the test's counts. The spec's wording is "2 claims approved on their own (under €100) ... listing 2 claims to decide". It needs a per-card summary sentence: a small follow-up, not a mechanism.
+6. **The P3 "What Foundry checked" sentence is generic.** It reads "1 e-mail to maria@example.com and 3 row(s) added to expense-decisions", built from the test's counts. The spec's wording is "2 claims approved on their own (under €100) ... listing 2 claims to decide". It needs a per-card summary sentence: a small follow-up, not a mechanism.
 7. **Additions not in the spec, found by the journeys:**
    - **An address turns on the part it belongs to.** "Summary to me@..." turns the summary on (`form-builder.mjs`). Without this, an agent's guessed address was dropped silently with the summary, and the person's own "summary to me" lost the summary.
    - **A test on the person's own list runs as of today.** It used to run as of the card's pretend date and showed 2 reminders where the live list makes 3.
@@ -138,6 +159,22 @@ in [WALKTHROUGH.md](WALKTHROUGH.md).
    - Allowlist (M10): the managed-settings entry sets `allowManagedMcpServersOnly`; without it the list is a soft allowlist, and the copy says so.
    - Folder privacy (minor 6): each start sets the workspace to 0700; the pages say "only your user" only when the doctor finds it so (not for the home folder or another account's folder).
    - Checks on the wording itself (M11): the overclaim lint covers every module, data file and page script under `app/` and every card as the person reads it; every claim cites lines and a verbatim quote that `claims.test.mjs` finds there. `app/core/stand-ins.mjs` stays frozen (BUILDER-1 manifest), so its "delivered" is explained in the known gaps instead (minor 16).
+9. **What the UX review of 2026-10-21 added or changed** (every finding, with its test, in [WALKTHROUGH.md](WALKTHROUGH.md) §7):
+   - **Turning off (M7).** The spec's undo for a turn-on (A5: "turn off") was not built. An automation's page now has Turn it off: it
+     makes no lists and runs nothing, its open list closes and a run of it waiting for a yes is cancelled; what it made stays.
+     Turning it on again is a new request and a new yes on a card, never the old yes revived. The yes stays in the ledger as decided;
+     the turn-off is its own row, and a line in the decision log; the evidence file and `check-evidence` carry it. A draft that will
+     not be used can be removed: it stops waiting for a yes, and the record of it stays. Per automation and per computer; a switch
+     that stops everything everywhere is still undecided (Trust page).
+   - **Answers about a file are remembered (m4; SPEC §5, "Never asked: the same thing twice").** Per card, list and set of columns, the
+     date order and the other answers come back already chosen, with a note saying so; never applied silently; asked afresh when the
+     file's columns or values differ.
+   - **The test result (M3).** A strip under the result leads to Turn it on; every e-mail in full is folded; the checks are shown
+     once, on the turn-on card.
+   - **Focus (M1).** A control that is working keeps the focus (`aria-disabled`, never `disabled`); an error panel takes the focus;
+     a part of a page that is redrawn hands the focus to its heading. Every journey now fails if the focus is lost after an action.
+   - **The fallback accessibility checks (M8)** are reported under that name, never as "accessibility issues", and catch what the
+     review found they missed. axe-core is still owner decision O-F.
 
 ## 5. Real vs designed
 
@@ -147,7 +184,7 @@ Nothing here has been used by a person other than the harness.
 | Area | Real (works now) | Preview (built, limited) | Designed only / Planned (not built) |
 |---|---|---|---|
 | Front door | 7 cards filled by the $0 form builder; the box suggests a card by keywords; restatement and asks with harm classes | Words without a card go to the Mercury builder only if a key is in the keychain and Settings allows it (never run here) | An AI "describe it" builder by default; launchers for non-technical installs (O-D) |
-| Test | Practice run on pretend data, bound to the version hash; "What I checked"; "What a test can't prove"; a test on the person's own list (CSV or JSON, column mapping, date, decimal and status questions) | — | A replay of past runs ("what would have happened last month") |
+| Test | Practice run on pretend data, bound to the version hash; "What Foundry checked"; "What a test can't prove"; a test on the person's own list (CSV or JSON, column mapping, date, decimal and status questions) | — | A replay of past runs ("what would have happened last month") |
 | Turn on | Version-bound yes in the page (`dashboard` channel) or in the terminal (`cli`) | The agent's dialog (`mcp-elicitation`): tested with a scripted client only, used only when Foundry finds no hook that could answer it, and a client's decline is recorded as the client's, not the person's no | Second authority with its own sign-in (Team plan) |
 | Going live | Own list → exact-list approval (sha256 per item, 60-minute expiry, each item used once) → drafts (mailto, `.eml` with `X-Unsent: 1`) | `.ics` weekly reminder (a reminder, not automation) | Sending from Gmail, an e-mail account or Slack; a scheduler; browser notifications (wave 2) |
 | Waiting and runs | "Waiting for you" (activations, lists, single actions); runs list; run record re-verified on open; evidence download | — | An MCP dialog for lists (wave 2) |
@@ -171,11 +208,15 @@ Nothing here has been used by a person other than the harness.
   Folding it into the templates needs a new template revision and manifest (owner).
 - **Linux only.** macOS and Windows keychains and launchers are untested. Headless Linux usually has no Secret Service, so keys are refused there, by design.
 - **One window per workspace** is guarded only by `<ws>/.lock`.
-- **Seven cards.** Requests outside them get "I can't make that yet" with every card offered; the box never builds.
+- **Seven cards.** Requests outside them get "Foundry can't make that yet" with every card offered; the box never builds.
 - **Practice-only mode** stops live runs and new live lists. The go-live page offers a test on the person's list instead.
   - A policy file (`/etc/foundry/policy.json`, owned by root, or `FOUNDRY_POLICY_FILE`) can force the mode and Allowed AI.
   - Anyone with root, or a user who runs a modified copy, can still bypass it. It is a control for honest machines, not a sandbox.
 - **Who decides what** is checked when an automation is made, not while it runs.
+- **Turning off is per automation and per computer.** Another copy of Foundry on another computer is not reached; a stop-everything
+  switch is undecided.
+- **No screen reader, macOS or Windows was tried.** The live regions, the focus moves and the announcements are checked in Chromium's
+  DOM by the tests, not heard. The accessibility checks are the harness's own, not axe-core (O-F).
 
 ## 7. Owner decisions (each reversible)
 

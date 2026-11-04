@@ -13,12 +13,13 @@
     "codeExpired": "That link has expired: a link from Foundry works once, within a minute. Open Foundry again with:",
     "codeUsed": "That link was already used. If you didn't open it twice, another program on this computer may have: Foundry has shut out whatever used it. Open Foundry again with:",
     "waitingNotice": "Something is waiting for your yes or no ({n}).",
-    "waitingNoticeLink": "Open it"
+    "waitingNoticeLink": "Open it",
+    "loading": "Loading…"
   },
   "nav": {
     "home": "Home",
     "waiting": "Waiting for you",
-    "waitingCount": "{n} waiting for you",
+    "waitingCount": "({n})",
     "automations": "Your automations",
     "runs": "Runs",
     "connections": "Connections",
@@ -32,7 +33,7 @@
     "claims": "What we can show",
     "docs": "Quickstart",
     "settings": "Settings",
-    "local": "Runs on this computer only (127.0.0.1)."
+    "local": "Runs on this computer only."
   },
   "common": {
     "and": " and ",
@@ -60,7 +61,8 @@
     "settings": "Choose",
     "test": "Test",
     "turnOn": "Turn on",
-    "goLive": "Use your own list"
+    "goLive": "Use your own list",
+    "done": "(done)"
   },
   "home": {
     "h1": "Let Foundry prepare the jobs you do every week.",
@@ -98,7 +100,8 @@
     "managedCheckNote": "Reads only the parts of the policy about which servers are allowed. Nothing is changed.",
     "managedYes": "Allowed: {why}",
     "managedNo": "Not allowed: {why} Send IT the one-page brief.",
-    "managedUnknown": "Can't tell: {why} Send IT the one-page brief."
+    "managedUnknown": "Can't tell: {why} Send IT the one-page brief.",
+    "practiceNotOn": "Practice-only mode was not turned on."
   },
   "describe": {
     "emptyTitle": "Describe what you want done",
@@ -109,8 +112,8 @@
     "notThis": "Not this, show all",
     "close": "These might be close",
     "showAll": "Show everything Foundry can make",
-    "none": "I can't make that yet. Nothing was created.",
-    "noneLead": "Here's what I can make today. If one is close, pick it and change the settings.",
+    "none": "Foundry can't make that yet. Nothing was created.",
+    "noneLead": "Here's what Foundry can make today. If one is close, pick it and change the settings.",
     "aiOffer": "Want Foundry to try with AI?",
     "aiLink": "Set up an AI key",
     "aiNote": "(your words go to the AI provider)",
@@ -120,7 +123,7 @@
   "make": {
     "unknownTitle": "There is no automation by that name",
     "changing": "You are changing an automation that already exists. Your changes become a new version, which is tested before it can replace the one that's on.",
-    "willTitle": "I'll do this:",
+    "willTitle": "Foundry will:",
     "wontTitle": "It won't:",
     "questionOne": "One question",
     "questionsMany": "A few questions",
@@ -144,7 +147,7 @@
     "back": "Back to all automations",
     "testNote": "The test uses pretend data and a pretend inbox. Nothing real is made or sent.",
     "answerFirst": "Please answer this first. Foundry won't guess it.",
-    "answerFirstSay": "Answer the highlighted question first.",
+    "answerFirstSay": "A question needs your answer first. Your cursor is in it.",
     "nothingMade": "Nothing was made or sent.",
     "fix": "Change the settings",
     "tryAgain": "Try again",
@@ -156,7 +159,7 @@
     "refusedNext": "Choose a stricter setting, or ask the person who set the rule to change it in Who decides what."
   },
   "ask": {
-    "why": "Why I'm asking:",
+    "why": "Why Foundry asks:",
     "skip": "If you skip:"
   },
   "who": {
@@ -204,7 +207,7 @@
     "nothingToChase": "Nothing to chase: nobody on this list needs a reminder today.",
     "testedOnPretend": "Tested on: pretend {noun} that come with this automation.",
     "testedOnYours": "Tested on: your own list.",
-    "checksTitle": "What I checked",
+    "checksTitle": "What Foundry checked",
     "wouldTitle": "What would have happened",
     "limitTitle": "What a test can't prove",
     "limitBody": "That your e-mails will arrive, or that your real list looks like the pretend one.",
@@ -219,14 +222,20 @@
     "rowsTitle": "Add {n} lines to {sheet} (on this computer)",
     "ownSectionTitle": "Try it on your real list first (optional)",
     "ownSectionTitleOn": "Test this version on a list (optional)",
-    "ownSectionBody": "Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent."
+    "ownSectionBody": "Drop the list you'd really use. Foundry tests this version on it. Nothing is made or sent.",
+    "notTestedNow": "Nothing was tested.",
+    "nextTitle": "Next:",
+    "nextBody": "turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.",
+    "toTurnOn": "Go to Turn it on",
+    "wouldShowOne": "Show it in full",
+    "wouldShowMany": "Show all {n} in full"
   },
   "turnon": {
     "title": "Turn on '{title}' (version {version})?",
     "replaces": "This replaces version {version}, which is on now.",
     "will": "It will",
     "wont": "It won't",
-    "done_means": "Done means",
+    "done_means": "How you'll know it worked",
     "testedOn": "Tested on:",
     "testedPretend": "pretend data, passed {passed} of {total} checks",
     "testedYours": "your own list, passed {passed} of {total} checks",
@@ -247,7 +256,9 @@
     "done": "Turned on. Nothing was sent.",
     "notOn": "It was not turned on.",
     "changeWho": "Change who decides",
-    "changeSettings": "Change settings"
+    "changeSettings": "Change settings",
+    "noteInform": "{who} gets an e-mail; you record their answer here",
+    "noteTeam": "{who} decides once the Team plan exists; until then you record their answer"
   },
   "golive": {
     "onTitle": "On.",
@@ -295,7 +306,9 @@
     "staleAnyway": "Use the {date} list anyway",
     "practiceOnlyTest": "Test on your list (nothing is made)",
     "receiptMissing": "Your file has no receipt column, so no claim counts as having one: with Needs a receipt on, every claim goes to the person who decides.",
-    "howSendLegend": "Ways to send"
+    "howSendLegend": "Ways to send",
+    "offTitle": "{card} is turned off",
+    "offBody": "Turn it on again on its page before it can use your list."
   },
   "drop": {
     "tooBig": "That file is over the size Foundry takes in one go. Export fewer rows.",
@@ -305,7 +318,8 @@
     "empty": "(empty)",
     "whichColumn": "Which column is the {plain}?",
     "noneOfThem": "None of these",
-    "excel": "This is a spreadsheet file (Excel, Numbers or similar), not a CSV file. In your spreadsheet app choose File, then Save As or Export, pick CSV, and drop that file here."
+    "excel": "This is a spreadsheet file (Excel, Numbers or similar), not a CSV file. In your spreadsheet app choose File, then Save As or Export, pick CSV, and drop that file here.",
+    "remembered": "Already chosen: your answer for the last file like this ({date}). Change it if this file is different."
   },
   "items": {
     "to": "To:",
@@ -339,7 +353,8 @@
     "firmFirstNoAfter": "Nothing was made. To start everyone with a friendly reminder, set the firmer reminders to later days for now (Change settings), then make a new list.",
     "alreadySent": "{n} of these claims already went to {who} on {date}. This run would send them again and add them to the decisions list again. Drop an updated list first, or record the answers in Waiting for you.",
     "answered": "You recorded an answer for {n} of these.",
-    "remembered": "Foundry remembered what earlier runs made, so nothing on this list was made before."
+    "remembered": "Foundry remembered what earlier runs made, so nothing on this list was made before.",
+    "notDeclined": "The list was not declined: it is still waiting for your yes or no."
   },
   "action": {
     "titleDraft": "Make this draft?",
@@ -347,7 +362,8 @@
     "yes": "Yes, do it",
     "no": "No, don't",
     "done": "Done.",
-    "refused": "Not done. The run stopped before it."
+    "refused": "Not done. The run stopped before it.",
+    "notDecided": "Nothing was decided: it is still waiting for your yes or no."
   },
   "drafts": {
     "title": "{n} drafts ready. Foundry didn't send anything.",
@@ -370,7 +386,10 @@
     "postTitle": "Paste this into {channel}",
     "copyPost": "Copy the message",
     "postNote": "Foundry doesn't post for you yet: copy the message and paste it into the channel.",
-    "countsNote": "Foundry counts a draft as done once it's made: it won't make that one again, even if you never send it."
+    "countsNote": "Foundry counts a draft as done once it's made: it won't make that one again, even if you never send it.",
+    "sentSay": "Marked as sent.",
+    "notSentSay": "Marked as not sent.",
+    "markNotSaved": "Your mark was not saved."
   },
   "waiting": {
     "title": "Waiting for you ({n})",
@@ -388,7 +407,8 @@
     "approved": "Approved",
     "rejected": "Rejected",
     "recorded": "Recorded: {answer}.",
-    "claimLine": "{id}: {person}, {amount} ({reason})"
+    "claimLine": "{id}: {person}, {amount} ({reason})",
+    "notRecorded": "The answer was not recorded."
   },
   "automations": {
     "title": "Your automations",
@@ -405,7 +425,13 @@
     "draftsTitle": "Drafts",
     "draftPassed": "Test passed; waiting for your OK.",
     "draftFailed": "The test didn't pass.",
-    "draftUntested": "Not tested yet."
+    "draftUntested": "Not tested yet.",
+    "removeDraft": "Remove this draft",
+    "removed": "Draft removed. It won't wait for your yes, and its test stays in Foundry's records.",
+    "notRemoved": "The draft was not removed.",
+    "removeLead": "Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.",
+    "draftsLead": "Versions you made but haven't turned on. Remove any you won't use.",
+    "turnedOff": "Off (turned off)"
   },
   "automation": {
     "run": "Make a list (shows you everything first)",
@@ -440,7 +466,16 @@
     "noDecisions": "No lists decided yet.",
     "approvedWord": "approved",
     "declinedWord": "declined",
-    "answersLink": "Record answers ({n} waiting)"
+    "answersLink": "Record answers ({n} waiting)",
+    "onOffTitle": "On or off",
+    "onNow": "On. It runs only when you start it here.",
+    "offExplain": "Turn it off to stop it: it then makes no lists and runs nothing, and anything of it still waiting for your yes is cancelled. Drafts it already made stay. You can turn it on again later.",
+    "turnOff": "Turn it off",
+    "turnedOffSay": "Turned off. Anything of it still waiting for your yes was cancelled.",
+    "notTurnedOff": "It was not turned off: it is still on.",
+    "offNow": "Off. Turned off by {who} through {channel}, {when}.",
+    "onAgainExplain": "Turning it on again is a new yes for this same version, which passed its test. Nothing is sent when you do.",
+    "turnOnAgain": "Turn it on again"
   },
   "channel": {
     "dashboard": "this page",
@@ -449,13 +484,13 @@
   },
   "runs": {
     "title": "Runs",
-    "lead": "Every run keeps a chained record. Foundry re-checks the chain each time you open this page.",
+    "lead": "Every run keeps a chained record. Foundry checks it again each time you open this page: \"checked\" means each entry still matches what was written and names the one before. Someone using this computer account could still rewrite a whole record, so the run page shows how to keep a copy of its latest link.",
     "empty": "No runs yet.",
     "automation": "Automation",
     "result": "Result",
     "when": "When",
     "record": "Record",
-    "checked": "consistent: {n} events, each linked to the one before",
+    "checked": "Checked: {n} entries, each linked to the one before",
     "notChecked": "could not be checked",
     "openLabel": "Open the run of {flow} from {when}",
     "auditorTitle": "For your auditor",
@@ -505,7 +540,6 @@
     "evidenceContains": "The file holds every step of the run in full, so each one can be re-checked. That includes your list (every customer, address and amount) and the full text of every e-mail. Share it only with someone who may see that list.",
     "startedBy": "Started through {channel} when its list was approved there. Recorded as {who}: the name in Settings and this computer's account, not a checked identity.",
     "startedUnknown": "Who started this run was not recorded.",
-    "decisionsOnly": "Show decisions only",
     "everything": "Show every event",
     "who": "Who",
     "byList": "{who} (not a checked identity), through {channel}, from the yes to the list",
@@ -528,7 +562,12 @@
       "run.succeeded": "Finished",
       "run.failed": "Stopped with a problem",
       "run.cancelled": "Stopped"
-    }
+    },
+    "decidedYes": "Yes applied",
+    "decidedNo": "No: not done",
+    "decidedUnknown": "Decided (the record doesn't say yes or no)",
+    "byOne": "{who} (not a checked identity), through {channel}",
+    "byUnknown": "not recorded"
   },
   "connections": {
     "title": "Connections",
@@ -746,7 +785,8 @@
     "notSaved": "The key was not saved.",
     "notAllowed": "Allowed AI in Settings doesn't include this provider, so Foundry won't send it your key, not even to check it. Choose Mercury 3 under Allowed AI first.",
     "notAllowedLink": "Open Settings",
-    "limit": "Each build from your words stops after {cap} tokens (the provider's unit of text), a limit set when Foundry starts. There is no daily limit."
+    "limit": "Each build from your words stops after {cap} tokens (the provider's unit of text), a limit set when Foundry starts. There is no daily limit.",
+    "notRemoved": "The key was not removed."
   },
   "settings": {
     "title": "Settings",
@@ -791,7 +831,9 @@
     "forgetBody": "Deletes every list you gave Foundry and their earlier versions. Your automations, drafts and records stay.",
     "forgetLabel": "Type delete my lists to confirm",
     "forgetButton": "Delete my lists",
-    "forgetDone": "Deleted {n} lists."
+    "forgetDone": "Deleted {n} lists.",
+    "notSaved": "This setting was not saved; the page shows the one in force.",
+    "nothingDeleted": "Nothing was deleted."
   },
   "connect": {
     "title": "Connect your coding agent",
@@ -950,12 +992,12 @@
     },
     "remove": {
       "title": "Removing Foundry",
-      "body": "Remove it from Claude Code with: claude mcp remove foundry (other agents: delete the foundry entry from their settings). Remove a saved AI key in Settings, AI keys. Then delete the Foundry folder. There is no background service, no auto-update and no schedule: stopping Foundry stops it."
+      "body": "To stop one automation and keep the rest, open it in Your automations and choose Turn it off: it makes no lists and runs nothing until someone turns it on again with a new yes, and the turn-off is kept in its record. To remove Foundry: remove it from Claude Code with claude mcp remove foundry (other agents: delete the foundry entry from their settings), remove a saved AI key in Settings, AI keys, then delete the Foundry folder. There is no background service, no auto-update and no schedule: stopping Foundry stops it."
     }
   },
   "docs": {
     "h1": "Quickstart",
-    "lead": "Three ways in. Pick the one that sounds like you.",
+    "lead": "Four ways in. Pick the one that sounds like you.",
     "devTitle": "I use Claude Code",
     "devSteps": [
       "Get the owner's copy of Foundry onto your computer: git clone <the path or link they give you> foundry, then cd foundry.",
@@ -1040,6 +1082,26 @@
         "drafts you send yourself",
         "local outbox",
         "E-mails Foundry writes on this computer for you to send."
+      ],
+      [
+        "fingerprint",
+        "cryptographic hash",
+        "A short code worked out from exact content: change one letter and it changes. Foundry ties a yes to one version, or to one list, by its fingerprint."
+      ],
+      [
+        "checked (a record)",
+        "hash chain verified",
+        "Each entry still matches what was written and names the one before. Someone using this computer account could still rewrite the whole record, so keep a copy of its latest link somewhere else."
+      ],
+      [
+        "turn off",
+        "revoke activation",
+        "Stops a version that was on. Turning it on again needs a new yes."
+      ],
+      [
+        "how you'll know it worked",
+        "success criteria (checks)",
+        "The checks a run must pass, written before it runs."
       ]
     ]
   },
@@ -1101,7 +1163,7 @@
     "h1": "What we can show",
     "lead": "The site's measured results, comparisons, limits and decisions, each with where it comes from. Development tests are our own; nothing here is a sealed result. A research result comes from our test beds, not from this product.",
     "source": "(source)",
-    "sourceFor": "Where this comes from: {short}",
+    "sourceFor": "Source: {short}",
     "evidence": "Kind of evidence",
     "date": "Date",
     "sourceFile": "Source",
@@ -1145,17 +1207,20 @@
     "label": "Text to copy",
     "copy": "Copy",
     "copied": "Copied",
-    "selected": "Selected: press Ctrl+C or Cmd+C to copy"
+    "selected": "Selected: press Ctrl+C or Cmd+C to copy",
+    "notCopied": "This browser didn't let Foundry copy it. Select the text and copy it yourself."
   },
   "errors": {
     "pageTitle": "This page couldn't load",
     "title": "That didn't work",
     "what": "What happened",
     "notDone": "What was not done",
-    "nothingSent": "Nothing was sent.",
     "todo": "What to do",
     "details": "Details",
-    "unknown": "Something went wrong."
+    "unknown": "Something went wrong.",
+    "notFinished": "Foundry stopped before finishing this.",
+    "nothingChanged": "Nothing was changed.",
+    "noFile": "No file was saved."
   },
   "notFound": {
     "h1": "There's no page here",
@@ -1225,7 +1290,6 @@
     "noRulesYet": "No rules yet. Make one from a row above.",
     "ownedBy": "Written down by you for {owner}. {owner} has not confirmed it.",
     "isThisYourRule": "Is this your rule?",
-    "caseAnswer": "Case {n}: what should happen",
     "answers": {
       "allowed": "allowed",
       "held": "held for a yes",
@@ -1269,6 +1333,11 @@
     "moreTitle": "More: where it runs, and changing these rules",
     "emailLabel": "Their e-mail (optional)",
     "emailHelp": "With an e-mail, a card that needs their yes uses it, and refuses any other address.",
-    "requesterInstead": "What you can do today: each run's page shows who started it and who approved its list"
+    "requesterInstead": "What you can do today: each run's page shows who started it and who approved its list",
+    "nameMissing": "Type the person's name first.",
+    "emailBad": "That doesn't look like an e-mail address. Fix it, or leave it empty.",
+    "chooseCurrency": "Choose a currency",
+    "currencyMissing": "Choose the currency of this amount first.",
+    "caseAnswerSr": "What should happen?"
   }
 }
