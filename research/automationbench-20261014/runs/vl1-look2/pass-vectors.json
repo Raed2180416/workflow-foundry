@@ -1,0 +1,5682 @@
+{
+ "schema": "foundry.vl1.pass-vectors/v1",
+ "evidence": "development, exploratory (look 2 of SEQUENTIAL-PLAN-v1; PREREG-VL1 §0); strict pass = each fork headline final.task_completed_correctly; no transcripts",
+ "taskOrder": "sorted task names",
+ "tasks": 60,
+ "inputs": {
+  "vl1/RESULT.json": "da65c69eca92728a9636e27672a5b5141254af12b274fe094fc2ff73c3076565",
+  "vl1/selection.json": "5c7b5e48e19d766d5c3aaa081fc7c9c4eae36140d79d16cfe99e01bbd5be3334"
+ },
+ "runs": {
+  "v1m": "a1c-v1m-look2",
+  "sonnet-a1": "a1s-look2",
+  "haiku-a0": "a0-look2",
+  "v2m": "a1c-v2m-look2",
+  "opus": "a0o-look2-1"
+ },
+ "vectors": {
+  "v1m": "011001111110110101100010011000001011000110011100001001001101",
+  "sonnet-a1": "011011001110000001100011001001011011100000011111001001000011",
+  "haiku-a0": "010000000010000000000000000010001000000010000001001001010000",
+  "v2m": "011011111100010101100010011000001011000100011111000001010100",
+  "opus": "010011110110010001100010000011001010100000010111001101011010",
+  "P2/R0": "011001111110110101100010011000001011000110011100001001001101",
+  "P2/R1": "011011111110110001100010011000001011100110011101001001001101",
+  "P2/R2": "011011101110010001100011011001011011000000011111001001001111",
+  "P2/R3": "011011101110010001100011011001011011100000011111001001001111",
+  "P2h/R0": "011001111110110101100010011000001011000110011100001001001101",
+  "P2h/R1": "010001111110110000100010011010001011000110011101001001011101",
+  "P2h/R2": "011001111110110100100010011010001011000010001101001001011101",
+  "P2h/R3": "011001111110110000100010011010001011000010011101001001011101",
+  "P3/R0": "011001111110110101100010011000001011000110011100001001001101",
+  "P3/R1": "010011111110110000100010011010001011100110011101001001001101",
+  "P3/R2": "011011101110010000100011011011011011000000011111001001001111",
+  "P3/R3": "011011101110010000100011011011011011100010011111001001001111",
+  "P2v2/R0": "011011111100010101100010011000001011000100011111000001010100",
+  "P2v2/R1": "011011111100010001100011011000001011100100011111001001000110",
+  "P2v2/R2": "011011101110010001100010011000001011000100011111001001010111",
+  "P2v2/R3": "011011101110010001100010011000001011100100011111001001010111",
+  "VL-1R": "011011101110010001100011001001010011100000011111001001001111"
+ },
+ "perTask": [
+  {
+   "task": "finance.cash_sweep",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.013866
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.142442
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.010396
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.009098
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.955843
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 0,
+    "control": 0,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "finance.expense_reclassification",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.005098
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.105074
+    },
+    "haiku-a0": {
+     "pass": 1,
+     "costUsd": 0.009605
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.00666
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.252358
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "finance.grant_expense_tracking",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.004544
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.054745
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.011224
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.003629
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.242093
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "finance.intercompany_balance_recon",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.005757
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.104173
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.012133
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.003289
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.317617
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "finance.invoice_aging_followup",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.016635
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.094196
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.008797
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.013548
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.329939
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "finance.qb_customer_balance_review",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.00398
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.147486
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.008651
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.006621
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.311751
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "finance.qb_customer_onboard",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.009002
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.205532
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.029093
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.006531
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.568059
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 1,
+    "control": 1,
+    "treatment": 1,
+    "violations": 0
+   }
+  },
+  {
+   "task": "finance.qb_estimate_conversion",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.005012
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.069824
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.012807
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.006478
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.309408
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 0,
+    "control": 0,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "finance.sales_tax_remittance",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.00539
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.0868
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.01134
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.010866
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.270535
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "finance.xero_expense_claim_review",
+   "domain": "finance",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.007955
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.08263
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.003913
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.007653
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.180744
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "hr.comp_adjustment_batch",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.010004
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.116292
+    },
+    "haiku-a0": {
+     "pass": 1,
+     "costUsd": 0.016604
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.008847
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.326516
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "hr.intern_program_coordination",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.011194
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.108521
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.021458
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.010973
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.507384
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "hr.jira_it_onboarding",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.020716
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.146185
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.025243
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.00504
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.432996
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "hr.job_posting_refresh",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.006906
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.117128
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.0134
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.007666
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.484022
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "hr.offer_letter_generation",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.009768
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.106446
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.014965
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.007519
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.303079
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "hr.payroll_bonus_processing",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.005193
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.08614
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.009184
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.006465
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.281766
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "hr.probation_review_reminder",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.003464
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.222169
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.016777
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.00402
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.615
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "hr.recognition_nominations",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.026879
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.097503
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.0135
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.009596
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.292121
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "hr.rto_compliance_check",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.011498
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.099894
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.011999
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.0097
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.268892
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "hr.zoom_all_hands_setup",
+   "domain": "hr",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.01132
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.177965
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.008549
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.009454
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.464507
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "marketing.budget_reallocation",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.004728
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.064505
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.00862
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.007354
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.222425
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "marketing.hashtag_performance",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.007731
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.08377
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.013816
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.006076
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.259642
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 0,
+    "control": 0,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "marketing.market_trend",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.007134
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.089448
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.013058
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.007901
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.348842
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "marketing.partner_comarketing",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.031971
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.067685
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.013589
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.010585
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.227235
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "marketing.partner_commission_calculation",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.008502
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.072394
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.01563
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.00676
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.283891
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "marketing.social_crisis_response",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.00974
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.064895
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.018717
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.013829
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.322139
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 1,
+    "control": 1,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "marketing.social_roi",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.004548
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.080376
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.009407
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.007674
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.231115
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "marketing.tam_analysis",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.022272
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.090745
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.01038
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.012733
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.29107
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 0,
+    "control": 0,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "marketing.topic_cluster",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.01021
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.08819
+    },
+    "haiku-a0": {
+     "pass": 1,
+     "costUsd": 0.017071
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.007516
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.316772
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "marketing.video_repurpose",
+   "domain": "marketing",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.02903
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.132029
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.008621
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.012533
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.532158
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 1,
+    "control": 1,
+    "treatment": 1,
+    "violations": 0
+   }
+  },
+  {
+   "task": "operations.asana_fire_drill",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.022441
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.07678
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.006754
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.008121
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.308455
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "operations.asana_slack_sheets_audit",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.029567
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.111559
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.010124
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.0111
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.326173
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "operations.chatgpt_feedback_analysis",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.018528
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.142691
+    },
+    "haiku-a0": {
+     "pass": 1,
+     "costUsd": 0.01688
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.015317
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.428762
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 1,
+    "control": 1,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "operations.drive_notion_lease_archive",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.041125
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.169376
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.015496
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.015777
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.728979
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "operations.facebook_roas_monitoring",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.009481
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.069514
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.006889
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.009376
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.220929
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "operations.hazmat_shipping_compliance",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.018951
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.136589
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.015447
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.017852
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.329097
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "operations.holiday_coverage_planning",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.013208
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.124291
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.011934
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.018453
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.377196
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "operations.monday_calendar_emergency_drill",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.016909
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.088913
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.007754
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.014163
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.284185
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "operations.notion_gmail_checklist_update",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.006439
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.070142
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.002628
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.010775
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.261877
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "operations.zoom_project_kickoff",
+   "domain": "operations",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.015809
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.090049
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.009402
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.00914
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.266755
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "sales.calendly_sequential_meetings",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.010453
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.069714
+    },
+    "haiku-a0": {
+     "pass": 1,
+     "costUsd": 0.008275
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.005416
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.281853
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 0,
+    "control": 0,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "sales.chatgpt_email_sentiment_routing",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.029248
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.089977
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.023604
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.021014
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.73475
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 0,
+    "control": 0,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "sales.cold_email_personalization",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.018251
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.152592
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.006257
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.011952
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.443658
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "sales.dependency_chain",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.023193
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.1303
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.010744
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.011519
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.395351
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "sales.docusign_compliance_template",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.014592
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.164857
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.014313
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.015573
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.790159
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "sales.docusign_conditional_template_selection",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.01555
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.138422
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.005705
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.020737
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.700019
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 1,
+    "control": 1,
+    "treatment": 1,
+    "violations": 0
+   }
+  },
+  {
+   "task": "sales.linkedin_sales_prospecting",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.028091
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.054879
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.005103
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.013481
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.178397
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 1,
+    "control": 1,
+    "treatment": 1,
+    "violations": 0
+   }
+  },
+  {
+   "task": "sales.milestone_celebration",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.02755
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.055109
+    },
+    "haiku-a0": {
+     "pass": 1,
+     "costUsd": 0.003942
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.009555
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.189217
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "sales.priority_selection",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.005348
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.092145
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.011064
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.005959
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.384523
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 0,
+    "control": 0,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "sales.sheets_multi_channel_campaign_router",
+   "domain": "sales",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.019324
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.126193
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.013452
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.021809
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.382468
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 0,
+    "control": 0,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "support.gorgias_loyalty_program",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.022978
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.154382
+    },
+    "haiku-a0": {
+     "pass": 1,
+     "costUsd": 0.025023
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.026965
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.495605
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "support.helpscout_customer_merge",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.042814
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.187754
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.020489
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.006816
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.650294
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "support.helpscout_health_sync",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.025245
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.112542
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.016235
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.011961
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.455819
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "support.helpscout_response_audit",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.008616
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.114913
+    },
+    "haiku-a0": {
+     "pass": 1,
+     "costUsd": 0.014578
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.010475
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.247902
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "support.intercom_sf_opportunity_alerts",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.029103
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.171995
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.011867
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.011417
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.481576
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "support.reamaze_intercom_sync",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.033371
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.16798
+    },
+    "haiku-a0": {
+     "pass": 1,
+     "costUsd": 0.023518
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.014918
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.582737
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 0,
+    "control": 0,
+    "treatment": 0,
+    "violations": 0
+   }
+  },
+  {
+   "task": "support.zendesk_cross_org_merge",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.01075
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.120238
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.00987
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.01419
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.401678
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 0
+    }
+   }
+  },
+  {
+   "task": "support.zendesk_intercom_company_sync",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.042614
+    },
+    "sonnet-a1": {
+     "pass": 0,
+     "costUsd": 0.108792
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.00923
+    },
+    "v2m": {
+     "pass": 1,
+     "costUsd": 0.013098
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.315578
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "v2m",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "v2m",
+     "pass": 1
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 1,
+    "control": 1,
+    "treatment": 1,
+    "violations": 0
+   }
+  },
+  {
+   "task": "support.zendesk_maintenance_notify",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 0,
+     "costUsd": 0.014038
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.112528
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.013972
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.015751
+    },
+    "opus": {
+     "pass": 1,
+     "costUsd": 0.322875
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P2h/R2": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P2h/R3": {
+     "pick": "haiku-a0",
+     "pass": 0
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 0
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   }
+  },
+  {
+   "task": "support.zoho_desk_capacity_planning",
+   "domain": "support",
+   "forks": {
+    "v1m": {
+     "pass": 1,
+     "costUsd": 0.028242
+    },
+    "sonnet-a1": {
+     "pass": 1,
+     "costUsd": 0.121628
+    },
+    "haiku-a0": {
+     "pass": 0,
+     "costUsd": 0.013654
+    },
+    "v2m": {
+     "pass": 0,
+     "costUsd": 0.01592
+    },
+    "opus": {
+     "pass": 0,
+     "costUsd": 0.406588
+    }
+   },
+   "cells": {
+    "P2/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2h/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R2": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P2h/R3": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R0": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R1": {
+     "pick": "v1m",
+     "pass": 1
+    },
+    "P3/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P3/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R0": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R1": {
+     "pick": "v2m",
+     "pass": 0
+    },
+    "P2v2/R2": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    },
+    "P2v2/R3": {
+     "pick": "sonnet-a1",
+     "pass": 1
+    }
+   },
+   "vl1r": {
+    "treated": true,
+    "live": 1,
+    "control": 1,
+    "treatment": 1,
+    "violations": 0
+   }
+  }
+ ]
+}

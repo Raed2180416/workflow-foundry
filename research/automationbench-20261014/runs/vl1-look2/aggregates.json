@@ -1,0 +1,1596 @@
+{
+ "schema": "foundry.vl1.aggregates/v1",
+ "item": "VL-1 (D27), PREREG-VL1 sha256 f316ca51…f1f4",
+ "evidence": "development, exploratory: look 2 of SEQUENTIAL-PLAN-v1, first look for every fork and the selector; protocol A1F (forked worlds, three models); never a headline; any claim needs a sealed rerun (PREREG-VL1 §0)",
+ "inputs": {
+  "vl1/RESULT.json": "da65c69eca92728a9636e27672a5b5141254af12b274fe094fc2ff73c3076565",
+  "vl1/selection.json": "5c7b5e48e19d766d5c3aaa081fc7c9c4eae36140d79d16cfe99e01bbd5be3334",
+  "selectionCommit": "686e61ec656625b6a5da2bae333ba06dd052268d",
+  "runs/vl1-look2/pass-vectors.json": "96e76a5062ec0a34a57679d851649006d0adb852d1e1ba845e32ff9f9811bbf5",
+  "chainAnalysis": {
+   "path": "research/automationbench-20261014/runs/a1c-v2-look2/analysis.json",
+   "commit": "287f57ff",
+   "sha256": "3a99467cd07b0e412501dae33505cf35d10e8700a4e2d38d2412c7a5ea9154c2"
+  }
+ },
+ "forks": {
+  "v1m": {
+   "run": "a1c-v1m-look2",
+   "pass": 29,
+   "recorded": 60,
+   "usdPerTask": 0.016198,
+   "usdPerSuccess": 0.033513,
+   "mercuryTokens": 3523669
+  },
+  "sonnet-a1": {
+   "run": "a1s-look2",
+   "pass": 27,
+   "recorded": 60,
+   "usdPerTask": 0.1122,
+   "usdPerSuccess": 0.249334,
+   "mercuryTokens": 0
+  },
+  "haiku-a0": {
+   "run": "a0-look2",
+   "pass": 9,
+   "recorded": 60,
+   "usdPerTask": 0.012712,
+   "usdPerSuccess": 0.08475,
+   "mercuryTokens": 0
+  },
+  "v2m": {
+   "run": "a1c-v2m-look2",
+   "pass": 27,
+   "recorded": 60,
+   "usdPerTask": 0.01092,
+   "usdPerSuccess": 0.024267,
+   "mercuryTokens": 3898307
+  }
+ },
+ "reference": {
+  "opus": {
+   "run": "a0o-look2-1",
+   "pass": 26,
+   "usdPerTask": 0.38539,
+   "usdPerSuccess": 0.88936
+  }
+ },
+ "cliPerArm": {
+  "a1c-v1m-look2": "2.1.312",
+  "a1s-look2": "2.1.307",
+  "a0-look2": "2.1.312",
+  "a1c-v2m-look2": "2.1.312",
+  "a0o-look2-1": "2.1.307",
+  "verifiers": "2.1.318 (RL2 extract/judge, Haiku judge)",
+  "repair": "2.1.318"
+ },
+ "faults": {
+  "a1c-v1m-look2": "5 environment-fault records on 3 tasks (account 5-hour usage limit; exit 3 at 15:13Z and 15:44Z, resumed after a container restart), $0 recorded, kept out of results.jsonl, never scored",
+  "a1s-look2": "0 fault records; one container restart on 2026-10-22 killed the run after 6/60 tasks; resumed with --resume; the in-flight sessions at the kill have unrecorded spend (at most 2 x $1.5)",
+  "a0-look2": 0,
+  "a1c-v2m-look2": 0,
+  "a0o-look2-1": 0,
+  "verifiers": "0 failed calls",
+  "repair": "0 session errors, 0 audit violations"
+ },
+ "cells": [
+  {
+   "id": "P2/R0",
+   "role": "v1-M alone (default)",
+   "arms": [
+    "v1m",
+    "sonnet-a1"
+   ],
+   "pass": 29,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 29,
+    "passB": 29,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 29,
+    "passB": 26,
+    "diff": 3,
+    "gains": 12,
+    "losses": 9,
+    "mcnemarP": 0.663624,
+    "bootstrap95": [
+     -6,
+     12
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 29,
+    "passB": 9,
+    "diff": 20,
+    "gains": 23,
+    "losses": 3,
+    "mcnemarP": 0.0000879765,
+    "bootstrap95": [
+     11,
+     29
+    ]
+   },
+   "oracle": 37,
+   "switchedFromDefault": 0,
+   "cost": {
+    "actingUsdPerTask": 0.128398,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.145785,
+    "usdPerSuccess": 0.301623,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 20,
+    "flaggedFailing": 10,
+    "precision": 0.5
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 6
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 3
+    },
+    "operations": {
+     "n": 10,
+     "pass": 4
+    },
+    "sales": {
+     "n": 10,
+     "pass": 4
+    },
+    "support": {
+     "n": 10,
+     "pass": 5
+    }
+   }
+  },
+  {
+   "id": "P2/R1",
+   "role": "VL-1/R1 (secondary)",
+   "arms": [
+    "v1m",
+    "sonnet-a1"
+   ],
+   "pass": 31,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 31,
+    "passB": 29,
+    "diff": 2,
+    "gains": 3,
+    "losses": 1,
+    "mcnemarP": 0.625,
+    "bootstrap95": [
+     -2,
+     6
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 31,
+    "passB": 26,
+    "diff": 5,
+    "gains": 11,
+    "losses": 6,
+    "mcnemarP": 0.332306,
+    "bootstrap95": [
+     -3,
+     13
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 31,
+    "passB": 9,
+    "diff": 22,
+    "gains": 24,
+    "losses": 2,
+    "mcnemarP": 0.0000104904,
+    "bootstrap95": [
+     14,
+     30
+    ]
+   },
+   "oracle": 37,
+   "switchedFromDefault": 14,
+   "cost": {
+    "actingUsdPerTask": 0.128398,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.145785,
+    "usdPerSuccess": 0.282164,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 16,
+    "flaggedFailing": 9,
+    "precision": 0.5625
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 8
+    },
+    "hr": {
+     "n": 10,
+     "pass": 5
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 3
+    },
+    "operations": {
+     "n": 10,
+     "pass": 5
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 5
+    }
+   }
+  },
+  {
+   "id": "P2/R2",
+   "role": "VL-1/R2 (secondary)",
+   "arms": [
+    "v1m",
+    "sonnet-a1"
+   ],
+   "pass": 31,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 31,
+    "passB": 29,
+    "diff": 2,
+    "gains": 7,
+    "losses": 5,
+    "mcnemarP": 0.774414,
+    "bootstrap95": [
+     -5,
+     9
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 31,
+    "passB": 26,
+    "diff": 5,
+    "gains": 10,
+    "losses": 5,
+    "mcnemarP": 0.301758,
+    "bootstrap95": [
+     -2,
+     13
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 31,
+    "passB": 9,
+    "diff": 22,
+    "gains": 25,
+    "losses": 3,
+    "mcnemarP": 0.0000274405,
+    "bootstrap95": [
+     13,
+     31
+    ]
+   },
+   "oracle": 37,
+   "switchedFromDefault": 33,
+   "cost": {
+    "actingUsdPerTask": 0.128398,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.145785,
+    "usdPerSuccess": 0.282164,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 20,
+    "flaggedFailing": 11,
+    "precision": 0.55
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 5
+    },
+    "operations": {
+     "n": 10,
+     "pass": 4
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 6
+    }
+   }
+  },
+  {
+   "id": "P2/R3",
+   "role": "VL-1 (primary)",
+   "arms": [
+    "v1m",
+    "sonnet-a1"
+   ],
+   "pass": 32,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 32,
+    "passB": 29,
+    "diff": 3,
+    "gains": 8,
+    "losses": 5,
+    "mcnemarP": 0.581055,
+    "bootstrap95": [
+     -4,
+     10
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 32,
+    "passB": 26,
+    "diff": 6,
+    "gains": 10,
+    "losses": 4,
+    "mcnemarP": 0.179565,
+    "bootstrap95": [
+     -1,
+     13
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 32,
+    "passB": 9,
+    "diff": 23,
+    "gains": 26,
+    "losses": 3,
+    "mcnemarP": 0.0000152364,
+    "bootstrap95": [
+     14,
+     32
+    ]
+   },
+   "oracle": 37,
+   "switchedFromDefault": 34,
+   "cost": {
+    "actingUsdPerTask": 0.128398,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.145785,
+    "usdPerSuccess": 0.273346,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 17,
+    "flaggedFailing": 9,
+    "precision": 0.5294117647058824
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 5
+    },
+    "operations": {
+     "n": 10,
+     "pass": 5
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 6
+    }
+   }
+  },
+  {
+   "id": "P2h/R0",
+   "role": "descriptive grid cell",
+   "arms": [
+    "v1m",
+    "haiku-a0"
+   ],
+   "pass": 29,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 29,
+    "passB": 29,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 29,
+    "passB": 26,
+    "diff": 3,
+    "gains": 12,
+    "losses": 9,
+    "mcnemarP": 0.663624,
+    "bootstrap95": [
+     -6,
+     12
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 29,
+    "passB": 9,
+    "diff": 20,
+    "gains": 23,
+    "losses": 3,
+    "mcnemarP": 0.0000879765,
+    "bootstrap95": [
+     11,
+     29
+    ]
+   },
+   "oracle": 32,
+   "switchedFromDefault": 0,
+   "cost": {
+    "actingUsdPerTask": 0.02891,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.046297,
+    "usdPerSuccess": 0.095786,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 20,
+    "flaggedFailing": 10,
+    "precision": 0.5
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 6
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 3
+    },
+    "operations": {
+     "n": 10,
+     "pass": 4
+    },
+    "sales": {
+     "n": 10,
+     "pass": 4
+    },
+    "support": {
+     "n": 10,
+     "pass": 5
+    }
+   }
+  },
+  {
+   "id": "P2h/R1",
+   "role": "descriptive grid cell",
+   "arms": [
+    "v1m",
+    "haiku-a0"
+   ],
+   "pass": 29,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 29,
+    "passB": 29,
+    "diff": 0,
+    "gains": 3,
+    "losses": 3,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -5,
+     5
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 29,
+    "passB": 26,
+    "diff": 3,
+    "gains": 10,
+    "losses": 7,
+    "mcnemarP": 0.629059,
+    "bootstrap95": [
+     -5,
+     11
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 29,
+    "passB": 9,
+    "diff": 20,
+    "gains": 20,
+    "losses": 0,
+    "mcnemarP": 0.00000190735,
+    "bootstrap95": [
+     13,
+     27
+    ]
+   },
+   "oracle": 32,
+   "switchedFromDefault": 13,
+   "cost": {
+    "actingUsdPerTask": 0.02891,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.046297,
+    "usdPerSuccess": 0.095786,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 20,
+    "flaggedFailing": 9,
+    "precision": 0.45
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 6
+    },
+    "hr": {
+     "n": 10,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 4
+    },
+    "operations": {
+     "n": 10,
+     "pass": 4
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 6
+    }
+   }
+  },
+  {
+   "id": "P2h/R2",
+   "role": "VL-1h (secondary)",
+   "arms": [
+    "v1m",
+    "haiku-a0"
+   ],
+   "pass": 29,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 29,
+    "passB": 29,
+    "diff": 0,
+    "gains": 3,
+    "losses": 3,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -5,
+     5
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 29,
+    "passB": 26,
+    "diff": 3,
+    "gains": 11,
+    "losses": 8,
+    "mcnemarP": 0.647606,
+    "bootstrap95": [
+     -6,
+     11
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 29,
+    "passB": 9,
+    "diff": 20,
+    "gains": 20,
+    "losses": 0,
+    "mcnemarP": 0.00000190735,
+    "bootstrap95": [
+     13,
+     27
+    ]
+   },
+   "oracle": 32,
+   "switchedFromDefault": 20,
+   "cost": {
+    "actingUsdPerTask": 0.02891,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.046297,
+    "usdPerSuccess": 0.095786,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 22,
+    "flaggedFailing": 11,
+    "precision": 0.5
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 5
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 4
+    },
+    "operations": {
+     "n": 10,
+     "pass": 3
+    },
+    "sales": {
+     "n": 10,
+     "pass": 4
+    },
+    "support": {
+     "n": 10,
+     "pass": 6
+    }
+   }
+  },
+  {
+   "id": "P2h/R3",
+   "role": "descriptive grid cell",
+   "arms": [
+    "v1m",
+    "haiku-a0"
+   ],
+   "pass": 29,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 29,
+    "passB": 29,
+    "diff": 0,
+    "gains": 3,
+    "losses": 3,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -5,
+     5
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 29,
+    "passB": 26,
+    "diff": 3,
+    "gains": 10,
+    "losses": 7,
+    "mcnemarP": 0.629059,
+    "bootstrap95": [
+     -5,
+     11
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 29,
+    "passB": 9,
+    "diff": 20,
+    "gains": 20,
+    "losses": 0,
+    "mcnemarP": 0.00000190735,
+    "bootstrap95": [
+     13,
+     27
+    ]
+   },
+   "oracle": 32,
+   "switchedFromDefault": 19,
+   "cost": {
+    "actingUsdPerTask": 0.02891,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.046297,
+    "usdPerSuccess": 0.095786,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 20,
+    "flaggedFailing": 9,
+    "precision": 0.45
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 4
+    },
+    "operations": {
+     "n": 10,
+     "pass": 3
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 6
+    }
+   }
+  },
+  {
+   "id": "P3/R0",
+   "role": "descriptive grid cell",
+   "arms": [
+    "v1m",
+    "sonnet-a1",
+    "haiku-a0"
+   ],
+   "pass": 29,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 29,
+    "passB": 29,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 29,
+    "passB": 26,
+    "diff": 3,
+    "gains": 12,
+    "losses": 9,
+    "mcnemarP": 0.663624,
+    "bootstrap95": [
+     -6,
+     12
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 29,
+    "passB": 9,
+    "diff": 20,
+    "gains": 23,
+    "losses": 3,
+    "mcnemarP": 0.0000879765,
+    "bootstrap95": [
+     11,
+     29
+    ]
+   },
+   "oracle": 39,
+   "switchedFromDefault": 0,
+   "cost": {
+    "actingUsdPerTask": 0.141111,
+    "verifierUsdPerTask": 0.019869,
+    "usdPerTask": 0.16098,
+    "usdPerSuccess": 0.333062,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 20,
+    "flaggedFailing": 10,
+    "precision": 0.5
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 6
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 3
+    },
+    "operations": {
+     "n": 10,
+     "pass": 4
+    },
+    "sales": {
+     "n": 10,
+     "pass": 4
+    },
+    "support": {
+     "n": 10,
+     "pass": 5
+    }
+   }
+  },
+  {
+   "id": "P3/R1",
+   "role": "descriptive grid cell",
+   "arms": [
+    "v1m",
+    "sonnet-a1",
+    "haiku-a0"
+   ],
+   "pass": 30,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 30,
+    "passB": 29,
+    "diff": 1,
+    "gains": 4,
+    "losses": 3,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -4,
+     6
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 30,
+    "passB": 26,
+    "diff": 4,
+    "gains": 10,
+    "losses": 6,
+    "mcnemarP": 0.454498,
+    "bootstrap95": [
+     -4,
+     12
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 30,
+    "passB": 9,
+    "diff": 21,
+    "gains": 22,
+    "losses": 1,
+    "mcnemarP": 0.00000572205,
+    "bootstrap95": [
+     13,
+     29
+    ]
+   },
+   "oracle": 39,
+   "switchedFromDefault": 21,
+   "cost": {
+    "actingUsdPerTask": 0.141111,
+    "verifierUsdPerTask": 0.019869,
+    "usdPerTask": 0.16098,
+    "usdPerSuccess": 0.32196,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 16,
+    "flaggedFailing": 9,
+    "precision": 0.5625
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 4
+    },
+    "operations": {
+     "n": 10,
+     "pass": 5
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 5
+    }
+   }
+  },
+  {
+   "id": "P3/R2",
+   "role": "descriptive grid cell",
+   "arms": [
+    "v1m",
+    "sonnet-a1",
+    "haiku-a0"
+   ],
+   "pass": 31,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 31,
+    "passB": 29,
+    "diff": 2,
+    "gains": 8,
+    "losses": 6,
+    "mcnemarP": 0.790527,
+    "bootstrap95": [
+     -5,
+     9
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 31,
+    "passB": 26,
+    "diff": 5,
+    "gains": 10,
+    "losses": 5,
+    "mcnemarP": 0.301758,
+    "bootstrap95": [
+     -2,
+     13
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 31,
+    "passB": 9,
+    "diff": 22,
+    "gains": 24,
+    "losses": 2,
+    "mcnemarP": 0.0000104904,
+    "bootstrap95": [
+     14,
+     30
+    ]
+   },
+   "oracle": 39,
+   "switchedFromDefault": 39,
+   "cost": {
+    "actingUsdPerTask": 0.141111,
+    "verifierUsdPerTask": 0.019869,
+    "usdPerTask": 0.16098,
+    "usdPerSuccess": 0.311574,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 20,
+    "flaggedFailing": 11,
+    "precision": 0.55
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 3
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 6
+    },
+    "operations": {
+     "n": 10,
+     "pass": 4
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 6
+    }
+   }
+  },
+  {
+   "id": "P3/R3",
+   "role": "VL-3 (exploratory)",
+   "arms": [
+    "v1m",
+    "sonnet-a1",
+    "haiku-a0"
+   ],
+   "pass": 33,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 33,
+    "passB": 29,
+    "diff": 4,
+    "gains": 9,
+    "losses": 5,
+    "mcnemarP": 0.42395,
+    "bootstrap95": [
+     -3,
+     11
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 33,
+    "passB": 26,
+    "diff": 7,
+    "gains": 11,
+    "losses": 4,
+    "mcnemarP": 0.118469,
+    "bootstrap95": [
+     0,
+     14
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 33,
+    "passB": 9,
+    "diff": 24,
+    "gains": 25,
+    "losses": 1,
+    "mcnemarP": 8.04663e-7,
+    "bootstrap95": [
+     16,
+     32
+    ]
+   },
+   "oracle": 39,
+   "switchedFromDefault": 40,
+   "cost": {
+    "actingUsdPerTask": 0.141111,
+    "verifierUsdPerTask": 0.019869,
+    "usdPerTask": 0.16098,
+    "usdPerSuccess": 0.292691,
+    "mercuryTokens": 3523669
+   },
+   "hpOnPicks": {
+    "flagged": 17,
+    "flaggedFailing": 8,
+    "precision": 0.47058823529411764
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 3
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 6
+    },
+    "operations": {
+     "n": 10,
+     "pass": 5
+    },
+    "sales": {
+     "n": 10,
+     "pass": 6
+    },
+    "support": {
+     "n": 10,
+     "pass": 6
+    }
+   }
+  },
+  {
+   "id": "P2v2/R0",
+   "role": "descriptive grid cell",
+   "arms": [
+    "v2m",
+    "sonnet-a1"
+   ],
+   "pass": 27,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 27,
+    "passB": 27,
+    "diff": 0,
+    "gains": 0,
+    "losses": 0,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     0,
+     0
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 27,
+    "passB": 26,
+    "diff": 1,
+    "gains": 9,
+    "losses": 8,
+    "mcnemarP": 1,
+    "bootstrap95": [
+     -7,
+     9
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 27,
+    "passB": 9,
+    "diff": 18,
+    "gains": 22,
+    "losses": 4,
+    "mcnemarP": 0.000533521,
+    "bootstrap95": [
+     9,
+     27
+    ]
+   },
+   "oracle": 35,
+   "switchedFromDefault": 0,
+   "cost": {
+    "actingUsdPerTask": 0.123121,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.140507,
+    "usdPerSuccess": 0.312238,
+    "mercuryTokens": 3898307
+   },
+   "hpOnPicks": {
+    "flagged": 25,
+    "flaggedFailing": 17,
+    "precision": 0.68
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 8
+    },
+    "hr": {
+     "n": 10,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 3
+    },
+    "operations": {
+     "n": 10,
+     "pass": 4
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 3
+    }
+   }
+  },
+  {
+   "id": "P2v2/R1",
+   "role": "descriptive grid cell",
+   "arms": [
+    "v2m",
+    "sonnet-a1"
+   ],
+   "pass": 29,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 29,
+    "passB": 27,
+    "diff": 2,
+    "gains": 4,
+    "losses": 2,
+    "mcnemarP": 0.6875,
+    "bootstrap95": [
+     -3,
+     7
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 29,
+    "passB": 26,
+    "diff": 3,
+    "gains": 9,
+    "losses": 6,
+    "mcnemarP": 0.607239,
+    "bootstrap95": [
+     -5,
+     11
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 29,
+    "passB": 9,
+    "diff": 20,
+    "gains": 24,
+    "losses": 4,
+    "mcnemarP": 0.000179991,
+    "bootstrap95": [
+     11,
+     29
+    ]
+   },
+   "oracle": 35,
+   "switchedFromDefault": 18,
+   "cost": {
+    "actingUsdPerTask": 0.123121,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.140507,
+    "usdPerSuccess": 0.290704,
+    "mercuryTokens": 3898307
+   },
+   "hpOnPicks": {
+    "flagged": 17,
+    "flaggedFailing": 11,
+    "precision": 0.6470588235294118
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 8
+    },
+    "hr": {
+     "n": 10,
+     "pass": 3
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 4
+    },
+    "operations": {
+     "n": 10,
+     "pass": 5
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 4
+    }
+   }
+  },
+  {
+   "id": "P2v2/R2",
+   "role": "descriptive grid cell",
+   "arms": [
+    "v2m",
+    "sonnet-a1"
+   ],
+   "pass": 29,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 29,
+    "passB": 27,
+    "diff": 2,
+    "gains": 4,
+    "losses": 2,
+    "mcnemarP": 0.6875,
+    "bootstrap95": [
+     -3,
+     7
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 29,
+    "passB": 26,
+    "diff": 3,
+    "gains": 9,
+    "losses": 6,
+    "mcnemarP": 0.607239,
+    "bootstrap95": [
+     -5,
+     11
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 29,
+    "passB": 9,
+    "diff": 20,
+    "gains": 22,
+    "losses": 2,
+    "mcnemarP": 0.000035882,
+    "bootstrap95": [
+     12,
+     28
+    ]
+   },
+   "oracle": 35,
+   "switchedFromDefault": 24,
+   "cost": {
+    "actingUsdPerTask": 0.123121,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.140507,
+    "usdPerSuccess": 0.290704,
+    "mercuryTokens": 3898307
+   },
+   "hpOnPicks": {
+    "flagged": 21,
+    "flaggedFailing": 13,
+    "precision": 0.6190476190476191
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 3
+    },
+    "operations": {
+     "n": 10,
+     "pass": 4
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 6
+    }
+   }
+  },
+  {
+   "id": "P2v2/R3",
+   "role": "VL-v2 (exploratory)",
+   "arms": [
+    "v2m",
+    "sonnet-a1"
+   ],
+   "pass": 30,
+   "n": 60,
+   "vsDefault": {
+    "n": 60,
+    "passA": 30,
+    "passB": 27,
+    "diff": 3,
+    "gains": 5,
+    "losses": 2,
+    "mcnemarP": 0.453125,
+    "bootstrap95": [
+     -2,
+     8
+    ]
+   },
+   "vsOpus": {
+    "n": 60,
+    "passA": 30,
+    "passB": 26,
+    "diff": 4,
+    "gains": 9,
+    "losses": 5,
+    "mcnemarP": 0.42395,
+    "bootstrap95": [
+     -3,
+     11
+    ]
+   },
+   "vsA0": {
+    "n": 60,
+    "passA": 30,
+    "passB": 9,
+    "diff": 21,
+    "gains": 23,
+    "losses": 2,
+    "mcnemarP": 0.0000194311,
+    "bootstrap95": [
+     13,
+     29
+    ]
+   },
+   "oracle": 35,
+   "switchedFromDefault": 26,
+   "cost": {
+    "actingUsdPerTask": 0.123121,
+    "verifierUsdPerTask": 0.017386,
+    "usdPerTask": 0.140507,
+    "usdPerSuccess": 0.281014,
+    "mercuryTokens": 3898307
+   },
+   "hpOnPicks": {
+    "flagged": 18,
+    "flaggedFailing": 10,
+    "precision": 0.5555555555555556
+   },
+   "byDomain": {
+    "finance": {
+     "n": 10,
+     "pass": 7
+    },
+    "hr": {
+     "n": 10,
+     "pass": 4
+    },
+    "marketing": {
+     "n": 10,
+     "pass": 3
+    },
+    "operations": {
+     "n": 10,
+     "pass": 5
+    },
+    "sales": {
+     "n": 10,
+     "pass": 5
+    },
+    "support": {
+     "n": 10,
+     "pass": 6
+    }
+   }
+  }
+ ],
+ "pickAccuracyP2": {
+  "bothPass": 19,
+  "v1mOnly": 10,
+  "sonnetOnly": 8,
+  "neither": 23,
+  "mixed": 18,
+  "r3RightOnMixed": 13,
+  "q": 0.722222,
+  "r1RightOnMixed": 12,
+  "r2RightOnMixed": 12
+ },
+ "verifierSpend": {
+  "rl2ExtractUsd": 0.745227,
+  "rl2JudgeUsd": 0.064752,
+  "djUsd": 0.531144,
+  "totalUsd": 1.341124,
+  "calls": {
+   "rl2Extract": 180,
+   "rl2Judge": 100,
+   "haikuJudge": 240
+  }
+ },
+ "vl1r": {
+  "treated": 17,
+  "graded": 17,
+  "vsControl": {
+   "fixed": 0,
+   "broke": 2
+  },
+  "vsLive": {
+   "fixed": 0,
+   "broke": 2
+  },
+  "controlDrift": 0,
+  "hpPrecisionOnTreated": 0.5294117647058824,
+  "vl1r": {
+   "pass": 30,
+   "vsVl1": {
+    "n": 60,
+    "passA": 30,
+    "passB": 32,
+    "diff": -2,
+    "gains": 0,
+    "losses": 2,
+    "mcnemarP": 0.5,
+    "bootstrap95": [
+     -5,
+     0
+    ]
+   }
+  },
+  "spentUsd": 0.12400116,
+  "usdPerTask": 0.147851,
+  "usdPerSuccess": 0.295703
+ },
+ "decisions": {
+  "primary": "P2/R3",
+  "vsDefault": {
+   "diff": 3,
+   "gains": 8,
+   "losses": 5,
+   "mcnemarP": 0.581055,
+   "bootstrap95": [
+    -4,
+    10
+   ]
+  },
+  "selection": "inconclusive (neither rule fires)",
+  "opus": {
+   "refPass": 26,
+   "refUsdPerTask": 0.3853895266666668,
+   "vl1Pass": 32,
+   "vl1UsdPerTask": 0.14578460795833328,
+   "parity": false
+  },
+  "repair": {
+   "fixedVsControl": 0,
+   "brokeVsControl": 2,
+   "hpPrecisionOnPicks": 0.5294117647058824,
+   "carry": false
+  }
+ },
+ "newSpendUsd": {
+  "sonnetFork": 6.732025,
+  "sonnetForkUnrecordedMax": 3,
+  "verifiers": 1.341124,
+  "repair": 0.12400116,
+  "totalRecorded": 8.19715,
+  "capTotal": 15.25
+ }
+}
