@@ -132,8 +132,15 @@ def body_text(m: dict) -> str:
     return raw
 
 
-def is_sent(m: dict) -> bool:
-    return "SENT" in (m.get("label_ids") or [])
+import sys as _b0_sys  # B0: experiments/autobench on the path for the shared abr.lib
+from pathlib import Path as _B0Path
+if str(_B0Path(__file__).resolve().parents[2]) not in _b0_sys.path:
+    _b0_sys.path.append(str(_B0Path(__file__).resolve().parents[2]))
+from abr.lib import common as _abr_common  # noqa: E402
+from abr.lib import host as _abr_host  # noqa: E402
+
+
+is_sent = _abr_common.is_sent
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -229,8 +236,7 @@ def summary_problems(text: str, want: str) -> list[str]:
     return out
 
 
-def _chan_id(world: dict, name: str):
-    return next((c["id"] for c in world.get("slack", {}).get("channels", []) if c.get("name") == name), None)
+_chan_id = _abr_common._chan_id
 
 
 def summarize(it: dict) -> str:

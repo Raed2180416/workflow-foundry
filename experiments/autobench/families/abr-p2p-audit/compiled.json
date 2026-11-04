@@ -1,0 +1,65 @@
+{
+ "id": "abr-p2p-audit",
+ "version": "0.1.0",
+ "sink": "automation-review",
+ "attribution": {
+  "cells:Invoices:Status": "A1|A2|A3",
+  "cells:Invoices:Hold Reason": "A1",
+  "cells:Invoices:Decided At": "A1|A2",
+  "cells:Invoices:Paid At": "A3",
+  "post:ap-holds:HOLD": "A1",
+  "mail:SOD": "A1",
+  "post:ap-holds:RELEASE": "A2",
+  "append:Payment Runs": "A3",
+  "post:ap-payments:PAYMENT": "A3",
+  "append:Policy Log": "A4",
+  "post:automation-review": "A4",
+  "post:ap-reports:MONTH-END": "A5",
+  "mail:AP": "A5"
+ },
+ "hard_clauses": [
+  "A1",
+  "A2",
+  "A3"
+ ],
+ "controls": [
+  "null",
+  "echo",
+  "naive",
+  "memoryless",
+  "clause_A1",
+  "clause_A2",
+  "clause_A3",
+  "clause_A4",
+  "clause_A5",
+  "clause_A6",
+  "trap_lookalike",
+  "trap_naive_money",
+  "trap_no_dedupe",
+  "trap_no_release",
+  "trap_no_sod",
+  "trap_no_tolerance",
+  "trap_stale_policy"
+ ],
+ "clauses": [
+  "A1",
+  "A2",
+  "A3",
+  "A4",
+  "A5",
+  "A6"
+ ],
+ "traps": [
+  "T-lookalike",
+  "T-replay",
+  "T-conflict",
+  "T-sod",
+  "T-match",
+  "T-stale",
+  "T-format"
+ ],
+ "g0_static": {
+  "pass": true,
+  "problems": []
+ }
+}

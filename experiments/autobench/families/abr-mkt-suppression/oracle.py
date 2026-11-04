@@ -238,8 +238,15 @@ def subject_of(m: dict) -> str:
     return (m.get("subject") or "").strip()
 
 
-def body_of(m: dict) -> str:
-    return f"{m.get('body_plain') or ''}\n{m.get('body_html') or ''}"
+import sys as _b0_sys  # B0: experiments/autobench on the path for the shared abr.lib
+from pathlib import Path as _B0Path
+if str(_B0Path(__file__).resolve().parents[2]) not in _b0_sys.path:
+    _b0_sys.path.append(str(_B0Path(__file__).resolve().parents[2]))
+from abr.lib import common as _abr_common  # noqa: E402
+from abr.lib import host as _abr_host  # noqa: E402
+
+
+body_of = _abr_common.body_of
 
 
 NEGATION = re.compile(r"\b(?:not|never|cannot|unable|failed|false)\b|n't\b", re.I)

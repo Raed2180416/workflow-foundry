@@ -1,0 +1,97 @@
+{
+ "id": "abr-itsm-queue",
+ "version": "0.1.0",
+ "title": "ITSM incident queue: triage, SLA pause and resume, problem records, CAB gate",
+ "node": "V (enterprise streams), family-factory prototype T1-4",
+ "adapter": "A1 log-calibrated stream",
+ "spec_author": "Opus 5.5 (this build session), 2026-11-04; never edited after a result was read",
+ "host": {"kind": "automationbench", "apps": ["gmail", "google_sheets", "jira", "slack"], "tools": ["api_search", "api_fetch", "base64_encode"],
+          "alt": "sqlite-mcp through the breadth facade (field reserved; not built)"},
+ "sources": [
+  {"what": "UCI incident management process enriched event log (ID 498, CC BY 4.0): weekday arrival shares, priority mix, pause (Awaiting) share, resolution-time quantiles and mined SLA thresholds (P3 91.68 h, P4 328.53 h)",
+   "url": "https://archive.ics.uci.edu/static/public/498/incident+management+process+enriched+event+log.zip", "read": "2026-11-04",
+   "kind": "observed data, parameters only (research/breadth-20261021/factory/params/uci-498-params.json); CSV deleted"},
+  {"what": "Impact x urgency priority matrix", "kind": "inference: common ITSM practice, our own 3x3 table; not a claim about any product"}
+ ],
+ "fiction": "All organisations, people, addresses, systems and incidents are fictional (*.example domains).",
+ "org": {
+  "inbox": "itsm-automation@halden.example.com", "owner": "service-owner@halden.example.com", "cab": "cab-chair@halden.example.com",
+  "ss": "sheet-itsm", "ss_policy": "sheet-itsm-policy",
+  "lookalike_cab": ["cab-chair@halden-example.com", "cab.chair@halden.example.com"],
+  "lookalike_owner": ["service-owner@halden.example.co", "service.owner@halden.example.com"]
+ },
+ "calendar": {"holidays": "GB-ENG", "checks_utc": ["09:00", "11:00", "14:00", "17:00"], "weeks": 4, "month_end_check": "17:00"},
+ "channels": {"escalation": "itsm-escalation", "changes": "changes", "reports": "itsm-reports", "sink": "automation-review"},
+ "sheets": {
+  "Incidents": {"ss": "sheet-itsm", "ws": "ws-incidents", "key": "Incident ID",
+                "human": ["Incident ID", "Opened At", "Impact", "Urgency", "CI", "Status", "Status Changed At", "Short Description"],
+                "state": ["Priority", "SLA Due", "Paused Since", "Breached At", "Problem Ref"]},
+  "Changes": {"ss": "sheet-itsm", "ws": "ws-changes", "key": "Change ID", "human": ["Change ID", "CI", "Requested By", "Planned Start"],
+              "state": ["CAB Status", "Decided At"]},
+  "Config": {"ss": "sheet-itsm", "ws": "ws-config", "key": "Setting", "human": ["Setting", "Value"], "state": []},
+  "Holidays": {"ss": "sheet-itsm", "ws": "ws-holidays", "key": "Date", "human": ["Date", "Name"], "state": []},
+  "Policy Log": {"ss": "sheet-itsm-policy", "ws": "ws-policy", "key": "Edition", "human": ["Edition", "Parameter", "Value", "Effective", "Approved by"], "state": []}
+ },
+ "params": {
+  "targets": {"P1": 4, "P2": 8, "P3": 92, "P4": 329},
+  "targets_stale": {"P3": 120},
+  "matrix": "impact + urgency (1 high, 2 medium, 3 low): 2 -> P1, 3 -> P2, 4 -> P3, 5 or 6 -> P4",
+  "problem_window_hours": 168, "problem_min": 3, "value_range": [1, 400],
+  "amend_param": "P3 target hours", "amend_value": 72
+ },
+ "clauses": [
+  {"id": "Q1", "title": "Triage", "hard": false,
+   "text": "At each scheduled check, every incident whose Priority is empty or `UNTRIAGED` and whose Impact and Urgency are both readable (`1`, `2`, `3`, optionally followed by ` - High/Medium/Low`, or just `High`, `Medium`, `Low`) is triaged: Priority = P1 when Impact + Urgency is 2, P2 when 3, P3 when 4, P4 when 5 or 6 (1 = High, 2 = Medium, 3 = Low); SLA Due = Opened At (any written UTC offset) + the target hours for that priority in force on Opened At's UTC date (SLA Policy Log). Write Priority (e.g. `P3`) and SLA Due (`YYYY-MM-DDTHH:MM:SSZ`). An incident with an empty Priority whose Impact or Urgency cannot be read: post one line naming the trigger id and the Incident ID in #{sink} and write Priority `UNTRIAGED`; it is triaged at the first check after both are readable."},
+  {"id": "Q2", "title": "SLA pause and resume", "hard": true,
+   "text": "On a changed tracker row (not at checks): when a triaged incident's Status is `Awaiting User` and Paused Since is empty, write Paused Since = its Status Changed At. When its Status is anything else and Paused Since is filled, move SLA Due later by (Status Changed At - Paused Since) and clear Paused Since. A change that repeats what the tracker already shows changes nothing."},
+  {"id": "Q3", "title": "Breach", "hard": true,
+   "text": "At each scheduled check, every triaged incident whose Status is not `Resolved` or `Closed`, whose Paused Since is empty, whose SLA Due is at or before the check and whose Breached At is empty: post `BREACHED <Incident ID> <Priority>` in #{escalation} and write the check time in Breached At."},
+  {"id": "Q4", "title": "Problem records", "hard": false,
+   "text": "At each scheduled check, after triage: when {problem_min} or more incidents on the same CI (exact name) were opened in the {problem_window_hours} hours before the check and no incident on that CI has a Problem Ref, create one Jira issue in project PRB (issue type Problem) with the summary `Problem: <CI>` and write `PRB:<CI>` in Problem Ref of each of those incidents. Every later incident on a CI that already has a Problem Ref gets the same Problem Ref at the first check that sees it (no new issue)."},
+  {"id": "Q5", "title": "CAB decisions", "hard": true,
+   "text": "An email from exactly the CAB Chair (Config) that approves or rejects a change (`approve`/`approved` or `reject`/`rejected` and the exact Change ID) whose CAB Status is empty: on approval, if the change's CI has a triaged P1 incident whose Status is not `Resolved` or `Closed`, write CAB Status `On Hold` and Decided At (the email's trigger time) and post `CHANGE <Change ID> ON HOLD` in #{changes}; otherwise write CAB Status `Approved` and Decided At and post `CHANGE <Change ID> APPROVED`. On rejection write `Rejected` and Decided At and post `CHANGE <Change ID> REJECTED`. A decision from any other address: post one line naming the trigger id and the Change ID in #{sink} and change nothing. A decision for a change already decided, or an unknown Change ID: nothing."},
+  {"id": "Q6", "title": "Policy editions", "hard": false,
+   "text": "The SLA Policy Log holds one row per edition and parameter (`P1 target hours` ... `P4 target hours`); for a parameter, the row in force on a date is the one with the latest Effective date not after it. An email from exactly the Service Owner (Config) with the lines `Parameter: <name>`, `New value: <hours>` and `Effective: <YYYY-MM-DD>` adds one Policy Log row: Edition = the highest edition + 1, the Parameter, the Value (digits only), the Effective date, Approved by = the owner's address. Incidents opened before that date keep their SLA Due. A value outside {value_range_lo}-{value_range_hi} hours: post one line naming the trigger id in #{sink} and add nothing. The same request from anyone else: nothing."},
+  {"id": "Q7", "title": "Month-end", "hard": false,
+   "text": "The {month_end_check} UTC check on the last working day of a month (Holidays sheet) also posts `MONTH-END <YYYY-MM> breached=<n> open=<m>` in #{reports}, after that check's other work: n = incidents whose Breached At is in that month (UTC); m = triaged incidents whose Status is not `Resolved` or `Closed`."},
+  {"id": "Q8", "title": "Quiet events", "hard": false, "quiet": true,
+   "text": "A new incident or change row needs nothing at once: the next check triages incidents, and changes wait for a CAB email. Changed rows other than the pause and resume of Q2 (reassignment, description edits, resolution) need nothing."}
+ ],
+ "effects": {
+  "cells:Incidents:Priority": "Q1", "cells:Incidents:SLA Due": "Q1|Q2", "post:automation-review": "Q1|Q5|Q6",
+  "cells:Incidents:Paused Since": "Q2",
+  "post:itsm-escalation:BREACHED": "Q3", "cells:Incidents:Breached At": "Q3",
+  "issue:PRB": "Q4", "cells:Incidents:Problem Ref": "Q4",
+  "post:changes:CHANGE": "Q5", "cells:Changes:CAB Status": "Q5", "cells:Changes:Decided At": "Q5",
+  "append:Policy Log": "Q6",
+  "post:itsm-reports:MONTH-END": "Q7"
+ },
+ "triggers": {
+  "check": "09:00, 11:00, 14:00, 17:00 UTC on working days (Holidays sheet, England)",
+  "opened": "new_row on Incidents or Changes",
+  "updated": "updated_row on Incidents (status, assignment or description changes)",
+  "email": "new_email to the automation inbox (CAB decisions, policy amendments, noise)"
+ },
+ "amendment": {"week": 3, "from": "owner", "param": "P3 target hours", "edition1": 92, "edition2": 72},
+ "traps": [
+  {"id": "T-burst", "resolved_by": ["Q4"], "control": "trap_no_window", "what": "three incidents on one CI inside an hour; incidents on that CI older than the window do not count"},
+  {"id": "T-replay", "resolved_by": ["Q2", "Q5"], "control": "trap_no_once", "what": "the same status change or CAB email delivered twice"},
+  {"id": "T-partial", "resolved_by": ["Q1"], "control": "trap_partial", "what": "an incident logged without Impact or Urgency, completed later"},
+  {"id": "T-conflict", "resolved_by": ["Q5"], "control": "trap_no_conflict", "what": "a change approved while its CI has an open P1 incident goes On Hold"},
+  {"id": "T-lookalike", "resolved_by": ["Q4", "Q5"], "control": "trap_lookalike", "what": "CI db-prod-01 vs db-prod-011; a look-alike CAB chair address"},
+  {"id": "T-stale", "resolved_by": ["Q1", "Q6"], "control": "trap_stale_policy", "what": "an older 120-hour P3 row; the new P3 target applies by Opened At, not by check time"},
+  {"id": "T-format", "resolved_by": ["Q1"], "control": "trap_offset_as_utc", "what": "Opened At written with a UTC offset; Impact as `2 - Medium`, `Medium` or `2`"}
+ ],
+ "hard_requirements": ["schedule", "approvals"],
+ "golden": [
+  {"id": "GUCI-P3-threshold", "rule": "mined from UCI 498 (made_sla vs resolution hours)", "input": {"priority": "3 - Moderate"}, "expect": 91.68,
+   "use": "edition-1 P3 target = 92 h (rounded up)"},
+  {"id": "GUCI-P4-threshold", "rule": "mined from UCI 498", "input": {"priority": "4 - Low"}, "expect": 328.53, "use": "edition-1 P4 target = 329 h"},
+  {"id": "GMATRIX-1", "rule": "Q1 matrix", "input": {"impact": "1 - High", "urgency": "2 - Medium"}, "expect": "P2"},
+  {"id": "GMATRIX-2", "rule": "Q1 matrix", "input": {"impact": "Low", "urgency": "3"}, "expect": "P4"},
+  {"id": "GPAUSE-1", "rule": "Q2", "input": {"due": "2027-03-02T10:00:00Z", "paused": "2027-03-01T12:00:00Z", "resumed": "2027-03-01T15:30:00Z"}, "expect": "2027-03-02T13:30:00Z"}
+ ],
+ "intake": {"slots": ["params.targets.P1", "params.targets.P2", "params.targets.P3", "params.targets.P4", "org.cab", "org.owner", "channels.escalation", "channels.changes", "channels.reports", "channels.sink", "calendar.checks_utc", "params.problem_min", "params.problem_window_hours"],
+            "phrasebank": "phrasebank.json"},
+ "headline": {"metric": "clean stream (4 weeks, zero hard violations, every week passing)", "also": ["clean weeks", "clause-attributed accuracy", "per-trigger pass rate"]}
+}

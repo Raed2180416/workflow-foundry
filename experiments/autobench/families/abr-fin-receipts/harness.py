@@ -50,73 +50,24 @@ MAX_STEPS = 50                    # the official loop: 50 model steps, so at mos
 _BRIDGE = None
 
 
-def bridge():
-    """Import bridge.py once and install the determinism shim in seed mode (imports all of AutomationBench)."""
-    global _BRIDGE
-    if _BRIDGE is None:
-        import bridge as b
-        b.SHIM.install("seed")
-        _BRIDGE = b
-    return _BRIDGE
+import sys as _b0_sys  # B0: experiments/autobench on the path for the shared abr.lib
+from pathlib import Path as _B0Path
+if str(_B0Path(__file__).resolve().parents[2]) not in _b0_sys.path:
+    _b0_sys.path.append(str(_B0Path(__file__).resolve().parents[2]))
+from abr.lib import common as _abr_common  # noqa: E402
+from abr.lib import host as _abr_host  # noqa: E402
 
 
-class StepBudgetExceeded(RuntimeError):
-    pass
+bridge = _abr_host.bridge
 
 
-class Ctx:
-    """What a code solver gets besides the payload: the tools, and nothing else."""
-
-    def __init__(self, rollout, trigger: dict):
-        self._r = rollout
-        self.trigger = trigger
-        self.steps = 0
-
-    def batch(self, calls: list[dict]) -> list[str]:
-        """One step: several tool calls in order (as parallel tool calls in one model response). Returns contents."""
-        norm = [{"name": c["name"], "arguments": c["arguments"] if isinstance(c["arguments"], str) else json.dumps(c["arguments"])}
-                for c in calls]
-        out = asyncio.run(self._r.batch(norm))
-        if "error" in out:
-            raise StepBudgetExceeded(out["error"])
-        self.steps += 1
-        return [x["content"] for x in out["results"]]
-
-    def call(self, name: str, arguments: dict) -> str:
-        return self.batch([{"name": name, "arguments": arguments}])[0]
-
-    @staticmethod
-    def fetch_args(method: str, url: str, params=None, body=None) -> dict:
-        a = {"method": method, "url": url}
-        if params is not None:
-            a["params"] = json.dumps(params)
-        if body is not None:
-            a["body"] = json.dumps(body)
-        return a
-
-    def fetch(self, method: str, url: str, params=None, body=None) -> str:
-        return self.call("api_fetch", self.fetch_args(method, url, params, body))
-
-    def fetch_json(self, method: str, url: str, params=None, body=None):
-        return json.loads(self.fetch(method, url, params, body))
-
-    def search(self, query: str, top_k: int = 5) -> str:
-        return self.call("api_search", {"query": query, "top_k": top_k})
+StepBudgetExceeded = _abr_host.StepBudgetExceeded
 
 
-def load_solver(name: str):
-    """'reference', a control name from controls.CONTROLS, or path/to/module.py[:function] (default handle)."""
-    if name == "reference":
-        import reference
-        return reference.handle
-    import controls
-    if name in controls.CONTROLS:
-        return controls.CONTROLS[name]
-    path, _, fn = name.partition(":")
-    spec = importlib.util.spec_from_file_location("solver_mod", path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return getattr(mod, fn or "handle")
+Ctx = _abr_host.Ctx
+
+
+load_solver = _abr_host.load_solver
 
 
 def apply_delta(world: dict, delta: list, at: str) -> dict:
@@ -141,8 +92,7 @@ def apply_delta(world: dict, delta: list, at: str) -> dict:
         return WorldState(**w).model_dump(mode="json")
 
 
-def trigger_seed(seed: int, tid: str) -> int:
-    return int(hashlib.sha256(f"{gen.FAMILY}:{seed}:{tid}".encode()).hexdigest()[:12], 16)
+trigger_seed = _abr_host.make_trigger_seed(gen.FAMILY)
 
 
 def run_stream(stream: dict, solver, mode: str = "carry", ref_befores: list | None = None, grader=None,

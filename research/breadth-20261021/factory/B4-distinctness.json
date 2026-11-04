@@ -1,0 +1,452 @@
+{
+ "tau": 0.35,
+ "families": 16,
+ "clusters": [
+  [
+   "abr-fin-apintake",
+   "abr-hr-referral",
+   "abr-mkt-suppression",
+   "abr-sup-gdpr",
+   "abr-sup-routing"
+  ],
+  [
+   "abr-fin-receipts"
+  ],
+  [
+   "abr-hr-inbox"
+  ],
+  [
+   "abr-itsm-queue"
+  ],
+  [
+   "abr-mkt-reviews"
+  ],
+  [
+   "abr-ops-mailroom"
+  ],
+  [
+   "abr-ops-slawatch"
+  ],
+  [
+   "abr-p2p-audit"
+  ],
+  [
+   "abr-reg-incident-clock"
+  ],
+  [
+   "abr-sales-dealdesk"
+  ],
+  [
+   "abr-sales-noshow"
+  ],
+  [
+   "ebed-e7"
+  ]
+ ],
+ "effective_breadth": 12,
+ "v_families": {
+  "abr-itsm-queue": {
+   "nearest": [
+    [
+     0.4167,
+     "abr-ops-slawatch"
+    ],
+    [
+     0.4706,
+     "ebed-e7"
+    ],
+    [
+     0.5135,
+     "abr-p2p-audit"
+    ]
+   ],
+   "within_tau": [],
+   "distinct": true
+  },
+  "abr-p2p-audit": {
+   "nearest": [
+    [
+     0.5135,
+     "abr-itsm-queue"
+    ],
+    [
+     0.5714,
+     "abr-fin-apintake"
+    ],
+    [
+     0.5806,
+     "abr-mkt-suppression"
+    ]
+   ],
+   "within_tau": [],
+   "distinct": true
+  },
+  "abr-reg-incident-clock": {
+   "nearest": [
+    [
+     0.5,
+     "abr-ops-slawatch"
+    ],
+    [
+     0.5161,
+     "abr-sales-dealdesk"
+    ],
+    [
+     0.5405,
+     "abr-itsm-queue"
+    ]
+   ],
+   "within_tau": [],
+   "distinct": true
+  }
+ },
+ "itsm_queue_vs_slawatch": 0.4167,
+ "itsm_queue_vs_e7": 0.4706,
+ "swap_rule_fires": false,
+ "features": {
+  "abr-fin-apintake": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:quickbooks",
+   "app:slack",
+   "hard:{'type': 'effects-with-authority', 'requirement': \"corrections only from ap-lead@company.example.com, amendments only from cfo@company.example.com, the Blocked Vendors list only from the Controller's sheet edits\", 'checkedBy': [\"oracle hard.effects-with-authority on every trigger: no Blocked Vendors edit; Policy Log rows only at a CFO amendment the model accepted (one per amended parameter), never changed or removed; an existing row's Amount changes only where the model applies an AP lead correction\", \"end.authority over the whole week (Blocked Vendors is the Controller's list; world0 Policy Log rows unchanged and every other row matches an accepted amendment; world0 invoices keep their world0 or corrected Amount)\", 'per-trigger effects and envelope, end.policy-log and end.ws_blocked-unedited (whether the written cells are right)']}",
+   "hard:{'type': 'human-approval', 'requirement': \"no QuickBooks bill payment, vendor payment email or Processing status for an invoice whose Approver is not 'none' (every invoice of $5,000 or more in the generated streams) without an earlier approval email from that approver's exact address naming the invoice\", 'checkedBy': [\"oracle hard.approval-before-payment on every trigger: every payment effect in the arm's world (bill payments through their linked bill, Processing rows, payment emails) needs an approval email from the required approver's exact address, dated before the trigger and not before the invoice was logged\", \"the evidence is host-side, from the generator: truth.authority (each invoice's required approver), truth.logged (when it was logged), truth.approvals (the emails the generator put in the inbox; never the arm's inbox, which an arm can write to) and truth.approval_floor (the lowest Approval threshold in force so far this week, for an invoice the model does not know)\", 'end.hard over the whole week (end.authority, end.logged, end.approvals, end.approval_floor)']}",
+   "mech:approval",
+   "mech:deadline-clock",
+   "mech:duplicate",
+   "mech:editions",
+   "mech:escalation",
+   "mech:holds-release",
+   "mech:money-tolerance",
+   "mech:once-only",
+   "mech:pause-resume",
+   "trap:T-authority",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-note",
+   "trap:T-repeat",
+   "trap:T-stale",
+   "trap:T-state",
+   "trigger:email",
+   "trigger:row-new",
+   "trigger:schedule"
+  ],
+  "abr-fin-receipts": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:slack",
+   "mech:approval",
+   "mech:escalation",
+   "mech:money-tolerance",
+   "mech:once-only",
+   "trap:T-authority",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-repeat",
+   "trap:T-state",
+   "trigger:row-new",
+   "trigger:schedule"
+  ],
+  "abr-hr-inbox": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:slack",
+   "mech:approval",
+   "mech:deadline-clock",
+   "mech:editions",
+   "mech:escalation",
+   "mech:routing",
+   "trap:T-authority",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-note",
+   "trap:T-stale",
+   "trap:T-state (context)",
+   "trigger:email",
+   "trigger:schedule"
+  ],
+  "abr-hr-referral": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:slack",
+   "mech:duplicate",
+   "mech:escalation",
+   "mech:holds-release",
+   "mech:money-tolerance",
+   "mech:once-only",
+   "trap:T-authority",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-note",
+   "trap:T-repeat",
+   "trap:T-stale",
+   "trap:T-state",
+   "trigger:email",
+   "trigger:row-update",
+   "trigger:schedule"
+  ],
+  "abr-itsm-queue": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:jira",
+   "app:slack",
+   "hard:approvals",
+   "hard:schedule",
+   "mech:approval",
+   "mech:deadline-clock",
+   "mech:editions",
+   "mech:escalation",
+   "mech:grouping",
+   "mech:holds-release",
+   "mech:holidays",
+   "mech:local-time",
+   "mech:month-end",
+   "mech:once-only",
+   "mech:pause-resume",
+   "mech:priority-matrix",
+   "mech:reassignment",
+   "trap:T-burst",
+   "trap:T-conflict",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-partial",
+   "trap:T-replay",
+   "trap:T-stale",
+   "trigger:email",
+   "trigger:row-new",
+   "trigger:row-update",
+   "trigger:schedule"
+  ],
+  "abr-mkt-reviews": [
+   "app:gmail",
+   "app:hubspot",
+   "app:slack",
+   "mech:editions",
+   "mech:escalation",
+   "trigger:row-new",
+   "trigger:row-update",
+   "trigger:schedule"
+  ],
+  "abr-mkt-suppression": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:mailchimp",
+   "app:slack",
+   "mech:approval",
+   "mech:compensation",
+   "mech:duplicate",
+   "mech:editions",
+   "mech:escalation",
+   "mech:holds-release",
+   "mech:once-only",
+   "trap:T-authority",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-note",
+   "trap:T-repeat",
+   "trap:T-stale",
+   "trigger:email",
+   "trigger:schedule"
+  ],
+  "abr-ops-mailroom": [
+   "app:google_sheets",
+   "app:slack",
+   "app:twilio",
+   "mech:escalation",
+   "mech:holds-release",
+   "mech:routing",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-note",
+   "trap:T-repeat",
+   "trap:T-state",
+   "trigger:row-update",
+   "trigger:schedule"
+  ],
+  "abr-ops-slawatch": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:jira",
+   "app:slack",
+   "app:twilio",
+   "hard:durable-wait",
+   "hard:schedule",
+   "mech:approval",
+   "mech:deadline-clock",
+   "mech:editions",
+   "mech:escalation",
+   "mech:holds-release",
+   "mech:local-time",
+   "mech:once-only",
+   "mech:pause-resume",
+   "mech:reassignment",
+   "trap:T-authority",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-note",
+   "trap:T-repeat",
+   "trap:T-stale",
+   "trap:T-timing",
+   "trigger:email",
+   "trigger:row-new",
+   "trigger:row-update",
+   "trigger:schedule"
+  ],
+  "abr-p2p-audit": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:slack",
+   "hard:approvals",
+   "hard:audit",
+   "hard:hold-and-release",
+   "mech:approval",
+   "mech:duplicate",
+   "mech:editions",
+   "mech:holds-release",
+   "mech:holidays",
+   "mech:money-tolerance",
+   "mech:month-end",
+   "mech:once-only",
+   "mech:sod",
+   "trap:T-conflict",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-match",
+   "trap:T-replay",
+   "trap:T-sod",
+   "trap:T-stale",
+   "trigger:email",
+   "trigger:row-new",
+   "trigger:schedule"
+  ],
+  "abr-reg-incident-clock": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:slack",
+   "hard:audit",
+   "hard:compensation",
+   "hard:schedule",
+   "mech:approval",
+   "mech:compensation",
+   "mech:deadline-clock",
+   "mech:editions",
+   "mech:holidays",
+   "mech:local-time",
+   "mech:month-end",
+   "mech:once-only",
+   "trap:T-authority",
+   "trap:T-clock",
+   "trap:T-lookalike",
+   "trap:T-repeat",
+   "trap:T-retract",
+   "trap:T-stale",
+   "trigger:email",
+   "trigger:row-new",
+   "trigger:row-update",
+   "trigger:schedule"
+  ],
+  "abr-sales-dealdesk": [
+   "app:docusign",
+   "app:gmail",
+   "app:google_sheets",
+   "app:salesforce",
+   "app:slack",
+   "mech:approval",
+   "mech:compensation",
+   "mech:editions",
+   "mech:escalation",
+   "mech:money-tolerance",
+   "mech:once-only",
+   "mech:routing",
+   "trap:T-authority",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-note",
+   "trap:T-repeat",
+   "trap:T-stale",
+   "trigger:email",
+   "trigger:row-new",
+   "trigger:row-update",
+   "trigger:schedule"
+  ],
+  "abr-sales-noshow": [
+   "app:calendly",
+   "app:salesforce",
+   "app:slack",
+   "mech:compensation",
+   "mech:duplicate",
+   "mech:escalation",
+   "mech:money-tolerance",
+   "mech:once-only",
+   "trigger:schedule"
+  ],
+  "abr-sup-gdpr": [
+   "app:gmail",
+   "app:google_sheets",
+   "app:slack",
+   "app:zendesk",
+   "hard:{'type': 'audit', 'requirement': 'the Compliance Log is append-only with exactly one row per transition and no edits', 'checkedBy': ['oracle audit.append-only and log checks per trigger', 'end.log-history-unchanged', 'end.log-week', 'google_sheets_row_not_updated (AutomationBench handler) on earlier rows']}",
+   "hard:{'type': 'schedule', 'requirement': 'statutory deadline: no request reaches day 30 at a daily close without a terminal state (Blocked - Legal Hold counts: the request is verified and answered with the hold notice)', 'checkedBy': ['day-close truth (Closed - Unverified rows and emails)', \"end.statutory-deadline, computed from the arm's own world\"]}",
+   "mech:deadline-clock",
+   "mech:duplicate",
+   "mech:escalation",
+   "mech:holds-release",
+   "mech:once-only",
+   "trap:T-authority",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-note",
+   "trap:T-repeat",
+   "trap:T-stale",
+   "trap:T-state",
+   "trap:T-timing",
+   "trigger:email",
+   "trigger:row-update",
+   "trigger:schedule"
+  ],
+  "abr-sup-routing": [
+   "app:freshdesk",
+   "app:google_sheets",
+   "app:slack",
+   "mech:escalation",
+   "mech:holds-release",
+   "mech:money-tolerance",
+   "mech:once-only",
+   "mech:pause-resume",
+   "mech:routing",
+   "trap:T-authority",
+   "trap:T-format",
+   "trap:T-lookalike",
+   "trap:T-note",
+   "trap:T-repeat",
+   "trap:T-stale",
+   "trap:T-state",
+   "trigger:row-update",
+   "trigger:schedule"
+  ],
+  "ebed-e7": [
+   "app:ebed-host",
+   "hard:approvals",
+   "hard:schedule",
+   "mech:approval",
+   "mech:deadline-clock",
+   "mech:editions",
+   "mech:escalation",
+   "mech:holds-release",
+   "mech:holidays",
+   "mech:local-time",
+   "mech:once-only",
+   "mech:pause-resume",
+   "mech:priority-matrix",
+   "mech:reassignment",
+   "mech:routing",
+   "trap:T-authority",
+   "trap:T-clock",
+   "trap:T-format",
+   "trap:T-replay",
+   "trigger:row-new",
+   "trigger:row-update",
+   "trigger:schedule"
+  ]
+ }
+}

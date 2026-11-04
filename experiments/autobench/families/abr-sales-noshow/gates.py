@@ -57,8 +57,15 @@ BAD_CONTROLS = ["null", "echo", "naive", "stale-threshold", "no-repeat", "latest
 # ---------------------------------------------------------------------------------------------------------------------
 # determinism and round trip
 # ---------------------------------------------------------------------------------------------------------------------
-def stream_hashes(out: dict) -> dict:
-    return {k: gen.sha(out[k]) for k in ("world0", "payloads", "triggers", "truth", "end")}
+import sys as _b0_sys  # B0: experiments/autobench on the path for the shared abr.lib
+from pathlib import Path as _B0Path
+if str(_B0Path(__file__).resolve().parents[2]) not in _b0_sys.path:
+    _b0_sys.path.append(str(_B0Path(__file__).resolve().parents[2]))
+from abr.lib import common as _abr_common  # noqa: E402
+from abr.lib import host as _abr_host  # noqa: E402
+
+
+stream_hashes = _abr_common.make_stream_hashes(gen.sha)
 
 
 def gate_determinism(seeds: list[int]) -> dict:
@@ -194,8 +201,7 @@ def _find(world: dict, app: str, coll: str, rid: str):
     return next((r for r in world[app][coll] if r.get("id") == rid), None)
 
 
-def _chan(world: dict, name: str) -> str:
-    return next(c["id"] for c in world["slack"]["channels"] if c["name"] == name)
+_chan = _abr_common._chan
 
 
 def _post(world: dict, channel: str, text: str, k: int):
