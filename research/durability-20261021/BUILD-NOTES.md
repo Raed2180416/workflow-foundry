@@ -61,6 +61,13 @@ the bed). Every DUR-1 file is new under `experiments/durability/` and `research/
 5. **Two parallel heal workers could both pay for the same announced C-O session**: a directory lock makes one session per
    change; the other worker waits for its reading.
 6. The smoke report could print a negative "passing" count (it now counts finished orders only).
+7. **The harm shield refused correct effects**: the host's `ctx.query` takes `{ where }`, so its bare filter returned
+   every row and the reference's first charge looked like a second one; it also refused idempotent re-emissions under
+   the F ramp. Found by the first full dry run (shielded 1/27 against 15/27); test: the reference passes unchanged
+   under the shield, with and without F (`loop.test.mjs`).
+8. **Routed ticks were undercounted under F**: each restart makes a new routing arm (the dry run showed 0 routed ticks).
+9. **Promotion attribution fell to 'base' when a heal repaired its own evidence cases**; it now falls back to exposure.
+10. **A missing import** (`runBundle` in `paid.mjs`) in the red-team windows, caught by `stages.test.mjs`.
 
 ## 4. Deviations from the design and build plan (with reasons)
 
@@ -161,3 +168,31 @@ The chain runs, in prereg §13.1 order, each as `nice -n 15 node experiments/dur
 Exit codes: 3 stops the chain (freeze changed or `--paid` missing), 4 budget-stops a row and moves on, 75 is an
 environment fault (wait 30 minutes, resume the same step), anything else is retried once and then excluded and reported.
 Resume after a restart: the same `setsid nohup sh ... after-author` line (finished steps leave `runs/.done-<step>`).
+
+## 7. The $0 dry run (plumbing, never evidence)
+
+`DUR1_WORK=/var/tmp/foundry-work/dur1-dry2 nice -n 15 node experiments/durability/run.mjs dry --light --lineages
+b1lh-e8-1,ch-e8-1 --out /var/tmp/foundry-work/dur1-dry2/out` (34.7 min on the shared machine at load 15-38): **all 18
+steps ran** (seeds, author gates, Stage Z gates, exposure, static comparators, MH-H, MH-stale, attribution,
+certification, routed agent window, LD-H, WC-1, red team, sweep, +SH, m6, power, report). What it showed:
+
+| Step | Output |
+|---|---|
+| seeds | every scheduled seed accepted; 8/8 probes in untouched or unclaimed ranges refused |
+| author (stub bundle) | count-only gates on 1223 at size 24: reference ok, controls fail; floors **not met** at that size (R2s 2/10, E2s 9/10, U1s 0/6), so the author step correctly refuses to seal |
+| Stage Z gates | V-1 ok on both worlds (30 and 29 completed); V-2: noop and charge-twice fail both; exposure counted per change |
+| static arms (W1, W2 passed/completed) | S-H* b1lh 23/29, 15/27; ch-e8-1 23/29, 14/27; REF-S S1 23/29, 24/27; R-static 23/29, 24/27; R-maint(2) and R-ceil 29/29, 26/27 |
+| MH-H (stub patcher) | b1lh: 6 sessions, 1 promotion (the API patch for the stub E2s notify rename, shadow canary passed, CAS promotion, re-run with byte-identical prefix), W2 15/27 -> 23/27; ch-e8-1: 10 sessions, 0 promotions (the scripted stub only patches monoliths) |
+| MH-stale fork | 1 promotion, same W2 as MH-H (the stale contracts did not matter for this patch) |
+| attribution | e.g. S-H* b1lh W2: E2s 9, R2s 2, L1 2, ADV 2 induced; after the heal MH-H b1lh: E2s 1 |
+| certification | the one promotion: `reject (partial-fix)` (fresh cases in the failing strata still fail: the compressed W2 stacks R2s, U1s and L1 on the same notice rules) |
+| windows | 4 cases selected, 8 pairs; the routed-tick count read 0 under F: defect 8 of §3, fixed after this run |
+| LD-H ld-k0 (stub revert, 1 manifest world) | healed, durable, 0 regressions, 0 false-complaint harm, 1 promotion |
+| WC-1 | 0 of 2 evaluations at the toy pool (fixed: a smaller pool for the dry run) |
+| red team (stub) | 2 probes, 2 scenarios, 2 valid, 0 bed findings; blind baseline 2 probes |
+| +SH | shielded 1/27 vs 15/27 with 38 refusals: defect 7 of §3, fixed after this run |
+| m6 | calibration 71 practice instances, 80 stream instances, 3 alarms in W2 (where the changes are) |
+| report | owner table first; K-0 pass, D-1 INCONCLUSIVE (n = 2 lineages), D-3 SUPPORTED against a do-nothing agent, D-5 YES, D-6 FAIL, D-4 / D-7 NOT RUN, D-8 NOT SHOWN (1 of 6 defects), D-11 NO VALUE SHOWN; 10 heal-requiring cells, durable 4/8, certified-durable 0/8; root-cause ledger 42 records |
+
+None of these numbers is a DUR-1 result: two lineages, two 24-order worlds with every change stacked, designer-written
+stand-ins for the sealed changes and scripted patchers.
