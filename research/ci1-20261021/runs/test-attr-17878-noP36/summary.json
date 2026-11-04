@@ -1,0 +1,145 @@
+{
+ "arm": "A2",
+ "label": "test-attr-17878-noP36",
+ "split": "test",
+ "dropPatterns": [
+  "P36"
+ ],
+ "model": "claude-haiku-5-5",
+ "K": 3,
+ "items": [
+  "17878"
+ ],
+ "manifestSha256": "39bf40bd420be14b4b666f5d5e9c0ceb4cb03a85d9c87774a2b0578ebb19def6",
+ "started": "2026-11-04T12:43:25.502Z",
+ "finished": "2026-11-04T12:51:09.862Z",
+ "capUsd": 0.2,
+ "spentUsd": 0.076124,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.020184,
+   "tokens": 111575,
+   "calls": 4,
+   "wallMs": 106366,
+   "questions": 0,
+   "repairs": 2,
+   "practice": [
+    "succeeded",
+    "succeeded",
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P42",
+     "P08"
+    ],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17878",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.030308,
+   "tokens": 295531,
+   "calls": 4,
+   "wallMs": 155676,
+   "questions": 0,
+   "repairs": 2,
+   "practice": [
+    "succeeded",
+    "succeeded",
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P42",
+     "P08"
+    ],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17878",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.025632,
+   "tokens": 187023,
+   "calls": 4,
+   "wallMs": 145659,
+   "questions": 0,
+   "repairs": 3,
+   "practice": [
+    "succeeded",
+    "succeeded",
+    "succeeded",
+    "succeeded"
+   ],
+   "reviewedOk": false,
+   "retrieval": {
+    "patterns": [
+     "P42",
+     "P08"
+    ],
+    "exemplars": [
+     "16312",
+     "20173",
+     "7514"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to bastian.silvana@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  }
+ ]
+}
