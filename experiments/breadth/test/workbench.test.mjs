@@ -8,7 +8,7 @@ import { existsSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { OPERATOR_ADDRESS, constantItems, modalGold, replayItems, violationItems } from '../workbench/baselines.mjs';
+import { OPERATOR_ADDRESS, constantItems, modalGold, replayItems, upperOutsideEscapes, violationItems } from '../workbench/baselines.mjs';
 import { emailsIn, foreignAddresses, identityVerdict } from '../workbench/audit.mjs';
 import { choosePrimary, pickRegenerated } from '../workbench/freeze-split.mjs';
 import { anchorInstances, parseCsv } from '../workbench/prescreen.mjs';
@@ -74,6 +74,10 @@ test('baselines: modal gold (dev only), constant agents, sibling replay, violati
   assert.deepEqual(kinds, ['case_only', 'extra_plot', 'extra_reads', 'operator_send', 'transient_write']);
   assert.match(v.find(i => i.kind === 'operator_send').actions.at(-1), new RegExp(OPERATOR_ADDRESS.replace('.', '\\.')));
   assert.match(v.find(i => i.kind === 'case_only').actions[0], /body="HELLO"/);
+  // escapes survive the upper-casing ("\n" must not become "\N", a malformed Python escape)
+  assert.equal(upperOutsideEscapes('hi\\nthere \\"x\\" a\\\\b'), 'HI\\nTHERE \\"X\\" A\\\\B');
+  const ve = violationItems([T('p-2', 'email', 'a', ['email.send_email.func(recipient="a@atlas.com", subject="s", body="hi\\nbye")'])], { untouched: { taskId: '00000001', board: 'Design', otherBoard: 'Front end' } });
+  assert.match(ve.find(i => i.kind === 'case_only').actions[0], /body="HI\\nBYE"/);
 });
 
 test('identity audit: foreign addresses are counted, world and task addresses are not', () => {

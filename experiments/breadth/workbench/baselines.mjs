@@ -78,7 +78,9 @@ export function violationItems(tasks, { untouched }) {
     const si = g.findIndex(a => a.startsWith('email.send_email'));
     if (si >= 0 && /body="[^"]*[a-z]/.test(g[si])) {
       const m = [...g];
-      m[si] = g[si].replace(/body="((?:[^"\\]|\\.)*)"/, (_, b) => `body="${b.toUpperCase()}"`);
+      // upper-case the text, never an escape sequence: "\n" upper-cased is "\N", a malformed escape in the Python-literal
+      // action string (seen on the full population, 2026-11-04: the run stopped at the parse step)
+      m[si] = g[si].replace(/body="((?:[^"\\]|\\.)*)"/, (_, b) => `body="${upperOutsideEscapes(b)}"`);
       out.push({ key: `${t.id}:case_only`, kind: 'case_only', task: t, actions: m });
     }
     out.push({ key: `${t.id}:extra_plot`, kind: 'extra_plot', task: t, actions: [...g,
@@ -88,6 +90,9 @@ export function violationItems(tasks, { untouched }) {
   }
   return out;
 }
+
+/** Upper-case a string-literal body except its backslash escapes (\n, \", \\ and the like stay as they are). */
+export const upperOutsideEscapes = b => b.replace(/(\\.)|([^\\]+)/g, (_, esc, txt) => esc ?? txt.toUpperCase());
 
 /** Expected direction of each probe under a state-exact evaluator, and whether it is a hard violation (BG-11). */
 export const VIOLATION_CLASSES = Object.freeze({

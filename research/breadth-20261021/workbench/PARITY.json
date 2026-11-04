@@ -111,7 +111,10 @@
   "msPerItem": 1357
  },
  "setsRun": {
-  "gold+nothing": "2026-11-04T13:49:39.688Z"
+  "gold+nothing": "2026-11-04T13:49:39.688Z",
+  "mutants": "2026-11-04T13:58:37.031Z",
+  "variants": "2026-11-04T14:03:38.628Z",
+  "baselines": "2026-11-04T14:09:47.674Z"
  },
  "code": {
   "gold+nothing": {
@@ -123,7 +126,506 @@
    "host.mjs": "4933de2b702b23ec1ab7ef6a26ebed07ffe8d0affef0f40fe162a5b9145b3438",
    "mcp-relay.mjs": "0dad835d38b3767f87fafdcf89aa51791a28daff1a5a35dbf257cf03579714b9",
    "scripted-client.mjs": "48d2169722322bcbb69a3ffc80c468934932b7f9038fdbb79b38062b9fb20707"
+  },
+  "mutants": {
+   "bed.py": "ab0520028e13282faa113e666a32a4dc6a568f3cfcc381c50f2b648175797eec",
+   "parity.mjs": "018fae391c6cb91d985ba5451cac1d532e84d029a5d2eb445cacd5f4dd4b01ec",
+   "baselines.mjs": "dc1cc62945b5759cd851b1b5883595787508e6c934b059b6ab7f7611167b607e",
+   "scripted.mjs": "29a3d50ac595db52347744eba2eab68cf576989f396adc289a64caee1119e6b3",
+   "lib.mjs": "c014aad9c0df02b011de4b277f16e6ff7156b995d7a490b2a8a488ae13fdb84b",
+   "host.mjs": "4933de2b702b23ec1ab7ef6a26ebed07ffe8d0affef0f40fe162a5b9145b3438",
+   "mcp-relay.mjs": "0dad835d38b3767f87fafdcf89aa51791a28daff1a5a35dbf257cf03579714b9",
+   "scripted-client.mjs": "48d2169722322bcbb69a3ffc80c468934932b7f9038fdbb79b38062b9fb20707"
+  },
+  "variants": {
+   "bed.py": "ab0520028e13282faa113e666a32a4dc6a568f3cfcc381c50f2b648175797eec",
+   "parity.mjs": "018fae391c6cb91d985ba5451cac1d532e84d029a5d2eb445cacd5f4dd4b01ec",
+   "baselines.mjs": "dc1cc62945b5759cd851b1b5883595787508e6c934b059b6ab7f7611167b607e",
+   "scripted.mjs": "29a3d50ac595db52347744eba2eab68cf576989f396adc289a64caee1119e6b3",
+   "lib.mjs": "c014aad9c0df02b011de4b277f16e6ff7156b995d7a490b2a8a488ae13fdb84b",
+   "host.mjs": "4933de2b702b23ec1ab7ef6a26ebed07ffe8d0affef0f40fe162a5b9145b3438",
+   "mcp-relay.mjs": "0dad835d38b3767f87fafdcf89aa51791a28daff1a5a35dbf257cf03579714b9",
+   "scripted-client.mjs": "48d2169722322bcbb69a3ffc80c468934932b7f9038fdbb79b38062b9fb20707"
+  },
+  "baselines": {
+   "bed.py": "ab0520028e13282faa113e666a32a4dc6a568f3cfcc381c50f2b648175797eec",
+   "parity.mjs": "018fae391c6cb91d985ba5451cac1d532e84d029a5d2eb445cacd5f4dd4b01ec",
+   "baselines.mjs": "dc1cc62945b5759cd851b1b5883595787508e6c934b059b6ab7f7611167b607e",
+   "scripted.mjs": "29a3d50ac595db52347744eba2eab68cf576989f396adc289a64caee1119e6b3",
+   "lib.mjs": "c014aad9c0df02b011de4b277f16e6ff7156b995d7a490b2a8a488ae13fdb84b",
+   "host.mjs": "4933de2b702b23ec1ab7ef6a26ebed07ffe8d0affef0f40fe162a5b9145b3438",
+   "mcp-relay.mjs": "0dad835d38b3767f87fafdcf89aa51791a28daff1a5a35dbf257cf03579714b9",
+   "scripted-client.mjs": "48d2169722322bcbb69a3ffc80c468934932b7f9038fdbb79b38062b9fb20707"
   }
  },
- "ms": 2267066
+ "ms": 3475053,
+ "BG3_mutation": {
+  "operators": {
+   "drop_last": {
+    "n": 568,
+    "equivalentRaw": 2,
+    "toleratedCaseOnly": 0,
+    "nonEquivalent": 566,
+    "killed": 566,
+    "killRate": 100,
+    "survivors": [],
+    "equivalentPassed": 2,
+    "parityAgree": 568,
+    "sem": {
+     "killed": 566,
+     "killRate": 100,
+     "semEquivalent": 0,
+     "survivors": []
+    }
+   },
+   "duplicate_write": {
+    "n": 568,
+    "equivalentRaw": 235,
+    "toleratedCaseOnly": 0,
+    "nonEquivalent": 333,
+    "killed": 333,
+    "killRate": 100,
+    "survivors": [],
+    "equivalentPassed": 235,
+    "parityAgree": 568,
+    "sem": {
+     "killed": 333,
+     "killRate": 100,
+     "semEquivalent": 0,
+     "survivors": []
+    }
+   },
+   "extra_write": {
+    "n": 690,
+    "equivalentRaw": 0,
+    "toleratedCaseOnly": 0,
+    "nonEquivalent": 690,
+    "killed": 690,
+    "killRate": 100,
+    "survivors": [],
+    "equivalentPassed": 0,
+    "parityAgree": 690,
+    "sem": {
+     "killed": 690,
+     "killRate": 100,
+     "semEquivalent": 0,
+     "survivors": []
+    }
+   },
+   "wrong_argument": {
+    "n": 568,
+    "equivalentRaw": 0,
+    "toleratedCaseOnly": 0,
+    "nonEquivalent": 568,
+    "killed": 568,
+    "killRate": 100,
+    "survivors": [],
+    "equivalentPassed": 0,
+    "parityAgree": 568,
+    "sem": {
+     "killed": 568,
+     "killRate": 100,
+     "semEquivalent": 0,
+     "survivors": []
+    }
+   }
+  },
+  "newOperators": [
+   "wrong_argument",
+   "extra_write",
+   "duplicate_write"
+  ],
+  "newOperatorsKillRate": 100,
+  "threshold": 95,
+  "pass": true,
+  "sem": {
+   "newOperatorsKillRate": 100,
+   "pass": true
+  },
+  "rule": "kill rate = killed / non-equivalent; a mutant is equivalent when its full final world (all tables, exact text, row order ignored) equals gold's (bed.py replay equivalent_raw); tolerated = differs from gold only in letter case of case-insensitive fields",
+  "parityAgree": 2394,
+  "n": 2394,
+  "digest": "499d5b18439068dd310bf92080822f5bc29311b4238c9d6ac06176943c6d0988"
+ },
+ "BG6_alternatives": {
+  "operators": {
+   "chart_end_today": {
+    "n": 56,
+    "templates": 10,
+    "sameOutcome": 56,
+    "officialAccepts": 56,
+    "officialRate": 100,
+    "semAccepts": 56,
+    "notSameOutcome": 0,
+    "parityAgree": 56,
+    "rejectedExamples": []
+   },
+   "datetime_iso_t": {
+    "n": 84,
+    "templates": 12,
+    "sameOutcome": 84,
+    "officialAccepts": 0,
+    "officialRate": 0,
+    "semAccepts": 84,
+    "notSameOutcome": 0,
+    "parityAgree": 84,
+    "rejectedExamples": [
+     {
+      "key": "calendar-020:datetime_iso_t",
+      "arg": "new_value",
+      "documented": null,
+      "tool": "calendar.update_event"
+     },
+     {
+      "key": "calendar-021:datetime_iso_t",
+      "arg": "new_value",
+      "documented": null,
+      "tool": "calendar.update_event"
+     },
+     {
+      "key": "calendar-022:datetime_iso_t",
+      "arg": "new_value",
+      "documented": null,
+      "tool": "calendar.update_event"
+     }
+    ],
+    "byDocumentation": {
+     "documentedFormat": {
+      "n": 74,
+      "officialAccepts": 0
+     },
+     "undocumentedFormat": {
+      "n": 10,
+      "officialAccepts": 0
+     },
+     "tools": [
+      "calendar.create_event.event_start",
+      "calendar.update_event.new_value"
+     ]
+    }
+   },
+   "datetime_minutes": {
+    "n": 84,
+    "templates": 12,
+    "sameOutcome": 84,
+    "officialAccepts": 0,
+    "officialRate": 0,
+    "semAccepts": 84,
+    "notSameOutcome": 0,
+    "parityAgree": 84,
+    "rejectedExamples": [
+     {
+      "key": "calendar-020:datetime_minutes",
+      "arg": "new_value",
+      "documented": null,
+      "tool": "calendar.update_event"
+     },
+     {
+      "key": "calendar-021:datetime_minutes",
+      "arg": "new_value",
+      "documented": null,
+      "tool": "calendar.update_event"
+     },
+     {
+      "key": "calendar-022:datetime_minutes",
+      "arg": "new_value",
+      "documented": null,
+      "tool": "calendar.update_event"
+     }
+    ],
+    "byDocumentation": {
+     "documentedFormat": {
+      "n": 74,
+      "officialAccepts": 0
+     },
+     "undocumentedFormat": {
+      "n": 10,
+      "officialAccepts": 0
+     },
+     "tools": [
+      "calendar.create_event.event_start",
+      "calendar.update_event.new_value"
+     ]
+    }
+   },
+   "email_upper": {
+    "n": 297,
+    "templates": 35,
+    "sameOutcome": 297,
+    "officialAccepts": 297,
+    "officialRate": 100,
+    "semAccepts": 297,
+    "notSameOutcome": 0,
+    "parityAgree": 297,
+    "rejectedExamples": []
+   },
+   "number_decimal": {
+    "n": 74,
+    "templates": 11,
+    "sameOutcome": 74,
+    "officialAccepts": 0,
+    "officialRate": 0,
+    "semAccepts": 74,
+    "notSameOutcome": 0,
+    "parityAgree": 74,
+    "rejectedExamples": [
+     {
+      "key": "calendar-061:number_decimal",
+      "arg": "duration",
+      "tool": "calendar.create_event"
+     },
+     {
+      "key": "calendar-063:number_decimal",
+      "arg": "duration",
+      "tool": "calendar.create_event"
+     },
+     {
+      "key": "calendar-064:number_decimal",
+      "arg": "duration",
+      "tool": "calendar.create_event"
+     }
+    ]
+   },
+   "reads_interleaved": {
+    "n": 568,
+    "templates": 69,
+    "sameOutcome": 568,
+    "officialAccepts": 568,
+    "officialRate": 100,
+    "semAccepts": 568,
+    "notSameOutcome": 0,
+    "parityAgree": 568,
+    "rejectedExamples": []
+   },
+   "reorder_cross_table": {
+    "n": 37,
+    "templates": 5,
+    "sameOutcome": 37,
+    "officialAccepts": 37,
+    "officialRate": 100,
+    "semAccepts": 37,
+    "notSameOutcome": 0,
+    "parityAgree": 37,
+    "rejectedExamples": []
+   },
+   "reorder_same_table_creates": {
+    "n": 11,
+    "templates": 2,
+    "sameOutcome": 11,
+    "officialAccepts": 1,
+    "officialRate": 9.09,
+    "semAccepts": 11,
+    "notSameOutcome": 0,
+    "parityAgree": 11,
+    "rejectedExamples": [
+     {
+      "key": "email-070:reorder_same_table_creates",
+      "tools": [
+       "email.forward_email",
+       "email.forward_email"
+      ]
+     },
+     {
+      "key": "email-071:reorder_same_table_creates",
+      "tools": [
+       "email.forward_email",
+       "email.forward_email"
+      ]
+     },
+     {
+      "key": "email-072:reorder_same_table_creates",
+      "tools": [
+       "email.forward_email",
+       "email.forward_email"
+      ]
+     }
+    ]
+   },
+   "reorder_same_table_edits": {
+    "n": 91,
+    "templates": 16,
+    "sameOutcome": 91,
+    "officialAccepts": 91,
+    "officialRate": 100,
+    "semAccepts": 91,
+    "notSameOutcome": 0,
+    "parityAgree": 91,
+    "rejectedExamples": []
+   },
+   "update_twice": {
+    "n": 127,
+    "templates": 16,
+    "sameOutcome": 127,
+    "officialAccepts": 127,
+    "officialRate": 100,
+    "semAccepts": 127,
+    "notSameOutcome": 0,
+    "parityAgree": 127,
+    "rejectedExamples": []
+   }
+  },
+  "sameOutcome": 1429,
+  "officialAccepts": 1177,
+  "semAccepts": 1429,
+  "officialRejectsValid": [
+   "datetime_iso_t",
+   "datetime_minutes",
+   "number_decimal",
+   "reorder_same_table_creates"
+  ],
+  "pass": false,
+  "semPass": true,
+  "affected": {
+   "instances": 94,
+   "templates": 13
+  },
+  "rule": "a variant keeps the task outcome by construction (reordering independent writes, another date-time or number format, letter case, an update in two steps, reads between writes, either chart end date); same outcome = equivalent_sem on replay; pass = is_correct accepts every same-outcome variant",
+  "parityAgree": 1429,
+  "n": 1429,
+  "digest": "d1c73b9677282f87f0309fed5df0282001efdd2114d8f1367c5c6aa9e67e342e"
+ },
+ "BG2_baselines": {
+  "definitions": {
+   "nothing": "no tool call",
+   "constant": "the single most frequent non-empty gold action list among dev-template instances, issued on every task (task-blind)",
+   "constant_domain": "its domain's most frequent non-empty dev gold list (knows only the domain)",
+   "replay": "naive reuse: replays the gold list of one sibling instance of the same template (sha256-chosen); the floor for copying a cluster's previous solution without adaptation"
+  },
+  "fittedOn": "dev templates only (SPLIT.json)",
+  "constantActions": [
+   "calendar.delete_event.func(event_id=\"00000165\")",
+   "calendar.delete_event.func(event_id=\"00000091\")"
+  ],
+  "constantDomainActions": {
+   "analytics": [
+    "analytics.create_plot.func(time_min=\"2023-11-20\", time_max=\"2023-11-27\", value_to_plot=\"session_duration_seconds\", plot_type=\"line\")"
+   ],
+   "calendar": [
+    "calendar.delete_event.func(event_id=\"00000165\")",
+    "calendar.delete_event.func(event_id=\"00000091\")"
+   ],
+   "customer_relationship_manager": [
+    "customer_relationship_manager.update_customer.func(customer_id=\"00000034\", field=\"assigned_to_email\", new_value=\"sofia.santos@atlas.com\")",
+    "customer_relationship_manager.update_customer.func(customer_id=\"00000177\", field=\"assigned_to_email\", new_value=\"sofia.santos@atlas.com\")",
+    "customer_relationship_manager.update_customer.func(customer_id=\"00000110\", field=\"assigned_to_email\", new_value=\"sofia.santos@atlas.com\")"
+   ],
+   "email": [
+    "email.delete_email.func(email_id=\"00000479\")"
+   ],
+   "multi_domain": [
+    "email.send_email.func(recipient=\"carlos.rodriguez@atlas.com\", subject=\"Good work this sprint\", body=\"Nice work keeping on top of your tasks this sprint!\")"
+   ],
+   "project_management": [
+    "project_management.update_task.func(task_id=\"00000086\", field=\"list_name\", new_value=\"Backlog\")"
+   ]
+  },
+  "stateChangingN": 566,
+  "agents": {
+   "nothing": {
+    "all": {
+     "n": 690,
+     "correct": 124,
+     "rate": 17.97,
+     "correctSem": 124
+    },
+    "stateChanging": {
+     "n": 566,
+     "correct": 0,
+     "rate": 0,
+     "correctSem": 0
+    },
+    "dev": {
+     "n": 290,
+     "correct": 64,
+     "rate": 22.07
+    },
+    "heldOutShipped": {
+     "n": 400,
+     "correct": 60,
+     "rate": 15
+    },
+    "sideEffects": 0,
+    "parityAgree": 690
+   },
+   "constant": {
+    "all": {
+     "n": 690,
+     "correct": 4,
+     "rate": 0.58,
+     "correctSem": 4
+    },
+    "stateChanging": {
+     "n": 566,
+     "correct": 4,
+     "rate": 0.71,
+     "correctSem": 4
+    },
+    "dev": {
+     "n": 290,
+     "correct": 4,
+     "rate": 1.38
+    },
+    "heldOutShipped": {
+     "n": 400,
+     "correct": 0,
+     "rate": 0
+    },
+    "sideEffects": 686,
+    "parityAgree": 690
+   },
+   "constant_domain": {
+    "all": {
+     "n": 690,
+     "correct": 16,
+     "rate": 2.32,
+     "correctSem": 16
+    },
+    "stateChanging": {
+     "n": 566,
+     "correct": 16,
+     "rate": 2.83,
+     "correctSem": 16
+    },
+    "dev": {
+     "n": 290,
+     "correct": 16,
+     "rate": 5.52
+    },
+    "heldOutShipped": {
+     "n": 400,
+     "correct": 0,
+     "rate": 0
+    },
+    "sideEffects": 556,
+    "parityAgree": 690
+   },
+   "replay": {
+    "all": {
+     "n": 690,
+     "correct": 60,
+     "rate": 8.7,
+     "correctSem": 60
+    },
+    "stateChanging": {
+     "n": 566,
+     "correct": 8,
+     "rate": 1.41,
+     "correctSem": 8
+    },
+    "dev": {
+     "n": 290,
+     "correct": 34,
+     "rate": 11.72
+    },
+    "heldOutShipped": {
+     "n": 400,
+     "correct": 26,
+     "rate": 6.5
+    },
+    "sideEffects": 478,
+    "parityAgree": 690
+   }
+  },
+  "digest": "7eaaa518570bfd9b12741cb3d0144665937deb533dd3960c90accd05fb08bd3f"
+ }
 }
