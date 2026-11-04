@@ -1,8 +1,13 @@
 # PREREG-DUR-1: worst case, change, detection and healing of Haiku-built E8 workflows over long streams
 
-- **Status: DRAFT.** Not frozen. The build and the review come next; the Fix phase freezes this file with the hashes
-  listed in §13 (`research/durability-20261021/FREEZE.json`). No paid call of any kind happens before the freeze that
-  covers it (§13.1).
+- **Status: FROZEN 2026-11-04** at code commit `5790d89a` (branch `worktree-wf_bd674a6e-71f-11`), after the two
+  build reviews of `a9b97e29` were applied (BUILD-NOTES.md §9-§10). The freeze commit is the commit that adds this line
+  and Appendix D. **Appendix D** records the sha256 of every file the paid run executes or reads (the import closure of
+  every module under `experiments/durability`, the files read at run time, the FH-1 heal kit, Move 0, the executors,
+  `policy/models.json`, the seed ledger), except this file, whose own digest goes into `FREEZE-A.json` (written at the
+  freeze commit) and `FREEZE.json` (F-B, after P1). F-B refuses to write unless every digest still equals Appendix D.
+  Any change from here on is a dated amendment in its own file, committed before the step it affects (§13.3). No paid
+  call of any kind happens before the freeze that covers it (§13.1).
 - **Evidence label: development.** Every number is development evidence on one family (E8): dev-oos on the stream
   worlds (seeds no arm or analysis has touched), dev-is for the programs (inspected by FH-1) and the latent-defect
   manifests. No held-out or sealed claim follows.
@@ -12,7 +17,8 @@
   `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`. No fallback; every escalation is logged.
 - **Template:** `research/PREREGISTRATION-TEMPLATE.md` as amended 2026-10-21 (B7, A4): the unit is named per test
   (§9), σ is measured and the MDE computed (§11), case-pooled tests between arms of builds are not used.
-- **Pre-registration commit:** filled in at the F-B freeze (§13.1).
+- **Pre-registration commit:** the freeze commit of 2026-11-04 (the child of `5790d89a` that sets this status);
+  `FREEZE-A.json` names it.
 - **Design rationale:** [DESIGN.md](DESIGN.md). **Build:** [BUILD-PLAN.md](BUILD-PLAN.md).
 - **Read at:** main-tree HEAD `056d70fa`; read only, never edited: the gap-closure branch `worktree-wf_0f86d12b-ab5-2`
   at `9e2a2b61` (FH-1 result) and the Move 0 branch `worktree-wf_bba577b8-b58-1` at `d3bd7acf` (`certify.mjs`).
@@ -851,3 +857,147 @@ Appended to the `use` text of `ebed-e8-rehearsal`:
 | Windows | k = 6 exposed + 2 controls (k = 4 by the P0 rule); A-Ox ≤ 6 cases |
 | WC-1 | 400 / 150 evaluations per target per pass; min π 0.01; 5 fresh salts, confirm ≥ 3 of 5 |
 | Decision thresholds | as §10 |
+
+## Appendix D. Frozen file digests (sha256, 2026-11-04)
+
+Written at code commit `5790d89a` by `node experiments/durability/freeze.mjs digests`: 134 files, every file of
+`frozenB()` except this preregistration (`experiments/durability/freeze.mjs`). F-A (`FREEZE-A.json`) checks this block's
+digest; F-B (`FREEZE.json`) refuses to write unless every file still has the digest below, then adds the sealed bundle's
+sha256, the bed digest and the program digests.
+
+```freeze-digests
+20826d12103024bc2fe07c93e182b9a88a79a6f14a697976a5e94134a0d82d65  beds/ebed/e7/actors.mjs
+fd152bf09688ca13feed01b93579269845cf7b1638939a63ab18e69aaf7c3f5e  beds/ebed/e7/index.mjs
+17b1b07c334120aaff476e203969685f3b25b48ab2f0ee41ef70ee9dea6343d9  beds/ebed/e7/sla.mjs
+0e3caf1a9e23769c158dd539fa5da2567964a35c31cc6221acac6872a322a29d  beds/ebed/e7/systems.mjs
+05c6609dde2395842c9374871814201a64c6a6a5de36eed1a3f0cd772ab51750  beds/ebed/e7/transition.mjs
+d39c13c73d210252536bcf55be4549e47dd2a188011182288c4bda2dd3dc6d43  beds/ebed/e7/world.mjs
+358ce211bfb436da83d38b4014dcfb744dadad3e7f29d2b4e33900ee2311d9a6  beds/ebed/e8/actors.mjs
+1b023079f36e7b9f41b174a96274b3580ea9342946b0de6a70c34a5799b61354  beds/ebed/e8/controls.mjs
+16283b254332af61acbbe93cf7f67389e4234169864767d06727ea749003ba4b  beds/ebed/e8/defects.mjs
+34815858b2514c1a24bd72e23cba09b6f8057d61fea8f1558f5a97a2e6a4d6a6  beds/ebed/e8/index.mjs
+51333ef432ff0ba5d821d2c0ef53db3e536dc3aa5cf5206df04ee57c1b132e01  beds/ebed/e8/metamorphic.mjs
+a3e9ac990dae30a50bded5c0871f50e468c00ad2245960f7dcce98fa2ec77783  beds/ebed/e8/systems.mjs
+bd5e610ae60b63deec289f702da38205eeb12248c44352067c681277e6be0547  beds/ebed/e8/transition.mjs
+57d7c3826d02c7301fe28efed7f726b12811eec5d730e7bae05b1509236fda38  beds/ebed/e8/world.mjs
+763e549f72c3a389115f505ccce3dae3e5e3ca2e8fad4b7707ffab42d59cd9e1  beds/ebed/host/actors.mjs
+52f6d80ef65f9217566b64b6a6d47e90d5cce42e9aa0984bec5378dc77088fb5  beds/ebed/host/faults.mjs
+27f1f05f1a13ba436ba38a7f8977a597a25d8eac8b74f5b0ec3701c7d62244df  beds/ebed/host/form.mjs
+2c83d7d0a06dfa563d3af1a0ade7335e20ca13a003117f4a25dd968509313203  beds/ebed/host/host.mjs
+e0008396c4bb9c052cf239a7f1fff65c409bd1ce7957c514809fd7b874ee95f5  beds/ebed/host/journal.mjs
+5599b28b6b7a2c434b7d655ae6fa1fdac179d4b463bf9b1e083c3ef51ef56716  beds/ebed/host/mocks.mjs
+7b4a87ca14972ea23dafd8395b548c4b85c4d7ae28fea386428af8cf19a70ad3  beds/ebed/host/output.mjs
+2cd2b8fe559f2a37854420f32a32f078ded85c1523bb7c75797e9462aac58a03  beds/ebed/host/profiles.mjs
+054f39d4f988d95d1cdcb8705afc91ed0b8b5c4c903cf6e2d15b00d0aa0c61b7  beds/ebed/host/sandbox-arm.mjs
+886015efe8fb9178bb4058d9ff91fc3666f93112af3e1d3362db26177508983a  beds/ebed/host/schema.mjs
+b695246445150537db9dcb3269a4d1abfed60d59b81a52cbec9a11c49eae471a  beds/ebed/host/systems/common.mjs
+73d3f5ad3c18ed343dc5d337ed7d6ba4cbdb817227e009b1bab27a78bff8579c  beds/ebed/host/time.mjs
+cf725ed597978c3574a37f180f7a098cd2569fdad1d91cc704b4e5e53a3b3d86  beds/ebed/host/workspace.mjs
+f7bb5cffaf0f8ea3783a620ac8009e91dce251f1b25ed7030247431b5467b46d  beds/ebed/lib/calendar.mjs
+e48ee0fe459b9e2a385cfbe137535c3f43cf4dab899ff89146e9b785e5f449ba  beds/ebed/lib/errors.mjs
+ad810af6facae753e7c83dac6ec4c7099707ec14df02514a5af7d7747c51c199  beds/ebed/lib/saga.mjs
+763cb32ec90e7b116e0433827eca2a58ae1e2a866e57f529d572ae546cdbe967  beds/ebed/lib/time.mjs
+195d70cd43b3c03f7568db9d7826286004491c5aca0f22797261f095ac64f2ac  beds/ebed/oracle/grade.mjs
+237a7fd42b9f018bc067c7b46c492cae6938dcc25fc6073b10be614a9bf2315c  beds/ebed/oracle/policy.mjs
+d461f46266984e171598aee71eff6932a2c38c33d0f3622f67cbce9f64d94a5a  beds/ebed/oracle/view.mjs
+6cf4d99cb459f0e75ef90d907dbc935ff391e091fa12fad5f8c98a1ee8c6a056  beds/lib/canonical.mjs
+a2094022a04d6336428fd0317a6f602c8f13cbd84ba12243bb2c9bed97d516a8  beds/lib/rng.mjs
+652ccd2cfc53fce58c9b395b0c63e363de7c9a8ee4eb8ea7cd4a7d18a1f6ad93  experiments/agentv/arm.mjs
+b36ba1fab8baf05ba4f4364ba51cbd9eab39a787883f709ed886452f55b0bcba  experiments/agentv/validator.mjs
+88e23afc0705a675cdd3cb84a74df840c19b7e05cea668ca040fd40df6946575  experiments/compose/build.mjs
+d1591a73f8fefd95861a65b665b4b5e43403eb8936110648862f0b346ee27e11  experiments/compose/bundle.mjs
+533e0b9aaa390cbe6c42f02bccf79cd61263fb7135cc2a212de8748cbf59b1cd  experiments/compose/capabilities.mjs
+31dd10e319868a45d83295ce3a49df5f0ced447077104f74403ab9ce4005763f  experiments/compose/drift.mjs
+b2c6c6d40fc0d74e220cab0edfe6acea525fa41b75a87cb8ddffbad4a90fad57  experiments/compose/faults.mjs
+fa9ae678e5af7cb7b5f95dd250f63c8a63d7f4515eb0bee96306f02ab8fa5ec3  experiments/compose/loader.mjs
+43e8d636e638840e83747cd3c010b878d4818daea2cd289fb40eb77b0376ce87  experiments/compose/reference.mjs
+a12bac31af9e6446483136767990a62c25e1d29f3a74b227dd9113a81ec5f8d3  experiments/compose/run.mjs
+14591e30564316afaf552bf277956b6d1a030f843d09093d49b0c500db78517c  experiments/compose/runtime.mjs
+b1b2c3ac128435906ae30718d42d2fa9feea58c95db9667a698a730a08f7b886  experiments/compose/smoke.mjs
+8f13ca4ae03550a3c19ba0a2b4883d84a2621019de356d97cd51b7b8e980d4d3  experiments/compose/trace.mjs
+02b4bf1f036e490f5cc515bd1cdb9525976b56a38258431805f784b7fe72c9ee  experiments/constitution/constitution.mjs
+b76f1bbbf660d37212de30cfcebceebc07a74b2ba892a5876ff6541c09b997d2  experiments/constitution/observer.mjs
+b4025c772e5be1ff5999685c32ca14402cc9221e5a479fbba9719ad8fcda8e3c  experiments/constitution/overlay.mjs
+f6cd4fbd61809373f43db084176d93efd71896fb2750a87dfca809569705302c  experiments/constitution/port.mjs
+147ebf6890c7a747a37b3da4a2e4187fec191395a9fa62bfd2b575cb0a2178f0  experiments/constitution/registry.mjs
+900e28826a02be2d752679b60a9a473d23ec18261840aaaae7d8fc20ba70b325  experiments/durability/analyze.mjs
+b8139cb7f684678c95ac1b7023dce931eb57d8b2f1908117a6f44e7b2ef19b3f  experiments/durability/arms.mjs
+a5a8d226f6df44fe4b7bf390424681599d5fe9012f00809936a114b3b33f23f0  experiments/durability/author.mjs
+c325939b4d8b8b2f63a5d91aa0ed9965576e19b569eb78d175005fafbe904f8f  experiments/durability/changes.mjs
+3f720d9d420a415c00fad6c21450ae8ad0aca56949b031b4015d5d14d0c222d6  experiments/durability/complaints.mjs
+7a663738ffb50e6fb9392f003ba7134bee9aef7d49d6304762c16a632e4af406  experiments/durability/contract-sandbox.mjs
+ccc807f6719e4f87da4491c0059b8785ae9a311729a424aa6d1d8751da7a033d  experiments/durability/contract-worker.mjs
+9644e83af2bcc45a1783ca51999550eb393e118768e9f127ddfbb66a11852725  experiments/durability/contracts-owner.mjs
+652ec4424fa2142d89e8a96bf7e0570bf65bac26ba84038d73a618a55314b244  experiments/durability/dur1-chain.sh
+a51ee2df5006bbecc3dd5c436be9e7bfa6f251b15359b06f597a41a02fd4a160  experiments/durability/edetector.mjs
+4c49f2b8dc74ea256a7e78a3e7fbfa01324d86b6382db35ea9c399b7147d50da  experiments/durability/exposure.mjs
+9e24793aff2c90582a60b267292f52080cc94dce9f019b1ee91c824072c3385b  experiments/durability/fixtures/author-api.md
+ab9adf8b49b59d7438b5d748c1388a86ad1794d920147a90b773ede176be3e92  experiments/durability/fixtures/sealed-stub.json
+8cb7269976b025066130ee7661b16293dc8523dd889a6f7339beb3b19bb2b1c2  experiments/durability/freeze.mjs
+3a3a316bedacb0f7f8f0dc5f03ea8a533b59181366229353bc8ada8937660d41  experiments/durability/heal-adapter.mjs
+04be631a3b7611a43599a1c3725f4d9d4613b512aaca29ca0cc30e25af2683b4  experiments/durability/heal-evidence.mjs
+23c1ba59bc0d5120a839d1f60b9a5149c04fa91e6397368752ddaed4c7d6bbf4  experiments/durability/knobs.mjs
+0fc7043f76f17834bc0ac1b15b8d38d0fce7695d97c053e19d84fe626f905b10  experiments/durability/ld.mjs
+8c620bb82c257b951953ffad632ff4c51a7500f96dda64c4a049f9dd12e1af10  experiments/durability/model.mjs
+cbac4913b558959e232f199a865c56ec4ef10019a6d1b73c5a54cd3c26e36603  experiments/durability/monitor.mjs
+93779a5f603dbb49f65d2db146a0a47191ca116d494279e39ea750c69c6d0202  experiments/durability/oracle.mjs
+2a8bf2533b885acb2aff0eaaf02dca5c488cdfd2284e48b86463d9c4091c40a1  experiments/durability/paid.mjs
+8e09803c58de851c3bf209dbae0deb37a84fb156ace917c77d27281713d3988b  experiments/durability/power.mjs
+6e696657c5ebcf0c892e896b0fb12470875ca0de496fff85ec1420fe0f4e7cf1  experiments/durability/redteam/probe.mjs
+0069b8eb5ad88d5ec8213678b7906faf56aa7c47a9077b6b109e8da257ee5209  experiments/durability/redteam/session.mjs
+c17282a045958c1602dc70b559afb4147d82a19058b10e225bed56864a7e00da  experiments/durability/redteam/validate.mjs
+35ce71a66302c420d6d951af9f2a8bdc68aca127ca3ac6832fa7a843377aca5d  experiments/durability/registry.mjs
+a955660723f8b34edf492686bb02e225d4b4ed9d7e7492c1e7aa7fdeda9f500a  experiments/durability/report.mjs
+7feeb8549add5330990a120fea2a576ac829003f2aa9136253371431f9ce239f  experiments/durability/rmaint.mjs
+d286e70be5428b7ca50279adbace68ba6aa300261bd26915dd2ecc7776056e7c  experiments/durability/run.mjs
+02c463a6c97f832e9faadabd3c7789eb6d10cbf71466d7d8fe5bb15d4edd20f0  experiments/durability/schedule.mjs
+d47aaed0591b1467650dd097d8fd9f6dde48858a4e53ce9e3b879a46752a553b  experiments/durability/shield-harm.mjs
+b6a1786425bb19a8b7fbbf2bb7db56db60223228ad893fcbaa32a5867a2b258c  experiments/durability/stream.mjs
+7093aed2bf4699d8a2968bb34d83d4c8b91881778fd0fb69db554929befc05b9  experiments/durability/sweep.mjs
+8ad493304e3ea56507241a0d8e3914a9b75d42f8d4513080eeae9cc036355ffe  experiments/durability/test/analysis.test.mjs
+3ef56200f9f074f48eff9d5efb8b1d45df92bcd61c1a50dcc2bfc666e0289797  experiments/durability/test/cli.test.mjs
+d0a8d0762b246440570800e34b85680e1c8a8f395076e336aaf0931fcfa86b82  experiments/durability/test/fixes.test.mjs
+8cddca2603bf1d2690c8874f1f06184ca8aeaedbe2270f4b4f408b7d8b65c12a  experiments/durability/test/loop.test.mjs
+b21a6f6b11d4d3e9fe45c60b296b72770c3c732d1509f0a617fb9cdd3cb2374d  experiments/durability/test/schedule.test.mjs
+850d4cbcb87bd0bb3c345cd19fc7ea22632b81e1e4afe652ed4a5843c64b121f  experiments/durability/test/stages.test.mjs
+b3c997faa9646863c9e67d5e869f8516d33eec221aeac0940f93ff1afbf5c07a  experiments/durability/test/units.test.mjs
+348f2467de6e81c074256bdbb73da7bf3e2769b8dec829c180de3949bee61b39  experiments/durability/test/world.test.mjs
+35984552aa4962e36ab50a2b362ab8cb8b0e5bfed50a7d3a4f6abe28deb063ad  experiments/durability/wc-search.mjs
+27badef300e239acb48ef13067bfe331e8c5a17c9bfcd5d88d7dd835abf539fb  experiments/durability/windows.mjs
+2e449c5c42a784fcd58da136cae4f3ebc94e63a66eecb321c098c77ef6aa7f8d  experiments/durability/worldop-worker.mjs
+124c4c3d86391dff805b978b5ba2c10f84ded5dae1dd8d735babb75236571ed5  experiments/ebed/agent-arm.mjs
+bf4a68d6443e4380690911807c11c3b68c9c38f8c6f96c6b31eb3fbac0f78941  experiments/ebed/build.mjs
+498bf143563e0cae9de5a40aa8e16ffe5d0eff0026432271f047520330e7e863  experiments/ebed/smoke-service.mjs
+fbe20714196222582ed39ad8c8b3214d073b26502f951ae2ff47b148cdd51f0a  experiments/fh/analyse.mjs
+b642a879bf683cd2baea377c043076ba154c7aba53148777770e4640e01db9c4  experiments/fh/baseline-table.mjs
+f6e302fd76753db58112530e9cf0b9c91d065cc23f227a604677f5e437944ae9  experiments/fh/baseline.mjs
+53c94f20a72f4e64ac7acbde4f2d8d6a9c7e0dae64e940102a04a0dd69662044  experiments/fh/counterfactual.mjs
+9e301b1f0d8d6251c7d7ea51926fc7bc931281c76e43906af060ef8e12d677c2  experiments/fh/ensemble.mjs
+d8436e29c1fcfa89d6dd3c7e8649f65a14102fdf5328817482aae5f531bbe4a4  experiments/fh/freeze.mjs
+34ca038e4ca0c9ba3099ff6baa6c0e56250350787883649a2106ac2c0ad5db07  experiments/fh/grade.mjs
+4093a7c22c73a515b0fdfe0c25fa71e2782fe885c2e982efa4b35d82dea504df  experiments/fh/heal.mjs
+e0cbc47f86ade01fd29d355a49ac90a11730a220fe36777a7cc1a8542afdec02  experiments/fh/report.mjs
+952e1c257f14ec40128abf16816c4d70a51a67a8ef7640fb87e11aaa4ac90cd8  experiments/fh/test/fh.test.mjs
+fbaf824fa558be123c7416e4ec940131dbf51ec4d1b4bc1ca4ea990dad6ccc54  experiments/jit/profile.mjs
+cf8efc7f5465efa704672f4b6cf4c6de272650f6b54aa5bc187404cd18aa5010  experiments/jit/report.mjs
+c6e67dc7a686ead92f90b0bdcca2a87e8947057d666ae7fb40f369df56446fb3  experiments/jit/seeds.mjs
+dfbd0c39cc97660d670c6cacb7cf01d03e93b56b7e615a2157efa5b2768c3b52  experiments/jit/stats.mjs
+88bbff678f7c8f388b38a2731c9a123474257e09b951628711be693ec5d90722  experiments/lib/certify.mjs
+6f518c4b54f2eab868e2d3f5d6dd5649a56594f65e0a7f5ef95005ed5c576653  experiments/lib/ebed-seeds.mjs
+a32ac23f1f6dd28ff32d3017a294069dcf83f252112cd77d47408cd3ac35793b  experiments/lib/gauntlet.mjs
+c505c7db7a538222400654eab0869e65dfd0ba46a6c5b6b65ae45808bf32ae67  experiments/lib/stats-builds.mjs
+a71906a46a1976cef191ff060883cc462ecc658f3e15acd30739efe1f82ee4fc  experiments/lib/stats-ebed.mjs
+94c94d3ece8e88a5835e072fb4444b6e43d0b488bf1a1a586f347914e1eed4dc  experiments/lib/stats.mjs
+a299f046f27c635af07822f32cdd3a76ce7f5ff1ab0d828cc6d981b202a6d54e  experiments/memory/cache-share.mjs
+4b5b79d59a945f2b38c9a3b8a2ee3446a31f3d3ba327fa442ec852b8460a8e46  experiments/tracker/nversion.mjs
+cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69  policy/models.json
+7f8ad2dc2028f7f7b07a8f239d7e304080bf3e1c41f89c8933e8f2d647220b96  research/durability-20261021/AUTHOR-BRIEF.md
+8a5d76426aeb55981ca3f828f2ad05b84ee17277364508cc3c54beb3838bcb7f  research/durability-20261021/POWER.json
+b04f9b8caf2a0dcd614c98034d2faff063172a87e47cd99b82dac0d4bf21f409  research/durability-20261021/SEED-CLAIMS.json
+9887aa669ebd277b93dbc86b16efd7dee4d24ddc8a089783073aa8cf478312a9  research/jit-20261008/SEED-LEDGER.json
+50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c  src/data.mjs
+f363c80418bf9bb91e6e8d42adc1345eba24274a56f6d870759ea2eebbe35afc  src/executors/claude-code.mjs
+327aed2a5e4dbcff5a1bac90628360de9c15e85acd052c5975b242a5d89e8c2b  src/executors/openai-chat.mjs
+22fad235df5bf60e01b69f40ed3e30fc597a60db6978ba6bb10d4f3ec965fdfd  src/models/openai-chat-client.mjs
+95390dec17adbfa0c68dc0e05314e7a95192e79e303b006412a1bedb4500b572  src/models/policy.mjs
+```

@@ -177,8 +177,8 @@ Resume after a restart: the same `setsid nohup sh ... after-author` line (finish
 
 ## 7. The $0 dry run (plumbing, never evidence)
 
-**Re-run 2026-11-04 after both review batches** (code of commit `249d77f7` plus the VB-prefix stamp and the R1-M18 test
-fix): `DUR1_WORK=/var/tmp/foundry-work/dur1-dry nice -n 15 node experiments/durability/run.mjs dry --light` (lineages
+**Re-run 2026-11-04 after both review batches** (the run code of `5790d89a`; its parent `249d77f7`
+differs only in a test file): `DUR1_WORK=/var/tmp/foundry-work/dur1-dry nice -n 15 node experiments/durability/run.mjs dry --light` (lineages
 `b1lh-e8-1`, `ch-e8-1`; 58.9 min at load average about 30 on the shared machine). **All 20 steps ran** (the 18 of the
 first dry run plus `m6-analysis`, the real analysis's m6 path, and the report's new rules). Free disk 1.52 GB at the
 start, 1.2-1.3 GB at the end (other runs); DUR-1's own temp use was 3.9 MB, deleted.
