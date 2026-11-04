@@ -1,0 +1,320 @@
+{
+ "note": "Aggregated from funnel-batch1..3.json: per arm, the furthest stage of each (run, bug) pair; perArmPerBug counts runs per stage.",
+ "byArm": {
+  "gqa1-agent": {
+   "n": 5,
+   "never-triggered": 51,
+   "triggered-not-detected": 4,
+   "foundMin": 5
+  },
+  "gqa1-workflow": {
+   "n": 5,
+   "triggered-not-detected": 16,
+   "foundMin": 32,
+   "reported-not-minimal": 1,
+   "confirmed-not-reported": 9,
+   "never-triggered": 2
+  },
+  "gqa1-workflow-random": {
+   "n": 5,
+   "confirmed-not-reported": 13,
+   "foundMin": 32,
+   "triggered-not-detected": 7,
+   "never-triggered": 4,
+   "reported-not-minimal": 4
+  },
+  "gqa1-monkey": {
+   "n": 5,
+   "triggered-not-detected": 52,
+   "foundMin": 5,
+   "never-triggered": 3
+  },
+  "gqa1nb-agent": {
+   "n": 5,
+   "never-triggered": 45,
+   "triggered-not-detected": 10,
+   "foundMin": 5
+  },
+  "gqa1nb-agent-persist": {
+   "n": 5,
+   "triggered-not-detected": 15,
+   "never-triggered": 35,
+   "foundMin": 8,
+   "reported-not-minimal": 2
+  }
+ },
+ "perArmPerBug": {
+  "gqa1-agent": {
+   "GQ01": {
+    "never-triggered": 4,
+    "foundMin": 1
+   },
+   "GQ02": {
+    "never-triggered": 5
+   },
+   "GQ03": {
+    "triggered-not-detected": 3,
+    "foundMin": 1,
+    "never-triggered": 1
+   },
+   "GQ04": {
+    "never-triggered": 5
+   },
+   "GQ05": {
+    "never-triggered": 5
+   },
+   "GQ06": {
+    "never-triggered": 5
+   },
+   "GQ07": {
+    "never-triggered": 5
+   },
+   "GQ08": {
+    "never-triggered": 5
+   },
+   "GQ09": {
+    "never-triggered": 5
+   },
+   "GQ10": {
+    "foundMin": 2,
+    "never-triggered": 3
+   },
+   "GQ11": {
+    "triggered-not-detected": 1,
+    "foundMin": 1,
+    "never-triggered": 3
+   },
+   "GQ12": {
+    "never-triggered": 5
+   }
+  },
+  "gqa1-workflow": {
+   "GQ01": {
+    "triggered-not-detected": 4,
+    "confirmed-not-reported": 1
+   },
+   "GQ02": {
+    "triggered-not-detected": 5
+   },
+   "GQ03": {
+    "foundMin": 5
+   },
+   "GQ04": {
+    "foundMin": 3,
+    "triggered-not-detected": 2
+   },
+   "GQ05": {
+    "foundMin": 5
+   },
+   "GQ06": {
+    "triggered-not-detected": 3,
+    "confirmed-not-reported": 2
+   },
+   "GQ07": {
+    "foundMin": 4,
+    "never-triggered": 1
+   },
+   "GQ08": {
+    "foundMin": 4,
+    "never-triggered": 1
+   },
+   "GQ09": {
+    "foundMin": 5
+   },
+   "GQ10": {
+    "foundMin": 3,
+    "confirmed-not-reported": 2
+   },
+   "GQ11": {
+    "foundMin": 2,
+    "confirmed-not-reported": 3
+   },
+   "GQ12": {
+    "reported-not-minimal": 1,
+    "foundMin": 1,
+    "confirmed-not-reported": 1,
+    "triggered-not-detected": 2
+   }
+  },
+  "gqa1-workflow-random": {
+   "GQ01": {
+    "confirmed-not-reported": 4,
+    "triggered-not-detected": 1
+   },
+   "GQ02": {
+    "confirmed-not-reported": 3,
+    "triggered-not-detected": 2
+   },
+   "GQ03": {
+    "foundMin": 4,
+    "reported-not-minimal": 1
+   },
+   "GQ04": {
+    "foundMin": 3,
+    "triggered-not-detected": 1,
+    "reported-not-minimal": 1
+   },
+   "GQ05": {
+    "foundMin": 5
+   },
+   "GQ06": {
+    "triggered-not-detected": 2,
+    "confirmed-not-reported": 3
+   },
+   "GQ07": {
+    "foundMin": 5
+   },
+   "GQ08": {
+    "never-triggered": 4,
+    "foundMin": 1
+   },
+   "GQ09": {
+    "foundMin": 5
+   },
+   "GQ10": {
+    "foundMin": 3,
+    "reported-not-minimal": 2
+   },
+   "GQ11": {
+    "foundMin": 2,
+    "triggered-not-detected": 1,
+    "confirmed-not-reported": 2
+   },
+   "GQ12": {
+    "confirmed-not-reported": 1,
+    "foundMin": 4
+   }
+  },
+  "gqa1-monkey": {
+   "GQ01": {
+    "triggered-not-detected": 5
+   },
+   "GQ02": {
+    "triggered-not-detected": 5
+   },
+   "GQ03": {
+    "triggered-not-detected": 5
+   },
+   "GQ04": {
+    "triggered-not-detected": 5
+   },
+   "GQ05": {
+    "foundMin": 5
+   },
+   "GQ06": {
+    "triggered-not-detected": 4,
+    "never-triggered": 1
+   },
+   "GQ07": {
+    "triggered-not-detected": 5
+   },
+   "GQ08": {
+    "never-triggered": 2,
+    "triggered-not-detected": 3
+   },
+   "GQ09": {
+    "triggered-not-detected": 5
+   },
+   "GQ10": {
+    "triggered-not-detected": 5
+   },
+   "GQ11": {
+    "triggered-not-detected": 5
+   },
+   "GQ12": {
+    "triggered-not-detected": 5
+   }
+  },
+  "gqa1nb-agent": {
+   "GQ01": {
+    "never-triggered": 3,
+    "triggered-not-detected": 2
+   },
+   "GQ02": {
+    "never-triggered": 5
+   },
+   "GQ03": {
+    "triggered-not-detected": 5
+   },
+   "GQ04": {
+    "never-triggered": 5
+   },
+   "GQ05": {
+    "never-triggered": 5
+   },
+   "GQ06": {
+    "never-triggered": 5
+   },
+   "GQ07": {
+    "never-triggered": 5
+   },
+   "GQ08": {
+    "never-triggered": 5
+   },
+   "GQ09": {
+    "never-triggered": 5
+   },
+   "GQ10": {
+    "never-triggered": 2,
+    "foundMin": 3
+   },
+   "GQ11": {
+    "triggered-not-detected": 3,
+    "never-triggered": 1,
+    "foundMin": 1
+   },
+   "GQ12": {
+    "foundMin": 1,
+    "never-triggered": 4
+   }
+  },
+  "gqa1nb-agent-persist": {
+   "GQ01": {
+    "triggered-not-detected": 4,
+    "never-triggered": 1
+   },
+   "GQ02": {
+    "triggered-not-detected": 2,
+    "never-triggered": 3
+   },
+   "GQ03": {
+    "never-triggered": 2,
+    "triggered-not-detected": 3
+   },
+   "GQ04": {
+    "triggered-not-detected": 1,
+    "never-triggered": 4
+   },
+   "GQ05": {
+    "foundMin": 3,
+    "reported-not-minimal": 2
+   },
+   "GQ06": {
+    "never-triggered": 4,
+    "triggered-not-detected": 1
+   },
+   "GQ07": {
+    "never-triggered": 5
+   },
+   "GQ08": {
+    "never-triggered": 5
+   },
+   "GQ09": {
+    "never-triggered": 5
+   },
+   "GQ10": {
+    "foundMin": 4,
+    "never-triggered": 1
+   },
+   "GQ11": {
+    "triggered-not-detected": 3,
+    "never-triggered": 1,
+    "foundMin": 1
+   },
+   "GQ12": {
+    "never-triggered": 4,
+    "triggered-not-detected": 1
+   }
+  }
+ }
+}

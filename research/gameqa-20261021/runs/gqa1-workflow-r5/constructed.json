@@ -1,0 +1,233 @@
+{
+ "personas": [
+  {
+   "name": "completionist mapper",
+   "goal": "Visit every area, collect every coin, gem, relic, key and heart, open every locked door, and finish the level with the score and time bonus checked at the end.",
+   "style": "Walks with goto: macros to each item cluster, then sweeps remaining tiles with single steps. Checks the HUD after each pickup and the coin, key and door counts against the map. Finishes the level and confirms the Level complete dialog and the time bonus."
+  },
+  {
+   "name": "sequence-breaker",
+   "goal": "Reach the exit, doors, gates and rewards in unintended orders: open a door before its key, step onto a closed gate, dash through walls, use levers in odd orders, and reach the exit with spare keys or near-zero timer.",
+   "style": "Tries illegal or early moves on purpose (dash into a locked door, dash with cooldown above 0, step onto spikes first, press use off a lever). After each attempt it verifies that the rule still holds and the state did not desync."
+  },
+  {
+   "name": "chaos tester",
+   "goal": "Break transitions by pausing, restarting, quitting to menus, and pressing several keys in one tick while coins are being collected, while enemies are close, when a life is lost, and when the level is being finished.",
+   "style": "Spams multi-key tokens such as dash-right+pause, use+esc, left+right+up, and click:btn-resume during running ticks. Inserts pause and resume at boundaries (the tick a heart or spikes are hit, the tick the timer reaches 0, the tick the exit is stepped on). Checks that the frozen state stays frozen and that dialogs and buttons match the mode."
+  },
+  {
+   "name": "literal newcomer",
+   "goal": "Follow the design document one sentence at a time and confirm each sentence against what the game does, including the map legend, the controls table, the dash recharge text and the list of items.",
+   "style": "Reads each rule as written: presses Shift plus arrow to dash, checks the HUD text for Dash 5 right after a dash, confirms that the Enter key activates the dialog's main button, and confirms that 5 coins are shown as Coins n/5. Reports any sentence the build contradicts."
+  },
+  {
+   "name": "economy auditor",
+   "goal": "Drive score, lives, keys, coins, timer and dash counters to their limits and verify each amount, including the cap at 999,999, the floor at 0 for spikes, the 5-life cap for hearts, the 300 timer start, and the time bonus of 10 per tick left.",
+   "style": "Collects everything in different orders, takes spikes at low score, collects hearts at 5 lives, lets the timer run down to 0 and to 1, and checks the HUD number against the state number after every tick. Records every amount and compares it with the documented rule."
+  },
+  {
+   "name": "photographer",
+   "goal": "Open every dialog and menu (pause menu, Level complete, Game over, victory) and check what each shows, its button labels, whether each visible button is on top and clickable, and whether anything covers a button.",
+   "style": "Opens the pause menu and checks Resume and Restart level, opens each end dialog and checks its text and Retry, Finish or Play again button, clicks every visible button once, and records the ui list (visible, text, rect, top) on each screen. Flags overlap, hidden buttons that still respond, and text that disagrees with the mode."
+  }
+ ],
+ "specs": [
+  {
+   "id": "lives-range",
+   "rule": "The player has between 0 and 5 lives (maximum 5).",
+   "bug_class": "state_desync",
+   "expect": "cur.state.lives >= 0 && cur.state.lives <= 5"
+  },
+  {
+   "id": "score-range",
+   "rule": "Score is never negative and is capped at 999,999.",
+   "bug_class": "score_overflow",
+   "expect": "cur.state.score >= 0 && cur.state.score <= 999999"
+  },
+  {
+   "id": "timer-range",
+   "rule": "The timer runs from 300 down to 0 and never exceeds 300.",
+   "bug_class": "state_desync",
+   "expect": "cur.state.timeLeft >= 0 && cur.state.timeLeft <= 300"
+  },
+  {
+   "id": "coins-cap",
+   "rule": "The level has 5 coins; the coin count never goes above 5.",
+   "bug_class": "state_desync",
+   "expect": "cur.state.coins >= 0 && cur.state.coins <= 5"
+  },
+  {
+   "id": "dash-cooldown-range",
+   "rule": "The dash recharge is between 0 and 6.",
+   "bug_class": "state_desync",
+   "expect": "cur.state.dashCooldown >= 0 && cur.state.dashCooldown <= 6"
+  },
+  {
+   "id": "hud-score",
+   "rule": "The HUD score shows the current score.",
+   "bug_class": "state_desync",
+   "when": "cur.state.score < 1000",
+   "expect": "num(cur.hud.score) == cur.state.score"
+  },
+  {
+   "id": "hud-lives",
+   "rule": "The HUD lives field shows the current lives.",
+   "bug_class": "state_desync",
+   "expect": "num(cur.hud.lives) == cur.state.lives"
+  },
+  {
+   "id": "hud-keys",
+   "rule": "The HUD keys field shows the current keys.",
+   "bug_class": "state_desync",
+   "expect": "num(cur.hud.keys) == cur.state.keys"
+  },
+  {
+   "id": "hud-coins",
+   "rule": "The HUD coins field shows the current coin count as n/5.",
+   "bug_class": "state_desync",
+   "expect": "num(cur.hud.coins) == cur.state.coins && includes(cur.hud.coins, '/5')"
+  },
+  {
+   "id": "hud-time",
+   "rule": "The HUD time shows the ticks left on the timer.",
+   "bug_class": "state_desync",
+   "expect": "num(cur.hud.time) == cur.state.timeLeft"
+  },
+  {
+   "id": "hud-dash",
+   "rule": "The dash HUD shows 'Dash ready' when the recharge is 0 and 'Dash n' with n equal to the ticks until ready otherwise.",
+   "bug_class": "state_desync",
+   "expect": "cur.state.dashCooldown == 0 ? includes(cur.hud.dash, 'ready') : num(cur.hud.dash) == cur.state.dashCooldown"
+  },
+  {
+   "id": "score-no-drop",
+   "rule": "Score only goes down from spikes (500 points, floored at 0) or from a restart.",
+   "bug_class": "score_overflow",
+   "when": "prev.state.score > 0",
+   "expect": "cur.state.score >= prev.state.score || includes(cur.state.events, 'spikes') || includes(cur.state.events, 'restart')"
+  },
+  {
+   "id": "items-not-return",
+   "rule": "Collected coins, gems and relics never come back except on a restart.",
+   "bug_class": "state_desync",
+   "when": "!includes(cur.state.events, 'restart')",
+   "expect": "cur.state.coins >= prev.state.coins && cur.state.gems >= prev.state.gems && cur.state.relics >= prev.state.relics"
+  },
+  {
+   "id": "keys-drop-only-door",
+   "rule": "Keys go down only when a locked door is opened (one key per door).",
+   "bug_class": "state_desync",
+   "when": "cur.state.keys < prev.state.keys",
+   "expect": "includes(cur.state.events, 'door-open') && cur.state.keys == prev.state.keys - 1"
+  },
+  {
+   "id": "one-move-per-tick",
+   "rule": "The player makes at most one move per tick: a step (1 tile) or a dash (up to 2 tiles in a straight line).",
+   "bug_class": "collision",
+   "when": "prev.state.mode == 'playing' && !includes(cur.state.events, 'respawn') && !includes(cur.state.events, 'restart')",
+   "expect": "abs(cur.state.player.x - prev.state.player.x) + abs(cur.state.player.y - prev.state.player.y) <= 2 && (cur.state.player.x == prev.state.player.x || cur.state.player.y == prev.state.player.y)"
+  },
+  {
+   "id": "dash-sets-recharge",
+   "rule": "A dash sets the recharge to 6 and the HUD shows Dash 5 right after it (the tick ends with one countdown).",
+   "bug_class": "state_desync",
+   "when": "includes(cur.state.events, 'dash') && cur.state.mode == 'playing'",
+   "expect": "cur.state.dashCooldown == 5"
+  },
+  {
+   "id": "pause-tick-inert",
+   "rule": "A tick in which the game becomes paused does not advance the timer or the clock.",
+   "bug_class": "input_race",
+   "when": "includes(cur.state.events, 'pause') && prev.state.mode == 'playing'",
+   "expect": "cur.state.timeLeft == prev.state.timeLeft && cur.state.clock == prev.state.clock"
+  },
+  {
+   "id": "paused-frozen",
+   "rule": "While the game is paused nothing moves; timer, dash recharge, toasts and the clock are frozen.",
+   "bug_class": "input_race",
+   "when": "cur.state.mode == 'paused' && prev.state.mode == 'paused'",
+   "expect": "cur.state.timeLeft == prev.state.timeLeft && cur.state.dashCooldown == prev.state.dashCooldown && cur.state.clock == prev.state.clock && cur.state.toast == prev.state.toast && cur.state.player == prev.state.player && cur.state.enemies == prev.state.enemies"
+  },
+  {
+   "id": "buttons-clickable",
+   "rule": "Every visible button must be clickable: nothing covers it.",
+   "bug_class": "ui_overlap",
+   "expect": "all(cur.ui, u => u.kind != 'button' || !u.visible || u.top == true)"
+  },
+  {
+   "id": "no-life-loss-without-cause",
+   "rule": "Lives go down only from an enemy hit, spikes, or the timer reaching 0 (which resets the timer to 300).",
+   "bug_class": "state_desync",
+   "when": "cur.state.lives < prev.state.lives",
+   "expect": "includes(cur.state.events, 'hit') || includes(cur.state.events, 'spikes') || cur.state.timeLeft == 300"
+  },
+  {
+   "id": "one-life-per-tick",
+   "rule": "At most one life is lost in a single tick.",
+   "bug_class": "state_desync",
+   "expect": "cur.state.lives >= prev.state.lives - 1"
+  },
+  {
+   "id": "respawn-at-start",
+   "rule": "After losing a life you reappear at the start (1,1).",
+   "bug_class": "collision",
+   "when": "includes(cur.state.events, 'respawn')",
+   "expect": "cur.state.player.x == 1 && cur.state.player.y == 1"
+  },
+  {
+   "id": "hit-not-when-invulnerable",
+   "rule": "Enemies cannot hurt you during the respawn tick or the next 4 ticks; spikes still hurt.",
+   "bug_class": "collision",
+   "when": "includes(cur.state.events, 'hit') && prev.state.invulnerable > 0",
+   "expect": "false"
+  },
+  {
+   "id": "enemy-hit-no-points",
+   "rule": "Touching an enemy costs one life and no points.",
+   "bug_class": "score_overflow",
+   "when": "includes(cur.state.events, 'hit') && !includes(cur.state.events, 'spikes') && !includes(cur.state.events, 'coin') && !includes(cur.state.events, 'gem') && !includes(cur.state.events, 'relic')",
+   "expect": "cur.state.score == prev.state.score"
+  },
+  {
+   "id": "player-on-passable-tile",
+   "rule": "The player never stands on a wall, a closed gate or a locked door.",
+   "bug_class": "collision",
+   "expect": "tile(cur, cur.state.player.x, cur.state.player.y) != '#' && tile(cur, cur.state.player.x, cur.state.player.y) != 'D' && (tile(cur, cur.state.player.x, cur.state.player.y) != '=' || cur.state.gateOpen == true)"
+  },
+  {
+   "id": "enemy-speed",
+   "rule": "Enemies move at most one tile per tick.",
+   "bug_class": "collision",
+   "when": "prev.state.enemies != undefined && len(prev.state.enemies) == len(cur.state.enemies)",
+   "expect": "all(cur.state.enemies, e => abs(e.x - find(prev.state.enemies, p => p.id == e.id).x) + abs(e.y - find(prev.state.enemies, p => p.id == e.id).y) <= 1)"
+  },
+  {
+   "id": "gameover-at-zero-lives",
+   "rule": "At 0 lives the game is over and the Game over dialog with Retry appears.",
+   "bug_class": "softlock",
+   "when": "cur.state.lives == 0",
+   "expect": "cur.state.mode == 'gameover' && any(cur.ui, u => u.kind == 'dialog' && u.visible && includes(u.text, 'Game over')) && any(cur.ui, u => u.id == 'btn-retry' && u.visible)"
+  },
+  {
+   "id": "complete-dialog",
+   "rule": "Stepping onto the exit shows the Level complete dialog with score, time bonus and a Finish button.",
+   "bug_class": "ui_overlap",
+   "when": "cur.state.mode == 'complete'",
+   "expect": "any(cur.ui, u => u.kind == 'dialog' && u.visible && includes(u.text, 'Level complete')) && any(cur.ui, u => u.id == 'btn-next' && u.visible)"
+  },
+  {
+   "id": "time-bonus",
+   "rule": "Completing the level adds a time bonus of 10 points per tick left on the timer.",
+   "bug_class": "score_overflow",
+   "when": "cur.state.mode == 'complete'",
+   "expect": "cur.state.bonus == 10 * cur.state.timeLeft"
+  },
+  {
+   "id": "restart-resets",
+   "rule": "Restart level restores score 0, 3 lives, all items back, keys 0 and the timer at 300.",
+   "bug_class": "state_desync",
+   "when": "includes(cur.state.events, 'restart')",
+   "expect": "cur.state.score == 0 && cur.state.lives == 3 && cur.state.coins == 0 && cur.state.keys == 0 && cur.state.timeLeft == 300 && cur.state.mode == 'playing'"
+  }
+ ]
+}

@@ -1,0 +1,54 @@
+{
+ "stats": {
+  "exploreTicks": 24,
+  "runs": 4,
+  "finished": true,
+  "notes": "Confirmed the same-tick input bug. With seed 12345, down+right from (1,1) ends at (1,2), so the first key (down) won. The design says the last key pressed counts, so it should end at (2,1). Run 2 (right+down) went to (2,1), which is consistent with first-key-wins. The single token 'down+right' is already minimal. Not yet probed: dash and spikes, lever and gates, pause during dash, dialogs and buttons, the timer and time bonus, and score caps. I stopped here to save budget.",
+  "played": [
+   {
+    "seed": 12345,
+    "steps": [
+     "right",
+     "dash-right",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "dash-down",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "right+down",
+     "wait",
+     "pause+left",
+     "wait",
+     "enter",
+     "left+right",
+     "wait"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "down+right",
+     "wait"
+    ]
+   },
+   {
+    "seed": 12345,
+    "steps": [
+     "down+right"
+    ]
+   }
+  ]
+ }
+}

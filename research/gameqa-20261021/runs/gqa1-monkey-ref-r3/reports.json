@@ -1,0 +1,377 @@
+[
+ {
+  "bug_class": "input_race",
+  "title": "Violates: At most one move (step or 2-tile dash) per tick",
+  "observed": "Check one-move fails.",
+  "expected": "At most one move (step or 2-tile dash) per tick",
+  "seed": 380477,
+  "steps": [
+   "dash-right+dash-right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Violates: Nothing moves while paused",
+  "observed": "Check paused-still fails.",
+  "expected": "Nothing moves while paused",
+  "seed": 807011,
+  "steps": [
+   "enter",
+   "esc",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "softlock",
+  "title": "Violates: Paused means the pause menu is open",
+  "observed": "Check paused-has-menu fails.",
+  "expected": "Paused means the pause menu is open",
+  "seed": 807011,
+  "steps": [
+   "esc",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "softlock",
+  "title": "Game stops responding after this input",
+  "observed": "After these tokens the state stops changing for 30 ticks and no dialog or button is visible.",
+  "expected": "The game must always respond: the state may not stay unchanged with no dialog or button to act on.",
+  "seed": 807011,
+  "steps": [
+   "esc",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Violates: HUD shows the current coins",
+  "observed": "Check hud-coins fails.",
+  "expected": "HUD shows the current coins",
+  "seed": 567473,
+  "steps": [
+   "dash-down"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Violates: A dash stops before the first solid tile",
+  "observed": "Check dash-stops fails.",
+  "expected": "A dash stops before the first solid tile",
+  "seed": 163520,
+  "steps": [
+   "goto:7,3",
+   "up",
+   "enter+left",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Violates: Spikes cost 500 points, the score stops at 0",
+  "observed": "Check spike-penalty fails.",
+  "expected": "Spikes cost 500 points, the score stops at 0",
+  "seed": 455706,
+  "steps": [
+   "right",
+   "dash-down+right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Violates: Score is never negative and at most 999,999",
+  "observed": "Check score-range fails.",
+  "expected": "Score is never negative and at most 999,999",
+  "seed": 771235,
+  "steps": [
+   "dash-down",
+   "right",
+   "dash-right",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Violates: Score changes only by the listed amounts",
+  "observed": "Check score-delta fails.",
+  "expected": "Score changes only by the listed amounts",
+  "seed": 771235,
+  "steps": [
+   "dash-down",
+   "right",
+   "dash-right",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "collision",
+  "title": "Violates: Swapping tiles with an enemy costs a life",
+  "observed": "Check swap-hurts fails.",
+  "expected": "Swapping tiles with an enemy costs a life",
+  "seed": 628679,
+  "steps": [
+   "down",
+   "right",
+   "click:btn-resume",
+   "up",
+   "up",
+   "wait",
+   "down",
+   "dash-up",
+   "use+left",
+   "enter",
+   "left",
+   "wait",
+   "left",
+   "left",
+   "goto:2,3",
+   "click:btn-again",
+   "up",
+   "pause",
+   "esc",
+   "pause",
+   "esc",
+   "right",
+   "down",
+   "dash-left",
+   "dash-down",
+   "enter+dash-down",
+   "right",
+   "right",
+   "use",
+   "dash-left",
+   "down",
+   "enter",
+   "enter",
+   "down",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Violates: HUD shows the time left",
+  "observed": "Check hud-time fails.",
+  "expected": "HUD shows the time left",
+  "seed": 156885,
+  "steps": [
+   "pause",
+   "click:btn-resume"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Violates: Nothing else happens in the tick the game pauses",
+  "observed": "Check pause-tick-still fails.",
+  "expected": "Nothing else happens in the tick the game pauses",
+  "seed": 500197,
+  "steps": [
+   "pause+right"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Violates: Every visible button is clickable",
+  "observed": "Check buttons-clickable fails.",
+  "expected": "Every visible button is clickable",
+  "seed": 103566,
+  "steps": [
+   "dash-right",
+   "goto:5,5",
+   "enter+esc"
+  ]
+ },
+ {
+  "bug_class": "softlock",
+  "title": "Violates: A key picked up is kept, even when you are hurt in the same tick",
+  "observed": "Check key-pickup fails.",
+  "expected": "A key picked up is kept, even when you are hurt in the same tick",
+  "seed": 978443,
+  "steps": [
+   "right",
+   "down",
+   "right",
+   "right",
+   "goto:1,3",
+   "click:btn-restart",
+   "dash-up+left",
+   "left",
+   "down",
+   "up",
+   "goto:5,5"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Violates: HUD shows the current coins",
+  "observed": "Check hud-coins fails.",
+  "expected": "HUD shows the current coins",
+  "seed": 439988,
+  "steps": [
+   "dash-down",
+   "esc"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Violates: Spikes cost 500 points, the score stops at 0",
+  "observed": "Check spike-penalty fails.",
+  "expected": "Spikes cost 500 points, the score stops at 0",
+  "seed": 714432,
+  "steps": [
+   "enter+dash-right",
+   "goto:5,7",
+   "esc",
+   "pause",
+   "goto:4,2",
+   "down",
+   "left"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Violates: Score is never negative and at most 999,999",
+  "observed": "Check score-range fails.",
+  "expected": "Score is never negative and at most 999,999",
+  "seed": 771235,
+  "steps": [
+   "dash-down",
+   "right",
+   "dash-right",
+   "right",
+   "right",
+   "right",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Violates: HUD shows the time left",
+  "observed": "Check hud-time fails.",
+  "expected": "HUD shows the time left",
+  "seed": 885770,
+  "steps": [
+   "pause",
+   "click:btn-resume",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Violates: Every visible button is clickable",
+  "observed": "Check buttons-clickable fails.",
+  "expected": "Every visible button is clickable",
+  "seed": 989785,
+  "steps": [
+   "goto:7,7",
+   "dash-right",
+   "right",
+   "dash-right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Violates: HUD shows the current coins",
+  "observed": "Check hud-coins fails.",
+  "expected": "HUD shows the current coins",
+  "seed": 380477,
+  "steps": [
+   "pause",
+   "pause",
+   "goto:7,4",
+   "up",
+   "click:btn-resume",
+   "left",
+   "dash-left",
+   "left",
+   "click:btn-restart",
+   "wait",
+   "dash-up",
+   "dash-down",
+   "dash-down",
+   "wait",
+   "right",
+   "left",
+   "down",
+   "up",
+   "down",
+   "right",
+   "down",
+   "right+enter",
+   "wait",
+   "goto:7,6"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Violates: HUD shows the time left",
+  "observed": "Check hud-time fails.",
+  "expected": "HUD shows the time left",
+  "seed": 115226,
+  "steps": [
+   "pause",
+   "esc",
+   "goto:4,5",
+   "esc",
+   "esc",
+   "left",
+   "dash-down",
+   "wait",
+   "dash-left",
+   "left",
+   "pause",
+   "click:btn-resume",
+   "click:btn-again",
+   "right",
+   "right",
+   "dash-up",
+   "up",
+   "wait",
+   "up",
+   "goto:7,6"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Violates: HUD shows the current coins",
+  "observed": "Check hud-coins fails.",
+  "expected": "HUD shows the current coins",
+  "seed": 989785,
+  "steps": [
+   "dash-left+dash-down",
+   "enter",
+   "goto:7,7",
+   "dash-right",
+   "right",
+   "dash-right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Violates: HUD shows the current coins",
+  "observed": "Check hud-coins fails.",
+  "expected": "HUD shows the current coins",
+  "seed": 989785,
+  "steps": [
+   "dash-down+up",
+   "goto:7,7",
+   "dash-right",
+   "right",
+   "right",
+   "right",
+   "pause+dash-left",
+   "left",
+   "pause",
+   "wait",
+   "up",
+   "pause",
+   "down",
+   "enter"
+  ]
+ }
+]

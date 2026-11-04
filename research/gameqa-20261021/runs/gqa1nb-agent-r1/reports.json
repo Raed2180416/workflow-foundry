@@ -1,0 +1,12 @@
+[
+ {
+  "bug_class": "input_race",
+  "title": "Two movement keys in the same tick: first pressed key wins instead of last",
+  "observed": "Seed 12345, one tick with down+right from the start (1,1): the player ends at (1,2), so the down key was applied and the right key was ignored. In run 2, right+down also moved right to (2,1), so the earlier key wins in both orders.",
+  "expected": "Design section 2/3: of the movement keys pressed in a tick, only the last one counts. down+right should move the player right to (2,1).",
+  "seed": 12345,
+  "steps": [
+   "down+right"
+  ]
+ }
+]

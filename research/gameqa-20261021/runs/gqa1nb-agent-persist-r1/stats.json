@@ -1,0 +1,208 @@
+{
+ "stats": {
+  "exploreTicks": 103,
+  "runs": 19,
+  "finished": true,
+  "notes": "Finishing with 3 confirmed reports. Untested: enemy contact/swap, timer expiry, exit/finish flow, gates/levers, Enter on game-over/victory. Toast duration not confirmed, so not reported.",
+  "refusedFinishes": 20,
+  "played": [
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "right",
+     "dash-down",
+     "pause",
+     "down",
+     "enter",
+     "down",
+     "dash-right",
+     "dash-right",
+     "use",
+     "pause",
+     "esc",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "right",
+     "dash-down"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "goto:3,3"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "pause+left",
+     "enter",
+     "right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "dash-right",
+     "dash-right",
+     "dash-right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "dash-right",
+     "dash-right",
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "pause",
+     "click:btn-restart",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "pause",
+     "click:btn-restart"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "down",
+     "down",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "goto:12,8",
+     "goto:13,8",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "right",
+     "right",
+     "right",
+     "pause",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "dash-right",
+     "pause",
+     "enter",
+     "wait",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "dash-left"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "right",
+     "right",
+     "dash-down"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "pause",
+     "click:btn-resume",
+     "right"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "pause",
+     "enter",
+     "wait",
+     "pause",
+     "esc",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "dash-right",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 42,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right",
+     "right"
+    ]
+   }
+  ]
+ }
+}

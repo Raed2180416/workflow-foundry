@@ -26,3 +26,22 @@ browser.newContext: Target page, context or browser has been closed
 }
 
 Node.js v24.21.0
+2026-11-04T12:39:23Z start --arm monkey --rep 3
+/home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/research/gameqa-20261021/runs/gqa1-monkey-r3 already has a score: refusing to overwrite
+2026-11-04T12:39:25Z end --arm monkey --rep 3 (exit 0; spent so far $0.1816)
+2026-11-04T12:39:25Z start --arm monkey-ref --rep 3
+{"runId":"gqa1-monkey-ref-r3","wallS":261,"usd":0,"calls":0,"reports":23,"bugs":12,"foundMin":11,"foundMinClass":11,"foundAny":12,"falseReports":0,"duplicates":11,"precision":1,"nondeterministic":0,"replays":211,"error":null}
+2026-11-04T12:44:04Z end --arm monkey-ref --rep 3 (exit 0; spent so far $0.2682)
+2026-11-04T12:44:04Z start --arm monkey --rep 4
+{"runId":"gqa1-monkey-r4","wallS":97,"usd":0,"calls":0,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":4,"error":null}
+2026-11-04T12:45:52Z end --arm monkey --rep 4 (exit 0; spent so far $0.2701)
+2026-11-04T12:45:52Z start --arm monkey-ref --rep 4
+{"runId":"gqa1-monkey-ref-r4","wallS":271,"usd":0,"calls":0,"reports":19,"bugs":12,"foundMin":10,"foundMinClass":10,"foundAny":10,"falseReports":0,"duplicates":9,"precision":1,"nondeterministic":0,"replays":282,"error":null}
+2026-11-04T12:50:53Z end --arm monkey-ref --rep 4 (exit 0; spent so far $0.3345)
+2026-11-04T12:50:54Z start --arm monkey --rep 5
+{"runId":"gqa1-monkey-r5","wallS":164,"usd":0,"calls":0,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":4,"error":null}
+2026-11-04T12:53:52Z end --arm monkey --rep 5 (exit 0; spent so far $0.3717)
+2026-11-04T12:53:53Z start --arm monkey-ref --rep 5
+{"runId":"gqa1-monkey-ref-r5","wallS":492,"usd":0,"calls":0,"reports":23,"bugs":12,"foundMin":11,"foundMinClass":11,"foundAny":11,"falseReports":0,"duplicates":12,"precision":1,"nondeterministic":0,"replays":388,"error":null}
+2026-11-04T13:02:55Z end --arm monkey-ref --rep 5 (exit 0; spent so far $0.4842)
+2026-11-04T13:02:55Z lane monkey 3..5 done

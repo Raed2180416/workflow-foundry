@@ -1,0 +1,119 @@
+[
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes corrupt score: 100 jumps to 65136, then goes negative (-300)",
+  "observed": "At tick 14 the player hits spikes at score 100 and the score becomes 65136 instead of 0 (100 - 500, floored at 0). Later a coin takes it to -300.",
+  "expected": "Spikes cost 500 points with the score floored at 0. Score must stay within 0..999,999 and never go negative. From 100, a spike hit should give 0.",
+  "seed": 42,
+  "steps": [
+   "goto:7,1",
+   "goto:5,8",
+   "goto:1,8"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "Restart level leaves the game paused instead of running",
+  "observed": "After pause then click btn-restart, the state reads mode 'paused' and the pause menu's buttons remain. The score, lives and timer are reset, but the game is not running.",
+  "expected": "Restart level puts the level back to its starting state and the game is running again straight away (mode 'playing', no pause menu).",
+  "seed": 7,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coins shows 0/5 after collecting a coin",
+  "observed": "After collecting a coin (state coins=1), the HUD reads 'Coins 0/5' while the score HUD already shows 100.",
+  "expected": "The HUD always shows current values, so it should read 'Coins 1/5'.",
+  "seed": 99173,
+  "steps": [
+   "goto:3,1",
+   "dash-right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD time stale after resuming from pause",
+  "observed": "After clicking Resume, the state shows timeLeft 299 but the HUD still reads 'Time 300'.",
+  "expected": "The HUD shows the current timer value, so it should read 'Time 299' after the first running tick.",
+  "seed": 7,
+  "steps": [
+   "esc",
+   "click:btn-resume"
+  ]
+ },
+ {
+  "bug_class": "softlock",
+  "title": "Restart level leaves the game paused with no dialog, so input is ignored",
+  "observed": "After pause+right and click:btn-restart, the state stays mode=paused with no dialog or pause menu shown. Waiting for 25 more ticks changes nothing: timer stays 300, enemies do not move, and the player has no visible button to act on.",
+  "expected": "Restart level puts the level back to its starting state and the game is running again straight away, so the timer and enemies should advance on the next tick.",
+  "seed": 7,
+  "steps": [
+   "pause+right",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Toast covers the pause menu's Resume button",
+  "observed": "With the pause menu open, the 'Key collected' toast is on top of btn-resume, so btn-resume reports top=false and a click there would not reach it. btn-restart is not covered.",
+  "expected": "Every visible button must be clickable; nothing may cover it, including toasts shown during the pause.",
+  "seed": 42,
+  "steps": [
+   "goto:4,5",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coins stays at 0/5 after a dash collects a coin",
+  "observed": "After dash-down passes over a coin, state.coins is 1 and the score shows 100, but the HUD reads 'Coins 0/5' and stays stale while paused.",
+  "expected": "The HUD always shows the current coin count, so after collecting one coin it should read 'Coins 1/5'.",
+  "seed": 4242,
+  "steps": [
+   "dash-down",
+   "pause+left"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD timer lags one tick behind the game timer",
+  "observed": "After click:btn-resume the state reads timeLeft=299 but the HUD still shows 'Time 300', and it remains 300 while paused on the next tick.",
+  "expected": "The HUD always shows the current timer value (ticks left), so it should read 'Time 299' to match the state.",
+  "seed": 1234,
+  "steps": [
+   "right+pause",
+   "click:btn-resume",
+   "dash-right+esc"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coins not updated after a dash collects a coin",
+  "observed": "After dash-down at tick 12 collects a second coin, state.coins is 2 but the HUD shows 'Coins 1/5'. The HUD stays one behind.",
+  "expected": "The HUD shows the current coin count, so it should read 'Coins 2/5' after the second coin is collected.",
+  "seed": 7,
+  "steps": [
+   "dash-right",
+   "dash-right",
+   "dash-right",
+   "wait",
+   "wait",
+   "wait",
+   "dash-right",
+   "dash-left",
+   "dash-down",
+   "dash-up",
+   "dash-up",
+   "dash-down",
+   "dash-down",
+   "goto:2,1",
+   "goto:5,5",
+   "goto:7,7",
+   "goto:1,4",
+   "goto:1,8"
+  ]
+ }
+]

@@ -1,0 +1,16 @@
+2026-11-04T12:39:23Z start --arm agent --rep 1 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa1nb-agent-r1","wallS":52,"usd":0.004457145,"calls":5,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":2,"error":null}
+2026-11-04T12:40:23Z end --arm agent --rep 1 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $0.1861)
+2026-11-04T12:40:24Z start --arm agent --rep 2 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa1nb-agent-r2","wallS":47,"usd":0.00359257,"calls":4,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":6,"error":null}
+2026-11-04T12:41:19Z end --arm agent --rep 2 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $0.1897)
+2026-11-04T12:41:20Z start --arm agent --rep 3 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa1nb-agent-r3","wallS":66,"usd":0.004843715,"calls":6,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":6,"error":null}
+2026-11-04T12:42:34Z end --arm agent --rep 3 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $0.1945)
+2026-11-04T12:42:35Z start --arm agent --rep 4 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa1nb-agent-r4","wallS":67,"usd":0.004865405,"calls":5,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":6,"error":null}
+2026-11-04T12:43:52Z end --arm agent --rep 4 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $0.2682)
+2026-11-04T12:43:53Z start --arm agent --rep 5 --live --model claude-haiku-5-5 --transport nb
+{"runId":"gqa1nb-agent-r5","wallS":31,"usd":0.001988295,"calls":3,"reports":1,"bugs":12,"foundMin":1,"foundMinClass":1,"foundAny":1,"falseReports":0,"duplicates":0,"precision":1,"nondeterministic":0,"replays":4,"error":null}
+2026-11-04T12:44:36Z end --arm agent --rep 5 --live --model claude-haiku-5-5 --transport nb (exit 0; spent so far $0.2701)
+2026-11-04T12:44:36Z lane agent-nb 1..5 done

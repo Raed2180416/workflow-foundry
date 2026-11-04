@@ -1,0 +1,15 @@
+[
+ {
+  "bug_class": "score_overflow",
+  "title": "Spikes at low score wrap score negative to ~65136",
+  "observed": "After collecting a coin (score 100) and stepping onto spikes at (3,3), score became 65136 (wrapped from -400) instead of 0. HUD also shows 65136.",
+  "expected": "Score never goes below 0; spikes subtract 500 floored at 0, so score should be 0.",
+  "seed": 42,
+  "steps": [
+   "down",
+   "down",
+   "right",
+   "right"
+  ]
+ }
+]

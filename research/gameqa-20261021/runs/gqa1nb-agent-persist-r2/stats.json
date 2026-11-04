@@ -1,0 +1,204 @@
+{
+ "stats": {
+  "exploreTicks": 252,
+  "runs": 18,
+  "finished": true,
+  "notes": "Final turn. Confirmed one bug: after Restart level from the pause menu, the game stays in mode paused with timeLeft frozen at 300, although the design says the game runs again straight away. Reproduced on seeds 1 and 2 with [pause, click:btn-restart]. Other probes (dash recharge, pause plus move in the same tick, spikes, enemy contact) showed no confirmed bugs. The key-loss candidate was not reproducible, so it is dropped.",
+  "refusedFinishes": 21,
+  "played": [
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "dash-right",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "down",
+     "use",
+     "goto:12,8"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:3,1",
+     "pause",
+     "esc",
+     "dash-left",
+     "dash-left",
+     "dash-right",
+     "dash-right",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "down",
+     "down",
+     "down",
+     "down",
+     "right",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "wait",
+     "click:btn-restart",
+     "right",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:12,7"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:4,5",
+     "goto:1,8",
+     "use",
+     "goto:7,3",
+     "right",
+     "right",
+     "goto:10,5",
+     "down",
+     "down",
+     "goto:12,7"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:9,3"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:9,3"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "pause",
+     "wait",
+     "enter",
+     "wait",
+     "left"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-right",
+     "dash-right",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "pause+right",
+     "wait",
+     "enter",
+     "wait"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "goto:1,8",
+     "use",
+     "goto:9,3"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "right",
+     "pause",
+     "right",
+     "right",
+     "esc",
+     "right",
+     "dash-right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "dash-down",
+     "pause",
+     "wait",
+     "wait",
+     "enter",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "wait",
+     "dash-down"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "wait",
+     "click:btn-restart",
+     "right"
+    ]
+   },
+   {
+    "seed": 1,
+    "steps": [
+     "pause",
+     "click:btn-restart"
+    ]
+   },
+   {
+    "seed": 2,
+    "steps": [
+     "pause",
+     "click:btn-restart"
+    ]
+   }
+  ]
+ }
+}

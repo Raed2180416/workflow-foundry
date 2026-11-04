@@ -1,0 +1,104 @@
+[
+ {
+  "bug_class": "softlock",
+  "title": "Restart level leaves game paused with no pause menu; game is stuck",
+  "observed": "After pause then click:btn-restart, mode stays 'paused' with event 'restart', the pause menu (btn-resume, btn-restart) is not visible, and every following tick is a no-op with the state unchanged through tick 31.",
+  "expected": "Restart level resets the level (score 0, 3 lives, keys 0) and the game is running again straight away, mode 'playing', with the pause menu closed.",
+  "seed": 664515,
+  "steps": [
+   "pause",
+   "click:btn-restart"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Dash and step in the same tick both move the player (3 tiles)",
+  "observed": "Token dash-down+down moved the player from (1,1) to (1,4): events dash, coin, move. The player dashed 2 tiles and then stepped 1 more in one tick, and the dash cooldown was set to 5.",
+  "expected": "Only one move per tick: of the movement keys pressed in a tick, only the last one counts, so the player moves at most one tile (step) or one dash, not both.",
+  "seed": 557665,
+  "steps": [
+   "dash-down+down"
+  ]
+ },
+ {
+  "bug_class": "ui_overlap",
+  "title": "Toast covers the pause menu's Resume button",
+  "observed": "With the pause menu open after a key pickup, btn-resume reports top=false: the 'Key collected' toast sits on top of it, so a click on Resume would not reach the button.",
+  "expected": "Every visible button must be clickable; nothing may cover it.",
+  "seed": 246845,
+  "steps": [
+   "goto:5,5",
+   "esc+right"
+  ]
+ },
+ {
+  "bug_class": "input_race",
+  "title": "Keys pressed after pause in the same tick still move the player",
+  "observed": "Token pause+left: the game paused, but the player still moved from (4,8) to (3,8) in that tick (events pause, move).",
+  "expected": "Pause takes effect immediately; the rest of that tick's input is ignored and nothing else happens in that tick, so the player should stay at (4,8).",
+  "seed": 982588,
+  "steps": [
+   "goto:4,8",
+   "pause+left"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Score goes negative after spikes (-300)",
+  "observed": "Score jumped from 100 to 65136 on a dash tick, then fell to -300 after spikes and a coin on a later tick, showing HUD Score -300.",
+  "expected": "Score is never negative and is capped at 999,999; spikes subtract 500 but the score stops at 0. A score of 65136 from this sequence is also unexpected.",
+  "seed": 885010,
+  "steps": [
+   "down",
+   "dash-left+down",
+   "dash-right+down",
+   "right",
+   "right",
+   "right"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD coin counter stays stale after collecting a coin",
+  "observed": "After dash-down collects a coin at tick 0, state reports coins=1 and time=299, but HUD still shows 'Coins 0/5'. The HUD coin count does not update on the tick the coin is picked up, and remains stale on the following tick.",
+  "expected": "Section 8: the HUD always shows the current Coins n/5 value, so it should read 'Coins 1/5' immediately after the coin is collected.",
+  "seed": 557665,
+  "steps": [
+   "dash-down",
+   "pause+dash-right"
+  ]
+ },
+ {
+  "bug_class": "score_overflow",
+  "title": "Spike damage at low score wraps the score around instead of flooring at 0",
+  "observed": "At tick 2 the player has score 100 and hits spikes. Score jumps to 65136 (the spike penalty of 500 wrapped to an unsigned 16-bit value, 65536-500+100). Later a coin/score update drives it to -300 at tick 5, so the score goes negative.",
+  "expected": "Section 4/5: spikes cost 500 points but the score stops at 0 and never goes below it. Score must never be negative or wrap; it should read 0 after the spike hit at tick 2, not 65136.",
+  "seed": 885010,
+  "steps": [
+   "down",
+   "dash-left+down",
+   "dash-right+down",
+   "goto:4,2",
+   "pause"
+  ]
+ },
+ {
+  "bug_class": "state_desync",
+  "title": "HUD timer freezes at 290 while the game timer keeps counting down",
+  "observed": "After pause and click:btn-resume, the state timeLeft drops (290 -> 289 -> 288 ... -> 277) but the HUD keeps showing 'Time 290' from tick 11 to the end of the run.",
+  "expected": "Section 8: the HUD always shows the current Time (ticks left). After resume the HUD should track timeLeft each tick (e.g. 'Time 289', 'Time 288', ...).",
+  "seed": 813037,
+  "steps": [
+   "goto:7,5",
+   "pause",
+   "click:btn-resume",
+   "goto:6,5",
+   "down",
+   "right+enter",
+   "right",
+   "right",
+   "left",
+   "dash-down"
+  ]
+ }
+]
