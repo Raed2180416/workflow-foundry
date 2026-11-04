@@ -251,12 +251,16 @@ test('wait.signal: race of a signal and the timer — a signal received after th
 
 test('wait.signal: timeout routing — onTimeout names the branch; the other dependents are skipped, and the reverse on a signal', async t => {
   const root = space(t), { store, runtime } = open(t, root);
-  const wf = base([payWait({ timeoutMs: 150, onTimeout: 'escalate' }), ship(), echo('escalate', ['pay'], { reason: 'no payment' }),
+  // The paid run's signal is delivered as soon as that run parks, before the late run executes: delivering it after both
+  // raced the 150 ms timer on a loaded host (load 38, 2026-11-04), so the paid run timed out first, which is correct
+  // engine behaviour and a wrong test. 1 s leaves the margin; pastWake still waits out the late run's timer.
+  const wf = base([payWait({ timeoutMs: 1000, onTimeout: 'escalate' }), ship(), echo('escalate', ['pay'], { reason: 'no payment' }),
     echo('close', ['ship', 'escalate'], { outcome: ref('nodes.pay.outcome') }, { join: 'all_resolved' })], [{ op: 'exists', value: ref('nodes.close.outcome') }], { id: 'RouteProbe' });
   assert.deepEqual(codes(wf), []);
   store.saveWorkflow(wf);
-  const paid = await runtime.execute(runtime.create(wf, { order: 'PO-P' }).id), late = await runtime.execute(runtime.create(wf, { order: 'PO-L' }).id);
+  const paid = await runtime.execute(runtime.create(wf, { order: 'PO-P' }).id);
   runtime.deliverSignal(paid.id, settled('rp-1', 'PO-P', 11));
+  const late = await runtime.execute(runtime.create(wf, { order: 'PO-L' }).id);
   await pastWake(store, late.id, 'root/pay');
   const ticked = await runtime.tick();
   assert.deepEqual(ticked.runs.map(r => r.status), ['succeeded', 'succeeded']);
