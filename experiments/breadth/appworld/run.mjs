@@ -95,8 +95,10 @@ export function assertUnits(split, ids, { sealed = false, freeze = null, look = 
     const n = Number(look);
     if (!(n >= 1 && n <= 3)) throw new Error('devCheck (the dev hold-back) needs --look 1|2|3');
     const prior = readJsonl(LOOK_LOG).filter(l => l.armFamily === armFamily);
-    if (prior.some(l => l.look === n)) throw new Error(`look ${n} for ${armFamily} is already recorded (${LOOK_LOG}); at most 3 looks`);
-    if (record) { mkdirSync(path.dirname(LOOK_LOG), { recursive: true }); appendFileSync(LOOK_LOG, JSON.stringify({ armFamily, look: n, at: new Date().toISOString(), units: ids.length }) + '\n'); }
+    if (record) { // a new run: a new look
+      if (prior.some(l => l.look === n)) throw new Error(`look ${n} for ${armFamily} is already recorded (${LOOK_LOG}); at most 3 looks`);
+      mkdirSync(path.dirname(LOOK_LOG), { recursive: true }); appendFileSync(LOOK_LOG, JSON.stringify({ armFamily, look: n, at: new Date().toISOString(), units: ids.length }) + '\n');
+    } else if (!prior.some(l => l.look === n)) throw new Error(`resume of look ${n} for ${armFamily}, which is not recorded (${LOOK_LOG})`); // a resumed run continues its look
   }
   return { role, freeze: null };
 }
@@ -279,6 +281,9 @@ export async function runUnits(o) {
   } else writeJson(launchFile, launch);
   const jobs = [];
   for (let r = 0; r < repeat; r++) for (const id of ids) jobs.push({ id, r });
+  // interleave.mjs runs a block at a time: the run keeps its full unit list (launch, resume, cap), only these ids run now
+  const only = o.onlyIds ? new Set(o.onlyIds) : null;
+  if (only && [...only].some(id => !ids.includes(id))) throw new Error('onlyIds names units outside this run');
   const done = new Set(kept.map(x => x.key));
   const ledger = makeLedger(scripted ? Infinity : o.capUsd);
   for (const x of [...kept, ...readJsonl(faultsFile)]) ledger.spent += x.costUsd ?? 0;
@@ -294,15 +299,16 @@ export async function runUnits(o) {
     for (const j of jobs) { const k = `${j.r}|${scenarioOf(j.id)}`; if (!g.has(k)) g.set(k, []); g.get(k).push(j); }
     for (const js of g.values()) groups.push(js.sort((a, b) => (sha256(`${split.salt}:notes:${a.r}:${a.id}`) < sha256(`${split.salt}:notes:${b.r}:${b.id}`) ? -1 : 1)));
   } else for (const j of jobs) groups.push([j]);
-  const grader = o.offline ? null : new BridgeServer({ cmd: 'grade-serve', root: path.join(hostRoot, 'grade-root'), onExit: c => log(`[appworld] grader exited (${c})`) });
+  const ownGrader = !o.offline && !o.grader;
+  const grader = o.offline ? null : (o.grader ?? new BridgeServer({ cmd: 'grade-serve', root: path.join(hostRoot, 'grade-root'), onExit: c => log(`[appworld] grader exited (${c})`) }));
   if (grader) await grader.hello;
   const results = [...kept];
-  let stopped = null, stopKind = null, lastMeter = null;
+  let stopped = null, stopKind = null, lastMeter = o.meterSeed ?? null; // the seed: the last reading of an earlier block
   const meterLog = m => { lastMeter = m; appendFileSync(meterFile, JSON.stringify({ at: new Date().toISOString(), ...m }) + '\n'); };
   try {
     await pool(groups, o.concurrency ?? DEFAULTS.concurrency, async group => {
       for (const { id, r } of group) {
-        if (stopped || done.has(unitKey(id, r))) continue;
+        if (stopped || done.has(unitKey(id, r)) || (only && !only.has(id))) continue;
         const g = scripted || o.offline ? { ok: true } : meterGate(lastMeter);
         if (!g.ok) { stopped ??= `usage meter: ${g.reason}`; stopKind ??= 'meter'; return; }
         if (!(await ledger.reserve(budgetUsd))) { stopped ??= `the cap ($${ledger.spent.toFixed(4)} spent + ${budgetUsd} > ${o.capUsd})`; stopKind ??= 'cap'; return; }
@@ -341,7 +347,7 @@ export async function runUnits(o) {
         log(`[appworld] ${rec.key} tgc=${rec.outcome.tgc ? 1 : 0} asserts=${verdict.passCount}/${verdict.passCount + verdict.failCount} turns=${rec.turns ?? '-'} executes=${rec.executes ?? '-'} $${(rec.costUsd ?? 0).toFixed(4)}${rec.sessionError ? ` (${rec.sessionError})` : ''}${rec.audit?.violations?.length ? ` [${rec.audit.violations.join('; ')}]` : ''}`);
       }
     });
-  } finally { if (grader) await grader.quit(); }
+  } finally { if (grader && ownGrader) await grader.quit(); }
   const faults = readJsonl(faultsFile);
   const summary = {
     runId, label: scripted ? `scripted ${o.policy} (no model)` : `arm ${o.armName}: ${arm.model} at ${arm.effort}`, arm: o.armName ?? null, policy: o.policy ?? null, role,

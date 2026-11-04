@@ -137,5 +137,32 @@
    "node experiments/breadth/appworld/run.mjs --arm A-HN --sealed --freeze research/breadth-20261021/appworld/SEALED-FREEZE.json --subset haiku --cap 54.6 --run-id aw-sealed-a-hn"
   ]
  },
+ "interleaved": {
+  "devPilot": {
+   "arms": [
+    "A-H",
+    "A-HN",
+    "A-S",
+    "A-O"
+   ],
+   "usd": 56.7,
+   "cmds": [
+    "node experiments/breadth/appworld/interleave.mjs --arms A-H,A-HN,A-S,A-O --pilot --caps A-H=7.8,A-HN=9.75,A-S=24.96,A-O=31.2 --run-id aw-pilot"
+   ]
+  },
+  "sealed": {
+   "arms": [
+    "A-H",
+    "A-S",
+    "A-O",
+    "A-HN"
+   ],
+   "usd": 258,
+   "capUsd": 335.4,
+   "cmds": [
+    "node experiments/breadth/appworld/interleave.mjs --arms A-H,A-S,A-O,A-HN --sealed --freeze research/breadth-20261021/appworld/SEALED-FREEZE.json --caps A-H=43.68,A-S=133.12,A-O=104,A-HN=54.6 --run-id aw-sealed"
+   ]
+  }
+ },
  "order": "dev only after the AppWorld $0 gates; sealed only after the cheap beds and the portfolio dev gate, with a SEALED-FREEZE.json written at the PREREG v1 freeze (arms, F-kit and card hashes, per-arm caps from 1.5 x dev p99, the A-S cut from the pilot ICC)"
 }

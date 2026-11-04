@@ -32,6 +32,7 @@ here quotes task content; the data is AppWorld's protected portion (ACQUISITION.
 | `facade.mjs` | host side of the mailbox: execute and docs to the unit's serve process, python to `src/sandbox.mjs`, notes |
 | `session.mjs` | the hardened `claude -p` session (the AgentDojo bed's, server name changed; CLI 2.1.318's new built-in `cc-plugin-privacy` added to the disabled plugins after the init probe caught it) |
 | `run.mjs` | the runner: arms, scripted policies, split hygiene, caps, meter gate, faults, resume, host-only records |
+| `interleave.mjs` | the arms interleaved (PLAN §5.2): whole-scenario blocks in hashed run order, arm order rotating per block, one run per arm (`run.mjs runUnits` with `onlyIds`), one shared grader, the meter reading carried across blocks; a stop in any arm stops all |
 | `split-rule.mjs`, `split.mjs` | the frozen split rule (committed first) and its CLI |
 | `parity.mjs`, `leakprobe.mjs`, `initprobe.mjs`, `costest.mjs` | $0 gates, BG-8, the init probe, the paid plan |
 
@@ -111,9 +112,11 @@ SEALED-FREEZE.json` naming this split; their results never leave the host-only d
 
 ## 7. Open before any sealed run
 
-1. Interleaving (PLAN §5.2): the paid commands run one arm at a time in the same hashed order (a stopped run is still an
-   unbiased paired prefix); an interleaving driver (all arms of a task on identical reset worlds, as the AgentDojo bed's
-   `interleave.mjs`) is still to write.
+1. Interleaving (PLAN §5.2): `interleave.mjs` (written 2026-11-04) runs the arms block by block over whole scenarios in
+   the hashed run order, so a stop leaves every arm with the same paired subset; every unit still gets its own fresh
+   serve process and world, identical for every arm. The per-arm `run.mjs` commands remain valid (the same order; a
+   stopped run is a paired prefix) and are kept in `cost-estimate.json` beside the interleaved ones. A resumed devCheck
+   run continues its recorded look instead of being refused as a second look (fixed in `assertUnits` the same day).
 2. BG-3 decision (owner): the evaluator kills touch-other-record but not extra-field mutants; PLAN §5.4 blocks a bed
    below 95%. Options: admit with the margin outcome as AppWorld's TGC and the uncovered class reported (§5); or skip the
    bed. No co-oracle can close the gap on test_normal.

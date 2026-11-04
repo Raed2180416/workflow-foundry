@@ -21,6 +21,7 @@ const F = await import('../facade.mjs');
 const RUN = await import('../run.mjs');
 const P = await import('../parity.mjs');
 const LP = await import('../leakprobe.mjs');
+const IL = await import('../interleave.mjs');
 test.after(() => rmSync(TMP, { recursive: true, force: true }));
 
 const HAVE_BED = existsSync(L.VENV_PY) && existsSync(L.DATA_DIR);
@@ -125,6 +126,9 @@ test('runner refuses test_challenge, mixed roles, sealed without a freeze, and a
   assert.throws(() => RUN.assertUnits(split, dc, { armFamily: 'A-H', look: 3 }), /already recorded/);
   assert.throws(() => RUN.assertUnits(split, dc, { armFamily: 'A-H', look: 4 }), /--look 1\|2\|3/);
   assert.equal(RUN.assertUnits(split, dc).role, 'devCheck'); // scripted: no look accounting
+  // a resumed run continues its recorded look (not a new one); resuming a look that was never recorded is refused
+  assert.equal(RUN.assertUnits(split, dc, { armFamily: 'A-H', look: 2, record: false }).role, 'devCheck');
+  assert.throws(() => RUN.assertUnits(split, dc, { armFamily: 'A-S', look: 1, record: false }), /not recorded/);
   const fz = path.join(TMP, 'freeze.json');
   writeFileSync(fz, JSON.stringify({ kind: 'appworld-sealed-freeze', splitSha256: split.splitSha256 }));
   assert.equal(RUN.assertUnits(split, split.roles.sealed.slice(0, 2), { sealed: true, freeze: fz }).role, 'sealed');
@@ -179,6 +183,40 @@ test('prompts: AppWorld convention, date note, card appended', () => {
   const s = RUN.systemPrompt({ card: 'CARD' });
   assert.match(s, /## Date/); assert.match(s, /## Bed card\nCARD$/); assert.doesNotMatch(s, /## Notes/);
   assert.match(RUN.systemPrompt({ notes: true }), /## Notes/);
+});
+
+// ---- interleaving (PLAN §5.2) ---------------------------------------------------------------------------------------
+test('interleave: whole-scenario blocks in hashed order, rotating arm order, each arm only its own units, a stop stops all', async () => {
+  const fz = path.join(TMP, 'freeze-il.json');
+  writeFileSync(fz, JSON.stringify({ kind: 'appworld-sealed-freeze', splitSha256: split.splitSha256 }));
+  const a = { arms: 'A-H,A-HN,A-S,A-O', sealed: true, freeze: fz, caps: 'A-H=1,A-HN=1,A-S=1,A-O=1', block: '5', 'run-id': 'il-test' };
+  const per = IL.armIds(a, ['A-H', 'A-HN', 'A-S', 'A-O'], split);
+  assert.deepEqual(per['A-H'], split.roles.sealed); assert.deepEqual(per['A-S'], split.sealed.sonnetDefault); assert.deepEqual(per['A-O'], split.sealed.opusAnchors);
+  const blocks = IL.scenarioBlocks(per, split.salt, 5);
+  assert.equal(blocks.flat().length, 168); assert.equal(new Set(blocks.flat()).size, 168);
+  const blockOf = new Map(); blocks.forEach((b, k) => b.forEach(id => { const s = L.scenarioOf(id); assert.ok(!blockOf.has(s) || blockOf.get(s) === k, 'a scenario straddles blocks'); blockOf.set(s, k); }));
+  assert.ok(blocks.every(b => new Set(b.map(L.scenarioOf)).size <= 5));
+  assert.deepEqual(blocks.flat().map(L.scenarioOf).filter((s, i, xs) => xs.indexOf(s) === i), S.runOrder(split.roles.sealed, split.salt).map(L.scenarioOf).filter((s, i, xs) => xs.indexOf(s) === i));
+  const calls = [];
+  const fake = async o => { calls.push(o); return { summary: { meter: { last: { n: calls.length } } }, stopped: null }; };
+  const r = await IL.interleave({ ...a, splitObject: split }, { runUnitsImpl: fake, graderImpl: { tag: 'shared' }, log: () => {} });
+  assert.equal(r.stopped, null); assert.equal(r.blocks, blocks.length);
+  const ran = {}; for (const c of calls) { ran[c.armName] ??= []; ran[c.armName].push(...c.onlyIds); assert.deepEqual(c.ids, per[c.armName]); assert.equal(c.grader.tag, 'shared'); assert.equal(c.runId, `il-test-${c.armName.toLowerCase()}`); }
+  for (const arm of Object.keys(per)) assert.deepEqual([...ran[arm]].sort(), [...per[arm]].sort(), arm);
+  assert.deepEqual(calls.slice(0, 4).map(c => c.armName), ['A-H', 'A-HN', 'A-S', 'A-O']);
+  const second = calls.filter(c => blocks[1].includes(c.onlyIds[0])).map(c => c.armName);
+  assert.equal(second[0], 'A-HN'); // rotated
+  assert.deepEqual(calls[1].meterSeed, { n: 1 }); // the meter reading carries to the next arm and block
+  calls.length = 0;
+  const stopAt = async o => { calls.push(o); return { summary: {}, stopped: calls.length === 3 ? 'the cap' : null, stopKind: calls.length === 3 ? 'cap' : null }; };
+  const s = await IL.interleave({ ...a, splitObject: split }, { runUnitsImpl: stopAt, graderImpl: {}, log: () => {} });
+  assert.equal(s.stopKind, 'cap'); assert.equal(calls.length, 3);
+  await assert.rejects(IL.interleave({ ...a, caps: 'A-H=1', splitObject: split }, { runUnitsImpl: fake, graderImpl: {}, log: () => {} }), /--caps needs a USD cap for A-HN/);
+  await assert.rejects(IL.interleave({ ...a, arms: 'A-H,F-H', splitObject: split }, { runUnitsImpl: fake, graderImpl: {}, log: () => {} }), /--arms/);
+});
+
+test('runUnits refuses onlyIds outside the run', async () => {
+  await assert.rejects(RUN.runUnits({ ids: split.roles.devTrain.slice(0, 2), onlyIds: [split.roles.devTrain[5]], policy: 'null', runId: 'only-test', log: () => {} }), /outside this run/);
 });
 
 // ---- parity helpers -------------------------------------------------------------------------------------------------

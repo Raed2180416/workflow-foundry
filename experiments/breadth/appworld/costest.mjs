@@ -12,6 +12,7 @@ import { loadSplit } from './split.mjs';
 
 export const PER_TASK_USD = Object.freeze({ 'A-H': 33.6 / 168, 'A-HN': 42 / 168, 'F-H': 67.2 / 168, 'A-S': 102.4 / 64, 'A-O': 80 / 20 });
 const R = 'node experiments/breadth/appworld/run.mjs';
+const IL = 'node experiments/breadth/appworld/interleave.mjs';
 const FREEZE = 'research/breadth-20261021/appworld/SEALED-FREEZE.json';
 const usd = x => Math.round(x * 100) / 100;
 const capOf = (est, budget) => Math.max(usd(est * 1.3), usd(budget * 2)); // 30% headroom, at least two sessions' reservation
@@ -41,8 +42,19 @@ export function plan(split = loadSplit()) {
   control.capUsd = capOf(control.usd, ARMS['A-HN'].budgetUsd);
   control.cmds = [`${R} --arm A-HN --sealed --freeze ${FREEZE} --subset haiku --cap ${control.capUsd} --run-id aw-sealed-a-hn`];
   const devUsd = usd(dev.reduce((a, s) => a + s.usd, 0)), sealedUsd = usd(sealed.reduce((a, s) => a + s.usd, 0)), sealedCap = usd(sealed.reduce((a, s) => a + s.capUsd, 0));
+  // the same arms through interleave.mjs (PLAN §5.2): whole-scenario blocks in hashed order, the arm order rotating per
+  // block; a stop leaves every arm with the same paired subset. Same caps and run order as the per-arm commands above.
+  const capList = xs => xs.map(x => `${x.arm}=${x.capUsd}`).join(',');
+  const pilots = dev.filter(x => x.step.startsWith('dev pilot')).map(x => ({ arm: x.arm, capUsd: Number(x.cmds[0].match(/--cap ([\d.]+)/)[1]) }));
+  const sealedArms = [...sealed.filter(x => ARMS[x.arm]), control];
+  const interleaved = {
+    devPilot: { arms: pilots.map(x => x.arm), usd: usd(dev.filter(x => x.step.startsWith('dev pilot')).reduce((a, x) => a + x.usd, 0)),
+      cmds: [`${IL} --arms ${pilots.map(x => x.arm).join(',')} --pilot --caps ${capList(pilots)} --run-id aw-pilot`] },
+    sealed: { arms: sealedArms.map(x => x.arm), usd: usd(sealedArms.reduce((a, x) => a + x.usd, 0)), capUsd: usd(sealedArms.reduce((a, x) => a + x.capUsd, 0)),
+      cmds: [`${IL} --arms ${sealedArms.map(x => x.arm).join(',')} --sealed --freeze ${FREEZE} --caps ${capList(sealedArms)} --run-id aw-sealed`] },
+  };
   return { kind: 'appworld-cost-plan', evidence: 'estimate [I] from PLAN §10.2 anchors; replaced by dev-pilot measurements before any sealed run', perTaskUsd: PER_TASK_USD, sizes,
-    dev, devUsd, devCapUsd: 90, sealed, sealedUsd, sealedCapSum: sealedCap, sealedCapUsd: 380, control,
+    dev, devUsd, devCapUsd: 90, sealed, sealedUsd, sealedCapSum: sealedCap, sealedCapUsd: 380, control, interleaved,
     order: 'dev only after the AppWorld $0 gates; sealed only after the cheap beds and the portfolio dev gate, with a SEALED-FREEZE.json written at the PREREG v1 freeze (arms, F-kit and card hashes, per-arm caps from 1.5 x dev p99, the A-S cut from the pilot ICC)' };
 }
 

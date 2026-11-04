@@ -205,7 +205,11 @@ export async function runParity({ concurrency = 2, limit = null, out = path.join
   const bundle = path.join(path.dirname(DATA_DIR), '..', 'download', 'data-0.1.0.bundle');
   bg0.bundlePresent = fileSize(bundle) === PIN.dataBytes;
   log(`[parity] BG-0 install pass=${bg0.install.pass}`);
-  const planFile = path.join(dir, 'plans.json');
+  // the plans and upstream's reference path depend only on bridge.py (its `plan` and `official` commands) and the pinned
+  // data: their own cache key
+  const offDir = path.join(HOST_ROOT, 'parity', `official-${sha256(readFileSync(BRIDGE)).slice(0, 16)}${limit ? `-l${limit}` : ''}`);
+  mkdirSync(offDir, { recursive: true });
+  const planFile = path.join(offDir, 'plans.json');
   let plans;
   if (existsSync(planFile)) plans = new Map(Object.entries(readJson(planFile)));
   else { plans = await plansFor(ids); writeJson(planFile, Object.fromEntries(plans)); }
@@ -215,9 +219,6 @@ export async function runParity({ concurrency = 2, limit = null, out = path.join
   const offPolicies = ['gold@verify', 'gold@arm', 'null@arm', 'docs@arm', ...ops.map(o => `${o}@verify`)];
   const offItems = batteryItems(plans, ids, offPolicies);
   log(`[parity] official battery: ${offItems.length} items`);
-  // upstream's reference path depends only on bridge.py (its `official` command) and the plans: its own cache key
-  const offDir = path.join(HOST_ROOT, 'parity', `official-${sha256(readFileSync(BRIDGE)).slice(0, 16)}${limit ? `-l${limit}` : ''}`);
-  mkdirSync(offDir, { recursive: true });
   const official = await cached(offDir, 'official', offItems, (todo, onRow) => officialBattery(todo, { workers: concurrency, dir: offDir, onRow }), log);
   log(`[parity] official done (${Math.round((Date.now() - t0) / 1000)} s)`);
   const ourItems = offItems.filter(it => !it.policy.startsWith('gold@arm') && !it.policy.startsWith('docs@'));
