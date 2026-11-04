@@ -4,6 +4,9 @@
 //   A1T  the node decides; on "subworkflow" it picks and fills a library template itself, in its own context (ablation).
 //   A2   the node decides; on "subworkflow" it sends a typed request (goal, inputs, returns, budget) to the governing
 //        builder: a fresh Haiku that selects and fills a library template from the request alone.
+//   A2O  (SW-1b, added after eval-1) as A2, with the open governing builder: when the library stage ends without a
+//        passing sub-workflow (the builder picks "none" or the template never passes), a fresh Haiku writes the
+//        sub-workflow free-form from the same request view (prompts-open.mjs). The node sees exactly A2's prompts.
 // Whoever builds, code owns the rest, identically: the envelope check (checkSpec: structure, then authority; a widening
 // is refused and recorded as a proposal for the owner, never run), a $0 practice run on the node's own input with every
 // judgment stubbed, binding by content hash through the flow-v3 call host (depth, recursion, effects 'none', budget tree),
@@ -14,6 +17,7 @@ import { TEMPLATES, templateById, fillSchema, slotProblems, instantiate } from '
 import { createNodeBinding, practiceRun, gateProblems } from './bind.mjs';
 import { compileDataSchema } from '../../src/validate.mjs';
 import * as P from './prompts.mjs';
+import * as PO from './prompts-open.mjs';
 
 // route: who builds a sub-workflow (null: nobody); directive: 'decide' (the node chooses: answer or sub-workflow) or
 // 'subworkflow' (the parent directs a sub-workflow for this node; the runner applies it to legacy-export nodes only).
@@ -21,7 +25,11 @@ export const ARM_CONFIG = Object.freeze({
   A0: { route: null, directive: 'answer' },
   A1: { route: 'self', directive: 'decide' }, A1T: { route: 'template', directive: 'decide' }, A2: { route: 'governing', directive: 'decide' },
   A1F: { route: 'self', directive: 'subworkflow' }, A1TF: { route: 'template', directive: 'subworkflow' }, A2F: { route: 'governing', directive: 'subworkflow' },
+  // SW-1b (after eval-1): the open governing builder. Appended, so the SW-1 arms keep their order in ARMS.
+  A2O: { route: 'governing-open', directive: 'decide' }, A2OF: { route: 'governing-open', directive: 'subworkflow' },
 });
+// The node-facing side of a route: the open governing route shows the node exactly the governing route's prompts.
+const nodeRoute = route => (route === 'governing-open' ? 'governing' : route);
 export const ARMS = Object.freeze(Object.keys(ARM_CONFIG));
 export const NODE_MODEL = 'claude-haiku-5-5';
 export const NODE_DECODING = Object.freeze({ reasoning: 'medium' });
@@ -37,7 +45,7 @@ const usd = x => Math.round(x * 1e6) / 1e6;
  */
 export async function runNode({ port, arm, input, runId, answerSchema, directive = ARM_CONFIG[arm]?.directive, budgetUsd = NODE_BUDGET_USD, maxRepairs = MAX_REPAIRS, maxDepth = MAX_DEPTH }) {
   if (!ARMS.includes(arm)) throw new Error(`unknown arm ${arm}`);
-  const { route } = ARM_CONFIG[arm];
+  const { route } = ARM_CONFIG[arm], nodeSide = nodeRoute(route);
   const ch = input.channel;
   const binding = createNodeBinding({ port, budgetUsd, maxDepth, arm, taskKey: ch, runId, outputSchema: answerSchema });
   const rec = { arm, route, directive, channel: ch, path: null, decision: null, reason: null, calls: [], proposals: [], rounds: [], fallback: null, sub: null, error: null,
@@ -150,7 +158,7 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
     const maxUsd = carvable();
     let d;
     if (directive === 'decide') {
-      d = await typed('decide', P.NODE_SYSTEM, P.decidePrompt(route, input, maxUsd), P.decideSchema(route, answerSchema), NODE_DECODING);
+      d = await typed('decide', P.NODE_SYSTEM, P.decidePrompt(nodeSide, input, maxUsd), P.decideSchema(nodeSide, answerSchema), NODE_DECODING);
       rec.decision = d.decision; rec.reason = String(d.reason ?? '').slice(0, 300);
       if (d.decision === 'answer') {
         rec.path = 'direct';
@@ -160,11 +168,11 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
     } else {
       // Parent-directed: the node does not choose. On the governing route it still writes its own typed request.
       rec.decision = 'directed';
-      d = route === 'governing' ? await typed('request', P.NODE_SYSTEM, P.requestPrompt(input, maxUsd), P.requestSchema(), NODE_DECODING) : {};
+      d = nodeSide === 'governing' ? await typed('request', P.NODE_SYSTEM, P.requestPrompt(input, maxUsd), P.requestSchema(), NODE_DECODING) : {};
       rec.reason = d.reason ? String(d.reason).slice(0, 300) : null;
     }
     const why = directive === 'decide' ? rec.reason : null;
-    rec.sub = { builder: route === 'governing' ? 'governing' : 'self', route };
+    rec.sub = { builder: nodeSide === 'governing' ? 'governing' : 'self', route };
     let loop;
     if (route === 'self') {
       const envelope = envelopeOf();
@@ -194,6 +202,19 @@ export async function runNode({ port, arm, input, runId, answerSchema, directive
         const context = P.requestContext({ ...req, inputs }, input, granted, answerSchema);
         loop = await constructLoop(templatePropose({ context, selectSystem: P.BUILDER_SELECT_SYSTEM, fillSystem: P.BUILDER_FILL_SYSTEM, keyPrefix: 'builder', budget: () => Math.min(granted, carvable()) }),
           envelopeOf(inputs));
+        // A2O / A2OF: the library missed. A fresh builder writes the sub-workflow free-form from the same request view (never
+        // the node's context), through the same loop: envelope check, practice run, binding by hash, real run, gate.
+        if (!loop.ok && route === 'governing-open' && loop.why !== 'node budget') {
+          rec.sub.open = { after: String(loop.why).slice(0, 300), fromRound: rec.rounds.length };
+          const envelope = envelopeOf(inputs);
+          let previous = null;
+          loop = await constructLoop(async (round, feedback) => {
+            const spec = await typed(`builder.open.r${round}`, PO.BUILDER_OPEN_SYSTEM, PO.openBuildPrompt(context, { envelope: { ...envelope, budgetUsd: carvable() }, why: rec.sub.open.after, feedback, previous }),
+              P.SELF_BUILD_SCHEMA, BUILDER_DECODING);
+            previous = spec;
+            return { spec };
+          }, envelope);
+        }
       }
     }
     rec.sub.ok = loop.ok; rec.sub.why = loop.why ?? null; rec.sub.round = loop.round ?? null; rec.sub.hash = loop.hash ?? null;

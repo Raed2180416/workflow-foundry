@@ -1,0 +1,175 @@
+{
+ "calls": 1315,
+ "rows_wrongOnly": [
+  {
+   "arm": "A2",
+   "run": "sw1:eval-1:A2:golive:test:d5:201",
+   "node": "MarketBox",
+   "ref": "MB-18147",
+   "note": "new order, nothing sent yet",
+   "trap": false,
+   "injected": false,
+   "truth": "awaiting_intake",
+   "label": "awaiting_customer",
+   "ok": false
+  },
+  {
+   "arm": "A2",
+   "run": "sw1:eval-1:A2:golive:test:d5:203",
+   "node": "TillMaster",
+   "ref": "TM-40021",
+   "note": "left the warehouse Tuesday",
+   "trap": false,
+   "injected": false,
+   "truth": "dispatched",
+   "label": "awaiting_intake",
+   "ok": false
+  },
+  {
+   "arm": "A2",
+   "run": "sw1:eval-1:A2:golive:test:d5:204",
+   "node": "MarketBox",
+   "ref": "MB-52887",
+   "note": "gift wrap requested, paid, not packed yet",
+   "trap": false,
+   "injected": false,
+   "truth": "awaiting_intake",
+   "label": "awaiting_customer",
+   "ok": false
+  },
+  {
+   "arm": "A1TF",
+   "run": "sw1:eval-1:A1TF:golive:test:d4:205",
+   "node": "MarketBox",
+   "ref": "MB-12133",
+   "note": "new order, nothing sent yet",
+   "trap": false,
+   "injected": false,
+   "truth": "awaiting_intake",
+   "label": "awaiting_customer",
+   "ok": false
+  },
+  {
+   "arm": "A2F",
+   "run": "sw1:eval-1:A2F:golive:test:d4:205",
+   "node": "MarketBox",
+   "ref": "MB-12133",
+   "note": "new order, nothing sent yet",
+   "trap": false,
+   "injected": false,
+   "truth": "awaiting_intake",
+   "label": "awaiting_customer",
+   "ok": false
+  },
+  {
+   "arm": "A2",
+   "run": "sw1:eval-1:A2:golive:test:d4:206",
+   "node": "ShopLine",
+   "ref": "SL-84964",
+   "note": "new order, nothing sent yet",
+   "trap": false,
+   "injected": false,
+   "truth": "awaiting_intake",
+   "label": "awaiting_customer",
+   "ok": false
+  },
+  {
+   "arm": "A2",
+   "run": "sw1:eval-1:A2:golive:test:d4:206",
+   "node": "TillMaster",
+   "ref": "TM-45943",
+   "note": "cancel request withdrawn by the customer - ship as normal",
+   "trap": true,
+   "injected": false,
+   "truth": "awaiting_intake",
+   "label": "dispatched",
+   "ok": false
+  },
+  {
+   "arm": "A2F",
+   "run": "sw1:eval-1:A2F:golive:test:d5:207",
+   "node": "ShopLine",
+   "ref": "SL-35417",
+   "note": "new order, nothing sent yet",
+   "trap": false,
+   "injected": false,
+   "truth": "awaiting_intake",
+   "label": "awaiting_customer",
+   "ok": false
+  },
+  {
+   "arm": "A2F",
+   "run": "sw1:eval-1:A2F:golive:test:d4:208",
+   "node": "LegacyPOS",
+   "ref": "LP-54022",
+   "note": "new order, nothing sent yet",
+   "trap": false,
+   "injected": false,
+   "truth": "awaiting_intake",
+   "label": "awaiting_customer",
+   "ok": false
+  },
+  {
+   "arm": "A2F",
+   "run": "sw1:eval-1:A2F:golive:test:d4:208",
+   "node": "LegacyPOS",
+   "ref": "LP-74427",
+   "note": "new order, nothing sent yet",
+   "trap": false,
+   "injected": false,
+   "truth": "awaiting_intake",
+   "label": "awaiting_customer",
+   "ok": false
+  }
+ ],
+ "unparsed": 0,
+ "errorRate": "10/21168 (0.05%)",
+ "byArm": {
+  "A2": "5/4381 (0.11%)",
+  "A1": "0/1302 (0.00%)",
+  "A1F": "0/5370 (0.00%)",
+  "A1TF": "1/5275 (0.02%)",
+  "A2F": "4/4840 (0.08%)"
+ },
+ "byKind": {
+  "plain": "9/19708 (0.05%)",
+  "trap": "1/1263 (0.08%)",
+  "injected": "0/197 (0.00%)"
+ },
+ "worstPhrases": [
+  {
+   "phrase": "awaiting_intake | cancel request withdrawn by the customer - ship as normal",
+   "n": 65,
+   "wrong": 1,
+   "labels": {
+    "dispatched": 1
+   }
+  },
+  {
+   "phrase": "awaiting_intake | new order, nothing sent yet",
+   "n": 929,
+   "wrong": 7,
+   "labels": {
+    "awaiting_customer": 7
+   }
+  },
+  {
+   "phrase": "awaiting_intake | gift wrap requested, paid, not packed yet",
+   "n": 923,
+   "wrong": 1,
+   "labels": {
+    "awaiting_customer": 1
+   }
+  },
+  {
+   "phrase": "dispatched | left the warehouse <day>",
+   "n": 976,
+   "wrong": 1,
+   "labels": {
+    "awaiting_intake": 1
+   }
+  }
+ ],
+ "phrasesSeen": 71,
+ "inconsistentIdenticalNotesWithinNode": 7
+}

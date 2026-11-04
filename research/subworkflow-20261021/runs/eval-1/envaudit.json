@@ -1,0 +1,1204 @@
+{
+ "units": [
+  {
+   "unit": "A2:golive:test:d5:201",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.030232,
+   "journalCostUsd": 0.030232,
+   "journalCalls": 37,
+   "journalFailed": 0
+  },
+  {
+   "unit": "A1F:golive:test:d5:201",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.038187,
+   "journalCostUsd": 0.038186,
+   "journalCalls": 24,
+   "journalFailed": 0
+  },
+  {
+   "unit": "A1:golive:test:d5:201",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.059056,
+   "journalCostUsd": 0.059056,
+   "journalCalls": 16,
+   "journalFailed": 0
+  },
+  {
+   "unit": "A0:golive:test:d5:201",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.084547,
+   "journalCostUsd": 0.084547,
+   "journalCalls": 4,
+   "journalFailed": 0
+  },
+  {
+   "unit": "A1TF:golive:test:d5:201",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.022817,
+   "journalCostUsd": 0.022818,
+   "journalCalls": 35,
+   "journalFailed": 0
+  },
+  {
+   "unit": "A2F:golive:test:d5:201",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.02814,
+   "journalCostUsd": 0.028139,
+   "journalCalls": 37,
+   "journalFailed": 0
+  },
+  {
+   "unit": "A0:golive:test:d4:201",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.031641,
+   "journalCostUsd": 0.03164,
+   "journalCalls": 4,
+   "journalFailed": 0
+  },
+  {
+   "unit": "A1F:golive:test:d4:201",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.028599,
+   "journalCostUsd": 0.028599,
+   "journalCalls": 27,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d4:201",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.012671,
+   "journalCostUsd": 0.012672,
+   "journalCalls": 33,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d4:201",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.015673,
+   "journalCostUsd": 0.015673,
+   "journalCalls": 27,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d5:202",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.078258,
+   "journalCostUsd": 0.078258,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d5:202",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.050596,
+   "journalCostUsd": 0.050596,
+   "journalCalls": 18,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d5:202",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.029218,
+   "journalCostUsd": 0.029217,
+   "journalCalls": 42,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d5:202",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.031921,
+   "journalCostUsd": 0.031922,
+   "journalCalls": 34,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d5:202",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.019761,
+   "journalCostUsd": 0.01976,
+   "journalCalls": 48,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d5:202",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.026291,
+   "journalCostUsd": 0.026292,
+   "journalCalls": 42,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d4:202",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.036504,
+   "journalCostUsd": 0.036504,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d4:202",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.028734,
+   "journalCostUsd": 0.028733,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d4:202",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.015978,
+   "journalCostUsd": 0.015977,
+   "journalCalls": 25,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d4:202",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.023418,
+   "journalCostUsd": 0.023418,
+   "journalCalls": 26,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d4:202",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.011101,
+   "journalCostUsd": 0.011101,
+   "journalCalls": 31,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d4:202",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.016884,
+   "journalCostUsd": 0.016884,
+   "journalCalls": 25,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d4:201",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.033233,
+   "journalCostUsd": 0.033233,
+   "journalCalls": 4,
+   "journalFailed": 0
+  },
+  {
+   "unit": "A0:golive:test:d5:203",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.090716,
+   "journalCostUsd": 0.090715,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d5:203",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.050664,
+   "journalCostUsd": 0.050664,
+   "journalCalls": 18,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d5:203",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.028177,
+   "journalCostUsd": 0.028175,
+   "journalCalls": 40,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d5:203",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.028708,
+   "journalCostUsd": 0.028707,
+   "journalCalls": 33,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d5:203",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.019508,
+   "journalCostUsd": 0.019508,
+   "journalCalls": 46,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d5:203",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.026844,
+   "journalCostUsd": 0.026845,
+   "journalCalls": 40,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d4:203",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.041476,
+   "journalCostUsd": 0.041475,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d4:203",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.049704,
+   "journalCostUsd": 0.049704,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d4:203",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.019904,
+   "journalCostUsd": 0.019904,
+   "journalCalls": 28,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d4:203",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.02547,
+   "journalCostUsd": 0.025469,
+   "journalCalls": 27,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d4:203",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.013469,
+   "journalCostUsd": 0.01347,
+   "journalCalls": 34,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d4:203",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.017508,
+   "journalCostUsd": 0.017509,
+   "journalCalls": 28,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d5:204",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.060311,
+   "journalCostUsd": 0.060311,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d5:204",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.067399,
+   "journalCostUsd": 0.0674,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d5:204",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.027095,
+   "journalCostUsd": 0.027095,
+   "journalCalls": 39,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d5:204",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.03157,
+   "journalCostUsd": 0.03157,
+   "journalCalls": 33,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2:golive:test:d4:201",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.027412,
+   "journalCostUsd": 0.027413,
+   "journalCalls": 20,
+   "journalFailed": 6
+  },
+  {
+   "unit": "A1TF:golive:test:d5:204",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.018979,
+   "journalCostUsd": 0.01898,
+   "journalCalls": 45,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d5:204",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.02735,
+   "journalCostUsd": 0.02735,
+   "journalCalls": 39,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d4:204",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.03633,
+   "journalCostUsd": 0.036329,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d4:204",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.036263,
+   "journalCostUsd": 0.036263,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d4:204",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.027659,
+   "journalCostUsd": 0.027658,
+   "journalCalls": 16,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2F:golive:test:d4:204",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.015711,
+   "journalCostUsd": 0.015711,
+   "journalCalls": 25,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d5:205",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.0781,
+   "journalCostUsd": 0.0781,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d5:205",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.056032,
+   "journalCostUsd": 0.056032,
+   "journalCalls": 18,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d5:205",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.030429,
+   "journalCostUsd": 0.030429,
+   "journalCalls": 41,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1TF:golive:test:d4:204",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.011988,
+   "journalCostUsd": 0.011988,
+   "journalCalls": 31,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1F:golive:test:d4:204",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.024505,
+   "journalCostUsd": 0.024506,
+   "journalCalls": 24,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d5:205",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.028196,
+   "journalCostUsd": 0.028197,
+   "journalCalls": 41,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d4:205",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.040429,
+   "journalCostUsd": 0.04043,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d4:205",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.041526,
+   "journalCostUsd": 0.041526,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d4:205",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.028287,
+   "journalCostUsd": 0.028287,
+   "journalCalls": 18,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d5:205",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.030704,
+   "journalCostUsd": 0.030704,
+   "journalCalls": 34,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d5:205",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.020326,
+   "journalCostUsd": 0.020327,
+   "journalCalls": 47,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d4:205",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.017151,
+   "journalCostUsd": 0.017151,
+   "journalCalls": 26,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d5:206",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.069962,
+   "journalCostUsd": 0.069963,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d5:206",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.049259,
+   "journalCostUsd": 0.049259,
+   "journalCalls": 18,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d5:206",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.029501,
+   "journalCostUsd": 0.029502,
+   "journalCalls": 42,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d4:205",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.024854,
+   "journalCostUsd": 0.024855,
+   "journalCalls": 25,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d4:205",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.011713,
+   "journalCostUsd": 0.011713,
+   "journalCalls": 32,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d5:206",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.057432,
+   "journalCostUsd": 0.057432,
+   "journalCalls": 31,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d4:206",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.032789,
+   "journalCostUsd": 0.03279,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d4:206",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.035277,
+   "journalCostUsd": 0.035278,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d4:206",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.019385,
+   "journalCostUsd": 0.019385,
+   "journalCalls": 26,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1TF:golive:test:d5:206",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.018589,
+   "journalCostUsd": 0.018589,
+   "journalCalls": 48,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1F:golive:test:d5:206",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.030851,
+   "journalCostUsd": 0.030852,
+   "journalCalls": 36,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d4:206",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.017752,
+   "journalCostUsd": 0.017751,
+   "journalCalls": 26,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d5:207",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.033193,
+   "journalCostUsd": 0.033193,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d5:207",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.069539,
+   "journalCostUsd": 0.069539,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d4:206",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.023073,
+   "journalCostUsd": 0.023074,
+   "journalCalls": 25,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2:golive:test:d5:207",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.029072,
+   "journalCostUsd": 0.029072,
+   "journalCalls": 42,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1TF:golive:test:d4:206",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.014092,
+   "journalCostUsd": 0.014092,
+   "journalCalls": 32,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d5:207",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.053204,
+   "journalCostUsd": 0.053204,
+   "journalCalls": 31,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d4:207",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.032133,
+   "journalCostUsd": 0.032133,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d4:207",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.031023,
+   "journalCostUsd": 0.031023,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d4:207",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.024322,
+   "journalCostUsd": 0.024322,
+   "journalCalls": 16,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d5:207",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.032465,
+   "journalCostUsd": 0.032464,
+   "journalCalls": 34,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d5:207",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.024289,
+   "journalCostUsd": 0.024288,
+   "journalCalls": 48,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d4:207",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.015646,
+   "journalCostUsd": 0.015645,
+   "journalCalls": 25,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d5:208",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.071749,
+   "journalCostUsd": 0.071749,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d5:208",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.055213,
+   "journalCostUsd": 0.055214,
+   "journalCalls": 19,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d5:208",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.029021,
+   "journalCostUsd": 0.029021,
+   "journalCalls": 42,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d4:207",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.024434,
+   "journalCostUsd": 0.024434,
+   "journalCalls": 26,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d4:207",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.011817,
+   "journalCostUsd": 0.011817,
+   "journalCalls": 31,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d5:208",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.024956,
+   "journalCostUsd": 0.024956,
+   "journalCalls": 42,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d4:208",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.035304,
+   "journalCostUsd": 0.035305,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d4:208",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.036875,
+   "journalCostUsd": 0.036875,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d4:208",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.038128,
+   "journalCostUsd": 0.038128,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1F:golive:test:d5:208",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.037097,
+   "journalCostUsd": 0.037097,
+   "journalCalls": 36,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1TF:golive:test:d5:208",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.023678,
+   "journalCostUsd": 0.023677,
+   "journalCalls": 48,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d4:208",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.017709,
+   "journalCostUsd": 0.01771,
+   "journalCalls": 27,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A0:golive:test:d3:201",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.016912,
+   "journalCostUsd": 0.016911,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1:golive:test:d3:201",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.014295,
+   "journalCostUsd": 0.014295,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A2:golive:test:d3:201",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.017288,
+   "journalCostUsd": 0.017287,
+   "journalCalls": 8,
+   "journalFailed": 4
+  },
+  {
+   "unit": "A1TF:golive:test:d4:208",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.013307,
+   "journalCostUsd": 0.013306,
+   "journalCalls": 33,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A1F:golive:test:d4:208",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.022196,
+   "journalCostUsd": 0.022196,
+   "journalCalls": 26,
+   "journalFailed": 12
+  },
+  {
+   "unit": "A2F:golive:test:d3:201",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.011442,
+   "journalCostUsd": 0.013172,
+   "journalCalls": 25,
+   "journalFailed": 11
+  },
+  {
+   "unit": "A0:golive:test:d3:202",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.012842,
+   "journalCostUsd": 0.012842,
+   "journalCalls": 12,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A1TF:golive:test:d3:201",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.008917,
+   "journalCostUsd": 0.008917,
+   "journalCalls": 34,
+   "journalFailed": 22
+  },
+  {
+   "unit": "A1F:golive:test:d3:201",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.020701,
+   "journalCostUsd": 0.020701,
+   "journalCalls": 35,
+   "journalFailed": 24
+  },
+  {
+   "unit": "A1:golive:test:d3:202",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.013933,
+   "journalCostUsd": 0.013933,
+   "journalCalls": 12,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A2:golive:test:d3:202",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.016954,
+   "journalCostUsd": 0.016955,
+   "journalCalls": 12,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A2F:golive:test:d3:202",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.012846,
+   "journalCostUsd": 0.012846,
+   "journalCalls": 22,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A0:golive:test:d3:203",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.012488,
+   "journalCostUsd": 0.012489,
+   "journalCalls": 12,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A1:golive:test:d3:203",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.012971,
+   "journalCostUsd": 0.012971,
+   "journalCalls": 12,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A2:golive:test:d3:203",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.018062,
+   "journalCostUsd": 0.018061,
+   "journalCalls": 12,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A1F:golive:test:d3:202",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.020352,
+   "journalCostUsd": 0.020352,
+   "journalCalls": 33,
+   "journalFailed": 24
+  },
+  {
+   "unit": "A1TF:golive:test:d3:202",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.01184,
+   "journalCostUsd": 0.011839,
+   "journalCalls": 36,
+   "journalFailed": 24
+  },
+  {
+   "unit": "A2F:golive:test:d3:203",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.011119,
+   "journalCostUsd": 0.011119,
+   "journalCalls": 22,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A0:golive:test:d3:204",
+   "arm": "A0",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.013137,
+   "journalCostUsd": 0.013137,
+   "journalCalls": 12,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A1:golive:test:d3:204",
+   "arm": "A1",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.015357,
+   "journalCostUsd": 0.015356,
+   "journalCalls": 12,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A2:golive:test:d3:204",
+   "arm": "A2",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.019012,
+   "journalCostUsd": 0.019012,
+   "journalCalls": 12,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A1F:golive:test:d3:203",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.022451,
+   "journalCostUsd": 0.022451,
+   "journalCalls": 32,
+   "journalFailed": 24
+  },
+  {
+   "unit": "A1TF:golive:test:d3:203",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.008258,
+   "journalCostUsd": 0.008257,
+   "journalCalls": 36,
+   "journalFailed": 24
+  },
+  {
+   "unit": "A2F:golive:test:d3:204",
+   "arm": "A2F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.011195,
+   "journalCostUsd": 0.011195,
+   "journalCalls": 22,
+   "journalFailed": 8
+  },
+  {
+   "unit": "A1F:golive:test:d3:204",
+   "arm": "A1F",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.023728,
+   "journalCostUsd": 0.023727,
+   "journalCalls": 34,
+   "journalFailed": 24
+  },
+  {
+   "unit": "A1TF:golive:test:d3:204",
+   "arm": "A1TF",
+   "envCalls": 0,
+   "nodes": [],
+   "rowCostUsd": 0.00779,
+   "journalCostUsd": 0.00779,
+   "journalCalls": 36,
+   "journalFailed": 24
+  }
+ ]
+}

@@ -9,12 +9,15 @@
 //        [--arms A0,A1,A1T,A2] [--concurrency 3 (units)] [--model-concurrency N (model calls; default = concurrency)] [--cap-usd 5]
 //        [--runs-root research/subworkflow-20261021/runs]
 //   node experiments/subworkflow/run.mjs --run-dir ... --split dev --seeds 11,12 --difficulties 2,3   (pilot)
+//   --layout blocks (SW-1b, added after eval-1): the backlog exports in the 'blocks' layout (beds/golive/layouts.mjs); a
+//   manifest task's own "layout" wins. 'delimited' (the default) generates exactly the eval-1 tasks.
 import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { createModelPort } from '../lib/models.mjs';
 import { ENV_FAULTS } from '../lib/runner.mjs';
 import * as bed from '../../beds/golive/index.mjs';
+import * as layouts from '../../beds/golive/layouts.mjs';
 import { runNode, ARMS, ARM_CONFIG, NODE_MODEL } from './node.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, x, i, all) => (x.startsWith('--') ? [...a, [x.slice(2), all[i + 1]?.startsWith('--') || all[i + 1] === undefined ? 'true' : all[i + 1]]] : a), []));
@@ -25,18 +28,20 @@ const arms = (args.arms ?? ARMS.join(',')).split(',');
 for (const a of arms) if (!ARMS.includes(a)) { console.error(`unknown arm ${a}`); process.exit(2); }
 const concurrency = Number(args.concurrency ?? 3), capUsd = Number(args['cap-usd'] ?? 5), modelConcurrency = Number(args['model-concurrency'] ?? concurrency);
 const tag = args.tag ?? path.basename(runDir);
+const layout = args.layout ?? 'delimited';
+if (!layouts.LAYOUTS.includes(layout)) { console.error(`unknown layout ${layout}`); process.exit(2); }
 mkdirSync(runDir, { recursive: true });
 
 let tasks;
-if (args.tasks) tasks = JSON.parse(readFileSync(args.tasks, 'utf8')).tasks.map(t => ({ seed: t.seed, split: t.split, difficulty: t.difficulty }));
-else tasks = (args.seeds ?? '').split(',').filter(Boolean).flatMap(s => (args.difficulties ?? '2').split(',').map(d => ({ seed: Number(s), split: args.split ?? 'dev', difficulty: Number(d) })));
+if (args.tasks) tasks = JSON.parse(readFileSync(args.tasks, 'utf8')).tasks.map(t => ({ seed: t.seed, split: t.split, difficulty: t.difficulty, layout: t.layout ?? layout }));
+else tasks = (args.seeds ?? '').split(',').filter(Boolean).flatMap(s => (args.difficulties ?? '2').split(',').map(d => ({ seed: Number(s), split: args.split ?? 'dev', difficulty: Number(d), layout })));
 if (!tasks.length) { console.error('no tasks'); process.exit(2); }
 
 const resultsFile = path.join(runDir, 'results.jsonl');
 const done = new Set(existsSync(resultsFile) ? readFileSync(resultsFile, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)).filter(r => r.status === 'complete').map(r => r.unit) : []);
 const { port, policyHash, db } = createModelPort({ journalFile: path.join(runDir, 'journal.sqlite'), allowedModels: [NODE_MODEL], maxBudgetUsdPerCall: 0.25, timeoutMs: 300000,
   concurrency: { [NODE_MODEL]: modelConcurrency } });
-writeFileSync(path.join(runDir, 'launch.json'), JSON.stringify({ at: new Date().toISOString(), argv: process.argv.slice(2), arms, tasks: tasks.length, capUsd, concurrency, modelConcurrency, policyHash, pid: process.pid }, null, 1));
+writeFileSync(path.join(runDir, 'launch.json'), JSON.stringify({ at: new Date().toISOString(), argv: process.argv.slice(2), arms, tasks: tasks.length, layout, capUsd, concurrency, modelConcurrency, policyHash, pid: process.pid }, null, 1));
 
 // Spend over every journal under the runs root (each run dir's journal.sqlite).
 function spendAll() {
@@ -59,7 +64,7 @@ log(`SW-1 ${tag}: ${queue.length} units (${tasks.length} tasks x ${arms.join(','
 async function worker() {
   while (queue.length && !stopped) {
     const { arm, t } = queue.shift();
-    const task = bed.generate(t), unit = `${arm}:${task.id}`;
+    const task = layouts.generate(t), unit = `${arm}:${task.id}`;
     if (done.has(unit)) continue;
     const spent = spendAll();
     if (spent >= capUsd) { stopped = `cap reached ($${spent} >= $${capUsd})`; break; }
@@ -72,7 +77,7 @@ async function worker() {
       const group = { orders: answers.reduce((s, a) => s + a.totals.orders, 0), usd_cents: answers.reduce((s, a) => s + a.totals.usd_cents, 0) };
       const out = { channels: answers, group };
       const o = bed.oracle(task, out);
-      const row = { unit, status: envFault ? 'env-fault' : 'complete', envFault, arm, runId, taskId: task.id, seed: task.seed, split: task.split, difficulty: task.difficulty,
+      const row = { unit, status: envFault ? 'env-fault' : 'complete', envFault, arm, runId, taskId: task.id, seed: task.seed, split: task.split, difficulty: task.difficulty, layout: task.layout ?? 'delimited',
         pass: o.pass, score: o.score, groupOk: o.details?.groupOk ?? null, costUsd: Math.round(nodes.reduce((s, n) => s + n.costUsd, 0) * 1e6) / 1e6, wallMs: Date.now() - started,
         at: new Date().toISOString(), nodes: nodes.map(({ answer, ...n }) => ({ ...n, answer })) };
       appendFileSync(resultsFile, JSON.stringify(row) + '\n');
