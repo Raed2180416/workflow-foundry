@@ -59,7 +59,7 @@ export async function officialBattery(items, { workers = 2, dir, onRow = () => {
     const [bin, argv] = hostArgv(['official', spec]);
     await new Promise((resolve, reject) => {
       const c = spawn(bin, argv, { cwd: root, env: bridgeEnv(root), stdio: ['ignore', 'pipe', 'pipe'] });
-      let buf = '', err = '';
+      let buf = '', err = '', done = false, killer = null;
       c.stdout.on('data', d => {
         buf += d;
         let i;
@@ -68,11 +68,14 @@ export async function officialBattery(items, { workers = 2, dir, onRow = () => {
           if (!l.startsWith(PROTO)) continue;
           let x; try { x = JSON.parse(l.slice(PROTO.length)); } catch { continue; }
           if (x.kind === 'official') onRow(x.key, x.error ? { error: x.error } : { ...x.row });
+          // every row is in; a worker that has run hundreds of worlds can take many minutes to tear its heap down, so
+          // it gets 60 s to exit and is then killed (observed 2026-11-04: three workers at 1 GB each, > 10 min)
+          if (x.kind === 'done') { done = true; killer = setTimeout(() => { try { c.kill('SIGKILL'); } catch {} }, 60_000); }
         }
       });
       c.stderr.on('data', d => { if (err.length < 100_000) err += d; });
       c.on('error', reject);
-      c.on('close', code => (code === 0 ? resolve() : reject(new Error(`official worker ${w} exited ${code}: ${err.slice(-800)}`))));
+      c.on('close', code => { clearTimeout(killer); (code === 0 || done ? resolve() : reject(new Error(`official worker ${w} exited ${code}: ${err.slice(-800)}`))); });
     });
     rmSync(spec, { force: true });
   }));
