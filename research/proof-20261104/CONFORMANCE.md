@@ -44,5 +44,15 @@ attack succeeds.
 - **What this does not show.** Nothing here says Foundry gets better task outcomes; that is P1's held-out result and
   later measurements. LangGraph's strengths stand: ecosystem, integrations, adoption, LangSmith tracing and
   evaluation, a mature hosted platform.
-- **Next systems to attack.** Temporal (expected native on P2 and P4 through deterministic replay, and on P3 only
-  with idempotent activities), n8n, the OpenAI Agents SDK and the Claude Agent SDK.
+- **Temporal was not executed.** Its SDK (temporalio 1.35.0, wheel) installed, but starting its local test server
+  means downloading and running an external binary, which this session's permission classifier refused. Its expected
+  behaviour, from its documentation [doc] and not proven here:
+  - P4: workflow code changed under an in-flight run is caught by deterministic replay (a non-determinism error). It
+    would be native, and better than LangGraph.
+  - P3: activities run at least once, so a crash after an effect re-runs it unless the activity is idempotent
+    (hand-written).
+  - P2: loops are bounded only by optional timeouts and history limits.
+  - P5, P7, P8, P10: no built-in equivalent.
+  Running it needs the owner to allow the Temporal dev-server download in the session's permission settings.
+- **Next systems to attack, offline:** the OpenAI Agents SDK and CrewAI (pip wheels). n8n needs its full
+  application install.
