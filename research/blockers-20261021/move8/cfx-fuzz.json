@@ -1,0 +1,332 @@
+{
+ "evidence": "development, $0 (stored candidate scripts executed in the executor sandbox on generated inputs; no model call)",
+ "n": 5000,
+ "seed": 20261028,
+ "scripts": {
+  "base": {
+   "file": "research/construction-20261006/artifacts/F-haiku-codefix-k1/workflow.json",
+   "node": "check1",
+   "sha256": "57c3c6f984dff1f1f961aa1d9ee1690b41d0cdade8d15c4d037cc222ced3ae54"
+  },
+  "sonnet": {
+   "file": "experiments/heal/runs/live-20261008-r2/cfx.json",
+   "proposal": "p-4e3456da-r3",
+   "justifiedClass": "default-value-changed",
+   "quote": "min_count is inclusive (default 2).",
+   "sha256": "2cde404c80771b49a946865dea2c0b2368e990069609d942a76a1764e00023b6"
+  },
+  "haiku": {
+   "file": "experiments/heal/runs/live-20261008-r3/cfx.json",
+   "proposal": "p-dfd855f4-r2",
+   "justifiedClass": "default-value-changed",
+   "quote": "min_count is inclusive (default 2).",
+   "sha256": "4123d49baa95db10a5a887e67170a8aa164f8eef4f729e9ac77992858dc75798"
+  },
+  "opus": {
+   "file": "experiments/heal/runs/live-20261008-r4/cfx.json",
+   "proposal": "p-a3336190-r4",
+   "justifiedClass": "default-value-changed",
+   "quote": "min_count is inclusive (default 2).",
+   "sha256": "9b9f7226dfde1c5c5086d057feeaa03112039a6c03701c56598933605e9234c3"
+  }
+ },
+ "generator": {
+  "classes": {
+   "other": 3258,
+   "default-values-only": 672,
+   "identical": 990,
+   "syntax": 80
+  },
+  "edits": {
+   "pos-default-value": 1552,
+   "add-kwonly": 273,
+   "add-import": 299,
+   "method-to-private": 124,
+   "rename-name": 272,
+   "remove-star": 170,
+   "func-to-class": 472,
+   "class-to-func": 337,
+   "kwonly-default-value": 313,
+   "toggle-kw": 260,
+   "remove-name": 259,
+   "add-param": 512,
+   "remove-default": 509,
+   "add-star": 263,
+   "add-name": 528,
+   "syntax": 80,
+   "rename-param": 535,
+   "remove-param": 480,
+   "add-default": 489,
+   "private-change": 314
+  }
+ },
+ "sanity": {
+  "identicalNotOk": 0,
+  "defaultsOk": 0,
+  "syntaxOk": 0,
+  "baseCrashes": 0
+ },
+ "gate": [
+  {
+   "candidate": "sonnet",
+   "verdict": "reject",
+   "crashes": 427,
+   "spurious": 0,
+   "missed": 0,
+   "flipped": 672,
+   "outOfClass": 3901,
+   "inClass": 672,
+   "spuriousUpper": 0.0007676447826853723,
+   "reasons": [
+    "427 crash(es) (first f00006, f00029, f00032, f00038, f00039)"
+   ]
+  },
+  {
+   "candidate": "haiku",
+   "verdict": "accept",
+   "crashes": 0,
+   "spurious": 0,
+   "missed": 0,
+   "flipped": 672,
+   "outOfClass": 4328,
+   "inClass": 672,
+   "spuriousUpper": 0.0006919352420569629,
+   "reasons": []
+  },
+  {
+   "candidate": "opus",
+   "verdict": "accept",
+   "crashes": 0,
+   "spurious": 0,
+   "missed": 0,
+   "flipped": 672,
+   "outOfClass": 4328,
+   "inClass": 672,
+   "spuriousUpper": 0.0006919352420569629,
+   "reasons": []
+  },
+  {
+   "candidate": "base",
+   "verdict": "reject",
+   "crashes": 0,
+   "spurious": 0,
+   "missed": 672,
+   "flipped": 0,
+   "outOfClass": 4328,
+   "inClass": 672,
+   "spuriousUpper": 0.0006919352420569629,
+   "reasons": [
+    "672 justified-class input(s) not given the intended verdict"
+   ]
+  }
+ ],
+ "certificates": {
+  "sonnet": {
+   "verdict": "reject",
+   "reasons": [
+    "427 crash(es) (first f00006, f00029, f00032, f00038, f00039)"
+   ],
+   "inputs": 5000,
+   "outOfClass": 3901,
+   "inClass": 672,
+   "baseCrashes": 0,
+   "crashes": 427,
+   "spurious": 0,
+   "missed": 0,
+   "flipped": 672,
+   "spuriousUpper": 0.0007676447826853723,
+   "level": 0.95,
+   "examples": {
+    "crashes": [
+     "f00006",
+     "f00029",
+     "f00032",
+     "f00038",
+     "f00039"
+    ],
+    "spurious": [],
+    "missed": [],
+    "flipped": [
+     "f00004",
+     "f00008",
+     "f00026",
+     "f00031",
+     "f00049"
+    ]
+   }
+  },
+  "haiku": {
+   "verdict": "accept",
+   "reasons": [],
+   "inputs": 5000,
+   "outOfClass": 4328,
+   "inClass": 672,
+   "baseCrashes": 0,
+   "crashes": 0,
+   "spurious": 0,
+   "missed": 0,
+   "flipped": 672,
+   "spuriousUpper": 0.0006919352420569629,
+   "level": 0.95,
+   "examples": {
+    "crashes": [],
+    "spurious": [],
+    "missed": [],
+    "flipped": [
+     "f00004",
+     "f00008",
+     "f00026",
+     "f00031",
+     "f00049"
+    ]
+   }
+  },
+  "opus": {
+   "verdict": "accept",
+   "reasons": [],
+   "inputs": 5000,
+   "outOfClass": 4328,
+   "inClass": 672,
+   "baseCrashes": 0,
+   "crashes": 0,
+   "spurious": 0,
+   "missed": 0,
+   "flipped": 672,
+   "spuriousUpper": 0.0006919352420569629,
+   "level": 0.95,
+   "examples": {
+    "crashes": [],
+    "spurious": [],
+    "missed": [],
+    "flipped": [
+     "f00004",
+     "f00008",
+     "f00026",
+     "f00031",
+     "f00049"
+    ]
+   }
+  },
+  "base": {
+   "verdict": "reject",
+   "reasons": [
+    "672 justified-class input(s) not given the intended verdict"
+   ],
+   "inputs": 5000,
+   "outOfClass": 4328,
+   "inClass": 672,
+   "baseCrashes": 0,
+   "crashes": 0,
+   "spurious": 0,
+   "missed": 672,
+   "flipped": 0,
+   "spuriousUpper": 0.0006919352420569629,
+   "level": 0.95,
+   "examples": {
+    "crashes": [],
+    "spurious": [],
+    "missed": [
+     "f00004",
+     "f00008",
+     "f00026",
+     "f00031",
+     "f00049"
+    ],
+    "flipped": []
+   }
+  }
+ },
+ "pairwise": {
+  "haiku|opus": {
+   "n": 5000,
+   "disagree": 0,
+   "ids": []
+  },
+  "haiku|sonnet": {
+   "n": 5000,
+   "disagree": 427,
+   "ids": [
+    "f00006",
+    "f00029",
+    "f00032",
+    "f00038",
+    "f00039"
+   ]
+  },
+  "opus|sonnet": {
+   "n": 5000,
+   "disagree": 427,
+   "ids": [
+    "f00006",
+    "f00029",
+    "f00032",
+    "f00038",
+    "f00039"
+   ]
+  }
+ },
+ "anatomy": {
+  "sonnet": {
+   "crashes": 427,
+   "byEdit": {
+    "func-to-class": 427,
+    "remove-name": 10,
+    "add-default": 34,
+    "rename-name": 13,
+    "add-import": 13,
+    "remove-param": 38,
+    "pos-default-value": 103,
+    "rename-param": 35,
+    "add-star": 18,
+    "toggle-kw": 17,
+    "add-name": 29,
+    "kwonly-default-value": 19,
+    "remove-default": 20,
+    "add-kwonly": 12,
+    "add-param": 40,
+    "class-to-func": 13,
+    "private-change": 14,
+    "remove-star": 8,
+    "method-to-private": 1
+   },
+   "byMessage": {
+    "TypeError": 427
+   },
+   "crashesWithFuncToClass": 427,
+   "inputsWithFuncToClass": 472,
+   "example": {
+    "id": "f00006",
+    "crash": "TypeError: string indices must be integers, not 'str'",
+    "edits": [
+     "func-to-class",
+     "remove-name"
+    ]
+   },
+   "shrunk": {
+    "names": [
+     "score"
+    ],
+    "tests": 3,
+    "source": "import re\nfrom collections import Counter\n\ndef score():\n    return None\n",
+    "candidate": "import re\nfrom collections import Counter\n\nclass score:\n    def __init__(self):\n        return None\n",
+    "cls": "other"
+   }
+  },
+  "haiku": {
+   "crashes": 0,
+   "byEdit": {},
+   "byMessage": {},
+   "crashesWithFuncToClass": 0,
+   "inputsWithFuncToClass": 472,
+   "example": null
+  },
+  "opus": {
+   "crashes": 0,
+   "byEdit": {},
+   "byMessage": {},
+   "crashesWithFuncToClass": 0,
+   "inputsWithFuncToClass": 472,
+   "example": null
+  }
+ }
+}

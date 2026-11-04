@@ -1,0 +1,23 @@
+{
+ "date": "2026-11-04T18:41:00.294Z",
+ "tests": [
+  "experiments/compose/test/runtime2.test.mjs"
+ ],
+ "runtime2": "cde405e3828f032b6a5db13c692dd9e7fa312afeabfa719d8b85551fc3a6f857",
+ "bundle2": "1e870704e36f12ec77317b42c3dfc17e47db8911e840138958782731cff0da69",
+ "baseline": {
+  "code": 0,
+  "failed": []
+ },
+ "whole": "the pre-review runtime2.mjs: git show da956d66:experiments/compose/runtime2.mjs (sha256 f24c27830c7b...), written over the file for the run and restored (sha256 checked)",
+ "wholeResult": {
+  "code": 1,
+  "failed": [
+   "envFill is injective: separators, defaults and number types in values cannot collide (E8 identities unchanged)",
+   "inbox: a surplus is compared with what the solver was told; it is delivered when the solver's view would be wrong",
+   "inbox: results for one identity shared by caller keys are handed out in emission order (A, B, A)",
+   "read-back (reconcile): a crash-orphaned failure answers the re-emission once a read shows nothing committed",
+   "eviction: answered entries go first, unanswered ones stay; the carry stays under the host limit"
+  ]
+ }
+}
