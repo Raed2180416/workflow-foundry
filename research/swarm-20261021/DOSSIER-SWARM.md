@@ -33,7 +33,8 @@ secondary source only; **[I]** inference; **[U]** unverified.
   mean score is 0.81. The failures are mostly missing entities (coverage) and a wrong excluded-document set, which are
   breadth failures. **So the swarm rung is d5.**
 - **d5 sizes** [M, a $0 sizing script on test-split seeds 8401–8406, generated analyst-side only: no arm saw them, and
-  the rung does not use them]: 400 documents; the whole task inline is 104–106K tokens; 18–22
+  the rung does not use them; the range `wbed-heldout-c` is owned by wbed/JIT, so this exposure is recorded in the seed
+  ledger (`exposures`, added 2026-11-04 after the review)]: 400 documents; the whole task inline is 104–106K tokens; 18–22
   compounds in scope, 26–28 plan candidates, 90–110 table cells, 4–9 excluded documents; an agent with tools needs to
   read 79–92K tokens of documents; tier "novel-test": the test dates use a phrasing no dev task contains;
   `referenceSolve` passes the oracle on every seed.

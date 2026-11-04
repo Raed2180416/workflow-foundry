@@ -399,7 +399,24 @@
     "jit-heldout"
    ],
    "use": "held-out W-bed stream C, per rung",
-   "source": "research/jit-20261008/design/W-BED.md section 8"
+   "source": "research/jit-20261008/design/W-BED.md section 8",
+   "exposures": [
+    {
+     "beds": [
+      "wbed-r6"
+     ],
+     "split": "test",
+     "from": 8401,
+     "to": 8406,
+     "difficulty": 5,
+     "date": "2026-11-04",
+     "by": "swarm ladder rung 1 (research/swarm-20261021/DOSSIER-SWARM.md, d5 sizes)",
+     "what": "a $0 sizing script generated these six wbed-r6 test worlds analyst-side; the agent that wrote PREREG-SWARM-R1 saw their summary statistics (documents, inline tokens, compounds in scope, plan candidates, cells, excluded documents, tokens an agent must read, tier) and that referenceSolve passes (the d5 sizes in DOSSIER-SWARM.md); no arm and no model call saw a task; what else that session printed is not recorded",
+     "armsSaw": false,
+     "recordedBy": "review fix minor 9 (2026-11-04)",
+     "decision": "status unchanged (reserved): the range owner (wbed / JIT) decides whether to burn 8401-8406 for wbed-r6"
+    }
+   ]
   },
   {
    "id": "wbed-heldout-d",

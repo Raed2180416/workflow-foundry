@@ -8,7 +8,7 @@
 //   W.policy   the task's ranking policy (W's solver ranks n-first unless the prompt says "sample size does not matter")
 //   W.keys     rows whose entity is a lower-cased code (W's compoundKey() 'name:' fallback), i.e. one compound split in two
 //   S-F        rung 1b's fan-out arm (Amendment 1), when its live directory exists
-//   node experiments/swarm/report-r1.mjs [--out <dir>]
+//   node experiments/swarm/report-r1.mjs [--rule a2|a3] [--out <dir>]
 import path from 'node:path';
 import { existsSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -48,15 +48,18 @@ function wRelative(task, units) {
 }
 const pct = (a, b) => (b ? Math.round((100 * a) / b) : 0);
 
-export async function report({ live = LIVE, live1b = LIVE_1B } = {}) {
-  const res = await analyze({ live, stage: 'heldout' });
+export async function report({ live = LIVE, live1b = LIVE_1B, rule = 'a2' } = {}) {
+  const res = await analyze({ live, stage: 'heldout', rule });
+  // sensitivity (review fix B1): the same analysis under Amendment 3 (a failed cd to a path that does not exist is no access)
+  const alt = rule === 'a3' ? null : await analyze({ live, stage: 'heldout', rule: 'a3' });
+  const sensitivity = alt ? { a3: { tasks: alt.tasks, incomplete: alt.incomplete, table: alt.table, comparisons: alt.comparisons } } : null;
   const extra = [];
-  for (const an of res.anatomy) {
+  for (const an of res.anatomyAll ?? res.anatomy) {
     const [, , , s] = an.taskKey.split(':');
     const task = bed.generate({ seed: Number(s.slice(1)), split: 'test', difficulty: 5 });
     const arc = archiveOf(live, an.arm, an.taskKey);
     const units = an.pass ? [] : errorUnits(task, arc.answer);
-    const x = { arm: an.arm, taskKey: an.taskKey, pass: an.pass, policy: truthOf(task).world.policy };
+    const x = { arm: an.arm, taskKey: an.taskKey, pass: an.pass, inComparison: an.inComparison ?? true, policy: truthOf(task).world.policy };
     if (an.arm !== ARMS.W) {
       const ev = evidenceLocus(task, units, arc.events, { parent: 'any' });
       x.evidence = { units: ev.length, seen: ev.filter(e => e.evidence === true).length, notSeen: ev.filter(e => e.evidence === false).length };
@@ -66,6 +69,13 @@ export async function report({ live = LIVE, live1b = LIVE_1B } = {}) {
       x.dupRows = units.filter(u => u.unit === 'duplicate-row').length;
       x.policyCellUnits = units.filter(u => u.unit === 'wrong-cell' && u.traps.some(k => k.startsWith('policy-'))).length;
       x.wrongCells = units.filter(u => u.unit === 'wrong-cell').length;
+      // review: the technical-report trace, reproducible (W's solve.mjs type list omits "Technical report"): a missing
+      // compound every establishing document of which is a technical report; a missing or wrong cell whose true winner is one
+      const tr = truthOf(task), isTR = id => tr.byId.get(id)?.kind === 'techreport';
+      const cellTR = u => isTR(tr.cells.get(`${u.code}|${u.property}`)?.source);
+      const count = (kind, f) => { const us = units.filter(u => u.unit === kind); return { units: us.length, techreport: us.filter(f).length }; };
+      x.techreport = { missingCompounds: count('missing-compound', u => (tr.establishing.get(u.code) ?? []).length > 0 && tr.establishing.get(u.code).every(isTR)),
+        missingCells: count('missing-cell', cellTR), wrongCells: count('wrong-cell', cellTR) };
       x.calls = arc.calls.length;
     }
     extra.push(x);
@@ -93,19 +103,32 @@ export async function report({ live = LIVE, live1b = LIVE_1B } = {}) {
         briefs: (arc.tree?.workers ?? []).map(w => ({ chars: w.brief.length, docs: w.docsRead.length, turns: w.turns, ms: w.durationMs, error: w.isError })) };
     });
   }
-  return { ...res, posthoc: extra, rung1b: r1b };
+  // review fix M4: rung 1b's arm against both rung-1 arms on the same task (N = 1, exploratory), not against S alone
+  if (r1b) {
+    const rows = readFileSync(path.join(live, 'heldout', 'results.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
+    for (const x of r1b) {
+      const same = arm => rows.find(r => r.arm === arm && r.taskKey === x.taskKey);
+      const a = same(ARMS.A), sw = same(ARMS.S);
+      x.vsSameTask = { A: a ? { pass: a.pass, score: a.score, costUsd: a.costUsd, wallS: Math.round(a.latencyMs / 1000), costRatio: x.costUsd / a.costUsd, wallRatio: x.wallS / (a.latencyMs / 1000) } : null,
+        S: sw ? { pass: sw.pass, score: sw.score, costUsd: sw.costUsd, wallS: Math.round(sw.latencyMs / 1000), costRatio: x.costUsd / sw.costUsd, wallRatio: x.wallS / (sw.latencyMs / 1000) } : null };
+    }
+  }
+  return { ...res, sensitivity, posthoc: extra, rung1b: r1b };
 }
 
 async function main() {
   const i = process.argv.indexOf('--out'), out = i > 0 ? process.argv[i + 1] : null;
-  const r = await report();
-  const { anatomy, ...summary } = r;
+  const j = process.argv.indexOf('--rule'), rule = j > 0 ? process.argv[j + 1] : 'a2';
+  const r = await report({ rule });
+  const { anatomy, anatomyAll, ...summary } = r;
   if (out) {
     mkdirSync(out, { recursive: true });
     writeFileSync(path.join(out, 'SUMMARY-R1.json'), JSON.stringify(summary, null, 1) + '\n');
-    writeFileSync(path.join(out, 'ROOTCAUSE-R1.jsonl'), anatomy.map(x => JSON.stringify(x)).join('\n') + '\n');
+    writeFileSync(path.join(out, 'ROOTCAUSE-R1.jsonl'), (anatomyAll ?? anatomy).map(x => JSON.stringify(x)).join('\n') + '\n');
   }
-  console.log(JSON.stringify({ table: summary.table, comparisons: summary.comparisons.map(c => ({ a: c.a, b: c.b, mcnemar: c.mcnemar, pass: c.passBootstrap.successDiff, score: c.score })), posthoc: summary.posthoc, rung1b: summary.rung1b }, null, 1));
+  console.log(JSON.stringify({ rules: summary.rules, table: summary.table, comparisons: summary.comparisons.map(c => ({ a: c.a, b: c.b, mcnemar: c.mcnemar, pass: c.passBootstrap.successDiff, score: c.score })),
+    sensitivity: summary.sensitivity && Object.fromEntries(Object.entries(summary.sensitivity).map(([k, v]) => [k, { tasks: v.tasks, comparisons: v.comparisons.map(c => ({ a: c.a, b: c.b, mcnemar: c.mcnemar, score: c.score })) }])),
+    posthoc: summary.posthoc, rung1b: summary.rung1b }, null, 1));
   void pct;
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) await main();

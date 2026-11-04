@@ -1,7 +1,7 @@
 // Swarm ladder rung 1 analysis (research/swarm-20261021/PREREG-SWARM-R1.md §7, §8). $0: reads the run records and the
 // archive, rebuilds the hidden truth analyst-side, writes the capability table, the paired comparisons and one root-cause
 // line per error unit of every failed trial.
-//   node experiments/swarm/analyze-r1.mjs [--stage heldout|calibrate] [--out research/swarm-20261021]
+//   node experiments/swarm/analyze-r1.mjs [--stage heldout|calibrate] [--rule a2|a3|frozen] [--out research/swarm-20261021]
 import path from 'node:path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
@@ -90,7 +90,17 @@ export function anatomyOf({ row, task, arc, bed, gradeConsistent }) {
   return out;
 }
 
-export async function analyze({ live = LIVE, stage = 'heldout' } = {}) {
+export const RULES = Object.freeze(['frozen', 'a2', 'a3']);
+/** The void rule of a row: frozen (§5.1 as frozen), a2 (Amendment 2 as written, with the corrected audit of review fix
+ *  B1), a3 (Amendment 3: a2 plus "a failed cd to a path that does not exist is not an access"). */
+export function voidRule(rule, auditOf) {
+  // Frozen void rule: a model other than Haiku served a message (K11), or any hidden-path or repository-path attempt.
+  if (rule === 'frozen') return r => (r.meta?.drift ?? []).length > 0 || (r.meta?.hiddenPathAttempts ?? 0) > 0 || (r.meta?.repoPathMentions ?? 0) > 0;
+  if (!['a2', 'a3'].includes(rule)) throw new Error(`unknown void rule ${rule}`);
+  return r => voidUnderAmendment2({ drift: r.meta?.drift ?? [], repoPathMentions: r.meta?.repoPathMentions ?? 0, audit: (r.meta?.hiddenPathAttempts ?? 0) > 0 ? auditOf(r, rule === 'a3') : [] });
+}
+
+export async function analyze({ live = LIVE, stage = 'heldout', rule = 'a2', exists = existsSync } = {}) {
   const rows = readJsonl(path.join(live, stage, 'results.jsonl'));
   const faults = readJsonl(path.join(live, stage, 'results.faults.jsonl'));
   const bed = await loadFamily(FAMILY);
@@ -98,37 +108,55 @@ export async function analyze({ live = LIVE, stage = 'heldout' } = {}) {
   const seeds = [...new Set(rows.map(r => Number(r.taskKey.split(':s')[1])))].sort((a, b) => a - b);
   const tasks = new Map((await makeTasks(FAMILY, { split, seeds, difficulty: DIFFICULTY })).map(t => [t.taskKey, t]));
   // complete blocks only (§5.1): a task enters the comparison when every arm has a recorded, non-void row for it.
-  // Frozen void rule: a model other than Haiku served a message (K11), or any hidden-path or repository-path attempt.
-  // Amendment 2 (2026-11-04, after the run): the frozen rule voided 11 of 14 held-out A/S trials for paths that are
+  // Amendment 2 (2026-11-04, after the run): the frozen rule voided 10 of 14 held-out A/S trials for paths that are
   // sandbox-private scratch (files the session wrote under /var/tmp, the CLI's tool-result spill files under /root/.claude,
   // the tmpfs directory above its own workdir); void-audit.mjs classifies every flagged path, and a trial is void only for
-  // drift, a repository-path mention, or a flagged path of kind `other`. Both counts are reported.
-  const frozenVoid = r => (r.meta?.drift ?? []).length > 0 || (r.meta?.hiddenPathAttempts ?? 0) > 0 || (r.meta?.repoPathMentions ?? 0) > 0;
+  // drift, a repository-path mention, or a flagged path of kind `other`. Review fix B1 (2026-11-04): the audit as first
+  // committed called every flagged path of a session "self-created" once any command held `"->"` or `> ''` (an empty write
+  // target); corrected, Amendment 2 voids A 9302 (a `cd /var/foundry-work`, a path that does not exist). Amendment 3
+  // (dated, after the review) treats such a failed cd as no access. All three rules are reported (`rules`); `rule` picks
+  // the one the table and comparisons use (default a2, the amendment as written).
   const audits = new Map();
-  const auditOf = r => {
-    const k = `${r.arm}|${r.taskKey}`;
+  const auditOf = (r, a3 = false) => {
+    const k = `${r.arm}|${r.taskKey}|${a3}`;
     if (!audits.has(k)) {
       const arc = archiveOf(live, r.arm, r.taskKey, r.trial);
       const uses = arc.events.filter(e => e?.type === 'assistant').flatMap(e => (e.message?.content ?? []).filter(c => c?.type === 'tool_use').map(c => ({ name: c.name, input: c.input })));
       const init = arc.events.find(e => e?.type === 'system' && e.subtype === 'init');
       const view = solverView(tasks.get(r.taskKey).task);
-      audits.set(k, uses.length && init?.cwd ? auditSession(uses, { workdir: init.cwd, taskTexts: [view.prompt, view.files] }) : []);
+      // a flagged trial whose transcript cannot be audited keeps its frozen verdict (void): an `other` placeholder
+      audits.set(k, uses.length && init?.cwd ? auditSession(uses, { workdir: init.cwd, taskTexts: [view.prompt, view.files], amendment3: a3, exists })
+        : [{ path: null, kind: 'other', why: 'no transcript to audit' }]);
     }
     return audits.get(k);
   };
-  const isVoid = r => voidUnderAmendment2({ drift: r.meta?.drift ?? [], repoPathMentions: r.meta?.repoPathMentions ?? 0, audit: (r.meta?.hiddenPathAttempts ?? 0) > 0 ? auditOf(r) : [] });
   const arms = [...new Set(rows.map(r => r.arm))].sort();
-  const complete = [...tasks.keys()].filter(k => arms.every(a => rows.some(r => r.arm === a && r.taskKey === k && !isVoid(r))));
-  const completeFrozen = [...tasks.keys()].filter(k => arms.every(a => rows.some(r => r.arm === a && r.taskKey === k && !frozenVoid(r))));
+  const completeUnder = isVoid => [...tasks.keys()].filter(k => arms.every(a => rows.some(r => r.arm === a && r.taskKey === k && !isVoid(r))));
+  const rules = {};
+  for (const name of RULES) {
+    const v = voidRule(name, auditOf), blocks = completeUnder(v);
+    rules[name] = { voids: rows.filter(v).length, voidTrials: rows.filter(v).map(r => `${r.arm}|${r.taskKey}`), completeBlocks: blocks.length,
+      excludedBlocks: [...tasks.keys()].filter(k => !blocks.includes(k)) };
+  }
+  const flagged = rows.filter(r => (r.meta?.hiddenPathAttempts ?? 0) > 0);
+  const kinds = a3 => flagged.flatMap(r => auditOf(r, a3)).reduce((m, x) => ({ ...m, [x.kind]: (m[x.kind] ?? 0) + 1 }), {});
+  rules.flaggedTrials = flagged.length;
+  rules.flaggedPaths = { a2: kinds(false), a3: kinds(true) };
+  const isVoid = voidRule(rule, auditOf);
+  const complete = completeUnder(isVoid);
   const use = rows.filter(r => complete.includes(r.taskKey));
-  const voids = rows.filter(isVoid).map(r => ({ arm: r.arm, taskKey: r.taskKey, drift: r.meta?.drift ?? [], hiddenPath: r.meta?.hiddenPathAttempts ?? 0, repoPath: r.meta?.repoPathMentions ?? 0 }));
-  const frozenRule = { voids: rows.filter(frozenVoid).length, completeBlocks: completeFrozen.length,
-    flaggedPaths: [...audits.values()].flat().reduce((m, x) => ({ ...m, [x.kind]: (m[x.kind] ?? 0) + 1 }), {}) };
-  if (!use.length) return { stage, split, tasks: 0, incomplete: [...tasks.keys()], voids, frozenRule, faults: faults.length, table: {}, comparisons: [], anatomy: [] };
+  const voids = rows.filter(isVoid).map(r => ({ arm: r.arm, taskKey: r.taskKey, drift: r.meta?.drift ?? [], hiddenPath: r.meta?.hiddenPathAttempts ?? 0, repoPath: r.meta?.repoPathMentions ?? 0,
+    other: rule === 'frozen' ? null : auditOf(r, rule === 'a3').filter(x => x.kind === 'other').map(x => x.path) }));
+  const frozenRule = { voids: rules.frozen.voids, completeBlocks: rules.frozen.completeBlocks, flaggedPaths: rules.flaggedPaths.a2 };
+  if (!use.length) return { stage, split, rule, tasks: 0, incomplete: [...tasks.keys()], voids, rules, frozenRule, faults: faults.length, table: {}, comparisons: [], anatomy: [] };
   const build = existsSync(path.join(live, 'build', 'construction.json')) ? JSON.parse(readFileSync(path.join(live, 'build', 'construction.json'), 'utf8')) : null;
   // the decidability witness on every task (the grader agrees with the task text)
   const grade = new Map([...tasks].map(([k, t]) => [k, bed.oracle(t.task, bed.whiteboxSolve(t.task)).pass]));
-  const anatomy = use.map(row => anatomyOf({ row, task: tasks.get(row.taskKey).task, arc: archiveOf(live, row.arm, row.taskKey, row.trial), bed, gradeConsistent: grade.get(row.taskKey) }));
+  // root cause on every recorded trial (review: every failure, also in a block the void rule removes); inComparison marks
+  // the rows the table and the comparisons use
+  const anatomyAll = rows.filter(r => tasks.has(r.taskKey)).map(row => ({ ...anatomyOf({ row, task: tasks.get(row.taskKey).task, arc: archiveOf(live, row.arm, row.taskKey, row.trial), bed, gradeConsistent: grade.get(row.taskKey) }),
+    inComparison: complete.includes(row.taskKey), void: isVoid(row) }));
+  const anatomy = anatomyAll.filter(x => x.inComparison);
   const table = {};
   for (const a of arms) {
     const rs = use.filter(r => r.arm === a), an = anatomy.filter(x => x.arm === a);
@@ -155,18 +183,18 @@ export async function analyze({ live = LIVE, stage = 'heldout' } = {}) {
   const pairs = [[ARMS.S, ARMS.A], [ARMS.W, ARMS.A], [ARMS.S, ARMS.W]].filter(([x, y]) => arms.includes(x) && arms.includes(y));
   const constructionUsd = build ? { [ARMS.W]: { [FAMILY]: build.constructionCostUsd } } : null;
   const comparisons = pairs.map(([x, y]) => ({ a: x, b: y, mcnemar: mcnemar(use, x, y), passBootstrap: pairedBootstrap(use, x, y, { iterations: 10000, seed: 'swarm-r1', constructionUsd }), score: pairedScoreDiff(use, x, y) }));
-  return { stage, split, tasks: complete.length, incomplete: [...tasks.keys()].filter(k => !complete.includes(k)), voids, frozenRule, faults: faults.length, gradeConsistent: [...grade.values()].every(Boolean), table, comparisons, anatomy };
+  return { stage, split, rule, tasks: complete.length, incomplete: [...tasks.keys()].filter(k => !complete.includes(k)), voids, rules, frozenRule, faults: faults.length, gradeConsistent: [...grade.values()].every(Boolean), table, comparisons, anatomy, anatomyAll };
 }
 
 async function main() {
   const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
-  const stage = arg('--stage', 'heldout'), out = arg('--out', null);
-  const res = await analyze({ stage });
-  const { anatomy, ...summary } = res;
+  const stage = arg('--stage', 'heldout'), out = arg('--out', null), rule = arg('--rule', 'a2');
+  const res = await analyze({ stage, rule });
+  const { anatomy, anatomyAll, ...summary } = res;
   if (out) {
     mkdirSync(out, { recursive: true });
     writeFileSync(path.join(out, `SUMMARY-R1-${stage}.json`), JSON.stringify(summary, null, 1) + '\n');
-    writeFileSync(path.join(out, `ROOTCAUSE-R1${stage === 'heldout' ? '' : '-' + stage}.jsonl`), anatomy.map(x => JSON.stringify(x)).join('\n') + '\n');
+    writeFileSync(path.join(out, `ROOTCAUSE-R1${stage === 'heldout' ? '' : '-' + stage}.jsonl`), (anatomyAll ?? anatomy).map(x => JSON.stringify(x)).join('\n') + '\n');
   }
   console.log(JSON.stringify(summary, null, 1));
 }

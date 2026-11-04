@@ -1,7 +1,7 @@
 // Amendment 2 void audit (experiments/swarm/void-audit.mjs): sandbox-private scratch is benign, a real reach outside is not.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { auditSession, voidUnderAmendment2, CLI_SPILL_RE, createsPath } from '../void-audit.mjs';
+import { auditSession, voidUnderAmendment2, CLI_SPILL_RE, createsPath, under, createdBy } from '../void-audit.mjs';
 
 const WD = '/var/tmp/foundry-work/swarm-r1/work/swarm-r1-heldout/A-agent-haiku/wbed-r6_test_d5_s9301_t0';
 const bash = command => ({ name: 'Bash', input: { command } });
@@ -40,4 +40,40 @@ test('spill pattern and createsPath are strict', () => {
   assert.equal(createsPath(bash('mkdir -p /var/tmp/a/b'), '/var/tmp/a/b'), true);
   assert.equal(createsPath(bash('cat /var/tmp/a/b'), '/var/tmp/a/b'), false);
   assert.equal(createsPath({ name: 'Write', input: { file_path: '/var/tmp/a/b/c.py' } }, '/var/tmp/a/b'), true);
+});
+
+// Review fix B1 (2026-11-04): fake write targets must not make every path "self-created".
+const OTHER = '/var/tmp/foundry-work/swarm-r1/work/swarm-r1-heldout/S-swarm-haiku/wbed-r6_test_d5_s9301_t0/answer.json';
+test('B1: an arrow or an empty redirection target before a real reach does not hide it', () => {
+  for (const first of ['python3 - <<\'EOF\'\nprint("a ->", x)\nEOF', 'grep -c -- "->" /var/tmp/w/out.txt', 'python3 x.py > \'\'', 'echo "a => b"; awk \'$1 > $2\' f']) {
+    const a = auditSession([bash(first), bash(`cat ${OTHER}`), { name: 'Read', input: { file_path: '/etc/passwd' } }], { workdir: WD });
+    assert.deepEqual(a.filter(x => x.path === OTHER || x.path === '/etc/passwd').map(x => x.kind), ['other', 'other'], `${first}: ${JSON.stringify(a)}`);
+    assert.equal(voidUnderAmendment2({ audit: a }), true);
+  }
+});
+
+test('B1: under() refuses an empty, root or relative ancestor; creation needs a whole path', () => {
+  assert.equal(under('/etc/passwd', ''), false); assert.equal(under('/etc/passwd', '/'), false); assert.equal(under('/etc/passwd', 'etc'), false);
+  assert.equal(under('/var/tmp/a/b', '/var/tmp/a'), true); assert.equal(under('/var/tmp/ab', '/var/tmp/a'), false); assert.equal(under('/var/tmp/a/', '/var/tmp/a'), true);
+  // minor 3: a file named notes.txt does not create a directory /var/tmp/notes
+  assert.equal(createsPath(bash('echo hi > /var/tmp/notes.txt'), '/var/tmp/notes'), false);
+  assert.equal(createsPath(bash('mkdir -p /var/tmp/notes.d'), '/var/tmp/notes'), false);
+  assert.equal(createsPath(bash('mkdir -p "/var/tmp/my dir"/sub'), '/var/tmp/my dir'), true);
+  assert.equal(createsPath(bash('cd /var/tmp/w && python3 x.py > out.txt'), '/var/tmp/w/out.txt'), true, 'a relative target after an absolute cd');
+  assert.deepEqual(createdBy(bash('cp a.py b.py /var/tmp/k/ && touch /var/tmp/t.txt')).sort(), ['/var/tmp/k/', '/var/tmp/t.txt']);
+  // a path named inside a heredoc body is not created by it
+  assert.equal(createsPath(bash("python3 - <<'EOF'\nopen('/var/tmp/z.txt','w')  # > /var/tmp/z.txt\nEOF"), '/var/tmp/z.txt'), false);
+});
+
+test('Amendment 3: a cd into a path that does not exist is `failed-cd`; anything more stays `other`', () => {
+  const none = () => false, all = () => true;
+  const cd = [bash('cd /var/foundry-work 2>/dev/null; cd ' + WD + ' && ls')];
+  assert.deepEqual(auditSession(cd, { workdir: WD, amendment3: true, exists: none }).map(x => x.kind), ['failed-cd']);
+  assert.deepEqual(auditSession(cd, { workdir: WD, amendment3: false, exists: none }).map(x => x.kind), ['other'], 'Amendment 2 as written');
+  assert.deepEqual(auditSession(cd, { workdir: WD, amendment3: true, exists: all }).map(x => x.kind), ['other'], 'the path exists: the cd may have worked');
+  const ls = [bash('cd /var/foundry-work && ls /var/foundry-work')];
+  assert.deepEqual(auditSession(ls, { workdir: WD, amendment3: true, exists: none }).map(x => x.kind), ['other'], 'also listed');
+  const tmp = [bash('cd /var/tmp/elsewhere')];
+  assert.deepEqual(auditSession(tmp, { workdir: WD, amendment3: true, exists: none }).map(x => x.kind), ['other'], 'a private tmpfs: host existence says nothing');
+  assert.equal(voidUnderAmendment2({ audit: [{ path: '/x', kind: 'failed-cd' }] }), false);
 });

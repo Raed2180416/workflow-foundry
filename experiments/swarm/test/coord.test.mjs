@@ -110,3 +110,13 @@ test('briefDocs reads ranges, lists and globs', () => {
   assert.equal(briefDocs('files/corpus/D1*.txt').size, 100);
   assert.equal(briefDocs('no ids here').size, 0);
 });
+
+// Review minor 4 (2026-11-04): K8 must not fire on the fake write targets the old writesOf returned for quoted arrows and
+// empty redirections (two workers that each ran `grep -c -- "->" …` both "wrote" "").
+test('K8 stays silent when workers only print arrows or redirect to an empty name', async () => {
+  const { writesOf } = await import('../spawn-tree.mjs');
+  const sw = cleanSwarm();
+  for (const w of sw.workers) w.writes = [...writesOf({ name: 'Bash', input: { command: 'grep -c -- "->" files/corpus/D001.txt; python3 x.py > \'\'' } })];
+  const r = codeSession({ task, tree: sw, output: ref });
+  assert.equal(r.codes.K8, false, JSON.stringify(r.detail.collisions));
+});

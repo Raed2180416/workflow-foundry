@@ -211,17 +211,62 @@ reported as preregistered.
 
 **What happened.** §5.1's void rule (copied from the need router: any hidden-path or repository-path attempt voids a
 trial) voided 10 of the 14 held-out A and S trials (every A trial, three S trials), leaving **0 complete blocks**; the
-frozen `analyze-r1.mjs` then crashed on the empty comparison (a second defect: no empty-set guard). Every flagged path is
-sandbox-private: 38 are files or directories the session itself created under `/var/tmp` (scripts, notes, outputs), 11
-are the CLI's own tool-result spill files under `/root/.claude/projects/<session>/tool-results/` (the CLI saves a long
-tool output there and the model reads it back), and 3 are `/var/tmp/foundry-work`, the tmpfs directory above the
-session's own workdir. Inside the executor sandbox `/root` and `/var/tmp` are empty private tmpfs mounts
+frozen `analyze-r1.mjs` then crashed on the empty comparison (a second defect: no empty-set guard). Of the 52 flagged
+paths, 51 are sandbox-private: 37 are files or directories the session itself created under `/var/tmp` (scripts, notes,
+outputs), 11 are the CLI's own tool-result spill files under `/root/.claude/projects/<session>/tool-results/` (the CLI
+saves a long tool output there and the model reads it back), and 3 are `/var/tmp/foundry-work`, the tmpfs directory above
+the session's own workdir. The 52nd is `/var/foundry-work` in A 9302: a `cd` (error discarded) to a path that does not
+exist. *[Corrected 2026-11-04 after the review, finding B1. As first committed this paragraph said "Every flagged path
+is sandbox-private: 38 … created … under `/var/tmp`"; the audit had miscounted `/var/foundry-work` as self-created.]* Inside the executor sandbox `/root` and `/var/tmp` are empty private tmpfs mounts
 (`src/executors/claude-code.mjs` `DEFAULT_HIDDEN`), so none of these can reach hidden material. The rule was written for
 sessions that do not script; it mistakes scratch for peeking.
 
 **Change.** `experiments/swarm/void-audit.mjs` classifies every flagged path (cli-spill, self-created — the first tool
 use naming it creates it, or it lies under a directory the session created — workdir-ancestor, other). A trial is void
 for drift, a repository-path mention, or any path of kind `other`. `analyze-r1.mjs` uses this rule, guards the empty
-case, and reports the frozen rule's outcome beside it (`frozenRule`: voids, complete blocks, path kinds). Under the
-amended rule no trial is void and all 7 blocks are complete. Tested (`test/void-audit.test.mjs`: scratch is benign;
-reading another session's workdir, a host file, or a path read before it was written is `other` and voids).
+case, and reports the frozen rule's outcome beside it (`frozenRule`: voids, complete blocks, path kinds). Tested
+(`test/void-audit.test.mjs`: scratch is benign; reading another session's workdir, a host file, or a path read before it
+was written is `other` and voids). *[Corrected 2026-11-04 after the review, finding B1. As first committed this said
+"Under the amended rule no trial is void and all 7 blocks are complete". That was the output of a buggy audit: `writesOf`
+(`spawn-tree.mjs`) read `"->"`, `> ''` and `a > b` inside quotes and heredocs as redirections and returned `""`, and
+`under(p, "")` was true for every path, so every flagged path of such a session came out self-created. With the audit
+corrected, this amendment as written voids A 9302 and leaves 6 complete blocks (9301, 9303–9307).]*
+
+### Amendment 3 (2026-11-04, after the review, analysis only): a failed `cd` is no access; three rules reported
+
+**Why.** With the audit corrected (review B1: `shell-scan.mjs`, a guarded `under()`), Amendment 2 voids A 9302 for a
+single path, `/var/foundry-work`. The session ran `cd /var/foundry-work 2>/dev/null; cd <its workdir> && …` in tool use
+31. The path does not exist on the host. The sandbox mounts the host filesystem read-only outside its private tmpfs
+mounts, so the path did not exist in the session either, and the `cd` read nothing. This amendment is written after
+seeing that it restores exactly the block where A passed and S failed. It is therefore a sensitivity analysis, not the
+primary rule.
+
+**Change.** `void-audit.mjs` (option `amendment3`) gives a flagged path kind `failed-cd` when every tool use that names
+it names it only as the argument of `cd`, no tool use creates it, it is not under a private tmpfs root, and it does not
+exist on the host. `failed-cd` is benign. `analyze-r1.mjs` reports all three rules (`rules.frozen`, `rules.a2`,
+`rules.a3`: void trials, complete blocks). The table and comparisons use `--rule`, default **a2 (Amendment 2 as written,
+corrected audit), the primary rule**. `report-r1.mjs` adds the a3 analysis as `sensitivity.a3`. Also: a flagged trial
+whose transcript cannot be audited keeps its frozen verdict (void); and the root cause now covers every recorded trial,
+with `inComparison` marking the rows the table uses.
+
+**Outcome.** Frozen rule: 10 void trials, 0 complete blocks. Amendment 2 as written: 1 void trial (A 9302), 6 blocks.
+Amendment 3: 0 void trials, 7 blocks.
+
+### Notes after the review (2026-11-04; nothing here changes an analysis)
+
+- **No treatment-delivery gate (M1).** §6 had no rule that stops the held-out stage when the swarm arm does not fan out.
+  The calibration record showed S with 0 workers at 17:48Z, and the held-out stage started at 18:01Z anyway. The next
+  rung's prereg must include `experiments/swarm/delivery-gate.mjs` (every swarm-arm calibration trial starts at least
+  2 workers, by spawn tree and by the CLI, and one completes; otherwise exit 7 and an amendment), and must pilot every arm
+  on dev before freezing.
+- **Frozen falsifiers (§7) and §5.5, as written:** falsifier 1 and falsifier 2 did not fire under any void rule, and the
+  "adds nothing" branch is not met as worded. The result is inconclusive about swarms (treatment not delivered).
+- **Rung 1b's launcher** (`launch-r1b.sh`) ran the only S-F call but was committed afterwards, in 17c4ee0a, not with
+  Amendment 1 (01221415).
+- **W builder effort.** §2 froze effort "high" for the Haiku builder. The owner's role rule is "Haiku 5.5 max for cheap
+  implementation" (OPERATING-PRINCIPLES §7). The departure was preregistered but not flagged as one.
+- **Seed exposure.** The $0 sizing script of the dossier generated wbed-r6 test seeds 8401–8406 (range `wbed-heldout-c`,
+  owned by wbed/JIT), and the agent that wrote this prereg saw their summary statistics. It is recorded in the seed ledger
+  (`exposures`). The range owner decides whether to burn them.
+- **Hashes.** `experiments/swarm/spawn-tree.mjs` and `experiments/swarm/analyze-r1.mjs` no longer match FROZEN-R1.json
+  (B1 fix; the amendments). This file no longer matches either (amendments appended). FROZEN-R1.json stays as frozen.

@@ -49,6 +49,15 @@ test('writesOf: file tools and Bash redirections; reads are not writes', () => {
   assert.deepEqual(writesOf({ name: 'Bash', input: { command: 'grep x files/corpus/*.txt > work/w1/hits.txt 2>&1 && cat a | tee -a work/w1/log' } }), ['work/w1/hits.txt', 'work/w1/log']);
   assert.deepEqual(writesOf({ name: 'Bash', input: { command: 'cat x > /dev/null; echo 2>&1' } }), []);
   assert.deepEqual(writesOf({ name: 'Read', input: { file_path: 'a' } }), []);
+  // review fix B1/M5: arrows, comparisons and empty targets are not written paths
+  const b = command => writesOf({ name: 'Bash', input: { command } });
+  assert.deepEqual(b('grep -c -- "->" /var/tmp/x/sel_out.txt'), []);
+  assert.deepEqual(b("python3 - <<'EOF'\nprint(\"a ->\", x)\nif a > b: y = {k: v for k, v in d.items() if v => 1}\nEOF"), []);
+  assert.deepEqual(b("cat > /var/tmp/s.py <<'EOF'\nx = a > b\nEOF\npython3 /var/tmp/s.py > /var/tmp/o.txt"), ['/var/tmp/s.py', '/var/tmp/o.txt']);
+  assert.deepEqual(b("python3 x.py > ''"), []);
+  assert.deepEqual(b("echo 'a > b' \"c => d\" # > e"), []);
+  assert.deepEqual(b('[[ $a > $b ]] && (( n > 2 )) && echo y >> "out file.txt"'), ['out file.txt']);
+  assert.deepEqual(b('cmd 2>&1 >&2 | tee -a log1 log2; x=$(echo hi > inner.txt)'), ['inner.txt', 'log1', 'log2']);
   assert.deepEqual(pathsOf({ name: 'Bash', input: { command: 'cat files/corpus/D012.txt files/corpus/D013.txt' } }), ['files/corpus/D012.txt', 'files/corpus/D013.txt']);
 });
 

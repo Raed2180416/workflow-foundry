@@ -10,6 +10,8 @@
 //   lead: { turns, toolUses: {name: n}, reads }           the lead's own work (parent_tool_use_id null)
 //   models: {model: assistant messages}                   over the whole session (lead + workers)
 //   maxConcurrent: the largest batch; criticalSteps: Kimi's metric, lead turns + per batch the slowest worker's turns
+import { scanCommand } from './shell-scan.mjs';
+
 export const SPAWN_TOOLS = Object.freeze(['Agent', 'Task']);
 
 const textOf = content => (typeof content === 'string' ? content : Array.isArray(content)
@@ -24,15 +26,16 @@ export function pathsOf(use) {
   return out;
 }
 
-/** Paths a tool use writes: Write/Edit/NotebookEdit targets and, best effort, a Bash command's redirection and tee targets. */
+/** Paths a tool use writes: Write/Edit/NotebookEdit targets and, best effort, a Bash command's redirection and tee targets.
+ *  Review fix B1 (2026-11-04, after the run): the Bash part reads the command with a quote- and heredoc-aware scanner
+ *  (shell-scan.mjs). The regex it replaces took `"->"`, `> ''` and `a > b` inside quotes, heredoc bodies and comments for
+ *  redirections and returned "" or script words as written paths. Empty targets are never returned. */
 export function writesOf(use) {
   const i = use?.input ?? {};
-  if (['Write', 'Edit', 'MultiEdit', 'NotebookEdit'].includes(use?.name)) return [i.file_path ?? i.notebook_path].filter(x => typeof x === 'string');
+  if (['Write', 'Edit', 'MultiEdit', 'NotebookEdit'].includes(use?.name)) return [i.file_path ?? i.notebook_path].filter(x => typeof x === 'string' && x !== '');
   if (use?.name !== 'Bash' || typeof i.command !== 'string') return [];
-  const out = [], clean = s => s.replace(/^['"]|['"]$/g, '');
-  for (const m of i.command.matchAll(/(?:^|[^0-9&<>])>{1,2}\s*([^\s;&|<>()]+)/g)) if (!/^&|^\/dev\//.test(m[1])) out.push(clean(m[1]));
-  for (const m of i.command.matchAll(/\btee\s+(?:-a\s+)?([^\s;&|<>()]+)/g)) out.push(clean(m[1]));
-  return out;
+  const { redirects, tee } = scanCommand(i.command);
+  return [...redirects, ...tee];
 }
 
 /** Corpus document ids (D001 …) a list of paths names explicitly (a glob or directory names none). */
