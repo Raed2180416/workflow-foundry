@@ -1,5 +1,5 @@
 {
- "version": "effort-cost-v1",
+ "version": "effort-cost-v2",
  "evidence": "development; stored dev60 records and RL2 journals, $0; prices from policy/models.json",
  "prices": {
   "qwen3.5-2b-q4km": {
@@ -89,7 +89,9 @@
    "accounting": {
     "meanRecordedOutput": 174.41666666666666,
     "meanImpliedOutputUpper": 14828.724500000004,
+    "meanImpliedOutputLower": 0,
     "sessionsRecordingUnderImplied": 60,
+    "sessionsRecordingUnderImpliedLower": 0,
     "n": 60
    }
   },
@@ -144,7 +146,9 @@
    "accounting": {
     "meanRecordedOutput": 105.48333333333333,
     "meanImpliedOutputUpper": 55560.802666666685,
+    "meanImpliedOutputLower": 13338.288500000002,
     "sessionsRecordingUnderImplied": 60,
+    "sessionsRecordingUnderImpliedLower": 40,
     "n": 60
    }
   },
@@ -175,7 +179,9 @@
    "accounting": {
     "meanRecordedOutput": 78.58333333333333,
     "meanImpliedOutputUpper": 21907.510333333335,
+    "meanImpliedOutputLower": 430.7081666666666,
     "sessionsRecordingUnderImplied": 60,
+    "sessionsRecordingUnderImpliedLower": 6,
     "n": 60
    }
   }

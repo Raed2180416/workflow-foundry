@@ -7,11 +7,24 @@
 //   errorsOf(v, y)                1 where a verdict disagrees with the label
 //   pairStats(a, b, {y, clusters}) verdict κ, error κ, φ, both-wrong vs both-wrong-if-independent, task-cluster bootstrap CI
 //   neffOfSet(vectors)            Kish-style n_eff = k / (1 + (k − 1) ρ̄) from the mean pairwise φ of the vectors
-//   admitSignal(cand, existing)   'admit' | 'refuse' | 'provisional' | 'unmeasured' with the reason, on error κ by default
+//   admitSignal(cand, existing, {on})  'admit' | 'refuse' | 'provisional' | 'unmeasured' with the reason; `on` names the
+//                                 metric and is REQUIRED ('verdicts' = ATTACK's κ; 'errors' = agreement of mistakes)
+//   admissionWalk(order, signals, {on, rule})  the rule applied in a purchase order: self-reports and uninformative
+//                                 signals are excluded by rule; 'point' admits on the point κ (ATTACK's literal rule, the
+//                                 bound reported as `fragile`), 'bound' only when the bootstrap upper bound is under the bar
 //   budgetPaths(cands, opts)      greedy information-path budget: admit signals in order of value per dollar (order
 //                                 'ratio') or of value (order 'value') while every admitted pair stays under KAPPA_MAX, up
-//                                 to a dollar budget; returns the set and its n_eff
-export const INFOPATH_VERSION = 'infopath-v1';
+//                                 to a dollar budget; an unpriced signal (costUsd null) is not bought; returns the set and
+//                                 its n_eff
+//
+// v2 (review, 2026-11-04): the metric is explicit. ATTACK's 0.4 bar sits between VERDICT κ values (RL2-judge 0.35, judge-
+// judge 0.61-0.70: VERIFIER-LAB §1.2); v1 applied it to ERROR κ by default, where it admitted a judge ATTACK's rule refuses
+// (Haiku-Mercury verdict κ 0.46, error κ 0.38). Error κ is the better redundancy measure (two accurate verifiers with
+// independent mistakes have a high verdict κ: the test shows it), but a bar calibrated on one metric is not moved to the
+// other silently: callers name the metric, and the decision of record follows ATTACK (verdicts) until the owner re-anchors
+// the bar on errors. v1's walk also admitted 'provisional' signals, the actor's self-report and a near-constant judge.
+export const INFOPATH_VERSION = 'infopath-v2';
+export const INFORMATIVE = Object.freeze({ minAcceptRate: 0.05, maxAcceptRate: 0.95, minValue: 0.02 });
 export const KAPPA_MAX = 0.4;
 export const MIN_ITEMS = 30;
 
@@ -99,7 +112,8 @@ export function neffOfSet(vectors) {
  * the bootstrap upper bound also below (when clusters are given); provisional: below at the point, above at the bound;
  * unmeasured: fewer than minItems paired items.
  */
-export function admitSignal(cand, existing, { y = null, clusters = null, kappaMax = KAPPA_MAX, minItems = MIN_ITEMS, on = 'errors', B = 500 } = {}) {
+export function admitSignal(cand, existing, { y = null, clusters = null, kappaMax = KAPPA_MAX, minItems = MIN_ITEMS, on, B = 500 } = {}) {
+  need(on === 'verdicts' || on === 'errors', `admitSignal: name the metric (on: 'verdicts' | 'errors'), got ${on}`);
   need(on === 'verdicts' || y, 'admitSignal: error agreement needs labels y');
   const rows = existing.map(s => {
     const st = pairStats(cand.verdicts, s.verdicts, { y: on === 'errors' ? y : null, clusters, B });
@@ -120,22 +134,61 @@ export function admitSignal(cand, existing, { y = null, clusters = null, kappaMa
  * minus 0.5; costUsd per decision). Admits in order of value per dollar (free signals first, by value), skipping any whose
  * error κ with an admitted one exceeds kappaMax, until budgetUsd is spent. Returns { chosen, refused, costUsd, nEff }.
  */
-export function budgetPaths(cands, { y, clusters = null, kappaMax = KAPPA_MAX, budgetUsd = Infinity, minItems = MIN_ITEMS, order: by = 'ratio' } = {}) {
+export function budgetPaths(cands, { y, clusters = null, kappaMax = KAPPA_MAX, budgetUsd = Infinity, minItems = MIN_ITEMS, order: by = 'ratio', on } = {}) {
   need(by === 'ratio' || by === 'value', `budgetPaths: order must be 'ratio' or 'value', got ${by}`);
+  need(on === 'verdicts' || on === 'errors', `budgetPaths: name the metric (on: 'verdicts' | 'errors'), got ${on}`);
+  const unpriced = cands.filter(c => c.costUsd === null || c.costUsd === undefined || !Number.isFinite(c.costUsd));
+  cands = cands.filter(c => !unpriced.includes(c));
   const order = [...cands].sort((p, q) => {
     if (by === 'value') return q.value - p.value || p.costUsd - q.costUsd;
     const vp = p.costUsd > 0 ? p.value / p.costUsd : Infinity, vq = q.costUsd > 0 ? q.value / q.costUsd : Infinity;
     return vp === vq ? q.value - p.value : vq - vp;
   });
-  const chosen = [], refused = [];
+  const chosen = [], refused = unpriced.map(c => ({ name: c.name, reason: 'unpriced (no price on record): not bought' }));
   let cost = 0;
   for (const c of order) {
     if (c.value <= 0) { refused.push({ name: c.name, reason: 'no value over chance' }); continue; }
     if (cost + c.costUsd > budgetUsd + 1e-12) { refused.push({ name: c.name, reason: 'over budget' }); continue; }
-    const adm = admitSignal(c, chosen, { y, clusters, kappaMax, minItems, B: 200 });
+    const adm = admitSignal(c, chosen, { y, clusters, kappaMax, minItems, B: 200, on });
     if (adm.decision === 'refuse' || adm.decision === 'unmeasured') { refused.push({ name: c.name, reason: adm.reason }); continue; }
     chosen.push(c); cost += c.costUsd;
   }
   const errs = chosen.map(c => errorsOf(c.verdicts, y));
-  return { chosen: chosen.map(c => c.name), refused, costUsd: cost, nEff: chosen.length ? neffOfSet(errs).nEff : 0, kappaMax };
+  return { chosen: chosen.map(c => c.name), refused, costUsd: cost, nEff: chosen.length ? neffOfSet(errs).nEff : 0, kappaMax, on };
+}
+
+/** Is a signal informative enough to be bought at all: accept rate inside [5%, 95%] and balanced accuracy > chance + 0.02. */
+export function informative(verdicts, y, lim = INFORMATIVE) {
+  let tp = 0, fn = 0, tn = 0, fp = 0, n = 0, acc = 0;
+  bin(verdicts).forEach((v, i) => { if (v === null || y[i] === null || y[i] === undefined) return; n++; acc += v; if (y[i]) { if (v) tp++; else fn++; } else if (v) fp++; else tn++; });
+  const acceptRate = n ? acc / n : null;
+  const value = tp + fn && tn + fp ? (tp / (tp + fn) + tn / (tn + fp)) / 2 - 0.5 : null;
+  const ok = acceptRate !== null && value !== null && acceptRate >= lim.minAcceptRate && acceptRate <= lim.maxAcceptRate && value > lim.minValue;
+  return { ok, acceptRate, value, n };
+}
+
+/**
+ * The admission rule applied in a purchase order. signals: { name: { verdicts, selfReport?: bool } }. Self-reports are
+ * excluded by rule (ATTACK RC3: no decision consumes the actor's own checker), uninformative signals (informative()) are
+ * not bought, then admitSignal against every signal admitted so far. rule 'point': admit when the point κ is under the
+ * bar (ATTACK's literal rule; `fragile` when the bootstrap upper bound is over it); rule 'bound': admit only when the
+ * upper bound is under the bar too ('provisional' signals are held, never admitted). Returns [{ name, decision, reason,
+ * fragile, rows }] and the admitted list.
+ */
+export function admissionWalk(order, signals, { y, clusters = null, on, rule = 'point', kappaMax = KAPPA_MAX, minItems = MIN_ITEMS, B = 500 } = {}) {
+  need(rule === 'point' || rule === 'bound', `admissionWalk: rule must be 'point' or 'bound', got ${rule}`);
+  const admitted = [], walk = [];
+  for (const name of order) {
+    const sig = signals[name];
+    need(sig, `admissionWalk: unknown signal ${name}`);
+    if (sig.selfReport) { walk.push({ name, decision: 'excluded', reason: 'self-report (RC3: no decision consumes it)', rows: [] }); continue; }
+    const inf = informative(sig.verdicts, y);
+    if (!inf.ok) { walk.push({ name, decision: 'excluded', reason: `uninformative (accept rate ${inf.acceptRate?.toFixed(2)}, value ${inf.value?.toFixed(3)})`, rows: [] }); continue; }
+    const res = admitSignal({ name, verdicts: sig.verdicts }, admitted.map(m => ({ name: m, verdicts: signals[m].verdicts })), { y, clusters, on, kappaMax, minItems, B });
+    const admit = res.decision === 'admit' || (rule === 'point' && res.decision === 'provisional');
+    const decision = admit ? 'admit' : res.decision === 'provisional' ? 'held' : res.decision;
+    walk.push({ name, decision, reason: res.reason, fragile: res.decision === 'provisional', rows: res.rows });
+    if (admit) admitted.push(name);
+  }
+  return { walk, admitted, on, rule, kappaMax };
 }

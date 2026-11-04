@@ -12,10 +12,16 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { parseArgs } from 'node:util';
-import { REPORTED_ARMS, fileSha, labelPass, loadLab, stepsOf, worldEmails } from './labio.mjs';
+import { REPORTED_ARMS, fileSha, labelPass, loadLab, stepsOf, underRun, worldEmails } from './labio.mjs';
 import { MUTATE_VERSION, isWrite, mutantsOf, noop } from './mutate.mjs';
 import { TWINS_VERSION, collectionsOf, twinsOf } from './twins.mjs';
 import { readGz } from './labio.mjs';
+
+const NAME_KEYS = ['name', 'title', 'Name', 'company', 'full_name', 'display_name', 'subject', 'summary'];
+/** Id-records of a world for the operators: [{app, coll, id, name}] (name: the first display-name field, or null). */
+export function recordsOf(world0) {
+  return collectionsOf(world0).flatMap(c => c.records.map(x => ({ app: c.app, coll: c.coll, id: x.id, name: NAME_KEYS.map(k => x[k]).find(v => typeof v === 'string' && v.trim()) ?? null })));
+}
 
 export function buildJobs({ vlab, arms = REPORTED_ARMS, limitSeeds = null }) {
   const rows = loadLab(vlab, { arms });
@@ -31,16 +37,17 @@ export function buildJobs({ vlab, arms = REPORTED_ARMS, limitSeeds = null }) {
     const world0 = readGz(w0path);
     inputs[r.worlds.initial] = fileSha(w0path);
     inputs[`${r.rowId}/calls.jsonl`] = fileSha(path.join(r.source.host, 'calls.jsonl'));
-    const input = path.join(r.source.prep, 'input.json');
+    if (!underRun(r.source?.prep, r.run, 'prep')) throw new Error(`jobs: no allowed prep directory for ${r.rowId}`);
+    const input = path.join(path.resolve(r.source.prep), 'input.json');
     const base = { seed: sid, seedRow: r.rowId, task: r.task, arm: r.arm };
     const add = (id, j, m) => { jobs.push({ id, input, world0: w0path, ...j }); meta[id] = { ...base, ...m }; };
     add(`${sid}__control`, { steps }, { kind: 'control', op: 'control', cls: 'control', intended: 'equivalent', note: 'stored call log' });
-    const ctx = { seed: r.rowId, worldEmails: worldEmails(world0), records: collectionsOf(world0).flatMap(c => c.records.map(x => ({ app: c.app, coll: c.coll, id: x.id }))) };
+    const ctx = { seed: r.rowId, worldEmails: worldEmails(world0), records: recordsOf(world0) };
     const ms = mutantsOf(steps, ctx);
     const k = {};
     for (const m of ms) {
       k[m.op] = (k[m.op] ?? 0) + 1;
-      add(`${sid}__${m.op}${k[m.op] > 1 ? k[m.op] : ''}`, { steps: m.steps }, { kind: 'mutant', op: m.op, cls: m.cls, intended: m.intended, note: m.note });
+      add(`${sid}__${m.op}${k[m.op] > 1 ? k[m.op] : ''}`, { steps: m.steps }, { kind: 'mutant', op: m.op, cls: m.cls, intended: m.intended, note: m.note, ...(m.sub ? { sub: m.sub } : {}) });
     }
     for (const t of twinsOf(world0, steps, { seed: r.rowId })) {
       const id = `${sid}__twin_${t.twin}`;

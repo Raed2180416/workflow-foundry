@@ -8,14 +8,19 @@
 // (certify.effectiveN, ICC floor 0.1, ANOVA estimate when larger) and every bound is read at n_eff.
 //
 // Leave-one-task-out: for each task, the threshold is chosen on the other tasks by Learn-then-Test (certify
-// learnThenTest, Hoeffding–Bentkus p-values, fixed-sequence from the strictest theta up, family-wise delta) at a target
-// risk alpha on the RELEASED rows (n = their n_eff; conditioning on release makes this an approximation, stated), taking
-// the most permissive certified theta; with none certified the task's runs are all held (abstain). The held-out task is
-// then released by that theta. The pooled result is the honest operating point: no task chose its own threshold.
+// learnThenTest, Hoeffding–Bentkus p-values; by default Holm over one hypothesis per distinct release set with n_eff >= 5,
+// family-wise delta; 'fixed_sequence' from the strictest theta up is kept as the reported alternative) at a target risk
+// alpha on the RELEASED rows (n = their n_eff; conditioning on release makes this an approximation, stated), taking the
+// most permissive certified theta; with none certified the task's runs are all held (abstain). The held-out task is then
+// released by that theta. The pooled result is the honest operating point: no task chose its own threshold.
+//
+// Exact bounds read at n_eff scale the failure count to the effective size and round it UP (Math.ceil): rounding to the
+// nearest (v1) made the Clopper–Pearson upper bound anti-conservative (risk 0.08 at n_eff 6: 0.39 instead of 0.58).
+// A point with nothing released has risk null, not 0 (v1 reported 0).
 import { clopperPearson, effectiveN, learnThenTest } from '../../../lib/certify.mjs';
 import { releasedAt } from './verdict.mjs';
 
-export const RISKCOV_VERSION = 'tristate-riskcov-v1';
+export const RISKCOV_VERSION = 'tristate-riskcov-v2';
 export const THETAS = Object.freeze([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.75, 1]);
 
 function clustersOf(items, pick) {
@@ -38,13 +43,17 @@ export function pointAt(items, theta) {
   const bad = rel.filter(it => !it.y).length;
   const eff = nEffOf(items, it => releasedAt(it.v, theta));
   const nE = Math.max(1, Math.floor(eff.nEff));
-  const riskHat = rel.length ? bad / rel.length : 0;
-  // the exact bound read at n_eff: scale the failure count to the effective size
-  const badE = Math.min(nE, Math.round(riskHat * nE));
+  const riskHat = rel.length ? bad / rel.length : null;
+  const badE = scaledFailures(bad, rel.length, nE);
   return { theta, n: items.length, released: rel.length, failingReleased: bad, coverage: items.length ? rel.length / items.length : 0, risk: riskHat,
     joint: items.length ? bad / items.length : 0, nEffReleased: eff.nEff, riskUpper: rel.length ? clopperPearson(badE, nE, { sides: 1 }).hi : null };
 }
 export const curve = (items, thetas = THETAS) => thetas.map(t => pointAt(items, t));
+/** Failures scaled from n rows to an effective size nE, rounded up (the conservative direction for an upper bound). */
+export function scaledFailures(bad, n, nE) {
+  if (!n) return 0;
+  return Math.max(0, Math.min(nE, Math.ceil((bad / n) * nE - 1e-9)));
+}
 
 /**
  * Learn-then-Test choice of theta on calibration items: the most permissive theta certified at risk <= alpha.
@@ -77,7 +86,7 @@ export function loto(items, opts = {}) {
   const released = per.reduce((a, p) => a + p.released, 0), bad = per.reduce((a, p) => a + p.failingReleased, 0), n = items.length;
   const cl = per.filter(p => p.released).map(p => ({ n: p.released, wrong: p.failingReleased }));
   const nEff = cl.length > 1 ? Math.min(released, effectiveN(cl).nEff) : released;
-  const nE = Math.max(1, Math.floor(nEff)), badE = released ? Math.min(nE, Math.round((bad / released) * nE)) : 0;
+  const nE = Math.max(1, Math.floor(nEff)), badE = scaledFailures(bad, released, nE);
   const thetas = per.map(p => p.theta);
   return {
     alpha: opts.alpha ?? 0.2, delta: opts.delta ?? 0.1, method: opts.method ?? 'bonferroni_holm', n, released, failingReleased: bad, coverage: n ? released / n : 0,
@@ -102,7 +111,8 @@ export function rowSummary(items) {
     n: items.length, supported: sup.length, unknown: by.UNKNOWN.length, failed: by.FAILED.length,
     supportedPrecision: prec(sup), unknownPassRate: prec(by.UNKNOWN), failedPassRate: prec(by.FAILED),
     coverage: items.length ? sup.length / items.length : 0, nEffSupported: e.nEff,
-    supportedPrecisionLower: sup.length ? 1 - clopperPearson(Math.min(nE, Math.round((supBad / sup.length) * nE)), nE, { sides: 1 }).hi : null,
+    supportedPrecisionLower: sup.length ? 1 - clopperPearson(scaledFailures(supBad, sup.length, nE), nE, { sides: 1 }).hi : null,
     released: items.filter(it => it.v.release).length, releasedPrecision: prec(items.filter(it => it.v.release)),
+    vacuous: items.filter(it => it.v.vacuous).length,
   };
 }

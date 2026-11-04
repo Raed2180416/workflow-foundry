@@ -8,6 +8,12 @@
 // Nothing is inferred silently (D28 (4)): an effort the manifest does not record stays UNSET; a dose with no paired
 // measurement is 'unmeasured' and projectCost returns null for it. Prices come only from policy/models.json.
 // Development evidence; $0; reads launch.json and results.jsonl cost/token fields of dev60 runs (allowlist), never a grade.
+//
+// v2 (review, 2026-11-04): every run id is checked against the allowlist BEFORE any of its files is read (v1 read the first
+// run's launch.json first); the accounting check reports the output the reported cost implies as a RANGE: the upper end
+// ignores cache charges (v1's only number), the lower end charges every cached input token at the full input price and
+// every uncached one at 1.25x (cache writes), the most a cache can cost. Both ends are bounds, not prices: the policy file
+// lists no Haiku cache price, and none is assumed.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -15,7 +21,8 @@ import { fileURLToPath } from 'node:url';
 import { checkManifest, manifestFromLaunch } from '../lib/certify.mjs';
 import { clusterBootstrap } from '../lib/infopath.mjs';
 
-export const EFFORT_COST_VERSION = 'effort-cost-v1';
+export const EFFORT_COST_VERSION = 'effort-cost-v2';
+export const CACHE_WRITE_MAX = 1.25;   // a bound on the cache-write multiplier for the lower end of the implied range
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const COST_RUNS = Object.freeze({ 'haiku-a0': ['a0-dev60-dn'], 'sonnet-a0': ['a0s-dev60-dn'], 'opus-a0-xhigh': ['a0o-dev60-dn'], 'haiku-a1': ['a1-dev60-dn', 'a1-dev60-dn-fill'],
   'sonnet-a1': ['a1s-dev60-dn', 'a1s-dev60-dn-fill'], 'haiku-a1c': ['a1c-dev60-dn'], 'm3-a1c': ['m3-a1c-dev60-dn', 'm3-a1c-dev60-dn-fill'] });
@@ -31,11 +38,11 @@ export function policyPrices(policyFile = path.join(ROOT, 'policy/models.json'))
 
 /** Per-arm cost profile from stored records: manifest nodes, $ per task, tokens per model, and the CLI accounting check. */
 export function armProfile(root, runs, prices) {
+  for (const r of runs) if (!RUN_OK(r)) throw new Error(`effort-cost: run ${r} is not on the dev60 allowlist`);
   const launch = JSON.parse(readFileSync(path.join(root, runs[0], 'launch.json'), 'utf8'));
   const manifest = checkManifest(manifestFromLaunch(launch, { runId: runs[0] }), { legacy: 'pre-D28 dev run' });
   const byTask = new Map();
   for (const r of runs) {
-    if (!RUN_OK(r)) throw new Error(`effort-cost: run ${r} is not on the dev60 allowlist`);
     for (const rec of readJsonl(path.join(root, r, 'results.jsonl'))) {
       const f = rec.forks?.[0];
       if (!f || f.costUsd == null || f.sessionError) continue;
@@ -50,18 +57,28 @@ export function armProfile(root, runs, prices) {
   }
   // accounting check for the session model: recorded output tokens vs the output the reported cost implies
   const pm = prices[launch.model];
-  const implied = xs.filter(x => x.tokens && pm).map(x => {
-    const t = x.tokens.byModel?.[launch.model] ?? x.tokens;
-    const uncached = Math.max(0, (t.input ?? 0) - (t.cachedInput ?? 0));
-    const claudeCost = x.costUsd;   // the CLI's total_cost_usd: list dollars for the session model (Mercury is listed at $0)
-    return { recorded: t.output ?? 0, impliedMax: Math.max(0, (claudeCost - (uncached * pm.in) / 1e6) / (pm.out / 1e6)) };
-  });
+  const implied = xs.filter(x => x.tokens && pm).map(x => impliedOutput(x.tokens.byModel?.[launch.model] ?? x.tokens, x.costUsd, pm));
   return {
     runs, manifest: manifest.nodes, conforming: manifest.conforming, tasks: xs.length, usdPerTask: mean(xs.map(x => x.costUsd)), usdPerTaskMedian: median(xs.map(x => x.costUsd)),
     tokensPerTask: Object.fromEntries(Object.entries(perModel).map(([m, v]) => [m, { input: mean(v.input), output: mean(v.output), cachedInput: mean(v.cached) }])),
     accounting: implied.length ? { meanRecordedOutput: mean(implied.map(i => i.recorded)), meanImpliedOutputUpper: mean(implied.map(i => i.impliedMax)),
-      sessionsRecordingUnderImplied: implied.filter(i => i.recorded < 0.5 * i.impliedMax).length, n: implied.length } : null,
+      meanImpliedOutputLower: mean(implied.map(i => i.impliedMin)), sessionsRecordingUnderImplied: implied.filter(i => i.recorded < 0.5 * i.impliedMax).length,
+      sessionsRecordingUnderImpliedLower: implied.filter(i => i.recorded < 0.5 * i.impliedMin).length, n: implied.length } : null,
   };
+}
+
+/**
+ * The output a session's reported cost implies, as a range (tokens {input, output, cachedInput}, cost in $, price
+ * {in, out} per MTok). impliedMax ignores cache charges (all cached input free); impliedMin charges cached input at the full
+ * input price and uncached input at CACHE_WRITE_MAX x (the most either can cost), so the recorded output is checked against
+ * the smallest output the cost can mean.
+ */
+export function impliedOutput(t, costUsd, pm) {
+  const input = t.input ?? 0, cached = Math.min(input, t.cachedInput ?? 0), uncached = Math.max(0, input - cached);
+  const perOut = pm.out / 1e6;
+  const impliedMax = perOut > 0 ? Math.max(0, (costUsd - (uncached * pm.in) / 1e6) / perOut) : null;
+  const impliedMin = perOut > 0 ? Math.max(0, (costUsd - (uncached * pm.in * CACHE_WRITE_MAX + cached * pm.in) / 1e6) / perOut) : null;
+  return { recorded: t.output ?? 0, impliedMax, impliedMin };
 }
 
 /** The measured dose: paired calls of one role at two reasoning levels on the same tasks (RL2 readers haiku vs haikum). */
@@ -106,6 +123,6 @@ async function main() {
   const out = { version: EFFORT_COST_VERSION, evidence: 'development; stored dev60 records and RL2 journals, $0; prices from policy/models.json', prices, arms, dose, projections,
     note: 'Every dev60 arm except opus-a0-xhigh ran with effort unset (the CLI default applied, not recorded). The only paired effort dose in the stored data is the RL2 Haiku reader at reasoning low vs medium; projections through any other dose return null.' };
   writeFileSync(a.out, JSON.stringify(out, null, 1) + '\n');
-  console.log(JSON.stringify({ arms: Object.fromEntries(Object.entries(arms).map(([k, v]) => [k, `${v.usdPerTask?.toFixed(4)} $/task; ${v.manifest.join(' ')}; accounting ${v.accounting ? `${v.accounting.meanRecordedOutput.toFixed(0)} rec vs <=${v.accounting.meanImpliedOutputUpper.toFixed(0)} implied` : '-'}`])), dose: { pairs: dose.pairs, outputRatio: dose.outputRatio, ci: dose.outputRatioCI, costRatio: dose.costRatio, costCI: dose.costRatioCI }, projections }, null, 1));
+  console.log(JSON.stringify({ arms: Object.fromEntries(Object.entries(arms).map(([k, v]) => [k, `${v.usdPerTask?.toFixed(4)} $/task; ${v.manifest.join(' ')}; accounting ${v.accounting ? `${v.accounting.meanRecordedOutput.toFixed(0)} rec vs ${v.accounting.meanImpliedOutputLower.toFixed(0)}..${v.accounting.meanImpliedOutputUpper.toFixed(0)} implied` : '-'}`])), dose: { pairs: dose.pairs, outputRatio: dose.outputRatio, ci: dose.outputRatioCI, costRatio: dose.costRatio, costCI: dose.costRatioCI }, projections }, null, 1));
 }
 if (import.meta.url === `file://${process.argv[1]}`) await main();

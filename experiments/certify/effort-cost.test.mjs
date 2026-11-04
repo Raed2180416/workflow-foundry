@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { armProfile, policyPrices, projectCost, readerDose } from './effort-cost.mjs';
+import { armProfile, impliedOutput, policyPrices, projectCost, readerDose } from './effort-cost.mjs';
 
 test('projectCost refuses an unmeasured dose (teeth: a variant that defaults the multiplier to 1 projects anyway)', () => {
   const doses = [{ model: 'claude-haiku-5-5', from: 'low', to: 'medium', costRatio: 1.2 }];
@@ -52,6 +52,10 @@ test('armProfile reads only dev60 runs and keeps an unset effort unset', () => {
     assert.match(p.manifest[0], /@UNSET\//, 'unset effort is reported, never filled with a CLI default');
     assert.ok(p.accounting.meanImpliedOutputUpper > p.accounting.meanRecordedOutput);
     assert.throws(() => armProfile(root, ['x-look2-1'], policyPrices()), /not on the dev60 allowlist/);
+    // review 17: the allowlist is checked before ANY file of the run is read (v1 read launch.json first): a forbidden run
+    // without a launch.json must fail on the allowlist, not on a missing file
+    assert.throws(() => armProfile(root, ['y-sealed-0'], policyPrices()), /not on the dev60 allowlist/);
+    assert.throws(() => armProfile(root, ['x-dev60-dn', 'x-look2-1'], policyPrices()), /not on the dev60 allowlist/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -59,4 +63,19 @@ test('prices come from the owner policy file only', () => {
   const p = policyPrices();
   assert.deepEqual(p['claude-haiku-5-5'], { in: 0.1, out: 0.5 });
   assert.ok(p['claude-opus-5-5'].out > p['claude-sonnet-5-5'].out);
+});
+
+test('review 18: the implied output is a range; the lower end charges cached and uncached input at their maximum price', () => {
+  const pm = { in: 0.1, out: 0.5 };
+  // 1M input tokens of which 900K cached, $0.06 total: upper end (cache free): (0.06 - 0.01) / 5e-7 = 100,000 tokens;
+  // lower end: cached at the input price (0.09) already exceeds the cost: 0
+  const r = impliedOutput({ input: 1e6, cachedInput: 9e5, output: 100 }, 0.06, pm);
+  assert.ok(Math.abs(r.impliedMax - 100000) < 1e-6);
+  assert.equal(r.impliedMin, 0);
+  // no cache: the range closes up to the cache-write bound: (0.06 - 0.0125) / 5e-7 = 95,000 .. 100,000
+  const n = impliedOutput({ input: 1e5, cachedInput: 0, output: 100 }, 0.06, pm);
+  assert.ok(Math.abs(n.impliedMax - 100000) < 1e-6 && Math.abs(n.impliedMin - 95000) < 1e-6);
+  assert.ok(n.impliedMin <= n.impliedMax);
+  // teeth: v1's single number is the upper end only, which overstates the gap when caching is heavy
+  assert.ok(r.impliedMax > 100 * r.recorded && r.impliedMin < r.recorded);
 });

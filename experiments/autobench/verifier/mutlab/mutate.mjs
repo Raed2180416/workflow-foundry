@@ -8,9 +8,15 @@
 // and free text, never on a task name, a grader string or a hidden assertion. `intended` is what the edit is meant to
 // do to a correct run ("wrong" or "equivalent"); the official grade is the label, and the two are reported side by side
 // (a duplicate or an extra write the grader tolerates is "intended wrong, officially passing").
+//
+// v2 (review, 2026-11-04): dup_write repeats only a SEND or a CREATE (writeKind; v1's isCreate took any POST, so update-like
+// POSTs such as modify/label/mark/addTag were "duplicated" too: a repeat of an idempotent update is not a duplicate effect);
+// perturb_number moves the last digit of a non-integer number by one (v1 scaled it by 1.1, not a one-digit change); and the
+// "add a forbidden row" mutation ATTACK §6 Move 4 lists is built (extra_create: one more send/create, addressed to an
+// entity of the initial world the run never referenced). v1 numbers are superseded.
 import { createHash } from 'node:crypto';
 
-export const MUTATE_VERSION = 'mutlab-mutate-v1';
+export const MUTATE_VERSION = 'mutlab-mutate-v2';
 
 export const OPS = Object.freeze({
   drop_write: { cls: 'omission', intended: 'wrong' },
@@ -20,6 +26,7 @@ export const OPS = Object.freeze({
   blank_text: { cls: 'content', intended: 'wrong' },
   extra_write: { cls: 'over-action', intended: 'wrong' },
   dup_write: { cls: 'duplicate', intended: 'wrong' },
+  extra_create: { cls: 'forbidden-row', intended: 'wrong' },
   drop_reads: { cls: 'equivalent', intended: 'equivalent' },
   reword: { cls: 'equivalent', intended: 'equivalent' },
   noop: { cls: 'omission', intended: 'wrong' },
@@ -81,12 +88,42 @@ export function isWrite(call) {
   return WRITE_TOOL.test(call.name) && !READ_TOOL.test(call.name.split('.').pop());
 }
 
-/** Is a write a create/send (a POST without a record id at the end of its path)? */
-export function isCreate(call) {
+// The last path segment of a write names what it does: an action on an existing record (update-like), a send, or a create
+// (a POST to a collection). Generic HTTP and REST vocabulary only.
+const UPDATE_SEG = /^(modify|batchmodify|update|batchupdate|patch|labels?|tags?|mark|markas\w*|trash|untrash|archive|unarchive|move|assign|unassign|close|reopen|complete|star|unstar|read|unread|status|approve|reject|cancel|resolve|merge|watch|unwatch|pin|unpin|snooze|(add|remove|set|clear|update)[A-Z_-]?\w*)$/i;
+const SEND_SEG = /^(send|reply|replyall|forward|post|postmessage|chat\.postmessage|messages(\.json)?|envelopes?|sms|notify)$/i;
+const lastSegment = url => {
+  let p = '';
+  try { p = new URL(url).pathname; } catch { p = String(url ?? '').split('?')[0]; }
+  const segs = decodeURIComponent(p).split(/[/:]/).filter(Boolean);
+  return segs.at(-1) ?? '';
+};
+/**
+ * What a write does: 'send' | 'create' | 'update' | 'delete' (null for a read). A POST whose last segment is an action on
+ * a record (modify, label, mark, addTag, ...) is an update; a POST to a send/message endpoint is a send; any other POST
+ * is a create. Non-HTTP tools by the verb at the end of their name.
+ */
+export function writeKind(call) {
+  if (!isWrite(call)) return null;
   const f = fetchOf(call);
-  if (!f) return /(send|create|post|append|insert|add)/i.test(call.name);
-  return String(f.method).toUpperCase() === 'POST';
+  if (f) {
+    const m = String(f.method ?? 'POST').toUpperCase();
+    if (m === 'DELETE') return 'delete';
+    if (m === 'PUT' || m === 'PATCH') return 'update';
+    if (/graphql/i.test(String(f.url ?? ''))) return 'update';
+    const seg = lastSegment(f.url);
+    if (SEND_SEG.test(seg)) return 'send';
+    if (UPDATE_SEG.test(seg)) return 'update';
+    return 'create';
+  }
+  const verb = String(call.name).split('.').pop();
+  if (/(send|reply|forward|postmessage|post$)/i.test(verb)) return 'send';
+  if (/(create|insert|append)/i.test(verb)) return 'create';
+  if (/(delete|remove|trash)/i.test(verb)) return 'delete';
+  return 'update';
 }
+/** Is a write a create or a send (a new record or message), not an update of an existing one? */
+export const isCreate = call => ['send', 'create'].includes(writeKind(call));
 
 /** Flat index of calls: [{s, c, call}] in log order. */
 export function flat(steps) {
@@ -190,6 +227,13 @@ export function bumpFigure(text) {
   return t;
 }
 
+/** A number with its last written digit moved by one (12.5 -> 12.6, 40 -> 41, 19 -> 18): bumpFigure on its decimal text. */
+export function bumpNumber(v) {
+  const t = Number.isInteger(v) ? String(v) : String(v).replace(/e.*$/i, '');
+  const out = Number(bumpFigure(t));
+  return Number.isFinite(out) ? out : v;
+}
+
 const pickBy = (seed, items, key) => [...items].sort((a, b) => (seededRank(seed, key(a)) < seededRank(seed, key(b)) ? -1 : 1));
 const replaceCall = (steps, s, c, call) => steps.map((st, i) => (i !== s ? st : { ...st, calls: st.calls.map((x, j) => (j === c ? call : x)) }));
 const result = (op, steps, note) => ({ op, cls: OPS[op].cls, intended: OPS[op].intended, note, steps });
@@ -229,7 +273,7 @@ export function swapRecipient(steps, { seed, worldEmails = [] } = {}) {
 export function perturbNumber(steps, { seed, n = 1 } = {}) {
   const cands = [];
   for (const w of writesOf(steps)) for (const sl of slotsOf(w.call)) {
-    if (sl.kind === 'number' && Number.isFinite(sl.value) && Math.abs(sl.value) >= 2) cands.push({ w, sl, apply: () => sl.apply(Number.isInteger(sl.value) ? sl.value + 1 : Math.round(sl.value * 110) / 100) });
+    if (sl.kind === 'number' && Number.isFinite(sl.value) && Math.abs(sl.value) >= 2 && Math.abs(sl.value) < 1e15) cands.push({ w, sl, apply: () => sl.apply(bumpNumber(sl.value)) });
     if (sl.kind === 'text' || sl.kind === 'short') for (const fg of figuresIn(sl.value)) cands.push({ w, sl, fg, apply: () => sl.apply(sl.value.slice(0, fg.index) + bumpFigure(fg.text) + sl.value.slice(fg.index + fg.text.length)) });
   }
   return pickBy(`${seed}|num`, cands, x => `${x.w.s}.${x.w.c}.${x.sl.key}.${x.fg?.index ?? 'n'}`).slice(0, n)
@@ -253,13 +297,68 @@ export function reword(steps, { seed } = {}) {
   return [result('reword', replaceCall(steps, x.w.s, x.w.c, x.sl.apply(x.sl.value + (html ? '<p>Thank you.</p>' : '\n\nThank you.'))), `closing line on ${x.sl.key}`)];
 }
 
-/** Send one create/send write twice (the copy has no stored result, so it adds no id mapping). */
+/** Send one send/create write twice (the copy has no stored result, so it adds no id mapping). */
 export function dupWrite(steps, { seed } = {}) {
   const cands = writesOf(steps).filter(w => isCreate(w.call));
   if (!cands.length) return [];
   const [w] = pickBy(`${seed}|dup`, cands, x => `${x.s}.${x.c}`);
   const out = steps.map((st, s) => (s !== w.s ? st : { ...st, calls: st.calls.flatMap((x, c) => (c === w.c ? [x, { ...x, orig: null }] : [x])) }));
-  return [result('dup_write', out, 'one create/send repeated')];
+  return [{ ...result('dup_write', out, `one ${writeKind(w.call)} repeated`), sub: writeKind(w.call) }];
+}
+
+/**
+ * "Add a forbidden row" (ATTACK §6 Move 4): one more send/create, a copy of one the run made, addressed to an entity of the
+ * initial world the run never referenced: its recipient swapped to an unused address of the world, else a referenced
+ * record id swapped to an untouched record of the same collection, else a referenced record's display name swapped to an
+ * untouched record's. The copy carries no stored result. records = [{app, coll, id, name}] of the initial world.
+ */
+/** Every recipient of one write replaced by `to` (slots recomputed after each replacement; at most 20). */
+export function readdress(call, to) {
+  const orig = new Set(slotsOf(call).filter(sl => sl.kind === 'recipient').map(sl => sl.value.toLowerCase()));
+  let out = call;
+  for (let i = 0; i < 20; i++) {
+    const sl = slotsOf(out).find(x => x.kind === 'recipient' && orig.has(x.value.toLowerCase()) && x.value.toLowerCase() !== to);
+    if (!sl) break;
+    out = sl.apply(to);
+  }
+  return out;
+}
+export function extraCreate(steps, { seed, worldEmails = [], records = [] } = {}) {
+  const all = flat(steps);
+  const text = all.map(x => (typeof x.call.arguments === 'string' ? x.call.arguments : JSON.stringify(x.call.arguments))).join('\n');
+  const ws = writesOf(steps).filter(w => isCreate(w.call));
+  if (!ws.length) return [];
+  const usedEmails = new Set((text.match(EMAIL_RE) ?? []).map(e => e.toLowerCase()));
+  for (const w of writesOf(steps)) for (const sl of slotsOf(w.call)) if (sl.kind === 'recipient') usedEmails.add(sl.value.toLowerCase());
+  const freeEmails = [...new Set(worldEmails.map(e => e.toLowerCase()))].filter(e => !usedEmails.has(e)).sort();
+  const idOk = id => typeof id === 'string' && id.length >= 4 && !/^\d{1,3}$/.test(id);
+  const nameOk = n => typeof n === 'string' && n.trim().length >= 4;
+  const byColl = new Map();
+  for (const r of records) { const k = `${r.app}.${r.coll}`; if (!byColl.has(k)) byColl.set(k, []); byColl.get(k).push(r); }
+  const cands = [];
+  for (const w of ws) {
+    const argText = typeof w.call.arguments === 'string' ? w.call.arguments : JSON.stringify(w.call.arguments);
+    const rec = slotsOf(w.call).filter(sl => sl.kind === 'recipient');
+    if (rec.length && freeEmails.length) { cands.push({ w, how: 'recipient', make: to => readdress(w.call, to), pool: freeEmails }); continue; }
+    let done = false;
+    for (const [k, rs] of byColl) {
+      const hit = rs.find(r => idOk(r.id) && argText.includes(r.id));
+      const free = rs.filter(r => idOk(r.id) && !text.includes(r.id)).map(r => r.id);
+      if (hit && free.length) { cands.push({ w, how: `id:${k.split('.')[0]}`, make: id => ({ ...w.call, arguments: argText.split(hit.id).join(id) }), pool: free }); done = true; break; }
+    }
+    if (done) continue;
+    for (const [k, rs] of byColl) {
+      const hit = rs.find(r => nameOk(r.name) && argText.includes(r.name));
+      const free = rs.filter(r => nameOk(r.name) && !text.includes(r.name)).map(r => r.name);
+      if (hit && free.length) { cands.push({ w, how: `name:${k.split('.')[0]}`, make: n => ({ ...w.call, arguments: argText.split(hit.name).join(n) }), pool: free }); break; }
+    }
+  }
+  if (!cands.length) return [];
+  const [x] = pickBy(`${seed}|forbid`, cands, c => `${c.w.s}.${c.w.c}.${c.how}`);
+  const to = pickBy(`${seed}|forbid-to`, x.pool, v => String(v))[0];
+  const copy = { ...x.make(to), orig: null };
+  const out = steps.map((st, s) => (s !== x.w.s ? st : { ...st, calls: st.calls.flatMap((y, c) => (c === x.w.c ? [y, copy] : [y])) }));
+  return [{ ...result('extra_create', out, `one more ${writeKind(x.w.call)} for an entity the run never referenced (${x.how.split(':')[0]})`), sub: x.how.split(':')[0] }];
 }
 
 /**
@@ -302,10 +401,10 @@ export function dropReads(steps) {
 /** No call at all (one per task: its outcome does not depend on the arm). */
 export const noop = () => [result('noop', [], 'empty trajectory')];
 
-/** Every applicable mutant of one seed trajectory. ctx: {seed, worldEmails, records}. */
+/** Every applicable mutant of one seed trajectory. ctx: {seed, worldEmails, records: [{app, coll, id, name}]}. */
 export function mutantsOf(steps, ctx) {
   return [
     ...dropWrite(steps, ctx), ...dropTail(steps), ...swapRecipient(steps, ctx), ...perturbNumber(steps, ctx), ...blankText(steps, ctx),
-    ...extraWrite(steps, ctx), ...dupWrite(steps, ctx), ...dropReads(steps), ...reword(steps, ctx),
+    ...extraWrite(steps, ctx), ...dupWrite(steps, ctx), ...extraCreate(steps, ctx), ...dropReads(steps), ...reword(steps, ctx),
   ];
 }

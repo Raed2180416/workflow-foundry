@@ -30,20 +30,35 @@ export function loadLab(labDir, { canonicalOnly = true, outcomeOnly = true, arms
   return rows.filter(r => (!canonicalOnly || r.canonical) && (!outcomeOnly || r.outcome) && (!arms || arms.includes(r.arm)));
 }
 
-/** What a verifier may see of a row: request, clock, services and the diff (never label, task name, arm, run or paths). */
-export function viewOf(row, diff = row.diff) {
-  return { vid: sha256(`v|${row.rowId}`).slice(0, 12), prompt: { system: row.prompt.system, user: row.prompt.user }, today: row.today, services: row.services, diff };
+/**
+ * What a verifier may see of a row: request, services and the diff (never label, task name, arm, run or paths).
+ * `today` is the world's hidden clock (meta.current_time, which the lab builder copied into the row); D28 (2) keeps it
+ * hidden, so it is passed only with { clock: true } (the lab's original runs, kept for comparison) and is null otherwise.
+ */
+export function viewOf(row, diff = row.diff, { clock = false } = {}) {
+  return { vid: sha256(`v|${row.rowId}`).slice(0, 12), prompt: { system: row.prompt.system, user: row.prompt.user }, today: clock ? row.today : null, services: row.services, diff };
 }
 export const labelPass = row => row.label.task_completed_correctly === 1;
 export function worldsOf(labDir, row) {
   return { initial: readGz(path.join(labDir, row.worlds.initial)), final: readGz(path.join(labDir, row.worlds.final)) };
 }
 
+/**
+ * Is `p` inside <...>/<run>/<kind>/ as a RESOLVED path (directory components, not a substring: review finding 17), with an
+ * allowed run? kind: 'host' | 'prep'.
+ */
+export function underRun(p, run, kind) {
+  if (typeof p !== 'string' || !p || !runAllowed(run)) return false;
+  const parts = path.resolve(p).split(path.sep);
+  const i = parts.indexOf(run);
+  return i > 0 && parts[i + 1] === kind && parts.length > i + 2;
+}
+
 /** The stored call log of a row as replay steps: [{calls: [{name, arguments, orig}]}]. */
 export function stepsOf(row) {
   const host = row.source?.host;
-  if (!host || !runAllowed(row.run) || !host.includes(`/${row.run}/host/`)) throw new Error(`labio: no allowed host directory for ${row.rowId}`);
-  const f = path.join(host, 'calls.jsonl');
+  if (!underRun(host, row.run, 'host')) throw new Error(`labio: no allowed host directory for ${row.rowId}`);
+  const f = path.join(path.resolve(host), 'calls.jsonl');
   return readJsonl(f).map(s => ({ calls: (s.calls ?? []).map((c, j) => ({ name: c.name, arguments: c.arguments, orig: (s.results ?? [])[j] ?? null })) }));
 }
 
