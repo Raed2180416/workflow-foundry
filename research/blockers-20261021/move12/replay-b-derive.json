@@ -1,0 +1,318 @@
+{
+ "evidence": "development/diagnostic, $0, expressibility (oracle-informed SELECTs written by the analyst), devTrain dev60",
+ "version": "dstar-derive-v1",
+ "figures": [
+  {
+   "task": "finance.ap_aging_report",
+   "id": "current-bucket",
+   "needsToday": true,
+   "readsToday": true,
+   "clock": {
+    "status": "weak",
+    "value": "2026-02-10",
+    "domain": [
+     "2026-01-11",
+     "2026-03-12"
+    ]
+   },
+   "status": "unknown",
+   "distinctOverDomain": 3,
+   "errors": 0,
+   "reproducesAtAnchor": true,
+   "certainCorrect": false,
+   "confidentWrong": false,
+   "consistentWindow": [
+    "2026-02-10",
+    "2026-03-03",
+    22
+   ],
+   "expectedSha256": "dbf1a7fe97dc6a1f"
+  },
+  {
+   "task": "finance.ap_aging_report",
+   "id": "over-90-bucket",
+   "needsToday": true,
+   "readsToday": true,
+   "clock": {
+    "status": "weak",
+    "value": "2026-02-10",
+    "domain": [
+     "2026-01-11",
+     "2026-03-12"
+    ]
+   },
+   "status": "unknown",
+   "distinctOverDomain": 4,
+   "errors": 0,
+   "reproducesAtAnchor": true,
+   "certainCorrect": false,
+   "confidentWrong": false,
+   "consistentWindow": [
+    "2026-01-31",
+    "2026-03-05",
+    34
+   ],
+   "expectedSha256": "5660a0508071f016"
+  },
+  {
+   "task": "finance.quarterly_tax_estimate",
+   "id": "q1-estimate",
+   "needsToday": false,
+   "readsToday": false,
+   "clock": {
+    "status": "anchored",
+    "value": "2026-03-03",
+    "domain": [
+     "2026-03-03",
+     "2026-04-02"
+    ]
+   },
+   "status": "certain",
+   "distinctOverDomain": 1,
+   "errors": 0,
+   "reproducesAtAnchor": true,
+   "certainCorrect": true,
+   "confidentWrong": false,
+   "consistentWindow": null,
+   "expectedSha256": "373ef3f7d052be74"
+  },
+  {
+   "task": "sales.vendor_review_prep",
+   "id": "qualifying-total",
+   "needsToday": false,
+   "readsToday": false,
+   "clock": {
+    "status": "anchored",
+    "value": "2026-02-25",
+    "domain": [
+     "2026-02-25",
+     "2026-03-27"
+    ]
+   },
+   "status": "certain",
+   "distinctOverDomain": 1,
+   "errors": 0,
+   "reproducesAtAnchor": true,
+   "certainCorrect": true,
+   "confidentWrong": false,
+   "consistentWindow": null,
+   "expectedSha256": "75a0cec01adfeb19"
+  },
+  {
+   "task": "marketing.customer_feedback_aggregation",
+   "id": "eligible-count",
+   "needsToday": false,
+   "readsToday": false,
+   "clock": {
+    "status": "anchored",
+    "value": "2026-01-28",
+    "domain": [
+     "2026-01-28",
+     "2026-02-27"
+    ]
+   },
+   "status": "certain",
+   "distinctOverDomain": 1,
+   "errors": 0,
+   "reproducesAtAnchor": true,
+   "certainCorrect": true,
+   "confidentWrong": false,
+   "consistentWindow": null,
+   "expectedSha256": "7dbe2e5e3667ef59"
+  },
+  {
+   "task": "operations.zoom_dr_drill",
+   "id": "plan-title",
+   "needsToday": false,
+   "readsToday": false,
+   "clock": {
+    "status": "anchored",
+    "value": "2026-03-03",
+    "domain": [
+     "2026-03-03",
+     "2026-04-02"
+    ]
+   },
+   "status": "certain",
+   "distinctOverDomain": 1,
+   "errors": 0,
+   "reproducesAtAnchor": true,
+   "certainCorrect": true,
+   "confidentWrong": false,
+   "consistentWindow": null,
+   "expectedSha256": "9d4e70b8702560f2"
+  },
+  {
+   "task": "operations.docusign_contractor_offboard",
+   "id": "card-name",
+   "needsToday": false,
+   "readsToday": false,
+   "clock": {
+    "status": "explicit",
+    "value": "2026-01-29",
+    "domain": [
+     "2026-01-29",
+     "2026-01-29"
+    ]
+   },
+   "status": "certain",
+   "distinctOverDomain": 1,
+   "errors": 0,
+   "reproducesAtAnchor": true,
+   "certainCorrect": true,
+   "confidentWrong": false,
+   "consistentWindow": null,
+   "expectedSha256": "5073bc0b8fe43907"
+  },
+  {
+   "task": "hr.visa_expiry_tracking",
+   "id": "days-kevin",
+   "needsToday": true,
+   "readsToday": true,
+   "clock": {
+    "status": "anchored",
+    "value": "2026-03-05",
+    "domain": [
+     "2026-03-05",
+     "2026-04-04"
+    ]
+   },
+   "status": "unknown",
+   "distinctOverDomain": 31,
+   "errors": 0,
+   "reproducesAtAnchor": false,
+   "certainCorrect": false,
+   "confidentWrong": false,
+   "consistentWindow": [
+    "2026-03-15",
+    "2026-03-15",
+    1
+   ],
+   "expectedSha256": "1be00341082e25c4"
+  },
+  {
+   "task": "hr.visa_expiry_tracking",
+   "id": "days-raj",
+   "needsToday": true,
+   "readsToday": true,
+   "clock": {
+    "status": "anchored",
+    "value": "2026-03-05",
+    "domain": [
+     "2026-03-05",
+     "2026-04-04"
+    ]
+   },
+   "status": "unknown",
+   "distinctOverDomain": 31,
+   "errors": 0,
+   "reproducesAtAnchor": false,
+   "certainCorrect": false,
+   "confidentWrong": false,
+   "consistentWindow": [
+    "2026-03-15",
+    "2026-03-15",
+    1
+   ],
+   "expectedSha256": "31489056e0916d59"
+  },
+  {
+   "task": "hr.visa_expiry_tracking",
+   "id": "days-yuki",
+   "needsToday": true,
+   "readsToday": true,
+   "clock": {
+    "status": "anchored",
+    "value": "2026-03-05",
+    "domain": [
+     "2026-03-05",
+     "2026-04-04"
+    ]
+   },
+   "status": "unknown",
+   "distinctOverDomain": 31,
+   "errors": 0,
+   "reproducesAtAnchor": false,
+   "certainCorrect": false,
+   "confidentWrong": false,
+   "consistentWindow": [
+    "2026-03-15",
+    "2026-03-15",
+    1
+   ],
+   "expectedSha256": "f57e5cb1f4532c00"
+  }
+ ],
+ "tasks": [
+  {
+   "task": "finance.ap_aging_report",
+   "figures": 2,
+   "reproducedAtAnchor": true,
+   "certainCorrect": false,
+   "anyConfidentWrong": false,
+   "anyUnknown": true
+  },
+  {
+   "task": "finance.quarterly_tax_estimate",
+   "figures": 1,
+   "reproducedAtAnchor": true,
+   "certainCorrect": true,
+   "anyConfidentWrong": false,
+   "anyUnknown": false
+  },
+  {
+   "task": "sales.vendor_review_prep",
+   "figures": 1,
+   "reproducedAtAnchor": true,
+   "certainCorrect": true,
+   "anyConfidentWrong": false,
+   "anyUnknown": false
+  },
+  {
+   "task": "marketing.customer_feedback_aggregation",
+   "figures": 1,
+   "reproducedAtAnchor": true,
+   "certainCorrect": true,
+   "anyConfidentWrong": false,
+   "anyUnknown": false
+  },
+  {
+   "task": "operations.zoom_dr_drill",
+   "figures": 1,
+   "reproducedAtAnchor": true,
+   "certainCorrect": true,
+   "anyConfidentWrong": false,
+   "anyUnknown": false
+  },
+  {
+   "task": "operations.docusign_contractor_offboard",
+   "figures": 1,
+   "reproducedAtAnchor": true,
+   "certainCorrect": true,
+   "anyConfidentWrong": false,
+   "anyUnknown": false
+  },
+  {
+   "task": "hr.visa_expiry_tracking",
+   "figures": 3,
+   "reproducedAtAnchor": false,
+   "certainCorrect": false,
+   "anyConfidentWrong": false,
+   "anyUnknown": true
+  }
+ ],
+ "summary": {
+  "tasks": 7,
+  "figures": 10,
+  "tasksReproducedAtAnchor": 6,
+  "tasksCertainCorrect": 5,
+  "figuresConfidentWrong": 0,
+  "figuresUnknown": 5,
+  "confidentWrongRate": 0,
+  "clock": {
+   "weak": 2,
+   "anchored": 7,
+   "explicit": 1
+  }
+ }
+}
