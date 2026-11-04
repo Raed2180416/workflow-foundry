@@ -1,12 +1,13 @@
 {
  "kind": "appworld-bg8",
  "version": 1,
- "at": "2026-11-04T14:27:51.134Z",
+ "at": "2026-11-04T17:31:31.581Z",
+ "codeSha256": "7b2681b9e6653a3a96e3449d23afedf923eaf9b9ccfc574299a3d4a2f3ffb045",
  "planted": {
-  "hostSnapshot": "/var/tmp/foundry-work/appworld-host/runs/bg8-18213/units/x__r0/output/dbs/planted.jsonl",
-  "hostVerdict": "/var/tmp/foundry-work/appworld-host/runs/bg8-18213/units/x__r0/verdict.json",
-  "otherUnitLive": "/var/tmp/foundry-work/appworld-live/bg8-18213/u/other__r0/serve/experiments/outputs/planted.jsonl",
-  "parityCache": "/var/tmp/foundry-work/appworld-host/parity/bg8-18213/official.jsonl"
+  "hostSnapshot": "/var/tmp/foundry-work/appworld-host/runs/bg8-9377/units/x__r0/output/dbs/planted.jsonl",
+  "hostVerdict": "/var/tmp/foundry-work/appworld-host/runs/bg8-9377/units/x__r0/verdict.json",
+  "otherUnitLive": "/var/tmp/foundry-work/appworld-live/bg8-9377/u/other__r0/serve/experiments/outputs/planted.jsonl",
+  "parityCache": "/var/tmp/foundry-work/appworld-host/parity/bg8-9377/official.jsonl"
  },
  "kept": {
   "venv": "/var/tmp/foundry-work/benches/appworld/venv",
@@ -51,12 +52,12 @@
     "/var/tmp/foundry-work/benches/appworld/home": "err:FileNotFoundError",
     "/var/tmp/foundry-work/benches/appworld/downloads.json": "err:FileNotFoundError",
     "/var/tmp/foundry-work/appworld-host": "err:FileNotFoundError",
-    "/var/tmp/foundry-work/appworld-host/runs/bg8-18213/units/x__r0/output/dbs/planted.jsonl": "err:FileNotFoundError",
-    "/var/tmp/foundry-work/appworld-host/runs/bg8-18213/units/x__r0/verdict.json": "err:FileNotFoundError",
-    "/var/tmp/foundry-work/appworld-live/bg8-18213/u/other__r0/serve/experiments/outputs/planted.jsonl": "err:FileNotFoundError",
-    "/var/tmp/foundry-work/appworld-host/parity/bg8-18213/official.jsonl": "err:FileNotFoundError",
-    "/var/tmp/foundry-work/appworld-live/bg8-18213/u/probe__r0/pub/data/tasks/afc0fce_2/ground_truth": "err:FileNotFoundError",
-    "/var/tmp/foundry-work/appworld-live/bg8-18213/u/probe__r0/pub/data/datasets": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-host/runs/bg8-9377/units/x__r0/output/dbs/planted.jsonl": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-host/runs/bg8-9377/units/x__r0/verdict.json": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-live/bg8-9377/u/other__r0/serve/experiments/outputs/planted.jsonl": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-host/parity/bg8-9377/official.jsonl": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-live/bg8-9377/u/probe__r0/pub/data/tasks/afc0fce_2/ground_truth": "err:FileNotFoundError",
+    "/var/tmp/foundry-work/appworld-live/bg8-9377/u/probe__r0/pub/data/datasets": "err:FileNotFoundError",
     "/home/user/workflow-foundry": "err:IsADirectoryError",
     "/home/user/workflow-foundry/corpus": "err:FileNotFoundError",
     "/home/user/workflow-foundry/.claude/worktrees/wf_435f2b5e-3ff-14/beds/sealed": "err:FileNotFoundError",

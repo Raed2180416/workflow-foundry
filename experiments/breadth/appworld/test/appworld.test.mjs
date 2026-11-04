@@ -117,7 +117,9 @@ test('facade: a bridge failure is reported as an environment failure, never as a
 // ---- runner hygiene -------------------------------------------------------------------------------------------------
 test('runner refuses test_challenge, mixed roles, sealed without a freeze, and a 4th devCheck look', () => {
   assert.throws(() => RUN.assertUnits(split, ['0000000_1']), /test_challenge is never run/);
-  assert.throws(() => RUN.assertUnits(split, [split.roles.devTrain[0], split.roles.devCheck[0]]), /mix roles/);
+  assert.throws(() => RUN.assertUnits(split, [split.roles.devTrain[0], split.roles.devCheck[0]], { armFamily: 'A-H', look: 1 }), /mix roles/);
+  assert.equal(RUN.assertUnits(split, [split.roles.devTrain[0], split.roles.devCheck[0]]).role, 'dev'); // scripted train + dev
+  assert.throws(() => RUN.assertUnits(split, [split.roles.devTrain[0], split.roles.sealed[0]]), /mix roles/);
   assert.throws(() => RUN.assertUnits(split, [split.roles.sealed[0]]), /--sealed --freeze/);
   assert.throws(() => RUN.assertUnits(split, [split.roles.devTrain[0]], { sealed: true }), /test_normal units only/);
   const dc = [split.roles.devCheck[0]];
@@ -259,6 +261,7 @@ test('parity.json and bg8.json: produced by the committed code and passing', { s
   const bg8 = L.readJson(path.join(L.RESEARCH, 'bg8.json'));
   assert.equal(bg8.pass, true);
   assert.equal(bg8.positiveControl.ok, true);
+  assert.equal(bg8.codeSha256, LP.bg8CodeSha256(), 'the code that produced bg8.json differs from the committed code: rerun leakprobe.mjs');
 });
 
 // ---- integration (pinned venv and data) -----------------------------------------------------------------------------

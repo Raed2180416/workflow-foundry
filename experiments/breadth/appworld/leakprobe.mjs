@@ -23,6 +23,14 @@ import { Facade, runPythonTool } from './facade.mjs';
 import { armTools, makeServer } from './mcp.mjs';
 import { materializeSession, NODE_BIN } from './session.mjs';
 import { loadSplit } from './split.mjs';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+
+/** The code BG-8 depends on: the probe, the serve sandbox and bridge, the relay, the facade and the session sandbox. A
+ * test fails when the committed code differs from the code that produced bg8.json. */
+export const BG8_FILES = ['leakprobe.mjs', 'bridge.py', 'lib.mjs', 'mcp.mjs', 'facade.mjs', 'session.mjs', '../../../src/executors/claude-code.mjs', '../../../src/sandbox.mjs'];
+const fileSha = f => createHash('sha256').update(readFileSync(new URL(f, import.meta.url))).digest('hex');
+export const bg8CodeSha256 = () => createHash('sha256').update(BG8_FILES.map(fileSha).join(':')).digest('hex');
 
 const TAG = `bg8-${process.pid}`;
 export const PLANTED = Object.freeze({
@@ -346,7 +354,7 @@ export async function runLeakProbe() {
   const python = await probePythonTool();
   const session = await probeSessionSandbox();
   const control = await probeControl();
-  return { kind: 'appworld-bg8', version: 1, at: new Date().toISOString(), planted: PLANTED, kept: { venv: VENV_DIR, bridge: BRIDGE, publicView: 'per unit', serveRoot: 'per unit' },
+  return { kind: 'appworld-bg8', version: 1, at: new Date().toISOString(), codeSha256: bg8CodeSha256(), planted: PLANTED, kept: { venv: VENV_DIR, bridge: BRIDGE, publicView: 'per unit', serveRoot: 'per unit' },
     executePath: execute, pythonTool: python, sessionSandbox: session, positiveControl: control, pass: Boolean(execute.ok && python.ok && session.ok && control.ok) };
 }
 

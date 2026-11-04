@@ -219,15 +219,9 @@ export async function runParity({ concurrency = 2, limit = null, out = path.join
   const offPolicies = ['gold@verify', 'gold@arm', 'null@arm', 'docs@arm', ...ops.map(o => `${o}@verify`)];
   const offItems = batteryItems(plans, ids, offPolicies);
   log(`[parity] official battery: ${offItems.length} items`);
-  const official = await cached(offDir, 'official', offItems, (todo, onRow) => officialBattery(todo, { workers: concurrency, dir: offDir, onRow }), log);
-  log(`[parity] official done (${Math.round((Date.now() - t0) / 1000)} s)`);
-  const ourItems = offItems.filter(it => !it.policy.startsWith('gold@arm') && !it.policy.startsWith('docs@'));
-  const ours = await cached(dir, 'ours-1', ourItems, (todo, onRow) => oursBattery(todo, { workers: concurrency, dir, snapRoot: path.join(snapRoot, 'run1'), onRow }), log);
-  log(`[parity] ours run 1 done (${Math.round((Date.now() - t0) / 1000)} s)`);
-  const detItems = ourItems.filter(it => it.policy === 'gold@verify' || it.policy === 'null@arm');
-  const ours2 = await cached(dir, 'ours-2', detItems, (todo, onRow) => oursBattery(todo, { workers: concurrency, dir, snapRoot: path.join(snapRoot, 'run2'), onRow }), log);
-  log(`[parity] ours run 2 done (${Math.round((Date.now() - t0) / 1000)} s)`);
-  // run.mjs per-unit path: the scripted $0 baselines (fresh serve process per unit, arm world profile)
+  // run.mjs per-unit path: the scripted $0 baselines (fresh serve process per unit, arm world profile). Independent of
+  // the batteries, so it runs beside them (each run resumes from its own results file).
+  const runBaselines = async () => {
   const baselines = {};
   for (const policy of ['null', 'docs', 'gold']) {
     const runId = `parity-${code.slice(0, 10)}-${policy}${limit ? `-l${limit}` : ''}`;
@@ -242,6 +236,20 @@ export async function runParity({ concurrency = 2, limit = null, out = path.join
       scenarios: new Set(res.map(r => scenarioOf(r.taskId))).size, collateral: res.filter(r => r.outcome?.collateral).length };
     log(`[parity] run.mjs ${policy}: ${baselines[policy].tgc}/${baselines[policy].n} (${Math.round((Date.now() - t0) / 1000)} s)`);
   }
+  return baselines;
+  };
+  const baselinesP = runBaselines();
+  baselinesP.catch(() => {}); // awaited below; this only keeps an early failure from being unhandled
+  const official = await cached(offDir, 'official', offItems, (todo, onRow) => officialBattery(todo, { workers: concurrency, dir: offDir, onRow }), log);
+  log(`[parity] official done (${Math.round((Date.now() - t0) / 1000)} s)`);
+  const ourItems = offItems.filter(it => !it.policy.startsWith('gold@arm') && !it.policy.startsWith('docs@'));
+  const ours = await cached(dir, 'ours-1', ourItems, (todo, onRow) => oursBattery(todo, { workers: concurrency, dir, snapRoot: path.join(snapRoot, 'run1'), onRow }), log);
+  log(`[parity] ours run 1 done (${Math.round((Date.now() - t0) / 1000)} s)`);
+  const detItems = ourItems.filter(it => it.policy === 'gold@verify' || it.policy === 'null@arm');
+  const ours2 = await cached(dir, 'ours-2', detItems, (todo, onRow) => oursBattery(todo, { workers: concurrency, dir, snapRoot: path.join(snapRoot, 'run2'), onRow }), log);
+  log(`[parity] ours run 2 done (${Math.round((Date.now() - t0) / 1000)} s)`);
+  const baselines = await baselinesP;
+  log(`[parity] baselines done (${Math.round((Date.now() - t0) / 1000)} s)`);
   const keysOf = pol => ids.map(id => `${id}/${pol}`);
   const goldV = keysOf('gold@verify'), goldA = keysOf('gold@arm'), nullA = keysOf('null@arm'), docsA = keysOf('docs@arm');
   const mutKeys = ops.flatMap(op => ids.map(id => `${id}/${op}`).filter(k => official.has(k)));

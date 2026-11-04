@@ -82,8 +82,10 @@ const LOOK_LOG = path.join(HOST_ROOT, 'devcheck-looks.jsonl');
 export function assertUnits(split, ids, { sealed = false, freeze = null, look = null, armFamily = null, record = true } = {}) {
   const roles = new Set(ids.map(id => roleOf(split, id)));
   if (roles.has(null)) throw new Error('a unit is outside train, dev and test_normal (test_challenge is never run)');
-  if (roles.size !== 1) throw new Error(`units mix roles (${[...roles].join(', ')})`);
-  const role = [...roles][0];
+  // train + dev together ('dev') only for scripted policies (no model, so no look accounting): `--scripted ... --split dev`
+  const devMix = roles.size === 2 && roles.has('devTrain') && roles.has('devCheck') && !armFamily && !sealed;
+  if (roles.size !== 1 && !devMix) throw new Error(`units mix roles (${[...roles].join(', ')})`);
+  const role = devMix ? 'dev' : [...roles][0];
   if (role === 'sealed') {
     if (!sealed || !freeze || !existsSync(freeze)) throw new Error('test_normal units need --sealed --freeze <SEALED-FREEZE.json>');
     const f = readJson(freeze);
