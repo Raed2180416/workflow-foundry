@@ -24,14 +24,12 @@ The weak points below appear in published traces and in ours. Each has a counter
 1. **Recon by code.** List every unit with id, path or key, size and type. Record the structure: directories,
    modules, tables, partitions, time ranges, plus import or join edges between units. Recon output is the inventory
    the ledger is checked against, so it must come from code.
-2. **Filter by code, then size from a probe.** First let code clear what it can (static checks, statistics,
-   queries); models get only what code cannot decide. Then run the reader on 3–5 probe shards with known answers
-   at increasing sizes (e.g. 1/8, 1/4, 1/2 of the model's window) and measure recall and cost per unit. Shard
-   size = the largest size before recall drops (bigger shards are cheaper per unit until context rot). Shard
-   count = remaining work ÷ shard size. If shard count × cost per shard exceeds the budget, do not fan out
-   further: filter more by code, sample with a stated guarantee (step 9), or ask. Use the cheapest model class
-   whose probe recall meets the bar; a stronger class may justify larger shards. If the remaining work fits a
-   few calls, do not fan out at all.
+2. **Filter by code, then size from a probe.** Code clears what it can first (static checks, statistics, queries).
+   Run the reader on known-answer probe shards at increasing sizes (e.g. 1/8, 1/4, 1/2 of the window) per candidate
+   class, recording known items, found and cost per shard. `node tools/sizing/plan.mjs --probes p.json --units N
+   --budget USD --recall R` returns the class, shard size and count: the largest size whose 95% recall lower bound
+   meets R, cheapest in total, never extrapolated. It refuses when nothing meets R or the budget: then filter more
+   by code, sample with a stated guarantee (step 9), or ask. Work that fits one shard gets no fan-out.
 3. **Partition by structure.** Keep coupled units together: a module, a table, a time window. Bound each shard by
    the measured per-reader budget. Keep shards well inside the model's window, since context rot starts long
    before the limit. Record the edges a shard boundary cuts; the reconcile step needs them.
