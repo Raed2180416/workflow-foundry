@@ -172,3 +172,20 @@ test('a ledger verifier takes its inventory from a data.inventory handle: every 
     if (!pass) assert.deepEqual(r.outputs.covered.ledger.missingIds, ['sub/a.json']);
   }
 });
+
+test('verify-run checks every blob a run references: clean while intact, BLOB_CORRUPT after an edit, BLOB_MISSING after a delete', async t => {
+  const { verifyRun } = await import('../src/verify-run.mjs');
+  const { unlinkSync } = await import('node:fs');
+  const env = world(t), registry = registryFor([env.data]);
+  const r = await run(t, env, registry, flow([task('imp', 'data.import', { path: 'big.txt' })]));
+  assert.equal(r.status, 'succeeded', JSON.stringify(r.error));
+  const clean = verifyRun(env.store, r.id);
+  assert.equal(clean.ok, true, JSON.stringify(clean.findings)); assert.equal(clean.checks.blobs.referenced, 1);
+  const blobs = new BlobStore(env.store.directory), file = blobs.pathOf(r.outputs.imp.$blob);
+  chmodSync(file, 0o600); writeFileSync(file, 'x'.repeat(r.outputs.imp.bytes));
+  const edited = verifyRun(env.store, r.id);
+  assert.equal(edited.ok, false); assert.deepEqual(edited.findings.filter(f => f.code.startsWith('BLOB_')).map(f => f.code), ['BLOB_CORRUPT']);
+  unlinkSync(file);
+  const missing = verifyRun(env.store, r.id);
+  assert.deepEqual(missing.findings.filter(f => f.code.startsWith('BLOB_')).map(f => f.code), ['BLOB_MISSING']);
+});

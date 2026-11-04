@@ -6,13 +6,14 @@
 - the producers `data.import`, `data.split` and `data.inventory` (`src/data-capabilities.mjs`);
 - the `$read` consumer in task and code args;
 - `render: "blob-text"` agent inputs;
-- ledger inventories from a handle.
+- ledger inventories from a handle;
+- `verify-run` BLOB_MISSING and BLOB_CORRUPT checks over every blob a run references.
 
 Tests: `tests/blobs.test.mjs`, `tests/capability-output-label.test.mjs` and `tests/data-handles.test.mjs`. Every
 safeguard has a mutant the tests kill (13 mutants in all).
 
 **Not built yet:**
-- `verify-run` BLOB_MISSING/BLOB_CORRUPT checks, and blob bundling in `export`;
+- blob bundling in `export`;
 - a per-node sandbox input cap above 2 MB;
 - store garbage collection.
 

@@ -10,6 +10,7 @@ import { verdictOf } from './verdict.mjs';
 import { engineHash, engineOf } from './engine.mjs';
 import { replayWaits, signalCheckpointDrift } from './signals.mjs';
 import { stateOpHash } from './state.mjs';
+import { BlobStore, isHandle } from './blobs.mjs';
 
 const CALL_EVENTS = new Set(['model.called', 'node.recovered_from_journal', 'model.cancelled']);
 const TERMINAL = new Set(['succeeded', 'failed', 'cancelled', 'uncertain']);
@@ -335,5 +336,23 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
     add('warn', 'MIXED_ENGINE_VERSIONS', `The run's ${harness} calls were served by ${versions.length} versions (${versions.map(v => `${v.version} from event ${v.firstSeq}, ${v.calls} call${v.calls === 1 ? '' : 's'}`).join('; ')}): pin the CLI (research/manifests/claude-cli.lock.json, FOUNDRY_CLI_LOCK) for runs whose evidence must come from one program`, { harness, versions });
   }
   checks.harness = Object.fromEntries([...served].map(([harness, byVersion]) => [harness, [...byVersion.keys()]]));
+
+  // 9. Data handles (src/blobs.mjs): every blob the run's record references (its input, outputs and node states) must still be in
+  // the workspace with its stated size and sha256. A missing or edited blob means the record no longer describes data anyone can read.
+  const handles = new Map(), visit = value => {
+    if (Array.isArray(value)) { value.forEach(visit); return; }
+    if (!value || typeof value !== 'object') return;
+    if (isHandle(value)) { if (!handles.has(value.$blob)) handles.set(value.$blob, value); return; }
+    for (const v of Object.values(value)) visit(v);
+  };
+  visit(run);
+  if (handles.size) {
+    const blobs = new BlobStore(store.directory);
+    for (const handle of handles.values()) {
+      try { blobs.verify(handle); }
+      catch (error) { if (['BLOB_MISSING', 'BLOB_CORRUPT'].includes(error.code)) add('error', error.code, error.message, { blob: handle.$blob }); else throw error; }
+    }
+  }
+  checks.blobs = { referenced: handles.size };
   return result();
 }
