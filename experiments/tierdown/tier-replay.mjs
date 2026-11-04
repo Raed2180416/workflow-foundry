@@ -117,7 +117,10 @@ async function main() {
   if (modelTiers.length && !flag('--dry')) {
     const { createModelPort } = await import('../lib/models.mjs');
     mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
-    ({ port, db, tokens } = createModelPort({ journalFile: opt('--journal') ?? path.resolve(out).replace(/\.jsonl$/, '') + '.journal.sqlite', allowedModels: modelTiers,
+    ({ port, db, tokens } = createModelPort({ journalFile: opt('--journal') ?? path.resolve(out).replace(/\.jsonl$/, '') + '.journal.sqlite',
+      // The policy subset must keep a models[] entry (validatePolicy); Haiku is listed even in a Mercury-only pass and
+      // is only called when it is one of this run's tiers.
+      allowedModels: [...new Set([...modelTiers, 'claude-haiku-5-5'])],
       ...(modelTiers.includes('mercury-3') ? { tokenCap: mercuryTokens } : {}), timeoutMs: 300000 }));
   }
   let spent = 0, calls = 0, refusedByCap = 0, consecutiveFaults = 0, capRefused = 0;
