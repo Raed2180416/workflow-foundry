@@ -286,7 +286,10 @@ export async function refreshBadge() {
     if (srCount && srCount.textContent !== sr) srCount.textContent = sr;
     updateNotice(waitingCount);
     // Something new waits: said once, politely, on any page (M2: the notice itself is not a live region, so a poll never repeats it).
-    if (waitingCount > before && !state.firstBadge) say(t('shell.waitingNotice', { n: waitingCount }));
+    // Fix round 2026-10-21 (review:UX new defect 5): what is already waiting when the page opens is said once too, on a page where the
+    // notice shows: it sits above the page's heading, outside main, and the focus starts at the heading, so it was skipped.
+    const route = parse();
+    if (waitingCount && (state.firstBadge ? !['waiting', 'home'].includes(route.view) : waitingCount > before)) say(t('shell.waitingNotice', { n: waitingCount }));
     state.firstBadge = false;
     setTitle(pageTitle);
   } catch { /* the badge is a convenience; the page keeps working */ }

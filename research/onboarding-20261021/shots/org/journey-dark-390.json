@@ -12,7 +12,7 @@
       "target": "opened \"Who decides what\" (Settings, then the link; or #/org)",
       "steps": 0,
       "asks": 0,
-      "ms": 860
+      "ms": 621
     },
     {
       "n": 1,
@@ -21,7 +21,7 @@
       "note": "four starters; the banner says the map is checked when an automation is made, not while it runs",
       "steps": 0,
       "asks": 0,
-      "ms": 1264,
+      "ms": 1045,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h1 Who decides what",
@@ -37,7 +37,7 @@
       "asks": 0,
       "tabs": 5,
       "screens": 0.06,
-      "ms": 1538
+      "ms": 1222
     },
     {
       "action": "fill",
@@ -48,7 +48,7 @@
       "asks": 0,
       "tabs": 9,
       "screens": 0.06,
-      "ms": 1973
+      "ms": 1516
     },
     {
       "action": "click",
@@ -59,7 +59,7 @@
       "asks": 0,
       "tabs": 12,
       "screens": 0.18,
-      "ms": 2478
+      "ms": 1845
     },
     {
       "action": "fill",
@@ -70,7 +70,7 @@
       "asks": 0,
       "tabs": 13,
       "screens": 0.18,
-      "ms": 2872
+      "ms": 2074
     },
     {
       "action": "choose",
@@ -81,7 +81,7 @@
       "asks": 0,
       "tabs": 15,
       "screens": 0.18,
-      "ms": 3266
+      "ms": 2292
     },
     {
       "action": "click",
@@ -92,7 +92,7 @@
       "asks": 0,
       "tabs": 18,
       "screens": 0.24,
-      "ms": 3775
+      "ms": 2537
     },
     {
       "n": 2,
@@ -101,7 +101,7 @@
       "note": null,
       "steps": 6,
       "asks": 0,
-      "ms": 4604,
+      "ms": 3033,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "input#person-name ",
@@ -117,7 +117,7 @@
       "asks": 1,
       "tabs": 22,
       "screens": 0.67,
-      "ms": 4949
+      "ms": 3151
     },
     {
       "action": "choose",
@@ -128,7 +128,7 @@
       "asks": 1,
       "tabs": 23,
       "screens": 0.78,
-      "ms": 5366
+      "ms": 3448
     },
     {
       "action": "choose",
@@ -139,7 +139,7 @@
       "asks": 1,
       "tabs": 25,
       "screens": 0.89,
-      "ms": 5919
+      "ms": 3683
     },
     {
       "n": 3,
@@ -148,7 +148,7 @@
       "note": "money out above €250 needs Dana: the Team plan badge sits here, at the one field it applies to",
       "steps": 9,
       "asks": 1,
-      "ms": 6613,
+      "ms": 4200,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "input#amt-money-out-30 ",
@@ -164,7 +164,7 @@
       "asks": 1,
       "tabs": 30,
       "screens": 1.17,
-      "ms": 6880
+      "ms": 4281
     },
     {
       "n": 4,
@@ -173,7 +173,7 @@
       "note": "the rule, its six examples (they become its tests), force and mode (Preview)",
       "steps": 10,
       "asks": 1,
-      "ms": 7615,
+      "ms": 4903,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h3 Money out above €250 needs Dana's yes; whoever asked for it ",
@@ -189,7 +189,7 @@
       "asks": 1,
       "tabs": 55,
       "screens": 3.03,
-      "ms": 7750
+      "ms": 5024
     },
     {
       "action": "click",
@@ -200,7 +200,7 @@
       "asks": 1,
       "tabs": 86,
       "screens": 3.92,
-      "ms": 8085
+      "ms": 5237
     },
     {
       "n": 5,
@@ -209,7 +209,7 @@
       "note": "version 1, with the bootstrap warning: one person signed it",
       "steps": 12,
       "asks": 1,
-      "ms": 8731,
+      "ms": 5788,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "p Version 1 saved by you (not signed).",
@@ -225,7 +225,7 @@
       "asks": 1,
       "tabs": 93,
       "screens": 3.92,
-      "ms": 8838
+      "ms": 5933
     },
     {
       "n": 6,
@@ -234,7 +234,7 @@
       "note": null,
       "steps": 13,
       "asks": 1,
-      "ms": 9464,
+      "ms": 6506,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
@@ -250,7 +250,7 @@
       "asks": 2,
       "tabs": 97,
       "screens": 4.16,
-      "ms": 9755
+      "ms": 6598
     },
     {
       "action": "fill",
@@ -261,7 +261,7 @@
       "asks": 3,
       "tabs": 98,
       "screens": 4.48,
-      "ms": 10164
+      "ms": 6824
     },
     {
       "action": "click",
@@ -272,7 +272,7 @@
       "asks": 3,
       "tabs": 104,
       "screens": 5.85,
-      "ms": 10635
+      "ms": 7126
     },
     {
       "n": 7,
@@ -281,7 +281,7 @@
       "note": null,
       "steps": 16,
       "asks": 3,
-      "ms": 11257,
+      "ms": 7747,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h2 That didn't work",
@@ -297,7 +297,7 @@
       "asks": 3,
       "tabs": 110,
       "screens": 6.4,
-      "ms": 11538
+      "ms": 7963
     },
     {
       "action": "fill",
@@ -308,7 +308,7 @@
       "asks": 4,
       "tabs": 120,
       "screens": 6.51,
-      "ms": 11873
+      "ms": 8193
     },
     {
       "action": "click",
@@ -319,7 +319,7 @@
       "asks": 4,
       "tabs": 141,
       "screens": 9.77,
-      "ms": 12408
+      "ms": 8454
     },
     {
       "n": 8,
@@ -328,7 +328,7 @@
       "note": "one example now answers differently: the save stops and shows it",
       "steps": 19,
       "asks": 4,
-      "ms": 13210,
+      "ms": 9239,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h2 This change would change a confirmed answer",
@@ -344,7 +344,7 @@
       "asks": 4,
       "tabs": 174,
       "screens": 10.09,
-      "ms": 13541
+      "ms": 9412
     },
     {
       "action": "click",
@@ -355,7 +355,7 @@
       "asks": 4,
       "tabs": 205,
       "screens": 10.09,
-      "ms": 14027
+      "ms": 9684
     },
     {
       "n": 9,
@@ -364,7 +364,7 @@
       "note": null,
       "steps": 21,
       "asks": 4,
-      "ms": 14672,
+      "ms": 10176,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "p Version 2 saved by you (not signed).",
@@ -382,7 +382,7 @@
       "tabs": 86,
       "screens": 3.92,
       "decisions": 0,
-      "ms": 8360
+      "ms": 5521
     },
     "v2": {
       "steps": 21,
@@ -390,7 +390,7 @@
       "tabs": 205,
       "screens": 10.09,
       "decisions": 0,
-      "ms": 14243
+      "ms": 9886
     }
   },
   "a11y": [],
@@ -421,7 +421,7 @@
   "totalTabs": 205,
   "totalScreens": 10.09,
   "totalDecisions": 0,
-  "ms": 14672,
+  "ms": 10176,
   "shots": [
     "01-start-dark-390.jpg",
     "02-people-dark-390.jpg",

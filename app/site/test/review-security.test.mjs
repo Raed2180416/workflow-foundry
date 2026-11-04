@@ -210,7 +210,7 @@ test('L18: the page without a key shows the open command with the home folder as
   } finally { await site.close(); await app.close(); rmSync(ws, { recursive: true, force: true }); }
 });
 
-test('gate: a code works once, within its time, only for the start it names; codes from an earlier start are swept', () => {
+test('gate: a code works once, within its time, only for the start it names; a code for an earlier start is refused', () => {
   const ws = mkdtempSync(path.join(tmpdir(), 'review-gate-'));
   try {
     let t = 1000;
@@ -247,7 +247,9 @@ const hookSettings = event => JSON.stringify({ hooks: { [event]: [{ hooks: [{ ty
 const put = (file, text) => { mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, text); };
 const tmp = prefix => mkdtempSync(path.join(tmpdir(), prefix));
 
-test('H3: the hook check covers every place Claude Code takes hooks from, not four settings files', async () => {
+// Fix round 2026-10-21: renamed; its old name claimed every place Claude Code takes hooks from, more than the check did (review:security
+// found spellings and folders it missed); app/site/test/fix-round.test.mjs holds those.
+test('H3: the hook check reads the settings, plugins, skills and subagents of every Claude Code folder it knows, not four settings files', async () => {
   const scenarios = {
     'CLAUDE_CONFIG_DIR settings': (home, proj, env) => { env.CLAUDE_CONFIG_DIR = path.join(home, 'cfg'); put(path.join(home, 'cfg', 'settings.json'), hookSettings('ElicitationResult')); },
     'a folder above the one the agent runs in': (home, proj) => put(path.join(proj, '.claude', 'settings.local.json'), hookSettings('Elicitation')),
@@ -497,7 +499,7 @@ test('L10, L11, L17: the page says what an evidence file holds, what a keychain 
   assert.match(claims.C10.qualifier, /programs running as you/);
   assert.notEqual(claims.C02.status, 'Works now', 'its own qualifier says it was not re-run');
   assert.match(readFileSync(path.join(PUBLIC, 'site.js'), 'utf8'), /claimStatus: c\.status/, 'a claim that is not "Works now" shows its status where it is used');
-  assert.match(copy.trust.hooks.body, /plugin, skill or subagent/); assert.match(copy.trust.hooks.body, /looks again each time/);
+  assert.match(copy.trust.hooks.body, /plugin, skill, subagent or command/); assert.match(copy.trust.hooks.body, /looks again each time/);
 });
 
 test('L13: the Markdown brief carries no markup from a value, and the calendar file no lone carriage return', () => {

@@ -236,7 +236,7 @@ Status:
 | M4 | Brief doesn't identify the software | Fixed | A Build table: package, commit, "changed since commit", sha256 of `app/` and `src/`, Node, exact dependencies, licence status, install path and contact. **Declined:** adding a LICENSE file. The licence decision (Apache-2.0, D1) is the owner's to apply. The brief says no licence file is in this copy yet. |
 | M5 | Questions the brief could answer | Fixed | Answered in the brief. Only open items remain, under "Still open" (Planned, no date set). |
 | M6 | Trust contradicts itself | Fixed | One wording for the limit. Claim C02 now says what it covered (the earlier prototype's tools and page) and what it did not. **Declined:** re-running the bypass set on the exact-list path. That is a separate test design; the claim says it has not been re-run. |
-| M7 | Elicitation-hook risk undisclosed | Partly | A pilot term: `allowManagedHooksOnly` [doc]. Every generated line has `--consent`. With a managed policy or an answering hook, decisions go to the browser. *Since the security review (H3, 2026-10-21):* without `--consent` the dialog is not used; with it, the check runs again on every `ask_person_to_turn_on` and reads every place Claude Code takes hooks from (settings in `$CLAUDE_CONFIG_DIR`, `~/.claude` and `.claude/` of the project folder and each folder above it; plugins; skill and subagent frontmatter; `managed-settings.d`). Only a client named `claude-code` gets the dialog, and not when Claude Code was started with `--settings`, `--plugin-dir`, `--agents`, `-p` or stream-json input. Still open: a hook Foundry cannot see (for example one an Agent SDK host registers in code under an interactive-looking launch) could answer, so the dialog stays the weaker channel [test `review-security` H3]. |
+| M7 | Elicitation-hook risk undisclosed | Partly | A pilot term: `allowManagedHooksOnly` [doc]. Every generated line has `--consent`. With a managed policy or an answering hook, decisions go to the browser. *Since the security review (H3, 2026-10-21):* without `--consent` the dialog is not used; with it, the check runs again on every `ask_person_to_turn_on` and reads ~~every place Claude Code takes hooks from~~ (*corrected in the fix round, §8: not every place; a JSON escape, a YAML flow mapping, plugin skill files and commands got past it*) the places listed here (settings in `$CLAUDE_CONFIG_DIR`, `~/.claude` and `.claude/` of the project folder and each folder above it; plugins; skill and subagent frontmatter; `managed-settings.d`). Only a client named `claude-code` gets the dialog, and not when Claude Code was started with `--settings`, `--plugin-dir`, `--agents`, `-p` or stream-json input. Still open: a hook Foundry cannot see (for example one an Agent SDK host registers in code under an interactive-looking launch) could answer, so the dialog stays the weaker channel [test `review-security` H3]. |
 | M8 | Practice-only refusal is an error page | Fixed | Go-live offers "Test on your list (nothing is made)" with a neutral note. There is no button that would be refused [journey `p4-it` 05 and 06]. |
 | M9 | "Works now" on Connect | Fixed | As P1 M1. |
 | M10 | No data-kept statement | Fixed | A "Data kept, and how to delete it" section, and Settings → "Delete my lists" (typed confirmation; also removes `.history`) [test]. |
@@ -425,3 +425,132 @@ Journeys after these fixes (`run-all.mjs`, development, scripted): 9 files and 3
 focus lost after an action, 0 fallback accessibility issues (not axe-core) on every page of every journey and crawl state; 173
 screenshots, 22.8 MB (budget 25 MB). Per-journey tabs, scrolling and decisions are in [JOURNEYS.md](JOURNEYS.md); what they leave
 out is in DESIGN §3.
+
+## 8. Fix round 2026-10-21: every verifier finding and its final state
+
+Three verifiers re-checked the fixes at `c2cc9ce8`: `review:security`, `review:honesty` and `review:UX`. Their reports are in the
+workflow journal. This round closes what they marked not closed and every new defect they found, including the minor ones. The work was
+done on 2026-11-04 in this worktree and belongs to the 2026-10-21 onboarding workflow. It is development evidence: scripted, $0, no model
+called, no network, no users.
+
+Each fix has a test in `app/site/test/fix-round.test.mjs` (23 tests) that reproduces the verifier's case. The file was not run as a whole
+against `c2cc9ce8`, because it imports functions this round adds; for the main cases the verifiers' own reproductions stand as the
+before-fix evidence.
+
+**Fixed** means the verifier's case no longer reproduces in the named test. **Closed (verifier)** means the verifier found it closed
+at `c2cc9ce8` and nothing here changed that. **Open** says what remains and why.
+
+### review:security (18 findings: 17 closed, H3 not closed; 6 new)
+
+| Finding | Final state | What changed | Test |
+|---|---|---|---|
+| H1, H2, M5, M6, M7, L10, L12-L18 | Closed (verifier) | Nothing. | `review-security` |
+| H3 hook check incomplete (**not closed**) | Fixed, with stated limits | `app/onboarding/detect.mjs` no longer matches a key pattern in the raw text. Each file is decoded first, the way a parser reads it: JSON `\u` escapes, and YAML `\x`/`\u`/`\U` escapes and escaped line breaks. Then **any mention** of "elicitation", in any letter case, counts as a hook: anywhere in a settings or plugin JSON file, or anywhere in a frontmatter. That covers the escaped key (the review's end-to-end case), a comment before the colon, YAML flow style, quoted and escaped keys, and a byte-order mark before the frontmatter. The check now reads every JSON file and every `.md` frontmatter under `plugins/` (plugin skills, subagents, commands, and marketplace entries that define hooks inline). It reads plugin folders that the plugins folder's records name elsewhere on disk, and `commands/` under every `.claude` folder. It follows symbolic links, and it reads the `.claude` chain of the Claude Code process's own folder (Linux, `/proc/<pid>/cwd`). A file it cannot read counts as a hook. A combined short flag that holds `p` (`-cp`) counts as print mode. Any of these sends the decision to the page. It can only send more decisions there, never fewer. | `fix-round` "H3 (not closed)" ×2. The first covers 14 spellings and places, plus the Claude Code process's own folder; an unreadable settings file is checked only when the tests run as an ordinary user, and they ran as root here, so that case did not run. The second is the review's scenario end to end, through the real `cli.mjs mcp --consent` and a stand-in `claude` |
+| H3, remaining | **Open (stated)** | Some hooks are still outside what Foundry reads. Settings an organisation sends over the network or through a device-management profile are not read. Neither are plugins or commands kept outside the folders it reads, or hooks a program registers in its own code. A hook added between the look and the dialog would also be missed. Foundry's rules for where Claude Code takes hooks from are inferred from its documentation and from the verifier's cases. No released Claude Code was run (no network). For these reasons the dialog stays the weaker channel. The Trust page, DESIGN §6 and the CLI note say so. | `fix-round` "new defect 1" (copy) |
+| M4 | Closed (verifier); extended | The evidence check now also compares `identityVerified` and `howKnown` with the logged line (honesty new defect 2). | `fix-round` "honesty new defects 2, 3" |
+| L8 | Closed (verifier); moved | The plain-text check moved out of the frozen `library.mjs` into `app/core/plain-text.mjs`. It runs in the form builder and on every built workflow in `FoundryApp.propose`, so a model builder's settings are checked too (honesty new defect 7). | `review-security` L8; `fix-round` "honesty new defect 7" |
+| L9 | Closed (verifier); extended | `identityVerified: true` is no longer passed as consistent (honesty new defect 2). | `fix-round` |
+| L11 "from Apple's documentation" could not be checked offline | Fixed (wording) | The Trust page and claim C10 now give the basis as it is: how the `security` command's access lists work as we understand them, not checked against Apple's documentation in this pass, and not tried on a Mac. | `fix-round` "keychain wording" |
+| New 1 (High): hook check by raw text; Trust copy and test name overstated | Fixed | As H3. The Trust "hooks" copy now names what is read, says that any mention counts, and lists what cannot be seen. The test once named "covers every place Claude Code takes hooks from" is renamed. DESIGN §5 and WALKTHROUGH P4 M7 carry the correction. | `fix-round` "new defect 1" |
+| New 2 (Low): a second gate deleted another start's codes | Fixed | `app/site/gate.mjs` sweeps only expired or unreadable code files. A code for another live start keeps working there and is refused here. | `fix-round` "security new defect 2" |
+| New 3 (Low): two processes could both break a dead lock | Fixed, one narrow race left | `app/onboarding/file-lock.mjs` breaks a stale lock only while it holds `<lock>.break`. It removes the lock only if it is still the same file with the same token it judged stale. **Open:** if a process dies in the middle of a break, and two others then clear that leftover breaker at the same moment, both can still go on. | `fix-round` "security new defect 3" (a live lock survives a late break; 6 processes, 30 entries, no overlap) |
+| New 4 (Low): "ok" printed before warnings | Fixed | `doctorLine()` prints `warn` for a warning, `note` for an optional item that is missing, and `NO` for a needed one. The JSON doctor output carries `warn`. | `fix-round` "security new defects 4, 5" |
+| New 5 (Low): header said the code is never printed when output is "captured" | Fixed (wording) | `app/cli.mjs` says the code is printed only when stdin and stdout are a terminal. A program running as the same account can give it a pseudo-terminal, which is within the Trust page's same-account limit. | `fix-round` "security new defects 4, 5" |
+| New 6 (Minor): "approved by {who}" without the identity note | Fixed | `automation.decisionList` and `automation.offNow` say "(not a checked identity)". | `fix-round` "security new defect 6" |
+| Race between the hook check and the dialog | **Open (stated, as before)** | It is disclosed on the Trust page and in `detect.mjs`. | none |
+
+### review:honesty (29 findings: 28 closed, minor 6 not closed; 7 new; 3 older)
+
+| Finding | Final state | What changed | Test |
+|---|---|---|---|
+| B1, M1-M11, minors 1-5, 8-17 | Closed (verifier) | Nothing beyond the wording in this table. | `review-honesty` |
+| Minor 6 (**not closed**): Trust page said "private to your user" unconditionally | Fixed | The Trust page takes the doctor's answer, as Settings does. "Only your user can open it (mode 0700)" appears only when that is true. Otherwise it says other users may be able to open it, with the mode, or that the system has no per-user modes Foundry can check. | `fix-round` "honesty minor 6" (Chromium; the home folder at 0755, and a private workspace) |
+| Minor 7 nit: the theme in localStorage was not listed | Fixed | Settings and the Trust page list "your choice of light or dark look, in this browser". | `fix-round` "UX nit" |
+| New 1 (Major): a genuine evidence file turned "Not consistent" after 200 later lists | Fixed | `batches.json` keeps every list a person decided on. Past 200, only the oldest lists that nobody decided on are dropped. | `fix-round` "honesty new defect 1" (205 later lists; still `ok: true`) |
+| New 2: `identityVerified`, `howKnown`, `note`, `channelWords` and `startedNote` were never compared | Fixed | Each is compared with the hashed line it comes from. `startedNote` is rebuilt from the logged channel, and the person behind a list decision (`who`) is compared too. Lines older than the security review carry no `howKnown`; that is said under "Not checked". The turn-on fields that are not checked (times, proposal) are named. | `fix-round` "honesty new defects 2, 3" (8 tampers) |
+| New 3: `turnedOn: null` passed | Fixed | "Not turned on" is inconsistent when a logged yes for this version took effect according to the turn-on history. The superseded case is allowed and said. | same |
+| New 4: head-comparison advice wrong for the growing decision log | Fixed | The CLI, `howToCheck`, the run page and the runs page say that a decision-log head copied earlier must appear among the file's links, at the place it had then. `check-evidence FILE --head HASH` (repeatable) says where each copy is, and exits 1 if one is not in the file. | `fix-round` "honesty new defect 4" |
+| New 5: "Foundry itself sends one thing … Nothing else" | Fixed | The Trust page, the IT brief and the Keys page say the AI builders send too. That means the person's words, their answers and the card list, never their lists. | `fix-round` "honesty new defect 5"; `review-honesty` M7 |
+| New 6: "ok" before the privacy warning | Fixed | As security new 4. | `fix-round` |
+| New 7 (process): frozen `explain.mjs` (and `library.mjs`) edited | Fixed | Both are back at their frozen versions. `node experiments/surface/manifest.mjs --out MANIFEST-fix.json` reports all 23 frozen files unchanged. The wording moved to `app/core/failure-words.mjs`, a non-frozen layer over `explain.mjs` that also holds the service's own codes. The L8 check moved to `app/core/plain-text.mjs`. | `fix-round` "honesty new defect 7"; `review-honesty` minor 16 |
+| Older: C08 said "Paid only when …", but D2 also makes verified packs paid | Fixed | C08 and the pricing heading name verified packs. | `fix-round` "honesty older defects" |
+| Older: the MCP dialog always said "pretend data" | Fixed | The practice record's data source reaches the dialog, so a test on the person's own list says so. | same (in-memory MCP client) |
+| Older: `tokenCap` accepted by Settings and ignored | Fixed | Saving it is refused with "set when Foundry starts (--token-cap)", and a saved one is not read. | same |
+
+### review:UX (30 findings closed; 8 new; 2 nits)
+
+| Finding | Final state | What changed | Test |
+|---|---|---|---|
+| M1-M9, m1-m21 | Closed (verifier) | Nothing. M3 was "closed, partly reduced". After the jump, the Turn it on button itself is still below the screen at 390 wide, under what the card says it will and won't do. That is unchanged and stated. | `review-ux` |
+| New 1: visible "null" on the AI keys page | Fixed | The card is built with `append()`, which skips null. | `fix-round` "UX new defects 1, 8"; journey `keys` |
+| New 2: a removed draft's test result still offered Turn it on and Remove; a second remove contradicted itself | Fixed | `/api/proposals/:id` says `removed` (who, how, when). The page shows "This draft was removed …", with no strip, turn-on card, own-list test or Remove. A remove of a draft that is already removed says "Nothing changed: it had been removed already." | `fix-round` "UX new defect 2" |
+| New 3: "Remove this draft" buttons named alike | Fixed | Each is described by its draft's heading. | `fix-round` "UX new defect 3" |
+| New 4: a failed name save left the unsaved name | Fixed | The name in force is put back. | `fix-round` "UX new defect 4" |
+| New 5: the "something waiting" notice skipped by screen readers; the above-the-h1 check only looked inside main | Fixed | What is already waiting when a page opens is said once, politely, on pages where the notice shows. Polls still do not repeat it (M2). The fallback check now also flags anything shown between the header and main, apart from that notice and the "Loading" line. | `fix-round` "UX new defect 5"; every journey |
+| New 6: remembered answers kept every offered value; "Delete my lists" left them | Fixed | Only the ticked values are kept. Each offered value is kept as a fingerprint, so a new value still makes it ask afresh. Entries in the older format are rewritten. "Delete my lists" deletes `site/data-answers.json`, and Settings says so. | `fix-round` "UX new defect 6"; `review-ux` m4 |
+| New 7: "Turn on (done)" under "turned off" | Fixed | When an automation is off, the going-live page marks Turn on as the current step. | `fix-round` "UX new defect 7" |
+| New 8: after saving a key the card was not redrawn | Fixed | It is drawn again from the keychain, as after Remove: the saved key with Remove, and no paste field. | `fix-round` "UX new defects 1, 8"; `review-ux` M5; journey `keys` |
+| Nit: the strip link `#turn-on-h` opened Home in a new tab | Fixed, partly | The link's address is the test result itself. A new tab opens that page at its top; only a click moves the focus to the card. | `fix-round` "UX new defect 2" |
+| Nit: "249.99 JPY" | Fixed | Example amounts step by the currency's smallest unit (249 / 251 JPY; €249.99 / €250.01). The org page formats amounts to that unit. | `fix-round` "UX nit" |
+
+### Tests and journeys after this round
+
+Journeys (`node app/site/test/journeys/run-all.mjs`, development, scripted): 9 files and 30 tests pass. That is 40 journey and
+crawl-state records, with 0 console or page errors, 0 external requests and 0 focus lost after an action. There are 0 fallback
+accessibility issues; the checks are not axe-core, and they now also look outside `main`. There are 173 screenshots, 22.97 MB
+(budget 25 MB). `JOURNEYS.json` and `JOURNEYS.md` are regenerated. The step counts are unchanged:
+
+- P2: first verified 3 / 1, first live 8 / 4.
+- P1 Claude Code: setup 2 / 0, first verified 3 / 0, first live 5 / 1.
+- P1 Cursor or Codex: first live 7 / 1.
+- P3 expense: 4 / 2 and 9 / 4.
+- P5 evidence: 3 / 0.
+
+The keys journey now also asserts that there is no "null", and that Remove shows at once after a key is saved.
+
+**A negative result, kept.** Twice in this round the keyboard-only P2 journey failed while other work loaded the shared machine.
+Space on the focused file button opened no file chooser within 30 s; the test took 35-45 s instead of about 11 s. The screenshot is
+not kept, because the final run rewrote the folder.
+
+| Run | Code | Result |
+|---|---|---|
+| Alone | Code before this round | passed once |
+| Alone | This round's code with `site.js` put back | passed once |
+| Alone | This round's `site.js` with the old announcement condition | passed once |
+| Alone | All of this round's code | passed twice |
+| Within its file | All of this round's code | passed twice; the second was the final `run-all` |
+
+The cause is not identified. One run is too few to tell anything, so this is recorded as an intermittent failure of the harness's
+keyboard upload under load, not as fixed.
+
+Unit tests: every `*.test.mjs` under `app/` was run one file at a time (`nice -n 15 node --test --test-concurrency=1 FILE`). That is
+21 files and 201 tests: 201 pass, 0 fail, 0 skipped.
+
+| Area | File: passed |
+|---|---|
+| Onboarding | authority-map 6, batch 7, csv 7, form-builder 8, keys-drafts 7, worker 1 |
+| Site | api 7, claims 5, copy-lint 8, **fix-round 23**, review-honesty 17, review-security 23, review-ux 29, security 4, tokens-contrast 2, walkthrough 12 |
+| App | builder-model 9, library 7, mcp-dashboard 7, n8n-import 7, service 5 |
+
+`node experiments/surface/manifest.mjs --out MANIFEST-fix.json` reports all 23 frozen files unchanged.
+
+These existing tests were changed for the new wording or behaviour, each with a note:
+
+- `review-security`: the hooks copy, and two test names that said more than the code does.
+- `review-honesty`: the "What leaves" wording; `failureText` is now imported from `failure-words.mjs`.
+- `review-ux`: M5 waits for the redrawn key card.
+- The journeys: `keys.mjs` checks the redrawn card, and `harness.mjs` adds the check outside `main`.
+
+**Still open after this round, with the reason:**
+
+1. The hooks Foundry cannot see (H3, above). These are hooks from server-managed or device-management settings, plugins or commands
+   outside Claude Code's folders, an SDK host's in-code hooks, and a hook added between the look and the dialog. Foundry's rules for
+   reading Claude Code's files were not run against a released Claude Code, because there is no network or real client here. The
+   dialog stays the weaker channel, as the Trust page says.
+2. The race in which a process crashes in the middle of a lock break and two others then clear the leftover breaker at once (security
+   new defect 3). It is narrower than before, but not removed: POSIX files offer no compare-and-delete.
+3. The macOS keychain behaviour behind the Trust "keys" wording (L11). It is not checked against Apple's documentation (no network)
+   and not tried on a Mac; the page says so.
+4. M3: Turn it on is still below the screen after the jump at 390 wide. The verifier found M3 closed and marked it partly reduced.
+5. The strip link (nit): in a new tab, it opens the test result at its top.
+6. The intermittent keyboard upload failure above, whose cause is not identified.

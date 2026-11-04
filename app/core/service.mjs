@@ -17,8 +17,9 @@ import { FoundryError, errorData, digest } from '../../src/data.mjs';
 import { appRegistry } from './capabilities.mjs';
 import { SAMPLE_INPUT, stubBuilder } from './builder.mjs';
 import { templateOf, slotsOf, practiceOf } from './library.mjs';
+import { plainTextProblems } from './plain-text.mjs';
 import { runInWorld } from './practice.mjs';
-import { describeWorkflow, explainRun, failureText } from './explain.mjs';
+import { describeWorkflow, explainRun, failureText, reword } from './failure-words.mjs';
 import { Ledger, HUMAN_CHANNELS } from './ledger.mjs';
 import { machinePolicy } from './machine-policy.mjs';
 
@@ -52,13 +53,8 @@ export function workspacePrivacy(root) {
 }
 /** Security review 2026-10-21 (L16): the workspace keeps itself out of any git repository it sits in (a .gitignore that ignores all). */
 export function ignoreWorkspace(root) { try { writeFileSync(path.join(root, '.gitignore'), '# Foundry: your lists, drafts, records and decisions. Never commit them.\n*\n', { flag: 'wx', mode: 0o600 }); } catch { /* already there, or not writable */ } }
-// The service's own codes in plain words (app/core/explain.mjs, which words the engine's codes, is frozen by the BUILDER-1 manifest).
-const APP_FAILURES = {
-  TURNED_OFF: ['This automation is turned off, so it does not run.', 'Turn it on again on its page in Foundry if you want it to run.'],
-  DRAFT_REMOVED: ['This draft was removed, so it cannot be turned on.', 'Make the automation again from its card if you want it.'],
-  NOT_ON: ['This automation is not on.', 'Nothing needed turning off.']
-};
-const plainFailure = data => APP_FAILURES[data.code] ? { code: data.code, what: APP_FAILURES[data.code][0], next: APP_FAILURES[data.code][1] } : failureText(data);
+// The service's own codes and the onboarding wording are in ./failure-words.mjs (app/core/explain.mjs is frozen by the BUILDER-1 manifest).
+const plainFailure = data => failureText(data);
 const problem = (error, extra = {}) => ({ ok: false, problem: { ...(plainFailure(errorData(error)) ?? {}), code: error.code ?? 'ERROR', details: errorData(error).message }, ...extra });
 
 export class FoundryApp {
@@ -108,6 +104,10 @@ export class FoundryApp {
         reply: 'Nothing in the flow would change, so no new version was made. Schedules and connectors are not part of this preview yet.', ...(report ? { build: report } : {}) };
     const validation = this.foundry.validate(built.workflow, { strict: true });
     if (!validation.valid) return problem(new FoundryError('INVALID_PROPOSAL', 'The builder produced a workflow that does not validate'), { validation, builder: built.builder });
+    // L8, whichever builder made it (a model's settings included): every text setting is plain text (app/core/plain-text.mjs).
+    const plain = plainTextProblems(templateOf(built.workflow), slotsOf(built.workflow));
+    if (plain.length) return { ok: true, status: 'build_failed', builder: built.builder, template: built.template, problems: plain,
+      reply: `Some settings are not usable: ${plain.join('; ')}. Nothing was created.` };
     const task = typeof request === 'string' && request.trim() ? request : `Settings for template ${built.template} filled in a form: ${JSON.stringify(settings ?? {}).slice(0, 4000)}`;
     const designRequest = this.foundry.store.createAgentDesignRequest({ task, workflowId: head ? head.workflow.id : null, expectedHash: head?.hash ?? null });
     const proposal = this.foundry.propose({ requestId: designRequest.id, workflow: built.workflow,
@@ -176,7 +176,7 @@ export class FoundryApp {
     const explained = res.explained;
     const record = this.ledger.recordDryRun({ proposalId: proposal.id, workflowHash: proposal.workflowHash, registryHash: res.run.registryHash, practiceRunId: res.run.id, passed: res.passed,
       body: { headline: explained.headline, checks: explained.checks, wouldDo, inputHash: digest(runInput), sheetsHash: digest(sheets), dataSource, practiceDir: res.dir, template: template.id } });
-    return { ok: true, practice: true, dryRunId: record.id, passed: res.passed, dataSource, headline: explained.headline, checks: explained.checks, wouldDo, problem: explained.problem,
+    return { ok: true, practice: true, dryRunId: record.id, passed: res.passed, dataSource, headline: explained.headline, checks: explained.checks, wouldDo, problem: reword(explained.problem),
       practiceRunId: res.run.id, workflowHash: proposal.workflowHash, practiceRegistryHash: res.run.registryHash, liveRegistryHash: this.registry.hash(),
       caveat: 'Practice used stand-ins for sending, posting and the sheets, with the template\'s practice data. It shows the flow behaves as described; it does not show delivery works.',
       next: res.passed ? 'Ask the person to approve it (approve). They decide in their own window, not you.' : 'Do not ask for approval: the practice run did not pass.' };
@@ -197,7 +197,7 @@ export class FoundryApp {
     }
     const act = this.ledger.requestActivation({ flowId: proposal.workflow.id, proposalId, workflowHash: proposal.workflowHash, dryRunId: dry.id });
     return { ok: true, status: 'awaiting_human', approvalId: act.id, flowId: proposal.workflow.id, version: proposal.workflow.version, workflowHash: proposal.workflowHash,
-      summary: describeWorkflow(proposal.workflow, this.registry), practice: { dryRunId: dry.id, checks: dry.body.checks } };
+      summary: describeWorkflow(proposal.workflow, this.registry), practice: { dryRunId: dry.id, checks: dry.body.checks, dataSource: dry.body.dataSource ?? 'template' } };
   }
 
   /** A person's decision on turning a version on (called by the dashboard, the CLI, or the MCP elicitation handler only). */

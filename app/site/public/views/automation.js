@@ -37,12 +37,13 @@ function onOffCard(a, flowId) {
     el('p', { class: 'muted' }, t('automation.onAgainExplain')), el('div', { class: 'actions stack decision' }, on), status);
 }
 
-/** "Remove this draft" (M7): a draft that will not be turned on stops waiting; the record of it stays. */
-export function removeButton(proposalId, flowId = null) {
+/** "Remove this draft" (M7): a draft that will not be turned on stops waiting; the record of it stays. describedBy: the id of the heading
+ *  that names the draft, so each of several such buttons says which draft it is for (fix round 2026-10-21, review:UX new defect 3). */
+export function removeButton(proposalId, flowId = null, describedBy = null) {
   const status = el('span', {});
-  const b = el('button', { type: 'button', class: 'small', dataset: { action: 'remove-draft', proposal: proposalId }, on: { click: once(async () => {
+  const b = el('button', { type: 'button', class: 'small', ...(describedBy ? { 'aria-describedby': describedBy } : {}), dataset: { action: 'remove-draft', proposal: proposalId }, on: { click: once(async () => {
     try { await api(`/api/proposals/${encodeURIComponent(proposalId)}/remove`, {}); say(t('automations.removed')); refreshBadge(); navigate(flowId ? `/automations/${flowId}` : '/automations'); }
-    catch (error) { showError(status, error, { notDone: t('automations.notRemoved') }); }
+    catch (error) { showError(status, error, { notDone: error.code === 'ALREADY_REMOVED' ? t('automations.alreadyRemoved') : t('automations.notRemoved') }); }
   }) } }, t('automations.removeDraft'));
   return [b, status];
 }
@@ -82,11 +83,11 @@ export async function render({ params }) {
       a.active ? el('a', { href: `#/go-live/${flowId}` }, t('automation.newList')) : null) : null,
     el('section', {}, el('h2', {}, t('automation.reminderTitle')), el('p', {}, t('automation.reminderBody')), el('div', { class: 'actions' }, ics), status),
     versions ? el('section', {}, el('h2', {}, t('automation.versionsTitle')), versions.versions.map(v => el('div', { class: 'card' },
-      el('h3', {}, v.state === 'draft' ? t('automation.draftV', { version: v.version }) : t('automation.versionV', { version: v.version }), v.active ? ` · ${t('automations.on')}` : ''),
+      el('h3', { id: `version-${v.version}` }, v.state === 'draft' ? t('automation.draftV', { version: v.version }) : t('automation.versionV', { version: v.version }), v.active ? ` · ${t('automations.on')}` : ''),
       v.diffFromPrevious && v.version > 1 ? el('p', {}, t('automation.changes'), ' ', [
         ...v.diffFromPrevious.added.map(x => t('automation.added', { step: x.step })), ...v.diffFromPrevious.removed.map(x => t('automation.removed', { step: x.step })),
         ...v.diffFromPrevious.changed.map(x => t('automation.changed', { step: x.step })), ...(v.diffFromPrevious.checksChanged ? [t('automation.checksChanged')] : [])].join('; ') || t('automation.nothingChanged')) : null,
-      v.state === 'draft' && v.proposalId ? el('div', { class: 'actions' }, el('a', { class: 'button small', href: `#/checked/${v.proposalId}` }, t('common.open')), removeButton(v.proposalId, flowId)) : null,
+      v.state === 'draft' && v.proposalId ? el('div', { class: 'actions' }, el('a', { class: 'button small', href: `#/checked/${v.proposalId}`, 'aria-describedby': `version-${v.version}` }, t('common.open')), removeButton(v.proposalId, flowId, `version-${v.version}`)) : null,
       el('details', {}, el('summary', {}, t('common.showDetails')), el('p', { class: 'small' }, t('automation.fingerprint', { hash: v.hash })))))) : null,
     el('section', {}, el('h2', {}, t('nav.runs')), a.runs.length ? el('ul', {}, a.runs.slice(0, 20).map(r => el('li', {}, el('a', { href: `#/runs/${r.runId}` }, `${t(`run.status.${r.status}`)} · ${when(r.at)}`)))) : el('p', { class: 'muted' }, t('automation.noRuns'))));
 }

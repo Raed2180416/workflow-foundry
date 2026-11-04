@@ -84,6 +84,12 @@ export async function a11y(page) {
     // The page heading comes first (m3): focus starts at the h1, so a notice, a banner or the step marker above it is skipped.
     const firstMark = document.querySelector('main') && [...document.querySelector('main').querySelectorAll('h1, h2, .stepper, .banner, [data-managed]')].find(visible);
     if (firstMark && !firstMark.matches('h1')) issues.push(`before the h1: ${firstMark.className || firstMark.tagName.toLowerCase()} "${(firstMark.textContent ?? '').trim().slice(0, 30)}"`);
+    // Outside main too (fix round 2026-10-21, review:UX new defect 5): between the header and main only the "something waiting" notice
+    // may show (the page says it once when it opens, since it sits above the heading) and the "Loading" line.
+    for (const n of [...document.body.children]) {
+      if (n.matches('header, main, footer, .skip, script, [aria-live], #toast, #notice, #loading') || !visible(n)) continue;
+      if (document.querySelector('main') && (n.compareDocumentPosition(document.querySelector('main')) & Node.DOCUMENT_POSITION_FOLLOWING)) issues.push(`before main: ${n.id || n.className || n.tagName.toLowerCase()}`);
+    }
     const ARTICLE_ROLES = ['application', 'document', 'feed', 'main', 'none', 'presentation', 'region'];
     for (const a of document.querySelectorAll('article[role]')) if (!ARTICLE_ROLES.includes(a.getAttribute('role'))) issues.push(`role ${a.getAttribute('role')} not allowed on article`);
     for (const li of document.querySelectorAll('[role=listitem]')) if (!li.parentElement?.matches('[role=list], ul, ol')) issues.push('list item outside a list');

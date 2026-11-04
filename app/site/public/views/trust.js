@@ -8,11 +8,16 @@ export async function render() {
   const [c, doctor] = await Promise.all([api('/api/connect'), api('/api/doctor').catch(() => null)]);
   const sec = (key, ...body) => el('section', { 'aria-labelledby': `trust-${key}`, dataset: { trust: key } }, el('h2', { id: `trust-${key}` }, t(`trust.${key}.title`)), ...body);
   const p = key => el('p', { class: 'prose' }, rich(key));
+  const privacy = doctor?.items?.find(i => i.check === 'Workspace privacy') ?? null;
   const managedExample = { mcpServers: { foundry: { command: c.allowlist.serverCommand[0], args: c.allowlist.serverCommand.slice(1) } } };
   return el('div', { dataset: { layout: 'narrow' } },
     el('h1', {}, t('trust.h1')),
     el('p', { class: 'lead' }, t('trust.lead')),
-    sec('where', p('trust.where.body'), el('pre', {}, doctor?.workspace ?? '')),
+    // "Only your user" only when the doctor finds the folder private now (honesty review minor 6, not closed until the fix round of
+    // 2026-10-21: this page said it unconditionally while Settings did not).
+    sec('where', p('trust.where.body'), el('pre', {}, doctor?.workspace ?? ''), el('p', { class: 'prose', dataset: { workspacePrivate: String(doctor?.workspacePrivate ?? null) } },
+      doctor?.workspacePrivate === true ? t('trust.where.private', { mode: privacy?.mode ?? '0700' }) : doctor?.workspacePrivate === null ? t('trust.where.unknown')
+        : t('trust.where.open', { mode: privacy?.mode ? ` (mode ${privacy.mode})` : '' }))),
     sec('leaves', p('trust.leaves.body')),
     sec('data', p('trust.data.body')),
     sec('keys', p('trust.keys.body')),

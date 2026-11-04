@@ -23,10 +23,6 @@ const EMAIL_IN_TEXT = /[^@\s<>()"',;:]+@[^@\s<>()"',;:]+\.[A-Za-z]{2,}/g;
 const CHANNEL = /^#[a-z0-9][a-z0-9_-]{0,60}$/;
 const MARKERS = /\{\{|\}\}|\[\[|\]\]/;
 const STRINGY = new Set(['string', 'text', 'email', 'channel']);
-// Security review 2026-10-21 (L8): a setting is plain text. Control characters and Unicode line, paragraph and direction marks are
-// refused everywhere; line breaks and tabs only in a longer text (a canned reply). A one-line setting with a line break could otherwise
-// draw lines of its own into the dialog or a card ("Practice run ... passed 9 of 9").
-const CONTROL = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]/;
 const SEVERITIES = ['info', 'warning', 'critical'];
 const slug = text => String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'team';
 
@@ -133,8 +129,7 @@ function typed(slot, raw) {
   const t = slot.type;
   if (STRINGY.has(t)) {
     if (typeof raw !== 'string') return { problem: `${slot.name} must be text` };
-    let v = t === 'text' ? raw.replace(/\r\n/g, '\n').trim() : raw.trim();
-    if (CONTROL.test(v) || (t !== 'text' && /[\t\n]/.test(v))) return { problem: `${slot.name} must be ${t === 'text' ? 'plain text' : 'one line of plain text'} (no control characters${t === 'text' ? '' : ' or line breaks'})` };
+    let v = raw.trim();
     if (MARKERS.test(v)) return { problem: `${slot.name} must not contain {{ }} or [[ ]] markers` };
     if (t === 'email') { v = v.replace(/^mailto:/i, '').toLowerCase(); if (v && !EMAIL.test(v)) return { problem: `${slot.name} "${v.slice(0, 80)}" is not one e-mail address` }; }
     if (t === 'channel') { v = v.toLowerCase(); if (v && !v.startsWith('#')) v = `#${v}`; if (v && !CHANNEL.test(v)) return { problem: `${slot.name} "${v.slice(0, 80)}" is not a channel name like #ops` }; }

@@ -28,7 +28,8 @@ function pick(v) {
   const out = {};
   if (!v || typeof v !== 'object') return out;
   for (const [k, list] of Object.entries(ALLOWED)) if (list.includes(v[k])) out[k] = v[k];
-  if (Number.isInteger(v.tokenCap) && v.tokenCap >= 1000 && v.tokenCap <= 5000000) out.tokenCap = v.tokenCap;
+  // tokenCap is not a setting here (fix round 2026-10-21, review:honesty older defect): the per-build limit is fixed when Foundry starts
+  // (--token-cap, default DEFAULTS.tokenCap), and nothing read a value saved here, so saving one is refused rather than kept and ignored.
   if (typeof v.notifications === 'boolean') out.notifications = v.notifications;
   // The name shown in records next to this computer's account ("Ravi Patel (ravi@laptop)"); plain text, no markup is ever parsed.
   if (typeof v.yourName === 'string' && v.yourName.length <= 80 && !/[\u0000-\u001f<>]/.test(v.yourName)) out.yourName = v.yourName.trim();
@@ -37,6 +38,7 @@ function pick(v) {
 /** Change some settings; unknown keys or values are refused (never silently dropped), and so is a key the organisation set. */
 export function saveSettings(root, changes, { policy = machinePolicy() } = {}) {
   if (!changes || typeof changes !== 'object' || Array.isArray(changes)) throw new FoundryError('SETTINGS', 'settings is an object');
+  if (Object.hasOwn(changes, 'tokenCap')) throw new FoundryError('SETTINGS', 'The AI builder\'s limit is set when Foundry starts (--token-cap), not in Settings. Nothing was saved.');
   const picked = pick(changes);
   const bad = Object.keys(changes).filter(k => !(k in picked));
   if (bad.length) throw new FoundryError('SETTINGS', `Not a setting or not an allowed value: ${bad.join(', ')}`);

@@ -228,6 +228,8 @@
     "nextBody": "turn it on, further down this page. Turning it on sends nothing: before anything is made, you see the exact list.",
     "toTurnOn": "Go to Turn it on",
     "wouldShowOne": "Show it in full",
+    "removed": "This draft was removed by {who} (not a checked identity) through {channel}, {when}. It can't be turned on, and nothing of it waits for your yes. Its test stays in Foundry's records.",
+    "removedAgain": "Make the automation again from its card",
     "wouldShowMany": "Show all {n} in full"
   },
   "turnon": {
@@ -429,6 +431,7 @@
     "removeDraft": "Remove this draft",
     "removed": "Draft removed. It won't wait for your yes, and its test stays in Foundry's records.",
     "notRemoved": "The draft was not removed.",
+    "alreadyRemoved": "Nothing changed: it had been removed already.",
     "removeLead": "Not going to use this version? Remove the draft: it won't wait for your yes any more, and its test stays in Foundry's records.",
     "draftsLead": "Versions you made but haven't turned on. Remove any you won't use.",
     "turnedOff": "Off (turned off)"
@@ -462,7 +465,7 @@
     "informed": "{who} gets an e-mail with the claims to decide; you record their answer in Waiting for you.",
     "lastRun": "Last run ({when}): {result}.",
     "decisionsTitle": "Decisions",
-    "decisionList": "A list of {n}: {decision} by {who} through {channel}, {when}",
+    "decisionList": "A list of {n}: {decision} by {who} (not a checked identity) through {channel}, {when}",
     "noDecisions": "No lists decided yet.",
     "approvedWord": "approved",
     "declinedWord": "declined",
@@ -473,7 +476,7 @@
     "turnOff": "Turn it off",
     "turnedOffSay": "Turned off. Anything of it still waiting for your yes was cancelled.",
     "notTurnedOff": "It was not turned off: it is still on.",
-    "offNow": "Off. Turned off by {who} through {channel}, {when}.",
+    "offNow": "Off. Turned off by {who} (not a checked identity) through {channel}, {when}.",
     "onAgainExplain": "Turning it on again is a new yes for this same version, which passed its test. Nothing is sent when you do.",
     "turnOnAgain": "Turn it on again"
   },
@@ -494,7 +497,7 @@
     "notChecked": "could not be checked",
     "openLabel": "Open the run of {flow} from {when}",
     "auditorTitle": "For your auditor",
-    "auditorBody": "Open a run and download its evidence. Send the latest link of its record, and of your decision log, separately, by another route (a chat message, say), so your auditor can tell nothing changed later."
+    "auditorBody": "Open a run and download its evidence. Send the latest link of its record, and of your decision log, separately, by another route (a chat message, say), so your auditor can tell nothing changed later. The decision log keeps growing, so in a file made later your auditor finds that link among its links, not at the end (check-evidence with --head says where)."
   },
   "run": {
     "back": "← All runs",
@@ -506,6 +509,7 @@
     "recordBad": "The record could not be checked: {reason}",
     "chainHead": "Latest link of the chain: {hash}",
     "decisionsHead": "Latest link of your decision log: {hash}",
+    "decisionsHeadNote": "Your decision log grows with every later decision, so a file made later ends at a newer link. To check it, look for this link among its decision-log links: node app/cli.mjs check-evidence FILE --head followed by this link says where it is.",
     "evidence": "Download evidence",
     "evidenceDone": "Saved {file} to your Downloads folder.",
     "gapsTitle": "What this record doesn't hold yet",
@@ -779,7 +783,7 @@
     "saved": "Saved in your keychain: key ending {last4} ({backend}).",
     "savedSay": "Key saved in your keychain.",
     "checkedAt": "Checked {when}.",
-    "wordsGo": "Your words go to the provider when you ask Foundry to build from them. Nothing else does.",
+    "wordsGo": "When you ask Foundry to build from your words, your words, your answers to its questions and Foundry's list of cards go to the provider. Nothing from your lists does.",
     "remove": "Remove the key",
     "removed": "Key removed.",
     "notSaved": "The key was not saved.",
@@ -817,7 +821,7 @@
     "whereTitle": "Where your things are",
     "where": "Your automations, your lists and every record live in this folder, readable only by your user:",
     "whereOpen": "Your automations, your lists and every record live in this folder. Other users of this computer may be able to open it: Foundry makes its folder private only when the folder is yours and isn't your home folder. Ask whoever set up Foundry to give it a folder of its own:",
-    "whereNote": "Outside this folder Foundry keeps only: an AI key in your keychain, if you saved one; this tab's key in the browser tab, until you close it; and files you download (evidence, a brief, a draft), wherever your browser saves them.",
+    "whereNote": "Outside this folder Foundry keeps only: an AI key in your keychain, if you saved one; this tab's key in the browser tab, until you close it; your choice of light or dark look, in this browser, if you made one; and files you download (evidence, a brief, a draft), wherever your browser saves them.",
     "orgTitle": "Your organisation",
     "orgLink": "Who decides what",
     "managed": "Set by your organisation for this computer. It can't be changed here.",
@@ -828,7 +832,7 @@
     "nameSaved": "Saved. Records now show: {label}.",
     "recordsAs": "Records show you as: {label}",
     "forgetTitle": "Delete my lists",
-    "forgetBody": "Deletes every list you gave Foundry and their earlier versions. Your automations, drafts and records stay.",
+    "forgetBody": "Deletes every list you gave Foundry, their earlier versions, and the answers Foundry remembered about your files (such as the date order). Your automations, drafts and records stay.",
     "forgetLabel": "Type delete my lists to confirm",
     "forgetButton": "Delete my lists",
     "forgetDone": "Deleted {n} lists.",
@@ -878,7 +882,7 @@
     "openLead": "To open Foundry's page yourself, at any time:"
   },
   "pricing": {
-    "h1": "Free for one person. Paid only when someone else's yes has to count as theirs.",
+    "h1": "Free for one person. Paid when someone else's yes has to count as theirs, and for verified packs.",
     "lead": "{claim:C08}",
     "freeTitle": "Free for one person",
     "free": [
@@ -915,15 +919,18 @@
     "lead": "What Foundry does, where, what it keeps, and the one limit you should know about.",
     "where": {
       "title": "What runs where",
-      "body": "Everything runs on this computer. The page listens on this computer only, and nothing listens on your network. Your automations and records are in this folder, private to your user:"
+      "body": "Everything runs on this computer. The page listens on this computer only, and nothing listens on your network. Your automations and records are in this folder:",
+      "private": "Only your user can open it (mode {mode}): Foundry makes its folder private each time it starts.",
+      "open": "Other users of this computer may be able to open it{mode}. Foundry makes its folder private only when the folder is yours and isn't your home folder. Settings says the same: give Foundry a folder of its own.",
+      "unknown": "This system has no per-user folder modes Foundry can check, so who else can open it depends on the folder's own settings."
     },
     "leaves": {
       "title": "What leaves this computer",
-      "body": "Foundry itself sends one thing: when you press Check and save on an AI key, one request to that provider with the key, and only if Allowed AI includes that provider. Nothing else: e-mails are drafts you send, chat messages are drafts you paste. If you use Foundry through a coding agent, what Foundry tells the agent (counts, step names, test results on pretend data) goes to that agent's AI provider under your agreement with them; the recipients and text of a real list are shown only in this page. AI builders: Mercury (Inception) only if Allowed AI says so and a key is saved; Claude Haiku (Anthropic) only if Foundry is started with it and Allowed AI says so. Neither is on by default."
+      "body": "Without an AI builder, Foundry itself sends one thing: when you press Check and save on an AI key, one request to that provider with the key, and only if Allowed AI includes that provider. E-mails are drafts you send, and chat messages are drafts you paste. An AI builder is the one other thing that sends: each time it builds, your words describing the automation, your answers to its questions and Foundry's list of cards go to its provider (nothing from your lists). Mercury (Inception) builds only if Allowed AI says so and a key is saved; Claude Haiku (Anthropic) only if Foundry is started with it and Allowed AI says so. Neither is on by default. If you use Foundry through a coding agent, what Foundry tells the agent (counts, step names, test results on pretend data) goes to that agent's AI provider under your agreement with them; the recipients and text of a real list are shown only in this page."
     },
     "keys": {
       "title": "Keys",
-      "body": "AI keys go into your computer's keychain. Foundry never writes them to a file, a log or the AI's view. If your computer has no keychain Foundry can use, it doesn't save the key. A keychain keeps the key from other users of this computer, not from programs running as you: on a Mac, Foundry saves it in a way that lets any program running as you read it back through the security command without asking you (from Apple's documentation; not tried on a Mac), and on Linux any program running as you can read it while your keyring is unlocked. {claim:C10}"
+      "body": "AI keys go into your computer's keychain. Foundry never writes them to a file, a log or the AI's view. If your computer has no keychain Foundry can use, it doesn't save the key. A keychain keeps the key from other users of this computer, not from programs running as you: on a Mac, Foundry saves it in a way that lets any program running as you read it back through the security command without asking you (how the security command's access lists work, as we understand them: not checked against Apple's documentation in this pass, and not tried on a Mac), and on Linux any program running as you can read it while your keyring is unlocked. {claim:C10}"
     },
     "approve": {
       "title": "Who can approve",
@@ -984,11 +991,11 @@
     },
     "hooks": {
       "title": "Dialogs a hook can answer",
-      "body": "A hook in Claude Code's settings, or in a plugin, skill or subagent, can answer Foundry's dialog without showing it to you, or change your answer. So Foundry uses that dialog only when it can look for such hooks and finds none. The line from the Connect page includes --consent, which lets Foundry read Claude Code's settings, plugins, skills and subagents on this computer, only to look for those hooks, and it looks again each time it asks. It asks you in this page instead if it finds one, if your organisation manages Claude Code, if Claude Code was started in a way that can bring hooks Foundry can't see, or if your agent isn't Claude Code. A hook Foundry can't see could still answer, so a yes in the dialog is recorded as the weaker way. Foundry can't see hooks that reach Claude Code from settings your organisation sends over the network or through a device-management profile, or from a plugin or skill kept outside the folders it reads. If you use plugins, ask IT to turn on allowManagedHooksOnly in Claude Code's managed settings: then only hooks your organisation sets can run."
+      "body": "A hook in Claude Code's settings, or in a plugin, skill, subagent or command, can answer Foundry's dialog without showing it to you, or change your answer. So Foundry uses that dialog only when it can look for such hooks and finds none. The line from the Connect page includes --consent, which lets Foundry read Claude Code's settings files and the plugins, skills, subagents and commands in Claude Code's folders (yours, and the .claude folder of the project and of each folder above it), only to look for those hooks, and it looks again each time it asks. It doesn't look for the exact way a hook is written: any mention of the name Elicitation in a settings or plugin file, or at the top of a skill, subagent or command, counts, however it is spelled or escaped, and so does a file it can't read. It asks you in this page instead if it finds one, if your organisation manages Claude Code, if Claude Code was started in a way that can bring hooks Foundry can't see (a settings or plugin flag, or run by a program), or if your agent isn't Claude Code. Foundry can't see hooks that reach Claude Code from settings your organisation sends over the network or through a device-management profile, from a plugin, skill or command kept outside the folders it reads, or from a program that starts Claude Code and adds hooks in its own code, and a hook added between Foundry's look and the dialog. So a yes in the dialog is recorded as the weaker way. If you use plugins, ask IT to turn on allowManagedHooksOnly in Claude Code's managed settings: then only hooks your organisation sets can run."
     },
     "data": {
       "title": "What Foundry keeps, and how to delete it",
-      "body": "Only the columns a card needs from the lists you give, the drafts it made, run records and your decisions, all in your Foundry folder, which Foundry makes private to your user each time it starts (Settings says so if it can't, for example when the folder is your home folder). Replaced lists are kept until you delete them (Settings: Delete my lists). Outside that folder: an AI key in your keychain, if you saved one; this tab's key in the browser tab; and any file you download. Foundry doesn't encrypt anything itself: if your computer's disk is encrypted, that protects these files while it is off; if it isn't, nothing does. To remove everything, delete the Foundry folder."
+      "body": "Only the columns a card needs from the lists you give, the drafts it made, run records and your decisions, all in your Foundry folder, which Foundry makes private to your user each time it starts (Settings says so if it can't, for example when the folder is your home folder). Replaced lists are kept until you delete them (Settings: Delete my lists). Outside that folder: an AI key in your keychain, if you saved one; this tab's key in the browser tab; your choice of light or dark look, in this browser; and any file you download. Foundry doesn't encrypt anything itself: if your computer's disk is encrypted, that protects these files while it is off; if it isn't, nothing does. To remove everything, delete the Foundry folder."
     },
     "remove": {
       "title": "Removing Foundry",

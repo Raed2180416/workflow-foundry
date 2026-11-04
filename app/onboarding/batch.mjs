@@ -51,7 +51,14 @@ export class Batches {
   // uses the real clock for both; the journeys fix asOf only, so their records keep real times (P5 walkthrough M6).
   constructor(app, { now = () => Date.now(), asOf = now } = {}) { this.app = app; this.now = now; this.asOf = asOf; this.file = path.join(app.root, 'batches.json'); }
   #load() { if (!existsSync(this.file)) return []; try { const v = JSON.parse(readFileSync(this.file, 'utf8')); return Array.isArray(v) ? v : []; } catch { return []; } }
-  #save(list) { const tmp = `${this.file}.tmp-${process.pid}`; writeFileSync(tmp, JSON.stringify(list.slice(-KEEP), null, 2), { mode: 0o600 }); renameSync(tmp, this.file); }
+  // Fix round 2026-10-21 (review:honesty new defect 1): only the oldest lists nobody decided on are dropped past KEEP. A list a person
+  // approved or declined is a record: a run's evidence file is built from it and checked against the logged decision on it, so dropping
+  // it after 200 later previews turned a genuine evidence file "Not consistent". Decided lists stay until the workspace is deleted.
+  #save(list) {
+    const undecided = list.filter(b => !b.decision);
+    const drop = new Set(undecided.slice(0, Math.max(0, undecided.length - KEEP)).map(b => b.batchId));
+    const tmp = `${this.file}.tmp-${process.pid}`; writeFileSync(tmp, JSON.stringify(list.filter(b => !drop.has(b.batchId)), null, 2), { mode: 0o600 }); renameSync(tmp, this.file);
+  }
   /** Read, change and write the whole file under the lock (M7): fn(list) returns the new list. */
   #mutate(fn) { return withFileLock(this.file, () => { const next = fn(this.#load()); this.#save(next); return next; }); }
   #update(id, fn) {

@@ -12,15 +12,18 @@
 //   node app/cli.mjs connect [--workspace DIR] [--json]                 the exact line for each coding agent (prints only)
 //   node app/cli.mjs approve APPROVAL_ID [--workspace DIR]              approve in this terminal (asks you to type yes; needs a real terminal):
 //                                                                        turning a version on, or one paused action (shows To, Subject, full text)
-//   node app/cli.mjs check-evidence FILE                                re-check an evidence file on its own; says what it checked and what not
+//   node app/cli.mjs check-evidence FILE [--head HASH]...               re-check an evidence file on its own; says what it checked and what not,
+//                                                                        and where each hash you kept elsewhere is in it
 //
 // Safe defaults: the workspace is a private directory (0700) under the user's home; nothing listens beyond 127.0.0.1; no config file of any
 // coding agent is written (connect prints what to paste); no model is called unless --builder names one and Settings allow it; nothing is
 // sent beyond the local outbox, except the one key check a person asks for on the Keys page (only if Allowed AI includes that provider).
 // Getting into the page (security review 2026-10-21, H1 M6 L15): no key is kept on disk or printed. Each start makes its own keys in
 // memory; a browser tab gets one by trading a one-time code (app/site/gate.mjs) that works once, within a minute. The code goes to the
-// browser opener; it is printed only when stdin and stdout are both a terminal (a person reading), never when the output is piped or
-// captured (a coding agent's shell, `! command` in Claude Code), where the output names the command to run instead.
+// browser opener; it is printed only when stdin and stdout are both a terminal, and otherwise (output piped or read by a program, as in a
+// coding agent's shell or `! command` in Claude Code) the output names the command to run instead. A terminal is what Foundry can test,
+// not a person: a program running as the same account can give it a pseudo-terminal (`script`) and read the code, which is within the
+// same-account limit the Trust page states (fix round 2026-10-21, review:security new defect 5).
 import { parseArgs } from 'node:util';
 import { homedir, platform } from 'node:os';
 import path from 'node:path';
@@ -62,6 +65,9 @@ export function canOpenBrowser(env = process.env, os = platform(), workspace = n
   return !!(env.DISPLAY || env.WAYLAND_DISPLAY) && spawnSync('sh', ['-c', 'command -v xdg-open'], { stdio: 'ignore' }).status === 0;
 }
 
+/** One doctor item as printed: "ok", "warn" (it works, but read this), "note" (optional, not there) or "NO" (needed, missing). Fix round
+ *  2026-10-21 (review:security 4, review:honesty 6): a warning used to be printed with "ok" in front of it. */
+export const doctorLine = i => `${!i.ok ? (i.optional ? 'note' : 'NO  ') : i.warn ? 'warn' : 'ok  '}  ${i.say}`;
 /** Plain-language environment report. Every item says what it means for the person, not just a flag. */
 export function doctor({ workspace, env = process.env, os = platform() } = {}) {
   const items = [];
@@ -225,7 +231,7 @@ async function serveSite({ workspace, args, print }) {
     return;
   }
   const report = await doctorFull({ workspace });
-  for (const i of report.items) print(`${i.ok ? 'ok ' : i.optional ? 'note' : 'NO '}  ${i.say}`);
+  for (const i of report.items) print(doctorLine(i));
   if (!report.ok) { process.exitCode = 1; return; }
   const builderRefusal = await builderAllowed(args.builder, workspace);
   if (builderRefusal) { process.stderr.write(`${builderRefusal}\n`); process.exitCode = 2; return; }
@@ -247,13 +253,24 @@ async function serveSite({ workspace, args, print }) {
   process.once('SIGINT', stop); process.once('SIGTERM', stop);
 }
 
+/** Where a hash someone kept elsewhere sits in an evidence file: the run's chain head, or a line of the decision log (null: not in it). */
+export function headIn(bundle, hash) {
+  if (typeof hash !== 'string' || !hash) return null;
+  if (bundle?.chain?.head === hash) return 'the run\'s chain head';
+  const links = Array.isArray(bundle?.personDecisions?.links) ? bundle.personDecisions.links : [];
+  const i = links.findIndex(l => l?.hash === hash);
+  return i < 0 ? null : `decision-log line ${i + 1} of ${links.length}; the file's log continues from it${i + 1 === links.length ? ' (it is the last line)' : ''}`;
+}
+/** What a consistent file still cannot show, and what to compare (said by check-evidence; the same words as the file's howToCheck). */
+export const OUTSIDE_COPY = bundle => `This shows nothing changed after the file was made only when compared with copies kept somewhere else: anyone using this computer account could rewrite a whole file consistently. The run's chain head (${bundle?.chain?.head ?? 'none'}) must equal a copy of it. The decision log keeps growing with every later decision, so a head of it copied earlier (the run page shows one) must appear among this file's decision-log links, at the place it had then, not as its last link (now ${bundle?.personDecisions?.check?.head ?? 'none'}). Pass each copy with --head HASH and Foundry says where it is.`;
+
 async function main() {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { workspace: { type: 'string' }, port: { type: 'string' }, 'no-open': { type: 'boolean' }, dashboard: { type: 'boolean' },
-    builder: { type: 'string' }, 'token-cap': { type: 'string' }, consent: { type: 'boolean' }, json: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } } });
+    builder: { type: 'string' }, 'token-cap': { type: 'string' }, consent: { type: 'boolean' }, json: { type: 'boolean' }, head: { type: 'string', multiple: true }, help: { type: 'boolean', short: 'h' } } });
   const [command = 'help', item] = positionals;
   const workspace = path.resolve(args.workspace ?? defaultWorkspace());
   const print = value => process.stdout.write(`${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}\n`);
-  if (command === 'help' || args.help) return print('Usage: node app/cli.mjs open | site | connect | doctor [--json] | mcp | approve ID | check-evidence FILE  [--workspace DIR]');
+  if (command === 'help' || args.help) return print('Usage: node app/cli.mjs open | site | connect | doctor [--json] | mcp | approve ID | check-evidence FILE [--head HASH]  [--workspace DIR]');
   if (command === 'doctor') {
     const report = await doctorFull({ workspace, consent: !!args.consent });
     if (args.json) {
@@ -261,26 +278,30 @@ async function main() {
       const { buildInfo } = await import('./onboarding/build-info.mjs');
       const s = loadSettings(workspace), b = buildInfo();
       print({ workspace, ok: report.ok, mode: s.mode, allowedAI: s.allowedAI, setByOrganisation: s.managed, policyFiles: s.policyFiles, build: { commit: b.commit, changedSinceCommit: b.changedSinceCommit, files: b.tree.sha256, node: b.node },
-        managedClaudeCode: report.managed.present, items: report.items.map(i => ({ check: i.check, ok: i.ok, optional: !!i.optional, say: i.say })) });
-    } else for (const i of report.items) print(`${i.ok ? 'ok ' : i.optional ? 'note' : 'NO '}  ${i.say}`);
+        managedClaudeCode: report.managed.present, items: report.items.map(i => ({ check: i.check, ok: i.ok, optional: !!i.optional, warn: !!i.warn, say: i.say })) });
+    } else for (const i of report.items) print(doctorLine(i));
     process.exitCode = report.ok ? 0 : 1; return;
   }
   if (command === 'site' || command === 'open') return serveSite({ workspace, args, print });
   if (command === 'connect') { const c = connectInstructions(workspace); return print(args.json ? c : connectText(c)); }
   if (command === 'check-evidence') {
-    if (!item) { process.stderr.write('Usage: node app/cli.mjs check-evidence FILE\n'); process.exitCode = 2; return; }
+    if (!item) { process.stderr.write('Usage: node app/cli.mjs check-evidence FILE [--head HASH]...\n'); process.exitCode = 2; return; }
     const { checkEvidence } = await import('./onboarding/evidence.mjs');
     let bundle; try { bundle = JSON.parse(readFileSync(item, 'utf8')); } catch (error) { process.stderr.write(`Cannot read ${item}: ${error.message}\n`); process.exitCode = 2; return; }
     const r = checkEvidence(bundle);
     // L9, honesty review B1: say exactly which sections were checked, and which were not.
     const list = xs => xs.map(x => `- ${x}`).join('\n');
-    print(r.ok ? `Consistent. Checked:\n${list(r.checked.sections)}\nNot checked:\n${list(r.checked.notChecked)}\nThis shows nothing changed after the file was made only if the run's chain head (${bundle.chain?.head}) and the decision log's head (${bundle.personDecisions?.check?.head ?? 'none'}) match copies kept somewhere else: anyone using this computer account could rewrite a whole file consistently.`
+    // Fix round 2026-10-21 (review:honesty new defect 4): the decision log keeps growing after a run, so a head copied earlier is found among
+    // the file's links, not compared with its last one. --head HASH (any number) says where each copied hash is in this file.
+    const heads = (args.head ?? []).map(h => ({ h, at: headIn(bundle, h) }));
+    print(r.ok ? `Consistent. Checked:\n${list(r.checked.sections)}\nNot checked:\n${list(r.checked.notChecked)}\n${OUTSIDE_COPY(bundle)}`
       : `Not consistent:\n${list(r.problems)}${r.checked.sections.length ? `\nThese sections did check:\n${list(r.checked.sections)}` : ''}`);
-    process.exitCode = r.ok ? 0 : 1; return;
+    if (heads.length) print(`Copies you kept:\n${list(heads.map(({ h, at }) => `${h}: ${at ?? 'NOT in this file. Either the copy is of another run or log, or this file was rewritten.'}`))}`);
+    process.exitCode = r.ok && heads.every(x => x.at) ? 0 : 1; return;
   }
   if (command === 'start') {
     const report = doctor({ workspace });
-    for (const i of report.items) print(`${i.ok ? 'ok ' : i.optional ? 'note' : 'NO '}  ${i.say}`);
+    for (const i of report.items) print(doctorLine(i));
     if (!report.ok) { process.exitCode = 1; return; }
     const builderRefusal = await builderAllowed(args.builder, workspace);
     if (builderRefusal) { process.stderr.write(`${builderRefusal}\n`); process.exitCode = 2; return; }

@@ -14,7 +14,7 @@
       "note": null,
       "steps": 0,
       "asks": 0,
-      "ms": 2980,
+      "ms": 1099,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -37,7 +37,7 @@
   "totalTabs": 0,
   "totalScreens": 0,
   "totalDecisions": 0,
-  "ms": 2980,
+  "ms": 1099,
   "shots": [
     "01-no-keychain.jpg"
   ],

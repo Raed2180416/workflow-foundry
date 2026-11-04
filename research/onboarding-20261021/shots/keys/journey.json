@@ -14,7 +14,7 @@
       "note": "you do not need a key; the cards work without AI",
       "steps": 0,
       "asks": 0,
-      "ms": 1428,
+      "ms": 916,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -28,7 +28,7 @@
       "note": "Allowed AI is none, so the key is not sent anywhere, not even to check it",
       "steps": 0,
       "asks": 0,
-      "ms": 1901,
+      "ms": 1242,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -44,7 +44,7 @@
       "asks": 0,
       "tabs": 9,
       "screens": 0,
-      "ms": 2190
+      "ms": 1346
     },
     {
       "action": "click",
@@ -55,7 +55,7 @@
       "asks": 0,
       "tabs": 22,
       "screens": 0,
-      "ms": 3089
+      "ms": 1828
     },
     {
       "action": "fill",
@@ -66,7 +66,7 @@
       "asks": 1,
       "tabs": 31,
       "screens": 0,
-      "ms": 3800
+      "ms": 2350
     },
     {
       "action": "click",
@@ -77,7 +77,7 @@
       "asks": 1,
       "tabs": 32,
       "screens": 0,
-      "ms": 4373
+      "ms": 2659
     },
     {
       "n": 3,
@@ -86,12 +86,12 @@
       "note": null,
       "steps": 4,
       "asks": 1,
-      "ms": 5198,
+      "ms": 3229,
       "route": "#/keys",
       "h1": "AI keys",
-      "focus": "button Check and save",
+      "focus": "h1 AI keys",
       "a11y": [],
-      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - text: null Paste your Inception (Mercury 3) key\n  - textbox \"Paste your Inception (Mercury 3) key\"\n  - paragraph: Checking sends one request to the provider with your key, and only if Allowed AI in Settings includes that provider. The key then goes into your keychain, and this page never sees it again.\n  - button \"Check and save\"\n  - paragraph: Each build from your words stops after 200,000 tokens (the provider's unit of text), a limit set when Foundry starts. There is no daily limit.\n  - status:\n    - paragraph: \"Preview Saved in your keychain: key ending wxyz (ephemeral).\"\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
+      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - paragraph: \"Preview Saved in your keychain: key ending wxyz (ephemeral).\"\n  - paragraph: Checked 21 Oct 2026, 09:00 UTC.\n  - paragraph: When you ask Foundry to build from your words, your words, your answers to its questions and Foundry's list of cards go to the provider. Nothing from your lists does.\n  - button \"Remove the key\"\n  - status\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
     },
     {
       "n": 4,
@@ -100,12 +100,12 @@
       "note": null,
       "steps": 4,
       "asks": 1,
-      "ms": 6037,
+      "ms": 3755,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
       "a11y": [],
-      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - paragraph: \"Preview Saved in your keychain: key ending wxyz (ephemeral).\"\n  - paragraph: Checked 21 Oct 2026, 09:00 UTC.\n  - paragraph: Your words go to the provider when you ask Foundry to build from them. Nothing else does.\n  - button \"Remove the key\"\n  - status\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
+      "aria": "- main:\n  - heading \"AI keys\" [level=1]\n  - paragraph: You don't need an AI key. Foundry matches your words to its list for free. A key lets an AI fill in the settings from your own words.\n  - heading \"Inception (Mercury 3) Preview\" [level=2]\n  - paragraph: \"Preview Saved in your keychain: key ending wxyz (ephemeral).\"\n  - paragraph: Checked 21 Oct 2026, 09:00 UTC.\n  - paragraph: When you ask Foundry to build from your words, your words, your answers to its questions and Foundry's list of cards go to the provider. Nothing from your lists does.\n  - button \"Remove the key\"\n  - status\n  - heading \"Anthropic (Haiku 5.5) Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\"\n  - heading \"OpenRouter Planned\" [level=2]\n  - paragraph: Not available yet.\n  - paragraph:\n    - 'link \"What you can do today: use the list, or Mercury\"':\n      - /url: \"#/\""
     }
   ],
   "errors": [],
@@ -125,14 +125,14 @@
     "responsesHaveKey": false,
     "filesHaveKey": false,
     "logHasKey": false,
-    "responses": 14
+    "responses": 13
   },
   "totalSteps": 4,
   "totalAsks": 1,
   "totalTabs": 32,
   "totalScreens": 0,
   "totalDecisions": 0,
-  "ms": 6040,
+  "ms": 3757,
   "shots": [
     "01-keys-page.jpg",
     "02-key-not-allowed.jpg",

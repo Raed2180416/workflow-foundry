@@ -26,7 +26,8 @@ export async function render({ params, query }) {
   if (!a.active) {
     const draft = a.drafts.find(d => d.dryRun);
     // Turned off (M7): say so, and the way back is its page (a new yes), not a draft.
-    root.append(el('h1', {}, t(a.turnedOff ? 'golive.offTitle' : 'golive.notOnTitle', { card: tpl.card })), stepper('goLive'), el('p', {}, a.turnedOff ? t('golive.offBody') : t('golive.notOnBody')),
+    // Not on, so "Turn on" is not done (fix round 2026-10-21, review:UX new defect 7: the stepper said "Turn on (done)" under "turned off").
+    root.append(el('h1', {}, t(a.turnedOff ? 'golive.offTitle' : 'golive.notOnTitle', { card: tpl.card })), stepper('turnOn'), el('p', {}, a.turnedOff ? t('golive.offBody') : t('golive.notOnBody')),
       el('div', { class: 'actions' }, a.turnedOff ? el('a', { class: 'button primary', href: `#/automations/${flowId}` }, t('golive.toAutomation'))
         : draft ? el('a', { class: 'button primary', href: `#/checked/${draft.proposalId}` }, t('golive.toTurnOn')) : el('a', { class: 'button primary', href: `#/make/${tpl.id}` }, t('golive.toMake'))));
     return root;

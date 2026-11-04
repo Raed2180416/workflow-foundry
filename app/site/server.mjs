@@ -16,7 +16,7 @@ import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { errorData } from '../../src/data.mjs';
-import { failureText } from '../core/explain.mjs';
+import { failureText } from '../core/failure-words.mjs';
 import { FoundryApp } from '../core/service.mjs';
 import { DEFAULTS } from '../onboarding/settings.mjs';
 import { handleDashboardApi, SECURITY } from '../dashboard/server.mjs';
@@ -109,7 +109,7 @@ export function createSite(app, options = {}) {
     } catch (error) {
       const data = errorData(error);
       options.log?.({ at: new Date().toISOString(), code: data.code, path: req.url?.split('?')[0] });
-      // Known codes read in plain words (app/core/explain.mjs); the site's own codes carry a plain message already.
+      // Known codes read in plain words (app/core/failure-words.mjs over app/core/explain.mjs); the site's own codes carry a plain message already.
       const known = failureText(data), plain = known && !known.what.startsWith('Stopped with code') ? known
         : { code: data.code, what: data.code === 'ERROR' ? 'Something went wrong inside Foundry.' : data.message, next: data.code === 'ERROR' ? 'Nothing was sent. Try again; if it keeps happening, the details below help whoever looks at it.' : null };
       return send(res, STATUS[data.code] ?? (data.code === 'ERROR' ? 500 : 409), { error: data, problem: plain, questions: error.questions ?? undefined, sheets: error.sheets ?? undefined, flips: error.flips ?? undefined, problems: error.problems ?? undefined });

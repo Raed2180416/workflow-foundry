@@ -11,7 +11,9 @@ import { id as uid, whenUtc } from '../components/dom.js';
 const ROLE_SETS = { 'approver,rule-owner': ['approver', 'rule-owner'], approver: ['approver'], 'rule-owner': ['rule-owner'], auditor: ['auditor'], builder: ['builder'] };
 const ACTIONS = ['money-out', 'message-outside', 'change-records', 'delete'];
 const SIGN = { EUR: '€', USD: '$', GBP: '£' };
-const money = (v, unit = 'EUR') => `${SIGN[unit] ?? ''}${Number(v).toLocaleString('en-GB', { maximumFractionDigits: 2 })}${SIGN[unit] ? '' : ` ${unit}`}`;
+// No decimals below the currency's smallest unit (review:UX nit: "249.99 JPY").
+const minorDigits = unit => { try { return new Intl.NumberFormat('en', { style: 'currency', currency: unit }).resolvedOptions().maximumFractionDigits; } catch { return 2; } };
+const money = (v, unit = 'EUR') => `${SIGN[unit] ?? ''}${Number(v).toLocaleString('en-GB', { maximumFractionDigits: minorDigits(unit) })}${SIGN[unit] ? '' : ` ${unit}`}`;
 // The currency where the browser says the person is (UX review m18: en-IN and ja-JP were offered euros). The region comes from the browser's
 // language (Intl.Locale, filled in with its likely region: "ja" is Japan); a region not listed here gets no guess, and the person chooses.
 const EURO = ['AT', 'BE', 'CY', 'DE', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PT', 'SI', 'SK', 'AD', 'MC', 'SM', 'VA', 'ME', 'XK'];

@@ -32,8 +32,11 @@ export async function render() {
     el('span', {}, t(`settings.ai.${v}`), ' ', v !== 'none' ? statusChip('preview') : null)));
   const nameInput = el('input', { type: 'text', id: 'your-name', autocomplete: 'name', maxlength: 80, value: s.yourName ?? '', 'aria-describedby': 'your-name-help' });
   const recordsAs = el('p', { class: 'muted small', role: 'status' }, me ? t('settings.recordsAs', { label: me.label }) : '');
+  // Fix round 2026-10-21 (review:UX new defect 4): a name that was not saved is put back to the one in force, as the message says.
+  let nameNow = s.yourName ?? '';
   const saveName = el('button', { type: 'button', dataset: { action: 'save-name' }, on: { click: once(async () => {
-    if (await save({ yourName: nameInput.value.trim() }, t('settings.aiSaved'), nameStatus)) { const w = await api('/api/whoami').catch(() => null); if (w) { recordsAs.textContent = t('settings.nameSaved', { label: w.label }); say(recordsAs.textContent); } }
+    const r = await save({ yourName: nameInput.value.trim() }, t('settings.aiSaved'), nameStatus, () => { nameInput.value = nameNow; });
+    if (r) { nameNow = r.yourName ?? ''; const w = await api('/api/whoami').catch(() => null); if (w) { recordsAs.textContent = t('settings.nameSaved', { label: w.label }); say(recordsAs.textContent); } }
   }) } }, t('settings.nameSave'));
   const confirm = el('input', { type: 'text', id: 'forget-confirm', autocomplete: 'off' });
   const forgetStatus = el('div', { role: 'status' });

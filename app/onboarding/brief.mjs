@@ -126,7 +126,8 @@ export function briefData(app, { flowId = null, connect, date = new Date() }) {
     })], header: true });
   }
   sections.push({ title: 'What leaves this computer', lines: [
-    'Foundry itself sends one thing over the network: when the person presses Check and save on an AI key, one request (GET <provider>/models, with the key) to the provider in the owner policy, and only if Allowed AI includes that provider. Nothing else: e-mails are drafts the person sends, chat messages are drafts they paste.',
+    'Without an AI builder, Foundry itself sends one thing over the network: when the person presses Check and save on an AI key, one request (GET <provider>/models, with the key) to the provider in the owner policy, and only if Allowed AI includes that provider. E-mails are drafts the person sends, and chat messages are drafts they paste.',
+    'An AI builder (below) is the one other thing that sends: each time it builds, the person\'s words describing the automation, their answers to its questions and Foundry\'s card list go to its provider, never the person\'s lists.',
     'Through a coding agent: what Foundry\'s tools return goes to that agent\'s AI provider under the person\'s agreement with them. Foundry returns counts, step names and practice results; a live list is shown in the browser, and the agent sees only how many items it has.',
     `AI builders: Mercury (Inception) only if Allowed AI says so and a key is saved; Claude Haiku (Anthropic) only if Foundry is started with --builder haiku and Allowed AI says so. Allowed AI here: ${settings.allowedAI}${settings.managed?.allowedAI ? ' (set by your organisation)' : ''}.`] });
   sections.push({ title: 'Data kept, and how to delete it', lines: [

@@ -29,7 +29,7 @@ export async function render() {
     root.append(el('div', { class: 'grid' }, a.drafts.map(d => el('article', { class: 'card practice', 'aria-labelledby': `draft-${d.proposalId}`, dataset: { draft: d.proposalId } },
       el('h3', { id: `draft-${d.proposalId}` }, d.card, ' ', t('automations.version', { version: d.version })),
       el('p', {}, d.dryRun === true ? t('automations.draftPassed') : d.dryRun === false ? t('automations.draftFailed') : t('automations.draftUntested')),
-      el('div', { class: 'actions' }, el('a', { class: 'button', href: `#/checked/${d.proposalId}`, 'aria-describedby': `draft-${d.proposalId}` }, t('common.open')), removeButton(d.proposalId))))));
+      el('div', { class: 'actions' }, el('a', { class: 'button', href: `#/checked/${d.proposalId}`, 'aria-describedby': `draft-${d.proposalId}` }, t('common.open')), removeButton(d.proposalId, null, `draft-${d.proposalId}`))))));
   }
   return root;
 }

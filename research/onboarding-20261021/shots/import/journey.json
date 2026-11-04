@@ -16,7 +16,7 @@
       "asks": 0,
       "tabs": 22,
       "screens": 1.24,
-      "ms": 2311
+      "ms": 740
     },
     {
       "n": 1,
@@ -25,7 +25,7 @@
       "note": null,
       "steps": 1,
       "asks": 0,
-      "ms": 3139,
+      "ms": 1205,
       "route": "#/import",
       "h1": "Bring in an n8n workflow •Preview",
       "focus": "h1 Bring in an n8n workflow •Preview",
@@ -41,7 +41,7 @@
       "asks": 0,
       "tabs": 31,
       "screens": 1.24,
-      "ms": 3429
+      "ms": 1361
     },
     {
       "n": 2,
@@ -50,7 +50,7 @@
       "note": null,
       "steps": 2,
       "asks": 0,
-      "ms": 4505,
+      "ms": 1834,
       "route": "#/import",
       "h1": "Bring in an n8n workflow •Preview",
       "focus": "h1 Bring in an n8n workflow •Preview",
@@ -78,7 +78,7 @@
   "totalTabs": 31,
   "totalScreens": 1.24,
   "totalDecisions": 0,
-  "ms": 4505,
+  "ms": 1834,
   "shots": [
     "01-import-page.jpg",
     "02-verdict-and-risk.jpg"

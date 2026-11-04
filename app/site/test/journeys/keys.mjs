@@ -54,8 +54,12 @@ test('KEYS with a keychain: a pasted canary key is checked on 127.0.0.1, saved, 
       assert.match(await text(page, '[data-provider="inception"] [data-key-limit]'), /no daily limit/, 'the per-build limit, not a daily one (M8)');
       await person.fill(page.locator('#key-inception'), CANARY);
       await person.click(page.locator('[data-provider="inception"] button.primary'));
-      await page.waitForSelector('[data-provider="inception"] .ok-text');
-      const saved = await text(page, '[data-provider="inception"] .ok-text');
+      // The card is drawn again from the keychain (fix round 2026-10-21): the saved key with Remove, no paste field, no "null".
+      await page.waitForSelector('[data-provider="inception"] [data-key-saved]');
+      const saved = await text(page, '[data-provider="inception"] [data-key-saved]');
+      assert.equal(await page.locator('#key-inception').count(), 0, 'no paste field beside a saved key');
+      assert.equal(await page.locator('[data-provider="inception"] [data-action="remove-key"]').count(), 1, 'Remove is there at once');
+      assert.doesNotMatch(await page.locator('main').innerText(), /\bnull\b/, 'no "null" on the page');
       assert.match(saved, /wxyz/);
       await shot('saved-last-four');
       await page.goto(`${new URL(page.url()).origin}/#/settings`);

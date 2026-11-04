@@ -213,7 +213,8 @@ test('M5: removing an AI key redraws the card: the paste field is back and nothi
       await go('#/keys');
       await page.fill('#key-inception', 'TESTKEY-ux-review-0000-abcd');
       await page.locator('[data-provider="inception"] button.primary').click();
-      await page.waitForSelector('[data-provider="inception"] .ok-text');
+      // Since the fix round of 2026-10-21 the card is drawn again from the keychain at once (no .ok-text beside a paste field).
+      await page.waitForSelector('[data-provider="inception"] [data-key-saved]');
       await go('#/settings'); await go('#/keys');
       await page.waitForSelector('[data-action="remove-key"]');
       await page.locator('[data-action="remove-key"]').click();

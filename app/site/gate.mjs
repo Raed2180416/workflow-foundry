@@ -6,7 +6,7 @@
 //          within a second) and, only when stdin and stdout are a person's terminal, what is printed (app/cli.mjs).
 //          The process that serves the page mints codes in memory. Another process (`open`, or `mcp --dashboard` while the page runs
 //          elsewhere) mints one by writing the code's sha256 to <workspace>/site/codes/<sha256>.json (0600 in a 0700 folder) with the
-//          id of the running start, read from <workspace>/.lock. Codes made for an earlier start are refused and swept.
+//          id of the running start, read from <workspace>/.lock. Codes made for another start are refused; expired ones are swept.
 //   key    what one tab gets for one code (POST /auth/open). The server keeps only its sha256, in memory; the page keeps the key in that
 //          tab's sessionStorage. Nothing on disk or in a printed line lets a browser in, and every start of Foundry makes old keys useless.
 //   reuse  a code presented a second time withdraws the key its first use got. A person who opened the link twice opens Foundry again;
@@ -56,13 +56,17 @@ export function createGate({ workspace = null, instance = randomUUID(), now = ()
   const keys = new Map(), codes = new Map(), spent = new Map();
   const addKey = key => { keys.set(sha(key), { at: now() }); while (keys.size > maxKeys) keys.delete(keys.keys().next().value); return key; };
   if (token) addKey(token);
-  // Codes left from an earlier start (or expired) are void: remove them.
+  // Expired or unreadable code files are void: remove them. A code that is still within its minute stays, whichever start it names: two
+  // Foundry processes can share a workspace (the site, and `start` or `mcp` with the older dashboard), and a code minted for the other one
+  // must keep working (fix round 2026-10-21: a second gate used to delete it, so the person's link failed). A code for another start is
+  // refused when it is presented here, and is removed by whichever gate finds it expired.
   if (workspace) {
     try {
       for (const f of readdirSync(codesDir(workspace))) {
         const file = path.join(codesDir(workspace), f);
+        if (!/^[a-f0-9]{64}\.json$/.test(f)) { if (/\.taken-/.test(f)) continue; rmSync(file, { force: true }); continue; }
         let v = null; try { v = JSON.parse(readFileSync(file, 'utf8')); } catch { v = null; }
-        if (!v || v.instance !== instance || !(v.expiresAt >= now())) rmSync(file, { force: true });
+        if (!v || typeof v.instance !== 'string' || !(v.expiresAt >= now())) rmSync(file, { force: true });
       }
     } catch { /* no codes folder yet */ }
   }

@@ -3,7 +3,7 @@
 import { el, t, api, templates, memory, navigate, say, decide, refreshBadge } from '../site.js';
 import { checkList, errorPanel, showError, stepper, whoDecides, dropZone, columnMapper, dataQuestions, statusChip, howNote, rowsTable, busy } from '../components/ui.js';
 import { focusOn } from '../site.js';
-import { plural, replace } from '../components/dom.js';
+import { plural, replace, when } from '../components/dom.js';
 
 /** "4 e-mails would have gone out: 3 to customers and 1 to me@example.com" (counts from the test, words from the card). */
 export function wouldDoSummary(wouldDo, slots, noun) {
@@ -79,27 +79,34 @@ export async function render({ params }) {
   }
   const d = view.dryRun;
   const passed = d.passed;
+  // A removed draft (fix round 2026-10-21, review:UX new defect 2): its result stays readable, with no way to turn it on or remove it again.
+  const removed = !!view.removed && !view.active;
+  const removedBanner = () => el('div', { class: 'banner wait', role: 'status', dataset: { draftRemoved: '' } }, el('p', {}, t('checked.removed', { who: view.removed.by ?? '', channel: t(`channel.${view.removed.channel}`), when: when(view.removed.at) })),
+    el('p', {}, el('a', { href: `#/make/${view.template}${view.basedOn ? `?flow=${view.flowId}` : ''}` }, t('checked.removedAgain'))));
   const ownData = d.dataSource === 'your-data';
   const checksPassed = d.checks.filter(c => c.passed === true).length;
   if (passed) {
     root.append(el('h1', {}, t('checked.passedTitle')), stepper(view.active ? 'goLive' : 'test'));
+    if (removed) root.append(removedBanner());
     const summary = wouldDoSummary(d.wouldDo, view.slots, noun);
     root.append(el('p', { class: 'lead' }, t(ownData ? 'checked.wouldHaveYours' : 'checked.wouldHave'), ' ', summary.join(t('common.and')), '. ', t('checked.nothingSent')));
     if (ownData && !d.wouldDo.some(w => w.action === 'send' && !Object.values(view.slots ?? {}).includes(w.to))) root.append(el('p', { class: 'banner', role: 'status' }, t('checked.nothingToChase')));
     // UX review M3: the next step is right under the result, not a few screens down. The yes itself stays on its card below, with what it
     // will and won't do (SPEC R5: a decision only from its card); this strip takes the person there, or back to the settings.
-    if (!view.active) root.append(el('div', { class: 'strip', dataset: { nextStep: '' } }, el('p', {}, el('b', {}, t('checked.nextTitle')), ' ', t('checked.nextBody')),
-      el('div', { class: 'actions' }, el('a', { class: 'button primary', href: '#turn-on-h', dataset: { action: 'to-turn-on' }, on: { click: e => { e.preventDefault(); const h = document.getElementById('turn-on-h'); focusOn(h, { scroll: false }); h?.closest('[data-turn-on]')?.scrollIntoView({ block: 'start' }); } } }, t('checked.toTurnOn')),
+    // The link's address is this page (review:UX nit: '#turn-on-h' opened Home in a new tab); a click moves the focus to the card.
+    if (!view.active && !removed) root.append(el('div', { class: 'strip', dataset: { nextStep: '' } }, el('p', {}, el('b', {}, t('checked.nextTitle')), ' ', t('checked.nextBody')),
+      el('div', { class: 'actions' }, el('a', { class: 'button primary', href: `#/checked/${proposalId}`, dataset: { action: 'to-turn-on' }, on: { click: e => { e.preventDefault(); const h = document.getElementById('turn-on-h'); focusOn(h, { scroll: false }); h?.closest('[data-turn-on]')?.scrollIntoView({ block: 'start' }); } } }, t('checked.toTurnOn')),
         el('a', { class: 'button', href: `#/make/${view.template}${view.basedOn ? `?flow=${view.flowId}` : ''}` }, t('turnon.changeSettings')))));
   } else {
     root.append(el('h1', {}, t('checked.failedTitle')), stepper('test'));
+    if (removed) root.append(removedBanner());
     root.append(errorPanel({ problem: d.problem ?? { what: d.headline } }, { notDone: t('checked.cantTurnOn'), action: { label: t('checked.changeSetting'), href: `#/make/${view.template}${view.basedOn ? `?flow=${view.flowId}` : ''}` } }));
   }
   root.append(el('p', { class: 'pretend' }, ownData ? t('checked.testedOnYours') : t('checked.testedOnPretend', { noun })));
 
   // The checks are shown once (UX review M3): on the turn-on card when there is one ("How you'll know it worked", the same ticks), here
   // otherwise. The card used to repeat this whole list under it, between the result and the yes.
-  const cardShown = passed && !view.active;
+  const cardShown = passed && !view.active && !removed;
   if (!cardShown) root.append(el('section', { 'aria-labelledby': 'checks-h' }, el('h2', { id: 'checks-h' }, t('checked.checksTitle')), checkList(d.checks), howNote()));
   // Every message in full, folded (M3): the summary above says how many and to whom; nothing is sent by turning on, and the exact list
   // is shown again, in full, before anything is made.
@@ -115,16 +122,16 @@ export async function render({ params }) {
   const own = tpl ? ownListBranch({ proposalId }, tpl, () => navigate(`/checked/${proposalId}`)) : null;
   const ownButton = el('button', { type: 'button', 'aria-expanded': 'false', dataset: { action: 'own-list' } }, t('checked.ownButton'));
   ownButton.addEventListener('click', () => { const open = own.hidden; own.hidden = !open; ownButton.setAttribute('aria-expanded', String(open)); if (open) own.querySelector('input[type=file]')?.focus(); });
-  if (tpl && passed) root.append(el('section', { 'aria-labelledby': 'own-h', dataset: { ownSection: '' } }, el('h2', { id: 'own-h' }, t(view.active ? 'checked.ownSectionTitleOn' : 'checked.ownSectionTitle')), el('p', {}, t('checked.ownSectionBody')),
+  if (tpl && passed && !removed) root.append(el('section', { 'aria-labelledby': 'own-h', dataset: { ownSection: '' } }, el('h2', { id: 'own-h' }, t(view.active ? 'checked.ownSectionTitleOn' : 'checked.ownSectionTitle')), el('p', {}, t('checked.ownSectionBody')),
     el('div', { class: 'actions' }, ownButton), own));
   root.append(el('section', { class: 'box-limit', 'aria-labelledby': 'limit-h' }, el('h2', { id: 'limit-h' }, t('checked.limitTitle')), el('p', {}, t('checked.limitBody')),
-    tpl && !passed ? el('div', { class: 'actions' }, ownButton) : null, tpl && !passed ? own : null));
+    tpl && !passed && !removed ? el('div', { class: 'actions' }, ownButton) : null, tpl && !passed && !removed ? own : null));
 
   // The turn-on card.
   if (cardShown) root.append(turnOnCard(view, tpl, { checksPassed, ownData }));
   if (view.active) root.append(el('div', { class: 'banner ok', role: 'status' }, el('p', {}, statusChip('works'), ' ', t('checked.alreadyOn')), el('a', { class: 'button primary', href: `#/go-live/${view.flowId}` }, t('checked.useOwnList'))));
   // Removing a draft the person won't use (M7): drafts left by "Not now" no longer pile up.
-  if (!view.active && view.status === 'proposed') root.append(removeDraft(view));
+  if (!view.active && view.status === 'proposed' && !removed) root.append(removeDraft(view));
   root.append(status);
   return root;
 }
@@ -140,7 +147,7 @@ function removeDraft(view) {
     if (button.getAttribute('aria-disabled') === 'true') return;
     busy(button, true);
     try { await api(`/api/proposals/${encodeURIComponent(view.proposalId)}/remove`, {}); say(t('automations.removed')); navigate('/automations'); }
-    catch (error) { showError(status, error, { notDone: t('automations.notRemoved') }); }
+    catch (error) { showError(status, error, { notDone: error.code === 'ALREADY_REMOVED' ? t('automations.alreadyRemoved') : t('automations.notRemoved') }); }
     finally { busy(button, false); }
   });
   return el('section', { class: 'inset', dataset: { removeDraft: '' } }, el('p', {}, t('automations.removeLead')), el('div', { class: 'actions' }, button), status);

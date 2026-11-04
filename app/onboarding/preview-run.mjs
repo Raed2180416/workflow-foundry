@@ -12,7 +12,7 @@ import { Foundry } from '../../src/foundry.mjs';
 import { requireWorkflow } from '../../src/validate.mjs';
 import { errorData } from '../../src/data.mjs';
 import { appRegistry } from '../core/capabilities.mjs';
-import { explainRun } from '../core/explain.mjs';
+import { explainRun } from '../core/failure-words.mjs';
 import { seedWorld, readWorld, readOutbox } from '../core/stand-ins.mjs';
 
 /** Copy the live store's state rows of one workflow (every slot, every entry, as stored) into another store. Returns the entries copied. */

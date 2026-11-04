@@ -69,7 +69,7 @@ export async function render({ params }) {
       el('p', {}, d.chain.verified ? t('run.recordOk', { n: d.chain.events }) : t('run.recordBad', { reason: d.chain.reason ?? '' })),
       d.chain.verified ? el('p', { class: 'small' }, t('run.recordMeaning')) : null,
       el('details', {}, el('summary', {}, t('common.showDetails')), el('p', { class: 'small' }, rich('run.chainHead', { hash: headText })), el('div', { class: 'actions' }, copyHead),
-        decisionsHead ? [el('p', { class: 'small' }, rich('run.decisionsHead', { hash: decisionsText })), el('div', { class: 'actions' }, copyDecisions)] : null)),
+        decisionsHead ? [el('p', { class: 'small' }, rich('run.decisionsHead', { hash: decisionsText })), el('p', { class: 'small muted' }, t('run.decisionsHeadNote')), el('div', { class: 'actions' }, copyDecisions)] : null)),
     el('div', { class: 'actions' }, ev1), el('p', { class: 'small muted', dataset: { evidenceContains: '' } }, t('run.evidenceContains')), fileNote, status,
     el('section', {}, el('h2', {}, t('run.gapsTitle')), el('ul', {}, ['decisions', 'transcripts', 'anchor', 'delivered', 'secondPerson', 'identity'].map(k => el('li', {}, t(`run.gaps.${k}`))))),
     el('section', {}, el('h2', {}, t('run.timeline', { n: d.timeline.length })), el('div', { class: 'actions' }, toggle),

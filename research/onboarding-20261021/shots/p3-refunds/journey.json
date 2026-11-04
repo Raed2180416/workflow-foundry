@@ -16,14 +16,14 @@
       "asks": 0,
       "tabs": 16,
       "screens": 0.58,
-      "ms": 1277
+      "ms": 595
     },
     {
       "action": "key",
       "key": "Enter",
       "steps": 2,
       "asks": 0,
-      "ms": 1438
+      "ms": 757
     },
     {
       "n": 1,
@@ -32,7 +32,7 @@
       "note": "no \"this sounds like\" for a refund; the cards are offered",
       "steps": 2,
       "asks": 0,
-      "ms": 2112,
+      "ms": 1122,
       "route": "#/describe",
       "h1": "Foundry can't make that yet. Nothing was created.",
       "focus": "h1 Foundry can't make that yet. Nothing was created.",
@@ -48,7 +48,7 @@
       "asks": 0,
       "tabs": 26,
       "screens": 0.58,
-      "ms": 2364
+      "ms": 1209
     },
     {
       "action": "fill",
@@ -59,7 +59,7 @@
       "asks": 1,
       "tabs": 35,
       "screens": 0.58,
-      "ms": 2828
+      "ms": 1543
     },
     {
       "action": "fill",
@@ -70,7 +70,7 @@
       "asks": 2,
       "tabs": 36,
       "screens": 0.64,
-      "ms": 3305
+      "ms": 1841
     },
     {
       "action": "click",
@@ -81,7 +81,7 @@
       "asks": 2,
       "tabs": 42,
       "screens": 1.35,
-      "ms": 3810
+      "ms": 2138
     },
     {
       "action": "click",
@@ -92,7 +92,7 @@
       "asks": 2,
       "tabs": 57,
       "screens": 2.57,
-      "ms": 5447
+      "ms": 3146
     },
     {
       "action": "upload",
@@ -103,7 +103,7 @@
       "asks": 3,
       "tabs": 66,
       "screens": 2.57,
-      "ms": 6260
+      "ms": 3501
     },
     {
       "n": 2,
@@ -112,7 +112,7 @@
       "note": "two columns to choose; receipt, category and description may be missing",
       "steps": 8,
       "asks": 3,
-      "ms": 6953,
+      "ms": 3934,
       "route": "#/go-live/expense-approval?on=1",
       "h1": "Add your expense claims",
       "focus": "h1 Add your expense claims",
@@ -128,7 +128,7 @@
       "asks": 3,
       "tabs": 76,
       "screens": 2.57,
-      "ms": 7147
+      "ms": 4094
     },
     {
       "action": "choose",
@@ -139,7 +139,7 @@
       "asks": 3,
       "tabs": 87,
       "screens": 2.57,
-      "ms": 7643
+      "ms": 4356
     },
     {
       "action": "click",
@@ -150,7 +150,7 @@
       "asks": 3,
       "tabs": 105,
       "screens": 3.59,
-      "ms": 8517
+      "ms": 5291
     },
     {
       "n": 3,
@@ -159,7 +159,7 @@
       "note": "no receipt column: every claim goes to the approver, and the page says so",
       "steps": 11,
       "asks": 3,
-      "ms": 10652,
+      "ms": 5899,
       "route": "#/go-live/expense-approval?on=1",
       "h1": "Add your expense claims",
       "focus": "h2#batch-27 Make this draft?",
@@ -173,9 +173,9 @@
       "target": "Make the draft",
       "steps": 12,
       "asks": 4,
-      "tabs": 115,
+      "tabs": 116,
       "screens": 3.59,
-      "ms": 11488
+      "ms": 6030
     },
     {
       "n": 4,
@@ -184,12 +184,12 @@
       "note": null,
       "steps": 12,
       "asks": 4,
-      "ms": 12360,
-      "route": "#/drafts?run=1dcb0dcb-7782-453a-9249-b6a284da2943",
+      "ms": 6940,
+      "route": "#/drafts?run=df59a05a-f5a3-4515-a2cb-1b60fc2391c3",
       "h1": "One draft ready. Foundry didn't send anything.",
       "focus": "h1 One draft ready. Foundry didn't send anything.",
       "a11y": [],
-      "aria": "- main:\n  - heading \"One draft ready. Foundry didn't send anything.\" [level=1]\n  - paragraph: Open each one in your mail app and send it yourself.\n  - paragraph: Use Gmail or Outlook in your browser? Copy the address, the subject and the text into a new e-mail.\n  - list:\n    - listitem:\n      - text: \"To: maria@example.com Subject: Expenses: 3 waiting for your approval 4 Nov 2026, 13:06 UTC Expense claims waiting for your decision (3): - R-1042 Lee Moss: 749.99 for no description given (no category; no receipt) - R-1043 Ana Ruiz: 45 for no description given (no category; no receipt) - R-1044 Sam Park: 120.5 for no description given (no category; no receipt) Approved on their own, not paid yet (up to 100 with a receipt) (0): - none Please reply with your decision on each waiting claim. Your reply goes to the person who sent this, who records it in Foundry. Nothing has been paid.\"\n      - link \"Open in your mail app\":\n        - /url: mailto:maria@example.com?subject=Expenses%3A%203%20waiting%20for%20your%20approval&body=Expense%20claims%20waiting%20for%20your%20decision%20(3)%3A%0A-%20R-1042%20Lee%20Moss%3A%20749.99%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A-%20R-1043%20Ana%20Ruiz%3A%2045%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A-%20R-1044%20Sam%20Park%3A%20120.5%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A%0AApproved%20on%20their%20own%2C%20not%20paid%20yet%20(up%20to%20100%20with%20a%20receipt)%20(0)%3A%0A-%20none%0A%0APlease%20reply%20with%20your%20decision%20on%20each%20waiting%20claim.%20Your%20reply%20goes%20to%20the%20person%20who%20sent%20this%2C%20who%20records%20it%20in%20Foundry.%20Nothing%20has%20been%20paid.\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n  - status\n  - paragraph: \"\\\"I sent it\\\" is your own note, kept in your Foundry folder. Foundry can't see your mail.\"\n  - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again, even if you never send it.\"\n  - link \"Your automations\":\n    - /url: \"#/automations\"\n  - link \"Runs\":\n    - /url: \"#/runs\""
+      "aria": "- main:\n  - heading \"One draft ready. Foundry didn't send anything.\" [level=1]\n  - paragraph: Open each one in your mail app and send it yourself.\n  - paragraph: Use Gmail or Outlook in your browser? Copy the address, the subject and the text into a new e-mail.\n  - list:\n    - listitem:\n      - text: \"To: maria@example.com Subject: Expenses: 3 waiting for your approval 4 Nov 2026, 14:39 UTC Expense claims waiting for your decision (3): - R-1042 Lee Moss: 749.99 for no description given (no category; no receipt) - R-1043 Ana Ruiz: 45 for no description given (no category; no receipt) - R-1044 Sam Park: 120.5 for no description given (no category; no receipt) Approved on their own, not paid yet (up to 100 with a receipt) (0): - none Please reply with your decision on each waiting claim. Your reply goes to the person who sent this, who records it in Foundry. Nothing has been paid.\"\n      - link \"Open in your mail app\":\n        - /url: mailto:maria@example.com?subject=Expenses%3A%203%20waiting%20for%20your%20approval&body=Expense%20claims%20waiting%20for%20your%20decision%20(3)%3A%0A-%20R-1042%20Lee%20Moss%3A%20749.99%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A-%20R-1043%20Ana%20Ruiz%3A%2045%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A-%20R-1044%20Sam%20Park%3A%20120.5%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A%0AApproved%20on%20their%20own%2C%20not%20paid%20yet%20(up%20to%20100%20with%20a%20receipt)%20(0)%3A%0A-%20none%0A%0APlease%20reply%20with%20your%20decision%20on%20each%20waiting%20claim.%20Your%20reply%20goes%20to%20the%20person%20who%20sent%20this%2C%20who%20records%20it%20in%20Foundry.%20Nothing%20has%20been%20paid.\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n  - status\n  - paragraph: \"\\\"I sent it\\\" is your own note, kept in your Foundry folder. Foundry can't see your mail.\"\n  - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again, even if you never send it.\"\n  - link \"Your automations\":\n    - /url: \"#/automations\"\n  - link \"Runs\":\n    - /url: \"#/runs\""
     },
     {
       "action": "click",
@@ -198,9 +198,9 @@
       "target": "Waiting for you0",
       "steps": 13,
       "asks": 4,
-      "tabs": 119,
+      "tabs": 120,
       "screens": 3.59,
-      "ms": 12837
+      "ms": 7030
     },
     {
       "n": 5,
@@ -209,7 +209,7 @@
       "note": "Maria answers by e-mail; the person records each answer here",
       "steps": 13,
       "asks": 4,
-      "ms": 13793,
+      "ms": 7549,
       "route": "#/waiting",
       "h1": "Answers to record",
       "focus": "h1 Answers to record",
@@ -223,9 +223,9 @@
       "target": "Approved",
       "steps": 14,
       "asks": 4,
-      "tabs": 128,
+      "tabs": 129,
       "screens": 3.59,
-      "ms": 14290
+      "ms": 7617
     },
     {
       "n": 6,
@@ -234,7 +234,7 @@
       "note": null,
       "steps": 14,
       "asks": 4,
-      "ms": 15481,
+      "ms": 8057,
       "route": "#/waiting",
       "h1": "Answers to record",
       "focus": "h1 Answers to record",
@@ -248,9 +248,9 @@
       "target": "Your automations",
       "steps": 15,
       "asks": 4,
-      "tabs": 133,
+      "tabs": 134,
       "screens": 3.59,
-      "ms": 15823
+      "ms": 8123
     },
     {
       "action": "click",
@@ -259,9 +259,9 @@
       "target": "Open",
       "steps": 16,
       "asks": 4,
-      "tabs": 142,
+      "tabs": 143,
       "screens": 3.59,
-      "ms": 16875
+      "ms": 8375
     },
     {
       "n": 7,
@@ -270,12 +270,12 @@
       "note": "who decided each list, how and when",
       "steps": 16,
       "asks": 4,
-      "ms": 18125,
+      "ms": 8875,
       "route": "#/automations/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Approve small expenses\" [level=1]\n  - paragraph: Works now On · version 1\n  - link \"Make a list (shows you everything first)\":\n    - /url: \"#/go-live/expense-approval\"\n  - link \"Change settings\":\n    - /url: \"#/make/expense-approval?flow=expense-approval\"\n  - link \"Record answers (2 waiting)\":\n    - /url: \"#/waiting\"\n  - link \"Get a one-page brief for IT\":\n    - /url: \"#/it-brief/expense-approval\"\n  - region \"On or off\":\n    - heading \"On or off\" [level=2]\n    - paragraph: Works now On. It runs only when you start it here.\n    - paragraph: \"Turn it off to stop it: it then makes no lists and runs nothing, and anything of it still waiting for your yes is cancelled. Drafts it already made stay. You can turn it on again later.\"\n    - button \"Turn it off\"\n  - heading \"It will\" [level=2]\n  - list:\n    - listitem: Read the claims still waiting for a decision\n    - listitem: Approve on its own each claim up to 100 that has a receipt\n    - listitem: Note every decision in a decisions list on this computer\n    - listitem: Draft an e-mail to maria@example.com listing the claims they need to decide. You see it first, and you send it\n    - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n  - heading \"It won't\" [level=2]\n  - list:\n    - listitem: Pay or reimburse anyone\n    - listitem: Approve anything over 100\n    - listitem: Change your list of claims\n    - listitem: \"See the approver's reply: you record their answer in Foundry\"\n    - listitem: \"Run by itself: you start each run\"\n  - heading \"How you'll know it worked\" [level=2]\n  - paragraph:\n    - text: \"Last run (4 Nov 2026, 13:06 UTC): Done.\"\n    - link \"Open\":\n      - /url: \"#/runs/1dcb0dcb-7782-453a-9249-b6a284da2943\"\n  - list:\n    - listitem: \"Passed: Every claim approved on its own is within the limit of 100 and has a receipt\"\n    - listitem: \"Passed: The e-mail to maria@example.com was drafted\"\n    - listitem: \"Passed: Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)\"\n    - listitem: \"Passed: Every claim is in the decisions list once (checked by re-reading it)\"\n    - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written, word for word\"\n    - listitem: \"Passed: Re-read the decisions list: one line per claim\"\n  - heading \"Who decides:\" [level=2]\n  - paragraph: Turned on by root@vm through this page on 4 Nov 2026, 13:06 UTC. That is the name in Settings and this computer's account, not a checked identity.\n  - paragraph: \"Noted: maria@example.com gets an e-mail; you record their answer here\"\n  - paragraph: maria@example.com gets an e-mail with the claims to decide; you record their answer in Waiting for you.\n  - heading \"Decisions\" [level=2]\n  - list:\n    - listitem:\n      - text: \"A list of 1: approved by root@vm through this page, 21 Oct 2026, 09:00 UTC\"\n      - link \"Open\":\n        - /url: \"#/runs/1dcb0dcb-7782-453a-9249-b6a284da2943\"\n  - heading \"Your data\" [level=2]\n  - list:\n    - listitem: \"expenses: 3 rows, given 4 Nov 2026, 13:06 UTC\"\n  - link \"Use a new list\":\n    - /url: \"#/go-live/expense-approval\"\n  - heading \"A reminder, not a schedule\" [level=2]\n  - paragraph: Foundry can't run by itself yet. If you like, add a weekly calendar reminder to open it and make a list.\n  - button \"Add a weekly calendar reminder\"\n  - heading \"Versions\" [level=2]\n  - heading \"Version 1 · On\" [level=3]\n  - group: ▸ Show details\n  - heading \"Runs\" [level=2]\n  - list:\n    - listitem:\n      - link \"Done · 4 Nov 2026, 13:06 UTC\":\n        - /url: \"#/runs/1dcb0dcb-7782-453a-9249-b6a284da2943\""
+      "aria": "- main:\n  - heading \"Approve small expenses\" [level=1]\n  - paragraph: Works now On · version 1\n  - link \"Make a list (shows you everything first)\":\n    - /url: \"#/go-live/expense-approval\"\n  - link \"Change settings\":\n    - /url: \"#/make/expense-approval?flow=expense-approval\"\n  - link \"Record answers (2 waiting)\":\n    - /url: \"#/waiting\"\n  - link \"Get a one-page brief for IT\":\n    - /url: \"#/it-brief/expense-approval\"\n  - region \"On or off\":\n    - heading \"On or off\" [level=2]\n    - paragraph: Works now On. It runs only when you start it here.\n    - paragraph: \"Turn it off to stop it: it then makes no lists and runs nothing, and anything of it still waiting for your yes is cancelled. Drafts it already made stay. You can turn it on again later.\"\n    - button \"Turn it off\"\n  - heading \"It will\" [level=2]\n  - list:\n    - listitem: Read the claims still waiting for a decision\n    - listitem: Approve on its own each claim up to 100 that has a receipt\n    - listitem: Note every decision in a decisions list on this computer\n    - listitem: Draft an e-mail to maria@example.com listing the claims they need to decide. You see it first, and you send it\n    - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n  - heading \"It won't\" [level=2]\n  - list:\n    - listitem: Pay or reimburse anyone\n    - listitem: Approve anything over 100\n    - listitem: Change your list of claims\n    - listitem: \"See the approver's reply: you record their answer in Foundry\"\n    - listitem: \"Run by itself: you start each run\"\n  - heading \"How you'll know it worked\" [level=2]\n  - paragraph:\n    - text: \"Last run (4 Nov 2026, 14:39 UTC): Done.\"\n    - link \"Open\":\n      - /url: \"#/runs/df59a05a-f5a3-4515-a2cb-1b60fc2391c3\"\n  - list:\n    - listitem: \"Passed: Every claim approved on its own is within the limit of 100 and has a receipt\"\n    - listitem: \"Passed: The e-mail to maria@example.com was drafted\"\n    - listitem: \"Passed: Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)\"\n    - listitem: \"Passed: Every claim is in the decisions list once (checked by re-reading it)\"\n    - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written, word for word\"\n    - listitem: \"Passed: Re-read the decisions list: one line per claim\"\n  - heading \"Who decides:\" [level=2]\n  - paragraph: Turned on by root@vm through this page on 4 Nov 2026, 14:39 UTC. That is the name in Settings and this computer's account, not a checked identity.\n  - paragraph: \"Noted: maria@example.com gets an e-mail; you record their answer here\"\n  - paragraph: maria@example.com gets an e-mail with the claims to decide; you record their answer in Waiting for you.\n  - heading \"Decisions\" [level=2]\n  - list:\n    - listitem:\n      - text: \"A list of 1: approved by root@vm (not a checked identity) through this page, 21 Oct 2026, 09:00 UTC\"\n      - link \"Open\":\n        - /url: \"#/runs/df59a05a-f5a3-4515-a2cb-1b60fc2391c3\"\n  - heading \"Your data\" [level=2]\n  - list:\n    - listitem: \"expenses: 3 rows, given 4 Nov 2026, 14:39 UTC\"\n  - link \"Use a new list\":\n    - /url: \"#/go-live/expense-approval\"\n  - heading \"A reminder, not a schedule\" [level=2]\n  - paragraph: Foundry can't run by itself yet. If you like, add a weekly calendar reminder to open it and make a list.\n  - button \"Add a weekly calendar reminder\"\n  - heading \"Versions\" [level=2]\n  - heading \"Version 1 · On\" [level=3]\n  - group: ▸ Show details\n  - heading \"Runs\" [level=2]\n  - list:\n    - listitem:\n      - link \"Done · 4 Nov 2026, 14:39 UTC\":\n        - /url: \"#/runs/df59a05a-f5a3-4515-a2cb-1b60fc2391c3\""
     }
   ],
   "errors": [],
@@ -285,17 +285,17 @@
     "firstLive": {
       "steps": 12,
       "asks": 4,
-      "tabs": 115,
+      "tabs": 116,
       "screens": 3.59,
       "decisions": 2,
-      "ms": 11853
+      "ms": 6675
     }
   },
   "a11y": [],
   "refusals": [],
   "focusLost": [],
   "checks": {
-    "refundRequest": "Foundry can't make that yet. Nothing was created.",
+    "refundRequest": "Let Foundry prepare the jobs you do every week.",
     "receiptNote": "Your file has no receipt column, so no claim counts as having one: with Needs a receipt on, every claim goes to the person who decides.",
     "exactList": [
       "To: maria@example.comSubject: Expenses: 3 waiting for your approvalExpense claims waiting for your decision (3): - R-1042 Lee Moss: 749.99 for no description given (no category; no receipt) - R-1043 A"
@@ -306,14 +306,14 @@
       "R-1044"
     ],
     "recorded": "Recorded: Approved. 21 Oct 2026, 09:00 UTC",
-    "decisions": "DecisionsA list of 1: approved by root@vm through this page, 21 Oct 2026, 09:00 UTC Open"
+    "decisions": "DecisionsA list of 1: approved by root@vm (not a checked identity) through this page, 21 Oct 2026, 09:00 UTC Open"
   },
   "totalSteps": 16,
   "totalAsks": 4,
-  "totalTabs": 142,
+  "totalTabs": 143,
   "totalScreens": 3.59,
   "totalDecisions": 2,
-  "ms": 18125,
+  "ms": 8876,
   "shots": [
     "01-refunds-request.jpg",
     "02-refunds-columns.jpg",

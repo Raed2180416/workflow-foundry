@@ -23,10 +23,14 @@
 //     draftsMarkedSent and which practice run are each checked against the hashed lines and events they come from. The list carries each
 //     item's text, so its fingerprint, the person's yes and the run's paused action can be tied together.
 //   - checked.sections and checked.notChecked name exactly what was and was not checked; the CLI prints both.
+//
+// Since the fix round of 2026-10-21 (review:honesty new defects 2 and 3): how Foundry knew who decided (identityVerified, howKnown, the
+// channel's words, the note, run.startedNote, the person behind a list decision) is compared with the logged line it comes from, and a
+// file that says the version was never turned on while a logged yes for it took effect is not consistent.
 import { createHash } from 'node:crypto';
 import { hostname } from 'node:os';
 import { readStore } from '../dashboard/server.mjs';
-import { explainRun } from '../core/explain.mjs';
+import { explainRun } from '../core/failure-words.mjs';
 import { canonical } from '../../src/data.mjs';
 import { GAPS, CHANNEL_WORDS } from './brief.mjs';
 import { buildInfo } from './build-info.mjs';
@@ -67,8 +71,7 @@ export function evidenceBundle(app, runId, { batches = null, date = new Date() }
       headline: view?.headline ?? null, checks: view?.checks ?? [],
       startedBy: batch?.result?.startedBy ?? batch?.decision?.by ?? null, startedThrough: batch ? CHANNEL_WORDS[batch.decision?.channel] ?? batch.decision?.channel : null,
       identityVerified: false, howKnown: batch ? HOW_KNOWN[batch.decision?.channel] ?? null : null,
-      startedNote: batch ? `The run started when a yes to its list came through ${CHANNEL_WORDS[batch.decision?.channel] ?? batch.decision?.channel}. "Started by" is the name in Settings and this computer's account; it is not a verified identity, and it does not show which person clicked.`
-        : 'Who started this run was not recorded (it was not started from an approved list).' },
+      startedNote: startedNoteFor(batch ? batch.decision?.channel ?? null : undefined) },
     chain: { verified: raw.chain.ok, events: raw.chain.count, head: raw.chain.head, reason: raw.chain.reason ?? null },
     workflow: { hash: raw.header.workflowHash, version: raw.workflow?.version ?? null, title: raw.workflow?.title ?? null, note: raw.workflowNote, body: raw.workflow },
     turnedOn: approved ? { approvalId: approved.id, by: approved.principal, identityVerified: false, howKnown: HOW_KNOWN[approved.channel] ?? null, channel: approved.channel, channelWords: CHANNEL_WORDS[approved.channel] ?? approved.channel,
@@ -89,9 +92,15 @@ export function evidenceBundle(app, runId, { batches = null, date = new Date() }
     whoDecidesWhat: org,
     events: raw.chain.events,
     gaps: GAPS,
-    howToCheck: 'Run: node app/cli.mjs check-evidence FILE; it names every section it checked and every one it could not. By hand: for each event in order, drop its hash field and take sha256 of its canonical JSON (keys sorted, no spaces): it must equal the hash shown, and the next event must name it as previousHash. The last hash must equal chain.head. The workflow body must hash the same way to workflow.hash. For each link in personDecisions.links with v 2, sha256 of the canonical JSON of { link: 2, seq, prev, flowId, body } must equal its hash; each link names the one before as prev, and the last is personDecisions.check.head. Each line in personDecisions.lines, without its hash, hashes to the body of the link at its seq. Every link whose flowId is this automation has its line in the file. turnedOn, ledger, batch, run.startedBy, actionDecisions, declinedLists and draftsMarkedSent must match those lines and the events. None of this shows that nothing changed unless chain.head and personDecisions.check.head match copies kept somewhere else.'
+    howToCheck: 'Run: node app/cli.mjs check-evidence FILE; it names every section it checked and every one it could not. By hand: for each event in order, drop its hash field and take sha256 of its canonical JSON (keys sorted, no spaces): it must equal the hash shown, and the next event must name it as previousHash. The last hash must equal chain.head. The workflow body must hash the same way to workflow.hash. For each link in personDecisions.links with v 2, sha256 of the canonical JSON of { link: 2, seq, prev, flowId, body } must equal its hash; each link names the one before as prev, and the last is personDecisions.check.head. Each line in personDecisions.lines, without its hash, hashes to the body of the link at its seq. Every link whose flowId is this automation has its line in the file. turnedOn, ledger, batch, run.startedBy, actionDecisions, declinedLists and draftsMarkedSent must match those lines and the events. None of this shows that nothing changed unless it matches copies kept somewhere else: chain.head must equal a copy of the run\'s head, and the decision log keeps growing with every later decision, so a head of it copied earlier (the run page shows one) must appear among personDecisions.links at the place it had then, not as the last link. check-evidence FILE --head HASH says where each copy is.'
   };
   return bundle;
+}
+/** The run's startedNote for a run started from a list approved through `channel` (undefined: not started from a list). checkEvidence()
+ *  rebuilds it from the logged line, so the words cannot say more than the line (fix round 2026-10-21). */
+export function startedNoteFor(channel) {
+  if (channel === undefined) return 'Who started this run was not recorded (it was not started from an approved list).';
+  return `The run started when a yes to its list came through ${CHANNEL_WORDS[channel] ?? channel}. "Started by" is the name in Settings and this computer's account; it is not a verified identity, and it does not show which person clicked.`;
 }
 /** What an evidence file holds, said in the file itself and next to the download (L10). */
 export const CONTAINS = 'Every run event in full, so each fingerprint can be re-checked. That includes what each step read and wrote: the list you gave (for example every customer, address and amount) and the full text of every e-mail the run wrote. Share this file only with someone who may see that list.';
@@ -170,18 +179,37 @@ export function checkEvidence(bundle) {
     (checked.olderLinks ? `; ${checked.olderLinks} lines were written by an older Foundry, so their place is shown but cannot be proved` : ''));
 
   // ---- the sections built from Foundry's other records, each against the hashed lines and events it comes from
+  const canonicalOr = v => { try { return v === undefined || v === null ? null : canonical(v); } catch { return 'unreadable'; } };
   const sameLine = (l, x, keys) => keys.every(([a, b]) => (l?.[a] ?? null) === (x?.[b] ?? null));
   const turnOn = id => lines.find(l => l?.kind === 'turn-on' && l.approvalId === id);
   start = problems.length;
   const t = bundle?.turnedOn;
+  // How Foundry knew who decided, as the line says it (fix round: these were in the hashed line and never compared).
+  // A line written before the security review (M4) carries no howKnown: then only identityVerified can be compared, and that is said.
+  let olderKnown = false;
+  const knownAs = (l, x) => {
+    if (l && !Object.hasOwn(l, 'howKnown')) olderKnown = true;
+    return (x?.identityVerified ?? null) === (l?.verified === true) && (!l || !Object.hasOwn(l, 'howKnown') || (x?.howKnown ?? null) === (l.howKnown ?? null));
+  };
   if (t) {
     const l = turnOn(t.approvalId);
     if (!l) problems.push(`turned on: no line in the decision log in this file backs it, so who turned it on (${t.by}) cannot be checked`);
-    else if (l.decision !== 'approved' || !sameLine(l, t, [['principal', 'by'], ['channel', 'channel']]) || l.workflowHash !== wf?.hash || (flowId && l.flowId !== flowId))
-      problems.push('turned on: who, how or which version does not match its line in the decision log');
+    else {
+      if (l.decision !== 'approved' || !sameLine(l, t, [['principal', 'by'], ['channel', 'channel'], ['note', 'note']]) || l.workflowHash !== wf?.hash || (flowId && l.flowId !== flowId))
+        problems.push('turned on: who, how or which version does not match its line in the decision log (or its note does not)');
+      if (!knownAs(l, t) || (t.channelWords ?? null) !== (CHANNEL_WORDS[l.channel] ?? l.channel ?? null))
+        problems.push('turned on: what it says about how Foundry knew who decided (identityVerified, howKnown, channelWords) is not what its line in the decision log says');
+    }
+  } else {
+    // Fix round (review:honesty new defect 3): "not turned on" must agree with the log. A logged yes for this version that took effect
+    // (its turn-on history row is approved, or missing) contradicts it.
+    for (const l of lines.filter(x => x?.kind === 'turn-on' && x.decision === 'approved' && x.workflowHash === wf?.hash)) {
+      const row = (Array.isArray(bundle?.ledger) ? bundle.ledger : []).find(a => a?.approvalId === l.approvalId);
+      if (!row || row.status === 'approved') problems.push(`turned on: the file says this version was not turned on, but log line ${l.seq} turned it on`);
+    }
   }
-  if (t) said(fresh(start), 'turned on: who, through which channel and which version match the logged decision');
-  else notChecked.push('turned on: the file says this version was not turned on');
+  if (t) said(fresh(start), 'turned on: who, through which channel, the note, how Foundry knew who it was (not a verified identity), and which version match the logged decision');
+  else if (fresh(start)) notChecked.push('turned on: the file says this version was not turned on, and no logged yes for it took effect according to the turn-on history (whether a logged yes took effect comes from Foundry\'s ledger, which no logged line holds)');
 
   start = problems.length;
   const ledger = Array.isArray(bundle?.ledger) ? bundle.ledger : [];
@@ -217,7 +245,7 @@ export function checkEvidence(bundle) {
     const want = b.decision?.approved ? 'approved' : 'declined';
     if (!l) problems.push('the list: no line in the decision log in this file backs the decision on it');
     else {
-      if (l.decision !== want || !sameLine(l, b.decision, [['principal', 'by'], ['channel', 'channel']])) problems.push('the list: who decided, or how, does not match its line in the decision log');
+      if (l.decision !== want || !sameLine(l, b.decision, [['principal', 'by'], ['channel', 'channel']]) || canonicalOr(l.who) !== canonicalOr(b.decision?.who)) problems.push('the list: who decided, or how, does not match its line in the decision log');
       if (!sameItems(l.items, b.list)) problems.push('the list: its items (to, subject, fingerprint) are not the ones the person decided on');
     }
     for (const i of Array.isArray(b.list) ? b.list : []) {
@@ -229,7 +257,11 @@ export function checkEvidence(bundle) {
       problems.push('the list: its items are not the list whose fingerprint the page showed');
     if (b.workflowHash && b.workflowHash !== wf?.hash) problems.push('the list was made for another version than the one that ran');
     if (l && b.decision?.approved && ((run.startedBy ?? null) !== (l.principal ?? null) || (run.startedThrough ?? null) !== (CHANNEL_WORDS[l.channel] ?? l.channel ?? null))) problems.push('started by: it does not match who approved the list in the decision log');
-  } else if (run.startedBy) problems.push('started by: the file names who started the run, but holds no list decision to back it');
+    if (l && b.decision?.approved && (!knownAs(l, run) || (run.startedNote ?? null) !== startedNoteFor(l.channel ?? null))) problems.push('started by: what it says about how Foundry knew who started the run (identityVerified, howKnown, startedNote) is not what the logged decision says');
+  } else {
+    if (run.startedBy) problems.push('started by: the file names who started the run, but holds no list decision to back it');
+    if (run.identityVerified !== false || (run.howKnown ?? null) !== null || (run.startedNote ?? null) !== startedNoteFor(undefined)) problems.push('started by: the file says how Foundry knew who started the run, but holds no list decision to back it');
+  }
   if (b) said(fresh(start), `the list (${(b.list ?? []).length} items) and who started the run: the logged decision, each item's fingerprint from its text, and the fingerprint the page showed all match`);
   else notChecked.push('the list and who started the run: this run was not started from an approved list');
 
@@ -259,7 +291,7 @@ export function checkEvidence(bundle) {
   const declined = Array.isArray(bundle?.declinedLists) ? bundle.declinedLists : [];
   for (const d of declined) {
     const l = lines.find(x => x?.kind === 'list' && x.batchId === d?.batchId);
-    if (!l || l.decision !== 'declined' || !sameLine(l, d.decision, [['principal', 'by'], ['channel', 'channel']]) || !sameItems(l.items, d.list)) problems.push(`declined lists: ${d?.batchId} does not match a declined list in the decision log`);
+    if (!l || l.decision !== 'declined' || !sameLine(l, d.decision, [['principal', 'by'], ['channel', 'channel']]) || canonicalOr(l.who) !== canonicalOr(d.decision?.who) || !sameItems(l.items, d.list)) problems.push(`declined lists: ${d?.batchId} does not match a declined list in the decision log`);
   }
   for (const l of lines.filter(x => x?.kind === 'list' && x.decision === 'declined')) if (!declined.some(d => d?.batchId === l.batchId)) problems.push(`declined lists: the file leaves out the list declined in log line ${l.seq}`);
   said(fresh(start), `declined lists (${declined.length}): each matches the logged decision, and none is left out`);
@@ -281,6 +313,9 @@ export function checkEvidence(bundle) {
   else if (practice) { said(fresh(start), 'practice run: for this version'); notChecked.push('which practice run the turn-on rests on: its logged line is older and does not name it'); }
   notChecked.push('the practice run\'s result and checks (passed, each check): they come from Foundry\'s ledger, which no logged line or event holds');
   notChecked.push('the run summary (status, verdict, headline, checks) and every time outside the events: Foundry derives them; compare them with the events by hand');
+  if (olderKnown) notChecked.push('how Foundry knew who decided (howKnown), for decisions logged by a Foundry older than the security review of 2026-10-21: their lines do not say');
+  notChecked.push('turned on: when it was asked for and decided (requestedAt, decidedAt), and its proposal (proposalId, proposalStatus): they come from Foundry\'s ledger and store, which no logged line holds');
+  notChecked.push('the list: when it was made and what date it was for (createdAt, asOf), and how many items the run made (made, stoppedAt): Foundry\'s own records of the list');
   notChecked.push('Who decides what (version and fingerprint), the Foundry build, where and when the file was made, and the notes: nothing in the file can vouch for them');
   return { ok: problems.length === 0, problems, checked };
 }

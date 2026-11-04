@@ -126,7 +126,8 @@ export function toolDefinitions(app, { dashboardUrl = () => null, batches = null
       let result;
       try {
         result = await server.elicitInput({ message: `Turn on “${oneLine(t ? FORMS.templates[t.id]?.card ?? s.title : s.title, 80)}”, version ${request.version}?\n\n` +
-          `Practice run on pretend data: passed ${passed} of ${total} checks. Turning it on makes and sends nothing.\n\nEach time you run it, it will:\n- ${will.join('\n- ')}`,
+          // Fix round 2026-10-21 (review:honesty, older defect): say which data the practice ran on; it can be the person's own list.
+          `Practice run on ${request.practice?.dataSource === 'your-data' ? 'your own list (nothing was made or sent)' : 'pretend data'}: passed ${passed} of ${total} checks. Turning it on makes and sends nothing.\n\nEach time you run it, it will:\n- ${will.join('\n- ')}`,
           requestedSchema: { type: 'object', required: ['decision'], properties: { decision: { type: 'string', title: 'Your decision', enum: ['approve', 'reject'] }, note: { type: 'string', title: 'Note (optional)', maxLength: 500 } } } });
       } catch { result = null; }
       if (result?.action === 'accept' && ['approve', 'reject'].includes(result.content?.decision)) {

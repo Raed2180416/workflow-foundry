@@ -14,7 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startSite } from './helpers.mjs';
 import { FoundryApp, privateWorkspace, workspacePrivacy } from '../../core/service.mjs';
-import { failureText } from '../../core/explain.mjs';
+import { failureText } from '../../core/failure-words.mjs';
 import { Batches, listDigest } from '../../onboarding/batch.mjs';
 import { DecisionLog, recordDecisions, linkHash } from '../../onboarding/decisions.mjs';
 import { evidenceBundle, checkEvidence } from '../../onboarding/evidence.mjs';
@@ -183,7 +183,7 @@ test('M7, M8: a key is sent to be checked only when Allowed AI includes its prov
     const saved = await s.post('/api/keys', { provider: 'inception', key: 'CANARY-honesty-0000-1111' });
     assert.equal(saved.saved, true); assert.equal(seen.length, 1);
   } finally { await s.close(); await new Promise(r => provider.close(r)); }
-  assert.match(copy.trust.leaves.body, /^Foundry itself sends one thing: when you press Check and save on an AI key/);
+  assert.match(copy.trust.leaves.body, /^Without an AI builder, Foundry itself sends one thing: when you press Check and save on an AI key/); assert.doesNotMatch(copy.trust.leaves.body, /Nothing else/, 'fix round: the AI builders send too');
   assert.match(copy.keys.limit, /\{cap\}/); assert.match(copy.keys.limit, /There is no daily limit/);
 });
 

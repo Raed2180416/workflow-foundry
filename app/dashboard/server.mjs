@@ -15,7 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { StoreReader } from '../../tools/run-view/store-adapter.mjs';
 import { digest, errorData } from '../../src/data.mjs';
-import { explainRun, describeWorkflow, failureText } from '../core/explain.mjs';
+import { explainRun, describeWorkflow, failureText } from '../core/failure-words.mjs';
 import { createGate, pageUrl, CODE_WORDS } from '../site/gate.mjs';
 import { watchPeers, peerAllowed } from '../site/peer.mjs';
 

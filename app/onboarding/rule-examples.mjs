@@ -6,7 +6,9 @@
 //   separation-of-duties      one person may not do both of two roles' acts on one case
 //   never-outside-domain      no message to an address outside the company's domain
 //   max-per-run               at most n effects of one kind per run
-const money = (v, unit) => `${unit === 'EUR' ? '€' : unit === 'USD' ? '$' : unit === 'GBP' ? '£' : ''}${Number(v).toLocaleString('en-GB', { minimumFractionDigits: Number.isInteger(v) ? 0 : 2, maximumFractionDigits: 2 })}${['EUR', 'USD', 'GBP'].includes(unit) ? '' : ` ${unit}`}`;
+// The smallest unit of a currency (yen has none below 1: fix round 2026-10-21, review:UX nit "249.99 JPY"); 2 when the code is unknown.
+const minorDigits = unit => { try { return new Intl.NumberFormat('en', { style: 'currency', currency: unit }).resolvedOptions().maximumFractionDigits; } catch { return 2; } };
+const money = (v, unit) => { const d = minorDigits(unit); return `${unit === 'EUR' ? '€' : unit === 'USD' ? '$' : unit === 'GBP' ? '£' : ''}${Number(v).toLocaleString('en-GB', { minimumFractionDigits: Number.isInteger(v) ? 0 : d, maximumFractionDigits: d })}${['EUR', 'USD', 'GBP'].includes(unit) ? '' : ` ${unit}`}`; };
 const param = (map, name) => map.parameters?.[name] ?? null;
 const nameOf = (map, id) => map.principals.find(p => p.id === id)?.name ?? id;
 
@@ -35,7 +37,9 @@ export function generateExamples(clause, map) {
     const p = param(map, k.parameter), T = p?.value ?? 0, unit = p?.unit ?? '';
     const approver = map.approvals.find(a => a.aboveParameter === k.parameter)?.approverPrincipal;
     const who = approver ? nameOf(map, approver) : 'the approver';
-    cases = [[0, false], [Math.round((T - 0.01) * 100) / 100, false], [T, false], [Math.round((T + 0.01) * 100) / 100, false], [Math.max(T * 20, 5000), false], [T * 2, true]]
+    // Just under and just over the limit by the currency's smallest unit (one cent; one yen).
+    const scale = 10 ** minorDigits(unit), step = 1 / scale, at = v => Math.round(v * scale) / scale;
+    cases = [[0, false], [at(T - step), false], [T, false], [at(T + step), false], [Math.max(T * 20, 5000), false], [T * 2, true]]
       .map(([amount, requesterIsApprover]) => ({ case: { amount, requesterIsApprover }, label: requesterIsApprover ? `${money(amount, unit)}, asked for by ${who} (who would also approve it)` : `${money(amount, unit)}` }));
   } else if (k.kind === 'separation-of-duties') {
     const [a, b] = k.roles ?? ['', ''];

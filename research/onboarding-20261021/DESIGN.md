@@ -147,7 +147,7 @@ also leave out costs a person still pays. Since the review the journeys measure 
    - **An address turns on the part it belongs to.** "Summary to me@..." turns the summary on (`form-builder.mjs`). Without this, an agent's guessed address was dropped silently with the summary, and the person's own "summary to me" lost the summary.
    - **A test on the person's own list runs as of today.** It used to run as of the card's pretend date and showed 2 reminders where the live list makes 3.
    - **A Settings link in the footer.**
-   - **With `--consent`, the MCP server skips the client's dialog** when a local hook could answer it (spec K12 said the doctor detects the hook, but nothing acted on it). Since the security review (H3, 2026-10-21): without `--consent` the dialog is not used at all, and with it the check covers every hook location and runs on every ask (WALKTHROUGH M7).
+   - **With `--consent`, the MCP server skips the client's dialog** when a local hook could answer it (spec K12 said the doctor detects the hook, but nothing acted on it). Since the security review (H3, 2026-10-21): without `--consent` the dialog is not used at all, and with it the check runs on every ask (WALKTHROUGH M7). *Corrected in the fix round (2026-10-21):* it did not cover every hook location; a JSON escape, a YAML flow mapping and plugin or command files got past it. It now reads the folders listed in `app/onboarding/detect.mjs` and counts any mention of the name, however spelled; what it cannot see is listed on the Trust page (WALKTHROUGH §8).
 8. **Where the honesty review of 2026-10-21 overrode the spec's wording** (the spec, `SPEC.md`, is kept as received):
    - C06 and the import report: "2 of 10 came over exactly; 10 of 10 can be called as they are" became "2 translated into Foundry steps without errors, 8 refused with reasons, calling them in n8n designed but not built, 0 run". A lowered flow's connector steps have no host adapter, and nothing in the site can configure the n8n wrapper.
    - Codex: "has no documented dialog" was wrong (see §6). The browser path stays, for the reason given there.
@@ -197,6 +197,10 @@ Nothing here has been used by a person other than the harness.
 ## 6. Known limits and risks (read before quoting anything)
 
 - **The same-user limit.** A coding agent that can run commands as the person can do what the person can do, including approve. This is on the Trust page and in every IT brief; it is claim C01's limit.
+- **The agent's dialog is the weaker channel.** Foundry looks for a hook that could answer it before each ask, but cannot see settings an
+  organisation sends over the network or by a device-management profile, plugins or commands kept outside Claude Code's folders, hooks a
+  program registers in code, or a hook added between the look and the dialog. Its rules for reading Claude Code's files are inferred from
+  Claude Code's documentation and were not run against a released Claude Code.
 - **No user has seen this.** Every count is scripted. Real Claude Code, Cursor and Codex behaviour was not exercised:
   - Claude Code's own trust prompt and its per-call prompt for `approve` (+1 click) are reported, not measured;
   - Codex takes the browser path. Codex does document MCP elicitation dialogs: `approval_policy.granular.mcp_elicitations` lets them through, and with it off Codex rejects them by itself (Codex config reference, learn.chatgpt.com/docs/config-file/config-reference, read 2026-10-21 by the honesty review; documentation, not tried with a released Codex). Foundry does not use Codex's dialog because it cannot look for what could answer it; a client's "decline" is recorded as the client's, not as the person's no.

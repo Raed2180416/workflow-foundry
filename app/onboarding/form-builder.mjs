@@ -12,6 +12,7 @@ import { FoundryError } from '../../src/data.mjs';
 import { loadLibrary, templateById, catalog, resolveSlots, instantiate, practiceOf } from '../core/library.mjs';
 import { validateStrict } from '../core/practice.mjs';
 import { applyCardText, cardPromises } from './card-text.mjs';
+import { plainTextProblems, normaliseSettings } from '../core/plain-text.mjs';
 
 // /2: the card's wording revisions (app/onboarding/card-text.json) are applied to what it builds; the template stays the authority for
 // every step, check and capability.
@@ -39,7 +40,8 @@ export function settingsProblems(template, settings) {
       if (!Array.isArray(v) || v.length > 50 || !v.every(row => row && typeof row === 'object' && !Array.isArray(row) && Object.values(row).every(SCALAR))) out.push(`${k} is a list of rows`);
     } else if (!SCALAR(v)) out.push(`${k} must be text, a number or yes/no`);
   }
-  return out;
+  // L8: plain text only (app/core/plain-text.mjs; the frozen library no longer carries this check).
+  return out.length ? out : plainTextProblems(template, settings);
 }
 
 export class TemplateFormBuilder {
@@ -49,7 +51,7 @@ export class TemplateFormBuilder {
     this.id = FORM_BUILDER_ID; this.async = false;
   }
 
-  build({ template, settings = {}, answers = {}, base = null, origin = 'site-form', request = null } = {}) {
+  build({ template, settings: given = {}, answers = {}, base = null, origin = 'site-form', request = null } = {}) {
     if (!ORIGINS.includes(origin)) throw new FoundryError('BUILDER_ORIGIN', `origin is one of ${ORIGINS.join(', ')}`);
     if (answers === null || typeof answers !== 'object' || Array.isArray(answers)) throw new FoundryError('ANSWERS', 'answers is an object of question id to text');
     const t = typeof template === 'string' ? templateById(template, this.library) : null;
@@ -57,6 +59,7 @@ export class TemplateFormBuilder {
       reply: `There is no automation card called ${String(template ?? '').slice(0, 60) || '(none)'}. Call list_templates, pick the closest, and fill its settings from the person's words. Nothing was created.` };
     if (base?.template && base.template !== t.id) return { status: 'build_failed', builder: this.id, template: t.id,
       reply: `This automation was made from the "${base.template}" card, not "${t.id}". Start a new automation instead. Nothing was changed.`, problems: ['template differs from the existing automation'] };
+    const settings = normaliseSettings(t, given);
     const shape = settingsProblems(t, settings ?? {});
     if (shape.length) return { status: 'build_failed', builder: this.id, template: t.id, problems: shape, reply: `Some settings are not usable: ${shape.join('; ')}. Nothing was created.` };
 
@@ -110,6 +113,7 @@ export function restate({ template, settings = {}, library = loadLibrary(), poli
   if (!t) throw new FoundryError('NOT_FOUND', `No template named ${String(template).slice(0, 60)}`);
   const shape = settingsProblems(t, settings);
   if (shape.length) return { template: t.id, problems: shape, questions: [], willDo: [], willNotDo: [], defaults: [] };
+  settings = normaliseSettings(t, settings);
   const checked = policy ? policy(t.id, { ...settings }) : { prefill: {}, refusals: [], answered: [] };
   const slots = { ...settings, ...(checked.prefill ?? {}) };
   const r = resolveSlots(t, { slots, notStated: t.slots.map(s => s.name).filter(n => !Object.hasOwn(slots, n)), questions: [], assumptions: [] }, { text: words(slots).join('\n') });

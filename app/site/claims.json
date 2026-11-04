@@ -65,7 +65,7 @@
       "source": { "path": "research/org-20261021/README.md", "anchor": "§2 results; P1", "lines": [[101, 102], [176, 176]], "quote": "Q5 in 41/45" }
     },
     "C08": {
-      "text": "Free while one person decides, at any size, with single sign-on included. Paid only when a second person's yes or a rule owner has to count.",
+      "text": "Free while one person decides, at any size, with single sign-on included. Paid: the control a second person's yes or a rule owner needs, and verified packs for one outcome each.",
       "short": "Where the paid line is",
       "qualifier": "Decision D2, taken under the owner's general permission: reversible, and the owner may overturn it. No price is set, and no buyer has been asked about it yet.",
       "status": "Decided",
@@ -85,7 +85,7 @@
     "C10": {
       "text": "Bringing your own AI key is free, and the key goes into your computer's keychain, never into files or logs.",
       "short": "Your key, your keychain",
-      "qualifier": "A keychain keeps the key from other users of this computer, not from programs running as you. On a Mac, Foundry saves the key without naming which programs may read it, so any program running as you can read it back through the security command without a prompt (from Apple's documentation of that command; not tried on a Mac). On Linux, any program running as you can read it while the keyring is unlocked.",
+      "qualifier": "A keychain keeps the key from other users of this computer, not from programs running as you. On a Mac, Foundry saves the key without naming which programs may read it, so any program running as you can read it back through the security command without a prompt (how that command's access lists work, as we understand them: not checked against Apple's documentation in this pass, and not tried on a Mac). On Linux, any program running as you can read it while the keyring is unlocked.",
       "status": "Preview",
       "evidence": "decided",
       "date": "2026-10-21",

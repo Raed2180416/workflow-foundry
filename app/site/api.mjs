@@ -15,7 +15,7 @@ import { restate } from '../onboarding/form-builder.mjs';
 import { suggest, FORMS } from '../onboarding/suggest.mjs';
 import { COLUMNS, preview as csvPreview, inputSheets } from '../onboarding/csv.mjs';
 import { commit as dataCommit, liveSheets } from '../onboarding/data.mjs';
-import { recallAnswers, rememberAnswers } from '../onboarding/data-answers.mjs';
+import { recallAnswers, rememberAnswers, forgetAnswers } from '../onboarding/data-answers.mjs';
 import { Batches } from '../onboarding/batch.mjs';
 import { readWorld } from '../core/stand-ins.mjs';
 import { listDrafts, listPosts, draft as oneDraft, markSent } from '../onboarding/drafts.mjs';
@@ -148,7 +148,9 @@ export function createSiteApi(app, options = {}) {
       builder: p.workflow.metadata?.tags?.find(x => x.startsWith('builder:'))?.slice(8) ?? null, usesAI: usesAI(p.workflow.metadata?.tags?.find(x => x.startsWith('builder:'))?.slice(8)),
       slots: slotsOf(p.workflow), promises: t ? cardPromises(t, slotsOf(p.workflow)) : null, decider: deciderOf(p.workflow.id), dryRun: dry ? { passed: dry.passed, at: new Date(dry.at).toISOString(), ...dry.body, practiceDir: undefined } : null,
       basedOn: h && h.hash !== p.workflowHash ? { version: h.workflow.version, active: !!app.ledger.approvedFor(h.workflow.id, h.hash) } : null,
-      active: !!app.ledger.approvedFor(p.workflow.id, p.workflowHash), sheets: t ? inputSheets(t.id) : [] };
+      active: !!app.ledger.approvedFor(p.workflow.id, p.workflowHash), sheets: t ? inputSheets(t.id) : [],
+      // A removed draft says so (fix round 2026-10-21, review:UX new defect 2): its page offered Turn it on and Remove after it was removed.
+      removed: (w => w ? { at: new Date(w.at).toISOString(), by: w.principal, channel: w.channel } : null)(app.ledger.withdrawn(proposalId)) };
   }
 
   async function handle(method, url, body) {
@@ -322,7 +324,9 @@ export function createSiteApi(app, options = {}) {
       const files = existsSync(dir) ? readdirSync(dir).filter(f => f.endsWith('.json')) : [];
       for (const f of files) rmSync(path.join(dir, f), { force: true });
       rmSync(path.join(dir, '.history'), { recursive: true, force: true });
-      decisionLog.append({ kind: 'lists-deleted', decision: 'deleted', count: files.length, channel: 'dashboard' });
+      // The answers remembered about the person's files hold the values they ticked (fix round 2026-10-21, review:UX new defect 6).
+      const answersDeleted = forgetAnswers(app.root);
+      decisionLog.append({ kind: 'lists-deleted', decision: 'deleted', count: files.length, answersDeleted, channel: 'dashboard' });
       return ok({ deleted: files.length });
     }
     if (method === 'GET' && p === '/api/build') return ok(buildInfo());
