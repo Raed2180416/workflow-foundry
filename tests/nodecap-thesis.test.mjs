@@ -66,7 +66,9 @@ const turn = (run, i, node = 'work') => run.frames[`root/${node}__loop:${i}`]?.o
 
 /** A run that ended on a typed gap whose proposal offers mcp.sheets.append_row (outside the node's crm-only lock). */
 async function gapWorld(t, { continuation = [] } = {}) {
-  const h = await setup(t, { entries: [crmEntry(), sheetsEntry()], script: [request({ kind: 'tool', verb: 'create', object: 'other', system: 'other', why: 'append a row to the team sheet' }), stuck(), ...continuation] });
+  // (The same request twice: since review-cost B2 the first answer is NEED_UNMET with the nearest members, the second raises the proposal.)
+  const need = { kind: 'tool', verb: 'create', object: 'other', system: 'other', why: 'append a row to the team sheet' };
+  const h = await setup(t, { entries: [crmEntry(), sheetsEntry()], script: [request(need), request(need), stuck(), ...continuation] });
   const first = await h.execute();
   assert.equal(first.error?.code, 'CAPABILITY_GAP', JSON.stringify(first.error));
   const [proposal] = h.ledger.proposals({ status: 'open' });
@@ -174,16 +176,18 @@ test('thesis #5: find matches computer-use and skill members whatever kind the n
   const lock = { flowId: 'F', tier0: {}, members, nodes: { work: { bound: [], skills: [], standby: Object.keys(members), acquire: { max: 4 }, controlLabel: 'untrusted:nodecap.work', maxCallsPerMember: 20 } } };
   const host = { members: new Map(), outsideCandidates: () => [], entry: () => ({ status: 'active' }), ledger: null };
   const d = new Dispatcher({ host, lock, lockHash: 'h', envelope, envelopeDigest: 'e' });
-  assert.deepEqual(d.find('work', { verb: 'read', object: 'page', system: 'app', kind: 'tool' }).ranked.map(r => r.id), ['ui.app.observe']);
+  // (Since review-cost B2 object and system rank too, never filter: the member that has them comes first, the others follow.)
+  assert.deepEqual(d.find('work', { verb: 'read', object: 'page', system: 'app', kind: 'tool' }).ranked[0].id, 'ui.app.observe');
   assert.deepEqual(d.find('work', {}).ranked.map(r => r.id).sort(), Object.keys(members).sort(), 'an empty need sees every in-lock member');
 });
 
 test('thesis #5: a need outside the lock raises a proposal and the node goes on: it can still finish with what it holds', async t => {
   const h = await setup(t, { entries: [crmEntry(), sheetsEntry()],
-    script: [request({ kind: 'tool', verb: 'create', object: 'other', system: 'other', why: 'log it in the team sheet' }), read('crm_search_contacts', { query: 'Ada' }), done({ email: 'ada@analytical.example' })] });
+    script: [request({ kind: 'tool', verb: 'create', object: 'other', system: 'other', why: 'log it in the team sheet' }), request({ kind: 'tool', verb: 'create', object: 'other', system: 'other', why: 'log it in the team sheet' }),
+      read('crm_search_contacts', { query: 'Ada' }), done({ email: 'ada@analytical.example' })] });
   const run = await h.execute();
   assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
-  assert.equal(turn(run, 0).do.code, 'CAPABILITY_GAP');
+  assert.deepEqual([turn(run, 0).do.code, turn(run, 1).do.code], ['NEED_UNMET', 'CAPABILITY_GAP'], 'confirmed on the second request (review-cost B2)');
   assert.deepEqual(h.ledger.proposals().map(p => p.status), ['open'], 'the proposal still waits for a person');
 });
 

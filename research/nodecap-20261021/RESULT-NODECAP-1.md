@@ -246,3 +246,41 @@ were declined), so no lock N+1 and no continuation happened. What changes:
 A rerun on the fixed code needs a new preregistration: request, routing and gap behaviour changed (a gap is now a refusal the node can
 continue past; a request never grants a different tool; an `act` on an effects-none tool is a read and an `act` that cannot run is
 refused before any person is asked).
+
+## Addendum, 2026-11-04 (later): the cost and cheap-model-fit review, and what it changes in this result
+
+A third review of the spike (2026-10-22, "cost and cheap-model fit"; findings, fixes and tests in [ARCHITECTURE.md §10](ARCHITECTURE.md))
+re-read this run's cost evidence. **The numbers in §1-§3 are unchanged and the frozen rules are reported as frozen.** The figures below
+are recomputed from this run's `report.json` with `analyze.mjs` at $0; the cache-layout figures are an inference, not a measurement.
+
+1. **The context ratio in §6 is a characters/4 estimate (review m6).** "About 19% of B's prompt per turn (637 against 3,306)" counts
+   characters. By the provider's own count, A's input per call was 2,578 tokens against B's 7,293: **35%**.
+2. **Tool-definition tokens are not what drives spend on this route (review M6).** An A call cost $0.00038 on average; its static tool
+   sections were about 2% of that. Output tokens were 44-47% of the Foundry arms' spend (A: 356 output tokens per call, for decisions a
+   few dozen tokens long), and calls are the multiplier. A against B: **40% per call, 66% per episode, 88% per success.** Calls per
+   successful episode: U 2.75, A 4.33, B 3.25; all calls divided by successes: U 4.5, A 10.7, B 4.9. R2 measured tool-definition tokens,
+   so it could not see this; `analyze.mjs` now reports calls and dollars per success (`decisions.secondary.R2_dollarsPerSuccess`) and the
+   next preregistration should freeze that rule.
+3. **Arm B paid for a prompt layout no real client uses (review M5; inference).** Every step put the static tool block in the per-turn
+   user prompt, so each call re-wrote it to the cache: cache writes were 80% of B's spend. Had the block been a cached prefix (as a raw
+   client caches its `tools`), each call after a run's first would have read it instead. Estimated with the documented rates (writes
+   1.25x, reads 0.1x of $0.10/MTok): B's spend falls from $0.0364 to **$0.0277** (static tokens as chars/4) or **$0.0208** (scaled by
+   1.78 to the provider's count, from the per-call input gap between B and A), so B's cost per success is **$0.0035 to $0.0026** against A's
+   $0.0040. **Under a cache-correct layout A is 15% to 52% more expensive per success than B on this bed**, not cheaper; §6's cost reading
+   does not hold. The fixed code puts the static sections in the system prompt in every arm (B included), so later runs measure this
+   instead of estimating it.
+4. **Grant precision was 10 of 15 (review M7).** Five grants named a member the task did not need: `search_tickets` in T02 and T06 (a
+   request for the comment or label tool), `billing-math` in T07, `ui.act` in T09 and `list_deals` in T11. Precision over successful calls
+   (§3) could not show them. A spent 19 of its 64 logged turns on `find` (8) and `request` (11); none of its six successes needed `find`.
+5. **The broker, not only the model, explains T04, T08 and T09 (review B2).** Besides §9's reading (the `kind` filter), a need whose
+   object or system was mistyped, or `"other"`, matched nothing in the lock and became a gap, and a need put inside `args` (T08 turn 2, T09
+   turn 6) was accepted and ignored. The record cannot separate the two causes (the needs were not kept); the fixed bed keeps every need,
+   score, option and outcome.
+6. **A static baseline was missing (review M8).** No arm bound the acquire clause's members statically with full views and the same
+   checks, so "Foundry's checks" and "lazy acquisition" were never separated. Arm S (A's lock, no `find`, standby listed with the tools)
+   now runs in every scripted bed, and a scale world puts 108 tools in front of B and a capped standby of 20 in front of A and S
+   ([RESULTS-SCRIPTED.md](RESULTS-SCRIPTED.md)). With 1-7 standby members per task, this bed sits in the regime where provider guidance
+   favours plain tool calling (under 10 tools); lazy acquisition has to earn its turns in the other one.
+
+A rerun on the fixed code needs a new preregistration: the request rule, the gap confirmation, the prompt layout, the CUA view names and
+the standby rendering all changed.

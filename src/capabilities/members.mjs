@@ -4,7 +4,7 @@ import { clone } from '../data.mjs';
 import { digest, fail, LABEL } from './common.mjs';
 
 const ATTESTED = ['type', 'system', 'verbs', 'objects', 'intents', 'effects', 'risk', 'requiresApproval', 'outputLabel', 'dataClass', 'egress', 'maxTimeoutMs', 'cost',
-  'outputMode', 'outputSchema', 'idempotencyArgument', 'modelViewTokens', 'scopes', 'capability'];
+  'outputMode', 'outputSchema', 'idempotencyArgument', 'modelViewTokens', 'scopes', 'capability', 'toolNode'];
 export const custodyOf = (entry, catalog = null) => entry.credential?.custody ?? (entry.connection ? catalog?.entries.find(e => e.id === entry.connection)?.credential?.custody : null) ?? null;
 
 /** The attested fields a member record carries (and hashes), with their defaults. */

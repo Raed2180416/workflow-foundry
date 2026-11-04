@@ -354,9 +354,12 @@ A source `agent` node named in the sidecar becomes:
 
 - **`<id>__loop`**, an existing `loop` node with `maxIterations = maxTurns` and `until nodes.log.done`. Its body is:
   - **`step`** (agent): returns `{action ∈ read|act|find|request|done|stuck, tool ∈ views ∪ none, args, need?, answer?}`.
-    - Its context holds: the brief; authored views of the bound members; a standby index; bound skill bodies; and the transcript, with
-      label `untrusted:nodecap.<id>`.
-    - A node without `acquire` cannot `find` or `request`.
+    - Its instructions (the system prompt, a prefix that is the same on every turn and so cacheable; §10 M5) hold the brief, the
+      protocol, and the static tool sections: full authored views (argument signature, `[effect]` mark) of the bound and the standby
+      members (§10 M3), and trusted skill bodies. Its per-turn prompt holds the node's inputs, untrusted skill bodies (labelled) and the
+      transcript, with label `untrusted:nodecap.<id>`.
+    - A node without `acquire` cannot `find` or `request` and has no `need` field (§10 m3). An `acquire` with `mode: static` has no
+      `find`: its standby is listed with the tools (arm S, §10 M8).
   - **`do`** (`nodecap.do`), when the action is read, act, find or request: an `act` on an effects-none tool is a read, and an `act` on
     an effectful tool is checked here before anyone is asked (§2.8).
   - **`act`** (`nodecap.act`, gated), when the action is act, the tool is one of the node's effectful views and `do` answered ready.
@@ -746,3 +749,55 @@ as a raw client would.
 
 **Not done.** The `dashboard` channel still does not exist (§7). The paid NODECAP-1 numbers are unchanged; a rerun on the fixed code
 needs a new preregistration (routing, request and gap behaviour changed).
+
+## 10. Cost and cheap-model-fit review of 2026-10-22: findings, fixes and tests
+
+The review (`review:cost and cheap-model fit` of workflow `wf_c56a08f8-048`) found 2 blockers, 8 majors and 8 minors. Some had been
+closed in part by §9 (#4 filtered a request by effect class and applied τ to one candidate; #5 made `kind` a hint and a gap non-terminal;
+#6 checked an `act` before a person is asked) and by §8 (m5: `find` tells the model only how many outside tools exist). Each code fix has a
+test in `tests/nodecap-cost.test.mjs` that drives the surface the finding named and checks what happened. **All 18 tests of that file fail
+on the pre-fix code** (HEAD `0438b9c3`, run with the new test file and the new `selection-dev.mjs` copied onto a `git archive` of it); 17
+fail by an assertion about what happened (a read granted in place of the named effect, a gap and a proposal for a capability the node held,
+six model calls where three were enough, static tool text in the per-turn prompt, an L1 read refused for an unneeded earlier one, a standby
+of 18 under a cap of 20), and the selection-split test fails on the missing `decideRequest` export. Per-test record:
+[runs/costfix-prefix-2026-11-04/prefix-results.json](runs/costfix-prefix-2026-11-04/prefix-results.json).
+
+| Finding | Fix | Test (`nodecap-cost` unless named) | Pre-fix result |
+|---|---|---|---|
+| B1 `request` hands out the wrong tool | a request whose `tool` names a view in the node's index asks for exactly that member (an effect answers `needs-approval`, a read is granted by L1's rules); a need whose verb names no class (`transform`, `compute`, `observe`, `navigate`) and no `effect` is ranked over both classes and the top match decides; the request rule is one pure function (`decideRequest`), recorded by the dispatcher and replayed by the selection split. τ for every ranked grant and the effect-class filter were §9 #4 | B1 ×2; `nodecap-thesis` #4 ×2 | `sheets_read_range` granted when the decision named `sheets_append_row`; offered as the only option for "append one row to the team sheet" |
+| B2 a mistyped need ends the run; `find` returns junk | `find` and `request` without a need (or with it inside `args`) are refused `NEED_REQUIRED` with an example built from the node's lock; verb, object, system and kind are ranking boosts over the whole section, never filters (a grant still needs text evidence ≥ τ); L3 only when nothing of the class matches; the first L3 answer is `NEED_UNMET` with the three nearest members as views, and only the same request again raises a proposal (`CAPABILITY_GAP`, non-terminal since §9 #5) | B2 ×3; `nodecap-broker` L3 tests; `nodecap-thesis` #1, #5 | `find` with `args.need` a string answered every member; `system: "other"` hid the in-lock `crm_search_contacts` and raised a gap and a proposal; the first unmatched request asked a person at once |
+| M1 a person asked about calls code could reject | fixed by §9 #6 (`nodecap.do` checks reach, budget, arguments and a held request before the engine asks; an `act` on an effects-none tool is a read) | `nodecap-thesis` #6 ×2 | (§9) |
+| M2 two view names collide with protocol actions | `ui.find` and `ui.act` are shown as `<entry>_locate` and `<entry>_interact` (ids and tools unchanged); lint `VIEW_NAME_PROTOCOL` refuses a view whose last name segment is a protocol action | M2 | `stockroom_ui_find` and `stockroom_ui_act` offered; a view `books_act` passed lint |
+| M3 standby lines had no signature and no `[effect]` | standby members are rendered with `renderView` (signature and effect mark); `ui.trace.export` and `ui.assert` are attested `toolNode: false` and never enter a tool node's standby (a requirement or Tier-0 node can still name them) | M3 ×2; `nodecap-e2e` (reads the page instead of `assert`) | `crm_update_contact — Change the email…` with no arguments and no mark; `assert` and `trace.export` on standby |
+| M4 nothing stops a repeated refusal; the need not in the transcript | `nodecap.log` keeps the need; the same call (action, tool, need, and the arguments of a read or act) refused with the same code gets a hint the second time and ends the node `stuck` with `REPEATED_REFUSAL` the third (`NODE_STUCK` carries the reason; a gap proposal still ends the run `CAPABILITY_GAP`) | M4 ×2 | six model calls for one refused call; no need in the transcript |
+| M5 the prompt layout defeats caching | the static tool sections (protocol, tool and standby views, trusted skill bodies) are part of the step's instructions, which the context compiler puts in the system prompt; only the transcript, the inputs and untrusted skill bodies stay per turn. Arm B's raw definitions sit in the same place (`toolText`). The NC-1 run's B cost under a cache-correct layout is an estimate (`analyze.mjs cacheCorrectUsd`), in the RESULT addendum | M5; `nodecap-bed` (poison checks read the system prompt) | every tool view was in the per-turn prompt |
+| M6 the cost rule measured the wrong variable | each episode records `toolContextTokens` (tool sections, protocol and decision schema) and, per model call, provider usage, cost, latency and raw output length (`calls`); `analyze.mjs` reports calls and dollars per success (also cache-correct) and `decisions.secondary.R2_dollarsPerSuccess`, the rule the next preregistration should freeze | M6/M7 ×2 | (new records and measures) |
+| M7 selection reliability unmeasured; thin records | episodes keep each turn's need and repeat mark and every broker decision (need, scores, options, outcome, level, code); grant precision over every grant and acquisition turns per arm; a development split of 25 labelled needs over the 12 arm-A locks and a τ/δ sweep (`experiments/nodecap/bed/selection-dev.mjs`, [runs/selection-dev-2026-11-04](runs/selection-dev-2026-11-04/selection-dev.json)) | M6/M7, M7 | (new records); the paid run's grant precision is 10/15 |
+| M8 no static baseline; wrong regime | arm S: A's lock with `acquire.mode: static` (no `find`; standby listed with the tools; the same broker checks and person); run in every scripted bed. A scale world (`run.mjs --scale`): 72 more read-only archive tools in the bed's systems, so B is shown 108 tools and A's and S's standby is cut to the cap of 20 ([runs/scripted-scale-2026-11-04](runs/scripted-scale-2026-11-04/report.json)). It found a defect: the cap counted ranked members twice and kept fewer than 20 (fixed in `resolve.mjs`) | M8 ×2 | arm S did not exist (an unknown arm ran as C and failed T04); a 31-member standby was cut to 18 |
+| m1 L1 grants spent `acquire.max` | the grant limits count and cap L2 grants only; L3 is capped by `proposalsPerRun` | m1; `nodecap-broker` rule test | the second L1 read was refused `GRANT_LIMIT` under `max: 1` |
+| m2 `find` showed outside ids | fixed by §8 (m5: a count only) | `nodecap-security` m5 | (§8) |
+| m3 `need` in schemas without find/request | no `need` property when the node has neither | m3 | the C arm's schema carried `need` |
+| m4 the transcript is recompiled in one block every turn | not fixed (see below) | | |
+| m5 an L3 continuation re-runs the node live | disputed (see below) | | |
+| m6 "about 19% of B's context" was chars/4 | RESULT addendum: 35% of B's provider-reported input per call (2,578 against 7,293) | (doc) | |
+| m7 wall time included qualification | `constructMs` (construct and launch, which qualify only the lock's entries since §8) and `modelMs` (the calls' own latency) per episode; per-arm totals in the analysis | M6/M7 | (new records) |
+| m8 SOTA.md said NC-1 had not run | corrected | (doc) | |
+
+**Disputed or not done.**
+- m5 (an L3 continuation re-runs the whole node live). Replaying the pre-gap turns would claim decisions the model never made under lock
+  N+1's prompt, which now lists the new member; the continuation is a new run of the node under a new version, and the journal correctly
+  misses. Its cost is bounded by `maxTurns` and is paid only after a person approved the gap. Not changed.
+- m4 (quadratic cache writes from one transcript block). With the static sections now a cached prefix, what is re-written per turn is the
+  transcript alone; turning it into an append-only multi-message history needs a multi-turn context compiler (`context.history` is
+  `none` only). Not done; it matters with 2,500-token GUI observations, and the per-call records now measure it.
+- M1's "one `call` action instead of read and act" is not done: routing already follows the tool's effects (§9 #6), so the label no longer
+  decides anything; collapsing the two would change every recorded plan for no change in authority.
+- The selection split's two misses (a `read` verb narrowing to `crm_get_contact` for a deals need; "refunded" not matching "refund"
+  without stemming) are reported, not tuned away: τ and δ between 0.5 and 2 give the same 23/25 on this split, so the thresholds are not
+  the binding constraint; verb narrowing and the tokenizer are.
+
+**Behaviour that changed.** The scripted bed's plans confirm an unmatched request by sending it again (the model the protocol now asks
+for); the adversary does the same. An unmatched request costs one more turn before a person is asked. The CUA view names, the standby
+rendering, the prompt layout and the request rule all change the prompt and the decisions, so the paid NODECAP-1 numbers are unchanged and
+a rerun needs a new preregistration.
+

@@ -19,7 +19,10 @@ export const sidecarSchema = { type: 'object', additionalProperties: false, requ
     acquire: { type: 'object', additionalProperties: false, required: ['systems', 'objects', 'effectsMax', 'max'], properties: {
       systems: { type: 'array', minItems: 1, maxItems: 20, uniqueItems: true, items: { type: 'string', pattern: '^[a-z][a-z0-9-]{0,40}$' } },
       objects: { type: 'array', minItems: 1, maxItems: 20, uniqueItems: true, items: { type: 'string', pattern: '^[a-z][a-z0-9-]{0,40}$' } },
-      effectsMax: { enum: EFFECTS }, max: { type: 'integer', minimum: 0, maximum: 10 } } },
+      effectsMax: { enum: EFFECTS }, max: { type: 'integer', minimum: 0, maximum: 10 },
+      // lazy (default): standby is an index the model reaches by name, find and request. static: no find; the standby members are listed
+      // with the bound tools as full views, still granted by the broker's rules on first use; request stays for a need outside the lock.
+      mode: { enum: ['lazy', 'static'] } } },
     maxTurns: { type: 'integer', minimum: 1, maximum: 30 }, budgetUsd: { type: 'number', minimum: 0, maximum: 10 },
     maxCallsPerMember: { type: 'integer', minimum: 1, maximum: 100 },
     // The data class of the workflow input the node reads (owner declaration); unknown input counts as private (Rule of Two).
@@ -82,12 +85,15 @@ export function resolve({ workflow, sidecar, members, catalogDigest, envelope, e
     let standby = [];
     if (acquire) {
       const order = new Map(acquire.systems.map((s, i) => [s, i]));
-      standby = members.filter(m => !held.has(m.id) && order.has(m.system) && m.objects.some(o => acquire.objects.includes(o))
+      // (A member attested `toolNode: false` is not for a tool node's model: the UI trace export and assert; review-cost M3.)
+      standby = members.filter(m => !held.has(m.id) && m.toolNode !== false && order.has(m.system) && m.objects.some(o => acquire.objects.includes(o))
         && effectRank(m.effects) <= effectRank(acquire.effectsMax) && envelope.standby.trust.includes(m.trust) && !denyListed(envelope, m));
       if (standby.length > envelope.standby.maxPerNode) {
         // Over the cap: keep the members most relevant to the node's own instructions (authored text only), then a stable order.
         const ranked = indexMembers(standby).rank(`${found.node.instructions} ${found.node.description}`, standby.length).map(r => r.id);
-        const keep = new Set([...ranked, ...standby.map(m => m.id)].slice(0, envelope.standby.maxPerNode));
+        // (De-duplicated before the cut: the ranked ids are also in the stable order, and counting them twice kept fewer than the cap,
+        // found by the scale world of review-cost M8.)
+        const keep = new Set([...new Set([...ranked, ...standby.map(m => m.id)])].slice(0, envelope.standby.maxPerNode));
         standby = standby.filter(m => keep.has(m.id));
       }
       standby = standby.sort((a, b) => (order.get(a.system) - order.get(b.system)) || (a.id < b.id ? -1 : 1)).map(use);

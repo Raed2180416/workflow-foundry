@@ -154,7 +154,7 @@ and https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization
 
 ## 7. Open questions this synthesis does not settle
 
-- **Selection by cheap models.** I found no Haiku-class measurement of in-run tool acquisition. NC-1 (ARCHITECTURE.md §4) is designed to measure it; it has not run.
+- **Selection by cheap models.** I found no Haiku-class measurement of in-run tool acquisition. NC-1 (ARCHITECTURE.md §4) measured it once (Haiku 5.5, n = 12 per arm, K = 1; RESULT-NODECAP-1.md): grant precision 10 of 15, 19 of A's logged turns spent on `find` and `request`, and none of A's six successes needed `find`. Development evidence on a self-built bed, not a capability claim.
 - **Stack choice.** Whether to adopt the 2026-07-28 stateless SDK line now or keep 1.30.0 is owner decision O4.
 - **Hosted servers that change behaviour without changing definitions.** Pins cannot catch this. Only canaries, scopes and labels mitigate it.
 - **CIMD for a local-first client.** CIMD needs an HTTPS client-id URL, so a local-first client cannot register without publishing, which is out of scope [S] `connection-brokers.md` §0.5.

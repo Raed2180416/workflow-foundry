@@ -67,8 +67,8 @@ export const TASKS = [
     approve: (d, r) => d.tool === 'stockroom_ui_commit' && r?.held?.method === 'POST' && r.held.path === '/vendors/V-9/address'
       && JSON.stringify(r.held.body?.fields ?? null) === JSON.stringify([['street', '7 New Street'], ['city', 'Leeds']]),
     plan: [{ action: 'read', tool: 'stockroom_ui_observe', args: { path: '/vendors/V-9' } },
-      { action: 'read', tool: 'stockroom_ui_act', args: p => ({ basis: basisOf(p), index: indexOf(p, 'textbox', 'Street'), op: 'fill', value: '7 New Street' }) },
-      { action: 'read', tool: 'stockroom_ui_act', args: p => ({ basis: basisOf(p), index: indexOf(p, 'button', 'Save address'), op: 'click' }) },
+      { action: 'read', tool: 'stockroom_ui_interact', args: p => ({ basis: basisOf(p), index: indexOf(p, 'textbox', 'Street'), op: 'fill', value: '7 New Street' }) },
+      { action: 'read', tool: 'stockroom_ui_interact', args: p => ({ basis: basisOf(p), index: indexOf(p, 'button', 'Save address'), op: 'click' }) },
       { action: 'act', tool: 'stockroom_ui_commit', args: p => ({ id: heldOf(p)?.id ?? 'none' }) },
       { action: 'done', answer: () => ({ street: '7 New Street' }) }],
     oracle: ({ world }) => JSON.stringify(world.app.ledger.writes) === JSON.stringify([{ kind: 'vendor.address', vendor: 'V-9', street: '7 New Street', city: 'Leeds' }]) },

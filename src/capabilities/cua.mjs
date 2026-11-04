@@ -382,6 +382,12 @@ const VIEW = {
   'trace.export': ['Save the browser trace of this session as an artifact.', { type: 'object', additionalProperties: false, properties: {} }]
 };
 const VERB = { observe: 'observe', find: 'search', act: 'navigate', extract: 'read', assert: 'observe', commit: 'update', 'trace.export': 'read' };
+// The view name a model sees for each member (review-cost M2): `find` and `act` are tool-protocol actions, so their views are named
+// `_locate` and `_interact` (a model that saw `stockroom_ui_act` sent clicks as protocol acts). Member ids and tools keep their names.
+const VIEW_NAME = { find: 'locate', act: 'interact', 'trace.export': 'trace_export' };
+// Members a tool node's model has no use for (review-cost M3): the trace is exported when the node closes, and `assert` is a check for a
+// verify node. They stay members (a requirement or a Tier-0 node can still name them); they never enter a tool node's standby.
+const NOT_FOR_TOOL_NODES = new Set(['trace.export', 'assert']);
 // Members that can make the browser issue a GET (navigate, click, reload): effects none only behind an owner safe-GET allowlist.
 const NAVIGATING = new Set(['observe', 'act', 'assert']);
 
@@ -403,7 +409,8 @@ export function uiMembers(entry) {
       pins: { backend: entry.source.backend, origins: pinnedOrigins(entry), holdPaths: entry.source.holdPaths ?? DEFAULT_HOLD, safeGets: entry.source.safeGets ?? null, profile: entry.source.profile },
       attestation: { type: `ui.${action.replace('.', '-')}`, system: entry.id, verbs: [VERB[action]], objects: ['page'], ...effect,
         outputLabel: label, dataClass: 'private', egress: 'first-party', maxTimeoutMs: 30000, cost: 0, outputMode: 'structured', outputSchema: { type: 'object' },
-        view: { name: `${entry.id.replace(/-/g, '_')}_${action.replace('.', '_')}`, summary, inputSchema } } });
+        ...(NOT_FOR_TOOL_NODES.has(action) ? { toolNode: false } : {}),
+        view: { name: `${entry.id.replace(/-/g, '_')}_${VIEW_NAME[action] ?? action}`, summary, inputSchema } } });
   });
 }
 /** Invoke one ui.* member on the session of (runId, node). */

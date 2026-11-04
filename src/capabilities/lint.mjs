@@ -9,6 +9,8 @@
 //   TOOLSET_TOO_LARGE          more than 5 bound tools, 3 skills or 20 standby members on one node
 //   SKILL_BUDGET / SKILL_REQUIRES_EXCEEDS_GRANT  a bound skill too long, or requiring what the node does not hold
 //   VERIFY_SAME_SURFACE        a verify node checks an effect with the very tool that produced it
+//   VIEW_NAME_PROTOCOL         a tool node's view whose last name segment is a tool-protocol action (`x_act`, `x_find`): a model reads it
+//                              as the action (review-cost M2)
 //   ACQUIRE_AFTER_EFFECT (warning)       a tool node that can act may also acquire later (a mid-run gap after its effect cannot continue)
 //   CONTINUATION_AFTER_EFFECT (warning)  an effect upstream of a tool node that acquires: a gap there ends the run with no continuation
 import { portableSchemaViolations } from '../schema-subset.mjs';
@@ -18,6 +20,7 @@ import { denyListed } from './envelope.mjs';
 import { typeInfo } from './types.mjs';
 import { checkSkillRequires } from './skills.mjs';
 import { walkNodes } from './resolve.mjs';
+import { ACTIONS } from './lower.mjs';
 
 export function lint({ workflow, lock, envelope, types = null, gaps = [], skills = new Map(), catalog = null }) {
   const findings = [], add = (code, node, message, severity = 'error') => findings.push({ code, severity, node, message });
@@ -40,6 +43,7 @@ export function lint({ workflow, lock, envelope, types = null, gaps = [], skills
     for (const m of reach) if (portableSchemaViolations(m.view.inputSchema).length) add('SCHEMA_PROFILE_UNSUPPORTED', id, `${m.id} view schema is outside the subset`);
     if (portableSchemaViolations(section.returns).length) add('SCHEMA_PROFILE_UNSUPPORTED', id, 'the answer schema is outside the portable subset');
     for (const m of reach) if (denyListed(envelope, m)) add('BROKER_SELF_PROVISIONING', id, `${m.id} manages connections or provisions tools`);
+    for (const m of reach) if (ACTIONS.includes(m.view.name.split(/[_.-]/).at(-1).toLowerCase())) add('VIEW_NAME_PROTOCOL', id, `${m.view.name} ends with a tool-protocol action; rename the view`);
     // Rule of Two (egress-aware): untrusted input + private data + a third-party egress reachable without a person.
     // (Untrusted input is always present: a tool node's transcript carries tool output.) Private data counts whether it comes from a
     // member the node can reach or through the node's inputs (resolve records their class as inputClass).

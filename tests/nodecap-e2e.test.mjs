@@ -40,13 +40,14 @@ function script(args, index) {
     case 0: return step({ action: 'read', tool: 'crm_search_contacts', args: { query: 'Analytical' } });
     case 1: return step({ action: 'read', tool: 'skill_refund_policy', args: { reference: 'references/RATES.md' } });
     case 2: return step({ action: 'read', tool: 'stockroom_ui_observe', args: { path: '/vendors/V-9' } });
-    case 3: return step({ action: 'read', tool: 'stockroom_ui_act', args: { basis: basis(), index: idx('textbox', 'Street'), op: 'fill', value: '7 New Street' } });
-    case 4: return step({ action: 'read', tool: 'stockroom_ui_act', args: { basis: basis(), index: idx('button', 'Save address'), op: 'click' } });
+    case 3: return step({ action: 'read', tool: 'stockroom_ui_interact', args: { basis: basis(), index: idx('textbox', 'Street'), op: 'fill', value: '7 New Street' } });
+    case 4: return step({ action: 'read', tool: 'stockroom_ui_interact', args: { basis: basis(), index: idx('button', 'Save address'), op: 'click' } });
     case 5: {
       const held = last(p, /"pending":\[\{"bodyHash":"([0-9a-f]{64})","bodyPreview":"[^"]*","id":"([^"]+)","method":"([A-Z]+)","origin":"([^"]+)","path":"([^"]+)"\}/g);
       return step({ action: 'act', tool: 'stockroom_ui_commit', args: { id: held[2] } });
     }
-    case 6: return step({ action: 'read', tool: 'stockroom_ui_assert', args: { textPresent: '7 New Street, Leeds' } });
+    // (ui.assert is a verify-node check, not on a tool node's standby since review-cost M3: the node reads the page instead.)
+    case 6: return step({ action: 'read', tool: 'stockroom_ui_extract', args: { text: true } });
     case 7: {
       const email = last(p, /"email":"([^"]+@analytical\.example)"/g)?.[1], rate = Number(last(p, /\| starter \| 29\.00 +\| ([0-9.]+)/g)?.[1]);
       return step({ action: 'done', answer: { email, starterDailyRate: rate, street: '7 New Street' } });
@@ -93,11 +94,11 @@ test('e2e: one tool node acquires an MCP read (L1), a skill (L1) and computer us
   assert.equal(ledgerLines(crmLedger).filter(l => l.tool === 'search_contacts').length, 1);
   const decisions = nodecapDecisions(store, run.id).filter(d => d.action.result === 'granted').map(d => [d.action.member, d.action.level]);
   assert.deepEqual(decisions, [['mcp.crm.search_contacts', 'L1'], ['skill.refund-policy', 'L1'], ['ui.stockroom-ui.observe', 'L1'], ['ui.stockroom-ui.act', 'L1'],
-    ['ui.stockroom-ui.commit', 'L2'], ['ui.stockroom-ui.assert', 'L1']]);
+    ['ui.stockroom-ui.commit', 'L2'], ['ui.stockroom-ui.extract', 'L1']]);
   const report = verifyAcquisitions({ store, runId: run.id, lock: construction.lock, envelope });
   assert.equal(report.ok, true, JSON.stringify(report.findings));
   assert.equal(report.recomputed, 6);
-  assert.equal(report.calls, 7, "search, skill, observe, fill, click (held), commit, assert");
+  assert.equal(report.calls, 7, "search, skill, observe, fill, click (held), commit, extract");
   // The node's close exported the UI trace as an artifact (hash-named, receipt in the ledger); it never holds the login secret.
   const [receipt] = ledger.receipts('ui.trace');
   assert.equal(receipt.runId, run.id);

@@ -100,10 +100,9 @@ export async function launchArmB({ store, host, envelope, source, maxTurns, mode
   const lock = { schema: 'nc1-armB-raw/1', flowId: source.id, tier0: {}, members: Object.fromEntries(members.map(m => [m.id, m])),
     nodes: { work: { bound: members.map(m => m.id), skills: [], standby: [], acquire: null, maxTurns, maxCallsPerMember: 100, budgetUsd: null,
       returns: source.nodes[0].returns, controlLabel: 'untrusted:nodecap.work' } } };
-  const lowered = lowerWorkflow(source, lock);
-  // What a raw client puts in front of the model: each tool's own definition (server description, schema, annotations).
-  const step = lowered.nodes.find(n => n.kind === 'loop').body.nodes[0], tools = step.context.inputs.find(i => i.name === 'tools');
-  tools.value = members.map(m => JSON.stringify(m.rawDefinition)).join('\n');
+  // What a raw client puts in front of the model: each tool's own definition (server description, schema, annotations), in the same
+  // static, cacheable part of the step as Foundry's views (review-cost M5: a real raw client caches its tool block the same way).
+  const lowered = lowerWorkflow(source, lock, { toolText: members.map(m => JSON.stringify(m.rawDefinition)).join('\n') });
   const dispatcher = new RawDispatcher({ host, lock, envelope }), registry = createDefaultRegistry();
   const base = { version: '1', implementation: `sha256:${digest({ adapter: 'nc1-armB-raw/1', members: members.map(m => m.rawDefinition) })}`, maxTimeoutMs: 120000, cost: 0, cancellation: 'cooperative' };
   const DECISION_IN = { type: 'object', additionalProperties: false, required: ['decision'], properties: { decision: { type: 'object' } } }, OPEN = { type: 'object' };

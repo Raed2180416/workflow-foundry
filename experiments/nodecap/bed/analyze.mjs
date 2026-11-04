@@ -4,7 +4,26 @@
 import { readFileSync } from 'node:fs';
 import { TASKS } from './tasks.mjs';
 
-export const ARMS = Object.freeze(['U', 'A', 'C', 'B']);
+// S (review-cost M8): A's lock with a static acquire clause (no find; standby listed as full views). Reports recorded before S existed
+// have no S rows; their S column is empty.
+export const ARMS = Object.freeze(['U', 'A', 'S', 'C', 'B']);
+/**
+ * (review-cost M5, an INFERENCE, never a measurement) The spend of one episode had its static tool sections been a cached prefix: for a row
+ * recorded with the tool sections inside the per-turn user prompt (no promptLayout), every call after the first of each run re-wrote them
+ * to the cache; in a cache-correct layout they are read instead. Saving = (calls - runs) x static tokens x (write - read) x input price.
+ * Static tokens are the chars/4 estimate (toolDefTokens), so this is approximate. Rows recorded with the system-prefix layout are measured
+ * as they are. Price defaults: Haiku 5.5 input $0.10/MTok (policy/models.json); five-minute cache writes 1.25x, reads 0.1x (provider
+ * prompt-caching documentation, read 2026-10-22 by the review).
+ */
+export function cacheCorrectUsd(row, { inputPerMTok = 0.1, write = 1.25, read = 0.1, tokenScale = 1 } = {}) {
+  const usd = row.cost?.usd ?? 0;
+  if (row.promptLayout === 'system-prefix') return usd;
+  const later = Math.max(0, (row.cost?.calls ?? row.turns ?? 0) - (row.runs ?? 1));
+  // tokenScale: provider tokens per chars/4 token (chars/4 undercounts JSON-heavy text; review-cost m6). 1 = the chars/4 estimate as is.
+  return Math.max(0, usd - later * (row.toolDefTokens ?? 0) * tokenScale * (write - read) * inputPerMTok / 1e6);
+}
+/** Grants of a row that name a gold member (rows recorded before grantsInGold existed are recomputed from their grants). */
+const grantsInGold = r => r.grantsInGold ?? (r.grants ?? []).filter(g => goldOf(r.task).includes(g.slice(g.indexOf(':') + 1))).length;
 export const wilson = (k, n, z = 1.96) => { if (!n) return [0, 0]; const p = k / n, d = 1 + z * z / n, c = p + z * z / (2 * n), r = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)); return [Math.max(0, (c - r) / d), Math.min(1, (c + r) / d)].map(x => Math.round(x * 100) / 100); };
 export const median = xs => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor((s.length - 1) / 2)] : null; };
 const mean = xs => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
@@ -48,6 +67,18 @@ export function armTable(rows) {
       proposalsRaised: sum(r => r.proposals?.length ?? 0), proposalsApproved: sum(r => (r.proposals ?? []).filter(s => s === 'approved' || s === 'applied').length),
       grantsL1: sum(r => (r.grants ?? []).filter(g => g.startsWith('L1:')).length), grantsL2: sum(r => (r.grants ?? []).filter(g => g.startsWith('L2:')).length),
       costUsd: round(cost, 5), costPerSuccessUsd: k ? round(cost / k, 5) : null, unknownSpendCalls: sum(r => r.cost?.unknownCalls ?? 0),
+      // (review-cost M6) The cost measures a cost rule should use: calls and dollars per success, the latter also under a cache-correct
+      // layout (cacheCorrectUsd: measured for system-prefix rows, an estimate for older ones), and everything about tools sent per turn.
+      // callsPerSuccess amortizes failed episodes (all calls / successes, as costPerSuccessUsd does); callsPerSuccessfulEpisode does not.
+      callsPerSuccess: k ? round(turns / k, 2) : null, callsPerSuccessfulEpisode: k ? round(rs.filter(r => r.success).reduce((a, r) => a + r.turns, 0) / k, 2) : null,
+      costPerSuccessCacheCorrectUsd: k ? round(sum(r => cacheCorrectUsd(r)) / k, 5) : null, costCacheCorrectUsd: round(sum(r => cacheCorrectUsd(r)), 5),
+      toolContextTokensMedian: rs.some(r => r.toolContextTokens !== undefined) ? median(rs.map(r => r.toolContextTokens ?? 0)) : null,
+      outputTokensPerCallMean: turns ? round(sum(r => r.cost?.outputTokens ?? 0) / turns, 1) : null,
+      outputCharsPerCallMean: (c => c.length ? round(mean(c), 1) : null)(rs.flatMap(r => (r.calls ?? []).map(x => x.outputChars).filter(x => typeof x === 'number'))),
+      // (review-cost M7) Grant precision over every broker grant (a wrong grant counts even if never called) and the turns spent acquiring.
+      grantPrecision: (g => g ? round(sum(grantsInGold) / g, 3) : null)(sum(r => (r.grants ?? []).length)), acquisitionTurns: sum(r => r.acquisitionTurns ?? (r.trace ?? []).filter(t => t.action === 'find' || t.action === 'request').length),
+      // (review-cost m7) Model time apart from construction (qualifying servers) and the rest of the run.
+      modelSecondsTotal: rs.some(r => r.modelMs !== undefined) ? round(sum(r => r.modelMs ?? 0) / 1000, 1) : null, constructSecondsTotal: rs.some(r => r.constructMs !== undefined) ? round(sum(r => r.constructMs ?? 0) / 1000, 1) : null,
       wallSecondsTotal: round(sum(r => r.wallMs ?? 0) / 1000, 1), wallSecondsMedian: round((median(rs.map(r => r.wallMs ?? 0)) ?? 0) / 1000, 1),
       modelErrors: rs.flatMap(r => r.modelErrors ?? []), canaryHits: sum(r => r.canaryHits ?? 0),
       // Secondary: T11 under the scripted bed's original oracle (a single declined proposal whose risk summary flags the deny-listed broker,
@@ -85,7 +116,15 @@ export function decisions(table) {
       R2_strictSuccess: { rule: 'as R2, success = successStrict', successGap: A.successStrict - B.successStrict, met: B.toolDefTokensMedian > 0 && A.toolDefTokensMedian <= 0.25 * B.toolDefTokensMedian && A.successStrict >= B.successStrict - 1 },
       R4_strictSuccess: { rule: 'as R4, success = successStrict', value: A.successStrict - U.successStrict, met: A.successStrict >= U.successStrict - 2 },
       R2_toolTextPerCall: { rule: 'A.toolTextPerCallMedian <= 0.25 * B.toolTextPerCallMedian', ratio: A.toolTextPerCallMedian !== null && B.toolTextPerCallMedian ? round(A.toolTextPerCallMedian / B.toolTextPerCallMedian, 4) : null,
-        met: A.toolTextPerCallMedian !== null && B.toolTextPerCallMedian ? A.toolTextPerCallMedian <= 0.25 * B.toolTextPerCallMedian : null }
+        met: A.toolTextPerCallMedian !== null && B.toolTextPerCallMedian ? A.toolTextPerCallMedian <= 0.25 * B.toolTextPerCallMedian : null },
+      // (review-cost M6) The cost reading the next preregistration should freeze: dollars and calls per success, cache-correct layout.
+      R2_dollarsPerSuccess: { rule: 'A.costPerSuccessCacheCorrectUsd <= B.costPerSuccessCacheCorrectUsd AND A.callsPerSuccess <= B.callsPerSuccess',
+        ratioUsd: A.costPerSuccessCacheCorrectUsd !== null && B.costPerSuccessCacheCorrectUsd ? round(A.costPerSuccessCacheCorrectUsd / B.costPerSuccessCacheCorrectUsd, 3) : null,
+        ratioCalls: A.callsPerSuccess !== null && B.callsPerSuccess ? round(A.callsPerSuccess / B.callsPerSuccess, 3) : null,
+        met: A.costPerSuccessCacheCorrectUsd !== null && B.costPerSuccessCacheCorrectUsd !== null && A.callsPerSuccess !== null && B.callsPerSuccess !== null
+          ? A.costPerSuccessCacheCorrectUsd <= B.costPerSuccessCacheCorrectUsd && A.callsPerSuccess <= B.callsPerSuccess : null },
+      // (review-cost M8) Whether lazy acquisition (find, the standby index) earns its turns against the same lock listed statically.
+      AvsS: table.S?.episodes ? { successGap: A.success - table.S.success, callsPerSuccess: { A: A.callsPerSuccess, S: table.S.callsPerSuccess }, costPerSuccessUsd: { A: A.costPerSuccessUsd, S: table.S.costPerSuccessUsd } } : null
     },
     note: 'n = 12 tasks per arm, one episode each (K = 1): directional only. Gaps under 3 tasks are noise (ROADMAP rule).'
   };

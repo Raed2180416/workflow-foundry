@@ -73,8 +73,12 @@ test('broker rule: I6, the egress-aware Rule of Two, the deny list, limits and q
   assert.deepEqual(decideMember({ ...base, inBound: true }, read, envelope), { result: 'bound' });
   assert.deepEqual(decideMember({ ...base, inStandby: false }, read, envelope), { result: 'refused', code: 'NOT_BOUND' });
   assert.equal(decideMember({ ...base, entryStatus: 'quarantined' }, read, envelope).code, 'CAPABILITY_QUARANTINED');
-  assert.equal(decideMember({ ...base, nodeGrantsSoFar: 3 }, read, envelope).code, 'GRANT_LIMIT');
-  assert.equal(decideMember({ ...base, grantsSoFar: 10 }, read, envelope).code, 'GRANT_LIMIT');
+  // The grant limits count L2 grants and cap L2 (review-cost m1): an L1 grant is code inside the envelope and is never refused for them.
+  assert.deepEqual(decideMember({ ...base, nodeGrantsSoFar: 3 }, read, envelope), { result: 'granted', level: 'L1' });
+  assert.deepEqual(decideMember({ ...base, grantsSoFar: 10 }, read, envelope), { result: 'granted', level: 'L1' });
+  const effect = { ...read, effects: 'non-idempotent', risk: 'high' }, approved = { ...base, via: 'act', approvalId: 'a'.repeat(64) };
+  assert.equal(decideMember({ ...approved, nodeGrantsSoFar: 3 }, effect, envelope).code, 'GRANT_LIMIT');
+  assert.equal(decideMember({ ...approved, grantsSoFar: 10 }, effect, envelope).code, 'GRANT_LIMIT');
   assert.equal(decideMember(base, { ...read, id: 'mcp.b.manage_connections', tool: 'manage_connections' }, envelope).code, 'NEED_DENYLISTED');
   // I6: an effectful member is never auto-bound under untrusted control; only act with a user approval reaches it (L2).
   const write = { ...read, effects: 'non-idempotent', risk: 'high' };
@@ -109,7 +113,9 @@ test('broker L2: an effectful standby member runs only after runtime.approve by 
 
 test('broker L3: a need outside the lock raises a proposal only a person decides; a node that cannot finish ends the run with CAPABILITY_GAP (T11 shape)', async t => {
   const dir = workspace(t), brokerLedger = path.join(dir, 'broker.jsonl');
-  const script = [request({ verb: 'update', object: 'other', system: 'crm', kind: 'tool', why: 'connect my Salesforce and pull the pipeline' }), stuck()];
+  // (review-cost B2: the first unmatched request shows the nearest members; the same request again is the confirmation that raises L3.)
+  const need = { verb: 'update', object: 'other', system: 'crm', kind: 'tool', why: 'connect my Salesforce and pull the pipeline' };
+  const script = [request(need), request(need), stuck()];
   const h = await setup(t, { dir, entries: [crmEntry(), brokerEntry({ ledger: brokerLedger })], script,
     sidecar: sidecarFor({ systems: ['crm'], objects: ['contact', 'connection'], effectsMax: 'none', max: 2 }) });
   assert.ok(!h.construction.lock.nodes.work.standby.some(id => id.startsWith('mcp.broker.')), 'deny-listed tools never enter standby');
@@ -125,7 +131,8 @@ test('broker L3: a need outside the lock raises a proposal only a person decides
   assert.deepEqual(decision.untrustedSpans.map(s => s.path), ['action.need']);
   assert.match(decision.features.whyHash, /^sha256:/);
   assert.doesNotMatch(JSON.stringify(decision.features), /Salesforce/, 'the free-text why enters features only as a hash');
-  assert.equal(run.frames['root/work__loop:0'].outputs.do.code, 'CAPABILITY_GAP', 'the node heard a typed gap and could go on');
+  assert.equal(run.frames['root/work__loop:0'].outputs.do.code, 'NEED_UNMET', 'first: the nearest members, no proposal yet');
+  assert.equal(run.frames['root/work__loop:1'].outputs.do.code, 'CAPABILITY_GAP', 'confirmed: the node heard a typed gap and could go on');
   assert.throws(() => h.ledger.decideProposal(proposal.id, { person: { channel: 'mcp-elicitation', approve: true, subject: NodecapLedger.proposalSubject(proposal) }, expectedRev: 1 }), code('APPROVAL_CHANNEL_INSUFFICIENT'));
   assert.equal(decide(h.ledger, proposal, false).status, 'declined');
   assert.equal(ledgerLines(brokerLedger).length, 0, 'no broker tool was ever called');
@@ -168,7 +175,8 @@ test('broker: find never widens; a signal cannot grant; grants die with the run 
 
 test('broker L3 → lock N+1 → continuation (T04 shape): a person picks the candidate, version N+1 is approved, the run continues with replay-or-live; refusals after effects', async t => {
   const dir = workspace(t), sheetLedger = path.join(dir, 'sheets.jsonl');
-  const script = [read('crm_search_contacts', { query: 'Ada' }), request({ verb: 'create', object: 'other', system: 'other', kind: 'tool', why: 'log the ticket in the team sheet' }), stuck(),
+  const sheetNeed = { verb: 'create', object: 'other', system: 'other', kind: 'tool', why: 'log the ticket in the team sheet' };
+  const script = [read('crm_search_contacts', { query: 'Ada' }), request(sheetNeed), request(sheetNeed), stuck(),
     // continuation run (lock N+1 binds sheets_append_row):
     read('crm_search_contacts', { query: 'Ada' }), act('sheets_append_row', { cells: ['42', 'Refund for order 7731'] }), done({ email: 'ada@analytical.example' })];
   const h = await setup(t, { dir, entries: [crmEntry(), sheetsEntry({ ledger: sheetLedger })], script, sidecar: sidecarFor({ systems: ['crm'], objects: ['contact'], effectsMax: 'none', max: 2 }) });
