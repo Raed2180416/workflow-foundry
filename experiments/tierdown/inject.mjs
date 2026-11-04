@@ -98,11 +98,12 @@ async function main() {
   const answersByKey = new Map();
   for (const a of answers) { if (!answersByKey.has(a.key)) answersByKey.set(a.key, new Map()); answersByKey.get(a.key).set(a.tier, a); }
   const rowsWithAnswers = new Set(answers.map(a => a.row));
-  let assignments;
+  const assignments = [];
   if (flag('--each')) {
     const pairs = [...new Set(answers.map(a => `${a.site}\0${a.tier}`))].sort();
-    assignments = pairs.map(p => { const [site, tier] = p.split('\0'); return { name: `${site}@${tier}`, map: { [site]: tier } }; });
-  } else assignments = parseAssign(opt('--assign'));
+    assignments.push(...pairs.map(p => { const [site, tier] = p.split('\0'); return { name: `${site}@${tier}`, map: { [site]: tier } }; }));
+  }
+  if (opt('--assign')) assignments.push(...parseAssign(opt('--assign')));
   const experiments = (opt('--experiments') ?? DEFAULT_EXPERIMENTS.join(',')).split(',');
   const arms = listArms({ runs: opt('--runs', DEFAULT_RUNS), experiments });
   const { sliceOf } = await import('./tier-replay.mjs');
@@ -112,7 +113,10 @@ async function main() {
   try {
     await pool(jobs, Number(opt('--concurrency', 2)), async ({ arm, row }) => {
       const id = rowId(arm, row), base = await replayRow({ arm, row, flowPath: arm.flows.hooked, work }), interpreterUsd = interpreterCostOf(arm);
-      const refUsd = base.calls.reduce((s, c) => s + (c.origCostUsd ?? 0), 0);
+      const refUsd = base.calls.reduce((s, c) => s + (c.origCostUsd ?? 0), 0), refLatencyMs = base.calls.reduce((s, c) => s + (c.origLatencyMs ?? 0), 0);
+      // B-ref: every judge at its archived answer (the solvers as compiled); the denominator of every comparison.
+      out.push({ row: id, taskKey: row.taskKey, family: arm.family, arm: arm.slug, version: row.stateAfter.version.dir, assignment: 'B-ref', status: 'reference', basePass: base.pass,
+        rowRefUsd: refUsd, refLatencyMs });
       for (const assignment of assignments) {
         const r = await injectRow({ arm, row, base, assignment, answersByKey, work, interpreterUsd });
         out.push({ row: id, taskKey: row.taskKey, family: arm.family, arm: arm.slug, version: row.stateAfter.version.dir, assignment: assignment.name, basePass: base.pass, rowRefUsd: refUsd,
