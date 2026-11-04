@@ -8,6 +8,7 @@
 // paid run records the claude CLI version at its start and end (meta.cli; finding m1) and, per call, whether the CLI got the
 // budget flag (calls.jsonl rows transport: 'cli-args'; finding m2); a preflight refuses to start when the transport does not
 // do what its label says; Playwright's temp folders go to a per-run TMPDIR that is deleted at the end (finding m8).
+// Amendment A3 (2026-11-04): mercury-3 runs build their port with Haiku listed next to it (see createModelPort below).
 // Haiku arms need --live (paid). Unless --dev, the bed must match the frozen manifest in research/gameqa-20261021/FREEZE.json.
 // Writes <out>/<runId>/{meta,reports,score,stats}.json and calls.jsonl (model outputs and spend, no prompts); the model
 // journal goes to experiments/runs/gameqa-web/<runId>/journal.sqlite (ignored: it can carry host account identity).
@@ -90,12 +91,15 @@ const cli = { start: null, end: null };
 const cliFresh = () => { try { return `claude-code ${execFileSync(port.providers['claude-cli'].binary, ['--version'], { encoding: 'utf8', timeout: 30000 }).trim().split(/\s+/)[0]}`; } catch (e) { return `unknown (${e.code ?? e.message})`; } };
 if (paid) {
   const journalFile = path.join(ROOT, 'experiments/runs/gameqa-web', runId, 'journal.sqlite');
-  ({ port, policyHash, db, tokens, policy } = createModelPort({ journalFile, allowedModels: [a.model], maxBudgetUsdPerCall: 0.25,
+  // A3: an executor model (mercury-3) cannot form a policy subset alone (subsetPolicy needs one generative model, so the
+  // E1 runs failed at port creation with MODEL_POLICY_INVALID); the repo's pattern (experiments/mercury/port-probe.mjs) lists
+  // Haiku next to it. Every call still names a.model, so nothing can fall back to Haiku.
+  ({ port, policyHash, db, tokens, policy } = createModelPort({ journalFile, allowedModels: a.model === MODEL ? [a.model] : [MODEL, a.model], maxBudgetUsdPerCall: 0.25,
     ...(M.tokenCap ? { tokenCap: M.tokenCap, callTokens: M.callTokens } : {}) }));
   if (a.transport === 'nb') omitCliBudgetFlag(port);
-  if (port.providers['claude-cli']) {
-    // preflight: the transport must do what its label says before any paid call (A2, m2)
-    const entry = policy.models.find(m => m.id === a.model);
+  const entry = policy.models.find(m => m.id === a.model);
+  if (entry?.provider === 'claude-cli') {
+    // preflight: the transport must do what its label says before any paid call (A2, m2; A3: only for a CLI-served model)
     const flag = port.providers['claude-cli'].args({ modelEntry: entry, system: 'preflight', schema: { type: 'object' }, decoding: M.decoding }).includes('--max-budget-usd');
     if (flag !== (a.transport === 'cli')) { console.error(`transport ${a.transport}: the CLI arguments ${flag ? 'still hold' : 'lack'} --max-budget-usd`); process.exit(2); }
     auditCliArgs(port, log);

@@ -291,3 +291,18 @@ No new monkey runs (R2 reuses `gqa1/monkey`, which is $0 and makes no model call
 - **E1 (m9).** The preregistered Mercury exploratory secondary (§2), dropped in A1 "for time", runs in a third lane after the
   Haiku lanes start: `MODEL=mercury-3 chain.sh agent 1 3`, then `MODEL=mercury-3 chain.sh workflow 1 3` (tag `gqa1m3`, $0
   listed, hard token caps as in §2). Descriptive only; never a comparative claim.
+
+### A3 (2026-11-04, written before any run it governs; frozen as `amendments[2]` of FREEZE.json)
+
+**Harness fault 3: the preregistered Mercury path could never run.** The E1 lane scheduled in A2 (`MODEL=mercury-3`) failed
+at port creation in all 9 attempts (`gqa1m3` agent r1-r3, workflow r1-r3, workflow-random r1-r3) with
+`MODEL_POLICY_INVALID: models must be a non-empty list`, before any model call, browser or run directory content (chain logs
+`runs/chain-agent-mercury-3.log`, `runs/chain-workflow-mercury-3.log`; the empty run directories were removed). Root cause:
+`run.mjs` builds its port with `allowedModels: [a.model]`; `mercury-3` is an executor model (policy `executorModels`), and
+`subsetPolicy` keeps generative models in `models` and executor models apart, so a subset holding only an executor model
+has an empty `models` list, which the policy validator rejects. The path was preregistered on 2026-10-28 but never exercised
+(no $0 smoke of it). Fix (`run.mjs` only): a non-Haiku model's port lists Haiku next to it (`[claude-haiku-5-5, mercury-3]`,
+the repo's own pattern in `experiments/mercury/port-probe.mjs`); every call still names `a.model`, so no call can be served
+by Haiku; the A2 transport preflight and the `cli-args` audit apply only when the run's model is served by the claude CLI.
+Haiku runs are unchanged by A3 (same port subset, same preflight). E1 then runs as A2 states: `gqa1m3` agent r1-r3, then
+workflow r1-r3 (each followed by its workflow-random), descriptive only, $0 listed, hard token caps of §2.

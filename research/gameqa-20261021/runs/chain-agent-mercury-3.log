@@ -1,0 +1,52 @@
+2026-11-04T18:25:13Z start --arm agent --rep 1 --live --model mercury-3
+file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/src/models/policy.mjs:8
+const invalid = message => { throw new FoundryError('MODEL_POLICY_INVALID', `Model policy: ${message}`); };
+                                   ^
+
+FoundryError: Model policy: models must be a non-empty list
+    at invalid (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/src/models/policy.mjs:8:36)
+    at validatePolicy (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/src/models/policy.mjs:106:63)
+    at subsetPolicy (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/lib/models.mjs:27:17)
+    at createModelPort (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/lib/models.mjs:37:34)
+    at file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/gameqa-web/run.mjs:93:47 {
+  code: 'MODEL_POLICY_INVALID',
+  details: undefined
+}
+
+Node.js v24.21.0
+2026-11-04T18:25:15Z end --arm agent --rep 1 --live --model mercury-3 (exit 1; spent so far $0.6089)
+2026-11-04T18:25:16Z start --arm agent --rep 2 --live --model mercury-3
+file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/src/models/policy.mjs:8
+const invalid = message => { throw new FoundryError('MODEL_POLICY_INVALID', `Model policy: ${message}`); };
+                                   ^
+
+FoundryError: Model policy: models must be a non-empty list
+    at invalid (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/src/models/policy.mjs:8:36)
+    at validatePolicy (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/src/models/policy.mjs:106:63)
+    at subsetPolicy (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/lib/models.mjs:27:17)
+    at createModelPort (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/lib/models.mjs:37:34)
+    at file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/gameqa-web/run.mjs:93:47 {
+  code: 'MODEL_POLICY_INVALID',
+  details: undefined
+}
+
+Node.js v24.21.0
+2026-11-04T18:25:18Z end --arm agent --rep 2 --live --model mercury-3 (exit 1; spent so far $0.6089)
+2026-11-04T18:25:19Z start --arm agent --rep 3 --live --model mercury-3
+file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/src/models/policy.mjs:8
+const invalid = message => { throw new FoundryError('MODEL_POLICY_INVALID', `Model policy: ${message}`); };
+                                   ^
+
+FoundryError: Model policy: models must be a non-empty list
+    at invalid (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/src/models/policy.mjs:8:36)
+    at validatePolicy (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/src/models/policy.mjs:106:63)
+    at subsetPolicy (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/lib/models.mjs:27:17)
+    at createModelPort (file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/lib/models.mjs:37:34)
+    at file:///home/user/workflow-foundry/.claude/worktrees/wf_0f86d12b-ab5-5/experiments/gameqa-web/run.mjs:93:47 {
+  code: 'MODEL_POLICY_INVALID',
+  details: undefined
+}
+
+Node.js v24.21.0
+2026-11-04T18:25:23Z end --arm agent --rep 3 --live --model mercury-3 (exit 1; spent so far $0.6089)
+2026-11-04T18:25:23Z lane agent 1..3 done

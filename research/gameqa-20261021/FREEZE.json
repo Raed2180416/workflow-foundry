@@ -83,6 +83,31 @@
     "experiments/gameqa-web/cost-matched.mjs": "3f480f1f6e0fa2c6d7efea21fa985d8ae8639156eb398894c9715d7ee641d80c",
     "research/gameqa-20261021/PREREG-GQA-1.md": "1f3666e4ebb220bdd0afe48a594d9e2efa9479d2ae5b8f1990e46e21bf6eee5f"
    }
+  },
+  {
+   "id": "A3",
+   "at": "2026-11-04T18:50:42.717Z",
+   "gitHead": "946a398b",
+   "sha256": "7f83d8fb159b776536871cdd81d10912dde21ca00adea81bcb4484e047fdb67e",
+   "files": {
+    "experiments/gameqa-web/arms.mjs": "ed466ff22d8fdb78b8509abd2e3f266c50c921aac18bd608b07459414aef11d5",
+    "experiments/gameqa-web/qa-lib.mjs": "b62e1e1190497f2279e3505eb9d650225f600851a886c5a7788c8f007595afe0",
+    "experiments/gameqa-web/expr.mjs": "9c742e2f6d729f8ab823d1ecd9fc8eda8539b406557987463d2adcccbf82a12d",
+    "experiments/gameqa-web/prompts.mjs": "ab8d9fae5dbb5e82ada0affba96918187f985123ada68f629aa751b84a9587a9",
+    "experiments/gameqa-web/template.json": "2838c42033481c6343167909e648ae0185a2ab0aabbac93e4229fc95b12efd4f",
+    "experiments/gameqa-web/run.mjs": "50c4dc11531b8310bd1d23836eab755b9c1ab426897e46a49b22ff0b8e473fe2",
+    "experiments/gameqa-web/reference-checks.json": "8584cd23e3270d8a58f6ae4b53743e13af68c92ba1f46d03be35a702c45ede59",
+    "experiments/gameqa-web/funnel.mjs": "05518a01e192873596743c0ae8c55b70a2a20f08d1fcd7eface71a2ab0e5e177",
+    "experiments/gameqa-web/analyze.mjs": "ede11541dabae0d14e64875ba6f5d363125b3fdf31cf12f6ba3d4f9eff0ab70f",
+    "experiments/gameqa-web/chain.sh": "2a2b1ed35592fad8ec336eda3f9902d35d4839a6536a06a082d6d6b8b9e74d2b",
+    "experiments/gameqa-web/regress.mjs": "6216ce79e5d5428f18778fbc9524ad0198bb48f7fe62f861abdc67a74628d3a4",
+    "experiments/lib/models.mjs": "d868e7d95c442b35fca25fac5e6e81b548f7f02f85e714d3303a94317d23b4d9",
+    "policy/models.json": "cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69",
+    "experiments/gameqa-web/transport.mjs": "e90453b01f45e34deb6b70333384ee3a84b0e8fb5da06227f2544bae4e37f067",
+    "experiments/gameqa-web/rescore-union.mjs": "73a34ac9c53a66d75317ee69016cf5f163022095f7e3dec1930c320527ef1ceb",
+    "experiments/gameqa-web/cost-matched.mjs": "3f480f1f6e0fa2c6d7efea21fa985d8ae8639156eb398894c9715d7ee641d80c",
+    "research/gameqa-20261021/PREREG-GQA-1.md": "27662f587944b0dbd602b0ed3ae50a73fbf72602900b88f76d72178d90e7391d"
+   }
   }
  ]
 }
