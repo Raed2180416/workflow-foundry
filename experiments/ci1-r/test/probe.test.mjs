@@ -47,6 +47,7 @@ const wf = (nodes, acceptance) => ({ nodes, acceptance });
 test('skipped-read rule: acceptance reads of a guarded node (or one downstream of it) are flagged unless protected', () => {
   const nodes = [{ id: 'plan', needs: [] }, { id: 'send', needs: ['plan'], when: { op: 'gt', left: { $ref: 'nodes.plan.count' }, right: 0 } }, { id: 'audit', needs: ['send'] }];
   assert.deepEqual([...maySkip(nodes)].sort(), ['audit', 'send']);
+  assert.deepEqual([...maySkip([...nodes.slice(0, 2), { id: 'audit', needs: ['send'], join: 'all_resolved' }])].sort(), ['send'], 'a non-default join stops skip propagation');
   assert.equal(skipRefFindings(wf(nodes, [{ op: 'eq', left: { $ref: 'nodes.audit.pass' }, right: true }])).length, 1, 'downstream of a when');
   assert.equal(skipRefFindings(wf(nodes, [{ op: 'eq', left: { $ref: 'nodes.send.delivered', default: true }, right: true }])).length, 0, 'default protects');
   assert.equal(skipRefFindings(wf(nodes, [{ op: 'exists', value: { $ref: 'nodes.send.delivered' } }])).length, 0, 'exists protects');
@@ -64,4 +65,29 @@ test('freeze-gate signature: values are dropped, recipients and columns kept; tw
   const rec = (item, k, pass, reason) => ({ item, k, pass, firstFailure: pass ? null : { world: 'c01', reasons: [reason] } });
   const flags = ambiguityFlags({ records: [rec('1', 0, false, 'chat to #a: 1 sent, expected 2'), rec('1', 1, false, 'chat to #a: 3 sent, expected 2'), rec('2', 0, false, 'x'), rec('2', 1, true), rec('3', 0, false, 'y 1'), rec('3', 1, false, 'z 1'), rec('1', 2, true)] });
   assert.deepEqual(flags.map(f => f.item), ['1']);
+});
+
+test('failure classifier: known classes by rule, anything else is listed for reading', async () => {
+  const { classify } = await import('../classify-r.mjs');
+  assert.match(classify('the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.x.sent', { item: '1' }), /skipped branch/);
+  assert.match(classify('response 1: body.missing has 1 entries, expected 2', { item: '18281' }), /18281/);
+  assert.match(classify('', { item: '1', outcome: 'build_failed' }), /no valid workflow/);
+  assert.match(classify('chat to #a: 1 sent, expected 2', { item: '1' }), /^read: count/);
+  assert.equal(classify('something new', { item: '1' }), 'read: other');
+});
+
+test('model-checked skipped-read rule: catches an exclusive-branch disjunction, accepts a real guard and a count guard', async () => {
+  const { modelFrame, modelFindings } = await import('../skip-ref-rule.mjs');
+  const kindIs = v => ({ op: 'eq', left: { $ref: 'nodes.prep.kind' }, right: v });
+  const nodes = [{ id: 'prep', needs: [] }, { id: 'urgent', needs: ['prep'], when: kindIs('urgent') }, { id: 'warning', needs: ['prep'], when: kindIs('warning') }];
+  // 15238's bug: with kind "warning" the first two disjuncts are false and the skipped urgent node is read before the warning one
+  const bad = [{ op: 'any', conditions: [kindIs('none'), { op: 'eq', left: { $ref: 'nodes.urgent.posted' }, right: true }, { op: 'eq', left: { $ref: 'nodes.warning.posted' }, right: true }] }];
+  assert.ok(modelFrame(nodes, bad).length > 0);
+  const good = [{ op: 'any', conditions: [{ op: 'ne', left: { $ref: 'nodes.prep.kind' }, right: 'urgent' }, { op: 'eq', left: { $ref: 'nodes.urgent.posted' }, right: true }] }];
+  assert.deepEqual(modelFrame(nodes, good), [], 'a guard that is the negation of the when');
+  const count = [{ id: 'plan', needs: [] }, { id: 'send', needs: ['plan'], when: { op: 'gt', left: { $ref: 'nodes.plan.count' }, right: 0 } }];
+  assert.deepEqual(modelFrame(count, [{ op: 'any', conditions: [{ op: 'eq', left: { $ref: 'nodes.plan.count' }, right: 0 }, { op: 'eq', left: { $ref: 'nodes.send.delivered' }, right: true }] }]), [], 'a count is not negative');
+  assert.ok(modelFrame(count, [{ op: 'eq', left: { $ref: 'nodes.send.delivered' }, right: true }]).length > 0, 'an unguarded read');
+  assert.deepEqual(modelFrame(count, [{ op: 'eq', left: { $ref: 'nodes.send.delivered', default: true }, right: true }]), [], 'default');
+  assert.equal(modelFindings({ nodes: count, acceptance: [{ op: 'eq', left: { $ref: 'nodes.send.delivered' }, right: true }] }).length, 1);
 });

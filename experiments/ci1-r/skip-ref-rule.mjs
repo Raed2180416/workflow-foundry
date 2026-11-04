@@ -23,14 +23,16 @@ export function refsIn(v, out = []) {
   else if (isObj(v)) { if (typeof v.$ref === 'string') out.push({ ref: v.$ref, hasDefault: Object.hasOwn(v, 'default') }); else for (const x of Object.values(v)) refsIn(x, out); }
   return out;
 }
-/** Node ids (of one frame: the top level, or one map body) that may be skipped: a `when`, or a need that may be skipped. */
+/** Node ids (of one frame: the top level, or one map body) that may be skipped: a `when`, or (under the default join all_success) a
+ *  need that may be skipped. */
 export function maySkip(nodes) {
   const byId = new Map((nodes ?? []).map(n => [n.id, n])), memo = new Map();
   const visit = (id, seen = new Set()) => {
     if (memo.has(id)) return memo.get(id);
     const n = byId.get(id); if (!n || seen.has(id)) return false;
     seen.add(id);
-    const r = !!n.when || (n.needs ?? []).some(d => visit(d, seen));
+    // a join other than all_success (all_resolved, any, ...) runs whatever its predecessors did: only its own `when` skips it
+    const r = !!n.when || ((n.join ?? 'all_success') === 'all_success' && (n.needs ?? []).some(d => visit(d, seen)));
     memo.set(id, r); return r;
   };
   return new Set((nodes ?? []).map(n => n.id).filter(id => visit(id)));
@@ -69,6 +71,102 @@ export function skipRefFindings(workflow, { guards = true } = {}) {
   return out;
 }
 
+// ------------------------------------------------------------------------------------------------ the model-checked variant
+// The strict variant ignores what guards a read; the guarded one trusts any earlier sibling. Both are wrong on real builds (§11.5).
+// This variant checks the frame exhaustively over a small value model: every ref that a `when` or an acceptance condition reads gets the
+// constants it is compared with (numbers also +-1), plus values no constant equals; for every combination, the nodes' skip states
+// follow from their `when`s and the join rule, and the acceptance list is evaluated with the engine's short-circuit semantics
+// (src/data.mjs condition; runtime: acceptance.every). A read of a skipped node without `default` (outside `exists`) is a finding.
+// Correlations through the same ref ("kind == none" vs "kind == urgent") are modelled; anything else is free, so it over-approximates.
+const canon = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(key => [key, x[key]])) : x));
+const isRef = v => isObj(v) && typeof v.$ref === 'string';
+function leaves(c, out = []) {
+  if (Array.isArray(c)) { c.forEach(x => leaves(x, out)); return out; }
+  if (!isObj(c)) return out;
+  if (c.op === 'all' || c.op === 'any') (c.conditions ?? []).forEach(x => leaves(x, out));
+  else if (c.op === 'not') leaves(c.condition, out);
+  else out.push(c);
+  return out;
+}
+function candidates(conds) {
+  const vals = new Map(), add = (ref, v) => { if (!vals.has(ref)) vals.set(ref, []); if (v !== undefined) vals.get(ref).push(v); };
+  for (const l of leaves(conds)) {
+    const L = l.left, R = l.right ?? l.value;
+    if (isRef(L)) add(L.$ref, isRef(R) ? undefined : R); if (isRef(R)) add(R.$ref, isRef(L) ? undefined : L); if (l.op === 'exists' && isRef(l.value)) add(l.value.$ref);
+    if (isRef(L) && l.op === 'in' && Array.isArray(R)) for (const x of R) add(L.$ref, x);
+  }
+  const out = new Map();
+  for (const [ref, cs] of vals) {
+    const set = new Map(); const put = v => set.set(canon(v), v);
+    // a ref compared only with numbers is a number, one compared only with true/false a boolean (a string there would be a CONDITION_TYPE error, not a skip); when every such
+    // constant is >= 0 it is taken as a count (no negative values): both assumptions favour the rule, so findings stay conservative
+    const flat = cs.filter(c => !Array.isArray(c)), numeric = flat.length > 0 && flat.every(c => typeof c === 'number'), nonNeg = numeric && flat.every(c => c >= 0);
+    for (const c of flat) { put(c); if (typeof c === 'number') { if (!nonNeg || c - 1 >= 0) put(c - 1); put(c + 1); } if (typeof c === 'boolean') put(!c); }
+    const boolean = flat.length > 0 && flat.every(c => typeof c === 'boolean'); // compared only with true/false: a boolean flag
+    if (!numeric && !boolean) { put(`__other_${ref}__`); if (!cs.length) put(`__other2_${ref}__`); }
+    out.set(ref, [...set.values()]);
+  }
+  return out;
+}
+const ERR = Symbol('missing');
+function evalCond(c, val) {
+  const get = x => { if (!isRef(x)) return x; const v = val(x.$ref); if (v === ERR) { if (Object.hasOwn(x, 'default')) return x.default; throw ERR; } return v; };
+  if (c.op === 'all') return (c.conditions ?? []).every(x => evalCond(x, val));
+  if (c.op === 'any') return (c.conditions ?? []).some(x => evalCond(x, val));
+  if (c.op === 'not') return !evalCond(c.condition, val);
+  if (c.op === 'exists') { try { return get(c.value) !== undefined; } catch (e) { if (e === ERR) return false; throw e; } }
+  const l = get(c.left), r = get(c.right);
+  if (c.op === 'eq') return canon(l) === canon(r);
+  if (c.op === 'ne') return canon(l) !== canon(r);
+  if (['gt', 'gte', 'lt', 'lte'].includes(c.op)) { if (typeof l !== 'number' || typeof r !== 'number') return false; return { gt: l > r, gte: l >= r, lt: l < r, lte: l <= r }[c.op]; }
+  if (c.op === 'in') return Array.isArray(r) && r.some(x => canon(x) === canon(l));
+  if (c.op === 'contains') return Array.isArray(l) ? l.some(x => canon(x) === canon(r)) : typeof l === 'string' && typeof r === 'string' && l.includes(r);
+  return false;
+}
+/** Model-checked findings of one frame (null when the value model is too large: the strict findings then stand). */
+export function modelFrame(nodes, acceptance, { maxCombos = 200000 } = {}) {
+  nodes = nodes ?? []; acceptance = acceptance ?? [];
+  const skippable = maySkip(nodes); if (!skippable.size) return [];
+  const conds = [...nodes.filter(n => n.when).map(n => n.when), ...acceptance];
+  const cand = candidates(conds), refs = [...cand.keys()];
+  const total = refs.reduce((p, r) => p * cand.get(r).length, 1);
+  if (total > maxCombos) return null;
+  const byId = new Map(nodes.map(n => [n.id, n])), found = new Map();
+  const idx = refs.map(() => 0);
+  for (let i = 0; i < total; i++) {
+    let k = i; for (let j = 0; j < refs.length; j++) { const n = cand.get(refs[j]).length; idx[j] = k % n; k = Math.floor(k / n); }
+    const assign = new Map(refs.map((r, j) => [r, cand.get(r)[idx[j]]]));
+    const skipped = new Map();
+    const isSkipped = id => {
+      if (skipped.has(id)) return skipped.get(id);
+      const n = byId.get(id); if (!n) return false;
+      skipped.set(id, false);
+      let sk = (n.join ?? 'all_success') === 'all_success' && (n.needs ?? []).some(isSkipped);
+      if (!sk && n.when) { try { sk = !evalCond(n.when, ref => valOf(ref)); } catch { sk = true; } }
+      skipped.set(id, sk); return sk;
+    };
+    const valOf = ref => { const t = target(ref); if (t && byId.has(t) && isSkipped(t)) return ERR; return assign.has(ref) ? assign.get(ref) : 1; };
+    try { acceptance.every(c => evalCond(c, valOf)); }
+    catch (e) {
+      if (e !== ERR) throw e;
+      const sk = [...skippable].filter(id => isSkipped(id)).sort().join(',');
+      if (!found.has(sk)) found.set(sk, { skipped: sk, example: Object.fromEntries([...assign].filter(([r]) => !r.startsWith('nodes.') || !skippable.has(target(r))).slice(0, 6)) });
+    }
+  }
+  return [...found.values()];
+}
+export function modelFindings(workflow) {
+  const out = []; let unknown = false;
+  const frame = (nodes, acceptance, name) => {
+    const f = modelFrame(nodes, acceptance);
+    if (f === null) { unknown = true; for (const x of skipRefFindings({ nodes, acceptance }, { guards: false }).filter(x => x.frame === 'top')) out.push({ ...x, frame: name, model: 'too large: strict' }); }
+    else for (const x of f) out.push({ frame: name, where: 'acceptance', skipped: x.skipped, example: x.example });
+    for (const n of nodes ?? []) if (n.kind === 'map' && n.body) frame(n.body.nodes, n.body.acceptance, `${name}/${n.id}`);
+  };
+  frame(workflow?.nodes, workflow?.acceptance, 'top');
+  return Object.assign(out, { unknown });
+}
+
 const RUNS = process.env.CI1_RUNS ?? '/var/tmp/foundry-work/ci1-20261021/runs';
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { values: a, positionals } = parseArgs({ options: { out: { type: 'string' }, latent: { type: 'string' } }, allowPositionals: true });
@@ -79,12 +177,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     for (const f of readdirSync(dir).filter(x => x.endsWith('.json')).sort()) {
       const rec = JSON.parse(readFileSync(path.join(dir, f), 'utf8'));
       if (rec.outcome !== 'ready' || !rec.workflow) continue;
-      const findings = skipRefFindings(rec.workflow), strict = skipRefFindings(rec.workflow, { guards: false });
+      const findings = skipRefFindings(rec.workflow), strict = skipRefFindings(rec.workflow, { guards: false }), model = modelFindings(rec.workflow);
       const missingRef = (rec.worlds ?? []).some(w => /MISSING_REFERENCE/.test(`${w.error ?? ''} ${(w.reasons ?? []).join(' ')}`));
-      const row = { label, item: rec.item, k: rec.k, flagged: findings.length > 0, flaggedStrict: strict.length > 0, findings: strict.slice(0, 3), missingRef, passedAllWorlds: !!rec.pass || (rec.worlds ?? []).every(w => w.pass) };
+      const row = { label, item: rec.item, k: rec.k, flagged: findings.length > 0, flaggedStrict: strict.length > 0, flaggedModel: model.length > 0, modelUnknown: model.unknown, findings: strict.slice(0, 3), modelFindings: model.slice(0, 2), missingRef, passedAllWorlds: !!rec.pass || (rec.worlds ?? []).every(w => w.pass) };
       // --latent N: run a flagged build that never hit a skipped read in its hidden worlds in the item's first N generated candidate
       // worlds (the bed's own generator, seed 1, as at the freeze; needs CI1_BED for the build's wave): does any world hit it?
-      if (a.latent && row.flaggedStrict && !row.missingRef) {
+      if (a.latent && row.flaggedModel && !row.missingRef) {
         const { loadItem, candidates } = await import('../ci1/bed.mjs'), { runBuilt } = await import('../ci1/foundry-world.mjs');
         const item = await loadItem(rec.item); let hits = 0, ran = 0;
         for (const w of candidates(item, Number(a.latent))) { const r = await runBuilt(rec.workflow, w); ran++; if (r.error?.code === 'MISSING_REFERENCE' || /MISSING_REFERENCE/.test(String(r.error?.message ?? ''))) hits++; }
@@ -102,8 +200,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       flaggedButPassedEveryHiddenWorld: extra.filter(r => r.passedAllWorlds).length };
   };
   const out = { rule: 'acceptance / non-all_success-join $ref to a may-be-skipped node without default', labels, readyBuilds: rows.length,
-    missingReferenceBuilds: rows.filter(r => r.missingRef).length, strict: variant('flaggedStrict'), guarded: variant('flagged'), latentWorlds: a.latent ? Number(a.latent) : null, rows };
+    missingReferenceBuilds: rows.filter(r => r.missingRef).length, strict: variant('flaggedStrict'), guarded: variant('flagged'), model: variant('flaggedModel'), modelTooLarge: rows.filter(r => r.modelUnknown).length, latentWorlds: a.latent ? Number(a.latent) : null, rows };
   if (a.out) writeFileSync(a.out, `${JSON.stringify(out, null, 1)}\n`);
   console.log(`ready builds ${rows.length}; MISSING_REFERENCE builds (hidden worlds) ${out.missingReferenceBuilds}`);
-  for (const k of ['strict', 'guarded']) { const v = out[k]; console.log(`${k}: caught ${v.caught}, missed ${v.missed.length} [${v.missed.join('; ')}]; flagged ${v.flagged}; flagged without a hidden failure ${v.flaggedWithoutHiddenFailure}${a.latent ? `: latent in candidate worlds ${v.ofThoseLatentInCandidateWorlds.length}, never hit ${v.ofThoseNeverHitInCandidateWorlds.length}` : ''}`); }
+  console.log(`model variant: value model too large (strict used) on ${out.modelTooLarge} builds`);
+  for (const k of ['strict', 'guarded', 'model']) { const v = out[k]; console.log(`${k}: caught ${v.caught}, missed ${v.missed.length} [${v.missed.join('; ')}]; flagged ${v.flagged}; flagged without a hidden failure ${v.flaggedWithoutHiddenFailure}${a.latent ? `: latent in candidate worlds ${v.ofThoseLatentInCandidateWorlds.length}, never hit ${v.ofThoseNeverHitInCandidateWorlds.length}` : ''}`); }
 }
