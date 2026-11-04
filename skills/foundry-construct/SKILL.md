@@ -53,7 +53,8 @@ other than the step that produced it. Build it, practise it, then stop on eviden
 - Spend a larger model class only where a cheaper one failed in practice, and say so in `model.justification`.
 - Prefer extracting with code (structure, section and cue rules) before asking a model. Code alone often matches
   or beats a cheap model on extraction.
-- Fan-out has a hard ceiling per map (1,000 items). Beyond it, nest maps or enlarge shards; never drop items.
+- Fan-out is sized, never maxed: code clears what it can first, and the number of model calls = the remaining
+  work ÷ the shard size where the chosen model's measured recall holds. The engine's 1,000 items per map is a limit.
 - Every loop has `maxIterations`, every wait a timeout, every map `maxItems`, every run a budget.
 
 ## Load only what the current step needs

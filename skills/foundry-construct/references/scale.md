@@ -24,13 +24,19 @@ The weak points below appear in published traces and in ours. Each has a counter
 1. **Recon by code.** List every unit with id, path or key, size and type. Record the structure: directories,
    modules, tables, partitions, time ranges, plus import or join edges between units. Recon output is the inventory
    the ledger is checked against, so it must come from code.
-2. **Probe.** Run the planned reader on 3–5 small shards. Measure tokens, time, findings and schema failures per
-   unit. Size the shards and the fan-out from these numbers, not from a guess.
+2. **Filter by code, then size from a probe.** First let code clear what it can (static checks, statistics,
+   queries); models get only what code cannot decide. Then run the reader on 3–5 probe shards with known answers
+   at increasing sizes (e.g. 1/8, 1/4, 1/2 of the model's window) and measure recall and cost per unit. Shard
+   size = the largest size before recall drops (bigger shards are cheaper per unit until context rot). Shard
+   count = remaining work ÷ shard size. If shard count × cost per shard exceeds the budget, do not fan out
+   further: filter more by code, sample with a stated guarantee (step 9), or ask. Use the cheapest model class
+   whose probe recall meets the bar; a stronger class may justify larger shards. If the remaining work fits a
+   few calls, do not fan out at all.
 3. **Partition by structure.** Keep coupled units together: a module, a table, a time window. Bound each shard by
    the measured per-reader budget. Keep shards well inside the model's window, since context rot starts long
    before the limit. Record the edges a shard boundary cuts; the reconcile step needs them.
-4. **Fan out within the ceiling.** One `map` takes at most 1,000 items. Beyond that, map over shard groups, each
-   group a `map` over its shards, or enlarge shards. Set `failure: "collect"` and gate on the failed count, so a
+4. **Fan out as sized, not as allowed.** The count comes from step 2. One `map` takes at most 1,000 items and
+   runs at most 16 at once; that is a limit, not a target. Beyond it, nest maps (a map of shard groups). Set `failure: "collect"` and gate on the failed count, so a
    failed shard is visible and never silently dropped. Set `concurrency` from the budget.
 5. **Coverage ledger.** A `code` node computes, per unit: assigned, read and finding count. Acceptance requires
    covered = inventory size and each unit read exactly once, except units read on purpose by the second reader.

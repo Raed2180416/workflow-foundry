@@ -45,9 +45,14 @@ These are core-engine work under D33, ranked by how much they block very large j
    512 KB (`src/sandbox.mjs:18`). A shard plan for more than about 10,000 units, or any bulk data, cannot flow
    through the workflow. A 300 GB program needs content-addressed references (path or key plus hash) that
    capabilities read in slices.
-2. **Fan-out ceiling** [obs]. `map.maxItems` is at most 1,000 and `budget.maxConcurrency` at most 16 (schema).
-   Nested maps reach 10^6 units, but the pattern has to be taught, and the engine should ideally offer a
-   shard-group primitive.
+2. **Sizing is left to the builder's judgement** [inf, owner 2026-11-04]. `map.maxItems` (at most 1,000) and
+   `budget.maxConcurrency` (at most 16) are limits, not targets. The economical number of model calls is the
+   work code cannot clear, divided by the shard size at which the chosen model's measured recall still holds;
+   for many tasks that is a handful of calls, not hundreds. Today the builder must run that probe by hand. The
+   engine should offer a probe-and-size step: run the reader on known-answer probe shards at increasing sizes
+   per model class, record recall and cost, and emit the shard size, the shard count and the model class that
+   meet a recall bar within the budget, or refuse with "filter more by code, sample, or ask". The skill pack
+   now teaches the rule (`scale.md` steps 2 and 4).
 3. **No run-time sub-workflow creation.** In-node sub-workflow creation is not built. Its experiment SW-1 has run,
    but no result is read yet. Re-decomposition today is a bounded `loop` planned at construction time.
 4. **Coverage ledgers are hand-written** [inf]. Every large job needs the same inventory → shard → read-ids →
