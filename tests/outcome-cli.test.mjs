@@ -377,7 +377,9 @@ test('documented offline shell example executes the supplied repair and retains 
   // test (e.g. a non-system Node 24) instead of depending on a system node.
   const shellPath = [path.dirname(process.execPath), h.env.PATH].join(path.delimiter);
   const result = spawnSync('/bin/bash', ['-s'], { input: script, cwd: root, env: { ...h.env, PATH: shellPath, TMPDIR: h.workspace },
-    encoding: 'utf8', timeout: 15000, maxBuffer: 2 * 1024 * 1024 });
+    // A correctness check, not a speed one: the example takes about 36 s at load 32 on a shared 4-CPU host (2026-11-04),
+    // where the earlier 15 s limit failed it while it succeeded.
+    encoding: 'utf8', timeout: 180000, maxBuffer: 2 * 1024 * 1024 });
   h.save('DOCUMENTATION-RUN.json', { exitCode: result.status, signal: result.signal, stdout: result.stdout, stderr: result.stderr });
   assert.equal(result.error, undefined); assert.equal(result.status, 0, result.stderr);
   const directory = result.stdout.match(/Evidence directory: (.+)/)?.[1];

@@ -239,9 +239,11 @@ async function main() {
   if (args['outcome-repair'] && args['auto-apply']) {
     throw new FoundryError('OUTCOME_CLI_ARGUMENT', 'Outcome generation produces a proposal; use a separate outcome-apply command to reverify its evidence.');
   }
-  // generate: the agent and model are checked and the provider is built (its constructor only reads and hashes the
-  // installed binary) before the workspace store is opened, so a refused request leaves no workspace state behind.
-  const generatorProvider = command === 'generate' ? await buildGeneratorProvider(args) : null;
+  // generate --task (a new request): the agent and model are checked and the provider is built (its constructor only
+  // reads and hashes the installed binary) before the workspace store is opened, so a refused request leaves no
+  // workspace state behind. With --request the store is opened first, because an outcome-repair request must be refused
+  // by its route (OUTCOME_CLI_ROUTE) before anything else is said about the command.
+  const generatorProvider = command === 'generate' && args.request === undefined ? await buildGeneratorProvider(args) : null;
   const workspace = path.resolve(args.workspace ?? args.project ?? process.cwd());
   if (command === 'outcome-history') {
     if (positionals.length !== 1 || !/^[a-f0-9]{64}$/.test(args.receipt ?? '') ||
