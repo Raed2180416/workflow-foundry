@@ -23,6 +23,9 @@ import { dayStart, HORIZON_DAYS, DAY_MS } from './schedule.mjs';
 export const BENIGN_ERRORS = Object.freeze([{ code: 402 }, { code: 'permanent' }, { code: 409, reason: 'already-collected' }, { code: 409, reason: 'not-cancellable' }]);
 const benign = e => BENIGN_ERRORS.some(b => b.code === e?.code && (b.reason === undefined || b.reason === e?.reason));
 const normOrder = s => (typeof s === 'string' ? s.trim().replace(/^#/, '').toUpperCase() : null);
+// The order an effect concerns: its orderId, or the order of the fulfilment its `about` names (SPEC-E §4.8: about is the order
+// id, or the fulfilment id <orderId>-F<n> for fulfilment notices). Build fix 2026-11-04: notify.send carries no orderId.
+export const orderOfArgs = a => { const o = normOrder(a?.orderId ?? a?.about ?? null); return o ? o.replace(/-F\d+$/, '') : null; };
 // FH-1's finding normaliser (experiments/fh/heal.mjs `norm`): one class per contract, rule and kind of finding.
 export const normFinding = s => String(s).replace(/ORD-\d+-\d+(-F\d+)?/g, 'ORD-…').replace(/\b\d{4}-\d{2}-\d{2}T[\d:.]+(Z|[+-]\d{2}:\d{2})?/g, '<time>')
   .replace(/\b(o|e|ev|ar)\d{3,}\b/g, '<id>').replace(/\b\d+(\.\d+)?\b/g, '<n>').slice(0, 160);
@@ -131,7 +134,7 @@ export async function signalsOfRun({ bundle, rows, pools = null, readings = BASE
     const d = Math.min(HORIZON_DAYS, Math.max(1, Math.floor((e.at - dayStart(1)) / DAY_MS) + 1));
     if (d < fromDay || d > toDay) continue;
     if (e.kind === 'effect' && (okBy.get(e.key) ?? []).some(t => t >= e.at && t < dayStart(d + 1))) continue;
-    const order = e.kind === 'effect' ? normOrder(argsOf.get(e.emission)?.args?.orderId ?? null) ?? (e.case ? W.truth.cases[e.case]?.subject : null) : instOrder.get(e.instance) ?? null;
+    const order = e.kind === 'effect' ? orderOfArgs(argsOf.get(e.emission)?.args) ?? (e.case ? W.truth.cases[e.case]?.subject : null) : instOrder.get(e.instance) ?? null;
     push({ ch: 'm1', day: d, at: e.at, order, case: order ? caseOf.get(order) ?? null : null,
       cls: e.kind === 'effect' ? `m1|${e.system}.${e.op}|${e.code}|${e.reason ?? ''}` : `m1|arm|${e.code}`, detail: e.detail,
       raw: e.kind === 'effect' ? { request: argsOf.get(e.emission)?.args ?? null, error: JSON.parse(e.detail) } : null });
@@ -192,7 +195,8 @@ export function m1Findings(rows) {
       if (r.outcome !== 'ok') { armErrors += 1; errs.push({ order: instOrder.get(r.target) ?? null, cls: `m1|arm|${r.error?.code ?? r.outcome}` }); }
     }
     if (r.type === 'ledger') {
-      const order = normOrder(emits.get(r.emission)?.args?.orderId ?? null);
+      const a = emits.get(r.emission)?.args ?? null;
+      const order = orderOfArgs(a);
       const k = `${order}|${r.system}.${r.op}`;
       if (r.committed) ok.add(k);
       else if (r.error && !benign(r.error)) errs.push({ order, k, cls: `m1|${r.system}.${r.op}|${r.error.code}|${r.error.reason ?? ''}` });

@@ -84,7 +84,7 @@ export async function runWindow({ bundle, cases, kind = 'A-H', runner = null, la
   let routing = null;
   const version = armVersion(`window-${kind}`, ({ bundle: b, journal }) => {
     const agent = agentVArm({ id: `${kind}-${label}`.slice(0, 60), model: conf.model, workRoot, contract: contractText(), effort: conf.effort, budgetUsdPerTick: conf.budgetUsdPerTick,
-      minutesPerTick: conf.minutesPerTick, schemas, retries: conf.retries, meter, keepWorkdirs, ...(runner ? { runner } : {}) });
+      minutesPerTick: conf.minutesPerTick, schemas, retries: conf.retries, meter, keepWorkdirs, stopOnEnvFault: true, ...(runner ? { runner } : {}) });   // an environment fault freezes the run (never scored)
     routing = routingArm({ bundle: b, cases, agent, journal, specAt: b.specAt, id: `routed-${kind}` });
     return routing;
   });

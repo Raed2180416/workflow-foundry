@@ -5,7 +5,7 @@
 // lineage-stream; a stage resumes by skipping every unit whose record exists (a unit killed mid-way is re-run from its
 // start: its spend so far stays on the ledger, disclosed).
 import path from 'node:path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync, readdirSync, rmSync } from 'node:fs';
 import { worldsOf, STREAM_IDS, REHEARSAL, T0_MS, DAY_MS, CHANGES } from './schedule.mjs';
 import { buildBundle, loadSealed, ROOT, WORK } from './changes.mjs';
 import { referencePools, gradeRun } from './oracle.mjs';
@@ -17,7 +17,7 @@ import { streamExposure, attributeRecord, modelOf, certifyRecord } from './model
 import { report } from './report.mjs';
 import { selectWindow, runWindow, WINDOW_CHANGES, K_DEFAULT, K_FALLBACK, AGENT } from './windows.mjs';
 import { runLD, LATENT } from './ld.mjs';
-import { search, confirm, BUDGET, GROUP_A } from './wc-search.mjs';
+import { search, confirm, evaluate, BUDGET, GROUP_A } from './wc-search.mjs';
 import { redTeamSession, blindBaseline, RT_SESSIONS } from './redteam/session.mjs';
 import { ruleVersion } from './rmaint.mjs';
 import { signalsOfRun } from './monitor.mjs';
@@ -64,7 +64,7 @@ export function ledgerMeter({ scope, row, file = SPEND }) {
   return {
     before({ model, bound }) {
       const room = rowRoom(row, file);
-      if (room < bound || spendOf(file).upperUsd + bound > TOTAL_CAP) throw Object.assign(new Error(`DUR1_BUDGET: ${scope} (row ${row} room $${room.toFixed(2)})`), { code: 'DUR1_BUDGET' });
+      if (room < bound || spendOf(file).upperUsd + bound > TOTAL_CAP) throw Object.assign(new Error(`DUR1_BUDGET: ${scope} (row ${row} room $${room.toFixed(2)})`), { code: 'DUR1_BUDGET', quota: true });   // quota: the host freezes the run at its last commit instead of scoring an arm error
       const id = `${scope}#${++n}@${new Date().toISOString()}`;
       appendFileSync(file, JSON.stringify({ id, phase: 'start', label: scope, scope, model, capUsd: bound, at: new Date().toISOString() }) + '\n');
       return { id, model, bound };
@@ -89,10 +89,24 @@ export class PersistentContractOwner extends ContractOwner {
     }
   }
   async forAnnounced(id, bundle, atMs) {
-    const had = this.announced.has(id);
-    const rec = await super.forAnnounced(id, bundle, atMs);
-    if (!had) writeFileSync(path.join(this.dir, `announced-${id}.reading.json`), JSON.stringify({ kind: 'announced', id, rec }, null, 1));
-    return rec;
+    if (this.announced.has(id)) return this.announced.get(id);
+    // One C-O session per announced change across parallel workers: the first takes a directory lock, the others wait for
+    // its reading file (a paid session is never run twice for one change).
+    const file = path.join(this.dir, `announced-${id}.reading.json`), lock = path.join(this.dir, `announced-${id}.lock`);
+    let mine = false;
+    try { mkdirSync(lock); mine = true; } catch { /* another worker holds it */ }
+    if (!mine) {
+      for (let i = 0; i < 480 && !existsSync(file); i++) await new Promise(r => setTimeout(r, 15_000));
+      if (!existsSync(file)) throw Object.assign(new Error(`DUR1_ENV_FAULT: C-O ${id} lock held for 2 h without a reading`), { code: 'DUR1_ENV_FAULT' });
+      const rec = JSON.parse(readFileSync(file, 'utf8')).rec;
+      this.announced.set(id, rec);
+      return rec;
+    }
+    try {
+      const rec = await super.forAnnounced(id, bundle, atMs);
+      writeFileSync(file, JSON.stringify({ kind: 'announced', id, rec }, null, 1));
+      return rec;
+    } finally { rmSync(lock, { recursive: true, force: true }); }
   }
   async forVerifierBlind(args) {
     const key = `${args.stream}|${args.k}|${args.topic}`;
@@ -136,6 +150,10 @@ async function windowRecord({ spec, change, sealed, ex, kind, label, cases = nul
   const sel = cases ? { exposed: cases, controls: [] } : selectWindow({ stream: spec.stream, change, exposed: ex.of(spec.k)[change] ?? new Set(), pools: ref.pools, W: b.W, onsetMs: ch.onsetMs, k });
   const ids = [...sel.exposed, ...sel.controls];
   const r = await runWindow({ bundle: b, cases: ids, kind, label, meter });
+  if (r.status !== 'complete') {   // frozen by an environment fault or the budget meter: never scored, no record written
+    const budget = rowRoom(rowOf(label)) < AGENT[kind].budgetUsdPerTick;
+    throw Object.assign(new Error(`${budget ? 'DUR1_BUDGET' : 'DUR1_ENV_FAULT'}: window ${label} stopped (${r.status})`), { code: budget ? 'DUR1_BUDGET' : 'DUR1_ENV_FAULT' });
+  }
   const g = gradeRun(b, r.rows, ref.pools);
   const sig = await signalsOfRun({ bundle: b, rows: r.rows, pools: ref.pools });
   const m1 = new Map();
@@ -223,6 +241,7 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
       return;
     }
     for (const s of streams) {
+      if (s === 's3' && existsSync(path.join(RUNS, 'K4.json'))) { log('K-4 fired: no s3 windows (D-3 directional)'); continue; }
       const worlds = worldsOf(s, { sealedOnsets: sealed.onsets() });
       const ex = await streamExposure(worlds, { sealed });
       const row = s === 's3' ? 'P5' : 'P4';
@@ -255,8 +274,13 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
       const conf = RT_SESSIONS[kind];
       const g = sessionGate(fz, 'P7', conf.budgetUsd)();
       if (!g.ok) { log(`${id}: ${g.reason}`); continue; }
-      await redTeamSession({ id, targetId: t, version: programVersion(LINEAGES[t], { id: t }), session: paidSession(conf, { scope: `J2.${id}`, row: 'P7', freeze: fz }), runDir: dir, sealed, log });
-      if (kind === 'opus') { const b = await blindBaseline({ targetId: t, version: programVersion(LINEAGES[t], { id: t }), sealed, log }); writeFileSync(path.join(dir, `${id}.blind.json`), JSON.stringify(b, (k, v) => (v instanceof Set ? [...v] : v), 1)); }
+      const version = programVersion(LINEAGES[t], { id: t });
+      const r = await redTeamSession({ id, targetId: t, version, session: paidSession(conf, { scope: `J2.${id}`, row: 'P7', freeze: fz }), runDir: dir, sealed, log });
+      // D-11: the most silent failing cases of a valid red-team world on its target, against blind search with the same 25 probes.
+      let best = 0;
+      for (const v of r.validated.filter(x => x.valid)) best = Math.max(best, (await evaluate(t, version, v.vector, { sealed })).silent ?? 0);
+      const blind = kind === 'opus' ? await blindBaseline({ targetId: t, version, sealed, log }) : null;
+      writeFileSync(path.join(dir, `${id}.best.json`), JSON.stringify({ id, target: t, kind, best, blindBest: blind ? Math.max(0, ...blind.evaluated.map(e => e.silent ?? 0)) : null, blindUsed: blind?.used ?? null }, null, 1));
     }
     return;
   }
@@ -287,6 +311,93 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
 
 // ---------------------------------------------------------------------------------------------------------------------
 // $0 stages that read the paid records: WC-1 passes and the analysis.
+
+/**
+ * WC-1 pass ($0, prereg §8.2). when 't0': the starting versions of the nine lineages and S1-S3; 'end': each MH-H
+ * lineage-stream's final version and REF-M's finals. Budget 400 per group-A target, 150 per group-B target; top 10
+ * re-drawn on 5 fresh salts; confirmed vectors found on group A are run on group B and vice versa (transfer). Resumes per
+ * target (a file per target). Returns { targets: { [id]: { used, ht, cvar10, confirmed } }, transfer }.
+ */
+export async function wc1Stage({ when = 't0', log = () => {}, sealed = undefined, budgets = BUDGET, only = null, poolSize = 400, maxSize = 200, salts = undefined } = {}) {
+  const sl = sealed === undefined ? loadRunSealed() : sealed;
+  const dir = path.join(RUNS, `wc1-${when}`);
+  mkdirSync(dir, { recursive: true });
+  const targets = [];
+  if (when === 't0') {
+    for (const [id, spec] of Object.entries(LINEAGES)) targets.push({ id, group: GROUP_A.includes(id) ? 'A' : 'B', version: programVersion(spec, { id }) });
+    for (const [id, spec] of Object.entries(REF_SOLVERS)) targets.push({ id, group: GROUP_A.includes(id) ? 'A' : 'B', version: programVersion(spec, { id }) });
+  } else {
+    for (const rec of [...readRecords(path.join(RUNS, 'heal')), ...readRecords(path.join(RUNS, 'refm'))]) {
+      const unit = rec.label.split('.')[1];
+      const v = (await versionsOf(rec)).get(rec.final.digest);
+      if (v) targets.push({ id: `${rec.label}.final`, group: GROUP_A.includes(unit) ? 'A' : 'B', version: v });
+    }
+  }
+  const out = { when, targets: {}, transfer: [] };
+  for (const t of targets.filter(x => !only || only.includes(x.id))) {
+    const f = path.join(dir, `${t.id}.json`);
+    if (existsSync(f)) { out.targets[t.id] = JSON.parse(readFileSync(f, 'utf8')); continue; }
+    const s = await search({ targetId: t.id, version: t.version, budget: t.group === 'A' ? budgets.groupA : budgets.groupB, sealed: sl, poolSize, maxSize, log });
+    const c = await confirm({ targetId: t.id, version: t.version, top: s.top, sealed: sl, ...(salts ? { salts } : {}) });
+    const rec = { id: t.id, group: t.group, used: s.used, budget: s.budget, ht: s.ht, cvar10: s.cvar10, bedFindings: s.bedFindings.length, top: s.top.map(x => ({ key: x.key, vector: x.vector, score: x.score, silent: x.silent, silentCritical: x.silentCritical, classes: x.classes })), confirmed: c };
+    writeFileSync(f, JSON.stringify(rec, null, 1));
+    out.targets[t.id] = rec;
+  }
+  // Transfer (selection-bias guard): confirmed vectors of group A on group B targets and vice versa.
+  const conf = g => Object.values(out.targets).filter(x => x.group === g).flatMap(x => x.confirmed.filter(c => c.confirmed).map(c => ({ from: x.id, vector: c.vector })));
+  for (const t of targets.filter(x => !only || only.includes(x.id))) for (const c of conf(t.group === 'A' ? 'B' : 'A')) {
+    const e = await evaluate(t.id, t.version, c.vector, { sealed: sl });
+    out.transfer.push({ target: t.id, from: c.from, key: e.key, valid: e.valid, failing: e.failing, silent: e.silent, silentCritical: e.silentCritical });
+  }
+  writeFileSync(path.join(dir, 'TRANSFER.json'), JSON.stringify(out.transfer, null, 1));
+  return out;
+}
+
+/**
+ * ADV-SET (prereg §8.3): the confirmed worlds of the t0 WC-1 pass and the valid J2 worlds, frozen when P7 ends, cross-run
+ * at $0 on every code arm at t0 and at stream end. Returns { set, cross: [{ arm, target, key, n, failing, silent, silentCritical }] }.
+ */
+export async function advSetStage({ log = () => {}, sealed = undefined } = {}) {
+  const sl = sealed === undefined ? loadRunSealed() : sealed;
+  const set = [];
+  const wdir = path.join(RUNS, 'wc1-t0');
+  if (existsSync(wdir)) for (const f of readdirSync(wdir).filter(x => x.endsWith('.json') && x !== 'TRANSFER.json')) for (const c of JSON.parse(readFileSync(path.join(wdir, f), 'utf8')).confirmed) if (c.confirmed) set.push({ source: `wc1:${f.slice(0, -5)}`, vector: c.vector });
+  const rdir = path.join(RUNS, 'redteam');
+  if (existsSync(rdir)) for (const f of readdirSync(rdir).filter(x => x.endsWith('.record.json'))) for (const v of JSON.parse(readFileSync(path.join(rdir, f), 'utf8')).validated ?? []) if (v.valid) set.push({ source: `j2:${f.split('.')[0]}`, vector: v.vector });
+  const file = path.join(RUNS, 'ADV-SET.json');
+  if (!existsSync(file)) writeFileSync(file, JSON.stringify({ frozenAt: new Date().toISOString(), set }, null, 1));
+  const frozen = JSON.parse(readFileSync(file, 'utf8')).set;
+  const cross = [];
+  const arms = [...Object.entries(LINEAGES).map(([id, s]) => ['S-H*', id, programVersion(s, { id })]), ...Object.entries(REF_SOLVERS).map(([id, s]) => ['REF-S', id, programVersion(s, { id })])];
+  for (const rec of readRecords(path.join(RUNS, 'heal'))) { const v = (await versionsOf(rec)).get(rec.final.digest); if (v) arms.push(['MH-H.final', rec.label, v]); }
+  for (const [arm, id, v] of arms) for (const w of frozen) {
+    const e = await evaluate(`adv-${id}`, v, w.vector, { sealed: sl });
+    cross.push({ arm, target: id, source: w.source, key: e.key, valid: e.valid, n: e.n, failing: e.failing, silent: e.silent, silentCritical: e.silentCritical });
+  }
+  writeFileSync(path.join(RUNS, 'ADV-CROSS.json'), JSON.stringify(cross, null, 1));
+  log(`ADV-SET: ${frozen.length} worlds x ${arms.length} arm units`);
+  return { set: frozen, cross };
+}
+
+/** The report's adv (D-5 b) and redTeam (D-11) inputs from the run directory (null when those stages did not run). */
+function redAndAdv() {
+  const cf = path.join(RUNS, 'ADV-CROSS.json');
+  const cross = existsSync(cf) ? JSON.parse(readFileSync(cf, 'utf8')) : [];
+  const rdir = path.join(RUNS, 'redteam');
+  const best = existsSync(rdir) ? readdirSync(rdir).filter(f => f.endsWith('.best.json')).map(f => JSON.parse(readFileSync(path.join(rdir, f), 'utf8'))) : [];
+  const { adv } = advInputs(cross);
+  const redTeam = best.filter(b => b.kind === 'opus').map(b => ({ target: `${b.id}:${b.target}`, redTeamBest: b.best, blindBest: b.blindBest ?? 0 }));
+  return { adv, redTeam: redTeam.length ? redTeam : null };
+}
+
+/** D-5 (b) and D-11 inputs from the ADV cross-run and the red-team records. */
+export function advInputs(cross, redRecords = [], blind = {}) {
+  const heal = cross.filter(x => x.arm === 'MH-H.final' && x.valid), refs = cross.filter(x => x.arm === 'REF-S' && x.valid);
+  const maxBy = (rows, k) => rows.reduce((m, r) => Math.max(m, r[k] ?? 0), 0);
+  const adv = heal.length ? { silentCritical: heal.reduce((a, r) => a + (r.silentCritical ?? 0), 0), maxSilentPerWorld: maxBy(heal, 'silent'), refsMax: maxBy(refs, 'silent'), n: Math.max(0, ...heal.map(r => r.n ?? 0)) } : null;
+  const redTeam = redRecords.filter(r => r.kind === 'opus').map(r => ({ target: r.target, redTeamBest: r.best, blindBest: blind[r.id] ?? 0 }));
+  return { adv, redTeam };
+}
 
 /** Rebuild a record's version map (programs from their kept specs; rule versions from their digests; c-oss). */
 export async function versionsOf(rec) {
@@ -340,7 +451,7 @@ export async function analyzeRuns({ log = () => {} } = {}) {
   const coUsd = {};
   for (const [sc, v] of Object.entries(spendOf(SPEND).byScope)) if (sc.startsWith('co-')) { const id = sc.slice(3).split('-a')[0]; coUsd[id] = (coUsd[id] ?? 0) + v; }
   const r = report({ worlds, exposure, arms, certs, windows: pairs.length ? { pairs, agentUsdPerCase: perCase } : null, ld: ld?.length ? ld : null, costs: { agentProjected, coUsd },
-    sDropped: existsSync(path.join(RUNS, 'K4.json')), records });
+    sDropped: existsSync(path.join(RUNS, 'K4.json')), records, ...redAndAdv() });
   writeFileSync(path.join(RUNS, 'REPORT.json'), JSON.stringify(r, (k, v) => (v instanceof Set ? [...v] : v === Infinity ? 'Infinity' : v), 1));
   return r;
 }

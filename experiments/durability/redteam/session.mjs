@@ -15,7 +15,7 @@ import { serveProbes, PROBE_CLIENT, MAX_PROBES, MAX_SCENARIOS, MAX_ORDERS } from
 import { validateScenario } from './validate.mjs';
 import { evaluate, search } from '../wc-search.mjs';
 import { WORK } from '../changes.mjs';
-import { spendOf, EffortMissing } from '../heal-adapter.mjs';
+import { spendOf, EffortMissing, throwIfEnvFault } from '../heal-adapter.mjs';
 
 export const RT_SESSIONS = Object.freeze({
   'RT-O1': Object.freeze({ target: 'b1lh-e8-1', model: 'claude-opus-5-5', effort: 'xhigh', budgetUsd: 3, minutes: 30 }),
@@ -77,6 +77,7 @@ export async function redTeamSession({ id, targetId, version, session, runDir, s
       appendFileSync(session.spend.file, JSON.stringify({ id: sid, phase: 'end', label: id, scope: 'J2', model: session.model, effort: session.effort, capUsd: session.budgetUsd, costUsd: r.costUsd ?? null, error: r.error?.code ?? null, at: new Date().toISOString() }) + '\n');
     }
   } finally { rec.probes = await box.stop(); }
+  throwIfEnvFault(r, id);
   rec.session = { kind: session.kind ?? 'paid', model: session.model ?? null, effort: session.effort ?? null, costUsd: r?.costUsd ?? 0, error: r?.error ?? null };
   let scenarios = [];
   try { scenarios = JSON.parse(readFileSync(path.join(workdir, 'SCENARIOS.json'), 'utf8')); } catch { scenarios = []; }

@@ -17,7 +17,7 @@ import { exposureOf } from './exposure.mjs';
 import { runBundle, controlVersion, BAD_CONTROLS } from './arms.mjs';
 import { ruleVersion } from './rmaint.mjs';
 import { AUTHOR_VALIDATION, CHANGES, T0_MS, DAY_MS, assertDurSeeds } from './schedule.mjs';
-import { spendOf, EffortMissing } from './heal-adapter.mjs';
+import { spendOf, EffortMissing, throwIfEnvFault } from './heal-adapter.mjs';
 import { specE } from '../../beds/ebed/e8/index.mjs';
 
 const sha = s => createHash('sha256').update(s).digest('hex');
@@ -199,6 +199,7 @@ export async function runAuthor({ session, sealedDir = SEALED_DIR, sealedJson = 
         const prompt = `Read AUTHOR-BRIEF.md and API.md first, then write bundle.json and run \`node check.mjs\` until every gate passes.${feedback ? ' GATES.txt holds the gate output of your previous attempt.' : ''}`;
         r = await runClaudeCode({ model: session.model, prompt, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort });
         appendFileSync(session.spend.file, JSON.stringify({ id, phase: 'end', label: `author-a${attempt}`, scope: 'P1', model: session.model, effort: session.effort, capUsd: session.budgetUsd, costUsd: r.costUsd ?? null, error: r.error?.code ?? null, at: new Date().toISOString() }) + '\n');
+        throwIfEnvFault(r, `author-a${attempt}`);
       }
     } finally { await box.stop(); }
     const f = path.join(workdir, 'bundle.json');

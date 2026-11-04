@@ -21,7 +21,7 @@ import { runBundle, referenceVersion } from './arms.mjs';
 import { referencePools, gradeRun } from './oracle.mjs';
 import { contractsFor, BASE_READINGS } from './monitor.mjs';
 import { ROOT, WORK } from './changes.mjs';
-import { spendOf, EffortMissing } from './heal-adapter.mjs';
+import { spendOf, EffortMissing, throwIfEnvFault } from './heal-adapter.mjs';
 
 const sha = s => createHash('sha256').update(s).digest('hex');
 export const CO_SESSION = Object.freeze({ model: 'claude-opus-5-5', effort: 'xhigh', budgetUsd: 1.5, minutes: 30, role: 'contract-owner' });
@@ -131,6 +131,7 @@ export async function coSession({ label, kind, change = null, complaints = null,
     r = await runClaudeCode({ model: session.model, prompt: `${task}\nRead TASK.md and the files it names first.`, workdir, files: {}, budgetUsd: session.budgetUsd, timeoutMs: session.minutes * 60_000, effort: session.effort });
     appendFileSync(session.spend.file, JSON.stringify({ id, phase: 'end', label, scope: session.spend.scope, model: session.model, effort: session.effort, capUsd: session.budgetUsd, costUsd: r.costUsd ?? null, error: r.error?.code ?? null, at: new Date().toISOString() }) + '\n');
   }
+  throwIfEnvFault(r, label);   // never scored as a quarantine: the chain waits and resumes
   rec.session = { kind: session.kind ?? 'paid', model: session.model ?? null, effort: session.effort ?? null, costUsd: r?.costUsd ?? 0, error: r?.error ?? null };
   let out = null;
   const rj = path.join(workdir, 'READING.json');

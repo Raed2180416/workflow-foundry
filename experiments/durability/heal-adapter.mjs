@@ -37,6 +37,10 @@ export const HAIKU_PATCH = Object.freeze({ model: 'claude-haiku-5-5', effort: 'h
 export const OPUS_PATCH = Object.freeze({ model: 'claude-opus-5-5', effort: 'xhigh', budgetUsd: 1.0, minutes: 30, role: 'heal-opus' });
 export const LIMITS = Object.freeze({ sessionsPerIncident: 2, usdPerLineageStream: 1.5, totalUsd: 80 });
 export const ENV_FAULTS = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE']);
+/** An environment fault (rate or session limit, model or sandbox unavailable): never scored; the chain waits 30 minutes and resumes. */
+export class EnvFault extends Error { constructor(label, code) { super(`DUR1_ENV_FAULT: ${label}: ${code}`); this.code = 'DUR1_ENV_FAULT'; this.fault = code; } }
+export const throwIfEnvFault = (r, label) => { const c = r?.error?.code ?? null; if (c && ENV_FAULTS.includes(c)) throw new EnvFault(label, c); return r; };
+export const ENV_WAIT_MS = Number(process.env.DUR1_ENV_WAIT_MS ?? 30 * 60_000);
 export class RedTeamLeak extends Error { constructor(k) { super(`DUR1_REDTEAM: red-team or WC-1 world ${k} may never enter an evidence or regression set`); this.code = 'DUR1_REDTEAM'; } }
 export class EffortMissing extends Error { constructor(m) { super(`DUR1_EFFORT: ${m} (D28 (4): a paid session with effort unset is refused)`); this.code = 'DUR1_EFFORT'; } }
 

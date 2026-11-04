@@ -19,7 +19,7 @@ import { signalsOfRun, IncidentBook, contractsFor, BASE_READINGS, orderState, jo
 import { trueComplaints, falseComplaints, adversarialComplaint } from './complaints.mjs';
 import { exposedTo } from './exposure.mjs';
 import { VersionRegistry } from './registry.mjs';
-import { evidenceSets, evidenceRun, patchSession, gate, LIMITS, HAIKU_PATCH, OPUS_PATCH, spendOf } from './heal-adapter.mjs';
+import { evidenceSets, evidenceRun, patchSession, gate, LIMITS, HAIKU_PATCH, OPUS_PATCH, spendOf, EnvFault, ENV_WAIT_MS } from './heal-adapter.mjs';
 import { coSession, certifyReadings, verifierBlindAccept, reading as mkReading, withReading } from './contracts-owner.mjs';
 import { dayStart, HORIZON_DAYS, streamDay, T0_MS, DAY_MS, CHANGES, PRACTICE, isoLocal, assertDurSeeds } from './schedule.mjs';
 
@@ -292,7 +292,7 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
         if (open.some(i => i.evidence.some(e => e.practice))) for (const b of sets.practice) rowsByWorld[b.key] = (await evidenceRun(current, b, { readings })).rows;
         const useOpus = !!heal.opusAfter && open.every(i => i.sessions >= LIMITS.sessionsPerIncident);
         const nSessions = useOpus ? 1 : Math.max(0, LIMITS.sessionsPerIncident - Math.max(...open.map(i => i.sessions)));
-        let best = null;
+        let best = null, envRetried = false;
         const tries = [];
         for (let s = 1; s <= nSessions; s++) {
           if (spentHere() >= LIMITS.usdPerLineageStream) break;
@@ -301,7 +301,18 @@ export async function runStream({ arm, label, start, worlds, sealed = null, heal
             session: heal.session(useOpus ? 'opus' : 'haiku', { scope }), runDir: path.join(runDir, 'sessions'), announced, log });
           for (const i of open) i.sessions += 1;
           out.sessions.push(p.record);
-          if (p.record.envFault) { out.envFaults += 1; continue; }
+          if (p.record.envFault) {
+            // Environment fault (prereg §13.2): never scored. Wait 30 minutes and re-run the session once fresh (its spend
+            // stays on the ledger); a second fault stops the stream so the chain waits and resumes it from its record.
+            out.envFaults += 1;
+            for (const i of open) i.sessions -= 1;
+            if (envRetried) throw new EnvFault(sessLabel, p.record.envFault);
+            envRetried = true;
+            log(`${sessLabel}: environment fault ${p.record.envFault}; waiting ${Math.round(ENV_WAIT_MS / 60_000)} min, then one fresh session`);
+            await new Promise(r => setTimeout(r, ENV_WAIT_MS));
+            s -= 1;
+            continue;
+          }
           const g = await gate({ incumbent: current, candidate: p.candidate, incidents: open, sets, readings, proactive });
           p.record.gate = { accept: g.accept, reason: g.reason, fixed: g.fixed?.length ?? 0, still: g.stillFlagged?.length ?? 0, regressions: g.regressions?.length ?? 0, regressionExamples: (g.regressions ?? []).slice(0, 5) };
           writeFileSync(path.join(runDir, 'sessions', sessLabel.replace(/[^\w.-]/g, '_'), 'record.json'), JSON.stringify(p.record, null, 1));

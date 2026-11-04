@@ -29,7 +29,7 @@ import { report, renderReport } from './report.mjs';
 import { rStaticVersion, ruleTimes, maintSwitches, ceilSwitches, switchTimeline, LAGS } from './rmaint.mjs';
 import { selectWindow, runWindow, WINDOW_CHANGES, K_DEFAULT, AGENT } from './windows.mjs';
 import { runLD, LATENT, stubLD, manifestOf } from './ld.mjs';
-import { search, confirm } from './wc-search.mjs';
+import { search, confirm, evaluate } from './wc-search.mjs';
 import { redTeamSession, stubRedTeam, blindBaseline, RT_SESSIONS } from './redteam/session.mjs';
 import { sweepStream } from './sweep.mjs';
 import { harmShield, shieldRefusals } from './shield-harm.mjs';
@@ -103,7 +103,7 @@ export async function gatesOfWorld(spec, { sealed, controls = BAD_CONTROLS, floo
 }
 
 /** Static comparator runs of one stream: S-H* lineages, R-static, R-maint(L), R-ceil, REF-S, c-oss (as asked). */
-export async function staticArms({ stream, worlds, sealed, lineages, refSolvers = Object.keys(REF_SOLVERS), coss = true, rmaint = true, exposure, co, runDir, log }) {
+export async function staticArms({ stream, worlds, sealed, lineages, refSolvers = Object.keys(REF_SOLVERS), coss = true, rmaint = true, lags = LAGS, exposure, co, runDir, log }) {
   const recs = { 'S-H*': {}, 'REF-S': {}, 'R-static': {}, 'R-maint0': {}, 'R-maint2': {}, 'R-maint7': {}, 'R-ceil': {}, 'c-oss': {} };
   for (const l of lineages) recs['S-H*'][l] = await runStream({ arm: 'static', label: `S-Hstar.${l}.${stream}`, start: programVersion(LINEAGES[l], { id: l }), worlds, sealed, co, runDir, log });
   for (const s of refSolvers) recs['REF-S'][s] = await runStream({ arm: 'static', label: `REF-S.${s}.${stream}`, start: programVersion(REF_SOLVERS[s], { id: s }), worlds, sealed, co, runDir, log });
@@ -112,7 +112,7 @@ export async function staticArms({ stream, worlds, sealed, lineages, refSolvers 
   if (rmaint) {
     const times = ruleTimes({ staticRecord: recs['R-static'].ref, worlds, exposure: k => exposure.of(k) });
     const cache = new Map();
-    for (const L of LAGS) {
+    for (const L of lags) {
       const sw = maintSwitches(times, L);
       recs[`R-maint${L}`].ref = await runStream({ arm: 'static', label: `R-maint${L}.${stream}`, start: rStaticVersion(), worlds, sealed, co, runDir, log, timelineFor: spec => switchTimeline(spec.k, sw, { cache, label: `R-maint${L}` }) });
     }
@@ -156,7 +156,7 @@ export async function dry({ lineages = ['b1lh-e8-1', 'ch-e8-1'], out = path.join
   const co = new ContractOwner({ session: id => (id === 'R1' ? stubCO('analyst-R1') : id === 'R2s' ? stubCO('notice:review-cleared:1970-01-01T00:00:00Z') : stubCO('none')), runDir, sealed, log, practice });
   let stat = null;
   await step('static-arms', async () => {
-    stat = await staticArms({ stream: 'r1', worlds, sealed, lineages, refSolvers: light ? ['S1'] : ['S1', 'S2'], coss: !light, exposure: ex, co, runDir, log });
+    stat = await staticArms({ stream: 'r1', worlds, sealed, lineages, refSolvers: light ? ['S1'] : ['S1', 'S2'], coss: !light, lags: light ? [2] : LAGS, exposure: ex, co, runDir, log });
     return { ruleTimes: stat.ruleTimes, worlds: Object.fromEntries(Object.entries(stat).filter(([k]) => k !== 'ruleTimes').flatMap(([arm, by]) => Object.entries(by).map(([u, r]) => [`${arm}/${u}`, r.worlds.map(w => `${w.gradeSummary.passed}/${w.gradeSummary.completed}`)]))) };
   });
   const healRecs = {};
@@ -211,7 +211,8 @@ export async function dry({ lineages = ['b1lh-e8-1', 'ch-e8-1'], out = path.join
     const v = programVersion(LINEAGES[lineages[0]], { id: lineages[0] });
     const r = await redTeamSession({ id: 'dry-rt', targetId: lineages[0], version: v, session: stubRedTeam({ probes: 2 }), runDir: path.join(out, 'redteam'), log });
     const blind = await blindBaseline({ targetId: lineages[0], version: v, probes: 2, log });
-    const best = r.validated.filter(x => x.valid).map(x => x.target?.silent ?? x.silent ?? 0);
+    const best = [];
+    for (const x of r.validated.filter(y => y.valid)) best.push((await evaluate(lineages[0], v, x.vector)).silent ?? 0);
     rt = [{ target: lineages[0], redTeamBest: best.length ? Math.max(...best) : 0, blindBest: Math.max(0, ...blind.evaluated.map(e => e.silent ?? 0)) }];
     return { probes: r.record.probes, scenarios: r.record.scenarios, valid: r.record.valid, bedFindings: r.record.bedFindings, blindUsed: blind.used };
   });
@@ -270,6 +271,16 @@ export async function stageZ({ streams = STREAM_IDS, lineages = Object.keys(LINE
   mkdirSync(out, { recursive: true });
   const co = new ContractOwner({ session: id => (id === 'R1' ? stubCO('analyst-R1') : stubCO('none')), runDir: out, sealed, log });   // K-0: the analyst's R1 reading stands in for C-O
   const res = { streams: {} };
+  // V-11: the nine starting versions reproduce 1,022/1,022 on the FH-1 grading worlds (1232-1234 x d2, d3, d5), FH-1's own grader.
+  const v11File = path.join(out, 'V11.json');
+  if (!existsSync(v11File)) {
+    const { gradeSubject } = await import('../fh/grade.mjs');
+    const v11 = {};
+    for (const l of lineages) { const g = await gradeSubject(LINEAGES[l], { judge: 'oracle', label: 'dur1-v11' }); v11[l] = { oracle: `${g.totals.oraclePassed}/${g.totals.oracleN}`, ok: g.totals.oraclePassed === g.totals.oracleN && g.totals.oracleN === 1022, digest: g.digest }; log(`V-11 ${l}: ${v11[l].oracle}`); }
+    writeFileSync(v11File, JSON.stringify(v11, null, 1));
+  }
+  res.v11 = JSON.parse(readFileSync(v11File, 'utf8'));
+  if (Object.values(res.v11).some(x => !x.ok)) { log(`V-11 FAILS: ${JSON.stringify(res.v11)}; stop and investigate`); return res; }
   for (const s of streams) {
     const worlds = worldsOf(s, { sealedOnsets: sealed.onsets() });
     const gates = [];
@@ -314,9 +325,13 @@ async function main() {
     await paidStage(cmd, { argv, opt, flag, list, log, guardPaid, paidSession });
     return;
   }
+  if (cmd === 'wc1') { const { wc1Stage } = await import('./paid.mjs'); const r = await wc1Stage({ when: opt('when', 't0'), log }); console.log(JSON.stringify({ when: r.when, targets: Object.keys(r.targets).length, transfer: r.transfer.length })); return; }
+  if (cmd === 'advset') { const { advSetStage } = await import('./paid.mjs'); const r = await advSetStage({ log }); console.log(JSON.stringify({ worlds: r.set.length, cross: r.cross.length })); return; }
   if (cmd === 'analyze') { const { analyzeRuns } = await import('./paid.mjs'); const r = await analyzeRuns({ log }); console.log(renderReport(r)); return; }
   console.error('usage: run.mjs dry|stagez|author|p0|heal|windows|refm|redteam|forks|analyze (see the header)');
   process.exit(2);
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(e => { console.error(String(e?.stack ?? e)); process.exit(e?.code === 'DUR1_UNPAID' || e?.code === 'DUR1_FREEZE' ? 3 : 1); });
+/** Exit codes the chain (dur1-chain.sh) acts on: 3 refused (freeze, --paid), 4 budget (row or total cap), 75 environment fault. */
+export const EXIT = Object.freeze({ DUR1_UNPAID: 3, DUR1_FREEZE: 3, DUR1_BUDGET: 4, DUR1_SCOPE_BUDGET: 4, DUR1_ENV_FAULT: 75 });
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(e => { console.error(String(e?.stack ?? e)); process.exit(EXIT[e?.code] ?? 1); });

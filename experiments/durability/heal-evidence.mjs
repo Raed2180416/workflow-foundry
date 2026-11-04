@@ -9,6 +9,7 @@
 // then (or, for complaints, delivered by then); anything else throws (DUR1_HYGIENE).
 
 const normOrder = s => (typeof s === 'string' ? s.trim().replace(/^#/, '').toUpperCase() : null);
+const orderOf = a => { const o = normOrder(a?.orderId ?? a?.about ?? null); return o ? o.replace(/-F\d+$/, '') : null; };   // as monitor.mjs orderOfArgs (no import: V-7)
 const MAX_JSON = 700;
 const j = (x, n = MAX_JSON) => { const s = JSON.stringify(x); return s.length > n ? `${s.slice(0, n)}…` : s; };
 const iso = ms => (ms === null || ms === undefined ? '-' : `${new Date(ms + 3_600_000).toISOString().slice(0, 19)}+01:00`);
@@ -28,7 +29,7 @@ export function effectResultsOf(rows, order, { before = Infinity } = {}) {
     const e = emits.get(r.emission);
     let args = e?.args ?? null;
     if (Array.isArray(args?.items) && r.batchIndex !== undefined && r.batchIndex !== null) { const { items, ...rest } = args; args = { ...rest, item: items[r.batchIndex] ?? null }; }
-    if (normOrder(args?.orderId) !== O) continue;
+    if (orderOf(args) !== O) continue;          // notify.send names its order (or fulfilment) in `about`
     out.push({ at, system: r.system, op: r.op, key: r.key ?? null, request: args, status: r.status ?? (r.committed ? 'ok' : 'error'), committed: !!r.committed, error: r.error ?? null });
   }
   return out;
