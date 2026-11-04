@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { StoreReader } from '../../tools/run-view/store-adapter.mjs';
 import { digest, errorData } from '../../src/data.mjs';
 import { explainRun, describeWorkflow, failureText } from '../core/explain.mjs';
+import { liveRoutes } from './live.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const STATIC = { '/': ['index.html', 'text/html; charset=utf-8'], '/dashboard.js': ['dashboard.js', 'text/javascript; charset=utf-8'], '/dashboard.css': ['dashboard.css', 'text/css; charset=utf-8'] };
@@ -74,6 +75,7 @@ function flowDetail(app, file, flowId) {
 /** Create (not start) the dashboard server for one FoundryApp. */
 export function createDashboard(app, { token = randomBytes(24).toString('base64url') } = {}) {
   const expected = Buffer.from(token);
+  const live = liveRoutes(app);                       // read-only run data for a visualisation + the human-task routes (live.mjs)
   let port = null;
   const send = (res, status, body, type = 'application/json; charset=utf-8') => {
     res.writeHead(status, { ...SECURITY, 'content-type': type }); res.end(type.startsWith('application/json') ? JSON.stringify(body) : body);
@@ -91,6 +93,7 @@ export function createDashboard(app, { token = randomBytes(24).toString('base64u
       const given = Buffer.from(String(req.headers['x-foundry-token'] ?? ''));
       if (given.length !== expected.length || !timingSafeEqual(given, expected)) return send(res, 401, { error: 'This page needs the link printed by `node app/cli.mjs start`.' });
       const file = app.storeFile;
+      if (await live(req, res, url, send) !== false) return;
       if (req.method === 'GET' && url.pathname === '/api/overview') {
         const listed = app.list();
         return send(res, 200, { workspace: app.root, flows: listed.flows, proposals: listed.proposals, inbox: app.inbox(), runs: runSummaries(file),
@@ -122,6 +125,6 @@ export function createDashboard(app, { token = randomBytes(24).toString('base64u
       port = server.address().port;
       return { port, url: `http://127.0.0.1:${port}/#t=${token}` };
     },
-    close: () => new Promise(resolve => server.close(() => resolve()))
+    close: () => new Promise(resolve => { live.close(); server.close(() => resolve()); })
   };
 }
