@@ -1,0 +1,44 @@
+{
+ "arm": "A0",
+ "label": "dev-a0-smoke",
+ "split": "dev",
+ "model": "claude-haiku-5-5",
+ "K": 1,
+ "items": [
+  "18832"
+ ],
+ "manifestSha256": null,
+ "started": "2026-10-22T02:35:16.611Z",
+ "finished": "2026-10-22T02:36:02.532Z",
+ "capUsd": 0.2,
+ "spentUsd": 0.00623,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.00623,
+   "tokens": 24800,
+   "calls": 1,
+   "wallMs": 35476,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c12",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  }
+ ]
+}

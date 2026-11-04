@@ -1,0 +1,168 @@
+{
+ "about": "BLIND pattern cards (review finding 4): written 2026-11-04 by ONE fresh claude -p call (claude-opus-5-5, reasoning high, isolated CLI config, account variables removed: CLAUDE_CODE_ACCOUNT_UUID, CLAUDE_CODE_ORGANIZATION_UUID, CLAUDE_CODE_USER_EMAIL) that saw only the 2026-10-14 catalog entries, the IR rules and the capability list (write-blind-cards.mjs promptText); never a bed item, a description, a run or the original hints. Same format as experiments/ci1/library/pattern-hints.json. Frozen by hash in research/ci1-20261021/r/MANIFEST-R.json.",
+ "model": "claude-opus-5-5",
+ "promptSha256": "156a9864a642171368cd0d726f161135559f844581af03bd605fc3348241ddf7",
+ "costUsd": 0.142993,
+ "usage": {
+  "inputTokens": 2,
+  "outputTokens": 4896,
+  "cacheReadTokens": 0,
+  "cacheWriteTokens": 9013
+ },
+ "patterns": {
+  "P02": {
+   "hint": "Read the source with sheet.read. Transform with rows.select or rows.route, or with a code node for cleaning, typing and renaming. Write with sheet.upsert keyed on a stable id so reruns don't add duplicates, and only to columns that exist in the target sheet. Put a sheet.audit after the write. Acceptance: the audited row count equals the planned rows length worked out in code, not the write's own echoed count.",
+   "cues": "sync copy import export transfer move data migrate update sheet from consolidate mirror",
+   "shape": [
+    "trigger:schedule",
+    "trigger:sheet-rows",
+    "effect:sheet-write"
+   ]
+  },
+  "P04": {
+   "hint": "Build the message text in a code node, or with core.template or rows.lines. Then check the draft before sending: in code, confirm it isn't empty, has the required fields, has no leftover {{markers}} and names the right recipient, and return ok. Gate outbox.send or chat.post (maxAttempts 1) with when ok. Afterwards run outbox.check, outbox.audit or chat.audit, and make acceptance compare the audited count to the planned count.",
+   "cues": "send email write message notify draft summary announce post reply compose",
+   "shape": [
+    "effect:mail",
+    "effect:chat",
+    "effect:respond"
+   ]
+  },
+  "P08": {
+   "hint": "Drop unwanted inputs before any effect. Use rows.filter for field rules, or a code node that returns the kept list plus a reason for each dropped item. Effects act only on the kept list: map over it, or put a when on the node checking that the list length is gt 0. An empty list means no effect at all. Acceptance compares the effect count to the kept length, never just existence.",
+   "cues": "only if unless skip ignore exclude when above below status filter except",
+   "shape": [
+    "logic:branch",
+    "logic:match",
+    "effect:mail",
+    "effect:chat",
+    "effect:sheet-write"
+   ]
+  },
+  "P12": {
+   "hint": "In a code node, build a list of flat items with simple field names: recipient, subject, body, key. Map over it with concurrency 1 and maxItems that covers the list. Body nodes read item.<field> and do the per-item effect (maxAttempts 1 for sends). Acceptance: map count eq plan.list.length. For mail, add outbox.audit with the expected recipients list. Leave a generous maxSteps budget.",
+   "cues": "each every all for each customer per row individually one by one respectively",
+   "shape": [
+    "effect:mail",
+    "effect:chat",
+    "effect:sheet-write",
+    "trigger:sheet-rows"
+   ]
+  },
+  "P15": {
+   "hint": "Combine results in one place. Use core.aggregate for a single sum or count, or a code node to group and total per key; the code should return per-group totals plus a grand total and the number of input rows. Render the report with rows.lines or core.template and deliver it once. Acceptance checks identities, such as the sum of group counts eq input rows length, or the grand total eq core.aggregate's sum.",
+   "cues": "report summary total digest overview combine aggregate count sum weekly per category",
+   "shape": [
+    "trigger:schedule",
+    "effect:mail",
+    "effect:chat",
+    "effect:sheet-write"
+   ]
+  },
+  "P16": {
+   "hint": "Do this in a code node; there is no fuzzy-match capability. Normalise each identity (lowercase, trim, strip punctuation and spaces, canonical e-mail or phone). Block by the normalised key, compare pairs only within a block using deterministic rules, and merge matches with union-find. Return clusters, a canonical record per cluster and a mapping. Acceptance: the cluster sizes add up to the input row count. Write merged rows with sheet.upsert.",
+   "cues": "duplicate duplicates dedupe same customer twice merge spelling variants double entries unique",
+   "shape": [
+    "effect:sheet-write",
+    "logic:match"
+   ]
+  },
+  "P17": {
+   "hint": "Read both sources with sheet.read. Run rows.reconcile on a shared key, left being the reference. Classify the missing, extra and changed results in code: give each discrepancy a type and a reason, and count matched keys. Report with rows.lines and deliver once, sending nothing if there are no discrepancies, unless the request says otherwise. Acceptance: matched + missing eq left length and matched + extra eq right length.",
+   "cues": "reconcile compare match against mismatch discrepancies differences between two lists versus check",
+   "shape": [
+    "effect:mail",
+    "effect:chat",
+    "effect:sheet-write",
+    "logic:match"
+   ]
+  },
+  "P27": {
+   "hint": "Treat failure as data. Give risky refs a {$ref, default}. A code or core.validate node splits items into ok and failed, with a reason for each failure. Normal effects act on ok items. A notify node (chat.post or outbox.send, maxAttempts 1) runs when failed length gt 0 and lists the reasons. Cleanup or marking uses sheet.update. Acceptance compares notify and effect counts to the planned lists.",
+   "cues": "error fails failure alert if something goes wrong problem invalid notify admin retry",
+   "shape": [
+    "logic:branch",
+    "effect:chat",
+    "effect:mail"
+   ]
+  },
+  "P32": {
+   "hint": "outbox.send and chat.post already ask a person before every dispatch; don't build a second approval loop. If approvals live in a sheet, filter rows by the approval column and act only on approved ones. For timeout routing, run rows.age on the request date and route pending rows past the limit to escalation, then mark them with sheet.update. The irreversible effect must depend on the approval check.",
+   "cues": "approve approval sign off confirm before manager review authorize pending escalate wait",
+   "shape": [
+    "logic:branch",
+    "effect:mail",
+    "effect:sheet-write"
+   ]
+  },
+  "P36": {
+   "hint": "Use a schedule trigger, so the input is only now. Run sheet.read, then select what is due relative to input.now: rows.age on the date field, rows.filter on a processed or status column, or code for date maths. Never read the clock. Process in code or a map, write results, and mark rows done with sheet.update so the next run skips them. An empty selection produces no effects.",
+   "cues": "every day daily weekly each morning nightly monthly schedule recurring overdue due batch",
+   "shape": [
+    "trigger:schedule",
+    "effect:sheet-write",
+    "effect:mail"
+   ]
+  },
+  "P37": {
+   "hint": "Declare event in inputSchema. Check input.event.body with core.validate or a code node returning valid and errors. Do the effects only when valid. Use exactly one reply.send per path, with mutually exclusive when conditions: 200 or 201 with the result if valid, 400 with the errors if not. A run answers at most once. Acceptance should cover the reply status or result on both paths.",
+   "cues": "webhook endpoint request respond return api call incoming submit callback reply status",
+   "shape": [
+    "trigger:webhook",
+    "trigger:form",
+    "effect:respond",
+    "logic:branch"
+   ]
+  },
+  "P38": {
+   "hint": "Trigger on a form, webhook or new rows, and read input.event. New rows arrive as an array, so filter them with rows.filter or rows.route and map over the matches. For a single event, a code node evaluates the condition and returns a flag plus the data, and the effect node has when flag eq true. Acceptance compares effect counts to matched counts and must not pass trivially when the effect was skipped.",
+   "cues": "when whenever new row submitted if then automatically as soon as rule trigger",
+   "shape": [
+    "trigger:form",
+    "trigger:webhook",
+    "trigger:sheet-rows",
+    "logic:branch",
+    "effect:mail",
+    "effect:chat"
+   ]
+  },
+  "P39": {
+   "hint": "On a schedule, read the current source and a snapshot sheet holding the last state. Run rows.reconcile with left = snapshot and right = current: extra is new, changed is modified, missing is removed. Notify only when there are changes. Then write the current rows to the snapshot with sheet.upsert, after the notify (in needs). Acceptance compares the notify count to the change count.",
+   "cues": "changed new since last check detect changes monitor watch price status update diff",
+   "shape": [
+    "trigger:schedule",
+    "effect:mail",
+    "effect:chat",
+    "effect:sheet-write"
+   ]
+  },
+  "P42": {
+   "hint": "Code nodes forget everything between runs; only sheets persist. Keep the seen ids, cursor or counter in a state sheet: read it first, compute new items in code by excluding seen keys or comparing against the cursor, act, then record with sheet.append or sheet.upsert. The state write must list the effect node in needs. Acceptance: the number of state rows written eq the number of items acted on.",
+   "cues": "already sent not again once only new since last last run remember counter",
+   "shape": [
+    "trigger:schedule",
+    "effect:sheet-write"
+   ]
+  },
+  "P58": {
+   "hint": "Keep rules as ordered data: a rules sheet or a rows.route rules array. For first-hit policy, use rows.route and give otherwise an explicit unmatched label. For collect, sum or priority, or for effective-dated editions (effective_from <= input.now < effective_to), evaluate in a code node. Report unmatched or ambiguous cases rather than guessing. Acceptance: the labelled count eq the input count and unmatched handled.",
+   "cues": "fee schedule tier rate table eligibility grid routing matrix depends on category threshold band",
+   "shape": [
+    "logic:match",
+    "logic:branch",
+    "effect:sheet-write"
+   ]
+  },
+  "P60": {
+   "hint": "rows.age counts calendar time only, so don't use it for SLAs. In a code node, compute elapsed business hours from the opened time to input.now, skipping weekends, holidays and hours outside the working day, and subtracting paused intervals such as waiting on the customer. Return breached and at-risk lists. Notify once, then mark them with sheet.update so they aren't alerted again. Acceptance compares the notify count to the breached length.",
+   "cues": "SLA within business hours response time deadline breach overdue working days paused waiting",
+   "shape": [
+    "trigger:schedule",
+    "logic:branch",
+    "effect:chat",
+    "effect:mail",
+    "effect:sheet-write"
+   ]
+  }
+ }
+}

@@ -1,0 +1,135 @@
+{
+ "arm": "A1",
+ "label": "dev1-A1",
+ "split": "dev",
+ "model": "claude-haiku-5-5",
+ "K": 1,
+ "items": [
+  "18832",
+  "17118",
+  "17618",
+  "17719",
+  "20173"
+ ],
+ "manifestSha256": null,
+ "started": "2026-10-22T02:41:33.136Z",
+ "finished": "2026-10-22T02:41:56.282Z",
+ "capUsd": 0.3,
+ "spentUsd": 0.003768,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "unsupported",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 0,
+   "usd": 0.000572,
+   "tokens": 3385,
+   "calls": 1,
+   "wallMs": 5587,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "outcome": "unsupported",
+    "error": null
+   }
+  },
+  {
+   "item": "17118",
+   "k": 0,
+   "outcome": "unsupported",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 0,
+   "usd": 0.000601,
+   "tokens": 3425,
+   "calls": 1,
+   "wallMs": 4326,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "outcome": "unsupported",
+    "error": null
+   }
+  },
+  {
+   "item": "17618",
+   "k": 0,
+   "outcome": "unsupported",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 0,
+   "usd": 0.000511,
+   "tokens": 3495,
+   "calls": 1,
+   "wallMs": 5976,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "outcome": "unsupported",
+    "error": null
+   }
+  },
+  {
+   "item": "17719",
+   "k": 0,
+   "outcome": "unsupported",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 0,
+   "usd": 0.000447,
+   "tokens": 3244,
+   "calls": 1,
+   "wallMs": 3653,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "outcome": "unsupported",
+    "error": null
+   }
+  },
+  {
+   "item": "20173",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0.001637,
+   "tokens": 8597,
+   "calls": 2,
+   "wallMs": 14942,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c03",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 4",
+     "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-88210\",\"customer_name\":\"Elif Pemberton\",\"customer_email\":\"elif.pemberton@mailbox.example\",\"amount\":2534.05,\"currency\":\"USD\",\"due_date\":\"2026-05-07\"} (first differing columns: l"
+    ],
+    "status": "succeeded"
+   }
+  }
+ ]
+}

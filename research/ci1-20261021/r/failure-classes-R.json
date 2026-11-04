@@ -1,0 +1,268 @@
+{
+ "failures": [
+  {
+   "label": "test-R-A2",
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "builder: 17878 skips an unpaid invoice (unstated filter)",
+   "text": "e-mail to talia.rothwell@post.example: 0 sent, expected 1 | sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-61783\",\"ClientName\":\"Talia Rothwell\",\"ClientEmail\":\"talia.rothwell@post.example\",\"Amount\":5910.68,\"Currency\":\"\",\"DueDate\":\"2026-08-07 | e-mail to <redacted-address>"
+  },
+  {
+   "label": "test-R-A2",
+   "item": "17878",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "builder: 17878 skips an unpaid invoice (unstated filter)",
+   "text": "e-mail to talia.rothwell@post.example: 0 sent, expected 1 | sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-61783\",\"ClientName\":\"Talia Rothwell\",\"ClientEmail\":\"talia.rothwell@post.example\",\"Amount\":5910.68,\"Currency\":\"\",\"DueDate\":\"2026-08-07 | e-mail to talia.rothwell@post.example"
+  },
+  {
+   "label": "test-R-A2",
+   "item": "17749",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "builder: reads a skipped branch (MISSING_REFERENCE)",
+   "text": "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_ok.sent | the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_ok.sent | the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_ok.sent | "
+  },
+  {
+   "label": "w2-R-A2",
+   "item": "18797",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "builder: 18797 writes reminder columns not asked for",
+   "text": "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-89941\",\"Client Name\":\"Ulric Ellery\",\"Client Email\":\"ulric.ellery@inbox.example\",\"Amount\":2000,\"Currency\":\"EUR\",\"Due Date\":\"2026-08-29\"} (first differing col | sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-35021\",\"Clien"
+  },
+  {
+   "label": "w2-R-A2",
+   "item": "19014",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 19014 placeholders written into Start Date / Notes",
+   "text": "sheet projects: no row matches reference row {\"Owner\":\"leo.pm@studio.example\",\"Package\":\"Premium\",\"Service\":\"Website redesign\",\"Priority\":\"Normal\",\"Client ID\":\"CL-SORENLOR-760000\",\"Created At\":\"2026-07-25T23:06:00.000Z\"} | response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+  },
+  {
+   "label": "w2-R-A2",
+   "item": "18281",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing has 1 entries, expected 2 |  | "
+  },
+  {
+   "label": "w2-R-A2",
+   "item": "18281",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing has 1 entries, expected 2 |  | "
+  },
+  {
+   "label": "w2-R-A2",
+   "item": "18281",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing has 1 entries, expected 2 |  | "
+  },
+  {
+   "label": "test-R-A2b",
+   "item": "17878",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 17878 skips an unpaid invoice (unstated filter)",
+   "text": "e-mail to talia.rothwell@post.example: 0 sent, expected 1 | sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-61783\",\"ClientName\":\"Talia Rothwell\",\"ClientEmail\":\"talia.rothwell@post.example\",\"Amount\":5910.68,\"Currency\":\"\",\"DueDate\":\"2026-08-07 | e-mail to <redacted-address>"
+  },
+  {
+   "label": "test-R-A2b",
+   "item": "15238",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "builder: reads a skipped branch (MISSING_REFERENCE)",
+   "text": "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.urgent.posted | the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.urgent.posted | the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.urgent.posted | "
+  },
+  {
+   "label": "w2-R-A2b",
+   "item": "18797",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 18797 writes reminder columns not asked for",
+   "text": "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-89941\",\"Client Name\":\"Ulric Ellery\",\"Client Email\":\"ulric.ellery@inbox.example\",\"Amount\":2000,\"Currency\":\"EUR\",\"Due Date\":\"2026-08-29\"} (first differing col | sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-35021\",\"Clien"
+  },
+  {
+   "label": "w2-R-A2b",
+   "item": "19014",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 19014 placeholders written into Start Date / Notes",
+   "text": "sheet clients: no row matches reference row {\"Client ID\":\"CL-HOLLISHA-520000\",\"Client Name\":\"Hollis Hartigan\",\"Client Email\":\"hollis.hartigan@mailbox.example\",\"Status\":\"Active\",\"Notes\":\"\",\"Budget\":999} (first differing c | sheet projects: no row matches reference row {\"Owner\":\"leo.pm@studio.example\""
+  },
+  {
+   "label": "w2-R-A2b",
+   "item": "18281",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing has 1 entries, expected 2 |  | "
+  },
+  {
+   "label": "w2-R-A2b",
+   "item": "18281",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing[0] is \"e-mail address\", expected \"email address\" |  | "
+  },
+  {
+   "label": "w2-R-A2b",
+   "item": "18281",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing[0] is \"e-mail address\", expected \"email address\" |  | "
+  },
+  {
+   "label": "test-R-A1cH",
+   "item": "17878",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 17878 skips an unpaid invoice (unstated filter)",
+   "text": "e-mail to talia.rothwell@post.example: 0 sent, expected 1 | sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-61783\",\"ClientName\":\"Talia Rothwell\",\"ClientEmail\":\"talia.rothwell@post.example\",\"Amount\":5910.68,\"Currency\":\"\",\"DueDate\":\"2026-08-07 | e-mail to <redacted-address>"
+  },
+  {
+   "label": "test-R-A1cH",
+   "item": "19446",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "read: a sheet row differs",
+   "text": "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-205\",\"vendorName\":\"Harbourline Freight\",\"invoiceNumber\":\"INV-18102\",\"invoiceDate\":\"2026-08-29\",\"poNumber\":\"PO-4549\",\"grnNumber\":\"GRN | sheet invoice-register: no row matches reference row {\"vendorId\":\"V-205\",\"vendorName\":\"Harbourlin"
+  },
+  {
+   "label": "w2-R-A1cH",
+   "item": "18797",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: its own acceptance failed after the effects",
+   "text": "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root | the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root | the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root | ACCEPTANCE_FAILED Acceptance f"
+  },
+  {
+   "label": "w2-R-A1cH",
+   "item": "19014",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "builder: 19014 placeholders written into Start Date / Notes",
+   "text": "sheet projects: no row matches reference row {\"Owner\":\"leo.pm@studio.example\",\"Package\":\"Premium\",\"Service\":\"Website redesign\",\"Priority\":\"Normal\",\"Client ID\":\"CL-SORENLOR-760000\",\"Created At\":\"2026-07-25T23:06:00.000Z\"} | response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+  },
+  {
+   "label": "w2-R-A1cH",
+   "item": "19014",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 19014 placeholders written into Start Date / Notes",
+   "text": "sheet projects: no row matches reference row {\"Owner\":\"leo.pm@studio.example\",\"Package\":\"Premium\",\"Service\":\"Website redesign\",\"Priority\":\"Normal\",\"Client ID\":\"CL-SORENLOR-760000\",\"Created At\":\"2026-07-25T23:06:00.000Z\"} | response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+  },
+  {
+   "label": "w2-R-A1cH",
+   "item": "18281",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing[0] is \"e-mail address\", expected \"email address\" |  | "
+  },
+  {
+   "label": "w2-R-A1cH",
+   "item": "18281",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing has 1 entries, expected 2 |  | "
+  },
+  {
+   "label": "w2-R-A1cH",
+   "item": "18281",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing[0] is \"e-mail address\", expected \"email address\" |  | "
+  },
+  {
+   "label": "test-R-A0p",
+   "item": "19446",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "read: count of messages or rows differs",
+   "text": "the built workflow did not finish: failed: SCHEMA_MISMATCH outbox.send input does not satisfy its schema | e-mail to fenwick.jessop@inbox.example: 0 sent, expected 1 | the built workflow did not finish: failed: SCHEMA_MISMATCH outbox.send input does not satisfy its schema | e-mail to fenwick.jessop@"
+  },
+  {
+   "label": "test-R-A0p",
+   "item": "19446",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "read: a sheet row differs",
+   "text": "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-144\",\"vendorName\":\"Ashgrove Motors\",\"invoiceNumber\":\"INV-66209\",\"invoiceDate\":\"2026-09-13\",\"poNumber\":\"PO-4011\",\"grnNumber\":\"GRN-958 | sheet invoice-register: no row matches reference row {\"vendorId\":\"V-182\",\"vendorName\":\"Juniper Mi"
+  },
+  {
+   "label": "test-R-A0p",
+   "item": "16904",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "builder: reads a skipped branch (MISSING_REFERENCE)",
+   "text": "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_success.sent | the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_success.sent | the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_"
+  },
+  {
+   "label": "w2-R-A0p",
+   "item": "18797",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "read: a sheet row differs",
+   "text": "sheet reminder-log: no row matches reference row {\"Amount\":\"GBP 874.16\",\"Subject\":\"Friendly reminder: invoice INV-60525 is due soon\",\"Logged At\":\"2026-09-04T09:00:00.000Z\",\"Invoice ID\":\"INV-60525\",\"Client Name\":\"Ingrid Y | sheet reminder-log: no row matches reference row {\"Amount\":\"GBP 874.16\",\"Subj"
+  },
+  {
+   "label": "w2-R-A0p",
+   "item": "19014",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "builder: 19014 placeholders written into Start Date / Notes",
+   "text": "sheet projects: no row matches reference row {\"Owner\":\"leo.pm@studio.example\",\"Package\":\"Premium\",\"Service\":\"Website redesign\",\"Priority\":\"Normal\",\"Client ID\":\"CL-SORENLOR-760000\",\"Created At\":\"2026-07-25T23:06:00.000Z\"} | response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+  },
+  {
+   "label": "w2-R-A0p",
+   "item": "19014",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 19014 placeholders written into Start Date / Notes",
+   "text": "sheet projects: no row matches reference row {\"Owner\":\"leo.pm@studio.example\",\"Package\":\"Premium\",\"Service\":\"Website redesign\",\"Priority\":\"Normal\",\"Client ID\":\"CL-SORENLOR-760000\",\"Created At\":\"2026-07-25T23:06:00.000Z\"} | response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+  },
+  {
+   "label": "w2-R-A0p",
+   "item": "20090",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "read: a sheet row differs",
+   "text": "sheet appointments: no row matches reference row {\"appointment_id\":\"APT-12520\",\"patient_name\":\"Mateo Ivers\",\"phone_number\":\"555-641-1381\",\"department\":\"Pediatrics\",\"doctor_name\":\"Dr. Noor Haddad\",\"appointment_type\":\"Foll | sheet appointments: no row matches reference row {\"appointment_id\":\"APT-84790"
+  },
+  {
+   "label": "w2-R-A0p",
+   "item": "18281",
+   "k": 0,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing has 1 entries, expected 2 |  | "
+  },
+  {
+   "label": "w2-R-A0p",
+   "item": "18281",
+   "k": 1,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing has 1 entries, expected 2 |  | "
+  },
+  {
+   "label": "w2-R-A0p",
+   "item": "18281",
+   "k": 2,
+   "outcome": "ready",
+   "cls": "builder: 18281 phone with < 7 digits not listed as missing",
+   "text": "response 1: body.missing has 1 entries, expected 2 |  | "
+  }
+ ]
+}

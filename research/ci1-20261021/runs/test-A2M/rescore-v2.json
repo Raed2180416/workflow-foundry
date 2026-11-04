@@ -1,0 +1,192 @@
+{
+ "label": "test-A2M",
+ "oracle": "v2 (post hoc: addressee exemption, categorical cells, declared optional spans, numeric d/m/y dates)",
+ "decl": {
+  "14177": {
+   "optional": {
+    "mail": [
+     "Overdue Invoices \\(\\d+\\)",
+     "All Unpaid Invoices \\(\\d+\\)"
+    ]
+   },
+   "why": "The e-mail section headers carry counts (\"Overdue Invoices (1)\", \"All Unpaid Invoices (2)\") the description never asks for (it asks for three totals and two lists; counts only for the Slack alert)."
+  },
+  "17545": {
+   "optional": {
+    "mail": [
+     "Quiet for \\d+-\\d+ days\\."
+    ]
+   },
+   "why": "Each group's explanatory line (\"Quiet for 7-20 days.\") carries the range bounds the description gives as definitions, not as text to show."
+  }
+ },
+ "builds": 5,
+ "v1Pass": 2,
+ "v2Pass": 3,
+ "v1Reproduced": true,
+ "rows": [
+  {
+   "item": "14177",
+   "k": 0,
+   "outcome": "ready",
+   "v1": false,
+   "v2": true,
+   "rerun": 4,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c26",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    }
+   ]
+  },
+  {
+   "item": "16364",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17342",
+   "k": 0,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 3,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.alertAudit.pass"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.alertAudit.pass"
+    },
+    {
+     "id": "c02",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.alertAudit.pass"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.alertAudit.pass"
+    }
+   ]
+  },
+  {
+   "item": "17545",
+   "k": 0,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 2,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c05",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "sheet digest-log: no row matches reference row {\"week_start\":\"2026-08-31\",\"open_count\":2,\"value_at_risk\":10825.9,\"needs_nudge\":0,\"going_cold\":2,\"sent_at\":\"2026-08-31 08:00\"} (first differing columns: "
+     ]
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "e-mail to you@example.com: no message carries the facts [3]",
+      "sheet digest-log: no row matches reference row {\"week_start\":\"2026-08-17\",\"open_count\":3,\"value_at_risk\":6859.15,\"needs_nudge\":2,\"going_cold\":0,\"sent_at\":\"2026-08-17 08:00\"} (first differing columns: "
+     ]
+    }
+   ]
+  },
+  {
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  }
+ ]
+}

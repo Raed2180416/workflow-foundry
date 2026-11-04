@@ -1,0 +1,521 @@
+{
+ "arm": "EMPTY",
+ "label": "freeze-EMPTY-test",
+ "split": "test",
+ "model": null,
+ "K": 1,
+ "items": [
+  "14177",
+  "17545",
+  "16364",
+  "17342",
+  "17878",
+  "19103",
+  "19445",
+  "19446",
+  "17816",
+  "16904",
+  "15238",
+  "11679",
+  "17749",
+  "17624",
+  "16312",
+  "17811",
+  "17815",
+  "17807",
+  "17059"
+ ],
+ "manifestSha256": "39bf40bd420be14b4b666f5d5e9c0ceb4cb03a85d9c87774a2b0578ebb19def6",
+ "started": "2026-10-22T02:53:28.718Z",
+ "finished": "2026-10-22T02:53:53.760Z",
+ "capUsd": 3,
+ "spentUsd": 0,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "14177",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1",
+     "chat to #general: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17545",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to you@example.com: 0 sent, expected 1",
+     "sheet digest-log: 2 rows, expected 3"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "16364",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c02",
+    "reasons": [
+     "e-mail to fenwick.ivers@inbox.example: 0 sent, expected 1",
+     "e-mail to wendell.okonkwo@post.example: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17342",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c00",
+    "reasons": [
+     "chat to #sms-alerts: 0 sent, expected 1",
+     "responses: 0, expected 1",
+     "sheet sms-ledger: 1 rows, expected 2"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: 0 sent, expected 1",
+     "e-mail to bastian.silvana@inbox.example: 0 sent, expected 1",
+     "e-mail to talia.rothwell@post.example: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "19103",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c00",
+    "reasons": [
+     "sheet clients: 0 rows, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "19445",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c30",
+    "reasons": [
+     "chat to #123456789: 0 sent, expected 2",
+     "sheet overcharge-report: 0 rows, expected 4"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "19446",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c00",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1",
+     "sheet invoice-register: 1 rows, expected 2"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17816",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 3,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to soren.lorrimer@mailbox.example: 0 sent, expected 1",
+     "e-mail to xiomara.northcott@mailbox.example: 0 sent, expected 1",
+     "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Soren Lorrimer\",\"Email\":\"soren.lorrimer@mailbox.example\",\"Start_Date\":\"2026-07-23\",\"Status\":\"Onboarding\"} (first differing columns: Status)"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "16904",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c00",
+    "reasons": [
+     "e-mail to hollis.lorrimer@inbox.example: 0 sent, expected 1",
+     "responses: 0, expected 1",
+     "sheet day1: 2 rows, expected 3"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "15238",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c29",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1",
+     "chat to #n8n: 0 sent, expected 1",
+     "sheet promos: 0 rows, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "11679",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to orders@thornbury.example: 0 sent, expected 1",
+     "e-mail to orders@calderwood.example: 0 sent, expected 1",
+     "sheet purchase-orders: 1 rows, expected 2"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17749",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c00",
+    "reasons": [
+     "chat to #new-leads: 0 sent, expected 1",
+     "responses: 0, expected 1",
+     "sheet leads: 2 rows, expected 3"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17624",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c29",
+    "reasons": [
+     "chat to #inventory: 0 sent, expected 5",
+     "sheet inventory: no row matches reference row {\"row_id\":\"R120\",\"item_name\":\"Wool throw\",\"current_stock\":0,\"reorder_threshold\":12,\"unit\":\"kg\",\"supplier_name\":\"Saltmarsh Cycles\"} (first differing columns: last_alert_date)"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "16312",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to yusuf.hartigan@post.example: 0 sent, expected 1",
+     "e-mail to lucinda.lorrimer@mailbox.example: 0 sent, expected 1",
+     "chat to #deadlines: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17811",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to noor.hartigan@post.example: 0 sent, expected 1",
+     "e-mail to vesna.ivers@post.example: 0 sent, expected 1",
+     "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-34500\",\"Agent_Name\":\"Noor Hartigan\",\"Email\":\"noor.hartigan@post.example\",\"Shift_Date\":\"2026-06-15\",\"Shift_Start\":\"06:00\",\"Shift_End\":\"14:00\"} (first differing columns: Statu"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17815",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to odette.thackeray@post.example: 0 sent, expected 1",
+     "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-9491\",\"Agent_Name\":\"Odette Thackeray\",\"Email\":\"odette.thackeray@post.example\",\"Status\":\"Active\",\"Last_Reminded\":\"07/08/2026\"} (first differing columns: Last_Reminded)"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17807",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c25",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17059",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 3,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to zelda.kilbride@mailbox.example: 0 sent, expected 1",
+     "e-mail to jasper.okonkwo@inbox.example: 0 sent, expected 1",
+     "sheet jobs: no row matches reference row {\"job_id\":\"J-8854\",\"customer_name\":\"Zelda\",\"customer_email\":\"zelda.kilbride@mailbox.example\",\"job_description\":\"sash window overhaul\",\"job_date\":\"2026-06-25\",\"status\":\"open\"} (first differing columns"
+    ],
+    "status": "succeeded"
+   }
+  }
+ ]
+}

@@ -1,0 +1,158 @@
+{
+ "label": "test-attr-17878-noP36",
+ "oracle": "v2 (post hoc: addressee exemption, categorical cells, declared optional spans, numeric d/m/y dates)",
+ "decl": {
+  "14177": {
+   "optional": {
+    "mail": [
+     "Overdue Invoices \\(\\d+\\)",
+     "All Unpaid Invoices \\(\\d+\\)"
+    ]
+   },
+   "why": "The e-mail section headers carry counts (\"Overdue Invoices (1)\", \"All Unpaid Invoices (2)\") the description never asks for (it asks for three totals and two lists; counts only for the Slack alert)."
+  },
+  "17545": {
+   "optional": {
+    "mail": [
+     "Quiet for \\d+-\\d+ days\\."
+    ]
+   },
+   "why": "Each group's explanatory line (\"Quiet for 7-20 days.\") carries the range bounds the description gives as definitions, not as text to show."
+  }
+ },
+ "builds": 3,
+ "v1Pass": 0,
+ "v2Pass": 2,
+ "v1Reproduced": true,
+ "rows": [
+  {
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "v1": false,
+   "v2": true,
+   "rerun": 1,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c11",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    }
+   ]
+  },
+  {
+   "item": "17878",
+   "k": 1,
+   "outcome": "ready",
+   "v1": false,
+   "v2": true,
+   "rerun": 1,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c11",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    }
+   ]
+  },
+  {
+   "item": "17878",
+   "k": 2,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 1,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "e-mail to talia.rothwell@post.example: 0 sent, expected 1",
+      "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-61783\",\"ClientName\":\"Talia Rothwell\",\"ClientEmail\":\"talia.rothwell@post.example\",\"Amount\":5910.68,\"Currency\":\"\",\"DueDate\":\"2026-08-07"
+     ]
+    },
+    {
+     "id": "c11",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    }
+   ]
+  }
+ ]
+}

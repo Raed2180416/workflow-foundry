@@ -1,0 +1,278 @@
+{
+ "wave": 2,
+ "oracle": "v2 (primary), v1 recorded",
+ "arm": "EMPTY",
+ "label": "w2-EMPTY",
+ "split": "test",
+ "model": null,
+ "K": 1,
+ "items": [
+  "18797",
+  "19187",
+  "18534",
+  "19014",
+  "20090",
+  "17902",
+  "17771",
+  "18281",
+  "17175"
+ ],
+ "manifestSha256": "333650cf0832f08018e5e3a257e1e2f57b64f958215e355308c54dd6ecc5a374",
+ "started": "2026-11-04T13:16:12.632Z",
+ "finished": "2026-11-04T13:16:12.640Z",
+ "capUsd": 3,
+ "spentUsd": 0,
+ "notRun": [],
+ "environmentFault": null,
+ "records": [
+  {
+   "item": "18797",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "e-mail to ulric.ellery@inbox.example: 0 sent, expected 1",
+     "e-mail to mateo.lorrimer@post.example: 0 sent, expected 1",
+     "e-mail to vesna.ashcombe@mailbox.example: 0 sent, expected 1"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19187",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 0,
+   "worlds": 7,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "e-mail to zelda.pemberton@mailbox.example: 0 sent, expected 1",
+     "sheet supplier-master: 4 rows, expected 5",
+     "sheet evaluation-log: 0 rows, expected 1"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18534",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c03",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 2",
+     "e-mail to dorian.jessop@post.example: 0 sent, expected 1",
+     "sheet ncr-master: 0 rows, expected 1"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19014",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c11",
+    "reasons": [
+     "e-mail to bastian.marchetti@post.example: 0 sent, expected 1",
+     "e-mail to leo.pm@studio.example: 0 sent, expected 2",
+     "responses: 0, expected 1"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "20090",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c03",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1",
+     "responses: 0, expected 1",
+     "sheet appointments: no row matches reference row {\"appointment_id\":\"APT-80391\",\"patient_name\":\"Galina Quayle\",\"phone_number\":\"+1 (555) 237-1858\",\"department\":\"Dermatology\",\"doctor_name\":\"Dr. Pavel Lindqvist\",\"appointment_type\":\"Follow-up\"} "
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17902",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c12",
+    "reasons": [
+     "chat to #alerts: 0 sent, expected 2",
+     "sheet jobs: no row matches reference row {\"job_id\":\"job-5820\",\"job_name\":\"Search reindex\",\"expected_every_minutes\":1440,\"grace_minutes\":10,\"last_heartbeat\":\"2026-07-28T07:48:30.000Z\",\"status\":\"MISSED\"} (first differing columns: status, last"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17771",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c16",
+    "reasons": [
+     "e-mail to talia.fairhurst@post.example: 0 sent, expected 1",
+     "e-mail to noor.hartigan@inbox.example: 0 sent, expected 1",
+     "e-mail to wendell.ellery@post.example: 0 sent, expected 1"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18281",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c07",
+    "reasons": [
+     "chat to #owner: 0 sent, expected 1",
+     "responses: 0, expected 1"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17175",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 0,
+   "worlds": 7,
+   "usd": 0,
+   "tokens": 0,
+   "calls": 0,
+   "wallMs": 0,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c21",
+    "reasons": [
+     "responses: 0, expected 1",
+     "sheet leads: 1 rows, expected 2"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  }
+ ]
+}

@@ -1,0 +1,3913 @@
+{
+ "rule": "acceptance / non-all_success-join $ref to a may-be-skipped node without default",
+ "labels": [
+  "test-A0",
+  "test-A0t",
+  "test-A1c",
+  "test-A2",
+  "test-A2M"
+ ],
+ "readyBuilds": 233,
+ "missingReferenceBuilds": 10,
+ "strict": {
+  "caught": 10,
+  "missed": [],
+  "flagged": 57,
+  "flaggedWithoutHiddenFailure": 47,
+  "ofThoseLatentInCandidateWorlds": [],
+  "ofThoseNeverHitInCandidateWorlds": [
+   "test-A0t 14177 k2",
+   "test-A0t 16904 k1",
+   "test-A1c 17807 k0",
+   "test-A2 15238 k0",
+   "test-A2 17807 k0"
+  ],
+  "flaggedButPassedEveryHiddenWorld": 37
+ },
+ "guarded": {
+  "caught": 8,
+  "missed": [
+   "test-A0 15238 k0",
+   "test-A0t 15238 k1"
+  ],
+  "flagged": 10,
+  "flaggedWithoutHiddenFailure": 2,
+  "ofThoseLatentInCandidateWorlds": [],
+  "ofThoseNeverHitInCandidateWorlds": [
+   "test-A0t 16904 k1"
+  ],
+  "flaggedButPassedEveryHiddenWorld": 2
+ },
+ "model": {
+  "caught": 10,
+  "missed": [],
+  "flagged": 15,
+  "flaggedWithoutHiddenFailure": 5,
+  "ofThoseLatentInCandidateWorlds": [],
+  "ofThoseNeverHitInCandidateWorlds": [
+   "test-A0t 14177 k2",
+   "test-A0t 16904 k1",
+   "test-A1c 17807 k0",
+   "test-A2 15238 k0",
+   "test-A2 17807 k0"
+  ],
+  "flaggedButPassedEveryHiddenWorld": 5
+ },
+ "modelTooLarge": 0,
+ "latentWorlds": 32,
+ "rows": [
+  {
+   "label": "test-A0",
+   "item": "11679",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "11679",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "11679",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "14177",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "14177",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "14177",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "15238",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send_email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.check_email.pass"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_sheet.pass"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "urgent_slack",
+     "example": {
+      "nodes.prepare.valid": true,
+      "nodes.prepare.kind": "warning"
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_row,audit_sheet,check_email,send_email,urgent_slack",
+     "example": {
+      "nodes.prepare.valid": false,
+      "nodes.prepare.kind": "warning"
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "15238",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "15238",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_mail.pass"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_sheet.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "16312",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "16312",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "16312",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "16364",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "16364",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "16364",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "16904",
+   "k": 0,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_invalid.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_duplicate.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send_email.delivered"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_day1,append_day2,compose,read_day2,reply_invalid,reply_success,send_email",
+     "example": {
+      "nodes.prep.valid": true,
+      "nodes.prep.sheet": "day1"
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_day1,append_day2,compose,read_day1,reply_invalid,reply_success,send_email",
+     "example": {
+      "nodes.prep.valid": true,
+      "nodes.prep.sheet": "day2"
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "16904",
+   "k": 1,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_invalid.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_duplicate.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_success.sent"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append,email,plan,reply_invalid,reply_success",
+     "example": {
+      "nodes.prepare.ok": true
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "reply_duplicate,reply_invalid",
+     "example": {
+      "nodes.prepare.ok": true
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "16904",
+   "k": 2,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_invalid.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_duplicate.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_success.sent"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_row,mail_audit,reply_invalid,reply_success,send_confirmation,sheet_audit",
+     "example": {
+      "nodes.prep.ok": true
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "reply_duplicate,reply_invalid",
+     "example": {
+      "nodes.prep.ok": true
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "17059",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17059",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17059",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17342",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17342",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17342",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17545",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send_digest.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "17545",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "17545",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_mail.pass"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_log.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "17624",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17624",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17624",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17749",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17749",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_ok.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reject.sent"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17749",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_rejected.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_received.sent"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17807",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17807",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17807",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17811",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "17811",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17811",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17815",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17815",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17815",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "17816",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17816",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17816",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "17878",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "17878",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "17878",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0",
+   "item": "19103",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "19103",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "19103",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "19445",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "19445",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "19445",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "19446",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "19446",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0",
+   "item": "19446",
+   "k": 2,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.dup_email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.result_email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_register.pass"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "dup_email",
+     "example": {
+      "nodes.prep.isDuplicate": false
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "audit_register,register_append,register_update,result_email",
+     "example": {
+      "nodes.prep.isDuplicate": true
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "11679",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "11679",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "11679",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "14177",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send_email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.post_alert.posted"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "14177",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.email_summary.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.alert_overdue.posted"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "14177",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.slack.posted"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "email,slack",
+     "example": {
+      "nodes.summarize.hasInvoices": false,
+      "nodes.summarize.overdueCount": 1
+     }
+    }
+   ],
+   "missingRef": false,
+   "passedAllWorlds": true,
+   "latent": {
+    "worlds": 32,
+    "missingReference": 0
+   }
+  },
+  {
+   "label": "test-A0t",
+   "item": "15238",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_email.pass"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_sheet.pass"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_chat.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "15238",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send_email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.slack_urgent.posted"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.slack_warning.posted"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "slack_urgent",
+     "example": {
+      "nodes.check.valid": true,
+      "nodes.check.kind": "warning"
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_promo,send_email,slack_urgent",
+     "example": {
+      "nodes.check.valid": false,
+      "nodes.check.kind": "warning"
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "15238",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.mail-audit.pass"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.sheet-audit.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "16312",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "16312",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "16312",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "16364",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "16364",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "16364",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "16904",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_sheet.pass"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_mail.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "16904",
+   "k": 1,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_invalid.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.decide.outcome"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_duplicate.sent"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_row,decide,read_sheet,reply_duplicate,reply_invalid,reply_success,send_email",
+     "example": {
+      "nodes.prepare.status": "__other_nodes.prepare.status__"
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_row,decide,read_sheet,reply_duplicate,reply_success,send_email",
+     "example": {
+      "nodes.prepare.status": "invalid"
+     }
+    }
+   ],
+   "missingRef": false,
+   "passedAllWorlds": true,
+   "latent": {
+    "worlds": 32,
+    "missingReference": 0
+   }
+  },
+  {
+   "label": "test-A0t",
+   "item": "16904",
+   "k": 2,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_invalid.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_duplicate.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_sheet.pass"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_row,audit_mail,audit_sheet,compose,reply_invalid,reply_success,send_mail",
+     "example": {
+      "nodes.prepare.status": "ok"
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_row,audit_mail,audit_sheet,check,compose,read_sheet,reply_duplicate,reply_invalid,reply_success,send_mail",
+     "example": {
+      "nodes.prepare.status": "__other_nodes.prepare.status__"
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "17059",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17059",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17059",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17342",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17342",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17342",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17545",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send_digest.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17545",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send-digest.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17545",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17624",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17624",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17624",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17749",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_bad.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_ok.sent"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17749",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_rejected.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_received.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.plan.isNew"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17749",
+   "k": 2,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_rejected.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_ok.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.post_slack.posted"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "reply_rejected,update_lead",
+     "example": {
+      "nodes.prep.valid": true
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append_lead,post_slack,reply_rejected",
+     "example": {
+      "nodes.prep.valid": true
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "17807",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17807",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17807",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17811",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "17811",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "17811",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17815",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17815",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17815",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17816",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17816",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17816",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "17878",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "17878",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "17878",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "19103",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "19103",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "19103",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "19445",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "19445",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "19445",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A0t",
+   "item": "19446",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "19446",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A0t",
+   "item": "19446",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "11679",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "11679",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "11679",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "14177",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.alert.posted"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "14177",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.alert.posted"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "14177",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.alert.posted"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "15238",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.email.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "15238",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.slack.posted"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "15238",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.append_check.pass"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.mail.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.mail_check.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "16312",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "16312",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "16312",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "16364",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "16364",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "16364",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "16904",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "16904",
+   "k": 1,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.mail.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_ok.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_no.sent"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "append,mail,reply_ok",
+     "example": {
+      "nodes.plan.proceed": false
+     }
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "reply_no",
+     "example": {
+      "nodes.plan.proceed": true
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "16904",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17059",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17059",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17059",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17342",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17342",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17342",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17545",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_mail.pass"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit_log.pass"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "17545",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17545",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "17624",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17624",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17624",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17749",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17749",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17749",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17807",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.mail.delivered"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "mail",
+     "example": {
+      "nodes.plan.send": false,
+      "nodes.plan.count": 1
+     }
+    }
+   ],
+   "missingRef": false,
+   "passedAllWorlds": true,
+   "latent": {
+    "worlds": 32,
+    "missingReference": 0
+   }
+  },
+  {
+   "label": "test-A1c",
+   "item": "17807",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.alert.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "17807",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17811",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17811",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17811",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17815",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17815",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17815",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17816",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17816",
+   "k": 1,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top/onboard",
+     "where": "acceptance",
+     "ref": "nodes.mark.updated"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17816",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "17878",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "17878",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "17878",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A1c",
+   "item": "19103",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "19103",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.save.appended"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.save.updated"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "19103",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "19445",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "19445",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "19445",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "19446",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.set_status.updated"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "19446",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A1c",
+   "item": "19446",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "11679",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "11679",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "11679",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "14177",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "14177",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "14177",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "15238",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.alert.posted"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "alert,email,record",
+     "example": {
+      "nodes.plan.valid": false,
+      "nodes.plan.post": true
+     }
+    }
+   ],
+   "missingRef": false,
+   "passedAllWorlds": true,
+   "latent": {
+    "worlds": 32,
+    "missingReference": 0
+   }
+  },
+  {
+   "label": "test-A2",
+   "item": "15238",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.email.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "15238",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.mail.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "16312",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "16312",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "16312",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "16364",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "16364",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "16364",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "16904",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "16904",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "16904",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send_mail.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_ok.sent"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.reply_fail.sent"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17059",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17059",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17059",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17342",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17342",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17342",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17545",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "17545",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17545",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17624",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17624",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17624",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17749",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17749",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17749",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17807",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.audit.pass"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "alert,audit",
+     "example": {
+      "nodes.plan.send": false,
+      "nodes.plan.count": 1
+     }
+    }
+   ],
+   "missingRef": false,
+   "passedAllWorlds": true,
+   "latent": {
+    "worlds": 32,
+    "missingReference": 0
+   }
+  },
+  {
+   "label": "test-A2",
+   "item": "17807",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17807",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.alert.delivered"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17811",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17811",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17811",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17815",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17815",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17815",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17816",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17816",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17816",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "17878",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "17878",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "17878",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2",
+   "item": "19103",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "19103",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "19103",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.save.unmatched"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "19445",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "19445",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "19445",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "19446",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "19446",
+   "k": 1,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2",
+   "item": "19446",
+   "k": 2,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2M",
+   "item": "14177",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2M",
+   "item": "16364",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  },
+  {
+   "label": "test-A2M",
+   "item": "17342",
+   "k": 0,
+   "flagged": true,
+   "flaggedStrict": true,
+   "flaggedModel": true,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.alertAudit.pass"
+    }
+   ],
+   "modelFindings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "skipped": "alert,alertAudit",
+     "example": {
+      "nodes.plan.alert": false,
+      "nodes.ledgerAudit.pass": true,
+      "nodes.answer.sent": true
+     }
+    }
+   ],
+   "missingRef": true,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2M",
+   "item": "17545",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": true,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.send_email.delivered"
+    },
+    {
+     "frame": "top",
+     "where": "acceptance",
+     "ref": "nodes.append_log.appended"
+    }
+   ],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": false
+  },
+  {
+   "label": "test-A2M",
+   "item": "17878",
+   "k": 0,
+   "flagged": false,
+   "flaggedStrict": false,
+   "flaggedModel": false,
+   "modelUnknown": false,
+   "findings": [],
+   "modelFindings": [],
+   "missingRef": false,
+   "passedAllWorlds": true
+  }
+ ]
+}

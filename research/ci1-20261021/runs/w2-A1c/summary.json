@@ -1,0 +1,710 @@
+{
+ "wave": 2,
+ "oracle": "v2 (primary), v1 recorded",
+ "arm": "A1c",
+ "label": "w2-A1c",
+ "split": "test",
+ "model": "claude-haiku-5-5",
+ "K": 3,
+ "items": [
+  "18797",
+  "19187",
+  "18534",
+  "19014",
+  "20090",
+  "17902",
+  "17771",
+  "18281",
+  "17175"
+ ],
+ "manifestSha256": "333650cf0832f08018e5e3a257e1e2f57b64f958215e355308c54dd6ecc5a374",
+ "started": "2026-11-04T13:35:45.098Z",
+ "finished": "2026-11-04T13:52:09.226Z",
+ "capUsd": 1.5,
+ "spentUsd": 0.315883,
+ "notRun": [],
+ "environmentFault": null,
+ "records": [
+  {
+   "item": "18797",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": false,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.011918,
+   "tokens": 89308,
+   "calls": 2,
+   "wallMs": 76676,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "18797",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": false,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.014115,
+   "tokens": 63175,
+   "calls": 2,
+   "wallMs": 77873,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "18797",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.010965,
+   "tokens": 61166,
+   "calls": 2,
+   "wallMs": 68566,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19187",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 2,
+   "worlds": 7,
+   "usd": 0.015541,
+   "tokens": 68411,
+   "calls": 2,
+   "wallMs": 80489,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "sheet evaluation-log: no row matches reference row {\"Logged At\":\"2026-07-12T08:47:00.000Z\",\"Risk Level\":\"Low\",\"Supplier ID\":\"SUP-20260712084700-sim-c06\",\"Evaluated By\":\"Automated Qualification Workflow\",\"Evaluation ID\":\"EVAL-20260712084700-"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19187",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 2,
+   "worlds": 7,
+   "usd": 0.012516,
+   "tokens": 67180,
+   "calls": 2,
+   "wallMs": 72913,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "sheet evaluation-log: no row matches reference row {\"Logged At\":\"2026-07-12T08:47:00.000Z\",\"Risk Level\":\"Low\",\"Supplier ID\":\"SUP-20260712084700-sim-c06\",\"Evaluated By\":\"Automated Qualification Workflow\",\"Evaluation ID\":\"EVAL-20260712084700-"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19187",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 2,
+   "worlds": 7,
+   "usd": 0.013988,
+   "tokens": 70489,
+   "calls": 2,
+   "wallMs": 83023,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "sheet evaluation-log: no row matches reference row {\"Logged At\":\"2026-07-12T08:47:00.000Z\",\"Risk Level\":\"Low\",\"Supplier ID\":\"SUP-20260712084700-sim-c06\",\"Evaluated By\":\"Automated Qualification Workflow\",\"Evaluation ID\":\"EVAL-20260712084700-"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18534",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.013061,
+   "tokens": 60083,
+   "calls": 2,
+   "wallMs": 64415,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "18534",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.0084,
+   "tokens": 54878,
+   "calls": 2,
+   "wallMs": 52127,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "18534",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.007839,
+   "tokens": 53782,
+   "calls": 2,
+   "wallMs": 42853,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "19014",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 3,
+   "worlds": 6,
+   "usd": 0.01783,
+   "tokens": 102421,
+   "calls": 2,
+   "wallMs": 93884,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c13",
+    "reasons": [
+     "response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19014",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.013914,
+   "tokens": 69711,
+   "calls": 2,
+   "wallMs": 83326,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c13",
+    "reasons": [
+     "response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19014",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.015481,
+   "tokens": 103567,
+   "calls": 2,
+   "wallMs": 87130,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c13",
+    "reasons": [
+     "response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "20090",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.01016,
+   "tokens": 53589,
+   "calls": 2,
+   "wallMs": 43172,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "20090",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.008488,
+   "tokens": 54619,
+   "calls": 2,
+   "wallMs": 46968,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "20090",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.007944,
+   "tokens": 53458,
+   "calls": 2,
+   "wallMs": 40558,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17902",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.008343,
+   "tokens": 48765,
+   "calls": 2,
+   "wallMs": 30163,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17902",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.007011,
+   "tokens": 72958,
+   "calls": 2,
+   "wallMs": 35636,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17902",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.006229,
+   "tokens": 48814,
+   "calls": 2,
+   "wallMs": 29568,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17771",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.01191,
+   "tokens": 81117,
+   "calls": 2,
+   "wallMs": 56386,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c16",
+    "reasons": [
+     "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-07-01 09:00\",\"customer_name\":\"wendell.ellery@post.example\",\"customer_email\":\"wendell.ellery@post.example\",\"statement_period\":\"July 2026\",\"invoice_count\":1,\"total_due\":2003.9"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17771",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.011089,
+   "tokens": 83292,
+   "calls": 2,
+   "wallMs": 67531,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c16",
+    "reasons": [
+     "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-07-01 09:00\",\"customer_name\":\"wendell.ellery@post.example\",\"customer_email\":\"wendell.ellery@post.example\",\"statement_period\":\"July 2026\",\"invoice_count\":1,\"total_due\":2003.9"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17771",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.010055,
+   "tokens": 57648,
+   "calls": 2,
+   "wallMs": 59728,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c16",
+    "reasons": [
+     "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-07-01 09:00\",\"customer_name\":\"wendell.ellery@post.example\",\"customer_email\":\"wendell.ellery@post.example\",\"statement_period\":\"July 2026\",\"invoice_count\":1,\"total_due\":2003.9"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18281",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 3,
+   "worlds": 6,
+   "usd": 0.015371,
+   "tokens": 64018,
+   "calls": 2,
+   "wallMs": 83610,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c07",
+    "reasons": [
+     "response 1: body.missing[0] is \"e-mail address\", expected \"email address\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18281",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 3,
+   "worlds": 6,
+   "usd": 0.010487,
+   "tokens": 58481,
+   "calls": 2,
+   "wallMs": 70057,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c07",
+    "reasons": [
+     "response 1: body.missing[0] is \"e-mail address\", expected \"email address\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18281",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.011491,
+   "tokens": 60415,
+   "calls": 2,
+   "wallMs": 72661,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c02",
+    "reasons": [
+     "response 1: body.missing has 1 entries, expected 2"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17175",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 7,
+   "usd": 0.019949,
+   "tokens": 140351,
+   "calls": 3,
+   "wallMs": 88438,
+   "questions": 0,
+   "repairs": 1,
+   "practice": [
+    "succeeded",
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c21",
+    "reasons": [
+     "response 1: body.phone is \"+391234567\", expected \"'+391234567\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17175",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 7,
+   "usd": 0.010445,
+   "tokens": 82708,
+   "calls": 2,
+   "wallMs": 81899,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c21",
+    "reasons": [
+     "response 1: body.phone is \"+391234567\", expected \"'+391234567\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17175",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 7,
+   "usd": 0.011343,
+   "tokens": 84556,
+   "calls": 2,
+   "wallMs": 80211,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c21",
+    "reasons": [
+     "response 1: body.phone is \"+391234567\", expected \"'+391234567\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  }
+ ]
+}

@@ -1,0 +1,684 @@
+{
+ "label": "w2-R-A2b",
+ "oracle": "v2 + post hoc w2x transforms (experiments/ci1-posthoc/rescore-w2x.mjs)",
+ "decl": {
+  "17175": [
+   {
+    "kind": "ambiguous",
+    "why": "The description asks for the formula-injection apostrophe \"in both sheets\" and to answer \"with the lead itself\"; whether the answer carries the sheet-escaped values is not said. A leading apostrophe in answer fields is ignored."
+   }
+  ],
+  "17771": [
+   {
+    "kind": "oracle",
+    "why": "An e-mail address logged in a sheet cell differs only in letter case (the reference logs the first line's raw casing, NOOR.FAIRHURST@...); addresses are case-insensitive and the oracle already lower-cases mail recipients."
+   },
+   {
+    "kind": "ambiguous",
+    "why": "The description says to greet a customer without a name by their e-mail and to log customer_name; whether the log takes the greeting fallback is not said. A blank logged name where the reference logs the e-mail is accepted."
+   }
+  ],
+  "18797": [
+   {
+    "kind": "oracle",
+    "why": "A build that names the invoice Owner (a categorical column, e.g. \"Pavel Okonkwo\") in the escalation e-mail was counted as mentioning another invoice whose client shares that first name (\"Pavel Rothwell\"). Words that occur in a categorical cell no longer identify other rows."
+   }
+  ],
+  "19014": [
+   {
+    "kind": "ambiguous",
+    "why": "The duplicate answer's clientId: the description names \"the existing client's Client ID\" for the e-mail and only \"clientId\" for the answer; the reference answers with the newly computed ID, every build with the existing one."
+   },
+   {
+    "kind": "oracle",
+    "why": "Mentioning the project manager's address from the one-row settings sheet (onboarding-config) in the welcome e-mail counted as leaking a row the reference leaves out; a settings row is not a data row."
+   }
+  ],
+  "19187": [
+   {
+    "kind": "ambiguous",
+    "why": "Description: \"Evaluation Date and Logged At (now)\". Every build (6 of 6 before this audit) wrote a date for the column named Date; the reference writes the full date-time. Compared on the day."
+   }
+  ],
+  "20090": [
+   {
+    "kind": "oracle",
+    "why": "The answer's message: for a reschedule the description leaves it unspecified, for a cancel it asks for the appointment's date and time; the reference message also carries the appointment ID (already its own field), which the oracle required as a fact. The reschedule message is free text; the ID is not required in the cancel message."
+   }
+  ]
+ },
+ "builds": 27,
+ "v2Pass": 10,
+ "w2xPass": 22,
+ "rows": [
+  {
+   "item": "17175",
+   "k": 0,
+   "v2": false,
+   "w2x": true,
+   "rerun": 3,
+   "worlds": [
+    {
+     "id": "c21",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c14",
+     "w2x": true
+    },
+    {
+     "id": "c13",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c07",
+     "w2x": true
+    },
+    {
+     "id": "c19",
+     "w2x": true
+    },
+    {
+     "id": "c31",
+     "w2x": true,
+     "reasons": []
+    }
+   ]
+  },
+  {
+   "item": "17175",
+   "k": 1,
+   "v2": false,
+   "w2x": true,
+   "rerun": 3,
+   "worlds": [
+    {
+     "id": "c21",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c14",
+     "w2x": true
+    },
+    {
+     "id": "c13",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c07",
+     "w2x": true
+    },
+    {
+     "id": "c19",
+     "w2x": true
+    },
+    {
+     "id": "c31",
+     "w2x": true,
+     "reasons": []
+    }
+   ]
+  },
+  {
+   "item": "17175",
+   "k": 2,
+   "v2": false,
+   "w2x": true,
+   "rerun": 3,
+   "worlds": [
+    {
+     "id": "c21",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c14",
+     "w2x": true
+    },
+    {
+     "id": "c13",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c07",
+     "w2x": true
+    },
+    {
+     "id": "c19",
+     "w2x": true
+    },
+    {
+     "id": "c31",
+     "w2x": true,
+     "reasons": []
+    }
+   ]
+  },
+  {
+   "item": "17771",
+   "k": 0,
+   "v2": false,
+   "w2x": true,
+   "rerun": 2,
+   "worlds": [
+    {
+     "id": "c16",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c29",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c02",
+     "w2x": true
+    },
+    {
+     "id": "c03",
+     "w2x": true
+    }
+   ]
+  },
+  {
+   "item": "17771",
+   "k": 1,
+   "v2": false,
+   "w2x": true,
+   "rerun": 2,
+   "worlds": [
+    {
+     "id": "c16",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c29",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c02",
+     "w2x": true
+    },
+    {
+     "id": "c03",
+     "w2x": true
+    }
+   ]
+  },
+  {
+   "item": "17771",
+   "k": 2,
+   "v2": false,
+   "w2x": true,
+   "rerun": 2,
+   "worlds": [
+    {
+     "id": "c16",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c29",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c02",
+     "w2x": true
+    },
+    {
+     "id": "c03",
+     "w2x": true
+    }
+   ]
+  },
+  {
+   "item": "17902",
+   "k": 0,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  },
+  {
+   "item": "17902",
+   "k": 1,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  },
+  {
+   "item": "17902",
+   "k": 2,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  },
+  {
+   "item": "18281",
+   "k": 0,
+   "v2": false,
+   "w2x": false,
+   "rerun": 0
+  },
+  {
+   "item": "18281",
+   "k": 1,
+   "v2": false,
+   "w2x": false,
+   "rerun": 0
+  },
+  {
+   "item": "18281",
+   "k": 2,
+   "v2": false,
+   "w2x": false,
+   "rerun": 0
+  },
+  {
+   "item": "18534",
+   "k": 0,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  },
+  {
+   "item": "18534",
+   "k": 1,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  },
+  {
+   "item": "18534",
+   "k": 2,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  },
+  {
+   "item": "18797",
+   "k": 0,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  },
+  {
+   "item": "18797",
+   "k": 1,
+   "v2": false,
+   "w2x": true,
+   "rerun": 1,
+   "worlds": [
+    {
+     "id": "c06",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c02",
+     "w2x": true
+    },
+    {
+     "id": "c03",
+     "w2x": true
+    },
+    {
+     "id": "c04",
+     "w2x": true
+    }
+   ]
+  },
+  {
+   "item": "18797",
+   "k": 2,
+   "v2": false,
+   "w2x": false,
+   "rerun": 4,
+   "worlds": [
+    {
+     "id": "c06",
+     "w2x": false,
+     "reasons": [
+      "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-89941\",\"Client Name\":\"Ulric Ellery\",\"Client Email\":\"ulric.ellery@inbox.example\",\"Amount\":2000,\"Currency\":\"EUR\",\"Due Date\":\"2026-08-29\"} (first differing col"
+     ]
+    },
+    {
+     "id": "c01",
+     "w2x": false,
+     "reasons": [
+      "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-35021\",\"Client Name\":\"Amara Fairhurst\",\"Client Email\":\"amara.fairhurst@post.example\",\"Amount\":170.77,\"Currency\":\"USD\",\"Due Date\":\"2026-07-30\"} (first differ"
+     ]
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c02",
+     "w2x": false,
+     "reasons": [
+      "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-40233\",\"Client Name\":\"Lucinda Fairhurst\",\"Client Email\":\"lucinda.fairhurst@inbox.example\",\"Amount\":1350.95,\"Currency\":\"EUR\",\"Due Date\":\"2026-07-04\"} (first "
+     ]
+    },
+    {
+     "id": "c03",
+     "w2x": true
+    },
+    {
+     "id": "c04",
+     "w2x": false,
+     "reasons": [
+      "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-16254\",\"Client Name\":\"Rosalind Grieve\",\"Client Email\":\"rosalind.grieve@post.example\",\"Amount\":417.55,\"Currency\":\"\",\"Due Date\":\"2026-08-07\"} (first differing"
+     ]
+    }
+   ]
+  },
+  {
+   "item": "19014",
+   "k": 0,
+   "v2": false,
+   "w2x": true,
+   "rerun": 1,
+   "worlds": [
+    {
+     "id": "c11",
+     "w2x": true
+    },
+    {
+     "id": "c13",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c20",
+     "w2x": true
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c02",
+     "w2x": true
+    }
+   ]
+  },
+  {
+   "item": "19014",
+   "k": 1,
+   "v2": false,
+   "w2x": true,
+   "rerun": 1,
+   "worlds": [
+    {
+     "id": "c11",
+     "w2x": true
+    },
+    {
+     "id": "c13",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c20",
+     "w2x": true
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c02",
+     "w2x": true
+    }
+   ]
+  },
+  {
+   "item": "19014",
+   "k": 2,
+   "v2": false,
+   "w2x": false,
+   "rerun": 3,
+   "worlds": [
+    {
+     "id": "c11",
+     "w2x": true
+    },
+    {
+     "id": "c13",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c20",
+     "w2x": false,
+     "reasons": [
+      "sheet clients: no row matches reference row {\"Client ID\":\"CL-HOLLISHA-520000\",\"Client Name\":\"Hollis Hartigan\",\"Client Email\":\"hollis.hartigan@mailbox.example\",\"Status\":\"Active\",\"Notes\":\"\",\"Budget\":999} (first differing c"
+     ]
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c00",
+     "w2x": false,
+     "reasons": [
+      "sheet projects: no row matches reference row {\"Owner\":\"leo.pm@studio.example\",\"Package\":\"Premium\",\"Service\":\"Website redesign\",\"Priority\":\"Normal\",\"Client ID\":\"CL-SORENLOR-760000\",\"Created At\":\"2026-07-25T23:06:00.000Z\"}"
+     ]
+    },
+    {
+     "id": "c02",
+     "w2x": true
+    }
+   ]
+  },
+  {
+   "item": "19187",
+   "k": 0,
+   "v2": false,
+   "w2x": true,
+   "rerun": 5,
+   "worlds": [
+    {
+     "id": "c06",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c09",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c05",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c27",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c04",
+     "w2x": true,
+     "reasons": []
+    }
+   ]
+  },
+  {
+   "item": "19187",
+   "k": 1,
+   "v2": false,
+   "w2x": true,
+   "rerun": 5,
+   "worlds": [
+    {
+     "id": "c06",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c09",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c05",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c27",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c04",
+     "w2x": true,
+     "reasons": []
+    }
+   ]
+  },
+  {
+   "item": "19187",
+   "k": 2,
+   "v2": false,
+   "w2x": true,
+   "rerun": 5,
+   "worlds": [
+    {
+     "id": "c06",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c09",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c00",
+     "w2x": true
+    },
+    {
+     "id": "c01",
+     "w2x": true
+    },
+    {
+     "id": "c05",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c27",
+     "w2x": true,
+     "reasons": []
+    },
+    {
+     "id": "c04",
+     "w2x": true,
+     "reasons": []
+    }
+   ]
+  },
+  {
+   "item": "20090",
+   "k": 0,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  },
+  {
+   "item": "20090",
+   "k": 1,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  },
+  {
+   "item": "20090",
+   "k": 2,
+   "v2": true,
+   "w2x": true,
+   "rerun": 0
+  }
+ ]
+}

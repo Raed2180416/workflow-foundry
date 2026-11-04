@@ -1,0 +1,5231 @@
+{
+ "probe": "ci1-r oracle false-negative probe ($0; reference effects rewritten, judged against the unmodified reference)",
+ "at": "2026-11-04T19:37:33.669Z",
+ "rewrites": [
+  "identity",
+  "greet-by-name",
+  "category-legend",
+  "dmy-dates",
+  "number-comma",
+  "list-to-prose",
+  "address-case-cells",
+  "courtesy-line",
+  "settings-mention"
+ ],
+ "strictMaybe": [
+  "settings-mention"
+ ],
+ "mustFail": [
+  "drop-message",
+  "wrong-recipient",
+  "wrong-number",
+  "dump-rows",
+  "change-sheet-cell"
+ ],
+ "table": {
+  "w1|v1|identity": {
+   "appliesTo": 0,
+   "worlds": 0,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v1|greet-by-name": {
+   "appliesTo": 7,
+   "worlds": 30,
+   "failingWorlds": 6,
+   "failingItems": [
+    "16364"
+   ]
+  },
+  "w1|v1|category-legend": {
+   "appliesTo": 16,
+   "worlds": 66,
+   "failingWorlds": 41,
+   "failingItems": [
+    "11679",
+    "16312",
+    "16364",
+    "17059",
+    "17342",
+    "17624",
+    "17749",
+    "17807",
+    "17811",
+    "17815",
+    "17816",
+    "17878",
+    "19446"
+   ]
+  },
+  "w1|v1|dmy-dates": {
+   "appliesTo": 8,
+   "worlds": 36,
+   "failingWorlds": 25,
+   "failingItems": [
+    "11679",
+    "14177",
+    "15238",
+    "16312",
+    "17816",
+    "17878"
+   ]
+  },
+  "w1|v1|number-comma": {
+   "appliesTo": 11,
+   "worlds": 45,
+   "failingWorlds": 22,
+   "failingItems": [
+    "14177",
+    "16312",
+    "16904",
+    "17545",
+    "17624",
+    "17807",
+    "19446"
+   ]
+  },
+  "w1|v1|list-to-prose": {
+   "appliesTo": 1,
+   "worlds": 2,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v1|address-case-cells": {
+   "appliesTo": 14,
+   "worlds": 75,
+   "failingWorlds": 75,
+   "failingItems": [
+    "11679",
+    "16312",
+    "16364",
+    "16904",
+    "17059",
+    "17624",
+    "17749",
+    "17807",
+    "17811",
+    "17815",
+    "17816",
+    "17878",
+    "19103",
+    "19446"
+   ]
+  },
+  "w1|v1|courtesy-line": {
+   "appliesTo": 18,
+   "worlds": 78,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v1|settings-mention": {
+   "appliesTo": 4,
+   "worlds": 11,
+   "failingWorlds": 7,
+   "failingItems": [
+    "11679",
+    "19446"
+   ]
+  },
+  "w1|v2|identity": {
+   "appliesTo": 0,
+   "worlds": 0,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v2|greet-by-name": {
+   "appliesTo": 7,
+   "worlds": 30,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v2|category-legend": {
+   "appliesTo": 16,
+   "worlds": 66,
+   "failingWorlds": 2,
+   "failingItems": [
+    "11679"
+   ]
+  },
+  "w1|v2|dmy-dates": {
+   "appliesTo": 8,
+   "worlds": 36,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v2|number-comma": {
+   "appliesTo": 11,
+   "worlds": 45,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v2|list-to-prose": {
+   "appliesTo": 1,
+   "worlds": 2,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v2|address-case-cells": {
+   "appliesTo": 14,
+   "worlds": 75,
+   "failingWorlds": 75,
+   "failingItems": [
+    "11679",
+    "16312",
+    "16364",
+    "16904",
+    "17059",
+    "17624",
+    "17749",
+    "17807",
+    "17811",
+    "17815",
+    "17816",
+    "17878",
+    "19103",
+    "19446"
+   ]
+  },
+  "w1|v2|courtesy-line": {
+   "appliesTo": 18,
+   "worlds": 78,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v2|settings-mention": {
+   "appliesTo": 4,
+   "worlds": 11,
+   "failingWorlds": 7,
+   "failingItems": [
+    "11679",
+    "19446"
+   ]
+  },
+  "w1|v3|identity": {
+   "appliesTo": 0,
+   "worlds": 0,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v3|greet-by-name": {
+   "appliesTo": 7,
+   "worlds": 30,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v3|category-legend": {
+   "appliesTo": 16,
+   "worlds": 66,
+   "failingWorlds": 2,
+   "failingItems": [
+    "11679"
+   ]
+  },
+  "w1|v3|dmy-dates": {
+   "appliesTo": 8,
+   "worlds": 36,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v3|number-comma": {
+   "appliesTo": 11,
+   "worlds": 45,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v3|list-to-prose": {
+   "appliesTo": 1,
+   "worlds": 2,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v3|address-case-cells": {
+   "appliesTo": 14,
+   "worlds": 75,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v3|courtesy-line": {
+   "appliesTo": 18,
+   "worlds": 78,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w1|v3|settings-mention": {
+   "appliesTo": 4,
+   "worlds": 11,
+   "failingWorlds": 7,
+   "failingItems": [
+    "11679",
+    "19446"
+   ]
+  },
+  "w2|v1|identity": {
+   "appliesTo": 0,
+   "worlds": 0,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v1|greet-by-name": {
+   "appliesTo": 3,
+   "worlds": 9,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v1|category-legend": {
+   "appliesTo": 7,
+   "worlds": 32,
+   "failingWorlds": 14,
+   "failingItems": [
+    "17771",
+    "17902",
+    "18534",
+    "18797",
+    "20090"
+   ]
+  },
+  "w2|v1|dmy-dates": {
+   "appliesTo": 4,
+   "worlds": 12,
+   "failingWorlds": 12,
+   "failingItems": [
+    "17771",
+    "18797",
+    "19014",
+    "20090"
+   ]
+  },
+  "w2|v1|number-comma": {
+   "appliesTo": 6,
+   "worlds": 22,
+   "failingWorlds": 13,
+   "failingItems": [
+    "17902",
+    "18797",
+    "19187",
+    "20090"
+   ]
+  },
+  "w2|v1|address-case-cells": {
+   "appliesTo": 6,
+   "worlds": 34,
+   "failingWorlds": 34,
+   "failingItems": [
+    "17175",
+    "17771",
+    "18534",
+    "18797",
+    "19014",
+    "19187"
+   ]
+  },
+  "w2|v1|courtesy-line": {
+   "appliesTo": 8,
+   "worlds": 41,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v1|settings-mention": {
+   "appliesTo": 4,
+   "worlds": 10,
+   "failingWorlds": 6,
+   "failingItems": [
+    "18534",
+    "19014",
+    "19187"
+   ]
+  },
+  "w2|v2|identity": {
+   "appliesTo": 0,
+   "worlds": 0,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v2|greet-by-name": {
+   "appliesTo": 3,
+   "worlds": 9,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v2|category-legend": {
+   "appliesTo": 7,
+   "worlds": 32,
+   "failingWorlds": 5,
+   "failingItems": [
+    "18797",
+    "20090"
+   ]
+  },
+  "w2|v2|dmy-dates": {
+   "appliesTo": 4,
+   "worlds": 12,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v2|number-comma": {
+   "appliesTo": 6,
+   "worlds": 22,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v2|address-case-cells": {
+   "appliesTo": 6,
+   "worlds": 34,
+   "failingWorlds": 34,
+   "failingItems": [
+    "17175",
+    "17771",
+    "18534",
+    "18797",
+    "19014",
+    "19187"
+   ]
+  },
+  "w2|v2|courtesy-line": {
+   "appliesTo": 8,
+   "worlds": 41,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v2|settings-mention": {
+   "appliesTo": 4,
+   "worlds": 10,
+   "failingWorlds": 6,
+   "failingItems": [
+    "18534",
+    "19014",
+    "19187"
+   ]
+  },
+  "w2|v3|identity": {
+   "appliesTo": 0,
+   "worlds": 0,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v3|greet-by-name": {
+   "appliesTo": 3,
+   "worlds": 9,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v3|category-legend": {
+   "appliesTo": 7,
+   "worlds": 32,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v3|dmy-dates": {
+   "appliesTo": 4,
+   "worlds": 12,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v3|number-comma": {
+   "appliesTo": 6,
+   "worlds": 22,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v3|address-case-cells": {
+   "appliesTo": 6,
+   "worlds": 34,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v3|courtesy-line": {
+   "appliesTo": 8,
+   "worlds": 41,
+   "failingWorlds": 0,
+   "failingItems": []
+  },
+  "w2|v3|settings-mention": {
+   "appliesTo": 4,
+   "worlds": 10,
+   "failingWorlds": 6,
+   "failingItems": [
+    "18534",
+    "19014",
+    "19187"
+   ]
+  }
+ },
+ "teeth": {
+  "w1|v1|drop-message": {
+   "appliesTo": 18,
+   "worlds": 78,
+   "caught": 78,
+   "missedItems": []
+  },
+  "w1|v1|wrong-recipient": {
+   "appliesTo": 14,
+   "worlds": 62,
+   "caught": 62,
+   "missedItems": []
+  },
+  "w1|v1|wrong-number": {
+   "appliesTo": 15,
+   "worlds": 60,
+   "caught": 60,
+   "missedItems": []
+  },
+  "w1|v1|dump-rows": {
+   "appliesTo": 17,
+   "worlds": 68,
+   "caught": 67,
+   "missedItems": [
+    "17807"
+   ]
+  },
+  "w1|v1|change-sheet-cell": {
+   "appliesTo": 19,
+   "worlds": 103,
+   "caught": 103,
+   "missedItems": []
+  },
+  "w1|v2|drop-message": {
+   "appliesTo": 18,
+   "worlds": 78,
+   "caught": 78,
+   "missedItems": []
+  },
+  "w1|v2|wrong-recipient": {
+   "appliesTo": 14,
+   "worlds": 62,
+   "caught": 62,
+   "missedItems": []
+  },
+  "w1|v2|wrong-number": {
+   "appliesTo": 15,
+   "worlds": 60,
+   "caught": 60,
+   "missedItems": []
+  },
+  "w1|v2|dump-rows": {
+   "appliesTo": 17,
+   "worlds": 68,
+   "caught": 67,
+   "missedItems": [
+    "17807"
+   ]
+  },
+  "w1|v2|change-sheet-cell": {
+   "appliesTo": 19,
+   "worlds": 103,
+   "caught": 103,
+   "missedItems": []
+  },
+  "w1|v3|drop-message": {
+   "appliesTo": 18,
+   "worlds": 78,
+   "caught": 78,
+   "missedItems": []
+  },
+  "w1|v3|wrong-recipient": {
+   "appliesTo": 14,
+   "worlds": 62,
+   "caught": 62,
+   "missedItems": []
+  },
+  "w1|v3|wrong-number": {
+   "appliesTo": 15,
+   "worlds": 60,
+   "caught": 60,
+   "missedItems": []
+  },
+  "w1|v3|dump-rows": {
+   "appliesTo": 17,
+   "worlds": 68,
+   "caught": 67,
+   "missedItems": [
+    "17807"
+   ]
+  },
+  "w1|v3|change-sheet-cell": {
+   "appliesTo": 19,
+   "worlds": 103,
+   "caught": 103,
+   "missedItems": []
+  },
+  "w2|v1|drop-message": {
+   "appliesTo": 8,
+   "worlds": 41,
+   "caught": 41,
+   "missedItems": []
+  },
+  "w2|v1|wrong-recipient": {
+   "appliesTo": 6,
+   "worlds": 31,
+   "caught": 31,
+   "missedItems": []
+  },
+  "w2|v1|wrong-number": {
+   "appliesTo": 7,
+   "worlds": 25,
+   "caught": 25,
+   "missedItems": []
+  },
+  "w2|v1|dump-rows": {
+   "appliesTo": 7,
+   "worlds": 27,
+   "caught": 26,
+   "missedItems": [
+    "17771"
+   ]
+  },
+  "w2|v1|change-sheet-cell": {
+   "appliesTo": 8,
+   "worlds": 47,
+   "caught": 47,
+   "missedItems": []
+  },
+  "w2|v2|drop-message": {
+   "appliesTo": 8,
+   "worlds": 41,
+   "caught": 41,
+   "missedItems": []
+  },
+  "w2|v2|wrong-recipient": {
+   "appliesTo": 6,
+   "worlds": 31,
+   "caught": 31,
+   "missedItems": []
+  },
+  "w2|v2|wrong-number": {
+   "appliesTo": 7,
+   "worlds": 25,
+   "caught": 25,
+   "missedItems": []
+  },
+  "w2|v2|dump-rows": {
+   "appliesTo": 7,
+   "worlds": 27,
+   "caught": 26,
+   "missedItems": [
+    "17771"
+   ]
+  },
+  "w2|v2|change-sheet-cell": {
+   "appliesTo": 8,
+   "worlds": 47,
+   "caught": 47,
+   "missedItems": []
+  },
+  "w2|v3|drop-message": {
+   "appliesTo": 8,
+   "worlds": 41,
+   "caught": 41,
+   "missedItems": []
+  },
+  "w2|v3|wrong-recipient": {
+   "appliesTo": 6,
+   "worlds": 31,
+   "caught": 31,
+   "missedItems": []
+  },
+  "w2|v3|wrong-number": {
+   "appliesTo": 7,
+   "worlds": 25,
+   "caught": 25,
+   "missedItems": []
+  },
+  "w2|v3|dump-rows": {
+   "appliesTo": 7,
+   "worlds": 27,
+   "caught": 26,
+   "missedItems": [
+    "17771"
+   ]
+  },
+  "w2|v3|change-sheet-cell": {
+   "appliesTo": 8,
+   "worlds": 47,
+   "caught": 47,
+   "missedItems": []
+  }
+ },
+ "failures": [
+  {
+   "wave": 1,
+   "item": "14177",
+   "world": "c01",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-05-13, D:2026-05-26]",
+    "chat to #general: no message carries the facts [D:2026-05-13]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "14177",
+   "world": "c01",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [12]",
+    "chat to #general: no message carries the facts [1, 12]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "14177",
+   "world": "c26",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-10-07]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "14177",
+   "world": "c02",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-05-23, D:2026-05-26, D:2026-05-08, D:2026-05-13]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "14177",
+   "world": "c04",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-05-27, D:2026-06-13]",
+    "chat to #general: no message carries the facts [D:2026-05-27]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "14177",
+   "world": "c04",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [5]",
+    "chat to #general: no message carries the facts [1, 5]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17545",
+   "world": "c01",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to you@example.com: no message carries the facts [2, 20]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17545",
+   "world": "c04",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to you@example.com: no message carries the facts [3, 20]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c02",
+   "rewrite": "greet-by-name",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.ivers@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to wendell.okonkwo@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.ivers@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to wendell.okonkwo@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"fenwick.ivers@inbox.example\",\"name\":\"Fenwick\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"fenwick.ivers@inbox.example\",\"name\":\"Fenwick\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c00",
+   "rewrite": "greet-by-name",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.jessop@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to elif.vantongeren@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"soren.jessop@inbox.example\",\"name\":\"Soren\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"soren.jessop@inbox.example\",\"name\":\"Soren\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c01",
+   "rewrite": "greet-by-name",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to galina.marchetti@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to talia.fairhurst@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"galina.marchetti@post.example\",\"name\":\"Galina\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"galina.marchetti@post.example\",\"name\":\"Galina\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c03",
+   "rewrite": "greet-by-name",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.okonkwo@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to amara.fairhurst@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.okonkwo@mailbox.example: no message carries only the right rows (it mentions 3 row(s) the reference leaves out)",
+    "e-mail to amara.fairhurst@mailbox.example: no message carries only the right rows (it mentions 3 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"rosalind.okonkwo@mailbox.example\",\"name\":\"Rosalind\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"rosalind.okonkwo@mailbox.example\",\"name\":\"Rosalind\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c04",
+   "rewrite": "greet-by-name",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to mateo.underhill@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to wendell.hartigan@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to mateo.underhill@inbox.example: no message carries only the right rows (it mentions 3 row(s) the reference leaves out)",
+    "e-mail to wendell.hartigan@post.example: no message carries only the right rows (it mentions 3 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"mateo.underhill@inbox.example\",\"name\":\"Mateo\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"mateo.underhill@inbox.example\",\"name\":\"Mateo\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c05",
+   "rewrite": "greet-by-name",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to amara.hartigan@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to odette.kilbride@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c05",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to amara.hartigan@mailbox.example: no message carries only the right rows (it mentions 4 row(s) the reference leaves out)",
+    "e-mail to odette.kilbride@inbox.example: no message carries only the right rows (it mentions 4 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"amara.hartigan@mailbox.example\",\"name\":\"Amara\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16364",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet newsletter-recipients: no row matches reference row {\"email\":\"amara.hartigan@mailbox.example\",\"name\":\"Amara\"} (first differing columns: email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17342",
+   "world": "c00",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #sms-alerts: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c05",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to bastian.silvana@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c05",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to calla.ashcombe@inbox.example: no message carries the facts [D:2026-07-28]",
+    "e-mail to bastian.silvana@inbox.example: no message carries the facts [D:2026-07-11]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-73080\",\"ClientName\":\"Calla Ashcombe\",\"ClientEmail\":\"calla.ashcombe@inbox.example\",\"Amount\":7145.7,\"Currency\":\"GBP\",\"DueDate\":\"2026-07"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-73080\",\"ClientName\":\"Calla Ashcombe\",\"ClientEmail\":\"calla.ashcombe@inbox.example\",\"Amount\":7145.7,\"Currency\":\"GBP\",\"DueDate\":\"2026-07"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c11",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to calla.hartigan@mailbox.example: no message carries the facts [D:2026-07-04]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c11",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-36820\",\"ClientName\":\"Kiran Thackeray\",\"ClientEmail\":\"kiran.thackeray@mailbox.example\",\"Amount\":187.38,\"Currency\":\"GBP\",\"DueDate\":\"202"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c11",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-36820\",\"ClientName\":\"Kiran Thackeray\",\"ClientEmail\":\"kiran.thackeray@mailbox.example\",\"Amount\":187.38,\"Currency\":\"GBP\",\"DueDate\":\"202"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-97460\",\"ClientName\":\"Pavel Marchetti\",\"ClientEmail\":\"pavel.marchetti@mailbox.example\",\"Amount\":2489.02,\"Currency\":\"USD\",\"DueDate\":\"20"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-97460\",\"ClientName\":\"Pavel Marchetti\",\"ClientEmail\":\"pavel.marchetti@mailbox.example\",\"Amount\":2489.02,\"Currency\":\"USD\",\"DueDate\":\"20"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to yusuf.ivers@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c02",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to yusuf.ivers@mailbox.example: no message carries the facts [D:2026-06-27]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-43920\",\"ClientName\":\"Zelda Brennagh\",\"ClientEmail\":\"zelda.brennagh@mailbox.example\",\"Amount\":7951.56,\"Currency\":\"EUR\",\"DueDate\":\"2026"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-43920\",\"ClientName\":\"Zelda Brennagh\",\"ClientEmail\":\"zelda.brennagh@mailbox.example\",\"Amount\":7951.56,\"Currency\":\"EUR\",\"DueDate\":\"2026"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to calla.whitlock@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to amara.jessop@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c03",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to calla.whitlock@inbox.example: no message carries the facts [D:2026-06-13]",
+    "e-mail to amara.jessop@mailbox.example: no message carries the facts [D:2026-06-28]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-74470\",\"ClientName\":\"Odette Brennagh\",\"ClientEmail\":\"odette.brennagh@inbox.example\",\"Amount\":2757.84,\"Currency\":\"\",\"DueDate\":\"2026-07"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17878",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-74470\",\"ClientName\":\"Odette Brennagh\",\"ClientEmail\":\"odette.brennagh@inbox.example\",\"Amount\":2757.84,\"Currency\":\"\",\"DueDate\":\"2026-07"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Name\":\"Zelda Lorrimer\",\"Email\":\"zelda.lorrimer@post.example\",\"Notes\":\"\",\"Budget\":\"under 2k\",\"Company\":\"Orchid Ridge Farms\",\"Timestamp\":\"2026-08-14T01:41:0"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Name\":\"Zelda Lorrimer\",\"Email\":\"zelda.lorrimer@post.example\",\"Notes\":\"\",\"Budget\":\"under 2k\",\"Company\":\"Orchid Ridge Farms\",\"Timestamp\":\"2026-08-14T01:41:0"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Timestamp\":\"2026-07-17T17:19:00.000Z\",\"Name\":\"Vesna Ashcombe\",\"Email\":\"vesna.ashcombe@mailbox.example\",\"Company\":\"Wrenfield Clinic\",\"Service needed\":\"Bran"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Timestamp\":\"2026-07-17T17:19:00.000Z\",\"Name\":\"Vesna Ashcombe\",\"Email\":\"vesna.ashcombe@mailbox.example\",\"Company\":\"Wrenfield Clinic\",\"Service needed\":\"Bran"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Timestamp\":\"2026-09-14T02:31:00.000Z\",\"Name\":\"Wendell Quayle\",\"Email\":\"wendell.quayle@mailbox.example\",\"Company\":\"Juniper Mill\",\"Service needed\":\"Website "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Timestamp\":\"2026-09-14T02:31:00.000Z\",\"Name\":\"Wendell Quayle\",\"Email\":\"wendell.quayle@mailbox.example\",\"Company\":\"Juniper Mill\",\"Service needed\":\"Website "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Timestamp\":\"2026-08-02T08:48:00.000Z\",\"Name\":\"Mateo Quayle\",\"Email\":\"mateo.quayle@post.example\",\"Company\":\"Lumen Bakery\",\"Service needed\":\"Inventory dashb"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Timestamp\":\"2026-08-02T08:48:00.000Z\",\"Name\":\"Mateo Quayle\",\"Email\":\"mateo.quayle@post.example\",\"Company\":\"Lumen Bakery\",\"Service needed\":\"Inventory dashb"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Name\":\"Talia Underhill\",\"Email\":\"talia.underhill@inbox.example\",\"Notes\":\"We use Shopify today\",\"Budget\":\"\",\"Company\":\"\",\"Timestamp\":\"2026-11-15T22:43:00.0"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Name\":\"Talia Underhill\",\"Email\":\"talia.underhill@inbox.example\",\"Notes\":\"We use Shopify today\",\"Budget\":\"\",\"Company\":\"\",\"Timestamp\":\"2026-11-15T22:43:00.0"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Timestamp\":\"2026-07-04T10:09:00.000Z\",\"Name\":\"Odette Underhill\",\"Email\":\"odette.underhill@inbox.example\",\"Company\":\"Wrenfield Clinic\",\"Service needed\":\"Bo"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19103",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Timestamp\":\"2026-07-04T10:09:00.000Z\",\"Name\":\"Odette Underhill\",\"Email\":\"odette.underhill@inbox.example\",\"Company\":\"Wrenfield Clinic\",\"Service needed\":\"Bo"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c00",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c00",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [960]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-295\",\"vendorName\":\"Lumen Bakery\",\"invoiceNumber\":\"INV-437\",\"invoiceDate\":\"2026-08-29\",\"poNumber\":\"PO-5285\",\"grnNumber\":\"GRN-1\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-295\",\"vendorName\":\"Lumen Bakery\",\"invoiceNumber\":\"INV-437\",\"invoiceDate\":\"2026-08-29\",\"poNumber\":\"PO-5285\",\"grnNumber\":\"GRN-1\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c00",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c00",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c00",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c04",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [5, 10]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-211\",\"vendorName\":\"Ashgrove Motors\",\"invoiceNumber\":\"INV-491\",\"invoiceDate\":\"2026-07-31\",\"poNumber\":\"PO-5347\",\"grnNumber\":\"GRN-1\"} ("
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-211\",\"vendorName\":\"Ashgrove Motors\",\"invoiceNumber\":\"INV-491\",\"invoiceDate\":\"2026-07-31\",\"poNumber\":\"PO-5347\",\"grnNumber\":\"GRN-1\"} ("
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c04",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c04",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c04",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c09",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-221\",\"vendorName\":\"Lumen Bakery\",\"invoiceNumber\":\"INV-514\",\"invoiceDate\":\"2026-08-24\",\"poNumber\":\"PO-5873\",\"grnNumber\":\"GRN-1\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c09",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-221\",\"vendorName\":\"Lumen Bakery\",\"invoiceNumber\":\"INV-514\",\"invoiceDate\":\"2026-08-24\",\"poNumber\":\"PO-5873\",\"grnNumber\":\"GRN-1\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c09",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.jessop@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c09",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.jessop@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c09",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.jessop@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c01",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [4320]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-297\",\"vendorName\":\"Bluefinch Media\",\"invoiceNumber\":\"INV-639\",\"invoiceDate\":\"2026-07-14\",\"poNumber\":\"PO-5793\",\"grnNumber\":\"GRN-1\"} ("
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-297\",\"vendorName\":\"Bluefinch Media\",\"invoiceNumber\":\"INV-639\",\"invoiceDate\":\"2026-07-14\",\"poNumber\":\"PO-5793\",\"grnNumber\":\"GRN-1\"} ("
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c01",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c01",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c01",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c02",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [120]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-205\",\"vendorName\":\"Lumen Bakery\",\"invoiceNumber\":\"INV-111\",\"invoiceDate\":\"2026-08-09\",\"poNumber\":\"PO-5227\",\"grnNumber\":\"GRN-1\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-205\",\"vendorName\":\"Lumen Bakery\",\"invoiceNumber\":\"INV-111\",\"invoiceDate\":\"2026-08-09\",\"poNumber\":\"PO-5227\",\"grnNumber\":\"GRN-1\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c02",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c02",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c02",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-273\",\"vendorName\":\"Juniper Mill\",\"invoiceNumber\":\"INV-456\",\"invoiceDate\":\"2026-06-25\",\"poNumber\":\"PO-5194\",\"grnNumber\":\"GRN-1\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-273\",\"vendorName\":\"Juniper Mill\",\"invoiceNumber\":\"INV-456\",\"invoiceDate\":\"2026-06-25\",\"poNumber\":\"PO-5194\",\"grnNumber\":\"GRN-1\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c03",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c03",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "19446",
+   "world": "c03",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.lorrimer@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to xiomara.northcott@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c01",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.lorrimer@mailbox.example: no message carries the facts [D:2026-07-23]",
+    "e-mail to xiomara.northcott@mailbox.example: no message carries the facts [D:2026-07-02]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Soren Lorrimer\",\"Email\":\"soren.lorrimer@mailbox.example\",\"Start_Date\":\"2026-07-23\",\"Status\":\"Onboarding\"} (first differing columns: Emai"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Soren Lorrimer\",\"Email\":\"soren.lorrimer@mailbox.example\",\"Start_Date\":\"2026-07-23\",\"Status\":\"Onboarding\"} (first differing columns: Emai"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to zelda.underhill@inbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to calla.yarrow@inbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c02",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to zelda.underhill@inbox.example: no message carries the facts [D:2026-08-10]",
+    "e-mail to calla.yarrow@inbox.example: no message carries the facts [D:2026-09-04]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Elif Lorrimer\",\"Email\":\"elif.lorrimer@mailbox.example\",\"Start_Date\":\"2026-08-18\",\"Status\":\"Onboarding\"} (first differing columns: Email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Elif Lorrimer\",\"Email\":\"elif.lorrimer@mailbox.example\",\"Start_Date\":\"2026-08-18\",\"Status\":\"Onboarding\"} (first differing columns: Email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Xiomara Ellery\",\"Email\":\"xiomara.ellery@mailbox.example\",\"Start_Date\":\"2026-08-19\",\"Status\":\"Inactive\"} (first differing columns: Email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Xiomara Ellery\",\"Email\":\"xiomara.ellery@mailbox.example\",\"Start_Date\":\"2026-08-19\",\"Status\":\"Inactive\"} (first differing columns: Email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c04",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to yusuf.vantongeren@inbox.example: no message carries the facts [D:2026-08-05]",
+    "e-mail to rosalind.kilbride@post.example: no message carries the facts [D:2026-09-03]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Yusuf Vantongeren\",\"Email\":\"yusuf.vantongeren@inbox.example\",\"Start_Date\":\"2026-08-05\",\"Status\":\"Onboarding\"} (first differing columns: "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Yusuf Vantongeren\",\"Email\":\"yusuf.vantongeren@inbox.example\",\"Start_Date\":\"2026-08-05\",\"Status\":\"Onboarding\"} (first differing columns: "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Kiran Fairhurst\",\"Email\":\"kiran.fairhurst@post.example\",\"Start_Date\":\"2026-10-02\",\"Status\":\"Inactive\"} (first differing columns: Email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17816",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agent-roster: no row matches reference row {\"Agent_Name\":\"Kiran Fairhurst\",\"Email\":\"kiran.fairhurst@post.example\",\"Start_Date\":\"2026-10-02\",\"Status\":\"Inactive\"} (first differing columns: Email)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c00",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to hollis.lorrimer@inbox.example: no message carries the facts [33]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Xiomara Grieve\",\"email\":\"xiomara.grieve@post.example\",\"role\":\"Participant\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Xiomara Grieve\",\"email\":\"xiomara.grieve@post.example\",\"role\":\"Participant\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (fir"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Soren Castellan\",\"email\":\"soren.castellan@mailbox.example\",\"role\":\"Mentor\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (fir",
+    "sheet day2: no row matches reference row {\"name\":\"Jasper Pemberton\",\"email\":\"jasper.pemberton@post.example\",\"role\":\"Participant\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Soren Castellan\",\"email\":\"soren.castellan@mailbox.example\",\"role\":\"Mentor\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (fir",
+    "sheet day2: no row matches reference row {\"name\":\"Jasper Pemberton\",\"email\":\"jasper.pemberton@post.example\",\"role\":\"Participant\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c13",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Soren Ivers\",\"email\":\"soren.ivers@mailbox.example\",\"role\":\"Mentor\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (first diffe"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c13",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Soren Ivers\",\"email\":\"soren.ivers@mailbox.example\",\"role\":\"Mentor\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (first diffe"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Amara Ashcombe\",\"email\":\"amara.ashcombe@mailbox.example\",\"role\":\"Mentor\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (first"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Amara Ashcombe\",\"email\":\"amara.ashcombe@mailbox.example\",\"role\":\"Mentor\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (first"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Pavel Dunmore\",\"email\":\"pavel.dunmore@inbox.example\",\"role\":\"Participant\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (firs"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Pavel Dunmore\",\"email\":\"pavel.dunmore@inbox.example\",\"role\":\"Participant\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (firs"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Hollis Brennagh\",\"email\":\"hollis.brennagh@post.example\",\"role\":\"Participant\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (f"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16904",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet day1: no row matches reference row {\"name\":\"Hollis Brennagh\",\"email\":\"hollis.brennagh@post.example\",\"role\":\"Participant\",\"eventId\":\"n8n-starter-lab-2026\",\"date\":\"01 June 2026\",\"time\":\"09:15\"} (f"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "15238",
+   "world": "c29",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-05-28]",
+    "chat to #n8n: no message carries the facts [D:2026-05-28]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "15238",
+   "world": "c04",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-06-01]",
+    "chat to #n8n: no message carries the facts [D:2026-06-01]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "15238",
+   "world": "c03",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-07-16]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "15238",
+   "world": "c00",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-08-23]",
+    "chat to #n8n: no message carries the facts [D:2026-08-23]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "15238",
+   "world": "c01",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-09-05]",
+    "chat to #n8n: no message carries the facts [D:2026-09-05]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@thornbury.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c01",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@thornbury.example: no message carries the facts [D:2026-06-05]",
+    "e-mail to orders@calderwood.example: no message carries the facts [D:2026-06-05]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-309\",\"Name\":\"Copper pan\",\"supplier\":\"Falconcrest Labs\",\"supplier_email\":\"orders@thornbury.example\",\"Available Qty\":42,\"Min. Threshold\":4",
+    "sheet purchase-orders: no row matches reference row {\"PO Number\":\"PO-2292\",\"Supplier\":\"Falconcrest Labs\",\"Supplier Email\":\"orders@thornbury.example\",\"SKU\":\"SKU-309\",\"Item Name\":\"Copper pan\",\"Available"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-309\",\"Name\":\"Copper pan\",\"supplier\":\"Falconcrest Labs\",\"supplier_email\":\"orders@thornbury.example\",\"Available Qty\":42,\"Min. Threshold\":4",
+    "sheet purchase-orders: no row matches reference row {\"PO Number\":\"PO-2292\",\"Supplier\":\"Falconcrest Labs\",\"Supplier Email\":\"orders@thornbury.example\",\"SKU\":\"SKU-309\",\"Item Name\":\"Copper pan\",\"Available"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c01",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@thornbury.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c01",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c01",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c02",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@calderwood.example: no message carries the facts [D:2026-07-11]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-304\",\"Name\":\"Wool throw\",\"supplier\":\"Orchid Ridge Farms\",\"supplier_email\":\"orders@calderwood.example\",\"Available Qty\":8,\"Min. Threshold\"",
+    "sheet purchase-orders: no row matches reference row {\"SKU\":\"SKU-304\",\"Supplier\":\"Orchid Ridge Farms\",\"Available\":8,\"Item Name\":\"Wool throw\",\"Order Qty\":20,\"PO Number\":\"PO-1783731600000\"} (first differ"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-304\",\"Name\":\"Wool throw\",\"supplier\":\"Orchid Ridge Farms\",\"supplier_email\":\"orders@calderwood.example\",\"Available Qty\":8,\"Min. Threshold\"",
+    "sheet purchase-orders: no row matches reference row {\"SKU\":\"SKU-304\",\"Supplier\":\"Orchid Ridge Farms\",\"Available\":8,\"Item Name\":\"Wool throw\",\"Order Qty\":20,\"PO Number\":\"PO-1783731600000\"} (first differ"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-308\",\"Name\":\"Cedar planter\",\"supplier\":\"Copperleaf Legal\",\"supplier_email\":\"orders@calderwood.example\",\"Available Qty\":21,\"Min. Threshol",
+    "sheet purchase-orders: no row matches reference row {\"PO Number\":\"PO-4262\",\"Supplier\":\"Quarry Lane Books\",\"Supplier Email\":\"orders@brookfield.example\",\"SKU\":\"SKU-318\",\"Item Name\":\"Walnut desk\",\"Availa"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-308\",\"Name\":\"Cedar planter\",\"supplier\":\"Copperleaf Legal\",\"supplier_email\":\"orders@calderwood.example\",\"Available Qty\":21,\"Min. Threshol",
+    "sheet purchase-orders: no row matches reference row {\"PO Number\":\"PO-4262\",\"Supplier\":\"Quarry Lane Books\",\"Supplier Email\":\"orders@brookfield.example\",\"SKU\":\"SKU-318\",\"Item Name\":\"Walnut desk\",\"Availa"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@thornbury.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@thornbury.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@thornbury.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c04",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@thornbury.example: no message carries the facts [D:2026-06-08]",
+    "e-mail to orders@calderwood.example: no message carries the facts [D:2026-06-08]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-307\",\"Name\":\"Brass lamp\",\"supplier\":\"Bluefinch Media\",\"supplier_email\":\"orders@thornbury.example\",\"Available Qty\":47,\"Min. Threshold\":48",
+    "sheet purchase-orders: no row matches reference row {\"PO Number\":\"PO-8790\",\"Supplier\":\"Saltmarsh Cycles\",\"Supplier Email\":\"orders@calderwood.example\",\"SKU\":\"SKU-323\",\"Item Name\":\"Walnut desk\",\"Availab"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-307\",\"Name\":\"Brass lamp\",\"supplier\":\"Bluefinch Media\",\"supplier_email\":\"orders@thornbury.example\",\"Available Qty\":47,\"Min. Threshold\":48",
+    "sheet purchase-orders: no row matches reference row {\"PO Number\":\"PO-8790\",\"Supplier\":\"Saltmarsh Cycles\",\"Supplier Email\":\"orders@calderwood.example\",\"SKU\":\"SKU-323\",\"Item Name\":\"Walnut desk\",\"Availab"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c05",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@brookfield.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to orders@calderwood.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c05",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to orders@brookfield.example: no message carries the facts [D:2026-08-24]",
+    "e-mail to orders@calderwood.example: no message carries the facts [D:2026-08-24]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-306\",\"Name\":\"Walnut desk\",\"supplier\":\"Mossgrove Dental\",\"supplier_email\":\"orders@brookfield.example\",\"Available Qty\":15,\"Min. Threshold\"",
+    "sheet purchase-orders: no row matches reference row {\"SKU\":\"SKU-306\",\"Supplier\":\"Mossgrove Dental\",\"Available\":15,\"Item Name\":\"Walnut desk\",\"Order Qty\":20,\"PO Number\":\"PO-1787601600000\"} (first differ"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "11679",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory-stock: no row matches reference row {\"sku\":\"SKU-306\",\"Name\":\"Walnut desk\",\"supplier\":\"Mossgrove Dental\",\"supplier_email\":\"orders@brookfield.example\",\"Available Qty\":15,\"Min. Threshold\"",
+    "sheet purchase-orders: no row matches reference row {\"SKU\":\"SKU-306\",\"Supplier\":\"Mossgrove Dental\",\"Available\":15,\"Item Name\":\"Walnut desk\",\"Order Qty\":20,\"PO Number\":\"PO-1787601600000\"} (first differ"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c00",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #new-leads: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Calla Pemberton\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: e"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Calla Pemberton\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: e"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Galina Brennagh\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Galina Brennagh\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Elif Lorrimer\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: email"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Elif Lorrimer\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: email"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #new-leads: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"ROSALIND.GRIEVE@POST.EXAMPLE\", expected \"rosalind.grieve@post.example\"",
+    "sheet leads: no row matches reference row {\"email\":\"elif.marchetti@inbox.example\",\"name\":\"Elif Marchetti\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns:"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"ROSALIND.GRIEVE@POST.EXAMPLE\", expected \"rosalind.grieve@post.example\"",
+    "sheet leads: no row matches reference row {\"email\":\"elif.marchetti@inbox.example\",\"name\":\"Elif Marchetti\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns:"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Talia Whitlock\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: ema"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"email\":\"<redacted-address>\",\"name\":\"Talia Whitlock\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing columns: ema"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"email\":\"zelda.fairhurst@inbox.example\",\"name\":\"Zelda Fairhurst\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing column"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17749",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"email\":\"zelda.fairhurst@inbox.example\",\"name\":\"Zelda Fairhurst\",\"company\":\"\",\"phone\":\"\",\"source\":\"website\",\"message\":\"Earlier note\"} (first differing column"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c29",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #inventory: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "chat to #inventory: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c29",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #inventory: no message carries the facts [1]",
+    "chat to #inventory: no message carries the facts [14]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c29",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R120\",\"item_name\":\"Wool throw\",\"current_stock\":0,\"reorder_threshold\":12,\"unit\":\"kg\",\"supplier_name\":\"Saltmarsh Cycles\"} (first differing column"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c29",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R120\",\"item_name\":\"Wool throw\",\"current_stock\":0,\"reorder_threshold\":12,\"unit\":\"kg\",\"supplier_name\":\"Saltmarsh Cycles\"} (first differing column"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R124\",\"item_name\":\"Linen apron\",\"current_stock\":23,\"reorder_threshold\":22,\"unit\":\"units\",\"supplier_name\":\"Juniper Mill\"} (first differing colum"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R124\",\"item_name\":\"Linen apron\",\"current_stock\":23,\"reorder_threshold\":22,\"unit\":\"units\",\"supplier_name\":\"Juniper Mill\"} (first differing colum"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #inventory: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "chat to #inventory: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c02",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #inventory: no message carries the facts [22]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R151\",\"item_name\":\"Glass carafe\",\"current_stock\":4,\"reorder_threshold\":4,\"unit\":\"rolls\",\"supplier_name\":\"Saltmarsh Cycles\"} (first differing co"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R151\",\"item_name\":\"Glass carafe\",\"current_stock\":4,\"reorder_threshold\":4,\"unit\":\"rolls\",\"supplier_name\":\"Saltmarsh Cycles\"} (first differing co"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #inventory: no message carries only the right rows (it mentions 3 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R147\",\"item_name\":\"Cedar planter\",\"current_stock\":39,\"reorder_threshold\":8,\"unit\":\"boxes\",\"supplier_name\":\"Kestrel Optics\"} (first differing co"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R147\",\"item_name\":\"Cedar planter\",\"current_stock\":39,\"reorder_threshold\":8,\"unit\":\"boxes\",\"supplier_name\":\"Kestrel Optics\"} (first differing co"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #inventory: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c04",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #inventory: no message carries the facts [2]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R168\",\"item_name\":\"Oak stool\",\"current_stock\":13,\"reorder_threshold\":3,\"unit\":\"kg\",\"supplier_name\":\"Falconcrest Labs\"} (first differing columns"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17624",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet inventory: no row matches reference row {\"row_id\":\"R168\",\"item_name\":\"Oak stool\",\"current_stock\":13,\"reorder_threshold\":3,\"unit\":\"kg\",\"supplier_name\":\"Falconcrest Labs\"} (first differing columns"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to lucinda.lorrimer@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c01",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to yusuf.hartigan@post.example: no message carries the facts [D:2026-07-21]",
+    "e-mail to lucinda.lorrimer@mailbox.example: no message carries the facts [D:2026-07-30]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c01",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to yusuf.hartigan@post.example: no message carries the facts [9]",
+    "chat to #deadlines: no message carries the facts [9]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Grant report submission\",\"Email\":\"yusuf.hartigan@post.example\",\"DueDate\":\"2026-07-21\",\"Status\":\"In progress\",\"NotifiedOn\":\"2026-07-30\"} (first d"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Grant report submission\",\"Email\":\"yusuf.hartigan@post.example\",\"DueDate\":\"2026-07-21\",\"Status\":\"In progress\",\"NotifiedOn\":\"2026-07-30\"} (first d"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to quinlan.grieve@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c02",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to quinlan.grieve@inbox.example: no message carries the facts [D:2026-04-20]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c02",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to quinlan.grieve@inbox.example: no message carries the facts [2]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Grant report submission\",\"Email\":\"galina.hartigan@post.example\",\"DueDate\":\"2026-04-30\",\"Status\":\"Done\",\"NotifiedOn\":\"\"} (first differing columns"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Grant report submission\",\"Email\":\"galina.hartigan@post.example\",\"DueDate\":\"2026-04-30\",\"Status\":\"Done\",\"NotifiedOn\":\"\"} (first differing columns"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to bastian.ellery@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to dorian.marchetti@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c03",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to bastian.ellery@post.example: no message carries the facts [D:2026-06-30]",
+    "e-mail to odette.ivers@inbox.example: no message carries the facts [D:2026-07-09]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c03",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to bastian.ellery@post.example: no message carries the facts [10]",
+    "e-mail to odette.ivers@inbox.example: no message carries the facts [1]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Payroll audit\",\"Email\":\"wendell.brennagh@mailbox.example\",\"DueDate\":\"2026-07-18\",\"Status\":\"Open\",\"NotifiedOn\":\"\"} (first differing columns: Emai"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Payroll audit\",\"Email\":\"wendell.brennagh@mailbox.example\",\"DueDate\":\"2026-07-18\",\"Status\":\"Open\",\"NotifiedOn\":\"\"} (first differing columns: Emai"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.marchetti@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to elif.ellery@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c04",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.marchetti@mailbox.example: no message carries the facts [D:2026-04-16]",
+    "e-mail to elif.ellery@post.example: no message carries the facts [D:2026-04-18]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c04",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.marchetti@mailbox.example: no message carries the facts [1]",
+    "e-mail to elif.ellery@post.example: no message carries the facts [3]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Vehicle MOT booking\",\"Email\":\"soren.marchetti@mailbox.example\",\"DueDate\":\"2026-04-16\",\"Status\":\"Open\",\"NotifiedOn\":\"2026-04-15\"} (first differin"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Vehicle MOT booking\",\"Email\":\"soren.marchetti@mailbox.example\",\"DueDate\":\"2026-04-16\",\"Status\":\"Open\",\"NotifiedOn\":\"2026-04-15\"} (first differin"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c05",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.hartigan@inbox.example: no message carries the facts [D:2026-04-30]",
+    "e-mail to amara.whitlock@inbox.example: no message carries the facts [D:2026-04-25]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c05",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.hartigan@inbox.example: no message carries the facts [2]",
+    "e-mail to amara.whitlock@inbox.example: no message carries the facts [3]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Fire safety inspection\",\"Email\":\"rosalind.hartigan@inbox.example\",\"DueDate\":\"2026-04-30\",\"Status\":\"Open\",\"NotifiedOn\":\"2026-04-28\"} (first diffe"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "16312",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet deadlines: no row matches reference row {\"Title\":\"Fire safety inspection\",\"Email\":\"rosalind.hartigan@inbox.example\",\"DueDate\":\"2026-04-30\",\"Status\":\"Open\",\"NotifiedOn\":\"2026-04-28\"} (first diffe"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to noor.hartigan@post.example: no message carries only the right rows (it mentions 3 row(s) the reference leaves out)",
+    "e-mail to vesna.ivers@post.example: no message carries only the right rows (it mentions 4 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-34500\",\"Agent_Name\":\"Noor Hartigan\",\"Email\":\"noor.hartigan@post.example\",\"Shift_Date\":\"2026-06-15\",\"Shift_Start\":\"06:00\",\"Shift_End\":"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-34500\",\"Agent_Name\":\"Noor Hartigan\",\"Email\":\"noor.hartigan@post.example\",\"Shift_Date\":\"2026-06-15\",\"Shift_Start\":\"06:00\",\"Shift_End\":"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to lucinda.underhill@mailbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-67280\",\"Agent_Name\":\"Lucinda Underhill\",\"Email\":\"lucinda.underhill@mailbox.example\",\"Shift_Date\":\"2026-07-22\",\"Shift_Start\":\"07:00\",\""
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-67280\",\"Agent_Name\":\"Lucinda Underhill\",\"Email\":\"lucinda.underhill@mailbox.example\",\"Shift_Date\":\"2026-07-22\",\"Shift_Start\":\"07:00\",\""
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to jasper.jessop@mailbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-83230\",\"Agent_Name\":\"Quinlan Silvana\",\"Email\":\"quinlan.silvana@post.example\",\"Shift_Date\":\"2026-09-26\",\"Shift_Start\":\"06:00\",\"Shift_E"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-83230\",\"Agent_Name\":\"Quinlan Silvana\",\"Email\":\"quinlan.silvana@post.example\",\"Shift_Date\":\"2026-09-26\",\"Shift_Start\":\"06:00\",\"Shift_E"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.castellan@post.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to noor.ashcombe@inbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-91860\",\"Agent_Name\":\"Noor Ashcombe\",\"Email\":\"noor.ashcombe@inbox.example\",\"Shift_Date\":\"2026-06-03\",\"Shift_Start\":\"14:00\",\"Shift_End\""
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-91860\",\"Agent_Name\":\"Noor Ashcombe\",\"Email\":\"noor.ashcombe@inbox.example\",\"Shift_Date\":\"2026-06-03\",\"Shift_Start\":\"14:00\",\"Shift_End\""
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c05",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to vesna.pemberton@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-36200\",\"Agent_Name\":\"Yusuf Lorrimer\",\"Email\":\"yusuf.lorrimer@mailbox.example\",\"Shift_Date\":\"2026-10-29\",\"Shift_Start\":\"06:00\",\"Shift_"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17811",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet shift-schedule: no row matches reference row {\"Shift_ID\":\"SH-36200\",\"Agent_Name\":\"Yusuf Lorrimer\",\"Email\":\"yusuf.lorrimer@mailbox.example\",\"Shift_Date\":\"2026-10-29\",\"Shift_Start\":\"06:00\",\"Shift_"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-8940\",\"Agent_Name\":\"Ulric Northcott\",\"Email\":\"ulric.northcott@mailbox.example\",\"Status\":\"Inactive\",\"Last_Reminded\":\"10/07/2026\"} (first diffe"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-8940\",\"Agent_Name\":\"Ulric Northcott\",\"Email\":\"ulric.northcott@mailbox.example\",\"Status\":\"Inactive\",\"Last_Reminded\":\"10/07/2026\"} (first diffe"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to elif.brennagh@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to fenwick.castellan@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-3520\",\"Agent_Name\":\"Ulric Ellery\",\"Email\":\"ulric.ellery@post.example\",\"Status\":\"Inactive\",\"Last_Reminded\":\"11/09/2026\"} (first differing colu"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-3520\",\"Agent_Name\":\"Ulric Ellery\",\"Email\":\"ulric.ellery@post.example\",\"Status\":\"Inactive\",\"Last_Reminded\":\"11/09/2026\"} (first differing colu"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to kiran.jessop@mailbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to talia.okonkwo@mailbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-7400\",\"Agent_Name\":\"Pavel Northcott\",\"Email\":\"pavel.northcott@mailbox.example\",\"Status\":\"Inactive\",\"Last_Reminded\":\"18/09/2026\"} (first diffe"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-7400\",\"Agent_Name\":\"Pavel Northcott\",\"Email\":\"pavel.northcott@mailbox.example\",\"Status\":\"Inactive\",\"Last_Reminded\":\"18/09/2026\"} (first diffe"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-9020\",\"Agent_Name\":\"Dorian Kilbride\",\"Email\":\"dorian.kilbride@inbox.example\",\"Status\":\"On Leave\",\"Last_Reminded\":\"\"} (first differing columns"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-9020\",\"Agent_Name\":\"Dorian Kilbride\",\"Email\":\"dorian.kilbride@inbox.example\",\"Status\":\"On Leave\",\"Last_Reminded\":\"\"} (first differing columns"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c05",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to quinlan.lorrimer@mailbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to amara.yarrow@post.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-5050\",\"Agent_Name\":\"Mateo Castellan\",\"Email\":\"mateo.castellan@post.example\",\"Status\":\"On Leave\",\"Last_Reminded\":\"\"} (first differing columns:"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17815",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet agents: no row matches reference row {\"Agent_ID\":\"AG-5050\",\"Agent_Name\":\"Mateo Castellan\",\"Email\":\"mateo.castellan@post.example\",\"Status\":\"On Leave\",\"Last_Reminded\":\"\"} (first differing columns:"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c25",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c25",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [30, 11]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c25",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Soren Jessop\",\"Email\":\"soren.jessop@post.example\",\"Cert_Type\":\"First aid at work\",\"Expiry_Date\":\"24/09/2026\"} (first differing columns"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c25",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Soren Jessop\",\"Email\":\"soren.jessop@post.example\",\"Cert_Type\":\"First aid at work\",\"Expiry_Date\":\"24/09/2026\"} (first differing columns"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c01",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [30]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Zelda Silvana\",\"Email\":\"zelda.silvana@inbox.example\",\"Cert_Type\":\"CCTV operator licence\",\"Expiry_Date\":\"19/08/2026\"} (first differing "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Zelda Silvana\",\"Email\":\"zelda.silvana@inbox.example\",\"Cert_Type\":\"CCTV operator licence\",\"Expiry_Date\":\"19/08/2026\"} (first differing "
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c02",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [30, 15]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Amara Lorrimer\",\"Email\":\"amara.lorrimer@inbox.example\",\"Cert_Type\":\"Door supervisor licence\",\"Expiry_Date\":\"23/09/2026\"} (first differ"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Amara Lorrimer\",\"Email\":\"amara.lorrimer@inbox.example\",\"Cert_Type\":\"Door supervisor licence\",\"Expiry_Date\":\"23/09/2026\"} (first differ"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c03",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [30]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Zelda Silvana\",\"Email\":\"zelda.silvana@mailbox.example\",\"Cert_Type\":\"First aid at work\",\"Expiry_Date\":\"14/07/2026\"} (first differing co"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Zelda Silvana\",\"Email\":\"zelda.silvana@mailbox.example\",\"Cert_Type\":\"First aid at work\",\"Expiry_Date\":\"14/07/2026\"} (first differing co"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c04",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [30, 29]"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Dorian Vantongeren\",\"Email\":\"dorian.vantongeren@mailbox.example\",\"Cert_Type\":\"CCTV operator licence\",\"Expiry_Date\":\"15/11/2026\"} (firs"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet certifications: no row matches reference row {\"Agent_Name\":\"Dorian Vantongeren\",\"Email\":\"dorian.vantongeren@mailbox.example\",\"Cert_Type\":\"CCTV operator licence\",\"Expiry_Date\":\"15/11/2026\"} (firs"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to zelda.kilbride@mailbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to jasper.okonkwo@inbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-7020\",\"customer_name\":\"Hollis\",\"customer_email\":\"hollis.thackeray@mailbox.example\",\"job_description\":\"oak staircase repair\",\"job_date\":\"2026-07-15"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-7020\",\"customer_name\":\"Hollis\",\"customer_email\":\"hollis.thackeray@mailbox.example\",\"job_description\":\"oak staircase repair\",\"job_date\":\"2026-07-15"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-9360\",\"customer_name\":\"Pavel\",\"customer_email\":\"pavel.pemberton@mailbox.example\",\"job_description\":\"bookcase alcove\",\"job_date\":\"2026-07-14\",\"stat"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-9360\",\"customer_name\":\"Pavel\",\"customer_email\":\"pavel.pemberton@mailbox.example\",\"job_description\":\"bookcase alcove\",\"job_date\":\"2026-07-14\",\"stat"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to odette.kilbride@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-4621\",\"customer_name\":\"Galina\",\"customer_email\":\"galina.jessop@mailbox.example\",\"job_description\":\"oak staircase repair\",\"job_date\":\"2026-06-11\",\""
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-4621\",\"customer_name\":\"Galina\",\"customer_email\":\"galina.jessop@mailbox.example\",\"job_description\":\"oak staircase repair\",\"job_date\":\"2026-06-11\",\""
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-2531\",\"customer_name\":\"Zelda\",\"customer_email\":\"zelda.ellery@inbox.example\",\"job_description\":\"bookcase alcove\",\"job_date\":\"2026-07-22\",\"status\":\""
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-2531\",\"customer_name\":\"Zelda\",\"customer_email\":\"zelda.ellery@inbox.example\",\"job_description\":\"bookcase alcove\",\"job_date\":\"2026-07-22\",\"status\":\""
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c05",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to xiomara.yarrow@inbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-2720\",\"customer_name\":\"\",\"customer_email\":\"dorian.ellery@inbox.example\",\"job_description\":\"oak staircase repair\",\"job_date\":\"2026-06-29\",\"status\":"
+   ]
+  },
+  {
+   "wave": 1,
+   "item": "17059",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet jobs: no row matches reference row {\"job_id\":\"J-2720\",\"customer_name\":\"\",\"customer_email\":\"dorian.ellery@inbox.example\",\"job_description\":\"oak staircase repair\",\"job_date\":\"2026-06-29\",\"status\":"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c06",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to ulric.ellery@inbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to mateo.lorrimer@post.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c06",
+   "rewrite": "category-legend",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to ulric.ellery@inbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to mateo.lorrimer@post.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c06",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to ingrid.yarrow@post.example: no message carries the facts [D:2026-09-07]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c06",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to ulric.ellery@inbox.example: no message carries the facts [6]",
+    "e-mail to vesna.ashcombe@mailbox.example: no message carries the facts [1]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c06",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-19060\",\"Client Name\":\"Odette Marchetti\",\"Client Email\":\"odette.marchetti@mailbox.example\",\"Amount\":1031.43,\"Currency\":\"GBP\",\"Due Date\":\"",
+    "sheet reminder-log: no row matches reference row {\"Amount\":\"EUR 2000\",\"Subject\":\"First Overdue Reminder: invoice INV-89941 is overdue\",\"Logged At\":\"2026-09-04T09:00:00.000Z\",\"Invoice ID\":\"INV-89941\",\""
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c06",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-19060\",\"Client Name\":\"Odette Marchetti\",\"Client Email\":\"odette.marchetti@mailbox.example\",\"Amount\":1031.43,\"Currency\":\"GBP\",\"Due Date\":\"",
+    "sheet reminder-log: no row matches reference row {\"Amount\":\"EUR 2000\",\"Subject\":\"First Overdue Reminder: invoice INV-89941 is overdue\",\"Logged At\":\"2026-09-04T09:00:00.000Z\",\"Invoice ID\":\"INV-89941\",\""
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to amara.fairhurst@post.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to kiran.ivers@inbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to amara.fairhurst@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to kiran.ivers@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c01",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to amara.fairhurst@post.example: no message carries the facts [8]",
+    "e-mail to kiran.ivers@inbox.example: no message carries the facts [14]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-31590\",\"Client Name\":\"Lucinda Grieve\",\"Client Email\":\"lucinda.grieve@mailbox.example\",\"Amount\":2000,\"Currency\":\"\",\"Due Date\":\"2026-08-06",
+    "sheet reminder-log: no row matches reference row {\"Amount\":\"USD 170.77\",\"Subject\":\"Second Overdue Reminder: invoice INV-35021 is overdue\",\"Logged At\":\"2026-08-07T09:00:00.000Z\",\"Invoice ID\":\"INV-35021"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-31590\",\"Client Name\":\"Lucinda Grieve\",\"Client Email\":\"lucinda.grieve@mailbox.example\",\"Amount\":2000,\"Currency\":\"\",\"Due Date\":\"2026-08-06",
+    "sheet reminder-log: no row matches reference row {\"Amount\":\"USD 170.77\",\"Subject\":\"Second Overdue Reminder: invoice INV-35021 is overdue\",\"Logged At\":\"2026-08-07T09:00:00.000Z\",\"Invoice ID\":\"INV-35021"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to lucinda.fairhurst@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to lucinda.fairhurst@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c02",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to lucinda.fairhurst@inbox.example: no message carries the facts [30]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-73830\",\"Client Name\":\"Ingrid Grieve\",\"Client Email\":\"ingrid.grieve@post.example\",\"Amount\":1166.68,\"Currency\":\"GBP\",\"Due Date\":\"2026-08-0",
+    "sheet reminder-log: no row matches reference row {\"Amount\":\"EUR 1350.95\",\"Subject\":\"Final Notice: invoice INV-40233 is overdue\",\"Logged At\":\"2026-08-03T09:00:00.000Z\",\"Invoice ID\":\"INV-40233\",\"Client "
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-73830\",\"Client Name\":\"Ingrid Grieve\",\"Client Email\":\"ingrid.grieve@post.example\",\"Amount\":1166.68,\"Currency\":\"GBP\",\"Due Date\":\"2026-08-0",
+    "sheet reminder-log: no row matches reference row {\"Amount\":\"EUR 1350.95\",\"Subject\":\"Final Notice: invoice INV-40233 is overdue\",\"Logged At\":\"2026-08-03T09:00:00.000Z\",\"Invoice ID\":\"INV-40233\",\"Client "
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-17950\",\"Client Name\":\"Ingrid Ellery\",\"Client Email\":\"ingrid.ellery@inbox.example\",\"Amount\":437.03,\"Currency\":\"GBP\",\"Due Date\":\"2026-08-2"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-17950\",\"Client Name\":\"Ingrid Ellery\",\"Client Email\":\"ingrid.ellery@inbox.example\",\"Amount\":437.03,\"Currency\":\"GBP\",\"Due Date\":\"2026-08-2"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.grieve@post.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c04",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.grieve@post.example: no message carries the facts [14]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-18260\",\"Client Name\":\"Talia Ivers\",\"Client Email\":\"talia.ivers@mailbox.example\",\"Amount\":3075,\"Currency\":\"USD\",\"Due Date\":\"2026-08-19\"} ",
+    "sheet reminder-log: no row matches reference row {\"Amount\":\"USD 417.55\",\"Subject\":\"Second Overdue Reminder: invoice INV-16254 is overdue\",\"Logged At\":\"2026-08-21T09:00:00.000Z\",\"Invoice ID\":\"INV-16254"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18797",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"Invoice ID\":\"INV-18260\",\"Client Name\":\"Talia Ivers\",\"Client Email\":\"talia.ivers@mailbox.example\",\"Amount\":3075,\"Currency\":\"USD\",\"Due Date\":\"2026-08-19\"} ",
+    "sheet reminder-log: no row matches reference row {\"Amount\":\"USD 417.55\",\"Subject\":\"Second Overdue Reminder: invoice INV-16254 is overdue\",\"Logged At\":\"2026-08-21T09:00:00.000Z\",\"Invoice ID\":\"INV-16254"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c06",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to zelda.pemberton@mailbox.example: no message carries the facts [80]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c06",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20266521-0\",\"Supplier Name\":\"Quarry Lane Books\",\"Registration / Tax Number\":\"GB523904\",\"Supplier Category\":\"Other\",\"Contact Pers"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c06",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20266521-0\",\"Supplier Name\":\"Quarry Lane Books\",\"Registration / Tax Number\":\"GB523904\",\"Supplier Category\":\"Other\",\"Contact Pers"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c09",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20262583-0\",\"Supplier Name\":\"Mossgrove Dental\",\"Registration / Tax Number\":\"GB788150\",\"Supplier Category\":\"Other\",\"Contact Perso"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c09",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20262583-0\",\"Supplier Name\":\"Mossgrove Dental\",\"Registration / Tax Number\":\"GB788150\",\"Supplier Category\":\"Other\",\"Contact Perso"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20269559-0\",\"Supplier Name\":\"Wrenfield Clinic\",\"Registration / Tax Number\":\"GB996476\",\"Supplier Category\":\"Manufacturing\",\"Conta"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20269559-0\",\"Supplier Name\":\"Wrenfield Clinic\",\"Registration / Tax Number\":\"GB996476\",\"Supplier Category\":\"Manufacturing\",\"Conta"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c00",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.rothwell@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c00",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.rothwell@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c00",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.rothwell@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20262088-0\",\"Supplier Name\":\"Saltmarsh Cycles\",\"Registration / Tax Number\":\"GB329256\",\"Supplier Category\":\"Professional Services"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20262088-0\",\"Supplier Name\":\"Saltmarsh Cycles\",\"Registration / Tax Number\":\"GB329256\",\"Supplier Category\":\"Professional Services"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c05",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.silvana@post.example: no message carries the facts [60]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Created At\":\"2026-09-24T16:33:00.000Z\",\"Risk Level\":\"Low\",\"Reviewed By\":\"Automated Qualification Workflow\",\"Supplier ID\":\"SUP-20260924163300-sim-c"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Created At\":\"2026-09-24T16:33:00.000Z\",\"Risk Level\":\"Low\",\"Reviewed By\":\"Automated Qualification Workflow\",\"Supplier ID\":\"SUP-20260924163300-sim-c"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c27",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to xiomara.whitlock@inbox.example: no message carries the facts [60]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c27",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20262935-0\",\"Supplier Name\":\"Kestrel Optics\",\"Registration / Tax Number\":\"GB831363\",\"Supplier Category\":\"Construction & Maintena"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c27",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20262935-0\",\"Supplier Name\":\"Kestrel Optics\",\"Registration / Tax Number\":\"GB831363\",\"Supplier Category\":\"Construction & Maintena"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c27",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to xiomara.whitlock@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c27",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to xiomara.whitlock@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c27",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to xiomara.whitlock@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c04",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to amara.ashcombe@mailbox.example: no message carries the facts [58]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20269558-0\",\"Supplier Name\":\"Kestrel Optics\",\"Registration / Tax Number\":\"GB581814\",\"Supplier Category\":\"IT & Technology\",\"Conta"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19187",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet supplier-master: no row matches reference row {\"Supplier ID\":\"SUP-20269558-0\",\"Supplier Name\":\"Kestrel Optics\",\"Registration / Tax Number\":\"GB581814\",\"Supplier Category\":\"IT & Technology\",\"Conta"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet ncr-master: no row matches reference row {\"RPN\":100,\"NCR ID\":\"NCR-20260731031300000\",\"Severity\":5,\"Closed At\":\"\",\"CAPA Cycle\":0,\"CAPA Owner\":\"\"} (first differing columns: Reporter Email)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet ncr-master: no row matches reference row {\"RPN\":100,\"NCR ID\":\"NCR-20260731031300000\",\"Severity\":5,\"Closed At\":\"\",\"CAPA Cycle\":0,\"CAPA Owner\":\"\"} (first differing columns: Reporter Email)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c00",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to wendell.brennagh@post.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to talia.whitlock@mailbox.example: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet ncr-master: no row matches reference row {\"NCR ID\":\"NCR-20260610021700000\",\"Created At\":\"2026-06-10T02:17:00.000Z\",\"Department\":\"HR\",\"Issue Title\":\"Wrong resin batch used\",\"Risk Level\":\"Low\",\"NC"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet ncr-master: no row matches reference row {\"NCR ID\":\"NCR-20260610021700000\",\"Created At\":\"2026-06-10T02:17:00.000Z\",\"Department\":\"HR\",\"Issue Title\":\"Wrong resin batch used\",\"Risk Level\":\"Low\",\"NC"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)",
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet ncr-master: no row matches reference row {\"NCR ID\":\"NCR-20260702194000000\",\"Created At\":\"2026-07-02T19:40:00.000Z\",\"Department\":\"Quality Assurance\",\"Issue Title\":\"Missing calibration record\",\"Ri"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c04",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet ncr-master: no row matches reference row {\"NCR ID\":\"NCR-20260702194000000\",\"Created At\":\"2026-07-02T19:40:00.000Z\",\"Department\":\"Quality Assurance\",\"Issue Title\":\"Missing calibration record\",\"Ri"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c05",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to rosalind.underhill@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet ncr-master: no row matches reference row {\"NCR ID\":\"NCR-20260613181300000\",\"Created At\":\"2026-06-13T18:13:00.000Z\",\"Department\":\"Production\",\"Issue Title\":\"Burr on machined flange\",\"Risk Level\":"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c05",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet ncr-master: no row matches reference row {\"NCR ID\":\"NCR-20260613181300000\",\"Created At\":\"2026-06-13T18:13:00.000Z\",\"Department\":\"Production\",\"Issue Title\":\"Burr on machined flange\",\"Risk Level\":"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c05",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to rosalind.underhill@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c05",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to rosalind.underhill@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "18534",
+   "world": "c05",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to rosalind.underhill@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c11",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to bastian.marchetti@post.example: no message carries the facts [D:2026-09-21]",
+    "e-mail to leo.pm@studio.example: no message carries the facts [D:2026-09-22, D:2026-09-21]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c11",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Client ID\":\"CL-OLD1\",\"Client Name\":\"Kiran Silvana\",\"Client Email\":\"kiran.silvana@post.example\",\"Status\":\"Active\"} (first differing columns: Client Email)",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c11",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Client ID\":\"CL-OLD1\",\"Client Name\":\"Kiran Silvana\",\"Client Email\":\"kiran.silvana@post.example\",\"Status\":\"Active\"} (first differing columns: Client Email)",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c11",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to bastian.marchetti@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to leo.pm@studio.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c11",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to bastian.marchetti@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to leo.pm@studio.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c11",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to bastian.marchetti@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to leo.pm@studio.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c13",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Client ID\":\"CL-ZELDA-263827\",\"Client Name\":\"Zelda Vantongeren\",\"Client Email\":\"zelda.vantongeren@mailbox.example\",\"Status\":\"Active\"} (first differing colu"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c13",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Client ID\":\"CL-ZELDA-263827\",\"Client Name\":\"Zelda Vantongeren\",\"Client Email\":\"zelda.vantongeren@mailbox.example\",\"Status\":\"Active\"} (first differing colu"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c20",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to hollis.hartigan@mailbox.example: no message carries the facts [D:2026-07-05]",
+    "e-mail to ana.pm@studio.example: no message carries the facts [D:2026-07-04, D:2026-07-05]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c20",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Client ID\":\"CL-OLD0\",\"Client Name\":\"Amara Jessop\",\"Client Email\":\"amara.jessop@inbox.example\",\"Status\":\"Active\"} (first differing columns: Client Email)",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c20",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Client ID\":\"CL-OLD0\",\"Client Name\":\"Amara Jessop\",\"Client Email\":\"amara.jessop@inbox.example\",\"Status\":\"Active\"} (first differing columns: Client Email)",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c01",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to xiomara.fairhurst@mailbox.example: no message carries the facts [D:2026-06-28]",
+    "e-mail to pm.desk@studio.example: no message carries the facts [D:2026-06-29, D:2026-06-28]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Client ID\":\"CL-XIOMARA-593393\",\"Client Name\":\"Xiomara Fairhurst\",\"Client Email\":\"xiomara.fairhurst@mailbox.example\",\"Status\":\"Inactive\"} (first differing ",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Client ID\":\"CL-XIOMARA-593393\",\"Client Name\":\"Xiomara Fairhurst\",\"Client Email\":\"xiomara.fairhurst@mailbox.example\",\"Status\":\"Inactive\"} (first differing ",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c00",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.lorrimer@mailbox.example: no message carries the facts [D:2026-07-28]",
+    "e-mail to leo.pm@studio.example: no message carries the facts [D:2026-07-28]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Notes\":\"Needs Shopify access\",\"Budget\":500,\"Status\":\"Active\",\"Company\":\"Soren Lorrimer\",\"Package\":\"Premium\",\"Service\":\"Website redesign\"} (first differing",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c00",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Notes\":\"Needs Shopify access\",\"Budget\":500,\"Status\":\"Active\",\"Company\":\"Soren Lorrimer\",\"Package\":\"Premium\",\"Service\":\"Website redesign\"} (first differing",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c00",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.lorrimer@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to leo.pm@studio.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c00",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.lorrimer@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to leo.pm@studio.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c00",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to soren.lorrimer@mailbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to leo.pm@studio.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c02",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.quayle@inbox.example: no message carries the facts [D:2026-08-15]",
+    "e-mail to pm.desk@studio.example: no message carries the facts [D:2026-08-16, D:2026-08-15]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Notes\":\"Prefers Slack\",\"Budget\":0,\"Status\":\"Active\",\"Company\":\"Falconcrest Labs\",\"Package\":\"Starter\",\"Service\":\"Enterprise CRM rollout\"} (first differing ",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet clients: no row matches reference row {\"Notes\":\"Prefers Slack\",\"Budget\":0,\"Status\":\"Active\",\"Company\":\"Falconcrest Labs\",\"Package\":\"Starter\",\"Service\":\"Enterprise CRM rollout\"} (first differing ",
+    "sheet onboarding-config: no row matches reference row {\"Key\":\"defaultProjectManager\",\"Value\":\"pm.desk@studio.example\"} (first differing columns: Value)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c02",
+   "rewrite": "settings-mention",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.quayle@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to pm.desk@studio.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c02",
+   "rewrite": "settings-mention",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.quayle@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "19014",
+   "world": "c02",
+   "rewrite": "settings-mention",
+   "oracle": "v3",
+   "pass": false,
+   "reasons": [
+    "e-mail to rosalind.quayle@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "20090",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 3 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "20090",
+   "world": "c03",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-07-21]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "20090",
+   "world": "c03",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [15]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "20090",
+   "world": "c04",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "20090",
+   "world": "c02",
+   "rewrite": "category-legend",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "20090",
+   "world": "c02",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [D:2026-09-28]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "20090",
+   "world": "c02",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries the facts [15]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "20090",
+   "world": "c05",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "20090",
+   "world": "c05",
+   "rewrite": "category-legend",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "e-mail to user@example.com: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17902",
+   "world": "c12",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #alerts: no message carries the facts [1440]",
+    "chat to #alerts: no message carries the facts [15]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17902",
+   "world": "c01",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #alerts: no message carries only the right rows (it mentions 2 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17902",
+   "world": "c03",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #alerts: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "chat to #alerts: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17902",
+   "world": "c03",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #alerts: no message carries the facts [1440]",
+    "chat to #alerts: no message carries the facts [15]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17902",
+   "world": "c04",
+   "rewrite": "number-comma",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "chat to #alerts: no message carries the facts [1440]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c16",
+   "rewrite": "category-legend",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to talia.fairhurst@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+    "e-mail to noor.hartigan@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c16",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to talia.fairhurst@post.example: no message carries the facts [D:2026-07-01, D:2026-06-11, D:2026-07-11]",
+    "e-mail to noor.hartigan@inbox.example: no message carries the facts [D:2026-07-01, D:2026-04-01, D:2026-05-01, D:2026-04-06, D:2026-05-06]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c16",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-28410\",\"customer_name\":\"Noor Hartigan\",\"customer_email\":\"noor.hartigan@inbox.example\",\"invoice_date\":\"2026-04-02\",\"due_date\":\"2026-05-02",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-05-31 09:00\",\"customer_name\":\"Amara Rothwell\",\"customer_email\":\"amara.rothwell@post.example\",\"statement_period\":\"June 2026\",\"invoice_"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c16",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-28410\",\"customer_name\":\"Noor Hartigan\",\"customer_email\":\"noor.hartigan@inbox.example\",\"invoice_date\":\"2026-04-02\",\"due_date\":\"2026-05-02",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-05-31 09:00\",\"customer_name\":\"Amara Rothwell\",\"customer_email\":\"amara.rothwell@post.example\",\"statement_period\":\"June 2026\",\"invoice_"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c29",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to noor.fairhurst@mailbox.example: no message carries the facts [D:2026-09-01, D:2026-06-28, D:2026-07-28, D:2026-07-02, D:2026-08-01, D:2026-07-03]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c29",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-01700\",\"customer_name\":\"Noor Fairhurst\",\"customer_email\":\"noor.fairhurst@mailbox.example\",\"invoice_date\":\"2026-07-03\",\"due_date\":\"2026-0",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-09-01 09:00\",\"customer_name\":\"Noor Fairhurst\",\"customer_email\":\"noor.fairhurst@mailbox.example\",\"statement_period\":\"September 2026\",\""
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c29",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-01700\",\"customer_name\":\"Noor Fairhurst\",\"customer_email\":\"noor.fairhurst@mailbox.example\",\"invoice_date\":\"2026-07-03\",\"due_date\":\"2026-0",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-09-01 09:00\",\"customer_name\":\"Noor Fairhurst\",\"customer_email\":\"noor.fairhurst@mailbox.example\",\"statement_period\":\"September 2026\",\""
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-13070\",\"customer_name\":\"Ulric Fairhurst\",\"customer_email\":\"ulric.fairhurst@mailbox.example\",\"invoice_date\":\"2026-09-11\",\"due_date\":\"2026",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-10-01 09:00\",\"customer_name\":\"Ulric Fairhurst\",\"customer_email\":\"ulric.fairhurst@mailbox.example\",\"statement_period\":\"October 2026\",\""
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-13070\",\"customer_name\":\"Ulric Fairhurst\",\"customer_email\":\"ulric.fairhurst@mailbox.example\",\"invoice_date\":\"2026-09-11\",\"due_date\":\"2026",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-10-01 09:00\",\"customer_name\":\"Ulric Fairhurst\",\"customer_email\":\"ulric.fairhurst@mailbox.example\",\"statement_period\":\"October 2026\",\""
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c02",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to fenwick.castellan@post.example: no message carries the facts [D:2026-07-01, D:2026-06-11, D:2026-07-11]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-08640\",\"customer_name\":\"Jasper Grieve\",\"customer_email\":\"jasper.grieve@mailbox.example\",\"invoice_date\":\"2026-03-03\",\"due_date\":\"2026-04-",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-07-01 09:00\",\"customer_name\":\"Jasper Grieve\",\"customer_email\":\"jasper.grieve@mailbox.example\",\"statement_period\":\"July 2026\",\"invoice"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c02",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-08640\",\"customer_name\":\"Jasper Grieve\",\"customer_email\":\"jasper.grieve@mailbox.example\",\"invoice_date\":\"2026-03-03\",\"due_date\":\"2026-04-",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-07-01 09:00\",\"customer_name\":\"Jasper Grieve\",\"customer_email\":\"jasper.grieve@mailbox.example\",\"statement_period\":\"July 2026\",\"invoice"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c03",
+   "rewrite": "dmy-dates",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "e-mail to mateo.marchetti@mailbox.example: no message carries the facts [D:2026-06-01, D:2026-02-01, D:2026-03-03, D:2026-04-17, D:2026-05-17]"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-22281\",\"customer_name\":\"Dorian Whitlock\",\"customer_email\":\"dorian.whitlock@post.example\",\"invoice_date\":\"2026-03-02\",\"due_date\":\"2026-04",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-05-01 09:00\",\"customer_name\":\"Mateo Marchetti\",\"customer_email\":\"mateo.marchetti@mailbox.example\",\"statement_period\":\"May 2026\",\"invo"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c03",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet invoices: no row matches reference row {\"invoice_id\":\"INV-22281\",\"customer_name\":\"Dorian Whitlock\",\"customer_email\":\"dorian.whitlock@post.example\",\"invoice_date\":\"2026-03-02\",\"due_date\":\"2026-04",
+    "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-05-01 09:00\",\"customer_name\":\"Mateo Marchetti\",\"customer_email\":\"mateo.marchetti@mailbox.example\",\"statement_period\":\"May 2026\",\"invo"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c21",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"WENDELL.WHITLOCK@BRIGHTWATER-TILES.EXAMPLE\", expected \"wendell.whitlock@brightwater-tiles.example\"",
+    "sheet leads: no row matches reference row {\"first_name\":\"Zelda\",\"last_name\":\"Brennagh\",\"email\":\"zelda.brennagh@post.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differing col"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c21",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"WENDELL.WHITLOCK@BRIGHTWATER-TILES.EXAMPLE\", expected \"wendell.whitlock@brightwater-tiles.example\"",
+    "sheet leads: no row matches reference row {\"first_name\":\"Zelda\",\"last_name\":\"Brennagh\",\"email\":\"zelda.brennagh@post.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differing col"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c14",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"first_name\":\"Amara\",\"last_name\":\"Yarrow\",\"email\":\"amara.yarrow@mailbox.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differing colu"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c14",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"first_name\":\"Amara\",\"last_name\":\"Yarrow\",\"email\":\"amara.yarrow@mailbox.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differing colu"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c13",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"first_name\":\"Galina\",\"last_name\":\"Castellan\",\"email\":\"galina.castellan@inbox.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differin"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c13",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"first_name\":\"Galina\",\"last_name\":\"Castellan\",\"email\":\"galina.castellan@inbox.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differin"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"first_name\":\"Wendell\",\"last_name\":\"Underhill\",\"email\":\"wendell.underhill@post.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differi"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c01",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"<redacted-address>\", expected \"<redacted-address>\"",
+    "sheet leads: no row matches reference row {\"first_name\":\"Wendell\",\"last_name\":\"Underhill\",\"email\":\"wendell.underhill@post.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differi"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c07",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"ROSALIND.OKONKWO@BRIGHTWATER-TILES.EXAMPLE\", expected \"rosalind.okonkwo@brightwater-tiles.example\"",
+    "sheet leads: no row matches reference row {\"first_name\":\"Rosalind\",\"last_name\":\"Okonkwo\",\"email\":\"rosalind.okonkwo@brightwater-tiles.example\",\"phone\":\"\",\"company_domain\":\"brightwater-tiles.example\",\"b"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c07",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"ROSALIND.OKONKWO@BRIGHTWATER-TILES.EXAMPLE\", expected \"rosalind.okonkwo@brightwater-tiles.example\"",
+    "sheet leads: no row matches reference row {\"first_name\":\"Rosalind\",\"last_name\":\"Okonkwo\",\"email\":\"rosalind.okonkwo@brightwater-tiles.example\",\"phone\":\"\",\"company_domain\":\"brightwater-tiles.example\",\"b"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c19",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"first_name\":\"Dorian\",\"last_name\":\"Kilbride\",\"email\":\"dorian.kilbride@mailbox.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differin",
+    "sheet rejected: no row matches reference row {\"received_at\":\"2026-09-14T20:21:00.000Z\",\"email\":\"pavel.lorrimer@kestrel-optics.example\",\"reason\":\"message is too short to act on, and no phone number\"} ("
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c19",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "sheet leads: no row matches reference row {\"first_name\":\"Dorian\",\"last_name\":\"Kilbride\",\"email\":\"dorian.kilbride@mailbox.example\",\"phone\":\"\",\"company_domain\":\"\",\"business_email\":false} (first differin",
+    "sheet rejected: no row matches reference row {\"received_at\":\"2026-09-14T20:21:00.000Z\",\"email\":\"pavel.lorrimer@kestrel-optics.example\",\"reason\":\"message is too short to act on, and no phone number\"} ("
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c31",
+   "rewrite": "address-case-cells",
+   "oracle": "v1",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"FENWICK.ASHCOMBE@LUMEN-BAKERY.EXAMPLE\", expected \"fenwick.ashcombe@lumen-bakery.example\"",
+    "sheet leads: no row matches reference row {\"first_name\":\"Fenwick\",\"last_name\":\"Ashcombe\",\"email\":\"fenwick.ashcombe@lumen-bakery.example\",\"phone\":\"'+442079460958123\",\"company_domain\":\"lumen-bakery.exam"
+   ]
+  },
+  {
+   "wave": 2,
+   "item": "17175",
+   "world": "c31",
+   "rewrite": "address-case-cells",
+   "oracle": "v2",
+   "pass": false,
+   "reasons": [
+    "response 1: body.email is \"FENWICK.ASHCOMBE@LUMEN-BAKERY.EXAMPLE\", expected \"fenwick.ashcombe@lumen-bakery.example\"",
+    "sheet leads: no row matches reference row {\"first_name\":\"Fenwick\",\"last_name\":\"Ashcombe\",\"email\":\"fenwick.ashcombe@lumen-bakery.example\",\"phone\":\"'+442079460958123\",\"company_domain\":\"lumen-bakery.exam"
+   ]
+  }
+ ],
+ "missedMutations": [
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c03",
+   "mutation": "dump-rows",
+   "oracle": "v1",
+   "caught": false
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c03",
+   "mutation": "dump-rows",
+   "oracle": "v2",
+   "caught": false
+  },
+  {
+   "wave": 1,
+   "item": "17807",
+   "world": "c03",
+   "mutation": "dump-rows",
+   "oracle": "v3",
+   "caught": false
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c29",
+   "mutation": "dump-rows",
+   "oracle": "v1",
+   "caught": false
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c29",
+   "mutation": "dump-rows",
+   "oracle": "v2",
+   "caught": false
+  },
+  {
+   "wave": 2,
+   "item": "17771",
+   "world": "c29",
+   "mutation": "dump-rows",
+   "oracle": "v3",
+   "caught": false
+  }
+ ]
+}

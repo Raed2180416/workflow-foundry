@@ -1,0 +1,5 @@
+{
+ "schema": "foundry.ci1.split-w2/1",
+ "note": "CI-1 wave 2: every item is test (held out from builder development; the arms are wave 1's, frozen since MANIFEST.json 39bf40bd...). Written by the same bed author as wave 1, so not sealed.",
+ "test": ["18797", "19187", "18534", "19014", "20090", "17902", "17771", "18281", "17175"]
+}

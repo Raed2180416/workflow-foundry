@@ -1,0 +1,1291 @@
+{
+ "wave": 2,
+ "review": "CI-1 review arms (PREREG-CI1-R)",
+ "evidence": "held out, not sealed (PREREG-CI1-R)",
+ "oracle": "v2 recorded (w2x by rescore-w2x.mjs)",
+ "arm": "A1cH",
+ "label": "w2-R-A1cH",
+ "split": "test",
+ "model": "claude-haiku-5-5",
+ "K": 3,
+ "items": [
+  "18797",
+  "19187",
+  "18534",
+  "19014",
+  "20090",
+  "17902",
+  "17771",
+  "18281",
+  "17175"
+ ],
+ "manifestSha256": "333650cf0832f08018e5e3a257e1e2f57b64f958215e355308c54dd6ecc5a374",
+ "manifestRSha256": "02ac814498232f0e1bb0d1b1a259e255523e68fe10c3b0aea125b359bf4bace7",
+ "isolation": {
+  "accountVariablesRemoved": [
+   "CLAUDE_CODE_ACCOUNT_UUID",
+   "CLAUDE_CODE_ORGANIZATION_UUID",
+   "CLAUDE_CODE_USER_EMAIL"
+  ],
+  "emptyCliConfigDir": true
+ },
+ "privacy": {
+  "recordAddressesRedactedThisRun": 0,
+  "journalCellsWithAccountAddressScrubbed": 0
+ },
+ "started": "2026-11-04T20:26:18.408Z",
+ "finished": "2026-11-04T20:36:41.065Z",
+ "capUsd": 0.6,
+ "spentUsd": 0.341769,
+ "notRun": [],
+ "environmentFault": null,
+ "records": [
+  {
+   "item": "18797",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.015604,
+   "tokens": 69722,
+   "calls": 2,
+   "wallMs": 78528,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "18797",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": false,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.017568,
+   "tokens": 102691,
+   "calls": 2,
+   "wallMs": 87478,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "18797",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.022936,
+   "tokens": 106914,
+   "calls": 3,
+   "wallMs": 110988,
+   "questions": 0,
+   "repairs": 1,
+   "practice": [
+    "failed",
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root"
+    ],
+    "status": "failed",
+    "error": "ACCEPTANCE_FAILED Acceptance failed for root"
+   }
+  },
+  {
+   "item": "19187",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 2,
+   "worlds": 7,
+   "usd": 0.015733,
+   "tokens": 73042,
+   "calls": 2,
+   "wallMs": 69742,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "sheet evaluation-log: no row matches reference row {\"Logged At\":\"2026-07-12T08:47:00.000Z\",\"Risk Level\":\"Low\",\"Supplier ID\":\"SUP-20260712084700-sim-c06\",\"Evaluated By\":\"Automated Qualification Workflow\",\"Evaluation ID\":\"EVAL-20260712084700-"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19187",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 2,
+   "worlds": 7,
+   "usd": 0.015074,
+   "tokens": 77001,
+   "calls": 2,
+   "wallMs": 86190,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "sheet evaluation-log: no row matches reference row {\"Logged At\":\"2026-07-12T08:47:00.000Z\",\"Risk Level\":\"Low\",\"Supplier ID\":\"SUP-20260712084700-sim-c06\",\"Evaluated By\":\"Automated Qualification Workflow\",\"Evaluation ID\":\"EVAL-20260712084700-"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19187",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 2,
+   "worlds": 7,
+   "usd": 0.012102,
+   "tokens": 70874,
+   "calls": 2,
+   "wallMs": 64013,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c06",
+    "reasons": [
+     "sheet evaluation-log: no row matches reference row {\"Logged At\":\"2026-07-12T08:47:00.000Z\",\"Risk Level\":\"Low\",\"Supplier ID\":\"SUP-20260712084700-sim-c06\",\"Evaluated By\":\"Automated Qualification Workflow\",\"Evaluation ID\":\"EVAL-20260712084700-"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18534",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.01206,
+   "tokens": 61830,
+   "calls": 2,
+   "wallMs": 50131,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "18534",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.009562,
+   "tokens": 61802,
+   "calls": 2,
+   "wallMs": 50942,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "18534",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": false,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.009744,
+   "tokens": 88825,
+   "calls": 2,
+   "wallMs": 69051,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "19014",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.019288,
+   "tokens": 80198,
+   "calls": 2,
+   "wallMs": 98968,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c13",
+    "reasons": [
+     "response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19014",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.01739,
+   "tokens": 82661,
+   "calls": 2,
+   "wallMs": 102518,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c13",
+    "reasons": [
+     "response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19014",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 2,
+   "worlds": 6,
+   "usd": 0.018247,
+   "tokens": 84457,
+   "calls": 2,
+   "wallMs": 106601,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c13",
+    "reasons": [
+     "response 1: body.clientId is \"CL-ZELDA-263827\", expected \"CL-ZELDAVAN-500000\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "20090",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.010299,
+   "tokens": 83916,
+   "calls": 2,
+   "wallMs": 37469,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "20090",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.009403,
+   "tokens": 61668,
+   "calls": 2,
+   "wallMs": 47176,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "20090",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.007297,
+   "tokens": 56499,
+   "calls": 2,
+   "wallMs": 32862,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "17902",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.009046,
+   "tokens": 54040,
+   "calls": 2,
+   "wallMs": 32774,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "17902",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.007253,
+   "tokens": 80358,
+   "calls": 2,
+   "wallMs": 35978,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "17902",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.006995,
+   "tokens": 54734,
+   "calls": 2,
+   "wallMs": 44195,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "17771",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.012513,
+   "tokens": 88714,
+   "calls": 2,
+   "wallMs": 52011,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c16",
+    "reasons": [
+     "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-07-01 09:00\",\"customer_name\":\"wendell.ellery@post.example\",\"customer_email\":\"wendell.ellery@post.example\",\"statement_period\":\"July 2026\",\"invoice_count\":1,\"total_due\":2003.9"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17771",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.009201,
+   "tokens": 60181,
+   "calls": 2,
+   "wallMs": 53568,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c29",
+    "reasons": [
+     "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-09-01 09:00\",\"customer_name\":\"Noor Fairhurst\",\"customer_email\":\"NOOR.FAIRHURST@MAILBOX.EXAMPLE\",\"statement_period\":\"September 2026\",\"invoice_count\":4,\"total_due\":7914.09} (f"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17771",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.013937,
+   "tokens": 101553,
+   "calls": 2,
+   "wallMs": 67193,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c16",
+    "reasons": [
+     "sheet statement-log: no row matches reference row {\"sent_at\":\"2026-07-01 09:00\",\"customer_name\":\"wendell.ellery@post.example\",\"customer_email\":\"wendell.ellery@post.example\",\"statement_period\":\"July 2026\",\"invoice_count\":1,\"total_due\":2003.9"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18281",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 3,
+   "worlds": 6,
+   "usd": 0.014755,
+   "tokens": 92234,
+   "calls": 2,
+   "wallMs": 69652,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c07",
+    "reasons": [
+     "response 1: body.missing[0] is \"e-mail address\", expected \"email address\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18281",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.009046,
+   "tokens": 59974,
+   "calls": 2,
+   "wallMs": 48027,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c02",
+    "reasons": [
+     "response 1: body.missing has 1 entries, expected 2"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "18281",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 3,
+   "worlds": 6,
+   "usd": 0.010653,
+   "tokens": 63081,
+   "calls": 2,
+   "wallMs": 58580,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c07",
+    "reasons": [
+     "response 1: body.missing[0] is \"e-mail address\", expected \"email address\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17175",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 7,
+   "usd": 0.013053,
+   "tokens": 63232,
+   "calls": 2,
+   "wallMs": 59358,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c21",
+    "reasons": [
+     "response 1: body.phone is \"+391234567\", expected \"'+391234567\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17175",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 7,
+   "usd": 0.0129,
+   "tokens": 62919,
+   "calls": 2,
+   "wallMs": 56756,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c21",
+    "reasons": [
+     "response 1: body.phone is \"+391234567\", expected \"'+391234567\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17175",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": false,
+   "worldsPassed": 4,
+   "worlds": 7,
+   "usd": 0.01011,
+   "tokens": 62218,
+   "calls": 2,
+   "wallMs": 58051,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P04",
+     "P08",
+     "P12",
+     "P15",
+     "P16",
+     "P17",
+     "P27",
+     "P32",
+     "P36",
+     "P37",
+     "P38",
+     "P39",
+     "P42",
+     "P58",
+     "P60"
+    ],
+    "exemplars": [],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c21",
+    "reasons": [
+     "response 1: body.phone is \"+391234567\", expected \"'+391234567\""
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  }
+ ]
+}

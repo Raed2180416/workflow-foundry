@@ -1,0 +1,1367 @@
+{
+ "wave": 1,
+ "review": "CI-1 review arms (PREREG-CI1-R)",
+ "evidence": "held out, not sealed (PREREG-CI1-R)",
+ "oracle": "v1 recorded (v2 by rescore.mjs)",
+ "arm": "A0p",
+ "label": "test-R-A0p",
+ "split": "test",
+ "model": "claude-haiku-5-5",
+ "K": 3,
+ "items": [
+  "14177",
+  "17545",
+  "16364",
+  "17342",
+  "17878",
+  "19103",
+  "19445",
+  "19446",
+  "17816",
+  "16904",
+  "15238",
+  "11679",
+  "17749",
+  "17624",
+  "16312",
+  "17811",
+  "17815",
+  "17807",
+  "17059"
+ ],
+ "manifestSha256": "39bf40bd420be14b4b666f5d5e9c0ceb4cb03a85d9c87774a2b0578ebb19def6",
+ "manifestRSha256": "02ac814498232f0e1bb0d1b1a259e255523e68fe10c3b0aea125b359bf4bace7",
+ "isolation": {
+  "accountVariablesRemoved": [
+   "CLAUDE_CODE_ACCOUNT_UUID",
+   "CLAUDE_CODE_ORGANIZATION_UUID",
+   "CLAUDE_CODE_USER_EMAIL"
+  ],
+  "emptyCliConfigDir": true
+ },
+ "privacy": {
+  "recordAddressesRedactedThisRun": 1,
+  "journalCellsWithAccountAddressScrubbed": 0
+ },
+ "started": "2026-11-04T20:12:38.476Z",
+ "finished": "2026-11-04T20:23:26.430Z",
+ "capUsd": 0.7,
+ "spentUsd": 0.281108,
+ "notRun": [],
+ "environmentFault": null,
+ "records": [
+  {
+   "item": "14177",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.00523,
+   "tokens": 22823,
+   "calls": 1,
+   "wallMs": 27192,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "14177",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.00357,
+   "tokens": 23018,
+   "calls": 1,
+   "wallMs": 29624,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "14177",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.00617,
+   "tokens": 24703,
+   "calls": 1,
+   "wallMs": 32895,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "chat to #general: no message carries the facts [1]"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17545",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.007175,
+   "tokens": 26922,
+   "calls": 1,
+   "wallMs": 42486,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17545",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.00461,
+   "tokens": 25304,
+   "calls": 1,
+   "wallMs": 36522,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17545",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.005188,
+   "tokens": 26460,
+   "calls": 1,
+   "wallMs": 41835,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "16364",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0.00581,
+   "tokens": 23954,
+   "calls": 1,
+   "wallMs": 32155,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c02",
+    "reasons": [
+     "e-mail to fenwick.ivers@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to wendell.okonkwo@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "16364",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0.003243,
+   "tokens": 22259,
+   "calls": 1,
+   "wallMs": 26148,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c02",
+    "reasons": [
+     "e-mail to fenwick.ivers@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to wendell.okonkwo@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "16364",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 0,
+   "worlds": 6,
+   "usd": 0.003584,
+   "tokens": 22942,
+   "calls": 1,
+   "wallMs": 28802,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c02",
+    "reasons": [
+     "e-mail to fenwick.ivers@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to wendell.okonkwo@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17342",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.004003,
+   "tokens": 20500,
+   "calls": 1,
+   "wallMs": 18214,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17342",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.002138,
+   "tokens": 20259,
+   "calls": 1,
+   "wallMs": 17485,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17342",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.002132,
+   "tokens": 20246,
+   "calls": 1,
+   "wallMs": 17328,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.006466,
+   "tokens": 25459,
+   "calls": 1,
+   "wallMs": 36514,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17878",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.004825,
+   "tokens": 25677,
+   "calls": 1,
+   "wallMs": 36013,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17878",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.004761,
+   "tokens": 25548,
+   "calls": 1,
+   "wallMs": 36450,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c05",
+    "reasons": [
+     "e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)",
+     "e-mail to talia.rothwell@post.example: no message carries only the right rows (it mentions 1 row(s) the reference leaves out)"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "19103",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.003275,
+   "tokens": 18860,
+   "calls": 1,
+   "wallMs": 12052,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "19103",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.001375,
+   "tokens": 18492,
+   "calls": 1,
+   "wallMs": 12830,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "19103",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.001551,
+   "tokens": 18844,
+   "calls": 1,
+   "wallMs": 12012,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "19445",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.005671,
+   "tokens": 23876,
+   "calls": 1,
+   "wallMs": 30057,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "19445",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.00365,
+   "tokens": 23335,
+   "calls": 1,
+   "wallMs": 27754,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "19445",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.003243,
+   "tokens": 22521,
+   "calls": 1,
+   "wallMs": 23599,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "19446",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.011614,
+   "tokens": 36338,
+   "calls": 1,
+   "wallMs": 69921,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c09",
+    "reasons": [
+     "the built workflow did not finish: failed: SCHEMA_MISMATCH outbox.send input does not satisfy its schema",
+     "e-mail to fenwick.jessop@inbox.example: 0 sent, expected 1"
+    ],
+    "status": "failed",
+    "error": "SCHEMA_MISMATCH outbox.send input does not satisfy its schema"
+   }
+  },
+  {
+   "item": "19446",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.011527,
+   "tokens": 36164,
+   "calls": 1,
+   "wallMs": 69978,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "19446",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0.008667,
+   "tokens": 30444,
+   "calls": 1,
+   "wallMs": 50720,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c00",
+    "reasons": [
+     "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-144\",\"vendorName\":\"Ashgrove Motors\",\"invoiceNumber\":\"INV-66209\",\"invoiceDate\":\"2026-09-13\",\"poNumber\":\"PO-4011\",\"grnNumber\":\"GRN-9586\"} (first differing columns: invoiceDat"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17816",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.004243,
+   "tokens": 20819,
+   "calls": 1,
+   "wallMs": 20647,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17816",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.005662,
+   "tokens": 41146,
+   "calls": 2,
+   "wallMs": 27325,
+   "questions": 0,
+   "repairs": 1,
+   "practice": [
+    "failed",
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17816",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.003904,
+   "tokens": 42343,
+   "calls": 1,
+   "wallMs": 23712,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "16904",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.008982,
+   "tokens": 30464,
+   "calls": 1,
+   "wallMs": 56460,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "16904",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0.005474,
+   "tokens": 26938,
+   "calls": 1,
+   "wallMs": 44320,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_success.sent"
+    ],
+    "status": "failed",
+    "error": "MISSING_REFERENCE Missing value at nodes.reply_success.sent"
+   }
+  },
+  {
+   "item": "16904",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.012283,
+   "tokens": 56537,
+   "calls": 2,
+   "wallMs": 72377,
+   "questions": 0,
+   "repairs": 1,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "15238",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.005608,
+   "tokens": 23619,
+   "calls": 1,
+   "wallMs": 31590,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "15238",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.003592,
+   "tokens": 23047,
+   "calls": 1,
+   "wallMs": 26909,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "15238",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.003953,
+   "tokens": 23769,
+   "calls": 1,
+   "wallMs": 30514,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "11679",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.004778,
+   "tokens": 22066,
+   "calls": 1,
+   "wallMs": 22901,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "11679",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.003845,
+   "tokens": 23695,
+   "calls": 1,
+   "wallMs": 29580,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "11679",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.003464,
+   "tokens": 22933,
+   "calls": 1,
+   "wallMs": 26392,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17749",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.007422,
+   "tokens": 27370,
+   "calls": 1,
+   "wallMs": 46814,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17749",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.004968,
+   "tokens": 25962,
+   "calls": 1,
+   "wallMs": 39064,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17749",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.010199,
+   "tokens": 51798,
+   "calls": 2,
+   "wallMs": 60119,
+   "questions": 0,
+   "repairs": 1,
+   "practice": [
+    "failed",
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17624",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.004222,
+   "tokens": 20799,
+   "calls": 1,
+   "wallMs": 19277,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17624",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.002795,
+   "tokens": 21391,
+   "calls": 1,
+   "wallMs": 22553,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17624",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.002827,
+   "tokens": 21456,
+   "calls": 1,
+   "wallMs": 21429,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "16312",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.006193,
+   "tokens": 24768,
+   "calls": 1,
+   "wallMs": 35402,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c03",
+    "reasons": [
+     "chat to #deadlines: 1 sent, expected 2"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "16312",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.004475,
+   "tokens": 24786,
+   "calls": 1,
+   "wallMs": 35766,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c03",
+    "reasons": [
+     "chat to #deadlines: 1 sent, expected 2"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "16312",
+   "k": 2,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 4,
+   "worlds": 6,
+   "usd": 0.004019,
+   "tokens": 23875,
+   "calls": 1,
+   "wallMs": 32813,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c03",
+    "reasons": [
+     "chat to #deadlines: 1 sent, expected 2"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17811",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0.004408,
+   "tokens": 21213,
+   "calls": 1,
+   "wallMs": 21984,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to noor.hartigan@post.example: no message carries the facts [D:2026-06-15]",
+     "e-mail to vesna.ivers@post.example: no message carries the facts [D:2026-06-22]"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17811",
+   "k": 1,
+   "outcome": "ready",
+   "pass": false,
+   "passV1": null,
+   "worldsPassed": 1,
+   "worlds": 6,
+   "usd": 0.002975,
+   "tokens": 21805,
+   "calls": 1,
+   "wallMs": 23431,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c01",
+    "reasons": [
+     "e-mail to noor.hartigan@post.example: no message carries the facts [D:2026-06-15]",
+     "e-mail to vesna.ivers@post.example: no message carries the facts [D:2026-06-22]"
+    ],
+    "status": "succeeded",
+    "error": null
+   }
+  },
+  {
+   "item": "17811",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.00295,
+   "tokens": 21753,
+   "calls": 1,
+   "wallMs": 22962,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17815",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.008842,
+   "tokens": 94567,
+   "calls": 1,
+   "wallMs": 40058,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17815",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.002089,
+   "tokens": 19958,
+   "calls": 1,
+   "wallMs": 16445,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17815",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.002369,
+   "tokens": 20518,
+   "calls": 1,
+   "wallMs": 20518,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17807",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.004903,
+   "tokens": 22170,
+   "calls": 1,
+   "wallMs": 24094,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17807",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.002478,
+   "tokens": 20768,
+   "calls": 1,
+   "wallMs": 22301,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17807",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.002802,
+   "tokens": 21416,
+   "calls": 1,
+   "wallMs": 23134,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17059",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.006066,
+   "tokens": 24651,
+   "calls": 1,
+   "wallMs": 34780,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17059",
+   "k": 1,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.004446,
+   "tokens": 24908,
+   "calls": 1,
+   "wallMs": 35728,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17059",
+   "k": 2,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.004394,
+   "tokens": 24803,
+   "calls": 1,
+   "wallMs": 35727,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": null,
+   "retrieval": null,
+   "firstFailure": null
+  }
+ ]
+}

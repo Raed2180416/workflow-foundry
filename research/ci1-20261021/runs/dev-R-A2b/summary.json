@@ -1,0 +1,103 @@
+{
+ "wave": 1,
+ "review": "CI-1 review arms (PREREG-CI1-R)",
+ "evidence": "development smoke (not evidence)",
+ "oracle": "v1 recorded (v2 by rescore.mjs)",
+ "arm": "A2b",
+ "label": "dev-R-A2b",
+ "split": "dev",
+ "model": "claude-haiku-5-5",
+ "K": 1,
+ "items": [
+  "18832",
+  "17618"
+ ],
+ "manifestSha256": null,
+ "manifestRSha256": null,
+ "isolation": {
+  "accountVariablesRemoved": [
+   "CLAUDE_CODE_ACCOUNT_UUID",
+   "CLAUDE_CODE_ORGANIZATION_UUID",
+   "CLAUDE_CODE_USER_EMAIL"
+  ],
+  "emptyCliConfigDir": true
+ },
+ "privacy": {
+  "recordAddressesRedactedThisRun": 0,
+  "journalCellsWithAccountAddressScrubbed": 0
+ },
+ "started": "2026-11-04T19:16:45.842Z",
+ "finished": "2026-11-04T19:17:30.173Z",
+ "capUsd": 0.1,
+ "spentUsd": 0.018616,
+ "notRun": [],
+ "environmentFault": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.00935,
+   "tokens": 51594,
+   "calls": 2,
+   "wallMs": 38347,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P60",
+     "P36",
+     "P08"
+    ],
+    "exemplars": [
+     "9020",
+     "16312",
+     "17807"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "17618",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "passV1": null,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.009266,
+   "tokens": 75694,
+   "calls": 2,
+   "wallMs": 38481,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P08",
+     "P12",
+     "P38"
+    ],
+    "exemplars": [
+     "18281",
+     "17749",
+     "13732"
+    ],
+    "excluded": 1
+   },
+   "firstFailure": null
+  }
+ ]
+}

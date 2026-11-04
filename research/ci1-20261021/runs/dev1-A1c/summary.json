@@ -1,0 +1,130 @@
+{
+ "arm": "A1c",
+ "label": "dev1-A1c",
+ "split": "dev",
+ "model": "claude-haiku-5-5",
+ "K": 1,
+ "items": [
+  "18832",
+  "17118",
+  "17618",
+  "17719",
+  "20173"
+ ],
+ "manifestSha256": null,
+ "started": "2026-10-22T02:39:35.901Z",
+ "finished": "2026-10-22T02:41:31.721Z",
+ "capUsd": 0.8,
+ "spentUsd": 0.04705,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.009609,
+   "tokens": 73357,
+   "calls": 2,
+   "wallMs": 40650,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": {
+    "world": "c12",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17118",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.008772,
+   "tokens": 49195,
+   "calls": 2,
+   "wallMs": 34584,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17618",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.009418,
+   "tokens": 50390,
+   "calls": 2,
+   "wallMs": 43102,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "17719",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.007121,
+   "tokens": 45270,
+   "calls": 2,
+   "wallMs": 23235,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  },
+  {
+   "item": "20173",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.01213,
+   "tokens": 57567,
+   "calls": 2,
+   "wallMs": 62086,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": null,
+   "firstFailure": null
+  }
+ ]
+}

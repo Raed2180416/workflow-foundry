@@ -1,0 +1,1261 @@
+{
+ "label": "test-A0t",
+ "oracle": "v2 (post hoc: addressee exemption, categorical cells, declared optional spans, numeric d/m/y dates)",
+ "decl": {
+  "14177": {
+   "optional": {
+    "mail": [
+     "Overdue Invoices \\(\\d+\\)",
+     "All Unpaid Invoices \\(\\d+\\)"
+    ]
+   },
+   "why": "The e-mail section headers carry counts (\"Overdue Invoices (1)\", \"All Unpaid Invoices (2)\") the description never asks for (it asks for three totals and two lists; counts only for the Slack alert)."
+  },
+  "17545": {
+   "optional": {
+    "mail": [
+     "Quiet for \\d+-\\d+ days\\."
+    ]
+   },
+   "why": "Each group's explanatory line (\"Quiet for 7-20 days.\") carries the range bounds the description gives as definitions, not as text to show."
+  }
+ },
+ "builds": 57,
+ "v1Pass": 42,
+ "v2Pass": 46,
+ "v1Reproduced": true,
+ "rows": [
+  {
+   "item": "11679",
+   "k": 0,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 6,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), name: txt(r['Name']), qty: qt",
+      "e-mail to orders@thornbury.example: 0 sent, expected 1",
+      "e-mail to orders@calderwood.example: 0 sent, expected 1"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), nam"
+    },
+    {
+     "id": "c00",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), name: txt(r['Name']), qty: qt"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), nam"
+    },
+    {
+     "id": "c02",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), name: txt(r['Name']), qty: qt",
+      "e-mail to orders@calderwood.example: 0 sent, expected 1",
+      "sheet purchase-orders: 0 rows, expected 1"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), nam"
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), name: txt(r['Name']), qty: qt"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), nam"
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), name: txt(r['Name']), qty: qt",
+      "e-mail to orders@thornbury.example: 0 sent, expected 1",
+      "e-mail to orders@calderwood.example: 0 sent, expected 1"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), nam"
+    },
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), name: txt(r['Name']), qty: qt",
+      "e-mail to orders@brookfield.example: 0 sent, expected 1",
+      "e-mail to orders@calderwood.example: 0 sent, expected 1"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …r: txt(r['supplier']), items: [] });\\n    bySupplier.get(gk).items.push({ sku: txt(r['sku']), nam"
+    }
+   ]
+  },
+  {
+   "item": "11679",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "11679",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "14177",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "14177",
+   "k": 1,
+   "outcome": "ready",
+   "v1": false,
+   "v2": true,
+   "rerun": 2,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c26",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    }
+   ]
+  },
+  {
+   "item": "14177",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "15238",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "15238",
+   "k": 1,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 3,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c29",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.slack_urgent.posted"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.slack_urgent.posted"
+    },
+    {
+     "id": "c04",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.slack_urgent.posted"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.slack_urgent.posted"
+    },
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.slack_urgent.posted"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.slack_urgent.posted"
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    }
+   ]
+  },
+  {
+   "item": "15238",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "16312",
+   "k": 0,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 2,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "chat to #deadlines: 1 sent, expected 2"
+     ]
+    },
+    {
+     "id": "c04",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "chat to #deadlines: 1 sent, expected 3"
+     ]
+    }
+   ]
+  },
+  {
+   "item": "16312",
+   "k": 1,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 2,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "chat to #deadlines: 1 sent, expected 2"
+     ]
+    },
+    {
+     "id": "c04",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "chat to #deadlines: 1 sent, expected 3"
+     ]
+    }
+   ]
+  },
+  {
+   "item": "16312",
+   "k": 2,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 2,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "chat to #deadlines: 1 sent, expected 2"
+     ]
+    },
+    {
+     "id": "c04",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "chat to #deadlines: 1 sent, expected 3"
+     ]
+    }
+   ]
+  },
+  {
+   "item": "16364",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "16364",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "16364",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "16904",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "16904",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "16904",
+   "k": 2,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 2,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c00",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_invalid.sent"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.reply_invalid.sent"
+    },
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c13",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_invalid.sent"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.reply_invalid.sent"
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c04",
+     "v1": true,
+     "v2": true
+    }
+   ]
+  },
+  {
+   "item": "17059",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17059",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17059",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17342",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17342",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17342",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17545",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17545",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17545",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17624",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17624",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17624",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17749",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17749",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17749",
+   "k": 2,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 4,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c00",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_rejected.sent"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.reply_rejected.sent"
+    },
+    {
+     "id": "c02",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_rejected.sent"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.reply_rejected.sent"
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_rejected.sent"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.reply_rejected.sent"
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_rejected.sent"
+     ],
+     "rerunError": "MISSING_REFERENCE Missing value at nodes.reply_rejected.sent"
+    },
+    {
+     "id": "c05",
+     "v1": true,
+     "v2": true
+    }
+   ]
+  },
+  {
+   "item": "17807",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17807",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17807",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17811",
+   "k": 0,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 5,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+     ],
+     "rerunError": "SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+     ],
+     "rerunError": "SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+     ],
+     "rerunError": "SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+     ],
+     "rerunError": "SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+    },
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+     ],
+     "rerunError": "SCHEMA_MISMATCH outbox.audit input does not satisfy its schema"
+    }
+   ]
+  },
+  {
+   "item": "17811",
+   "k": 1,
+   "outcome": "ready",
+   "v1": false,
+   "v2": true,
+   "rerun": 5,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    }
+   ]
+  },
+  {
+   "item": "17811",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17815",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17815",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17815",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17816",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17816",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17816",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "17878",
+   "k": 0,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 6,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + amountText + ' was due on '",
+      "e-mail to calla.ashcombe@inbox.example: 0 sent, expected 1",
+      "e-mail to bastian.silvana@inbox.example: 0 sent, expected 1"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + a"
+    },
+    {
+     "id": "c11",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + amountText + ' was due on '",
+      "e-mail to calla.hartigan@mailbox.example: 0 sent, expected 1",
+      "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-49121\",\"ClientName\":\"Calla Hartigan\",\"ClientEmail\":\"calla.hartigan@mailbox.example\",\"Amount\":6427.73,\"Currency\":\"GBP\",\"DueDate\":\"2026"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + a"
+    },
+    {
+     "id": "c00",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + amountText + ' was due on '"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + a"
+    },
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + amountText + ' was due on '"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + a"
+    },
+    {
+     "id": "c02",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + amountText + ' was due on '",
+      "e-mail to yusuf.ivers@mailbox.example: 0 sent, expected 1",
+      "sheet invoices: no row matches reference row {\"InvoiceNumber\":\"INV-94343\",\"ClientName\":\"Yusuf Ivers\",\"ClientEmail\":\"yusuf.ivers@mailbox.example\",\"Amount\":2272.49,\"Currency\":\"GBP\",\"DueDate\":\"2026-06-27"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + a"
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + amountText + ' was due on '",
+      "e-mail to calla.whitlock@inbox.example: 0 sent, expected 1",
+      "e-mail to amara.jessop@mailbox.example: 0 sent, expected 1"
+     ],
+     "rerunError": "CODE_ERROR Code failed (exit 1): …body = 'Hi ' + first + ',\\\\n\\\\nThis is a friendly reminder that invoice ' + invoice + ' for ' + a"
+    }
+   ]
+  },
+  {
+   "item": "17878",
+   "k": 1,
+   "outcome": "ready",
+   "v1": false,
+   "v2": true,
+   "rerun": 1,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c11",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    }
+   ]
+  },
+  {
+   "item": "17878",
+   "k": 2,
+   "outcome": "ready",
+   "v1": false,
+   "v2": true,
+   "rerun": 1,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c05",
+     "v1": false,
+     "v2": true,
+     "v2reasons": []
+    },
+    {
+     "id": "c11",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c00",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c01",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c02",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c03",
+     "v1": true,
+     "v2": true
+    }
+   ]
+  },
+  {
+   "item": "19103",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "19103",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "19103",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "19445",
+   "k": 0,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "19445",
+   "k": 1,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "19445",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  },
+  {
+   "item": "19446",
+   "k": 0,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 5,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c00",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-144\",\"vendorName\":\"Ashgrove Motors\",\"invoiceNumber\":\"INV-66209\",\"invoiceDate\":\"2026-09-13\",\"poNumber\":\"PO-4011\",\"grnNumber\":\"GRN-958"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-182\",\"vendorName\":\"Juniper Mill\",\"invoiceNumber\":\"INV-96854\",\"invoiceDate\":\"2026-08-15\",\"poNumber\":\"PO-4952\",\"grnNumber\":\"GRN-7074\"}"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    },
+    {
+     "id": "c09",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-101\",\"vendorName\":\"Cindervale Brewing\",\"invoiceNumber\":\"INV-75063\",\"invoiceDate\":\"2026-08-01\",\"poNumber\":\"PO-4749\",\"grnNumber\":\"GRN-"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    },
+    {
+     "id": "c02",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-205\",\"vendorName\":\"Harbourline Freight\",\"invoiceNumber\":\"INV-18102\",\"invoiceDate\":\"2026-08-29\",\"poNumber\":\"PO-4549\",\"grnNumber\":\"GRN"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-184\",\"vendorName\":\"Copperleaf Legal\",\"invoiceNumber\":\"INV-39773\",\"invoiceDate\":\"2026-07-07\",\"poNumber\":\"PO-4812\",\"grnNumber\":\"GRN-73"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    }
+   ]
+  },
+  {
+   "item": "19446",
+   "k": 1,
+   "outcome": "ready",
+   "v1": false,
+   "v2": false,
+   "rerun": 5,
+   "v1Check": true,
+   "worlds": [
+    {
+     "id": "c00",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-144\",\"vendorName\":\"Ashgrove Motors\",\"invoiceNumber\":\"INV-66209\",\"invoiceDate\":\"2026-09-13\",\"poNumber\":\"PO-4011\",\"grnNumber\":\"GRN-958"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    },
+    {
+     "id": "c04",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-182\",\"vendorName\":\"Juniper Mill\",\"invoiceNumber\":\"INV-96854\",\"invoiceDate\":\"2026-08-15\",\"poNumber\":\"PO-4952\",\"grnNumber\":\"GRN-7074\"}"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    },
+    {
+     "id": "c09",
+     "v1": true,
+     "v2": true
+    },
+    {
+     "id": "c01",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-101\",\"vendorName\":\"Cindervale Brewing\",\"invoiceNumber\":\"INV-75063\",\"invoiceDate\":\"2026-08-01\",\"poNumber\":\"PO-4749\",\"grnNumber\":\"GRN-"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    },
+    {
+     "id": "c02",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-205\",\"vendorName\":\"Harbourline Freight\",\"invoiceNumber\":\"INV-18102\",\"invoiceDate\":\"2026-08-29\",\"poNumber\":\"PO-4549\",\"grnNumber\":\"GRN"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    },
+    {
+     "id": "c03",
+     "v1": false,
+     "v2": false,
+     "v2reasons": [
+      "the built workflow did not finish: failed: ACCEPTANCE_FAILED Acceptance failed for root",
+      "sheet invoice-register: no row matches reference row {\"vendorId\":\"V-184\",\"vendorName\":\"Copperleaf Legal\",\"invoiceNumber\":\"INV-39773\",\"invoiceDate\":\"2026-07-07\",\"poNumber\":\"PO-4812\",\"grnNumber\":\"GRN-73"
+     ],
+     "rerunError": "ACCEPTANCE_FAILED Acceptance failed for root"
+    }
+   ]
+  },
+  {
+   "item": "19446",
+   "k": 2,
+   "outcome": "ready",
+   "v1": true,
+   "v2": true,
+   "rerun": 0,
+   "v1Check": true,
+   "worlds": []
+  }
+ ]
+}

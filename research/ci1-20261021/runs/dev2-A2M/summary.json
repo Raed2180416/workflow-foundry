@@ -1,0 +1,63 @@
+{
+ "arm": "A2-M",
+ "label": "dev2-A2M",
+ "split": "dev",
+ "model": "mercury-3",
+ "K": 1,
+ "items": [
+  "17719"
+ ],
+ "manifestSha256": null,
+ "started": "2026-10-22T02:45:39.481Z",
+ "finished": "2026-10-22T02:46:02.586Z",
+ "capUsd": 3,
+ "spentUsd": 0,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": {
+  "inception": {
+   "cap": 90000,
+   "callCap": 60000,
+   "spent": 64279,
+   "reserved": 0,
+   "calls": 4,
+   "refused": 0,
+   "unknown": 0
+  }
+ },
+ "records": [
+  {
+   "item": "17719",
+   "k": 0,
+   "outcome": "build_failed",
+   "pass": false,
+   "worldsPassed": 0,
+   "worlds": 0,
+   "usd": 0,
+   "tokens": 64279,
+   "calls": 4,
+   "wallMs": 23088,
+   "questions": 0,
+   "repairs": 4,
+   "practice": [],
+   "reviewedOk": null,
+   "retrieval": {
+    "patterns": [
+     "P37",
+     "P16",
+     "P42"
+    ],
+    "exemplars": [
+     "19103",
+     "16816",
+     "11805"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "outcome": "build_failed",
+    "error": null
+   }
+  }
+ ]
+}

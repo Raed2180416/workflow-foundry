@@ -1,0 +1,48 @@
+{
+  "about": "Frontier-written worked examples for the CI-1 compose path (claude-opus-5-5, 2026-10-22). Generic first-party automations, written before any builder call and NOT derived from any bed item: they show the IR mechanics (input, code node, map over a planned list, conditional post, keyed sheet writes, webhook answer). Frozen by hash in research/ci1-20261021/MANIFEST.json.",
+  "examples": [
+    {
+      "id": "ex-overdue-tasks",
+      "request": "Every weekday at 8am, e-mail each task owner the tasks they own that are overdue (due date before today, status not done in any capitalisation), one e-mail per owner listing title and due date. If anything is overdue, post the count to #team. Then set reminded_on to today's date on those tasks.",
+      "workspace": { "trigger": { "kind": "schedule", "when": "Monday to Friday at 08:00 (UTC)" }, "sheets": { "tasks": { "columns": ["task_id", "title", "owner_email", "due", "status", "reminded_on"], "about": "task_id is unique; due is YYYY-MM-DD" } }, "channels": ["#team"] },
+      "workflow": {
+        "schemaVersion": "1.0", "id": "ex-overdue-tasks", "version": 1, "title": "Overdue task reminders", "goal": "Remind each owner of their overdue tasks, tell #team how many, and record the reminder date.", "domain": "general",
+        "envelope": { "assumptions": ["due is YYYY-MM-DD"], "risks": ["Reminding finished tasks"], "successCriteria": ["One e-mail per owner with overdue tasks"] },
+        "inputSchema": { "type": "object", "additionalProperties": false, "required": ["now"], "properties": { "now": { "type": "string" } } },
+        "budget": { "maxSteps": 2000, "maxConcurrency": 2, "maxDurationMs": 300000, "maxCost": 0 },
+        "nodes": [
+          { "id": "read", "kind": "task", "needs": [], "description": "Read the tasks", "tool": "sheet.read", "args": { "sheet": "tasks" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+          { "id": "plan", "kind": "code", "needs": ["read"], "description": "Find overdue tasks, group them by owner, write the texts and the sheet updates", "lang": "js",
+            "source": "export default function main({ rows, now }) {\n  const today = String(now).slice(0, 10);\n  const overdue = rows.filter(r => String(r.status ?? '').trim().toLowerCase() !== 'done' && r.due && String(r.due).slice(0, 10) < today && r.owner_email);\n  const byOwner = new Map();\n  for (const r of overdue) { const k = String(r.owner_email).trim().toLowerCase(); if (!byOwner.has(k)) byOwner.set(k, []); byOwner.get(k).push(r); }\n  const mails = [...byOwner].map(([to, list]) => ({ to, subject: `You have ${list.length} overdue task(s)`, body: ['These tasks are overdue:', ...list.map(r => `- ${r.title} (due ${r.due})`)].join('\\n') }));\n  return { mails, count: overdue.length, post: overdue.length > 0, text: `${overdue.length} task(s) are overdue today (${today}).`, updates: overdue.map(r => ({ task_id: r.task_id, reminded_on: today })) };\n}",
+            "args": { "rows": { "$ref": "nodes.read.rows" }, "now": { "$ref": "input.now" } }, "timeoutMs": 10000 },
+          { "id": "remind", "kind": "map", "needs": ["plan"], "description": "One e-mail per owner", "items": { "$ref": "nodes.plan.mails" }, "maxItems": 500, "concurrency": 1,
+            "body": { "nodes": [ { "id": "send", "kind": "task", "needs": [], "description": "E-mail the owner", "tool": "outbox.send", "args": { "to": { "$ref": "item.to" }, "subject": { "$ref": "item.subject" }, "body": { "$ref": "item.body" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 1 } } ],
+              "acceptance": [ { "op": "eq", "left": { "$ref": "nodes.send.delivered" }, "right": true } ] } },
+          { "id": "tell", "kind": "task", "needs": ["remind"], "when": { "op": "eq", "left": { "$ref": "nodes.plan.post" }, "right": true }, "description": "Post the count to #team", "tool": "chat.post", "args": { "channel": "#team", "text": { "$ref": "nodes.plan.text" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 1 } },
+          { "id": "mark", "kind": "task", "needs": ["remind"], "description": "Record the reminder date", "tool": "sheet.update", "args": { "sheet": "tasks", "key": "task_id", "rows": { "$ref": "nodes.plan.updates" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } }
+        ],
+        "acceptance": [ { "op": "eq", "left": { "$ref": "nodes.remind.count" }, "right": { "$ref": "nodes.plan.mails.length", "default": 0 } }, { "op": "eq", "left": { "$ref": "nodes.mark.updated" }, "right": { "$ref": "nodes.plan.count" } } ]
+      }
+    },
+    {
+      "id": "ex-signup-webhook",
+      "request": "Our signup form posts name and email to a webhook and waits for a JSON answer. Trim both and lowercase the e-mail. Without a valid e-mail answer {\"ok\": false, \"error\": \"invalid email\"} with status 400 and do nothing else. Otherwise keep one row per e-mail in contacts: add new people with visits 1, and for someone already there update their name and add 1 to visits; then answer {\"ok\": true}.",
+      "workspace": { "trigger": { "kind": "webhook", "method": "POST", "payload": "event.body has name and email (either may be missing)" }, "sheets": { "contacts": { "columns": ["email", "name", "visits", "last_seen"], "about": "one row per e-mail (lowercase)" } } },
+      "workflow": {
+        "schemaVersion": "1.0", "id": "ex-signup-webhook", "version": 1, "title": "Signup webhook", "goal": "Validate a signup, keep one contact row per e-mail with a visit count, and answer the form.", "domain": "general",
+        "envelope": { "assumptions": ["email identifies a contact"], "risks": ["Duplicate contacts"], "successCriteria": ["One answer per request"] },
+        "inputSchema": { "type": "object", "additionalProperties": false, "required": ["now", "event"], "properties": { "now": { "type": "string" }, "event": { "type": "object" } } },
+        "budget": { "maxSteps": 50, "maxConcurrency": 2, "maxDurationMs": 300000, "maxCost": 0 },
+        "nodes": [
+          { "id": "contacts", "kind": "task", "needs": [], "description": "Read the contacts", "tool": "sheet.read", "args": { "sheet": "contacts" }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+          { "id": "plan", "kind": "code", "needs": ["contacts"], "description": "Validate and decide the write and the answer", "lang": "js",
+            "source": "export default function main({ body, rows, now }) {\n  const s = v => (v === undefined || v === null ? '' : String(v).trim());\n  const email = s(body.email).toLowerCase(), name = s(body.name);\n  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return { valid: false, status: 400, answer: { ok: false, error: 'invalid email' }, rows: [] };\n  const old = rows.find(r => s(r.email).toLowerCase() === email);\n  return { valid: true, status: 200, answer: { ok: true }, rows: [{ email, name, visits: old ? (Number(old.visits) || 0) + 1 : 1, last_seen: now }] };\n}",
+            "args": { "body": { "$ref": "input.event.body", "default": {} }, "rows": { "$ref": "nodes.contacts.rows" }, "now": { "$ref": "input.now" } }, "timeoutMs": 10000 },
+          { "id": "save", "kind": "task", "needs": ["plan"], "when": { "op": "eq", "left": { "$ref": "nodes.plan.valid" }, "right": true }, "description": "Add or update the contact", "tool": "sheet.upsert", "args": { "sheet": "contacts", "key": "email", "rows": { "$ref": "nodes.plan.rows" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } },
+          { "id": "answer", "kind": "task", "needs": ["plan"], "description": "Answer the form", "tool": "reply.send", "args": { "status": { "$ref": "nodes.plan.status" }, "body": { "$ref": "nodes.plan.answer" } }, "timeoutMs": 10000, "retry": { "maxAttempts": 2 } }
+        ],
+        "acceptance": [ { "op": "eq", "left": { "$ref": "nodes.answer.sent" }, "right": true } ]
+      }
+    }
+  ]
+}

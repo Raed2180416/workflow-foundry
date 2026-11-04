@@ -1,0 +1,13 @@
+{
+  "package": "luxon",
+  "version": "3.5.0",
+  "license": "MIT (LICENSE.md, copied unchanged from the package)",
+  "url": "https://registry.npmjs.org/luxon/-/luxon-3.5.0.tgz",
+  "tarballIntegrity": "sha512-rh+Zjr6DNfUYR3bPwJEnuwDdqMbxZW7LOQfUN4B54+Cl+0o5zaU9RJ6bcidfDtC1cWCZXQ+nvX8bf6bAji37QQ==",
+  "tarballSha1": "6b6f65c5cd1d61d1fd19dbf07ee87a50bf4b8e20",
+  "file": "package/build/global/luxon.min.js",
+  "fileSha256": "fd365dbd60506d97604fde4080c17a9c32f28e17b741d38ca70e152e791c82ae",
+  "acquired": "2026-10-21",
+  "outcome": "vendored: the tarball integrity matched the registry's dist.integrity; only the global build and the licence are kept",
+  "why": "n8n expressions and Code nodes use Luxon DateTime ($now, $today, DateTime.fromISO ...); n8n-sim runs inside the code sandbox, where node_modules is not visible, so the bundle inlines this file. n8n itself depends on luxon 3.x."
+}

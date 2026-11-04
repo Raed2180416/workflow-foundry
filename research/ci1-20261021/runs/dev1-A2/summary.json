@@ -1,0 +1,190 @@
+{
+ "arm": "A2",
+ "label": "dev1-A2",
+ "split": "dev",
+ "model": "claude-haiku-5-5",
+ "K": 1,
+ "items": [
+  "18832",
+  "17118",
+  "17618",
+  "17719",
+  "20173"
+ ],
+ "manifestSha256": null,
+ "started": "2026-10-22T02:41:33.163Z",
+ "finished": "2026-10-22T02:43:32.291Z",
+ "capUsd": 0.8,
+ "spentUsd": 0.047874,
+ "notRun": [],
+ "environmentFault": null,
+ "tokenMeter": null,
+ "records": [
+  {
+   "item": "18832",
+   "k": 0,
+   "outcome": "ready",
+   "pass": false,
+   "worldsPassed": 5,
+   "worlds": 6,
+   "usd": 0.009658,
+   "tokens": 52351,
+   "calls": 2,
+   "wallMs": 44547,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P36",
+     "P60",
+     "P12"
+    ],
+    "exemplars": [
+     "9020",
+     "16312",
+     "17807"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": {
+    "world": "c12",
+    "reasons": [
+     "e-mail to user@example.com: 0 sent, expected 1"
+    ],
+    "status": "succeeded"
+   }
+  },
+  {
+   "item": "17118",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.008271,
+   "tokens": 73595,
+   "calls": 2,
+   "wallMs": 33541,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P02",
+     "P42",
+     "P36"
+    ],
+    "exemplars": [
+     "17059",
+     "19295",
+     "17864"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "17618",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.008879,
+   "tokens": 51156,
+   "calls": 2,
+   "wallMs": 38960,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P12",
+     "P37",
+     "P16"
+    ],
+    "exemplars": [
+     "18281",
+     "17749",
+     "13732"
+    ],
+    "excluded": 1
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "17719",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.007748,
+   "tokens": 48580,
+   "calls": 2,
+   "wallMs": 29083,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P37",
+     "P16",
+     "P42"
+    ],
+    "exemplars": [
+     "19103",
+     "16816",
+     "11805"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": null
+  },
+  {
+   "item": "20173",
+   "k": 0,
+   "outcome": "ready",
+   "pass": true,
+   "worldsPassed": 6,
+   "worlds": 6,
+   "usd": 0.013318,
+   "tokens": 86891,
+   "calls": 2,
+   "wallMs": 65167,
+   "questions": 0,
+   "repairs": 0,
+   "practice": [
+    "succeeded"
+   ],
+   "reviewedOk": true,
+   "retrieval": {
+    "patterns": [
+     "P42",
+     "P36",
+     "P02"
+    ],
+    "exemplars": [
+     "17878",
+     "16312",
+     "17811"
+    ],
+    "excluded": 0
+   },
+   "firstFailure": null
+  }
+ ]
+}

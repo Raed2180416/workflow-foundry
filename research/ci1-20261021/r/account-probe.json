@@ -1,0 +1,78 @@
+{
+ "probe": "ci1-r account-context probe (diagnostic, not a comparison)",
+ "at": "2026-11-04T19:08:31.307Z",
+ "model": "claude-haiku-5-5",
+ "route": "claude-cli (policy/models.json)",
+ "accountVariablePresentBefore": true,
+ "variablesRemoved": [
+  "CLAUDE_CODE_ACCOUNT_UUID",
+  "CLAUDE_CODE_ORGANIZATION_UUID",
+  "CLAUDE_CODE_USER_EMAIL"
+ ],
+ "results": [
+  {
+   "condition": "inherited-environment",
+   "calls": [
+    {
+     "ok": true,
+     "error": null,
+     "costUsd": 0.00014616,
+     "listed": 1,
+     "accountAddressListed": true,
+     "otherNonFixtureListed": 0
+    },
+    {
+     "ok": true,
+     "error": null,
+     "costUsd": 0.00020253500000000003,
+     "listed": 1,
+     "accountAddressListed": true,
+     "otherNonFixtureListed": 0
+    }
+   ]
+  },
+  {
+   "condition": "account-variables-removed",
+   "calls": [
+    {
+     "ok": true,
+     "error": null,
+     "costUsd": 0.00015966,
+     "listed": 1,
+     "accountAddressListed": true,
+     "otherNonFixtureListed": 0
+    },
+    {
+     "ok": true,
+     "error": null,
+     "costUsd": 0.00016366,
+     "listed": 1,
+     "accountAddressListed": true,
+     "otherNonFixtureListed": 0
+    }
+   ]
+  },
+  {
+   "condition": "account-variables-removed+empty-config-dir",
+   "calls": [
+    {
+     "ok": true,
+     "error": null,
+     "costUsd": 0.00017020000000000002,
+     "listed": 0,
+     "accountAddressListed": false,
+     "otherNonFixtureListed": 0
+    },
+    {
+     "ok": true,
+     "error": null,
+     "costUsd": 0.00011496,
+     "listed": 0,
+     "accountAddressListed": false,
+     "otherNonFixtureListed": 0
+    }
+   ]
+  }
+ ],
+ "costUsd": 0.000957
+}

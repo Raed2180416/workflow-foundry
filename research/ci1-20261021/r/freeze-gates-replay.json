@@ -1,0 +1,301 @@
+{
+ "replay": "CI-1 freeze-gate replay ($0, committed files only)",
+ "waves": {
+  "1": {
+   "items": 19,
+   "artefactItems": 7,
+   "frozenOracle": "v1",
+   "oracleDefectClasses": [
+    {
+     "cls": "greeting the addressee by name counted as a leak (v1 change 1)",
+     "item": "16364",
+     "rewrite": "greet-by-name",
+     "flaggedOnItems": [
+      "16364"
+     ],
+     "flagged": true,
+     "flaggedOnItsOwnItem": true
+    },
+    {
+     "cls": "a categorical cell identified a row (v1 change 2)",
+     "item": "17878",
+     "rewrite": "category-legend",
+     "flaggedOnItems": [
+      "11679",
+      "16312",
+      "16364",
+      "17059",
+      "17342",
+      "17624",
+      "17749",
+      "17807",
+      "17811",
+      "17815",
+      "17816",
+      "17878",
+      "19446"
+     ],
+     "flagged": true,
+     "flaggedOnItsOwnItem": true
+    },
+    {
+     "cls": "reference wording carried facts the description never asked for (v1 change 3)",
+     "item": "14177",
+     "rewrite": null,
+     "flaggedOnItems": [],
+     "flagged": false,
+     "flaggedOnItsOwnItem": false
+    },
+    {
+     "cls": "numeric d/m/y dates did not count (v1 change 4)",
+     "item": "17811",
+     "rewrite": "dmy-dates",
+     "flaggedOnItems": [
+      "11679",
+      "14177",
+      "15238",
+      "16312",
+      "17816",
+      "17878"
+     ],
+     "flagged": true,
+     "flaggedOnItsOwnItem": false
+    },
+    {
+     "cls": "a number before a prose comma was dropped (v1 change 5)",
+     "item": "17807",
+     "rewrite": "number-comma",
+     "flaggedOnItems": [
+      "14177",
+      "16312",
+      "16904",
+      "17545",
+      "17624",
+      "17807",
+      "19446"
+     ],
+     "flagged": true,
+     "flaggedOnItsOwnItem": true
+    }
+   ],
+   "ambiguityProbe": {
+    "flagged": 5,
+    "artefactsFlagged": [
+     "16312",
+     "16364",
+     "17545",
+     "17878"
+    ],
+    "artefactsMissed": [
+     "14177",
+     "17807",
+     "17811"
+    ],
+    "falseAlarms": [
+     "16904"
+    ],
+    "signatures": [
+     {
+      "item": "17545",
+      "signature": "c03|sheet digest-log: no row matches reference row (open_count)"
+     },
+     {
+      "item": "16364",
+      "signature": "c02|e-mail to fenwick.ivers@inbox.example: no message carries only the right rows (it mentions N row(s) the reference leaves out)"
+     },
+     {
+      "item": "17878",
+      "signature": "c05|e-mail to calla.ashcombe@inbox.example: no message carries only the right rows (it mentions N row(s) the reference leaves out)"
+     },
+     {
+      "item": "16904",
+      "signature": "c00|the built workflow did not finish: failed: MISSING_REFERENCE Missing value at nodes.reply_invalid.sent"
+     },
+     {
+      "item": "16312",
+      "signature": "c03|chat to #deadlines: N sent, expected N"
+     }
+    ]
+   },
+   "fnProbe": {
+    "flagged": 18,
+    "artefactsFlagged": [
+     "14177",
+     "16312",
+     "16364",
+     "17545",
+     "17807",
+     "17811",
+     "17878"
+    ],
+    "artefactsMissed": [],
+    "falseAlarms": [
+     "11679",
+     "15238",
+     "16904",
+     "17059",
+     "17342",
+     "17624",
+     "17749",
+     "17815",
+     "17816",
+     "19103",
+     "19446"
+    ]
+   },
+   "fnProbeSettingsMention": [
+    "11679",
+    "19446"
+   ],
+   "both": {
+    "flagged": 18,
+    "artefactsFlagged": [
+     "14177",
+     "16312",
+     "16364",
+     "17545",
+     "17807",
+     "17811",
+     "17878"
+    ],
+    "artefactsMissed": [],
+    "falseAlarms": [
+     "11679",
+     "15238",
+     "16904",
+     "17059",
+     "17342",
+     "17624",
+     "17749",
+     "17815",
+     "17816",
+     "19103",
+     "19446"
+    ]
+   }
+  },
+  "2": {
+   "items": 9,
+   "artefactItems": 6,
+   "frozenOracle": "v2",
+   "oracleDefectClasses": [
+    {
+     "cls": "an address in a sheet cell differing only in case",
+     "item": "17771",
+     "rewrite": "address-case-cells",
+     "flaggedOnItems": [
+      "17175",
+      "17771",
+      "18534",
+      "18797",
+      "19014",
+      "19187"
+     ],
+     "flagged": true,
+     "flaggedOnItsOwnItem": true
+    },
+    {
+     "cls": "a settings-sheet value counted as a leak",
+     "item": "19014",
+     "rewrite": "settings-mention",
+     "flaggedOnItems": [
+      "18534",
+      "19014",
+      "19187"
+     ],
+     "flagged": true,
+     "flaggedOnItsOwnItem": true
+    },
+    {
+     "cls": "a categorical name word identified another row",
+     "item": "18797",
+     "rewrite": "category-legend",
+     "flaggedOnItems": [
+      "18797",
+      "20090"
+     ],
+     "flagged": true,
+     "flaggedOnItsOwnItem": true
+    },
+    {
+     "cls": "an answer message required a value the description does not ask for",
+     "item": "20090",
+     "rewrite": null,
+     "flaggedOnItems": [],
+     "flagged": false,
+     "flaggedOnItsOwnItem": false
+    }
+   ],
+   "ambiguityProbe": {
+    "flagged": 4,
+    "artefactsFlagged": [
+     "17771",
+     "19014",
+     "19187"
+    ],
+    "artefactsMissed": [
+     "17175",
+     "18797",
+     "20090"
+    ],
+    "falseAlarms": [
+     "18281"
+    ],
+    "signatures": [
+     {
+      "item": "19187",
+      "signature": "c06|sheet evaluation-log: no row matches reference row {\"…\":\"…\",\"…\":\"…\",\"…\":\"…\",\"…\":\"…\",\"…\":\"EVALN-"
+     },
+     {
+      "item": "19014",
+      "signature": "c13|response N: body.clientId is \"…\", expected \"…\""
+     },
+     {
+      "item": "17771",
+      "signature": "c29|sheet statement-log: no row matches reference row () (f"
+     },
+     {
+      "item": "18281",
+      "signature": "c07|response N: body.missing[…] is \"…\", expected \"…\""
+     }
+    ]
+   },
+   "fnProbe": {
+    "flagged": 7,
+    "artefactsFlagged": [
+     "17175",
+     "17771",
+     "18797",
+     "19014",
+     "19187",
+     "20090"
+    ],
+    "artefactsMissed": [],
+    "falseAlarms": [
+     "18534"
+    ]
+   },
+   "fnProbeSettingsMention": [
+    "18534",
+    "19014",
+    "19187"
+   ],
+   "both": {
+    "flagged": 8,
+    "artefactsFlagged": [
+     "17175",
+     "17771",
+     "18797",
+     "19014",
+     "19187",
+     "20090"
+    ],
+    "artefactsMissed": [],
+    "falseAlarms": [
+     "18281",
+     "18534"
+    ]
+   }
+  }
+ }
+}

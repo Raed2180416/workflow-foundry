@@ -1,0 +1,79 @@
+{
+ "oracle": "corrected (v2 wave 1, w2x wave 2)",
+ "exclude": [
+  "16312",
+  "17545"
+ ],
+ "arms": {
+  "A0": {
+   "builds": 78,
+   "verified": 65,
+   "pass1": 0.8333333333333334,
+   "medianWallS": 40.1785,
+   "meanWallS": 47.65126923076924,
+   "wallPerVerifiedS": 57.18152307692308,
+   "usdPerBuild": 0.0065673846153846156,
+   "usdPerVerified": 0.007880861538461539
+  },
+  "A1c": {
+   "builds": 78,
+   "verified": 68,
+   "pass1": 0.8717948717948718,
+   "medianWallS": 40.263000000000005,
+   "meanWallS": 49.96188461538462,
+   "wallPerVerifiedS": 57.30922058823529,
+   "usdPerBuild": 0.01002824358974359,
+   "usdPerVerified": 0.011502985294117647
+  },
+  "A2": {
+   "builds": 78,
+   "verified": 74,
+   "pass1": 0.9487179487179487,
+   "medianWallS": 42.664500000000004,
+   "meanWallS": 52.64910256410256,
+   "wallPerVerifiedS": 55.495,
+   "usdPerBuild": 0.01020179487179487,
+   "usdPerVerified": 0.010753243243243242
+  },
+  "A2i": {
+   "builds": 78,
+   "verified": 70,
+   "pass1": 0.8974358974358975,
+   "medianWallS": 35.024,
+   "meanWallS": 42.704743589743586,
+   "wallPerVerifiedS": 47.58528571428572,
+   "usdPerBuild": 0.00933005128205128,
+   "usdPerVerified": 0.010396342857142856
+  },
+  "A2b": {
+   "builds": 78,
+   "verified": 71,
+   "pass1": 0.9102564102564102,
+   "medianWallS": 37.1295,
+   "meanWallS": 44.98926923076923,
+   "wallPerVerifiedS": 49.42483098591549,
+   "usdPerBuild": 0.009564064102564104,
+   "usdPerVerified": 0.010507000000000002
+  },
+  "A1cH": {
+   "builds": 78,
+   "verified": 70,
+   "pass1": 0.8974358974358975,
+   "medianWallS": 37.816500000000005,
+   "meanWallS": 46.859307692307695,
+   "wallPerVerifiedS": 52.21465714285714,
+   "usdPerBuild": 0.010351730769230764,
+   "usdPerVerified": 0.011534785714285707
+  },
+  "A0p": {
+   "builds": 78,
+   "verified": 68,
+   "pass1": 0.8717948717948718,
+   "medianWallS": 35.25,
+   "meanWallS": 39.89585897435898,
+   "wallPerVerifiedS": 45.76289705882353,
+   "usdPerBuild": 0.006111666666666665,
+   "usdPerVerified": 0.007010441176470587
+  }
+ }
+}
