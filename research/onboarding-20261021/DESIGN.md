@@ -105,7 +105,7 @@ also leave out costs a person still pays. Since the review the journeys measure 
 | Cost | P2 first verified | P2 first live | How it is measured |
 |---|---|---|---|
 | Tab presses (keyboard run, 1280) | 16 | 32 | pressed by the keyboard-only journey; pointer runs report an estimate |
-| Scrolling, in window heights | 0.74 at 1280; 1.66 at 390 | 3.77 at 1280; 7.87 at 390 | how far below what the person had already scrolled to each control was; a scroll the script makes is not credited |
+| Scrolling, in window heights | 0.74 at 1280; 1.66 at 390 | 3.71 at 1280 (3.77 in the keyboard run); 7.87 at 390 | how far below what the person had already scrolled to each control was; a scroll the script makes is not credited |
 | Decisions | 0 | 2 (turn on; the exact list) | presses on a decision card; turning on is not an ask (§4.1, O-K); counted as one, first live is 8 / 5, over its ≤ 4 asks |
 
 - **Install and start.** For P2 these are a precondition, done today by someone technical (Quickstart, "I don't code"). They are

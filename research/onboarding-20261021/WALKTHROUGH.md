@@ -420,3 +420,8 @@ changing a frozen budget or an owner decision is now counted and reported, not h
 | m19 Stale-list check in UTC days | Fixed | Days are counted where the person is. | "m19" (Pacific/Auckland) |
 | m20 Toast can cover the focused control | Fixed | The toast moves to the top when it would cover the focused control, and never takes clicks. | "m20" (390 wide: Turn it on, full width at the bottom edge, focused; before the fix the toast covered it) |
 | m21 Plain words and line length | Fixed | No address in the footer; "Four ways in"; no "highlighted"; Foundry never says "I" (buttons keep the person's own voice: "I sent it"); the turn-on notes are in the copy file; "How you'll know it worked", "Checked: N entries"; glossary entries for fingerprint, checked, turn off; running text at most 68 characters wide. | "m21" (copy and measured line widths on five pages) |
+
+Journeys after these fixes (`run-all.mjs`, development, scripted): 9 files and 30 tests pass; 0 errors, 0 external requests, 0
+focus lost after an action, 0 fallback accessibility issues (not axe-core) on every page of every journey and crawl state; 173
+screenshots, 22.8 MB (budget 25 MB). Per-journey tabs, scrolling and decisions are in [JOURNEYS.md](JOURNEYS.md); what they leave
+out is in DESIGN §3.

@@ -14,7 +14,7 @@
       "note": null,
       "steps": 0,
       "asks": 0,
-      "ms": 2014,
+      "ms": 2980,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -28,12 +28,16 @@
   "milestones": {},
   "a11y": [],
   "refusals": [],
+  "focusLost": [],
   "checks": {
     "refusal": "This computer has no keychain Foundry can use, so a key can't be saved.You can set INCEPTION_API_KEY in your own terminal before starting Foundry instead. Foundry never writes a key to a file."
   },
   "totalSteps": 0,
   "totalAsks": 0,
-  "ms": 2014,
+  "totalTabs": 0,
+  "totalScreens": 0,
+  "totalDecisions": 0,
+  "ms": 2980,
   "shots": [
     "01-no-keychain.jpg"
   ],

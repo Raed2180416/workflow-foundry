@@ -10,17 +10,20 @@
     {
       "action": "fill",
       "ask": false,
+      "decision": false,
       "target": "Or describe it in your own words",
       "steps": 1,
       "asks": 0,
-      "ms": 1032
+      "tabs": 16,
+      "screens": 0.58,
+      "ms": 1277
     },
     {
       "action": "key",
       "key": "Enter",
       "steps": 2,
       "asks": 0,
-      "ms": 1032
+      "ms": 1438
     },
     {
       "n": 1,
@@ -29,60 +32,78 @@
       "note": "no \"this sounds like\" for a refund; the cards are offered",
       "steps": 2,
       "asks": 0,
-      "ms": 2187,
+      "ms": 2112,
       "route": "#/describe",
-      "h1": "I can't make that yet. Nothing was created.",
-      "focus": "h1 I can't make that yet. Nothing was created.",
+      "h1": "Foundry can't make that yet. Nothing was created.",
+      "focus": "h1 Foundry can't make that yet. Nothing was created.",
       "a11y": [],
-      "aria": "- main:\n  - heading \"I can't make that yet. Nothing was created.\" [level=1]\n  - paragraph: \"You wrote: Refunds over $500 need my approval before we pay them back\"\n  - paragraph: Here's what I can make today. If one is close, pick it and change the settings.\n  - article \"Chase unpaid invoices\":\n    - heading \"Chase unpaid invoices\" [level=3]\n    - paragraph: Polite reminders to customers who are late, firmer later. You see every e-mail first.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your invoice list (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/invoice-chase\"\n  - article \"Approve small expenses\":\n    - heading \"Approve small expenses\" [level=3]\n    - paragraph: Approves claims under your limit. Sends the rest to the person who decides.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your expense claims (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/expense-approval\"\n  - article \"Weekly progress report\":\n    - heading \"Weekly progress report\" [level=3]\n    - paragraph: Counts what's done, open and blocked, and e-mails one person.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your tracker export (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/weekly-report\"\n  - article \"Route new leads\":\n    - heading \"Route new leads\" [level=3]\n    - paragraph: Sends each new lead to the right salesperson.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your leads list (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/lead-triage\"\n  - article \"Answer common support questions\":\n    - heading \"Answer common support questions\" [level=3]\n    - paragraph: Replies with your own answers. Sends the rest to a person.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your ticket export (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/support-deflection\"\n  - article \"On-call alert digest\":\n    - heading \"On-call alert digest\" [level=3]\n    - paragraph: One summary of unresolved alerts to a chat channel.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your alerts export (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/oncall-digest\"\n  - article \"Keep the newsletter list in step\":\n    - heading \"Keep the newsletter list in step\" [level=3]\n    - paragraph: Finds contacts missing from your list and tells you.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your customer list (CRM export) and newsletter list (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/contact-sync\"\n  - paragraph:\n    - text: Want Foundry to try with AI?\n    - link \"Set up an AI key\":\n      - /url: \"#/keys\"\n    - text: (your words go to the AI provider)\n  - search \"Or describe it in your own words\":\n    - text: Or describe it in your own words\n    - textbox \"Or describe it in your own words\":\n      - /placeholder: e.g. remind customers who haven't paid after a week\n      - text: Refunds over $500 need my approval before we pay them back\n    - button \"Find a match\"\n    - paragraph: Without an AI key, Foundry matches your words to the list above. Nothing leaves this computer."
+      "aria": "- main:\n  - heading \"Foundry can't make that yet. Nothing was created.\" [level=1]\n  - paragraph: \"You wrote: Refunds over $500 need my approval before we pay them back\"\n  - paragraph: Here's what Foundry can make today. If one is close, pick it and change the settings.\n  - article \"Chase unpaid invoices\":\n    - heading \"Chase unpaid invoices\" [level=3]\n    - paragraph: Polite reminders to customers who are late, firmer later. You see every e-mail first.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your invoice list (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/invoice-chase\"\n  - article \"Approve small expenses\":\n    - heading \"Approve small expenses\" [level=3]\n    - paragraph: Approves claims under your limit. Sends the rest to the person who decides.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your expense claims (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/expense-approval\"\n  - article \"Weekly progress report\":\n    - heading \"Weekly progress report\" [level=3]\n    - paragraph: Counts what's done, open and blocked, and e-mails one person.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your tracker export (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/weekly-report\"\n  - article \"Route new leads\":\n    - heading \"Route new leads\" [level=3]\n    - paragraph: Sends each new lead to the right salesperson.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your leads list (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/lead-triage\"\n  - article \"Answer common support questions\":\n    - heading \"Answer common support questions\" [level=3]\n    - paragraph: Replies with your own answers. Sends the rest to a person.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your ticket export (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/support-deflection\"\n  - article \"On-call alert digest\":\n    - heading \"On-call alert digest\" [level=3]\n    - paragraph: One summary of unresolved alerts to a chat channel.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your alerts export (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/oncall-digest\"\n  - article \"Keep the newsletter list in step\":\n    - heading \"Keep the newsletter list in step\" [level=3]\n    - paragraph: Finds contacts missing from your list and tells you.\n    - list \"About this automation\":\n      - listitem: \"Uses AI: no\"\n      - listitem: \"Needs: your customer list (CRM export) and newsletter list (a CSV file; Excel can save one)\"\n    - link \"Start\":\n      - /url: \"#/make/contact-sync\"\n  - paragraph:\n    - text: Want Foundry to try with AI?\n    - link \"Set up an AI key\":\n      - /url: \"#/keys\"\n    - text: (your words go to the AI provider)\n  - search \"Or describe it in your own words\":\n    - text: Or describe it in your own words\n    - textbox \"Or describe it in your own words\":\n      - /placeholder: e.g. remind customers who haven't paid after a week\n      - text: Refunds over $500 need my approval before we pay them back\n    - button \"Find a match\"\n    - paragraph: Without an AI key, Foundry matches your words to the list above. Nothing leaves this computer."
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Start",
       "steps": 3,
       "asks": 0,
-      "ms": 2338
+      "tabs": 26,
+      "screens": 0.58,
+      "ms": 2364
     },
     {
       "action": "fill",
       "ask": true,
+      "decision": false,
       "target": "Up to what amount should it approve on its own?",
       "steps": 4,
       "asks": 1,
-      "ms": 2642
+      "tabs": 35,
+      "screens": 0.58,
+      "ms": 2828
     },
     {
       "action": "fill",
       "ask": true,
+      "decision": false,
       "target": "Who decides claims over your limit? (their e-mail)",
       "steps": 5,
       "asks": 2,
-      "ms": 2792
+      "tabs": 36,
+      "screens": 0.64,
+      "ms": 3305
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Test it with pretend claims",
       "steps": 6,
       "asks": 2,
-      "ms": 2912
+      "tabs": 42,
+      "screens": 1.35,
+      "ms": 3810
     },
     {
       "action": "click",
       "ask": false,
+      "decision": true,
       "target": "Turn it on",
       "steps": 7,
       "asks": 2,
-      "ms": 4213
+      "tabs": 57,
+      "screens": 2.57,
+      "ms": 5447
     },
     {
       "action": "upload",
       "ask": true,
+      "decision": false,
       "target": "Choose your expense claims (a CSV file)",
       "steps": 8,
       "asks": 3,
-      "ms": 4492
+      "tabs": 66,
+      "screens": 2.57,
+      "ms": 6260
     },
     {
       "n": 2,
@@ -91,36 +112,45 @@
       "note": "two columns to choose; receipt, category and description may be missing",
       "steps": 8,
       "asks": 3,
-      "ms": 5398,
+      "ms": 6953,
       "route": "#/go-live/expense-approval?on=1",
       "h1": "Add your expense claims",
       "focus": "h1 Add your expense claims",
       "a11y": [],
-      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: \"On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.\"\n  - heading \"Add your expense claims\" [level=1]\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your expense claims (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your expense claims (a CSV file)\"\n  - paragraph: Found 3 claims.\n  - heading \"Which column is which?\" [level=3]\n  - text: Which column is the claim number?\n  - combobox \"Which column is the claim number?\":\n    - option \"Choose a column\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the person's name?\n  - combobox \"Which column is the person's name?\":\n    - option \"Choose a column\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the person's e-mail address?\n  - combobox \"Which column is the person's e-mail address?\":\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\" [selected]\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph: \"For example: lee@moss.example, ana@ruiz.example, sam@park.example\"\n  - text: Which column is the amount?\n  - combobox \"Which column is the amount?\":\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\" [selected]\n    - option \"Status\"\n  - paragraph: \"For example: 749.99, 45.00, 120.50\"\n  - text: Which column is the category?\n  - combobox \"Which column is the category?\":\n    - option \"Not in my file\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the description?\n  - combobox \"Which column is the description?\":\n    - option \"Not in my file\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the receipt (yes or no)?\n  - combobox \"Which column is the receipt (yes or no)?\":\n    - option \"Not in my file\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the status?\n  - combobox \"Which column is the status?\":\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\" [selected]\n  - paragraph: \"For example: Pending, Pending, Pending\"\n  - paragraph: \"Foundry keeps only the columns above. It leaves out: Refund ID, Customer.\"\n  - button \"Use these columns and test\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+      "aria": "- main:\n  - heading \"Add your expense claims\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: \"On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your expense claims (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your expense claims (a CSV file)\"\n  - paragraph: Found 3 claims.\n  - heading \"Which column is which?\" [level=3]\n  - text: Which column is the claim number?\n  - combobox \"Which column is the claim number?\":\n    - option \"Choose a column\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the person's name?\n  - combobox \"Which column is the person's name?\":\n    - option \"Choose a column\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the person's e-mail address?\n  - combobox \"Which column is the person's e-mail address?\":\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\" [selected]\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph: \"For example: lee@moss.example, ana@ruiz.example, sam@park.example\"\n  - text: Which column is the amount?\n  - combobox \"Which column is the amount?\":\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\" [selected]\n    - option \"Status\"\n  - paragraph: \"For example: 749.99, 45.00, 120.50\"\n  - text: Which column is the category?\n  - combobox \"Which column is the category?\":\n    - option \"Not in my file\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the description?\n  - combobox \"Which column is the description?\":\n    - option \"Not in my file\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the receipt (yes or no)?\n  - combobox \"Which column is the receipt (yes or no)?\":\n    - option \"Not in my file\" [selected]\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\"\n  - paragraph\n  - text: Which column is the status?\n  - combobox \"Which column is the status?\":\n    - option \"Refund ID\"\n    - option \"Customer\"\n    - option \"Customer email\"\n    - option \"Refund amount\"\n    - option \"Status\" [selected]\n  - paragraph: \"For example: Pending, Pending, Pending\"\n  - paragraph: \"Foundry keeps only the columns above. It leaves out: Refund ID, Customer.\"\n  - button \"Use these columns and test\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
     },
     {
       "action": "choose",
       "ask": false,
+      "decision": false,
       "target": "Which column is the claim number?",
       "steps": 9,
       "asks": 3,
-      "ms": 5710
+      "tabs": 76,
+      "screens": 2.57,
+      "ms": 7147
     },
     {
       "action": "choose",
       "ask": false,
+      "decision": false,
       "target": "Which column is the person's name?",
       "steps": 10,
       "asks": 3,
-      "ms": 5910
+      "tabs": 87,
+      "screens": 2.57,
+      "ms": 7643
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Use these columns and test",
       "steps": 11,
       "asks": 3,
-      "ms": 6087
+      "tabs": 105,
+      "screens": 3.59,
+      "ms": 8517
     },
     {
       "n": 3,
@@ -129,20 +159,23 @@
       "note": "no receipt column: every claim goes to the approver, and the page says so",
       "steps": 11,
       "asks": 3,
-      "ms": 7171,
+      "ms": 10652,
       "route": "#/go-live/expense-approval?on=1",
       "h1": "Add your expense claims",
-      "focus": "h2#batch-25 Make this draft?",
+      "focus": "h2#batch-27 Make this draft?",
       "a11y": [],
-      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: \"On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.\"\n  - heading \"Add your expense claims\" [level=1]\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your expense claims (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your expense claims (a CSV file)\"\n  - status: Saved 3 claims.\n  - paragraph: \"Your file has no receipt column, so no claim counts as having one: with Needs a receipt on, every claim goes to the person who decides.\"\n  - article \"Make this draft?\":\n    - heading \"Make this draft?\" [level=2]\n    - paragraph: This is everything the real run would make (version 1, as of 21 Oct 2026), in full. Read it before you say yes.\n    - list:\n      - listitem: \"To: maria@example.com Subject: Expenses: 3 waiting for your approval Expense claims waiting for your decision (3): - R-1042 Lee Moss: 749.99 for no description given (no category; no receipt) - R-1043 Ana Ruiz: 45 for no description given (no category; no receipt) - R-1044 Sam Park: 120.5 for no description given (no category; no receipt) Approved on their own, not paid yet (up to 100 with a receipt) (0): - none Please reply with your decision on each waiting claim. Your reply goes to the person who sent this, who records it in Foundry. Nothing has been paid.\"\n    - paragraph: \"Also: adds 3 lines to expense-decisions on this computer.\"\n    - paragraph: If the real run wants to make anything that isn't on this list, it stops and asks you.\n    - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again. Send it, or copy it, from the Drafts page.\"\n    - button \"Make the draft\"\n    - button \"Don't make any\"\n    - status\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+      "aria": "- main:\n  - heading \"Add your expense claims\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - status:\n    - paragraph: \"On. It runs when you start it here: drop your list, then press Show me what it would make. It won't run by itself.\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your expense claims (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your expense claims (a CSV file)\"\n  - status: Saved 3 claims.\n  - paragraph: \"Your file has no receipt column, so no claim counts as having one: with Needs a receipt on, every claim goes to the person who decides.\"\n  - article \"Make this draft?\":\n    - heading \"Make this draft?\" [level=2]\n    - paragraph: This is everything the real run would make (version 1, as of 21 Oct 2026), in full. Read it before you say yes.\n    - list:\n      - listitem: \"To: maria@example.com Subject: Expenses: 3 waiting for your approval Expense claims waiting for your decision (3): - R-1042 Lee Moss: 749.99 for no description given (no category; no receipt) - R-1043 Ana Ruiz: 45 for no description given (no category; no receipt) - R-1044 Sam Park: 120.5 for no description given (no category; no receipt) Approved on their own, not paid yet (up to 100 with a receipt) (0): - none Please reply with your decision on each waiting claim. Your reply goes to the person who sent this, who records it in Foundry. Nothing has been paid.\"\n    - paragraph: \"Also: adds 3 lines to expense-decisions on this computer.\"\n    - paragraph: If the real run wants to make anything that isn't on this list, it stops and asks you.\n    - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again. Send it, or copy it, from the Drafts page.\"\n    - button \"Make the draft\"\n    - button \"Don't make any\"\n    - status\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
     },
     {
       "action": "click",
       "ask": true,
+      "decision": true,
       "target": "Make the draft",
       "steps": 12,
       "asks": 4,
-      "ms": 7965
+      "tabs": 115,
+      "screens": 3.59,
+      "ms": 11488
     },
     {
       "n": 4,
@@ -151,20 +184,23 @@
       "note": null,
       "steps": 12,
       "asks": 4,
-      "ms": 8518,
-      "route": "#/drafts?run=dcee20f4-df2b-4163-90c1-4a2ca6f10ed4",
+      "ms": 12360,
+      "route": "#/drafts?run=1dcb0dcb-7782-453a-9249-b6a284da2943",
       "h1": "One draft ready. Foundry didn't send anything.",
       "focus": "h1 One draft ready. Foundry didn't send anything.",
       "a11y": [],
-      "aria": "- main:\n  - heading \"One draft ready. Foundry didn't send anything.\" [level=1]\n  - paragraph: Open each one in your mail app and send it yourself.\n  - paragraph: Use Gmail or Outlook in your browser? Copy the address, the subject and the text into a new e-mail.\n  - list:\n    - listitem:\n      - text: \"To: maria@example.com Subject: Expenses: 3 waiting for your approval 28 Oct 2026, 18:18 UTC Expense claims waiting for your decision (3): - R-1042 Lee Moss: 749.99 for no description given (no category; no receipt) - R-1043 Ana Ruiz: 45 for no description given (no category; no receipt) - R-1044 Sam Park: 120.5 for no description given (no category; no receipt) Approved on their own, not paid yet (up to 100 with a receipt) (0): - none Please reply with your decision on each waiting claim. Your reply goes to the person who sent this, who records it in Foundry. Nothing has been paid.\"\n      - link \"Open in your mail app\":\n        - /url: mailto:maria@example.com?subject=Expenses%3A%203%20waiting%20for%20your%20approval&body=Expense%20claims%20waiting%20for%20your%20decision%20(3)%3A%0A-%20R-1042%20Lee%20Moss%3A%20749.99%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A-%20R-1043%20Ana%20Ruiz%3A%2045%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A-%20R-1044%20Sam%20Park%3A%20120.5%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A%0AApproved%20on%20their%20own%2C%20not%20paid%20yet%20(up%20to%20100%20with%20a%20receipt)%20(0)%3A%0A-%20none%0A%0APlease%20reply%20with%20your%20decision%20on%20each%20waiting%20claim.%20Your%20reply%20goes%20to%20the%20person%20who%20sent%20this%2C%20who%20records%20it%20in%20Foundry.%20Nothing%20has%20been%20paid.\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n  - status\n  - paragraph: \"\\\"I sent it\\\" is your own note, kept in your Foundry folder. Foundry can't see your mail.\"\n  - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again, even if you never send it.\"\n  - link \"Your automations\":\n    - /url: \"#/automations\"\n  - link \"Runs\":\n    - /url: \"#/runs\""
+      "aria": "- main:\n  - heading \"One draft ready. Foundry didn't send anything.\" [level=1]\n  - paragraph: Open each one in your mail app and send it yourself.\n  - paragraph: Use Gmail or Outlook in your browser? Copy the address, the subject and the text into a new e-mail.\n  - list:\n    - listitem:\n      - text: \"To: maria@example.com Subject: Expenses: 3 waiting for your approval 4 Nov 2026, 13:06 UTC Expense claims waiting for your decision (3): - R-1042 Lee Moss: 749.99 for no description given (no category; no receipt) - R-1043 Ana Ruiz: 45 for no description given (no category; no receipt) - R-1044 Sam Park: 120.5 for no description given (no category; no receipt) Approved on their own, not paid yet (up to 100 with a receipt) (0): - none Please reply with your decision on each waiting claim. Your reply goes to the person who sent this, who records it in Foundry. Nothing has been paid.\"\n      - link \"Open in your mail app\":\n        - /url: mailto:maria@example.com?subject=Expenses%3A%203%20waiting%20for%20your%20approval&body=Expense%20claims%20waiting%20for%20your%20decision%20(3)%3A%0A-%20R-1042%20Lee%20Moss%3A%20749.99%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A-%20R-1043%20Ana%20Ruiz%3A%2045%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A-%20R-1044%20Sam%20Park%3A%20120.5%20for%20no%20description%20given%20(no%20category%3B%20no%20receipt)%0A%0AApproved%20on%20their%20own%2C%20not%20paid%20yet%20(up%20to%20100%20with%20a%20receipt)%20(0)%3A%0A-%20none%0A%0APlease%20reply%20with%20your%20decision%20on%20each%20waiting%20claim.%20Your%20reply%20goes%20to%20the%20person%20who%20sent%20this%2C%20who%20records%20it%20in%20Foundry.%20Nothing%20has%20been%20paid.\n      - button \"Download a copy for Outlook or Apple Mail\"\n      - checkbox \"I sent it\"\n      - text: I sent it\n      - button \"Copy address\"\n      - button \"Copy subject\"\n      - button \"Copy text\"\n  - status\n  - paragraph: \"\\\"I sent it\\\" is your own note, kept in your Foundry folder. Foundry can't see your mail.\"\n  - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again, even if you never send it.\"\n  - link \"Your automations\":\n    - /url: \"#/automations\"\n  - link \"Runs\":\n    - /url: \"#/runs\""
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Waiting for you0",
       "steps": 13,
       "asks": 4,
-      "ms": 8569
+      "tabs": 119,
+      "screens": 3.59,
+      "ms": 12837
     },
     {
       "n": 5,
@@ -173,7 +209,7 @@
       "note": "Maria answers by e-mail; the person records each answer here",
       "steps": 13,
       "asks": 4,
-      "ms": 9061,
+      "ms": 13793,
       "route": "#/waiting",
       "h1": "Answers to record",
       "focus": "h1 Answers to record",
@@ -183,10 +219,13 @@
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Approved",
       "steps": 14,
       "asks": 4,
-      "ms": 9253
+      "tabs": 128,
+      "screens": 3.59,
+      "ms": 14290
     },
     {
       "n": 6,
@@ -195,7 +234,7 @@
       "note": null,
       "steps": 14,
       "asks": 4,
-      "ms": 9927,
+      "ms": 15481,
       "route": "#/waiting",
       "h1": "Answers to record",
       "focus": "h1 Answers to record",
@@ -205,18 +244,24 @@
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Your automations",
       "steps": 15,
       "asks": 4,
-      "ms": 10020
+      "tabs": 133,
+      "screens": 3.59,
+      "ms": 15823
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Open",
       "steps": 16,
       "asks": 4,
-      "ms": 10412
+      "tabs": 142,
+      "screens": 3.59,
+      "ms": 16875
     },
     {
       "n": 7,
@@ -225,12 +270,12 @@
       "note": "who decided each list, how and when",
       "steps": 16,
       "asks": 4,
-      "ms": 11435,
+      "ms": 18125,
       "route": "#/automations/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Approve small expenses\" [level=1]\n  - paragraph: Works now On · version 1\n  - link \"Make a list (shows you everything first)\":\n    - /url: \"#/go-live/expense-approval\"\n  - link \"Change settings\":\n    - /url: \"#/make/expense-approval?flow=expense-approval\"\n  - link \"Record answers (2 waiting)\":\n    - /url: \"#/waiting\"\n  - link \"Get a one-page brief for IT\":\n    - /url: \"#/it-brief/expense-approval\"\n  - heading \"It will\" [level=2]\n  - list:\n    - listitem: Read the claims still waiting for a decision\n    - listitem: Approve on its own each claim up to 100 that has a receipt\n    - listitem: Note every decision in a decisions list on this computer\n    - listitem: Draft an e-mail to maria@example.com listing the claims they need to decide. You see it first, and you send it\n    - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n  - heading \"It won't\" [level=2]\n  - list:\n    - listitem: Pay or reimburse anyone\n    - listitem: Approve anything over 100\n    - listitem: Change your list of claims\n    - listitem: \"See the approver's reply: you record their answer in Foundry\"\n    - listitem: \"Run by itself: you start each run\"\n  - heading \"Done means\" [level=2]\n  - paragraph:\n    - text: \"Last run (28 Oct 2026, 18:18 UTC): Done.\"\n    - link \"Open\":\n      - /url: \"#/runs/dcee20f4-df2b-4163-90c1-4a2ca6f10ed4\"\n  - list:\n    - listitem: \"Passed: Every claim approved on its own is within the limit of 100 and has a receipt\"\n    - listitem: \"Passed: The e-mail to maria@example.com was drafted\"\n    - listitem: \"Passed: Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)\"\n    - listitem: \"Passed: Every claim is in the decisions list once (checked by re-reading it)\"\n    - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written, word for word\"\n    - listitem: \"Passed: Re-read the decisions list: one line per claim\"\n  - heading \"Who decides:\" [level=2]\n  - paragraph: Turned on by root@vm through this page on 28 Oct 2026, 18:18 UTC. That is the name in Settings and this computer's account, not a checked identity.\n  - paragraph: \"Noted: maria@example.com gets an e-mail; you record their answer here\"\n  - paragraph: maria@example.com gets an e-mail with the claims to decide; you record their answer in Waiting for you.\n  - heading \"Decisions\" [level=2]\n  - list:\n    - listitem:\n      - text: \"A list of 1: approved by root@vm through this page, 21 Oct 2026, 09:00 UTC\"\n      - link \"Open\":\n        - /url: \"#/runs/dcee20f4-df2b-4163-90c1-4a2ca6f10ed4\"\n  - heading \"Your data\" [level=2]\n  - list:\n    - listitem: \"expenses: 3 rows, given 28 Oct 2026, 18:18 UTC\"\n  - link \"Use a new list\":\n    - /url: \"#/go-live/expense-approval\"\n  - heading \"A reminder, not a schedule\" [level=2]\n  - paragraph: Foundry can't run by itself yet. If you like, add a weekly calendar reminder to open it and make a list.\n  - button \"Add a weekly calendar reminder\"\n  - heading \"Versions\" [level=2]\n  - heading \"Version 1 · On\" [level=3]\n  - group: ▸ Show details\n  - heading \"Runs\" [level=2]\n  - list:\n    - listitem:\n      - link \"Done · 28 Oct 2026, 18:18 UTC\":\n        - /url: \"#/runs/dcee20f4-df2b-4163-90c1-4a2ca6f10ed4\""
+      "aria": "- main:\n  - heading \"Approve small expenses\" [level=1]\n  - paragraph: Works now On · version 1\n  - link \"Make a list (shows you everything first)\":\n    - /url: \"#/go-live/expense-approval\"\n  - link \"Change settings\":\n    - /url: \"#/make/expense-approval?flow=expense-approval\"\n  - link \"Record answers (2 waiting)\":\n    - /url: \"#/waiting\"\n  - link \"Get a one-page brief for IT\":\n    - /url: \"#/it-brief/expense-approval\"\n  - region \"On or off\":\n    - heading \"On or off\" [level=2]\n    - paragraph: Works now On. It runs only when you start it here.\n    - paragraph: \"Turn it off to stop it: it then makes no lists and runs nothing, and anything of it still waiting for your yes is cancelled. Drafts it already made stay. You can turn it on again later.\"\n    - button \"Turn it off\"\n  - heading \"It will\" [level=2]\n  - list:\n    - listitem: Read the claims still waiting for a decision\n    - listitem: Approve on its own each claim up to 100 that has a receipt\n    - listitem: Note every decision in a decisions list on this computer\n    - listitem: Draft an e-mail to maria@example.com listing the claims they need to decide. You see it first, and you send it\n    - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n  - heading \"It won't\" [level=2]\n  - list:\n    - listitem: Pay or reimburse anyone\n    - listitem: Approve anything over 100\n    - listitem: Change your list of claims\n    - listitem: \"See the approver's reply: you record their answer in Foundry\"\n    - listitem: \"Run by itself: you start each run\"\n  - heading \"How you'll know it worked\" [level=2]\n  - paragraph:\n    - text: \"Last run (4 Nov 2026, 13:06 UTC): Done.\"\n    - link \"Open\":\n      - /url: \"#/runs/1dcb0dcb-7782-453a-9249-b6a284da2943\"\n  - list:\n    - listitem: \"Passed: Every claim approved on its own is within the limit of 100 and has a receipt\"\n    - listitem: \"Passed: The e-mail to maria@example.com was drafted\"\n    - listitem: \"Passed: Exactly the planned e-mails were drafted, word for word (checked by re-reading the drafts)\"\n    - listitem: \"Passed: Every claim is in the decisions list once (checked by re-reading it)\"\n    - listitem: \"Passed: Re-read the drafts: exactly the planned e-mails were written, word for word\"\n    - listitem: \"Passed: Re-read the decisions list: one line per claim\"\n  - heading \"Who decides:\" [level=2]\n  - paragraph: Turned on by root@vm through this page on 4 Nov 2026, 13:06 UTC. That is the name in Settings and this computer's account, not a checked identity.\n  - paragraph: \"Noted: maria@example.com gets an e-mail; you record their answer here\"\n  - paragraph: maria@example.com gets an e-mail with the claims to decide; you record their answer in Waiting for you.\n  - heading \"Decisions\" [level=2]\n  - list:\n    - listitem:\n      - text: \"A list of 1: approved by root@vm through this page, 21 Oct 2026, 09:00 UTC\"\n      - link \"Open\":\n        - /url: \"#/runs/1dcb0dcb-7782-453a-9249-b6a284da2943\"\n  - heading \"Your data\" [level=2]\n  - list:\n    - listitem: \"expenses: 3 rows, given 4 Nov 2026, 13:06 UTC\"\n  - link \"Use a new list\":\n    - /url: \"#/go-live/expense-approval\"\n  - heading \"A reminder, not a schedule\" [level=2]\n  - paragraph: Foundry can't run by itself yet. If you like, add a weekly calendar reminder to open it and make a list.\n  - button \"Add a weekly calendar reminder\"\n  - heading \"Versions\" [level=2]\n  - heading \"Version 1 · On\" [level=3]\n  - group: ▸ Show details\n  - heading \"Runs\" [level=2]\n  - list:\n    - listitem:\n      - link \"Done · 4 Nov 2026, 13:06 UTC\":\n        - /url: \"#/runs/1dcb0dcb-7782-453a-9249-b6a284da2943\""
     }
   ],
   "errors": [],
@@ -240,13 +285,17 @@
     "firstLive": {
       "steps": 12,
       "asks": 4,
-      "ms": 8155
+      "tabs": 115,
+      "screens": 3.59,
+      "decisions": 2,
+      "ms": 11853
     }
   },
   "a11y": [],
   "refusals": [],
+  "focusLost": [],
   "checks": {
-    "refundRequest": "Let Foundry prepare the jobs you do every week.",
+    "refundRequest": "Foundry can't make that yet. Nothing was created.",
     "receiptNote": "Your file has no receipt column, so no claim counts as having one: with Needs a receipt on, every claim goes to the person who decides.",
     "exactList": [
       "To: maria@example.comSubject: Expenses: 3 waiting for your approvalExpense claims waiting for your decision (3): - R-1042 Lee Moss: 749.99 for no description given (no category; no receipt) - R-1043 A"
@@ -261,7 +310,10 @@
   },
   "totalSteps": 16,
   "totalAsks": 4,
-  "ms": 11435,
+  "totalTabs": 142,
+  "totalScreens": 3.59,
+  "totalDecisions": 2,
+  "ms": 18125,
   "shots": [
     "01-refunds-request.jpg",
     "02-refunds-columns.jpg",

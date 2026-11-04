@@ -14,7 +14,7 @@
       "note": "you do not need a key; the cards work without AI",
       "steps": 0,
       "asks": 0,
-      "ms": 1613,
+      "ms": 1428,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -28,7 +28,7 @@
       "note": "Allowed AI is none, so the key is not sent anywhere, not even to check it",
       "steps": 0,
       "asks": 0,
-      "ms": 2093,
+      "ms": 1901,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -38,34 +38,46 @@
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Open Settings",
       "steps": 1,
       "asks": 0,
-      "ms": 2594
+      "tabs": 9,
+      "screens": 0,
+      "ms": 2190
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Mercury 3, with your own key •Preview",
       "steps": 2,
       "asks": 0,
-      "ms": 3424
+      "tabs": 22,
+      "screens": 0,
+      "ms": 3089
     },
     {
       "action": "fill",
       "ask": true,
+      "decision": false,
       "target": "Paste your Inception (Mercury 3) key",
       "steps": 3,
       "asks": 1,
-      "ms": 3785
+      "tabs": 31,
+      "screens": 0,
+      "ms": 3800
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Check and save",
       "steps": 4,
       "asks": 1,
-      "ms": 4245
+      "tabs": 32,
+      "screens": 0,
+      "ms": 4373
     },
     {
       "n": 3,
@@ -74,7 +86,7 @@
       "note": null,
       "steps": 4,
       "asks": 1,
-      "ms": 4806,
+      "ms": 5198,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "button Check and save",
@@ -88,7 +100,7 @@
       "note": null,
       "steps": 4,
       "asks": 1,
-      "ms": 5715,
+      "ms": 6037,
       "route": "#/keys",
       "h1": "AI keys",
       "focus": "h1 AI keys",
@@ -104,6 +116,7 @@
   "refusals": [
     "409 /api/keys"
   ],
+  "focusLost": [],
   "checks": {
     "saved": "•Preview Saved in your keychain: key ending wxyz (ephemeral).",
     "blockedBeforeAllowed": true,
@@ -116,7 +129,10 @@
   },
   "totalSteps": 4,
   "totalAsks": 1,
-  "ms": 5717,
+  "totalTabs": 32,
+  "totalScreens": 0,
+  "totalDecisions": 0,
+  "ms": 6040,
   "shots": [
     "01-keys-page.jpg",
     "02-key-not-allowed.jpg",

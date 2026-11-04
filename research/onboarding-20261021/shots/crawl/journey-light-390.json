@@ -14,7 +14,7 @@
       "note": null,
       "steps": 0,
       "asks": 0,
-      "ms": 5751,
+      "ms": 6049,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h1 Who decides what",
@@ -28,12 +28,12 @@
       "note": null,
       "steps": 0,
       "asks": 0,
-      "ms": 6180,
+      "ms": 6434,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
       "a11y": [],
-      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Approve small expenses\" [level=1]\n  - region \"I'll do this:\":\n    - heading \"I'll do this:\" [level=2]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 250 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to the address you give listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 250\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - paragraph: €250 · set by you for Dana (Org policy). Dana hasn't confirmed it\n  - spinbutton \"Up to what amount should it approve on its own?\": \"250\"\n  - paragraph: \"Why I'm asking: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - paragraph: Written down in Who decides what. You can make it stricter here, not looser.\n  - text: Who decides claims over your limit? (their e-mail)\n  - textbox \"Who decides claims over your limit? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n  - paragraph: \"Why I'm asking: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"How is their decision recorded?\":\n    - text: How is their decision recorded?\n    - radio \"The person you named gets an e-mail. They reply, and you record their answer here. Free\" [checked]\n    - text: The person you named gets an e-mail. They reply, and you record their answer here. Free\n    - radio \"The person you named signs in and decides, and their yes is recorded as theirs\"\n    - text: The person you named signs in and decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent."
+      "aria": "- main:\n  - heading \"Approve small expenses\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - region \"Foundry will:\":\n    - heading \"Foundry will:\" [level=2]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 250 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to the address you give listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 250\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - paragraph: €250 · set by you for Dana (Org policy). Dana hasn't confirmed it\n  - spinbutton \"Up to what amount should it approve on its own?\": \"250\"\n  - paragraph: \"Why Foundry asks: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - paragraph: Written down in Who decides what. You can make it stricter here, not looser.\n  - text: Who decides claims over your limit? (their e-mail)\n  - textbox \"Who decides claims over your limit? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n  - paragraph: \"Why Foundry asks: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"How is their decision recorded?\":\n    - text: How is their decision recorded?\n    - radio \"The person you named gets an e-mail. They reply, and you record their answer here. Free\" [checked]\n    - text: The person you named gets an e-mail. They reply, and you record their answer here. Free\n    - radio \"The person you named signs in and decides, and their yes is recorded as theirs\"\n    - text: The person you named signs in and decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent."
     }
   ],
   "errors": [],
@@ -42,6 +42,7 @@
   "milestones": {},
   "a11y": [],
   "refusals": [],
+  "focusLost": [],
   "checks": {
     "state": "org-v1",
     "width": 390,
@@ -51,7 +52,10 @@
   },
   "totalSteps": 0,
   "totalAsks": 0,
-  "ms": 8861,
+  "totalTabs": 0,
+  "totalScreens": 0,
+  "totalDecisions": 0,
+  "ms": 9146,
   "shots": [
     "01-org-v1-org-light-390.jpg",
     "02-org-v1-make-expense-approval-light-390.jpg"

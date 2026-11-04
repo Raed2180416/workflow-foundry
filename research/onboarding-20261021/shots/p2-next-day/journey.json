@@ -12,7 +12,7 @@
       "target": "yesterday they turned on \"Chase unpaid invoices\", dropped their list and made 4 drafts (as in P2), in this browser",
       "steps": 0,
       "asks": 0,
-      "ms": 920
+      "ms": 1505
     },
     {
       "n": 1,
@@ -21,12 +21,12 @@
       "note": "the bookmark: no key kept for this port, so the page says the one command that opens Foundry",
       "steps": 0,
       "asks": 0,
-      "ms": 1463,
+      "ms": 2508,
       "route": "",
       "h1": "Open Foundry from its link",
-      "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
+      "focus": "h1 Open Foundry from its link",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Open Foundry from its link\" [level=1]\n  - paragraph: \"This tab doesn't have Foundry's key. Foundry gives each tab its own key, and only through a link it opens for you. To open Foundry, run this in a terminal on this computer:\"\n  - text: node \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" open --workspace \"/tmp/journey-p2-next-day-Y75L2v\"\n  - paragraph: \"Run it in your own terminal, not through a coding agent: the link it opens works once, within a minute, and Foundry shows it only to a person's terminal.\"\n  - paragraph: If nothing opens, Foundry isn't running. Today someone technical has to start it again after the computer restarts.\n  - paragraph:\n    - link \"Help\":\n      - /url: \"#/help\""
+      "aria": "- main:\n  - heading \"Open Foundry from its link\" [level=1]\n  - paragraph: \"This tab doesn't have Foundry's key. Foundry gives each tab its own key, and only through a link it opens for you. To open Foundry, run this in a terminal on this computer:\"\n  - text: node \"/home/user/workflow-foundry/.claude/worktrees/wf_c7946468-203-16/app/cli.mjs\" open --workspace \"/tmp/journey-p2-next-day-RIvx5x\"\n  - paragraph: \"Run it in your own terminal, not through a coding agent: the link it opens works once, within a minute, and Foundry shows it only to a person's terminal.\"\n  - paragraph: If nothing opens, Foundry isn't running. Today someone technical has to start it again after the computer restarts.\n  - paragraph:\n    - link \"Help\":\n      - /url: \"#/help\""
     },
     {
       "action": "external",
@@ -34,31 +34,40 @@
       "ask": false,
       "steps": 1,
       "asks": 0,
-      "ms": 1463
+      "ms": 2508
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Your automations",
       "steps": 2,
       "asks": 0,
-      "ms": 2047
+      "tabs": 5,
+      "screens": 0,
+      "ms": 3755
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Open",
       "steps": 3,
       "asks": 0,
-      "ms": 2432
+      "tabs": 14,
+      "screens": 0,
+      "ms": 4263
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Make a list (shows you everything first)",
       "steps": 4,
       "asks": 0,
-      "ms": 2566
+      "tabs": 23,
+      "screens": 0,
+      "ms": 5088
     },
     {
       "n": 2,
@@ -67,67 +76,82 @@
       "note": "yesterday's list no longer says who paid: replacing it comes first",
       "steps": 4,
       "asks": 0,
-      "ms": 3051,
+      "ms": 5815,
       "route": "#/go-live/invoice-chase",
       "h1": "Add your invoice list",
       "focus": "h1 Add your invoice list",
       "a11y": [],
-      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Add your invoice list\" [level=1]\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - paragraph:\n    - text: You gave Foundry your invoice list on 21 Oct 2026, 09:00 UTC (6 invoices).\n    - button \"Replace it\"\n  - paragraph: Your list is from 21 Oct 2026. Anything that changed since then (a customer who paid, say) is not in it. Drop a fresh export first.\n  - button \"Replace it\"\n  - button \"Use the 21 Oct 2026 list anyway\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+      "aria": "- main:\n  - heading \"Add your invoice list\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - paragraph:\n    - text: You gave Foundry your invoice list on 21 Oct 2026, 09:00 UTC (6 invoices).\n    - button \"Replace it\"\n  - paragraph: Your list is from 21 Oct 2026. Anything that changed since then (a customer who paid, say) is not in it. Drop a fresh export first.\n  - button \"Replace it\"\n  - button \"Use the 21 Oct 2026 list anyway\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Replace it",
       "steps": 5,
       "asks": 0,
-      "ms": 3125
+      "tabs": 33,
+      "screens": 0,
+      "ms": 6101
     },
     {
       "action": "upload",
       "ask": true,
+      "decision": false,
       "target": "Choose your invoice list (a CSV file)",
       "steps": 6,
       "asks": 1,
-      "ms": 3264
+      "tabs": 34,
+      "screens": 0,
+      "ms": 7545
     },
     {
-      "action": "choose",
-      "ask": true,
-      "target": "The 3rd of October 2026 (day first)",
-      "steps": 7,
-      "asks": 2,
-      "ms": 3599
+      "n": 3,
+      "shot": "03-date-order-remembered.jpg",
+      "slug": "date-order-remembered",
+      "note": "the date order answered yesterday is already chosen, and the page says so; it can be changed",
+      "steps": 6,
+      "asks": 1,
+      "ms": 8526,
+      "route": "#/go-live/invoice-chase",
+      "h1": "Add your invoice list",
+      "focus": "input#file-1 ",
+      "a11y": [],
+      "aria": "- main:\n  - heading \"Add your invoice list\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - paragraph:\n    - text: You gave Foundry your invoice list on 21 Oct 2026, 09:00 UTC (6 invoices).\n    - button \"Replace it\"\n  - text: Choose your invoice list (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your invoice list (a CSV file)\"\n  - paragraph: Found 6 invoices.\n  - heading \"Which column is which?\" [level=3]\n  - text: Which column is the invoice number?\n  - combobox \"Which column is the invoice number?\":\n    - option \"Invoice No.\" [selected]\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: INV-2041, INV-2042, INV-2043\"\n  - text: Which column is the customer name?\n  - combobox \"Which column is the customer name?\":\n    - option \"Invoice No.\"\n    - option \"Client\" [selected]\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: Bramble Cafe, Northfield Gym, Lark & Fern Florist\"\n  - text: Which column is the customer's e-mail address?\n  - combobox \"Which column is the customer's e-mail address?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\" [selected]\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: accounts@bramble-cafe.example, billing@northfield-gym.example, hello@larkfern.example\"\n  - text: Which column is the amount still owed?\n  - combobox \"Which column is the amount still owed?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\" [selected]\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: 1,240.00, 480.00, 75.50\"\n  - text: Which column is the due date?\n  - combobox \"Which column is the due date?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\" [selected]\n    - option \"Amount due (EUR)\"\n    - option \"Status\"\n    - option \"Notes\"\n  - paragraph: \"For example: 03/10/2026, 10/10/2026, 01/09/2026\"\n  - text: Which column is the status?\n  - combobox \"Which column is the status?\":\n    - option \"Invoice No.\"\n    - option \"Client\"\n    - option \"Contact email\"\n    - option \"Issued\"\n    - option \"Due date\"\n    - option \"Amount due (EUR)\"\n    - option \"Status\" [selected]\n    - option \"Notes\"\n  - paragraph: \"For example: Open, Open, Open\"\n  - paragraph: \"Foundry keeps only the columns above. It leaves out: Issued, Notes.\"\n  - heading \"Before Foundry reads your list\" [level=3]\n  - group \"Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\":\n    - text: Is 03/10/2026 the 3rd of October 2026 or March 10th, 2026?\n    - paragraph: \"Why Foundry asks: Your file writes dates both ways round, so the due date could be wrong by months. Foundry will not guess it. If you skip: Nothing is imported until you choose.\"\n    - paragraph: \"Already chosen: your answer for the last file like this (21 Oct 2026). Change it if this file is different.\"\n    - radio \"The 3rd of October 2026 (day first)\" [checked]\n    - text: The 3rd of October 2026 (day first)\n    - radio \"March 10th, 2026 (month first)\"\n    - text: March 10th, 2026 (month first)\n  - button \"Use these columns and test\"\n  - paragraph: Your list is from 21 Oct 2026. Anything that changed since then (a customer who paid, say) is not in it. Drop a fresh export first.\n  - button \"Replace it\"\n  - button \"Use the 21 Oct 2026 list anyway\"\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Use these columns and test",
-      "steps": 8,
-      "asks": 2,
-      "ms": 3792
+      "steps": 7,
+      "asks": 1,
+      "tabs": 43,
+      "screens": 1.07,
+      "ms": 9051
     },
     {
-      "n": 3,
-      "shot": "03-no-repeats.jpg",
+      "n": 4,
+      "shot": "04-no-repeats.jpg",
       "slug": "no-repeats",
       "note": "the reminders made yesterday are remembered; today's list has only the summary",
-      "steps": 8,
-      "asks": 2,
-      "ms": 5614,
+      "steps": 7,
+      "asks": 1,
+      "ms": 11251,
       "route": "#/go-live/invoice-chase",
       "h1": "Add your invoice list",
       "focus": "h2#batch-9 Make this draft?",
       "a11y": [],
-      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Add your invoice list\" [level=1]\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your invoice list (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your invoice list (a CSV file)\"\n  - status: Saved 6 invoices.\n  - article \"Make this draft?\":\n    - heading \"Make this draft?\" [level=2]\n    - paragraph: This is everything the real run would make (version 1, as of 22 Oct 2026), in full. Read it before you say yes.\n    - paragraph: Foundry remembered what earlier runs made, so nothing on this list was made before.\n    - list:\n      - listitem: \"To: me@example.com Subject: Invoice reminders: summary Unpaid late invoices, with the reminder their lateness calls for (3): - INV-2041 Bramble Cafe: €1,240.00, 19 days late (second reminder) - INV-2042 Northfield Gym: €480.00, 12 days late (reminder) - INV-2043 Lark & Fern Florist: €75.50, 51 days late (final notice) Reminder drafts made this run: 0 (you send them yourself). Paid and disputed invoices were left alone.\"\n    - paragraph: If the real run wants to make anything that isn't on this list, it stops and asks you.\n    - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again. Send it, or copy it, from the Drafts page.\"\n    - button \"Make the draft\"\n    - button \"Don't make any\"\n    - status\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
+      "aria": "- main:\n  - heading \"Add your invoice list\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose (done)\"\n    - listitem: \"Step 2 of 4: Test (done)\"\n    - listitem: \"Step 3 of 4: Turn on (done)\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - paragraph: Most accounting, CRM and tracker apps can export a list as a CSV file. Drop it here. An Excel file works once you save it as CSV.\n  - text: Choose your invoice list (a CSV file)\n  - paragraph: Foundry reads the file on this computer and keeps only the columns it needs.\n  - button \"Choose your invoice list (a CSV file)\"\n  - status: Saved 6 invoices.\n  - article \"Make this draft?\":\n    - heading \"Make this draft?\" [level=2]\n    - paragraph: This is everything the real run would make (version 1, as of 22 Oct 2026), in full. Read it before you say yes.\n    - paragraph: Foundry remembered what earlier runs made, so nothing on this list was made before.\n    - list:\n      - listitem: \"To: me@example.com Subject: Invoice reminders: summary Unpaid late invoices, with the reminder their lateness calls for (3): - INV-2041 Bramble Cafe: €1,240.00, 19 days late (second reminder) - INV-2042 Northfield Gym: €480.00, 12 days late (reminder) - INV-2043 Lark & Fern Florist: €75.50, 51 days late (final notice) Reminder drafts made this run: 0 (you send them yourself). Paid and disputed invoices were left alone.\"\n    - paragraph: If the real run wants to make anything that isn't on this list, it stops and asks you.\n    - paragraph: \"Foundry counts a draft as done once it's made: it won't make that one again. Send it, or copy it, from the Drafts page.\"\n    - button \"Make the draft\"\n    - button \"Don't make any\"\n    - status\n  - region \"How should it send?\":\n    - heading \"How should it send?\" [level=2]\n    - group \"Ways to send\":\n      - text: Ways to send\n      - radio \"Make drafts you send yourself Works now\" [checked]\n      - text: Make drafts you send yourself Works now\n      - radio \"Send from Gmail, an e-mail account, or a Slack channel Planned\" [disabled]\n      - text: Send from Gmail, an e-mail account, or a Slack channel Planned\n      - paragraph:\n        - 'link \"What you can do today: use drafts\"':\n          - /url: \"#/connections\""
     },
     {
-      "n": 4,
-      "shot": "04-other-browser.jpg",
+      "n": 5,
+      "shot": "05-other-browser.jpg",
       "slug": "other-browser",
       "note": "no key in this browser: the exact command to open Foundry (no key shown)",
-      "steps": 8,
-      "asks": 2,
-      "ms": 6079,
+      "steps": 7,
+      "asks": 1,
+      "ms": 13008,
       "route": null,
       "h1": null,
       "focus": null,
@@ -141,6 +165,7 @@
   "milestones": {},
   "a11y": [],
   "refusals": [],
+  "focusLost": [],
   "checks": {
     "bookmark": {
       "title": "Open Foundry from its link",
@@ -148,6 +173,7 @@
     },
     "openedWithCommand": "Let Foundry prepare the jobs you do every week.",
     "stale": "Your list is from 21 Oct 2026. Anything that changed since then (a customer who paid, say) is not in it. Drop a fresh export first.Replace itUse the 21 Oct 2026 list anyway",
+    "remembered": "Already chosen: your answer for the last file like this (21 Oct 2026). Change it if this file is different.",
     "secondList": [
       "To: me@example.comSubject: Invoice reminders: summary"
     ],
@@ -160,14 +186,18 @@
   "preconditions": [
     "yesterday they turned on \"Chase unpaid invoices\", dropped their list and made 4 drafts (as in P2), in this browser"
   ],
-  "totalSteps": 8,
-  "totalAsks": 2,
-  "ms": 6112,
+  "totalSteps": 7,
+  "totalAsks": 1,
+  "totalTabs": 43,
+  "totalScreens": 1.07,
+  "totalDecisions": 0,
+  "ms": 13110,
   "shots": [
     "01-bookmark-says-command.jpg",
     "02-stale-list.jpg",
-    "03-no-repeats.jpg",
-    "04-other-browser.jpg"
+    "03-date-order-remembered.jpg",
+    "04-no-repeats.jpg",
+    "05-other-browser.jpg"
   ],
   "budgets": null,
   "passed": true

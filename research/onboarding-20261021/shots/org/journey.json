@@ -12,7 +12,7 @@
       "target": "opened \"Who decides what\" (Settings, then the link; or #/org)",
       "steps": 0,
       "asks": 0,
-      "ms": 1045
+      "ms": 1624
     },
     {
       "n": 1,
@@ -21,7 +21,7 @@
       "note": "four starters; the banner says the map is checked when an automation is made, not while it runs",
       "steps": 0,
       "asks": 0,
-      "ms": 1610,
+      "ms": 2556,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h1 Who decides what",
@@ -31,50 +31,68 @@
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Start from this",
       "steps": 1,
       "asks": 0,
-      "ms": 1807
+      "tabs": 10,
+      "screens": 0,
+      "ms": 3106
     },
     {
       "action": "fill",
       "ask": false,
+      "decision": false,
       "target": "Add a person: name",
       "steps": 2,
       "asks": 0,
-      "ms": 2002
+      "tabs": 19,
+      "screens": 0,
+      "ms": 3526
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Add",
       "steps": 3,
       "asks": 0,
-      "ms": 2191
+      "tabs": 22,
+      "screens": 0,
+      "ms": 4040
     },
     {
       "action": "fill",
       "ask": false,
+      "decision": false,
       "target": "Add a person: name",
       "steps": 4,
       "asks": 0,
-      "ms": 2396
+      "tabs": 23,
+      "screens": 0,
+      "ms": 4614
     },
     {
       "action": "choose",
       "ask": false,
+      "decision": false,
       "target": "Their role",
       "steps": 5,
       "asks": 0,
-      "ms": 2582
+      "tabs": 25,
+      "screens": 0,
+      "ms": 5117
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Add",
       "steps": 6,
       "asks": 0,
-      "ms": 2798
+      "tabs": 28,
+      "screens": 0,
+      "ms": 5491
     },
     {
       "n": 2,
@@ -83,36 +101,45 @@
       "note": null,
       "steps": 6,
       "asks": 0,
-      "ms": 3186,
+      "ms": 6405,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "input#person-name ",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: Nothing changes until you save a new version.\n  - heading \"People and roles\" [level=2]\n  - paragraph: Names stay on this computer. You hold every role until you give one to someone else.\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem:\n      - text: \"Dana: Approver, Rule owner\"\n      - button \"Team plan\"\n    - listitem:\n      - text: \"Sam: Auditor\"\n      - button \"Team plan\"\n  - text: \"Add a person: name\"\n  - 'textbox \"Add a person: name\"':\n    - /placeholder: e.g. Dana (Finance)\n  - text: Their e-mail (optional)\n  - textbox \"Their e-mail (optional)\"\n  - paragraph: With an e-mail, a card that needs their yes uses it, and refuses any other address.\n  - text: Their role\n  - combobox \"Their role\":\n    - option \"Approver and rule owner\" [selected]\n    - option \"Approver\"\n    - option \"Rule owner\"\n    - option \"Auditor (a label only today)\"\n    - option \"Builder\"\n  - button \"Add\"\n  - heading \"Who approves what\" [level=2]\n  - paragraph: \"For each kind of action: above what amount it needs a yes, and from whom.\"\n  - group \"Money going out\":\n    - text: Money going out Needs a yes above this amount\n    - spinbutton \"Needs a yes above this amount\"\n    - text: Currency\n    - combobox \"Currency\":\n      - option \"€ EUR\"\n      - option \"$ USD\" [selected]\n      - option \"£ GBP\"\n    - text: Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"A message leaving the company\":\n    - text: A message leaving the company Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"Changing customer records\":\n    - text: Changing customer records Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - group \"Deleting anything\":\n    - text: Deleting anything Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - paragraph: A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.\n  - paragraph: No rules yet. Make one from a row above.\n  - group: \"▸ More: where it runs, and changing these rules\"\n  - button \"Save version 1\"\n  - button \"Discard changes\""
+      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: Nothing changes until you save a new version.\n  - heading \"People and roles\" [level=2]\n  - paragraph: Names stay on this computer. You hold every role until you give one to someone else.\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem:\n      - text: \"Dana: Approver, Rule owner\"\n      - button \"Team plan\"\n    - listitem:\n      - text: \"Sam: Auditor\"\n      - button \"Team plan\"\n  - text: \"Add a person: name\"\n  - 'textbox \"Add a person: name\"':\n    - /placeholder: e.g. Dana (Finance)\n  - text: Their e-mail (optional)\n  - textbox \"Their e-mail (optional)\"\n  - paragraph: With an e-mail, a card that needs their yes uses it, and refuses any other address.\n  - text: Their role\n  - combobox \"Their role\":\n    - option \"Approver and rule owner\" [selected]\n    - option \"Approver\"\n    - option \"Rule owner\"\n    - option \"Auditor (a label only today)\"\n    - option \"Builder\"\n  - button \"Add\"\n  - heading \"Who approves what\" [level=2]\n  - paragraph: \"For each kind of action: above what amount it needs a yes, and from whom.\"\n  - group \"Money going out\":\n    - text: Money going out Needs a yes above this amount\n    - spinbutton \"Needs a yes above this amount\"\n    - text: Currency\n    - combobox \"Currency\":\n      - option \"$ USD\" [selected]\n      - option \"€ EUR\"\n      - option \"£ GBP\"\n    - text: Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"A message leaving the company\":\n    - text: A message leaving the company Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"Changing customer records\":\n    - text: Changing customer records Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - group \"Deleting anything\":\n    - text: Deleting anything Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - paragraph: A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.\n  - paragraph: No rules yet. Make one from a row above.\n  - group: \"▸ More: where it runs, and changing these rules\"\n  - button \"Save version 1\"\n  - button \"Discard changes\""
     },
     {
       "action": "fill",
       "ask": true,
+      "decision": false,
       "target": "Needs a yes above this amount",
       "steps": 7,
       "asks": 1,
-      "ms": 3271
+      "tabs": 32,
+      "screens": 0.35,
+      "ms": 6530
     },
     {
       "action": "choose",
       "ask": false,
+      "decision": false,
       "target": "Currency",
       "steps": 8,
       "asks": 1,
-      "ms": 3356
+      "tabs": 33,
+      "screens": 0.45,
+      "ms": 6916
     },
     {
       "action": "choose",
       "ask": false,
+      "decision": false,
       "target": "Who approves",
       "steps": 9,
       "asks": 1,
-      "ms": 3443
+      "tabs": 35,
+      "screens": 0.55,
+      "ms": 7351
     },
     {
       "n": 3,
@@ -121,20 +148,23 @@
       "note": "money out above €250 needs Dana: the Team plan badge sits here, at the one field it applies to",
       "steps": 9,
       "asks": 1,
-      "ms": 4022,
+      "ms": 8231,
       "route": "#/org",
       "h1": "Who decides what",
-      "focus": "input#amt-money-out-28 ",
+      "focus": "input#amt-money-out-30 ",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: Nothing changes until you save a new version.\n  - heading \"People and roles\" [level=2]\n  - paragraph: Names stay on this computer. You hold every role until you give one to someone else.\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem:\n      - text: \"Dana: Approver, Rule owner\"\n      - button \"Team plan\"\n    - listitem:\n      - text: \"Sam: Auditor\"\n      - button \"Team plan\"\n  - text: \"Add a person: name\"\n  - 'textbox \"Add a person: name\"':\n    - /placeholder: e.g. Dana (Finance)\n  - text: Their e-mail (optional)\n  - textbox \"Their e-mail (optional)\"\n  - paragraph: With an e-mail, a card that needs their yes uses it, and refuses any other address.\n  - text: Their role\n  - combobox \"Their role\":\n    - option \"Approver and rule owner\" [selected]\n    - option \"Approver\"\n    - option \"Rule owner\"\n    - option \"Auditor (a label only today)\"\n    - option \"Builder\"\n  - button \"Add\"\n  - heading \"Who approves what\" [level=2]\n  - paragraph: \"For each kind of action: above what amount it needs a yes, and from whom.\"\n  - group \"Money going out\":\n    - text: Money going out Needs a yes above this amount\n    - spinbutton \"Needs a yes above this amount\": \"250\"\n    - text: Currency\n    - combobox \"Currency\":\n      - option \"€ EUR\" [selected]\n      - option \"$ USD\"\n      - option \"£ GBP\"\n    - text: Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\"\n      - option \"Dana\" [selected]\n    - button \"Team plan\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n    - button \"Make this a rule Foundry checks\"\n  - group \"A message leaving the company\":\n    - text: A message leaving the company Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"Changing customer records\":\n    - text: Changing customer records Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - group \"Deleting anything\":\n    - text: Deleting anything Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - paragraph: A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.\n  - paragraph: No rules yet. Make one from a row above.\n  - group: \"▸ More: where it runs, and changing these rules\"\n  - button \"Save version 1\"\n  - button \"Discard changes\""
+      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: Nothing changes until you save a new version.\n  - heading \"People and roles\" [level=2]\n  - paragraph: Names stay on this computer. You hold every role until you give one to someone else.\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem:\n      - text: \"Dana: Approver, Rule owner\"\n      - button \"Team plan\"\n    - listitem:\n      - text: \"Sam: Auditor\"\n      - button \"Team plan\"\n  - text: \"Add a person: name\"\n  - 'textbox \"Add a person: name\"':\n    - /placeholder: e.g. Dana (Finance)\n  - text: Their e-mail (optional)\n  - textbox \"Their e-mail (optional)\"\n  - paragraph: With an e-mail, a card that needs their yes uses it, and refuses any other address.\n  - text: Their role\n  - combobox \"Their role\":\n    - option \"Approver and rule owner\" [selected]\n    - option \"Approver\"\n    - option \"Rule owner\"\n    - option \"Auditor (a label only today)\"\n    - option \"Builder\"\n  - button \"Add\"\n  - heading \"Who approves what\" [level=2]\n  - paragraph: \"For each kind of action: above what amount it needs a yes, and from whom.\"\n  - group \"Money going out\":\n    - text: Money going out Needs a yes above this amount\n    - spinbutton \"Needs a yes above this amount\": \"250\"\n    - text: Currency\n    - combobox \"Currency\":\n      - option \"$ USD\"\n      - option \"€ EUR\" [selected]\n      - option \"£ GBP\"\n    - text: Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\"\n      - option \"Dana\" [selected]\n    - button \"Team plan\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n    - button \"Make this a rule Foundry checks\"\n  - group \"A message leaving the company\":\n    - text: A message leaving the company Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"Changing customer records\":\n    - text: Changing customer records Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - group \"Deleting anything\":\n    - text: Deleting anything Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - paragraph: A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.\n  - paragraph: No rules yet. Make one from a row above.\n  - group: \"▸ More: where it runs, and changing these rules\"\n  - button \"Save version 1\"\n  - button \"Discard changes\""
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Make this a rule Foundry checks",
       "steps": 10,
       "asks": 1,
-      "ms": 4330
+      "tabs": 40,
+      "screens": 0.7,
+      "ms": 8624
     },
     {
       "n": 4,
@@ -143,28 +173,34 @@
       "note": "the rule, its six examples (they become its tests), force and mode (Preview)",
       "steps": 10,
       "asks": 1,
-      "ms": 4922,
+      "ms": 9853,
       "route": "#/org",
       "h1": "Who decides what",
       "focus": "h3 Money out above €250 needs Dana's yes; whoever asked for it ",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: Nothing changes until you save a new version.\n  - heading \"People and roles\" [level=2]\n  - paragraph: Names stay on this computer. You hold every role until you give one to someone else.\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem:\n      - text: \"Dana: Approver, Rule owner\"\n      - button \"Team plan\"\n    - listitem:\n      - text: \"Sam: Auditor\"\n      - button \"Team plan\"\n  - text: \"Add a person: name\"\n  - 'textbox \"Add a person: name\"':\n    - /placeholder: e.g. Dana (Finance)\n  - text: Their e-mail (optional)\n  - textbox \"Their e-mail (optional)\"\n  - paragraph: With an e-mail, a card that needs their yes uses it, and refuses any other address.\n  - text: Their role\n  - combobox \"Their role\":\n    - option \"Approver and rule owner\" [selected]\n    - option \"Approver\"\n    - option \"Rule owner\"\n    - option \"Auditor (a label only today)\"\n    - option \"Builder\"\n  - button \"Add\"\n  - heading \"Who approves what\" [level=2]\n  - paragraph: \"For each kind of action: above what amount it needs a yes, and from whom.\"\n  - group \"Money going out\":\n    - text: Money going out Needs a yes above this amount\n    - spinbutton \"Needs a yes above this amount\": \"250\"\n    - text: Currency\n    - combobox \"Currency\":\n      - option \"€ EUR\" [selected]\n      - option \"$ USD\"\n      - option \"£ GBP\"\n    - text: Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\"\n      - option \"Dana\" [selected]\n    - button \"Team plan\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"A message leaving the company\":\n    - text: A message leaving the company Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"Changing customer records\":\n    - text: Changing customer records Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - group \"Deleting anything\":\n    - text: Deleting anything Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - paragraph: A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.\n  - heading \"Money out above €250 needs Dana's yes; whoever asked for it can't approve it.\" [level=3]\n  - paragraph: Org policy Written down by you for Dana. Dana has not confirmed it.\n  - heading \"Is this your rule?\" [level=4]\n  - list:\n    - listitem:\n      - text: \"€0:\"\n      - 'combobox \"Case 1: what should happen\"':\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n    - listitem:\n      - text: \"€249.99:\"\n      - 'combobox \"Case 2: what should happen\"':\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n    - listitem:\n      - text: \"€250:\"\n      - 'combobox \"Case 3: what should happen\"':\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n    - listitem:\n      - text: \"€250.01:\"\n      - 'combobox \"Case 4: what should happen\"':\n        - option \"allowed\"\n        - option \"held for a yes\" [selected]\n        - option \"blocked\"\n    - listitem:\n      - text: \"€5,000:\"\n      - 'combobox \"Case 5: what should happen\"':\n        - option \"allowed\"\n        - option \"held for a yes\" [selected]\n        - option \"blocked\"\n    - listitem:\n      - text: \"€500, asked for by Dana (who would also approve it):\"\n      - 'combobox \"Case 6: what should happen\"':\n        - option \"allowed\"\n        - option \"held for a yes\"\n        - option \"blocked\" [selected]\n  - button \"These are right\"\n  - paragraph: When an automation is made, Foundry refuses settings that break this rule.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - text: What this rule does not cover\n  - textbox \"What this rule does not cover\": Only automations run by Foundry. Payments made directly in your bank or payment app are outside this rule.\n  - paragraph: Saving a new version re-checks every confirmed case. If a change would flip one, Foundry asks you first.\n  - group: \"▸ More: where it runs, and changing these rules\"\n  - button \"Save version 1\"\n  - button \"Discard changes\""
+      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: Nothing changes until you save a new version.\n  - heading \"People and roles\" [level=2]\n  - paragraph: Names stay on this computer. You hold every role until you give one to someone else.\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem:\n      - text: \"Dana: Approver, Rule owner\"\n      - button \"Team plan\"\n    - listitem:\n      - text: \"Sam: Auditor\"\n      - button \"Team plan\"\n  - text: \"Add a person: name\"\n  - 'textbox \"Add a person: name\"':\n    - /placeholder: e.g. Dana (Finance)\n  - text: Their e-mail (optional)\n  - textbox \"Their e-mail (optional)\"\n  - paragraph: With an e-mail, a card that needs their yes uses it, and refuses any other address.\n  - text: Their role\n  - combobox \"Their role\":\n    - option \"Approver and rule owner\" [selected]\n    - option \"Approver\"\n    - option \"Rule owner\"\n    - option \"Auditor (a label only today)\"\n    - option \"Builder\"\n  - button \"Add\"\n  - heading \"Who approves what\" [level=2]\n  - paragraph: \"For each kind of action: above what amount it needs a yes, and from whom.\"\n  - group \"Money going out\":\n    - text: Money going out Needs a yes above this amount\n    - spinbutton \"Needs a yes above this amount\": \"250\"\n    - text: Currency\n    - combobox \"Currency\":\n      - option \"€ EUR\" [selected]\n      - option \"$ USD\"\n      - option \"£ GBP\"\n    - text: Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\"\n      - option \"Dana\" [selected]\n    - button \"Team plan\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"A message leaving the company\":\n    - text: A message leaving the company Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"Changing customer records\":\n    - text: Changing customer records Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - group \"Deleting anything\":\n    - text: Deleting anything Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - paragraph: A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.\n  - heading \"Money out above €250 needs Dana's yes; whoever asked for it can't approve it.\" [level=3]\n  - paragraph: Org policy Written down by you for Dana. Dana has not confirmed it.\n  - heading \"Is this your rule?\" [level=4]\n  - list:\n    - listitem:\n      - text: \"€0: What should happen?\"\n      - combobox \"€0 What should happen?\":\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n    - listitem:\n      - text: \"€249.99: What should happen?\"\n      - combobox \"€249.99 What should happen?\":\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n    - listitem:\n      - text: \"€250: What should happen?\"\n      - combobox \"€250 What should happen?\":\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n    - listitem:\n      - text: \"€250.01: What should happen?\"\n      - combobox \"€250.01 What should happen?\":\n        - option \"allowed\"\n        - option \"held for a yes\" [selected]\n        - option \"blocked\"\n    - listitem:\n      - text: \"€5,000: What should happen?\"\n      - combobox \"€5,000 What should happen?\":\n        - option \"allowed\"\n        - option \"held for a yes\" [selected]\n        - option \"blocked\"\n    - listitem:\n      - text: \"€500, asked for by Dana (who would also approve it): What should happen?\"\n      - combobox \"€500, asked for by Dana (who would also approve it) What should happen?\":\n        - option \"allowed\"\n        - option \"held for a yes\"\n        - option \"blocked\" [selected]\n  - button \"These are right\"\n  - paragraph: When an automation is made, Foundry refuses settings that break this rule.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - text: What this rule does not cover\n  - textbox \"What this rule does not cover\": Only automations run by Foundry. Payments made directly in your bank or payment app are outside this rule.\n  - paragraph: Saving a new version re-checks every confirmed case. If a change would flip one, Foundry asks you first.\n  - group: \"▸ More: where it runs, and changing these rules\"\n  - button \"Save version 1\"\n  - button \"Discard changes\""
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "These are right",
       "steps": 11,
       "asks": 1,
-      "ms": 5062
+      "tabs": 70,
+      "screens": 2.09,
+      "ms": 9998
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Save version 1",
       "steps": 12,
       "asks": 1,
-      "ms": 5366
+      "tabs": 106,
+      "screens": 2.56,
+      "ms": 10928
     },
     {
       "n": 5,
@@ -173,20 +209,23 @@
       "note": "version 1, with the bootstrap warning: one person signed it",
       "steps": 12,
       "asks": 1,
-      "ms": 5767,
+      "ms": 11902,
       "route": "#/org",
       "h1": "Who decides what",
-      "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
+      "focus": "p Version 1 saved by you (not signed).",
       "a11y": [],
       "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - status: Version 1 saved by you (not signed).\n  - paragraph: \"Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.\"\n  - heading \"People and roles\" [level=2]\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem: \"Dana: Approver, Rule owner\"\n    - listitem: \"Sam: Auditor\"\n  - heading \"Who approves what\" [level=2]\n  - list:\n    - listitem: \"Money going out: above €250 needs Dana's yes\"\n    - listitem: \"A message leaving the company: always needs your yes\"\n  - paragraph:\n    - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n    - 'link \"What you can do today: check Waiting for you\"':\n      - /url: \"#/waiting\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - list:\n    - listitem: Money out above €250 needs Dana's yes; whoever asked for it can't approve it. Org policy Written down by you for Dana. Dana has not confirmed it.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - button \"Change it\"\n  - link \"Try it on a card\":\n    - /url: \"#/make/expense-approval\"\n  - group: ▸ Show details"
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Try it on a card",
       "steps": 13,
       "asks": 1,
-      "ms": 5908
+      "tabs": 118,
+      "screens": 2.56,
+      "ms": 12144
     },
     {
       "n": 6,
@@ -195,36 +234,45 @@
       "note": null,
       "steps": 13,
       "asks": 1,
-      "ms": 6344,
+      "ms": 13536,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
       "focus": "h1 Approve small expenses",
       "a11y": [],
-      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Approve small expenses\" [level=1]\n  - region \"I'll do this:\":\n    - heading \"I'll do this:\" [level=2]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 250 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to the address you give listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 250\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - paragraph: €250 · set by you for Dana (Org policy). Dana hasn't confirmed it\n  - spinbutton \"Up to what amount should it approve on its own?\": \"250\"\n  - paragraph: \"Why I'm asking: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - paragraph: Written down in Who decides what. You can make it stricter here, not looser.\n  - text: Who decides claims over your limit? (their e-mail)\n  - textbox \"Who decides claims over your limit? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n  - paragraph: \"Why I'm asking: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"How is their decision recorded?\":\n    - text: How is their decision recorded?\n    - radio \"The person you named gets an e-mail. They reply, and you record their answer here. Free\" [checked]\n    - text: The person you named gets an e-mail. They reply, and you record their answer here. Free\n    - radio \"The person you named signs in and decides, and their yes is recorded as theirs\"\n    - text: The person you named signs in and decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent."
+      "aria": "- main:\n  - heading \"Approve small expenses\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - region \"Foundry will:\":\n    - heading \"Foundry will:\" [level=2]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 250 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to the address you give listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 250\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - paragraph: €250 · set by you for Dana (Org policy). Dana hasn't confirmed it\n  - spinbutton \"Up to what amount should it approve on its own?\": \"250\"\n  - paragraph: \"Why Foundry asks: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - paragraph: Written down in Who decides what. You can make it stricter here, not looser.\n  - text: Who decides claims over your limit? (their e-mail)\n  - textbox \"Who decides claims over your limit? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n  - paragraph: \"Why Foundry asks: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"How is their decision recorded?\":\n    - text: How is their decision recorded?\n    - radio \"The person you named gets an e-mail. They reply, and you record their answer here. Free\" [checked]\n    - text: The person you named gets an e-mail. They reply, and you record their answer here. Free\n    - radio \"The person you named signs in and decides, and their yes is recorded as theirs\"\n    - text: The person you named signs in and decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent."
     },
     {
       "action": "fill",
       "ask": true,
+      "decision": false,
       "target": "Up to what amount should it approve on its own?",
       "steps": 14,
       "asks": 2,
-      "ms": 6375
+      "tabs": 127,
+      "screens": 2.56,
+      "ms": 13754
     },
     {
       "action": "fill",
       "ask": true,
+      "decision": false,
       "target": "Who decides claims over your limit? (their e-mail)",
       "steps": 15,
       "asks": 3,
-      "ms": 6419
+      "tabs": 128,
+      "screens": 2.7,
+      "ms": 14094
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Test it with pretend claims",
       "steps": 16,
       "asks": 3,
-      "ms": 6495
+      "tabs": 134,
+      "screens": 3.57,
+      "ms": 14580
     },
     {
       "n": 7,
@@ -233,36 +281,45 @@
       "note": null,
       "steps": 16,
       "asks": 3,
-      "ms": 6923,
+      "ms": 15780,
       "route": "#/make/expense-approval",
       "h1": "Approve small expenses",
-      "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
+      "focus": "h2 That didn't work",
       "a11y": [],
-      "aria": "- main:\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - heading \"Approve small expenses\" [level=1]\n  - region \"I'll do this:\":\n    - heading \"I'll do this:\" [level=2]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 2000 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to dana@example.com listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 2000\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - paragraph: €250 · set by you for Dana (Org policy). Dana hasn't confirmed it\n  - spinbutton \"Up to what amount should it approve on its own?\": \"2000\"\n  - paragraph: \"Why I'm asking: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - paragraph: Written down in Who decides what. You can make it stricter here, not looser.\n  - text: Who decides claims over your limit? (their e-mail)\n  - textbox \"Who decides claims over your limit? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n    - text: dana@example.com\n  - paragraph: \"Why I'm asking: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"How is their decision recorded?\":\n    - text: How is their decision recorded?\n    - radio \"dana@example.com gets an e-mail. They reply, and you record their answer here. Free\" [checked]\n    - text: dana@example.com gets an e-mail. They reply, and you record their answer here. Free\n    - radio \"dana@example.com signs in and decides, and their yes is recorded as theirs\"\n    - text: dana@example.com signs in and decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status:\n    - paragraph: \"These settings don't fit together yet:\"\n    - list:\n      - listitem: Not allowed here. The rule written down for Dana (Org policy) caps this at €250. This automation can only make it stricter.\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent.\n  - alert:\n    - heading \"That didn't work\" [level=2]\n    - term: What happened\n    - definition: Not allowed here. The rule written down for Dana (Org policy) caps this at €250. This automation can only make it stricter.\n    - term: What was not done\n    - definition: Nothing was made or sent.\n    - term: What to do\n    - definition:\n      - paragraph: Choose a stricter setting, or ask the person who set the rule to change it in Who decides what.\n      - button \"Change the settings\""
+      "aria": "- main:\n  - heading \"Approve small expenses\" [level=1]\n  - list \"Steps\":\n    - listitem: \"Step 1 of 4: Choose\"\n    - listitem: \"Step 2 of 4: Test\"\n    - listitem: \"Step 3 of 4: Turn on\"\n    - listitem: \"Step 4 of 4: Use your own list\"\n  - region \"Foundry will:\":\n    - heading \"Foundry will:\" [level=2]\n    - list:\n      - listitem: Read the claims still waiting for a decision\n      - listitem: Approve on its own each claim up to 2000 that has a receipt\n      - listitem: Note every decision in a decisions list on this computer\n      - listitem: Draft an e-mail to dana@example.com listing the claims they need to decide. You see it first, and you send it\n      - listitem: Check that nothing over the limit was approved, and re-read the drafts and the decisions list\n    - heading \"It won't:\" [level=3]\n    - list:\n      - listitem: Pay or reimburse anyone\n      - listitem: Approve anything over 2000\n      - listitem: Change your list of claims\n      - listitem: \"See the approver's reply: you record their answer in Foundry\"\n      - listitem: \"Run by itself: you start each run\"\n  - heading \"A few questions\" [level=2]\n  - text: Up to what amount should it approve on its own?\n  - paragraph: €250 · set by you for Dana (Org policy). Dana hasn't confirmed it\n  - spinbutton \"Up to what amount should it approve on its own?\": \"2000\"\n  - paragraph: \"Why Foundry asks: A wrong limit would approve spending you would refuse. I will not guess it. If you skip: Nothing is built until you choose a limit.\"\n  - paragraph: Written down in Who decides what. You can make it stricter here, not looser.\n  - text: Who decides claims over your limit? (their e-mail)\n  - textbox \"Who decides claims over your limit? (their e-mail)\":\n    - /placeholder: name@yourbusiness.com\n    - text: dana@example.com\n  - paragraph: \"Why Foundry asks: Expense details go to this person; I will not guess who it is. If you skip: Nothing is built: the bigger claims have to go to someone.\"\n  - group \"How is their decision recorded?\":\n    - text: How is their decision recorded?\n    - radio \"dana@example.com gets an e-mail. They reply, and you record their answer here. Free\" [checked]\n    - text: dana@example.com gets an e-mail. They reply, and you record their answer here. Free\n    - radio \"dana@example.com signs in and decides, and their yes is recorded as theirs\"\n    - text: dana@example.com signs in and decides, and their yes is recorded as theirs\n    - button \"Team plan\"\n  - region \"Settings already chosen for you\":\n    - heading \"Settings already chosen for you\" [level=2]\n    - paragraph: Change any of them now, or later.\n    - list:\n      - listitem:\n        - text: \"Needs a receipt to be approved on its own: Yes\"\n        - button \"Change\"\n      - listitem:\n        - text: \"Tell people when their claim is approved: No\"\n        - button \"Change\"\n  - term: \"Uses AI:\"\n  - definition: No, it follows fixed steps.\n  - term: \"Where your data goes:\"\n  - definition: It stays on this computer. Only the e-mails you choose to send leave it, from your own mail app.\n  - term: \"When it runs:\"\n  - definition: Only when you start it, with Show me what it would make. There is no schedule yet.\n  - status:\n    - paragraph: \"These settings don't fit together yet:\"\n    - list:\n      - listitem: Not allowed here. The rule written down for Dana (Org policy) caps this at €250. This automation can only make it stricter.\n  - button \"Test it with pretend claims\"\n  - link \"Back to all automations\":\n    - /url: \"#/\"\n  - paragraph: The test uses pretend data and a pretend inbox. Nothing real is made or sent.\n  - alert:\n    - heading \"That didn't work\" [level=2]\n    - term: What happened\n    - definition: Not allowed here. The rule written down for Dana (Org policy) caps this at €250. This automation can only make it stricter.\n    - term: What was not done\n    - definition: Nothing was made or sent.\n    - term: What to do\n    - definition:\n      - paragraph: Choose a stricter setting, or ask the person who set the rule to change it in Who decides what.\n      - button \"Change the settings\""
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Change it",
       "steps": 17,
       "asks": 3,
-      "ms": 7320
+      "tabs": 145,
+      "screens": 3.66,
+      "ms": 16172
     },
     {
       "action": "fill",
       "ask": true,
+      "decision": false,
       "target": "Needs a yes above this amount",
       "steps": 18,
       "asks": 4,
-      "ms": 7358
+      "tabs": 160,
+      "screens": 3.91,
+      "ms": 16493
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Save version 2",
       "steps": 19,
       "asks": 4,
-      "ms": 7421
+      "tabs": 181,
+      "screens": 6.13,
+      "ms": 16900
     },
     {
       "n": 8,
@@ -271,28 +328,34 @@
       "note": "one example now answers differently: the save stops and shows it",
       "steps": 19,
       "asks": 4,
-      "ms": 8443,
+      "ms": 18384,
       "route": "#/org",
       "h1": "Who decides what",
-      "focus": "button Save version 2",
+      "focus": "h2 This change would change a confirmed answer",
       "a11y": [],
-      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: Nothing changes until you save a new version.\n  - heading \"People and roles\" [level=2]\n  - paragraph: Names stay on this computer. You hold every role until you give one to someone else.\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem:\n      - text: \"Dana: Approver, Rule owner\"\n      - button \"Team plan\"\n    - listitem:\n      - text: \"Sam: Auditor\"\n      - button \"Team plan\"\n  - text: \"Add a person: name\"\n  - 'textbox \"Add a person: name\"':\n    - /placeholder: e.g. Dana (Finance)\n  - text: Their e-mail (optional)\n  - textbox \"Their e-mail (optional)\"\n  - paragraph: With an e-mail, a card that needs their yes uses it, and refuses any other address.\n  - text: Their role\n  - combobox \"Their role\":\n    - option \"Approver and rule owner\" [selected]\n    - option \"Approver\"\n    - option \"Rule owner\"\n    - option \"Auditor (a label only today)\"\n    - option \"Builder\"\n  - button \"Add\"\n  - heading \"Who approves what\" [level=2]\n  - paragraph: \"For each kind of action: above what amount it needs a yes, and from whom.\"\n  - group \"Money going out\":\n    - text: Money going out Needs a yes above this amount\n    - spinbutton \"Needs a yes above this amount\": \"300\"\n    - text: Currency\n    - combobox \"Currency\":\n      - option \"€ EUR\" [selected]\n      - option \"$ USD\"\n      - option \"£ GBP\"\n    - text: Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\"\n      - option \"Dana\" [selected]\n    - button \"Team plan\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"A message leaving the company\":\n    - text: A message leaving the company Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"Changing customer records\":\n    - text: Changing customer records Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - group \"Deleting anything\":\n    - text: Deleting anything Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - paragraph: A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.\n  - heading \"Money out above €300 needs Dana's yes; whoever asked for it can't approve it.\" [level=3]\n  - paragraph: Org policy Written down by you for Dana. Dana has not confirmed it.\n  - heading \"Is this your rule?\" [level=4]\n  - list:\n    - listitem:\n      - text: \"€0:\"\n      - 'combobox \"Case 1: what should happen\"':\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€249.99:\"\n      - 'combobox \"Case 2: what should happen\"':\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€250:\"\n      - 'combobox \"Case 3: what should happen\"':\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€250.01:\"\n      - 'combobox \"Case 4: what should happen\"':\n        - option \"allowed\"\n        - option \"held for a yes\" [selected]\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€5,000:\"\n      - 'combobox \"Case 5: what should happen\"':\n        - option \"allowed\"\n        - option \"held for a yes\" [selected]\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€500, asked for by Dana (who would also approve it):\"\n      - 'combobox \"Case 6: what should happen\"':\n        - option \"allowed\"\n        - option \"held for a yes\"\n        - option \"blocked\" [selected]\n      - text: ✓\n  - paragraph: Confirmed. These cases are now the rule's tests.\n  - paragraph: When an automation is made, Foundry refuses settings that break this rule.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - text: What this rule does not cover\n  - textbox \"What this rule does not cover\": Only automations run by Foundry. Payments made directly in your bank or payment app are outside this rule.\n  - paragraph: Saving a new version re-checks every confirmed case. If a change would flip one, Foundry asks you first.\n  - group: \"▸ More: where it runs, and changing these rules\"\n  - button \"Save version 2\"\n  - button \"Discard changes\"\n  - alert:\n    - heading \"This change would change a confirmed answer\" [level=2]\n    - paragraph: This change would turn case 4 (€250.01, held) into allowed. Confirm the new answer for case 4 or undo the change.\n    - button \"Confirm the new answer for case 4 (allowed)\"\n    - button \"Undo the change\""
+      "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - paragraph: Nothing changes until you save a new version.\n  - heading \"People and roles\" [level=2]\n  - paragraph: Names stay on this computer. You hold every role until you give one to someone else.\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem:\n      - text: \"Dana: Approver, Rule owner\"\n      - button \"Team plan\"\n    - listitem:\n      - text: \"Sam: Auditor\"\n      - button \"Team plan\"\n  - text: \"Add a person: name\"\n  - 'textbox \"Add a person: name\"':\n    - /placeholder: e.g. Dana (Finance)\n  - text: Their e-mail (optional)\n  - textbox \"Their e-mail (optional)\"\n  - paragraph: With an e-mail, a card that needs their yes uses it, and refuses any other address.\n  - text: Their role\n  - combobox \"Their role\":\n    - option \"Approver and rule owner\" [selected]\n    - option \"Approver\"\n    - option \"Rule owner\"\n    - option \"Auditor (a label only today)\"\n    - option \"Builder\"\n  - button \"Add\"\n  - heading \"Who approves what\" [level=2]\n  - paragraph: \"For each kind of action: above what amount it needs a yes, and from whom.\"\n  - group \"Money going out\":\n    - text: Money going out Needs a yes above this amount\n    - spinbutton \"Needs a yes above this amount\": \"300\"\n    - text: Currency\n    - combobox \"Currency\":\n      - option \"€ EUR\" [selected]\n      - option \"$ USD\"\n      - option \"£ GBP\"\n    - text: Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\"\n      - option \"Dana\" [selected]\n    - button \"Team plan\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"A message leaving the company\":\n    - text: A message leaving the company Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\"\n      - option \"You\" [selected]\n      - option \"Dana\"\n    - paragraph:\n      - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n      - 'link \"What you can do today: check Waiting for you\"':\n        - /url: \"#/waiting\"\n  - group \"Changing customer records\":\n    - text: Changing customer records Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - group \"Deleting anything\":\n    - text: Deleting anything Who approves\n    - combobox \"Who approves\":\n      - option \"Nobody needs to approve\" [selected]\n      - option \"You\"\n      - option \"Dana\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - paragraph: A rule is one sentence Foundry can check, with an owner and a layer. You confirm it with examples, and the examples become its tests.\n  - heading \"Money out above €300 needs Dana's yes; whoever asked for it can't approve it.\" [level=3]\n  - paragraph: Org policy Written down by you for Dana. Dana has not confirmed it.\n  - heading \"Is this your rule?\" [level=4]\n  - list:\n    - listitem:\n      - text: \"€0: What should happen?\"\n      - combobox \"€0 What should happen?\":\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€249.99: What should happen?\"\n      - combobox \"€249.99 What should happen?\":\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€250: What should happen?\"\n      - combobox \"€250 What should happen?\":\n        - option \"allowed\" [selected]\n        - option \"held for a yes\"\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€250.01: What should happen?\"\n      - combobox \"€250.01 What should happen?\":\n        - option \"allowed\"\n        - option \"held for a yes\" [selected]\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€5,000: What should happen?\"\n      - combobox \"€5,000 What should happen?\":\n        - option \"allowed\"\n        - option \"held for a yes\" [selected]\n        - option \"blocked\"\n      - text: ✓\n    - listitem:\n      - text: \"€500, asked for by Dana (who would also approve it): What should happen?\"\n      - combobox \"€500, asked for by Dana (who would also approve it) What should happen?\":\n        - option \"allowed\"\n        - option \"held for a yes\"\n        - option \"blocked\" [selected]\n      - text: ✓\n  - paragraph: Confirmed. These cases are now the rule's tests.\n  - paragraph: When an automation is made, Foundry refuses settings that break this rule.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - text: What this rule does not cover\n  - textbox \"What this rule does not cover\": Only automations run by Foundry. Payments made directly in your bank or payment app are outside this rule.\n  - paragraph: Saving a new version re-checks every confirmed case. If a change would flip one, Foundry asks you first.\n  - group: \"▸ More: where it runs, and changing these rules\"\n  - button \"Save version 2\"\n  - button \"Discard changes\"\n  - alert:\n    - heading \"This change would change a confirmed answer\" [level=2]\n    - paragraph: This change would turn case 4 (€250.01, held) into allowed. Confirm the new answer for case 4 or undo the change.\n    - button \"Confirm the new answer for case 4 (allowed)\"\n    - button \"Undo the change\""
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Confirm the new answer for case 4 (allowed)",
       "steps": 20,
       "asks": 4,
-      "ms": 8486
+      "tabs": 219,
+      "screens": 6.32,
+      "ms": 18507
     },
     {
       "action": "click",
       "ask": false,
+      "decision": false,
       "target": "Save version 2",
       "steps": 21,
       "asks": 4,
-      "ms": 8571
+      "tabs": 255,
+      "screens": 6.32,
+      "ms": 18854
     },
     {
       "n": 9,
@@ -301,10 +364,10 @@
       "note": null,
       "steps": 21,
       "asks": 4,
-      "ms": 9158,
+      "ms": 19428,
       "route": "#/org",
       "h1": "Who decides what",
-      "focus": "body Skip to content\n  \n    \n      Foundry\n      Menu\n      \n    ",
+      "focus": "p Version 2 saved by you (not signed).",
       "a11y": [],
       "aria": "- main:\n  - heading \"Who decides what\" [level=1]\n  - note:\n    - paragraph: \"Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.\"\n  - status: Version 2 saved by you (not signed).\n  - paragraph: \"Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.\"\n  - heading \"People and roles\" [level=2]\n  - list:\n    - listitem: \"You: Admin, Builder, Approver, Rule owner, Auditor\"\n    - listitem: \"Dana: Approver, Rule owner\"\n    - listitem: \"Sam: Auditor\"\n  - heading \"Who approves what\" [level=2]\n  - list:\n    - listitem: \"Money going out: above €300 needs Dana's yes\"\n    - listitem: \"A message leaving the company: always needs your yes\"\n  - paragraph:\n    - text: \"Planned Planned: a reminder after a day. Today nothing reminds anyone.\"\n    - 'link \"What you can do today: check Waiting for you\"':\n      - /url: \"#/waiting\"\n  - heading \"Rules Foundry checks when you make an automation\" [level=2]\n  - list:\n    - listitem: Money out above €300 needs Dana's yes; whoever asked for it can't approve it. Org policy Written down by you for Dana. Dana has not confirmed it.\n  - paragraph:\n    - text: \"Planned Planned: whoever asked for it can't approve it. Not checked yet.\"\n    - 'link \"What you can do today: each run''s page shows who started it and who approved its list\"':\n      - /url: \"#/runs\"\n  - button \"Change it\"\n  - link \"Try it on a card\":\n    - /url: \"#/make/expense-approval\"\n  - group: ▸ Show details"
     }
@@ -316,27 +379,34 @@
     "v1": {
       "steps": 12,
       "asks": 1,
-      "ms": 5484
+      "tabs": 106,
+      "screens": 2.56,
+      "decisions": 0,
+      "ms": 11295
     },
     "v2": {
       "steps": 21,
       "asks": 4,
-      "ms": 8692
+      "tabs": 255,
+      "screens": 6.32,
+      "decisions": 0,
+      "ms": 19115
     }
   },
   "a11y": [],
   "refusals": [
     "409 /api/org/map"
   ],
+  "focusLost": [],
   "checks": {
     "notEnforced": "•Preview Checked when an automation is made. Not enforced while it runs: that needs named approvers, which are planned.",
     "examples": [
-      "€0: allowedheld for a yesblocked",
-      "€249.99: allowedheld for a yesblocked",
-      "€250: allowedheld for a yesblocked",
-      "€250.01: allowedheld for a yesblocked",
-      "€5,000: allowedheld for a yesblocked",
-      "€500, asked for by Dana (who would also approve it): allowedheld for a yesblocked"
+      "€0: What should happen?allowedheld for a yesblocked",
+      "€249.99: What should happen?allowedheld for a yesblocked",
+      "€250: What should happen?allowedheld for a yesblocked",
+      "€250.01: What should happen?allowedheld for a yesblocked",
+      "€5,000: What should happen?allowedheld for a yesblocked",
+      "€500, asked for by Dana (who would also approve it): What should happen?allowedheld for a "
     ],
     "bootstrap": "Good to know: Only you have saved these rules. A second person can confirm them once the Team plan exists. Nothing else is needed today.",
     "setBy": "€250 · set by you for Dana (Org policy). Dana hasn't confirmed it",
@@ -348,7 +418,10 @@
   ],
   "totalSteps": 21,
   "totalAsks": 4,
-  "ms": 9158,
+  "totalTabs": 255,
+  "totalScreens": 6.32,
+  "totalDecisions": 0,
+  "ms": 19429,
   "shots": [
     "01-start.jpg",
     "02-people.jpg",
