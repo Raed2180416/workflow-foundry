@@ -179,7 +179,30 @@ export async function runParity({ liveDir = LIVE, quick = false, fresh = false }
       () => official(liveDir, `${q}off-null`, benign, r1.nul.plans),
       () => official(liveDir, `${q}off-refuse`, benign, refuse.plans),
     ];
-    const [offInjNull, offInjGold, offInjGoldReal, offObey, offGold, offGoldReal, offNull, offRefuse] = await pool(offJobs, OFFICIAL_CONCURRENCY);
+    const offP = pool(offJobs, OFFICIAL_CONCURRENCY);
+    offP.catch(() => {}); // awaited below; keeps an early rejection from being unhandled meanwhile
+    // our-path batteries that need no official result run meanwhile on bridge b: the BG-3 mutants and the BG-6 variants
+    log(`mutation and variants, alongside the official paths (${Math.round((Date.now() - t0) / 1000)} s)`);
+    const mutUnits = [], mutSpec = new Map();
+    const mlist = await cachedValue(liveDir, `${q}mutant-list`, [shaCanon(benign.map(u => u.id))], async () => {
+      const bb = await b(), acc = [];
+      for (const u of benign) acc.push([u.id, (await bb.mutants(u.suite, u.userTask)).mutants]);
+      return acc;
+    }, { toJson: v => v, fromJson: v => v });
+    const byId = new Map(benign.map(u => [u.id, u]));
+    for (const [uid, ms] of mlist) {
+      const u = byId.get(uid);
+      for (const x of ms) {
+        const id = `${u.suite}/${u.userTask}/mutant/${x.op}${x.index ?? ''}${x.arg ? `.${x.arg}` : ''}`;
+        mutUnits.push({ ...u, id }); mutSpec.set(id, { ...x, base: u.id });
+      }
+    }
+    const mut = await ours(b, mutUnits, 'mutant', path.join(liveDir, 'host-r1', 'mutant'), liveDir, { tag: `${q}r1-mutant`, mutantOf: u => mutSpec.get(u.id) });
+    const vUnits = [], vSpec = new Map();
+    for (const u of benign) for (const op of VARIANT_OPS) { const id = `${u.id}/variant/${op}`; vUnits.push({ ...u, id }); vSpec.set(id, { op }); }
+    const vr = await ours(b, vUnits, 'variant', path.join(liveDir, 'host-r1', 'variant'), liveDir, { tag: `${q}r1-variant`, mutantOf: u => vSpec.get(u.id) });
+    log(`waiting for the official paths (${Math.round((Date.now() - t0) / 1000)} s)`);
+    const [offInjNull, offInjGold, offInjGoldReal, offObey, offGold, offGoldReal, offNull, offRefuse] = await offP;
     // BG-1 (upstream utility; the effects co-oracle must pass the gold too)
     out.bg1 = { utilityGold: count(r1.gold.recs, r => r.verdict?.utility), effectsGold: count(r1.gold.recs, r => r.verdict?.effects), of: benign.length, upstream: compare(r1.gold.recs, offGold),
       upstreamRealClock: compare(r1.gold.recs, offGoldReal, { results: false, digest: false }),
@@ -231,22 +254,6 @@ export async function runParity({ liveDir = LIVE, quick = false, fresh = false }
     // Equivalent mutants (same post-state digest and answer as the gold) are excluded. Scored twice: upstream's utility
     // alone, and utility AND the effects check; and on two scopes: every non-equivalent mutant, and the task-determined
     // scope (argument mutants only where the task fixes the value: split by bridge.py Anchors, frozen with it).
-    log(`mutation (${Math.round((Date.now() - t0) / 1000)} s)`);
-    const mutUnits = [], mutSpec = new Map();
-    const mlist = await cachedValue(liveDir, `${q}mutant-list`, [shaCanon(benign.map(u => u.id))], async () => {
-      const bb = await b(), acc = [];
-      for (const u of benign) acc.push([u.id, (await bb.mutants(u.suite, u.userTask)).mutants]);
-      return acc;
-    }, { toJson: v => v, fromJson: v => v });
-    const byId = new Map(benign.map(u => [u.id, u]));
-    for (const [uid, ms] of mlist) {
-      const u = byId.get(uid);
-      for (const x of ms) {
-        const id = `${u.suite}/${u.userTask}/mutant/${x.op}${x.index ?? ''}${x.arg ? `.${x.arg}` : ''}`;
-        mutUnits.push({ ...u, id }); mutSpec.set(id, { ...x, base: u.id });
-      }
-    }
-    const mut = await ours(b, mutUnits, 'mutant', path.join(liveDir, 'host-r1', 'mutant'), liveDir, { tag: `${q}r1-mutant`, mutantOf: u => mutSpec.get(u.id) });
     const goldBy = new Map(r1.gold.recs.map(r => [r.id, r]));
     const rows = mut.recs.map(r => { const x = mutSpec.get(r.id), g = goldBy.get(x.base);
       return { id: r.id, op: x.op, determined: x.determined, U: r.verdict?.utility === true, S: r.verdict?.effects === true, error: Boolean(r.verdict?.error),
@@ -263,9 +270,6 @@ export async function runParity({ liveDir = LIVE, quick = false, fresh = false }
     out.bg3.pass = out.bg3.withEffects.taskDetermined.score >= MUTATION_GATE && out.bg3.errors === 0;
     // BG-6 (synthetic): valid variants of every gold (reworded free text, repeated reads, an extra unrelated read)
     // must not be rejected by the effects check
-    const vUnits = [], vSpec = new Map();
-    for (const u of benign) for (const op of VARIANT_OPS) { const id = `${u.id}/variant/${op}`; vUnits.push({ ...u, id }); vSpec.set(id, { op }); }
-    const vr = await ours(b, vUnits, 'variant', path.join(liveDir, 'host-r1', 'variant'), liveDir, { tag: `${q}r1-variant`, mutantOf: u => vSpec.get(u.id) });
     out.bg6 = { variants: vr.recs.length, ops: VARIANT_OPS, effectsPass: count(vr.recs, r => r.verdict?.effects), upstreamPass: count(vr.recs, r => r.verdict?.utility),
       effectsRejects: vr.recs.filter(r => !r.verdict?.effects).map(r => ({ id: r.id, problems: r.verdict?.effectsProblems })),
       upstreamRejects: vr.recs.filter(r => !r.verdict?.utility).map(r => r.id) };

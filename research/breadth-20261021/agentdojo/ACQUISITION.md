@@ -46,6 +46,11 @@ time) in `/var/tmp/foundry-work/benches/agentdojo/downloads.json` (42,939 B, sha
 D16 limits: this install is 155–193 MB (≤ 500 MB). Disk free before this session's work: 2.1 GB (`df -h /`, 2026-10-28
 17:51Z), 1.8 GB at 17:55Z with other tracks writing [run]. Nothing new was installed or downloaded on 2026-10-28.
 
+2026-11-04 (completion session): nothing installed or downloaded. Disk free at start 2.0 GB (`df -h /`, above the 1.5 GB
+stop line); it fell to 1.4 GB at 13:10Z while other tracks wrote and was back at 1.8 GB by 13:21Z; this bed's own scratch
+peaked at about 15 MB (`agentdojo-live/parity`), host-only run data is 64 MB. The install check passed again
+(`verify_install.py` in the test suite and in `parity.json` `bg0`) [run].
+
 ## Outcome
 
 **Adopted** for bed 2 (Tier 1). The earlier $0 probe install of the same 72 wheels (agentic-tool sweep, 2026-10-21; DISPOSALS.md)

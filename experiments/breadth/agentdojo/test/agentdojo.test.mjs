@@ -18,6 +18,7 @@ import { Facade, memoryNotes, runPythonTool } from '../facade.mjs';
 import { attackUnit, benignUnit, executePlans, gradeRecords, officialRun, planUnits, runScripted } from '../scripted.mjs';
 import { comparatorSubsets, eligibility, unitsFor } from '../seal.mjs';
 import { BRIEF, EXAMPLE_TASKS, MIN_HELD_OUT_PAIRINGS, PREDICATES } from '../authored.mjs';
+import { EXPECT, MUTATION_GATE, pool } from '../parity.mjs';
 
 const HAVE = existsSync(VENV_PY);
 const SKIP = !HAVE && 'AgentDojo venv missing (research/breadth-20261021/agentdojo/ACQUISITION.md)';
@@ -486,4 +487,37 @@ test('repo hygiene: no per-unit sealed data and no authored goal text under rese
   }
   assert.ok(existsSync(SPLIT_FILE));
   assert.equal(sha256(readFileSync(SPLIT_FILE)).length, 64);
+});
+
+test('pool: at most n jobs in flight, results in input order, a rejection rejects after the rest finish', async () => {
+  let live = 0, peak = 0;
+  const job = (v, ms) => async () => { live++; peak = Math.max(peak, live); await new Promise(r => setTimeout(r, ms)); live--; return v; };
+  assert.deepEqual(await pool([job('a', 30), job('b', 5), job('c', 10), job('d', 1), job('e', 1)], 2), ['a', 'b', 'c', 'd', 'e']);
+  assert.equal(peak, 2);
+  let ran = 0;
+  await assert.rejects(pool([async () => { throw new Error('boom'); }, async () => { ran++; return 1; }, async () => { ran++; return 2; }], 1), /boom/);
+  assert.equal(ran, 2);
+});
+
+test('committed gate records: parity.json passes every gate and was produced by the committed oracle code; bg8.json passes', () => {
+  const RES = path.join(REPO, 'research/breadth-20261021/agentdojo');
+  const pf = path.join(RES, 'parity.json');
+  if (existsSync(pf)) {
+    const p = readJson(pf);
+    const here = path.join(REPO, 'experiments/breadth/agentdojo');
+    const code = sha256(['bridge.py', 'scripted.mjs', 'lib.mjs'].map(f => sha256(readFileSync(path.join(here, f)))).join(':'));
+    assert.equal(p.codeSha256, code, 'parity.json was produced by different oracle code: rerun parity.mjs');
+    assert.equal(p.quick, false);
+    assert.equal(p.pass, true);
+    assert.deepEqual([p.bg1.utilityGold, p.bg1.effectsGold, p.bg1.of], [EXPECT.userTasks, EXPECT.userTasks, EXPECT.userTasks]);
+    assert.equal(p.bg2.nullUtility, EXPECT.nullUtility);
+    assert.equal(p.inj.pairings, EXPECT.pairings);
+    assert.equal(p.inj.nullRegistered, 0);
+    assert.equal(p.inj.injectionTasksWithAPairing, EXPECT.injectionTasks);
+    assert.ok(p.bg3.withEffects.taskDetermined.score >= MUTATION_GATE);
+    assert.ok(['gold', 'null', 'injNull', 'injGold'].every(k => p.bg4[k].same));
+  }
+  const b8 = readJson(path.join(RES, 'bg8.json'));
+  assert.equal(b8.pass, true);
+  assert.deepEqual([b8.pythonTool.leaked, b8.relayPath.leaked, b8.sessionSandbox.leaked, b8.sessionSandbox.plantedSeen], [[], [], [], []]);
 });
