@@ -1,0 +1,370 @@
+{
+ "arm": "B1",
+ "armId": "W-workflow-haiku",
+ "familyId": "wbed-r6",
+ "label": "w-haiku-r1",
+ "difficulty": 5,
+ "probeSeeds": [
+  365,
+  366,
+  367
+ ],
+ "builderModel": "claude-haiku-5-5",
+ "builderEffort": "high",
+ "kitHash": "6bc6b06eccf45cae",
+ "policyHash": "b77dd19c53ba78aa5954bf5a3c7d8683ed4587dc39dde64a4c1ee38d4fa5add0",
+ "models": [
+  "claude-haiku-5-5"
+ ],
+ "runId": "construct:w-haiku-r1:e30bf9ca-f5f1-47bb-a9b1-09a74d10beea",
+ "promptSha256": "1eb876adf49c46829cdcdf91bf091be8ba451856b37761484e711aaaa0cdf9e8",
+ "artifact": "solve.mjs",
+ "artifactSha256": "46d2c98b390db6aa40ce3016d5b4867d12f513b5df6c0111a3b0fc4314d09efd",
+ "builderCostUsd": 0.20857072,
+ "builderCostReportedUsd": 0.20857072,
+ "builderCostUnknown": false,
+ "builderCostUpperUsd": 0.20857072,
+ "builderBudgetUsd": 1,
+ "builderUsage": {
+  "input_tokens": 72,
+  "cache_creation_input_tokens": 112219,
+  "cache_read_input_tokens": 3020390,
+  "output_tokens": 61733,
+  "output_tokens_details": {
+   "thinking_tokens": 38263
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 112219,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 828,
+    "cache_read_input_tokens": 116190,
+    "cache_creation_input_tokens": 1177,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 1177
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "builderStreamUsage": {
+  "inputTokens": 72,
+  "outputTokens": 322,
+  "cacheReadTokens": 3020390,
+  "cacheWriteTokens": 112219
+ },
+ "builderSessionId": "399a1055-81a3-4c15-ad0a-716a6e95b922",
+ "gatewayCostUsd": 0.18500475499999997,
+ "gatewayCapUsd": 0.4,
+ "gatewayOvershootUsd": 0,
+ "gatewayCalls": 121,
+ "gatewayErrors": {
+  "MODEL_SCHEMA": 1
+ },
+ "gatewayRefusals": {},
+ "gatewayUnknownCalls": 0,
+ "gatewayUnknownUpperUsd": 0,
+ "gatewayImputedUsd": 0,
+ "constructionCostUsd": 0.39357547499999995,
+ "startedAt": "2026-11-04T17:43:18.499Z",
+ "durationMs": 760231,
+ "minutes": 40,
+ "turns": 42,
+ "toolUses": 41,
+ "builderError": null,
+ "scoreLog": [
+  {
+   "probe": 0,
+   "pass": false,
+   "score": 0.455909,
+   "at": "2026-11-04T17:50:49.911Z"
+  },
+  {
+   "probe": 0,
+   "pass": false,
+   "score": 0.992273,
+   "at": "2026-11-04T17:52:04.412Z"
+  }
+ ],
+ "scoreChecks": 6,
+ "firstPassAtCheck": null,
+ "notes": "# Build notes: corpus lab-test and claims solver\n\n**What it does.** `solve.mjs` parses the corpus (from `task.files` or `files/corpus/`) and does most of the work in code:\n- Parses headers and dates (ISO, `dd.mm.yyyy`, `Month D, YYYY`, `D Month YYYY`).\n- Builds lab aliases from the consortium notice (`Full (ABBR)`) and renames, and compound aliases from the register and `name (CODE)` pairs in the text.\n- Voids documents: retraction notices match title plus every detail given (author surname, venue, date or year); version and peer-review statements void the referenced preprint by title and posted date. Expressions of concern void nothing.\n- Applies errata to the corrected document's measurements, converting units (°F, µM, mg/100 mL, and so on).\n- Sets scope: compounds with any own-lab test (any property, including bounds) dated on or after `tested_on_or_after`, in non-void documents.\n- Picks claims (own, standard condition, not a bound), ranks them (n, then venue, then date, or venue and date only if the prompt says sample size does not matter), rounds to the property's decimals, and lists void research documents that mention a scope compound.\n\nThe model (`claude-haiku-5-5`, no reasoning) only extracts typed measurements from batches of 6 documents: compound, property, value, unit, bound, standard-condition flag, own-measurement flag, n, and measurement date. Each batch is checked for echoed document ids and retried once on failure.\n\n**Verified.**\n- Probe-0 was run end-to-end through `tools/run-solver` (exit 0, 110 rows, 9 excluded ids). Two density cells (ZN-4992, QT-6938) differed from the scored run, so model extraction varies between runs.\n- Scoring: the first version scored 0.456. After fixing scope (tests of non-requested properties were dropped) and the mg/100 mL conversion, the scored version got 0.992 (fail). That is 2 of 6 score checks used. The 0.992 answer came from the cached-extraction run; the end-to-end run is identical apart from those two density cells.\n- Cost: about $0.09 per probe run (60 batches at about $0.0015 each). Construction spend so far is about $0.185 of $0.40.\n- `LOAD_EXTRACT=<dump>` is a dev-only switch that reuses saved model output; it is unset in normal runs.\n\n**Not verified.**\n- Probes 1 and 2 were not run, for budget and time reasons.\n- The exact cell(s) causing the 0.992 are unknown.\n\n**Known weaknesses.**\n- Model flags (`condition_ok`, `own_measurement`) are the largest error source and are unchecked.\n- Compounds named only, with no code anywhere in the corpus, get a name key, and the output uses that name.\n- Measurement dates fall back to the publication date when none is given.\n- Erratum sentences are parsed by a single regex; unmatched forms are logged and skipped.\n- The question-parsing assumes the input layout seen in the probes.\n",
+ "hiddenPathAttempts": 0,
+ "outsidePaths": [],
+ "nestedModelAttempts": 0,
+ "hiddenPathAccesses": 0,
+ "accessedOutsidePaths": [],
+ "taskPathsIgnored": 0,
+ "repoPathMentions": 0,
+ "repoPathForms": [],
+ "runSolverCalls": 2,
+ "builderMessageUsage": [
+  [
+   2,
+   8,
+   5148,
+   3266,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   8414,
+   17774,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   26188,
+   3256,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   29444,
+   2964,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   5,
+   32408,
+   3184,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   35592,
+   2612,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   3,
+   38204,
+   4806,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   6,
+   43010,
+   23956,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   66966,
+   10193,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   7,
+   77159,
+   2779,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   16,
+   79938,
+   785,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   21,
+   80723,
+   411,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   81134,
+   606,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   20,
+   81740,
+   1738,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   5,
+   83478,
+   3074,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   7,
+   86552,
+   907,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   3,
+   87459,
+   6392,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   6,
+   93851,
+   6633,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   7,
+   100484,
+   2799,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   103283,
+   1868,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   105151,
+   1976,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   20,
+   107127,
+   476,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   107603,
+   481,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   108084,
+   509,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   3,
+   108593,
+   1113,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   20,
+   109706,
+   1309,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   5,
+   111015,
+   522,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   16,
+   111537,
+   540,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   4,
+   112077,
+   379,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   7,
+   112456,
+   532,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   16,
+   112988,
+   470,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   8,
+   113458,
+   324,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   2,
+   113782,
+   458,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   20,
+   114240,
+   968,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   4,
+   115208,
+   982,
+   "claude-haiku-5-5"
+  ],
+  [
+   2,
+   3,
+   116190,
+   1177,
+   "claude-haiku-5-5"
+  ]
+ ],
+ "selfCheck": false,
+ "check": null,
+ "checkSha256": null
+}

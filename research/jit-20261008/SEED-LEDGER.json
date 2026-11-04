@@ -98,6 +98,12 @@
    "split": "test",
    "fresh": true,
    "about": "factory and AB-R held-out seed block (PLAN §6.4, OD-10); nothing generated yet"
+  },
+  "swarm-r1": {
+   "split": "test",
+   "fresh": true,
+   "heldout": true,
+   "about": "swarm ladder rung 1 held-out tasks (research/swarm-20261021/PREREG-SWARM-R1.md): A single Haiku agent vs S Haiku swarm vs W Haiku-built workflow, used once"
   }
  },
  "ranges": [
@@ -408,7 +414,24 @@
     "jit-heldout"
    ],
    "use": "held-out W-bed stream C, per rung",
-   "source": "research/jit-20261008/design/W-BED.md section 8"
+   "source": "research/jit-20261008/design/W-BED.md section 8",
+   "exposures": [
+    {
+     "beds": [
+      "wbed-r6"
+     ],
+     "split": "test",
+     "from": 8401,
+     "to": 8406,
+     "difficulty": 5,
+     "date": "2026-11-04",
+     "by": "swarm ladder rung 1 (research/swarm-20261021/DOSSIER-SWARM.md, d5 sizes)",
+     "what": "a $0 sizing script generated these six wbed-r6 test worlds analyst-side; the agent that wrote PREREG-SWARM-R1 saw their summary statistics (documents, inline tokens, compounds in scope, plan candidates, cells, excluded documents, tokens an agent must read, tier) and that referenceSolve passes (the d5 sizes in DOSSIER-SWARM.md); no arm and no model call saw a task; what else that session printed is not recorded",
+     "armsSaw": false,
+     "recordedBy": "review fix minor 9 (2026-11-04)",
+     "decision": "status unchanged (reserved): the range owner (wbed / JIT) decides whether to burn 8401-8406 for wbed-r6"
+    }
+   ]
   },
   {
    "id": "wbed-heldout-d",
@@ -1614,6 +1637,38 @@
    ],
    "use": "factory and AB-R held-out block (OD-10: the AB-R README's 8801+ collides with need-heldout 8801-8848)",
    "source": "research/breadth-20261021/PLAN.md §6.4; registered 2026-11-04"
+  },
+  {
+   "id": "swarm-r1-heldout",
+   "beds": [
+    "wbed-r6"
+   ],
+   "split": "test",
+   "from": 9301,
+   "to": 9310,
+   "status": "used",
+   "owner": "swarm",
+   "allow": [
+    "swarm-r1"
+   ],
+   "use": "swarm ladder rung 1 held-out tasks at d5: 9301-9307 run by arms A, S, W on 2026-11-04 (9301 also by the exploratory arm S-F, Amendment 1); 9308-9310 were generated only for the freeze hashes and never shown to an arm, but are marked used with the range",
+   "source": "research/swarm-20261021/PREREG-SWARM-R1.md §1"
+  },
+  {
+   "id": "swarm-r1-dev",
+   "beds": [
+    "wbed-r6"
+   ],
+   "split": "dev",
+   "from": 365,
+   "to": 368,
+   "status": "used",
+   "owner": "swarm",
+   "allow": [
+    "jit-dev"
+   ],
+   "use": "swarm ladder rung 1: W build probes 365-367 and the cost calibration task 368 (d5), inside wbed-dev tuning 349-372",
+   "source": "research/swarm-20261021/PREREG-SWARM-R1.md §1"
   }
  ]
 }

@@ -1,0 +1,1313 @@
+{
+ "stage": "heldout",
+ "split": "test",
+ "rule": "a2",
+ "tasks": 6,
+ "incomplete": [
+  "wbed-r6:test:d5:s9302"
+ ],
+ "voids": [
+  {
+   "arm": "A-agent-haiku",
+   "taskKey": "wbed-r6:test:d5:s9302",
+   "drift": [],
+   "hiddenPath": 17,
+   "repoPath": 0,
+   "other": [
+    "/var/foundry-work"
+   ]
+  }
+ ],
+ "rules": {
+  "frozen": {
+   "voids": 10,
+   "voidTrials": [
+    "A-agent-haiku|wbed-r6:test:d5:s9302",
+    "A-agent-haiku|wbed-r6:test:d5:s9301",
+    "A-agent-haiku|wbed-r6:test:d5:s9304",
+    "S-swarm-haiku|wbed-r6:test:d5:s9303",
+    "A-agent-haiku|wbed-r6:test:d5:s9303",
+    "S-swarm-haiku|wbed-r6:test:d5:s9305",
+    "A-agent-haiku|wbed-r6:test:d5:s9305",
+    "S-swarm-haiku|wbed-r6:test:d5:s9306",
+    "A-agent-haiku|wbed-r6:test:d5:s9306",
+    "A-agent-haiku|wbed-r6:test:d5:s9307"
+   ],
+   "completeBlocks": 0,
+   "excludedBlocks": [
+    "wbed-r6:test:d5:s9301",
+    "wbed-r6:test:d5:s9302",
+    "wbed-r6:test:d5:s9303",
+    "wbed-r6:test:d5:s9304",
+    "wbed-r6:test:d5:s9305",
+    "wbed-r6:test:d5:s9306",
+    "wbed-r6:test:d5:s9307"
+   ]
+  },
+  "a2": {
+   "voids": 1,
+   "voidTrials": [
+    "A-agent-haiku|wbed-r6:test:d5:s9302"
+   ],
+   "completeBlocks": 6,
+   "excludedBlocks": [
+    "wbed-r6:test:d5:s9302"
+   ]
+  },
+  "a3": {
+   "voids": 0,
+   "voidTrials": [],
+   "completeBlocks": 7,
+   "excludedBlocks": []
+  },
+  "flaggedTrials": 10,
+  "flaggedPaths": {
+   "a2": {
+    "self-created": 37,
+    "other": 1,
+    "workdir-ancestor": 3,
+    "cli-spill": 11
+   },
+   "a3": {
+    "self-created": 37,
+    "failed-cd": 1,
+    "workdir-ancestor": 3,
+    "cli-spill": 11
+   }
+  }
+ },
+ "frozenRule": {
+  "voids": 10,
+  "completeBlocks": 0,
+  "flaggedPaths": {
+   "self-created": 37,
+   "other": 1,
+   "workdir-ancestor": 3,
+   "cli-spill": 11
+  }
+ },
+ "faults": 0,
+ "gradeConsistent": true,
+ "table": {
+  "A-agent-haiku": {
+   "n": 6,
+   "pass": 3,
+   "passRate": 0.5,
+   "wilson95": {
+    "p": 0.5,
+    "lo": 0.18761280689940868,
+    "hi": 0.8123871931005913
+   },
+   "meanScore": 0.8642858333333333,
+   "cellsCorrect": 0.9285714285714285,
+   "missingCompounds": 1,
+   "excludedOk": 3,
+   "costUsd": 2.60098082,
+   "costPerTrial": 0.43349680333333335,
+   "costPerPass": 0.8669936066666667,
+   "costUnknown": 0,
+   "wallMedianS": 626.6885,
+   "wallMaxS": 747.196,
+   "errors": {},
+   "drift": 0,
+   "hiddenPathVoid": 6,
+   "traps": {
+    "unexplained:both-wrong": 2,
+    "concern-voids": 1,
+    "recency-only": 9,
+    "policy-venue-first": 9,
+    "policy-recency-after-venue": 11,
+    "void-missed:retracted": 1,
+    "affil:abbr-only": 2,
+    "plain": 2,
+    "novel-date:relative": 1,
+    "alias:former": 1,
+    "affil:former-only": 1,
+    "cascade:missing-compound": 2,
+    "policy-n-first": 1,
+    "superseded-kept": 1,
+    "void-missed:replaced-by-journal": 1
+   },
+   "sides": {
+    "model:search:not-seen": 19,
+    "model:judgment:seen": 6
+   }
+  },
+  "S-swarm-haiku": {
+   "n": 6,
+   "pass": 4,
+   "passRate": 0.6666666666666666,
+   "wilson95": {
+    "p": 0.6666666666666666,
+    "lo": 0.29998832134152864,
+    "hi": 0.9032306674407831
+   },
+   "meanScore": 0.9257143333333334,
+   "cellsCorrect": 0.9714285714285715,
+   "missingCompounds": 0,
+   "excludedOk": 4,
+   "costUsd": 2.02186406,
+   "costPerTrial": 0.33697734333333335,
+   "costPerPass": 0.505466015,
+   "costUnknown": 0,
+   "wallMedianS": 409.524,
+   "wallMaxS": 677.041,
+   "errors": {},
+   "drift": 0,
+   "hiddenPathVoid": 3,
+   "workers": {
+    "median": 0,
+    "max": 0,
+    "criticalStepsMedian": 20.5,
+    "coord": {
+     "K1": 6,
+     "K2": 0,
+     "K3": 0,
+     "K4": 0,
+     "K5": 0,
+     "K6": 0,
+     "K7": 0,
+     "K8": 0,
+     "K9": 0,
+     "K10": 0,
+     "K11": 0
+    }
+   },
+   "traps": {
+    "unexplained:both-wrong": 4,
+    "concern-voids": 1,
+    "recency-only": 10,
+    "policy-venue-first": 9,
+    "policy-recency-after-venue": 12,
+    "void-missed:retracted": 1,
+    "superseded-kept": 2,
+    "void-missed:replaced-by-journal": 2
+   },
+   "sides": {
+    "model:judgment:seen": 14,
+    "model:search:not-seen": 7
+   }
+  },
+  "W-workflow-haiku": {
+   "n": 6,
+   "pass": 0,
+   "passRate": 0,
+   "wilson95": {
+    "p": 0,
+    "lo": 0,
+    "hi": 0.3903430336530645
+   },
+   "meanScore": 0.464415,
+   "cellsCorrect": 0.5563770537454747,
+   "missingCompounds": 4,
+   "excludedOk": 0,
+   "costUsd": 0.42337109000000006,
+   "costPerTrial": 0.07056184833333334,
+   "costPerPass": null,
+   "costUnknown": 0,
+   "buildUsd": 0.39357547499999995,
+   "costPerPassInclBuild": null,
+   "buildArtifact": "solve.mjs",
+   "buildScoreChecks": 2,
+   "buildFirstPassAtCheck": null,
+   "wallMedianS": 210.8175,
+   "wallMaxS": 252.172,
+   "errors": {},
+   "drift": 0,
+   "hiddenPathVoid": 0,
+   "traps": {
+    "novel-date:relative": 12,
+    "code-only": 2,
+    "affil:abbr-only": 7,
+    "T1:tested-before-cutoff": 3,
+    "policy-venue-first": 39,
+    "policy-n-first": 25,
+    "errata-skipped": 4,
+    "unexplained:both-wrong": 34,
+    "nonstandard-counted": 1,
+    "missing-cell": 51,
+    "cascade:missing-compound": 9,
+    "plain": 9,
+    "recency-only": 25,
+    "policy-recency-after-venue": 29,
+    "void-missed:retracted": 4,
+    "alias:abbr": 2,
+    "quotes-counted": 1
+   },
+   "sides": {
+    "model:builder-code": 189
+   }
+  }
+ },
+ "comparisons": [
+  {
+   "a": "S-swarm-haiku",
+   "b": "A-agent-haiku",
+   "mcnemar": {
+    "aOnly": 1,
+    "bOnly": 0,
+    "p": 1
+   },
+   "passBootstrap": {
+    "armA": "S-swarm-haiku",
+    "armB": "A-agent-haiku",
+    "tasks": 6,
+    "families": 1,
+    "iterations": 10000,
+    "successDiff": {
+     "point": 0.16666666666666663,
+     "lo": 0,
+     "hi": 0.5
+    },
+    "cpsRatio": {
+     "point": 0.5830100834807386,
+     "lo": 0.22173648374136687,
+     "hi": 1.0810019195659586,
+     "finiteResamples": 9843
+    }
+   },
+   "score": {
+    "tasks": 6,
+    "point": 0.0614285,
+    "lo": -0.008095333333333343,
+    "hi": 0.14103183333333336
+   }
+  },
+  {
+   "a": "W-workflow-haiku",
+   "b": "A-agent-haiku",
+   "mcnemar": {
+    "aOnly": 0,
+    "bOnly": 3,
+    "p": 0.25000000000000006
+   },
+   "passBootstrap": {
+    "armA": "W-workflow-haiku",
+    "armB": "A-agent-haiku",
+    "tasks": 6,
+    "families": 1,
+    "iterations": 10000,
+    "successDiff": {
+     "point": -0.5,
+     "lo": -0.8333333333333334,
+     "hi": -0.16666666666666666
+    },
+    "cpsRatio": {
+     "point": null,
+     "lo": null,
+     "hi": null,
+     "finiteResamples": 0
+    }
+   },
+   "score": {
+    "tasks": 6,
+    "point": -0.39987083333333334,
+    "lo": -0.492337,
+    "hi": -0.3119925
+   }
+  },
+  {
+   "a": "S-swarm-haiku",
+   "b": "W-workflow-haiku",
+   "mcnemar": {
+    "aOnly": 4,
+    "bOnly": 0,
+    "p": 0.125
+   },
+   "passBootstrap": {
+    "armA": "S-swarm-haiku",
+    "armB": "W-workflow-haiku",
+    "tasks": 6,
+    "families": 1,
+    "iterations": 10000,
+    "successDiff": {
+     "point": 0.6666666666666666,
+     "lo": 0.3333333333333333,
+     "hi": 1
+    },
+    "cpsRatio": {
+     "point": null,
+     "lo": null,
+     "hi": null,
+     "finiteResamples": 0
+    }
+   },
+   "score": {
+    "tasks": 6,
+    "point": 0.46129933333333334,
+    "lo": 0.3715348333333333,
+    "hi": 0.5245111666666666
+   }
+  }
+ ],
+ "sensitivity": {
+  "a3": {
+   "tasks": 7,
+   "incomplete": [],
+   "table": {
+    "A-agent-haiku": {
+     "n": 7,
+     "pass": 4,
+     "passRate": 0.5714285714285714,
+     "wilson95": {
+      "p": 0.5714285714285714,
+      "lo": 0.2504542304090258,
+      "hi": 0.8417830777373732
+     },
+     "meanScore": 0.8836735714285714,
+     "cellsCorrect": 0.9387755102040816,
+     "missingCompounds": 0.8571428571428571,
+     "excludedOk": 4,
+     "costUsd": 3.05991062,
+     "costPerTrial": 0.4371300885714286,
+     "costPerPass": 0.764977655,
+     "costUnknown": 0,
+     "wallMedianS": 607.28,
+     "wallMaxS": 747.196,
+     "errors": {},
+     "drift": 0,
+     "hiddenPathVoid": 7,
+     "traps": {
+      "unexplained:both-wrong": 2,
+      "concern-voids": 1,
+      "recency-only": 9,
+      "policy-venue-first": 9,
+      "policy-recency-after-venue": 11,
+      "void-missed:retracted": 1,
+      "affil:abbr-only": 2,
+      "plain": 2,
+      "novel-date:relative": 1,
+      "alias:former": 1,
+      "affil:former-only": 1,
+      "cascade:missing-compound": 2,
+      "policy-n-first": 1,
+      "superseded-kept": 1,
+      "void-missed:replaced-by-journal": 1
+     },
+     "sides": {
+      "model:search:not-seen": 19,
+      "model:judgment:seen": 6
+     }
+    },
+    "S-swarm-haiku": {
+     "n": 7,
+     "pass": 4,
+     "passRate": 0.5714285714285714,
+     "wilson95": {
+      "p": 0.5714285714285714,
+      "lo": 0.2504542304090258,
+      "hi": 0.8417830777373732
+     },
+     "meanScore": 0.9021768571428571,
+     "cellsCorrect": 0.9605442176870749,
+     "missingCompounds": 0.2857142857142857,
+     "excludedOk": 4,
+     "costUsd": 2.24953147,
+     "costPerTrial": 0.3213616385714286,
+     "costPerPass": 0.5623828675,
+     "costUnknown": 0,
+     "wallMedianS": 419.703,
+     "wallMaxS": 677.041,
+     "errors": {},
+     "drift": 0,
+     "hiddenPathVoid": 3,
+     "workers": {
+      "median": 0,
+      "max": 0,
+      "criticalStepsMedian": 21,
+      "coord": {
+       "K1": 7,
+       "K2": 0,
+       "K3": 0,
+       "K4": 0,
+       "K5": 0,
+       "K6": 0,
+       "K7": 0,
+       "K8": 0,
+       "K9": 0,
+       "K10": 0,
+       "K11": 0
+      }
+     },
+     "traps": {
+      "novel-date:relative": 2,
+      "affil:abbr-only": 1,
+      "code-only": 1,
+      "superseded-kept": 3,
+      "cascade:missing-compound": 2,
+      "void-missed:replaced-by-journal": 3,
+      "unexplained:both-wrong": 4,
+      "concern-voids": 1,
+      "recency-only": 10,
+      "policy-venue-first": 9,
+      "policy-recency-after-venue": 12,
+      "void-missed:retracted": 1
+     },
+     "sides": {
+      "model:judgment:seen": 16,
+      "model:search:not-seen": 11
+     }
+    },
+    "W-workflow-haiku": {
+     "n": 7,
+     "pass": 0,
+     "passRate": 0,
+     "wilson95": {
+      "p": 0,
+      "lo": 0,
+      "hi": 0.35433884297520657
+     },
+     "meanScore": 0.44416785714285717,
+     "cellsCorrect": 0.5326769304212913,
+     "missingCompounds": 4.142857142857143,
+     "excludedOk": 0,
+     "costUsd": 0.49658140000000006,
+     "costPerTrial": 0.07094020000000001,
+     "costPerPass": null,
+     "costUnknown": 0,
+     "buildUsd": 0.39357547499999995,
+     "costPerPassInclBuild": null,
+     "buildArtifact": "solve.mjs",
+     "buildScoreChecks": 2,
+     "buildFirstPassAtCheck": null,
+     "wallMedianS": 212.87,
+     "wallMaxS": 252.172,
+     "errors": {},
+     "drift": 0,
+     "hiddenPathVoid": 0,
+     "traps": {
+      "novel-date:relative": 15,
+      "code-only": 2,
+      "affil:abbr-only": 10,
+      "T1:tested-before-cutoff": 4,
+      "policy-venue-first": 39,
+      "policy-n-first": 34,
+      "errata-skipped": 5,
+      "unexplained:both-wrong": 51,
+      "nonstandard-counted": 1,
+      "missing-cell": 58,
+      "cascade:missing-compound": 12,
+      "plain": 11,
+      "alias:abbr": 3,
+      "recency-only": 31,
+      "policy-recency-after-venue": 32,
+      "concern-voids": 1,
+      "void-missed:retracted": 5,
+      "quotes-counted": 1
+     },
+     "sides": {
+      "model:builder-code": 238
+     }
+    }
+   },
+   "comparisons": [
+    {
+     "a": "S-swarm-haiku",
+     "b": "A-agent-haiku",
+     "mcnemar": {
+      "aOnly": 1,
+      "bOnly": 1,
+      "p": 1
+     },
+     "passBootstrap": {
+      "armA": "S-swarm-haiku",
+      "armB": "A-agent-haiku",
+      "tasks": 7,
+      "families": 1,
+      "iterations": 10000,
+      "successDiff": {
+       "point": 0,
+       "lo": -0.42857142857142855,
+       "hi": 0.42857142857142855
+      },
+      "cpsRatio": {
+       "point": 0.7351624767392715,
+       "lo": 0.30396956284211224,
+       "hi": 1.6917432562640262,
+       "finiteResamples": 9950
+      }
+     },
+     "score": {
+      "tasks": 7,
+      "point": 0.018503285714285705,
+      "lo": -0.07870771428571431,
+      "hi": 0.11870714285714282
+     }
+    },
+    {
+     "a": "W-workflow-haiku",
+     "b": "A-agent-haiku",
+     "mcnemar": {
+      "aOnly": 0,
+      "bOnly": 4,
+      "p": 0.125
+     },
+     "passBootstrap": {
+      "armA": "W-workflow-haiku",
+      "armB": "A-agent-haiku",
+      "tasks": 7,
+      "families": 1,
+      "iterations": 10000,
+      "successDiff": {
+       "point": -0.5714285714285714,
+       "lo": -0.8571428571428571,
+       "hi": -0.14285714285714285
+      },
+      "cpsRatio": {
+       "point": null,
+       "lo": null,
+       "hi": null,
+       "finiteResamples": 0
+      }
+     },
+     "score": {
+      "tasks": 7,
+      "point": -0.4395057142857142,
+      "lo": -0.553777,
+      "hi": -0.33798257142857147
+     }
+    },
+    {
+     "a": "S-swarm-haiku",
+     "b": "W-workflow-haiku",
+     "mcnemar": {
+      "aOnly": 4,
+      "bOnly": 0,
+      "p": 0.125
+     },
+     "passBootstrap": {
+      "armA": "S-swarm-haiku",
+      "armB": "W-workflow-haiku",
+      "tasks": 7,
+      "families": 1,
+      "iterations": 10000,
+      "successDiff": {
+       "point": 0.5714285714285714,
+       "lo": 0.14285714285714285,
+       "hi": 0.8571428571428571
+      },
+      "cpsRatio": {
+       "point": null,
+       "lo": null,
+       "hi": null,
+       "finiteResamples": 0
+      }
+     },
+     "score": {
+      "tasks": 7,
+      "point": 0.45800899999999994,
+      "lo": 0.38100071428571425,
+      "hi": 0.514031857142857
+     }
+    }
+   ]
+  }
+ },
+ "posthoc": [
+  {
+   "arm": "W-workflow-haiku",
+   "taskKey": "wbed-r6:test:d5:s9301",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P2",
+   "relative": [
+    {
+     "code": "BRX-9218",
+     "establishing": 1,
+     "relative": 1,
+     "explainedByVisitDate": true
+    },
+    {
+     "code": "LT-6603",
+     "establishing": 1,
+     "relative": 1,
+     "explainedByVisitDate": true
+    },
+    {
+     "code": "RV-8170",
+     "establishing": 1,
+     "relative": 1,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "QT-7041",
+     "establishing": 1,
+     "relative": 1,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "BRX-8978",
+     "establishing": 1,
+     "relative": 1,
+     "explainedByVisitDate": false
+    }
+   ],
+   "lowerCodeRows": 0,
+   "dupRows": 0,
+   "policyCellUnits": 6,
+   "wrongCells": 12,
+   "techreport": {
+    "missingCompounds": {
+     "units": 5,
+     "techreport": 2
+    },
+    "missingCells": {
+     "units": 10,
+     "techreport": 10
+    },
+    "wrongCells": {
+     "units": 12,
+     "techreport": 9
+    }
+   },
+   "calls": 41
+  },
+  {
+   "arm": "W-workflow-haiku",
+   "taskKey": "wbed-r6:test:d5:s9302",
+   "pass": false,
+   "inComparison": false,
+   "policy": "P1",
+   "relative": [
+    {
+     "code": "CX-9987",
+     "establishing": 1,
+     "relative": 1,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "SC-8298",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "KT-4911",
+     "establishing": 2,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "CX-9172",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "QT-9116",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    }
+   ],
+   "lowerCodeRows": 0,
+   "dupRows": 0,
+   "policyCellUnits": 12,
+   "wrongCells": 32,
+   "techreport": {
+    "missingCompounds": {
+     "units": 5,
+     "techreport": 5
+    },
+    "missingCells": {
+     "units": 7,
+     "techreport": 6
+    },
+    "wrongCells": {
+     "units": 32,
+     "techreport": 19
+    }
+   },
+   "calls": 41
+  },
+  {
+   "arm": "S-swarm-haiku",
+   "taskKey": "wbed-r6:test:d5:s9301",
+   "pass": true,
+   "inComparison": true,
+   "policy": "P2",
+   "evidence": {
+    "units": 0,
+    "seen": 0,
+    "notSeen": 0
+   }
+  },
+  {
+   "arm": "S-swarm-haiku",
+   "taskKey": "wbed-r6:test:d5:s9302",
+   "pass": false,
+   "inComparison": false,
+   "policy": "P1",
+   "evidence": {
+    "units": 6,
+    "seen": 4,
+    "notSeen": 2
+   }
+  },
+  {
+   "arm": "A-agent-haiku",
+   "taskKey": "wbed-r6:test:d5:s9302",
+   "pass": true,
+   "inComparison": false,
+   "policy": "P1",
+   "evidence": {
+    "units": 0,
+    "seen": 0,
+    "notSeen": 0
+   }
+  },
+  {
+   "arm": "A-agent-haiku",
+   "taskKey": "wbed-r6:test:d5:s9301",
+   "pass": true,
+   "inComparison": true,
+   "policy": "P2",
+   "evidence": {
+    "units": 0,
+    "seen": 0,
+    "notSeen": 0
+   }
+  },
+  {
+   "arm": "W-workflow-haiku",
+   "taskKey": "wbed-r6:test:d5:s9303",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P3",
+   "relative": [
+    {
+     "code": "QT-6241",
+     "establishing": 2,
+     "relative": 1,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "SC-4332",
+     "establishing": 2,
+     "relative": 1,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "RV-3015",
+     "establishing": 2,
+     "relative": 0,
+     "explainedByVisitDate": false
+    }
+   ],
+   "lowerCodeRows": 0,
+   "dupRows": 0,
+   "policyCellUnits": 13,
+   "wrongCells": 17,
+   "techreport": {
+    "missingCompounds": {
+     "units": 3,
+     "techreport": 3
+    },
+    "missingCells": {
+     "units": 5,
+     "techreport": 5
+    },
+    "wrongCells": {
+     "units": 17,
+     "techreport": 16
+    }
+   },
+   "calls": 43
+  },
+  {
+   "arm": "W-workflow-haiku",
+   "taskKey": "wbed-r6:test:d5:s9304",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P3",
+   "relative": [
+    {
+     "code": "BRX-4798",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "VX-4897",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "CX-5508",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    }
+   ],
+   "lowerCodeRows": 0,
+   "dupRows": 0,
+   "policyCellUnits": 14,
+   "wrongCells": 23,
+   "techreport": {
+    "missingCompounds": {
+     "units": 3,
+     "techreport": 3
+    },
+    "missingCells": {
+     "units": 6,
+     "techreport": 5
+    },
+    "wrongCells": {
+     "units": 23,
+     "techreport": 18
+    }
+   },
+   "calls": 46
+  },
+  {
+   "arm": "S-swarm-haiku",
+   "taskKey": "wbed-r6:test:d5:s9304",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P3",
+   "evidence": {
+    "units": 17,
+    "seen": 14,
+    "notSeen": 3
+   }
+  },
+  {
+   "arm": "A-agent-haiku",
+   "taskKey": "wbed-r6:test:d5:s9304",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P3",
+   "evidence": {
+    "units": 14,
+    "seen": 10,
+    "notSeen": 4
+   }
+  },
+  {
+   "arm": "S-swarm-haiku",
+   "taskKey": "wbed-r6:test:d5:s9303",
+   "pass": true,
+   "inComparison": true,
+   "policy": "P3",
+   "evidence": {
+    "units": 0,
+    "seen": 0,
+    "notSeen": 0
+   }
+  },
+  {
+   "arm": "A-agent-haiku",
+   "taskKey": "wbed-r6:test:d5:s9303",
+   "pass": true,
+   "inComparison": true,
+   "policy": "P3",
+   "evidence": {
+    "units": 0,
+    "seen": 0,
+    "notSeen": 0
+   }
+  },
+  {
+   "arm": "W-workflow-haiku",
+   "taskKey": "wbed-r6:test:d5:s9306",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P2",
+   "relative": [
+    {
+     "code": "KT-110",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "BRX-2546",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "SC-6302",
+     "establishing": 1,
+     "relative": 1,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "SC-5569",
+     "establishing": 2,
+     "relative": 1,
+     "explainedByVisitDate": false
+    }
+   ],
+   "lowerCodeRows": 0,
+   "dupRows": 0,
+   "policyCellUnits": 5,
+   "wrongCells": 13,
+   "techreport": {
+    "missingCompounds": {
+     "units": 4,
+     "techreport": 4
+    },
+    "missingCells": {
+     "units": 8,
+     "techreport": 7
+    },
+    "wrongCells": {
+     "units": 13,
+     "techreport": 12
+    }
+   },
+   "calls": 42
+  },
+  {
+   "arm": "W-workflow-haiku",
+   "taskKey": "wbed-r6:test:d5:s9305",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P1",
+   "relative": [
+    {
+     "code": "PD-9212",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "BRX-578",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "CX-7251",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "SC-7346",
+     "establishing": 2,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "MRL-8033",
+     "establishing": 1,
+     "relative": 1,
+     "explainedByVisitDate": true
+    },
+    {
+     "code": "KT-2241",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "SC-3118",
+     "establishing": 2,
+     "relative": 2,
+     "explainedByVisitDate": false
+    }
+   ],
+   "lowerCodeRows": 0,
+   "dupRows": 0,
+   "policyCellUnits": 15,
+   "wrongCells": 23,
+   "techreport": {
+    "missingCompounds": {
+     "units": 7,
+     "techreport": 7
+    },
+    "missingCells": {
+     "units": 6,
+     "techreport": 6
+    },
+    "wrongCells": {
+     "units": 23,
+     "techreport": 8
+    }
+   },
+   "calls": 43
+  },
+  {
+   "arm": "S-swarm-haiku",
+   "taskKey": "wbed-r6:test:d5:s9305",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P1",
+   "evidence": {
+    "units": 4,
+    "seen": 4,
+    "notSeen": 0
+   }
+  },
+  {
+   "arm": "A-agent-haiku",
+   "taskKey": "wbed-r6:test:d5:s9305",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P1",
+   "evidence": {
+    "units": 8,
+    "seen": 7,
+    "notSeen": 1
+   }
+  },
+  {
+   "arm": "S-swarm-haiku",
+   "taskKey": "wbed-r6:test:d5:s9306",
+   "pass": true,
+   "inComparison": true,
+   "policy": "P2",
+   "evidence": {
+    "units": 0,
+    "seen": 0,
+    "notSeen": 0
+   }
+  },
+  {
+   "arm": "A-agent-haiku",
+   "taskKey": "wbed-r6:test:d5:s9306",
+   "pass": true,
+   "inComparison": true,
+   "policy": "P2",
+   "evidence": {
+    "units": 0,
+    "seen": 0,
+    "notSeen": 0
+   }
+  },
+  {
+   "arm": "W-workflow-haiku",
+   "taskKey": "wbed-r6:test:d5:s9307",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P2",
+   "relative": [
+    {
+     "code": "KT-739",
+     "establishing": 1,
+     "relative": 1,
+     "explainedByVisitDate": false
+    },
+    {
+     "code": "SC-1449",
+     "establishing": 1,
+     "relative": 0,
+     "explainedByVisitDate": false
+    }
+   ],
+   "lowerCodeRows": 0,
+   "dupRows": 0,
+   "policyCellUnits": 2,
+   "wrongCells": 10,
+   "techreport": {
+    "missingCompounds": {
+     "units": 2,
+     "techreport": 2
+    },
+    "missingCells": {
+     "units": 16,
+     "techreport": 15
+    },
+    "wrongCells": {
+     "units": 10,
+     "techreport": 9
+    }
+   },
+   "calls": 39
+  },
+  {
+   "arm": "S-swarm-haiku",
+   "taskKey": "wbed-r6:test:d5:s9307",
+   "pass": true,
+   "inComparison": true,
+   "policy": "P2",
+   "evidence": {
+    "units": 0,
+    "seen": 0,
+    "notSeen": 0
+   }
+  },
+  {
+   "arm": "A-agent-haiku",
+   "taskKey": "wbed-r6:test:d5:s9307",
+   "pass": false,
+   "inComparison": true,
+   "policy": "P2",
+   "evidence": {
+    "units": 3,
+    "seen": 3,
+    "notSeen": 0
+   }
+  }
+ ],
+ "rung1b": [
+  {
+   "taskKey": "wbed-r6:test:d5:s9301",
+   "pass": false,
+   "score": 0.991905,
+   "costUsd": 0.7609025549999999,
+   "wallS": 561,
+   "error": null,
+   "workers": 9,
+   "batches": 1,
+   "maxConcurrent": 9,
+   "criticalSteps": 18,
+   "timing": {
+    "workerMsSum": 1258655,
+    "workerMsUnion": 202865,
+    "overlapMax": 8,
+    "slowestWorkerMs": 177735,
+    "sessionMs": 557478
+   },
+   "stats": {
+    "spawned": 9,
+    "requested": {
+     "background": 0,
+     "foreground": 9,
+     "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 1,
+    "spawned_by_subagents": 0,
+    "completed": 9,
+    "failed": 0,
+    "killed": {
+     "parent": 0,
+     "user": 0,
+     "system": 0
+    },
+    "refused": {
+     "depth_limit": 0,
+     "concurrency_limit": 0,
+     "budget": 0
+    },
+    "by_type": {
+     "general-purpose": 9
+    }
+   },
+   "drift": [],
+   "traps": {
+    "no-unit-conversion~source": 1
+   },
+   "units": 1,
+   "coord": {
+    "codes": [],
+    "detail": {
+     "missing": 0,
+     "planGap": 0,
+     "unassigned": 21,
+     "aggregationLoss": 0,
+     "conflictWrong": 0,
+     "workerWrong": 0
+    }
+   },
+   "replays": {
+    "carried": {
+     "pass": false,
+     "score": 0.15,
+     "rows": 210,
+     "offeredRows": 448
+    },
+    "briefPlan": {
+     "named": 0,
+     "ok": false,
+     "unknown": 0,
+     "duplicates": 0,
+     "gaps": 27,
+     "missingFlagged": 0,
+     "missing": 0
+    }
+   },
+   "evidence": {
+    "seen": 1,
+    "notSeen": 0
+   },
+   "briefs": [
+    {
+     "chars": 4386,
+     "docs": 0,
+     "turns": 3,
+     "ms": 6587,
+     "error": false
+    },
+    {
+     "chars": 4334,
+     "docs": 50,
+     "turns": 6,
+     "ms": 160091,
+     "error": false
+    },
+    {
+     "chars": 4336,
+     "docs": 50,
+     "turns": 5,
+     "ms": 147740,
+     "error": false
+    },
+    {
+     "chars": 4337,
+     "docs": 50,
+     "turns": 7,
+     "ms": 163029,
+     "error": false
+    },
+    {
+     "chars": 4337,
+     "docs": 50,
+     "turns": 5,
+     "ms": 154473,
+     "error": false
+    },
+    {
+     "chars": 4337,
+     "docs": 50,
+     "turns": 9,
+     "ms": 150557,
+     "error": false
+    },
+    {
+     "chars": 4337,
+     "docs": 51,
+     "turns": 7,
+     "ms": 177735,
+     "error": false
+    },
+    {
+     "chars": 4337,
+     "docs": 50,
+     "turns": 7,
+     "ms": 153176,
+     "error": false
+    },
+    {
+     "chars": 4337,
+     "docs": 51,
+     "turns": 8,
+     "ms": 145267,
+     "error": false
+    }
+   ],
+   "vsSameTask": {
+    "A": {
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.70569515,
+     "wallS": 646,
+     "costRatio": 1.0782312376668592,
+     "wallRatio": 0.8682906746200648
+    },
+    "S": {
+     "pass": true,
+     "score": 1,
+     "costUsd": 0.35773516,
+     "wallS": 371,
+     "costRatio": 2.126999635708159,
+     "wallRatio": 1.5112047345694144
+    }
+   }
+  }
+ ]
+}
