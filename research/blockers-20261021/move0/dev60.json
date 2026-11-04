@@ -1,0 +1,577 @@
+{
+ "generatedBy": "experiments/certify/rescore.mjs",
+ "part": "dev60",
+ "evidence": "development/diagnostic: devTrain dev60 (seed 21), k = 1, in-sample for A1-C; stored grades only",
+ "strata": {
+  "file": "research/blockers-20261021/move0/dev60-ceiling-strata.json",
+  "hard": 7,
+  "soft": 4
+ },
+ "arms": [
+  {
+   "label": "haiku-a0",
+   "strict": {
+    "passes": 9,
+    "n": 60,
+    "p": 0.15,
+    "lo": 0.07095619525709138,
+    "hi": 0.2657404477572948
+   },
+   "reachable": {
+    "passes": 9,
+    "n": 53,
+    "p": 0.16981132075471697,
+    "lo": 0.0807088764668229,
+    "hi": 0.2980216681054023,
+    "source": "dev60 minus the 7 hard benchmark defects (VERIFIER-LAB §2)"
+   },
+   "conservative": {
+    "passes": 9,
+    "n": 49,
+    "p": 0.1836734693877551,
+    "lo": 0.08759033531284754,
+    "hi": 0.32022121442886753
+   },
+   "nEff": 60,
+   "costUsd": 0.79057351,
+   "costPerSuccess": 0.08784150111111111,
+   "level": 0.95,
+   "manifest": {
+    "runId": "a0-dev60-dn",
+    "paid": true,
+    "conforming": false,
+    "missingEffort": [
+     "session"
+    ],
+    "unrecordedTemperature": [
+     "session"
+    ],
+    "unrecordedCap": [],
+    "legacy": "pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)",
+    "nodes": [
+     "session:claude-haiku-5-5@UNSET/T?/cap0.75"
+    ]
+   },
+   "runs": [
+    "a0-dev60-dn"
+   ],
+   "efforts": [
+    {
+     "run": "a0-dev60-dn",
+     "effort": null,
+     "temperature": null,
+     "budgetUsdPerSession": 0.75,
+     "capUsd": 3,
+     "callTokens": null,
+     "sessionTokens": null,
+     "tokenCap": null
+    }
+   ],
+   "hardDefectPasses": 0
+  },
+  {
+   "label": "sonnet-a0",
+   "strict": {
+    "passes": 20,
+    "n": 60,
+    "p": 0.3333333333333333,
+    "lo": 0.21686944543117054,
+    "hi": 0.466872674742829
+   },
+   "reachable": {
+    "passes": 20,
+    "n": 53,
+    "p": 0.37735849056603776,
+    "lo": 0.24787219846491182,
+    "hi": 0.521060715081298,
+    "source": "dev60 minus the 7 hard benchmark defects (VERIFIER-LAB §2)"
+   },
+   "conservative": {
+    "passes": 20,
+    "n": 49,
+    "p": 0.40816326530612246,
+    "lo": 0.2699670606312985,
+    "hi": 0.557870607057354
+   },
+   "nEff": 60,
+   "costUsd": 6.033365500000003,
+   "costPerSuccess": 0.30166827500000015,
+   "level": 0.95,
+   "manifest": {
+    "runId": "a0s-dev60-dn",
+    "paid": true,
+    "conforming": false,
+    "missingEffort": [
+     "session"
+    ],
+    "unrecordedTemperature": [
+     "session"
+    ],
+    "unrecordedCap": [],
+    "legacy": "pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)",
+    "nodes": [
+     "session:claude-sonnet-5-5@UNSET/T?/cap1.5"
+    ]
+   },
+   "runs": [
+    "a0s-dev60-dn"
+   ],
+   "efforts": [
+    {
+     "run": "a0s-dev60-dn",
+     "effort": null,
+     "temperature": null,
+     "budgetUsdPerSession": 1.5,
+     "capUsd": 14,
+     "callTokens": null,
+     "sessionTokens": null,
+     "tokenCap": null
+    }
+   ],
+   "hardDefectPasses": 0
+  },
+  {
+   "label": "haiku-a1",
+   "strict": {
+    "passes": 18,
+    "n": 60,
+    "p": 0.3,
+    "lo": 0.18845144541972342,
+    "hi": 0.4320831338760617
+   },
+   "reachable": {
+    "passes": 18,
+    "n": 53,
+    "p": 0.33962264150943394,
+    "lo": 0.21519963794746344,
+    "hi": 0.48266930645936956,
+    "source": "dev60 minus the 7 hard benchmark defects (VERIFIER-LAB §2)"
+   },
+   "conservative": {
+    "passes": 18,
+    "n": 49,
+    "p": 0.3673469387755102,
+    "lo": 0.23422415553661202,
+    "hi": 0.5171223088306067
+   },
+   "nEff": 60,
+   "costUsd": 0.9390042600000001,
+   "costPerSuccess": 0.05216690333333334,
+   "level": 0.95,
+   "manifest": {
+    "runId": "a1-dev60-dn+a1-dev60-dn-fill",
+    "paid": true,
+    "conforming": false,
+    "missingEffort": [
+     "session"
+    ],
+    "unrecordedTemperature": [
+     "session"
+    ],
+    "unrecordedCap": [],
+    "legacy": "pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)",
+    "nodes": [
+     "session:claude-haiku-5-5@UNSET/T?/cap0.75"
+    ]
+   },
+   "runs": [
+    "a1-dev60-dn",
+    "a1-dev60-dn-fill"
+   ],
+   "efforts": [
+    {
+     "run": "a1-dev60-dn",
+     "effort": null,
+     "temperature": null,
+     "budgetUsdPerSession": 0.75,
+     "capUsd": 3,
+     "callTokens": null,
+     "sessionTokens": null,
+     "tokenCap": null
+    },
+    {
+     "run": "a1-dev60-dn-fill",
+     "effort": null,
+     "temperature": null,
+     "budgetUsdPerSession": 0.75,
+     "capUsd": 3,
+     "callTokens": null,
+     "sessionTokens": null,
+     "tokenCap": null
+    }
+   ],
+   "hardDefectPasses": 0
+  },
+  {
+   "label": "sonnet-a1",
+   "strict": {
+    "passes": 28,
+    "n": 60,
+    "p": 0.4666666666666667,
+    "lo": 0.33669913625045245,
+    "hi": 0.6000350974156972
+   },
+   "reachable": {
+    "passes": 28,
+    "n": 53,
+    "p": 0.5283018867924528,
+    "lo": 0.3863552071940992,
+    "hi": 0.6669753043211055,
+    "source": "dev60 minus the 7 hard benchmark defects (VERIFIER-LAB §2)"
+   },
+   "conservative": {
+    "passes": 28,
+    "n": 49,
+    "p": 0.5714285714285714,
+    "lo": 0.42210405203591284,
+    "hi": 0.7118047757521899
+   },
+   "nEff": 60,
+   "costUsd": 6.916765599999997,
+   "costPerSuccess": 0.24702734285714276,
+   "level": 0.95,
+   "manifest": {
+    "runId": "a1s-dev60-dn+a1s-dev60-dn-fill",
+    "paid": true,
+    "conforming": false,
+    "missingEffort": [
+     "session"
+    ],
+    "unrecordedTemperature": [
+     "session"
+    ],
+    "unrecordedCap": [],
+    "legacy": "pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)",
+    "nodes": [
+     "session:claude-sonnet-5-5@UNSET/T?/cap1.5"
+    ]
+   },
+   "runs": [
+    "a1s-dev60-dn",
+    "a1s-dev60-dn-fill"
+   ],
+   "efforts": [
+    {
+     "run": "a1s-dev60-dn",
+     "effort": null,
+     "temperature": null,
+     "budgetUsdPerSession": 1.5,
+     "capUsd": 14,
+     "callTokens": null,
+     "sessionTokens": null,
+     "tokenCap": null
+    },
+    {
+     "run": "a1s-dev60-dn-fill",
+     "effort": null,
+     "temperature": null,
+     "budgetUsdPerSession": 1.5,
+     "capUsd": 8,
+     "callTokens": null,
+     "sessionTokens": null,
+     "tokenCap": null
+    }
+   ],
+   "hardDefectPasses": 0
+  },
+  {
+   "label": "haiku-a1c",
+   "strict": {
+    "passes": 20,
+    "n": 60,
+    "p": 0.3333333333333333,
+    "lo": 0.21686944543117054,
+    "hi": 0.466872674742829
+   },
+   "reachable": {
+    "passes": 20,
+    "n": 53,
+    "p": 0.37735849056603776,
+    "lo": 0.24787219846491182,
+    "hi": 0.521060715081298,
+    "source": "dev60 minus the 7 hard benchmark defects (VERIFIER-LAB §2)"
+   },
+   "conservative": {
+    "passes": 20,
+    "n": 49,
+    "p": 0.40816326530612246,
+    "lo": 0.2699670606312985,
+    "hi": 0.557870607057354
+   },
+   "nEff": 60,
+   "costUsd": 2.2252084800000005,
+   "costPerSuccess": 0.11126042400000002,
+   "level": 0.95,
+   "manifest": {
+    "runId": "a1c-dev60-dn",
+    "paid": true,
+    "conforming": false,
+    "missingEffort": [
+     "ledger",
+     "adjudicate",
+     "pcmap",
+     "checker",
+     "act",
+     "repair"
+    ],
+    "unrecordedTemperature": [
+     "ledger",
+     "adjudicate",
+     "pcmap",
+     "checker",
+     "act",
+     "repair"
+    ],
+    "unrecordedCap": [],
+    "legacy": "pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)",
+    "nodes": [
+     "ledger:claude-haiku-5-5@UNSET/T?/cap0.75",
+     "adjudicate:claude-haiku-5-5@UNSET/T?/cap0.75",
+     "pcmap:claude-haiku-5-5@UNSET/T?/cap0.75",
+     "checker:claude-haiku-5-5@UNSET/T?/cap0.75",
+     "act:claude-haiku-5-5@UNSET/T?/cap0.75",
+     "repair:claude-haiku-5-5@UNSET/T?/cap0.75"
+    ]
+   },
+   "runs": [
+    "a1c-dev60-dn"
+   ],
+   "efforts": [
+    {
+     "run": "a1c-dev60-dn",
+     "effort": null,
+     "temperature": null,
+     "budgetUsdPerSession": 0.75,
+     "capUsd": 6,
+     "callTokens": null,
+     "sessionTokens": null,
+     "tokenCap": null
+    }
+   ],
+   "hardDefectPasses": 0
+  },
+  {
+   "label": "m3-a1c",
+   "strict": {
+    "passes": 29,
+    "n": 60,
+    "p": 0.48333333333333334,
+    "lo": 0.3523129300021267,
+    "hi": 0.6160539826684028
+   },
+   "reachable": {
+    "passes": 29,
+    "n": 53,
+    "p": 0.5471698113207547,
+    "lo": 0.40449829172671803,
+    "hi": 0.6843847161359016,
+    "source": "dev60 minus the 7 hard benchmark defects (VERIFIER-LAB §2)"
+   },
+   "conservative": {
+    "passes": 29,
+    "n": 49,
+    "p": 0.5918367346938775,
+    "lo": 0.44212939294264586,
+    "hi": 0.7300329393687013
+   },
+   "nEff": 60,
+   "costUsd": 0.9280783100000001,
+   "costPerSuccess": 0.03200270034482759,
+   "level": 0.95,
+   "manifest": {
+    "runId": "m3-a1c-dev60-dn+m3-a1c-dev60-dn-fill",
+    "paid": true,
+    "conforming": false,
+    "missingEffort": [
+     "ledger",
+     "adjudicate",
+     "pcmap",
+     "checker",
+     "act",
+     "repair"
+    ],
+    "unrecordedTemperature": [
+     "ledger",
+     "adjudicate",
+     "pcmap",
+     "checker",
+     "act",
+     "repair"
+    ],
+    "unrecordedCap": [],
+    "legacy": "pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)",
+    "nodes": [
+     "ledger:mercury-3@UNSET/T?/cap0.75",
+     "adjudicate:claude-haiku-5-5@UNSET/T?/cap0.75",
+     "pcmap:claude-haiku-5-5@UNSET/T?/cap0.75",
+     "checker:mercury-3@UNSET/T?/cap0.75",
+     "act:claude-haiku-5-5@UNSET/T?/cap0.75",
+     "repair:claude-haiku-5-5@UNSET/T?/cap0.75"
+    ]
+   },
+   "runs": [
+    "m3-a1c-dev60-dn",
+    "m3-a1c-dev60-dn-fill"
+   ],
+   "efforts": [
+    {
+     "run": "m3-a1c-dev60-dn",
+     "effort": null,
+     "temperature": null,
+     "budgetUsdPerSession": 0.75,
+     "capUsd": 4,
+     "callTokens": 100000,
+     "sessionTokens": 300000,
+     "tokenCap": 3000000
+    },
+    {
+     "run": "m3-a1c-dev60-dn-fill",
+     "effort": null,
+     "temperature": null,
+     "budgetUsdPerSession": 0.75,
+     "capUsd": 3,
+     "callTokens": 100000,
+     "sessionTokens": 300000,
+     "tokenCap": 2300000
+    }
+   ],
+   "hardDefectPasses": 0
+  }
+ ],
+ "table": "| Arm | Strict (95% CP) | Reachable subset (ceiling column) | Conservative subset | n_eff | $ / task | $ / success | Nodes (model@effort/T/cap) | Manifest |\n|---|---|---|---|---|---|---|---|---|\n| haiku-a0 | 9/60 = 15.0% [7.1%, 26.6%] | 9/53 = 17.0% [8.1%, 29.8%] | 9/49 = 18.4% | 60.0 | 0.0132 | 0.0878 | session:claude-haiku-5-5@UNSET/T?/cap0.75 | NON-CONFORMING: effort unset on session (legacy: pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)) |\n| sonnet-a0 | 20/60 = 33.3% [21.7%, 46.7%] | 20/53 = 37.7% [24.8%, 52.1%] | 20/49 = 40.8% | 60.0 | 0.1006 | 0.3017 | session:claude-sonnet-5-5@UNSET/T?/cap1.5 | NON-CONFORMING: effort unset on session (legacy: pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)) |\n| haiku-a1 | 18/60 = 30.0% [18.8%, 43.2%] | 18/53 = 34.0% [21.5%, 48.3%] | 18/49 = 36.7% | 60.0 | 0.0157 | 0.0522 | session:claude-haiku-5-5@UNSET/T?/cap0.75 | NON-CONFORMING: effort unset on session (legacy: pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)) |\n| sonnet-a1 | 28/60 = 46.7% [33.7%, 60.0%] | 28/53 = 52.8% [38.6%, 66.7%] | 28/49 = 57.1% | 60.0 | 0.1153 | 0.2470 | session:claude-sonnet-5-5@UNSET/T?/cap1.5 | NON-CONFORMING: effort unset on session (legacy: pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)) |\n| haiku-a1c | 20/60 = 33.3% [21.7%, 46.7%] | 20/53 = 37.7% [24.8%, 52.1%] | 20/49 = 40.8% | 60.0 | 0.0371 | 0.1113 | ledger:claude-haiku-5-5@UNSET/T?/cap0.75; adjudicate:claude-haiku-5-5@UNSET/T?/cap0.75; pcmap:claude-haiku-5-5@UNSET/T?/cap0.75; checker:claude-haiku-5-5@UNSET/T?/cap0.75; act:claude-haiku-5-5@UNSET/T?/cap0.75; repair:claude-haiku-5-5@UNSET/T?/cap0.75 | NON-CONFORMING: effort unset on ledger, adjudicate, pcmap, checker, act, repair (legacy: pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)) |\n| m3-a1c | 29/60 = 48.3% [35.2%, 61.6%] | 29/53 = 54.7% [40.4%, 68.4%] | 29/49 = 59.2% | 60.0 | 0.0155 | 0.0320 | ledger:mercury-3@UNSET/T?/cap0.75; adjudicate:claude-haiku-5-5@UNSET/T?/cap0.75; pcmap:claude-haiku-5-5@UNSET/T?/cap0.75; checker:mercury-3@UNSET/T?/cap0.75; act:claude-haiku-5-5@UNSET/T?/cap0.75; repair:claude-haiku-5-5@UNSET/T?/cap0.75 | NON-CONFORMING: effort unset on ledger, adjudicate, pcmap, checker, act, repair (legacy: pre-D28 dev run: effort unset in the launch record (the CLI then applied its default; not recorded)) |",
+ "unionOfArms": {
+  "passes": 40,
+  "n": 60,
+  "reachable": "40/53"
+ },
+ "armsNeff": {
+  "all60": {
+   "arms": 6,
+   "tasks": 60,
+   "meanPhi": 0.365,
+   "nEff": 2.12
+  },
+  "reachable53": {
+   "arms": 6,
+   "tasks": 53,
+   "meanPhi": 0.32,
+   "nEff": 2.31
+  }
+ },
+ "pairedVsBest": {
+  "best": "m3-a1c",
+  "note": "exact McNemar on discordant tasks; identical on the reachable subset because no arm passes a hard-defect task",
+  "haiku-a0": {
+   "bestOnly": 23,
+   "otherOnly": 3,
+   "mcnemarP": 0.0001
+  },
+  "sonnet-a0": {
+   "bestOnly": 15,
+   "otherOnly": 6,
+   "mcnemarP": 0.0784
+  },
+  "haiku-a1": {
+   "bestOnly": 17,
+   "otherOnly": 6,
+   "mcnemarP": 0.0347
+  },
+  "sonnet-a1": {
+   "bestOnly": 8,
+   "otherOnly": 7,
+   "mcnemarP": 1
+  },
+  "haiku-a1c": {
+   "bestOnly": 13,
+   "otherOnly": 4,
+   "mcnemarP": 0.049
+  }
+ },
+ "inputs": {
+  "research/need-router-20261014/tracker-e8/gold.json": "77034dd7e5ad4815feb9d4864699ae3ec0d8e91f2bc39ca8ad5c1d4355059a43",
+  "research/need-router-20261014/tracker-e8/extraction/haiku.s0.json": "3f3a8772e9e82e5c82013dc2119cfaab4192aa0d3569366140bce62913182f0d",
+  "research/need-router-20261014/tracker-e8/extraction/haiku.s1.json": "47869fcdcc9cd6da3ef6c352551aa80bbeb83ef69f251eb3a1fb4adcc7738832",
+  "research/need-router-20261014/tracker-e8/extraction/haiku.s2.json": "dd228080c6dbba4cafeeb140acf2d682791299511d7bace10724bd9421c5dad6",
+  "research/need-router-20261014/tracker-e8/extraction/sonnet.s0.json": "9de27334c90775bd53ed6de842bf001826a7f95d98df833229687722247bc66a",
+  "research/need-router-20261014/tracker-e8/extraction/sonnet.s1.json": "474bef0afb04bf491b48c37356011a78999fb7f14255d4c71af60de40089dd83",
+  "research/need-router-20261014/tracker-e8/extraction/sonnet.s2.json": "d3ed1edcf7659b3293c60bfc99671ad67d2d3d8508d3297809861de93af86672",
+  "research/need-router-20261014/tracker-e8/glean/s0.g0.json": "31a6be1d7580e562fa8f3718eb0b762dc21dd589b24058f21ee7b227c2da392a",
+  "research/need-router-20261014/tracker-e8/glean/s0.g1.json": "a6183f54d3f1a63143ed7ad99e25cca6eb4cd2bc7e0f8d863d51791a89533097",
+  "research/need-router-20261014/tracker-e8/glean/s0.g2.json": "2f7c48adbdea455eadb287f0c90b46590d2cd1275e0103324403bbb18e11a893",
+  "research/need-router-20261014/tracker-e8/glean/s1.g0.json": "919332c23b7b5b1cb80868f63927fb98058b29ecea6f5fadbec77bbd0fd6c49a",
+  "research/need-router-20261014/tracker-e8/glean/s2.g0.json": "e90b26c7204d8e8139af6c66814490558f61682e43d9720029097a2835569311",
+  "research/need-router-20261014/tracker-e8/glean/s0.baseline.json": "a1853b9e2491b7f04bb1b07865a1246d63192df02cfce95e7fbba6fb4a4d5d3d",
+  "research/need-router-20261014/tracker-e8/glean/s1.baseline.json": "67795f90d4fd17872e6350fa16c6ac534f1919bed81eb1443f2c306d16e778fe",
+  "research/need-router-20261014/tracker-e8/glean/s2.baseline.json": "906990925f6398cd22241b7820dc871f7f540251c35eb4f2db70085d0130b76d",
+  "experiments/heal/runs/live-20261008-r4/p1-retry.json": "512b6c8739e7ae3e6fc761c0594bc7a3c366a5bf69208b1761a305a44e971f90",
+  "experiments/heal/runs/review-20261008/p1-mechanism.json": "ea668b86349b1f9388671f2adad401c008efc972ae3e81bfc73f04fb90c069f2",
+  "experiments/heal/runs/review-20261008/audit.json": "a6811ba8488a03c3a569384ecf7d178876ffde21b352762c321efaead5bb0d83",
+  "experiments/heal/runs/review-20261008/audit-relax.json": "2a0d01e06d1291ade7060981457fac246dca447e427b0f690db77ff9618bc480",
+  "experiments/heal/runs/live-20261008/archive/state/live2-cfx/p-4e3456da-r3.json": "b6c04d39caa6b7194d434b745c76becdc75046a08bd99485d6dbf4fa35a06357",
+  "experiments/heal/runs/live-20261008/archive/state/live3-cfx/p-dfd855f4-r2.json": "bf36076e28b3664e057c3f6c910571d19fff652b943aa5b204670f7542098851",
+  "experiments/heal/runs/live-20261008/archive/state/live4-cfx/p-a3336190-r4.json": "1ba536919baaed732f292a4cea279a14c3af526ae9bbc3f89af8491909c3f3c8",
+  "experiments/heal/runs/live-20261008-r4/rec-escalate.json": "2fc151b0ab019e940ef7a9fffd80da82a40b5e7f9ceb2546205865e896cd28f1",
+  "experiments/heal/runs/live-20261008/rec.json": "b6eda9718926f4a227505b6e3140bbe71c5d40e5b76455931e8bbf0588d98bef",
+  "experiments/heal/runs/live-20261008-r2/rec.json": "a815171efcadab0e759df8761735ad6a551472126200bf617f981f2523cb038f",
+  "experiments/heal/runs/live-20261008-r3/rec.json": "4b00d39322c585e871405996028cc34d0d0f7224747910d2508700806c8f03be",
+  "experiments/heal/runs/live-20261008-r4/rec.json": "b00204e87433e7cff0867c582f469f1edfdcf877a97469e9014ae1d18014a80e",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-2.H-0.k1/record.json": "52bbf72435007175d37dba2031a150cf3205d2ea22500fcf3a34b067c54acb9e",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/b1lh-e8-2.json": "1431c1fef87e10ad950f6b0894831b01b9a32ecf609898e6e074d05bda4d21a4",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-2.H-C.k1/record.json": "207b050c56e475f7c8dcb6952ff6a1d047da97b10b2bb57d33804737526885f0",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-2.H-N.k1/record.json": "7c69c0cc8fa7cb071dea579b3ea67ba3fb1d10b9db93c67677cad93f7c07443a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-3.H-0.k1/record.json": "9c00492f9f2bf41edac82de62eecb9c1ad37ce826d62315b19b0f31ff362650c",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/b1lh-e8-3.json": "49ad4fb2e536fe591faa30c523f3f7fe954ce9e929560c784c7ee3d4652710a5",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-3.H-C.k1/record.json": "a28c0e6b33f45c0abe97ad2ca79dd6b7057f2b3dce90a41d298acbe713014634",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/b1lh-e8-3.H-N.k1/record.json": "2ee1a8cc65db229ce0ec44917c14f3cd06ff769839aea4a67c3bbe02c445cd68",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-1.H-0.k1/record.json": "03125054b29c04746557fb82fba265ef9f5dc9555bbd29a1f0b33f27428913d1",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/ch-e8-1.json": "1d19e72b3024cb1a8b4d699747e412be25297319484693356240a923896eec5a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-1.H-C.k1/record.json": "0c60bacfef5efb7523a16fcebfc664bb57ae874e19b2508359f4125fec02b2de",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-1.H-C.k2/record.json": "cdb5f8190a4d127befb44be8476acfd69c9654e27c829f3e5d5dc2ba215f9381",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-1.H-N.k1/record.json": "34a4b10f2a1c496cc63c9b2f875056fc5c30b673da2bdbfb3a742b6f5617244f",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-2.H-0.k1/record.json": "cc1b22fb1512b6f17def59612f4ffebca8f4cada9a3bfa217fbc87c911a2685a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/ch-e8-2.json": "a9f09b54beea18768bee2c2f1229f4b3d7f53da5102bc4da94c3dacd8835985c",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-2.H-C.k1/record.json": "9dc8110371af5fa2626cd22637817c17cef4759742d1eb6623b8359042d0d241",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-2.H-C.k2/record.json": "658b1e8ef795a2e4ca96bfbdcf269d2eec05a88fb82f1097b5a4aa0877a903e1",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-2.H-N.k1/record.json": "9582e9714aeb530cac504b6600237e709413f23d1f66ea4305e32de5579ba78c",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-3.H-0.k1/record.json": "72f1d39448f4978818a3f713f2408f378f2a14a93494dae74ac3130fbe039958",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/ch-e8-3.json": "892f669f0d657f6431ff838deb2b9372b8a1fa052626b34374f536d7aae91709",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-3.H-C.k1/record.json": "13465833d74c36e42e0775ae83f4e2e127511740c4b5de8419720c5bef922e15",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-3.H-C.k2/record.json": "e87e335e9a720ac5cc74b699e7d25900f361f00e62f536abad84bf051e1f628a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/ch-e8-3.H-N.k1/record.json": "45ce22656cad7a54931a27afe1eb66b4066f20043681909d97b0a59988bc38fe",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-1.H-0.k1/record.json": "80333af038303c8e36a482867f8fd7ff5b313217d769316b8a14a3c9699863e2",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/cht-e8-1.json": "65a3bc9b5068486ccdfb5695d932f43fb03f2021e6cfea673524bbfa821a1dfb",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-1.H-C.k1/record.json": "5cfbfea084d463fa2b5269890fad296c1e484511bb1324a4e16abe986bbbca33",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-1.H-C.k2/record.json": "1ba7aa35b567a3bedbb0079ce69711a81e9c1bc3051c9a9756add9d53ec5f505",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-1.H-N.k1/record.json": "1d2878b6607e90e321d55ad37867718492ef32f2655528f5714572208c70b184",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-2.H-0.k1/record.json": "cf3a9effeb82c4282a624c1e5275ed9a72477b9250823187ab3374fedb2b1994",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/cht-e8-2.json": "f2b1b64b0106631a8c3c04efb9774441bf22ee7ea9dfc26563c697bca750ab39",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-2.H-C.k1/record.json": "02b3f509147ace9191ee63e6d87b95e8cec2d6896ba84f4b39067f9c0e1a335a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-2.H-C.k2/record.json": "0052bb4de1e7694447537276650b2da621a5afec6033f9e3e04bf45388023538",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-2.H-N.k1/record.json": "4d941ad457d159daaefc09aa3851bf8e9414e13daf964a1150c2e1fd32943b1f",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-3.H-0.k1/record.json": "0be597b57a6e8d3839e7e011de2c1782a60cddb74089f7e45f35e645c250d2a1",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/baseline/cht-e8-3.json": "26eb15238bcb562ef39036442525e1999300f5be081f4241c5036448eb0c7e9a",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-3.H-C.k1/record.json": "4ae60c0851adea4e3455833da41cdc9bb3667eeef65c2502ac2bee56e1c57900",
+  "worktree-wf_0f86d12b-ab5-2:research/heal-20261021/fh1/runs/cht-e8-3.H-N.k1/record.json": "689a63ca67ce8ec714f64f28ecd61c993f2b0183caf017d9a1d2ff7ba8016fff",
+  "research/need-router-20261014/runs/m1/results.jsonl": "cb2c1ede427f17760ed1d4b2c61eee3326d536d68f5672083b8bbd56cab59d53",
+  "research/need-router-20261014/runs/m1-d5/results.jsonl": "a4e31672a2d0fd631ab67493d555096f711b11f6895849b2a35d548e0f01e77a",
+  "research/blockers-20261021/move0/dev60-ceiling-strata.json": "ae0cca5883e46a4c6d5d42611e9fc8bc234f801e6f436c58ed6d40a31dbc37a6",
+  "research/automationbench-20261014/runs/a0-dev60-dn/summary.json": "f201d4719bd746f4eabc09165845768116ead414f3ec5e051b321bf7ea6274d1",
+  "research/automationbench-20261014/runs/a0-dev60-dn/results.jsonl": "c7547e9739f7bd99d964b4e01ed9a3d9f646902dd0c9bcfd7ffe25a536e9b409",
+  "research/automationbench-20261014/runs/a0s-dev60-dn/results.jsonl": "1fdecf88327ec508838b9e5a88c0bacbd458c094650c7064d9063a394e101e8f",
+  "research/automationbench-20261014/runs/a0s-dev60-dn/summary.json": "c61efa5684b5f670e38ec44904eb329ec4bb0441d6d8fc45fbe0940537cf87d8",
+  "research/automationbench-20261014/runs/a1-dev60-dn/results.jsonl": "e8c2b7436f5d6d01e11fcc771dc17daea349e25a88952bbdc402408117846b1b",
+  "research/automationbench-20261014/runs/a1-dev60-dn-fill/results.jsonl": "3db48114c50c51d452fe1df3692da11eb5a1d7bd9b8a9ea559bd8c9b23c2e368",
+  "research/automationbench-20261014/runs/a1-dev60-dn/summary.json": "8932e2c18510a595fd2abe8bf2bc602186281e89b50991aa3bdaef0afb027bca",
+  "research/automationbench-20261014/runs/a1-dev60-dn-fill/summary.json": "476249c24719fe92eac07d540043aa6666cb5119afd55fa5f34772822415107a",
+  "research/automationbench-20261014/runs/a1s-dev60-dn/results.jsonl": "2a814b792dbaa307d67c7a7b5a93ac59d5003d137796adc1fa813477a90e4d2e",
+  "research/automationbench-20261014/runs/a1s-dev60-dn-fill/results.jsonl": "c98a3fd48a1c42fd5df000170c162a25e1bcbdec2c6c0f2ff417c82b091ef576",
+  "research/automationbench-20261014/runs/a1s-dev60-dn/launch.json": "f6ec1dcaeca13909553b00b4e2975daa47a63cf263c100a779ae7713cfe13623",
+  "research/automationbench-20261014/runs/a1s-dev60-dn-fill/summary.json": "4abf7eae5b422e6d51bbe66e9bf143c4f49131160aafe3825377e2733f46b3dd",
+  "research/automationbench-20261014/runs/a1c-dev60-dn/results.jsonl": "4522b55e06a5050d80c691acf5feb3dd0a9d02d40c8e888b16739a83b0f84d01",
+  "research/automationbench-20261014/runs/a1c-dev60-dn/summary.json": "890bc8b89611da361455c09a8d25cc1bad77babe1b6015064a398183aa4a3401",
+  "/var/tmp/foundry-work/autobench/m3-a1c-dev60-dn/results.jsonl": "1c03650e115e648eb0c35b54a308b08f9a1fdf6a14e16952a0a34b92fb46e749",
+  "research/automationbench-20261014/runs/m3-a1c-dev60-dn-fill/results.jsonl": "a42789aea292c2f39dbe954853f1bfc0686937435addc1a27bae192400a328d1",
+  "/var/tmp/foundry-work/autobench/m3-a1c-dev60-dn/launch.json": "93221d92791e108737579c6de03ce278a62aca5e1ecf9b6cc0f15820508661c9",
+  "research/automationbench-20261014/runs/m3-a1c-dev60-dn-fill/summary.json": "9f457e755b55599713981316cc9395a8bfb227f4af6003d1fecb6bc3974b6b55"
+ }
+}

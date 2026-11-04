@@ -1,0 +1,758 @@
+{
+ "generatedBy": "experiments/certify/rescore.mjs",
+ "part": "e8",
+ "evidence": "development/diagnostic: one spec (frozen SPEC-E 48535bb), stored 2026-10-14 and 2026-10-21 ledgers, k = 1 reads; SPEC-E is in-sample for the gleaning prompt",
+ "text": {
+  "sha256": "c013c04c80636682f46fd9bdbc2bf436712ed53233b03a06ba74bd88824f8cf1",
+  "units": 163,
+  "byZone": {
+   "platform": 62,
+   "rules": 87,
+   "readings": 11,
+   "reference": 3
+  }
+ },
+ "gold": {
+  "units": 83,
+  "clauses": 76,
+  "u": 15,
+  "unlocated": [],
+  "sharedUnits": 6
+ },
+ "designs": {
+  "all units": {
+   "kind": "null ($0, no model)",
+   "selected": 163,
+   "hits": 83,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 83,
+    "n": 83,
+    "p": 1,
+    "lo": 0.9565,
+    "hi": 1
+   },
+   "precision": 0.5092,
+   "randomSelectionP": 1,
+   "elusionAudit": null
+  },
+  "cue regex (coverage guard CUES)": {
+   "kind": "null ($0, no model)",
+   "selected": 94,
+   "hits": 62,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 62,
+    "n": 83,
+    "p": 0.747,
+    "lo": 0.6396,
+    "hi": 0.8361
+   },
+   "precision": 0.6596,
+   "randomSelectionP": 0.000006,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 69,
+    "missed": 21,
+    "pZeroHits": 0,
+    "expectedRecallLower": 0.681,
+    "pCertifiesTarget": 0,
+    "target": 0.9
+   }
+  },
+  "zone prior (§4 rules, §5 readings)": {
+   "kind": "null ($0, no model)",
+   "selected": 98,
+   "hits": 72,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 72,
+    "n": 83,
+    "p": 0.8675,
+    "lo": 0.7752,
+    "hi": 0.9319
+   },
+   "precision": 0.7347,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 65,
+    "missed": 11,
+    "pZeroHits": 0.0005,
+    "expectedRecallLower": 0.8021,
+    "pCertifiesTarget": 0.0066,
+    "target": 0.9
+   }
+  },
+  "zone prior ∪ cue regex": {
+   "kind": "null ($0, no model)",
+   "selected": 127,
+   "hits": 80,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 80,
+    "n": 83,
+    "p": 0.9639,
+    "lo": 0.898,
+    "hi": 0.9925
+   },
+   "precision": 0.6299,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 36,
+    "missed": 3,
+    "pZeroHits": 0.0028,
+    "expectedRecallLower": 0.9468,
+    "pCertifiesTarget": 1,
+    "target": 0.9
+   }
+  },
+  "haiku.s0": {
+   "kind": "model",
+   "selected": 78,
+   "hits": 68,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 68,
+    "n": 83,
+    "p": 0.8193,
+    "lo": 0.7195,
+    "hi": 0.8952
+   },
+   "precision": 0.8718,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 85,
+    "missed": 15,
+    "pZeroHits": 0.0007,
+    "expectedRecallLower": 0.7333,
+    "pCertifiesTarget": 0.0007,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 18,
+    "regexOnly": 12,
+    "mcnemarP": 0.361595
+   },
+   "spanMetrics": {
+    "idsCovered": 23,
+    "ids": 30,
+    "uBySpan": 12,
+    "uByUnit": 11,
+    "uSiblingOnly": [
+     "U11"
+    ],
+    "clauseCoverage": 0.7368,
+    "costUsd": 0.011586575
+   }
+  },
+  "haiku.s1": {
+   "kind": "model",
+   "selected": 80,
+   "hits": 70,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 70,
+    "n": 83,
+    "p": 0.8434,
+    "lo": 0.7471,
+    "hi": 0.9139
+   },
+   "precision": 0.875,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 83,
+    "missed": 13,
+    "pZeroHits": 0.0016,
+    "expectedRecallLower": 0.7582,
+    "pCertifiesTarget": 0.0016,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 18,
+    "regexOnly": 10,
+    "mcnemarP": 0.184933
+   },
+   "spanMetrics": {
+    "idsCovered": 28,
+    "ids": 30,
+    "uBySpan": 12,
+    "uByUnit": 12,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.8026,
+    "costUsd": 0.011276645
+   }
+  },
+  "haiku.s2": {
+   "kind": "model",
+   "selected": 1,
+   "hits": 0,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 0,
+    "n": 83,
+    "p": 0,
+    "lo": 0,
+    "hi": 0.0435
+   },
+   "precision": 0,
+   "randomSelectionP": 1,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 162,
+    "missed": 83,
+    "pZeroHits": 0,
+    "expectedRecallLower": 0,
+    "pCertifiesTarget": 0,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 0,
+    "regexOnly": 62,
+    "mcnemarP": 0
+   },
+   "spanMetrics": {
+    "idsCovered": 0,
+    "ids": 30,
+    "uBySpan": 1,
+    "uByUnit": 0,
+    "uSiblingOnly": [
+     "U02"
+    ],
+    "clauseCoverage": 0,
+    "costUsd": 0.011531244999999999
+   }
+  },
+  "sonnet.s0": {
+   "kind": "model",
+   "selected": 40,
+   "hits": 36,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 36,
+    "n": 83,
+    "p": 0.4337,
+    "lo": 0.3253,
+    "hi": 0.5471
+   },
+   "precision": 0.9,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 123,
+    "missed": 47,
+    "pZeroHits": 0,
+    "expectedRecallLower": 0.3612,
+    "pCertifiesTarget": 0,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 5,
+    "regexOnly": 31,
+    "mcnemarP": 0.000013
+   },
+   "spanMetrics": {
+    "idsCovered": 16,
+    "ids": 30,
+    "uBySpan": 3,
+    "uByUnit": 3,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.5132,
+    "costUsd": 0.073264
+   }
+  },
+  "sonnet.s1": {
+   "kind": "model",
+   "selected": 41,
+   "hits": 40,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 40,
+    "n": 83,
+    "p": 0.4819,
+    "lo": 0.3708,
+    "hi": 0.5944
+   },
+   "precision": 0.9756,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 122,
+    "missed": 43,
+    "pZeroHits": 0,
+    "expectedRecallLower": 0.4028,
+    "pCertifiesTarget": 0,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 7,
+    "regexOnly": 29,
+    "mcnemarP": 0.000313
+   },
+   "spanMetrics": {
+    "idsCovered": 17,
+    "ids": 30,
+    "uBySpan": 4,
+    "uByUnit": 4,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.5658,
+    "costUsd": 0.0559347
+   }
+  },
+  "sonnet.s2": {
+   "kind": "model",
+   "selected": 40,
+   "hits": 35,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 35,
+    "n": 83,
+    "p": 0.4217,
+    "lo": 0.314,
+    "hi": 0.5351
+   },
+   "precision": 0.875,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 123,
+    "missed": 48,
+    "pZeroHits": 0,
+    "expectedRecallLower": 0.3512,
+    "pCertifiesTarget": 0,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 4,
+    "regexOnly": 31,
+    "mcnemarP": 0.000003
+   },
+   "spanMetrics": {
+    "idsCovered": 17,
+    "ids": 30,
+    "uBySpan": 2,
+    "uByUnit": 2,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.5263,
+    "costUsd": 0.045457199999999996
+   }
+  },
+  "glean.s0.g0": {
+   "kind": "model+glean",
+   "selected": 100,
+   "hits": 79,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 79,
+    "n": 83,
+    "p": 0.9518,
+    "lo": 0.8812,
+    "hi": 0.9867
+   },
+   "precision": 0.79,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 63,
+    "missed": 4,
+    "pZeroHits": 0.0687,
+    "expectedRecallLower": 0.894,
+    "pCertifiesTarget": 0.3435,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 18,
+    "regexOnly": 1,
+    "mcnemarP": 0.000076
+   },
+   "spanMetrics": {
+    "idsCovered": 28,
+    "ids": 30,
+    "uBySpan": 13,
+    "uByUnit": 13,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.8553,
+    "costUsd": 0.011586575
+   }
+  },
+  "glean.s0.g1": {
+   "kind": "model+glean",
+   "selected": 104,
+   "hits": 80,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 80,
+    "n": 83,
+    "p": 0.9639,
+    "lo": 0.898,
+    "hi": 0.9925
+   },
+   "precision": 0.7692,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 59,
+    "missed": 3,
+    "pZeroHits": 0.1124,
+    "expectedRecallLower": 0.9142,
+    "pCertifiesTarget": 0.4871,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 18,
+    "regexOnly": 0,
+    "mcnemarP": 0.000008
+   },
+   "spanMetrics": {
+    "idsCovered": 28,
+    "ids": 30,
+    "uBySpan": 14,
+    "uByUnit": 14,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.8553,
+    "costUsd": 0.011586575
+   }
+  },
+  "glean.s0.g2": {
+   "kind": "model+glean",
+   "selected": 101,
+   "hits": 79,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 79,
+    "n": 83,
+    "p": 0.9518,
+    "lo": 0.8812,
+    "hi": 0.9867
+   },
+   "precision": 0.7822,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 62,
+    "missed": 4,
+    "pZeroHits": 0.0645,
+    "expectedRecallLower": 0.8936,
+    "pCertifiesTarget": 0.3312,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 18,
+    "regexOnly": 1,
+    "mcnemarP": 0.000076
+   },
+   "spanMetrics": {
+    "idsCovered": 28,
+    "ids": 30,
+    "uBySpan": 13,
+    "uByUnit": 13,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.8553,
+    "costUsd": 0.011586575
+   }
+  },
+  "glean.s1.g0": {
+   "kind": "model+glean",
+   "selected": 100,
+   "hits": 80,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 80,
+    "n": 83,
+    "p": 0.9639,
+    "lo": 0.898,
+    "hi": 0.9925
+   },
+   "precision": 0.8,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 63,
+    "missed": 3,
+    "pZeroHits": 0.1374,
+    "expectedRecallLower": 0.9079,
+    "pCertifiesTarget": 0.5363,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 18,
+    "regexOnly": 0,
+    "mcnemarP": 0.000008
+   },
+   "spanMetrics": {
+    "idsCovered": 29,
+    "ids": 30,
+    "uBySpan": 14,
+    "uByUnit": 14,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.9079,
+    "costUsd": 0.011276645
+   }
+  },
+  "glean.s2.g0": {
+   "kind": "model+glean",
+   "selected": 73,
+   "hits": 59,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 59,
+    "n": 83,
+    "p": 0.7108,
+    "lo": 0.6009,
+    "hi": 0.8052
+   },
+   "precision": 0.8082,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 90,
+    "missed": 24,
+    "pZeroHits": 0,
+    "expectedRecallLower": 0.6256,
+    "pCertifiesTarget": 0,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 0,
+    "regexOnly": 3,
+    "mcnemarP": 0.25
+   },
+   "spanMetrics": {
+    "idsCovered": 25,
+    "ids": 30,
+    "uBySpan": 9,
+    "uByUnit": 9,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.75,
+    "costUsd": 0.011531244999999999
+   }
+  },
+  "coverage-list.s0": {
+   "kind": "null (coverage-list baseline, $0)",
+   "selected": 115,
+   "hits": 80,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 80,
+    "n": 83,
+    "p": 0.9639,
+    "lo": 0.898,
+    "hi": 0.9925
+   },
+   "precision": 0.6957,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 48,
+    "missed": 3,
+    "pZeroHits": 0.0472,
+    "expectedRecallLower": 0.9231,
+    "pCertifiesTarget": 0.7653,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 18,
+    "regexOnly": 0,
+    "mcnemarP": 0.000008
+   },
+   "spanMetrics": {
+    "idsCovered": 28,
+    "ids": 30,
+    "uBySpan": 14,
+    "uByUnit": 14,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.8553,
+    "costUsd": 0.011586575
+   }
+  },
+  "coverage-list.s1": {
+   "kind": "null (coverage-list baseline, $0)",
+   "selected": 114,
+   "hits": 80,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 80,
+    "n": 83,
+    "p": 0.9639,
+    "lo": 0.898,
+    "hi": 0.9925
+   },
+   "precision": 0.7018,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 49,
+    "missed": 3,
+    "pZeroHits": 0.0526,
+    "expectedRecallLower": 0.9233,
+    "pCertifiesTarget": 0.7796,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 18,
+    "regexOnly": 0,
+    "mcnemarP": 0.000008
+   },
+   "spanMetrics": {
+    "idsCovered": 29,
+    "ids": 30,
+    "uBySpan": 14,
+    "uByUnit": 14,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.9079,
+    "costUsd": 0.011276645
+   }
+  },
+  "coverage-list.s2": {
+   "kind": "null (coverage-list baseline, $0)",
+   "selected": 94,
+   "hits": 62,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 62,
+    "n": 83,
+    "p": 0.747,
+    "lo": 0.6396,
+    "hi": 0.8361
+   },
+   "precision": 0.6596,
+   "randomSelectionP": 0.000006,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 69,
+    "missed": 21,
+    "pZeroHits": 0,
+    "expectedRecallLower": 0.681,
+    "pCertifiesTarget": 0,
+    "target": 0.9
+   },
+   "vsCueRegex": {
+    "ledgerOnly": 0,
+    "regexOnly": 0,
+    "mcnemarP": 1
+   },
+   "spanMetrics": {
+    "idsCovered": 26,
+    "ids": 30,
+    "uBySpan": 10,
+    "uByUnit": 10,
+    "uSiblingOnly": [],
+    "clauseCoverage": 0.7763,
+    "costUsd": 0.011531244999999999
+   }
+  },
+  "union haiku.s0-s2 (K = 3 same view)": {
+   "kind": "model union",
+   "selected": 90,
+   "hits": 77,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 77,
+    "n": 83,
+    "p": 0.9277,
+    "lo": 0.8493,
+    "hi": 0.973
+   },
+   "precision": 0.8556,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 73,
+    "missed": 6,
+    "pZeroHits": 0.0358,
+    "expectedRecallLower": 0.8538,
+    "pCertifiesTarget": 0.0358,
+    "target": 0.9
+   }
+  },
+  "union of all six samples": {
+   "kind": "model union",
+   "selected": 93,
+   "hits": 77,
+   "gold": 83,
+   "units": 163,
+   "recall": {
+    "x": 77,
+    "n": 83,
+    "p": 0.9277,
+    "lo": 0.8493,
+    "hi": 0.973
+   },
+   "precision": 0.828,
+   "randomSelectionP": 0,
+   "elusionAudit": {
+    "sampled": 30,
+    "excluded": 70,
+    "missed": 6,
+    "pZeroHits": 0.0293,
+    "expectedRecallLower": 0.86,
+    "pCertifiesTarget": 0.1798,
+    "target": 0.9
+   }
+  }
+ },
+ "missedByEverything": [
+  [
+   "S4a"
+  ]
+ ],
+ "zonePriorCueMisses": [
+  {
+   "ids": [
+    "U07"
+   ],
+   "zone": "platform"
+  },
+  {
+   "ids": [
+    "U08"
+   ],
+   "zone": "platform"
+  },
+  {
+   "ids": [
+    "U09"
+   ],
+   "zone": "platform"
+  }
+ ],
+ "inputs": {
+  "research/need-router-20261014/tracker-e8/gold.json": "77034dd7e5ad4815feb9d4864699ae3ec0d8e91f2bc39ca8ad5c1d4355059a43",
+  "research/need-router-20261014/tracker-e8/extraction/haiku.s0.json": "3f3a8772e9e82e5c82013dc2119cfaab4192aa0d3569366140bce62913182f0d",
+  "research/need-router-20261014/tracker-e8/extraction/haiku.s1.json": "47869fcdcc9cd6da3ef6c352551aa80bbeb83ef69f251eb3a1fb4adcc7738832",
+  "research/need-router-20261014/tracker-e8/extraction/haiku.s2.json": "dd228080c6dbba4cafeeb140acf2d682791299511d7bace10724bd9421c5dad6",
+  "research/need-router-20261014/tracker-e8/extraction/sonnet.s0.json": "9de27334c90775bd53ed6de842bf001826a7f95d98df833229687722247bc66a",
+  "research/need-router-20261014/tracker-e8/extraction/sonnet.s1.json": "474bef0afb04bf491b48c37356011a78999fb7f14255d4c71af60de40089dd83",
+  "research/need-router-20261014/tracker-e8/extraction/sonnet.s2.json": "d3ed1edcf7659b3293c60bfc99671ad67d2d3d8508d3297809861de93af86672",
+  "research/need-router-20261014/tracker-e8/glean/s0.g0.json": "31a6be1d7580e562fa8f3718eb0b762dc21dd589b24058f21ee7b227c2da392a",
+  "research/need-router-20261014/tracker-e8/glean/s0.g1.json": "a6183f54d3f1a63143ed7ad99e25cca6eb4cd2bc7e0f8d863d51791a89533097",
+  "research/need-router-20261014/tracker-e8/glean/s0.g2.json": "2f7c48adbdea455eadb287f0c90b46590d2cd1275e0103324403bbb18e11a893",
+  "research/need-router-20261014/tracker-e8/glean/s1.g0.json": "919332c23b7b5b1cb80868f63927fb98058b29ecea6f5fadbec77bbd0fd6c49a",
+  "research/need-router-20261014/tracker-e8/glean/s2.g0.json": "e90b26c7204d8e8139af6c66814490558f61682e43d9720029097a2835569311",
+  "research/need-router-20261014/tracker-e8/glean/s0.baseline.json": "a1853b9e2491b7f04bb1b07865a1246d63192df02cfce95e7fbba6fb4a4d5d3d",
+  "research/need-router-20261014/tracker-e8/glean/s1.baseline.json": "67795f90d4fd17872e6350fa16c6ac534f1919bed81eb1443f2c306d16e778fe",
+  "research/need-router-20261014/tracker-e8/glean/s2.baseline.json": "906990925f6398cd22241b7820dc871f7f540251c35eb4f2db70085d0130b76d"
+ }
+}
