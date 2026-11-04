@@ -9,12 +9,48 @@ aggregates in [runs/c2-2/summary-c22.json](runs/c2-2/summary-c22.json). No amend
 Run: `node experiments/reuse/c22.mjs run` then `analyze` (960 history runs and 320 stream runs, all `done`, 279 s at
 concurrency 3; no model call). Unit tests: `experiments/reuse/test/c22.test.mjs` (4 tests).
 
+## 0. Review corrections (dated 2026-11-04)
+
+*An adversarial review of C2-1 and C2-2 (2026-11-04) found that this file's "M3 serve" claim rests on the wrong cluster
+unit and that its main prediction could hardly fail. The preregistered results below are kept as they were; where a
+sentence is superseded it is marked "(corrected, §0)". Nothing here changes a count.*
+
+- **M3 does not let the gate serve (finding 1, blocker for the claim).** PREREG §3 clustered the admitted decisions by
+  shipment. The gate admits or refuses whole suppliers, and its errors are correlated within a supplier (T1: 17 of 17
+  wrong), so the supplier is the unit of independent evidence. Recomputed ($0, [runs/c2-2/m3-supplier-c22.json](runs/c2-2/m3-supplier-c22.json),
+  `c22-m3-supplier.mjs`; the shipment-clustered numbers reproduce `summary-c22.json` exactly): the primary's 98 admitted
+  stream decisions on C2-1-kind suppliers fall in **5 suppliers**; clustered by supplier, M3 returns **no-decision**:
+  one-sided exact upper bound 0.085 at the rule's ρ floor 0.1 (n_eff 33.9), 0.456 if each admitted supplier counts once
+  (ρ = 1). The raw count is 98 ≥ the rule's minimum of 60; it fails because the upper bound is above 5%. E1 passed as
+  preregistered, but its M3 half no longer supports "serve". Future preregistrations cluster by the admission unit.
+- **E1 could hardly fail (finding 6).** Each supplier applies one deterministic transform to every item
+  (`program-b.mjs` `sopScoreOf`, `rawOf`) and history and stream come from the same generator (`gen-b.mjs`), so "the entry
+  reproduces 60 history labels" implies "it is right on the stream" almost surely. E1 tests that the generator is
+  stationary, not that the gate is sound. The two cases that do test the gate were designed knowing it: T1 (drift after
+  admission: 17/17 accepted and wrong) and T3 (mixed conventions within a supplier: the whole supplier refused, 20 false
+  deopts). A real test needs a second program the experimenter did not generate (another SOP, or external data).
+- **The projection leaves out labelling (finding 12).** The primary assumes 60 labelled history products per supplier;
+  SCRATCH's builder used 15. In every admission here G0-M3 = G0-60 = G0-15, so the 45 extra labels bought the (withdrawn)
+  certificate and 4 fewer per-run false deopts (S1 3, S6 1), nothing else. §2's USD and time per item count builds only.
+- **Two predictions hold by construction (finding 13).** E6 (S6's 0 false deopts): every S6 product cycles through all
+  six branch kinds (`gen-b.mjs:124`, `EDGE_KINDS[i % 6]`), so even the first 15 history items cover them. And B's oracle
+  shares the reused workflow's class bands (disclosed in C2-1); the same workflow always fails 6 of SOP-Bench's 254 sealed
+  dangerous_goods rows, all on hazard_class, cause unknown (`research/sopbench-20261021/RESULT-p2.md` §9). If those are
+  band-edge errors, B's oracle inherits them and no C2 number can show it.
+- **The freeze guard counted stream records only (finding 8).** `c22.mjs` recorded `streamRecordsBeforeFreeze`, but
+  admission comes from the history runs. No breach: `history.jsonl` was created at 02:23:12Z, 10 s after the freeze
+  (02:23:01.97Z), and `stream.jsonl` at 02:26:37Z. `c22.mjs` is frozen and unchanged; later drivers use
+  `freeze-guard.mjs`, which refuses a freeze while any result-feeding record file is non-empty (C2-3 does).
+- **What the capability number is now.** On fresh suppliers of every C2-1 kind: 0 wrong reuses in 98 accepted items,
+  in 5 admitted suppliers, with no M3 certificate. No baseline ran in C2-2 (REUSE and SCRATCH accuracy are bounded,
+  costs projected). Against rebuilding, C2-1's measured arms say the history gate ties it on accuracy (C2-1 §0).
+
 ## 1. The answer
 
 Program A's proven workflow, reused by program B **only after it reproduces B's own labelled history for the supplier**
 (M3 bound on 60 history labels) and with **every run checked against everything proven** (A's proof widened with B's
 conforming history), made **0 wrong reuses in 98 accepted items on fresh suppliers of every C2-1 kind**, and the M3 rule
-on those admitted decisions returns `serve` (one-sided exact 95% upper bound 3.4%, n_eff 86.8). C2-1's preregistered
+on those admitted decisions returns `serve` (one-sided exact 95% upper bound 3.4%, n_eff 86.8) when clustered by shipment, as preregistered (corrected, §0: clustered by supplier, the admission unit, it is no-decision). C2-1's preregistered
 producer-side gate (b3), replicated on the same items, made 38 wrong reuses in 123 accepted (30.9%).
 
 It fails exactly where it was predicted to fail: on **T1**, a supplier whose scoring service changed meaning after the
@@ -41,8 +77,8 @@ is at least −(wrong reuse)/items whatever the builds do.
 | **G0-M3+b3c (primary)** | **115** | **17** | **14.8%** | 47 | 90.3% | 10 | kill (0.254) | no-decision (0.485) | **98 / 0 / 9** | 17 / 17 / 38 | $0.00158 | 8.2 s | −5.3 pts |
 | oracle (ceiling) | 145 | 0 | 0.0% | 0 | 100.0% | 10 | serve (0.023) | no-decision (0.274) | 107 / 0 / 0 | 38 / 0 / 0 | $0.00158 | 8.2 s | 0 |
 
-Without T1 (15 suppliers), the primary gate accepts 98, 0 wrong, M3 aE `serve` (upper 0.034), M3b `no-decision` (upper
-0.282, one entry).
+Without T1 (15 suppliers), the primary gate accepts 98, 0 wrong, M3 aE `serve` (upper 0.034, by shipment; corrected, §0:
+no-decision by supplier, upper 0.085), M3b `no-decision` (upper 0.282, one entry).
 
 ## 3. Per supplier (accepted / wrong / false deopt)
 
@@ -69,7 +105,7 @@ Without T1 (15 suppliers), the primary gate accepts 98, 0 wrong, M3 aE `serve` (
 
 | Rule | Prediction | Result |
 |---|---|---|
-| E1: 0 wrong reuse on C2-1 kinds, M3 aE `serve` | yes; admit S0, S1, S5, S6, H5; refuse S2, S3, S4, H1–H4 | **yes**: 98 accepted, 0 wrong, `serve` (upper 0.034); admitted and refused exactly as predicted |
+| E1: 0 wrong reuse on C2-1 kinds, M3 aE `serve` | yes; admit S0, S1, S5, S6, H5; refuse S2, S3, S4, H1–H4 | **yes** as preregistered: 98 accepted, 0 wrong, `serve` (upper 0.034, by shipment); admitted and refused exactly as predicted. *(Corrected, §0: by supplier no-decision, upper 0.085; and E1 could hardly fail.)* |
 | E2: T1 wrong-accepted ≥ 80% | yes (stated blind spot) | **yes**: 17/17 |
 | E3: T2 refused ≥ 95% by the primary, none by G0-M3 alone | yes | **yes**: 22/22 refused (every run answered Unable to Decide, an answer outside everything proven, and its scores are strings); G0-M3 alone accepted 22/22, all wrong |
 | E4: T3 | G0-M3 refuses; G0-15 may admit | G0-M3 refused (56/60); G0-15 refused too (the one sub-brand product among the first 15 changed class). 2 harmful items caught, 20 false deopts |
@@ -104,7 +140,8 @@ Without T1 (15 suppliers), the primary gate accepts 98, 0 wrong, M3 aE `serve` (
 
 ## 6. Honest reading
 
-- **Capability number (dev, preregistered, $0):** wrong reuse 0/98 on fresh suppliers of every C2-1 kind, M3 `serve`;
+- **Capability number (dev, preregistered, $0):** wrong reuse 0/98 on fresh suppliers of every C2-1 kind, M3 `serve` by
+  shipment (corrected, §0: no-decision by supplier; 5 admitted suppliers);
   against the producer-profile gate's 38/123 on the same items, and against no gate's 134/241. REUSE needs 10 builds
   where SCRATCH needs 16 (projected $0.00158 against $0.00253 per item, 8.2 s against 12.7 s), and its accuracy is at least
   SCRATCH's on everything except T1.
