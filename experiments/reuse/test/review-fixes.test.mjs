@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import fs, { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { HERE, LIVE_ROOT, RESEARCH, readJson, readJsonl, sha256 } from '../lib.mjs';
@@ -14,6 +15,7 @@ import { contractHashOf, createRegistry } from '../registry.mjs';
 import { contractOfB, lookupForReuse } from '../lookup-b.mjs';
 import { admitAll, composeConformanceArm, m3Views } from '../posthoc.mjs';
 import { assertNoRecordsBeforeFreeze, auditFrozenCode } from '../freeze-guard.mjs';
+import { ALLOWED_MANIFEST_CHANGES } from '../../autobench/test/manifest-allowances.mjs';
 import { historyBlock, withHistory, runAgentHItem, HISTORY_HEADER } from '../agent-h.mjs';
 import { systemPrompt, userPrompt } from '../../sopbench/run.mjs';
 import { DG_TOOLS, callTool, makeWorld } from '../world-b.mjs';
@@ -139,8 +141,19 @@ test('the C2-1 and C2-2 freezes: every frozen file is unchanged except stats.mjs
     const a = auditFrozenCode(readJson(path.join(RESEARCH, f)).code, HERE);
     assert.deepEqual(a.changed.map(c => [c.file, c.appendOnly]), [['../lib/stats.mjs', true]], f);
   }
-  const a3 = auditFrozenCode(readJson(path.join(RESEARCH, 'FREEZE-C2-3.json')).code, HERE);
-  assert.deepEqual(a3.changed, [], 'C2-3 frozen code changed');
+  // C2-3 was measured on its frozen bytes (11-04, in the gap-closure worktree). Main's engine work changed one of its files
+  // afterwards by a recorded change: src/executors/claude-code.mjs, e6a23ca's bytes -> the recorded "after"
+  // (experiments/autobench/test/manifest-allowances.mjs; research/automationbench-20261014/MANIFEST-ALLOWANCES.md). Any other
+  // change, or any further change to that file, fails here. A C2-3 re-run from this tree would use the newer executor.
+  const frozen3 = readJson(path.join(RESEARCH, 'FREEZE-C2-3.json')).code;
+  const a3 = auditFrozenCode(frozen3, HERE);
+  const repo = path.resolve(HERE, '../..');
+  const unrecorded = a3.changed.filter(c => {
+    const a = ALLOWED_MANIFEST_CHANGES[path.relative(repo, path.resolve(HERE, c.file))];
+    return !(a && a.before === frozen3[c.file] && a.after === createHash('sha256').update(readFileSync(path.resolve(HERE, c.file))).digest('hex'));
+  });
+  assert.deepEqual(unrecorded, [], 'C2-3 frozen code changed without a recorded engine change');
+  assert.deepEqual(a3.changed.map(c => c.file), ['../../src/executors/claude-code.mjs'], 'the recorded engine change is the only one');
 });
 
 /** Run fn while fs.readFileSync returns edits[suffix](text) for files whose path ends with a key of `edits` (ESM bindings

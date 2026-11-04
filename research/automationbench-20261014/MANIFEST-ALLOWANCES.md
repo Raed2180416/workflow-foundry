@@ -45,3 +45,10 @@ PREREG-VL1 and A1C-MERCURY-PARTIAL.
 | `src/cli-pin.mjs` | new file | `18967fd06089` | `83d9e713` | New file. Compromise C2: the Claude CLI is pinned by its bytes and its version is recorded per call (gap rank 16, chaos D4). |
 | `src/executors/claude-code.mjs` | `f363c80418bf` | `d50b93d9c203` | `8b00b4a4`, `03c19e2b`, `83d9e713` | Orchestration patches 01-09; a session the caller aborts ends CANCELLED, not EXECUTOR_PROTOCOL (gap rank 21); the CLI pin (C2). |
 | `src/models/policy.mjs` | `95390dec17ad` | `d8ecfb841107` | `83d9e713`, `a81447eb` | The CLI pin (C2), then Mercury-only session subsets: an empty models[] beside executorModels (PORT-PROBE finding 1). |
+
+## Other freezes that use this table
+
+The C2-3 reuse freeze (`research/reuse-20261021/FREEZE-C2-3.json`) froze `src/executors/claude-code.mjs` at `e6a23ca`'s bytes.
+C2-3 was measured on those bytes in its own worktree. On main, `experiments/reuse/test/review-fixes.test.mjs` accepts that
+file only with exactly the recorded "after" bytes above, and accepts no other change. A C2-3 re-run from main would use
+the newer executor.
