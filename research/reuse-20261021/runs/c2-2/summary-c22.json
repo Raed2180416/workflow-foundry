@@ -1,0 +1,4614 @@
+{
+ "kind": "c22-summary",
+ "id": "C2-2",
+ "evidence": "development evidence (preregistered; self-authored second program and suppliers; not sealed); $0",
+ "freeze": {
+  "ok": true,
+  "changed": []
+ },
+ "manifestSha256": "8d2a2bf1a96a1d092aaeff1cbc158742583b07037a027c721cd907ff2077a908",
+ "items": 320,
+ "shipments": 160,
+ "sources": [
+  "S0",
+  "S1",
+  "S2",
+  "S3",
+  "S4",
+  "S5",
+  "S6",
+  "H1",
+  "H2",
+  "H3",
+  "H4",
+  "H5",
+  "T1",
+  "T2",
+  "T3",
+  "T4"
+ ],
+ "primary": "G0-M3+b3c",
+ "historyRuns": 960,
+ "statuses": {
+  "history": {
+   "done": 960
+  },
+  "stream": {
+   "done": 320
+  }
+ },
+ "admission": {
+  "S0": {
+   "all15": {
+    "rule": "all",
+    "admit": true,
+    "pass": 15,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": true,
+    "pass": 60,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": true,
+    "pass": 60,
+    "of": 60,
+    "m3": {
+     "decision": "serve",
+     "upper": 0.048702913310097296,
+     "nEff": 60
+    }
+   }
+  },
+  "S1": {
+   "all15": {
+    "rule": "all",
+    "admit": true,
+    "pass": 15,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": true,
+    "pass": 60,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": true,
+    "pass": 60,
+    "of": 60,
+    "m3": {
+     "decision": "serve",
+     "upper": 0.048702913310097296,
+     "nEff": 60
+    }
+   }
+  },
+  "S2": {
+   "all15": {
+    "rule": "all",
+    "admit": false,
+    "pass": 0,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": false,
+    "pass": 0,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": false,
+    "pass": 0,
+    "of": 60,
+    "m3": {
+     "decision": "kill",
+     "upper": 1,
+     "nEff": 60
+    }
+   }
+  },
+  "S3": {
+   "all15": {
+    "rule": "all",
+    "admit": false,
+    "pass": 0,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": false,
+    "pass": 8,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": false,
+    "pass": 8,
+    "of": 60,
+    "m3": {
+     "decision": "kill",
+     "upper": 0.9318897217197959,
+     "nEff": 60
+    }
+   }
+  },
+  "S4": {
+   "all15": {
+    "rule": "all",
+    "admit": false,
+    "pass": 1,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": false,
+    "pass": 3,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": false,
+    "pass": 3,
+    "of": 60,
+    "m3": {
+     "decision": "kill",
+     "upper": 0.9862348424317171,
+     "nEff": 60
+    }
+   }
+  },
+  "S5": {
+   "all15": {
+    "rule": "all",
+    "admit": true,
+    "pass": 15,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": true,
+    "pass": 60,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": true,
+    "pass": 60,
+    "of": 60,
+    "m3": {
+     "decision": "serve",
+     "upper": 0.048702913310097296,
+     "nEff": 60
+    }
+   }
+  },
+  "S6": {
+   "all15": {
+    "rule": "all",
+    "admit": true,
+    "pass": 15,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": true,
+    "pass": 60,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": true,
+    "pass": 60,
+    "of": 60,
+    "m3": {
+     "decision": "serve",
+     "upper": 0.048702913310097296,
+     "nEff": 60
+    }
+   }
+  },
+  "H1": {
+   "all15": {
+    "rule": "all",
+    "admit": false,
+    "pass": 0,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": false,
+    "pass": 0,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": false,
+    "pass": 0,
+    "of": 60,
+    "m3": {
+     "decision": "kill",
+     "upper": 1,
+     "nEff": 60
+    }
+   }
+  },
+  "H2": {
+   "all15": {
+    "rule": "all",
+    "admit": false,
+    "pass": 0,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": false,
+    "pass": 0,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": false,
+    "pass": 0,
+    "of": 60,
+    "m3": {
+     "decision": "kill",
+     "upper": 1,
+     "nEff": 60
+    }
+   }
+  },
+  "H3": {
+   "all15": {
+    "rule": "all",
+    "admit": false,
+    "pass": 0,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": false,
+    "pass": 0,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": false,
+    "pass": 0,
+    "of": 60,
+    "m3": {
+     "decision": "kill",
+     "upper": 1,
+     "nEff": 60
+    }
+   }
+  },
+  "H4": {
+   "all15": {
+    "rule": "all",
+    "admit": false,
+    "pass": 6,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": false,
+    "pass": 22,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": false,
+    "pass": 22,
+    "of": 60,
+    "m3": {
+     "decision": "kill",
+     "upper": 0.7370775238331488,
+     "nEff": 60
+    }
+   }
+  },
+  "H5": {
+   "all15": {
+    "rule": "all",
+    "admit": true,
+    "pass": 15,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": true,
+    "pass": 60,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": true,
+    "pass": 60,
+    "of": 60,
+    "m3": {
+     "decision": "serve",
+     "upper": 0.048702913310097296,
+     "nEff": 60
+    }
+   }
+  },
+  "T1": {
+   "all15": {
+    "rule": "all",
+    "admit": true,
+    "pass": 15,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": true,
+    "pass": 60,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": true,
+    "pass": 60,
+    "of": 60,
+    "m3": {
+     "decision": "serve",
+     "upper": 0.048702913310097296,
+     "nEff": 60
+    }
+   }
+  },
+  "T2": {
+   "all15": {
+    "rule": "all",
+    "admit": true,
+    "pass": 15,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": true,
+    "pass": 60,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": true,
+    "pass": 60,
+    "of": 60,
+    "m3": {
+     "decision": "serve",
+     "upper": 0.048702913310097296,
+     "nEff": 60
+    }
+   }
+  },
+  "T3": {
+   "all15": {
+    "rule": "all",
+    "admit": false,
+    "pass": 14,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": false,
+    "pass": 56,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": false,
+    "pass": 56,
+    "of": 60,
+    "m3": {
+     "decision": "no-decision",
+     "upper": 0.1460972054507112,
+     "nEff": 60
+    }
+   }
+  },
+  "T4": {
+   "all15": {
+    "rule": "all",
+    "admit": false,
+    "pass": 14,
+    "of": 15
+   },
+   "all60": {
+    "rule": "all",
+    "admit": false,
+    "pass": 59,
+    "of": 60
+   },
+   "m3": {
+    "rule": "m3",
+    "admit": false,
+    "pass": 59,
+    "of": 60,
+    "m3": {
+     "decision": "no-decision",
+     "upper": 0.07663999493450374,
+     "nEff": 60
+    }
+   }
+  }
+ },
+ "conformanceBySource": {
+  "S0": {
+   "pass15": 15,
+   "pass60": 60,
+   "of": 60
+  },
+  "S1": {
+   "pass15": 15,
+   "pass60": 60,
+   "of": 60
+  },
+  "S2": {
+   "pass15": 0,
+   "pass60": 0,
+   "of": 60
+  },
+  "S3": {
+   "pass15": 0,
+   "pass60": 8,
+   "of": 60
+  },
+  "S4": {
+   "pass15": 1,
+   "pass60": 3,
+   "of": 60
+  },
+  "S5": {
+   "pass15": 15,
+   "pass60": 60,
+   "of": 60
+  },
+  "S6": {
+   "pass15": 15,
+   "pass60": 60,
+   "of": 60
+  },
+  "H1": {
+   "pass15": 0,
+   "pass60": 0,
+   "of": 60
+  },
+  "H2": {
+   "pass15": 0,
+   "pass60": 0,
+   "of": 60
+  },
+  "H3": {
+   "pass15": 0,
+   "pass60": 0,
+   "of": 60
+  },
+  "H4": {
+   "pass15": 6,
+   "pass60": 22,
+   "of": 60
+  },
+  "H5": {
+   "pass15": 15,
+   "pass60": 60,
+   "of": 60
+  },
+  "T1": {
+   "pass15": 15,
+   "pass60": 60,
+   "of": 60
+  },
+  "T2": {
+   "pass15": 15,
+   "pass60": 60,
+   "of": 60
+  },
+  "T3": {
+   "pass15": 14,
+   "pass60": 56,
+   "of": 60
+  },
+  "T4": {
+   "pass15": 14,
+   "pass60": 59,
+   "of": 60
+  }
+ },
+ "gates": {
+  "b0": {
+   "all": {
+    "items": 320,
+    "accepted": 320,
+    "reuseRate": 1,
+    "wrongReuse": 175,
+    "wrongReuseRate": 0.546875,
+    "deopt": 0,
+    "deoptRate": 0,
+    "falseDeopt": 0,
+    "falseDeoptRate": null,
+    "harmful": 175,
+    "catchRate": 0,
+    "buildsNeeded": 0,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.6164177734128626,
+      "nEff": 147.83727138701843
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.8200478285108685,
+      "nEff": 9.39393222797559,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 20,
+      "wrong": 20,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 19,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 20,
+      "wrong": 20,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 19,
+      "wrong": 19,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 22,
+      "wrong": 2,
+      "falseDeopt": 0
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 24,
+      "wrong": 23,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 24,
+      "wrong": 18,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "c21Kinds": {
+    "items": 241,
+    "accepted": 241,
+    "reuseRate": 1,
+    "wrongReuse": 134,
+    "wrongReuseRate": 0.5560165975103735,
+    "deopt": 0,
+    "deoptRate": 0,
+    "falseDeopt": 0,
+    "falseDeoptRate": null,
+    "harmful": 134,
+    "catchRate": 0,
+    "buildsNeeded": 0,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.6359888679312169,
+      "nEff": 111.62951255595382
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.828808881449336,
+      "nEff": 9.212916011920834,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 20,
+      "wrong": 20,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 19,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 20,
+      "wrong": 20,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 19,
+      "wrong": 19,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 24,
+      "wrong": 23,
+      "falseDeopt": 0
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 24,
+      "wrong": 18,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "tKinds": {
+    "items": 79,
+    "accepted": 79,
+    "reuseRate": 1,
+    "wrongReuse": 41,
+    "wrongReuseRate": 0.5189873417721519,
+    "deopt": 0,
+    "deoptRate": 0,
+    "falseDeopt": 0,
+    "falseDeoptRate": null,
+    "harmful": 41,
+    "catchRate": 0,
+    "buildsNeeded": 0,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.6639053904295011,
+      "nEff": 36.21296145048816
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.8218863406778103,
+      "nEff": 7.914610894559636,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 22,
+      "wrong": 2,
+      "falseDeopt": 0
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "withoutT1": {
+    "items": 303,
+    "accepted": 303,
+    "reuseRate": 1,
+    "wrongReuse": 158,
+    "wrongReuseRate": 0.5214521452145214,
+    "deopt": 0,
+    "deoptRate": 0,
+    "falseDeopt": 0,
+    "falseDeoptRate": null,
+    "harmful": 158,
+    "catchRate": 0,
+    "buildsNeeded": 0,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.5938331948850317,
+      "nEff": 139.16250778708388
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.8021267416692048,
+      "nEff": 9.35840545767137,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 20,
+      "wrong": 20,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 19,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 20,
+      "wrong": 20,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 19,
+      "wrong": 19,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 22,
+      "wrong": 2,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 24,
+      "wrong": 23,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 24,
+      "wrong": 18,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "projection": {
+    "reuseUsdPerItem": 0,
+    "scratchUsdPerItem": 0.00253,
+    "agentUsdPerItem": 0.00134,
+    "reuseMsPerItem": 668,
+    "scratchMsPerItem": 12733,
+    "agentMsPerItem": 11449,
+    "accuracyGapLowerBound": -0.546875
+   }
+  },
+  "b3": {
+   "all": {
+    "items": 320,
+    "accepted": 180,
+    "reuseRate": 0.5625,
+    "wrongReuse": 57,
+    "wrongReuseRate": 0.31666666666666665,
+    "deopt": 140,
+    "deoptRate": 0.4375,
+    "falseDeopt": 22,
+    "falseDeoptRate": 0.15714285714285714,
+    "harmful": 175,
+    "catchRate": 0.6742857142857143,
+    "buildsNeeded": 8,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.40778402828894744,
+      "nEff": 87.97181378714664
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.639579765797043,
+      "nEff": 9.024316060185146,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 5,
+      "wrong": 3,
+      "falseDeopt": 0
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 22
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 22,
+      "wrong": 2,
+      "falseDeopt": 0
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 24,
+      "wrong": 23,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 18,
+      "wrong": 12,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "c21Kinds": {
+    "items": 241,
+    "accepted": 123,
+    "reuseRate": 0.5103734439834025,
+    "wrongReuse": 38,
+    "wrongReuseRate": 0.3089430894308943,
+    "deopt": 118,
+    "deoptRate": 0.4896265560165975,
+    "falseDeopt": 22,
+    "falseDeoptRate": 0.1864406779661017,
+    "harmful": 134,
+    "catchRate": 0.7164179104477612,
+    "buildsNeeded": 7,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.42072061434230024,
+      "nEff": 60.375605434207486
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.6401852097592511,
+      "nEff": 8.63931088722749,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 5,
+      "wrong": 3,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 22
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 24,
+      "wrong": 23,
+      "falseDeopt": 0
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 18,
+      "wrong": 12,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "tKinds": {
+    "items": 79,
+    "accepted": 57,
+    "reuseRate": 0.7215189873417721,
+    "wrongReuse": 19,
+    "wrongReuseRate": 0.3333333333333333,
+    "deopt": 22,
+    "deoptRate": 0.27848101265822783,
+    "falseDeopt": 0,
+    "falseDeoptRate": 0,
+    "harmful": 41,
+    "catchRate": 0.5365853658536586,
+    "buildsNeeded": 1,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.5073353746843561,
+      "nEff": 27.599810785241246
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.6885406832034937,
+      "nEff": 7.436174580020015,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 22,
+      "wrong": 2,
+      "falseDeopt": 0
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "withoutT1": {
+    "items": 303,
+    "accepted": 163,
+    "reuseRate": 0.5379537953795379,
+    "wrongReuse": 40,
+    "wrongReuseRate": 0.24539877300613497,
+    "deopt": 140,
+    "deoptRate": 0.46204620462046203,
+    "falseDeopt": 22,
+    "falseDeoptRate": 0.15714285714285714,
+    "harmful": 158,
+    "catchRate": 0.7468354430379747,
+    "buildsNeeded": 8,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.3367312737919582,
+      "nEff": 80.78797194422769
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.573812255104245,
+      "nEff": 8.94737823300391,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 5,
+      "wrong": 3,
+      "falseDeopt": 0
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 22
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 22,
+      "wrong": 2,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 24,
+      "wrong": 23,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 18,
+      "wrong": 12,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "projection": {
+    "reuseUsdPerItem": 0.001265,
+    "scratchUsdPerItem": 0.00253,
+    "agentUsdPerItem": 0.00134,
+    "reuseMsPerItem": 6701,
+    "scratchMsPerItem": 12733,
+    "agentMsPerItem": 11449,
+    "accuracyGapLowerBound": -0.178125
+   }
+  },
+  "G0-15": {
+   "all": {
+    "items": 320,
+    "accepted": 137,
+    "reuseRate": 0.428125,
+    "wrongReuse": 39,
+    "wrongReuseRate": 0.2846715328467153,
+    "deopt": 183,
+    "deoptRate": 0.571875,
+    "falseDeopt": 47,
+    "falseDeoptRate": 0.2568306010928962,
+    "harmful": 175,
+    "catchRate": 0.7771428571428571,
+    "buildsNeeded": 9,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.395213158303657,
+      "nEff": 60.350482315112544
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.6179952428578357,
+      "nEff": 8.63260049673443,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "c21Kinds": {
+    "items": 241,
+    "accepted": 98,
+    "reuseRate": 0.4066390041493776,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 143,
+    "deoptRate": 0.5933609958506224,
+    "falseDeopt": 9,
+    "falseDeoptRate": 0.06293706293706294,
+    "harmful": 134,
+    "catchRate": 1,
+    "buildsNeeded": 7,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.03391065332936011,
+      "nEff": 86.83544303797468
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.28180583044427576,
+      "nEff": 9.050131926121372,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "tKinds": {
+    "items": 79,
+    "accepted": 39,
+    "reuseRate": 0.4936708860759494,
+    "wrongReuse": 39,
+    "wrongReuseRate": 1,
+    "deopt": 40,
+    "deoptRate": 0.5063291139240507,
+    "falseDeopt": 38,
+    "falseDeoptRate": 0.95,
+    "harmful": 41,
+    "catchRate": 0.04878048780487805,
+    "buildsNeeded": 2,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 34.726027397260275
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 7.921875,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     }
+    }
+   },
+   "withoutT1": {
+    "items": 303,
+    "accepted": 120,
+    "reuseRate": 0.39603960396039606,
+    "wrongReuse": 22,
+    "wrongReuseRate": 0.18333333333333332,
+    "deopt": 183,
+    "deoptRate": 0.6039603960396039,
+    "falseDeopt": 47,
+    "falseDeoptRate": 0.2568306010928962,
+    "harmful": 158,
+    "catchRate": 0.8607594936708861,
+    "buildsNeeded": 9,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.2944882942712338,
+      "nEff": 51.798561151079134
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.5223885911560573,
+      "nEff": 8.440797186400937,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "projection": {
+    "reuseUsdPerItem": 0.001423,
+    "scratchUsdPerItem": 0.00253,
+    "agentUsdPerItem": 0.00134,
+    "reuseMsPerItem": 7455,
+    "scratchMsPerItem": 12733,
+    "agentMsPerItem": 11449,
+    "accuracyGapLowerBound": -0.121875
+   }
+  },
+  "G0-15+b3c": {
+   "all": {
+    "items": 320,
+    "accepted": 111,
+    "reuseRate": 0.346875,
+    "wrongReuse": 17,
+    "wrongReuseRate": 0.15315315315315314,
+    "deopt": 209,
+    "deoptRate": 0.653125,
+    "falseDeopt": 51,
+    "falseDeoptRate": 0.24401913875598086,
+    "harmful": 175,
+    "catchRate": 0.9028571428571428,
+    "buildsNeeded": 12,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.26136613148549015,
+      "nEff": 50.70370370370371
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.4908062097805376,
+      "nEff": 8.415983606557377,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 3
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "c21Kinds": {
+    "items": 241,
+    "accepted": 94,
+    "reuseRate": 0.3900414937759336,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 147,
+    "deoptRate": 0.6099585062240664,
+    "falseDeopt": 13,
+    "falseDeoptRate": 0.08843537414965986,
+    "harmful": 134,
+    "catchRate": 1,
+    "buildsNeeded": 9,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.03516900069396539,
+      "nEff": 83.67424242424242
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.2826479834714627,
+      "nEff": 9.018166972851601,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 3
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "tKinds": {
+    "items": 79,
+    "accepted": 17,
+    "reuseRate": 0.21518987341772153,
+    "wrongReuse": 17,
+    "wrongReuseRate": 1,
+    "deopt": 62,
+    "deoptRate": 0.7848101265822784,
+    "falseDeopt": 38,
+    "falseDeoptRate": 0.6129032258064516,
+    "harmful": 41,
+    "catchRate": 0.5853658536585366,
+    "buildsNeeded": 3,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 15.537634408602148
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 6.310043668122271,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     }
+    }
+   },
+   "withoutT1": {
+    "items": 303,
+    "accepted": 94,
+    "reuseRate": 0.3102310231023102,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 209,
+    "deoptRate": 0.6897689768976898,
+    "falseDeopt": 51,
+    "falseDeoptRate": 0.24401913875598086,
+    "harmful": 158,
+    "catchRate": 1,
+    "buildsNeeded": 12,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.03516900069396539,
+      "nEff": 83.67424242424242
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.2826479834714627,
+      "nEff": 9.018166972851601,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 3
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "projection": {
+    "reuseUsdPerItem": 0.001897,
+    "scratchUsdPerItem": 0.00253,
+    "agentUsdPerItem": 0.00134,
+    "reuseMsPerItem": 9717,
+    "scratchMsPerItem": 12733,
+    "agentMsPerItem": 11449,
+    "accuracyGapLowerBound": -0.053125
+   }
+  },
+  "G0-60": {
+   "all": {
+    "items": 320,
+    "accepted": 137,
+    "reuseRate": 0.428125,
+    "wrongReuse": 39,
+    "wrongReuseRate": 0.2846715328467153,
+    "deopt": 183,
+    "deoptRate": 0.571875,
+    "falseDeopt": 47,
+    "falseDeoptRate": 0.2568306010928962,
+    "harmful": 175,
+    "catchRate": 0.7771428571428571,
+    "buildsNeeded": 9,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.395213158303657,
+      "nEff": 60.350482315112544
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.6179952428578357,
+      "nEff": 8.63260049673443,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "c21Kinds": {
+    "items": 241,
+    "accepted": 98,
+    "reuseRate": 0.4066390041493776,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 143,
+    "deoptRate": 0.5933609958506224,
+    "falseDeopt": 9,
+    "falseDeoptRate": 0.06293706293706294,
+    "harmful": 134,
+    "catchRate": 1,
+    "buildsNeeded": 7,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.03391065332936011,
+      "nEff": 86.83544303797468
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.28180583044427576,
+      "nEff": 9.050131926121372,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "tKinds": {
+    "items": 79,
+    "accepted": 39,
+    "reuseRate": 0.4936708860759494,
+    "wrongReuse": 39,
+    "wrongReuseRate": 1,
+    "deopt": 40,
+    "deoptRate": 0.5063291139240507,
+    "falseDeopt": 38,
+    "falseDeoptRate": 0.95,
+    "harmful": 41,
+    "catchRate": 0.04878048780487805,
+    "buildsNeeded": 2,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 34.726027397260275
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 7.921875,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     }
+    }
+   },
+   "withoutT1": {
+    "items": 303,
+    "accepted": 120,
+    "reuseRate": 0.39603960396039606,
+    "wrongReuse": 22,
+    "wrongReuseRate": 0.18333333333333332,
+    "deopt": 183,
+    "deoptRate": 0.6039603960396039,
+    "falseDeopt": 47,
+    "falseDeoptRate": 0.2568306010928962,
+    "harmful": 158,
+    "catchRate": 0.8607594936708861,
+    "buildsNeeded": 9,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.2944882942712338,
+      "nEff": 51.798561151079134
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.5223885911560573,
+      "nEff": 8.440797186400937,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "projection": {
+    "reuseUsdPerItem": 0.001423,
+    "scratchUsdPerItem": 0.00253,
+    "agentUsdPerItem": 0.00134,
+    "reuseMsPerItem": 7455,
+    "scratchMsPerItem": 12733,
+    "agentMsPerItem": 11449,
+    "accuracyGapLowerBound": -0.121875
+   }
+  },
+  "G0-M3": {
+   "all": {
+    "items": 320,
+    "accepted": 137,
+    "reuseRate": 0.428125,
+    "wrongReuse": 39,
+    "wrongReuseRate": 0.2846715328467153,
+    "deopt": 183,
+    "deoptRate": 0.571875,
+    "falseDeopt": 47,
+    "falseDeoptRate": 0.2568306010928962,
+    "harmful": 175,
+    "catchRate": 0.7771428571428571,
+    "buildsNeeded": 9,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.395213158303657,
+      "nEff": 60.350482315112544
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 0.6179952428578357,
+      "nEff": 8.63260049673443,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "c21Kinds": {
+    "items": 241,
+    "accepted": 98,
+    "reuseRate": 0.4066390041493776,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 143,
+    "deoptRate": 0.5933609958506224,
+    "falseDeopt": 9,
+    "falseDeoptRate": 0.06293706293706294,
+    "harmful": 134,
+    "catchRate": 1,
+    "buildsNeeded": 7,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.03391065332936011,
+      "nEff": 86.83544303797468
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.28180583044427576,
+      "nEff": 9.050131926121372,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "tKinds": {
+    "items": 79,
+    "accepted": 39,
+    "reuseRate": 0.4936708860759494,
+    "wrongReuse": 39,
+    "wrongReuseRate": 1,
+    "deopt": 40,
+    "deoptRate": 0.5063291139240507,
+    "falseDeopt": 38,
+    "falseDeoptRate": 0.95,
+    "harmful": 41,
+    "catchRate": 0.04878048780487805,
+    "buildsNeeded": 2,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 34.726027397260275
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 7.921875,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     }
+    }
+   },
+   "withoutT1": {
+    "items": 303,
+    "accepted": 120,
+    "reuseRate": 0.39603960396039606,
+    "wrongReuse": 22,
+    "wrongReuseRate": 0.18333333333333332,
+    "deopt": 183,
+    "deoptRate": 0.6039603960396039,
+    "falseDeopt": 47,
+    "falseDeoptRate": 0.2568306010928962,
+    "harmful": 158,
+    "catchRate": 0.8607594936708861,
+    "buildsNeeded": 9,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.2944882942712338,
+      "nEff": 51.798561151079134
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.5223885911560573,
+      "nEff": 8.440797186400937,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 22,
+      "wrong": 22,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "projection": {
+    "reuseUsdPerItem": 0.001423,
+    "scratchUsdPerItem": 0.00253,
+    "agentUsdPerItem": 0.00134,
+    "reuseMsPerItem": 7455,
+    "scratchMsPerItem": 12733,
+    "agentMsPerItem": 11449,
+    "accuracyGapLowerBound": -0.121875
+   }
+  },
+  "G0-M3+b3c": {
+   "all": {
+    "items": 320,
+    "accepted": 115,
+    "reuseRate": 0.359375,
+    "wrongReuse": 17,
+    "wrongReuseRate": 0.14782608695652175,
+    "deopt": 205,
+    "deoptRate": 0.640625,
+    "falseDeopt": 47,
+    "falseDeoptRate": 0.22926829268292684,
+    "harmful": 175,
+    "catchRate": 0.9028571428571428,
+    "buildsNeeded": 10,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 0.25419723567323305,
+      "nEff": 51.459143968871594
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.48452460341759107,
+      "nEff": 8.434311224489797,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "c21Kinds": {
+    "items": 241,
+    "accepted": 98,
+    "reuseRate": 0.4066390041493776,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 143,
+    "deoptRate": 0.5933609958506224,
+    "falseDeopt": 9,
+    "falseDeoptRate": 0.06293706293706294,
+    "harmful": 134,
+    "catchRate": 1,
+    "buildsNeeded": 7,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.03391065332936011,
+      "nEff": 86.83544303797468
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.28180583044427576,
+      "nEff": 9.050131926121372,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "tKinds": {
+    "items": 79,
+    "accepted": 17,
+    "reuseRate": 0.21518987341772153,
+    "wrongReuse": 17,
+    "wrongReuseRate": 1,
+    "deopt": 62,
+    "deoptRate": 0.7848101265822784,
+    "falseDeopt": 38,
+    "falseDeoptRate": 0.6129032258064516,
+    "harmful": 41,
+    "catchRate": 0.5853658536585366,
+    "buildsNeeded": 3,
+    "m3": {
+     "parentExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 15.537634408602148
+     },
+     "crossedExact": {
+      "decision": "kill",
+      "upper": 1,
+      "nEff": 6.310043668122271,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 17,
+      "wrong": 17,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     }
+    }
+   },
+   "withoutT1": {
+    "items": 303,
+    "accepted": 98,
+    "reuseRate": 0.3234323432343234,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 205,
+    "deoptRate": 0.6765676567656765,
+    "falseDeopt": 47,
+    "falseDeoptRate": 0.22926829268292684,
+    "harmful": 158,
+    "catchRate": 1,
+    "buildsNeeded": 10,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.03391065332936011,
+      "nEff": 86.83544303797468
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.28180583044427576,
+      "nEff": 9.050131926121372,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 2
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 20
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 1
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 18
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 6
+     }
+    }
+   },
+   "projection": {
+    "reuseUsdPerItem": 0.001581,
+    "scratchUsdPerItem": 0.00253,
+    "agentUsdPerItem": 0.00134,
+    "reuseMsPerItem": 8209,
+    "scratchMsPerItem": 12733,
+    "agentMsPerItem": 11449,
+    "accuracyGapLowerBound": -0.053125
+   }
+  },
+  "oracle": {
+   "all": {
+    "items": 320,
+    "accepted": 145,
+    "reuseRate": 0.453125,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 175,
+    "deoptRate": 0.546875,
+    "falseDeopt": 0,
+    "falseDeoptRate": 0,
+    "harmful": 175,
+    "catchRate": 1,
+    "buildsNeeded": 10,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.02290162991113759,
+      "nEff": 129.3050430504305
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.27434105788775487,
+      "nEff": 9.341953256909267,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 2,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 1,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 6,
+      "wrong": 0,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "c21Kinds": {
+    "items": 241,
+    "accepted": 107,
+    "reuseRate": 0.44398340248962653,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 134,
+    "deoptRate": 0.5560165975103735,
+    "falseDeopt": 0,
+    "falseDeoptRate": 0,
+    "harmful": 134,
+    "catchRate": 1,
+    "buildsNeeded": 7,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.030860516156180406,
+      "nEff": 95.56761268781301
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.2797235690949357,
+      "nEff": 9.129984051036681,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 2,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 1,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 6,
+      "wrong": 0,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "tKinds": {
+    "items": 79,
+    "accepted": 38,
+    "reuseRate": 0.4810126582278481,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 41,
+    "deoptRate": 0.5189873417721519,
+    "falseDeopt": 0,
+    "falseDeoptRate": 0,
+    "harmful": 41,
+    "catchRate": 1,
+    "buildsNeeded": 3,
+    "m3": {
+     "parentExact": {
+      "decision": "no-decision",
+      "upper": 0.08496519177208689,
+      "nEff": 33.73831775700935
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.3164687436541539,
+      "nEff": 7.873500545256271,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T1": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "withoutT1": {
+    "items": 303,
+    "accepted": 145,
+    "reuseRate": 0.47854785478547857,
+    "wrongReuse": 0,
+    "wrongReuseRate": 0,
+    "deopt": 158,
+    "deoptRate": 0.5214521452145214,
+    "falseDeopt": 0,
+    "falseDeoptRate": 0,
+    "harmful": 158,
+    "catchRate": 1,
+    "buildsNeeded": 9,
+    "m3": {
+     "parentExact": {
+      "decision": "serve",
+      "upper": 0.02290162991113759,
+      "nEff": 129.3050430504305
+     },
+     "crossedExact": {
+      "decision": "no-decision",
+      "upper": 0.27434105788775487,
+      "nEff": 9.341953256909267,
+      "entries": 1
+     }
+    },
+    "bySource": {
+     "H1": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S2": {
+      "items": 17,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S3": {
+      "items": 19,
+      "entryRight": 2,
+      "accepted": 2,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T2": {
+      "items": 22,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H3": {
+      "items": 20,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S6": {
+      "items": 22,
+      "entryRight": 22,
+      "accepted": 22,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S1": {
+      "items": 21,
+      "entryRight": 21,
+      "accepted": 21,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S5": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S0": {
+      "items": 20,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H2": {
+      "items": 19,
+      "entryRight": 0,
+      "accepted": 0,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H5": {
+      "items": 15,
+      "entryRight": 15,
+      "accepted": 15,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T3": {
+      "items": 22,
+      "entryRight": 20,
+      "accepted": 20,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "S4": {
+      "items": 24,
+      "entryRight": 1,
+      "accepted": 1,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "T4": {
+      "items": 18,
+      "entryRight": 18,
+      "accepted": 18,
+      "wrong": 0,
+      "falseDeopt": 0
+     },
+     "H4": {
+      "items": 24,
+      "entryRight": 6,
+      "accepted": 6,
+      "wrong": 0,
+      "falseDeopt": 0
+     }
+    }
+   },
+   "projection": {
+    "reuseUsdPerItem": 0.001581,
+    "scratchUsdPerItem": 0.00253,
+    "agentUsdPerItem": 0.00134,
+    "reuseMsPerItem": 8209,
+    "scratchMsPerItem": 12733,
+    "agentMsPerItem": 11449,
+    "accuracyGapLowerBound": 0
+   }
+  }
+ },
+ "runMsPerItem": 668,
+ "histMsPerSource": {
+  "S0": 44139,
+  "S1": 39285,
+  "S2": 34052,
+  "S3": 44747,
+  "S4": 42657,
+  "S5": 36510,
+  "S6": 39507,
+  "H1": 37597,
+  "H2": 39715,
+  "H3": 30849,
+  "H4": 38522,
+  "H5": 36713,
+  "T1": 30203,
+  "T2": 35754,
+  "T3": 37278,
+  "T4": 38507
+ },
+ "b3cRefusedAmongAdmitted": [
+  {
+   "id": "P_42620",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_55488",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_24625",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_43256",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_44376",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_50885",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_48274",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_42429",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_95991",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_20037",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_64777",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_91566",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_63368",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_67547",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_49892",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_89797",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_43098",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_95295",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_87081",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_27662",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_29742",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  },
+  {
+   "id": "P_27356",
+   "source": "T2",
+   "correct": false,
+   "reasons": [
+    {
+     "path": "inputs.answer.hazard_class",
+     "feature": "enum"
+    },
+    {
+     "path": "inputs.tools.calculate_disposal_score[].disposal_score",
+     "feature": "type"
+    },
+    {
+     "path": "inputs.tools.calculate_handling_score[].handling_score",
+     "feature": "type"
+    }
+   ]
+  }
+ ],
+ "generatedAt": "2026-10-22T02:27:53.090Z"
+}

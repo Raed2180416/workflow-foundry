@@ -1,0 +1,42 @@
+{
+ "kind": "c22-freeze",
+ "id": "C2-2",
+ "createdAt": "2026-10-22T02:23:01.972Z",
+ "manifestSha256": "8d2a2bf1a96a1d092aaeff1cbc158742583b07037a027c721cd907ff2077a908",
+ "manifestFile": "runs/c2-2/manifest-c22.json",
+ "preregSha256": "2b655e2b550bdf7014cb6e0e67b440eb1fca4658d576835e59cb586fae9fbcfa",
+ "code": {
+  "c22.mjs": "19c3dfabca5913993dcef00b9b7dae880504c3685aeadedf45b046eeddc71616",
+  "conformance.mjs": "9b91008540494a44de12b01386bbf5e1710225d073086d58aea44f56f5ecd68a",
+  "gen-c22.mjs": "2aced9e3b41ea851b81cec660174c72f0a345de54133b52ecde5baeab4d1995a",
+  "gen-b.mjs": "cf45861128de55c459b1c806a4637eb39025d52ac3adb325f6bfed99e5d7e7e0",
+  "program-b.mjs": "7322d26958f3732ffffb81467eb292a6d1cea7e65f76d8e52fe8eb8c15134deb",
+  "world-b.mjs": "59993225c95df86d46e8d5b53557025ae63a12c3636d08aa53318d4b2dc8fa01",
+  "gate.mjs": "2bd4d9470eafb9b32df5b27b5710864f773939357f911d5f63464a3fa91c5364",
+  "host.mjs": "965238b38af99798b4def38350162782388a61a4bd7067da026f9cc402697726",
+  "registry.mjs": "c0e2bba78f96fdc7b794d3980d26779d570dfdef17f815d06d6c400bea163b83",
+  "lib.mjs": "54b238e34eb780fa21a28145cea2ae2443a1b5df16592b4efa7bf2612be6a2ff",
+  "c2.mjs": "a3b7ffc9f37b413ffd2ab8cd390a01ca36b9eea313fee3d2fe263ef1c42b9b82",
+  "build-b.mjs": "a3e535e4590c55484f142d46d7d4f92d7fd09defcba007e6aa1aeb69ede2092b",
+  "../jit/profile.mjs": "fbaf824fa558be123c7416e4ec940131dbf51ec4d1b4bc1ca4ea990dad6ccc54",
+  "../lib/stats.mjs": "96c1a161725df07337a96523f6f9663aab7454315ec9fbfbc98da4c7b17746e1",
+  "../sopbench/exec.mjs": "41f66b9d30e7911493c8f8c4e60a24d72ab49a4b516950a73d6547d4b5a58f4c",
+  "../sopbench/scorer.mjs": "7ae987729ef034a6986f030b1f5deeb5cbe5def15847da04acb367151f7ac531",
+  "../sopbench/kit/sop.mjs": "ad7f018391710dcbac38ec202db30f0bf453285a26202a2a1a60f0ae765da72a"
+ },
+ "entry": {
+  "id": "sopbench-p2:dangerous_goods",
+  "artifactSha256": "8e7b18221a16eae23db331e3eb96b2ae0388405d6e0d20e8a8826ce6a69ac875",
+  "inputProfileSha256": "c73d445d189f2e3f3cd11f30ee4a86fecb32fe5349d869e5d55379e2b14f1e17",
+  "traceProfileSha256": "1f297e25b310571115f53fa91a1a19fe368c3def30ff863893f7a991c096a1f9"
+ },
+ "primary": "G0-M3+b3c",
+ "unitCosts": {
+  "buildUsd": 0.0506,
+  "buildWallMs": 241291,
+  "agentUsdPerItem": 0.00134,
+  "agentMsPerItem": 11449
+ },
+ "streamRecordsBeforeFreeze": 0,
+ "spendUsd": 0
+}

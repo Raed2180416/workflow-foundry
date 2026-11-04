@@ -1,0 +1,47 @@
+{
+ "kind": "c2-freeze",
+ "id": "C2-1",
+ "createdAt": "2026-10-21T22:31:59.962Z",
+ "runId": "c2-1",
+ "manifestSha256": "15f753dc0b602f1982f96987ab3cdde14a927c8a084781a56f46f96f9a6df3ae",
+ "manifestFile": "runs/c2-1/manifest-test.json",
+ "entry": {
+  "id": "sopbench-p2:dangerous_goods",
+  "contractHash": "560837af9a0740fea0f2c8d146e8df4a36c61fc726270c85beeb0d1f88e98123",
+  "artifactSha256": "8e7b18221a16eae23db331e3eb96b2ae0388405d6e0d20e8a8826ce6a69ac875",
+  "inputProfileSha256": "c73d445d189f2e3f3cd11f30ee4a86fecb32fe5349d869e5d55379e2b14f1e17",
+  "traceProfileSha256": "1f297e25b310571115f53fa91a1a19fe368c3def30ff863893f7a991c096a1f9"
+ },
+ "preregSha256": "ea91af9779860993911c55c96c80850d3151113efc2c60d0ed74677645c6482c",
+ "code": {
+  "lib.mjs": "54b238e34eb780fa21a28145cea2ae2443a1b5df16592b4efa7bf2612be6a2ff",
+  "world-b.mjs": "59993225c95df86d46e8d5b53557025ae63a12c3636d08aa53318d4b2dc8fa01",
+  "program-b.mjs": "7322d26958f3732ffffb81467eb292a6d1cea7e65f76d8e52fe8eb8c15134deb",
+  "gen-b.mjs": "cf45861128de55c459b1c806a4637eb39025d52ac3adb325f6bfed99e5d7e7e0",
+  "registry.mjs": "c0e2bba78f96fdc7b794d3980d26779d570dfdef17f815d06d6c400bea163b83",
+  "gate.mjs": "2bd4d9470eafb9b32df5b27b5710864f773939357f911d5f63464a3fa91c5364",
+  "host.mjs": "965238b38af99798b4def38350162782388a61a4bd7067da026f9cc402697726",
+  "prove.mjs": "33644c66bb903962c30c7e1fc8dca4d832c9d406d9bc36b6679591a88748d008",
+  "build-b.mjs": "a3e535e4590c55484f142d46d7d4f92d7fd09defcba007e6aa1aeb69ede2092b",
+  "agent-b.mjs": "f9105f6ec1a7a2d7301eb64c240a320574aa95fe9172f58e94264f1ba281597b",
+  "c2.mjs": "a3b7ffc9f37b413ffd2ab8cd390a01ca36b9eea313fee3d2fe263ef1c42b9b82",
+  "analyze.mjs": "b2c746928e93a6e6ab688f4c947fb4a37b1c77b11869b3a193c8050336211c77",
+  "../jit/profile.mjs": "fbaf824fa558be123c7416e4ec940131dbf51ec4d1b4bc1ca4ea990dad6ccc54",
+  "../sopbench/build.mjs": "fada7c493f35f97868acf38d2e26b5cfeebb680cee0407071d11a0f2a8554605",
+  "../sopbench/exec.mjs": "41f66b9d30e7911493c8f8c4e60a24d72ab49a4b516950a73d6547d4b5a58f4c",
+  "../sopbench/run.mjs": "700e33ceb19acf576e4ce8dd6e5a362af1f0f2ee277048512b33f06286f0df70",
+  "../sopbench/scorer.mjs": "7ae987729ef034a6986f030b1f5deeb5cbe5def15847da04acb367151f7ac531",
+  "../sopbench/kit/run-solver.mjs": "b6c7c3187d305cd435d37b86c8b73b1db531f6345d23b34464a0f494ca1de0b9",
+  "../sopbench/kit/check.mjs": "8616dd8c75bf9b140d879442809975eb0372a9b96a0050a6de9d276097fea857",
+  "../sopbench/kit/sop.mjs": "ad7f018391710dcbac38ec202db30f0bf453285a26202a2a1a60f0ae765da72a",
+  "../sopbench/tool.mjs": "53918f7c1fcb5ee96260ff0144db5e88cd8bb2433cef9aa476d99cec8c9d018f",
+  "../lib/stats.mjs": "96c1a161725df07337a96523f6f9663aab7454315ec9fbfbc98da4c7b17746e1"
+ },
+ "models": {
+  "builder": "claude-haiku-5-5",
+  "agent": "claude-haiku-5-5"
+ },
+ "spendCapUsd": 2.9,
+ "reuseRecordsBeforeFreeze": 0,
+ "note": "The $0 reuse phase (proven entry on every test item, every gate variant) may run before or after this file; nothing paid runs on the test set before it."
+}
