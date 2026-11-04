@@ -176,3 +176,30 @@ test('the gateway serves a named executor model to a solver and books its tokens
   const refused = await fetch(`${svc.url}/model`, { method: 'POST', headers: { authorization: `Bearer ${svc.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ model: 'mercury-2.5', system: 's', prompt: 'p', schema }) });
   assert.equal(refused.status, 403, 'a model the session does not allow is refused before the port');
 });
+
+// research/mercury-20261021/PORT-PROBE.md finding 1 (engine bump 2026-10-21, item 5): a Mercury-only session subset. models[] is empty, the
+// executor model is listed by id, and nothing resolves by class: class routing can never reach an executor model.
+test('a Mercury-only subset is a valid policy; calls that name mercury-3 are served; class resolution reaches nothing', async t => {
+  const only = subsetPolicy(policy, ['mercury-3']);
+  assert.deepEqual([only.models, only.executorModels.map(m => m.id), Object.keys(only.providers)], [[], ['mercury-3'], ['inception']]);
+  for (const cls of policy.classOrder) assert.deepEqual(modelsForClass(only, cls), [], `class ${cls} resolves to no model`);
+  assert.throws(() => resolve(only, { class: policy.classOrder[0] }), { code: 'MODEL_CLASS_EMPTY' });
+  assert.equal(nextClass(only, policy.classOrder[0]), null);
+  assert.throws(() => modelById(only, 'mercury-3'), { code: 'MODEL_NOT_IN_POLICY' }, 'workflow IR nodes resolve models[] only');
+  assert.equal(portModelById(only, 'mercury-3').provider, 'inception');
+  const ep = await fakeEndpoint(t, [answer('{"answer":"only mercury"}')]);
+  const port = new ModelPort({ policy: only, providers: { inception: new OpenAIChatProvider({ policy: only, providerName: 'inception', baseUrl: ep.baseUrl, hostEnv: env, retry: FAST, runTokenCap: 100_000 }) }, journal: new Journal(new DatabaseSync(':memory:')) });
+  const r = await port.call(req());
+  assert.equal(r.ok, true, JSON.stringify(r.error)); assert.deepEqual(r.value, { answer: 'only mercury' });
+  await assert.rejects(port.call(req('x', { modelId: 'claude-haiku-5-5' })), { code: 'MODEL_NOT_IN_POLICY' }, 'a class model is not in a Mercury-only session');
+  assert.equal(ep.requests.length, 1);
+  // createModelPort builds it (the remote provider still needs its token cap) and registers no claude-cli provider.
+  const dir = mkdtempSync(path.join(tmpdir(), 'foundry-ocp-only-')); t.after(() => rmSync(dir, { recursive: true, force: true }));
+  assert.throws(() => createModelPort({ journalFile: path.join(dir, 'a.sqlite'), allowedModels: ['mercury-3'] }), /need tokenCap/);
+  const built = createModelPort({ journalFile: path.join(dir, 'b.sqlite'), allowedModels: ['mercury-3'], tokenCap: 50_000 });
+  assert.deepEqual(Object.keys(built.port.providers), ['inception']); built.db.close();
+  // Only a session subset may be executor-only: the owner policy (and the Runtime) still need models[], and so does a subset without one.
+  const { validatePolicy } = await import('../src/models/policy.mjs');
+  assert.throws(() => validatePolicy({ ...structuredClone(policy), models: [] }), { code: 'MODEL_POLICY_INVALID' });
+  assert.throws(() => validatePolicy({ ...structuredClone(policy), models: [], executorModels: [] }, { executorOnly: true }), { code: 'MODEL_POLICY_INVALID' });
+});

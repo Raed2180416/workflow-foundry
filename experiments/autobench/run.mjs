@@ -51,7 +51,8 @@ import { CHILD_ENV_ALLOWED, loadPolicy, modelById } from '../../src/models/polic
 import { BRIDGE, CORPUS, PUBLIC_DOMAINS, REPO, TOOL_CLIENT, adapterText, bridgeJson, listTasks, materializeWorkdir, readJson, scriptedRunner, sha256, startServe, stratifiedSubset, writeJson } from './lib.mjs';
 import { auditSession, readCalls, readStream, worldUsage } from './accounting.mjs';
 import { assertDevOnly, domainOf, loadSplit } from './split.mjs';
-import { HARNESS_ID, HARNESS_VERSION, cliVersion, collectLedger, harnessConfig, harnessManifest, harnessSystemPrompt, writeCliGuard } from './harness/foundry.mjs';
+import { HARNESS_ID, HARNESS_VERSION, cliIdentity, cliVersion, collectLedger, harnessConfig, harnessManifest, harnessSystemPrompt, writeCliGuard } from './harness/foundry.mjs';
+import { cliPinChange } from '../../src/cli-pin.mjs';
 import { ENV_FAULTS } from '../lib/runner.mjs';
 import { executorForModel } from '../../src/executors/openai-chat.mjs';
 
@@ -279,7 +280,9 @@ export async function runTasks(o) {
   // disk and this run's settings; A0 (a model run) given --test-run AB-v1. A dry run prints a task's prompt and a
   // scripted A0 run grades host-side, so neither ever touches a test task.
   if (opt.testRun != null && opt.testRun !== TEST_RUN_TOKEN) throw new Error(`--test-run must be ${TEST_RUN_TOKEN}`);
-  const cli = scripted || remote ? null : cliVersion();
+  // The CLI by bytes (compromise C2): pinned with FOUNDRY_CLI_LOCK, else the one on PATH, hashed. The manifest keeps the version string.
+  const cliId = scripted || remote ? null : cliIdentity();
+  const cli = scripted || remote ? null : cliVersion(cliId?.path ?? 'claude');
   let manifest = null, guard = null;
   if (harness) {
     manifest = co ? (co.pipelineManifest ?? co.codeownedManifest)((co.pipelineConfig ?? co.codeownedConfig)({ ...opt, cli, ...(remoteRoles.length ? { executor: `src/executors/claude-code.mjs runClaudeCode for claude-cli roles; src/executors/openai-chat.mjs runOpenAIChat for ${remoteRoles.join(', ')} roles (model nodes: one request, no tools, at most ${opt.callTokens ?? DEFAULT_CALL_TOKENS} tokens; per-task token pool ${sessionTokenBudget})` } : {}) })) : harnessManifest(harnessConfig({ ...opt, cliMaxTurns, cli, ...(remote ? { policy: remote.manifestPolicy, executor: `${remote.manifestExecutor}; session token budget ${sessionTokenBudget}` } : {}) }));
@@ -293,6 +296,7 @@ export async function runTasks(o) {
   const launch = { tasks, model: scripted ? null : opt.model ?? null, scripted, harness: manifest?.sha256 ?? null, cliMaxTurns, k: opt.k, det: opt.det,
     maxSteps: opt.maxSteps, budgetUsd: opt.budgetUsd, capUsd: opt.capUsd ?? null, timeoutMin: opt.timeoutMin, effort: opt.effort ?? null,
     tools: opt.tools, dateNote: Boolean(opt.dateNote), runnerSha256: sha256(readFileSync(new URL(import.meta.url))),
+    ...(cliId ? { cli: { version: cliId.version, sha256: cliId.sha256, pinned: cliId.pinned } } : {}),
     ...(opt.tokenCap != null || remote || remoteRoles.length ? { tokenCap: opt.tokenCap ?? null, sessionTokens: sessionTokenBudget } : {}),
     ...(remoteRoles.length ? { callTokens: opt.callTokens ?? DEFAULT_CALL_TOKENS } : {}) };
   const readRecords = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
@@ -303,9 +307,14 @@ export async function runTasks(o) {
     // Every setting must match. Two may change, each recorded in the launch history: the cap may be raised (it gates which
     // sessions start, never how one runs), and the runner may change only with --accept-runner-change.
     const prior = readJson(launchFile);
-    const settings = ({ capUsd, tokenCap, runnerSha256, history, ...rest }) => JSON.stringify(rest);
+    const settings = ({ capUsd, tokenCap, runnerSha256, history, cli, ...rest }) => JSON.stringify(rest);
     if (settings(prior) !== settings(launch)) throw new Error(`resume refused: the settings differ from ${launchFile}`);
     const change = {};
+    // The CLI's bytes (C2): a resume on another CLI than the launch's is refused (bumping the lock included). A launch that predates
+    // the record (no cli.sha256) continues and records the CLI it resumes with.
+    const cliChange = cliPinChange(prior.cli, launch.cli);
+    if (cliChange) throw new Error(`resume refused: ${cliChange}`);
+    if (!prior.cli?.sha256 && launch.cli?.sha256) change.cli = [prior.cli ?? null, launch.cli];
     if (prior.runnerSha256 !== launch.runnerSha256) {
       if (!opt.acceptRunnerChange) throw new Error(`resume refused: the runner changed since launch (${prior.runnerSha256.slice(0, 12)} -> ${launch.runnerSha256.slice(0, 12)}); pass --accept-runner-change to accept and record it`);
       change.runnerSha256 = [prior.runnerSha256, launch.runnerSha256];
@@ -318,7 +327,7 @@ export async function runTasks(o) {
       if (!(launch.tokenCap >= prior.tokenCap)) throw new Error(`resume refused: the token cap can only be raised (${prior.tokenCap} -> ${launch.tokenCap})`);
       change.tokenCap = [prior.tokenCap, launch.tokenCap];
     }
-    if (Object.keys(change).length) writeJson(launchFile, { ...prior, runnerSha256: launch.runnerSha256, capUsd: launch.capUsd, ...(launch.tokenCap != null ? { tokenCap: launch.tokenCap } : {}), history: [...(prior.history ?? []), { at: new Date().toISOString(), ...change }] });
+    if (Object.keys(change).length) writeJson(launchFile, { ...prior, runnerSha256: launch.runnerSha256, capUsd: launch.capUsd, ...(launch.tokenCap != null ? { tokenCap: launch.tokenCap } : {}), ...(change.cli ? { cli: launch.cli } : {}), history: [...(prior.history ?? []), { at: new Date().toISOString(), ...change }] });
     // A recorded task that is not an outcome (written before these rules, or by hand) reruns; a faulted one is kept aside.
     const all = readRecords(resultsFile);
     kept = all.filter(r => !notAnOutcome(r));
@@ -330,7 +339,7 @@ export async function runTasks(o) {
       writeFileSync(resultsFile, kept.map(r => JSON.stringify(r) + '\n').join(''));
     }
   } else if (!opt.dryRun) writeJson(launchFile, launch);
-  if (harness && cliMaxTurns > 0) guard = writeCliGuard(path.join(live, 'harness-bin'), { maxTurns: cliMaxTurns, target: opt.cliTarget ?? 'claude' });
+  if (harness && cliMaxTurns > 0) guard = writeCliGuard(path.join(live, 'harness-bin'), { maxTurns: cliMaxTurns, target: opt.cliTarget ?? cliId?.path ?? 'claude' });
   // Sealed run (devCheck go/no-go looks, the test run): per-task grades never reach the log or a plain repo file.
   const split = loadSplit();
   const sealed = opt.sealed ?? tasks.some(t => split.devCheck.includes(t) || split.test.includes(t));
@@ -445,7 +454,7 @@ export async function runTasks(o) {
           nodeRunner: disp?.run ?? opt.nodeRunner ?? runner, cliTarget: opt.cliTarget ?? 'claude', scripted, pipeline: opt.pipeline, log })
           : await runner({ model: opt.model, prompt: prompt.user, systemPrompt: systemPromptFor(prompt, catalog), workdir, files: {},
           budgetUsd: opt.budgetUsd, timeoutMs: opt.timeoutMin * 60_000, effort: opt.effort ?? null, tools: opt.tools, task: { name: task, fork },
-          ...(harness ? { maxTurns: cliMaxTurns || null } : {}), ...(guard ? { binary: guard.binary, keepRo: [...DEFAULT_KEEP_RO, guard.dir] } : {}), ...(remote ? { tokenBudget: sessionTokenBudget } : {}) });
+          ...(harness ? { maxTurns: cliMaxTurns || null } : {}), ...(guard ? { binary: guard.binary, keepRo: [...DEFAULT_KEEP_RO, guard.dir, ...(cliId?.path ? [cliId.path] : [])] } : {}), ...(remote ? { tokenBudget: sessionTokenBudget } : {}) });
         if (co) rec.pipeline = r.pipeline;
         Object.assign(rec, { costUsd: r.costUsd ?? null, costUnknown: Boolean(r.costUnknown), costUpperUsd: r.costUpperUsd ?? opt.budgetUsd, turns: r.turns ?? null,
           durationMs: r.durationMs ?? null, sessionError: r.error?.code ?? null, nestedModelUses: nestedModelUses(r.toolUses ?? []), tokens: tokensOf(r) });

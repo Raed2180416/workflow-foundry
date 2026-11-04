@@ -5,15 +5,16 @@ import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkData, clone, condition, digest, errorData, FoundryError, references, resolve } from './data.mjs';
 import { approvalGated, bindOutput, controlPolicyMessage, labelPolicyMessage, modelNodes, OUTPUT_KEY, requireWorkflow, stateArgs, stateLabelMessage, stateNodes, validateData, validateDecision, validateIdentity, VERIFY_RETURNS } from './validate.mjs';
-import { engineHash } from './engine.mjs';
+import { engineHash, engineOf, engineResumesFrom, engineVersion } from './engine.mjs';
 import { compileContext, contextInputs, inheritedLabel, joinLabels } from './context.mjs';
 import { verdictOf } from './verdict.mjs';
 import { runCode } from './sandbox.mjs';
 import { childScope, reapChildren } from './children.mjs';
 import { classIndex, modelById, modelsForClass, nextClass, validatePolicy } from './models/policy.mjs';
 import { MODES } from './models/port.mjs';
-import { AUDIT, identityChanges, journalSeal } from './audit.mjs';
+import { AUDIT, engineBinding, identityChanges, journalSeal } from './audit.mjs';
 import { MATERIALIZE, STATE_BYTES, STATE_ITEMS } from './run-rows.mjs';
+import { principalOf, requirementOf, roleMatrix } from './principals.mjs';
 import { isStateWrite, journalRequest, slotIdentity, slotOf, stateOpHash, stateReplayKey, stateRequest } from './state.mjs';
 import { cancelledBy, claimant, correlateTemplates, declaredSignals, isSignalWait, keyHashOf, matches, normalizeSignal, parseAt, pickSignal, routeOf, SIGNAL_LIMITS, signalCheckpointDrift, subscriptionsOf, timeoutMode } from './signals.mjs';
 
@@ -88,12 +89,22 @@ const providerFaults = new Set(['MODEL_PROTOCOL', 'MODEL_BUDGET']);
 const retryable = new Set(['MODEL_SCHEMA', 'MODEL_TRUNCATED']);
 // onError:"continue" and map failure:"collect" never hide an environment fault, a budget stop, a cancellation,
 // a policy violation or a harness integrity failure.
-const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'COST_BUDGET', 'STEP_BUDGET',
+const unhandled = new Set([...environmentFaults, ...providerFaults, 'CANCELLED', 'ABORT_ERR', 'SANDBOX_UNAVAILABLE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'COST_BUDGET', 'TOKEN_BUDGET', 'STEP_BUDGET',
   'DEADLINE', 'STATE_BUDGET', 'STATE_CONFLICT', 'STALE_RUNNER', 'REPLAY_MISS', 'MODEL_PORT_REQUIRED', 'VERIFY_INDEPENDENCE', 'ASSIGNMENT_INVALID',
   'LABEL_POLICY', 'FRAME_DRIFT', 'CORRUPT_EVENTS', 'MODEL_POLICY_DRIFT', 'JOURNAL_TAMPERED', 'APPROVAL_TAMPERED', 'STATE_DRIFT', 'STATE_CORRUPT',
   // Cross-run state faults of the harness, not refusals of the data (src/state.mjs STATE_REFUSALS are the handleable ones).
   'STATE_CLOCK', 'STATE_OP', 'STATE_TRANSACTION', 'STATE_SLOT_UNKNOWN']);
 const cancelled = error => ['CANCELLED', 'ABORT_ERR'].includes(error?.code);
+// Tokens a call used, as the token budget counts them: input, output and cache writes in full, cache reads at a tenth (their price ratio).
+const tokensOf = u => !u ? 0 : Math.ceil((u.inputTokens ?? 0) + (u.outputTokens ?? 0) + (u.cacheWriteTokens ?? 0) + 0.1 * (u.cacheReadTokens ?? 0));
+// Outages (orch-20261021): up to ENV_RETRIES inline retries of a model call, each at most ENV_RETRY_INLINE_MAX_MS away; past that an agent
+// node parks (status waiting, timer at retryAt) at most MAX_PARKS times. retry-after (seconds) in the provider's message wins; a usage
+// limit ("resets ...") parks for 15 minutes at a time; otherwise exponential backoff with jitter.
+const ENV_RETRIES = 3, ENV_RETRY_INLINE_MAX_MS = 60000, MAX_PARKS = 8;
+const retryAfterMs = message => { const m = /retry.?after[^0-9]{0,4}(\d+(?:\.\d+)?)/i.exec(String(message ?? '')); return m ? Math.ceil(Number(m[1]) * 1000) : null; };
+const jitter = ms => Math.round(ms * (0.8 + 0.4 * Math.random()));
+const outageDelayMs = (message, n) => retryAfterMs(message) ?? (/usage limit|limit reached|resets/i.test(String(message ?? '')) ? Infinity : jitter(Math.min(30000, 1000 * 2 ** n)));
+const parkDelayMs = (message, parks) => retryAfterMs(message) ?? (/usage limit|limit reached|resets/i.test(String(message ?? '')) ? 15 * 60000 : jitter(Math.min(30 * 60000, 60000 * 2 ** parks)));
 // A call cut short because the run deadline, not its own timeout, set its limit is the deadline's outcome.
 const deadlineStop = (what, details) => new FoundryError('DEADLINE', `Run deadline exhausted while ${what} was running`, details);
 // The E1 retry note sits outside every untrusted fence, so it carries only the port's model-safe feedback (fixed text
@@ -172,7 +183,7 @@ const cancelRequested = run => run.cancelRequest ? new FoundryError('RUN_CLOSED'
 const PARKED = new Set(['waiting', 'awaiting_human', 'awaiting_approval']);
 const policyDefaults = registry => ({
   allowedCapabilities: registry.list().filter(c => c.risk === 'low').map(c => c.name),
-  maxSteps: 5000, maxConcurrency: 4, maxDurationMs: 3600000, maxCost: 0, maxResumes: 1000
+  maxSteps: 5000, maxConcurrency: 4, maxDurationMs: 3600000, maxCost: 0, maxResumes: 1000, maxTokens: 5000000
 });
 
 export class Runtime {
@@ -183,9 +194,11 @@ export class Runtime {
   // now: the clock of cross-run state (src/state.mjs: TTL expiry and the time journaled with each operation); tests pass a simulated one.
   // faultHooks: test-only fault injection (a run's `extra.crashAfterWaitDecision` kills the process at that point). Off unless the caller
   // constructing the runtime turns it on, so an edit of a run record (`extra` is not bound to the birth event) cannot make a host kill itself.
-  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000, now = Date.now, faultHooks = false } = {}) {
+  // principals: the host's role matrix for human nodes that name a principal (src/principals.mjs; an OT-0 constitution document works as is).
+  // It is the host's, never the workflow's or a model's; without it, such a node's answer is refused (PRINCIPAL_MATRIX_REQUIRED).
+  constructor(store, registry, policy = {}, { models = null, modelPolicy = null, codeRunner = runCode, cancelPollMs = 250, cancelGraceMs = 2000, now = Date.now, faultHooks = false, principals = null } = {}) {
     this.store = store; this.registry = registry; this.policy = { ...policyDefaults(registry), ...clone(policy) };
-    for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
+    for (const k of ['maxSteps', 'maxConcurrency', 'maxDurationMs', 'maxResumes', 'maxTokens']) if (!Number.isSafeInteger(this.policy[k]) || this.policy[k] < 1) throw new FoundryError('POLICY', `${k} must be a positive integer`);
     if (!Array.isArray(this.policy.allowedCapabilities) || this.policy.allowedCapabilities.some(x => !registry.get(x))) throw new FoundryError('POLICY', 'Allowed capabilities must be registered');
     if (!Number.isFinite(this.policy.maxCost) || this.policy.maxCost < 0) throw new FoundryError('POLICY', 'maxCost must be nonnegative');
     const owner = modelPolicy?.policy ?? modelPolicy;
@@ -198,10 +211,12 @@ export class Runtime {
     if (!Number.isSafeInteger(cancelGraceMs) || cancelGraceMs < 1 || cancelGraceMs > 600000) throw new FoundryError('POLICY', 'cancelGraceMs must be an integer of 1 to 600000');
     if (typeof now !== 'function') throw new FoundryError('POLICY', 'now must be a function returning milliseconds');
     this.models = models; this.codeRunner = codeRunner; this.cancelPollMs = cancelPollMs; this.cancelGraceMs = cancelGraceMs; this.now = now; this.faultHooks = faultHooks === true;
+    this.principals = principals ? roleMatrix(principals) : null;
   }
   create(workflow, input = {}, options = {}) {
     const { modelMode = 'live', sampleSalt = null, assignment = null, identity = null, ...rest } = options;
-    const { hash } = requireWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy });
+    // With a role matrix, a workflow whose segregation rules its principals can never satisfy is refused here (src/principals.mjs).
+    const { hash } = requireWorkflow(workflow, { registry: this.registry, modelPolicy: this.modelPolicy, principals: this.principals });
     if (workflow.inputSchema) validateData(workflow.inputSchema, input, 'workflow input'); else checkData(input);
     this.store.workflow(hash); // The exact immutable version must already be saved.
     if (!MODES.includes(modelMode)) throw new FoundryError('RUN_OPTIONS', `modelMode must be one of ${MODES.join('|')}`);
@@ -293,7 +308,11 @@ export class Runtime {
     // the same Store but must not share mutable in-flight fields.
     return new Invocation(this, runId, signal).execute();
   }
-  answer(runId, nodeKey, answer) {
+  // `actor` is who answers, as the host's channel identified them (the CLI's --actor, the HTTP surface); `channel` names the channel. A human
+  // node with a principal requirement (bound when its question was asked) takes an answer only from an actor the host's role matrix gives
+  // the required roles, and never from the actor who answered a node its segregation rules set apart in this run (compromise D1). The
+  // actor, the roles that authorised it and the matrix hash go on the chain. A node without a requirement takes any answer, as before.
+  answer(runId, nodeKey, answer, { actor = null, channel = null } = {}) {
     const run = this.store.rows.header(runId); // NOT_FOUND; the run's own fields are enough here
     if (finished.has(run.status)) throw new FoundryError('RUN_CLOSED', 'A terminal run cannot accept answers');
     const closed = closingSeal(this.store.events(runId));
@@ -301,15 +320,40 @@ export class Runtime {
     if (cancelRequested(run)) throw cancelRequested(run);
     const state = this.store.rows.nodeState(runId, ...splitKey(nodeKey));
     if (!state || state.status !== 'awaiting_human') throw new FoundryError('NO_QUESTION', 'No pending question exists at this node');
+    if (actor !== null && (typeof actor !== 'string' || !actor || actor.length > 200)) throw new FoundryError('PRINCIPAL_REQUIRED', 'An actor is a non-empty identity of at most 200 characters');
+    const authority = state.principal ? this.authorizeAnswer(runId, run.workflowHash, nodeKey, state.principal, actor) : null;
     validateData(state.answerSchema, answer, 'human answer');
     return this.store.updateRun(runId, r => {
       if (finished.has(r.status)) throw new FoundryError('RUN_CLOSED', 'A terminal run cannot accept answers');
       if (cancelRequested(r)) throw cancelRequested(r);
       const current = locateNode(r, nodeKey);
       if (current.state.status !== 'awaiting_human') throw new FoundryError('ANSWER_CONFLICT', 'This question was already answered');
+      // Segregation of duties, again inside the update (compare-and-swap with any answer committed since the check above).
+      if (authority) this.checkSegregation(runId, r.workflowHash, nodeKey, actor);
       current.state.status = 'completed'; current.state.completedAt = Date.now();
+      if (actor !== null) current.state.answeredBy = actor;
       current.frame.outputs[current.id] = { answer: clone(answer) }; r.status = 'ready';
-    }, { type: 'human.answered', nodeKey, answerHash: digest(answer) });
+    }, { type: 'human.answered', nodeKey, answerHash: digest(answer), ...(actor !== null ? { actor, actorVerified: !!authority } : {}), ...(channel ? { channel: String(channel).slice(0, 40) } : {}),
+      ...(authority ? { principal: authority } : {}) });
+  }
+  authorizeAnswer(runId, workflowHash, nodeKey, required, actor) {
+    if (!this.principals) throw new FoundryError('PRINCIPAL_MATRIX_REQUIRED', `${nodeKey} needs an answer from a principal holding ${required.roles.join(' + ')}; this host supplied no role matrix (Foundry/Runtime option principals, foundry --principals FILE)`);
+    if (actor === null) throw new FoundryError('PRINCIPAL_REQUIRED', `${nodeKey} needs an answer from a principal holding ${required.roles.join(' + ')}; the answer names no actor (foundry answer ... --actor ID)`);
+    const principal = principalOf(this.principals, actor);
+    if (!principal) throw new FoundryError('PRINCIPAL_UNKNOWN', `${actor} is not a principal in the host's role matrix`, { actor });
+    const missing = required.roles.filter(role => !principal.roles.includes(role));
+    if (missing.length) throw new FoundryError('PRINCIPAL_ROLE', `${actor} does not hold ${missing.join(' + ')}, which ${nodeKey} needs${required.threshold?.applied ? ` (${required.threshold.why}: delegation of authority above ${required.threshold.limit})` : ''}`, { actor, missing });
+    this.checkSegregation(runId, workflowHash, nodeKey, actor);
+    return { principal: principal.id, roles: required.roles, matrixHash: this.principals.hash };
+  }
+  // The other human nodes a segregation rule sets apart from this one must not have been answered by the same actor in this run. Who answered
+  // is read from the hash-chained human.answered events, not from the editable record.
+  checkSegregation(runId, workflowHash, nodeKey, actor) {
+    const workflow = this.store.workflow(workflowHash).workflow, id = splitKey(nodeKey)[1];
+    const apart = new Set((workflow.segregation ?? []).filter(rule => rule.nodes.includes(id)).flatMap(rule => rule.nodes).filter(other => other !== id));
+    if (!apart.size) return;
+    const clash = this.store.events(runId).find(e => e.type === 'human.answered' && e.actor === actor && apart.has(splitKey(e.nodeKey)[1]));
+    if (clash) throw new FoundryError('SOD_VIOLATION', `${actor} answered ${clash.nodeKey} in this run; segregation of duties forbids the same actor at ${nodeKey}`, { actor, other: clash.nodeKey });
   }
   approve(runId, approvalId, decision, actor = 'user') {
     if (typeof decision !== 'boolean' || actor !== 'user') throw new FoundryError('APPROVAL_AUTHORITY', 'An explicit user approval decision is required');
@@ -526,6 +570,13 @@ class Invocation {
     signal.addEventListener('abort', abandon, { once: true });
     return { lapse: promise, done: () => { clearTimeout(timer); signal.removeEventListener('abort', abandon); } };
   }
+  // A cancel request found in the record outside the poll (checkBudget): the execution aborts as watchCancel would, after the
+  // current update (the abort listeners kill processes and settle promises; they must not run inside the transaction).
+  noteCancel(request) {
+    if (this.cancelRequest) return;
+    this.cancelRequest = request; this.userCancelled = true;
+    queueMicrotask(() => this.abort.abort());
+  }
   // Best effort: a store that was closed under a running execution reads as no request.
   readCancelRequest() { try { return this.store.cancelRequest(this.runId); } catch { return null; } }
   // The whole record (every row): for the checks when a run is resumed. Everything else reads the rows it needs (store.rows).
@@ -564,9 +615,13 @@ class Invocation {
   }
   checkBudget(run = this.head(), cost = 0) {
     if (this.signal().aborted) throw new FoundryError('CANCELLED', 'Execution cancelled');
+    // A cancel request already in the record stops every new start at once, not one poll later (orch-20261021 A7): charge()
+    // runs this inside the update that would start the node, so nothing starts after the request committed.
+    if (run.cancelRequest) { this.noteCancel(run.cancelRequest); throw new FoundryError('CANCELLED', 'Run cancellation was requested; no new node starts'); }
     if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted');
     if (run.steps >= Math.min(run.policy.maxSteps, this.workflow.budget.maxSteps)) throw new FoundryError('STEP_BUDGET', 'Run step budget exhausted');
     if (run.cost + cost > Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost) + 1e-12) throw new FoundryError('COST_BUDGET', 'Run cost budget exhausted');
+    if ((run.tokens ?? 0) >= this.tokenLimit(run)) throw new FoundryError('TOKEN_BUDGET', `Run token budget exhausted (${run.tokens} of ${this.tokenLimit(run)} tokens)`);
     // The stored size and JSON value count of the run (kept by the store as rows change), not a re-serialisation of it.
     let bytes = run[STATE_BYTES], items = run[STATE_ITEMS];
     if (bytes === undefined || items === undefined) ({ bytes, items } = this.rows.raw(this.runId));
@@ -595,6 +650,9 @@ class Invocation {
     }, status === 'handled_error' ? 'node.handled_error' : 'node.completed', { outputHash: digest(output), output, ...state });
   }
   costLimit(run) { return Math.min(run.policy.maxCost, this.workflow.budget.maxCost ?? run.policy.maxCost); }
+  // Tokens bound a run whatever the model costs (a $0-priced local model ran 97M tokens under a dollar budget: orch-20261021 E2). A run
+  // created before the token budget existed has none in its bound policy and keeps no limit but the workflow's.
+  tokenLimit(run) { return Math.min(run.policy.maxTokens ?? Infinity, this.workflow.budget.maxTokens ?? Infinity); }
   // The integrity labels a reference in `templates` can inherit (inheritedLabel): the frame's own labels plus the non-trusted output label of each
   // node a reference names (`nodes.X...`; a bare `nodes` reads them all). Only those nodes' labels are fetched.
   labelScope(frameKey, ...templates) {
@@ -648,13 +706,19 @@ class Invocation {
       const closed = closingSeal(log);
       if (closed) throw closedError(closed, run.status);
       if (!run.engineHash) throw new FoundryError('ENGINE_UNBOUND', 'This historical run has no native engine binding. Inspect it or use its original frozen runtime; do not silently resume it under changed semantics.');
-      if (run.engineHash !== engineHash) throw new FoundryError('ENGINE_DRIFT', 'The native execution engine differs from the version that created this run. Resume with the original engine or create a separately reviewed new run.', { recorded: run.engineHash, current: engineHash });
-      const birth = log[0];
-      if (birth?.engineHash !== run.engineHash) throw new FoundryError('ENGINE_BINDING_CORRUPT', 'Run engine identity does not match its immutable creation event');
+      // Engine compatibility ranges (research/engine-20261021/ENGINE-BUMP.md §1): a run bound to another engine resumes only when this
+      // engine's lineage (src/engine-lineage.json) recognises that engine exactly and declares its version resumable here; the migration is
+      // then recorded in the chain with the runner.acquired below. Anything else stays ENGINE_DRIFT. An older engine never resumes a run a
+      // newer one migrated: the record names the newer engine, which the older lineage does not know.
+      const from = run.engineHash === engineHash ? null : engineOf(run.engineHash);
+      if (run.engineHash !== engineHash && !from?.resumable) throw new FoundryError('ENGINE_DRIFT', `The native execution engine differs from the version that created this run${from ? ` (engine version ${from.version}; this engine, version ${engineVersion}, resumes runs of version ${engineResumesFrom} or later)` : ' and is not a predecessor this engine declares compatible'}. Resume with the original engine or create a separately reviewed new run.`, { recorded: run.engineHash, current: engineHash, recordedVersion: from?.version ?? null, currentVersion: engineVersion, resumesFrom: engineResumesFrom });
+      const birth = log[0], bound = engineBinding(log);
+      if (!bound.valid || bound.hash !== run.engineHash) throw new FoundryError('ENGINE_BINDING_CORRUPT', 'Run engine identity does not match its immutable creation event and recorded migrations');
+      const migration = from ? { type: 'engine.migrated', from: run.engineHash, to: engineHash, fromVersion: from.version, toVersion: engineVersion, resumesFrom: engineResumesFrom } : null;
       if (modelBound && (birth?.modelPolicyHash ?? null) !== run.modelPolicyHash) throw new FoundryError('MODEL_POLICY_BINDING_CORRUPT', 'Run model policy binding does not match its immutable creation event');
       // The rest of the run's identity, against the same event: the record is a checkpoint any writer to the workspace can edit, and the
       // runtime executes the workflow, input and policy (allowed capabilities, budgets) it names, so an edit there would widen the run.
-      const changed = identityChanges(run, birth);
+      const changed = identityChanges(run, birth, log);
       if (changed.length) throw new FoundryError('RUN_BINDING_CORRUPT', `The run record no longer matches its immutable creation event (${changed.join(', ')}): the record was edited, so the run is not resumed`, { changed });
       const forged = forgedAnswers(this.workflow, run, log);
       if (forged.length) throw new FoundryError('CHECKPOINT_TAMPERED', `The run record holds human answers its chain did not record (${forged.slice(0, 5).join(', ')}): the record was edited, so the run is not resumed`, { nodeKeys: forged });
@@ -673,13 +737,22 @@ class Invocation {
           r.resumeCount = (r.resumeCount ?? 0) + 1;
           r.owner = { token: this.token, pid: process.pid, processStart: startStamp(process.pid), acquiredAt: Date.now() };
           r.status = 'running';
-        }, { type: 'runner.acquired', token: this.token }, { result: 'header' });
+          if (migration) {
+            // Compare-and-swap on the engine binding: another process may have migrated (or edited) it since the checks above.
+            if (r.engineHash !== migration.from) throw new FoundryError('STATE_CONFLICT', 'The run engine binding changed while this execution was starting');
+            r.engineHash = engineHash;
+          }
+        }, migration ? [migration, { type: 'runner.acquired', token: this.token }] : { type: 'runner.acquired', token: this.token }, { result: 'header' });
       } catch (error) {
         // Closed (cancelled) by another process while this execution was starting: the result is the closed run, as when it was closed before.
         if (error.details?.closedWhileStarting) return this.current();
         throw error;
       }
       owned = true;
+      // Did the earlier owner stop on a signal it handled (Ctrl-C, SIGTERM)? Only an interruption recorded by that same process counts.
+      const interrupt = this.store.interruptOf?.(this.runId) ?? null;
+      const graceful = interrupt && run.owner && interrupt.pid === run.owner.pid ? interrupt : null;
+      if (interrupt) this.store.forgetInterrupt(this.runId);
       // Process groups an earlier owner of this run left running (it was killed) are stopped before this execution starts its own.
       const stale = reapChildren(this.store, this.runId).filter(child => child.killed);
       if (stale.length) this.update(() => {}, { type: 'children.reaped', children: stale.map(({ pid, kind }) => ({ pid, kind })) });
@@ -690,7 +763,7 @@ class Invocation {
       if (this.cancelRequest) throw new FoundryError('CANCELLED', 'Execution was cancelled before it started');
       if (Date.now() >= run.deadline) throw new FoundryError('DEADLINE', 'Run deadline exhausted before resume');
       this.semaphore = new Semaphore(Math.min(run.policy.maxConcurrency, this.workflow.budget.maxConcurrency));
-      this.recover();
+      this.recover(graceful);
       const result = await this.flow(this.workflow, 'root', run.input, {});
       let status = result.done ? 'succeeded' : 'waiting';
       if (this.rows.anyWithStatus(this.runId, 'awaiting_human')) status = 'awaiting_human';
@@ -726,16 +799,22 @@ class Invocation {
       }, r => [...swept, ...(r.verdict ? [this.runtime.verdictEvent(r)] : []), { type: 'run.stopped', error: errorData(reported), ...(request ? { cancel: request } : {}) }], { result: 'run', final: true });
     } finally { clearInterval(this.cancelTimer); this.outerSignal?.removeEventListener('abort', this.onAbort); }
   }
-  recover() {
+  // Tasks an earlier owner left running. `graceful`: that owner stopped on Ctrl-C or SIGTERM (bin/foundry.mjs records it in
+  // run_interrupts before it exits): an interruption by the user is not a failed attempt, so a pure or idempotent task gets its
+  // attempt back (with maxAttempts 1, the common case, Ctrl-C made the run unresumable although the CLI printed resumable: true,
+  // orch-20261021 G2). An unexplained death (SIGKILL, out of memory, a native crash) still costs the attempt, which is what bounds
+  // a task that kills its owner every time (B7).
+  recover(graceful = null) {
     for (const { frameKey, nodeId: id, state } of this.rows.withStatus(this.runId, 'running')) {
       if (state.kind !== 'task') continue;
       const cap = this.registry.get(state.tool);
       if (!cap) throw new FoundryError('CAPABILITY_DRIFT', 'Interrupted operation capability is missing');
-      const uncertain = cap.effects === 'non-idempotent';
+      const uncertain = cap.effects === 'non-idempotent', refund = !!graceful && !uncertain && (state.attempts ?? 0) > 0;
       this.eventNode(frameKey, id, current => {
         current.nodes[id].status = uncertain ? 'uncertain' : 'pending';
         current.nodes[id].recovered = true;
-      }, uncertain ? 'effect.uncertain' : 'node.recovered', { effects: cap.effects });
+        if (refund) current.nodes[id].attempts -= 1;
+      }, uncertain ? 'effect.uncertain' : 'node.recovered', { effects: cap.effects, ...(refund ? { attemptRefunded: true, interruptedBy: graceful.signal } : {}) });
     }
   }
   context(frameKey, input, locals) {
@@ -855,9 +934,18 @@ class Invocation {
       this.complete(frameKey, node, { passed: true }); return;
     }
     if (node.kind === 'human') {
+      // A principal requirement is bound when the question is asked (src/principals.mjs): the roles, and for a delegation-of-authority
+      // threshold the amount as it stands now. An amount that untrusted data decided counts as above the threshold.
+      let principal = null;
+      if (node.principal) {
+        const template = node.principal.threshold?.amount;
+        let amount;
+        try { amount = template === undefined ? undefined : resolve(template, ctx); } catch { amount = undefined; }
+        principal = requirementOf(node.principal, { amount, trusted: template === undefined || labelOf(template, this.labelScope(frameKey, template)) === 'trusted' });
+      }
       this.eventNode(frameKey, node.id, f => {
-        Object.assign(f.nodes[node.id], { status: 'awaiting_human', question: node.question, answerSchema: clone(node.answerSchema), ...controlState(control) });
-      }, 'human.requested', { question: node.question }); return;
+        Object.assign(f.nodes[node.id], { status: 'awaiting_human', question: node.question, answerSchema: clone(node.answerSchema), ...(principal ? { principal } : {}), ...controlState(control) });
+      }, 'human.requested', { question: node.question, ...(principal ? { principal } : {}) }); return;
     }
     if (node.kind === 'wait') return this.wait(node, frameKey, state);
     if (node.kind === 'map') return this.map(node, frameKey, ctx, input);
@@ -1148,17 +1236,33 @@ class Invocation {
   }
 
   async agent(node, frameKey, ctx, state, resumed) {
+    const nodeKey = `${frameKey}/${node.id}`;
+    if (state.status === 'waiting' && state.parked) {
+      // A node parked on an outage (below) is due again: it runs on, within the same attempt.
+      this.store.clearTimer(this.runId, nodeKey);
+      this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { ...f.nodes[node.id], status: 'running', parked: null }; }, 'model.unparked', { parks: state.parks ?? 0 });
+    }
     try {
-      const { value, compiled, entry, escalations } = await this.modelLoop(node, frameKey, ctx, state, resumed, { returns: node.returns, checks: node.checks ?? [] });
+      const { value, compiled, entry, escalations } = await this.modelLoop(node, frameKey, ctx, state, resumed, { returns: node.returns, checks: node.checks ?? [], park: true });
       this.complete(frameKey, node, value, 'completed', { state: { ...labelState(compiled.outputLabel), modelId: entry.id, modelClass: entry.class, escalations, receiptHash: compiled.receiptHash } });
     } catch (error) {
+      // An outage (rate limit, usage limit, provider down, timeout) that outlasted the inline retries parks this node: the run is
+      // `waiting` with a timer at retryAt, so `foundry tick` (or a resume after it) continues it, the work done so far is kept and the user
+      // sees why and until when. Bounded: after MAX_PARKS the outage is the run's result (orch-20261021 B9, D1, D3).
+      if (error.code === 'ENV_PARK') {
+        const parks = (this.stateOf(frameKey, node.id)?.parks ?? 0) + 1, { retryAt, cause } = error.details;
+        if (parks > MAX_PARKS || retryAt >= this.head().deadline) throw new FoundryError(cause.code, `${node.id}: ${cause.message} (outage outlasted ${parks - 1} park(s) or the run deadline)`, { parks: parks - 1 });
+        this.eventNode(frameKey, node.id, f => { f.nodes[node.id] = { ...f.nodes[node.id], status: 'waiting', parked: { code: cause.code, message: cause.message.slice(0, 300), retryAt }, parks }; }, 'model.parked', { errorCode: cause.code, retryAt, parks });
+        this.store.setTimer(this.runId, nodeKey, retryAt);
+        return;
+      }
       if (node.onError !== 'continue' || unhandled.has(error.code)) throw error;
       this.complete(frameKey, node, { ok: false, error: errorData(error) }, 'handled_error');
     }
   }
   // DESIGN §5.1. The journal is the loop's memory: a resumed attempt recompiles the same requests,
   // and ModelPort serves already-journaled calls of this (run, node, attempt) without a provider call.
-  async modelLoop(node, frameKey, ctx, state, resumed, { returns, checks, excludeFamily = new Set(), extraInputs = [] }) {
+  async modelLoop(node, frameKey, ctx, state, resumed, { returns, checks, excludeFamily = new Set(), extraInputs = [], park = false }) {
     const models = this.runtime.models, policy = this.runtime.modelPolicy;
     if (!models) throw new FoundryError('MODEL_PORT_REQUIRED', `${node.id} needs a ModelPort; this runtime was created without one`);
     const run = this.head(), nodeKey = `${frameKey}/${node.id}`, attempt = state.attempts, limits = policy.escalation ?? {};
@@ -1171,7 +1275,7 @@ class Invocation {
     if (classIndex(policy, entry.class) > classIndex(policy, max)) throw new FoundryError('ASSIGNMENT_INVALID', `${entry.id} (class ${entry.class}) exceeds maxClass ${max} of ${node.id}`);
     if (resumed) this.eventNode(frameKey, node.id, () => {}, 'node.resumed', { attempt, source: 'journal' });
     const inputs = [...contextInputs(node, ctx, this.labelScope(frameKey, ...(node.context?.inputs ?? []).map(spec => spec.ref).filter(ref => typeof ref === 'string'))), ...extraInputs];
-    let retries = 0, resamples = 0, sampleIndex = 0, escalations = 0, retryNote = null, recovered = false;
+    let retries = 0, resamples = 0, sampleIndex = 0, escalations = 0, retryNote = null, recovered = false, envRetries = 0;
     const escalate = (rule, code, message) => {
       let target = null;
       if (escalations < rules.maxEscalations)
@@ -1219,8 +1323,22 @@ class Invocation {
         journalId: result.journalId ?? null, replayed: result.replayed === true && !recovered, ...(result.replayedFrom ? { replayedFrom: result.replayedFrom } : {}), ...unknownOf(result) });
       const spent = this.head();
       if (spent.cost > this.costLimit(spent) + 1e-12) throw new FoundryError('COST_BUDGET', `Run cost budget exhausted by a model call at ${node.id}`);
+      if ((spent.tokens ?? 0) > this.tokenLimit(spent)) throw new FoundryError('TOKEN_BUDGET', `Run token budget exhausted by a model call at ${node.id} (${spent.tokens} of ${this.tokenLimit(spent)} tokens)`);
       if (!result.ok) {
         const message = result.error?.message ?? code;
+        if (environmentFaults.has(code)) {
+          // A transient outage is retried here, on the same model (an outage never escalates), honouring a retry-after the provider sent;
+          // a longer one parks the node (agent nodes) or ends the run as an environment fault (other model nodes).
+          const waitMs = outageDelayMs(message, envRetries);
+          if (envRetries < ENV_RETRIES && waitMs <= ENV_RETRY_INLINE_MAX_MS && Date.now() + waitMs < this.head().deadline) {
+            envRetries++;
+            this.eventNode(frameKey, node.id, () => {}, 'model.env_retry', { errorCode: code, modelId: entry.id, retry: envRetries, delayMs: waitMs });
+            try { await delay(waitMs, undefined, { signal }); }
+            catch (error) { if (error.code === 'ABORT_ERR') throw new FoundryError('CANCELLED', 'Execution cancelled during an outage backoff'); throw error; }
+            continue;
+          }
+          if (park) throw new FoundryError('ENV_PARK', `${node.id}: parked on ${code}`, { retryAt: Date.now() + parkDelayMs(message, state.parks ?? 0), cause: { code, message: `${node.id}: ${message}` } });
+        }
         if (environmentFaults.has(code) || providerFaults.has(code)) throw new FoundryError(code, `${node.id}: ${message}`, { journalId: result.journalId ?? null, modelId: entry.id });
         if (retryable.has(code) && retries < rules.schemaRetries) {
           retries++; retryNote = `Retry ${retries} of ${rules.schemaRetries} on this model. ${code}: ${result.error?.feedback ?? RETRY_FEEDBACK[code]}`;
@@ -1253,8 +1371,9 @@ class Invocation {
       const s = f.nodes[node.id], seen = s.journalIds ?? [];
       if (call.journalId != null && seen.includes(call.journalId)) return; // already charged before a crash
       s.journalIds = [...seen, call.journalId]; s.modelCalls = (s.modelCalls ?? 0) + 1;
-      const cost = call.costUsd ?? 0;
+      const cost = call.costUsd ?? 0, tokens = tokensOf(call.usage);
       s.costUsd = (s.costUsd ?? 0) + cost; s.imputedUsd = (s.imputedUsd ?? 0) + (call.imputedUsd ?? 0); r.cost += cost;
+      if (tokens) { s.tokens = (s.tokens ?? 0) + tokens; r.tokens = (r.tokens ?? 0) + tokens; }
       if (call.costUnknown === true) for (const t of [s, r]) { t.costUnknownCalls = (t.costUnknownCalls ?? 0) + 1; t.costUnknownUpperUsd = addBound(t.costUnknownUpperUsd, call.costUpperUsd); }
     }, type, event);
   }

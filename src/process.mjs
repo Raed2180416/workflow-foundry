@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { StringDecoder } from 'node:string_decoder';
 import { FoundryError } from './data.mjs';
-import { trackChild } from './children.mjs';
+import { lifeline, lifelineExecFailed, trackChild } from './children.mjs';
 
 /** Bounded argv-only subprocess. No shell parsing or inherited credential env. */
 export async function runProcess(command, args, { cwd, env, input = '', timeoutMs = 60000, signal, maxBytes = 4 * 1024 * 1024 } = {}) {
@@ -11,7 +11,7 @@ export async function runProcess(command, args, { cwd, env, input = '', timeoutM
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 64 * 1024 * 1024) throw new FoundryError('PROCESS_OUTPUT_LIMIT', 'Output budget must be an integer between one byte and 64 MiB');
   if (signal?.aborted) throw new FoundryError('CANCELLED', 'Subprocess was cancelled before launch');
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd, env, shell: false, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(...lifeline(command, args), { cwd, env, shell: false, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
     const untrack = trackChild(child, 'process'); // recorded with the run executing it (src/children.mjs), so a killed owner's child can be found and stopped
     let stdout = '', stderr = '', bytes = 0, failure = null, killTimer;
     const decoders = { stdout: new StringDecoder('utf8'), stderr: new StringDecoder('utf8') };
@@ -41,6 +41,8 @@ export async function runProcess(command, args, { cwd, env, input = '', timeoutM
       if (failure) kill();
       const result = { command, args, code, signal: terminationSignal, stdout, stderr, elapsedMs: Date.now() - startedAt };
       if (failure) { failure.processResult = result; reject(failure); }
+      // The lifeline (setpriv) could not exec the command: a launch failure, as the spawn error was before the wrapper (patch 05 follow-up).
+      else if (lifelineExecFailed(code, stderr)) { const error = new FoundryError('PROCESS_LAUNCH', `${command} could not be launched: ${stderr.trim().split('\n').at(-1).slice(0, 200)}`); error.processResult = result; reject(error); }
       else if (code !== 0) { const error = new FoundryError('PROCESS_FAILED', `${command} exited with ${code ?? terminationSignal}`); error.processResult = result; reject(error); }
       else resolve(result);
     });

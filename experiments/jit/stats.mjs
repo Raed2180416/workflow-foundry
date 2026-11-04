@@ -45,7 +45,10 @@ export const RHO_PREREG = 0.1;          // assumed within-lineage ICC of the pai
 export const ENV_FAULT_LIMIT = 0.25;    // PREREG §6: an arm whose env-impaired tasks exceed 25% of planned tasks is invalid
 // The environment-fault codes stream.mjs retries once and then records in faults.jsonl (experiments/lib/runner.mjs
 // ENV_FAULTS; the test pins this copy to it). A faults.jsonl line is written only for these.
-export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL']);
+// Host infrastructure codes (a full disk, a quota, the file table, an unwritable store) and WORKDIR_BUSY joined ENV_FAULTS with the
+// 2026-10-21 engine bump (orch-20261021 patch 06 and rank 12).
+export const ENV_FAULT_CODES = Object.freeze(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL',
+  'ENOSPC', 'EDQUOT', 'EMFILE', 'ENFILE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE', 'WORKDIR_BUSY']);
 
 export const DECISION_RULE = 'Effect reported only if: no arm invalid by the 25% env-fault rule; K >= 2 streams; pooled gap >= 3 points and every '
   + 'stream\'s gap >= 3 points in the same direction; exact two-sided McNemar p < 0.05 on pooled pairs; and the 95% lineage-clustered CI '

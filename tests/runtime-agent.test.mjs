@@ -133,22 +133,54 @@ test('agent: E7 caps escalation at two even when maxClass allows more; maxClass 
 });
 
 test('agent: outages and provider faults are environment/harness faults and never escalate', async t => {
-  for (const [code, verdict] of [['MODEL_UNAVAILABLE', 'env_fault'], ['MODEL_RATE_LIMIT', 'env_fault'], ['MODEL_TIMEOUT', 'env_fault'], ['MODEL_PROTOCOL', 'harness_fault']]) {
+  // An outage (orch-20261021 patch 04) is retried inline on the same model, honouring the provider's retry-after (10 ms here), at most 3
+  // times; past that the agent node parks (status waiting, a timer at retryAt) instead of ending the run. It never escalates and no other
+  // model is tried. A provider (harness) fault is still terminal at once.
+  const outage = code => ({ error: { code, message: `${code}: overloaded, retry after 0.01 s` } });
+  for (const code of ['MODEL_UNAVAILABLE', 'MODEL_RATE_LIMIT', 'MODEL_TIMEOUT']) {
     await t.test(code, async t => {
-      const h = harness(t, base([agent('norm')], accept('norm')), { script: { [S]: [{ error: code }], [M]: [{ value: { amount: 1 } }] } });
+      const h = harness(t, base([agent('norm')], accept('norm')), { script: { [S]: [outage(code), outage(code), outage(code), outage(code), { value: { amount: 1 } }], [M]: [{ value: { amount: 1 } }] } });
       const run = await h.runtime.execute(h.run.id);
-      assert.equal(run.status, 'failed');
-      assert.equal(run.error.code, code);
-      assert.equal(run.verdict.verdict, verdict);
+      assert.equal(run.status, 'waiting', JSON.stringify(run.error));
+      assert.equal(run.nodes.norm.status, 'waiting');
+      assert.equal(run.nodes.norm.parked.code, code);
+      assert.ok(run.nodes.norm.parked.retryAt > Date.now() - 1000 && run.nodes.norm.parked.retryAt < Date.now() + 60000, 'parked until the retry-after');
+      assert.deepEqual(h.of('model.env_retry').map(e => [e.errorCode, e.retry, e.modelId]), [1, 2, 3].map(n => [code, n, S]));
+      assert.equal(h.of('model.parked').length, 1);
       assert.equal(h.of('model.escalated').length, 0);
-      assert.deepEqual(h.provider.calls.map(c => c.modelId), [S], 'no other model is tried');
+      assert.deepEqual(h.provider.calls.map(c => c.modelId), [S, S, S, S], 'no other model is tried');
       assert.equal(new Journal(h.store).forRun(run.id)[0].errorCode, code, 'the failure is journaled with the call');
+      // The outage ends: the parked node runs on, on the same model, within the same attempt, and the run succeeds.
+      const resumed = await h.runtime.execute(h.run.id);
+      assert.equal(resumed.status, 'succeeded', JSON.stringify(resumed.error));
+      assert.deepEqual(h.provider.calls.map(c => c.modelId), [S, S, S, S, S]);
+      assert.equal(h.of('model.unparked').length, 1);
+      assert.equal(resumed.nodes.norm.attempts, 1);
     });
   }
-  await t.test('onError continue does not hide an outage', async t => {
-    const h = harness(t, base([agent('norm', { onError: 'continue' })], [{ op: 'exists', value: { $ref: 'nodes.norm' } }]), { script: { [S]: [{ error: 'MODEL_UNAVAILABLE' }] } });
+  await t.test('a single transient outage is absorbed by one same-model retry', async t => {
+    const h = harness(t, base([agent('norm')], accept('norm')), { script: { [S]: [outage('MODEL_RATE_LIMIT'), { value: { amount: 1 } }] } });
     const run = await h.runtime.execute(h.run.id);
-    assert.equal(run.error.code, 'MODEL_UNAVAILABLE');
+    assert.equal(run.status, 'succeeded', JSON.stringify(run.error));
+    assert.deepEqual(h.provider.calls.map(c => c.modelId), [S, S]);
+    assert.equal(h.of('model.env_retry').length, 1); assert.equal(h.of('model.escalated').length, 0);
+  });
+  await t.test('MODEL_PROTOCOL', async t => {
+    const h = harness(t, base([agent('norm')], accept('norm')), { script: { [S]: [{ error: 'MODEL_PROTOCOL' }], [M]: [{ value: { amount: 1 } }] } });
+    const run = await h.runtime.execute(h.run.id);
+    assert.equal(run.status, 'failed');
+    assert.equal(run.error.code, 'MODEL_PROTOCOL');
+    assert.equal(run.verdict.verdict, 'harness_fault');
+    assert.equal(h.of('model.escalated').length, 0);
+    assert.deepEqual(h.provider.calls.map(c => c.modelId), [S], 'no other model is tried');
+    assert.equal(new Journal(h.store).forRun(run.id)[0].errorCode, 'MODEL_PROTOCOL', 'the failure is journaled with the call');
+  });
+  await t.test('onError continue does not hide an outage', async t => {
+    const h = harness(t, base([agent('norm', { onError: 'continue' })], [{ op: 'exists', value: { $ref: 'nodes.norm' } }]), { script: { [S]: Array.from({ length: 4 }, () => outage('MODEL_UNAVAILABLE')) } });
+    const run = await h.runtime.execute(h.run.id);
+    assert.equal(run.status, 'waiting');
+    assert.equal(run.nodes.norm.status, 'waiting', 'parked, not completed as a handled error');
+    assert.equal(run.nodes.norm.parked.code, 'MODEL_UNAVAILABLE');
   });
   await t.test('onError continue records an exhausted model judgment as a handled error', async t => {
     const h = harness(t, base([agent('norm', { onError: 'continue', model: { class: 'S' } })], [{ op: 'eq', left: { $ref: 'nodes.norm.ok' }, right: false }]), { script: { [S]: [{ text: 'x' }, { text: 'y' }] } });

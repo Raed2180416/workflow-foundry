@@ -696,7 +696,10 @@ test('a cancel that lands while the run is pausing (a question, a timer) is hono
     assert.equal(events.at(-1).cancel.actor, 'ui');
     assert.equal(final.nodes.gate.status, 'completed', 'the tool that ended on its own keeps its result');
   }
-  assert.equal(finals.RaceAsk.nodes.ask.status, 'awaiting_human', 'the question is left open, unanswered');
+  // orch-20261021 patch 02: a cancel request in the record stops every new start inside the update that would start it, so the question
+  // is never asked after the request committed (before the patch it was asked, then left open); the node ends as a stopped node does.
+  assert.equal(finals.RaceAsk.nodes.ask.status, 'failed', 'the question is not asked after the cancel');
+  assert.equal(finals.RaceAsk.nodes.ask.error?.code, 'CANCELLED');
   assert.throws(() => p.other.runtime.answer(asking.id, 'root/ask', true), error => error.code === 'RUN_CLOSED');
   assert.deepEqual(p.other.store.timers(pausing.id), [], 'the timer is gone: no tick restarts the run');
   assert.equal((await p.other.tick({ now: Date.now() + 2 * 3600000 })).due, 0);

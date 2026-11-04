@@ -17,6 +17,16 @@ function liveJobOwner(job) {
 const COUNT_EVERY = 64;
 const timerRow = row => ({ runId: row.run_id, nodeKey: row.node_key, wakeAt: row.wake_at });
 
+// A full disk, a quota or an exhausted file table is an environment fault the user can act on (free space, then resume): it
+// is typed STORAGE_FULL / STORAGE_UNAVAILABLE instead of surfacing as a raw SQLite or errno error (orch-20261021 C1).
+const FULL = /SQLITE_FULL|database or disk is full|ENOSPC|EDQUOT|no space left/i, UNAVAILABLE = /SQLITE_IOERR|SQLITE_CANTOPEN|EMFILE|ENFILE|EROFS/i;
+export function storageFault(error) {
+  if (!error || error instanceof FoundryError) return error;
+  const text = `${error.code ?? ''} ${error.errstr ?? ''} ${error.message ?? ''}`;
+  if (FULL.test(text)) return new FoundryError('STORAGE_FULL', `The workspace disk is full (${(error.errstr ?? error.message ?? '').slice(0, 120)}): free space, then resume the run; nothing was committed by the failed write`, { cause: error.code ?? null });
+  if (UNAVAILABLE.test(text)) return new FoundryError('STORAGE_UNAVAILABLE', `The workspace store cannot be written (${(error.errstr ?? error.message ?? '').slice(0, 120)}): fix the host, then resume`, { cause: error.code ?? null });
+  return error;
+}
 export class Store {
   // The updateRun in progress (its run id and the decisions recorded during it), so a decision commits with its chain event.
   #scope = null;
@@ -53,6 +63,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS timers(run_id TEXT NOT NULL, node_key TEXT NOT NULL, wake_at INTEGER NOT NULL, PRIMARY KEY(run_id,node_key));
       CREATE INDEX IF NOT EXISTS timers_due ON timers(wake_at);
       CREATE TABLE IF NOT EXISTS run_children(run_id TEXT NOT NULL, pid INTEGER NOT NULL, pgid INTEGER NOT NULL, start TEXT, kind TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY(run_id,pid));
+      CREATE TABLE IF NOT EXISTS run_interrupts(run_id TEXT PRIMARY KEY, pid INTEGER NOT NULL, signal TEXT NOT NULL, at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS signals(id TEXT PRIMARY KEY, run_id TEXT NOT NULL, digest TEXT NOT NULL, at INTEGER NOT NULL);
     `);
     // Run state is per-node rows (src/run-rows.mjs). `limits` are the state bounds; an instance may lower them (tests do).
@@ -65,7 +76,12 @@ export class Store {
   transaction(fn) {
     this.db.exec('BEGIN IMMEDIATE'); this.#depth++;
     try { const result = fn(); this.db.exec('COMMIT'); return result; }
-    catch (error) { this.db.exec('ROLLBACK'); throw error; }
+    catch (error) {
+      // SQLite rolls a transaction back by itself on some errors (SQLITE_FULL on COMMIT among them). A second ROLLBACK then
+      // throws "cannot rollback - no transaction is active" and would replace the error that matters (orch-20261021 C1).
+      if (this.db.isTransaction) { try { this.db.exec('ROLLBACK'); } catch { /* keep the original error */ } }
+      throw storageFault(error);
+    }
     finally { this.#depth--; }
   }
   #workflow(hash) {
@@ -145,6 +161,11 @@ export class Store {
   recordChild(runId, { pid, pgid, start = null, kind }) { this.rows.stmt('INSERT OR REPLACE INTO run_children(run_id,pid,pgid,start,kind,at) VALUES(?,?,?,?,?,?)').run(runId, pid, pgid, start, kind, Date.now()); }
   forgetChild(runId, pid) { this.rows.stmt('DELETE FROM run_children WHERE run_id=? AND pid=?').run(runId, pid); }
   forgetChildren(runId) { this.rows.stmt('DELETE FROM run_children WHERE run_id=?').run(runId); }
+  // An owner that stops on a signal it handles (bin/foundry.mjs interruptOnSignal) records it, so the next owner can tell a user's
+  // interruption from a crash (Runtime recover). Advisory: the refund it allows is recorded in the chain (node.recovered attemptRefunded).
+  markInterrupted(runId, { pid, signal }) { this.rows.stmt('INSERT OR REPLACE INTO run_interrupts(run_id,pid,signal,at) VALUES(?,?,?,?)').run(runId, pid, String(signal).slice(0, 16), Date.now()); }
+  interruptOf(runId) { const row = this.rows.stmt('SELECT pid,signal,at FROM run_interrupts WHERE run_id=?').get(runId); return row ? { ...row } : null; }
+  forgetInterrupt(runId) { this.rows.stmt('DELETE FROM run_interrupts WHERE run_id=?').run(runId); }
   children(runId) { return this.rows.stmt('SELECT pid,pgid,start,kind,at FROM run_children WHERE run_id=? ORDER BY at,pid').all(runId).map(row => ({ ...row })); }
   /** The ids of runs that have recorded process groups still on file. */
   childRunIds() { return this.rows.stmt('SELECT DISTINCT run_id FROM run_children ORDER BY run_id').all().map(row => row.run_id); }

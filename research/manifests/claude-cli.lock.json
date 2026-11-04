@@ -1,0 +1,46 @@
+{
+  "kind": "foundry.cli-lock/1",
+  "tool": "claude-code",
+  "version": "2.1.306",
+  "description": "Pin of the Claude Code CLI by bytes, not by version string (compromise C2; research/compromises-20261021/FIXES.md action 2; research/engine-20261021/ENGINE-BUMP.md section 4). src/cli-pin.mjs resolveCli() accepts only a binary at .foundry/cli/<sha256>/claude whose sha256 (and size) equal this platform's entry; scripts/fetch-cli.mjs fetches and verifies it. A null sha256 means the pin is not acquired for that platform and resolveCli refuses (CLI_UNPINNED) rather than falling back to PATH.",
+  "platforms": {
+    "linux-x64": { "binary": "claude", "sha256": "520bc6c1f40af466bd03a278b5ae1af1a2938bc7de5b9e5cb15526da20d71cfe", "size": 290532720 },
+    "linux-arm64": { "binary": "claude", "sha256": "77d257d5e8b8730ec61d5a4992a8eb65550aaf9589f464988aa1a9684338d801", "size": 290447544 },
+    "darwin-arm64": { "binary": "claude", "sha256": "b5d795b7760032d79954b55a9cd1876dcf3a8dc9608fd6bb9f618593f69fd44b", "size": 272984176 },
+    "darwin-x64": { "binary": "claude", "sha256": "fc273f4caaeb11189bfed82251496728cf1e650563cb9b5f70d91ec6bec42c17", "size": 284167840 }
+  },
+  "sources": {
+    "manifest": {
+      "url": "https://downloads.claude.ai/claude-code-releases/2.1.306/manifest.json",
+      "sha256": "2c2e75d5231f4169ca23e4a14f62608bd862bca4e21d7eb64456e8a9140f7896",
+      "bytes": 2101,
+      "commit": "01ae8327ca9931db91a0802d6e8e377419dd44e6",
+      "buildDate": "2026-10-21T01:32:56Z",
+      "binaryUrlTemplate": "https://downloads.claude.ai/claude-code-releases/2.1.306/<platform>/claude",
+      "binaryUrlChecked": "HEAD of the linux-x64 URL on 2026-10-21: HTTP 200, stored content length 290532720 (equal to the manifest size); body not downloaded"
+    },
+    "signature": {
+      "url": "https://downloads.claude.ai/claude-code-releases/2.1.306/manifest.json.sig",
+      "bytes": 833,
+      "issuerFingerprint": "31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE",
+      "documentedFingerprint": "31DD DE24 ... CACE (as quoted in research/compromises-20261021/FIXES.md; the visible parts match the issuer)",
+      "verified": false,
+      "note": "Not verified cryptographically from this environment: keys.openpgp.org serves the key for this fingerprint without a user ID, and neither gpg --import nor gpgv accepts it (No public key). Verify once with the publisher's full key before relying on the signature root."
+    },
+    "npm": {
+      "package": "@anthropic-ai/claude-code@2.1.306",
+      "url": "https://registry.npmjs.org/@anthropic-ai/claude-code/2.1.306",
+      "integrity": "sha512-7biQtEqwnigGbezCgmpkGfcleiRddNy7Z9FXLCxmaizBnC11Qk9dxnr6mPBMX5eTRbnoMGHHIsL5M5el1vWhlw==",
+      "shasum": "19ee36814fd23f840c75f3a61600c413ce75c56f",
+      "tarball": "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-2.1.306.tgz",
+      "unpackedSize": 189395,
+      "note": "Second root for the version: the registry's integrity of the 2.1.306 package tarball (a launcher, 189 KB unpacked), not of the native binary's bytes. Never installed (no npm install, no install hooks)."
+    }
+  },
+  "acquisition": {
+    "date": "2026-10-21T14:25:23Z",
+    "method": "HTTPS GET of the manifest, its detached signature and the npm version document through the session proxy; no binary was downloaded",
+    "outcome": "manifest and npm metadata fetched; sha256 and size per platform copied from the manifest. Cross-check: the CLI installed on this host (/opt/claude-code/bin/claude, reporting 2.1.306) has sha256 520bc6c1...71cfe and 290532720 bytes, equal to the linux-x64 entry. Signature not verified (see sources.signature). The binary itself is not in .foundry/cli yet: run node scripts/fetch-cli.mjs (needs >= 1 GB free disk) or copy a verified binary there.",
+    "licence": "Proprietary (Anthropic Commercial Terms; npm license field: SEE LICENSE IN README.md). Fetched for local execution only; never committed or redistributed (.foundry/ is git-ignored)."
+  }
+}

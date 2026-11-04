@@ -7,8 +7,14 @@ export class Results {
   constructor(file) {
     this.file = file; mkdirSync(path.dirname(file), { recursive: true });
     this.done = new Map();
-    if (existsSync(file)) for (const line of readFileSync(file, 'utf8').split('\n').filter(Boolean)) {
-      try { const r = JSON.parse(line); this.done.set(Results.key(r), r); } catch {}
+    if (existsSync(file)) {
+      const text = readFileSync(file, 'utf8');
+      for (const line of text.split('\n').filter(Boolean)) {
+        try { const r = JSON.parse(line); this.done.set(Results.key(r), r); } catch {}
+      }
+      // A write cut short (disk full, a kill) leaves a torn last line: end it, so the next record does not join it and get lost too
+      // (orch-20261021 C2). The torn line stays in the file as evidence; it parses as nothing.
+      if (text.length && !text.endsWith('\n')) appendFileSync(file, '\n');
     }
   }
   static key(r) { return `${r.arm}|${r.taskKey}|${r.trial}`; }

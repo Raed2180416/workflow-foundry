@@ -64,7 +64,9 @@ function validateRemoteChatProvider(name, p) {
 // CLI builds by about 165 tokens, see research/review-20261007/cli-flags-20261008/). A value is "1" (set) or null (removed from the child).
 // "0" is rejected: the CLI tests some of these variables for presence, so "0" does not reliably mean off (measured 2026-10-08:
 // CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=0 behaves exactly as =1, FORCE_PROMPT_CACHING_5M=0 as absent; cli-flags-20261008/zero-probe.json).
-export const CHILD_ENV_ALLOWED = Object.freeze(['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_ERROR_REPORTING', 'DISABLE_AUTOUPDATER']);
+// DISABLE_UPDATES (compromise C2, 2026-10-21): with DISABLE_AUTOUPDATER, keeps a CLI from replacing itself under a run (incident I3); the
+// pin by bytes is src/cli-pin.mjs. Neither changes the decoding.
+export const CHILD_ENV_ALLOWED = Object.freeze(['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'FORCE_PROMPT_CACHING_5M', 'DISABLE_TELEMETRY', 'DISABLE_ERROR_REPORTING', 'DISABLE_AUTOUPDATER', 'DISABLE_UPDATES']);
 /** Check a childEnv block ({ NAME: "1" | null }); `where` names it in the error. Returns the block. */
 export function validateChildEnv(childEnv, where = 'childEnv') {
   // A plain object only: a Map or class instance has no enumerable entries and would pass as an empty block.
@@ -76,7 +78,8 @@ export function validateChildEnv(childEnv, where = 'childEnv') {
   return childEnv;
 }
 
-export function validatePolicy(policy) {
+// executorOnly: a session subset that lists executor models alone (experiments/lib/models.mjs subsetPolicy); only then may models[] be empty.
+export function validatePolicy(policy, { executorOnly = false } = {}) {
   try { checkData(policy, { maxBytes: 1024 * 1024 }); } catch (error) { invalid(error.message); }
   if (!isObject(policy)) invalid('must be a JSON object');
   if (!nonEmpty(policy.policyVersion)) invalid('policyVersion is required');
@@ -103,7 +106,12 @@ export function validatePolicy(policy) {
     }
     if (p.kind === REMOTE_CHAT_KIND) validateRemoteChatProvider(name, p);
   }
-  if (!Array.isArray(policy.models) || !policy.models.length) invalid('models must be a non-empty list');
+  // models[] may be empty only in an executor-only session subset (executorOnly, with a non-empty executorModels[]: a Mercury-only stream,
+  // research/mercury-20261021/PORT-PROBE.md finding 1). Class resolution (modelsForClass, nextClass, resolve) reads models[] only, so it
+  // finds nothing and never reaches an executor model; every call must name its executor model (portModelById). The owner policy file and
+  // the Runtime (agent nodes resolve models[] by class or id) still need a non-empty models[].
+  const emptyAllowed = executorOnly === true && Array.isArray(policy.models) && Array.isArray(policy.executorModels) && policy.executorModels.length > 0;
+  if (!Array.isArray(policy.models) || (!policy.models.length && !emptyAllowed)) invalid('models must be a non-empty list (it may be empty only in an executor-only session subset)');
   const ids = new Set(), ports = new Set();
   for (const m of policy.models) {
     if (!isObject(m) || typeof m.id !== 'string' || !ID.test(m.id)) invalid(`model id ${JSON.stringify(m?.id)} is not a valid id`);

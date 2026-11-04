@@ -54,9 +54,14 @@ export function toolDefinitions(foundry) {
   // can invoke host-selected external adapters; do not advertise a universally
   // closed/additive world merely because the bundled examples are local.
   const dispatches = new Set(['foundry_run', 'foundry_run_json', 'foundry_resume', 'foundry_trial', 'foundry_trial_json']);
+  // Applying a proposal changes which program future runs execute. Claude Code shows a person a permission prompt for a tool marked
+  // anthropic/requiresUserInteraction on every call, in every permission mode, and never offers "don't ask again"
+  // (code.claude.com/docs/en/mcp, "Require approval for a specific tool"; read 2026-10-21). Other clients ignore the key.
+  const personOnly = new Set(['foundry_apply_proposal']);
   return defs.map(([name, description, inputSchema, execute, readOnly]) => ({
     name, description, inputSchema, execute,
-    annotations: { readOnlyHint: readOnly, destructiveHint: !readOnly, idempotentHint: readOnly, openWorldHint: dispatches.has(name) }
+    annotations: { readOnlyHint: readOnly, destructiveHint: !readOnly, idempotentHint: readOnly, openWorldHint: dispatches.has(name) },
+    ...(personOnly.has(name) ? { _meta: { 'anthropic/requiresUserInteraction': true } } : {})
   }));
 }
 

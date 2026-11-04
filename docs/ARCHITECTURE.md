@@ -64,6 +64,28 @@ response. Risk/authority approvals are separate runtime decisions bound to the
 exact tool, arguments and workflow hash; a human-answer node or model text cannot
 grant them. Changes in preference can trigger a versioned workflow proposal.
 
+A human node may also name a **principal requirement** (`principal: {role,
+threshold?: {amount, above, role}}`, since the 2026-10-21 engine bump;
+`src/principals.mjs`). The workflow names roles only; the role matrix (who holds
+which role, in the vocabulary of the OT-0 constitution: `roles` and `principals`)
+is supplied by the host (`Foundry`/`Runtime` option `principals`, `foundry answer
+--principals FILE --actor ID`), never by the workflow or a model. The requirement is
+bound when the question is asked: the actor must hold `role`, and when the amount
+is above `above` (or unreadable, or decided by untrusted data) also
+`threshold.role` (delegation of authority). A workflow-level `segregation` rule
+(`[{nodes: [A, B]}]`) makes the actors who answer the named nodes of one run
+pairwise distinct; who answered is read from the hash chain. The runtime refuses an
+answer from an actor without the roles (`PRINCIPAL_ROLE`), from an unknown actor,
+without an actor, on a host without a matrix, or against a segregation rule
+(`SOD_VIOLATION`); the `human.answered` event records the actor, the roles that
+authorised it and the matrix hash. With a matrix, validation solves the workflow
+satisfiability problem and rejects a workflow whose rules its principals can never
+satisfy (`SOD_UNSATISFIABLE`, `PRINCIPAL_ROLE_UNHELD`), returning a satisfying
+assignment otherwise. Without `principal`, a human node accepts any answer, as
+before. The actor is only as authenticated as the channel that supplies it (CLI
+flag, local HTTP); the MCP surface has no answer tool, and its
+`foundry_apply_proposal` requires a person on every call.
+
 Map/loop nodes contain a nested workflow; output and per-iteration execution state
 are namespaced. Every nested step is charged to the parent budget. Adapters must
 reject constructs whose semantics they cannot preserve.

@@ -8,6 +8,7 @@ import { classIndex, modelById, modelsForClass } from './models/policy.mjs';
 import { lintWorkflow } from './lint.mjs';
 import { correlateTemplates, isSignalWait, parseAt, routeOf, subscriptionsOf, timeoutMode } from './signals.mjs';
 import { CURSOR_ORDERS, instantNanos, isStateWrite, slotOf, STATE_ARGS, STATE_LIMITS, STATE_OPS } from './state.mjs';
+import { principalProblems, roleMatrix, satisfiability } from './principals.mjs';
 
 export { bindOutput, OUTPUT_KEY };
 
@@ -101,7 +102,7 @@ const entry = (key, label) => label === 'trusted' ? {} : { [key]: label };
 const common = new Set(['id', 'kind', 'needs', 'description', 'when', 'join']);
 const fields = {
   task: ['tool', 'args', 'timeoutMs', 'retry', 'onError'], assert: ['checks'],
-  human: ['question', 'answerSchema'], wait: ['delayMs', 'at', 'signal', 'race', 'correlate', 'schema', 'timeoutMs', 'onTimeout', 'label'],
+  human: ['question', 'answerSchema', 'principal'], wait: ['delayMs', 'at', 'signal', 'race', 'correlate', 'schema', 'timeoutMs', 'onTimeout', 'label'],
   map: ['items', 'maxItems', 'body', 'input', 'concurrency', 'failure'],
   loop: ['maxIterations', 'body', 'until', 'initial', 'input'],
   agent: ['role', 'instructions', 'context', 'returns', 'model', 'decoding', 'checks', 'escalation', 'quarantined', 'timeoutMs', 'onError'],
@@ -301,7 +302,10 @@ function checkWaitRoute(node, byId, at, add) {
 
 // strict: also run the construction lint (lint.mjs). Its error findings make the workflow invalid, its warnings are
 // appended to `warnings`, and the structured report is returned as `lint`. Default validation is unchanged.
-export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPolicy = null, strict = false } = {}) {
+// principals: the host's role matrix (src/principals.mjs roleMatrix, or a constitution document). With it, a workflow whose human nodes and
+// segregation rules can never be satisfied by the principals it lists is invalid (SOD_UNSATISFIABLE, PRINCIPAL_ROLE_UNHELD); without it only
+// the structure of principals and segregation rules is checked. Workflows without principals are unaffected either way.
+export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPolicy = null, strict = false, principals = null } = {}) {
   const errors = [], warnings = [];
   try { checkData(workflow); } catch (e) { return { valid: false, errors: [{ code: e.code, message: e.message }], warnings }; }
   if (!shape(workflow)) return { valid: false, errors: shape.errors.map(e => ({ code: 'SCHEMA', path: e.instancePath, message: `${e.message} ${JSON.stringify(e.params)}` })), warnings };
@@ -481,6 +485,18 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
     }
   }
   if (workflow.inputSchema) try { compileDataSchema(workflow.inputSchema); } catch (e) { add(e.code ?? 'INVALID_SCHEMA', e.message, 'inputSchema'); }
+  // Principals and segregation of duties (compromise D1, src/principals.mjs).
+  let principalAssignment;
+  for (const p of principalProblems(workflow)) add(p.code, p.message, p.path);
+  if (principals && !errors.some(e => e.code === 'SOD_NODE')) {
+    let matrix = null;
+    try { matrix = principals.hash && principals.roles instanceof Set ? principals : roleMatrix(principals); } catch (e) { add(e.code ?? 'PRINCIPALS_INVALID', e.message, 'principals'); }
+    if (matrix) {
+      const solved = satisfiability(workflow, matrix);
+      for (const { severity, ...p } of solved.problems) (severity === 'error' ? errors : warnings).push({ code: p.code, message: p.message, path: p.path });
+      principalAssignment = solved.assignment;
+    }
+  }
   if (!errors.length) {
     const dataflow = analyzeDataflow(workflow, registry);
     errors.push(...dataflow.errors); warnings.push(...dataflow.warnings);
@@ -495,7 +511,8 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
     for (let i = warnings.length - 1; i >= 0; i--) if (warnings[i].code === 'ERROR_COLLECTION' || warnings[i].code === 'ERROR_CONTINUATION') warnings.splice(i, 1);
     for (const { severity, ...finding } of lint.findings) (severity === 'error' ? errors : warnings).push({ ...finding, severity });
   }
-  return { valid: errors.length === 0, errors, warnings, nodeCount: total, ...(strict ? { strict: true, lint } : {}), ...(errors.length ? {} : { hash: digest(workflow) }) };
+  return { valid: errors.length === 0, errors, warnings, nodeCount: total, ...(strict ? { strict: true, lint } : {}), ...(errors.length ? {} : { hash: digest(workflow) }),
+    ...(principalAssignment && Object.keys(principalAssignment).length ? { principalAssignment } : {}) };
 }
 
 export function requireWorkflow(workflow, options) {

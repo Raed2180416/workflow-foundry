@@ -1,0 +1,46 @@
+{
+  "contract": "foundry-engine-lineage/1",
+  "description": "Engine compatibility ranges (research/engine-20261021/ENGINE-BUMP.md section 1). `version` is this engine's release number; a run whose bound engine is a predecessor with version >= `resumesFrom` may resume under this engine, and the runtime records the migration (engine.migrated) in the run's chain. A predecessor is recognised only by its exact source identity: its `files` map, combined with this host's node/platform/architecture/validator, must hash to the engine hash the run recorded. Anything else is ENGINE_DRIFT, as before. This file is part of the engine identity (src/engine.mjs), so a change to a declared range is itself an engine change. It is written by the engine's maintainer after review, never by a model or a run.",
+  "version": 2,
+  "resumesFrom": 1,
+  "changes": [
+    "engine compatibility ranges and engine.migrated (this file; src/engine.mjs, src/runtime.mjs execute, src/audit.mjs engineBinding)",
+    "orch-20261021 patches 01-09: typed STORAGE_FULL/STORAGE_UNAVAILABLE; a recorded cancel request stops new starts; a handled Ctrl-C refunds a pure task's attempt (run_interrupts); outages retry on the same model then park agent nodes (status waiting, parked, parks; read only by this engine, absent from version-1 records); PDEATHSIG lifeline on spawns; budget.maxTokens and TOKEN_BUDGET (a version-1 run's bound policy has no maxTokens and keeps no runtime token limit). Each reads a version-1 record as version 1 wrote it.",
+    "verdict.remedy per stop code (rank 15): a field added to new verdicts; version-1 verdicts are read and re-graded as before (recompute compares verdict, code and authority only).",
+    "principal requirements on human nodes and workflow segregation rules (compromise D1, src/principals.mjs): optional IR fields; a version-1 run's workflow has none, its human nodes carry no bound requirement, and its answers are taken as before.",
+    "children.mjs lifelineExecFailed: setpriv's own exec failure is a launch failure (PROCESS_LAUNCH), as the spawn error was in version 1.",
+    "models/policy.mjs: DISABLE_UPDATES in the closed child-env list; an executor-only session subset may have an empty models[] (validatePolicy option executorOnly). Neither changes a version-1 run's model policy, which is bound by its own hash (MODEL_POLICY_DRIFT applies as before)."
+  ],
+  "predecessors": [
+    {
+      "version": 1,
+      "source": "commit 96cab64 (2026-10-21), the engine the 10-21 paid runs were created with",
+      "files": {
+        "engine.mjs": "ea151e74b1ffec5fd436b85e3b5688cdbf6c5333d99b6a5d0ecdc89e5cfc216e",
+        "runtime.mjs": "73621cdade19c2956bbc94e41886f61ee97a990182ef8b740cb2bfdc36558bd1",
+        "store.mjs": "5b607599f8b46afae803f962a83bcdfba27df6e5e081539525b01c1abbe48198",
+        "run-rows.mjs": "68ce673181a90b678f3aa2e9370fb9bd8e9bd69999239c75aa310bb789a8d473",
+        "data.mjs": "50049ae8819aa022481faafb435f2887d94fa669ceef1b6375c8d4a664e7680c",
+        "dataflow.mjs": "5df69b3c7d0d0c31d961e2842c2c529f5d773a939420b5a58768976fc71202b6",
+        "validate.mjs": "45d418c4a52e3f7ffe3c346ffe59819d408475e06961bd249c2fabcc96c55126",
+        "lint.mjs": "1ec7a60e1db24b4dedbce4fc1b9004c2a0eb5063a42abc8f7e207639558b495a",
+        "acceptance.mjs": "222a316212b2b213fec35ef052b73538f8a1435a9e59001a4f19b02499f3ebbf",
+        "capabilities.mjs": "1707d4506f50e86498fa471dc3c8714615e6c06a1240014f2515aab58cc3ac49",
+        "context.mjs": "f1024b4bf689374713a589899c7ac4a83d3a7044d82230c7ebbdfd89b485fe5d",
+        "verdict.mjs": "729d36a23a90667b78458189ba0780e9e038144986ee44e4b0124fe871a11673",
+        "audit.mjs": "b1059e3ce7320078061d5279553ce67c657df21594aeebe1e19d06fea98c14a6",
+        "sandbox.mjs": "871aa71a43e60f553ac0322b1d1e2b09fc1771071e04cca58eb004001dc63f26",
+        "children.mjs": "68a763b3e9f948cda0286e12381bb6bbda19f360fa29fbf76e9ebee9c715d6c5",
+        "schema-subset.mjs": "20a6f35b8c9b25ce43820f08adf5de1c31a6115444c0bbabfa43ddd3ab2ef5eb",
+        "models/port.mjs": "bdc48f1fcd53ba2c7c788c0d97922965dbaff686a859a55f1dd3638b1068873a",
+        "models/policy.mjs": "95390dec17adbfa0c68dc0e05314e7a95192e79e303b006412a1bedb4500b572",
+        "journal.mjs": "090e019434a64676690af187187e110bfa78d0f51745aa7b43d2e02d938ffef7",
+        "state.mjs": "72a27fd7aa34f66420de31b5e79032cd81e320627227b80112ad74fef16cafd5",
+        "signals.mjs": "617b96c34050cbcacb71c174078c295390554400279fbbd9b3b4342e66dd268a",
+        "../schemas/workflow.schema.json": "8993fd829bc9422ac2265a54f979e3097f78e775f38e358b8666f72f7e19bfef",
+        "../schemas/identity.schema.json": "19196a563018fc0650dd3f86878413117bc68782624e4de177be2174f124cfcd",
+        "../schemas/decision.schema.json": "a1207a41cbc62036d193e487c163307520b67366a0257420b528359253dd2570"
+      }
+    }
+  ]
+}

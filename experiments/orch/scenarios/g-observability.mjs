@@ -5,6 +5,7 @@ import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { Store } from '../../../src/store.mjs';
 import { Runtime } from '../../../src/runtime.mjs';
+import { remedyOf } from '../../../src/verdict.mjs';
 import { agentNode, eq, exists, HAIKU, mapNode, POLICY, probeRegistry, ref, ROOT, scriptedPort, task, tmp, until, wait, wf } from '../lib/harness.mjs';
 import { owner, startOwner } from '../lib/proc.mjs';
 
@@ -26,7 +27,11 @@ export default [
         const runtime = new Runtime(store, registry, { allowedCapabilities: registry.list().map(c => c.name), maxCost: 5, ...policy }, { models: port, modelPolicy: POLICY });
         const run = runtime.create(workflow, input);
         const final = await runtime.execute(run.id);
-        cases[name] = { status: final.status, code: final.error?.code ?? null, verdict: final.verdict?.verdict, reason: final.verdict?.reason ?? null, message: final.error?.message ?? null };
+        // What the record tells the user: its error and verdict, and (engine bump 2026-10-21, rank 15) the remedy remedyOf reads from the
+        // record for every stop, a park included (a parked run has no error and no verdict). The checks below are unchanged.
+        const stop = remedyOf(final);
+        cases[name] = { status: final.status, code: final.error?.code ?? stop?.code ?? null, verdict: final.verdict?.verdict, reason: final.verdict?.reason ?? null,
+          message: [final.error?.message, stop?.text].filter(Boolean).join(' ') || null };
         store.close();
       };
       await lib('rate-limit', wf('G1rate', [agentNode('j', { model: HAIKU })], [exists(ref('nodes.j.v'))]), () => ({ error: { code: 'MODEL_RATE_LIMIT', message: '429; retry-after: 1' } }), { raw: '1' });
@@ -39,7 +44,9 @@ export default [
       await o.waitFor('executing'); await wait(800); o.child.kill('SIGKILL'); await o.done;
       const u = await owner({ workspace: ws, action: 'execute', runId: c.lines[0].runId });
       const s = new Store(ws); const ur = s.run(c.lines[0].runId); s.close();
-      cases.uncertain = { status: ur.status, code: ur.error?.code ?? null, verdict: ur.verdict?.verdict, reason: ur.verdict?.reason ?? null, message: ur.error?.message ?? null, resumeSaw: u.result?.status };
+      const ustop = remedyOf(ur);
+      cases.uncertain = { status: ur.status, code: ur.error?.code ?? ustop?.code ?? null, verdict: ur.verdict?.verdict, reason: ur.verdict?.reason ?? null,
+        message: [ur.error?.message, ustop?.text].filter(Boolean).join(' ') || null, resumeSaw: u.result?.status };
       const checks = Object.entries(cases).map(([name, c]) => ({ name: `${name}: cause, continuability and next action stated`, pass: !!c.code && NEXT.test(`${c.reason} ${c.message}`) && /resum|final|cannot continue|can continue/i.test(`${c.reason} ${c.message}`),
         observed: `${c.status}/${c.verdict} ${c.code}: ${String(c.reason).slice(0, 110)}` }));
       return { observed: cases, checks };

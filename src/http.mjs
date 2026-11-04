@@ -89,7 +89,7 @@ export async function serveHttp(foundry, { port = 4177, host = '127.0.0.1', tick
         }
         if (parts.length === 4 && parts[1] === 'runs') {
           if (parts[3] === 'answers') {
-            foundry.runtime.answer(parts[2], data.nodeId, data.answer);
+            foundry.runtime.answer(parts[2], data.nodeId, data.answer, { actor: typeof data.actor === 'string' ? data.actor : null, channel: 'http' });
             foundry.startRun(parts[2]).catch(error => console.error('Foundry resume:', error.code, error.message));
             return json(202, foundry.inspectRun(parts[2]));
           }

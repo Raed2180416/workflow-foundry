@@ -74,7 +74,7 @@
 // - Harvest (I8) drops a script that is byte-identical to a file the node was given (a shipped decoder copied out).
 import path from 'node:path';
 import { readFileSync, writeFileSync, appendFileSync, mkdirSync, existsSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { runCompiled, canonicalJson, FLOW_V2 } from './run-compiled.mjs';
 import { validateOutput } from './interpret.mjs';
 import { AGENT_TOOLS, DEFAULT_AGENT_TOOLS, MAX_AGENT_TOOLS, DEFAULT_AGENT_FLOOR_USD, DEFAULT_AGENT_CONCURRENCY, DEFAULT_AGENTS_PER_RUN, DEFAULT_MAX_AGENT_DEPTH,
@@ -83,6 +83,7 @@ import { compileDataSchema, validateData } from '../../src/validate.mjs';
 import { checkProfile, checkOptionsOf, profileSupports, PROFILE_SCHEMA } from './profile.mjs';
 import { reserveFor } from '../lib/services.mjs';
 import { ENV_FAULTS } from '../lib/runner.mjs';
+import { lockWorkdir } from '../lib/workdir-lock.mjs';
 import { FoundryError } from '../../src/data.mjs';
 
 export const FLOW_V3 = path.resolve(new URL('./flow-v3.mjs', import.meta.url).pathname);
@@ -270,9 +271,15 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
   if (!NOVEL_MODES.includes(novelMode)) throw new Error(`createCallHost: novelMode must be one of ${NOVEL_MODES.join(', ')}`);
   if (interpreter != null && typeof interpreter !== 'function') throw new Error('createCallHost: interpreter must be a function ({task, outputSchema, budgetUsd, timeoutMs, workdir, ...}) => {answer, costUsd}');
   if (!(typeof interpretFloorUsd === 'number' && interpretFloorUsd >= 0)) throw new Error('createCallHost: interpretFloorUsd must be a number >= 0');
-  const events = [], journalOut = [], spans = new Map(), memo = new Map();
+  const events = [], journalOut = [], spans = new Map(), memo = new Map(), inflightCalls = new Map();
   for (const row of journal ?? []) if (row?.key && row.result?.status === 'ok') memo.set(row.key, { result: row.result, replayed: true });   // call and agent rows (keys differ)
   const tree = { children: 0 };
+  // Child workdirs are unique by construction (orch-20261021 rank 12): one host serves several solver runs (each check case), whose
+  // child spans repeat (call:x#0 in every case), so a name from the span alone was shared by concurrent cases and their files clobbered
+  // each other. A host tag and a sequence number make every child's directory its own; the workdir lock stays as the guard.
+  const hostTag = randomUUID().slice(0, 8);
+  let workdirSeq = 0;
+  const uniqueDir = name => `${name}~${hostTag}-${++workdirSeq}`;
   const agentCfg = agentConfigOf(agent, { allowedModels, modelPort });
   const agentState = { admitted: 0, started: 0, nodePaths: new Set(), running: 0, queue: [], harvests: [], ordinals: new Map() };
   const envFaults = [];   // review fix C1/I5: {code, path, kind} per environment fault met anywhere in the tree
@@ -391,7 +398,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       }
       return out;
     }
-    const workdir = path.join(workRoot, 'calls', dirOf(child.path));
+    const workdir = path.join(workRoot, 'calls', uniqueDir(dirOf(child.path)));
     // runCompiled writes tools/flow-scope.json itself (after clearing a stale one), from flowScope.
     const r = await runCompiled({ solvePath: entry.solvePath, task, modelPort: wrapPort(child), perTaskUsd: child.budgetUsd, timeoutMs, workdir, outputSchema: entry.contract.output,
       allowedModels: withCallModel(allowedModels), flowPath: entry.flowVersion === 2 ? FLOW_V2 : FLOW_V3, label: `call:${entry.hash.slice(7, 19)}`,
@@ -403,11 +410,15 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
   // FLOW-V3 §1.5 local deopt: the interpreter on the child task alone, under budgetUsd (already reserved by the caller).
   // Returns {ok, output?, error?, costUsd, costUnknown, traceId}; never throws.
   async function interpretChild({ entry, task, span, childPath, budgetUsd, timeoutMs, reason }) {
-    const workdir = workRoot ? path.join(workRoot, 'interpret', dirOf(childPath)) : null;
+    const workdir = workRoot ? path.join(workRoot, 'interpret', uniqueDir(dirOf(childPath))) : null;
     if (workdir) mkdirSync(workdir, { recursive: true });
+    // One runner per workdir (orch-20261021 rank 12): another host sharing this workRoot is refused, nothing spent.
+    const lock = workdir ? lockWorkdir(workdir, { label: `interpret:${childPath}` }) : null;
+    if (lock && !lock.ok) return { ok: false, error: { code: 'WORKDIR_BUSY', message: `interpret workdir in use by pid ${lock.holder?.pid ?? '?'}` }, costUsd: 0, costUnknown: false, traceId: null };
     let r;
     try { r = (await interpreter({ task, outputSchema: entry.contract.output, budgetUsd, timeoutMs, workdir, name: span?.replace(/^call:|#\d+$/g, '') ?? null, span, path: childPath, callee: entry.hash, reason, arm, taskKey })) ?? {}; }
     catch (error) { return { ok: false, error: { code: error.code ?? 'INTERPRETER', message: short(error, 400) }, costUsd: 0, costUnknown: false, traceId: null }; }
+    finally { lock?.release(); }
     const costUnknown = !!r.costUnknown, costUsd = usd(costUnknown ? Math.max(r.costUsd ?? 0, budgetUsd) : (r.costUsd ?? 0));
     const traceId = r.traceId ?? null;
     if (r.answer == null) return { ok: false, error: r.error ?? { code: 'NO_ANSWER' }, costUsd, costUnknown, traceId };
@@ -426,7 +437,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
     const itemAttempt = itemAttemptOf(req);
     const key = callee && inputDigest ? callKeyOf({ callee, inputDigest, parentPath: scope.path, promptDigest, itemAttempt }) : null;
     const onRefuse = ON_REFUSE.includes(req.onRefuse) ? req.onRefuse : 'deopt', onDeopt = ON_DEOPT.includes(req.onDeopt) ? req.onDeopt : 'propagate';
-    let entry = null, span = null, applicability = { checked: false }, warning = null;
+    let entry = null, span = null, applicability = { checked: false }, warning = null, landed = null;
     if (name) {
       // The SDK's span id is used when well formed and unused in this scope (it is deterministic: fixed in call order);
       // otherwise the host numbers it.
@@ -522,8 +533,13 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       }
       const hit = memo.get(key);
       if (hit) return finish({ ...hit.result, memo: hit.replayed ? 'replay' : 'repeat' });
+      // Single flight (orch-20261021 A9): an identical call (same key) already running is joined instead of run a second time; the memo
+      // above only knows calls that have ended. A joined call that did not end ok runs on its own, as before.
+      const flying = inflightCalls.get(key);
+      if (flying) { const settled = await flying; if (settled?.status === 'ok') return finish({ ...settled, memo: 'joined' }); }
       const no = budgetRefusal(childUsd, entry.minBudgetUsd ?? budgetFloorUsd);
       if (no) return refuse(no[0], no[1]);
+      inflightCalls.set(key, new Promise(resolve => { landed = resolve; }));
 
       // Reserve, run, release. The reservation returns to the caller when the child ends; its spend is booked to the caller.
       tree.children++;
@@ -565,8 +581,10 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       }
       const envFault = childFault ?? (interp && !interp.ok ? envFaultOf({ error: interp.error }) : null);
       if (envFault) result = { ...result, envFault };
+      if (landed) { inflightCalls.delete(key); landed(result); landed = null; }
       return finish(result, { costUsd, costUnknown: !!r.costUnknown || !!interp?.costUnknown, child });
     } catch (error) {
+      if (landed) { inflightCalls.delete(key); landed(null); landed = null; }
       // A host fault before the child ran (a malformed registry entry, a profile that cannot be read): a child deopt.
       return finish({ status: 'deopt', childStatus: 'host-error', deopt: { kind: 'host-error', name: null, detail: short(error, 400) } });
     }
@@ -655,8 +673,11 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
       agentState.admitted++;
       const timeoutMs = Math.min(agentCfg.maxTimeoutMs, Number.isInteger(req.timeoutMs) && req.timeoutMs > 0 ? req.timeoutMs : 10 * 60 * 1000);
       const stallMs = Number.isInteger(req.stallMs) && req.stallMs > 0 ? req.stallMs : agentCfg.stallMs;
-      const workdir = workRoot ? path.join(workRoot, 'agents', `${dirOf(nodePath)}-a${attempt}`) : null;
+      const workdir = workRoot ? path.join(workRoot, 'agents', uniqueDir(`${dirOf(nodePath)}-a${attempt}`)) : null;
       let run = null, spent = 0, restarts = 0, stalls = 0, costUnknown = false;
+      // One runner per workdir (orch-20261021 rank 12): the agent's workdir (and its -rN restart dirs) belong to this host while it runs.
+      const lock = workdir ? lockWorkdir(workdir, { label: `agent:${nodePath}` }) : null;
+      try {
       await reserveOn(scope, amount, gatewayHoldUsd, async () => {
         await acquireSlot();
         try {
@@ -667,7 +688,8 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
             if (stallMs) { timer = setInterval(() => { if (Date.now() - last > stallMs) { stalled = true; ac.abort(); } }, Math.max(5, Math.min(1000, Math.floor(stallMs / 4)))); timer.unref?.(); }
             let r;
             try {
-              r = (await agentCfg.runner({ instructions: req.instructions, files, inputs: req.inputs, returns: req.returns, model, tools, budgetUsd: usd(amount - spent), timeoutMs,
+              if (lock && !lock.ok) r = { answer: null, costUsd: 0, error: { code: 'WORKDIR_BUSY', message: `agent workdir in use by pid ${lock.holder?.pid ?? '?'}` } };
+              else r = (await agentCfg.runner({ instructions: req.instructions, files, inputs: req.inputs, returns: req.returns, model, tools, budgetUsd: usd(amount - spent), timeoutMs,
                 workdir: workdir ? (restarts ? `${workdir}-r${restarts}` : workdir) : null, signal: ac.signal, progress: () => { last = Date.now(); }, retryReason, name, span, attempt,
                 path: nodePath, arm, taskKey })) ?? {};
             } catch (error) { r = { answer: null, costUsd: 0, error: { code: error.code ?? 'AGENT_RUNNER', message: short(error, 400) } }; }
@@ -683,6 +705,7 @@ export function createCallHost({ registry, modelPort = null, ledger = null, maxD
           }
         } finally { releaseSlot(); }
       });
+      } finally { lock?.release(); }
       scope.spentUsd += spent;
       // Void, failed or ok (the verify is the caller's).
       let result;

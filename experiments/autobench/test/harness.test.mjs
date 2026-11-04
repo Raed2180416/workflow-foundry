@@ -96,7 +96,7 @@ test('manifest: covers what run.mjs loads; the hash pins files and settings', ()
   // §7 / H8: the config pins the policy entries the run uses, the CLI child environment, the corpus and the knowledge.
   assert.equal(cfg.policy.model.id, 'claude-haiku-5-5');
   assert.equal(cfg.policy.provider.kind, 'claude-cli');
-  assert.deepEqual(Object.keys(cfg.childEnv).sort(), ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'DISABLE_AUTOUPDATER', 'DISABLE_ERROR_REPORTING', 'DISABLE_TELEMETRY', 'FORCE_PROMPT_CACHING_5M']);
+  assert.deepEqual(Object.keys(cfg.childEnv).sort(), ['CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', 'DISABLE_AUTOUPDATER', 'DISABLE_ERROR_REPORTING', 'DISABLE_TELEMETRY', 'DISABLE_UPDATES', 'FORCE_PROMPT_CACHING_5M']);
   assert.ok(cfg.knowledge.length >= 1);
   assert.notEqual(harnessManifest({ ...cfg, childEnv: { ...cfg.childEnv, FORCE_PROMPT_CACHING_5M: cfg.childEnv.FORCE_PROMPT_CACHING_5M === '1' ? null : '1' } }).sha256, a.sha256);
   assert.notEqual(harnessManifest({ ...cfg, corpus: { ...cfg.corpus, commit: '0'.repeat(40) } }).sha256, a.sha256);

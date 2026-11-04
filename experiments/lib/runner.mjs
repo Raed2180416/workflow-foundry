@@ -16,8 +16,15 @@ export const armHash = arm => createHash('sha256').update(canonical({ id: arm.id
 // retries it; more than 25% faulted trials (after at least 8 attempts in one runExperiment call) stops the run as a stall.
 // strictResume (opt-in) refuses to resume over trials recorded by another version of an arm (a different armHash).
 // Both are opt-in so experiments already in progress keep the semantics they started with.
-export const ENV_FAULTS = Object.freeze(new Set(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL']));
-export const metEnvFault = r => ENV_FAULTS.has(r?.error?.code) || Object.keys(r?.meta?.errors ?? {}).some(c => ENV_FAULTS.has(c));
+// Host infrastructure (orch-20261021 C2): a full disk, a quota, an exhausted file table or a store that cannot be written is the host's
+// fault, never the task's; autobench/run.mjs INFRA_FAULT already treated them so, the generic runner and the call host did not.
+export const ENV_FAULTS = Object.freeze(new Set(['MODEL_RATE_LIMIT', 'MODEL_UNAVAILABLE', 'SANDBOX_UNAVAILABLE', 'EXECUTOR_LAUNCH', 'EXECUTOR_PROTOCOL',
+  'ENOSPC', 'EDQUOT', 'EMFILE', 'ENFILE', 'STORAGE_FULL', 'STORAGE_UNAVAILABLE',
+  // A run refused because another run holds its workdir (experiments/lib/workdir-lock.mjs, orch-20261021 rank 12): the harness's fault.
+  'WORKDIR_BUSY']));
+const INFRA_TEXT = /ENOSPC|EDQUOT|EMFILE|ENFILE|no space left|database or disk is full|SQLITE_FULL|No usable temporary directory/i;
+export const metEnvFault = r => ENV_FAULTS.has(r?.error?.code) || Object.keys(r?.meta?.errors ?? {}).some(c => ENV_FAULTS.has(c))
+  || INFRA_TEXT.test(`${r?.error?.message ?? ''} ${r?.error?.errstr ?? ''}`);
 export const faultsFileOf = resultsFile => resultsFile.replace(/\.jsonl$/, '') + '.faults.jsonl';
 export const STALL_MIN_ATTEMPTS = 8, STALL_FRACTION = 0.25;
 

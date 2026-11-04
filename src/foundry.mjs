@@ -10,6 +10,7 @@ import { checkData, clone, digest, errorData, FoundryError } from './data.mjs';
 import { TrialRunner } from './trials.mjs';
 import { loadPolicy } from './models/policy.mjs';
 import { cancelRun, stopAll } from './control.mjs';
+import { remedyOf } from './verdict.mjs';
 
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const skillRoot = path.join(packageRoot, 'skills');
@@ -38,13 +39,14 @@ export class Foundry {
   // modelPolicy defaults to the committed owner policy; models (a ModelPort) is never created implicitly,
   // so no workflow can spend on a model unless the host wires a port in explicitly. A host may pass
   // models as a factory store => ModelPort when its journal must live in this workspace's store.
-  constructor(workspace, { registry = createDefaultRegistry(), policy = {}, trialPolicy = {}, modelPolicy, models = null, codeRunner, cancelPollMs, cancelGraceMs } = {}) {
+  // principals: the host's role matrix for human nodes with a principal requirement (src/principals.mjs); never the workflow's.
+  constructor(workspace, { registry = createDefaultRegistry(), policy = {}, trialPolicy = {}, modelPolicy, models = null, codeRunner, cancelPollMs, cancelGraceMs, principals = null } = {}) {
     if (modelPolicy === undefined) {
       try { modelPolicy = loadPolicy(); } catch (error) { modelPolicy = null; this.modelPolicyError = errorData(error); }
     }
     this.store = new Store(workspace); this.registry = registry; this.modelPolicy = modelPolicy;
     if (typeof models === 'function') models = models(this.store);
-    this.runtime = new Runtime(this.store, registry, policy, { models, modelPolicy, ...(codeRunner ? { codeRunner } : {}), ...(cancelPollMs === undefined ? {} : { cancelPollMs }), ...(cancelGraceMs === undefined ? {} : { cancelGraceMs }) }); this.active = new Map();
+    this.runtime = new Runtime(this.store, registry, policy, { models, modelPolicy, principals, ...(codeRunner ? { codeRunner } : {}), ...(cancelPollMs === undefined ? {} : { cancelPollMs }), ...(cancelGraceMs === undefined ? {} : { cancelGraceMs }) }); this.active = new Map();
     this.trialRunner = new TrialRunner(this, trialPolicy);
   }
   async close() { await this.trialRunner.close(); await Promise.allSettled([...this.active.values()].map(x => x.promise)); this.store.close(); }
@@ -92,9 +94,10 @@ export class Foundry {
       limits: ['Local completion is not independent task qualification.', 'Proprietary-product equivalence and arbitrary worst-case robustness are not established.']
     };
   }
+  // `remedy` (orch-20261021 rank 15): for a run that stopped or is parked, the cause, whether it can continue and the next action.
   publicRun(run) {
     const { policy, extra, owner, ...visible } = run;
-    return { ...visible, executionActive: !!owner, independentTaskVerified: false };
+    return { ...visible, executionActive: !!owner, independentTaskVerified: false, remedy: remedyOf(run) };
   }
   inspectRun(id) { return { ...this.publicRun(this.store.run(id)), events: this.store.events(id) }; }
   // Only the documented run options pass through; fault injection (extra) stays a trusted test-only path.

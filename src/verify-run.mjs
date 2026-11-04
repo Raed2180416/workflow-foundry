@@ -4,10 +4,10 @@
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { digest } from './data.mjs';
-import { AUDIT, anchorOfEvents, bindRow, identityChanges, journalRow, journalRowsAfter, journalSeal, sha256, verdictInputsHash } from './audit.mjs';
+import { AUDIT, anchorOfEvents, bindRow, engineBinding, identityChanges, journalRow, journalRowsAfter, journalSeal, sha256, verdictInputsHash } from './audit.mjs';
 import { REPLAYABLE_ERRORS } from './journal.mjs';
 import { verdictOf } from './verdict.mjs';
-import { engineHash } from './engine.mjs';
+import { engineHash, engineOf } from './engine.mjs';
 import { replayWaits, signalCheckpointDrift } from './signals.mjs';
 import { stateOpHash } from './state.mjs';
 
@@ -82,8 +82,13 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
 
   // 1b. The run record's identity against its immutable birth event: the workflow, input, policy, engine, registry and model binding
   // the run was created with. Nothing rewrites these after creation, so any difference is an edit (07 §4.4).
-  const birth = events[0], identity = identityChanges(run, birth);
+  const birth = events[0], identity = identityChanges(run, birth, events);
   if (identity.length) add('error', 'RUN_IDENTITY_EDITED', `The run record no longer matches its birth event (${identity.join(', ')})`, { changed: identity });
+  // Engine migrations (research/engine-20261021/ENGINE-BUMP.md §1): each one recorded is reported; a chain whose migrations do not follow
+  // on from each other is an error (identityChanges names it too). Whether each was allowed was the migrating engine's lineage.
+  const engines = engineBinding(events);
+  if (!engines.valid) add('error', 'ENGINE_MIGRATION_INVALID', 'The run\'s engine.migrated events do not follow on from its birth engine and from each other');
+  for (const m of engines.migrations) add('info', 'ENGINE_MIGRATED', `The run moved from engine ${String(m.from).slice(0, 12)} (version ${m.fromVersion ?? '?'}) to ${String(m.to).slice(0, 12)} (version ${m.toVersion ?? '?'}) at event ${m.seq}${engineOf(m.to) ? '' : '; this engine does not know the target engine'}`, { seq: m.seq, fromVersion: m.fromVersion, toVersion: m.toVersion });
   // The workflow the run executed, by its content hash: an edited or deleted body cannot be the one the chain names.
   let workflow = null;
   try { workflow = store.workflow(birth.workflowHash).workflow; }
@@ -216,8 +221,8 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
     if (edited.length) add('error', 'VERDICT_EDITED', `The run's stored verdict differs from the verdict sealed in the chain at event ${current.seq} (${edited.join(', ')})`, { seq: current.seq, changed: edited });
     else if (inputsMatch) {
       // Informational unless the engine is unchanged: a later engine may grade the same evidence differently.
-      // The engine identity comes from the birth event, not the (editable) run record.
-      const sameEngine = birth.engineHash === engineHash;
+      // The engine identity comes from the chain (birth event and recorded migrations), not the (editable) run record.
+      const sameEngine = engines.valid && engines.hash === engineHash;
       let recomputed = null;
       if (workflow) try { recomputed = verdictOf(run, { workflow }); } catch (cause) { add('warn', 'VERDICT_NOT_RECOMPUTED', `The verdict could not be recomputed: ${cause.code ?? cause.message}`); }
       if (recomputed && ['verdict', 'code', 'authority'].some(key => (recomputed[key] ?? null) !== (current[key] ?? null)))
@@ -306,8 +311,29 @@ function check(store, runId, { journalDb: given = null, expectHead = null, ancho
   // decisions against the chain. A re-derived decision that differs is an error on the engine that recorded it (the rule is a pure function
   // of the chain), a warning on another (a later engine may decide differently). Read-only.
   const replay = replayWaits(events);
-  for (const miss of replay.mismatches) add(birth.engineHash === engineHash ? 'error' : 'warn', 'WAIT_REPLAY_MISMATCH', `Event ${miss.seq}${miss.nodeKey ? ` (${miss.nodeKey})` : ''}: ${miss.message} [${miss.code}]`, { seq: miss.seq, nodeKey: miss.nodeKey, rule: miss.code });
+  // The waits were decided by every engine the run ran under: an error only when that was this engine throughout.
+  const onlyThisEngine = engines.valid && engines.engines.every(hash => hash === engineHash);
+  for (const miss of replay.mismatches) add(onlyThisEngine ? 'error' : 'warn', 'WAIT_REPLAY_MISMATCH', `Event ${miss.seq}${miss.nodeKey ? ` (${miss.nodeKey})` : ''}: ${miss.message} [${miss.code}]`, { seq: miss.seq, nodeKey: miss.nodeKey, rule: miss.code });
   for (const drift of signalCheckpointDrift(run, events)) add('error', 'SIGNAL_EDITED', `The run record's ${drift} differs from what its chain recorded`, { drift });
   checks.waits = { waits: replay.waits, deliveries: replay.deliveries, decisions: replay.decisions, mismatches: replay.mismatches.length };
+
+  // 6d. Harness versions (orch-20261021 rank 16, chaos D4): every model call records the version of the harness that served it (the
+  // claude-cli provider asks on every call, or names its pinned bytes). A run whose calls were served by more than one version of one
+  // harness (a CLI that updated itself mid-run, or a resume on another machine) is flagged: its results mix two programs. A warning,
+  // not an error: the record is intact, the evidence is mixed.
+  const served = new Map();
+  for (const e of events) {
+    if (!CALL_EVENTS.has(e.type) || typeof e.engineVersion !== 'string' || !e.engineVersion.trim()) continue;
+    const [harness, ...rest] = e.engineVersion.trim().split(/\s+/), version = rest.join(' ') || '(unversioned)';
+    const byVersion = served.get(harness) ?? new Map();
+    if (!byVersion.has(version)) byVersion.set(version, { version, firstSeq: e.seq, calls: 0 });
+    byVersion.get(version).calls++;
+    served.set(harness, byVersion);
+  }
+  for (const [harness, byVersion] of served) if (byVersion.size > 1) {
+    const versions = [...byVersion.values()].sort((a, b) => a.firstSeq - b.firstSeq);
+    add('warn', 'MIXED_ENGINE_VERSIONS', `The run's ${harness} calls were served by ${versions.length} versions (${versions.map(v => `${v.version} from event ${v.firstSeq}, ${v.calls} call${v.calls === 1 ? '' : 's'}`).join('; ')}): pin the CLI (research/manifests/claude-cli.lock.json, FOUNDRY_CLI_LOCK) for runs whose evidence must come from one program`, { harness, versions });
+  }
+  checks.harness = Object.fromEntries([...served].map(([harness, byVersion]) => [harness, [...byVersion.keys()]]));
   return result();
 }

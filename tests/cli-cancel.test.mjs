@@ -19,7 +19,10 @@ import { ModelPort } from '../src/models/port.mjs';
 import { Journal } from '../src/journal.mjs';
 import { ScriptedProvider } from '../src/models/providers/scripted.mjs';
 import { sandboxStatus } from '../src/sandbox.mjs';
-import { startOf } from '../src/children.mjs';
+import { lifeline, startOf } from '../src/children.mjs';
+// orch-20261021 patch 05: on Linux with setpriv every spawn shares its owner's fate (PDEATHSIG), so a killed owner takes its sandbox or model
+// CLI with it; only a grandchild that leaves its parent's process group behind outlives it. Elsewhere the leftovers stay until cancel/resume.
+const fateShared = lifeline('x', [])[0] !== 'x';
 import { cmdline, groupMembers, isRunning, processes, until } from './support/processes.mjs';
 
 const cli = new URL('../bin/foundry.mjs', import.meta.url).pathname;
@@ -400,7 +403,7 @@ test('--journal: a run that journaled its model calls in another database is clo
 
 // A killed owner cannot clean up after itself: its sandbox keeps running, a busy loop with no CPU limit. The groups a run starts are on file
 // (table run_children) while they run, so the next `cancel`, `stop-all` or `resume` can find and stop them.
-test('an owner killed with SIGKILL leaves its sandbox running: cancel stops the group found on file, then closes the run', { skip, timeout: 120000 }, async t => {
+test('an owner killed with SIGKILL: its sandbox dies with it where fate is shared (else cancel stops the group found on file); cancel then closes the run', { skip, timeout: 120000 }, async t => {
   const { workspace, write } = scratch(t);
   const owner = launch(t, ['run', write('wf.json', spinning('OrphanCancel')), '--workspace', workspace]);
   const group = await sandboxGroup(t, owner);
@@ -409,21 +412,25 @@ test('an owner killed with SIGKILL leaves its sandbox running: cancel stops the 
   assert.deepEqual(store.children(record.id).map(c => [c.pid, c.pgid, c.kind]), [[group, group, 'sandbox']], 'the sandbox is on file with the run');
   owner.child.kill('SIGKILL');
   assert.equal((await owner.exited).signal, 'SIGKILL');
-  assert.ok(groupMembers(group).length >= 2, 'the sandbox outlived its owner: the leftover the file exists for');
+  if (fateShared) assert.ok(await gone(group), 'the sandbox died with its owner, without anyone acting (PDEATHSIG)');
+  else assert.ok(groupMembers(group).length >= 2, 'the sandbox outlived its owner: the leftover the file exists for');
   assert.equal(store.rows.header(record.id).status, 'running');
   const cancelled = await run(['cancel', record.id, '--workspace', workspace]);
   assert.equal(cancelled.status, 0, cancelled.stderr);
   const report = cancelled.json();
   assert.equal(report.outcome, 'cancelled', report.message);
-  assert.deepEqual(report.orphans, [{ pid: group, kind: 'sandbox', killed: true }], cancelled.stdout);
-  assert.match(report.message, /Stopped 1 process group its dead owner had left running \(sandbox\)/);
+  if (fateShared) assert.equal(report.orphans, undefined, 'nothing was left to stop');
+  else {
+    assert.deepEqual(report.orphans, [{ pid: group, kind: 'sandbox', killed: true }], cancelled.stdout);
+    assert.match(report.message, /Stopped 1 process group its dead owner had left running \(sandbox\)/);
+  }
   assert.ok(await gone(group), 'the orphaned sandbox is stopped');
   assert.deepEqual(store.children(record.id), [], 'and forgotten');
   assert.equal(store.run(record.id).nodes.spin.status, 'failed');
   await verify(workspace, record.id);
 });
 
-test('a run resumed after its owner was killed first stops what that owner left running, and says so on its chain', { skip, timeout: 120000 }, async t => {
+test('a run resumed after its owner was killed first stops what that owner left running (nothing, where fate is shared), and says so on its chain', { skip, timeout: 120000 }, async t => {
   const { workspace, write } = scratch(t);
   const first = launch(t, ['run', write('wf.json', spinning('OrphanResume')), '--workspace', workspace]);
   const oldGroup = await sandboxGroup(t, first);
@@ -431,13 +438,17 @@ test('a run resumed after its owner was killed first stops what that owner left 
   const record = await until(() => runOf(store, 'OrphanResume'));
   first.child.kill('SIGKILL');
   await first.exited;
-  assert.ok(groupMembers(oldGroup).length >= 2);
+  if (fateShared) assert.ok(await gone(oldGroup), 'the sandbox died with its owner (PDEATHSIG)');
+  else assert.ok(groupMembers(oldGroup).length >= 2);
   const second = launch(t, ['resume', record.id, '--workspace', workspace]);
   const newGroup = await sandboxGroup(t, second);
   assert.notEqual(newGroup, oldGroup);
   assert.ok(await gone(oldGroup), 'the earlier owner\'s sandbox was stopped when the run was taken over');
-  const reaped = (await until(() => store.events(record.id).find(e => e.type === 'children.reaped')));
-  assert.deepEqual(reaped.children, [{ pid: oldGroup, kind: 'sandbox' }]);
+  if (fateShared) assert.equal(store.events(record.id).find(e => e.type === 'children.reaped'), undefined, 'nothing was left running to reap');
+  else {
+    const reaped = (await until(() => store.events(record.id).find(e => e.type === 'children.reaped')));
+    assert.deepEqual(reaped.children, [{ pid: oldGroup, kind: 'sandbox' }]);
+  }
   assert.deepEqual(store.children(record.id).map(c => c.pid), [newGroup], 'only the new sandbox is on file');
   const cancelled = await run(['cancel', record.id, '--workspace', workspace]);
   assert.equal(cancelled.json().outcome, 'cancelled');
@@ -476,7 +487,11 @@ process.stdin.on('end', () => { fs.appendFileSync(process.env.FAKE_CLAUDE_LOG, J
   assert.deepEqual(store.children(record.id).map(c => [c.pid, c.kind]), [[pids.pid, 'process']]);
   owner.child.kill('SIGKILL');
   await owner.exited;
-  assert.ok(isRunning(pids.pid) && isRunning(pids.helper), 'the model CLI and its helper outlived the owner');
+  // The model CLI shares its owner's fate where PDEATHSIG exists; its helper (a grandchild in the CLI's process group) is outside its reach
+  // and outlives the owner either way: that leftover, found through the group on file, is what stop-all must stop.
+  if (fateShared) assert.ok(await until(() => !isRunning(pids.pid), 10000), 'the model CLI died with its owner (PDEATHSIG)');
+  else assert.ok(isRunning(pids.pid), 'the model CLI outlived the owner');
+  assert.ok(isRunning(pids.helper), 'its helper outlived the owner');
   // A run that ended but still has a process group on file (a record that was never forgotten), pointing at a real process of this test.
   assert.equal((await run(['run', write('f.json', workflow('OrphanDone', [{ id: 'a', kind: 'assert', needs: [], description: 'Nothing to hold', checks: [{ op: 'eq', left: 1, right: 1 }] }], [{ op: 'exists', value: { $ref: 'nodes.a' } }])), '--workspace', workspace])).json().status, 'succeeded');
   const sleeper = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { detached: true, stdio: 'ignore' });

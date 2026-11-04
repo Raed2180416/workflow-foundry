@@ -358,8 +358,10 @@ test('claude-cli provider: argv, stdin prompt, empty throwaway cwd, parsing and 
   const { pid } = entries().find(e => e.scenario === 'hang');
   for (let i = 0; i < 40; i++) { try { process.kill(pid, 0); } catch { break; } await sleep(50); }
   assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' }, 'the process group was killed');
-  const versionProbes = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse).filter(e => e.version).length;
-  assert.equal(versionProbes, 1, 'claude --version runs once per binary');
+  // orch-20261021 rank 16: the version is asked for on every call (the per-connect check), so a CLI that updates itself between two calls
+  // is recorded as the version that served each; it used to be asked once per binary per process.
+  const logged = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse), versionProbes = logged.filter(e => e.version).length;
+  assert.equal(versionProbes, logged.filter(e => !e.version).length, 'claude --version runs once per call');
 
   const missing = await portOf({ journal, providers: { 'claude-cli': new ClaudeCliProvider({ policy, binary: path.join(dir, 'nope') }) } }).call(req({ modelId: HAIKU, nodeKey: 'missing' }));
   assert.equal(missing.error.code, 'MODEL_UNAVAILABLE');

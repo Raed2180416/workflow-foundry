@@ -22,10 +22,13 @@ export function subsetPolicy(owner, ids) {
   // A session subset holds generative models only: judgment models (judgmentModels, System One; added 2026-10-09 for hosted Jev)
   // never enter a ModelPort, and their providers are not kept, so they are left out with them. Executor models (executorModels,
   // remote chat endpoints; added 2026-10-21 for Mercury) stay only when listed by id, with their provider: ModelPort serves
-  // one only when a call names it (policy.mjs portModelById). A subset that lists none is unchanged from before.
+  // one only when a call names it (policy.mjs portModelById). A subset that lists none is unchanged from before. A subset of executor
+  // models alone (Mercury only; research/mercury-20261021/PORT-PROBE.md finding 1) has an empty models[]: nothing resolves by class, and
+  // every call names its model (engine bump 2026-10-21, item 5).
   const { judgmentModels: _judgment, executorModels: _executor, ...generative } = owner;
   return freeze(validatePolicy(structuredClone({ ...generative, policyVersion: `${owner.policyVersion}+only:${[...ids].sort().join(',')}`, models,
-    ...(execs.length ? { executorModels: execs } : {}), providers: Object.fromEntries(Object.entries(owner.providers).filter(([n]) => used.has(n))) })));
+    ...(execs.length ? { executorModels: execs } : {}), providers: Object.fromEntries(Object.entries(owner.providers).filter(([n]) => used.has(n))) }),
+    { executorOnly: models.length === 0 && execs.length > 0 }));
 }
 
 // tokenCap / callTokens: the per-run and per-call token caps of a remote chat provider (providers/openai-chat.mjs). It is

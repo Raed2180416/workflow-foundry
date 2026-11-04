@@ -150,7 +150,10 @@ test('compatibility: the same workflow and input on the current store produce th
   const run = runtime.create(workflow, { notes: 'legacy store', items: ['a', 'b', 'c'] });
   const result = await runtime.execute(run.id);
   assert.equal(result.status, 'succeeded');
-  assert.deepEqual(scrub(result), scrub(record), 'the record');
+  // The runtime's default token budget (orch-20261021 patch 09, engine bump 2026-10-21) is bound into every new run's policy; the fixture
+  // predates it. It is the runtime's addition, not the store's, like `dispatch` below.
+  assert.equal(result.policy.maxTokens, runtime.policy.maxTokens);
+  assert.deepEqual(scrub(result), scrub({ ...record, policy: { ...record.policy, maxTokens: runtime.policy.maxTokens } }), 'the record');
   assert.deepEqual(Object.keys(result).sort(), Object.keys(record).sort());
   assert.deepEqual(store.run(run.id), result, 'what execute returns is what is stored');
   const wanted = fixture.events.map(e => JSON.parse(e.body)), got = store.events(run.id);

@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, copyFileSync, symlinkSync, appendFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, copyFileSync, symlinkSync, appendFileSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { Foundry } from '../src/foundry.mjs';
-import { engineHash, engineIdentity } from '../src/engine.mjs';
+import { engineHash, engineIdentity, engineOf, engineResumesFrom, engineVersion } from '../src/engine.mjs';
+import { engineBinding, identityChanges } from '../src/audit.mjs';
+import { verifyRun } from '../src/verify-run.mjs';
 
 const sourceRoot = path.resolve(import.meta.dirname, '..');
 const workflow = () => ({ schemaVersion: '1.0', id: 'EngineBound', version: 1,
@@ -80,4 +82,106 @@ test('Engine binding: an actual second process with changed engine source reject
   assert.deepEqual(foundry.store.events(run.id), before);
   assert.equal(foundry.store.run(run.id).status, 'awaiting_human');
   assert.ok(readFileSync(path.join(sourceRoot, 'src/runtime.mjs'), 'utf8').includes('ENGINE_DRIFT'));
+});
+
+// Engine compatibility ranges (research/engine-20261021/ENGINE-BUMP.md §1).
+// A copy of exactly the engine identity set (src/ modules, schemas, lineage) under dir/name, changed by `edit(srcDir)`.
+function engineCopy(dir, name, edit = () => {}) {
+  const copied = path.join(dir, name);
+  for (const file of Object.keys(engineIdentity().files)) {
+    const target = path.join(copied, 'src', file);
+    mkdirSync(path.dirname(target), { recursive: true });
+    copyFileSync(path.join(sourceRoot, 'src', file), target);
+  }
+  symlinkSync(path.join(sourceRoot, 'node_modules'), path.join(copied, 'node_modules'), 'dir');
+  edit(path.join(copied, 'src'));
+  return copied;
+}
+// Run `action` against the workspace in a second process that loads the engine copy.
+function underEngine(copied, workspace, action, runId = null) {
+  const url = file => JSON.stringify(new URL(`file://${path.join(copied, 'src', file)}`).href);
+  const code = `
+    import {Store} from ${url('store.mjs')};
+    import {Runtime} from ${url('runtime.mjs')};
+    import {createDefaultRegistry} from ${url('capabilities.mjs')};
+    import {engineHash, engineIdentity} from ${url('engine.mjs')};
+    const store=new Store(${JSON.stringify(workspace)});
+    const action=${JSON.stringify(action)};
+    try {
+      if (action==='identity') console.log(JSON.stringify({engineHash, files: engineIdentity().files}));
+      else {
+        const runtime=new Runtime(store,createDefaultRegistry());
+        const id = action==='create' ? runtime.create(${JSON.stringify(workflow())}, {}).id : ${JSON.stringify(runId)};
+        const r=await runtime.execute(id); console.log(JSON.stringify({id, status:r.status, engineHash}));
+      }
+    } catch(error){console.log(JSON.stringify({code:error.code, details:error.details ?? null, message:error.message, engineHash}));}
+    finally {store.close();}
+  `;
+  const child = spawnSync(process.execPath, ['--input-type=module', '--eval', code], { env: { PATH: process.env.PATH, NODE_NO_WARNINGS: '1' }, timeout: 15000, encoding: 'utf8' });
+  assert.equal(child.status, 0, child.stderr); return JSON.parse(child.stdout);
+}
+const lineageOf = srcDir => JSON.parse(readFileSync(path.join(srcDir, 'engine-lineage.json'), 'utf8'));
+
+test('Engine lineage: version 1 (commit 96cab64, the engine of the 10-21 runs) is a resumable predecessor on this host', () => {
+  assert.ok(engineVersion >= 2 && engineResumesFrom <= 1);
+  assert.deepEqual(engineOf(engineHash), { version: engineVersion, current: true, resumable: true });
+  assert.equal(engineOf('0'.repeat(64)), null);
+  // The hash the 10-21 runs recorded on the owner's host (node v24.21.0, linux x64, ajv 8.20.0): it must be recognised as version 1.
+  const id = engineIdentity();
+  if (id.node === 'v24.21.0' && id.platform === 'linux' && id.architecture === 'x64' && id.validator === 'ajv@8.20.0')
+    assert.equal(engineOf('358cb02019b9826d7181bc313b8f5084a35c45c47c50b051f8149e863caad9f6')?.version, 1);
+  assert.ok(id.files['engine-lineage.json'], 'the lineage is part of the engine identity');
+});
+
+test('Engine lineage: the chain decides the bound engine; a broken migration chain is an identity change', () => {
+  const [a, b, c] = ['a', 'b', 'c'].map(x => x.repeat(64));
+  const birth = { type: 'run.created', engineHash: a };
+  assert.deepEqual(engineBinding([birth]), { valid: true, hash: a, engines: [a], migrations: [] });
+  const moved = [birth, { type: 'engine.migrated', seq: 2, from: a, to: b, fromVersion: 1, toVersion: 2 }];
+  assert.equal(engineBinding(moved).hash, b);
+  assert.deepEqual(identityChanges({ engineHash: b }, birth, moved), []);
+  assert.deepEqual(identityChanges({ engineHash: a }, birth, moved), ['engineHash'], 'the record must follow the migration');
+  const skipped = [...moved, { type: 'engine.migrated', seq: 3, from: a, to: c }];
+  assert.equal(engineBinding(skipped).valid, false);
+  assert.ok(identityChanges({ engineHash: c }, birth, skipped).includes('engineMigration'));
+});
+
+test('Engine lineage: a run of a declared-compatible predecessor resumes with engine.migrated in its chain; outside the range, and backwards, it refuses', async t => {
+  const { dir, foundry } = await setup(t), workspace = foundry.store.workspace;
+  // "old": an engine differing from this checkout by one comment. Its exact file map is what a successor freezes into its lineage.
+  const old = engineCopy(dir, 'old', src => appendFileSync(path.join(src, 'runtime.mjs'), '\n// Synthetic predecessor engine (test only).\n'));
+  const oldId = underEngine(old, workspace, 'identity');
+  const created = underEngine(old, workspace, 'create');
+  assert.equal(created.status, 'awaiting_human'); assert.equal(foundry.store.run(created.id).engineHash, oldId.engineHash);
+  const successor = (name, version, resumesFrom) => engineCopy(dir, name, src => {
+    const lineage = lineageOf(src);
+    writeFileSync(path.join(src, 'engine-lineage.json'), JSON.stringify({ ...lineage, version, resumesFrom, predecessors: [{ version: version - 1, source: 'test: old', files: oldId.files }] }));
+  });
+  // A successor that lists the predecessor but no longer resumes its version: ENGINE_DRIFT, naming both versions; nothing is written.
+  const before = foundry.store.events(created.id);
+  const far = underEngine(successor('far', 3, 3), workspace, 'resume', created.id);
+  assert.equal(far.code, 'ENGINE_DRIFT'); assert.equal(far.details.recordedVersion, 2); assert.equal(far.details.resumesFrom, 3);
+  assert.deepEqual(foundry.store.events(created.id), before);
+  // A successor declaring it compatible: the run resumes, and the migration is in its chain, once.
+  const next = successor('next', 3, 2);
+  const resumed = underEngine(next, workspace, 'resume', created.id);
+  assert.equal(resumed.status, 'awaiting_human');
+  const migrations = () => foundry.store.events(created.id).filter(e => e.type === 'engine.migrated');
+  assert.deepEqual(migrations().map(({ from, to, fromVersion, toVersion, resumesFrom }) => ({ from, to, fromVersion, toVersion, resumesFrom })),
+    [{ from: oldId.engineHash, to: resumed.engineHash, fromVersion: 2, toVersion: 3, resumesFrom: 2 }]);
+  const migratedAt = migrations()[0].seq, events = foundry.store.events(created.id);
+  assert.equal(events[migratedAt].type, 'runner.acquired', 'the migration commits with the ownership it precedes');
+  assert.equal(foundry.store.run(created.id).engineHash, resumed.engineHash);
+  assert.equal(underEngine(next, workspace, 'resume', created.id).status, 'awaiting_human');
+  assert.equal(migrations().length, 1, 'a second resume under the same engine records no migration');
+  // The older engine never resumes a run a newer engine migrated: the record names an engine its lineage does not know.
+  const back = underEngine(old, workspace, 'resume', created.id);
+  assert.equal(back.code, 'ENGINE_DRIFT'); assert.equal(back.details.recordedVersion, null);
+  foundry.runtime.answer(created.id, 'root/question', true);
+  assert.equal(underEngine(next, workspace, 'resume', created.id).status, 'succeeded');
+  // verify-run (under this checkout's engine) accepts the migrated record and reports the migration.
+  const report = verifyRun(foundry.store, created.id);
+  assert.equal(report.ok, true, JSON.stringify(report.findings));
+  assert.ok(report.findings.some(f => f.code === 'ENGINE_MIGRATED' && f.fromVersion === 2 && f.toVersion === 3));
+  assert.ok(!report.findings.some(f => f.code === 'RUN_IDENTITY_EDITED'));
 });
