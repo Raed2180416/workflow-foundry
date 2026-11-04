@@ -1,7 +1,7 @@
 # P1 headline: A1-C v2 against plain Haiku on 60 held-out AutomationBench tasks (2026-11-04)
 
-**Status: the preregistered confirmatory test is complete. Failure anatomy and independent verification are pending**
-(PREREG-A1CV2-P1 §13). The full record lives on branch `worktree-wf_3674d3bc-0a7-12` at `287f57ff`, bundled on this
+**Status: the preregistered confirmatory test is complete and independently re-checked (below). The failure anatomy is
+pending** (PREREG-A1CV2-P1 §13). The full record lives on branch `worktree-wf_3674d3bc-0a7-12` at `287f57ff`, bundled on this
 branch as `research/session-20261028-rescue/incr-20261104-p1-result.bundle`. It holds all six arms' repo copies,
 `analysis.json` and `harm-v1-v2.json` under `research/automationbench-20261014/runs/`.
 
@@ -33,3 +33,17 @@ against a second A0 run, gave 8 vs 9 (p = 1), so run-to-run noise is small.
   times as many tasks as the same model working alone, at 2.3× its cost.
 - It is not a comparison against a frontier agent. The Opus 5.5 xhigh and Sonnet + A1 reference arms are VL-1's, still to run.
 - It is one benchmark (breadth is the open claim). The arms are not cost-matched (A0 spent less).
+
+## Independent re-check (2026-11-04 ~19:40Z, orchestrator, from the raw rows, not from analysis.json)
+- **Recomputed from each arm's `results.jsonl`, fault rows excluded.** Strict pass: A0 9, A0-AA 8, v1 19, v2 29, v1-M 29, v2-M 27. Partial credit: 0.556,
+  0.565, 0.728, 0.811, 0.812, 0.775. Exact McNemar tests:
+  - v2 vs A0: 21 vs 1, p = 1.10e-5;
+  - v2 vs v1: 11 vs 1, p = 6.35e-3;
+  - A0 vs A0-AA: 3 vs 2, p = 1.0;
+  - v2-M vs A0: 22 vs 4, p = 5.34e-4.
+  Every number equals `analysis.json`.
+- **Integrity.**
+  - Every arm ran exactly the 60 tasks of LOOK2-TASKS.json (sha256 `85099131…`, the frozen file).
+  - The four harness arms carry exactly their frozen harness hashes: v1 `e2f1f491`, v2 `12bb43cf`, v1-M `fff2886f`,
+    v2-M `cc16ed23`.
+  - Every arm records CLI 2.1.312.
