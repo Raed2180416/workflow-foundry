@@ -335,7 +335,7 @@ export function silentLoud(sr, channels, classOf = () => 'all') {
       const b = by.get(cls); b.failing += 1;
       if (silent(v, channels)) { b.silent += 1; if (v.critical) b.silentCritical += 1; } else b.loud += 1;
     }
-    for (const [, v] of gradedOf(w)) { const cls = classOf(Number(k), null, v); if (by.has(cls)) by.get(cls).n += 1; }
+    for (const [c, v] of gradedOf(w)) { const cls = classOf(Number(k), c, v); if (by.has(cls)) by.get(cls).n += 1; }   // n per class: every graded case of the class
     out.push(...by.values());
   }
   return out;

@@ -136,13 +136,22 @@ export function report(results) {
   out.finalWeek = { 'MH-H': healFW, 'R-maint2': rm2, 'R-static': rst, 'REF-M': refm };
   // D-5 worst case: units (lineage x world x class), silent critical outside the U1s carve-out.
   const units = [];
-  const carve = results.u1sCarveOut ?? {};
+  // U1s carve-out (D-5 a): U1s is silent by design until the world complains, so its exposed cases placed before its first
+  // true complaint + 2 world-days form their own class, 'U1s-silent-exposure', reported and not counted against (a).
+  const u1Recs = results.records?.['MH-H'] ?? {};
+  const carveOf = (l, s) => {
+    const rec = u1Recs[l]?.[s];
+    const spec = worldsOf(s).find(w => w.changes.some(x => x.id === 'U1s' && x.startsHere));
+    if (!rec || !spec) return () => false;
+    const ex = exposureOf(s)(spec.k)?.U1s ?? new Set();
+    const first = (rec.worlds.find(w => w.k === spec.k)?.complaints ?? []).filter(c => c.kind === 'true' && ex.has(c.case)).sort((a, b) => a.at - b.at)[0];
+    const limit = first ? first.at + 2 * DAY_MS : Infinity;
+    return (k, c, v) => k === spec.k && ex.has(c) && (v?.placedAt ?? 0) <= limit;
+  };
   for (const [l, b] of Object.entries(heal)) for (const [s, m] of Object.entries(b)) {
-    const cls = classOfCase(exposureOf(s));
-    for (const row of silentLoud(m, VISIBLE.heal, (k, c) => cls(k, c) ?? 'all')) {
-      let sc = row.silentCritical;
-      if (carve[`${l}|${s}`] !== undefined && row.cls === 'CHG-U') sc = Math.max(0, sc - (carve[`${l}|${s}`] ?? 0));
-      units.push({ lineage: l, world: `${s}/W${row.world}`, cls: row.cls, silentCritical: sc, silent: row.silent, failing: row.failing });
+    const cls = classOfCase(exposureOf(s)), carve = carveOf(l, s);
+    for (const row of silentLoud(m, VISIBLE.heal, (k, c, v) => (carve(k, c, v) ? 'U1s-silent-exposure' : cls(k, c) ?? 'IP'))) {
+      units.push({ lineage: l, world: `${s}/W${row.world}`, cls: row.cls, silentCritical: row.cls === 'U1s-silent-exposure' ? 0 : row.silentCritical, silentExposure: row.cls === 'U1s-silent-exposure' ? row.silentCritical : 0, silent: row.silent, failing: row.failing });
     }
   }
   const w1False = [];
