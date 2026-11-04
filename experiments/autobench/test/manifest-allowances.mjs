@@ -72,10 +72,12 @@ export const ALLOWED_MANIFEST_CHANGES = Object.freeze({
     reason: ENGINE + 'New file. Compromise C2: the Claude CLI is pinned by its bytes and its version is recorded per call (gap rank 16, chaos D4).',
   }),
   'src/executors/claude-code.mjs': entry({
-    commits: ['8b00b4a400d2cb033284ed3da9ed43e8ca693df2', '03c19e2b1f894f65eab092ff4755f8e620a37c7f', '83d9e7133e3e0db75152bf74bac4ed95adfe638d'],
+    commits: ['8b00b4a400d2cb033284ed3da9ed43e8ca693df2', '03c19e2b1f894f65eab092ff4755f8e620a37c7f', '83d9e7133e3e0db75152bf74bac4ed95adfe638d', '4ecf5753e994fc3ae2581bfd86bd8fcf235c36f8'],
     before: 'f363c80418bf9bb91e6e8d42adc1345eba24274a56f6d870759ea2eebbe35afc',
-    after: 'd50b93d9c2039dd2238eafe45b1a2fc14bc026e0297647c396e6bf9e82b871de',
-    reason: ENGINE + 'Orchestration patches 01-09; a session the caller aborts ends CANCELLED, not EXECUTOR_PROTOCOL (gap rank 21); the CLI pin (C2).',
+    after: 'c71d1f1017931f14ffb523d63ffed81f0f109286c825c3de13f50e2f36b11bb7',
+    reason: ENGINE + 'Orchestration patches 01-09; a session the caller aborts ends CANCELLED, not EXECUTOR_PROTOCOL (gap rank 21); the CLI pin (C2). ' +
+      'Then the swarm-ladder merge (gap-closure-2 c30-10, 2026-11-04, conflict resolved by hand): extraArgs, a closed list of value-less CLI flags ' +
+      '(only --forward-subagent-text), empty by default, so every existing caller\'s argv is unchanged.',
   }),
   'src/models/policy.mjs': entry({
     commits: ['83d9e7133e3e0db75152bf74bac4ed95adfe638d', 'a81447eb584beec18e7f13203fd7708cf2eab51c'],

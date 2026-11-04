@@ -43,7 +43,7 @@ PREREG-VL1 and A1C-MERCURY-PARTIAL.
 | `experiments/lib/runner.mjs` | `cbc4b19741f8` | `ea84709699cb` | `8b00b4a4`, `ebc81908` | Orchestration patches 01-09, then one runner per workdir (an exclusive lock; gap rank 12, chaos F1). |
 | `src/children.mjs` | `68a763b3e9f9` | `f81dc9035711` | `8b00b4a4`, `6203fb69` | Orchestration patches 01-09 and their follow-ups (patches 05 and 09). The A1-C v1 manifest lists it since the executor imports it; at a1c-v1 it was not imported. |
 | `src/cli-pin.mjs` | new file | `18967fd06089` | `83d9e713` | New file. Compromise C2: the Claude CLI is pinned by its bytes and its version is recorded per call (gap rank 16, chaos D4). |
-| `src/executors/claude-code.mjs` | `f363c80418bf` | `d50b93d9c203` | `8b00b4a4`, `03c19e2b`, `83d9e713` | Orchestration patches 01-09; a session the caller aborts ends CANCELLED, not EXECUTOR_PROTOCOL (gap rank 21); the CLI pin (C2). |
+| `src/executors/claude-code.mjs` | `f363c80418bf` | `c71d1f101793` | `8b00b4a4`, `03c19e2b`, `83d9e713`, `4ecf5753` | Orchestration patches 01-09; a session the caller aborts ends CANCELLED, not EXECUTOR_PROTOCOL (gap rank 21); the CLI pin (C2). Then the swarm-ladder merge `4ecf5753` (2026-11-04, conflict resolved by hand, so it is listed as a commit, not a clean-merge record): `extraArgs`, a closed list of value-less CLI flags (only `--forward-subagent-text`), empty by default; every existing caller's argv is unchanged. The bytes before it were `d50b93d9c203`. |
 | `src/models/policy.mjs` | `95390dec17ad` | `d8ecfb841107` | `83d9e713`, `a81447eb` | The CLI pin (C2), then Mercury-only session subsets: an empty models[] beside executorModels (PORT-PROBE finding 1). |
 
 ## Other freezes that use this table
