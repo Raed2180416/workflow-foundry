@@ -1,0 +1,95 @@
+{
+ "drift": {
+  "bytesIdentical": false,
+  "blocking": [],
+  "ignored": [
+   "policyVersion",
+   "notes",
+   "providers.claude-cli.childEnv: no kit source mentions \"childEnv\"",
+   "judgmentModels: no kit source mentions \"judgmentModels\"",
+   "executorModels: no kit source mentions \"executorModels\"",
+   "defaultsByRole: no kit source mentions \"defaultsByRole\"",
+   "providers.typesafe-systemone: no kit source mentions \"typesafe-systemone\"; no models[] entry names it",
+   "providers.inception: no kit source mentions \"inception\"; no models[] entry names it",
+   "inputBudgetTokensByClass.F: record 32000 <= owner 100000; the kit reads only its record, and only as an upper bound (audited sites)",
+   "inputBudgetTokensByClass.L: record 16000 <= owner 100000; the kit reads only its record, and only as an upper bound (audited sites)",
+   "inputBudgetTokensByClass.M: record 8000 <= owner 100000; the kit reads only its record, and only as an upper bound (audited sites)"
+  ],
+  "ok": true
+ },
+ "journals": {
+  "c0-dev": {
+   "calls": 768,
+   "contextOverflowRows": 0,
+   "compiledCalls": 173,
+   "compiledCallsAtClassCap": 0,
+   "maxShareOfClassCap": 0.672,
+   "maxShareAt": {
+    "model": "claude-haiku-5-5",
+    "class": "M",
+    "cap": 8000,
+    "estTokens": 5373
+   }
+  },
+  "p1": {
+   "calls": 1863,
+   "contextOverflowRows": 0,
+   "compiledCalls": 1647,
+   "compiledCallsAtClassCap": 0,
+   "maxShareOfClassCap": 0.142,
+   "maxShareAt": {
+    "model": "claude-haiku-5-5",
+    "class": "M",
+    "cap": 8000,
+    "estTokens": 1132
+   }
+  }
+ },
+ "options": {
+  "(b') D20: record unchanged": {
+   "policyHash": "fe63f99b9fcdd5bb",
+   "byJournal": {
+    "c0-dev": {
+     "same": 768,
+     "changed": 0,
+     "unknownModel": 0
+    },
+    "p1": {
+     "same": 1863,
+     "changed": 0,
+     "unknownModel": 0
+    }
+   }
+  },
+  "(a) re-freeze to the owner file": {
+   "policyHash": "7447a8752174cb7e",
+   "byJournal": {
+    "c0-dev": {
+     "same": 0,
+     "changed": 768,
+     "unknownModel": 0
+    },
+    "p1": {
+     "same": 0,
+     "changed": 1863,
+     "unknownModel": 0
+    }
+   }
+  },
+  "(a') re-freeze budgets + defaultsByRole only": {
+   "policyHash": "0e3c11c0d0eb4eb6",
+   "byJournal": {
+    "c0-dev": {
+     "same": 768,
+     "changed": 0,
+     "unknownModel": 0
+    },
+    "p1": {
+     "same": 1863,
+     "changed": 0,
+     "unknownModel": 0
+    }
+   }
+  }
+ }
+}

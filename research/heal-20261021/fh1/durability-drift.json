@@ -1,0 +1,1313 @@
+{
+ "part": "drift",
+ "drift": "review-timeout-clears",
+ "worlds": [
+  {
+   "seed": 1165,
+   "d": 2,
+   "size": 30
+  },
+  {
+   "seed": 1166,
+   "d": 3,
+   "size": 30
+  }
+ ],
+ "subjects": {
+  "ch-e8-1": {
+   "incident": "ch-e8-1",
+   "arm": "original",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "ch-e8-1",
+      "oracle": "26/33",
+      "capabilities": {
+       "intake": "32/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "28/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "27/33",
+       "customer-action": "32/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "ch-e8-1",
+      "oracle": "25/34",
+      "capabilities": {
+       "intake": "31/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "27/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "26/33",
+       "customer-action": "31/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "ch-e8-1.H-C.k1": {
+   "incident": "ch-e8-1",
+   "arm": "H-C k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "ch-e8-1.H-C.k1",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "ch-e8-1.H-C.k1",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "ch-e8-2": {
+   "incident": "ch-e8-2",
+   "arm": "original",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "ch-e8-2",
+      "oracle": "26/33",
+      "capabilities": {
+       "intake": "32/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "28/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "27/33",
+       "customer-action": "32/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "ch-e8-2",
+      "oracle": "25/34",
+      "capabilities": {
+       "intake": "31/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "27/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "26/33",
+       "customer-action": "31/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "ch-e8-2.H-C.k1": {
+   "incident": "ch-e8-2",
+   "arm": "H-C k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "ch-e8-2.H-C.k1",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "ch-e8-2.H-C.k1",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "ch-e8-3": {
+   "incident": "ch-e8-3",
+   "arm": "original",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "ch-e8-3",
+      "oracle": "28/33",
+      "capabilities": {
+       "intake": "32/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "28/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "28/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "ch-e8-3",
+      "oracle": "28/34",
+      "capabilities": {
+       "intake": "31/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "27/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "27/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "ch-e8-3.H-C.k1": {
+   "incident": "ch-e8-3",
+   "arm": "H-C k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "ch-e8-3.H-C.k1",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "ch-e8-3.H-C.k1",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "cht-e8-1": {
+   "incident": "cht-e8-1",
+   "arm": "original",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "cht-e8-1",
+      "oracle": "28/33",
+      "capabilities": {
+       "intake": "32/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "28/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "28/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "cht-e8-1",
+      "oracle": "28/34",
+      "capabilities": {
+       "intake": "31/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "27/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "27/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "cht-e8-1.H-C.k1": {
+   "incident": "cht-e8-1",
+   "arm": "H-C k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "cht-e8-1.H-C.k1",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "cht-e8-1.H-C.k1",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "cht-e8-2": {
+   "incident": "cht-e8-2",
+   "arm": "original",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "cht-e8-2",
+      "oracle": "26/33",
+      "capabilities": {
+       "intake": "32/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "28/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "27/33",
+       "customer-action": "32/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "cht-e8-2",
+      "oracle": "25/34",
+      "capabilities": {
+       "intake": "31/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "27/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "26/33",
+       "customer-action": "31/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "cht-e8-2.H-C.k1": {
+   "incident": "cht-e8-2",
+   "arm": "H-C k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "cht-e8-2.H-C.k1",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "cht-e8-2.H-C.k1",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "cht-e8-3": {
+   "incident": "cht-e8-3",
+   "arm": "original",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "cht-e8-3",
+      "oracle": "24/33",
+      "capabilities": {
+       "intake": "32/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "31/33",
+       "reservation": "26/33",
+       "shipment": "33/33",
+       "compensation": "31/33",
+       "failure": "33/33",
+       "tracking": "27/33",
+       "customer-action": "32/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "cht-e8-3",
+      "oracle": "23/34",
+      "capabilities": {
+       "intake": "31/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "31/33",
+       "reservation": "25/33",
+       "shipment": "33/33",
+       "compensation": "31/33",
+       "failure": "33/33",
+       "tracking": "26/33",
+       "customer-action": "31/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "cht-e8-3.H-C.k1": {
+   "incident": "cht-e8-3",
+   "arm": "H-C k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "cht-e8-3.H-C.k1",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "cht-e8-3.H-C.k1",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "b1lh-e8-2": {
+   "incident": "b1lh-e8-2",
+   "arm": "original",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "b1lh-e8-2",
+      "oracle": "26/33",
+      "capabilities": {
+       "intake": "32/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "28/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "27/33",
+       "customer-action": "32/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": null
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "b1lh-e8-2",
+      "oracle": "25/34",
+      "capabilities": {
+       "intake": "31/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "27/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "26/33",
+       "customer-action": "31/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": null
+     }
+    }
+   ]
+  },
+  "b1lh-e8-2.H-C.k1": {
+   "incident": "b1lh-e8-2",
+   "arm": "H-C k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "b1lh-e8-2.H-C.k1",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": null
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "b1lh-e8-2.H-C.k1",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": null
+     }
+    }
+   ]
+  },
+  "b1lh-e8-3": {
+   "incident": "b1lh-e8-3",
+   "arm": "original",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "b1lh-e8-3",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": null
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "b1lh-e8-3",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": null
+     }
+    }
+   ]
+  },
+  "b1lh-e8-3.H-C.k1": {
+   "incident": "b1lh-e8-3",
+   "arm": "H-C k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "b1lh-e8-3.H-C.k1",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": null
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "b1lh-e8-3.H-C.k1",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": null
+     }
+    }
+   ]
+  },
+  "ch-e8-3.H-C.k2": {
+   "incident": "ch-e8-3",
+   "arm": "H-C k2",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "ch-e8-3.H-C.k2",
+      "oracle": "29/33",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "ch-e8-3.H-C.k2",
+      "oracle": "30/34",
+      "capabilities": {
+       "intake": "33/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "29/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "29/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "ch-e8-3.H-0.k1": {
+   "incident": "ch-e8-3",
+   "arm": "H-0 k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "ch-e8-3.H-0.k1",
+      "oracle": "28/33",
+      "capabilities": {
+       "intake": "32/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "28/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "28/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "ch-e8-3.H-0.k1",
+      "oracle": "28/34",
+      "capabilities": {
+       "intake": "31/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "27/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "27/33",
+       "customer-action": "33/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  },
+  "cht-e8-3.H-N.k1": {
+   "incident": "cht-e8-3",
+   "arm": "H-N k1",
+   "worlds": [
+    {
+     "seed": 1165,
+     "d": 2,
+     "converted": [
+      "o0009",
+      "o0010",
+      "o0017",
+      "o0019"
+     ],
+     "subject": {
+      "label": "cht-e8-3.H-N.k1",
+      "oracle": "26/33",
+      "capabilities": {
+       "intake": "32/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "28/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "27/33",
+       "customer-action": "32/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    },
+    {
+     "seed": 1166,
+     "d": 3,
+     "converted": [
+      "o0006",
+      "o0007",
+      "o0008",
+      "o0011"
+     ],
+     "subject": {
+      "label": "cht-e8-3.H-N.k1",
+      "oracle": "25/34",
+      "capabilities": {
+       "intake": "31/33",
+       "fraud": "29/33",
+       "capture": "33/33",
+       "refund": "33/33",
+       "reservation": "27/33",
+       "shipment": "33/33",
+       "compensation": "33/33",
+       "failure": "33/33",
+       "tracking": "26/33",
+       "customer-action": "31/33",
+       "cancellation": "33/33",
+       "notifications": "33/33",
+       "exactly-once": "33/33"
+      },
+      "changedCasesPass": 0,
+      "interface": 0
+     }
+    }
+   ]
+  }
+ },
+ "at": "2026-11-04T15:19:19.198Z",
+ "wallMs": 142445,
+ "evidence": "development (dev worlds), post hoc after the FH-1 result, $0"
+}

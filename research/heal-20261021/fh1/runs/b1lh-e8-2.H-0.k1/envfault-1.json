@@ -1,0 +1,13 @@
+{
+ "label": "b1lh-e8-2.H-0.k1",
+ "at": "2026-10-21T23:31:58.562Z",
+ "error": {
+  "code": "MODEL_RATE_LIMIT",
+  "exitCode": 1,
+  "stderr": ""
+ },
+ "costUsd": 0.18015613,
+ "costUpperUsd": 0.18015613,
+ "turns": 10,
+ "smokeRuns": 1
+}

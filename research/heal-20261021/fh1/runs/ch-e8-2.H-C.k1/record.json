@@ -1,0 +1,450 @@
+{
+ "label": "ch-e8-2.H-C.k1",
+ "incident": "ch-e8-2",
+ "arm": "H-C",
+ "k": 1,
+ "dryRun": false,
+ "kind": "composed",
+ "at": "2026-10-21T22:29:15.999Z",
+ "wallMs": 537975,
+ "bedDigest": "b9e5a67138d42a7f",
+ "intervene": "patch (workflow defect: every failure reproduces exactly)",
+ "baseDigest": "99a8e0586ee79bc5",
+ "patchedDigest": "43514494acb836be",
+ "changed": true,
+ "loads": true,
+ "problems": [],
+ "session": {
+  "model": "claude-haiku-5-5",
+  "effort": "high",
+  "capUsd": 0.5,
+  "costUsd": 0.204965,
+  "costUpperUsd": 0.204965,
+  "costUnknown": false,
+  "turns": 32,
+  "error": null,
+  "durationMs": 371323,
+  "smokeRuns": 2
+ },
+ "report": {
+  "file": "FAILURES.md",
+  "sha256": "548201dbd993a894d50a8f277709dfe0b0cdf10037647785539507a44f6858a1",
+  "classes": [
+   {
+    "key": "reservation|R4.2|ORD-…: not every item reserved within <n> min of ready",
+    "contract": "reservation",
+    "rule": "R4.2",
+    "finding": "ORD-…: not every item reserved within <n> min of ready",
+    "n": 8,
+    "contractRules": [
+     "R4.2.1",
+     "R5.1",
+     "R6.2",
+     "R7.1"
+    ],
+    "owners": [
+     "fulfil"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0001",
+     "1236:d3/ORD-1236-0001",
+     "1236:d3/ORD-1236-0002",
+     "1236:d3/ORD-1236-0004",
+     "1237:d5/ORD-1237-0001",
+     "1237:d5/ORD-1237-0002",
+     "1237:d5/ORD-1237-0004",
+     "1237:d5/ORD-1237-0007"
+    ]
+   },
+   {
+    "key": "intake|R1.1|order never recorded",
+    "contract": "intake",
+    "rule": "R1.1",
+    "finding": "order never recorded",
+    "n": 6,
+    "contractRules": [
+     "R1.1",
+     "R1.2",
+     "R1.3",
+     "R1.4",
+     "§3.1",
+     "§3.5"
+    ],
+    "owners": [
+     "intake"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0001",
+     "1236:d3/ORD-1236-0001",
+     "1236:d3/ORD-1236-0004",
+     "1237:d5/ORD-1237-0001",
+     "1237:d5/ORD-1237-0004",
+     "1237:d5/ORD-1237-0007"
+    ]
+   },
+   {
+    "key": "tracking|R4.1|order never set processing",
+    "contract": "tracking",
+    "rule": "R4.1",
+    "finding": "order never set processing",
+    "n": 6,
+    "contractRules": [
+     "R4.1",
+     "R4.4",
+     "R4.5",
+     "R7.2"
+    ],
+    "owners": [
+     "fulfil"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0001",
+     "1236:d3/ORD-1236-0001",
+     "1236:d3/ORD-1236-0004",
+     "1237:d5/ORD-1237-0001",
+     "1237:d5/ORD-1237-0004",
+     "1237:d5/ORD-1237-0007"
+    ]
+   },
+   {
+    "key": "tracking|R4.4|ORD-…: never completed after delivery",
+    "contract": "tracking",
+    "rule": "R4.4",
+    "finding": "ORD-…: never completed after delivery",
+    "n": 4,
+    "contractRules": [
+     "R4.1",
+     "R4.4",
+     "R4.5",
+     "R7.2"
+    ],
+    "owners": [
+     "fulfil"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0003",
+     "1236:d3/ORD-1236-0003",
+     "1237:d5/ORD-1237-0003",
+     "1237:d5/ORD-1237-0006"
+    ]
+   },
+   {
+    "key": "customer-action|R3.2|ORD-…: unavailable fulfilment not cancelled after the amend",
+    "contract": "customer-action",
+    "rule": "R3.2",
+    "finding": "ORD-…: unavailable fulfilment not cancelled after the amend",
+    "n": 2,
+    "contractRules": [
+     "R3.1",
+     "R3.2",
+     "S1",
+     "S5",
+     "S9",
+     "S11"
+    ],
+    "owners": [
+     "wait"
+    ],
+    "orders": [
+     "1236:d3/ORD-1236-0002",
+     "1237:d5/ORD-1237-0002"
+    ]
+   },
+   {
+    "key": "customer-action|R3.2|order never timed out",
+    "contract": "customer-action",
+    "rule": "R3.2",
+    "finding": "order never timed out",
+    "n": 2,
+    "contractRules": [
+     "R3.1",
+     "R3.2",
+     "S1",
+     "S5",
+     "S9",
+     "S11"
+    ],
+    "owners": [
+     "wait"
+    ],
+    "orders": [
+     "1237:d5/ORD-1237-0005",
+     "1237:d5/ORD-1237-0008"
+    ]
+   },
+   {
+    "key": "customer-action|R3.2|order not cancelled after the counted action",
+    "contract": "customer-action",
+    "rule": "R3.2",
+    "finding": "order not cancelled after the counted action",
+    "n": 2,
+    "contractRules": [
+     "R3.1",
+     "R3.2",
+     "S1",
+     "S5",
+     "S9",
+     "S11"
+    ],
+    "owners": [
+     "wait"
+    ],
+    "orders": [
+     "1235:d2/ORD-1235-0002",
+     "1236:d3/ORD-1236-0005"
+    ]
+   },
+   {
+    "key": "fraud|R2.2|order cancelled at <time>, window <time>-<n>-07T14:<n>",
+    "contract": "fraud",
+    "rule": "R2.2",
+    "finding": "order cancelled at <time>, window <time>-<n>-07T14:<n>",
+    "n": 1,
+    "contractRules": [
+     "R2.1",
+     "R2.2",
+     "R6.4",
+     "S1",
+     "S3",
+     "S12",
+     "S15"
+    ],
+    "owners": [
+     "review"
+    ],
+    "orders": [
+     "1237:d5/ORD-1237-0079"
+    ]
+   },
+   {
+    "key": "fraud|R2.2|order cancelled at <time>, window <time>-<n>-08T17:<n>",
+    "contract": "fraud",
+    "rule": "R2.2",
+    "finding": "order cancelled at <time>, window <time>-<n>-08T17:<n>",
+    "n": 1,
+    "contractRules": [
+     "R2.1",
+     "R2.2",
+     "R6.4",
+     "S1",
+     "S3",
+     "S12",
+     "S15"
+    ],
+    "owners": [
+     "review"
+    ],
+    "orders": [
+     "1237:d5/ORD-1237-0096"
+    ]
+   },
+   {
+    "key": "fraud|R2.2|order cancelled at <time>, window <time>-<n>-09T18:<n>",
+    "contract": "fraud",
+    "rule": "R2.2",
+    "finding": "order cancelled at <time>, window <time>-<n>-09T18:<n>",
+    "n": 1,
+    "contractRules": [
+     "R2.1",
+     "R2.2",
+     "R6.4",
+     "S1",
+     "S3",
+     "S12",
+     "S15"
+    ],
+    "owners": [
+     "review"
+    ],
+    "orders": [
+     "1237:d5/ORD-1237-0116"
+    ]
+   },
+   {
+    "key": "fraud|R2.2|order cancelled at <time>, window <time>-<n>-10T00:<n>",
+    "contract": "fraud",
+    "rule": "R2.2",
+    "finding": "order cancelled at <time>, window <time>-<n>-10T00:<n>",
+    "n": 1,
+    "contractRules": [
+     "R2.1",
+     "R2.2",
+     "R6.4",
+     "S1",
+     "S3",
+     "S12",
+     "S15"
+    ],
+    "owners": [
+     "review"
+    ],
+    "orders": [
+     "1237:d5/ORD-1237-0125"
+    ]
+   },
+   {
+    "key": "fraud|R2.2|order cancelled at <time>, window <time>-<n>-11T04:<n>",
+    "contract": "fraud",
+    "rule": "R2.2",
+    "finding": "order cancelled at <time>, window <time>-<n>-11T04:<n>",
+    "n": 1,
+    "contractRules": [
+     "R2.1",
+     "R2.2",
+     "R6.4",
+     "S1",
+     "S3",
+     "S12",
+     "S15"
+    ],
+    "owners": [
+     "review"
+    ],
+    "orders": [
+     "1236:d3/ORD-1236-0060"
+    ]
+   },
+   {
+    "key": "fraud|R2.2|order cancelled at <time>, window <time>-<n>-11T05:<n>",
+    "contract": "fraud",
+    "rule": "R2.2",
+    "finding": "order cancelled at <time>, window <time>-<n>-11T05:<n>",
+    "n": 1,
+    "contractRules": [
+     "R2.1",
+     "R2.2",
+     "R6.4",
+     "S1",
+     "S3",
+     "S12",
+     "S15"
+    ],
+    "owners": [
+     "review"
+    ],
+    "orders": [
+     "1236:d3/ORD-1236-0061"
+    ]
+   },
+   {
+    "key": "fraud|R2.2|order cancelled at <time>, window <time>-<n>-12T11:<n>",
+    "contract": "fraud",
+    "rule": "R2.2",
+    "finding": "order cancelled at <time>, window <time>-<n>-12T11:<n>",
+    "n": 1,
+    "contractRules": [
+     "R2.1",
+     "R2.2",
+     "R6.4",
+     "S1",
+     "S3",
+     "S12",
+     "S15"
+    ],
+    "owners": [
+     "review"
+    ],
+    "orders": [
+     "1236:d3/ORD-1236-0065"
+    ]
+   }
+  ]
+ },
+ "gate": {
+  "accept": true,
+  "reason": "23 practice orders recovered, 0 regressed"
+ },
+ "gates": {
+  "H-C": {
+   "accept": true,
+   "reason": "23 practice orders recovered, 0 regressed"
+  },
+  "H-N": {
+   "accept": false,
+   "reason": "6 orders newly disagree with the majority"
+  },
+  "H-0": {
+   "accept": true,
+   "reason": "loads; no new arm error (no correctness signal)"
+  }
+ },
+ "moduleTests": {
+  "files": 5,
+  "modules": 5,
+  "modulesWithTests": 5,
+  "pass": 30,
+  "fail": 0,
+  "ok": true,
+  "ran": true
+ },
+ "practice": {
+  "before": {
+   "completed": 331,
+   "oraclePassed": 308,
+   "oracleN": 331,
+   "contractsPassed": 301,
+   "contractsN": 324,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "after": {
+   "completed": 331,
+   "oraclePassed": 331,
+   "oracleN": 331,
+   "contractsPassed": 324,
+   "contractsN": 324,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "nvBefore": 0,
+  "nvAfter": 6
+ },
+ "grading": {
+  "before": {
+   "completed": 1022,
+   "oraclePassed": 955,
+   "oracleN": 1022,
+   "contractsPassed": 934,
+   "contractsN": 1001,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "rawAfter": {
+   "completed": 1022,
+   "oraclePassed": 1022,
+   "oracleN": 1022,
+   "contractsPassed": 1001,
+   "contractsN": 1001,
+   "armErrors": 0,
+   "critical": 0
+  },
+  "raw": {
+   "nRecovered": 67,
+   "nRegressed": 0,
+   "net": 67,
+   "recoveredByClass": {
+    "gl-intake": 18,
+    "gl-awaiting": 18,
+    "gl-dispatched": 12,
+    "review-timeout": 12,
+    "review-reject": 3,
+    "review-approve": 4
+   },
+   "regressedByClass": {}
+  },
+  "kept": {
+   "nRecovered": 67,
+   "nRegressed": 0,
+   "net": 67,
+   "recoveredByClass": {
+    "gl-intake": 18,
+    "gl-awaiting": 18,
+    "gl-dispatched": 12,
+    "review-timeout": 12,
+    "review-reject": 3,
+    "review-approve": 4
+   },
+   "regressedByClass": {}
+  }
+ }
+}

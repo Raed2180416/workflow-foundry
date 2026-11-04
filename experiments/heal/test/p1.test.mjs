@@ -13,7 +13,10 @@ const flip = (ctx0, trial) => { const row = acceptedCalls(ctx0.journal, trial.ru
 
 test('records-v3 (P1): the eleven-op mechanical lint-debt proposal passes V0-V3 on the recorded failure; partial verification never promotes', { skip: skipReason }, async () => {
   const w = await incidentFor(KEY, 'p1', flip), { wf, gate } = w;
-  assert.equal(w.incident.passing.length, 35); assert.deepEqual(w.incident.failing.map(t => t.key), [KEY]); assert.deepEqual(w.incident.excluded, []);
+  // 2026-10-21: one run under load ~20 saw 30 of 35 (not reproduced in three reruns); the exclusions are printed if it recurs
+  // 2026-11-04: recurred at load 20.6 (27 of 35); every exclusion ended CODE_TIMEOUT, a code node's wall-clock budget crossed by a
+  // CPU-starved strict replay (frozen kit src/sandbox.mjs:166), not a divergence of the evidence (RESULT-FH1 §10.8 m8)
+  assert.equal(w.incident.passing.length, 35, JSON.stringify(w.incident.excluded)); assert.deepEqual(w.incident.failing.map(t => t.key), [KEY]); assert.deepEqual(w.incident.excluded, []);
   const m = mechanicalProposal({ base: wf.p1, baseHash: digest(wf.p1), lint: gate.lintWorkflow(wf.p1, { modelPolicy: w.policy }), env: envOf(w) }), proposal = m.proposal;
   assert.equal(proposal.ops.length, 11);
   const v = await runVerify(w, { base: wf.p1, proposal, extra: { stages: ['V0', 'V1', 'V2', 'V3'] } });

@@ -1,0 +1,1809 @@
+{
+ "at": "2026-11-04T14:37:29.290Z",
+ "note": "post hoc (2026-11-04 review), $0, not frozen",
+ "regen": {
+  "rows": [
+   {
+    "incident": "ch-e8-1",
+    "failing": 48,
+    "peers": [
+     {
+      "peer": "ch-e8-2",
+      "usd": 0.53,
+      "gate": {
+       "accept": false,
+       "reason": "7 practice orders newly fail",
+       "rec": 0,
+       "reg": 7
+      },
+      "raw": {
+       "rec": 0,
+       "reg": 19,
+       "net": -19
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 0,
+       "net": 0
+      },
+      "other": {
+       "rec": 0,
+       "reg": 19,
+       "net": -19
+      }
+     },
+     {
+      "peer": "ch-e8-3",
+      "usd": 0.86,
+      "gate": {
+       "accept": false,
+       "reason": "36 practice orders newly fail",
+       "rec": 10,
+       "reg": 36
+      },
+      "raw": {
+       "rec": 30,
+       "reg": 118,
+       "net": -88
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 30,
+       "reg": 0,
+       "net": 30
+      },
+      "other": {
+       "rec": 0,
+       "reg": 118,
+       "net": -118
+      }
+     }
+    ],
+    "ungated": {
+     "net": -53.5,
+     "rec": 15,
+     "reg": 68.5,
+     "other": -68.5,
+     "usd": 0.6950000000000001
+    },
+    "gated": {
+     "net": 0,
+     "reg": 0,
+     "other": 0,
+     "usd": 0.6950000000000001,
+     "acceptRate": 0
+    },
+    "best2Practice": {
+     "net": 0,
+     "other": 0,
+     "pick": null,
+     "usd": 1.3900000000000001
+    },
+    "best2Oracle": {
+     "net": 0,
+     "usd": 1.3900000000000001
+    }
+   },
+   {
+    "incident": "ch-e8-2",
+    "failing": 67,
+    "peers": [
+     {
+      "peer": "ch-e8-1",
+      "usd": 1.73,
+      "gate": {
+       "accept": true,
+       "reason": "7 recovered, 0 regressed",
+       "rec": 7,
+       "reg": 0
+      },
+      "raw": {
+       "rec": 19,
+       "reg": 0,
+       "net": 19
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 0,
+       "net": 0
+      },
+      "other": {
+       "rec": 19,
+       "reg": 0,
+       "net": 19
+      }
+     },
+     {
+      "peer": "ch-e8-3",
+      "usd": 0.86,
+      "gate": {
+       "accept": false,
+       "reason": "36 practice orders newly fail",
+       "rec": 17,
+       "reg": 36
+      },
+      "raw": {
+       "rec": 49,
+       "reg": 118,
+       "net": -69
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 30,
+       "reg": 0,
+       "net": 30
+      },
+      "other": {
+       "rec": 19,
+       "reg": 118,
+       "net": -99
+      }
+     }
+    ],
+    "ungated": {
+     "net": -25,
+     "rec": 34,
+     "reg": 59,
+     "other": -40,
+     "usd": 1.295
+    },
+    "gated": {
+     "net": 9.5,
+     "reg": 0,
+     "other": 9.5,
+     "usd": 1.295,
+     "acceptRate": 0.5
+    },
+    "best2Practice": {
+     "net": 19,
+     "other": 19,
+     "pick": "ch-e8-1",
+     "usd": 2.59
+    },
+    "best2Oracle": {
+     "net": 19,
+     "usd": 2.59
+    }
+   },
+   {
+    "incident": "ch-e8-3",
+    "failing": 136,
+    "peers": [
+     {
+      "peer": "ch-e8-1",
+      "usd": 1.73,
+      "gate": {
+       "accept": false,
+       "reason": "10 practice orders newly fail",
+       "rec": 36,
+       "reg": 10
+      },
+      "raw": {
+       "rec": 118,
+       "reg": 30,
+       "net": 88
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 30,
+       "net": -30
+      },
+      "other": {
+       "rec": 118,
+       "reg": 0,
+       "net": 118
+      }
+     },
+     {
+      "peer": "ch-e8-2",
+      "usd": 0.53,
+      "gate": {
+       "accept": false,
+       "reason": "17 practice orders newly fail",
+       "rec": 36,
+       "reg": 17
+      },
+      "raw": {
+       "rec": 118,
+       "reg": 49,
+       "net": 69
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 30,
+       "net": -30
+      },
+      "other": {
+       "rec": 118,
+       "reg": 19,
+       "net": 99
+      }
+     }
+    ],
+    "ungated": {
+     "net": 78.5,
+     "rec": 118,
+     "reg": 39.5,
+     "other": 108.5,
+     "usd": 1.13
+    },
+    "gated": {
+     "net": 0,
+     "reg": 0,
+     "other": 0,
+     "usd": 1.13,
+     "acceptRate": 0
+    },
+    "best2Practice": {
+     "net": 0,
+     "other": 0,
+     "pick": null,
+     "usd": 2.26
+    },
+    "best2Oracle": {
+     "net": 0,
+     "usd": 2.26
+    }
+   },
+   {
+    "incident": "cht-e8-1",
+    "failing": 19,
+    "peers": [
+     {
+      "peer": "cht-e8-2",
+      "usd": 1.12,
+      "gate": {
+       "accept": false,
+       "reason": "10 practice orders newly fail",
+       "rec": 1,
+       "reg": 10
+      },
+      "raw": {
+       "rec": 1,
+       "reg": 30,
+       "net": -29
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 30,
+       "net": -30
+      },
+      "other": {
+       "rec": 1,
+       "reg": 0,
+       "net": 1
+      }
+     },
+     {
+      "peer": "cht-e8-3",
+      "usd": 1.16,
+      "gate": {
+       "accept": false,
+       "reason": "28 practice orders newly fail",
+       "rec": 1,
+       "reg": 28
+      },
+      "raw": {
+       "rec": 1,
+       "reg": 84,
+       "net": -83
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 30,
+       "net": -30
+      },
+      "other": {
+       "rec": 1,
+       "reg": 54,
+       "net": -53
+      }
+     }
+    ],
+    "ungated": {
+     "net": -56,
+     "rec": 1,
+     "reg": 57,
+     "other": -26,
+     "usd": 1.1400000000000001
+    },
+    "gated": {
+     "net": 0,
+     "reg": 0,
+     "other": 0,
+     "usd": 1.1400000000000001,
+     "acceptRate": 0
+    },
+    "best2Practice": {
+     "net": 0,
+     "other": 0,
+     "pick": null,
+     "usd": 2.2800000000000002
+    },
+    "best2Oracle": {
+     "net": 0,
+     "usd": 2.2800000000000002
+    }
+   },
+   {
+    "incident": "cht-e8-2",
+    "failing": 48,
+    "peers": [
+     {
+      "peer": "cht-e8-1",
+      "usd": 1.7,
+      "gate": {
+       "accept": false,
+       "reason": "1 practice orders newly fail",
+       "rec": 10,
+       "reg": 1
+      },
+      "raw": {
+       "rec": 30,
+       "reg": 1,
+       "net": 29
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 30,
+       "reg": 0,
+       "net": 30
+      },
+      "other": {
+       "rec": 0,
+       "reg": 1,
+       "net": -1
+      }
+     },
+     {
+      "peer": "cht-e8-3",
+      "usd": 1.16,
+      "gate": {
+       "accept": false,
+       "reason": "18 practice orders newly fail",
+       "rec": 0,
+       "reg": 18
+      },
+      "raw": {
+       "rec": 0,
+       "reg": 54,
+       "net": -54
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 0,
+       "net": 0
+      },
+      "other": {
+       "rec": 0,
+       "reg": 54,
+       "net": -54
+      }
+     }
+    ],
+    "ungated": {
+     "net": -12.5,
+     "rec": 15,
+     "reg": 27.5,
+     "other": -27.5,
+     "usd": 1.43
+    },
+    "gated": {
+     "net": 0,
+     "reg": 0,
+     "other": 0,
+     "usd": 1.43,
+     "acceptRate": 0
+    },
+    "best2Practice": {
+     "net": 0,
+     "other": 0,
+     "pick": null,
+     "usd": 2.86
+    },
+    "best2Oracle": {
+     "net": 0,
+     "usd": 2.86
+    }
+   },
+   {
+    "incident": "cht-e8-3",
+    "failing": 102,
+    "peers": [
+     {
+      "peer": "cht-e8-1",
+      "usd": 1.7,
+      "gate": {
+       "accept": false,
+       "reason": "1 practice orders newly fail",
+       "rec": 28,
+       "reg": 1
+      },
+      "raw": {
+       "rec": 84,
+       "reg": 1,
+       "net": 83
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 30,
+       "reg": 0,
+       "net": 30
+      },
+      "other": {
+       "rec": 54,
+       "reg": 1,
+       "net": 53
+      }
+     },
+     {
+      "peer": "cht-e8-2",
+      "usd": 1.12,
+      "gate": {
+       "accept": true,
+       "reason": "18 recovered, 0 regressed",
+       "rec": 18,
+       "reg": 0
+      },
+      "raw": {
+       "rec": 54,
+       "reg": 0,
+       "net": 54
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 0,
+       "net": 0
+      },
+      "other": {
+       "rec": 54,
+       "reg": 0,
+       "net": 54
+      }
+     }
+    ],
+    "ungated": {
+     "net": 68.5,
+     "rec": 69,
+     "reg": 0.5,
+     "other": 53.5,
+     "usd": 1.4100000000000001
+    },
+    "gated": {
+     "net": 27,
+     "reg": 0,
+     "other": 27,
+     "usd": 1.4100000000000001,
+     "acceptRate": 0.5
+    },
+    "best2Practice": {
+     "net": 54,
+     "other": 54,
+     "pick": "cht-e8-2",
+     "usd": 2.8200000000000003
+    },
+    "best2Oracle": {
+     "net": 54,
+     "usd": 2.8200000000000003
+    }
+   },
+   {
+    "incident": "b1lh-e8-2",
+    "failing": 48,
+    "peers": [
+     {
+      "peer": "b1lh-e8-1",
+      "usd": 0.39,
+      "gate": {
+       "accept": true,
+       "reason": "16 recovered, 0 regressed",
+       "rec": 16,
+       "reg": 0
+      },
+      "raw": {
+       "rec": 48,
+       "reg": 0,
+       "net": 48
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 48,
+       "reg": 0,
+       "net": 48
+      },
+      "other": {
+       "rec": 0,
+       "reg": 0,
+       "net": 0
+      }
+     },
+     {
+      "peer": "b1lh-e8-3",
+      "usd": 0.53,
+      "gate": {
+       "accept": false,
+       "reason": "4 practice orders newly fail",
+       "rec": 16,
+       "reg": 4
+      },
+      "raw": {
+       "rec": 48,
+       "reg": 7,
+       "net": 41
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 48,
+       "reg": 0,
+       "net": 48
+      },
+      "other": {
+       "rec": 0,
+       "reg": 7,
+       "net": -7
+      }
+     }
+    ],
+    "ungated": {
+     "net": 44.5,
+     "rec": 48,
+     "reg": 3.5,
+     "other": -3.5,
+     "usd": 0.46
+    },
+    "gated": {
+     "net": 24,
+     "reg": 0,
+     "other": 0,
+     "usd": 0.46,
+     "acceptRate": 0.5
+    },
+    "best2Practice": {
+     "net": 48,
+     "other": 0,
+     "pick": "b1lh-e8-1",
+     "usd": 0.92
+    },
+    "best2Oracle": {
+     "net": 48,
+     "usd": 0.92
+    }
+   },
+   {
+    "incident": "b1lh-e8-3",
+    "failing": 7,
+    "peers": [
+     {
+      "peer": "b1lh-e8-1",
+      "usd": 0.39,
+      "gate": {
+       "accept": true,
+       "reason": "4 recovered, 0 regressed",
+       "rec": 4,
+       "reg": 0
+      },
+      "raw": {
+       "rec": 7,
+       "reg": 0,
+       "net": 7
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 0,
+       "net": 0
+      },
+      "other": {
+       "rec": 7,
+       "reg": 0,
+       "net": 7
+      }
+     },
+     {
+      "peer": "b1lh-e8-2",
+      "usd": 0.62,
+      "gate": {
+       "accept": false,
+       "reason": "16 practice orders newly fail",
+       "rec": 4,
+       "reg": 16
+      },
+      "raw": {
+       "rec": 7,
+       "reg": 48,
+       "net": -41
+      },
+      "missing": 0,
+      "goLive": {
+       "rec": 0,
+       "reg": 48,
+       "net": -48
+      },
+      "other": {
+       "rec": 7,
+       "reg": 0,
+       "net": 7
+      }
+     }
+    ],
+    "ungated": {
+     "net": -17,
+     "rec": 7,
+     "reg": 24,
+     "other": 7,
+     "usd": 0.505
+    },
+    "gated": {
+     "net": 3.5,
+     "reg": 0,
+     "other": 3.5,
+     "usd": 0.505,
+     "acceptRate": 0.5
+    },
+    "best2Practice": {
+     "net": 7,
+     "other": 7,
+     "pick": "b1lh-e8-1",
+     "usd": 1.01
+    },
+    "best2Oracle": {
+     "net": 7,
+     "usd": 1.01
+    }
+   }
+  ],
+  "totals": {
+   "ungated": {
+    "net": 27.5,
+    "rec": 307,
+    "reg": 279.5,
+    "other": 3.5,
+    "usd": 8.065
+   },
+   "gated": {
+    "net": 64,
+    "reg": 0,
+    "other": 40,
+    "usd": 8.065
+   },
+   "best2Practice": {
+    "net": 128,
+    "other": 80,
+    "usd": 16.13
+   },
+   "best2Oracle": {
+    "net": 128,
+    "usd": 16.13
+   }
+  }
+ },
+ "perIncident": [
+  {
+   "incident": "ch-e8-1",
+   "H-C k1": {
+    "gl": 48,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 48,
+    "usd": 0.06872926000000001,
+    "noSignal": false
+   },
+   "H-N k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0,
+    "noSignal": true
+   },
+   "H-0 k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.23152822999999997,
+    "noSignal": false
+   },
+   "H-C k2": {
+    "gl": 48,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 48,
+    "usd": 0.04082777,
+    "noSignal": false
+   }
+  },
+  {
+   "incident": "ch-e8-2",
+   "H-C k1": {
+    "gl": 48,
+    "other": 19,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 67,
+    "usd": 0.204965,
+    "noSignal": false
+   },
+   "H-N k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0,
+    "noSignal": true
+   },
+   "H-0 k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.16976059999999998,
+    "noSignal": false
+   },
+   "H-C k2": {
+    "gl": 48,
+    "other": 19,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 67,
+    "usd": 0.13763591000000003,
+    "noSignal": false
+   }
+  },
+  {
+   "incident": "ch-e8-3",
+   "H-C k1": {
+    "gl": 18,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 18,
+    "usd": 0.3973186899999999,
+    "noSignal": false
+   },
+   "H-N k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.3234614800000001,
+    "noSignal": false
+   },
+   "H-0 k1": {
+    "gl": 0,
+    "other": 118,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 118,
+    "usd": 0.32033443000000006,
+    "noSignal": false
+   },
+   "H-C k2": {
+    "gl": 18,
+    "other": 118,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 136,
+    "usd": 0.30968261,
+    "noSignal": false
+   }
+  },
+  {
+   "incident": "cht-e8-1",
+   "H-C k1": {
+    "gl": 18,
+    "other": 1,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 19,
+    "usd": 0.03570517000000001,
+    "noSignal": false
+   },
+   "H-N k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.16627640000000002,
+    "noSignal": false
+   },
+   "H-0 k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.38967553,
+    "noSignal": false
+   },
+   "H-C k2": {
+    "gl": 18,
+    "other": 1,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 19,
+    "usd": 0.03266746,
+    "noSignal": false
+   }
+  },
+  {
+   "incident": "cht-e8-2",
+   "H-C k1": {
+    "gl": 48,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 48,
+    "usd": 0.27882295999999995,
+    "noSignal": false
+   },
+   "H-N k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0,
+    "noSignal": true
+   },
+   "H-0 k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.21854127,
+    "noSignal": false
+   },
+   "H-C k2": {
+    "gl": 48,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 48,
+    "usd": 0.13663367,
+    "noSignal": false
+   }
+  },
+  {
+   "incident": "cht-e8-3",
+   "H-C k1": {
+    "gl": 48,
+    "other": 54,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 102,
+    "usd": 0.07739748,
+    "noSignal": false
+   },
+   "H-N k1": {
+    "gl": 0,
+    "other": 54,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 54,
+    "usd": 0.04737119,
+    "noSignal": false
+   },
+   "H-0 k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.248063,
+    "noSignal": false
+   },
+   "H-C k2": null
+  },
+  {
+   "incident": "b1lh-e8-2",
+   "H-C k1": {
+    "gl": 48,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 48,
+    "usd": 0.036166420000000005,
+    "noSignal": false
+   },
+   "H-N k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0,
+    "noSignal": true
+   },
+   "H-0 k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.17800476,
+    "noSignal": false
+   },
+   "H-C k2": null
+  },
+  {
+   "incident": "b1lh-e8-3",
+   "H-C k1": {
+    "gl": 0,
+    "other": 7,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 7,
+    "usd": 0.04255866999999999,
+    "noSignal": false
+   },
+   "H-N k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.06667392,
+    "noSignal": false
+   },
+   "H-0 k1": {
+    "gl": 0,
+    "other": 0,
+    "regGl": 0,
+    "regOther": 0,
+    "net": 0,
+    "usd": 0.25607223999999995,
+    "noSignal": false
+   },
+   "H-C k2": null
+  }
+ ],
+ "pooled": {
+  "H-C k1": {
+   "gl": 276,
+   "other": 81,
+   "net": 357,
+   "usd": 1.14166365,
+   "n": 8
+  },
+  "H-N k1": {
+   "gl": 0,
+   "other": 54,
+   "net": 54,
+   "usd": 0.60378299,
+   "n": 8
+  },
+  "H-0 k1": {
+   "gl": 0,
+   "other": 118,
+   "net": 118,
+   "usd": 2.01198006,
+   "n": 8
+  },
+  "H-C k2": {
+   "gl": 180,
+   "other": 138,
+   "net": 318,
+   "usd": 0.6574474200000001,
+   "n": 5
+  }
+ },
+ "failingGl": 276,
+ "failingOther": 199,
+ "otherVs": [
+  {
+   "incident": "ch-e8-1",
+   "hc": 0,
+   "regen": -68.5,
+   "gated": 0
+  },
+  {
+   "incident": "ch-e8-2",
+   "hc": 19,
+   "regen": -40,
+   "gated": 9.5
+  },
+  {
+   "incident": "ch-e8-3",
+   "hc": 0,
+   "regen": 108.5,
+   "gated": 0
+  },
+  {
+   "incident": "cht-e8-1",
+   "hc": 1,
+   "regen": -26,
+   "gated": 0
+  },
+  {
+   "incident": "cht-e8-2",
+   "hc": 0,
+   "regen": -27.5,
+   "gated": 0
+  },
+  {
+   "incident": "cht-e8-3",
+   "hc": 54,
+   "regen": 53.5,
+   "gated": 27
+  },
+  {
+   "incident": "b1lh-e8-2",
+   "hc": 0,
+   "regen": -3.5,
+   "gated": 0
+  },
+  {
+   "incident": "b1lh-e8-3",
+   "hc": 7,
+   "regen": 7,
+   "gated": 3.5
+  }
+ ],
+ "otherSign": {
+  "hcVsRegen": {
+   "wins": 6,
+   "losses": 1,
+   "p": 0.125
+  },
+  "hcVsGated": {
+   "wins": 4,
+   "losses": 0,
+   "p": 0.125
+  }
+ },
+ "defects": [
+  {
+   "incident": "ch-e8-1",
+   "defect": "go-live intake (§3.5)",
+   "confirmed": false,
+   "classes": [
+    "gl-awaiting",
+    "gl-dispatched",
+    "gl-intake"
+   ],
+   "failing": 48,
+   "arms": {
+    "H-C k1": {
+     "recovered": 48,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "ch-e8-2",
+   "defect": "go-live intake (§3.5)",
+   "confirmed": false,
+   "classes": [
+    "gl-awaiting",
+    "gl-dispatched",
+    "gl-intake"
+   ],
+   "failing": 48,
+   "arms": {
+    "H-C k1": {
+     "recovered": 48,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "ch-e8-3",
+   "defect": "go-live intake (§3.5)",
+   "confirmed": false,
+   "classes": [
+    "gl-intake"
+   ],
+   "failing": 18,
+   "arms": {
+    "H-C k1": {
+     "recovered": 18,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "cht-e8-1",
+   "defect": "go-live intake (§3.5)",
+   "confirmed": false,
+   "classes": [
+    "gl-intake"
+   ],
+   "failing": 18,
+   "arms": {
+    "H-C k1": {
+     "recovered": 18,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "cht-e8-2",
+   "defect": "go-live intake (§3.5)",
+   "confirmed": false,
+   "classes": [
+    "gl-awaiting",
+    "gl-dispatched",
+    "gl-intake"
+   ],
+   "failing": 48,
+   "arms": {
+    "H-C k1": {
+     "recovered": 48,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "cht-e8-3",
+   "defect": "go-live intake (§3.5)",
+   "confirmed": false,
+   "classes": [
+    "gl-awaiting",
+    "gl-dispatched",
+    "gl-intake"
+   ],
+   "failing": 48,
+   "arms": {
+    "H-C k1": {
+     "recovered": 48,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "b1lh-e8-2",
+   "defect": "go-live intake (§3.5)",
+   "confirmed": false,
+   "classes": [
+    "gl-awaiting",
+    "gl-dispatched",
+    "gl-intake"
+   ],
+   "failing": 48,
+   "arms": {
+    "H-C k1": {
+     "recovered": 48,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "ch-e8-2",
+   "defect": "review timing (R2.2)",
+   "confirmed": false,
+   "classes": [
+    "review-approve",
+    "review-reject",
+    "review-timeout"
+   ],
+   "failing": 19,
+   "arms": {
+    "H-C k1": {
+     "recovered": 19,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "ch-e8-3",
+   "defect": "error classifier reads code, not reason (d5 rename)",
+   "confirmed": true,
+   "classes": [
+    "action-at-deadline",
+    "amend",
+    "amend-then-cancel",
+    "cancel-after-collection",
+    "cancel-at-collection",
+    "cancel-processing",
+    "collection-failed",
+    "decline",
+    "f1-charge",
+    "f3-charge",
+    "f3-refund",
+    "f4-reserve",
+    "f6-carrier",
+    "review-approve",
+    "straight"
+   ],
+   "failing": 118,
+   "arms": {
+    "H-C k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 118,
+     "fixed": true
+    }
+   }
+  },
+  {
+   "incident": "cht-e8-1",
+   "defect": "refund after cancel during processing",
+   "confirmed": false,
+   "classes": [
+    "cancel-processing"
+   ],
+   "failing": 1,
+   "arms": {
+    "H-C k1": {
+     "recovered": 1,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "cht-e8-3",
+   "defect": "refunds after cancel (processing, amend)",
+   "confirmed": false,
+   "classes": [
+    "amend-then-cancel",
+    "cancel-processing"
+   ],
+   "failing": 54,
+   "arms": {
+    "H-C k1": {
+     "recovered": 54,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 54,
+     "fixed": true
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  },
+  {
+   "incident": "b1lh-e8-3",
+   "defect": "partial reserve (R4.2)",
+   "confirmed": false,
+   "classes": [
+    "f4-reserve"
+   ],
+   "failing": 7,
+   "arms": {
+    "H-C k1": {
+     "recovered": 7,
+     "fixed": true
+    },
+    "H-N k1": {
+     "recovered": 0,
+     "fixed": false
+    },
+    "H-0 k1": {
+     "recovered": 0,
+     "fixed": false
+    }
+   }
+  }
+ ],
+ "h2": {
+  "incidents": [
+   "ch-e8-3",
+   "cht-e8-1",
+   "cht-e8-3",
+   "b1lh-e8-3"
+  ],
+  "hcWins": 4,
+  "hnWins": 0,
+  "p": 0.125
+ },
+ "nVs0": {
+  "hnWins": [
+   "cht-e8-3"
+  ],
+  "h0Wins": [
+   "ch-e8-3"
+  ],
+  "ties": 6
+ },
+ "verifierCost": {
+  "wholeSession": 131.44,
+  "wholeSession1hCache": 179.23,
+  "lowerBound": 6.69,
+  "lowerBoundNote": "every call up to and including the first write of the file (reading SPEC-E, the bed and the oracle views), plus the file's own output tokens; later validation and tests not counted",
+  "allocated": 19.58,
+  "allocatedNote": "the whole session times the file's share of all characters the session wrote",
+  "upperBound": 179.23,
+  "upperBoundNote": "the whole session (it also built the runtime, builder kit, reference, faults, drift and the COMP-1 docs), 1-hour cache-write rate; thinking tokens still uncounted"
+ },
+ "h1Cost": {
+  "lowerBound": {
+   "verifierUsd": 6.69,
+   "hcTotal": 7.83166365,
+   "regenerate": 8.065,
+   "conjunctHolds": true,
+   "perProgram": 0.97895795625
+  },
+  "allocated": {
+   "verifierUsd": 19.58,
+   "hcTotal": 20.721663649999996,
+   "regenerate": 8.065,
+   "conjunctHolds": false,
+   "perProgram": 2.5902079562499996
+  },
+  "upperBound": {
+   "verifierUsd": 179.23,
+   "hcTotal": 180.37166365,
+   "regenerate": 8.065,
+   "conjunctHolds": false,
+   "perProgram": 22.54645795625
+  }
+ },
+ "integrity": [
+  {
+   "label": "b1lh-e8-2.H-0.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "b1lh-e8-2.H-C.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 48,
+   "reg": 0,
+   "recordRaw": [
+    48,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "b1lh-e8-2.H-C.k1.dry",
+   "missing": 0,
+   "extra": 0,
+   "rec": 48,
+   "reg": 0,
+   "recordRaw": [
+    48,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "b1lh-e8-3.H-0.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "b1lh-e8-3.H-C.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 7,
+   "reg": 0,
+   "recordRaw": [
+    7,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "b1lh-e8-3.H-C.k1.dry",
+   "missing": 0,
+   "extra": 0,
+   "rec": 7,
+   "reg": 48,
+   "recordRaw": [
+    7,
+    48
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "b1lh-e8-3.H-N.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-1.H-0.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-1.H-C.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 48,
+   "reg": 0,
+   "recordRaw": [
+    48,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-1.H-C.k1.dry",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-1.H-C.k2",
+   "missing": 0,
+   "extra": 0,
+   "rec": 48,
+   "reg": 0,
+   "recordRaw": [
+    48,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-1.H-N.k1.dry",
+   "missing": 0,
+   "extra": 0,
+   "rec": 30,
+   "reg": 1,
+   "recordRaw": [
+    30,
+    1
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-2.H-0.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-2.H-C.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 67,
+   "reg": 0,
+   "recordRaw": [
+    67,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-2.H-C.k2",
+   "missing": 0,
+   "extra": 0,
+   "rec": 67,
+   "reg": 0,
+   "recordRaw": [
+    67,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-3.H-0.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 118,
+   "reg": 0,
+   "recordRaw": [
+    118,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-3.H-C.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 18,
+   "reg": 0,
+   "recordRaw": [
+    18,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-3.H-C.k2",
+   "missing": 0,
+   "extra": 0,
+   "rec": 136,
+   "reg": 0,
+   "recordRaw": [
+    136,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "ch-e8-3.H-N.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-1.H-0.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-1.H-C.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 19,
+   "reg": 0,
+   "recordRaw": [
+    19,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-1.H-C.k2",
+   "missing": 0,
+   "extra": 0,
+   "rec": 19,
+   "reg": 0,
+   "recordRaw": [
+    19,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-1.H-N.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-2.H-0.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-2.H-C.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 48,
+   "reg": 0,
+   "recordRaw": [
+    48,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-2.H-C.k2",
+   "missing": 0,
+   "extra": 0,
+   "rec": 48,
+   "reg": 0,
+   "recordRaw": [
+    48,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-3.H-0.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 0,
+   "reg": 0,
+   "recordRaw": [
+    0,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-3.H-C.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 102,
+   "reg": 0,
+   "recordRaw": [
+    102,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  },
+  {
+   "label": "cht-e8-3.H-N.k1",
+   "missing": 0,
+   "extra": 0,
+   "rec": 54,
+   "reg": 0,
+   "recordRaw": [
+    54,
+    0
+   ],
+   "agrees": true,
+   "keptRule": true
+  }
+ ]
+}

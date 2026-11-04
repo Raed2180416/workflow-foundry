@@ -1,0 +1,51 @@
+diff -ruN a/modules/fulfilment.mjs b/modules/fulfilment.mjs
+--- a/modules/fulfilment.mjs	2026-11-04 14:33:20.243698691 +0000
++++ b/modules/fulfilment.mjs	2026-11-04 14:33:20.243698691 +0000
+@@ -11,6 +11,7 @@
+ };
+ 
+ const MAX_FIX = 3;
++const REISSUE_MIN = 120;
+ 
+ // A 400 from a system is our mistake (e.g. a field it renamed): re-issue with the arguments the current schema names.
+ const fixArgs = (v, s) => {
+@@ -36,6 +37,12 @@
+ };
+ // a budget of re-issues per step, so one step's renames do not use up another step's retries
+ const tryAgain = (S, step) => { S.fx[step] = (S.fx[step] ?? 0) + 1; return S.fx[step] <= MAX_FIX; };
++// a 400 is corrected and re-issued, not a failure (R4.2): as long as the step's window runs from its first 400 (S.fw)
++const reissue = (S, step, at) => {
++  S.fw = S.fw ?? {};
++  S.fw[step] = S.fw[step] ?? at;
++  return Date.parse(at) - Date.parse(S.fw[step]) <= REISSUE_MIN * 60000;
++};
+ 
+ // ok | pend (still running) | invalid (our request was wrong) | bad (a permanent failure) | transient (retry later)
+ const classify = (ctx, system, key, status, err) => {
+@@ -174,7 +181,7 @@
+     }
+     if (fixable.length) {
+       const fixed = fixArgs(reserveEffect(S, fixable).args, argsSchema(ctx, 'inventory', 'reserve'));
+-      const e = tryAgain(S, 'reserve') ? reserveEffect(S, fixable, fixed) : false;
++      const e = reissue(S, 'reserve', at) ? reserveEffect(S, fixable, fixed) : false;
+       if (e) eff.push(e); else { for (const sku of fixable) S.res[sku].s = 'bad'; fail(); }
+     }
+     if (redo.length) eff.push(reserveEffect(S, redo));
+@@ -190,7 +197,7 @@
+       if (S.st === 'run') { S.sh = 'pend'; eff.push({ key: 'ship', system: 'carrier', op: 'create', args: shipArgs(S) }); }
+     } else if (c === 'invalid') {
+       const fixed = fixArgs(chargeArgs(S), argsSchema(ctx, 'billing', 'charge'));
+-      if (tryAgain(S, 'charge')) eff.push({ key: 'charge', system: 'billing', op: 'charge', args: fixed }); else { S.ch = 'bad'; fail(); }
++      if (reissue(S, 'charge', at)) eff.push({ key: 'charge', system: 'billing', op: 'charge', args: fixed }); else { S.ch = 'bad'; fail(); }
+     } else if (c === 'bad') { S.ch = 'bad'; fail(); }
+     else if (c === 'transient' && tryAgain(S, 'charge')) eff.push({ key: 'charge', system: 'billing', op: 'charge', args: chargeArgs(S) });
+     else if (c === 'transient') { S.ch = 'bad'; fail(); }
+@@ -199,7 +206,7 @@
+     if (c === 'ok') S.sh = 'ok';
+     else if (c === 'invalid') {
+       const fixed = fixArgs(shipArgs(S), argsSchema(ctx, 'carrier', 'create'));
+-      if (tryAgain(S, 'ship')) eff.push({ key: 'ship', system: 'carrier', op: 'create', args: fixed }); else { S.sh = 'bad'; fail(); }
++      if (reissue(S, 'ship', at)) eff.push({ key: 'ship', system: 'carrier', op: 'create', args: fixed }); else { S.sh = 'bad'; fail(); }
+     } else if (c === 'bad') { S.sh = 'bad'; fail(); }
+     else if (c === 'transient' && tryAgain(S, 'ship')) eff.push({ key: 'ship', system: 'carrier', op: 'create', args: shipArgs(S) });
+     else if (c === 'transient') { S.sh = 'bad'; fail(); }

@@ -1,0 +1,231 @@
+diff -ruN a/solver.mjs b/solver.mjs
+--- a/solver.mjs	2026-11-04 14:33:19.816704236 +0000
++++ b/solver.mjs	2026-11-04 14:33:19.816704236 +0000
+@@ -24,9 +24,9 @@
+     c = (start.type === 'migration' && fromRecords(T, start)) || newCarry(T, start);
+     if (!c.o) { T.close = true; return out(T, null, null); }
+   }
+-  // Carrier reports first: a collection in the same instant as a cancel wins (S4).
+-  for (const e of ev) if (e.type === 'carrier.status') handle(T, c, e);
+-  for (const e of ev) if (e.type !== 'carrier.status') handle(T, c, e);
++  // Delivery order (§1): by source, then id. A carrier report comes before a customer action in the same instant (S4).
++  const ordered = [...ev].sort((a, b) => cmp(srcOf(a), srcOf(b)) || cmp(String(a.id), String(b.id)));
++  for (const e of ordered) handle(T, c, e);
+   drive(T, c);
+   if (c.ph === 'end' && !pending(c)) {
+     T.close = true;
+@@ -189,6 +189,7 @@
+ }
+ 
+ function openOf(T, subject) {
++  if (!subject) return [];
+   const list = T.ctx.instances({ subject }) || [];
+   return list.map(x => (typeof x === 'string' ? x : x.instance ?? x.id)).filter(Boolean);
+ }
+@@ -211,6 +212,44 @@
+   return Object.values(c.k).some(v => v[3] === 'pend');
+ }
+ 
++const srcOf = e => String(e.source ?? e.system ?? '');
++const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
++
++// status(key) of a keyed effect: committed | not-found | pending; null when it cannot be read.
++function statusOf(T, system, key) {
++  try {
++    const s = T.ctx.status(system, key);
++    const v = s && typeof s === 'object' ? (s.status ?? s.state) : s;
++    return typeof v === 'string' ? v : null;
++  } catch {
++    return null;
++  }
++}
++
++// A fulfilment whose failure is already decided: a declined or permanently failed step, or a collection failure (S13).
++function failing(f) {
++  return f.fail || f.chg === 'declined' || f.chg === 'bad' || f.shp === 'bad' || f.items.some(it => f.rsv[it.sku] === 'bad');
++}
++
++// S2: an effect with an unknown outcome is re-read on a wake-up until status(key) settles it.
++function armUnknown(T, c) {
++  const id = `${c.o}:unk`;
++  c.ob = c.ob.filter(x => x !== id);
++  obligation(T, c, id, T.now + MIN, 'settleUnknown');
++}
++
++function settleUnknown(T, c) {
++  let open = false;
++  for (const [kk, m] of Object.entries(c.k)) {
++    if (m[3] !== 'pend' || !m[4]) continue;
++    const st = statusOf(T, m[4], kk);
++    if (st === 'committed' || st === 'not-found') {
++      result(T, c, { key: kk, system: m[4], status: st === 'committed' ? 'ok' : 'error', error: { code: 'not-applied' } });
++    } else open = true;
++  }
++  if (open) armUnknown(T, c);
++}
++
+ const STEP_TAGS = ['rsv', 'chg', 'shp', 'shpc', 'ref', 'rel'];
+ 
+ function stepPending(c, fid) {
+@@ -295,6 +334,16 @@
+   if (!m) return;
+   const [tag, fid, sub] = m;
+   const f = fid ? c.f[fid] : null;
++  if (e.status === 'unknown' && tag !== 'rsv' && !kk.startsWith('~')) {
++    // S2: an unknown outcome counts as committed only when status(key) says so; until then the step stays in flight.
++    const st = statusOf(T, e.system, kk);
++    if (st !== 'committed' && st !== 'not-found') {
++      m[4] = e.system;
++      armUnknown(T, c);
++      return;
++    }
++    e = Object.assign({}, e, { status: st === 'committed' ? 'ok' : 'error', error: { code: 'not-applied' } });
++  }
+   const ok = e.status === 'ok';
+   const code = errCode(e.error);
+   if (!ok && tag !== 'rsv' && (tag === 'alloc' || tag === 'fraud' || tag === 'create' || isInvalid(e.error))) {
+@@ -318,7 +367,7 @@
+       if (ok) c.rec = 'ok';
+       return;
+     case 'rsv':
+-      rsvResult(c, f, e);
++      rsvResult(T, c, f, e);
+       // Items still to submit: drop the batch entry so the next drive resubmits them with their own keys.
+       if (f.items.some(it => f.rsv[it.sku] === 'no')) delete c.k[kk];
+       return;
+@@ -361,16 +410,21 @@
+   c.al = Object.keys(c.f);
+ }
+ 
+-function rsvResult(c, f, e) {
++function rsvResult(T, c, f, e) {
+   const n = (c.tries['rsv' + f.id] = (c.tries['rsv' + f.id] || 0) + 1);
+   for (const it of f.items) {
+     if (f.rsv[it.sku] === 'ok') continue;
+     const ik = `${c.o}:ri:${f.id}:${it.sku}`;
+     const r = Array.isArray(e.items) ? e.items.find(x => x && x.key === ik) : undefined;
+-    if (e.status === 'ok' || (r && r.status === 'ok')) { f.rsv[it.sku] = 'ok'; continue; }
++    const unknown = (r ? r.status : e.status) === 'unknown';
++    // S2: an item with an unknown outcome is committed only if status(key) says so.
++    if (e.status === 'ok' || (r && r.status === 'ok') || (unknown && statusOf(T, 'inventory', ik) === 'committed')) {
++      f.rsv[it.sku] = 'ok';
++      continue;
++    }
+     const rc = r ? r.error : e.error;
+     // Items the batch did not process committed nothing: resubmit them with their original keys.
+-    const retry = isInvalid(rc) || errCode(rc) === 'batch-item-not-processed'
++    const retry = unknown || isInvalid(rc) || errCode(rc) === 'batch-item-not-processed'
+       || (!r && e.status === 'partial') || (r && !rc && r.status === 'partial');
+     f.rsv[it.sku] = retry && n <= MAX_TRIES ? 'no' : 'bad';
+   }
+@@ -378,22 +432,31 @@
+ 
+ function action(T, c, e, at) {
+   const pl = e.payload || {};
++  const cancel = pl.action === 'cancel';
+   if (c.ph === 'intake') {
+-    if (pl.action === 'cancel' && !c.stop) c.stop = 'customer';
++    // R6.4: a cancel counts while the review is open. The first amend at or before D counts even before clearance (S9).
++    if (c.stop || (c.fr && at > c.fr.due)) return;
++    if (cancel) c.stop = 'customer';
++    else if (!c.act && at <= Date.parse(c.p) + c.A * 60 * MIN) c.act = 'amend';
+     return;
+   }
+-  if (c.ph === 'wait' && !c.act && at <= Date.parse(c.D)) {
+-    c.act = pl.action === 'amend' ? 'amend' : 'cancel';
+-    if (c.act === 'cancel') c.stop = 'customer';
++  if (c.ph === 'wait' && !c.act) {
++    if (at <= Date.parse(c.D)) {
++      c.act = cancel ? 'cancel' : 'amend';
++      if (cancel) c.stop = 'customer';
++    }
+     return;
+   }
+-  if (c.ph === 'proc' && pl.action === 'cancel' && !c.stop) {
+-    const refused = Object.values(c.f).some(f => f.coll !== null && f.coll <= at);
+-    if (refused) {
+-      return notify(T, c, 'cancel-refused', null, c.em, 'Your order can no longer be cancelled: it has been collected for shipping.');
+-    }
+-    c.stop = 'customer';
++  // A counted amend made the order ready in this instant, so a cancel here is a cancel during processing (S11).
++  if (!cancel || c.stop || (c.ph !== 'proc' && c.ph !== 'wait')) return;
++  const fs = Object.values(c.f);
++  const refused = fs.some(f => f.coll !== null && f.coll <= at);
++  // An order whose last fulfilment has already ended (completed, failed, or delivered in this instant) has ended (S13).
++  const ended = fs.every(f => !f.avail || TERM.includes(f.st) || failing(f) || f.dl);
++  if (refused || ended) {
++    return notify(T, c, 'cancel-refused', null, c.em, 'Your order can no longer be cancelled: it has been collected for shipping.');
+   }
++  c.stop = 'customer';
+ }
+ 
+ function carrier(T, c, e, at) {
+@@ -514,6 +577,7 @@
+ 
+ function drive(T, c) {
+   const { now } = T;
++  settleUnknown(T, c);
+   if (c.al === null) send(T, c, 'alloc', null, null, 'inventory', 'allocate', { orderId: c.o }, false);
+   if (c.fd === null) send(T, c, 'fraud', null, null, 'fraud', 'check', { orderId: c.o }, false);
+   if (c.al && c.rec === 'no') {
+@@ -548,13 +612,24 @@
+   }
+ 
+   // R2/R3 clearing
++  // R3.2 an amend counted before clearance: cancel the unavailable items now, within 60 min of it (S9).
++  if (c.act === 'amend' && c.ph === 'intake' && !c.stop) {
++    if (!Object.values(c.f).some(f => !f.avail)) c.act = null; // S5: an amend with nothing unavailable changes nothing
++    else {
++      for (const f of Object.values(c.f)) if (!f.avail) setF(T, c, f, 'cancelled');
++      if (!Object.values(c.f).some(f => f.avail)) c.stop = 'nothing-available';
++    }
++  }
++
+   if (c.cl && c.ph === 'intake' && !c.stop) {
+     const unav = Object.values(c.f).some(f => !f.avail);
+     if (unav) {
+       c.ph = 'wait';
+       c.D = isoAms(Date.parse(c.p) + c.A * 60 * MIN);
+-      setOrd(T, c, 'customerActionRequired');
+-      notify(T, c, 'action-required', null, c.em, 'Some items of your order are unavailable. Please amend or cancel within the deadline.');
++      if (c.act !== 'amend') { // S9: a counted amend makes the action-required step moot
++        setOrd(T, c, 'customerActionRequired');
++        notify(T, c, 'action-required', null, c.em, 'Some items of your order are unavailable. Please amend or cancel within the deadline.');
++      }
+     } else {
+       ready(T, c);
+     }
+@@ -565,7 +640,7 @@
+     if (c.act === 'amend') {
+       for (const f of Object.values(c.f)) if (!f.avail) setF(T, c, f, 'cancelled');
+       if (!Object.values(c.f).some(f => f.avail)) c.stop = 'nothing-available';
+-      else ready(T, c);
++      else if (!c.stop) ready(T, c);
+     } else if (!c.act && now > Date.parse(c.D)) {
+       for (const f of Object.values(c.f)) setF(T, c, f, 'cancelled');
+       setOrd(T, c, 'timedOut');
+@@ -585,7 +660,13 @@
+     }
+     for (const f of Object.values(c.f)) {
+       if (TERM.includes(f.st)) continue;
+-      if (compensate(T, c, f)) setF(T, c, f, 'cancelled');
++      if (compensate(T, c, f)) {
++        // A failure decided before the stop keeps its status: the cancel only covers the other open fulfilments (S13).
++        if (failing(f)) {
++          setF(T, c, f, 'failed');
++          failNotice(T, c, f);
++        } else setF(T, c, f, 'cancelled');
++      }
+     }
+     if (Object.values(c.f).every(f => TERM.includes(f.st))) c.ph = 'end';
+     return;
+@@ -662,7 +743,8 @@
+ function compensate(T, c, f) {
+   if (stepPending(c, f.id)) return false;
+   if (f.shp === 'ok' && f.shpc === 'no') {
+-    if (f.coll !== null || f.cf) f.shpc = f.cf ? 'na' : 'refused';
++    // A collected shipment is refused by the carrier itself (409 already-collected); a failed collection is not cancelled.
++    if (f.cf) f.shpc = 'na';
+     else send(T, c, 'shpc', f.id, null, 'carrier', 'cancel', { orderId: c.o, fulfilmentId: f.id });
+     if (f.shpc === 'no') return false;
+   }

@@ -1,0 +1,35 @@
+diff -ruN a/modules/fulfilment.mjs b/modules/fulfilment.mjs
+--- a/modules/fulfilment.mjs	2026-11-04 14:33:20.231698690 +0000
++++ b/modules/fulfilment.mjs	2026-11-04 14:33:20.231698690 +0000
+@@ -27,7 +27,13 @@
+ const argsSchema = (ctx, system, op) => fileJson(ctx.files, `api/${system}.schema.json`)?.ops?.[op]?.args ?? null;
+ 
+ const codeOf = err => (typeof err === 'string' ? err : err?.code);
+-const isInvalid = err => codeOf(err) === 'invalid-args' || codeOf(err) === 'field-renamed';
++// a 400 names its reason in the error (its code, or a field of it): invalid-args or field-renamed
++const isInvalid = err => {
++  const leaves = [];
++  const walk = v => { if (v !== null && typeof v === 'object') Object.values(v).forEach(walk); else leaves.push(String(v)); };
++  walk(err);
++  return leaves.some(x => /\b(invalid-args|field-renamed)\b/.test(x) || x === '400');
++};
+ // a permanent error (retryable: false, a declined card, a permanent failure) is never retried; any other error is
+ // retried a few times (the platform has already retried it once, e.g. 503 batch-item-not-processed)
+ const isTransient = err => {
+diff -ruN a/parent.mjs b/parent.mjs
+--- a/parent.mjs	2026-11-04 14:33:20.236590863 +0000
++++ b/parent.mjs	2026-11-04 14:33:20.236590863 +0000
+@@ -101,7 +101,12 @@
+   function migrate(e) {
+     const oid = norm(deepFind(e.payload, 'orderId'));
+     const rec = oid && !st.o ? ctx.query('orders.orders', { where: { orderId: oid }, limit: 1 })[0] : undefined;
+-    if (!rec) return;
++    if (!rec) {
++      // not recorded yet: its messages from the export go through the same rules as live ones, the placed order first (R1.1)
++      for (const x of e.payload?.events ?? []) if (norm(x.payload?.orderId ?? x.payload?.orderRef) === oid && kindOf(x) === 'placed') placed(x);
++      for (const x of e.payload?.events ?? []) if (norm(x.payload?.orderRef) === oid && kindOf(x) === 'action') action(x);
++      return;
++    }
+     const frs = ctx.query('orders.fulfilments', { where: { orderId: oid }, limit: 100 });
+     const customers = fileJson(files, 'master/customers.json');
+     const row = (Array.isArray(customers) ? customers : customers?.rows ?? []).find(c => c.customerId === rec.customerId);

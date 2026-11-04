@@ -1,0 +1,30 @@
+diff -ruN a/modules/fulfilment.mjs b/modules/fulfilment.mjs
+--- a/modules/fulfilment.mjs	2026-11-04 14:33:20.263698692 +0000
++++ b/modules/fulfilment.mjs	2026-11-04 14:33:20.267698692 +0000
+@@ -13,7 +13,7 @@
+ //   phase: 'new' | 'running' | 'dispatched' | 'completed' | 'failed' | 'stopped'
+ //   charge / ship / refund: 'none' | 'pending' | 'ok' | 'failed' ; shipUndo, refund undo: 'none'|'pending'|'done'
+ 
+-const MAX_BATCHES = 5;
++const RESERVE_WINDOW_MIN = 120;                                    // R4.2: the reserve step is within 120 min of t
+ const MEANINGS = ['collected', 'inTransit', 'delivered', 'collectionFailed'];
+ 
+ // Files arrive as raw text: parse a JSON file (or pass a parsed value through).
+@@ -74,7 +74,7 @@
+   const state = {
+     orderId: input.orderId, fid: input.fulfilment.fulfilmentId, customerId: input.customerId, currency: input.currency,
+     edition: input.edition, location: input.fulfilment.location, items, amountMinor: input.fulfilment.amountMinor,
+-    phase: 'running', batches: 0,
++    phase: 'running', batches: 0, startedAt: ctx.now,
+     reserve: Object.fromEntries(items.map(i => [i.sku, 'none'])),
+     charge: 'none', ship: 'none', shipUndo: 'none', refund: 'none', collectionFailed: false, dispatched: false,
+     reports: [], end: null, endedAt: null,
+@@ -165,7 +165,7 @@
+     return compensate(s, ctx);                                          // nothing new after a stop or a failure
+   }
+   // A partial batch is delivered, not retried: resubmit only the failed items, with their original keys (R4.2).
+-  if (s.batches >= MAX_BATCHES) {
++  if (Date.parse(ctx.now) > Date.parse(s.startedAt) + RESERVE_WINDOW_MIN * 60000) {
+     for (const sku of failed) s.reserve[sku] = 'failed';
+     return fail(s, ctx, 'reserve-error', ctx.now);
+   }

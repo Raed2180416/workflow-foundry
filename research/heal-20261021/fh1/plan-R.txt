@@ -1,0 +1,9 @@
+# FH-1 amendment 1 (AMENDMENT-FH1-1.md): the 8 outstanding steps, one sequential worker, run once more after the usage window reopened
+ch-e8-3 H-C 2
+b1lh-e8-2 H-0 1
+b1lh-e8-3 H-0 1
+ch-e8-2 H-C 2
+cht-e8-2 H-C 2
+cht-e8-3 H-C 2
+b1lh-e8-2 H-C 2
+b1lh-e8-3 H-C 2
