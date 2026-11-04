@@ -4,6 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { checkData, clone, digest, FoundryError, refParts, resolve } from './data.mjs';
 import { validateData, compileDataSchema } from './validate.mjs';
+import { checkLabel } from './context.mjs';
 
 export class CapabilityRegistry {
   #tools = new Map();
@@ -15,6 +16,12 @@ export class CapabilityRegistry {
     if (!['low', 'high'].includes(spec.risk)) throw new FoundryError('CAPABILITY_RISK', 'Capability risk must be declared');
     if (!Number.isInteger(spec.maxTimeoutMs) || spec.maxTimeoutMs < 1) throw new FoundryError('CAPABILITY_TIMEOUT', 'A positive timeout limit is required');
     if (!Number.isFinite(spec.cost) || spec.cost < 0) throw new FoundryError('CAPABILITY_COST', 'A nonnegative per-dispatch reserved cost is required');
+    // The integrity label of what the capability returns, joined with its arguments' label. A capability that reads data the
+    // workflow did not author (a file, a page, a mailbox) declares it untrusted, or the bytes it reads would be labelled by its
+    // (trusted) arguments and reach an effect or a prompt as trusted (DATA-HANDLES.md, the label prerequisite).
+    if (spec.outputLabel !== undefined) {
+      try { checkLabel(spec.outputLabel); } catch { throw new FoundryError('CAPABILITY_LABEL', `outputLabel must be "trusted" or "untrusted:<source>": ${String(spec.outputLabel).slice(0, 80)}`); }
+    }
     if (spec.requiresEvidence) {
       if (!Array.isArray(spec.requiresEvidence) || spec.requiresEvidence.length > 30) throw new FoundryError('EVIDENCE_CONTRACT', 'Evidence requirements must be a bounded array');
       const ids = new Set();

@@ -109,6 +109,10 @@ test('registry: interim taint rule (b) compiles a Tier-0 effect member approval-
   const registry = compileRegistry({ lock, lockHash: 'h', host: {}, envelope, envelopeDigest: 'e' });
   assert.equal(registry.get(write.id).requiresApproval, true);
   assert.equal(registry.get(read.id).requiresApproval, false);
+  // The engine sees each member's declared output label (data handles prerequisite, 2026-11-04): what an MCP read returns is
+  // untrusted wherever it flows (an agent's context, an effect's arguments), not labelled by the read's trusted arguments.
+  assert.equal(registry.get(read.id).outputLabel, 'untrusted:mcp.e');
+  assert.equal(registry.get(read.id).outputLabel, lock.members[read.id].outputLabel);
 });
 
 test('lint: every code has a firing and a quiet fixture', () => {

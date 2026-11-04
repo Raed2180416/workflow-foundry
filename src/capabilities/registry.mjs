@@ -37,7 +37,7 @@ export function compileRegistry({ lock, host, envelope, ledger = null, mode = 'l
     const m = lock.members[memberId], requiresApproval = m.requiresApproval === true || (gateEffects && m.effects !== 'none');
     registry.register({ name: m.id, description: m.view.summary, version: '1', implementation: `sha256:${digest({ member: m.implementation, code: CODE, mode })}`,
       inputSchema: m.view.inputSchema, outputSchema: m.outputSchema, effects: m.effects, risk: m.risk,
-      requiresApproval, maxTimeoutMs: m.maxTimeoutMs, cost: m.cost,
+      requiresApproval, maxTimeoutMs: m.maxTimeoutMs, cost: m.cost, ...(m.outputLabel && m.outputLabel !== 'trusted' ? { outputLabel: m.outputLabel } : {}),
       cancellation: 'protocol-request-only; external effect reconciliation may be required',
       execute: async (args, ctx) => {
         // An approval-gated Tier-0 effect runs only with a person's decision for the host rendering of this exact call (as nodecap.act).

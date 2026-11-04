@@ -184,8 +184,11 @@ function effectTaint(workflow, registry, add) {
       const inputs = () => joinLabels((node.context?.inputs ?? []).map(spec => joinLabels([spec.label ?? TRUSTED, Object.hasOwn(spec, 'ref') ? inheritedLabel(spec.ref, own) : TRUSTED])));
       if (node.kind === 'agent') label = joinLabels([node.quarantined === true ? TRUSTED : inputs(), labelOf(bindOutput(node.checks ?? []), own)]);
       else if (node.kind === 'assert') failure = labelOf(node.checks, own);
-      else if (node.kind === 'verify') label = joinLabels([labelOf(node.subject, own), labelOf(node.args ?? null, own), labelOf(node.ledger?.inventory ?? null, own), inputs()]);
-      else if (node.kind === 'task' || node.kind === 'code') label = labelOf(node.args ?? null, own);
+      else if (node.kind === 'verify') label = joinLabels([labelOf(node.subject, own), labelOf(node.args ?? null, own), labelOf(node.ledger?.inventory ?? null, own), inputs(),
+        node.method === 'capability' ? registry?.get(node.tool)?.outputLabel ?? TRUSTED : TRUSTED]);
+      // A task's output carries its arguments' label joined with the capability's declared output label (capabilities.mjs).
+      else if (node.kind === 'task') label = joinLabels([labelOf(node.args ?? null, own), registry?.get(node.tool)?.outputLabel ?? TRUSTED]);
+      else if (node.kind === 'code') label = labelOf(node.args ?? null, own);
       else if (isSignalWait(node) || node.at !== undefined) label = joinLabels([node.label ?? TRUSTED, labelOf(node.at ?? null, own), ...correlateTemplates(node).map(t => labelOf(t, own))]);
       else if (node.kind === 'state') {
         // A read carries the slot's label (what earlier runs wrote) and its key's; a write may not carry more taint than the slot's label, in

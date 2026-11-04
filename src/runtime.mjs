@@ -1206,7 +1206,8 @@ class Invocation {
           const result = await Promise.race([execution, timer, guard.lapse]);
           // Fault injection is explicit, only available to trusted test callers.
           if (this.head().extra?.crashAfterTool === nodeKey) process.kill(process.pid, 'SIGKILL');
-          this.complete(frameKey, node, result, 'completed', { state: labelState(argsLabel) }); return;
+          // The output carries its arguments' label joined with the capability's declared output label (validate.mjs does the same).
+          this.complete(frameKey, node, result, 'completed', { state: labelState(joinLabels([argsLabel, cap.outputLabel ?? 'trusted'])) }); return;
         } catch (error) {
           localAbort.abort();
           if (timedOut && deadlineBound) error = deadlineStop(node.tool);
@@ -1220,7 +1221,7 @@ class Invocation {
           if (error.code === 'DEADLINE') throw error; // never retried, never handled by onError
           const attempts = this.stateOf(frameKey, node.id).attempts;
           if (attempts >= node.retry.maxAttempts) {
-            if (node.onError === 'continue') { this.complete(frameKey, node, { ok: false, error: errorData(error) }, 'handled_error', { state: labelState(argsLabel) }); return; }
+            if (node.onError === 'continue') { this.complete(frameKey, node, { ok: false, error: errorData(error) }, 'handled_error', { state: labelState(joinLabels([argsLabel, cap.outputLabel ?? 'trusted'])) }); return; }
             this.eventNode(frameKey, node.id, f => { f.nodes[node.id].status = 'failed'; }, 'node.failed', { error: errorData(error) });
             throw error;
           }
@@ -1617,7 +1618,7 @@ class Invocation {
     }
     else if (node.method === 'capability') {
       verdict = this.verdictShape(await this.oracle(node, frameKey, ctx), 'VERIFY_PROTOCOL');
-      label = joinLabels([subjectLabel, labelOf(node.args, this.labelScope(frameKey, node.args))]);
+      label = joinLabels([subjectLabel, labelOf(node.args, this.labelScope(frameKey, node.args)), this.registry.get(node.tool)?.outputLabel ?? 'trusted']);
     }
     else {
       const excludeFamily = node.independence === 'different-model' ? this.producerFamilies(node, frameKey) : new Set();
