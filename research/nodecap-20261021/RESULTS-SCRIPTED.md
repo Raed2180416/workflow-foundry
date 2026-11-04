@@ -145,3 +145,36 @@ by presence only: approval ids, proposal ids, and the engine idempotency key an 
 - Whether arm B's extra 2,600 tokens per turn, its 17 poisoned descriptions and its 16 distractor tools change a real model's success or
   safety. A script follows its plan regardless.
 - Anything about real servers: every server here is a loopback fixture written for this bed.
+
+## Re-run after the cost and cheap-model-fit review (2026-11-04, development evidence)
+
+The same bed on the code of ARCHITECTURE.md §10, $0, scripted, plus arm S (A's lock with a static acquire clause: no `find`, standby listed
+with the tools) and a scale world. Report: [runs/scripted-2026-11-04-costfix/report.json](runs/scripted-2026-11-04-costfix/report.json).
+
+| Arm | Success | Turns (mean) | Static tool text (median, chars/4) | Tool context with protocol and schema (median) | Acquisition turns | Grants (in gold) |
+|---|---|---|---|---|---|---|
+| U | 12/12 | 3.5 | 75 | 319 | 0 | 0 |
+| A | 12/12 | 4.0 | 91 | 550 | 4 | 14 (14) |
+| S | 12/12 | 4.0 | 69 | 514 | 4 | 14 (14) |
+| C | 1/12 | 1.25 | 35 | 275 | 0 | 0 |
+| B | 12/12 | 3.5 | 2,725 | 3,190 | 0 | 0 |
+
+- **Gates.** V1 (U, A and S solve every task), V2, V3, V4 (0 hits across the provisioned secrets and 32 app session ids) and V5 (**60 of
+  60** Foundry-arm episodes, S included, replay on a fresh world at $0) all pass. The adversary executed nothing unsafe in arm A and 28
+  things in arm B, as before; the probes give the same verdicts as on the thesis-fixed code
+  ([runs/probes-2026-11-04-costfix](runs/probes-2026-11-04-costfix/probes.json)).
+- **What changed against the thesis-fixed run.** A's static tool text grew from 47 to 91 tokens (median) because standby members are now
+  full views (signatures and effect marks). T04 and T11 take one more turn in A (and S): an unmatched request is answered with the nearest members
+  first and only the repeated request raises the proposal. The tool sections now sit in the system prompt in every arm.
+- **A against S.** The scripted plans call standby tools by name, so the two arms do the same thing; S's context is smaller (no standby
+  header, no `find`). Whether `find` and the standby index earn their turns is a question for a real model, which this bed now asks in
+  both arms.
+- **Scale world** ([runs/scripted-scale-2026-11-04/report.json](runs/scripted-scale-2026-11-04/report.json)): 72 more read-only archive
+  tools in the crm, tickets and sheets systems. B is shown 108 tools (115 in the GUI tasks; median tool context 8,855 tokens); A's and
+  S's standby is cut to the cap of 20 (median 20 exposed, tool context about 1,150 tokens). The cap kept every gold member in all 24 A
+  and S episodes, all four arms solved 12/12 with the scripts, and the 24 A and S episodes replay at $0. Building it found that the cap
+  had kept 18, not 20, members (fixed). Selection at this size is the paid question.
+- **Selection split** ([runs/selection-dev-2026-11-04](runs/selection-dev-2026-11-04/selection-dev.json)): 25 needs over the 12 arm-A
+  locks; the request rule answers 23 as labelled, grants one wrong read (a `read` verb narrowing to `crm_get_contact` for a deals need)
+  and answers one `NEED_UNMET` whose nearest members include the right skill. τ from 0.5 to 2 changes nothing; τ = 3 turns four grants
+  into closed choices. Builder-written development data, never held-out evidence.

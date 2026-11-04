@@ -1,0 +1,154 @@
+{
+  "schema": "nodecap-selection-dev/1",
+  "date": "2026-11-04",
+  "evidence": "development split written by the builder (knows the gold sets); $0; never held-out",
+  "current": {
+    "thresholds": {
+      "tau": 1,
+      "delta": 0.5
+    },
+    "cases": 25,
+    "exact": 23,
+    "wrongGrants": 1,
+    "optionsWithExpected": 0,
+    "unmetWithExpectedNearest": 1,
+    "misses": [
+      {
+        "task": "T03",
+        "phrasing": "mistyped",
+        "expect": "grant:mcp.crm.list_deals",
+        "got": "grant:mcp.crm.get_contact",
+        "full": "grant:mcp.crm.get_contact"
+      },
+      {
+        "task": "T05",
+        "phrasing": "loose",
+        "expect": "grant:skill.refund-policy",
+        "got": "unmet",
+        "full": "unmet:skill.fast-refunds,skill.refund-policy"
+      }
+    ]
+  },
+  "grid": [
+    {
+      "tau": 0.5,
+      "delta": 0.25,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 0.5,
+      "delta": 0.5,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 0.5,
+      "delta": 1,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1,
+      "delta": 0.25,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1,
+      "delta": 0.5,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1,
+      "delta": 1,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1.5,
+      "delta": 0.25,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1.5,
+      "delta": 0.5,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 1.5,
+      "delta": 1,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 2,
+      "delta": 0.25,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 2,
+      "delta": 0.5,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 2,
+      "delta": 1,
+      "exact": 23,
+      "wrongGrants": 1,
+      "optionsWithExpected": 0,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 3,
+      "delta": 0.25,
+      "exact": 19,
+      "wrongGrants": 1,
+      "optionsWithExpected": 4,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 3,
+      "delta": 0.5,
+      "exact": 19,
+      "wrongGrants": 1,
+      "optionsWithExpected": 4,
+      "unmetWithExpectedNearest": 1
+    },
+    {
+      "tau": 3,
+      "delta": 1,
+      "exact": 19,
+      "wrongGrants": 1,
+      "optionsWithExpected": 4,
+      "unmetWithExpectedNearest": 1
+    }
+  ]
+}
