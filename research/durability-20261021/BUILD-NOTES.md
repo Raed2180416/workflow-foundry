@@ -69,8 +69,9 @@ the bed). Every DUR-1 file is new under `experiments/durability/` and `research/
    world-day; the cost of a restart is at most one lineage-stream's sessions (<= $1.50).
 2. **MH-stale forks at W3 t0** with MH-H's W3 starting version (not at R1's publication, W3 d2 09:00), and keeps s1's W1 in
    its regression set (`regressionW1`). A promotion on W3 d1-d2 would be missed by the fork; reported if it happens.
-3. **MH-H->O is not in the chain** (B-tier, dropped first per BUILD-PLAN §4); the code path exists (`heal.opusAfter` in
-   `stream.mjs`), listed for the Fix phase. The A-H red-team windows of P7 are wired (`run.mjs rtwindows --paid`, after
+3. **MH-H->O re-runs s1 from its start** (not a fork at the incident) for the lineages whose MH-H s1 record left an
+   incident at needs-human, last in P9 and only while P9 has room for an Opus patch: forking mid-stream would need the
+   serialised loop state of item 1. The A-H red-team windows of P7 are wired (`run.mjs rtwindows --paid`, after
    `advset`): the two top valid ADV-SET worlds by the median starting version's silent failures, <= 8 of its failing cases.
 4. **A-Ox stop rule per case**: each A-Ox case is one routed run of its world (the code arms' world is unchanged), so the
    "stop if 1.5 x mean $/case > remaining P8" check runs before every case, as written.

@@ -305,6 +305,16 @@ export async function paidStage(cmd, { opt, flag, list, log, guardPaid, paidSess
       if (existsSync(path.join(dir, `LD-H.${id}.analysis.json`))) continue;
       await runLD({ id, heal: { session: healSession('P9', `LD-H.${id}`) }, co, runDir: dir, log, spendFile: SPEND });
     }
+    // MH-H->O (B-tier, last): s1 re-run with one Opus xhigh patch after two rejected Haiku sessions on an incident, for the
+    // lineages whose MH-H s1 record left an incident at needs-human (the fork point is the stream start: disclosed).
+    for (const l of lineages) {
+      const label = `MH-HO.${l}.s1`;
+      if (existsSync(recFile(dir, label))) continue;
+      const hf = recFile(path.join(RUNS, 'heal', 's1'), `MH-H.${l}.s1`);
+      if (!existsSync(hf) || !JSON.parse(readFileSync(hf, 'utf8')).incidents.some(i => i.status === 'needs-human')) continue;
+      if (rowRoom('P9') < OPUS_PATCH.budgetUsd) { log(`${label}: P9 has no room for an Opus patch`); break; }
+      await runStream({ arm: 'heal', label, start: programVersion(LINEAGES[l], { id: l }), worlds, sealed, heal: { session: healSession('P9', label), opusAfter: true }, co, runDir: dir, log, spendFile: SPEND });
+    }
     return;
   }
   throw new Error(`unknown paid stage ${cmd}`);
