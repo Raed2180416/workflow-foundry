@@ -9,6 +9,7 @@ import { lintWorkflow } from './lint.mjs';
 import { correlateTemplates, isSignalWait, parseAt, routeOf, subscriptionsOf, timeoutMode } from './signals.mjs';
 import { CURSOR_ORDERS, instantNanos, isStateWrite, slotOf, STATE_ARGS, STATE_LIMITS, STATE_OPS } from './state.mjs';
 import { principalProblems, roleMatrix, satisfiability } from './principals.mjs';
+import { BLOB_LIMITS, isHandle } from './blobs.mjs';
 
 export { bindOutput, OUTPUT_KEY };
 
@@ -308,6 +309,24 @@ function checkWaitRoute(node, byId, at, add) {
 // principals: the host's role matrix (src/principals.mjs roleMatrix, or a constitution document). With it, a workflow whose human nodes and
 // segregation rules can never be satisfied by the principals it lists is invalid (SOD_UNSATISFIABLE, PRINCIPAL_ROLE_UNHELD); without it only
 // the structure of principals and segregation rules is checked. Workflows without principals are unaffected either way.
+// Data handles: the shape of an author-written {"$read": ..., "as": ..., "maxBytes": ...} in task or code args (runtime.mjs readArgs).
+const READ_AS = ['text', 'json', 'lines'];
+function readProblems(template, at = 'args', out = []) {
+  if (Array.isArray(template)) { template.forEach((v, i) => readProblems(v, `${at}[${i}]`, out)); return out; }
+  if (!template || typeof template !== 'object' || Object.hasOwn(template, '$ref')) return out;
+  if (Object.hasOwn(template, '$read')) {
+    const extra = Object.keys(template).filter(k => !['$read', 'as', 'maxBytes'].includes(k));
+    if (extra.length) out.push(`${at}: a $read takes only $read, as and maxBytes (found ${extra.join(', ')})`);
+    if (template.as !== undefined && !READ_AS.includes(template.as)) out.push(`${at}: as must be one of ${READ_AS.join(', ')}`);
+    if (template.maxBytes !== undefined && !(Number.isSafeInteger(template.maxBytes) && template.maxBytes >= 1 && template.maxBytes <= BLOB_LIMITS.maxReadBytes)) out.push(`${at}: maxBytes must be an integer from 1 to ${BLOB_LIMITS.maxReadBytes}`);
+    const target = template.$read;
+    if (!target || typeof target !== 'object' || Array.isArray(target) || !(Object.hasOwn(target, '$ref') || isHandle(target))) out.push(`${at}: $read must be a reference to a blob handle or view, or a handle`);
+    return out;
+  }
+  for (const [k, v] of Object.entries(template)) readProblems(v, `${at}.${k}`, out);
+  return out;
+}
+
 export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPolicy = null, strict = false, principals = null } = {}) {
   const errors = [], warnings = [];
   try { checkData(workflow); } catch (e) { return { valid: false, errors: [{ code: e.code, message: e.message }], warnings }; }
@@ -365,6 +384,7 @@ export function validateWorkflow(workflow, { registry, maxNodes = 2000, modelPol
       if (['__proto__', 'constructor', 'prototype'].includes(node.id)) add('UNSAFE_NODE_ID', `Reserved node id ${node.id}`, prefix);
       byId.set(node.id, node);
       for (const key of Object.keys(node)) if (!common.has(key) && !fields[node.kind].includes(key)) add('WRONG_NODE_FIELD', `${key} does not belong to ${node.kind}`, `${prefix}.${node.id}`);
+      if (node.kind === 'task' || node.kind === 'code') for (const problem of readProblems(node.args)) add('BLOB_READ', problem, `${prefix}.${node.id}`);
       if (node.kind === 'task') {
         const cap = registry?.get(node.tool);
         if (registry && !cap) add('UNKNOWN_TOOL', `Capability is not registered: ${node.tool}`, `${prefix}.${node.id}`);

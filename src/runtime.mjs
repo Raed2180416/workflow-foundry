@@ -1,4 +1,5 @@
 import { ledgerVerdict } from './ledger.mjs';
+import { BLOB_LIMITS, BlobStore, isHandle } from './blobs.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -1158,7 +1159,7 @@ class Invocation {
   async task(node, frameKey, ctx) {
     const cap = this.registry.get(node.tool), run = this.head();
     if (!cap || !run.policy.allowedCapabilities.includes(node.tool)) throw new FoundryError('CAPABILITY_DENIED', `Capability ${node.tool} is not permitted for this run`);
-    const args = resolve(node.args, ctx), argsLabel = labelOf(node.args, this.labelScope(frameKey, node.args)), signal = this.signal();
+    const args = this.readArgs(node.args, ctx), argsLabel = labelOf(node.args, this.labelScope(frameKey, node.args)), signal = this.signal();
     validateData(cap.inputSchema, args, `${node.tool} input`);
     // DESIGN §4: untrusted-derived arguments reach an effect only through an approval gate (the validator rejects this statically).
     if (cap.effects !== 'none' && !approvalGated(cap) && argsLabel !== 'trusted') throw new FoundryError('LABEL_POLICY', labelPolicyMessage(node.tool, argsLabel), { rule: 'UNTRUSTED_EFFECT_ARGS', label: argsLabel });
@@ -1478,8 +1479,32 @@ class Invocation {
     catch (error) { throw stop.reached() ? deadlineStop('code') : error; }
     finally { this.semaphore.release(); }
   }
+  // Data handles (src/blobs.mjs). An author-written {"$read": <handle or view, or a ref to one>, "as": "text" | "json" | "lines",
+  // "maxBytes": n} in a node's args is replaced by the blob's content just before the node runs. Only the workflow's own
+  // template is read this way: a "$read" object that arrives inside resolved data (a model's output, a capability's result)
+  // stays plain data, so nothing a model writes can make the engine read a blob. The content carries the label of the ref
+  // inside "$read" (labelOf sees that ref like any other). Each read is verified (size and sha256) and bounded.
+  blobStore() { return (this.blobs ??= new BlobStore(this.store.directory)); }
+  readArgs(template, ctx) {
+    let budget = BLOB_LIMITS.maxReadBytes;
+    const walk = t => {
+      if (Array.isArray(t)) return t.map(walk);
+      if (!t || typeof t !== 'object') return t;
+      if (Object.hasOwn(t, '$ref')) return resolve(t, ctx);
+      if (Object.hasOwn(t, '$read')) {
+        const handle = resolve(t.$read, ctx);
+        if (!isHandle(handle)) throw new FoundryError('BLOB_HANDLE', '$read must name a blob handle or view');
+        const blobs = this.blobStore(), [start, end] = blobs.rangeOf(handle), size = end - start;
+        if (size > budget) throw new FoundryError('BLOB_READ_LIMIT', `The $read values of one node may total ${BLOB_LIMITS.maxReadBytes} bytes; read smaller views`);
+        budget -= size;
+        return blobs.read(handle, { as: t.as ?? 'text', maxBytes: t.maxBytes ?? BLOB_LIMITS.maxReadBytes });
+      }
+      return Object.fromEntries(Object.entries(t).map(([k, v]) => [k, walk(v)]));
+    };
+    return walk(template);
+  }
   async code(node, frameKey, ctx) {
-    const value = await this.sandboxed({ lang: node.lang, source: node.source, input: resolve(node.args ?? {}, ctx), timeoutMs: node.timeoutMs ?? 10000 });
+    const value = await this.sandboxed({ lang: node.lang, source: node.source, input: this.readArgs(node.args ?? {}, ctx), timeoutMs: node.timeoutMs ?? 10000 });
     if (node.returns) {
       try { validateData(node.returns, value, `${node.id} output`); }
       catch (error) { throw new FoundryError('CODE_OUTPUT', `${node.id} returned a value outside its declared schema`, error.details); }
