@@ -1,4 +1,5 @@
 import { ledgerVerdict } from './ledger.mjs';
+import { BLOB_LIMITS, BlobStore, isHandle } from './blobs.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -1158,7 +1159,7 @@ class Invocation {
   async task(node, frameKey, ctx) {
     const cap = this.registry.get(node.tool), run = this.head();
     if (!cap || !run.policy.allowedCapabilities.includes(node.tool)) throw new FoundryError('CAPABILITY_DENIED', `Capability ${node.tool} is not permitted for this run`);
-    const args = resolve(node.args, ctx), argsLabel = labelOf(node.args, this.labelScope(frameKey, node.args)), signal = this.signal();
+    const args = this.readArgs(node.args, ctx), argsLabel = labelOf(node.args, this.labelScope(frameKey, node.args)), signal = this.signal();
     validateData(cap.inputSchema, args, `${node.tool} input`);
     // DESIGN §4: untrusted-derived arguments reach an effect only through an approval gate (the validator rejects this statically).
     if (cap.effects !== 'none' && !approvalGated(cap) && argsLabel !== 'trusted') throw new FoundryError('LABEL_POLICY', labelPolicyMessage(node.tool, argsLabel), { rule: 'UNTRUSTED_EFFECT_ARGS', label: argsLabel });
@@ -1206,7 +1207,8 @@ class Invocation {
           const result = await Promise.race([execution, timer, guard.lapse]);
           // Fault injection is explicit, only available to trusted test callers.
           if (this.head().extra?.crashAfterTool === nodeKey) process.kill(process.pid, 'SIGKILL');
-          this.complete(frameKey, node, result, 'completed', { state: labelState(argsLabel) }); return;
+          // The output carries its arguments' label joined with the capability's declared output label (validate.mjs does the same).
+          this.complete(frameKey, node, result, 'completed', { state: labelState(joinLabels([argsLabel, cap.outputLabel ?? 'trusted'])) }); return;
         } catch (error) {
           localAbort.abort();
           if (timedOut && deadlineBound) error = deadlineStop(node.tool);
@@ -1220,7 +1222,7 @@ class Invocation {
           if (error.code === 'DEADLINE') throw error; // never retried, never handled by onError
           const attempts = this.stateOf(frameKey, node.id).attempts;
           if (attempts >= node.retry.maxAttempts) {
-            if (node.onError === 'continue') { this.complete(frameKey, node, { ok: false, error: errorData(error) }, 'handled_error', { state: labelState(argsLabel) }); return; }
+            if (node.onError === 'continue') { this.complete(frameKey, node, { ok: false, error: errorData(error) }, 'handled_error', { state: labelState(joinLabels([argsLabel, cap.outputLabel ?? 'trusted'])) }); return; }
             this.eventNode(frameKey, node.id, f => { f.nodes[node.id].status = 'failed'; }, 'node.failed', { error: errorData(error) });
             throw error;
           }
@@ -1275,7 +1277,14 @@ class Invocation {
     if (!entry || excludeFamily.has(entry.family)) throw new FoundryError('VERIFY_INDEPENDENCE', `${node.id}: no permitted ${declared} model outside the producer famil${excludeFamily.size === 1 ? 'y' : 'ies'} ${[...excludeFamily].join(', ')}`);
     if (classIndex(policy, entry.class) > classIndex(policy, max)) throw new FoundryError('ASSIGNMENT_INVALID', `${entry.id} (class ${entry.class}) exceeds maxClass ${max} of ${node.id}`);
     if (resumed) this.eventNode(frameKey, node.id, () => {}, 'node.resumed', { attempt, source: 'journal' });
-    const inputs = [...contextInputs(node, ctx, this.labelScope(frameKey, ...(node.context?.inputs ?? []).map(spec => spec.ref).filter(ref => typeof ref === 'string'))), ...extraInputs];
+    // render "blob-text" (data handles): the input is a blob handle or view; it is read here (verified, at most the store's read
+    // limit) and compiled as text, so the token budget and onOverflow apply to the content as to any input. Its label is the ref's.
+    const inputs = [...contextInputs(node, ctx, this.labelScope(frameKey, ...(node.context?.inputs ?? []).map(spec => spec.ref).filter(ref => typeof ref === 'string'))), ...extraInputs]
+      .map(input => {
+        if (input.render !== 'blob-text') return input;
+        if (!isHandle(input.value)) throw new FoundryError('CONTEXT_INPUT', `Context input ${input.name} renders blob-text but is not a blob handle or view`);
+        return { ...input, value: this.blobStore().read(input.value, { as: 'text' }), render: 'text' };
+      });
     let retries = 0, resamples = 0, sampleIndex = 0, escalations = 0, retryNote = null, recovered = false, envRetries = 0;
     const escalate = (rule, code, message) => {
       let target = null;
@@ -1477,8 +1486,32 @@ class Invocation {
     catch (error) { throw stop.reached() ? deadlineStop('code') : error; }
     finally { this.semaphore.release(); }
   }
+  // Data handles (src/blobs.mjs). An author-written {"$read": <handle or view, or a ref to one>, "as": "text" | "json" | "lines",
+  // "maxBytes": n} in a node's args is replaced by the blob's content just before the node runs. Only the workflow's own
+  // template is read this way: a "$read" object that arrives inside resolved data (a model's output, a capability's result)
+  // stays plain data, so nothing a model writes can make the engine read a blob. The content carries the label of the ref
+  // inside "$read" (labelOf sees that ref like any other). Each read is verified (size and sha256) and bounded.
+  blobStore() { return (this.blobs ??= new BlobStore(this.store.directory)); }
+  readArgs(template, ctx) {
+    let budget = BLOB_LIMITS.maxReadBytes;
+    const walk = t => {
+      if (Array.isArray(t)) return t.map(walk);
+      if (!t || typeof t !== 'object') return t;
+      if (Object.hasOwn(t, '$ref')) return resolve(t, ctx);
+      if (Object.hasOwn(t, '$read')) {
+        const handle = resolve(t.$read, ctx);
+        if (!isHandle(handle)) throw new FoundryError('BLOB_HANDLE', '$read must name a blob handle or view');
+        const blobs = this.blobStore(), [start, end] = blobs.rangeOf(handle), size = end - start;
+        if (size > budget) throw new FoundryError('BLOB_READ_LIMIT', `The $read values of one node may total ${BLOB_LIMITS.maxReadBytes} bytes; read smaller views`);
+        budget -= size;
+        return blobs.read(handle, { as: t.as ?? 'text', maxBytes: t.maxBytes ?? BLOB_LIMITS.maxReadBytes });
+      }
+      return Object.fromEntries(Object.entries(t).map(([k, v]) => [k, walk(v)]));
+    };
+    return walk(template);
+  }
   async code(node, frameKey, ctx) {
-    const value = await this.sandboxed({ lang: node.lang, source: node.source, input: resolve(node.args ?? {}, ctx), timeoutMs: node.timeoutMs ?? 10000 });
+    const value = await this.sandboxed({ lang: node.lang, source: node.source, input: this.readArgs(node.args ?? {}, ctx), timeoutMs: node.timeoutMs ?? 10000 });
     if (node.returns) {
       try { validateData(node.returns, value, `${node.id} output`); }
       catch (error) { throw new FoundryError('CODE_OUTPUT', `${node.id} returned a value outside its declared schema`, error.details); }
@@ -1612,12 +1645,19 @@ class Invocation {
     if (node.method === 'code') verdict = this.verdictShape(await this.sandboxed({ lang: node.lang, source: node.source, input: { subject }, timeoutMs: node.timeoutMs ?? 60000 }), 'CODE_OUTPUT');
     else if (node.method === 'ledger') {
       // Coverage proved by code (src/ledger.mjs): the readers' returned unit ids against the inventory code produced.
-      verdict = ledgerVerdict(subject, resolve(node.ledger.inventory, ctx), node.ledger);
+      // The inventory may be a blob handle (data handles): NDJSON rows give their `id`, a JSON blob its array, text its lines.
+      let inventory = resolve(node.ledger.inventory, ctx);
+      if (isHandle(inventory)) {
+        const blobs = this.blobStore();
+        inventory = inventory.mediaType === 'application/json' ? blobs.read(inventory, { as: 'json' })
+          : blobs.read(inventory, { as: 'lines' }).map(row => (row && typeof row === 'object' && !Array.isArray(row) ? row.id : row));
+      }
+      verdict = ledgerVerdict(subject, inventory, node.ledger);
       label = joinLabels([subjectLabel, labelOf(node.ledger.inventory, this.labelScope(frameKey, node.ledger.inventory))]);
     }
     else if (node.method === 'capability') {
       verdict = this.verdictShape(await this.oracle(node, frameKey, ctx), 'VERIFY_PROTOCOL');
-      label = joinLabels([subjectLabel, labelOf(node.args, this.labelScope(frameKey, node.args))]);
+      label = joinLabels([subjectLabel, labelOf(node.args, this.labelScope(frameKey, node.args)), this.registry.get(node.tool)?.outputLabel ?? 'trusted']);
     }
     else {
       const excludeFamily = node.independence === 'different-model' ? this.producerFamilies(node, frameKey) : new Set();
