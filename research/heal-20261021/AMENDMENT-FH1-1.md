@@ -11,7 +11,11 @@ every paid step), so this amendment lives in its own file and `RESULT-FH1.md` re
   "You've hit your session limit · resets 2am (UTC)"). Six steps faulted (`MODEL_RATE_LIMIT`). The single rerun of §3 started 1 to 3
   seconds after each worker's plan ended, inside the same closed window, and faulted again. All of these sessions cost $0, except
   `b1lh-e8-2.H-0.k1` envfault-1, which ran 10 turns ($0.180, counted in `spend.jsonl`) before the limit hit.
-- **Worker B.** Exited silently at 22:59:19Z, 0.12 s after creating the directory of `cht-e8-2 H-C k2`: no exception line (the
+- **Correction (2026-11-04, after review finding m8).** The next bullet is wrong. Worker B did not exit: the FH-1 build agent
+  suspended it with `kill -STOP 24250` at 22:59:19Z ("Pause worker B between steps") and never resumed it; it stayed stopped
+  until the container restart at 02:05Z. This was a manual intervention in the plan runner that PREREG-FH1 §3 does not provide
+  for, and it was not declared here. It affected only `cht-e8-2 H-C k2` and `cht-e8-3 H-C k2`. Evidence: RESULT-FH1 §10.8 m8.
+- **Worker B (as first written).** Exited silently at 22:59:19Z, 0.12 s after creating the directory of `cht-e8-2 H-C k2`: no exception line (the
   runner logs every exception), no `spend:` line, no session, no spend. Cause not established (no OOM trace is readable in the
   container; the restart at 02:05Z cleared process state). `cht-e8-2 H-C k2` and `cht-e8-3 H-C k2` never started.
 

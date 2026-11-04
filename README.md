@@ -63,12 +63,17 @@ sealed or claim-bearing result.*
     - Mercury 3 as a second cheap model ([PROVISIONING](research/mercury-20261021/PROVISIONING.md));
     - the org layer and the open-core line ([v0](research/business-20261021/OPEN-CORE-AND-INVARIANTS.md)).
   - **Benchmark landscape:** `research/benchmarks-20261015/`.
-  - **Failure handling (C3), FH-1, 2026-10-22** ([RESULT](research/heal-20261021/RESULT-FH1.md), preregistered, dev, Haiku
-    $4.62). The setup is classify → intervene → patch → replay on 475 real recurring failing cases of eight Haiku-built E8
-    programs. With the capability contracts as verifier, one Haiku session per program removed **75.2%** net (357), with 0
-    regressions and 7 of 8 programs at 1,022/1,022, for $1.14. The baselines: retry 0 and regenerate +5.8% (expected, $8.07).
-    With an N-version verifier the loop removed 11.4%; with no verifier, 24.8%. H1, H1b and H2 are all supported (dev).
-    The heal unblock is D20.
+  - **Failure handling (C3), FH-1, 2026-10-22, reviewed 2026-11-04** ([RESULT](research/heal-20261021/RESULT-FH1.md) §10,
+    preregistered, dev, Haiku $4.62). Patch → replay on 475 real, deterministic failing cases of eight Haiku-built E8 programs.
+    With the 13 capability contracts as verifier, one Haiku session per program removed **75.2%** net (357), with 0
+    regressions, 11 of 12 defects and 7 of 8 programs fully fixed, for $1.14. Two caveats: the verifier is **near-oracle and
+    frontier-written** (precision = recall = 1.000 on practice), and **its authoring cost is not in the $1.14** ($6.69 lower
+    bound, $19.58 allocated). Baselines: retry 0 (deterministic by construction), regenerate +5.8% ungated, **+13.5% behind the
+    same gate** and +26.9% best-of-2 behind it ($16.13). 58% of the failing cases are one shared go-live misreading; off go-live
+    the contracts arm recovers 40.7% and the no-verifier arm 59.3% (one defect). On nine more unseen dev worlds the heals hold
+    (78.0% of the originals' failing cases, 0 regressions, 7 of 8 at the hand-written reference's 100%), but they inherit the
+    originals' fault weaknesses and none carries over to drift (0 of 8 changed cases). The heal unblock is D20. A4 stays open:
+    no hand-crafted comparison, no heal after drift or faults, no live variance routing, no added tool.
 - **2026-10-09: the cloud session ended** (usage limit); work continues on the owner's laptop. Stream run data, journals and
   the Kev held-out material were lost with the container (`research/jit-20261008/HANDOFF.md`). The two in-flight workflows
   were finished by hand:

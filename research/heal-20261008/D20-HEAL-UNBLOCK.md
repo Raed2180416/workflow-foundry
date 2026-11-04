@@ -116,6 +116,12 @@ lines 1196-1246; the frozen runtime enforces them, `src/runtime.mjs:512-519`), s
 out and diverge from its record. The assertion now prints the excluded trials and their reason if it recurs
 (`experiments/heal/test/p1.test.mjs`).
 
+**Confirmed 2026-11-04 (FH-1 review m8).** The failure recurred at load 20.6 on 4 vCPUs (nice 15): 27 of 35 pooled. With the
+new exclusion detail (`buildIncident` now records what diverged and how the replay ended), all 8 excluded trials ended `failed`
+with `CODE_TIMEOUT`: the code sandbox's wall-clock budget (frozen kit `src/sandbox.mjs:166`, default 10 s at
+`src/runtime.mjs:683`). So the mechanism is the code-node budget, not the tool timeout or run deadline. Fix candidates and why
+none is applied here: [RESULT-FH1](../heal-20261021/RESULT-FH1.md) §10.8 m8.
+
 **Re-run 2026-10-22 02:21–02:47 UTC** (same method, private work root `/var/tmp/foundry-work/heal-d20-0222`, deleted after;
 load average 9 to 18 on 4 vCPUs with FH-1, SOP-Bench and AutomationBench runs alongside): **98 tests, 98 pass, 0 fail, 0
 skipped** across the 15 files, `p1` 2/2 (248 s). The 10-21 P1 failure did not recur.
