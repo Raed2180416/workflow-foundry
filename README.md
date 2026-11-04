@@ -66,8 +66,9 @@ else below is still development and diagnostic evidence.*
     and control properties. LangGraph 1.2.19, attacked offline, is native on 1 of 8.
   - **Harness² and Prime Agent**, read in code ([note](research/selfimprove-20261104/HARNESS2-PRIMEAGENT.md)): adopt
     their loops as proposers only; Foundry's gate stays the only promoter.
-  - **On branch `data-handles`:** capability output labels (a security fix: MCP and file reads stay untrusted), and the
-    data-handle producers and `$read` consumer.
+  - **Data handles, merged:** capability output labels (a security fix: MCP and file reads stay untrusted);
+    `data.import`, `data.split` and `data.inventory`; `$read`; `blob-text` agent inputs; ledger inventories from a
+    handle; verify-run blob checks. Full suite 1,480 of 1,499 pass, 0 fail, 19 opt-in skips.
 - **Phase 0** finished 2026-10-06 (start HEAD `6e1c06c`).
 - **Phase 1's exit experiment (P1)** finished 2026-10-08 for model classes M and L; class S
   (local generative models) is parked.

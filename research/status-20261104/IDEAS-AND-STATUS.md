@@ -50,7 +50,7 @@ Almost everything here is dev or held-out. One result is sealed: SOP-Bench phase
 | B3 | Give the builder the templates and the corpus's hardest patterns | [72] | ✅ | CI-1 (held-out n8n items, K = 3): leave-one-out corpus pattern retrieval A2 reaches 80.7% pass@1 on oracle v1, against the one-shot 64.9% (93.0% against 80.7% on oracle v2, post hoc) ⏳ unmerged | Seal it; a second corpus |
 | B4 | Train a small model to compose (corpus + Foundry syntax) instead of Haiku | [28][50][61] | 📐 | Composer question (#40) pending; templates, retrieval and the skill pack were chosen first as cheaper levers | Measure the composer only if retrieval saturates |
 | B5 | Skill pack: the most information-efficient instructions for constructing workflows | [126] | 🔧 | `skills/foundry-construct/`, whose IR reference is generated from the schema. SKILLPACK-1 approved at $20 (D34) | Run SKILLPACK-1 |
-| B6 | Scale adaptation (a 300 GB research program, auditing a huge messy codebase) | [126] | ◐ | Coverage ledger verify method (`src/ledger.mjs`); sizing planner (Clopper–Pearson); `scale.md` in the skill pack; data handles step 1 (blob store); step 2 label prerequisite committed on branch `data-handles` (`9fb74487`) | Step 2 producers and consumers (`data.import/split/inventory`, `$read`, blob-text render, BLOB_* checks), then a real large-input test |
+| B6 | Scale adaptation (a 300 GB research program, auditing a huge messy codebase) | [126] | ◐ | Coverage ledger verify method; sizing planner (Clopper–Pearson); `scale.md` in the skill pack. Data handles merged (`a5755d68`): content-addressed blobs; `data.import`, `data.split` and `data.inventory`; `$read`; `blob-text` agent inputs; ledger inventories from a handle; verify-run blob checks. 13 mutants killed. Full suite 1,480/1,499 with 0 fail | A real large-input run (the 300 GB case); export bundling; a per-node input cap above 2 MB; GC |
 | B7 | Fan-out proportionate to the model's capacity and the task, not "1000 agents" | [128] | 🔧 | `src/sizing.mjs`, `tools/sizing/plan.mjs` | Use it in a measured run |
 | B8 | Messy, poorly defined tasks → the maximal optimal intent | [98] | ◐ | SPEC-0 bed with four-layer truth; inter-rater check: stated 6/6, not-wanted 23/23, κ 0.57 on implied against latent | SPEC-1/INTENT-1 paid runs |
 | B9 | Tracker: log the user's conditions and check the build against them, without over-engineering | [72] | ✅ ⏳ | Held-out (14 new requests, 97 builds): caught 37/37/40 defective builds in the three samples, against 2 for no tracker; precision 0.90–0.97. Unmerged branch c30-6 | Not met: H1 (precision ≥ 0.95) and H2 (zero false alarms) |
@@ -77,7 +77,7 @@ Almost everything here is dev or held-out. One result is sealed: SOP-Bench phase
 | D3 | Swarms (Kimi-style) in scope | [23] | ❌ (dev) ⏳ | Swarm ladder rung 1: the Haiku swarm lead started 0 workers in 8 of 8 sessions; swarm 4/7 = single agent 4/7 ($7.60). Unmerged branch c30-10 | A trained or forced fan-out arm, if pursued |
 | D4 | Every component maximally efficient; a SOTA fix per compromise | [23][102] | ◐ | Compromise register: 28 items, waves 1–2 adopted (CLI pin C2, orchestration patches, …) | Wave 3 |
 | D5 | Rust port | [23] | 💬 | No port; the hot path is model latency | — |
-| D6 | Data handles for very large data (engine gap 1) | proposed from [126] | ◐ | Step 1 store built; the label prerequisite built and mutation-tested (5/5 mutants killed) | Step 2 |
+| D6 | Data handles for very large data (engine gap 1) | proposed from [126] | ✅ (engineering) | Merged into main 2026-11-04 (see B6) | Measured scale run |
 | D7 | Node capabilities: per-node MCP servers, skills, computer use, connections; a broker; "exactly what it needs and nothing more" | [80][105][today] | ✅ (dev) | Merged (29 files). NODECAP-1 amendment (K = 2, $0.15): arms U 9.5, A 9.5, C 1, B 9 of 12; safety rules R1, R2 and R4 met. Tier-0 MCP outputs now carry their untrusted label into the engine (today) | Production integration work (§F2) |
 | D8 | Principals, approvals, segregation of duties, effect gates, taint (data and control) | engine | ✅ | Conformance properties P8 and P10; control-taint fuzz | — |
 | D9 | Coverage ledger: a fan-out proves it read every unit | proposed | 🔧 | `verify` method `ledger` | Use it in a measured scale run |
@@ -143,7 +143,7 @@ Almost everything here is dev or held-out. One result is sealed: SOP-Bench phase
 | I8 | Engine identity, compare-and-swap, hash-chain anchors | ✅ | Conformance P4, P5, P11 |
 | I9 | Model policy with no silent fallback; every escalation logged | ✅ | `policy/models.json` |
 | I10 | Freeze guards with recorded allowances | ✅ | `manifest-allowances.mjs` (today) |
-| I11 | Capability output labels (untrusted reads stay untrusted) | ✅ | Today, branch `data-handles` |
+| I11 | Capability output labels (untrusted reads stay untrusted) | ✅ | Merged 2026-11-04 (`a5755d68`) |
 | I12 | Proposers may come from anywhere, but only the gate promotes (the answer to Harness² and Prime Agent) | 📐 | See `research/selfimprove-20261104/HARNESS2-PRIMEAGENT.md`; promotion experiment #105 |
 
 ## J. Owner questions answered in chat (no build needed)
