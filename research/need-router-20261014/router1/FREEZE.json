@@ -1,0 +1,49 @@
+{
+ "schema": "foundry.need-router.router1-set/v1",
+ "rule": "items from build-set.mjs; split: clusters stratified by source x needsWorkflow, ordered by sha256('router1-split-v1:'+cluster), first round(0.4 n) per stratum to dev",
+ "n": 319,
+ "dev": 126,
+ "test": 193,
+ "positives": {
+  "dev": 42,
+  "test": 61
+ },
+ "sha256": {
+  "set": "1d637076b3641d0b6938af8703817f57ac75999f9af4426c976538c73fff19a5",
+  "devIds": "c69ff19366b2ca06ac9a9ab44dc610d1ce6ee329c916a3c6b87dc6279365cf23",
+  "testIds": "e597b1cd151d2910d5c429775ffea0f86cd3f41e2ec1052886a4f1150b340ec5",
+  "rubric": "6ec25f9414446ca486037126d9ef5246170d9ee315308bd7ec2f34fe8c42de0c"
+ },
+ "counts": {
+  "dev|ab-devtrain|none": 1,
+  "dev|ab-devtrain|recurring": 1,
+  "dev|ab-devtrain|workflow": 10,
+  "dev|ab-simple|none": 4,
+  "dev|abr-policy|recurring": 5,
+  "dev|anchor|none": 6,
+  "dev|authored|checklist": 2,
+  "dev|authored|none": 38,
+  "dev|authored|recurring": 8,
+  "dev|authored|workflow": 5,
+  "dev|ebed-spec|recurring": 1,
+  "dev|mercury|none": 33,
+  "dev|mercury|recurring": 9,
+  "dev|mercury|workflow": 3,
+  "test|ab-devtrain|none": 2,
+  "test|ab-devtrain|recurring": 4,
+  "test|ab-devtrain|workflow": 12,
+  "test|ab-simple|none": 6,
+  "test|abr-policy|recurring": 7,
+  "test|anchor|none": 14,
+  "test|authored|checklist": 5,
+  "test|authored|none": 55,
+  "test|authored|recurring": 14,
+  "test|authored|workflow": 6,
+  "test|ebed-spec|recurring": 1,
+  "test|mercury|checklist": 1,
+  "test|mercury|none": 49,
+  "test|mercury|recurring": 10,
+  "test|mercury|workflow": 7
+ },
+ "frozenAt": "2026-10-21T19:29:00.813Z"
+}

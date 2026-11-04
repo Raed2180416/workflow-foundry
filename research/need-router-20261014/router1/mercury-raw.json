@@ -1,0 +1,249 @@
+{
+ "model": "mercury-3",
+ "at": "2026-10-21T19:26:07.795Z",
+ "system": "You write realistic test data: requests that real people type to an AI assistant or agent. Output JSON only.",
+ "promptTemplate": "Write 8 different realistic requests that a person might send to an AI assistant or AI agent, of this kind:\n\n<category description>\n\nVary the length (from one short line to a detailed paragraph of up to 6 sentences), the tone, the industry and the specifics (names, numbers, tools). Write each request exactly as the person would type it, in their voice. Do not number them and do not add commentary.",
+ "categories": [
+  {
+   "id": "m-code",
+   "description": "routine requests to an AI coding assistant working in a repository: bug fixes, small features, tests, refactors of one file, config edits",
+   "ok": true,
+   "requests": [
+    "Can you fix the typo in the README? It says 'recieve' instead of 'receive'.",
+    "We're getting a KeyError in src/processing.py when the payload is missing 'user_id'. Could you add a default value and a log warning? Also update the unit test for that case.",
+    "Please refactor the function `calculate_total` in `billing.py` to use the new discount service instead of the hardcoded 10% off logic. Keep the same behavior for edge cases (negative amounts, zero). Add tests for those.",
+    "Add a new CLI flag `--dry-run` to the deploy script that prints what it would do without actually executing. Should work with all existing subcommands. Update the help text.",
+    "The CI is failing on the lint step because of line length in `utils/helpers.py`. Can you reformat that file to fit within 88 chars without changing any logic?",
+    "I need to change the API rate limit from 100 requests per minute to 250. Update the config file and also the docs that mention it. Don't forget to bump the version number.",
+    "We have a memory leak in the background worker. The `process_batch` function keeps references to old items after processing. Fix that by setting the list to None after iterating. Also add a regression test that checks memory usage.",
+    "Can you generate a function to compute the SHA256 hash of a file in chunks so we don't load large files into memory? Put it in `crypto/hash.py`, write tests for empty file and multi-megabyte file."
+   ],
+   "usage": {
+    "inputTokens": 333,
+    "outputTokens": 1132,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 1
+  },
+  {
+   "id": "m-bigcode",
+   "description": "large one-off software engineering projects a developer hands to an AI coding agent: big refactors, rewrites, ports to another language, new subsystems, performance work",
+   "ok": true,
+   "requests": [
+    "Port our login service from Python to Go. Keep the API identical.",
+    "Replace the hand-rolled caching in payments-api with Redis and make it so we can flip it on per-tenant.",
+    "We're migrating the inventory sync job from cron to Airflow DAGs. There are about 40 tasks, some depend on S3 files that land at unpredictable times. Can you design the DAGs with sensors and backfill handling, and also port the existing task logic into Python operators?",
+    "Our data pipeline is a mess. The current ETL is a single monolithic Python script that runs nightly on a VM and takes 11 hours, mostly because it re-processes everything. I need you to rewrite it as a Spark job (we already have a Databricks workspace) that does incremental loads using watermark columns, split the transformations into separate stages, and add proper error handling with retries and alerts. Also make the schema evolution robust because the upstream team keeps adding columns without telling us. We need this done before the end of the quarter because we're getting audited.",
+    "Seriously, the old frontend is a disaster. It's AngularJS and no one knows it anymore. Rip it out and rebuild the same screens in React with TypeScript. We have a design system with components, just use those. Don't break any of the URLs and make sure SEO still works. Oh and the checkout flow has a weird bug where tax isn't calculated when shipping is free—fix that too.",
+    "We're building a new patient portal module to handle insurance verification. Our current system calls a third-party API synchronously and it times out constantly. I want you to create an async worker with a queue (we use RabbitMQ) that processes verification requests in batches, stores results in Postgres, and exposes a REST endpoint to check status. Also implement retry logic with exponential backoff and alerting if a request fails more than 5 times.",
+    "Our game server's tick rate is terrible. It's written in C# and uses locks everywhere. I need you to profile it and replace the hot spots with lock-free structures. Additionally, convert the entity update loop to use job system with Burst compiler if possible. We're targeting 60Hz updates on consoles. Provide a report on what you changed and benchmark results.",
+    "We just got acquired and now need to consolidate our billing system with the parent company's. We have a Stripe integration and they use Chargebee. Write a migration tool that syncs customer data and subscriptions, handles proration, and generates a reconciliation report. Also need to update our webhooks so both systems get events. The migration should run in dry-run mode first."
+   ],
+   "usage": {
+    "inputTokens": 339,
+    "outputTokens": 1357,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 2
+  },
+  {
+   "id": "m-devops",
+   "description": "requests from a growing startup about how they ship software: release processes, deployments, CI/CD with approvals, on-call and incident follow-up, backups, change management",
+   "ok": true,
+   "requests": [
+    "Do we have a rollback plan for the new checkout service if it breaks in prod?",
+    "Hey, can you set up a Slack alert when the nightly backup job fails? I keep finding out about it three days later.",
+    "Our CI pipeline just started failing on the integration tests after we merged the payment refactor. Can you check if it's flaky or a real regression before I page anyone?",
+    "I'm trying to get our change management process approved by the security team. We need to document every production deployment, but our current tooling only logs the commit hash and timestamp. Can you recommend a lightweight way to tie each deploy to a ticket and an approver, ideally with a webhook to our audit log?",
+    "We're a fintech startup and our auditor wants evidence that we have a formal incident review loop. Right now we just fix stuff and move on. Can you draft a template for post-incident writeups that includes root cause, blast radius, and action items, and maybe suggest a cadence for reviewing them?",
+    "Can you remind me of the runbook for paging the on-call engineer over the weekend? I'm new to this rotation and I don't want to wake someone up unless it's actually urgent.",
+    "We're scaling from 10 to 50 engineers and our manual release process is breaking down. We have a staging environment, but deployments to prod still require the CTO to SSH in and run a script. Can you outline a plan to move us to automated CI/CD with approval gates, including how to handle hotfixes without waiting for the full pipeline?",
+    "The other day we lost a database because our backups were only kept for 24 hours and nobody noticed the retention policy wasn't applied. Can you help me design a backup strategy that includes daily snapshots, weekly archives, and a quarterly restore test? Also, can you set up an alert if any backup job takes longer than an hour?"
+   ],
+   "usage": {
+    "inputTokens": 339,
+    "outputTokens": 454,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 3
+  },
+  {
+   "id": "m-oss",
+   "description": "requests from maintainers of an open-source project: handling issues and pull requests, releases, contributors, documentation, community",
+   "ok": true,
+   "requests": [
+    "Can you summarize all open issues tagged 'bug' from the last week and suggest which ones I should prioritize?",
+    "Hey, the new release candidate 2.3.0-rc1 has a failing test on Windows (test_file_locking). Anyone know if it's a real bug or a CI environment issue? I'm hesitant to cut the final release until this is sorted.",
+    "I need help drafting a response to the contributor who opened PR #214. The code is great but it's missing unit tests for the new parser module. I want to be encouraging but also set the expectation that we require test coverage before merging.",
+    "Could you look at the history of the docs folder and tell me when the installation instructions for Docker were last updated? I have a feeling they're out of date and we've had three issues about it this month alone.",
+    "We're about to announce the project's first major release, v1.0.0. Can you write a short release blog post that highlights the top 5 features, thanks the key external contributors by name, and mentions the new code of conduct? Keep it warm and community-focused.",
+    "Someone just filed an issue about a possible security vulnerability in the OAuth2 flow (issue #482). I've triaged it as high severity. Before I escalate to the security team, can you help me summarize the repro steps and check if any public branches contain the vulnerable code?",
+    "I'm trying to onboard a new maintainer. Could you explain our review process in simple terms, including how to use the `needs-review` label, when to request changes, and how to handle the merge queue? Also, what's our policy on self-merging?",
+    "Actually, can you remind me what we agreed on in the last maintainers' meeting about deprecating the v2 API? I remember we said we'd keep it around for at least two more minor releases, but I can't recall the exact version numbers we committed to."
+   ],
+   "usage": {
+    "inputTokens": 316,
+    "outputTokens": 435,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 4
+  },
+  {
+   "id": "m-research",
+   "description": "requests from researchers or a lab: literature, experiments, evaluations, protocols, data handling, reviews, reporting",
+   "ok": true,
+   "requests": [
+    "Can you format this citation in APA 7th? Jansen et al., 2022, Nature Methods, 19, 220-228.",
+    "We need to rewrite the discussion section for our CRISPR screening paper - could you suggest 3 alternative phrasings for our main claim about off-target effects? Keep it cautious.",
+    "I'm setting up a new protocol for single-cell RNA-seq analysis using Seurat v5. Can you draft a step-by-step R script that takes the raw count matrix, filters low-quality cells (min genes = 200, max mitochondrial = 10%), normalizes with SCTransform, and does PCA + UMAP? Also include markers for clustering resolution 0.8.",
+    "Can you summarize the key findings from the last 3 papers on protein liquid-liquid phase separation in neurodegeneration? I need a quick lit review for my grant proposal.",
+    "Our lab ran an experiment and the control group shows weird variance — can you help me decide between a t-test and a Mann-Whitney U test? The data looks skewed but n=12 per group.",
+    "Draft an abstract for our conference submission about the new ML model we built for protein structure prediction. Word limit: 250. Include our results: RMSD 0.7 Å, speed 3x faster than AlphaFold.",
+    "Can you review this methods paragraph for clarity? 'Cells were cultured in DMEM supplemented with 10% FBS and 1% penicillin/streptomycin at 37°C in 5% CO2. For treatment, 10 µM compound X was added for 24h.' Is there anything inconsistent?",
+    "I need to file our annual report for the NIH grant — can you generate a summary paragraph about our progress on the microfluidics project, mentioning that we published one paper, have 2 under review, and trained 3 postdocs?"
+   ],
+   "usage": {
+    "inputTokens": 319,
+    "outputTokens": 904,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 5
+  },
+  {
+   "id": "m-question",
+   "description": "one-off questions, explanations, writing, editing, translation or analysis requests to an AI assistant",
+   "ok": true,
+   "requests": [
+    "Can you shorten this intro to 3 sentences for my LinkedIn?",
+    "I'm trying to understand if our SaaS churn rate of 8.4% monthly is actually bad for B2B or if that's normal in the current market. We're a mid-market analytics tool with about 1,200 customers. If it is bad, what are the biggest levers we should pull first — pricing, onboarding, or support? Be specific, not generic.",
+    "Rewrite this rejection email to a candidate so it's kind but clear. She interviewed for the senior PM role and we're going with someone internal. Don't make it sound like a form letter.",
+    "What's the difference between a 1031 exchange and a deferred sales trust, and which one makes more sense if I'm selling a commercial property worth $2.4M in Texas and plan to reinvest in multifamily within the next 18 months?",
+    "Draft a cold email to the head of procurement at a regional hospital chain pitching our wound care supplies. Keep it under 120 words, mention our GSA contract, and end with a specific meeting time suggestion.",
+    "Is it okay to cite a Wikipedia article in a college research paper if I'm just using it for background context on the history of the Paris Climate Agreement, or do I need to find the original sources?",
+    "Can you summarize the key provisions of the EU AI Act that would affect our company? We're a fintech startup that uses machine learning for credit scoring, and we have about 40 employees based in Portugal. I need to know what compliance steps we should prioritize this year and roughly what it might cost.",
+    "Fix the grammar and flow in this paragraph, but don't change the meaning. We're putting it in our investor update. 'We've seen tremendous growth over the last quarter and our CAC has decreased significant while retention is up and we believe this shows that our new strategy is working and we are confident in the path ahead.'"
+   ],
+   "usage": {
+    "inputTokens": 324,
+    "outputTokens": 521,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 6
+  },
+  {
+   "id": "m-bizauto",
+   "description": "requests from staff at a company (finance, HR, sales, support, operations, marketing) asking an AI agent to take care of business processes across their tools (email, CRM, spreadsheets, Slack, ticketing, accounting)",
+   "ok": true,
+   "requests": [
+    "Hi, can you pull the latest sales numbers from Salesforce and put them in the weekly pipeline spreadsheet? I need it by 9am.",
+    "Hey, I've got a bunch of invoices sitting in the shared folder that need to be entered into QuickBooks. Can you handle that for me and flag any that have errors or missing info?",
+    "Can you send a follow-up email to the client who hasn't paid their invoice yet? It's the one from Acme Corp for $12,500, due last Friday. Keep the tone firm but polite, and CC me on it.",
+    "Hi! Could you please go through the support tickets from the last 2 days and categorize them by urgency and topic? Then send a summary to the team Slack channel #support-standup with the top 3 issues we should prioritize.",
+    "We need to reconcile the expense reports for Q3. Can you cross-check the receipts in Expensify against the bank statements in our accounting system, and let me know if there are any discrepancies over $100? Also, flag any that are missing receipts entirely.",
+    "Morning! Can you update the candidate records in our ATS for the Marketing Manager role? I just finished interviews with two candidates, Emily Wong and Marcus Chen — mark them as 'Interview 2 Complete' and set the next steps to 'Reference Check' for both. Also, schedule a quick 15-minute sync for me and the hiring manager to review their feedback.",
+    "Could you draft a response to the customer who filed a complaint about their delayed shipment? Order #38472, shipped two weeks ago, still not delivered. Explain that we're investigating with the carrier, offer a 10% discount on their next order, and ask if they'd like expedited shipping once we locate the package.",
+    "Hey, I need you to clean up the contacts list in HubSpot. Remove anyone who hasn't opened an email in the last year and isn't in an active deal, and merge the duplicate records for 'John Smith' and 'J. Smith'. Then give me a count of how many contacts are left, broken down by region."
+   ],
+   "usage": {
+    "inputTokens": 349,
+    "outputTokens": 437,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 7
+  },
+  {
+   "id": "m-bizone",
+   "description": "single small business actions asked of an AI agent with access to company tools: send one email, update one record, book one meeting, create one ticket",
+   "ok": true,
+   "requests": [
+    "Email Marco at the warehouse and tell him the Pallet 37 delivery is confirmed for Thursday.",
+    "Can you update the customer record for Acme Corp in Salesforce? Their new billing address is 5000 Wilshire Blvd, Suite 300, Los Angeles, CA 90036, and their phone changed to (310) 555-0188. Also switch their account owner to Dana Reyes effective today. Oh, and add a note that they signed the new contract on March 12.",
+    "Book a 30-minute Zoom for next Tuesday afternoon with Sarah Kim and our CFO — she needs to walk through those revised revenue numbers before the board packet goes out. Prefer between 2 and 4 PM her time.",
+    "Create a ticket in Zendesk about the POS terminal in the back checkout lane freezing during card swipes.",
+    "Send an email to our freight forwarder, Joe Alvarado at Blue Compass Logistics, letting him know we're expecting the shipment of ceramic tile to arrive at the Nashville warehouse on or before the 28th, and ask whether he needs any additional customs paperwork for the origin docs.",
+    "Update the inventory record for SKU B-2207 in QuickBooks: we received 150 units today from the San Diego supplier, so the on-hand count should now be 238. Set reorder point to 60 instead of 40. Also correct the unit cost from $14.25 to $15.10.",
+    "Open a ticket with IT — my Outlook calendar won't sync to my iPhone and I missed two site visits because of it. Urgent-ish.",
+    "Please send a follow-up email to Dr. Patel at Greenfield Family Medicine to confirm the flu vaccine clinic on November 5 from 9 to 11 AM, and let her know we can host up to 120 patients in the community center, and include the flyer attachment from the shared drive."
+   ],
+   "usage": {
+    "inputTokens": 339,
+    "outputTokens": 1137,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 8
+  },
+  {
+   "id": "m-tricky",
+   "description": "requests that mention schedules, recurring events, workflows, approvals, automation or compliance, but that are actually a question, a piece of writing, or a single action",
+   "ok": true,
+   "requests": [
+    "Can you remind me of the recurring team stand-up timing?",
+    "Is there a compliance deadline for the quarterly security audit this month?",
+    "I need a short paragraph for the client explaining why we moved the weekly status call to Fridays.",
+    "Approve my expense report for the conference travel, reimbursement code TRAV-2024-118.",
+    "We have an automated workflow that reorders inventory when stock drops below 20 units; does that also trigger an email to the purchasing manager?",
+    "Please write a draft of the approval request for extending the vendor contract, mentioning the discount and the new renewal date.",
+    "Does the monthly compliance report need to be filed by the 15th or the last business day?",
+    "Set up a recurring reminder every Monday at 9 AM to check the sales pipeline and flag any stalled deals."
+   ],
+   "usage": {
+    "inputTokens": 338,
+    "outputTokens": 250,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 9
+  },
+  {
+   "id": "m-casual",
+   "description": "short, casual, lowercase chat messages to an AI assistant from busy people asking it to handle something for them, the way people text a colleague",
+   "ok": true,
+   "requests": [
+    "hey can you push my 3pm to 4? thx",
+    "can you find the latest q3 numbers for the acme account and put together a quick one-pager i can send to jen before the noon call",
+    "ugh i double booked the conference room again. can you cancel the 2pm one and keep the 3pm?",
+    "can you draft a follow up email to dr. patel's office about the referral status? keep it polite but firm. mention i called three times already",
+    "bro can you summarize that 40 page contract and flag anything scary about the liability section? just the highlights",
+    "hey, i need you to book me a flight to austin tuesday morning, return thursday evening, window seat if possible. also find a hotel near the convention center under 250 a night. nothing fancy, just clean",
+    "can you write a quick instagram caption for the new spring menu? make it playful, mention the $12 lunch special and the avocado toast. keep it under 3 lines",
+    "i'm stuck in traffic and forgot to send the landlord the renewal forms. can you email him the signed pdf and confirm we got the new lease? use the usual template, subject line lease renewal."
+   ],
+   "usage": {
+    "inputTokens": 328,
+    "outputTokens": 475,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 10
+  }
+ ],
+ "tokens": {
+  "inception": {
+   "cap": 60000,
+   "callCap": 6000,
+   "spent": 10426,
+   "reserved": 0,
+   "calls": 10,
+   "refused": 0,
+   "unknown": 0
+  }
+ }
+}

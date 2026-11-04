@@ -1,0 +1,111 @@
+{
+ "model": "mercury-3",
+ "at": "2026-10-21T19:27:07.707Z",
+ "system": "You write realistic test data: requests that real people type to an AI assistant or agent. Output JSON only.",
+ "promptTemplate": "Write 8 different realistic requests that a person might send to an AI assistant or AI agent, of this kind:\n\n<category description>\n\nVary the length (from one short line to a detailed paragraph of up to 6 sentences), the tone, the industry and the specifics (names, numbers, tools). Write each request exactly as the person would type it, in their voice. Do not number them and do not add commentary.",
+ "categories": [
+  {
+   "id": "m2-ongoing",
+   "description": "requests asking an AI agent to take over an ongoing responsibility at a company, something that keeps happening (each new item, every week, whenever something occurs), across their tools",
+   "ok": true,
+   "requests": [
+    "Can you take over sending the Friday status report to the team? You know the format, just pull from our project tracker and Slack updates.",
+    "Set me up a weekly review of our ad account where you spot and kill any underperforming campaigns before I lose more money. Use the same threshold as last month—CTR under 1.2% or CPA above $45. Ping me on Slack when you act.",
+    "Please manage the monthly invoice reconciliation for me. Download the PDFs from the shared Drive folder, cross-check against the QuickBooks entries, and flag any mismatch over $100. Send a summary every 2nd business day, and if the total discrepancy goes above $1,500, notify me immediately.",
+    "You're now responsible for tracking our supplier's delivery lead times. Every time we get a new order from Toptier Foods, update the sheet with the promised date versus actual arrival and let me know if it slips more than 3 days.",
+    "With the new shift schedule, I want you to handle the daily temperature log for the cold storage. Enter the readings from the email the floor sends each morning into the compliance spreadsheet, and if anything is above 40°F, alert me and the safety officer right away.",
+    "Take over our incident reporting for all construction sites. When someone submits a near-miss form, format it into the standard template, assign a severity level, and route it to the right project manager. Follow up if it hasn't been reviewed within 48 hours.",
+    "From now on, you curate the weekly client newsletter. Grab relevant articles from our saved Feedly feeds, pick out 3, write a one-line summary for each, and drop it into the template. Loosen it up a bit—the last one felt like a legal brief.",
+    "Please handle all the candidate rejection emails for the data analyst role. When a candidate has been in 'interview complete' status for more than 5 days, send them a personalized note based on the interviewer's feedback. Keep it warm but concise, and copy the hiring manager."
+   ],
+   "usage": {
+    "inputTokens": 336,
+    "outputTokens": 741,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 11
+  },
+  {
+   "id": "m2-process",
+   "description": "requests asking an AI agent to run a multi-step business or engineering process that involves other people's approvals, waiting for replies or signatures, or deadlines days or weeks away",
+   "ok": true,
+   "requests": [
+    "Can you draft the vendor agreement for Acme and send it to legal for review, then loop in Sarah for approval by Friday?",
+    "Hey, I need to get the new office lease finalized. We're at 45 days out from our move-in date. Can you pull the current draft, send it to the landlord's counsel for their redlines, chase them for a response, and once we have that, get it in front of Jason for a final sign-off? Also flag anything that looks off to me before we commit.",
+    "Please set up a meeting with the compliance team to review our updated data handling policy, then route it to the general counsel for sign-off, and schedule it for board approval at the next meeting. Deadline is end of month.",
+    "We need to submit the permit application to the city by Tuesday. Can you compile all the required documents from the project folder, double-check the checklist, submit it online, and track the status until we get a confirmation number? If anything's missing, tell me what we need to pull together.",
+    "Can you follow up with the client on the SOW and get their signature before the 15th? Also remind me to prep the kickoff deck for the week after.",
+    "I'm trying to get the new headcount approved. Can you draft the business case, send it to finance for budget review, schedule a call with the VP of operations to discuss it, and then route it to HR for the final green light? We're hoping to have someone started by the first of next month.",
+    "The insurance broker hasn't gotten back to us on the renewal quote. Can you chase them, get the terms, run a quick comparison against last year's policy, and then send it to the CFO for approval before the current policy lapses on the 30th?",
+    "Need to coordinate the vendor onboarding for the new IT supplier. Verify their certifications, get the security questionnaire filled out, push it through the risk team, and then get the purchase order signed off by procurement. This needs to be done before the project kickoff on the 10th, so keep me posted if anything gets stuck."
+   ],
+   "usage": {
+    "inputTokens": 338,
+    "outputTokens": 663,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 12
+  },
+  {
+   "id": "m2-program",
+   "description": "requests asking an AI agent to run a research or engineering program that must follow explicit rules, protocols or audit requirements over many steps",
+   "ok": true,
+   "requests": [
+    "Run the compliance check script on the latest codebase and flag any violations of PCI-DSS 4.0.",
+    "Start the migration to the new CRM, following the step-by-step playbook you have. Pause and confirm with me before each stage, and log every action to the audit trail.",
+    "For the next 30 days, execute the experiments in the attached protocol for the new battery chemistry. You must record temperature, pressure, and charge cycles every 15 minutes, and alert me if any reading falls outside the tolerance band. Also, after each batch, tag the results with the run number and sync to our shared drive.",
+    "Please do a full sweep of our third-party vendor contracts, checking each one against the updated data-processing addendum. Flag any that don't have the new indemnity clause, and produce a summary table ranked by renewal date. Use the standard review checklist from our legal folder.",
+    "Set up a simulated penetration test on our staging environment, following the red-team rules of engagement we agreed on. Use the toolset provided, keep the attack within the defined scope, and report findings in the template with severity ratings and remediation steps. Do not touch production.",
+    "I need you to audit our AWS billing for the last quarter. Go through each service, compare usage against the budget tags, and identify any anomalies. Then draft a report with charts, highlighting the top three cost drivers and recommend optimization actions. Stick to the format we used last time.",
+    "Execute the patient enrollment protocol for the Phase 2 trial. Verify each candidate against the inclusion/exclusion criteria, obtain eConsent, and update the CTMS in real time. For any ineligible record, log the reason code and notify the coordinator. Run the daily reconciliation at 8 PM and send a status summary.",
+    "Continue the systematic review of our internal documentation as per the style guide. For every page, check the structure, terminology, and outdated references. Rewrite the problematic sections in place, keep a change log with timestamps, and flag anything that conflicts with the current product spec. Do all 120 pages before Friday."
+   ],
+   "usage": {
+    "inputTokens": 321,
+    "outputTokens": 498,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 13
+  },
+  {
+   "id": "m2-casual",
+   "description": "short casual chat messages asking an AI assistant to handle something from now on or on a regular basis, the way people text a colleague",
+   "ok": true,
+   "requests": [
+    "hey can you start sending me a digest of my unread emails every morning around 9? thanks",
+    "From now on, can you pull the Salesforce pipeline numbers every Friday at 4 and drop them into our #sales Slack channel? Same format as last week's report.",
+    "Hey, I'd like you to start doing a weekly check-in every Monday morning. Review the open support tickets in Zendesk, flag any that have been sitting over 48 hours, and draft a short list of suggested responses for my top 3. Keep it under 200 words and message me in Teams before 10. That would help a ton.",
+    "pls remind me to drink water every hour lol",
+    "Can you start tracking my daily step count from my Fitbit and send me a weekly summary every Sunday evening? Include my weekly average and compare it to the previous 4 weeks.",
+    "Set up a recurring task: every month on the 1st, generate a client billing report from QuickBooks, sort by outstanding balance, and email it to me and Priya. Make the subject 'Monthly AR Report – [Month]'.",
+    "hey from now on whenever someone mentions our brand on social media, save the post and add a brief sentiment note. do it once a day and put it in the brand-monitoring spreadsheet.",
+    "Could you start generating practice quiz questions for me at the end of each study session? Just 10 multiple choice based on the notes I've uploaded that day, and keep them in a running flashcard deck."
+   ],
+   "usage": {
+    "inputTokens": 335,
+    "outputTokens": 1325,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0
+   },
+   "servedModel": null,
+   "journalId": 14
+  }
+ ],
+ "tokens": {
+  "inception": {
+   "cap": 60000,
+   "callCap": 6000,
+   "spent": 4557,
+   "reserved": 0,
+   "calls": 4,
+   "refused": 0,
+   "unknown": 0
+  }
+ }
+}

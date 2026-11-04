@@ -1,0 +1,70 @@
+{
+ "config": {
+  "schema": "foundry.need-router.ngram-baseline/1",
+  "lambdas": [
+   0.01,
+   0.03,
+   0.1,
+   0.3,
+   1,
+   3,
+   10
+  ],
+  "ngrams": [
+   3,
+   4,
+   5
+  ],
+  "minDf": 2,
+  "margin": 0.02,
+  "clip": 8000,
+  "iters": 3000,
+  "folds": 5
+ },
+ "choice": {
+  "lambda": 1,
+  "threshold": 0.457064,
+  "oofNegMax": 0.4370638513139236,
+  "grid": [
+   {
+    "lambda": 0.01,
+    "oofAuroc": 0.8909
+   },
+   {
+    "lambda": 0.03,
+    "oofAuroc": 0.8923
+   },
+   {
+    "lambda": 0.1,
+    "oofAuroc": 0.8951
+   },
+   {
+    "lambda": 0.3,
+    "oofAuroc": 0.8971
+   },
+   {
+    "lambda": 1,
+    "oofAuroc": 0.9025
+   },
+   {
+    "lambda": 3,
+    "oofAuroc": 0.8934
+   },
+   {
+    "lambda": 10,
+    "oofAuroc": 0.7795
+   }
+  ],
+  "devOof": {
+   "tp": 10,
+   "fp": 0,
+   "fn": 32,
+   "tn": 84,
+   "precision": 1,
+   "recall": 0.2381,
+   "f1": 0.3846,
+   "accuracy": 0.746,
+   "auroc": 0.9025
+  }
+ }
+}
