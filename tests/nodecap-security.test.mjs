@@ -8,9 +8,10 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import net from 'node:net';
 import path from 'node:path';
+import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readdirSync, realpathSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { Store } from '../src/store.mjs';
 import { loadPolicy } from '../src/models/policy.mjs';
 import { ModelPort } from '../src/models/port.mjs';
@@ -217,7 +218,13 @@ test('M3: a stdio server runs sandboxed: no host files outside its binds, no net
   // Its own code is bound read-only (it cannot rewrite what the owner pinned), and a write elsewhere lands in its private /tmp, never on the host.
   const beside = path.join(FIXTURES, 'servers', `escaped-${randomUUID().slice(0, 8)}.txt`);
   t.after(() => rmSync(beside, { force: true }));
-  assert.equal((await call('try_write', { path: beside })).ok, false);
+  // The sandbox gives the server a private /tmp. When this checkout itself lives under the temp directory, the server's code
+  // directory is inside that private /tmp, so a write beside its code lands in the private tmpfs (allowed, never on the host)
+  // instead of failing on the read-only bind. What must hold everywhere is the host check below; the read-only refusal is
+  // asserted where the checkout is outside the temp directory (as in a normal install).
+  const underTmp = realpathSync(FIXTURES).startsWith(`${realpathSync(tmpdir())}${path.sep}`);
+  if (!underTmp) assert.equal((await call('try_write', { path: beside })).ok, false);
+  else { await call('try_write', { path: beside }); t.diagnostic('checkout under the temp directory: the write beside the server code landed in its private /tmp; host check only'); }
   await call('try_write', { path: escape });
   assert.deepEqual([existsSync(beside), existsSync(escape)], [false, false], 'nothing was written on the host outside the writable bind');
   assert.equal((await call('try_connect', { port: listener.address().port })).ok, false, 'no network for a server whose members attest local egress');
