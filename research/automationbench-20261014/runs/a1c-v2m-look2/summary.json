@@ -1,0 +1,351 @@
+{
+ "runId": "a1c-v2m-look2",
+ "label": "model claude-haiku-5-5",
+ "model": "claude-haiku-5-5",
+ "scripted": false,
+ "evidence": "development/diagnostic (public AutomationBench set; not held-out)",
+ "arm": "A1-C v2 (code-owned harness)",
+ "sealed": false,
+ "testSplitTasks": 0,
+ "harness": {
+  "id": "codeowned-v2",
+  "version": "a1c-v2",
+  "manifestSha256": "cc16ed235a8e13b7a28d4a644cd4175b34e22598f6708d32972bd6f6263b84a7",
+  "frozenHashGiven": true,
+  "nodeModels": {
+   "ledger": "mercury-3",
+   "adjudicate": "claude-haiku-5-5",
+   "pcmap": "claude-haiku-5-5",
+   "checker": "mercury-3",
+   "act": "claude-haiku-5-5",
+   "repair": "claude-haiku-5-5"
+  },
+  "pipeline": {
+   "K": 3,
+   "inventorySteps": 16,
+   "checkSteps": 3,
+   "maxRounds": 0,
+   "actReserveResponses": 8,
+   "singlePassReserveResponses": 4,
+   "minRepairResponses": 4,
+   "nodeTimeoutMs": 240000,
+   "inlineInventoryChars": 70000,
+   "ledgerInventoryChars": 150000,
+   "systemMaxBytes": 90000,
+   "nodeBudgetShare": 0.1,
+   "reserveShare": 0.25,
+   "pcmap": true,
+   "parallelLedgers": true,
+   "minCheckerMs": 45000,
+   "systemToReaders": true,
+   "reaskWhenFailed": 2,
+   "reaskMinMsLeft": 600000,
+   "valueTyping": true,
+   "clauseWords": 9,
+   "clauseLenRatio": 3,
+   "clauseMinChars": 40,
+   "completeness": "asked",
+   "derivedAgreement": 2,
+   "humanizeMachineValues": true,
+   "effectTable": "effects.json",
+   "unobservable": "null",
+   "contentConstraints": true,
+   "preSendLint": false,
+   "lintPerPair": 1,
+   "lintPerSession": 2,
+   "loadStampWindowMs": 43200000,
+   "entityKeyMerge": true
+  },
+  "extraModelCalls": 257
+ },
+ "selection": {
+  "tasks": [
+   "finance.cash_sweep",
+   "finance.expense_reclassification",
+   "finance.grant_expense_tracking",
+   "finance.intercompany_balance_recon",
+   "finance.invoice_aging_followup",
+   "finance.qb_customer_balance_review",
+   "finance.qb_customer_onboard",
+   "finance.qb_estimate_conversion",
+   "finance.sales_tax_remittance",
+   "finance.xero_expense_claim_review",
+   "hr.comp_adjustment_batch",
+   "hr.intern_program_coordination",
+   "hr.jira_it_onboarding",
+   "hr.job_posting_refresh",
+   "hr.offer_letter_generation",
+   "hr.payroll_bonus_processing",
+   "hr.probation_review_reminder",
+   "hr.recognition_nominations",
+   "hr.rto_compliance_check",
+   "hr.zoom_all_hands_setup",
+   "marketing.budget_reallocation",
+   "marketing.hashtag_performance",
+   "marketing.market_trend",
+   "marketing.partner_comarketing",
+   "marketing.partner_commission_calculation",
+   "marketing.social_crisis_response",
+   "marketing.social_roi",
+   "marketing.tam_analysis",
+   "marketing.topic_cluster",
+   "marketing.video_repurpose",
+   "operations.asana_fire_drill",
+   "operations.asana_slack_sheets_audit",
+   "operations.chatgpt_feedback_analysis",
+   "operations.drive_notion_lease_archive",
+   "operations.facebook_roas_monitoring",
+   "operations.hazmat_shipping_compliance",
+   "operations.holiday_coverage_planning",
+   "operations.monday_calendar_emergency_drill",
+   "operations.notion_gmail_checklist_update",
+   "operations.zoom_project_kickoff",
+   "sales.calendly_sequential_meetings",
+   "sales.chatgpt_email_sentiment_routing",
+   "sales.cold_email_personalization",
+   "sales.dependency_chain",
+   "sales.docusign_compliance_template",
+   "sales.docusign_conditional_template_selection",
+   "sales.linkedin_sales_prospecting",
+   "sales.milestone_celebration",
+   "sales.priority_selection",
+   "sales.sheets_multi_channel_campaign_router",
+   "support.gorgias_loyalty_program",
+   "support.helpscout_customer_merge",
+   "support.helpscout_health_sync",
+   "support.helpscout_response_audit",
+   "support.intercom_sf_opportunity_alerts",
+   "support.reamaze_intercom_sync",
+   "support.zendesk_cross_org_merge",
+   "support.zendesk_intercom_company_sync",
+   "support.zendesk_maintenance_notify",
+   "support.zoho_desk_capacity_planning"
+  ]
+ },
+ "tasks": [
+  "finance.cash_sweep",
+  "finance.expense_reclassification",
+  "finance.grant_expense_tracking",
+  "finance.intercompany_balance_recon",
+  "finance.invoice_aging_followup",
+  "finance.qb_customer_balance_review",
+  "finance.qb_customer_onboard",
+  "finance.qb_estimate_conversion",
+  "finance.sales_tax_remittance",
+  "finance.xero_expense_claim_review",
+  "hr.comp_adjustment_batch",
+  "hr.intern_program_coordination",
+  "hr.jira_it_onboarding",
+  "hr.job_posting_refresh",
+  "hr.offer_letter_generation",
+  "hr.payroll_bonus_processing",
+  "hr.probation_review_reminder",
+  "hr.recognition_nominations",
+  "hr.rto_compliance_check",
+  "hr.zoom_all_hands_setup",
+  "marketing.budget_reallocation",
+  "marketing.hashtag_performance",
+  "marketing.market_trend",
+  "marketing.partner_comarketing",
+  "marketing.partner_commission_calculation",
+  "marketing.social_crisis_response",
+  "marketing.social_roi",
+  "marketing.tam_analysis",
+  "marketing.topic_cluster",
+  "marketing.video_repurpose",
+  "operations.asana_fire_drill",
+  "operations.asana_slack_sheets_audit",
+  "operations.chatgpt_feedback_analysis",
+  "operations.drive_notion_lease_archive",
+  "operations.facebook_roas_monitoring",
+  "operations.hazmat_shipping_compliance",
+  "operations.holiday_coverage_planning",
+  "operations.monday_calendar_emergency_drill",
+  "operations.notion_gmail_checklist_update",
+  "operations.zoom_project_kickoff",
+  "sales.calendly_sequential_meetings",
+  "sales.chatgpt_email_sentiment_routing",
+  "sales.cold_email_personalization",
+  "sales.dependency_chain",
+  "sales.docusign_compliance_template",
+  "sales.docusign_conditional_template_selection",
+  "sales.linkedin_sales_prospecting",
+  "sales.milestone_celebration",
+  "sales.priority_selection",
+  "sales.sheets_multi_channel_campaign_router",
+  "support.gorgias_loyalty_program",
+  "support.helpscout_customer_merge",
+  "support.helpscout_health_sync",
+  "support.helpscout_response_audit",
+  "support.intercom_sf_opportunity_alerts",
+  "support.reamaze_intercom_sync",
+  "support.zendesk_cross_org_merge",
+  "support.zendesk_intercom_company_sync",
+  "support.zendesk_maintenance_notify",
+  "support.zoho_desk_capacity_planning"
+ ],
+ "dateNote": true,
+ "k": 1,
+ "det": "record",
+ "maxSteps": 50,
+ "budgetUsdPerSession": 0.75,
+ "capUsd": 4,
+ "tools": [
+  "Bash"
+ ],
+ "effort": null,
+ "n": 60,
+ "n_graded": 60,
+ "pass_rate": 0.45,
+ "mean_partial_credit": 0.7753191117161704,
+ "by_domain": {
+  "finance": {
+   "n": 10,
+   "pass_rate": 0.8,
+   "mean_partial_credit": 0.9607142857142857
+  },
+  "hr": {
+   "n": 10,
+   "pass_rate": 0.4,
+   "mean_partial_credit": 0.7020929070929072
+  },
+  "marketing": {
+   "n": 10,
+   "pass_rate": 0.3,
+   "mean_partial_credit": 0.8366108074931604
+  },
+  "operations": {
+   "n": 10,
+   "pass_rate": 0.4,
+   "mean_partial_credit": 0.5891666666666666
+  },
+  "sales": {
+   "n": 10,
+   "pass_rate": 0.5,
+   "mean_partial_credit": 0.8137301587301587
+  },
+  "support": {
+   "n": 10,
+   "pass_rate": 0.3,
+   "mean_partial_credit": 0.7495998445998446
+  }
+ },
+ "live_pass_rate": 0.45,
+ "mean_cost_per_task_usd": 0.010920223833333333,
+ "accounting": {
+  "modelResponses": {
+   "mean": 10.233333333333333,
+   "max": 15
+  },
+  "toolResponses": {
+   "mean": 4.95,
+   "max": 9
+  },
+  "numTurnsCli": {
+   "mean": 10.683333333333334,
+   "max": 24
+  },
+  "worldSteps": {
+   "mean": 9.966666666666667,
+   "max": 22
+  },
+  "worldCalls": {
+   "mean": 178.76666666666668,
+   "max": 305
+  },
+  "reads": {
+   "mean": 166.8,
+   "max": 285
+  },
+  "searches": {
+   "mean": 3.2666666666666666,
+   "max": 10
+  },
+  "writes": {
+   "mean": 7.6,
+   "max": 34
+  },
+  "stoppedByStepGuard": 0,
+  "extraModelCalls": 257,
+  "compactions": 0,
+  "capViolations": 0,
+  "l5Violations": 0,
+  "models": [
+   "claude-haiku-5-5",
+   "mercury-3"
+  ],
+  "ledger": null
+ },
+ "cost": {
+  "spentUsd": 0.65521343,
+  "knownUsd": 0.65521343,
+  "unknownUpperUsd": 0,
+  "unknownCostSessions": 0,
+  "sessions": 60,
+  "skipped": 0
+ },
+ "tokens": {
+  "input": 10283814,
+  "output": 2324565,
+  "cachedInput": 6842523,
+  "total": 12608379,
+  "sessions": 60,
+  "byModel": {
+   "mercury-3": {
+    "input": 1576250,
+    "output": 2322057,
+    "cachedInput": 30100,
+    "total": 3898307
+   },
+   "claude-haiku-5-5": {
+    "input": 8707564,
+    "output": 2508,
+    "cachedInput": 6812423,
+    "total": 8710072
+   }
+  },
+  "meanPerTask": 210139.65,
+  "sessionBudget": 300000,
+  "cap": 5500000,
+  "meterSpent": 3898307,
+  "meterUnknownSessions": 0,
+  "metered": [
+   "mercury-3"
+  ],
+  "callTokens": 100000,
+  "faultSessions": 0
+ },
+ "launchHistory": [],
+ "envFaults": {
+  "records": 0,
+  "tasks": 0,
+  "sessions": 0,
+  "spentUsd": 0
+ },
+ "nestedModelUses": 0,
+ "void": null,
+ "errors": [],
+ "provenance": {
+  "automationbenchCommit": "4a8e1061254004d9dac807054eed33fad7d1ff14",
+  "uvLockSha256": "c7d275af5ad98caa7058edce5806281a340f63781cdff3062622c9c0d5d7c521",
+  "bridgeSha256": "285be4f5ba32f569c904897d512524535f6b50c11c05d54e419e5e272f97641a",
+  "toolClientSha256": "eac87bd9ab18389d703323ad5cf10d845f00bc625deedf71f516a26b25831262",
+  "runnerSha256": "a93cd5daeb700594da8854107829b281a5a9c1d69e90ac0a12bf00cbc0f5470a",
+  "policyHash": "7447a8752174cb7ebe7f754a7a2fac7bfa081c6db1787db989cfeca29cf53462",
+  "policyVersion": "2026-10-21.2",
+  "policyFileSha256": "cffef22b216b382705b1086b004330a6d2b24366aed8cf506668b9e1a812ea69",
+  "node": "v24.21.0",
+  "cli": "2.1.312 (Claude Code)",
+  "childEnv": {
+   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": null,
+   "FORCE_PROMPT_CACHING_5M": null,
+   "DISABLE_TELEMETRY": null,
+   "DISABLE_ERROR_REPORTING": null,
+   "DISABLE_AUTOUPDATER": "1"
+  },
+  "accountingSha256": "9ddeb8f7ef1025aeadd66b8ee12ec0dd3772b99a2a13f2a74b8000eb6c4108d7",
+  "harnessManifestSha256": "cc16ed235a8e13b7a28d4a644cd4175b34e22598f6708d32972bd6f6263b84a7"
+ },
+ "live": "/var/tmp/foundry-work/autobench/a1c-v2m-look2",
+ "finishedAt": "2026-11-04T18:26:34.584Z"
+}
