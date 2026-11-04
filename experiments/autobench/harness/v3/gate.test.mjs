@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EFFECTS_SHA256, callFacts, createRegistry, decodeRaw, identityOf, identityOfV1, identityOfCreated, isWrite, routeOf } from './registry.mjs';
-import { createGate, gateRules, violationsOf, writeSucceeded } from './gate.mjs';
+import { READ_TOOLS, createGate, gateRules, violationsOf, witnessHolds, writeSucceeded } from './gate.mjs';
 import { buildDstar } from '../../verifier/requirement-ledger-v3/dstar.mjs';
 import { universesFromInventory } from '../../verifier/requirement-ledger-v3/universe.mjs';
 
@@ -107,12 +107,12 @@ test('gate: rules come only from HARD prohibitions of Δ*; obligations become ex
 });
 
 test('gate: admit with a certificate, refuse P (mention and recipient), refuse K duplicates, report unexplained writes', () => {
-  const g = createGate({ dstar: dstar() });
+  const g = createGate({ dstar: dstar(), holdUnexplained: false });
   const ok = g.check(email({ to: 'owner@corp.test', subject: 'Vendor summary', body: 'Active: Acme Supplies, Initech.' }));
   assert.equal(ok.action, 'admit');
   assert.ok(ok.discharges.length > 0);
   assert.equal(ok.unexplained, false);
-  assert.match(ok.certificate.witness, /owner@corp\.test/);
+  assert.deepEqual([ok.certificate.witness.recipients, ok.certificate.witness.status], [['owner@corp.test'], 'pending']);
   const dup = g.check(email({ to: 'owner@corp.test', subject: 'Vendor summary', body: 'Active: Acme Supplies, Initech.' }, { idempotency_key: 'retry-2' }));
   assert.deepEqual([dup.action, dup.duplicate, dup.violations.length], ['refuse', true, 0]);
   const leak = g.check(email({ to: 'owner@corp.test', subject: 'Vendor summary v2', body: 'Active: Acme, Initech. Globex is on hold.' }));
@@ -129,10 +129,42 @@ test('gate: admit with a certificate, refuse P (mention and recipient), refuse K
   assert.equal(g.check(email({ to: 'billing@globex.test', subject: 'Reminder', body: 'Please pay.' })).duplicate, false);
   const stray = g.check(slack('C9', 'FYI: vendor run done'));
   assert.deepEqual([stray.action, stray.unexplained], ['admit', true]);
-  const held = createGate({ dstar: dstar(), holdUnexplained: true }).check(slack('C9', 'FYI: vendor run done'));
-  assert.equal(held.action, 'hold');
+  const held = createGate({ dstar: dstar() }).check(slack('C9', 'FYI: vendor run done'));
+  assert.equal(held.action, 'hold', 'by default an unexplained write is held (ATTACK Move 2)');
   assert.equal(g.check(fetchCall('GET', 'https://gmail.googleapis.com/gmail/v1/users/me/messages')).action, 'read');
-  assert.equal(g.check(fetchCall('POST', GMAIL_SEND, { raw: '%%%' })).action, 'undecodable');
+  assert.deepEqual([g.check(fetchCall('POST', GMAIL_SEND, { raw: '%%%' })).action, g.check(fetchCall('POST', GMAIL_SEND, { raw: '%%%' })).undecodable], ['hold', true]);
+});
+
+test('gate (review finding 10): fail closed: unknown tools, unparseable arguments, a body without a method and undecodable writes are held', () => {
+  const g = createGate({ dstar: dstar(), holdUnexplained: false });
+  const send = { method: 'POST', url: 'https://slack.com/api/chat.postMessage', body: JSON.stringify({ channel: 'C9', text: 'Globex Corp is on hold' }) };
+  // the reviewer's probes: an object argument, malformed JSON and a missing method all read as "read" before
+  assert.equal(g.check({ name: 'api_fetch', arguments: send }).action, 'admit', 'an object argument is decoded like a JSON string');
+  assert.equal(g.check({ name: 'api_fetch', arguments: '{"method": "POST", "url": ' }).action, 'hold');
+  assert.equal(g.check({ name: 'api_fetch', arguments: JSON.stringify({ url: send.url, body: send.body }) }).action, 'hold');
+  assert.equal(g.check({ name: 'api_fetch', arguments: JSON.stringify({ method: 'DELETE', url: 'not a url' }) }).action, 'hold');
+  assert.equal(g.check({ name: 'send_slack_message', arguments: JSON.stringify({ channel: 'C9', text: 'hi' }) }).action, 'hold', 'a tool the gate does not know may write');
+  for (const t of READ_TOOLS) assert.equal(g.check({ name: t, arguments: '{"query": "x"}' }).action, 'read');
+  assert.equal(g.check({ name: 'api_fetch', arguments: JSON.stringify({ url: 'https://slack.com/api/conversations.list' }) }).action, 'read', 'no method and no body: the tool default, GET');
+  // a sheet-row ban that no call-level rule enforces is listed and travels with every write of its app
+  const D = { assertions: [{ id: 'B1', polarity: 'must_not', status: 'hard', origin: 'closure', check: { type: 'rec_unchanged', params: { ptr: 'google_sheets:row:ss/ws#4', scope: 'any' } } }] };
+  const rules = gateRules(D);
+  assert.deepEqual([rules.prohibit.length, rules.unenforced.length, rules.unenforced[0].app], [0, 1, 'google_sheets']);
+  const sheets = createGate({ dstar: D, holdUnexplained: false }).check(fetchCall('PUT', 'https://sheets.googleapis.com/v4/spreadsheets/ss/values/ws!A4:C4', { values: [['x']] }));
+  assert.deepEqual(sheets.unverified, ['B1']);
+});
+
+test('gate (review finding 11): a certificate\'s witness is a read-back spec, confirmed only by the world\'s own changes', () => {
+  const g = createGate({ dstar: dstar(), holdUnexplained: false });
+  const d = g.check(email({ to: 'owner@corp.test', subject: 'Vendor summary', body: 'Acme, Initech' }));
+  const w = d.certificate.witness;
+  assert.equal(witnessHolds(w, { changes: [{ op: 'created', app: 'gmail', coll: 'messages', id: 'n1', record: { to: ['owner@corp.test'], subject: 'Vendor summary' } }] }), true);
+  assert.equal(witnessHolds(w, { changes: [{ op: 'created', app: 'gmail', coll: 'messages', id: 'n1', record: { to: ['someone@else.test'] } }] }), false, 'a message to someone else is not the witness');
+  assert.equal(witnessHolds(w, { changes: [] }), false, 'the tool said ok, the world shows nothing: no witness');
+  const u = g.check(fetchCall('PATCH', 'https://api.hubapi.com/crm/v3/objects/contacts/501', { properties: { lifecyclestage: 'customer' } }));
+  assert.equal(u.action, 'admit');
+  assert.equal(witnessHolds(u.certificate.witness, { changes: [{ op: 'updated', app: u.facts.app, coll: 'contacts', id: '501', fields: {} }] }), true);
+  assert.equal(witnessHolds(u.certificate.witness, { changes: [{ op: 'updated', app: u.facts.app, coll: 'contacts', id: '999', fields: {} }] }), false);
 });
 
 test('gate: a failed write releases its key (the effect did not happen); a successful one keeps it', () => {

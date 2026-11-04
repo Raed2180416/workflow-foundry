@@ -22,19 +22,29 @@
 //   - a predicate that reads :today is evaluated on every day of the clock domain; a member whose disposition changes
 //     inside the domain is UNKNOWN (a certain answer or nothing);
 //   - members no reader disposes and no executed predicate covers are UNKNOWN;
+//   - a predicate that reads an IDENTIFYING column (the member number, rowid, the label column or an id column), or no
+//     column of its universe at all, is a list posing as a rule: its members are reader claims, never executed votes
+//     (ATTACK (a): "predicates over attributes, not lists");
+//   - a rule that CODE induces from a reader's listed claims (induceTest) is not a reader rule: its votes carry the basis
+//     kind 'induced', never count as verified and never compile to a hard check (review of 2026-11-04, finding 7);
 //   - consensus: with three or more readers, a hard disposition needs two agreeing verified votes and no more verified
-//     votes against than for; with one or two readers, one verified vote and none against.
+//     votes against than for; with one or two readers, one verified vote and none against. An unverified include
+//     majority needs no exclude vote of any kind;
+//   - (c) and (d) of ATTACK Move 1: an obligation's recipient, channel or record is GROUNDED when the request or a record
+//     shows it (an address, an enumerated channel, a resolved pointer), and each of its content literals when the request
+//     or a record carries it verbatim; only grounded targets and literals compile to hard positives (msg_to, post_in,
+//     msg_has, created_has); an ungrounded one is soft and listed as UNKNOWN.
 // Generic by construction (PREREG-AB-v1 H7/H8): nothing here names a task, a grader check or a hidden assertion. The
 // request, the records and every reader output are untrusted data; only SQL runs, and only inside sqlsafe.
 import { createHash } from 'node:crypto';
 import { emailsIn, grounded, norm } from './lib.mjs';
 import { sqlTables } from './universe.mjs';
 import { pointerIndex, normalizePointer } from './pointers.mjs';
-import { runSelect, checkSqlText } from './sqlsafe.mjs';
+import { runSelect, checkSqlText, checkPredicateText } from './sqlsafe.mjs';
 import { deriveToday, domainDays, parseDate, requestDate } from './clock.mjs';
 import { checkKey } from './compile.mjs';
 
-export const DSTAR_VERSION = 'dstar-v1';
+export const DSTAR_VERSION = 'dstar-v1.1';   // v1.1: review of 2026-11-04 (findings 4-7, 13, 14)
 export const EFFECT_CLASS = Object.freeze({ send_email: 'message', reply: 'message', post_message: 'message', create_record: 'create', add_row: 'create', schedule_event: 'create', update_record: 'update', update_row: 'update', delete_record: 'delete', other: 'other' });
 
 const str = v => (v === null || v === undefined ? '' : String(v));
@@ -94,32 +104,52 @@ export function holdsTest(test, member) {
 // Predicates and figures on the sandbox
 
 const usesToday = sql => /:today\b/i.test(sql);
+/** Columns that name a member rather than describe it: reading one makes a predicate a list. */
+export const ID_COLUMN = /^(_mid|_label|rowid|_rowid_|oid|id|uuid|key|ptr)$|[ ._-]id$|[a-z]Id$/i;
 
-/** Evaluate predicates (WHERE expressions over one universe table) and figures (full SELECTs) for every day of the
- *  clock domain that they need. Returns per item {status: 'ok'|'error', byDay: Map(day -> rows) | rows}. One sandbox
- *  call per batch. */
-function evaluateSql(items, { tables, clock, timeoutMs }) {
+/** Evaluate predicates (boolean expressions over one universe table, evaluated once per member as a projected column)
+ *  and figures (full SELECTs) for every day of the clock domain that they need. Returns per item {status:
+ *  'ok'|'error'|'unknown', byDay: Map(day -> rows), reads}. One sandbox call per build; a failed batch is retried per
+ *  item (all its day-variants together) inside the build's time budget. */
+function evaluateSql(items, { tables, clock, timeoutMs, budgetMs }) {
   const days = clock?.domain ? domainDays(clock.domain) : [];
   const queries = [], owners = [];
   for (const [i, it] of items.entries()) {
-    const sql = it.kind === 'where' ? `SELECT _mid FROM "${it.table}" WHERE (${it.where})` : it.select;
+    let sql, trace;
+    if (it.kind === 'where') {
+      const pc = checkPredicateText(it.where);
+      if (!pc.ok) { it.result = { status: 'error', error: `refused: ${pc.reason}` }; continue; }
+      // the predicate is projected, never spliced into a WHERE clause: it cannot end the expression or add rows
+      sql = `SELECT _mid, CASE WHEN (\n${it.where}\n) THEN 1 ELSE 0 END AS _hit FROM "${it.table}"`;
+      trace = `SELECT CASE WHEN (\n${it.where}\n) THEN 1 ELSE 0 END FROM "${it.table}"`;
+    } else sql = it.select;
     const st = checkSqlText(sql);
     if (!st.ok) { it.result = { status: 'error', error: `refused: ${st.reason}` }; continue; }
+    const q = trace === undefined ? {} : { trace };
     if (usesToday(sql)) {
       if (!days.length) { it.result = { status: 'unknown', error: 'reads :today, which is a labelled null' }; continue; }
-      for (const d of days) { queries.push({ sql, params: { today: d } }); owners.push([i, d]); }
-    } else { queries.push({ sql, params: {} }); owners.push([i, null]); }
+      for (const d of days) { queries.push({ sql, params: { today: d }, ...q }); owners.push([i, d]); }
+    } else { queries.push({ sql, params: {}, ...q }); owners.push([i, null]); }
   }
-  const res = queries.length ? runSelect({ tables, queries, timeoutMs }) : [];
+  const res = queries.length ? runSelect({ tables, queries, timeoutMs, budgetMs, groupOf: (_, k) => owners[k][0] }) : [];
   res.forEach((r, k) => {
     const [i, d] = owners[k];
     const it = items[i];
     if (it.result?.status === 'error') return;
     if (!r.ok) { it.result = { status: 'error', error: `${r.error.code}: ${r.error.message}` }; return; }
-    it.result ??= { status: 'ok', byDay: new Map() };
-    it.result.byDay.set(d, r.rows);
+    it.result ??= { status: 'ok', byDay: new Map(), reads: new Set() };
+    for (const c of r.reads ?? []) it.result.reads.add(c);
+    it.result.byDay.set(d, it.kind === 'where' ? r.rows.filter(x => Number(x._hit) === 1) : r.rows);
   });
   return items;
+}
+
+/** Is a predicate a list? It reads an identifying column of its own table, or no column of its own table at all. */
+export function listLike(reads, table, labelColumn) {
+  const own = [...(reads ?? [])].filter(c => c.startsWith(`${table}.`)).map(c => c.slice(table.length + 1));
+  if (!own.length) return { list: true, why: 'it reads no attribute of the members' };
+  const ids = own.filter(c => ID_COLUMN.test(c) || (labelColumn && c === labelColumn));
+  return ids.length ? { list: true, why: `it reads ${ids.map(c => `"${c}"`).join(', ')}, which names members` } : { list: false, why: null };
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -127,14 +157,21 @@ function evaluateSql(items, { tables, clock, timeoutMs }) {
 
 const numOf = v => { const s = str(v).trim(); const d = parseDate(s); if (d) return Date.parse(`${d}T00:00:00Z`) / 86_400_000; const n = Number(s.replace(/[$€£,%\s]/g, '').replace('−', '-')); return s && Number.isFinite(n) ? n : null; };
 
+/** Claims per side an induced rule needs (review of 2026-11-04, finding 7: one claim per side was enough before). */
+export const INDUCE_MIN_PER_SIDE = 2;
+
 /** From claims [{m, want, field, value}] (each verified on its member), induce one test over the universe or null:
  *  categorical (F IN include-values, with at least one value shared by two or more members of the universe) or threshold
- *  (numeric or date F, the include side and the exclude side separated). Both dispositions must occur. */
+ *  (numeric or date F, the include side and the exclude side separated). Both dispositions must occur with at least
+ *  INDUCE_MIN_PER_SIDE claims each, and the rule never extrapolates: a categorical rule places only the values the claims
+ *  show, a threshold rule only values inside one side's observed range. Its votes are CODE's induction, not a reader's
+ *  rule: buildDstar records them with the basis kind 'induced', which is never verified and never hard. */
 export function induceTest(claims, u) {
-  if (claims.length < 2) return null;
+  if (claims.length < 2 * INDUCE_MIN_PER_SIDE) return null;
   const byField = new Map();
   for (const c of claims) { const f = norm(c.field); if (!byField.has(f)) byField.set(f, []); byField.get(f).push(c); }
-  const [f, cs] = [...byField].sort((a, b) => b[1].length - a[1].length)[0];
+  const [, cs] = [...byField].sort((a, b) => b[1].length - a[1].length)[0];
+  if (cs.filter(c => c.want === 'include').length < INDUCE_MIN_PER_SIDE || cs.filter(c => c.want === 'exclude').length < INDUCE_MIN_PER_SIDE) return null;
   const field = cs[0].field;
   const valOf = m => { const k = fieldKey(m, field); return k === undefined ? undefined : m.attrs[k]; };
   const map = new Map();
@@ -151,9 +188,9 @@ export function induceTest(claims, u) {
   const nIn = cs.filter(c => c.want === 'include').map(c => numOf(valOf(c.m))), nOut = cs.filter(c => c.want === 'exclude').map(c => numOf(valOf(c.m)));
   if (nIn.some(x => x === null) || nOut.some(x => x === null)) return null;
   const [inLo, inHi, outLo, outHi] = [Math.min(...nIn), Math.max(...nIn), Math.min(...nOut), Math.max(...nOut)];
-  if (inHi < outLo) return { kind: 'threshold', where: `"${field}" <= ${inHi} (include) / >= ${outLo} (exclude)`, apply: m => { const x = numOf(valOf(m)); return x === null ? null : x <= inHi ? 'include' : x >= outLo ? 'exclude' : null; } };
-  if (outHi < inLo) return { kind: 'threshold', where: `"${field}" >= ${inLo} (include) / <= ${outHi} (exclude)`, apply: m => { const x = numOf(valOf(m)); return x === null ? null : x >= inLo ? 'include' : x <= outHi ? 'exclude' : null; } };
-  return null;
+  if (!(inHi < outLo || outHi < inLo)) return null;
+  const side = x => (x === null ? null : x >= inLo && x <= inHi ? 'include' : x >= outLo && x <= outHi ? 'exclude' : null);
+  return { kind: 'threshold', where: `"${field}" in [${inLo}, ${inHi}] (include) / in [${outLo}, ${outHi}] (exclude); no extrapolation`, apply: m => side(numOf(valOf(m))) };
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -165,24 +202,27 @@ export function induceTest(claims, u) {
  *   where, members: [{ptr, in, test, quote}], perItem}], figures: [{id, select, format}]}], exclusions: [{universe,
  *   effect, app, where, members: [{ptr, quote, test}], quote}]}]
  */
-export function buildDstar({ request = {}, universes = [], readers = [], hostNow = null, horizonDays, timeoutMs = 3000, channels = null } = {}) {
+export function buildDstar({ request = {}, universes = [], readers = [], hostNow = null, horizonDays, timeoutMs = 3000, budgetMs = 20_000, channels = null } = {}) {
   const requestText = `${str(request.user)}\n${str(request.system)}`;
   const pidx = pointerIndex(universes);
   const records = universes.flatMap(u => u.members);
   const chans = channels ?? universes.filter(u => u.app === 'slack' && /channel/.test(u.kind)).flatMap(u => u.members.map(m => ({ id: str(m.attrs.id ?? m.id), name: str(m.attrs.name ?? m.label) })));
+  const ground = grounding({ requestText, records });
   const { tables, catalog } = sqlTables(universes);
   const tableOf = new Map(catalog.map(c => [c.uid, c.table]));
+  const labelOf = new Map(catalog.map(c => [c.table, c.labelColumn]));
   const uByUid = new Map(universes.map(u => [u.uid, u]));
   const unknowns = [];
   const ledger = [];   // the disposition log: one row per (obligation, member, reader) vote
 
-  // --- today (D28): the request's own date, else a reader's date whose quote code verifies, else business dates
+  // --- today (D28): the request's own date, else a reader's date stated by a quote OF THE REQUEST (a "today" or "as of"
+  // in a record, such as an old e-mail, is that record's date, not the work's), else business dates
   let clock = deriveToday({ request: requestText, members: records, hostNow, horizonDays });
   if (clock.status !== 'explicit') {
     for (const R of readers) {
       const v = parseDate(R.today?.value);
       const said = requestDate(R.today?.quote);
-      if (v && said && said.value === v && verifyQuote(R.today.quote, { requestText, records })) {
+      if (v && said && said.value === v && grounded(str(R.today.quote), requestText)) {
         clock = { status: 'explicit', value: v, domain: [v, v], basis: { quote: R.today.quote, reader: R.reader } };
         break;
       }
@@ -220,12 +260,12 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
       if (!u) continue;
       const effect = EFFECT_CLASS[x.effect] ? x.effect : 'send_email';
       const ob = { reader: R.reader, id: x.id ?? `X${obls.length + 1}`, effect, eclass: EFFECT_CLASS[effect], app: str(x.app).toLowerCase(), target: resolveTarget(x.target ?? {}, pidx, chans), literals: [], quote: x.quote ?? null, source: x.source ?? null, exclusionOnly: true,
-        selections: [{ u, where: x.where ? `NOT (${x.where})` : null, members: (x.members ?? []).map(m => ({ ...m, in: false })), perItem: x.perItem ?? true, partial: !x.where, votes: new Map() }], figures: [] };
+        selections: [{ u, where: x.where ? `NOT (${x.where})` : null, members: (x.members ?? []).map(m => ({ ...m, in: false })), perItem: x.perItem ?? true, partial: !x.where, exclusionOnly: true, votes: new Map() }], figures: [] };
       if (x.where) { const it = { kind: 'where', table: tableOf.get(u.uid), where: `NOT (${x.where})`, owner: ob.selections[0] }; sqlItems.push(it); ob.selections[0].sql = it; }
       obls.push(ob);
     }
   }
-  evaluateSql(sqlItems, { tables, clock, timeoutMs });
+  evaluateSql(sqlItems, { tables, clock, timeoutMs, budgetMs });
 
   // dispositions of each selection (one reader)
   for (const ob of obls) {
@@ -238,9 +278,21 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
           for (const m of u.members) vote(m, 'unknown', { kind: 'null', why: r?.error ?? 'predicate not evaluated' });
         } else {
           const inSets = [...r.byDay.values()].map(rows => new Set(rows.map(x => Number(x._mid))));
+          const where = sel.where;
+          const L = listLike(r.reads, sel.sql.table, labelOf.get(sel.sql.table));
+          if (L.list) {
+            // a list posing as a predicate: its members are the reader's claims (an include stays a soft include); the
+            // rest are undisposed, exactly as for a list-style selection
+            for (const m of u.members) {
+              const ins = inSets.map(s => s.has(m.mid));
+              if (ins.every(Boolean) && !sel.exclusionOnly) vote(m, 'include', { kind: 'reader', verified: false, listed: true, where, why: `a list, not a rule: ${L.why}` });
+              else if (ins.every(x => !x) && sel.exclusionOnly) vote(m, 'unknown', { kind: 'null', why: `excluded by a list, not a rule: ${L.why}`, claimed: 'exclude', where });
+            }
+            if (!sel.partial) for (const m of u.members) if (!sel.votes.has(m.mid)) vote(m, 'unknown', { kind: 'null', why: 'no reader disposed this member' });
+            continue;
+          }
           for (const m of u.members) {
             const ins = inSets.map(s => s.has(m.mid));
-            const where = sel.where;
             if (ins.every(Boolean)) vote(m, 'include', { kind: 'predicate', where, executed: true });
             else if (ins.every(x => !x)) vote(m, 'exclude', { kind: 'predicate', where, executed: true, complement: true });
             else {
@@ -276,7 +328,7 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
         for (const m of u.members) {
           if (sel.votes.has(m.mid) && sel.votes.get(m.mid).basis.kind !== 'null') continue;
           const d = test.apply(m);
-          if (d) vote(m, d, { kind: 'predicate', where: test.where, executed: true, induced: test.kind, listed: listed.has(m.mid) });
+          if (d) vote(m, d, { kind: 'induced', where: test.where, executed: true, induced: test.kind, listed: listed.has(m.mid), why: 'a rule code induced from listed claims, not a reader rule' });
         }
       }
       // whatever stays undecided keeps the reader's claim as an unverified vote (an include stays a soft include)
@@ -321,7 +373,7 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
       let d = 'unknown', basis = { kind: 'null', why: vs.length ? 'no verified majority' : 'no reader disposed this member' };
       if (exc.length >= need && exc.length > incAny.length) { d = 'exclude'; basis = exc[0].basis; }
       else if (inc.length >= need && inc.length >= exc.length) { d = 'include'; basis = inc[0].basis; }
-      else if (incAny.length >= need && !exc.length) { d = 'include'; basis = { kind: 'reader', verified: false }; }
+      else if (incAny.length >= need && !vs.some(v => v.d === 'exclude')) { d = 'include'; basis = { kind: 'reader', verified: false }; }
       // a labelled null keeps its label: when every vote is a null, the member carries the first vote's reason
       if (d === 'unknown' && vs.every(v => v.d === 'unknown' && v.basis?.kind === 'null')) basis = vs[0].basis;
       dispositions.push({ group: g.key, uid: g.u.uid, mid: m.mid, ptr: m.key, label: m.label, disposition: d, basis, votes: vs.map(v => v.d), hard: d !== 'unknown' && ['predicate', 'quote'].includes(basis.kind) });
@@ -344,9 +396,9 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
   }
 
   // --- compile both directions; then the readers' direct prohibitions (hard with a verified quote and the consensus)
-  const assertions = compileDstar({ groups: [...groups.values()], dispositions, figures });
+  const assertions = compileDstar({ groups: [...groups.values()], dispositions, figures, ground });
   for (const a of assertions) a.origin = a.group.startsWith('figure|') ? 'figure' : 'closure';
-  assertions.push(...compileObligations(obls, { need }));
+  assertions.push(...compileObligations(obls, { need, ground, unknowns }));
   assertions.push(...compileProhibitions(readers, { pidx, chans, requestText, records, need, assertions }));
   const dstar = {
     version: DSTAR_VERSION,
@@ -365,6 +417,27 @@ export function buildDstar({ request = {}, universes = [], readers = [], hostNow
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+// Grounding (ATTACK Move 1 (c)): what the request or a record shows
+
+/** {email(e), channel(ch), target(t), literal(l)} -> true | false ('request' | 'record' | false for a literal). An address is grounded when the request or a record
+ *  carries it; a channel when it resolved to an enumerated channel or the request names it; a record pointer when it
+ *  resolved to a member; a literal when the request or one record carries it verbatim (normalised text). */
+export function grounding({ requestText = '', records = [] }) {
+  const req = norm(requestText);
+  const texts = records.map(r => norm(r.text ?? ''));
+  const reqEmails = new Set(emailsIn(requestText));
+  const worldEmails = new Set(records.flatMap(r => r.emails ?? emailsIn(r.text ?? '')));
+  const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const g = {
+    email: e => reqEmails.has(String(e).toLowerCase()) || worldEmails.has(String(e).toLowerCase()),
+    channel: ch => Boolean(ch && (ch.id || (ch.name && new RegExp(`(?<![a-z0-9_-])#?${esc(norm(ch.name))}(?![a-z0-9_-])`).test(req)))),
+    literal: l => { const n = norm(l); return n.length < 2 ? false : req.includes(n) ? 'request' : texts.some(t => t.includes(n)) ? 'record' : false; },
+  };
+  g.target = t => (t?.email ? g.email(t.email) : t?.channel ? g.channel(t.channel) : t?.ptr ? true : false);
+  return g;
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 // Compilation: dispositions and figures -> Agent-Diff-shaped assertions, each with its executable check
 
 const ENTITY = { gmail: 'gmail.messages', slack: 'slack.messages' };
@@ -380,7 +453,7 @@ function messageTarget(g) {
 const mk = (a) => { a.check.key = checkKey(a.check); a.id = `A-${sha(`${a.check.key}|${a.group}|${a.member ?? ''}`).slice(0, 12)}`; return a; };
 
 /** Compile one group's dispositions (and figures) into assertions with checks in the v2/v3 grammar. */
-export function compileDstar({ groups, dispositions, figures = [] }) {
+export function compileDstar({ groups, dispositions, figures = [], ground = null }) {
   const out = [];
   for (const g of groups) {
     const ds = dispositions.filter(d => d.group === g.key);
@@ -437,8 +510,10 @@ export function compileDstar({ groups, dispositions, figures = [] }) {
     const lit = formatFigure(f.rows, f.format);
     if (lit === null) continue;
     for (const target of messageTarget({ target: f.target })) {
-      const check = { type: 'msg_has', polarity: 'must', cat: 'value', params: { target, lit }, hard: true };
-      out.push(mk({ group: `figure|${f.obligation}`, member: null, label: f.id, polarity: 'must', basis: { kind: 'figure', select: f.select }, status: 'hard', diff_type: 'added', entity: target.email ? 'gmail.messages' : 'slack.messages', where: { body: { contains: lit } }, expected_count: { min: 1 }, strict: true, check }));
+      // a certain figure is hard only on a grounded target (an invented recipient would turn a right run into FAILED)
+      const hard = ground ? ground.target(target) : true;
+      const check = { type: 'msg_has', polarity: 'must', cat: 'value', params: { target, lit }, hard };
+      out.push(mk({ group: `figure|${f.obligation}`, member: null, label: f.id, polarity: 'must', basis: { kind: 'figure', select: f.select, targetGrounded: hard }, status: hard ? 'hard' : 'soft', diff_type: 'added', entity: target.email ? 'gmail.messages' : 'slack.messages', where: { body: { contains: lit } }, expected_count: { min: 1 }, strict: hard, check }));
     }
   }
   return out;
@@ -461,32 +536,52 @@ export function formatFigure(rows, format) {
   }
 }
 
-/** O: each obligation's effect, keyed by (effect class, app, target) across readers; hard when its support reaches the
- *  consensus. A message to an address or a channel, a record created in an app (and container), a record set to a value. */
-export function compileObligations(obls, { need }) {
+/** Content literals longer than this are drafted prose, not a value the run must carry (v2's rule, tighter). */
+export const LITERAL_MAX = 200;
+
+/** O: each obligation's effect, keyed by (effect class, app, target) across readers, and each of its content literals
+ *  (ATTACK Move 1 (d)): a message to an address or a channel, a reply on a record, a record created in an app (and
+ *  container), a record set to a value, and "the message / the new record carries L". A check is hard when its support
+ *  reaches the consensus AND its target and literal are grounded (grounding()); an ungrounded target or literal compiles
+ *  soft and is listed as UNKNOWN (pushed onto `unknowns`). */
+export function compileObligations(obls, { need, ground = null, unknowns = null }) {
   const byKey = new Map();
+  const listed = new Set();
+  const unknown = (u) => { if (!unknowns || listed.has(u.id)) return; listed.add(u.id); unknowns.push(u); };
   for (const ob of obls) {
     if (ob.exclusionOnly) continue;
     const t = ob.target, checks = [];
+    const msgTargets = [];
     if (ob.eclass === 'message') {
-      for (const email of t.emails) checks.push({ type: 'msg_to', params: { target: { email } } });
-      if (!t.emails.length && t.channel) checks.push({ type: 'post_in', params: { target: { channel: t.channel } } });
-      if (!t.emails.length && !t.channel && t.ptr) checks.push({ type: 'rec_changed', params: { ptr: t.ptr, scope: 'reply' } });
+      for (const email of t.emails) { checks.push({ type: 'msg_to', params: { target: { email } } }); msgTargets.push({ email }); }
+      if (!t.emails.length && t.channel) { checks.push({ type: 'post_in', params: { target: { channel: t.channel } } }); msgTargets.push({ channel: t.channel }); }
+      if (!t.emails.length && !t.channel && t.ptr) { checks.push({ type: 'rec_changed', params: { ptr: t.ptr, scope: 'reply' } }); msgTargets.push({ ptr: t.ptr }); }
     } else if (ob.eclass === 'create' && ob.app) checks.push({ type: 'created_in', params: { app: ob.app, container: t.container ?? null, label: null } });
-    else if (ob.eclass === 'update' && t.ptr) checks.push(ob.set?.value && !NOTE_FIELD.test(ob.set.field) ? { type: 'rec_field', params: { ptr: t.ptr, field: ob.set.field, value: ob.set.value } } : { type: 'rec_changed', params: { ptr: t.ptr, scope: ob.set && NOTE_FIELD.test(ob.set.field) ? 'reply' : 'any' } });
+    else if (ob.eclass === 'update' && t.ptr) { checks.push(ob.set?.value && !NOTE_FIELD.test(ob.set.field) ? { type: 'rec_field', params: { ptr: t.ptr, field: ob.set.field, value: ob.set.value } } : { type: 'rec_changed', params: { ptr: t.ptr, scope: ob.set && NOTE_FIELD.test(ob.set.field) ? 'reply' : 'any' } }); msgTargets.push({ ptr: t.ptr }); }
+    // content literals: on each message target (or the updated record), or inside the created record
+    for (const lit of uniq((ob.literals ?? []).map(x => str(x).trim()).filter(x => x.length >= 2 && x.length <= LITERAL_MAX))) {
+      if (ob.eclass === 'create' && ob.app) checks.push({ type: 'created_has', params: { app: ob.app, container: t.container ?? null, label: null, lit } });
+      else for (const target of msgTargets) checks.push({ type: 'msg_has', params: { target, lit } });
+    }
     for (const c of checks) {
-      const check = { ...c, polarity: 'must', cat: 'positive' };
+      const check = { ...c, polarity: 'must', cat: c.type === 'msg_has' || c.type === 'created_has' ? 'value' : 'positive' };
       const k = checkKey(check);
       if (!byKey.has(k)) byKey.set(k, { check, readers: new Set(), ids: [] });
       byKey.get(k).readers.add(ob.reader); byKey.get(k).ids.push(`${ob.reader}:${ob.id}`);
     }
   }
   return [...byKey].map(([k, e]) => {
-    const hard = e.readers.size >= need;
+    const P = e.check.params;
+    const target = P.target ?? (e.check.type === 'rec_changed' || e.check.type === 'rec_field' ? { ptr: P.ptr } : null);
+    const targetOk = !ground || !target || ground.target(target);
+    const litOk = !ground || P.lit === undefined || ground.literal(P.lit);
+    if (!targetOk) unknown({ id: `U-tgt-${sha(JSON.stringify(target)).slice(0, 10)}`, kind: 'target', about: target.email ?? target.channel?.name ?? target.channel?.id ?? target.ptr, why: 'no request text or record shows this recipient or channel' });
+    if (!litOk) unknown({ id: `U-lit-${sha(norm(P.lit)).slice(0, 10)}`, kind: 'value', about: String(P.lit).slice(0, 120), why: 'no request text or record carries this content literal verbatim' });
+    const hard = e.readers.size >= need && targetOk && litOk;
     e.check.hard = hard; e.check.key = k;
-    return { id: `A-${sha(k).slice(0, 12)}`, group: 'obligation', member: null, label: e.ids.slice(0, 3).join(' '), polarity: 'must', origin: 'obligation', basis: { kind: 'consensus', support: e.readers.size }, status: hard ? 'hard' : 'soft',
-      diff_type: e.check.type === 'rec_field' || e.check.type === 'rec_changed' ? 'changed' : 'added', entity: e.check.params?.target?.channel ? 'slack.messages' : e.check.params?.target?.email ? 'gmail.messages' : e.check.params.app ? `${e.check.params.app}.*` : 'record',
-      where: e.check.params, expected_count: { min: 1 }, strict: hard, check: e.check };
+    return { id: `A-${sha(k).slice(0, 12)}`, group: 'obligation', member: null, label: e.ids.slice(0, 3).join(' '), polarity: 'must', origin: 'obligation', basis: { kind: 'consensus', support: e.readers.size, targetGrounded: targetOk, literalGrounded: P.lit === undefined ? null : litOk }, status: hard ? 'hard' : 'soft',
+      diff_type: e.check.type === 'rec_field' || e.check.type === 'rec_changed' ? 'changed' : 'added', entity: P?.target?.channel ? 'slack.messages' : P?.target?.email ? 'gmail.messages' : P.app ? `${P.app}.*` : 'record',
+      where: P, expected_count: { min: 1 }, strict: hard, check: e.check };
   });
 }
 
@@ -539,15 +634,27 @@ export function compileProhibitions(readers, { pidx, chans, requestText, records
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// The three-valued verdict over a candidate (ATTACK Move 3's semantics, used by the replays)
+// The three-valued verdict over a candidate (ATTACK Move 3's semantics; D28 (1))
 
-/** Per assertion: SUPPORTED (check passed), FAILED (check failed) or UNKNOWN (check undecided); plus the run verdict:
- *  release only with no FAILED hard assertion; UNKNOWN members and figures are the assumption list. */
+/** Per assertion: SUPPORTED (its check ran and passed), FAILED (a HARD check ran and failed) or UNKNOWN (no result, a
+ *  check that could not decide, or a SOFT check that failed: a guess that the run contradicts is an assumption to show,
+ *  never a pass and never a veto). The run releases only with no FAILED; every UNKNOWN row joins Δ*'s own labelled nulls
+ *  on the assumption list (ATTACK §8.2: "stop mapping null or soft to pass"). A soft check that passes is SUPPORTED: the
+ *  world already satisfies it, so nothing is assumed. (The replays score dispositions and checks directly; this
+ *  function is the release semantics for a live run and for Move 3's risk-coverage replay.) */
 export function verdict(dstar, results) {
   const by = new Map(results.map(r => [r.key, r]));
-  const rows = dstar.assertions.map(a => { const r = by.get(a.check.key); const v = r ? (r.pass === true ? 'SUPPORTED' : r.pass === false ? 'FAILED' : 'UNKNOWN') : 'UNKNOWN'; return { id: a.id, status: a.status, polarity: a.polarity, verdict: v, evidence: r?.evidence ?? null }; });
-  const failedHard = rows.filter(r => r.status === 'hard' && r.verdict === 'FAILED');
-  return { release: failedHard.length === 0, failedHard: failedHard.length, supported: rows.filter(r => r.verdict === 'SUPPORTED').length, unknown: rows.filter(r => r.verdict === 'UNKNOWN').length + dstar.unknowns.length, assumptions: dstar.unknowns, rows };
+  const rows = dstar.assertions.map(a => {
+    const r = by.get(a.check.key);
+    const pass = r ? r.pass : null;
+    const v = pass === true ? 'SUPPORTED' : pass === false && a.status === 'hard' ? 'FAILED' : 'UNKNOWN';
+    const why = v !== 'UNKNOWN' ? null : !r ? 'no result' : pass === false ? 'a soft check failed' : 'the check could not decide';
+    return { id: a.id, status: a.status, polarity: a.polarity, verdict: v, why, evidence: r?.evidence ?? null };
+  });
+  const failed = rows.filter(r => r.verdict === 'FAILED');
+  const unknownRows = rows.filter(r => r.verdict === 'UNKNOWN');
+  const assumptions = [...dstar.unknowns, ...unknownRows.map(r => ({ id: `U-${r.id}`, kind: 'check', about: r.id, why: r.why, evidence: r.evidence }))];
+  return { release: failed.length === 0, failed: failed.length, failedHard: failed.length, supported: rows.filter(r => r.verdict === 'SUPPORTED').length, unknown: unknownRows.length + dstar.unknowns.length, assumptions, rows };
 }
 
 /** The Agent-Diff-shaped contract alone (what the actor's read-back brief, the gate and the selector consume). */

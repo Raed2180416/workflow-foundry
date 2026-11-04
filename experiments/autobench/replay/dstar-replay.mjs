@@ -18,7 +18,12 @@
 //   closure recall   a broken guardrail of a haiku-a1c failing world is REACHED when a hard Δ* assertion FAILS on that
 //                    world and aligns with it (dstar-score.mjs aligns); a task is reached when one of its guardrails is;
 //   false exclusion  among (target, member) pairs that a positive assertion requires, the share Δ* hard-excludes;
-//   passing flags    passing worlds (all six arms; the five-arm set reported apart) on which a hard closure negative fails.
+//   passing flags    ATTACK's count: the passing worlds of the five dev60 arms on the 14 broken-guardrail tasks plus 14
+//                    MATCHED PASSING CONTROLS (matchedControls: per broken-guardrail task, one task the haiku-a1c arm
+//                    passed, same domain first, chosen in a seeded hash order that sees no flag or Δ* output); the
+//                    verdict uses this count. All passing worlds of all six arms are reported beside it (sensitivity).
+//                    Disclosure: the matching rule was fixed on 2026-11-04, AFTER the all-worlds counts were known
+//                    (review finding 8); it reads task names, the domain and the haiku-a1c pass label only.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -40,6 +45,7 @@ export const FIVE_ARMS = Object.freeze(['haiku-a0', 'haiku-a1', 'sonnet-a0', 'so
 export const SOURCES = Object.freeze(['a1c', 'm3', 'rl2', 'union']);
 export const PRIMARY = 'a1c';
 // ATTACK §6 Move 1, verbatim thresholds (replay step A)
+export const CONTROL_SEED = 'attack-move1-controls-v1';
 export const MOVE1_A = Object.freeze({ successTasks: 6, ofTasks: 14, maxTaskShare: 0.30, maxFalseExclusion: 0.05, maxPassingFlagged: 1, killTasksBelow: 4, killFalseExclusionAbove: 0.10, killPassingFlaggedAbove: 3 });
 
 const readJsonl = f => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : []);
@@ -91,7 +97,8 @@ export function scoreTask(D, { rows, L, universes }) {
       broken: broken.length, reachedClosure: reached.filter(x => x.closure).length, reachedAny: reached.filter(x => x.any).length,
       reachedRows: reached.map(x => ({ type: x.g.type, mention: MENTION_TYPES_PREREG.has(x.g.type), closure: x.closure, any: x.any, bases: x.bases })),
       flagBases: passed ? [...new Set(closureNegFail.map(x => `${x.basis}${x.induced ? `/${x.induced}` : ''}`))] : [],
-      falseFlags: passed ? hardFail.filter(x => x.polarity === 'must_not').map(x => ({ type: x.type, origin: x.origin, basis: x.basis, evidence: String(x.evidence).slice(0, 160) })) : [] };
+      falseFlags: passed ? hardFail.filter(x => x.polarity === 'must_not').map(x => ({ type: x.type, origin: x.origin, basis: x.basis, evidence: String(x.evidence).slice(0, 160) })) : [],
+      hardPositiveFails: hardFail.filter(x => x.polarity === 'must').map(x => { const a = D.assertions.find(y => y.id === x.id); return `${x.origin}|${a?.check?.type}|${a?.basis?.literalGrounded ?? '-'}`; }) };
   }
   // false exclusion: (target, member) pairs a positive assertion requires (scaffold; any arm's grade carries the same assertions)
   const grade = readGrade(rows.find(r => r.arm === 'haiku-a1c').source.host);
@@ -146,6 +153,25 @@ export function scoreScaffold({ rows, L, universes }) {
   return out;
 }
 
+/** ATTACK's matched controls: for each broken-guardrail task (haiku-a1c failed with a broken guardrail), in name order,
+ *  the first not-yet-chosen task the haiku-a1c arm PASSED in the same domain (the name's first segment), else in any
+ *  domain, in the order of sha256(seed | task). Inputs: the haiku-a1c pass label and broken-guardrail count only. */
+export function matchedControls(perTask, { seed = CONTROL_SEED } = {}) {
+  const tasks = Object.keys(perTask).sort();
+  const a1cOf = t => Object.values(perTask[t] ?? {}).find(v => v?.arms?.['haiku-a1c'])?.arms['haiku-a1c'] ?? null;
+  const broken = tasks.filter(t => { const x = a1cOf(t); return x && !x.passed && x.broken > 0; });
+  const order = t => createHash('sha256').update(`${seed}|${t}`).digest('hex');
+  const left = tasks.filter(t => a1cOf(t)?.passed).sort((x, y) => order(x).localeCompare(order(y)));
+  const dom = t => t.split('.')[0];
+  const controls = [];
+  for (const b of broken) {
+    let i = left.findIndex(t => dom(t) === dom(b));
+    if (i < 0) i = 0;
+    if (i < left.length) controls.push(left.splice(i, 1)[0]);
+  }
+  return { broken, controls };
+}
+
 export function summarize(perTask, { primary = PRIMARY } = {}) {
   const S = {};
   for (const source of SOURCES) {
@@ -156,6 +182,9 @@ export function summarize(perTask, { primary = PRIMARY } = {}) {
     const maxShare = k => { const tot = guardsReached(k); return tot ? Math.max(...a1cFail.map(r => r.arms['haiku-a1c'][k] / tot)) : 0; };
     const passing = (arms) => rows.flatMap(r => arms.filter(a => r.arms[a]?.passed).map(a => ({ task: r.task, arm: a, ...r.arms[a] })));
     const p6 = passing(ARMS), p5 = passing(FIVE_ARMS);
+    const M = matchedControls(perTask);
+    const matchedTasks = new Set([...M.broken, ...M.controls]);
+    const pm = p5.filter(x => matchedTasks.has(x.task));
     const failing = rows.flatMap(r => ARMS.filter(a => r.arms[a] && !r.arms[a].passed).map(a => ({ task: r.task, arm: a, ...r.arms[a] })));
     const fe = rows.reduce((s, r) => ({ required: s.required + r.falseExclusion.required, hardExcluded: s.hardExcluded + r.falseExclusion.hardExcluded, unknown: s.unknown + r.falseExclusion.unknown }), { required: 0, hardExcluded: 0, unknown: 0 });
     const mention = a1cFail.reduce((s, r) => s + r.arms['haiku-a1c'].reachedRows.filter(x => x.mention && x.any).length, 0);
@@ -163,6 +192,12 @@ export function summarize(perTask, { primary = PRIMARY } = {}) {
     const T = MOVE1_A;
     const closureTasks = tasksReached('reachedClosure').length, feRate = fe.required ? fe.hardExcluded / fe.required : 0;
     const flagged6 = p6.filter(x => x.flaggedClosure).length;
+    const flaggedM = pm.filter(x => x.flaggedClosure).length;
+    const verdictOn = flagged => ({
+      success: closureTasks >= T.successTasks && maxShare('reachedClosure') <= T.maxTaskShare && feRate <= T.maxFalseExclusion && flagged <= T.maxPassingFlagged,
+      kill: closureTasks < T.killTasksBelow || feRate > T.killFalseExclusionAbove || flagged > T.killPassingFlaggedAbove,
+      killBy: [closureTasks < T.killTasksBelow ? 'recall' : null, feRate > T.killFalseExclusionAbove ? 'false exclusion' : null, flagged > T.killPassingFlaggedAbove ? 'passing worlds flagged' : null].filter(Boolean),
+    });
     S[source] = {
       brokenGuardrailTasks: a1cFail.length, brokenGuardrails: a1cFail.reduce((s, r) => s + r.arms['haiku-a1c'].broken, 0),
       closure: { tasks: closureTasks, taskList: tasksReached('reachedClosure').map(r => r.task), guardrails: guardsReached('reachedClosure'), maxTaskShare: +maxShare('reachedClosure').toFixed(3) },
@@ -171,17 +206,17 @@ export function summarize(perTask, { primary = PRIMARY } = {}) {
       falseExclusion: { ...fe, rate: +feRate.toFixed(4) },
       passingFlagsByBasis: p6.filter(x => x.flaggedClosure).reduce((a, x) => { for (const b of x.flagBases) a[b] = (a[b] ?? 0) + 1; return a; }, {}),
       reachedByBasis: a1cFail.reduce((a, r) => { for (const row of r.arms['haiku-a1c'].reachedRows) for (const b of row.bases ?? []) a[b] = (a[b] ?? 0) + 1; return a; }, {}),
-      passingWorlds: { six: p6.length, five: p5.length, flaggedClosureSix: flagged6, flaggedClosureFive: p5.filter(x => x.flaggedClosure).length, flaggedAnyNegSix: p6.filter(x => x.flaggedAnyNeg).length, flaggedAnyHardSix: p6.filter(x => x.flaggedAnyHard).length,
-        flaggedList: p6.filter(x => x.flaggedClosure).map(x => `${x.task}/${x.arm}`) },
+      passingWorlds: { matched: pm.length, matchedTasks: matchedTasks.size, flaggedClosureMatched: flaggedM, six: p6.length, five: p5.length, flaggedClosureSix: flagged6, flaggedClosureFive: p5.filter(x => x.flaggedClosure).length, flaggedAnyNegSix: p6.filter(x => x.flaggedAnyNeg).length, flaggedAnyHardSix: p6.filter(x => x.flaggedAnyHard).length,
+        flaggedAnyHardMatched: pm.filter(x => x.flaggedAnyHard).length, flaggedList: p6.filter(x => x.flaggedClosure).map(x => `${x.task}/${x.arm}`), controls: M.controls },
       failingWorlds: { six: failing.length, flaggedClosure: failing.filter(x => x.flaggedClosure).length, flaggedAnyNeg: failing.filter(x => x.flaggedAnyNeg).length, flaggedAnyHard: failing.filter(x => x.flaggedAnyHard).length },
       today: rows.reduce((a, r) => ((a[r.today.status] = (a[r.today.status] ?? 0) + 1), a), {}),
       unknowns: rows.reduce((a, r) => { for (const [k, n] of Object.entries(r.unknownKinds)) a[k] = (a[k] ?? 0) + n; return a; }, {}),
       dispositions: rows.reduce((a, r) => ({ members: a.members + r.stats.members, include: a.include + r.stats.include, exclude: a.exclude + r.stats.exclude, unknown: a.unknown + r.stats.unknown, hardExclude: a.hardExclude + r.stats.hardExclude }), { members: 0, include: 0, exclude: 0, unknown: 0, hardExclude: 0 }),
       prereg: {
-        success: closureTasks >= T.successTasks && maxShare('reachedClosure') <= T.maxTaskShare && feRate <= T.maxFalseExclusion && flagged6 <= T.maxPassingFlagged,
-        kill: closureTasks < T.killTasksBelow || feRate > T.killFalseExclusionAbove || flagged6 > T.killPassingFlaggedAbove,
-        rule: 'success: closure recall >= 6 of 14 broken-guardrail tasks, no task over 30% of the numerator, false exclusion <= 5%, <= 1 passing world flagged; kill: < 4 of 14, or false exclusion > 10%, or > 3 passing worlds flagged (ATTACK §6 Move 1)',
+        ...verdictOn(flaggedM), passingWorlds: `matched: ${pm.length} passing worlds of the five arms on ${matchedTasks.size} tasks (14 broken-guardrail + matched controls)`,
+        rule: 'success: closure recall >= 6 of 14 broken-guardrail tasks, no task over 30% of the numerator, false exclusion <= 5%, <= 1 passing world flagged; kill: < 4 of 14, or false exclusion > 10%, or > 3 passing worlds flagged (ATTACK §6 Move 1: "14 matched passing controls ... ~70 passing worlds")',
       },
+      preregAllWorlds: { ...verdictOn(flagged6), passingWorlds: `all ${p6.length} passing worlds of the six arms (sensitivity)` },
     };
   }
   const sc = Object.entries(perTask).filter(([, v]) => v.scaffold).map(([task, v]) => ({ task, ...v.scaffold }));
@@ -332,7 +367,7 @@ async function main() {
     } catch (e) { process.stderr.write(`[dstar-replay] ${task}/scaffold: ${String(e?.message ?? e).slice(0, 200)}\n`); }
     process.stderr.write(`[dstar-replay] ${task}: ${SOURCES.map(s => `${s} ${perTask[task][s]?.stats?.hardChecks ?? '-'}h`).join(' ')}\n`);
   }
-  const res = { evidence: 'development/diagnostic, $0, in-sample (devTrain dev60 stored runs; oracle-implied labels as scoring scaffold only)', version: 'dstar-replay-v1', tasks: tasks.length, timingMs: timing, summary: summarize(perTask), perTask };
+  const res = { evidence: 'development/diagnostic, $0, in-sample (devTrain dev60 stored runs; oracle-implied labels as scoring scaffold only)', version: 'dstar-replay-v2', tasks: tasks.length, timingMs: timing, summary: summarize(perTask), perTask };
   if (a.out) writeFileSync(a.out, JSON.stringify(res, null, 1));
   process.stdout.write(`${JSON.stringify(res.summary, null, 1)}\n`);
 }

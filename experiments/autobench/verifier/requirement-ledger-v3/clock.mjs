@@ -13,7 +13,7 @@
 // point value at the anchor reported as a soft expectation.
 // Generic by construction (PREREG-AB-v1 H7/H8). Every string is untrusted data.
 
-export const CLOCK_VERSION = 'rl3-clock-v1';
+export const CLOCK_VERSION = 'rl3-clock-v2';   // v2: past-event fields only (review of 2026-11-04)
 export const HORIZON_DAYS = 30;
 export const LOAD_STAMP_BEFORE_MS = 12 * 3600_000;
 export const LOAD_STAMP_AFTER_MS = 5 * 60_000;
@@ -66,8 +66,14 @@ export function instantOf(v) {
   return Number.isFinite(t) ? t : null;
 }
 
-const EVENT_KIND = /(message|mail|conversation|ticket|event|meeting|post|comment|note|log|activity|request|submission|case|chat|sms|call|envelope|history|thread|reply|invitee|registrant)/i;
-const EVENT_FIELD = /(^|\.)(date|sent|sent_?at|sent_?date(_?time)?|received(_?at)?|internal_?date|ts|timestamp|submitted(_?at)?|requested(_?at)?|request_?date|logged(_?at)?|reported(_?at)?|occurred(_?at)?|start(_?time)?|start\.date(time)?|created_?time|date_?sent)$/i;
+// Kinds whose dates record something that HAPPENED (a message sent, a ticket opened, a row logged). Scheduled kinds
+// (calendar events, meetings, invitees, registrants) are not here: their dates may lie in the future, so they are only
+// business dates (review of 2026-11-04, finding 13: a future meeting's start pushed "today" forward and made a figure
+// certain and wrong).
+const EVENT_KIND = /(message|mail|conversation|ticket|post|comment|note|log|activity|request|submission|case|chat|sms|call|envelope|history|thread|reply)/i;
+// Fields that carry the moment a past event happened; start, start_time and other schedule fields are not among them.
+const EVENT_FIELD = /(^|\.)(date|sent|sent_?at|sent_?date(_?time)?|received(_?at)?|internal_?date|ts|timestamp|submitted(_?at)?|requested(_?at)?|request_?date|logged(_?at)?|reported(_?at)?|occurred(_?at)?|created_?time|date_?sent)$/i;
+const SCHEDULE_FIELD = /(^|\.)(start|start_?time|start_?date|start\.date(time)?|end|end_?time|end_?date|end\.date(time)?|due|due_?date|scheduled(_?at|_?for)?|deadline|expires?(_?at)?|expiry|starts_?at|ends_?at)$/i;
 const BOOKKEEPING_FIELD = /(^|\.)(created_?at|createdat|createddate|created|updated_?at|updatedat|lastmodifieddate|last_?modified(_?date(_?time)?)?|modified(_?at|_?time)?|last_?activity(_?at)?|last_?viewed(_?at)?|seen_?at|date_?created|date_?updated|system_?modstamp|last_?referenced_?date)$/i;
 
 /**
@@ -104,7 +110,7 @@ export function businessDates(members, { hostNow = null } = {}) {
         if (hostDay && date === hostDay) continue;   // a creation or update stamp written on the day the world was loaded
         if (!eventKind) continue;   // bookkeeping stamps of reference records are not work-item dates
       }
-      const kind = eventKind && (EVENT_FIELD.test(field) || BOOKKEEPING_FIELD.test(field) || instant !== null) ? 'event' : 'business';
+      const kind = eventKind && !SCHEDULE_FIELD.test(field) && (EVENT_FIELD.test(field) || BOOKKEEPING_FIELD.test(field) || instant !== null) ? 'event' : 'business';
       out.push({ date, kind, field, ptr: m.ptr });
     }
   }

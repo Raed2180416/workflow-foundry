@@ -8,7 +8,7 @@
 // Generic by construction (PREREG-AB-v1 H7/H8). Pointers are untrusted text; nothing here executes them.
 import { norm } from './lib.mjs';
 
-export const POINTER_VERSION = 'rl3-pointers-v1';
+export const POINTER_VERSION = 'rl3-pointers-v2';
 
 const singular = s => String(s ?? '').toLowerCase().replace(/ies$/, 'y').replace(/(ses|xes)$/, s => s.slice(0, -2)).replace(/s$/, '');
 const clean = raw => String(raw ?? '').trim().replace(/^[\s[(<"'`]+|[\s\])>"'`.,;]+$/g, '').trim();
@@ -67,6 +67,9 @@ export function normalizePointer(raw, index) {
     const any = (index.byId.get(id) ?? []).filter(x => x.u.app === app);
     if (any.length === 1) return { ...any[0], how: 'app-id' };
     if (cands.length > 1 || any.length > 1) return miss('ambiguous');
+    // the pointer names an app this world has: an id it does not hold there is unresolved, never another app's member
+    // (review of 2026-11-04, finding 18)
+    if (index.universes.some(u => u.app === app)) return miss('unresolved');
   }
   // a bare id (the last segment of anything else)
   const tail = s.split(/[:/]/).pop().trim().toLowerCase();

@@ -1,203 +1,602 @@
 {
- "baselineExitCodes": [
-  0,
-  0,
-  0
- ],
- "killed": 32,
- "of": 32,
+ "version": "mutation-check-v2",
+ "date": "2026-11-04",
+ "baseline": {
+  "rl3": {
+   "code": 0,
+   "timeout": false,
+   "failing": "0"
+  },
+  "gate": {
+   "code": 0,
+   "timeout": false,
+   "failing": "0"
+  },
+  "replay": {
+   "code": 0,
+   "timeout": false,
+   "failing": "0"
+  }
+ },
  "results": [
   {
    "name": "sqlsafe: authorizer allows by default",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "2",
    "timeout": false
   },
   {
-   "name": "sqlsafe: randomblob and friends on the allow-list",
+   "name": "sqlsafe: randomblob and zeroblob on the allow-list",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
    "name": "sqlsafe: trailing statements allowed",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
    "killed": true,
-   "failingTests": "2",
+   "failingTests": "1",
    "timeout": false
   },
   {
    "name": "sqlsafe: any table readable",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
    "killed": true,
-   "failingTests": "2",
+   "failingTests": "1",
    "timeout": false
   },
   {
    "name": "sqlsafe: timeout reported as a crash",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: the host clock is readable (finding 2)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: only the exact literal 'now' is refused (finding 2)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: localtime and utc modifiers allowed (finding 2)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: no file-size cap on the worker (finding 3)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: the time budget is ignored (finding 14)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: a failed batch is retried query by query (finding 14)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: an oversized reply is reported as a timeout (finding 14)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: a predicate may close its own parenthesis (finding 4)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: reads are not traced (finding 4)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "7",
    "timeout": false
   },
   {
    "name": "dstar: every vote counts as verified",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
    "killed": true,
-   "failingTests": "1",
+   "failingTests": "2",
    "timeout": false
   },
   {
    "name": "dstar: clock flips become exclusions",
-   "killed": true,
-   "failingTests": "1",
-   "timeout": false
-  },
-  {
-   "name": "dstar: one vote suffices with three readers",
-   "killed": true,
-   "failingTests": "1",
-   "timeout": false
-  },
-  {
-   "name": "dstar: any quote verifies",
-   "killed": true,
-   "failingTests": "3",
-   "timeout": false
-  },
-  {
-   "name": "dstar: polarity of compiled dispositions swapped",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "2",
    "timeout": false
   },
   {
-   "name": "dstar: complement never hard",
+   "name": "dstar: a bare reader exclusion is hard",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "2",
    "timeout": false
   },
   {
-   "name": "dstar: figure certain even when it moves with the clock",
-   "killed": true,
-   "failingTests": "1",
-   "timeout": false
-  },
-  {
-   "name": "dstar: conditional bans hard",
-   "killed": true,
-   "failingTests": "1",
-   "timeout": false
-  },
-  {
-   "name": "clock: load stamps kept",
-   "killed": true,
-   "failingTests": "1",
-   "timeout": false
-  },
-  {
-   "name": "clock: \"as of\" not a request date",
-   "killed": true,
-   "failingTests": "1",
-   "timeout": false
-  },
-  {
-   "name": "pointers: ambiguous match guesses the first",
-   "killed": true,
-   "failingTests": "1",
-   "timeout": false
-  },
-  {
-   "name": "universe: org suffix kept",
+   "name": "dstar: quotes are not verified",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "3",
    "timeout": false
   },
   {
-   "name": "registry: caller keys are identity",
+   "name": "dstar: a list posing as a predicate executes (finding 4)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
-   "name": "registry: nested names are entity names",
+   "name": "dstar: identifying columns are not a list (finding 4)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "dstar: the predicate is spliced into WHERE again (finding 4)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": false,
+   "failingTests": "0",
+   "timeout": false,
+   "superseded": true,
+   "note": "partial revert (text check and splice only): survives because the read trace still refuses the injected text (defence in depth); replaced by the full revert below, run alone on the same code"
+  },
+  {
+   "name": "dstar: an induced rule counts as a reader predicate (finding 7)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
-   "name": "registry: no structured attributes in a create key",
-   "killed": true,
-   "failingTests": "1",
-   "timeout": false
-  },
-  {
-   "name": "gate: duplicates admitted",
+   "name": "dstar: one claim per side induces a rule (finding 7)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "3",
    "timeout": false
   },
   {
-   "name": "gate: soft prohibitions refuse",
+   "name": "dstar: an induced threshold extrapolates (finding 7)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: an unverified include outvotes an unverified exclusion (finding 7)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: literals compile hard without grounding (finding 6)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: targets compile hard without grounding (finding 6)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: content literals are never compiled (finding 6)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: a figure to an ungrounded target is hard (finding 6)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: a failed soft check passes the verdict (finding 5)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "dstar: undecided checks are not on the assumption list (finding 5)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "dstar: a record's 'as of' becomes the work's today (finding 13)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "clock: load stamps are business dates",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "clock: the weak domain is one-sided",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "clock: schedule fields count as past events (finding 13)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "clock: scheduled kinds count as past events (finding 13)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "pointers: ambiguity resolves to the first match",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "pointers: an app-qualified pointer falls back to another app's id (finding 18)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "universes: common words become mention forms",
+   "suite": "rl3",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "registry: identity uses the caller's key",
+   "suite": "gate",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "registry: a nested reference's name is the entity's name",
+   "suite": "gate",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: message keys ignore the members they are about",
+   "suite": "gate",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: a mention ban ignores the ban's target",
+   "suite": "gate",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "gate: recipient bans are off",
+   "suite": "gate",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: duplicates are not refused",
+   "suite": "gate",
+   "fix": false,
+   "applied": true,
+   "killed": true,
+   "failingTests": "3",
    "timeout": false
   },
   {
    "name": "gate: a failed write keeps its key",
+   "suite": "gate",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
-   "name": "gate: messages not keyed by what they are about",
+   "name": "gate: an unknown tool is a read (finding 10)",
+   "suite": "gate",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
-   "name": "gate: mention bans ignore the target",
+   "name": "gate: unparseable arguments are a read (finding 10)",
+   "suite": "gate",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
-   "name": "replay: Move 1 success at 5 tasks",
+   "name": "gate: a body without a method is a read (finding 10)",
+   "suite": "gate",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: unexplained writes are admitted by default (finding 11)",
+   "suite": "gate",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: unenforceable bans are dropped silently (finding 10)",
+   "suite": "gate",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: a witness holds on the tool's word (finding 11)",
+   "suite": "gate",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "replay: Move 2 mention threshold 5",
+   "suite": "replay",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "2",
    "timeout": false
   },
   {
    "name": "replay: Move 1 kill below 3 tasks",
+   "suite": "replay",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "2",
    "timeout": false
   },
   {
-   "name": "replay: Move 1 task share not capped",
+   "name": "replay: the 30% task share is ignored",
+   "suite": "replay",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
-   "name": "replay: registry conflations not false refusals",
+   "name": "replay: duplicate attribution counts unrefused writes",
+   "suite": "replay",
+   "fix": false,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
-   "name": "replay: duplicate criterion dropped",
+   "name": "replay: a refusal with no channel aligns with a channel guardrail (finding 1)",
+   "suite": "replay",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
-   "name": "replay: unexplained-write kill dropped",
+   "name": "replay: a refused non-message aligns with a mention break (finding 1)",
+   "suite": "replay",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
   },
   {
-   "name": "replay: refusal alignment ignores the target",
+   "name": "replay: Move 2 counts worlds, not refusals (finding 16)",
+   "suite": "replay",
+   "fix": true,
+   "applied": true,
    "killed": true,
    "failingTests": "1",
    "timeout": false
+  },
+  {
+   "name": "replay: Move 2 verdict on six arms (finding 8)",
+   "suite": "replay",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "replay: matched controls ignore the domain (finding 8)",
+   "suite": "replay",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "replay: Move 1 verdict on all passing worlds (finding 8)",
+   "suite": "replay",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: the predicate is spliced into WHERE again, untraced (finding 4)",
+   "suite": "rl3",
+   "fix": true,
+   "applied": true,
+   "killed": true,
+   "failingTests": "6",
+   "timeout": false,
+   "runAlone": true
   }
- ]
+ ],
+ "summary": {
+  "mutants": 62,
+  "killed": 62,
+  "fixMutants": 38,
+  "fixKilled": 38,
+  "survivors": [],
+  "supersededSurvivor": "dstar: the predicate is spliced into WHERE again (finding 4)",
+  "how": "one full run of the committed harness (61 of 62 killed), then the one redefined mutant run alone with --only on the same code"
+ }
 }

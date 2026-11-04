@@ -11,11 +11,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import { FUNCTIONS, checkSqlText, evaluateInProcess, runSelect } from './sqlsafe.mjs';
+import { FUNCTIONS, FILE_CAP_BLOCKS, checkPredicateText, checkSqlText, evaluateInProcess, hostClockUse, runSelect } from './sqlsafe.mjs';
 import { businessDates, deriveToday, domainDays, parseDate, requestDate } from './clock.mjs';
 import { mentionForms, sqlTables, universesFromInventory, universesFromWorld } from './universe.mjs';
 import { normalizePointer, pointerIndex } from './pointers.mjs';
-import { agentDiffContract, buildDstar, compileProhibitions, formatFigure, holdsTest, induceTest, verdict, verifyQuote } from './dstar.mjs';
+import { INDUCE_MIN_PER_SIDE, agentDiffContract, buildDstar, compileProhibitions, formatFigure, grounding, holdsTest, induceTest, listLike, verdict, verifyQuote } from './dstar.mjs';
 import { evaluateDstar } from './evaluate.mjs';
 import { adaptA1cLedger, adaptRl2Extraction } from './adapters.mjs';
 
@@ -120,6 +120,61 @@ test('sandbox: allowed SQL computes with :today; a runaway recursive CTE is kill
   assert.equal(runSelect({ tables: T, maxRows: 1, queries: [{ sql: 'SELECT * FROM u1' }] })[0].error.code, 'SQL_ROWS');
 });
 
+test('sandbox (review finding 2): reader SQL cannot read the host clock or zone; :today and fixed dates still compute', () => {
+  const refused = ["SELECT date('now') AS v", 'SELECT date() AS v', 'SELECT unixepoch() AS v', "SELECT strftime('%Y', 'now') AS v", "SELECT strftime('%s') AS v",
+    "SELECT date(lower('NOW')) AS v", "SELECT julianday(' now ') AS v", "SELECT datetime('2026-01-01', 'localtime') AS v", "SELECT time('12:00', 'utc') AS v", "SELECT julianday('n' || 'ow') AS v"];
+  const res = runSelect({ tables: T, queries: refused.map(sql => ({ sql })) });
+  for (const [i, r] of res.entries()) { assert.equal(r.ok, false, refused[i]); assert.equal(r.error.code, 'SQL_CLOCK', refused[i]); }
+  const ok = runSelect({ tables: T, queries: [{ sql: "SELECT date('2026-01-31', '+1 month') AS a, julianday('2026-03-01') - julianday('2026-02-01') AS b, strftime('%Y', :today) AS c, unixepoch('2026-01-01') AS d", params: { today: '2026-02-15' } }] });
+  assert.deepEqual(ok[0].rows, [{ a: '2026-03-03', b: 28, c: '2026', d: 1767225600 }]);
+  assert.equal(hostClockUse('strftime', ['%Y']), 'no time value (the host clock)');
+  assert.equal(hostClockUse('date', ['2026-01-01', '+1 day']), null);
+  // through Δ*: a predicate on the host clock disposes nothing (it gave hard decisions from the host date before)
+  const universes = universesFromInventory(inventory());
+  const D = buildDstar({ request: REQUEST, universes, readers: [predicateReader('r1', `julianday('now') - julianday("Due Date") > 30`)] });
+  assert.ok(D.dispositions.filter(d => d.uid === VENDORS).every(d => d.disposition === 'unknown' && /SQL_CLOCK/.test(d.basis.why)));
+  assert.ok(!D.assertions.some(a => a.origin === 'closure' && a.status === 'hard'));
+});
+
+test('sandbox (review finding 3): a spill beyond the file-size cap fails fast instead of filling the shared disk', () => {
+  assert.ok(FILE_CAP_BLOCKS * 512 <= 16 * 1024 * 1024, 'the cap is at most 16 MB per worker');
+  const big = [{ name: 'u1', columns: [{ name: '_mid', type: 'num' }, { name: 'S', type: 'text' }], rows: [[1, 'x'.repeat(4000)]] }];
+  const t0 = Date.now();
+  // about 24 MB of distinct keys: far above the cap, and far above SQLite's in-memory sorter budget
+  const [r] = runSelect({ tables: big, timeoutMs: 20_000, queries: [{ sql: 'WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 6000) SELECT count(*) AS n FROM (SELECT DISTINCT x || S AS k FROM c, u1)' }] });
+  assert.equal(r.ok, false, 'the sort must not complete by spilling to disk');
+  assert.equal(r.error.code, 'SQL_SPILL');
+  assert.ok(Date.now() - t0 < 5_000, 'it fails fast');
+  // a sort that fits stays fine
+  assert.deepEqual(runSelect({ tables: big, queries: [{ sql: 'WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 500) SELECT count(*) AS n FROM (SELECT DISTINCT x AS k FROM c)' }] })[0].rows, [{ n: 500 }]);
+});
+
+test('sandbox (review finding 14): one time budget per call; the day-variants of one predicate fail together; an oversized reply is not a timeout', () => {
+  const runaway = 'WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT count(*) AS n FROM c WHERE :today IS NOT NULL';
+  const days = Array.from({ length: 8 }, (_, i) => ({ sql: runaway, params: { today: `2026-01-0${i + 1}` } }));
+  let t0 = Date.now();
+  const grouped = runSelect({ tables: T, timeoutMs: 400, budgetMs: 10_000, queries: days, groupOf: () => 'predicate-1' });
+  assert.ok(grouped.every(r => r.error?.code === 'SQL_TIMEOUT'));
+  assert.ok(Date.now() - t0 < 2_000, 'no rerun variant by variant (8 x 400 ms before)');
+  t0 = Date.now();
+  const budget = runSelect({ tables: T, timeoutMs: 400, budgetMs: 1_000, queries: days });
+  assert.ok(budget.some(r => r.error?.code === 'SQL_BUDGET'), 'nothing starts after the budget');
+  assert.ok(Date.now() - t0 < 3_000);
+  const [big] = runSelect({ tables: T, maxReplyBytes: 200, queries: [{ sql: 'SELECT * FROM u1, u1 AS b, u1 AS c' }] });
+  assert.equal(big.error.code, 'SQL_REPLY');
+});
+
+test('sandbox (review finding 4): a predicate is a projected boolean; it cannot close its parentheses or add a query; reads are traced', () => {
+  assert.equal(checkPredicateText(`"Status" = 'Active'`).ok, true);
+  assert.equal(checkPredicateText('"Amount" > (SELECT avg("Amount") FROM u1)').ok, true, 'a parenthesised subquery is an expression');
+  for (const w of ['0) UNION SELECT 1 --', '1) OR (1', '1; DROP TABLE u1', '"A" = 1 UNION SELECT 2', '(1', "'unterminated"]) assert.equal(checkPredicateText(w).ok, false, w);
+  const [r] = runSelect({ tables: T, queries: [{ sql: 'SELECT _mid, CASE WHEN ("Amount" > 15) THEN 1 ELSE 0 END AS _hit FROM u1', trace: 'SELECT CASE WHEN ("Amount" > 15) THEN 1 ELSE 0 END FROM u1' }] });
+  assert.deepEqual(r.reads, ['u1.Amount'], 'the trace reports the predicate\'s own reads, not the wrapper\'s _mid');
+  assert.deepEqual(listLike(['u1.Amount'], 'u1', 'Vendor'), { list: false, why: null });
+  for (const reads of [['u1._mid'], ['u1._label'], ['u1.ROWID'], ['u1.Vendor'], ['u1.Employee ID'], [], ['u2.Status']]) assert.equal(listLike(reads, 'u1', 'Vendor').list, true, JSON.stringify(reads));
+  assert.equal(listLike(['u1.Status', 'u1._label'], 'u1', 'Vendor').list, true, 'any identifying read makes it a list (no "OR a trivial attribute" escape)');
+});
+
 // ---------------------------------------------------------------------------------------------------------------
 // The clock (D28 (2)): request date, else business dates, else a labelled null; meta never read
 
@@ -140,6 +195,26 @@ test('clock: explicit, anchored (events), weak (business dates only), unknown; l
   const none = deriveToday({ request: 'Tidy the list', members: [{ ptr: 'x', kind: 'row', attrs: { Name: 'A', Note: 'no dates here' } }] });
   assert.deepEqual([none.status, none.value, none.domain], ['unknown', null, null]);
   assert.equal(domainDays(['2026-02-27', '2026-03-02']).length, 4);
+});
+
+test('clock (review finding 13): only past-event fields bound today from below; a record\'s "as of" is not the work\'s date', () => {
+  const members = [
+    { ptr: 'gmail.messages:m1', kind: 'message', attrs: { subject: 'Status', date: '2026-02-10T09:00:00Z' } },
+    { ptr: 'google_calendar.events:e1', kind: 'event', attrs: { summary: 'Planning', start: '2026-03-20T10:00:00Z', start_time: '2026-03-20T10:00:00Z' } },
+    { ptr: 'zoom.meetings:z1', kind: 'meeting', attrs: { topic: 'Review', start_time: '2026-04-01T10:00:00Z', date: '2026-04-02T10:00:00Z' } },
+    { ptr: 'zendesk.tickets:t1', kind: 'ticket', attrs: { subject: 'Onsite visit', start_time: '2026-05-01T10:00:00Z' } },
+  ];
+  const t = deriveToday({ request: 'Tidy up', members, horizonDays: 30 });
+  assert.deepEqual([t.status, t.value], ['anchored', '2026-02-10'], 'a future meeting does not move today forward');
+  assert.ok(!businessDates(members).some(d => d.kind === 'event' && d.date >= '2026-03-20'));
+  // a reader's "today" quoted from an old record is that record's date; only the request states the work's date
+  const records = inventory().records.map(r => (r.app === 'gmail' ? { ...r, data: { ...r.data, body: 'As of 2026-01-15 the policy changed. Vendors on hold must not appear in any summary.' } } : r));
+  const universes = universesFromInventory({ records });
+  const reader = { ...predicateReader('r1'), today: { value: '2026-01-15', quote: 'As of 2026-01-15' } };
+  const D = buildDstar({ request: REQUEST, universes, readers: [reader] });
+  assert.notEqual(D.today.status, 'explicit');
+  const E = buildDstar({ request: { user: `${REQUEST.user} As of 2026-01-15, use the current list.` }, universes, readers: [reader] });
+  assert.deepEqual([E.today.status, E.today.value], ['explicit', '2026-01-15']);
 });
 
 test('clock: the simulator meta (hidden clock) is never enumerated', () => {
@@ -192,6 +267,14 @@ test('pointers: brackets, case, sheet titles and singular collections resolve; a
 // ---------------------------------------------------------------------------------------------------------------
 // Δ*: dispositions, labelled nulls, consensus, compilation, contract, verdict
 
+test('pointers (review finding 18): an app-qualified pointer never falls back to another app\'s member by its bare id', () => {
+  const universes = universesFromWorld({ hubspot: { contacts: [{ id: '501', email: 'a@x.test', firstname: 'Ann', lastname: 'Lee' }] }, salesforce: { contacts: [{ id: '777', Email: 'b@y.test', FirstName: 'Bo', LastName: 'Ray' }] } });
+  const idx = pointerIndex(universes);
+  assert.equal(normalizePointer('hubspot.contacts:501', idx).m?.id, '501');
+  assert.equal(normalizePointer('hubspot.contacts:777', idx).m, null, 'id 777 is a salesforce contact, not a hubspot one');
+  assert.equal(normalizePointer('777', idx).m?.id, '777', 'a bare id still resolves when unique');
+});
+
 test('Δ*: an executed predicate disposes every member; the complement compiles to hard negatives, the obligation and figure to hard positives', () => {
   const universes = universesFromInventory(inventory());
   const t = tableOf(universes, VENDORS);
@@ -234,10 +317,10 @@ test('Δ*: a bare reader exclusion is a labelled null; a verbatim quote or an ex
   assert.deepEqual([disp(quoted, 'Globex Corp').disposition, disp(quoted, 'Globex Corp').basis.kind, disp(quoted, 'Globex Corp').hard], ['exclude', 'quote', true]);
   const invented = buildDstar({ request: REQUEST, universes, readers: [listReader('r1', [{ ptr: p(3), in: false, quote: { text: 'Globex was terminated last week' } }])] });
   assert.equal(disp(invented, 'Globex Corp').disposition, 'unknown');
-  // a listed claim with a deciding value: code induces the rule from the claims and executes it on EVERY member
+  // a listed claim with a deciding value, one per side: too few claims for code to induce a rule (finding 7)
   const tested = buildDstar({ request: REQUEST, universes, readers: [listReader('r1', [{ ptr: p(2), in: true, test: { field: 'Status', value: 'Active' } }, { ptr: p(3), in: false, test: { field: 'status', value: 'On Hold' } }])] });
-  assert.deepEqual(['Acme Supplies Inc', 'Globex Corp', 'Initech LLC'].map(l => disp(tested, l).disposition), ['include', 'exclude', 'include']);
-  assert.equal(disp(tested, 'Initech LLC').basis.induced, 'categorical');
+  assert.deepEqual(['Acme Supplies Inc', 'Globex Corp', 'Initech LLC'].map(l => disp(tested, l).disposition), ['include', 'unknown', 'unknown']);
+  assert.equal(disp(tested, 'Acme Supplies Inc').hard, false);
   // a claimed deciding value that the record refutes is a labelled null, not a vote
   const refuted = buildDstar({ request: REQUEST, universes, readers: [listReader('r1', [{ ptr: p(3), in: false, test: { field: 'Status', value: 'Active' } }])] });
   assert.equal(disp(refuted, 'Globex Corp').disposition, 'unknown');
@@ -291,6 +374,86 @@ test('Δ*: hostile reader SQL disposes nothing (every member UNKNOWN) and never 
   }
 });
 
+test('Δ* (review finding 4): a list of names or ids posing as a predicate never makes a hard disposition', () => {
+  const universes = universesFromInventory(inventory());
+  const t = tableOf(universes, VENDORS);
+  for (const where of ['_mid IN (1, 3)', `"_label" IN ('Acme Supplies Inc', 'Initech LLC')`, `"Vendor" <> 'Globex Corp'`, 'rowid <> 2', '1', `"Status" = 'Active' OR _mid = 2`]) {
+    const D = buildDstar({ request: REQUEST, universes, readers: [predicateReader('r1', where)] });
+    const own = D.dispositions.filter(d => d.uid === VENDORS);
+    assert.ok(!own.some(d => d.hard), where);
+    assert.ok(!own.some(d => d.disposition === 'exclude'), where);
+    assert.ok(own.filter(d => d.disposition === 'include').every(d => d.basis.kind === 'reader' && d.basis.verified === false), where);
+    assert.ok(!D.assertions.some(a => a.origin === 'closure' && a.status === 'hard'), where);
+  }
+  // the old splice: "0) UNION SELECT 1 --" turned every member into a hard decision
+  const inj = buildDstar({ request: REQUEST, universes, readers: [predicateReader('r1', '0) UNION SELECT 1 --')] });
+  assert.ok(inj.dispositions.filter(d => d.uid === VENDORS).every(d => d.disposition === 'unknown'));
+  // control: a rule over attributes still executes and stays hard
+  const rule = buildDstar({ request: REQUEST, universes, readers: [predicateReader('r1', `"Status" = 'Active' AND "Amount#num" > 0`)] });
+  assert.deepEqual([disp(rule, 'Globex Corp').disposition, disp(rule, 'Globex Corp').hard], ['exclude', true]);
+  assert.ok(t);
+});
+
+test('Δ* (review finding 7): a rule code induces from listed claims is not a reader rule: never verified, never hard, never extrapolated', () => {
+  const rows = [['Acme Supplies Inc', 'Active', '$1,200'], ['Globex Corp', 'On Hold', '$800'], ['Initech LLC', 'Active', '$450'], ['Umbrella Group', 'On Hold', '$90'], ['Hooli Labs', 'Active', '$30'], ['Vandelay Imports', 'Closed', '$10']];
+  const universes = universesFromInventory({ records: rows.map(([v, st, a], i) => rowRec(i + 2, { Vendor: v, Status: st, Amount: a })) });
+  const p = n => `google_sheets:row:${SS}/${WS}#${n}`;
+  const claims = [{ ptr: p(2), in: true, test: { field: 'Status', value: 'Active' } }, { ptr: p(4), in: true, test: { field: 'Status', value: 'Active' } }, { ptr: p(3), in: false, test: { field: 'Status', value: 'On Hold' } }, { ptr: p(5), in: false, test: { field: 'Status', value: 'On Hold' } }];
+  assert.equal(INDUCE_MIN_PER_SIDE, 2);
+  const D = buildDstar({ request: REQUEST, universes, readers: [listReader('r1', claims)] });
+  assert.equal(D.ledger.find(v => v.label === 'Hooli Labs').basis.kind, 'induced', 'the unlisted active member is placed by the induced rule');
+  assert.deepEqual([disp(D, 'Hooli Labs').disposition, disp(D, 'Hooli Labs').hard], ['include', false], 'an induced include is soft');
+  assert.equal(disp(D, 'Globex Corp').disposition, 'unknown', 'an induced exclusion is a labelled null');
+  assert.ok(D.unknowns.some(u => u.label === 'Globex Corp'), 'and is on the assumption list');
+  assert.equal(disp(D, 'Vandelay Imports').disposition, 'unknown', 'a value no claim showed is not placed');
+  assert.ok(!D.assertions.some(a => a.status === 'hard' && a.polarity === 'must_not'));
+  // a reader's unverified include does not win over another reader's induced exclusion: the member stays UNKNOWN
+  const two = buildDstar({ request: REQUEST, universes, readers: [listReader('r1', claims), listReader('r2', [{ ptr: p(3), in: true }])] });
+  assert.equal(disp(two, 'Globex Corp').disposition, 'unknown');
+});
+
+test('Δ* (review finding 6): grounded content literals and targets compile to hard positives; ungrounded ones are soft and listed', () => {
+  const universes = universesFromInventory(inventory());
+  const R = { reader: 'r1', obligations: [
+    { id: 'O1', effect: 'send_email', app: 'gmail', target: { emails: ['owner@corp.test'] }, literals: ['active vendor', 'Quarterly close is complete'] },
+    { id: 'O2', effect: 'send_email', app: 'gmail', target: { emails: ['nobody@invented.test'] }, literals: [] },
+    { id: 'O3', effect: 'post_message', app: 'slack', target: { channel: 'ops-invented' }, literals: [] },
+    { id: 'O4', effect: 'create_record', app: 'hubspot', target: {}, literals: ['Globex Corp'] },
+  ] };
+  const D = buildDstar({ request: REQUEST, universes, readers: [R] });
+  const find = (type, pred) => D.assertions.find(a => a.check.type === type && pred(a.check.params));
+  assert.equal(find('msg_has', P => P.lit === 'active vendor').status, 'hard', 'the request carries it');
+  assert.equal(find('msg_has', P => P.lit === 'Quarterly close is complete').status, 'soft', 'no source carries it');
+  assert.ok(D.unknowns.some(u => u.kind === 'value' && u.about === 'Quarterly close is complete'));
+  assert.equal(find('msg_to', P => P.target.email === 'owner@corp.test').status, 'hard');
+  assert.equal(find('msg_to', P => P.target.email === 'nobody@invented.test').status, 'soft', 'an invented recipient is not grounded');
+  assert.ok(D.unknowns.some(u => u.kind === 'target' && u.about === 'nobody@invented.test'));
+  assert.equal(find('post_in', P => P.target.channel.name === 'ops-invented').status, 'soft');
+  assert.equal(find('created_has', P => P.lit === 'Globex Corp').status, 'hard', 'a record carries the literal');
+  // evaluated: the hard literal fails on a world whose message lacks it
+  const bad = evaluateDstar(D, { diff: msgDiff('owner@corp.test', 'Done.'), world0: {}, final: {} });
+  assert.equal(bad.find(r => r.id === find('msg_has', P => P.lit === 'active vendor').id).pass, false);
+  // a certain figure is a hard literal only on a grounded target
+  const t = tableOf(universes, VENDORS);
+  const F = buildDstar({ request: REQUEST, universes, readers: [predicateReader('r1', `"Status" = 'Active'`, { target: { emails: ['nobody@invented.test'] }, figures: [{ id: 'F1', select: `SELECT sum("Amount#num") AS v FROM "${t}" WHERE "Status" = 'Active'`, format: 'money' }] })] });
+  assert.deepEqual(F.assertions.filter(a => a.origin === 'figure').map(a => a.status), ['soft']);
+  const g = grounding({ requestText: 'post in #finance-ops', records: [] });
+  assert.deepEqual([g.channel({ id: null, name: 'finance-ops' }), g.channel({ id: null, name: 'finance' }), g.channel({ id: 'C1', name: 'x' })], [true, false, true]);
+});
+
+test('Δ* (review finding 5): the verdict maps a failed soft check and an undecided check to UNKNOWN on the assumption list, never to a pass', () => {
+  const D = { unknowns: [{ id: 'U-today', kind: 'today' }], assertions: [
+    { id: 'h1', status: 'hard', polarity: 'must', check: { key: 'k-h1' } }, { id: 's1', status: 'soft', polarity: 'must', check: { key: 'k-s1' } },
+    { id: 's2', status: 'soft', polarity: 'must_not', check: { key: 'k-s2' } }, { id: 'h2', status: 'hard', polarity: 'must_not', check: { key: 'k-h2' } }] };
+  const v = verdict(D, [{ key: 'k-h1', pass: true }, { key: 'k-s1', pass: false, evidence: 'lacks it' }, { key: 'k-s2', pass: true }, { key: 'k-h2', pass: null }]);
+  assert.deepEqual(v.rows.map(r => r.verdict), ['SUPPORTED', 'UNKNOWN', 'SUPPORTED', 'UNKNOWN']);
+  assert.equal(v.release, true, 'no FAILED: the run releases, with its assumptions shown');
+  assert.deepEqual(v.assumptions.map(a => a.about ?? a.kind), ['today', 's1', 'h2']);
+  assert.match(v.assumptions[1].why, /soft check failed/);
+  const f = verdict(D, [{ key: 'k-h1', pass: false }]);
+  assert.deepEqual([f.release, f.failed, f.rows[0].verdict], [false, 1, 'FAILED']);
+});
+
 test('Δ*: consensus: with three readers a hard exclusion needs two verified votes and no more votes against', () => {
   const universes = universesFromInventory(inventory());
   const p = n => `google_sheets:row:${SS}/${WS}#${n}`;
@@ -299,7 +462,8 @@ test('Δ*: consensus: with three readers a hard exclusion needs two verified vot
   const two = buildDstar({ request: REQUEST, universes, readers: [predicateReader('a'), predicateReader('b', `"Status" <> 'On Hold'`), listReader('c', [{ ptr: p(2), in: true }])] });
   assert.equal(disp(two, 'Globex Corp').disposition, 'exclude');
   assert.equal(disp(two, 'Globex Corp').hard, true);
-  const against = buildDstar({ request: REQUEST, universes, readers: [predicateReader('a'), predicateReader('b'), predicateReader('c', '1 = 1'), predicateReader('d', '1 = 1'), predicateReader('e', '1 = 1')] });
+  const always = `"Status" IS NOT NULL`;
+  const against = buildDstar({ request: REQUEST, universes, readers: [predicateReader('a'), predicateReader('b'), predicateReader('c', always), predicateReader('d', always), predicateReader('e', always)] });
   assert.equal(disp(against, 'Globex Corp').disposition, 'include', 'three verified includes outvote two verified excludes');
   // an unverified majority never overrides a verified vote: two say-so includes against one executed exclusion
   const sayso = buildDstar({ request: REQUEST, universes, readers: [predicateReader('a'), listReader('b', [{ ptr: p(3), in: true }]), listReader('c', [{ ptr: p(3), in: true }])] });
@@ -335,7 +499,8 @@ test('Δ*: the contract has the Agent-Diff state-diff shape, and UNKNOWN is neve
   const v = verdict(D, []);
   assert.equal(v.supported, 0);
   assert.equal(v.unknown, D.assertions.length + D.unknowns.length);
-  assert.deepEqual(v.assumptions, D.unknowns);
+  assert.deepEqual(v.assumptions.slice(0, D.unknowns.length), D.unknowns);
+  assert.equal(v.assumptions.length, D.unknowns.length + D.assertions.length, 'every undecided check is on the assumption list');
 });
 
 test('Δ*: direct prohibitions are hard only with consensus, a verified quote, no contradiction and no condition', () => {
@@ -367,10 +532,14 @@ test('Δ*: helpers: quote verification, absence claims, induced tests, figure fo
   assert.equal(holdsTest({ field: 'Missing', value: 'x' }, m), null);
   const u = universes.find(x => x.uid === VENDORS);
   const by = l => u.members.find(x => x.label === l);
-  const th = induceTest([{ m: by('Acme Supplies Inc'), want: 'include', field: 'Amount' }, { m: by('Globex Corp'), want: 'exclude', field: 'Amount' }], u);
+  const am = v => ({ attrs: { Amount: v } });
+  assert.equal(induceTest([{ m: by('Acme Supplies Inc'), want: 'include', field: 'Amount' }, { m: by('Globex Corp'), want: 'exclude', field: 'Amount' }], u), null, 'one claim per side is not a rule (finding 7)');
+  const th = induceTest([{ m: am('$1,200'), want: 'include', field: 'Amount' }, { m: am('$1,500'), want: 'include', field: 'Amount' }, { m: am('$300'), want: 'exclude', field: 'Amount' }, { m: am('$800'), want: 'exclude', field: 'Amount' }], u);
   assert.equal(th.kind, 'threshold');
-  assert.equal(th.apply(by('Initech LLC')), 'exclude', '450 is on the exclude side of the observed split');
-  assert.equal(th.apply({ attrs: { Amount: '$1,000' } }), null, 'a value between the two sides is not placed');
+  assert.equal(th.apply(by('Initech LLC')), 'exclude', '450 lies inside the observed exclude range [300, 800]');
+  assert.equal(th.apply(am('$1,000')), null, 'a value between the two sides is not placed');
+  assert.equal(th.apply(am('$5,000')), null, 'no extrapolation above the include range');
+  assert.equal(th.apply(am('$50')), null, 'no extrapolation below the exclude range');
   assert.equal(induceTest([{ m: by('Acme Supplies Inc'), want: 'include', field: 'Status' }, { m: by('Initech LLC'), want: 'include', field: 'Status' }], u), null, 'one side only is not a rule');
   assert.deepEqual([formatFigure([{ v: 1650 }], 'money'), formatFigure([{ v: 1650.5 }], 'grouped'), formatFigure([{ v: 3.6 }], 'integer'), formatFigure([{ v: 7 }], 'Count: {v}'), formatFigure([], 'money')], ['$1,650', '1,650.5', '4', 'Count: 7', null]);
 });

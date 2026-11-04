@@ -208,7 +208,7 @@ export function identityOfV1(f) {
     case 'create': { const nm = f.nameV1 ?? f.name; return `create|${f.app}|${f.op}|${ids}|${nm ? normText(nm) : h(f.text)}`; }
     case 'update': return `update|${f.app}|${f.op}|${ids}|${h(f.text)}`;
     case 'delete': return `delete|${f.app}|${f.op}|${ids}`;
-    default: return `other|${f.app ?? new URL(f.url).host}|${f.op ?? f.url}|${h(f.text)}`;
+    default: { let host = f.app; if (!host) { try { host = new URL(f.url).host; } catch { host = `?${h(f.url)}`; } } return `other|${host}|${f.op ?? f.url}|${h(f.text)}`; }
   }
 }
 
