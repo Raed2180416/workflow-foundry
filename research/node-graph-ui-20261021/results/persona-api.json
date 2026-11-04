@@ -1,0 +1,172 @@
+{
+ "generatedAt": "2026-11-04T14:58:43.559Z",
+ "rows": [
+  {
+   "task": "T1 why did S1b fail",
+   "B0": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 1776,
+    "ms": 96,
+    "note": "Grade the essay [tag:grade] / NODE_CHECK_FAILED"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 3414,
+    "ms": 74,
+    "note": "Grade / NODE_CHECK_FAILED"
+   }
+  },
+  {
+   "task": "T1 why did S7 fail",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 3089,
+    "ms": 19,
+    "note": "Check each invoice / NODE_CHECK_FAILED"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 4101,
+    "ms": 11,
+    "note": "Read / NODE_CHECK_FAILED"
+   }
+  },
+  {
+   "task": "T1 why did S12 fail",
+   "B0": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 1778,
+    "ms": 5,
+    "note": "Translate the page [tag:translate] / MODEL_RATE_LIMIT"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 3345,
+    "ms": 5,
+    "note": "Translate / MODEL_RATE_LIMIT"
+   }
+  },
+  {
+   "task": "T3 what did step A cost",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 2916,
+    "ms": 5,
+    "note": "run total only: $0.0141"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 4186,
+    "ms": 9,
+    "note": "$0.0115"
+   }
+  },
+  {
+   "task": "T5 which recent run failed and why (list)",
+   "B0": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 2793,
+    "ms": 9,
+    "note": "S12Env: Stopped with code MODEL_RATE_LIMIT."
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 1990,
+    "ms": 16,
+    "note": "Translate the page: Problem at “Translate”: The model service failed (for example a rate limit or an outage); this is not the workflow's fault. 0 of 2 steps, $0, 1 model call, 143 ms."
+   }
+  },
+  {
+   "task": "T6a nothing waiting: say no",
+   "B0": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 2793,
+    "ms": 7,
+    "note": null
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 110,
+    "ms": 2,
+    "note": null
+   }
+  },
+  {
+   "task": "T6b two questions wait (in a map): say yes, 2",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 3301,
+    "ms": 55,
+    "note": "count 0"
+   },
+   "T": {
+    "ok": true,
+    "requests": 1,
+    "bytes": 3178,
+    "ms": 78,
+    "note": "count 2"
+   }
+  },
+  {
+   "task": "T4 answer the refund question",
+   "B0": {
+    "ok": false,
+    "requests": 1,
+    "bytes": 3799,
+    "ms": 22,
+    "note": "no route answers a human-node question"
+   },
+   "T": {
+    "ok": true,
+    "requests": 2,
+    "bytes": 7421,
+    "ms": 223,
+    "note": null
+   }
+  },
+  {
+   "task": "T2 approve the waiting send",
+   "B0": {
+    "ok": true,
+    "requests": 2,
+    "bytes": 8965,
+    "ms": 123,
+    "note": null
+   },
+   "T": {
+    "ok": true,
+    "requests": 2,
+    "bytes": 6849,
+    "ms": 58,
+    "note": null
+   }
+  }
+ ],
+ "total": {
+  "B0": {
+   "success": 5,
+   "of": 9,
+   "requests": 10,
+   "bytes": 31210
+  },
+  "T": {
+   "success": 9,
+   "of": 9,
+   "requests": 11,
+   "bytes": 34594
+  }
+ }
+}
