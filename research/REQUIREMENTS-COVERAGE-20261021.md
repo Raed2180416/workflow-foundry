@@ -47,7 +47,7 @@ evidence, not memory.
 |---|---|---|---|---|
 | D1 | Represent any and all workflows (target ~94%+), nested, iterative; reject rather than flatten [20][21] | D | corpus coverage + agent-framework corpus (#19) | refresh numbers with call/compensate (C6) |
 | D2 | Subagents/parallel/waits robust across hosts and meta-harnesses; the system owns plumbing [95] | D | chaos 20 → 35/43 (engine v2, held for merge) | macOS, no-/proc hosts, quota throttle, budget reservations |
-| D3 | Swarms (Kimi-style) in scope? [20] | B | W-bed R6 swarm bed | paid ladder run |
+| D3 | Swarms (Kimi-style) in scope? [20] | D | Rung 1, preregistered held-out pilot ([RESULT-R1](swarm-20261021/RESULT-R1.md), N = 7, R6 d5, $7.60 Haiku): single agent 4/7; Haiku swarm 4/7, but its lead started 0 workers in 8/8 sessions (serial collapse); Haiku-built workflow 0/7 (vocabulary overfit to dev); forced fan-out (exploratory, 1 task) not better at 2× cost | guards on the single agent (code ranker, void detection, coverage plan); a swarm-favouring bed (corpus above one context) before any guarded-swarm rung |
 | D4 | Memory: shared board vs private notes; deep research [20][70] | R | ROADMAP blackboard (§334) | deep research report, today's state of the art |
 | D5 | Efficiency first; frontier/OSS SOTA fix per compromise [20][96] | D | FIXES.md (28 compromises); wave 1 building | waves 2–3 after the runs |
 | D6 | Rust port? [20] | R | answered then; no port | — |

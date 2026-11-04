@@ -1,0 +1,275 @@
+{
+ "stage": "heldout",
+ "split": "test",
+ "tasks": 7,
+ "incomplete": [],
+ "voids": [],
+ "frozenRule": {
+  "voids": 10,
+  "completeBlocks": 0,
+  "flaggedPaths": {
+   "self-created": 38,
+   "workdir-ancestor": 3,
+   "cli-spill": 11
+  }
+ },
+ "faults": 0,
+ "gradeConsistent": true,
+ "table": {
+  "A-agent-haiku": {
+   "n": 7,
+   "pass": 4,
+   "passRate": 0.5714285714285714,
+   "wilson95": {
+    "p": 0.5714285714285714,
+    "lo": 0.2504542304090258,
+    "hi": 0.8417830777373732
+   },
+   "meanScore": 0.8836735714285714,
+   "cellsCorrect": 0.9387755102040816,
+   "missingCompounds": 0.8571428571428571,
+   "excludedOk": 4,
+   "costUsd": 3.05991062,
+   "costPerTrial": 0.4371300885714286,
+   "costPerPass": 0.764977655,
+   "costUnknown": 0,
+   "wallMedianS": 607.28,
+   "wallMaxS": 747.196,
+   "errors": {},
+   "drift": 0,
+   "hiddenPathVoid": 7,
+   "traps": {
+    "unexplained:both-wrong": 2,
+    "concern-voids": 1,
+    "recency-only": 9,
+    "policy-venue-first": 9,
+    "policy-recency-after-venue": 11,
+    "void-missed:retracted": 1,
+    "affil:abbr-only": 2,
+    "plain": 2,
+    "novel-date:relative": 1,
+    "alias:former": 1,
+    "affil:former-only": 1,
+    "cascade:missing-compound": 2,
+    "policy-n-first": 1,
+    "superseded-kept": 1,
+    "void-missed:replaced-by-journal": 1
+   },
+   "sides": {
+    "model:search:not-seen": 19,
+    "model:judgment:seen": 6
+   }
+  },
+  "S-swarm-haiku": {
+   "n": 7,
+   "pass": 4,
+   "passRate": 0.5714285714285714,
+   "wilson95": {
+    "p": 0.5714285714285714,
+    "lo": 0.2504542304090258,
+    "hi": 0.8417830777373732
+   },
+   "meanScore": 0.9021768571428571,
+   "cellsCorrect": 0.9605442176870749,
+   "missingCompounds": 0.2857142857142857,
+   "excludedOk": 4,
+   "costUsd": 2.24953147,
+   "costPerTrial": 0.3213616385714286,
+   "costPerPass": 0.5623828675,
+   "costUnknown": 0,
+   "wallMedianS": 419.703,
+   "wallMaxS": 677.041,
+   "errors": {},
+   "drift": 0,
+   "hiddenPathVoid": 3,
+   "workers": {
+    "median": 0,
+    "max": 0,
+    "criticalStepsMedian": 21,
+    "coord": {
+     "K1": 7,
+     "K2": 0,
+     "K3": 0,
+     "K4": 0,
+     "K5": 0,
+     "K6": 0,
+     "K7": 0,
+     "K8": 0,
+     "K9": 0,
+     "K10": 0,
+     "K11": 0
+    }
+   },
+   "traps": {
+    "novel-date:relative": 2,
+    "affil:abbr-only": 1,
+    "code-only": 1,
+    "superseded-kept": 3,
+    "cascade:missing-compound": 2,
+    "void-missed:replaced-by-journal": 3,
+    "unexplained:both-wrong": 4,
+    "concern-voids": 1,
+    "recency-only": 10,
+    "policy-venue-first": 9,
+    "policy-recency-after-venue": 12,
+    "void-missed:retracted": 1
+   },
+   "sides": {
+    "model:judgment:seen": 16,
+    "model:search:not-seen": 11
+   }
+  },
+  "W-workflow-haiku": {
+   "n": 7,
+   "pass": 0,
+   "passRate": 0,
+   "wilson95": {
+    "p": 0,
+    "lo": 0,
+    "hi": 0.35433884297520657
+   },
+   "meanScore": 0.44416785714285717,
+   "cellsCorrect": 0.5326769304212913,
+   "missingCompounds": 4.142857142857143,
+   "excludedOk": 0,
+   "costUsd": 0.49658140000000006,
+   "costPerTrial": 0.07094020000000001,
+   "costPerPass": null,
+   "costUnknown": 0,
+   "buildUsd": 0.39357547499999995,
+   "costPerPassInclBuild": null,
+   "buildArtifact": "solve.mjs",
+   "buildScoreChecks": 2,
+   "buildFirstPassAtCheck": null,
+   "wallMedianS": 212.87,
+   "wallMaxS": 252.172,
+   "errors": {},
+   "drift": 0,
+   "hiddenPathVoid": 0,
+   "traps": {
+    "novel-date:relative": 15,
+    "code-only": 2,
+    "affil:abbr-only": 10,
+    "T1:tested-before-cutoff": 4,
+    "policy-venue-first": 39,
+    "policy-n-first": 34,
+    "errata-skipped": 5,
+    "unexplained:both-wrong": 51,
+    "nonstandard-counted": 1,
+    "missing-cell": 58,
+    "cascade:missing-compound": 12,
+    "plain": 11,
+    "alias:abbr": 3,
+    "recency-only": 31,
+    "policy-recency-after-venue": 32,
+    "concern-voids": 1,
+    "void-missed:retracted": 5,
+    "quotes-counted": 1
+   },
+   "sides": {
+    "model:builder-code": 238
+   }
+  }
+ },
+ "comparisons": [
+  {
+   "a": "S-swarm-haiku",
+   "b": "A-agent-haiku",
+   "mcnemar": {
+    "aOnly": 1,
+    "bOnly": 1,
+    "p": 1
+   },
+   "passBootstrap": {
+    "armA": "S-swarm-haiku",
+    "armB": "A-agent-haiku",
+    "tasks": 7,
+    "families": 1,
+    "iterations": 10000,
+    "successDiff": {
+     "point": 0,
+     "lo": -0.42857142857142855,
+     "hi": 0.42857142857142855
+    },
+    "cpsRatio": {
+     "point": 0.7351624767392715,
+     "lo": 0.30396956284211224,
+     "hi": 1.6917432562640262,
+     "finiteResamples": 9950
+    }
+   },
+   "score": {
+    "tasks": 7,
+    "point": 0.018503285714285705,
+    "lo": -0.07870771428571431,
+    "hi": 0.11870714285714282
+   }
+  },
+  {
+   "a": "W-workflow-haiku",
+   "b": "A-agent-haiku",
+   "mcnemar": {
+    "aOnly": 0,
+    "bOnly": 4,
+    "p": 0.125
+   },
+   "passBootstrap": {
+    "armA": "W-workflow-haiku",
+    "armB": "A-agent-haiku",
+    "tasks": 7,
+    "families": 1,
+    "iterations": 10000,
+    "successDiff": {
+     "point": -0.5714285714285714,
+     "lo": -0.8571428571428571,
+     "hi": -0.14285714285714285
+    },
+    "cpsRatio": {
+     "point": null,
+     "lo": null,
+     "hi": null,
+     "finiteResamples": 0
+    }
+   },
+   "score": {
+    "tasks": 7,
+    "point": -0.4395057142857142,
+    "lo": -0.553777,
+    "hi": -0.33798257142857147
+   }
+  },
+  {
+   "a": "S-swarm-haiku",
+   "b": "W-workflow-haiku",
+   "mcnemar": {
+    "aOnly": 4,
+    "bOnly": 0,
+    "p": 0.125
+   },
+   "passBootstrap": {
+    "armA": "S-swarm-haiku",
+    "armB": "W-workflow-haiku",
+    "tasks": 7,
+    "families": 1,
+    "iterations": 10000,
+    "successDiff": {
+     "point": 0.5714285714285714,
+     "lo": 0.14285714285714285,
+     "hi": 0.8571428571428571
+    },
+    "cpsRatio": {
+     "point": null,
+     "lo": null,
+     "hi": null,
+     "finiteResamples": 0
+    }
+   },
+   "score": {
+    "tasks": 7,
+    "point": 0.45800899999999994,
+    "lo": 0.38100071428571425,
+    "hi": 0.514031857142857
+   }
+  }
+ ]
+}

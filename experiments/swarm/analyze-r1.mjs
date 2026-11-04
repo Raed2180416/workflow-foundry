@@ -6,7 +6,8 @@ import path from 'node:path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
-import { loadFamily, makeTasks } from '../lib/beds.mjs';
+import { loadFamily, makeTasks, solverView } from '../lib/beds.mjs';
+import { auditSession, voidUnderAmendment2 } from './void-audit.mjs';
 import { pairedBootstrap, mcnemar, wilson } from '../lib/stats.mjs';
 import { rng } from '../../beds/lib/rng.mjs';
 import { readEvents } from './spawn-tree.mjs';
@@ -96,13 +97,34 @@ export async function analyze({ live = LIVE, stage = 'heldout' } = {}) {
   const split = stage === 'heldout' ? 'test' : 'dev';
   const seeds = [...new Set(rows.map(r => Number(r.taskKey.split(':s')[1])))].sort((a, b) => a - b);
   const tasks = new Map((await makeTasks(FAMILY, { split, seeds, difficulty: DIFFICULTY })).map(t => [t.taskKey, t]));
-  // complete blocks only (§5.1): a task enters the comparison when every arm has a recorded, non-void row for it. Void: a
-  // model other than Haiku served a message (K11), or the session reached outside its workdir (hidden path, repository path).
-  const isVoid = r => (r.meta?.drift ?? []).length > 0 || (r.meta?.hiddenPathAttempts ?? 0) > 0 || (r.meta?.repoPathMentions ?? 0) > 0;
+  // complete blocks only (§5.1): a task enters the comparison when every arm has a recorded, non-void row for it.
+  // Frozen void rule: a model other than Haiku served a message (K11), or any hidden-path or repository-path attempt.
+  // Amendment 2 (2026-11-04, after the run): the frozen rule voided 11 of 14 held-out A/S trials for paths that are
+  // sandbox-private scratch (files the session wrote under /var/tmp, the CLI's tool-result spill files under /root/.claude,
+  // the tmpfs directory above its own workdir); void-audit.mjs classifies every flagged path, and a trial is void only for
+  // drift, a repository-path mention, or a flagged path of kind `other`. Both counts are reported.
+  const frozenVoid = r => (r.meta?.drift ?? []).length > 0 || (r.meta?.hiddenPathAttempts ?? 0) > 0 || (r.meta?.repoPathMentions ?? 0) > 0;
+  const audits = new Map();
+  const auditOf = r => {
+    const k = `${r.arm}|${r.taskKey}`;
+    if (!audits.has(k)) {
+      const arc = archiveOf(live, r.arm, r.taskKey, r.trial);
+      const uses = arc.events.filter(e => e?.type === 'assistant').flatMap(e => (e.message?.content ?? []).filter(c => c?.type === 'tool_use').map(c => ({ name: c.name, input: c.input })));
+      const init = arc.events.find(e => e?.type === 'system' && e.subtype === 'init');
+      const view = solverView(tasks.get(r.taskKey).task);
+      audits.set(k, uses.length && init?.cwd ? auditSession(uses, { workdir: init.cwd, taskTexts: [view.prompt, view.files] }) : []);
+    }
+    return audits.get(k);
+  };
+  const isVoid = r => voidUnderAmendment2({ drift: r.meta?.drift ?? [], repoPathMentions: r.meta?.repoPathMentions ?? 0, audit: (r.meta?.hiddenPathAttempts ?? 0) > 0 ? auditOf(r) : [] });
   const arms = [...new Set(rows.map(r => r.arm))].sort();
   const complete = [...tasks.keys()].filter(k => arms.every(a => rows.some(r => r.arm === a && r.taskKey === k && !isVoid(r))));
+  const completeFrozen = [...tasks.keys()].filter(k => arms.every(a => rows.some(r => r.arm === a && r.taskKey === k && !frozenVoid(r))));
   const use = rows.filter(r => complete.includes(r.taskKey));
   const voids = rows.filter(isVoid).map(r => ({ arm: r.arm, taskKey: r.taskKey, drift: r.meta?.drift ?? [], hiddenPath: r.meta?.hiddenPathAttempts ?? 0, repoPath: r.meta?.repoPathMentions ?? 0 }));
+  const frozenRule = { voids: rows.filter(frozenVoid).length, completeBlocks: completeFrozen.length,
+    flaggedPaths: [...audits.values()].flat().reduce((m, x) => ({ ...m, [x.kind]: (m[x.kind] ?? 0) + 1 }), {}) };
+  if (!use.length) return { stage, split, tasks: 0, incomplete: [...tasks.keys()], voids, frozenRule, faults: faults.length, table: {}, comparisons: [], anatomy: [] };
   const build = existsSync(path.join(live, 'build', 'construction.json')) ? JSON.parse(readFileSync(path.join(live, 'build', 'construction.json'), 'utf8')) : null;
   // the decidability witness on every task (the grader agrees with the task text)
   const grade = new Map([...tasks].map(([k, t]) => [k, bed.oracle(t.task, bed.whiteboxSolve(t.task)).pass]));
@@ -133,7 +155,7 @@ export async function analyze({ live = LIVE, stage = 'heldout' } = {}) {
   const pairs = [[ARMS.S, ARMS.A], [ARMS.W, ARMS.A], [ARMS.S, ARMS.W]].filter(([x, y]) => arms.includes(x) && arms.includes(y));
   const constructionUsd = build ? { [ARMS.W]: { [FAMILY]: build.constructionCostUsd } } : null;
   const comparisons = pairs.map(([x, y]) => ({ a: x, b: y, mcnemar: mcnemar(use, x, y), passBootstrap: pairedBootstrap(use, x, y, { iterations: 10000, seed: 'swarm-r1', constructionUsd }), score: pairedScoreDiff(use, x, y) }));
-  return { stage, split, tasks: complete.length, incomplete: [...tasks.keys()].filter(k => !complete.includes(k)), voids, faults: faults.length, gradeConsistent: [...grade.values()].every(Boolean), table, comparisons, anatomy };
+  return { stage, split, tasks: complete.length, incomplete: [...tasks.keys()].filter(k => !complete.includes(k)), voids, frozenRule, faults: faults.length, gradeConsistent: [...grade.values()].every(Boolean), table, comparisons, anatomy };
 }
 
 async function main() {

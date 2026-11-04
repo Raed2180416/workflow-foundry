@@ -1560,12 +1560,12 @@
    "split": "test",
    "from": 9301,
    "to": 9310,
-   "status": "reserved",
+   "status": "used",
    "owner": "swarm",
    "allow": [
     "swarm-r1"
    ],
-   "use": "swarm ladder rung 1 held-out tasks at d5 (the first N run, N by PREREG-SWARM-R1 §6.2); reserved at the freeze, used once by the rung-1 run",
+   "use": "swarm ladder rung 1 held-out tasks at d5: 9301-9307 run by arms A, S, W on 2026-11-04 (9301 also by the exploratory arm S-F, Amendment 1); 9308-9310 were generated only for the freeze hashes and never shown to an arm, but are marked used with the range",
    "source": "research/swarm-20261021/PREREG-SWARM-R1.md §1"
   },
   {

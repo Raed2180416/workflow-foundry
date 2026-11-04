@@ -206,3 +206,22 @@ test that also sees script-printed sentences; the frozen `seenDocs` only sees do
 calibration showed both sessions reading through scripts) and `experiments/swarm/report-r1.mjs` (the frozen analysis
 plus the post-hoc checks: evidence, W's relative-date and ranking-policy checks, rung 1b). The frozen analysis is
 reported as preregistered.
+
+### Amendment 2 (2026-11-04, after the rung-1 held-out stage, analysis only): the void rule
+
+**What happened.** §5.1's void rule (copied from the need router: any hidden-path or repository-path attempt voids a
+trial) voided 10 of the 14 held-out A and S trials (every A trial, three S trials), leaving **0 complete blocks**; the
+frozen `analyze-r1.mjs` then crashed on the empty comparison (a second defect: no empty-set guard). Every flagged path is
+sandbox-private: 38 are files or directories the session itself created under `/var/tmp` (scripts, notes, outputs), 11
+are the CLI's own tool-result spill files under `/root/.claude/projects/<session>/tool-results/` (the CLI saves a long
+tool output there and the model reads it back), and 3 are `/var/tmp/foundry-work`, the tmpfs directory above the
+session's own workdir. Inside the executor sandbox `/root` and `/var/tmp` are empty private tmpfs mounts
+(`src/executors/claude-code.mjs` `DEFAULT_HIDDEN`), so none of these can reach hidden material. The rule was written for
+sessions that do not script; it mistakes scratch for peeking.
+
+**Change.** `experiments/swarm/void-audit.mjs` classifies every flagged path (cli-spill, self-created — the first tool
+use naming it creates it, or it lies under a directory the session created — workdir-ancestor, other). A trial is void
+for drift, a repository-path mention, or any path of kind `other`. `analyze-r1.mjs` uses this rule, guards the empty
+case, and reports the frozen rule's outcome beside it (`frozenRule`: voids, complete blocks, path kinds). Under the
+amended rule no trial is void and all 7 blocks are complete. Tested (`test/void-audit.test.mjs`: scratch is benign;
+reading another session's workdir, a host file, or a path read before it was written is `other` and voids).
