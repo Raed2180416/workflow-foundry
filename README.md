@@ -39,7 +39,35 @@ sealed or claim-bearing result.*
 *Amended 2026-10-28: the SOP-Bench phase-2 primary (2026-10-22, under Results) is the first sealed result. Everything
 else below is still development and diagnostic evidence.*
 
+*Amended 2026-11-04: the newest state is the first bullet below. Every idea in the session, each with its status, is in
+[IDEAS-AND-STATUS](research/status-20261104/IDEAS-AND-STATUS.md). Why each test scored what it did is in
+[WHY-NOT-HIGHER](research/status-20261104/WHY-NOT-HIGHER.md).*
+
 **Where we are.**
+- **2026-11-04.** Everything that was waiting on branches is merged into this branch, with every suite green:
+  - A1-C v2;
+  - the six gap-closure items (need router, FH-1 heal, C2 reuse, SW-1 sub-workflows, game QA, memory);
+  - node capabilities (per-node MCP servers, skills, computer use, connections; a broker);
+  - onboarding;
+  - engine v2;
+  - the breadth adapters (WorkBench, AgentDojo, AppWorld, the family factory).
+
+  The new results:
+  - **Held-out AutomationBench look 2** ([P1 headline](research/automationbench-20261014/P1-RESULT-HEADLINE.md)): A1-C v2
+    (Haiku) passed 29/60, plain Haiku 9/60. McNemar 21 against 1, p = 1.1e-5, which crosses the plan's
+    O'Brien–Fleming bound. Cost $0.029 per task. Opus 5.5 xhigh alone passed 26/60 at $0.385; that comparison is
+    descriptive and was not tested.
+  - **VL-1**, selection among forks: 32/60, +3 over v1-M (p 0.58). Inconclusive by the frozen rule.
+  - **Why 90% was out of reach:** only 43 of the 60 tasks were solved by any arm. The 17 that no system solved, Opus
+    included, are mostly source-authority traps, not benchmark defects: a policy or guidance document in the world
+    overrides the literal request. The fix that keeps Foundry's security rule is that **data may restrict, never
+    authorise** ([WHY-NOT-HIGHER §1a](research/status-20261104/WHY-NOT-HIGHER.md)).
+  - **Conformance suite** ([CONFORMANCE](research/proof-20261104/CONFORMANCE.md)): Foundry meets 11 of 11 durability
+    and control properties. LangGraph 1.2.19, attacked offline, is native on 1 of 8.
+  - **Harness² and Prime Agent**, read in code ([note](research/selfimprove-20261104/HARNESS2-PRIMEAGENT.md)): adopt
+    their loops as proposers only; Foundry's gate stays the only promoter.
+  - **On branch `data-handles`:** capability output labels (a security fix: MCP and file reads stay untrusted), and the
+    data-handle producers and `$read` consumer.
 - **Phase 0** finished 2026-10-06 (start HEAD `6e1c06c`).
 - **Phase 1's exit experiment (P1)** finished 2026-10-08 for model classes M and L; class S
   (local generative models) is parked.
