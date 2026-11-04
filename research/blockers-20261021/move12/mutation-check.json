@@ -1,0 +1,203 @@
+{
+ "baselineExitCodes": [
+  0,
+  0,
+  0
+ ],
+ "killed": 32,
+ "of": 32,
+ "results": [
+  {
+   "name": "sqlsafe: authorizer allows by default",
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: randomblob and friends on the allow-list",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: trailing statements allowed",
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: any table readable",
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "sqlsafe: timeout reported as a crash",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: every vote counts as verified",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: clock flips become exclusions",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: one vote suffices with three readers",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: any quote verifies",
+   "killed": true,
+   "failingTests": "3",
+   "timeout": false
+  },
+  {
+   "name": "dstar: polarity of compiled dispositions swapped",
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "dstar: complement never hard",
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "dstar: figure certain even when it moves with the clock",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "dstar: conditional bans hard",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "clock: load stamps kept",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "clock: \"as of\" not a request date",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "pointers: ambiguous match guesses the first",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "universe: org suffix kept",
+   "killed": true,
+   "failingTests": "3",
+   "timeout": false
+  },
+  {
+   "name": "registry: caller keys are identity",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "registry: nested names are entity names",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "registry: no structured attributes in a create key",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: duplicates admitted",
+   "killed": true,
+   "failingTests": "3",
+   "timeout": false
+  },
+  {
+   "name": "gate: soft prohibitions refuse",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: a failed write keeps its key",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: messages not keyed by what they are about",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "gate: mention bans ignore the target",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "replay: Move 1 success at 5 tasks",
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "replay: Move 1 kill below 3 tasks",
+   "killed": true,
+   "failingTests": "2",
+   "timeout": false
+  },
+  {
+   "name": "replay: Move 1 task share not capped",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "replay: registry conflations not false refusals",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "replay: duplicate criterion dropped",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "replay: unexplained-write kill dropped",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  },
+  {
+   "name": "replay: refusal alignment ignores the target",
+   "killed": true,
+   "failingTests": "1",
+   "timeout": false
+  }
+ ]
+}

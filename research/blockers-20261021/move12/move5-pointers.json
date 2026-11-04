@@ -1,0 +1,49 @@
+{
+ "evidence": "development/diagnostic, $0, stored A1-C v1 ledgers (devTrain dev60)",
+ "haiku-a1c": {
+  "replies": 180,
+  "candidates": 1497,
+  "exactBefore": 1374,
+  "resolvedAfter": 1485,
+  "how": {
+   "exact": 1374,
+   "unwrapped": 50,
+   "sheet-row": 42,
+   "worksheet-row": 7,
+   "bare-id": 12
+  },
+  "ambiguous": 0,
+  "unresolved": 12,
+  "membersGainingVotes": 105,
+  "votePairs": 1357,
+  "votePairsAfter": 1468,
+  "examplesUnresolved": [
+   "google_sheets:row:ss_seniority#2",
+   "google_sheets:row:ss_seniority#3",
+   "google_sheets:row:ss_seniority#4",
+   "google_sheets:row:ss_seniority#5",
+   "google_sheets:row:ss_seniority#6",
+   "google_sheets:row:ss_seniority#8",
+   "google_sheets:row:ss_seniority#9",
+   "google_sheets:row:ss_seniority#10"
+  ]
+ },
+ "m3-a1c": {
+  "replies": 180,
+  "candidates": 3088,
+  "exactBefore": 1928,
+  "resolvedAfter": 3088,
+  "how": {
+   "unwrapped": 1020,
+   "exact": 1928,
+   "bare-id": 18,
+   "sheet-row": 122
+  },
+  "ambiguous": 0,
+  "unresolved": 0,
+  "membersGainingVotes": 539,
+  "votePairs": 1503,
+  "votePairsAfter": 2158,
+  "examplesUnresolved": []
+ }
+}
